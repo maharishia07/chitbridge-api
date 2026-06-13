@@ -117,6 +117,7 @@ router.post('/register',
 
       // Send OTP email
       await sendOTPEmail(email, display_name, otp);
+      console.log(`OTP generated for ${email}: ${otp}`);
 
       res.json({
         message: 'Verification code sent to your email',
