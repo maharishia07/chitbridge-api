@@ -2,6 +2,7 @@
 const { Pool } = require('pg');
 
 const POOLER_REGIONS = [
+  'aws-1-ap-south-1',
   'aws-0-ap-south-1',
   'aws-0-ap-southeast-1',
   'aws-0-us-east-1',
