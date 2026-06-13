@@ -16,15 +16,19 @@ app.use(helmet({ contentSecurityPolicy: false }));
 
 // CORS — allow React dev server, Claude.ai test dashboard, and Vercel
 app.use(cors({
-  origin: [
-    'http://localhost:5173',          // React dev server (Vite)
-    'http://localhost:3000',          // API itself
-    'http://127.0.0.1:3000',
-    'https://claude.ai',              // Claude.ai test dashboard
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-    process.env.ALLOWED_ORIGIN || null,
-    'https://chitbridge-hhjpztq6f-maharishia07-7287s-projects.vercel.app',
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://claude.ai',
+    ];
+    if (!origin) return callback(null, true);
+    if (allowed.includes(origin)) return callback(null, true);
+    if (origin.includes('maharishia07-7287s-projects.vercel.app')) return callback(null, true);
+    if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
