@@ -28,7 +28,7 @@ app.use(cors({
     ];
     if (!origin) return callback(null, true);
     if (allowed.includes(origin)) return callback(null, true);
-    if (origin.includes('maharishia07-7287s-projects.vercel.app')) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
     if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) return callback(null, true);
     callback(new Error('Not allowed by CORS'));
   },
