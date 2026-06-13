@@ -8,6 +8,12 @@ if (connectionString.includes('db.bzacyrdrnzdbficjplcn.supabase.co')) {
     .replace('db.bzacyrdrnzdbficjplcn.supabase.co:5432', 'aws-0-ap-south-1.pooler.supabase.com:6543')
     .replace('postgresql://postgres:', 'postgresql://postgres.bzacyrdrnzdbficjplcn:');
 }
+// Log host being used (no password)
+try {
+  const u = new URL(connectionString);
+  console.log(`DB connecting to: ${u.host} as user: ${u.username}`);
+} catch (e) {}
+
 
 const pool = new Pool({
   connectionString,
