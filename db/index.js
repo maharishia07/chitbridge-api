@@ -29,31 +29,21 @@ async function createPool() {
   const ref = 'bzacyrdrnzdbficjplcn';
   const sslConfig = { rejectUnauthorized: false };
 
-  // Try each pooler region until one connects
+  // Try each pooler region with both username formats
   for (const region of POOLER_REGIONS) {
     const host = `${region}.pooler.supabase.com`;
-    const config = {
-      host,
-      port: 6543,
-      user: `postgres.${ref}`,
-      password,
-      database: 'postgres',
-      ssl: sslConfig,
-    };
-    try {
-      await tryConnect(config);
-      console.log(`DB connected via pooler: ${host}`);
-      return new Pool({
-        ...config,
-        max: 10,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 10000,
-      });
-    } catch (e) {
-      console.log(`Pooler ${region} failed: ${e.message}`);
+    for (const user of [`postgres.${ref}`, 'postgres']) {
+      const config = { host, port: 6543, user, password, database: 'postgres', ssl: sslConfig };
+      try {
+        await tryConnect(config);
+        console.log(`DB connected via pooler: ${host} as ${user}`);
+        return new Pool({ ...config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 });
+      } catch (e) {
+        console.log(`Pooler ${region} user=${user} failed: ${e.message}`);
+      }
     }
   }
-  throw new Error('All pooler regions failed — check Supabase credentials');
+  throw new Error('All pooler regions failed — enable Connection Pooling in Supabase Settings → Database');
 }
 
 let pool;
