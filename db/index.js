@@ -1,43 +1,48 @@
 // db/index.js — PostgreSQL connection pool
 const { Pool } = require('pg');
+const dns = require('dns').promises;
 
-// Force pooler URL to avoid IPv6 issues on Railway
-let connectionString = process.env.DATABASE_URL || '';
-if (connectionString.includes('db.bzacyrdrnzdbficjplcn.supabase.co')) {
-  connectionString = connectionString
-    .replace('db.bzacyrdrnzdbficjplcn.supabase.co:5432', 'aws-0-ap-south-1.pooler.supabase.com:6543')
-    .replace('postgresql://postgres:', 'postgresql://postgres.bzacyrdrnzdbficjplcn:');
-}
-// Log host being used (no password)
-try {
-  const u = new URL(connectionString);
-  console.log(`DB connecting to: ${u.host} as user: ${u.username}`);
-} catch (e) {}
+let pool;
 
+async function createPool() {
+  const rawUrl = process.env.DATABASE_URL || '';
+  let parsed;
+  try { parsed = new URL(rawUrl); } catch (e) { throw new Error('Invalid DATABASE_URL'); }
 
-const pool = new Pool({
-  connectionString,
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  family: 4,
-});
-
-// Test connection on startup
-pool.on('connect', () => {
-  if (process.env.NODE_ENV !== 'test') {
-    console.log('Database connected');
+  // Resolve hostname to IPv4 to avoid Railway IPv6 issue
+  let host = parsed.hostname;
+  try {
+    const addresses = await dns.resolve4(parsed.hostname);
+    if (addresses && addresses.length > 0) {
+      host = addresses[0];
+      console.log(`DB resolved ${parsed.hostname} to IPv4: ${host}`);
+    }
+  } catch (e) {
+    console.log(`DNS resolve failed, using hostname: ${host}`);
   }
+
+  const p = new Pool({
+    host,
+    port: parseInt(parsed.port) || 5432,
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: parsed.pathname.replace('/', ''),
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+
+  p.on('connect', () => { if (process.env.NODE_ENV !== 'test') console.log('Database connected'); });
+  p.on('error', (err) => { console.error('Database error:', err.message); });
+  return p;
+}
+
+createPool().then(p => { pool = p; }).catch(err => {
+  console.error('DB init failed:', err.message);
+  process.exit(1);
 });
 
-pool.on('error', (err) => {
-  console.error('Database error:', err.message);
-});
-
-// Parameterised query helper — prevents SQL injection
 const query = async (text, params) => {
   const start = Date.now();
   try {
@@ -53,4 +58,4 @@ const query = async (text, params) => {
   }
 };
 
-module.exports = { query, pool };
+module.exports = { query, get pool() { return pool; } };
