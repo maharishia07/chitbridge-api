@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chit and Bridge — Send Chit</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; }
+  .header { background: #0D47A1; color: white; padding: 14px 20px;
+            display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; }
+  .header .entity-info { font-size: 12px; opacity: 0.8; }
+  .header .logout { background: rgba(255,255,255,0.2); border: none; color: white;
+                    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .nav { background: white; border-bottom: 1px solid #ddd; display: flex; }
+  .nav a { padding: 12px 20px; text-decoration: none; color: #555;
+           font-size: 13px; font-weight: bold; border-bottom: 3px solid transparent; }
+  .nav a.active { color: #0D47A1; border-bottom-color: #0D47A1; }
+  .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+  .card { background: white; border-radius: 10px; padding: 24px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  h2 { font-size: 16px; color: #1a1a2e; margin-bottom: 18px; }
+  h3 { font-size: 14px; color: #0D47A1; margin-bottom: 12px; }
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; color: #555; margin-bottom: 5px; font-weight: bold; }
+  input, select, textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd;
+                             border-radius: 8px; font-size: 13px; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: #0D47A1; }
+  .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+         font-size: 14px; font-weight: bold; }
+  .btn-primary { background: #0D47A1; color: white; }
+  .btn-secondary { background: #e0e0e0; color: #333; }
+  .btn-danger { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; }
+  .btn:hover { opacity: 0.9; }
+  .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
+  .msg.error { background: #FFEBEE; color: #C62828; }
+  .msg.success { background: #E8F5E9; color: #2E7D32; }
+  .receiver-tag { display: inline-flex; align-items: center; gap: 6px;
+                  background: #E3F2FD; color: #0D47A1; padding: 4px 10px;
+                  border-radius: 20px; font-size: 12px; margin: 4px; }
+  .receiver-tag button { background: none; border: none; cursor: pointer;
+                         color: #0D47A1; font-size: 14px; padding: 0; line-height: 1; }
+  .receivers-area { min-height: 36px; padding: 4px; border: 1px solid #ddd;
+                    border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; }
+  .search-results { position: absolute; background: white; width: 100%;
+                    border: 1px solid #ddd; border-radius: 8px; z-index: 10;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; }
+  .search-wrap { position: relative; }
+  .result-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+  .result-item:hover { background: #f8f9ff; }
+  .result-name { font-size: 13px; font-weight: bold; }
+  .result-id { font-size: 11px; color: #999; }
+  .line-item { background: #f9f9f9; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+  .line-item-grid { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; }
+  .line-item-grid input { padding: 7px 10px; }
+  .total-row { text-align: right; font-size: 14px; font-weight: bold;
+               color: #0D47A1; padding: 8px 0; }
+  .add-item-btn { background: none; border: 2px dashed #0D47A1; color: #0D47A1;
+                  width: 100%; padding: 10px; border-radius: 8px; cursor: pointer;
+                  font-size: 13px; font-weight: bold; margin-bottom: 12px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⬡ Chit and Bridge</h1>
+    <div class="entity-info" id="entity-info">Loading...</div>
+  </div>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="nav">
+  <a href="/inbox.html">📥 Inbox</a>
+  <a href="/send.html" class="active">✉️ Send Chit</a>
+  <a href="/connections.html">🔗 Connections</a>
+</div>
+
+<div class="container">
+  <div id="msg-main"></div>
+
+  <div class="card">
+    <h2>✉️ Send New Chit</h2>
+
+    <!-- Receivers -->
+    <div class="form-group">
+      <label>To — Recipients *</label>
+      <div class="receivers-area" id="receivers-display"></div>
+      <div class="search-wrap">
+        <input type="text" id="receiver-search" placeholder="Search connected entities to add..."
+               oninput="searchReceivers(this.value)" autocomplete="off">
+        <div id="receiver-results" class="search-results" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Purpose -->
+    <div class="form-row">
+      <div class="form-group">
+        <label>Purpose *</label>
+        <select id="purpose">
+          <option value="order">Order</option>
+          <option value="invoice">Invoice</option>
+          <option value="receipt">Receipt</option>
+          <option value="inquiry">Inquiry</option>
+          <option value="delivery_note">Delivery Note</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Currency</label>
+        <select id="currency">
+          <option value="INR">INR — Indian Rupee</option>
+          <option value="USD">USD — US Dollar</option>
+          <option value="EUR">EUR — Euro</option>
+          <option value="GBP">GBP — British Pound</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Subject -->
+    <div class="form-group">
+      <label>Subject (Optional)</label>
+      <input type="text" id="manual_subject" placeholder="e.g. Urgent — June batch order needed by 15th"
+             maxlength="500">
+    </div>
+  </div>
+
+  <!-- Line Items -->
+  <div class="card">
+    <h3>📦 Line Items</h3>
+    <div style="display:grid; grid-template-columns:3fr 1fr 1fr 1fr auto;
+                gap:8px; margin-bottom:8px; padding: 0 4px;">
+      <span style="font-size:11px;color:#999;font-weight:bold">ITEM NAME</span>
+      <span style="font-size:11px;color:#999;font-weight:bold">QTY</span>
+      <span style="font-size:11px;color:#999;font-weight:bold">UNIT</span>
+      <span style="font-size:11px;color:#999;font-weight:bold">PRICE</span>
+      <span></span>
+    </div>
+    <div id="line-items"></div>
+    <button class="add-item-btn" onclick="addLineItem()">+ Add Line Item</button>
+    <div class="total-row">Total: <span id="total-display">0.00</span></div>
+  </div>
+
+  <!-- Send button -->
+  <div style="display:flex; gap:12px;">
+    <button class="btn btn-primary" style="flex:1" onclick="sendChit()">
+      Send Chit →
+    </button>
+    <button class="btn btn-secondary" onclick="window.location.href='/inbox.html'">
+      Cancel
+    </button>
+  </div>
+</div>
+
+<script>
+const API = '';
+const token = localStorage.getItem('cb_token');
+const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
+if (!token) { window.location.href = '/'; }
+
+document.getElementById('entity-info').textContent =
+  `${entity.display_name} · ${entity.bridge_id}`;
+
+let selectedReceivers = [];
+let lineItems = [];
+let searchTimer = null;
+
+// ── Receiver search ──────────────────────────────────────────
+async function searchReceivers(q) {
+  clearTimeout(searchTimer);
+  const resultsEl = document.getElementById('receiver-results');
+  if (q.length < 2) { resultsEl.style.display = 'none'; return; }
+
+  searchTimer = setTimeout(async () => {
+    try {
+      // Search from connected entities
+      const res = await fetch(`${API}/api/entities/search?q=${encodeURIComponent(q)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const results = (data.results || [])
+        .filter(r => !selectedReceivers.find(s => s.id === r.identity_id));
+
+      if (results.length === 0) {
+        resultsEl.innerHTML = '<div class="result-item" style="color:#999">No connected entities found</div>';
+        resultsEl.style.display = 'block';
+        return;
+      }
+
+      resultsEl.innerHTML = results.map(r => `
+        <div class="result-item" onclick="addReceiver('${r.identity_id}','${r.display_name}','${r.bridge_id}')">
+          <div class="result-name">${r.display_name}</div>
+          <div class="result-id">${r.bridge_id}</div>
+        </div>
+      `).join('');
+      resultsEl.style.display = 'block';
+    } catch (err) {
+      resultsEl.style.display = 'none';
+    }
+  }, 300);
+}
+
+function addReceiver(id, name, bridgeId) {
+  if (selectedReceivers.find(r => r.id === id)) return;
+  selectedReceivers.push({ id, name, bridgeId });
+  renderReceivers();
+  document.getElementById('receiver-search').value = '';
+  document.getElementById('receiver-results').style.display = 'none';
+}
+
+function removeReceiver(id) {
+  selectedReceivers = selectedReceivers.filter(r => r.id !== id);
+  renderReceivers();
+}
+
+function renderReceivers() {
+  const el = document.getElementById('receivers-display');
+  el.innerHTML = selectedReceivers.map(r => `
+    <span class="receiver-tag">
+      ${r.name}
+      <button onclick="removeReceiver('${r.id}')">×</button>
+    </span>
+  `).join('');
+}
+
+// ── Line items ───────────────────────────────────────────────
+function addLineItem() {
+  const id = Date.now();
+  lineItems.push({ id, name: '', quantity: 1, unit: 'PCS', price: 0 });
+  renderLineItems();
+}
+
+function removeLineItem(id) {
+  lineItems = lineItems.filter(i => i.id !== id);
+  renderLineItems();
+}
+
+function updateLineItem(id, field, value) {
+  const item = lineItems.find(i => i.id === id);
+  if (item) {
+    item[field] = field === 'quantity' || field === 'price'
+      ? parseFloat(value) || 0 : value;
+  }
+  updateTotal();
+}
+
+function renderLineItems() {
+  const el = document.getElementById('line-items');
+  el.innerHTML = lineItems.map(item => `
+    <div class="line-item">
+      <div class="line-item-grid">
+        <input type="text" value="${item.name}" placeholder="Item name"
+               onchange="updateLineItem(${item.id},'name',this.value)">
+        <input type="number" value="${item.quantity}" min="0" step="0.01"
+               onchange="updateLineItem(${item.id},'quantity',this.value)">
+        <input type="text" value="${item.unit}" placeholder="PCS"
+               onchange="updateLineItem(${item.id},'unit',this.value)">
+        <input type="number" value="${item.price}" min="0" step="0.01" placeholder="0.00"
+               onchange="updateLineItem(${item.id},'price',this.value)">
+        <button class="btn btn-danger" onclick="removeLineItem(${item.id})"
+                style="padding:7px 10px; font-size:16px;">×</button>
+      </div>
+    </div>
+  `).join('');
+  updateTotal();
+}
+
+function updateTotal() {
+  const total = lineItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+  const currency = document.getElementById('currency').value;
+  document.getElementById('total-display').textContent =
+    `${currency} ${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  return total;
+}
+
+// ── Send chit ────────────────────────────────────────────────
+async function sendChit() {
+  const msgEl = document.getElementById('msg-main');
+  msgEl.innerHTML = '';
+
+  if (selectedReceivers.length === 0) {
+    msgEl.innerHTML = '<div class="msg error">Please add at least one receiver</div>';
+    return;
+  }
+
+  const purpose = document.getElementById('purpose').value;
+  const manual_subject = document.getElementById('manual_subject').value.trim();
+  const currency = document.getElementById('currency').value;
+
+  // Prepare line items with total
+  const items = lineItems
+    .filter(i => i.name.trim())
+    .map(i => ({
+      name: i.name.trim(),
+      quantity: i.quantity,
+      unit: i.unit,
+      price: i.price,
+      total: Math.round(i.quantity * i.price * 100) / 100,
+      currency_code: currency
+    }));
+
+  const payload = {
+    receivers: selectedReceivers.map(r => ({ entity_id: r.id })),
+    purpose,
+    manual_subject: manual_subject || undefined,
+    line_items: items.length > 0 ? items : undefined
+  };
+
+  const btn = document.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const res = await fetch(`${API}/api/chits/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      msgEl.innerHTML = `<div class="msg error">${data.message || 'Failed to send chit'}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Send Chit →';
+      return;
+    }
+
+    msgEl.innerHTML = `
+      <div class="msg success">
+        ✅ Chit sent successfully!<br>
+        <strong>${data.auto_subject}</strong><br>
+        Chit ID: <code>${data.chit_id}</code>
+      </div>`;
+
+    // Reset form
+    selectedReceivers = [];
+    lineItems = [];
+    renderReceivers();
+    renderLineItems();
+    document.getElementById('manual_subject').value = '';
+    btn.disabled = false;
+    btn.textContent = 'Send Chit →';
+
+    setTimeout(() => { window.location.href = '/inbox.html'; }, 2000);
+
+  } catch (err) {
+    msgEl.innerHTML = '<div class="msg error">Network error — please try again</div>';
+    btn.disabled = false;
+    btn.textContent = 'Send Chit →';
+  }
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) {
+    document.getElementById('receiver-results').style.display = 'none';
+  }
+});
+
+function logout() {
+  localStorage.removeItem('cb_token');
+  localStorage.removeItem('cb_entity');
+  window.location.href = '/';
+}
+
+// Start with one line item
+addLineItem();
+</script>
+</body>
+</html>

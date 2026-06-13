@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chit and Bridge — Connections</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; }
+  .header { background: #0D47A1; color: white; padding: 14px 20px;
+            display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; }
+  .header .entity-info { font-size: 12px; opacity: 0.8; }
+  .header .logout { background: rgba(255,255,255,0.2); border: none; color: white;
+                    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .nav { background: white; border-bottom: 1px solid #ddd; display: flex; }
+  .nav a { padding: 12px 20px; text-decoration: none; color: #555;
+           font-size: 13px; font-weight: bold; border-bottom: 3px solid transparent; }
+  .nav a.active { color: #0D47A1; border-bottom-color: #0D47A1; }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; display: grid;
+               grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .container { grid-template-columns: 1fr; } }
+  .card { background: white; border-radius: 10px; padding: 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  h2 { font-size: 15px; color: #1a1a2e; margin-bottom: 16px; }
+  .form-group { margin-bottom: 12px; }
+  input, textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd;
+                    border-radius: 8px; font-size: 13px; outline: none; }
+  input:focus, textarea:focus { border-color: #0D47A1; }
+  .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer;
+         font-size: 13px; font-weight: bold; width: 100%; }
+  .btn-primary { background: #0D47A1; color: white; }
+  .btn-success { background: #2E7D32; color: white; }
+  .btn-danger { background: #C62828; color: white; }
+  .msg { padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+  .msg.error { background: #FFEBEE; color: #C62828; }
+  .msg.success { background: #E8F5E9; color: #2E7D32; }
+  .search-results { margin-top: 12px; }
+  .result-item { padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px;
+                 margin-bottom: 8px; cursor: pointer; }
+  .result-item:hover { background: #f8f9ff; border-color: #0D47A1; }
+  .result-name { font-weight: bold; font-size: 13px; }
+  .result-id { font-size: 11px; color: #999; margin-top: 2px; }
+  .conn-item { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+  .conn-item:last-child { border-bottom: none; }
+  .conn-name { font-weight: bold; font-size: 13px; }
+  .conn-id { font-size: 11px; color: #999; }
+  .conn-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .conn-actions .btn { width: auto; padding: 5px 14px; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px;
+           font-size: 11px; font-weight: bold; }
+  .badge-pending { background: #FFF3E0; color: #E65100; }
+  .badge-accepted { background: #E8F5E9; color: #2E7D32; }
+  .empty { text-align: center; padding: 24px; color: #999; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⬡ Chit and Bridge</h1>
+    <div class="entity-info" id="entity-info">Loading...</div>
+  </div>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="nav">
+  <a href="/inbox.html">📥 Inbox</a>
+  <a href="/send.html">✉️ Send Chit</a>
+  <a href="/connections.html" class="active">🔗 Connections</a>
+</div>
+
+<div class="container">
+
+  <!-- Left: Search and connect -->
+  <div>
+    <div class="card">
+      <h2>🔍 Find and Connect</h2>
+      <div id="msg-connect"></div>
+      <div class="form-group">
+        <input type="text" id="search-input" placeholder="Search by entity name..."
+               oninput="searchEntities(this.value)">
+      </div>
+      <div id="search-results" class="search-results"></div>
+    </div>
+
+    <!-- Send connection request form -->
+    <div class="card" id="connect-form" style="margin-top:16px; display:none;">
+      <h2>Send Connection Request</h2>
+      <div id="msg-request"></div>
+      <p style="font-size:13px; color:#333; margin-bottom:12px;">
+        Connecting to: <strong id="connect-to-name"></strong>
+      </p>
+      <div class="form-group">
+        <textarea id="connect-note" placeholder="Introduce yourself (optional)..."
+                  rows="3" maxlength="500"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="sendRequest()">Send Request</button>
+    </div>
+  </div>
+
+  <!-- Right: My connections and pending requests -->
+  <div>
+
+    <!-- Pending requests -->
+    <div class="card">
+      <h2>📨 Pending Requests <span id="pending-count" class="badge badge-pending"></span></h2>
+      <div id="pending-list"><div class="empty">No pending requests</div></div>
+    </div>
+
+    <!-- Accepted connections -->
+    <div class="card" style="margin-top:16px;">
+      <h2>✅ My Connections</h2>
+      <div id="connections-list"><div class="empty">No connections yet</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = '';
+const token = localStorage.getItem('cb_token');
+const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
+if (!token) { window.location.href = '/'; }
+
+document.getElementById('entity-info').textContent =
+  `${entity.display_name} · ${entity.bridge_id}`;
+
+let selectedEntity = null;
+let searchTimer = null;
+
+async function searchEntities(q) {
+  clearTimeout(searchTimer);
+  const resultsEl = document.getElementById('search-results');
+  if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+
+  searchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`${API}/api/entities/search?q=${encodeURIComponent(q)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      if (!data.results || data.results.length === 0) {
+        resultsEl.innerHTML = '<div style="font-size:13px;color:#999;padding:8px">No entities found</div>';
+        return;
+      }
+
+      resultsEl.innerHTML = data.results.map(e => `
+        <div class="result-item" onclick="selectEntity('${e.identity_id}', '${e.display_name}', '${e.bridge_id}')">
+          <div class="result-name">${e.display_name}</div>
+          <div class="result-id">${e.bridge_id}</div>
+        </div>
+      `).join('');
+    } catch (err) {}
+  }, 300);
+}
+
+function selectEntity(id, name, bridgeId) {
+  selectedEntity = { id, name, bridgeId };
+  document.getElementById('connect-to-name').textContent = `${name} (${bridgeId})`;
+  document.getElementById('connect-form').style.display = 'block';
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('msg-request').innerHTML = '';
+}
+
+async function sendRequest() {
+  if (!selectedEntity) return;
+  const note = document.getElementById('connect-note').value.trim();
+  const msgEl = document.getElementById('msg-request');
+
+  try {
+    const res = await fetch(`${API}/api/connections/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ to_entity_id: selectedEntity.id, note })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      msgEl.innerHTML = `<div class="msg error">${data.message}</div>`;
+      return;
+    }
+
+    msgEl.innerHTML = `<div class="msg success">Connection request sent to ${selectedEntity.name}</div>`;
+    document.getElementById('connect-form').style.display = 'none';
+    document.getElementById('connect-note').value = '';
+    selectedEntity = null;
+    loadConnections();
+  } catch (err) {
+    msgEl.innerHTML = '<div class="msg error">Failed to send request</div>';
+  }
+}
+
+async function respondToRequest(connectionId, action, name) {
+  try {
+    const res = await fetch(`${API}/api/connections/${connectionId}/respond`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      loadPendingRequests();
+      loadConnections();
+    }
+  } catch (err) {}
+}
+
+async function loadPendingRequests() {
+  try {
+    const res = await fetch(`${API}/api/connections/pending`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const el = document.getElementById('pending-list');
+    const countEl = document.getElementById('pending-count');
+
+    if (!data.requests || data.requests.length === 0) {
+      el.innerHTML = '<div class="empty">No pending requests</div>';
+      countEl.textContent = '';
+      return;
+    }
+
+    countEl.textContent = data.requests.length;
+    el.innerHTML = data.requests.map(r => `
+      <div class="conn-item">
+        <div class="conn-name">${r.from_display_name}</div>
+        <div class="conn-id">${r.from_bridge_id}</div>
+        ${r.note ? `<div style="font-size:12px;color:#555;margin-top:4px;font-style:italic">"${r.note}"</div>` : ''}
+        <div class="conn-actions">
+          <button class="btn btn-success"
+            onclick="respondToRequest('${r.connection_id}', 'accept', '${r.from_display_name}')">
+            ✓ Accept
+          </button>
+          <button class="btn btn-danger"
+            onclick="respondToRequest('${r.connection_id}', 'reject', '${r.from_display_name}')">
+            ✗ Reject
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {}
+}
+
+async function loadConnections() {
+  try {
+    const res = await fetch(`${API}/api/connections/list`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const el = document.getElementById('connections-list');
+
+    if (!data.connections || data.connections.length === 0) {
+      el.innerHTML = '<div class="empty">No connections yet<br><small>Search for entities above to connect</small></div>';
+      return;
+    }
+
+    el.innerHTML = data.connections.map(c => `
+      <div class="conn-item">
+        <div class="conn-name">${c.partner_display_name}</div>
+        <div class="conn-id">${c.partner_bridge_id}</div>
+        <div style="font-size:11px;color:#999;margin-top:4px">
+          Connected since ${new Date(c.created_at).toLocaleDateString('en-IN')}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {}
+}
+
+function logout() {
+  localStorage.removeItem('cb_token');
+  localStorage.removeItem('cb_entity');
+  window.location.href = '/';
+}
+
+loadPendingRequests();
+loadConnections();
+</script>
+</body>
+</html>

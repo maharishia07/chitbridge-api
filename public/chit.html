@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chit and Bridge — Chit Detail</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; }
+  .header { background: #0D47A1; color: white; padding: 14px 20px;
+            display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; }
+  .back-btn { background: rgba(255,255,255,0.2); border: none; color: white;
+              padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+  .card { background: white; border-radius: 10px; padding: 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .chit-header { border-left: 4px solid #0D47A1; padding-left: 16px; }
+  .auto-subject { font-size: 18px; font-weight: bold; color: #1a1a2e; }
+  .manual-subject { font-size: 14px; color: #555; margin-top: 6px; font-style: italic; }
+  .meta-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+  .meta-item { font-size: 12px; color: #777; }
+  .meta-item strong { color: #333; }
+  .section-title { font-size: 13px; font-weight: bold; color: #0D47A1;
+                   text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .participants { display: grid; gap: 10px; }
+  .participant { display: flex; justify-content: space-between; align-items: center;
+                 padding: 10px 14px; border-radius: 8px; background: #f9f9f9; }
+  .p-name { font-size: 13px; font-weight: bold; }
+  .p-id { font-size: 11px; color: #999; }
+  .p-role { font-size: 11px; color: #0D47A1; font-weight: bold; }
+  .status-badge { padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+  .status-pending { background: #FFF3E0; color: #E65100; }
+  .status-accepted { background: #E8F5E9; color: #2E7D32; }
+  .status-rejected { background: #FFEBEE; color: #C62828; }
+  .status-delivered { background: #E3F2FD; color: #0D47A1; }
+  .status-completed { background: #E8F5E9; color: #1B5E20; }
+  .status-in_progress { background: #F3E5F5; color: #6A1B9A; }
+  .line-items table { width: 100%; border-collapse: collapse; }
+  .line-items th { background: #f5f5f5; padding: 8px 12px; text-align: left;
+                   font-size: 12px; color: #555; border-bottom: 1px solid #e0e0e0; }
+  .line-items td { padding: 10px 12px; font-size: 13px;
+                   border-bottom: 1px solid #f0f0f0; }
+  .line-items tr:last-child td { border-bottom: none; }
+  .total-row td { font-weight: bold; color: #0D47A1; background: #f9f9ff; }
+  .log-item { display: flex; gap: 12px; padding: 10px 0;
+              border-bottom: 1px solid #f0f0f0; }
+  .log-item:last-child { border-bottom: none; }
+  .log-dot { width: 10px; height: 10px; border-radius: 50%; background: #0D47A1;
+             margin-top: 4px; flex-shrink: 0; }
+  .log-action { font-size: 13px; font-weight: bold; color: #333; }
+  .log-detail { font-size: 12px; color: #666; margin-top: 2px; }
+  .log-time { font-size: 11px; color: #999; }
+  .action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+         font-size: 14px; font-weight: bold; }
+  .btn-accept { background: #2E7D32; color: white; }
+  .btn-reject { background: #C62828; color: white; }
+  .btn-complete { background: #0D47A1; color: white; }
+  .btn-progress { background: #6A1B9A; color: white; }
+  .btn-back { background: #e0e0e0; color: #333; }
+  .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
+  .msg.error { background: #FFEBEE; color: #C62828; }
+  .msg.success { background: #E8F5E9; color: #2E7D32; }
+  .payload-note { background: #f5f5f5; border-radius: 8px; padding: 16px;
+                  text-align: center; color: #999; font-size: 13px; }
+  .summary-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .chip { background: #E3F2FD; color: #0D47A1; padding: 4px 12px;
+          border-radius: 12px; font-size: 12px; font-weight: bold; }
+  .loading { text-align: center; padding: 48px; color: #999; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⬡ Chit Detail</h1>
+  <button class="back-btn" onclick="window.location.href='/inbox.html'">← Back to Inbox</button>
+</div>
+
+<div class="container">
+  <div id="msg-main"></div>
+  <div id="content"><div class="loading">Loading chit...</div></div>
+</div>
+
+<script>
+const API = '';
+const token = localStorage.getItem('cb_token');
+const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
+if (!token) { window.location.href = '/'; }
+
+const chit_id = new URLSearchParams(window.location.search).get('id');
+if (!chit_id) { window.location.href = '/inbox.html'; }
+
+let chitData = null;
+
+function getStatusClass(status) {
+  return `status-${status}`;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function formatAction(action) {
+  const labels = {
+    created: '📤 Created and sent',
+    delivered: '📥 Delivered',
+    read: '👁 Opened and read',
+    accepted: '✅ Accepted',
+    rejected: '❌ Rejected',
+    in_progress: '⏳ In Progress',
+    completed: '✅ Completed',
+    cancelled: '🚫 Cancelled',
+    status_accepted: '✅ Accepted',
+    status_rejected: '❌ Rejected',
+    status_in_progress: '⏳ Marked In Progress',
+    status_completed: '✅ Marked Completed',
+    status_cancelled: '🚫 Cancelled',
+    connection_requested: '🔗 Connection Requested',
+    connection_accepted: '✅ Connection Accepted',
+  };
+  return labels[action] || action;
+}
+
+async function loadChit() {
+  try {
+    const res = await fetch(`${API}/api/chits/${chit_id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (res.status === 401) { window.location.href = '/'; return; }
+    if (!res.ok) {
+      document.getElementById('content').innerHTML =
+        '<div class="card"><p style="color:#C62828">Chit not found</p></div>';
+      return;
+    }
+
+    chitData = await res.json();
+    renderChit();
+
+  } catch (err) {
+    document.getElementById('content').innerHTML =
+      '<div class="card"><p style="color:#C62828">Failed to load chit</p></div>';
+  }
+}
+
+function renderChit() {
+  const { header, detail, participants, state_log } = chitData;
+  const myStatus = participants.find(p => p.entity_id === entity.identity_id);
+  const currentStatus = myStatus ? myStatus.current_status : 'unknown';
+  const isSender = header.sender_entity_id === entity.identity_id;
+
+  // Summary chips
+  let summaryChips = '';
+  if (header.summary_json) {
+    const s = typeof header.summary_json === 'string'
+      ? JSON.parse(header.summary_json) : header.summary_json;
+    if (s.line_item_count) summaryChips += `<span class="chip">📦 ${s.line_item_count} items</span>`;
+    if (s.total_value) summaryChips += `<span class="chip">💰 ${s.currency_code || 'INR'} ${parseFloat(s.total_value).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>`;
+    summaryChips += `<span class="chip">📋 ${header.purpose}</span>`;
+  }
+
+  // Line items table
+  let lineItemsHtml = '';
+  if (detail && detail.line_items) {
+    const items = typeof detail.line_items === 'string'
+      ? JSON.parse(detail.line_items) : detail.line_items;
+    if (items && items.length > 0) {
+      lineItemsHtml = `
+        <table>
+          <tr>
+            <th>Item</th><th>Qty</th><th>Unit</th><th>Price</th><th>Total</th>
+          </tr>
+          ${items.map(i => `
+            <tr>
+              <td>${i.name}</td>
+              <td>${i.quantity}</td>
+              <td>${i.unit || '—'}</td>
+              <td>${parseFloat(i.price || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+              <td>${parseFloat(i.total || i.price * i.quantity || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td colspan="4">Total</td>
+            <td>${detail.currency_code || 'INR'} ${parseFloat(detail.total_value || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+          </tr>
+        </table>`;
+    }
+  } else if (detail && detail.payload_deleted_at) {
+    lineItemsHtml = `<div class="payload-note">
+      🔒 Payload delivered and deleted per fire-and-forget model<br>
+      <small>Delivered: ${formatDate(detail.payload_delivered_at)}</small>
+    </div>`;
+  }
+
+  // Action buttons — only for receivers and valid transitions
+  const validNextActions = {
+    'pending':     [['accepted','✅ Accept','btn-accept'],['rejected','❌ Reject','btn-reject']],
+    'delivered':   [['accepted','✅ Accept','btn-accept'],['rejected','❌ Reject','btn-reject']],
+    'read':        [['accepted','✅ Accept','btn-accept'],['rejected','❌ Reject','btn-reject']],
+    'accepted':    [['in_progress','⏳ Start Processing','btn-progress'],['completed','✅ Complete','btn-complete'],['cancelled','🚫 Cancel','btn-reject']],
+    'in_progress': [['completed','✅ Mark Complete','btn-complete'],['cancelled','🚫 Cancel','btn-reject']],
+  };
+
+  let actionButtons = '';
+  if (!isSender && validNextActions[currentStatus]) {
+    actionButtons = validNextActions[currentStatus].map(([status, label, cls]) =>
+      `<button class="btn ${cls}" onclick="updateStatus('${status}')">${label}</button>`
+    ).join('');
+  }
+
+  document.getElementById('content').innerHTML = `
+
+    <!-- Chit Header -->
+    <div class="card">
+      <div class="chit-header">
+        <div class="auto-subject">${header.auto_subject || 'Chit'}</div>
+        ${header.manual_subject ? `<div class="manual-subject">"${header.manual_subject}"</div>` : ''}
+        <div class="summary-chips">${summaryChips}</div>
+        <div class="meta-row">
+          <div class="meta-item"><strong>From:</strong> ${header.sender_entity_display_name}</div>
+          <div class="meta-item"><strong>Purpose:</strong> ${header.purpose}</div>
+          <div class="meta-item"><strong>Sent:</strong> ${formatDate(header.created_at)}</div>
+          <div class="meta-item"><strong>Chit ID:</strong> <code style="font-size:11px">${header.chit_id}</code></div>
+          <div class="meta-item"><strong>My Status:</strong>
+            <span class="status-badge ${getStatusClass(currentStatus)}">${currentStatus}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action bar -->
+    ${actionButtons ? `
+    <div class="card">
+      <div class="section-title">Actions</div>
+      <div id="msg-action"></div>
+      <div class="action-bar">${actionButtons}</div>
+    </div>` : ''}
+
+    <!-- Participants -->
+    <div class="card">
+      <div class="section-title">All Participants</div>
+      <div class="participants">
+        ${participants.map(p => `
+          <div class="participant">
+            <div>
+              <div class="p-name">${p.display_name}
+                ${p.entity_id === entity.identity_id ? '<span style="color:#0D47A1;font-size:11px"> (You)</span>' : ''}
+              </div>
+              <div class="p-id">${p.bridge_id}</div>
+            </div>
+            <div style="text-align:right">
+              <span class="status-badge ${getStatusClass(p.current_status)}">${p.current_status}</span>
+              ${p.read_at ? '<div style="font-size:11px;color:#999;margin-top:4px">Read</div>' : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Line items -->
+    ${lineItemsHtml ? `
+    <div class="card line-items">
+      <div class="section-title">Line Items</div>
+      ${lineItemsHtml}
+    </div>` : ''}
+
+    <!-- State log -->
+    <div class="card">
+      <div class="section-title">Audit Trail — State Log</div>
+      ${state_log.map(log => `
+        <div class="log-item">
+          <div class="log-dot"></div>
+          <div style="flex:1">
+            <div class="log-action">${formatAction(log.action)}</div>
+            ${log.action_by_display_name ? `<div class="log-detail">By: ${log.action_by_display_name}</div>` : ''}
+            ${log.detail ? `<div class="log-detail">${log.detail}</div>` : ''}
+            <div class="log-time">${formatDate(log.created_at)}</div>
+          </div>
+          ${log.new_status ? `<span class="status-badge ${getStatusClass(log.new_status)}">${log.new_status}</span>` : ''}
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+async function updateStatus(newStatus) {
+  const msgEl = document.getElementById('msg-action');
+  if (!msgEl) return;
+
+  try {
+    const res = await fetch(`${API}/api/chits/${chit_id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      msgEl.innerHTML = `<div class="msg error">${data.message}</div>`;
+      return;
+    }
+
+    msgEl.innerHTML = `<div class="msg success">Status updated to: ${newStatus}</div>`;
+    setTimeout(() => loadChit(), 1000);
+
+  } catch (err) {
+    if (msgEl) msgEl.innerHTML = '<div class="msg error">Update failed</div>';
+  }
+}
+
+loadChit();
+</script>
+</body>
+</html>

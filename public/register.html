@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chit and Bridge — Register</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; min-height: 100vh;
+         display: flex; align-items: center; justify-content: center; }
+  .card { background: white; border-radius: 12px; padding: 40px;
+          width: 100%; max-width: 420px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .logo { text-align: center; margin-bottom: 24px; }
+  .logo h1 { color: #0D47A1; font-size: 22px; }
+  .logo p { color: #666; font-size: 13px; margin-top: 4px; }
+  h2 { color: #1a1a2e; margin-bottom: 20px; font-size: 18px; }
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: bold; }
+  input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px;
+          font-size: 14px; outline: none; transition: border-color 0.2s; }
+  input:focus { border-color: #0D47A1; }
+  .btn { width: 100%; padding: 12px; background: #0D47A1; color: white;
+         border: none; border-radius: 8px; font-size: 15px; cursor: pointer;
+         font-weight: bold; transition: background 0.2s; }
+  .btn:hover { background: #1565C0; }
+  .btn:disabled { background: #90A4AE; cursor: not-allowed; }
+  .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+  .msg.error { background: #FFEBEE; color: #C62828; }
+  .msg.success { background: #E8F5E9; color: #2E7D32; }
+  .link { text-align: center; margin-top: 16px; font-size: 13px; color: #666; }
+  .link a { color: #0D47A1; text-decoration: none; font-weight: bold; }
+  #otp-section { display: none; }
+  .bridge-id { background: #E3F2FD; border-radius: 8px; padding: 16px;
+               text-align: center; margin: 16px 0; }
+  .bridge-id .label { font-size: 12px; color: #666; }
+  .bridge-id .value { font-size: 24px; font-weight: bold; color: #0D47A1;
+                      letter-spacing: 4px; margin-top: 4px; }
+  .dev-note { background: #FFF3E0; border-radius: 8px; padding: 10px;
+              font-size: 12px; color: #E65100; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <h1>⬡ Chit and Bridge</h1>
+    <p>Cross-organisation execution platform</p>
+  </div>
+
+  <!-- Step 1: Registration form -->
+  <div id="register-section">
+    <h2>Register your entity</h2>
+    <div id="msg-register"></div>
+    <div class="form-group">
+      <label>Entity Name</label>
+      <input type="text" id="display_name" placeholder="e.g. ABC Pharma Chennai" maxlength="255">
+    </div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="you@company.com">
+    </div>
+    <button class="btn" onclick="register()">Get Verification Code</button>
+    <div class="link">Already registered? <a href="/inbox.html">Go to Inbox</a></div>
+  </div>
+
+  <!-- Step 2: OTP verification -->
+  <div id="otp-section">
+    <h2>Verify your email</h2>
+    <div id="msg-otp"></div>
+    <p style="color:#666; font-size:13px; margin-bottom:16px;">
+      Enter the 6-digit code sent to <strong id="email-display"></strong>
+    </p>
+    <div id="dev-otp-note" class="dev-note" style="display:none">
+      <strong>DEV MODE:</strong> OTP is <span id="dev-otp-value"></span>
+    </div>
+    <div class="form-group">
+      <label>Verification Code</label>
+      <input type="text" id="otp" placeholder="123456" maxlength="6"
+             style="letter-spacing:8px; font-size:20px; text-align:center;">
+    </div>
+    <button class="btn" onclick="verify()">Verify and Continue</button>
+    <div class="link" style="margin-top:10px">
+      <a href="#" onclick="resend()">Resend code</a>
+    </div>
+  </div>
+
+  <!-- Step 3: Success -->
+  <div id="success-section" style="display:none; text-align:center;">
+    <div style="font-size:48px; margin-bottom:16px;">✅</div>
+    <h2>Registration complete!</h2>
+    <p style="color:#666; font-size:13px; margin: 12px 0;">Your Bridge ID:</p>
+    <div class="bridge-id">
+      <div class="label">Bridge ID</div>
+      <div class="value" id="bridge-id-display"></div>
+    </div>
+    <p style="color:#666; font-size:12px; margin-bottom:20px;">
+      Share this ID with partners so they can connect with you
+    </p>
+    <button class="btn" onclick="window.location.href='/inbox.html'">
+      Go to Inbox →
+    </button>
+  </div>
+</div>
+
+<script>
+const API = '';
+let currentEmail = '';
+
+async function register() {
+  const display_name = document.getElementById('display_name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const msgEl = document.getElementById('msg-register');
+
+  if (!display_name || display_name.length < 2) {
+    msgEl.innerHTML = '<div class="msg error">Entity name must be at least 2 characters</div>';
+    return;
+  }
+  if (!email || !email.includes('@')) {
+    msgEl.innerHTML = '<div class="msg error">Valid email required</div>';
+    return;
+  }
+
+  const btn = document.querySelector('#register-section .btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  msgEl.innerHTML = '';
+
+  try {
+    const res = await fetch(`${API}/api/entities/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ display_name, email })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      msgEl.innerHTML = `<div class="msg error">${data.message || 'Registration failed'}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Get Verification Code';
+      return;
+    }
+
+    currentEmail = email;
+    document.getElementById('email-display').textContent = email;
+    document.getElementById('register-section').style.display = 'none';
+    document.getElementById('otp-section').style.display = 'block';
+
+    // Show OTP in dev mode
+    if (data.dev_otp) {
+      document.getElementById('dev-otp-note').style.display = 'block';
+      document.getElementById('dev-otp-value').textContent = data.dev_otp;
+    }
+
+  } catch (err) {
+    msgEl.innerHTML = '<div class="msg error">Network error — please try again</div>';
+    btn.disabled = false;
+    btn.textContent = 'Get Verification Code';
+  }
+}
+
+async function verify() {
+  const otp = document.getElementById('otp').value.trim();
+  const msgEl = document.getElementById('msg-otp');
+
+  if (!otp || otp.length !== 6) {
+    msgEl.innerHTML = '<div class="msg error">Enter the 6-digit code</div>';
+    return;
+  }
+
+  const btn = document.querySelector('#otp-section .btn');
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+  msgEl.innerHTML = '';
+
+  try {
+    const res = await fetch(`${API}/api/entities/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: currentEmail, otp })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      msgEl.innerHTML = `<div class="msg error">${data.message || 'Verification failed'}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Verify and Continue';
+      return;
+    }
+
+    // Store token and entity info
+    localStorage.setItem('cb_token', data.token);
+    localStorage.setItem('cb_entity', JSON.stringify(data.entity));
+
+    // Show success
+    document.getElementById('otp-section').style.display = 'none';
+    document.getElementById('success-section').style.display = 'block';
+    document.getElementById('bridge-id-display').textContent = data.entity.bridge_id;
+
+  } catch (err) {
+    msgEl.innerHTML = '<div class="msg error">Network error — please try again</div>';
+    btn.disabled = false;
+    btn.textContent = 'Verify and Continue';
+  }
+}
+
+async function resend() {
+  document.getElementById('register-section').style.display = 'block';
+  document.getElementById('otp-section').style.display = 'none';
+  document.getElementById('email').value = currentEmail;
+}
+
+// Auto-go to inbox if already logged in
+window.onload = () => {
+  const token = localStorage.getItem('cb_token');
+  if (token) {
+    window.location.href = '/inbox.html';
+  }
+};
+</script>
+</body>
+</html>

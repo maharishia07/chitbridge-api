@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chit and Bridge — Inbox</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; }
+  .header { background: #0D47A1; color: white; padding: 14px 20px;
+            display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; }
+  .header .entity-info { font-size: 12px; opacity: 0.8; }
+  .header .logout { background: rgba(255,255,255,0.2); border: none; color: white;
+                    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .nav { background: white; border-bottom: 1px solid #ddd;
+         display: flex; gap: 0; }
+  .nav a { padding: 12px 20px; text-decoration: none; color: #555;
+           font-size: 13px; font-weight: bold; border-bottom: 3px solid transparent; }
+  .nav a.active { color: #0D47A1; border-bottom-color: #0D47A1; }
+  .nav a:hover { color: #0D47A1; }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer;
+         font-size: 13px; font-weight: bold; text-decoration: none; display: inline-block; }
+  .btn-primary { background: #0D47A1; color: white; }
+  .btn-primary:hover { background: #1565C0; }
+  .btn-secondary { background: #e0e0e0; color: #333; }
+  .filter { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px;
+            font-size: 13px; outline: none; }
+  .chit-list { background: white; border-radius: 10px; overflow: hidden;
+               box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .chit-item { padding: 14px 18px; border-bottom: 1px solid #f0f0f0;
+               cursor: pointer; transition: background 0.15s; }
+  .chit-item:hover { background: #f8f9ff; }
+  .chit-item:last-child { border-bottom: none; }
+  .chit-item.unread { border-left: 4px solid #0D47A1; }
+  .chit-row1 { display: flex; justify-content: space-between; align-items: center; }
+  .sender { font-weight: bold; font-size: 14px; color: #1a1a2e; }
+  .date { font-size: 12px; color: #999; }
+  .auto-subject { font-size: 13px; color: #333; margin: 3px 0; }
+  .manual-subject { font-size: 12px; color: #666; font-style: italic; }
+  .summary { font-size: 12px; color: #0D47A1; margin-top: 4px; }
+  .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px;
+                  font-size: 11px; font-weight: bold; margin-left: 8px; }
+  .status-pending { background: #FFF3E0; color: #E65100; }
+  .status-accepted { background: #E8F5E9; color: #2E7D32; }
+  .status-rejected { background: #FFEBEE; color: #C62828; }
+  .status-delivered { background: #E3F2FD; color: #0D47A1; }
+  .status-completed { background: #E8F5E9; color: #1B5E20; }
+  .status-in_progress { background: #F3E5F5; color: #6A1B9A; }
+  .empty { text-align: center; padding: 48px; color: #999; }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .conn-badge { background: #FFF3E0; border-radius: 8px; padding: 10px 14px;
+                font-size: 13px; color: #E65100; margin-bottom: 12px;
+                display: flex; justify-content: space-between; align-items: center; }
+  .loading { text-align: center; padding: 32px; color: #999; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⬡ Chit and Bridge</h1>
+    <div class="entity-info" id="entity-info">Loading...</div>
+  </div>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="nav">
+  <a href="/inbox.html" class="active">📥 Inbox</a>
+  <a href="/send.html">✉️ Send Chit</a>
+  <a href="/connections.html">🔗 Connections</a>
+</div>
+
+<div class="container">
+
+  <!-- Pending connection requests banner -->
+  <div id="pending-banner" style="display:none" class="conn-badge">
+    <span id="pending-text"></span>
+    <a href="/connections.html" class="btn btn-secondary" style="padding:5px 12px; font-size:12px;">
+      View Requests
+    </a>
+  </div>
+
+  <div class="toolbar">
+    <a href="/send.html" class="btn btn-primary">+ Send Chit</a>
+    <select class="filter" onchange="loadInbox(this.value)" id="status-filter">
+      <option value="">All Chits</option>
+      <option value="pending">Pending</option>
+      <option value="accepted">Accepted</option>
+      <option value="rejected">Rejected</option>
+      <option value="completed">Completed</option>
+    </select>
+    <button class="btn btn-secondary" onclick="loadInbox()">↻ Refresh</button>
+  </div>
+
+  <div class="chit-list" id="chit-list">
+    <div class="loading">Loading your inbox...</div>
+  </div>
+</div>
+
+<script>
+const API = '';
+const token = localStorage.getItem('cb_token');
+const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
+
+if (!token) { window.location.href = '/'; }
+
+document.getElementById('entity-info').textContent =
+  `${entity.display_name} · ${entity.bridge_id}`;
+
+function getStatusClass(status) {
+  return `status-${status}` in document.createElement('div').style
+    ? status : status.replace('_', '_');
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function formatSummary(summaryJson) {
+  if (!summaryJson) return '';
+  const s = typeof summaryJson === 'string' ? JSON.parse(summaryJson) : summaryJson;
+  const parts = [];
+  if (s.line_item_count) parts.push(`${s.line_item_count} items`);
+  if (s.total_value) parts.push(`${s.currency_code || 'INR'} ${parseFloat(s.total_value).toLocaleString('en-IN', {minimumFractionDigits: 2})}`);
+  return parts.join(' · ');
+}
+
+async function loadInbox(statusFilter = '') {
+  const listEl = document.getElementById('chit-list');
+  listEl.innerHTML = '<div class="loading">Loading...</div>';
+
+  try {
+    const url = statusFilter
+      ? `${API}/api/chits/inbox?status=${statusFilter}`
+      : `${API}/api/chits/inbox`;
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+
+    if (!data.chits || data.chits.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty">
+          <div class="icon">📭</div>
+          <div>Your inbox is empty</div>
+          <div style="font-size:12px; margin-top:8px; color:#bbb">
+            Connect with partners and send your first chit
+          </div>
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = data.chits.map(chit => {
+      const isUnread = !chit.read_at;
+      const summary = formatSummary(chit.summary_json);
+      const isSender = chit.sender_entity_bridge_id === entity.bridge_id;
+
+      return `
+        <div class="chit-item ${isUnread ? 'unread' : ''}"
+             onclick="window.location.href='/chit.html?id=${chit.chit_id}'">
+          <div class="chit-row1">
+            <div>
+              <span class="sender">
+                ${isSender ? '📤 You → ' : '📥 '} ${chit.sender_entity_display_name}
+              </span>
+              <span class="status-badge status-${chit.current_status}">
+                ${chit.current_status}
+              </span>
+              ${chit.priority_flag === 'urgent' ? '<span style="color:red; margin-left:6px">⚡ Urgent</span>' : ''}
+              ${chit.star_flag ? '<span style="margin-left:6px">⭐</span>' : ''}
+            </div>
+            <div class="date">${formatDate(chit.created_at)}</div>
+          </div>
+          <div class="auto-subject">${chit.auto_subject || ''}</div>
+          ${chit.manual_subject ? `<div class="manual-subject">"${chit.manual_subject}"</div>` : ''}
+          ${summary ? `<div class="summary">${summary}</div>` : ''}
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty"><div class="icon">⚠️</div><div>Failed to load inbox</div></div>';
+  }
+}
+
+async function checkPendingConnections() {
+  try {
+    const res = await fetch(`${API}/api/connections/pending`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.count > 0) {
+      document.getElementById('pending-banner').style.display = 'flex';
+      document.getElementById('pending-text').textContent =
+        `📨 You have ${data.count} pending connection request${data.count > 1 ? 's' : ''}`;
+    }
+  } catch (err) {}
+}
+
+function logout() {
+  localStorage.removeItem('cb_token');
+  localStorage.removeItem('cb_entity');
+  window.location.href = '/';
+}
+
+loadInbox();
+checkPendingConnections();
+</script>
+</body>
+</html>
