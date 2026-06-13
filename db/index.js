@@ -1,8 +1,16 @@
 // db/index.js — PostgreSQL connection pool
 const { Pool } = require('pg');
 
+// Force pooler URL to avoid IPv6 issues on Railway
+let connectionString = process.env.DATABASE_URL || '';
+if (connectionString.includes('db.bzacyrdrnzdbficjplcn.supabase.co')) {
+  connectionString = connectionString
+    .replace('db.bzacyrdrnzdbficjplcn.supabase.co:5432', 'aws-0-ap-south-1.pooler.supabase.com:6543')
+    .replace('postgresql://postgres:', 'postgresql://postgres.bzacyrdrnzdbficjplcn:');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: process.env.NODE_ENV === 'production'
     ? { rejectUnauthorized: false }
     : false,
