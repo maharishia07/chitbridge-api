@@ -115,9 +115,12 @@ router.post('/register',
         [otp, expires, display_name, identity_id]
       );
 
-      // Send OTP email
-      await sendOTPEmail(email, display_name, otp);
-      console.log(`OTP generated for ${email}: ${otp}`);
+      // Send OTP email — controlled by OTP_EMAIL_ENABLED flag
+      if (process.env.OTP_EMAIL_ENABLED === 'true') {
+        await sendOTPEmail(email, display_name, otp);
+      } else {
+        console.log(`[OTP] ${email}: ${otp}`);
+      }
 
       res.json({
         message: 'Verification code sent to your email',
