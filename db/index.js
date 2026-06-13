@@ -1,44 +1,67 @@
 // db/index.js — PostgreSQL connection pool
 const { Pool } = require('pg');
-const dns = require('dns').promises;
 
-let pool;
+const POOLER_REGIONS = [
+  'aws-0-ap-south-1',
+  'aws-0-ap-southeast-1',
+  'aws-0-us-east-1',
+  'aws-0-eu-west-1',
+];
+
+async function tryConnect(config) {
+  return new Promise((resolve, reject) => {
+    const p = new Pool({ ...config, max: 1, connectionTimeoutMillis: 5000 });
+    p.connect((err, client, release) => {
+      if (err) { p.end(); return reject(err); }
+      release();
+      p.end();
+      resolve(true);
+    });
+  });
+}
 
 async function createPool() {
   const rawUrl = process.env.DATABASE_URL || '';
   let parsed;
   try { parsed = new URL(rawUrl); } catch (e) { throw new Error('Invalid DATABASE_URL'); }
 
-  // Resolve hostname to IPv4 to avoid Railway IPv6 issue
-  let host = parsed.hostname;
-  try {
-    const addresses = await dns.resolve4(parsed.hostname);
-    if (addresses && addresses.length > 0) {
-      host = addresses[0];
-      console.log(`DB resolved ${parsed.hostname} to IPv4: ${host}`);
+  const password = decodeURIComponent(parsed.password);
+  const ref = 'bzacyrdrnzdbficjplcn';
+  const sslConfig = { rejectUnauthorized: false };
+
+  // Try each pooler region until one connects
+  for (const region of POOLER_REGIONS) {
+    const host = `${region}.pooler.supabase.com`;
+    const config = {
+      host,
+      port: 6543,
+      user: `postgres.${ref}`,
+      password,
+      database: 'postgres',
+      ssl: sslConfig,
+    };
+    try {
+      await tryConnect(config);
+      console.log(`DB connected via pooler: ${host}`);
+      return new Pool({
+        ...config,
+        max: 10,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+      });
+    } catch (e) {
+      console.log(`Pooler ${region} failed: ${e.message}`);
     }
-  } catch (e) {
-    console.log(`DNS resolve failed, using hostname: ${host}`);
   }
-
-  const p = new Pool({
-    host,
-    port: parseInt(parsed.port) || 5432,
-    user: decodeURIComponent(parsed.username),
-    password: decodeURIComponent(parsed.password),
-    database: parsed.pathname.replace('/', ''),
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-  });
-
-  p.on('connect', () => { if (process.env.NODE_ENV !== 'test') console.log('Database connected'); });
-  p.on('error', (err) => { console.error('Database error:', err.message); });
-  return p;
+  throw new Error('All pooler regions failed — check Supabase credentials');
 }
 
-createPool().then(p => { pool = p; }).catch(err => {
+let pool;
+
+createPool().then(p => {
+  pool = p;
+  p.on('error', err => console.error('Database error:', err.message));
+}).catch(err => {
   console.error('DB init failed:', err.message);
   process.exit(1);
 });
@@ -47,9 +70,8 @@ const query = async (text, params) => {
   const start = Date.now();
   try {
     const result = await pool.query(text, params);
-    const duration = Date.now() - start;
     if (process.env.NODE_ENV === 'development') {
-      console.log(`Query: ${text.substring(0, 50)} | ${duration}ms | ${result.rowCount} rows`);
+      console.log(`Query: ${text.substring(0, 50)} | ${Date.now() - start}ms | ${result.rowCount} rows`);
     }
     return result;
   } catch (err) {
