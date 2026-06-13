@@ -7,17 +7,8 @@ const { query } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
-// ─── Helper: Check connection exists ─────────────────────────
-const isConnected = async (entity_a, entity_b) => {
-  const result = await query(
-    `SELECT connection_id FROM connections
-     WHERE ((from_entity_id = $1 AND to_entity_id = $2)
-         OR (from_entity_id = $2 AND to_entity_id = $1))
-     AND status = 'accepted'`,
-    [entity_a, entity_b]
-  );
-  return result.rows.length > 0;
-};
+// Connection check removed — existence check only
+// Sender can send to any entity that exists in the system
 
 // ─── Helper: Generate auto subject ───────────────────────────
 const generateAutoSubject = (purpose, senderName, date) => {
@@ -57,10 +48,14 @@ router.post('/send',
     body('receivers')
       .isArray({ min: 1 })
       .withMessage('At least one receiver required'),
-    body('receivers.*.entity_id')
-      .trim()
-      .notEmpty()
-      .withMessage('Each receiver must have entity_id'),
+    body('receivers').custom((receivers) => {
+      for (const r of receivers) {
+        if (!r.entity_id && !r.display_name) {
+          throw new Error('Each receiver must have entity_id or display_name');
+        }
+      }
+      return true;
+    }),
     body('purpose')
       .trim()
       .isIn(['order','invoice','receipt','inquiry','delivery_note','general'])
@@ -82,29 +77,36 @@ router.post('/send',
       const business_json = req.body.business_json || null;
       const receivers = req.body.receivers;
 
-      // Validate all receivers are connected
+      // Existence check only — connection NOT required to send
       const receiverDetails = [];
       for (const r of receivers) {
-        const connected = await isConnected(sender_id, r.entity_id);
-        if (!connected) {
-          return res.status(400).json({
-            error: 'Not connected',
-            message: `Not connected to entity ${r.entity_id}. Send connection request first.`
+        // Support both entity_id (UUID) and display_name lookup
+        let rec;
+        if (r.entity_id) {
+          rec = await query(
+            `SELECT identity_id, bridge_id, display_name FROM identities
+             WHERE identity_id = $1 AND status = 'active'`,
+            [r.entity_id]
+          );
+        } else if (r.display_name) {
+          rec = await query(
+            `SELECT identity_id, bridge_id, display_name FROM identities
+             WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
+             AND identity_type = 'entity'`,
+            [r.display_name.trim()]
+          );
+        }
+
+        if (!rec || rec.rows.length === 0) {
+          return res.status(404).json({
+            error: 'Not found',
+            message: `Receiver "${r.entity_id || r.display_name}" not found in the platform`
           });
         }
 
-        // Get receiver details — snapshot at send time
-        const rec = await query(
-          `SELECT identity_id, bridge_id, display_name
-           FROM identities WHERE identity_id = $1 AND status = 'active'`,
-          [r.entity_id]
-        );
-
-        if (rec.rows.length === 0) {
-          return res.status(404).json({
-            error: 'Not found',
-            message: `Receiver entity ${r.entity_id} not found`
-          });
+        // Check not sending to self
+        if (rec.rows[0].identity_id === sender_id) {
+          return res.status(400).json({ error: 'Invalid receiver', message: 'Cannot send to yourself' });
         }
 
         receiverDetails.push({
