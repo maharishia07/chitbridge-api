@@ -480,15 +480,18 @@ router.put('/:chit_id/status',
          previous_status, new_status, detail]
       );
 
-      // Also log for sender so they see the update
+      // Get header to check sender and propagate cancellation to receivers
       const header = await query(
         `SELECT sender_entity_id FROM chit_header
          WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
       );
 
-      if (header.rows.length > 0 &&
-          header.rows[0].sender_entity_id !== entity_id) {
+      const isSender = header.rows.length > 0 &&
+                       header.rows[0].sender_entity_id === entity_id;
+
+      if (!isSender && header.rows.length > 0) {
+        // Receiver action — log update to sender so they see it
         await query(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
@@ -500,6 +503,30 @@ router.put('/:chit_id/status',
            previous_status, new_status,
            `${req.identity.display_name} ${new_status} this chit`]
         );
+      }
+
+      // When sender cancels — push cancellation to all receivers
+      if (isSender && new_status === 'cancelled') {
+        const receivers = await query(
+          `SELECT entity_id FROM chit_status
+           WHERE chit_id = $1 AND entity_id != $2`,
+          [chit_id, entity_id]
+        );
+        for (const r of receivers.rows) {
+          await query(
+            `UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW()
+             WHERE chit_id = $1 AND entity_id = $2`,
+            [chit_id, r.entity_id]
+          );
+          await query(
+            `INSERT INTO state_log
+             (chit_id, entity_id, action, action_by_identity_id,
+              action_by_display_name, previous_status, new_status, detail)
+             VALUES ($1,$2,'status_cancelled',$3,$4,'pending','cancelled',$5)`,
+            [chit_id, r.entity_id, entity_id, req.identity.display_name,
+             `Cancelled by ${req.identity.display_name}`]
+          );
+        }
       }
 
       res.json({
