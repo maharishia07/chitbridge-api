@@ -47,10 +47,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiting
+// Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX || '500'),
   message: { error: 'Too many requests', message: 'Please try again in 15 minutes' }
 });
 app.use('/api/', limiter);
