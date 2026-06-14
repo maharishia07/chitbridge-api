@@ -441,12 +441,12 @@ router.put('/:chit_id/status',
 
       // Validate state transitions
       const validTransitions = {
-        'pending':     ['accepted', 'rejected'],
-        'delivered':   ['accepted', 'rejected'],
+        'pending':     ['accepted', 'rejected', 'cancelled'],
+        'delivered':   ['accepted', 'rejected', 'cancelled'],
         'accepted':    ['in_progress', 'completed', 'cancelled'],
         'in_progress': ['partial', 'completed', 'cancelled'],
         'partial':     ['completed', 'cancelled'],
-        'read':        ['accepted', 'rejected']
+        'read':        ['accepted', 'rejected', 'cancelled']
       };
 
       const allowed = validTransitions[previous_status] || [];
