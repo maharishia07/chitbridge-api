@@ -60,11 +60,13 @@ const entitiesRouter    = require('./routes/entities');
 const connectionsRouter = require('./routes/connections');
 const chitsRouter       = require('./routes/chits');
 const schemasRouter     = require('./routes/schemas');
+const actorsRouter      = require('./routes/actors');
 
 app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
 app.use('/api/chits',       chitsRouter);
 app.use('/api/schemas',     schemasRouter);
+app.use('/api/actors',      actorsRouter);
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
