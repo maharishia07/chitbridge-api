@@ -371,10 +371,10 @@ router.get('/:chit_id', auth, async (req, res) => {
       [chit_id, entity_id]
     );
 
-    // Mark as read if not already
+    // Always update read_at to latest view time
     await query(
       `UPDATE chit_status
-       SET read_at = COALESCE(read_at, NOW())
+       SET read_at = NOW()
        WHERE chit_id = $1 AND entity_id = $2`,
       [chit_id, entity_id]
     );
