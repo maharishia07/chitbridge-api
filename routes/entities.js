@@ -61,45 +61,72 @@ const sendOTPEmail = async (email, displayName, otp) => {
 };
 
 // POST /entities/register
+// Accepts email (athi@test.com) OR display name (Athi) for entity login
 router.post('/register',
   [
-    body('display_name').trim().isLength({ min: 2, max: 255 }).withMessage('Display name must be 2 to 255 characters'),
-    body('email').trim().isEmail().normalizeEmail().withMessage('Valid email required'),
+    body('display_name').optional().trim().isLength({ min: 2, max: 255 }),
+    body('email').trim().isLength({ min: 2 }).withMessage('Username required'),
   ],
   validate,
   async (req, res) => {
     try {
-      const display_name = sanitise(req.body.display_name);
-      const email = req.body.email.toLowerCase().trim();
+      const input = req.body.email.trim();
+      const isEmail = input.includes('@');
 
-      const existing = await query(
-        'SELECT identity_id, bridge_id FROM identities WHERE email = $1',
-        [email]
-      );
+      let email, display_name, identity_id, bridge_id;
 
-      let identity_id, bridge_id;
+      if (isEmail) {
+        // Email login — existing flow
+        email = input.toLowerCase();
+        display_name = sanitise(req.body.display_name || input);
 
-      if (existing.rows.length > 0) {
-        identity_id = existing.rows[0].identity_id;
-        bridge_id = existing.rows[0].bridge_id;
-        console.log(`Re-registering existing entity: ${email}`);
-      } else {
-        bridge_id = generateBridgeId();
-        identity_id = uuidv4();
-        await query(
-          `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status)
-           VALUES ($1, $2, $3, $4, 'entity', 'pending')`,
-          [identity_id, bridge_id, display_name, email]
+        const existing = await query(
+          'SELECT identity_id, bridge_id FROM identities WHERE email = $1',
+          [email]
         );
-        console.log(`New entity created: ${display_name} / ${bridge_id}`);
+
+        if (existing.rows.length > 0) {
+          identity_id = existing.rows[0].identity_id;
+          bridge_id = existing.rows[0].bridge_id;
+          console.log(`Re-registering existing entity: ${email}`);
+        } else {
+          bridge_id = generateBridgeId();
+          identity_id = uuidv4();
+          await query(
+            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status)
+             VALUES ($1, $2, $3, $4, 'entity', 'pending')`,
+            [identity_id, bridge_id, display_name, email]
+          );
+          console.log(`New entity created: ${display_name} / ${bridge_id}`);
+        }
+      } else {
+        // Display name login — look up entity by name
+        const found = await query(
+          `SELECT identity_id, bridge_id, email, display_name FROM identities
+           WHERE LOWER(display_name) = LOWER($1)
+           AND identity_type = 'entity'
+           AND status = 'active'`,
+          [input]
+        );
+        if (found.rows.length === 0) {
+          return res.status(400).json({
+            error: 'Not found',
+            message: 'Entity not found — check your name or use your email address'
+          });
+        }
+        identity_id   = found.rows[0].identity_id;
+        bridge_id     = found.rows[0].bridge_id;
+        email         = found.rows[0].email;
+        display_name  = found.rows[0].display_name;
+        console.log(`Display name login: ${display_name} → ${email}`);
       }
 
       const otp = generateOTP();
-      const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      const expires = new Date(Date.now() + 60 * 60 * 1000);
 
       await query(
-        `UPDATE identities SET otp_code = $1, otp_expires_at = $2, display_name = $3 WHERE identity_id = $4`,
-        [otp, expires, display_name, identity_id]
+        `UPDATE identities SET otp_code = $1, otp_expires_at = $2 WHERE identity_id = $3`,
+        [otp, expires, identity_id]
       );
 
       await sendOTPEmail(email, display_name, otp);
@@ -109,7 +136,6 @@ router.post('/register',
           ? `Dev mode — use OTP: ${otp}`
           : 'Verification code sent to your email',
         email,
-        // Always return dev_otp when DEV_OTP env is set — shows in amber box on login screen
         ...(process.env.DEV_OTP && { dev_otp: otp })
       });
 
