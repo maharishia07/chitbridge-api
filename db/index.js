@@ -53,11 +53,11 @@ createPool().then(p => {
   pool = p;
   p.on('error', err => console.error('Database error:', err.message));
 }).catch(err => {
-  console.error('DB init failed:', err.message);
-  process.exit(1);
+  console.error('DB init failed — server stays up, queries will retry:', err.message);
 });
 
 const query = async (text, params) => {
+  if (!pool) throw new Error('Database not connected — check DATABASE_URL in Railway environment variables');
   const start = Date.now();
   try {
     const result = await pool.query(text, params);
