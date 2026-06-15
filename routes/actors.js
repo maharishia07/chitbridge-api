@@ -362,7 +362,6 @@ router.post('/login',
   async (req, res) => {
     try {
       const username = req.body.username.trim().toLowerCase();
-      const otp      = req.body.otp.trim();
 
       // Parse actor_key@entity_name
       if (!username.includes('@')) {
@@ -429,7 +428,8 @@ router.post('/login',
       // First login: OTP required (pin_hash is NULL)
       // Return login: PIN required (pin_hash is set)
 
-      const { otp, pin } = req.body;
+      const otp = (req.body.otp || '').trim();
+      const pin = req.body.pin;
 
       if (a.pin_hash) {
         // ── RETURNING ACTOR — use PIN ──────────────────────────
