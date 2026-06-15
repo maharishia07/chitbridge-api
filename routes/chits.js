@@ -379,8 +379,9 @@ router.get('/:chit_id', auth, async (req, res) => {
       [chit_id, entity_id]
     );
 
-    // Log read action if first time
-    const wasUnread = !header.rows[0].read_at;
+    // Log read action if first time — read_at is in chit_status (allStatuses), not chit_header
+    const myStatus = allStatuses.rows.find(s => s.entity_id === entity_id);
+    const wasUnread = !myStatus?.read_at;
     if (wasUnread) {
       await query(
         `INSERT INTO state_log
