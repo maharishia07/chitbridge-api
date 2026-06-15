@@ -14,28 +14,14 @@ const PORT = process.env.PORT || 3000;
 // Trust Railway's proxy
 app.set('trust proxy', 1);
 
-// ── CORS first — must run before helmet so headers are always set ─
+// ── CORS first — allow all origins, methods, headers ─────────
 app.use(cors({
-  origin: function (origin, callback) {
-    const allowed = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'https://claude.ai',
-    ];
-    if (!origin) return callback(null, true);
-    if (allowed.includes(origin)) return callback(null, true);
-    if (origin.endsWith('.vercel.app')) return callback(null, true);
-    if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
-
-// Handle OPTIONS preflight explicitly
-app.options('*', cors());
+app.options('*', cors({ origin: true, credentials: true }));
 
 // ── Security middleware ───────────────────────────────────────
 app.use(helmet({
