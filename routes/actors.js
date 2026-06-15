@@ -1183,4 +1183,190 @@ router.put('/settings',
   }
 );
 
+// ── GET /api/actors/:id/tasks ───────────────────────────────
+// Entity admin views tasks assigned to a specific actor
+// Returns chits currently assigned to that actor
+router.get('/:id/tasks',
+  auth,
+  async (req, res) => {
+    try {
+      const entity_id = req.identity.identity_id;
+      const actor_id  = req.params.id;
+
+      // Verify actor belongs to this entity
+      const actor = await db(
+        `SELECT identity_id, display_name, actor_key,
+                break_status, current_task_count, max_tasks
+         FROM identities
+         WHERE identity_id = $1
+         AND parent_entity_id = $2
+         AND identity_type = 'actor'`,
+        [actor_id, entity_id]
+      );
+
+      if (actor.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Actor not found',
+          message: 'Co-assist not found under your entity'
+        });
+      }
+
+      const a = actor.rows[0];
+
+      // Get all chits assigned to this actor under this entity
+      const tasks = await db(
+        `SELECT
+           cs.chit_id,
+           cs.current_status,
+           cs.assigned_at,
+           cs.assignment_type,
+           cs.read_at,
+           ch.auto_subject,
+           ch.purpose,
+           ch.created_at,
+           sender.display_name AS sender_entity_display_name
+         FROM chit_status cs
+         JOIN chit_header ch ON ch.chit_id = cs.chit_id
+         JOIN identities sender ON sender.identity_id = ch.sender_entity_id
+         WHERE cs.entity_id = $1
+         AND cs.assigned_to_actor_id = $2
+         AND cs.current_status NOT IN ('completed','cancelled','rejected')
+         ORDER BY cs.created_at ASC`,
+        [entity_id, actor_id]
+      );
+
+      res.json({
+        actor: {
+          identity_id:       a.identity_id,
+          display_name:      a.display_name,
+          actor_key:         a.actor_key,
+          break_status:      a.break_status,
+          current_task_count: a.current_task_count,
+          max_tasks:         a.max_tasks
+        },
+        tasks: tasks.rows,
+        count: tasks.rows.length
+      });
+
+    } catch (err) {
+      console.error('Actor tasks error:', err.message);
+      res.status(500).json({ error: 'Failed to get actor tasks' });
+    }
+  }
+);
+
+// ── PUT /api/actors/:id/tasks/route ─────────────────────────
+// Entity admin routes a specific task from an actor
+// action: pool (return to pool) | push (assign to another actor)
+router.put('/:id/tasks/route',
+  auth,
+  async (req, res) => {
+    try {
+      const entity_id    = req.identity.identity_id;
+      const from_actor_id = req.params.id;
+      const { chit_id, action, to_actor_id } = req.body;
+
+      if (!chit_id || !action) {
+        return res.status(400).json({ error: 'chit_id and action required' });
+      }
+
+      // Verify chit belongs to this entity and is assigned to actor
+      const chit = await db(
+        `SELECT chit_id, assigned_to_actor_id
+         FROM chit_status
+         WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+
+      if (chit.rows.length === 0) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      if (action === 'pool') {
+        // Return to entity pool
+        await db(
+          `UPDATE chit_status
+           SET assigned_to_actor_id = NULL,
+               assigned_at = NULL,
+               assignment_type = NULL
+           WHERE chit_id = $1 AND entity_id = $2`,
+          [chit_id, entity_id]
+        );
+        // Decrement from_actor task count
+        await db(
+          `UPDATE identities
+           SET current_task_count = GREATEST(0, current_task_count - 1)
+           WHERE identity_id = $1`,
+          [from_actor_id]
+        );
+        // Log
+        await db(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action,
+            action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'returned',$3,$4,'Returned to pool by admin override')`,
+          [chit_id, entity_id, entity_id,
+           req.identity.display_name]
+        );
+        return res.json({ message: 'Task returned to pool' });
+
+      } else if (action === 'push' && to_actor_id) {
+        // Push to another actor
+        const toActor = await db(
+          `SELECT identity_id, display_name, current_task_count, max_tasks
+           FROM identities
+           WHERE identity_id = $1 AND parent_entity_id = $2
+           AND break_status = 'active'`,
+          [to_actor_id, entity_id]
+        );
+        if (toActor.rows.length === 0) {
+          return res.status(400).json({ error: 'Target actor not found or not active' });
+        }
+        const ta = toActor.rows[0];
+        await db(
+          `UPDATE chit_status
+           SET assigned_to_actor_id = $1,
+               assigned_at = NOW(),
+               assignment_type = 'push'
+           WHERE chit_id = $2 AND entity_id = $3`,
+          [to_actor_id, chit_id, entity_id]
+        );
+        // Update task counts
+        await db(
+          `UPDATE identities
+           SET current_task_count = GREATEST(0, current_task_count - 1)
+           WHERE identity_id = $1`,
+          [from_actor_id]
+        );
+        await db(
+          `UPDATE identities
+           SET current_task_count = current_task_count + 1
+           WHERE identity_id = $1`,
+          [to_actor_id]
+        );
+        // Log
+        await db(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action,
+            action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'assigned',$3,$4,$5)`,
+          [chit_id, entity_id, entity_id,
+           req.identity.display_name,
+           `Routed to ${ta.display_name} by admin override`]
+        );
+        return res.json({
+          message: `Task routed to ${ta.display_name}`,
+          to_actor: ta.display_name
+        });
+      }
+
+      res.status(400).json({ error: 'Invalid action' });
+
+    } catch (err) {
+      console.error('Route task error:', err.message);
+      res.status(500).json({ error: 'Failed to route task' });
+    }
+  }
+);
+
 module.exports = router;
