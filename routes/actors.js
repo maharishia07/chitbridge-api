@@ -5,6 +5,7 @@ const express = require('express');
 const router  = express.Router();
 const { body, param, query } = require('express-validator');
 const jwt     = require('jsonwebtoken');
+const bcrypt  = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { query: db } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
@@ -189,11 +190,173 @@ router.post('/',
 );
 
 // ── POST /api/actors/login ───────────────────────────────────
-// Actor login with actor_key@entity_name and OTP
+// ── GET /api/actors/check-login ─────────────────────────────
+// Check if actor has PIN set — frontend shows correct field
+router.get('/check-login', async (req, res) => {
+  try {
+    const username = (req.query.username || '').trim().toLowerCase();
+    if (!username.includes('@')) {
+      return res.json({ has_pin: false, valid: false });
+    }
+    const [actor_key, entity_name] = username.split('@');
+    const entity = await db(
+      `SELECT identity_id FROM identities
+       WHERE LOWER(display_name) = $1
+       AND identity_type = 'entity' AND status = 'active'`,
+      [entity_name]
+    );
+    if (entity.rows.length === 0) return res.json({ has_pin: false, valid: false });
+    const actor = await db(
+      `SELECT pin_hash, break_status FROM identities
+       WHERE actor_key = $1 AND parent_entity_id = $2
+       AND identity_type = 'actor'`,
+      [actor_key, entity.rows[0].identity_id]
+    );
+    if (actor.rows.length === 0) return res.json({ has_pin: false, valid: false });
+    const a = actor.rows[0];
+    if (a.break_status === 'removed') return res.json({ has_pin: false, valid: false, removed: true });
+    res.json({
+      valid: true,
+      has_pin: !!a.pin_hash,
+    });
+  } catch (err) {
+    res.json({ has_pin: false, valid: false });
+  }
+});
+
+// ── POST /api/actors/set-pin ────────────────────────────────
+// Actor sets PIN after first OTP login
+router.post('/set-pin',
+  auth,
+  [
+    body('pin').isLength({ min: 4, max: 4 }).isNumeric()
+      .withMessage('PIN must be exactly 4 digits'),
+    body('confirm_pin').custom((val, { req }) => {
+      if (val !== req.body.pin) throw new Error('PINs do not match');
+      return true;
+    }),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const identity_id = req.identity.identity_id;
+      if (req.identity.identity_type !== 'actor') {
+        return res.status(400).json({ error: 'Only actors can set PIN' });
+      }
+      const pin_hash = await bcrypt.hash(req.body.pin, 10);
+      await db(
+        `UPDATE identities
+         SET pin_hash = $1, pin_set_at = NOW(),
+             pin_attempts = 0, pin_locked_at = NULL
+         WHERE identity_id = $2`,
+        [pin_hash, identity_id]
+      );
+      res.json({ message: 'PIN set successfully — use PIN for future logins' });
+    } catch (err) {
+      res.status(500).json({ error: 'Set PIN failed', message: err.message });
+    }
+  }
+);
+
+// ── PUT /api/actors/change-pin ──────────────────────────────
+// Actor changes own PIN from profile page
+router.put('/change-pin',
+  auth,
+  [
+    body('current_pin').isLength({ min: 4, max: 4 }).isNumeric(),
+    body('new_pin').isLength({ min: 4, max: 4 }).isNumeric(),
+    body('confirm_pin').custom((val, { req }) => {
+      if (val !== req.body.new_pin) throw new Error('New PINs do not match');
+      return true;
+    }),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const identity_id = req.identity.identity_id;
+      if (req.identity.identity_type !== 'actor') {
+        return res.status(400).json({ error: 'Only actors can change PIN' });
+      }
+      const actor = await db(
+        `SELECT pin_hash, pin_locked_at FROM identities WHERE identity_id = $1`,
+        [identity_id]
+      );
+      if (actor.rows.length === 0) {
+        return res.status(404).json({ error: 'Actor not found' });
+      }
+      const a = actor.rows[0];
+      if (!a.pin_hash) {
+        return res.status(400).json({
+          error: 'No PIN set',
+          message: 'Set your PIN first via login'
+        });
+      }
+      // Verify current PIN
+      const match = await bcrypt.compare(req.body.current_pin, a.pin_hash);
+      if (!match) {
+        return res.status(400).json({
+          error: 'Incorrect PIN',
+          message: 'Current PIN is incorrect'
+        });
+      }
+      const new_pin_hash = await bcrypt.hash(req.body.new_pin, 10);
+      await db(
+        `UPDATE identities
+         SET pin_hash = $1, pin_set_at = NOW(), pin_attempts = 0
+         WHERE identity_id = $2`,
+        [new_pin_hash, identity_id]
+      );
+      res.json({ message: 'PIN changed successfully' });
+    } catch (err) {
+      res.status(500).json({ error: 'Change PIN failed', message: err.message });
+    }
+  }
+);
+
+// ── DELETE /api/actors/:id/pin ──────────────────────────────
+// Admin clears actor PIN — forces new PIN setup on next OTP login
+router.delete('/:id/pin',
+  auth,
+  async (req, res) => {
+    try {
+      const entity_id = req.identity.identity_id;
+      const actor_id  = req.params.id;
+      // Verify actor belongs to this entity
+      const actor = await db(
+        `SELECT identity_id, display_name FROM identities
+         WHERE identity_id = $1 AND parent_entity_id = $2
+         AND identity_type = 'actor'`,
+        [actor_id, entity_id]
+      );
+      if (actor.rows.length === 0) {
+        return res.status(404).json({ error: 'Actor not found' });
+      }
+      await db(
+        `UPDATE identities
+         SET pin_hash = NULL, pin_set_at = NULL,
+             pin_attempts = 0, pin_locked_at = NULL
+         WHERE identity_id = $1`,
+        [actor_id]
+      );
+      res.json({
+        message: 'PIN cleared — actor must set new PIN on next OTP login',
+        actor_name: actor.rows[0].display_name
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'Clear PIN failed', message: err.message });
+    }
+  }
+);
+
+// ── POST /api/actors/login ───────────────────────────────────
+// Actor login — OTP first time — PIN returning
+// Entity always generates OTP
+// Actor always manages PIN
 router.post('/login',
   [
     body('username').trim().notEmpty().withMessage('Username required'),
-    body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    body('otp').optional().trim(),
+    body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric(),
   ],
   validate,
   async (req, res) => {
@@ -234,7 +397,8 @@ router.post('/login',
       const actor = await db(
         `SELECT identity_id, bridge_id, display_name, actor_key,
                 actor_role, actor_type, break_status,
-                otp_code, otp_expires_at, max_tasks
+                otp_code, otp_expires_at, max_tasks,
+                pin_hash, pin_attempts, pin_locked_at
          FROM identities
          WHERE actor_key = $1
          AND parent_entity_id = $2
@@ -259,30 +423,88 @@ router.post('/login',
         });
       }
 
-      // Check OTP
-      if (a.otp_code !== otp) {
-        return res.status(400).json({
-          error: 'Login failed',
-          message: 'Incorrect OTP. Ask your admin to reset.'
-        });
-      }
+      // ── PIN or OTP logic ────────────────────────────────────
+      // Entity always generates OTP
+      // Actor always manages PIN
+      // First login: OTP required (pin_hash is NULL)
+      // Return login: PIN required (pin_hash is set)
 
-      // Check OTP not expired
-      if (new Date() > new Date(a.otp_expires_at)) {
-        return res.status(400).json({
-          error: 'Login failed',
-          message: 'OTP expired. Ask your admin to reset your access.'
-        });
-      }
+      const { otp, pin } = req.body;
 
-      // Clear OTP — one time use
-      await db(
-        `UPDATE identities
-         SET otp_code = NULL, otp_expires_at = NULL,
-             status = 'active', last_active_at = NOW()
-         WHERE identity_id = $1`,
-        [a.identity_id]
-      );
+      if (a.pin_hash) {
+        // ── RETURNING ACTOR — use PIN ──────────────────────────
+        if (!pin) {
+          return res.status(400).json({
+            error: 'PIN required',
+            message: 'Enter your 4 digit PIN to login',
+            use_pin: true
+          });
+        }
+        // Check PIN locked
+        if (a.pin_locked_at) {
+          return res.status(400).json({
+            error: 'Account locked',
+            message: 'Too many wrong attempts. Contact your admin to reset.'
+          });
+        }
+        const pinMatch = await bcrypt.compare(pin, a.pin_hash);
+        if (!pinMatch) {
+          // Increment attempts — lock after 5
+          const newAttempts = (a.pin_attempts || 0) + 1;
+          const lockNow = newAttempts >= 5;
+          await db(
+            `UPDATE identities
+             SET pin_attempts = $1
+             ${lockNow ? ', pin_locked_at = NOW()' : ''}
+             WHERE identity_id = $2`,
+            [newAttempts, a.identity_id]
+          );
+          return res.status(400).json({
+            error: 'Login failed',
+            message: lockNow
+              ? 'Account locked after 5 wrong attempts. Contact your admin.'
+              : `Incorrect PIN. ${5 - newAttempts} attempts remaining.`
+          });
+        }
+        // PIN correct — reset attempts
+        await db(
+          `UPDATE identities
+           SET pin_attempts = 0, last_active_at = NOW()
+           WHERE identity_id = $1`,
+          [a.identity_id]
+        );
+      } else {
+        // ── FIRST TIME ACTOR — use OTP ─────────────────────────
+        if (!otp) {
+          return res.status(400).json({
+            error: 'OTP required',
+            message: 'Enter the OTP your admin shared with you',
+            use_otp: true
+          });
+        }
+        // Check OTP
+        if (a.otp_code !== otp) {
+          return res.status(400).json({
+            error: 'Login failed',
+            message: 'Incorrect OTP. Ask your admin to reset.'
+          });
+        }
+        // Check OTP not expired
+        if (new Date() > new Date(a.otp_expires_at)) {
+          return res.status(400).json({
+            error: 'Login failed',
+            message: 'OTP expired. Ask your admin to reset your access.'
+          });
+        }
+        // Clear OTP — one time use
+        await db(
+          `UPDATE identities
+           SET otp_code = NULL, otp_expires_at = NULL,
+               status = 'active', last_active_at = NOW()
+           WHERE identity_id = $1`,
+          [a.identity_id]
+        );
+      }
 
       // Issue JWT with actor details
       const token = jwt.sign(
@@ -299,7 +521,7 @@ router.post('/login',
           parent_bridge_id: parent_entity.bridge_id,
         },
         process.env.JWT_SECRET,
-        { expiresIn: '7d' }
+        { expiresIn: '30d' }
       );
 
       console.log(`Actor login: ${actor_key}@${entity_name}`);
@@ -307,6 +529,7 @@ router.post('/login',
       res.json({
         message: 'Login successful',
         token,
+        requires_pin_setup: !a.pin_hash,
         actor: {
           identity_id:    a.identity_id,
           bridge_id:      a.bridge_id,
@@ -801,6 +1024,16 @@ router.put('/assign/:chit_id',
           `UPDATE identities SET current_task_count = current_task_count + 1
            WHERE identity_id = $1`,
           [actor_id]
+        );
+        // Log assignment in state_log
+        await db(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id,
+            action_by_display_name, detail)
+           SELECT $1, entity_id, 'assigned', $2, $3, $4
+           FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
+          [chit_id, actor_id, req.identity.display_name,
+           `Pulled by co-assist ${req.identity.display_name}`, entity_id]
         );
         return res.json({
           message: 'Chit pulled to your My Task',
