@@ -350,17 +350,6 @@ router.get('/:chit_id', auth, async (req, res) => {
       [chit_id, entity_id]
     );
 
-    // Get ALL participants status — visibility to all
-    const allStatuses = await query(
-      `SELECT cs.entity_id, cs.current_status, cs.read_at,
-              cs.assigned_to_actor_display_name, cs.updated_at,
-              i.display_name, i.bridge_id
-       FROM chit_status cs
-       JOIN identities i ON i.identity_id = cs.entity_id
-       WHERE cs.chit_id = $1`,
-      [chit_id]
-    );
-
     // Get full state log for this entity
     const log = await query(
       `SELECT action, action_by_display_name, previous_status,
@@ -371,7 +360,14 @@ router.get('/:chit_id', auth, async (req, res) => {
       [chit_id, entity_id]
     );
 
-    // Always update read_at to latest view time
+    // Check if first time reading (before update) to decide whether to log it
+    const preCheck = await query(
+      `SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+      [chit_id, entity_id]
+    );
+    const wasUnread = !preCheck.rows[0]?.read_at;
+
+    // Update read_at FIRST so allStatuses fetch below reflects this read
     await query(
       `UPDATE chit_status
        SET read_at = NOW()
@@ -379,9 +375,16 @@ router.get('/:chit_id', auth, async (req, res) => {
       [chit_id, entity_id]
     );
 
-    // Log read action if first time — read_at is in chit_status (allStatuses), not chit_header
-    const myStatus = allStatuses.rows.find(s => s.entity_id === entity_id);
-    const wasUnread = !myStatus?.read_at;
+    // Get ALL participants status AFTER update — ensures current reader's read_at is fresh
+    const allStatuses = await query(
+      `SELECT cs.entity_id, cs.current_status, cs.read_at,
+              cs.assigned_to_actor_display_name, cs.updated_at,
+              i.display_name, i.bridge_id
+       FROM chit_status cs
+       JOIN identities i ON i.identity_id = cs.entity_id
+       WHERE cs.chit_id = $1`,
+      [chit_id]
+    );
     if (wasUnread) {
       await query(
         `INSERT INTO state_log
