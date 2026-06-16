@@ -17,7 +17,7 @@ const generateBridgeId = () => {
 
 // DEV_OTP in Railway env = fixed OTP for testing e.g. 123456
 // No DEV_OTP = random 6-digit OTP
-const generateOTP = () => process.env.DEV_OTP || Math.floor(100000 + Math.random() * 900000).toString();
+const generateOTP = () => (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
 
 const sendOTPEmail = async (email, displayName, otp) => {
   // Skip email if DEV_OTP is set — OTP is fixed and known
@@ -131,12 +131,13 @@ router.post('/register',
 
       await sendOTPEmail(email, display_name, otp);
 
+      const emailDisabled = process.env.OTP_EMAIL_ENABLED !== 'true';
       res.json({
         message: process.env.DEV_OTP
           ? `Dev mode — use OTP: ${otp}`
           : 'Verification code sent to your email',
         email,
-        ...(process.env.DEV_OTP && { dev_otp: otp })
+        ...((process.env.DEV_OTP || emailDisabled) && { dev_otp: otp })
       });
 
     } catch (err) {

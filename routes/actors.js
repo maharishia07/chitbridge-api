@@ -21,7 +21,7 @@ const generateBridgeId = () => {
 };
 
 const generateOTP = () =>
-  process.env.DEV_OTP || Math.floor(100000 + Math.random() * 900000).toString();
+  (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
