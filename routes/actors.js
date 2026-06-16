@@ -982,11 +982,12 @@ router.put('/assign/:chit_id',
   validate,
   async (req, res) => {
     try {
-      const chit_id  = req.params.chit_id;
-      const actor_id = req.identity.identity_id;
-      const entity_id = req.identity.identity_type === 'actor'
-        ? req.identity.parent_entity_id
-        : req.identity.identity_id;
+      const chit_id      = req.params.chit_id;
+      // entity_id   = participant entity context (parent for actors, self for entities)
+      // action_by_* = whoever is performing — entity admin or actor, never remapped
+      const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+      const action_by_id   = req.identity.identity_id;
+      const action_by_name = req.identity.display_name;
       const { action, target_actor_id } = req.body;
 
       // Verify chit belongs to this entity
@@ -1019,27 +1020,27 @@ router.put('/assign/:chit_id',
                assigned_at = NOW(),
                assignment_type = 'pull'
            WHERE chit_id = $3 AND entity_id = $4`,
-          [actor_id, req.identity.display_name, chit_id, entity_id]
+          [action_by_id, action_by_name, chit_id, entity_id]
         );
         await db(
           `UPDATE identities SET current_task_count = current_task_count + 1
            WHERE identity_id = $1`,
-          [actor_id]
+          [action_by_id]
         );
-        // Log assignment in state_log
+        // One log row per participant entity — action_by_id/name = actual performer
         await db(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
            SELECT $1, entity_id, 'assigned', $2, $3, $4
-           FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
-          [chit_id, actor_id, req.identity.display_name,
-           `Pulled by co-assist ${req.identity.display_name}`, entity_id]
+           FROM chit_status WHERE chit_id = $1`,
+          [chit_id, action_by_id, action_by_name,
+           `Pulled by ${action_by_name}`]
         );
         return res.json({
           message: 'Chit pulled to your My Task',
           action: 'pull',
-          assigned_to: req.identity.display_name
+          assigned_to: action_by_name
         });
       }
 
@@ -1084,6 +1085,22 @@ router.put('/assign/:chit_id',
            WHERE identity_id = $1`,
           [t.identity_id]
         );
+        // Log assignment — differentiate initial push from actor-to-actor transfer
+        const isTransfer = !!cs.assigned_to_actor_id;
+        const assignDetail = isTransfer
+          ? `Transferred from ${cs.actor_name} to ${t.display_name} by ${action_by_name}`
+          : `Assigned to ${t.display_name} by ${action_by_name}`;
+        // One row per participant — entity_id from chit_status, action_by = actual performer
+        await db(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id,
+            action_by_display_name, detail)
+           SELECT $1, entity_id, $2, $3, $4, $5
+           FROM chit_status WHERE chit_id = $1`,
+          [chit_id,
+           isTransfer ? 'transferred' : 'assigned',
+           action_by_id, action_by_name, assignDetail]
+        );
         return res.json({
           message: `Chit pushed to ${t.display_name}`,
           action: 'push',
@@ -1107,6 +1124,17 @@ router.put('/assign/:chit_id',
                assigned_at = NULL, assignment_type = NULL
            WHERE chit_id = $1 AND entity_id = $2`,
           [chit_id, entity_id]
+        );
+        // One row per participant — each owns their copy of this return event
+        await db(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id,
+            action_by_display_name, detail)
+           SELECT $1, entity_id, 'returned', $2, $3, $4
+           FROM chit_status WHERE chit_id = $1`,
+          [chit_id,
+           action_by_id, action_by_name,
+           `Returned to entity pool${cs.actor_name ? ` from ${cs.actor_name}` : ''} by ${action_by_name}`]
         );
         return res.json({
           message: 'Chit returned to entity pool',

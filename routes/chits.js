@@ -354,14 +354,15 @@ router.get('/:chit_id', auth, async (req, res) => {
       [chit_id, entity_id]
     );
 
-    // Get full state log for the chit — shared timeline visible to all participants
+    // Each participant has their own copy (entity_id = their entity).
+    // Filtering by entity_id means one party deleting their rows never affects others.
     const log = await query(
       `SELECT action, action_by_display_name, previous_status,
               new_status, detail, created_at
        FROM state_log
-       WHERE chit_id = $1
+       WHERE chit_id = $1 AND entity_id = $2 AND action != 'read'
        ORDER BY created_at ASC`,
-      [chit_id]
+      [chit_id, entity_id]
     );
 
     // Check if first time reading (before update) to decide whether to log it
@@ -426,8 +427,12 @@ router.put('/:chit_id/status',
   auth,
   async (req, res) => {
     try {
-      const chit_id = req.params.chit_id;
-      const entity_id = req.identity.identity_id;
+      const chit_id      = req.params.chit_id;
+      // entity_id   = participant entity context (parent for actors, self for entities)
+      // action_by_* = whoever is performing — entity admin or actor, never remapped
+      const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+      const action_by_id   = req.identity.identity_id;
+      const action_by_name = req.identity.display_name;
       const new_status = req.body.status;
       const note = sanitise(req.body.note || '');
 
@@ -447,14 +452,17 @@ router.put('/:chit_id/status',
 
       const previous_status = current.rows[0].current_status;
 
-      // Validate state transitions
+      // Validate state transitions — bidirectional; movement is allowed both ways
       const validTransitions = {
         'pending':     ['accepted', 'rejected', 'cancelled'],
         'delivered':   ['accepted', 'rejected', 'cancelled'],
-        'accepted':    ['in_progress', 'completed', 'cancelled'],
-        'in_progress': ['partial', 'completed', 'cancelled'],
-        'partial':     ['completed', 'cancelled'],
-        'read':        ['accepted', 'rejected', 'cancelled']
+        'read':        ['accepted', 'rejected', 'cancelled'],
+        'accepted':    ['in_progress', 'rejected', 'cancelled'],
+        'in_progress': ['partial', 'completed', 'accepted', 'cancelled'],
+        'partial':     ['in_progress', 'completed', 'cancelled'],
+        'completed':   ['in_progress'],
+        'rejected':    ['accepted'],
+        'cancelled':   ['accepted'],
       };
 
       const allowed = validTransitions[previous_status] || [];
@@ -474,17 +482,18 @@ router.put('/:chit_id/status',
         [new_status, chit_id, entity_id]
       );
 
-      // Log state change
+      // One log row per participant — each entity owns their copy independently
       const detail = note ||
-        `Status changed from ${previous_status} to ${new_status} by ${req.identity.display_name}`;
+        `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`;
 
       await query(
         `INSERT INTO state_log
          (chit_id, entity_id, action, action_by_identity_id,
           action_by_display_name, previous_status, new_status, detail)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [chit_id, entity_id, `status_${new_status}`,
-         entity_id, req.identity.display_name,
+         SELECT $1, entity_id, $2, $3, $4, $5, $6, $7
+         FROM chit_status WHERE chit_id = $1`,
+        [chit_id, `status_${new_status}`,
+         action_by_id, action_by_name,
          previous_status, new_status, detail]
       );
 
@@ -498,20 +507,8 @@ router.put('/:chit_id/status',
       const isSender = header.rows.length > 0 &&
                        header.rows[0].sender_entity_id === entity_id;
 
-      if (!isSender && header.rows.length > 0) {
-        // Receiver action — log update to sender so they see it
-        await query(
-          `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, previous_status, new_status, detail)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [chit_id, header.rows[0].sender_entity_id,
-           `status_${new_status}`,
-           entity_id, req.identity.display_name,
-           previous_status, new_status,
-           `${req.identity.display_name} ${new_status} this chit`]
-        );
-      }
+      // One log entry per status change — state_log is queried by chit_id only
+      // so all participants already see every entry; no need to duplicate per entity
 
       // When sender cancels — push cancellation to all receivers
       if (isSender && new_status === 'cancelled') {
@@ -526,14 +523,8 @@ router.put('/:chit_id/status',
              WHERE chit_id = $1 AND entity_id = $2`,
             [chit_id, r.entity_id]
           );
-          await query(
-            `INSERT INTO state_log
-             (chit_id, entity_id, action, action_by_identity_id,
-              action_by_display_name, previous_status, new_status, detail)
-             VALUES ($1,$2,'status_cancelled',$3,$4,'pending','cancelled',$5)`,
-            [chit_id, r.entity_id, entity_id, req.identity.display_name,
-             `Cancelled by ${req.identity.display_name}`]
-          );
+          // No separate log insert — the per-participant INSERT...SELECT above
+          // already wrote a cancelled row for every entity on this chit
         }
       }
 
