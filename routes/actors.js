@@ -555,7 +555,8 @@ router.get('/',
   auth,
   async (req, res) => {
     try {
-      const entity_id  = req.identity.identity_id;
+      // Actors can also call this to see colleagues — use parent entity id
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
       const status     = req.query.status || 'active';
       const actor_type = req.query.type   || null;
 
