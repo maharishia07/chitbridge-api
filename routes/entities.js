@@ -88,7 +88,12 @@ router.post('/register',
         if (existing.rows.length > 0) {
           identity_id = existing.rows[0].identity_id;
           bridge_id = existing.rows[0].bridge_id;
-          console.log(`Re-registering existing entity: ${email}`);
+          console.log(`Existing entity login: ${email}`);
+        } else if (req.body.mode === 'login') {
+          return res.status(400).json({
+            error: 'Not registered',
+            message: 'No account found — please register first'
+          });
         } else {
           bridge_id = generateBridgeId();
           identity_id = uuidv4();
@@ -97,7 +102,7 @@ router.post('/register',
              VALUES ($1, $2, $3, $4, 'entity', 'pending')`,
             [identity_id, bridge_id, display_name, email]
           );
-          console.log(`New entity created: ${display_name} / ${bridge_id}`);
+          console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
       } else {
         // Display name login — look up entity by name
