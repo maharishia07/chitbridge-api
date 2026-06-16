@@ -1020,7 +1020,7 @@ router.put('/assign/:chit_id',
                assigned_to_actor_display_name = $2,
                assigned_at = NOW(),
                assignment_type = 'pull',
-               current_status = 'accepted',
+               current_status = 'pending',
                updated_at = NOW()
            WHERE chit_id = $3 AND entity_id = $4`,
           [action_by_id, action_by_name, chit_id, entity_id]
@@ -1040,22 +1040,22 @@ router.put('/assign/:chit_id',
           [chit_id, action_by_id, action_by_name,
            `Pulled by ${action_by_name}`]
         );
-        // Log auto-accept — assignment always moves status to accepted
+        // Log status reset to pending so it appears in Open tab for the new assignee
         await db(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
-           SELECT $1, entity_id, 'status_accepted', $2, $3, $4, 'accepted', $5
+           SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
            FROM chit_status WHERE chit_id = $1`,
           [chit_id, action_by_id, action_by_name,
            previousStatusOnPull,
-           `Auto-accepted — pulled by ${action_by_name}`]
+           `Reset to pending — pulled by ${action_by_name}`]
         );
         return res.json({
           message: 'Chit pulled to your My Task',
           action: 'pull',
           assigned_to: action_by_name,
-          new_status: 'accepted'
+          new_status: 'pending'
         });
       }
 
@@ -1094,7 +1094,7 @@ router.put('/assign/:chit_id',
                assigned_to_actor_display_name = $2,
                assigned_at = NOW(),
                assignment_type = 'push',
-               current_status = 'accepted',
+               current_status = 'pending',
                updated_at = NOW()
            WHERE chit_id = $3 AND entity_id = $4`,
           [t.identity_id, t.display_name, chit_id, entity_id]
@@ -1119,22 +1119,22 @@ router.put('/assign/:chit_id',
            isTransfer ? 'transferred' : 'assigned',
            action_by_id, action_by_name, assignDetail]
         );
-        // Log auto-accept — assignment always moves status to accepted
+        // Log status reset to pending so it appears in Open tab for the new assignee
         await db(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
-           SELECT $1, entity_id, 'status_accepted', $2, $3, $4, 'accepted', $5
+           SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
            FROM chit_status WHERE chit_id = $1`,
           [chit_id, action_by_id, action_by_name,
            previousStatusOnPush,
-           `Auto-accepted — assigned to ${t.display_name} by ${action_by_name}`]
+           `Reset to pending — assigned to ${t.display_name} by ${action_by_name}`]
         );
         return res.json({
           message: `Chit pushed to ${t.display_name}`,
           action: 'push',
           assigned_to: t.display_name,
-          new_status: 'accepted',
+          new_status: 'pending',
           warning: overloaded ? `${t.display_name} is at maximum load` : null
         });
       }
