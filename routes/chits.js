@@ -419,7 +419,7 @@ router.put('/:chit_id/status',
   [
     body('status')
       .trim()
-      .isIn(['accepted','rejected','in_progress','partial','completed','cancelled'])
+      .isIn(['pending','accepted','rejected','in_progress','partial','completed','cancelled'])
       .withMessage('Invalid status'),
     body('note').optional().trim().isLength({ max: 500 }),
   ],
@@ -452,13 +452,16 @@ router.put('/:chit_id/status',
 
       const previous_status = current.rows[0].current_status;
 
-      // Validate state transitions — bidirectional; movement is allowed both ways
+      // Validate state transitions
+      // Arrow model: Open(pending/delivered/read) → in_progress → completed
+      // ← regress: in_progress/accepted → pending, completed → in_progress
+      // Legacy accepted step kept for backward compat (ChitDetailPage still uses it)
       const validTransitions = {
-        'pending':     ['accepted', 'rejected', 'cancelled'],
-        'delivered':   ['accepted', 'rejected', 'cancelled'],
-        'read':        ['accepted', 'rejected', 'cancelled'],
-        'accepted':    ['in_progress', 'rejected', 'cancelled'],
-        'in_progress': ['partial', 'completed', 'accepted', 'cancelled'],
+        'pending':     ['in_progress', 'accepted', 'rejected', 'cancelled'],
+        'delivered':   ['in_progress', 'accepted', 'rejected', 'cancelled'],
+        'read':        ['in_progress', 'accepted', 'rejected', 'cancelled'],
+        'accepted':    ['in_progress', 'pending', 'rejected', 'cancelled'],
+        'in_progress': ['partial', 'completed', 'pending', 'accepted', 'cancelled'],
         'partial':     ['in_progress', 'completed', 'cancelled'],
         'completed':   ['in_progress'],
         'rejected':    ['accepted'],
