@@ -19,11 +19,12 @@ const auth = (req, res, next) => {
 
     // Attach identity to request
     req.identity = {
-      identity_id: decoded.identity_id,
-      bridge_id: decoded.bridge_id,
-      display_name: decoded.display_name,
-      email: decoded.email,
-      identity_type: decoded.identity_type
+      identity_id:      decoded.identity_id,
+      bridge_id:        decoded.bridge_id,
+      display_name:     decoded.display_name,
+      email:            decoded.email,
+      identity_type:    decoded.identity_type,
+      parent_entity_id: decoded.parent_entity_id || null,
     };
 
     next();

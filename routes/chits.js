@@ -250,7 +250,8 @@ router.post('/send',
 // Lightweight inbox — my chit_status only — fast
 router.get('/inbox', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.identity_id;
+    // Actors query their parent entity's inbox (chit_status is entity-keyed)
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const page = parseInt(req.query.page || 1);
     const limit = parseInt(req.query.limit || 20);
     const offset = (page - 1) * limit;
@@ -318,7 +319,8 @@ router.get('/inbox', auth, async (req, res) => {
 router.get('/:chit_id', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
-    const entity_id = req.identity.identity_id;
+    // Actors use parent entity's id — chit_header and chit_status are entity-keyed
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
 
     // Verify entity participates in this chit
     const participation = await query(
