@@ -748,18 +748,19 @@ router.put('/:id/status',
       let tasks_routed = 0;
       if (a.current_task_count > 0 && task_action) {
         if (task_action === 'pool') {
-          // Clear assignment — return to entity pool
+          // Clear assignment — return to entity pool (active tasks only)
           const result = await db(
             `UPDATE chit_status
              SET assigned_to_actor_id = NULL,
                  assigned_to_actor_display_name = NULL,
                  assigned_at = NULL, assignment_type = NULL
-             WHERE assigned_to_actor_id = $1`,
+             WHERE assigned_to_actor_id = $1
+             AND current_status NOT IN ('completed','cancelled','rejected')`,
             [actor_id]
           );
           tasks_routed = result.rowCount;
         } else if (task_action === 'actor' && target_actor_id) {
-          // Pass to specific actor
+          // Pass to specific actor (active tasks only)
           const target = await db(
             `SELECT identity_id, display_name FROM identities
              WHERE identity_id = $1 AND parent_entity_id = $2
@@ -774,7 +775,8 @@ router.put('/:id/status',
              SET assigned_to_actor_id = $1,
                  assigned_to_actor_display_name = $2,
                  assigned_at = NOW(), assignment_type = 'push'
-             WHERE assigned_to_actor_id = $3`,
+             WHERE assigned_to_actor_id = $3
+             AND current_status NOT IN ('completed','cancelled','rejected')`,
             [target.rows[0].identity_id, target.rows[0].display_name, actor_id]
           );
           tasks_routed = result.rowCount;
@@ -897,10 +899,11 @@ router.put('/break',
       }
 
       if (break_type === 'leave') {
-        // Tasks must be routed before leave confirmed
+        // Tasks must be routed before leave confirmed — active tasks only
         const taskCount = await db(
           `SELECT COUNT(*) as count FROM chit_status
-           WHERE assigned_to_actor_id = $1`,
+           WHERE assigned_to_actor_id = $1
+           AND current_status NOT IN ('completed','cancelled','rejected')`,
           [actor_id]
         );
         const count = parseInt(taskCount.rows[0].count);
@@ -922,7 +925,8 @@ router.put('/break',
                SET assigned_to_actor_id = NULL,
                    assigned_to_actor_display_name = NULL,
                    assigned_at = NULL, assignment_type = NULL
-               WHERE assigned_to_actor_id = $1`,
+               WHERE assigned_to_actor_id = $1
+               AND current_status NOT IN ('completed','cancelled','rejected')`,
               [actor_id]
             );
           } else if (task_action === 'actor' && target_actor_id) {
@@ -939,7 +943,8 @@ router.put('/break',
                SET assigned_to_actor_id = $1,
                    assigned_to_actor_display_name = $2,
                    assigned_at = NOW(), assignment_type = 'push'
-               WHERE assigned_to_actor_id = $3`,
+               WHERE assigned_to_actor_id = $3
+               AND current_status NOT IN ('completed','cancelled','rejected')`,
               [target.rows[0].identity_id, target.rows[0].display_name, actor_id]
             );
           }

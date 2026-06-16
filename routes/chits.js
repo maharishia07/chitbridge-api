@@ -137,9 +137,10 @@ router.post('/send',
 
       // Calculate summary from line items
       const summary = calculateSummary(line_items);
+      const currency_code = (business_json && business_json.currency) || 'INR';
       const summary_json = {
         ...summary,
-        currency_code: req.identity.currency_code || 'INR',
+        currency_code,
         purpose
       };
 
