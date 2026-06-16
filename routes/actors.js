@@ -1013,12 +1013,15 @@ router.put('/assign/:chit_id',
             message: `Already assigned to ${cs.actor_name}`
           });
         }
+        const previousStatusOnPull = cs.current_status;
         await db(
           `UPDATE chit_status
            SET assigned_to_actor_id = $1,
                assigned_to_actor_display_name = $2,
                assigned_at = NOW(),
-               assignment_type = 'pull'
+               assignment_type = 'pull',
+               current_status = 'accepted',
+               updated_at = NOW()
            WHERE chit_id = $3 AND entity_id = $4`,
           [action_by_id, action_by_name, chit_id, entity_id]
         );
@@ -1027,7 +1030,7 @@ router.put('/assign/:chit_id',
            WHERE identity_id = $1`,
           [action_by_id]
         );
-        // One log row per participant entity — action_by_id/name = actual performer
+        // Log assignment event
         await db(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
@@ -1037,10 +1040,22 @@ router.put('/assign/:chit_id',
           [chit_id, action_by_id, action_by_name,
            `Pulled by ${action_by_name}`]
         );
+        // Log auto-accept — assignment always moves status to accepted
+        await db(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id,
+            action_by_display_name, previous_status, new_status, detail)
+           SELECT $1, entity_id, 'status_accepted', $2, $3, $4, 'accepted', $5
+           FROM chit_status WHERE chit_id = $1`,
+          [chit_id, action_by_id, action_by_name,
+           previousStatusOnPull,
+           `Auto-accepted — pulled by ${action_by_name}`]
+        );
         return res.json({
           message: 'Chit pulled to your My Task',
           action: 'pull',
-          assigned_to: action_by_name
+          assigned_to: action_by_name,
+          new_status: 'accepted'
         });
       }
 
@@ -1072,11 +1087,15 @@ router.put('/assign/:chit_id',
           );
         }
 
+        const previousStatusOnPush = cs.current_status;
         await db(
           `UPDATE chit_status
            SET assigned_to_actor_id = $1,
                assigned_to_actor_display_name = $2,
-               assigned_at = NOW(), assignment_type = 'push'
+               assigned_at = NOW(),
+               assignment_type = 'push',
+               current_status = 'accepted',
+               updated_at = NOW()
            WHERE chit_id = $3 AND entity_id = $4`,
           [t.identity_id, t.display_name, chit_id, entity_id]
         );
@@ -1090,7 +1109,6 @@ router.put('/assign/:chit_id',
         const assignDetail = isTransfer
           ? `Transferred from ${cs.actor_name} to ${t.display_name} by ${action_by_name}`
           : `Assigned to ${t.display_name} by ${action_by_name}`;
-        // One row per participant — entity_id from chit_status, action_by = actual performer
         await db(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
@@ -1101,10 +1119,22 @@ router.put('/assign/:chit_id',
            isTransfer ? 'transferred' : 'assigned',
            action_by_id, action_by_name, assignDetail]
         );
+        // Log auto-accept — assignment always moves status to accepted
+        await db(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id,
+            action_by_display_name, previous_status, new_status, detail)
+           SELECT $1, entity_id, 'status_accepted', $2, $3, $4, 'accepted', $5
+           FROM chit_status WHERE chit_id = $1`,
+          [chit_id, action_by_id, action_by_name,
+           previousStatusOnPush,
+           `Auto-accepted — assigned to ${t.display_name} by ${action_by_name}`]
+        );
         return res.json({
           message: `Chit pushed to ${t.display_name}`,
           action: 'push',
           assigned_to: t.display_name,
+          new_status: 'accepted',
           warning: overloaded ? `${t.display_name} is at maximum load` : null
         });
       }
