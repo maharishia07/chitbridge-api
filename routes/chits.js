@@ -350,14 +350,14 @@ router.get('/:chit_id', auth, async (req, res) => {
       [chit_id, entity_id]
     );
 
-    // Get full state log for this entity
+    // Get full state log for the chit — shared timeline visible to all participants
     const log = await query(
       `SELECT action, action_by_display_name, previous_status,
               new_status, detail, created_at
        FROM state_log
-       WHERE chit_id = $1 AND entity_id = $2
+       WHERE chit_id = $1
        ORDER BY created_at ASC`,
-      [chit_id, entity_id]
+      [chit_id]
     );
 
     // Check if first time reading (before update) to decide whether to log it
