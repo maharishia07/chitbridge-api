@@ -141,7 +141,8 @@ router.post('/send',
       const summary_json = {
         ...summary,
         currency_code,
-        purpose
+        purpose,
+        is_promotion: !!(business_json && business_json.is_promotion)
       };
 
       // ── Create records for SENDER ──
