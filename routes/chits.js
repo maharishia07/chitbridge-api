@@ -831,4 +831,70 @@ router.get('/disputes/queue', auth, async (req, res) => {
   }
 });
 
+// ─── DELETE /chits/:chit_id ──────────────────────────────────
+// Soft delete (per-entity) — sets chit_status.deleted_at for the
+// requesting entity only; the other party's copy is untouched.
+// Blocked (409) while an OPEN dispute exists on the chit.
+router.delete('/:chit_id', auth, async (req, res) => {
+  try {
+    const chit_id        = req.params.chit_id;
+    const entity_id      = req.identity.parent_entity_id || req.identity.identity_id;
+    const action_by_id   = req.identity.identity_id;
+    const action_by_name = req.identity.display_name;
+
+    // Verify this entity has a (non-deleted) copy of the chit
+    const current = await query(
+      `SELECT current_status FROM chit_status
+       WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`,
+      [chit_id, entity_id]
+    );
+
+    if (current.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: 'Chit not found or already deleted'
+      });
+    }
+
+    // Guard: cannot delete while an open dispute is registered
+    const openDisputes = await query(
+      `SELECT COUNT(*)::int AS count FROM chit_disputes
+       WHERE chit_id = $1 AND status = 'open'`,
+      [chit_id]
+    );
+
+    if (openDisputes.rows[0].count > 0) {
+      return res.status(409).json({
+        error: 'Dispute active',
+        message: 'Cannot delete a chit with an open dispute. Resolve the dispute first.'
+      });
+    }
+
+    // Soft delete this entity's copy only
+    await query(
+      `UPDATE chit_status
+       SET deleted_at = NOW(), updated_at = NOW()
+       WHERE chit_id = $1 AND entity_id = $2`,
+      [chit_id, entity_id]
+    );
+
+    // Audit trail — one row for this entity's copy
+    await query(
+      `INSERT INTO state_log
+       (chit_id, entity_id, action, action_by_identity_id,
+        action_by_display_name, previous_status, new_status, detail)
+       VALUES ($1, $2, 'deleted', $3, $4, $5, $5, $6)`,
+      [chit_id, entity_id, action_by_id, action_by_name,
+       current.rows[0].current_status,
+       `Chit deleted by ${action_by_name}`]
+    );
+
+    res.json({ message: 'Chit deleted', chit_id });
+
+  } catch (err) {
+    console.error('Delete chit error:', err.message);
+    res.status(500).json({ error: 'Delete failed', message: err.message });
+  }
+});
+
 module.exports = router;
