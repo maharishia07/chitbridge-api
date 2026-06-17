@@ -291,7 +291,9 @@ router.get('/inbox', auth, async (req, res) => {
          cs.priority_flag,
          cs.assignment_type,
          cs.assigned_to_actor_id,
-         cs.assigned_to_actor_display_name
+         cs.assigned_to_actor_display_name,
+         (SELECT COUNT(*) FROM chit_disputes cd
+          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
