@@ -1,7 +1,9 @@
 // routes/schemas.js — Schema engine basic
 const express = require('express');
 const router  = express.Router();
+const { body } = require('express-validator');
 const { query } = require('../db');
+const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
 // GET /api/schemas/my — does entity have a schema?
@@ -90,5 +92,21 @@ router.get('/fields', auth, async (req, res) => {
     res.status(500).json({ error: 'Failed to get fields', message: err.message });
   }
 });
+
+// PATCH /api/schemas/visibility — set catalogue visibility (private | restricted | public)
+router.patch('/visibility', auth,
+  [ body('visibility').isIn(['private','restricted','public']) ], validate,
+  async (req, res) => {
+    try {
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const r = await query(
+        `UPDATE entity_schemas SET visibility = $1
+         WHERE entity_id = $2 AND status = 'active' AND is_default = true
+         RETURNING schema_id, visibility`,
+        [req.body.visibility, entity_id]);
+      if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No active catalogue to update' });
+      res.json({ message: 'Visibility updated', visibility: r.rows[0].visibility });
+    } catch (err) { res.status(500).json({ error: 'Visibility update failed', message: err.message }); }
+  });
 
 module.exports = router;
