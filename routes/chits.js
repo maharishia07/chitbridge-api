@@ -295,7 +295,9 @@ router.get('/inbox', auth, async (req, res) => {
          (SELECT COUNT(*) FROM chit_disputes cd
           WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
-          WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
+          WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
+         (SELECT MAX(cm2.created_at) FROM chit_messages cm2
+          WHERE cm2.chit_id = ch.chit_id AND cm2.visibility_entity_id IS NULL) AS last_message_at
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
