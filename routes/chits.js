@@ -293,7 +293,9 @@ router.get('/inbox', auth, async (req, res) => {
          cs.assigned_to_actor_id,
          cs.assigned_to_actor_display_name,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count
+          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+         (SELECT COUNT(*) FROM chit_messages cm
+          WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
@@ -587,6 +589,21 @@ router.post('/:chit_id/messages',
          RETURNING *`,
         [chit_id, entity_id, display_name, thread_type, visibility_entity_id, message_text]
       );
+
+      // Log external messages in state_log so all participants see it in their timeline
+      if (thread_type === 'external') {
+        const participants = await query(
+          `SELECT entity_id FROM chit_status WHERE chit_id = $1`,
+          [chit_id]
+        );
+        for (const p of participants.rows) {
+          await query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
+          );
+        }
+      }
 
       res.json({
         message_id:           result.rows[0].message_id,
