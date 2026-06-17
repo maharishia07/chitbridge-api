@@ -546,4 +546,268 @@ router.put('/:chit_id/status',
   }
 );
 
+// ─────────────────────────────────────────────────────────────
+// B3.5 — MESSAGING (dual thread) and DISPUTE MODULE
+// ─────────────────────────────────────────────────────────────
+
+// ─── POST /chits/:chit_id/messages ───────────────────────────
+// thread_type: 'external' (all parties see) | 'internal' (sender entity only)
+router.post('/:chit_id/messages',
+  [
+    body('message_text').trim().notEmpty().withMessage('Message text required'),
+    body('thread_type').isIn(['external','internal']).withMessage('thread_type must be external or internal'),
+  ],
+  validate,
+  auth,
+  async (req, res) => {
+    const { chit_id }  = req.params;
+    const { message_text, thread_type } = req.body;
+    const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+    const display_name = req.identity.display_name;
+
+    try {
+      const access = await query(
+        `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+      if (access.rows.length === 0) {
+        return res.status(403).json({ error: 'Forbidden', message: 'Not a participant on this chit' });
+      }
+
+      // NULL visibility = external (all see); entity_id = internal (only sender sees)
+      const visibility_entity_id = thread_type === 'internal' ? entity_id : null;
+
+      const result = await query(
+        `INSERT INTO chit_messages
+           (chit_id, sender_entity_id, sender_display_name,
+            thread_type, visibility_entity_id, message_text, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+         RETURNING *`,
+        [chit_id, entity_id, display_name, thread_type, visibility_entity_id, message_text]
+      );
+
+      res.json({
+        message_id:           result.rows[0].message_id,
+        thread_type,
+        message_text,
+        sender_display_name:  display_name,
+        created_at:           result.rows[0].created_at,
+      });
+    } catch (err) {
+      console.error('Send message error:', err.message);
+      if (err.message.includes('chit_messages')) {
+        return res.status(500).json({ error: 'Table not found', message: 'Run B3.5 migration SQL first', sql_needed: true });
+      }
+      res.status(500).json({ error: 'Send message failed', message: err.message });
+    }
+  }
+);
+
+// ─── GET /chits/:chit_id/messages ────────────────────────────
+// thread_type query: 'all' | 'external' | 'internal'
+router.get('/:chit_id/messages', auth, async (req, res) => {
+  const { chit_id }   = req.params;
+  const entity_id     = req.identity.parent_entity_id || req.identity.identity_id;
+  const thread_filter = req.query.thread_type || 'all';
+
+  try {
+    const access = await query(
+      `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+      [chit_id, entity_id]
+    );
+    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
+
+    let q, params;
+    if (thread_filter === 'external') {
+      q = `SELECT * FROM chit_messages WHERE chit_id = $1 AND thread_type = 'external' ORDER BY created_at ASC`;
+      params = [chit_id];
+    } else if (thread_filter === 'internal') {
+      q = `SELECT * FROM chit_messages WHERE chit_id = $1 AND thread_type = 'internal' AND visibility_entity_id = $2 ORDER BY created_at ASC`;
+      params = [chit_id, entity_id];
+    } else {
+      q = `SELECT * FROM chit_messages WHERE chit_id = $1 AND (thread_type = 'external' OR (thread_type = 'internal' AND visibility_entity_id = $2)) ORDER BY created_at ASC`;
+      params = [chit_id, entity_id];
+    }
+
+    const result = await query(q, params);
+    res.json({ messages: result.rows, count: result.rows.length });
+  } catch (err) {
+    console.error('Get messages error:', err.message);
+    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0 });
+    res.status(500).json({ error: 'Get messages failed', message: err.message });
+  }
+});
+
+// ─── POST /chits/:chit_id/disputes ───────────────────────────
+router.post('/:chit_id/disputes',
+  [
+    body('category').isIn(['quality','quantity','delivery','payment','docs','other']).withMessage('Invalid category'),
+    body('reason').trim().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'),
+  ],
+  validate,
+  auth,
+  async (req, res) => {
+    const { chit_id }  = req.params;
+    const { category, reason } = req.body;
+    const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+    const display_name = req.identity.display_name;
+
+    try {
+      const access = await query(
+        `SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+      if (access.rows.length === 0) return res.status(403).json({ error: 'Not a participant' });
+
+      // Block duplicate open dispute in same category from same entity
+      const existing = await query(
+        `SELECT dispute_id FROM chit_disputes WHERE chit_id = $1 AND raised_by_entity_id = $2 AND status = 'open' AND category = $3`,
+        [chit_id, entity_id, category]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(400).json({ error: 'Dispute exists', message: `You already have an open ${category} dispute on this chit` });
+      }
+
+      const result = await query(
+        `INSERT INTO chit_disputes
+           (chit_id, raised_by_entity_id, raised_by_display_name, category, reason, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, 'open', NOW())
+         RETURNING *`,
+        [chit_id, entity_id, display_name, category, reason]
+      );
+
+      // Log in state_log for timeline — sender's entity view
+      await query(
+        `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+         VALUES ($1, $2, 'dispute_raised', $3, $4, $5)`,
+        [chit_id, entity_id, entity_id, display_name, `Dispute raised — ${category}: ${reason.slice(0,100)}`]
+      );
+
+      res.json({
+        dispute_id:           result.rows[0].dispute_id,
+        category,
+        reason,
+        status:               'open',
+        raised_by_display_name: display_name,
+        created_at:           result.rows[0].created_at,
+        message:              'Dispute raised',
+      });
+    } catch (err) {
+      console.error('Raise dispute error:', err.message);
+      if (err.message.includes('chit_disputes')) {
+        return res.status(500).json({ error: 'Table not found', message: 'Run B3.5 migration SQL first', sql_needed: true });
+      }
+      res.status(500).json({ error: 'Raise dispute failed', message: err.message });
+    }
+  }
+);
+
+// ─── GET /chits/:chit_id/disputes ────────────────────────────
+// All participants see all disputes on a chit
+router.get('/:chit_id/disputes', auth, async (req, res) => {
+  const { chit_id } = req.params;
+  const entity_id   = req.identity.parent_entity_id || req.identity.identity_id;
+
+  try {
+    const access = await query(
+      `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+      [chit_id, entity_id]
+    );
+    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
+
+    const result = await query(
+      `SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`,
+      [chit_id]
+    );
+    res.json({ disputes: result.rows, open_count: result.rows.filter(d => d.status === 'open').length });
+  } catch (err) {
+    if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
+    res.status(500).json({ error: 'Get disputes failed', message: err.message });
+  }
+});
+
+// ─── PUT /chits/:chit_id/disputes/:dispute_id/resolve ────────
+// Only the entity that raised the dispute can resolve it
+router.put('/:chit_id/disputes/:dispute_id/resolve',
+  [body('resolution_note').trim().notEmpty().withMessage('Resolution note required')],
+  validate,
+  auth,
+  async (req, res) => {
+    const { chit_id, dispute_id } = req.params;
+    const { resolution_note }     = req.body;
+    const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+    const display_name = req.identity.display_name;
+
+    try {
+      const dispute = await query(
+        `SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2`,
+        [dispute_id, chit_id]
+      );
+      if (dispute.rows.length === 0) return res.status(404).json({ error: 'Dispute not found' });
+
+      const d = dispute.rows[0];
+      if (d.status !== 'open') return res.status(400).json({ error: 'Dispute already resolved' });
+      if (d.raised_by_entity_id !== entity_id) {
+        return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it' });
+      }
+
+      await query(
+        `UPDATE chit_disputes
+         SET status = 'resolved', resolution_note = $1, resolved_by_entity_id = $2, resolved_at = NOW()
+         WHERE dispute_id = $3`,
+        [resolution_note, entity_id, dispute_id]
+      );
+
+      await query(
+        `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+         VALUES ($1, $2, 'dispute_resolved', $3, $4, $5)`,
+        [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]
+      );
+
+      res.json({ dispute_id, status: 'resolved', resolution_note, resolved_by: display_name, message: 'Dispute resolved' });
+    } catch (err) {
+      console.error('Resolve dispute error:', err.message);
+      res.status(500).json({ error: 'Resolve failed', message: err.message });
+    }
+  }
+);
+
+// ─── GET /chits/disputes/queue ────────────────────────────────
+// All open disputes across all chits for this entity — used by DisputesPage sidebar
+// Safe: /disputes/queue has 2 segments; /:chit_id matches 1 segment only — no conflict
+router.get('/disputes/queue', auth, async (req, res) => {
+  const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+
+  try {
+    const result = await query(
+      `SELECT cd.*, ch.auto_subject, ch.purpose,
+              se.display_name AS sender_display_name
+       FROM chit_disputes cd
+       JOIN chit_header ch ON ch.chit_id = cd.chit_id AND ch.entity_id = $1
+       JOIN chit_status cs ON cs.chit_id = cd.chit_id AND cs.entity_id = $1
+       LEFT JOIN identities se ON se.identity_id = ch.sender_entity_id
+       WHERE cd.status = 'open'
+       ORDER BY cd.created_at ASC`,
+      [entity_id]
+    );
+
+    const myDisputes    = result.rows.filter(d => d.raised_by_entity_id === entity_id);
+    const otherDisputes = result.rows.filter(d => d.raised_by_entity_id !== entity_id);
+
+    res.json({
+      disputes:       result.rows,
+      my_disputes:    myDisputes,
+      other_disputes: otherDisputes,
+      total_open:     result.rows.length,
+    });
+  } catch (err) {
+    if (err.message.includes('chit_disputes')) {
+      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0 });
+    }
+    res.status(500).json({ error: 'Get dispute queue failed', message: err.message });
+  }
+});
+
 module.exports = router;
