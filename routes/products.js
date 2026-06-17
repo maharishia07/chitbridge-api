@@ -14,11 +14,36 @@ async function defaultSchemaId(entity_id) {
   return r.rows[0]?.schema_id || null;
 }
 
+// Validate a product against its schema fields. Returns an error message, or null if valid.
+// Rules: required fields not empty · number fields numeric, not negative, respect min_value.
+// `quantity` is excluded — the customer sets it at order time.
+async function validateItem(schema_id, item_data) {
+  if (!schema_id) return null;
+  const f = await query(
+    `SELECT field_key, field_name, field_type, required, min_value
+     FROM schema_fields WHERE schema_id = $1`, [schema_id]);
+  for (const field of f.rows) {
+    if (field.field_key === 'quantity') continue;
+    const v = (item_data?.[field.field_key] == null ? '' : String(item_data[field.field_key])).trim();
+    if (field.required && !v) return `${field.field_name} is required`;
+    if (field.field_type === 'number' && v !== '') {
+      const n = Number(v);
+      if (Number.isNaN(n))            return `${field.field_name} must be a number`;
+      if (n < 0)                      return `${field.field_name} cannot be negative`;
+      if (field.min_value != null && n < Number(field.min_value))
+                                      return `${field.field_name} must be at least ${field.min_value}`;
+    }
+  }
+  return null;
+}
+
 // CREATE — add a product
 router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const schema_id = await defaultSchemaId(entity_id);
+    const verr = await validateItem(schema_id, req.body.item_data);
+    if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
     const r = await query(
       `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
        VALUES ($1,$2,$3) RETURNING *`,
@@ -49,6 +74,8 @@ router.get('/', auth, async (req, res) => {
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    const verr = await validateItem(await defaultSchemaId(entity_id), req.body.item_data);
+    if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
     const r = await query(
       `UPDATE catalogue_items SET item_data=$1, updated_at=NOW()
        WHERE item_id=$2 AND entity_id=$3 RETURNING *`,
