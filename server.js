@@ -17,7 +17,7 @@ app.set('trust proxy', 1);
 // ── CORS first — allow all origins, methods, headers ─────────
 app.use(cors({
   origin: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
