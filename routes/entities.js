@@ -229,7 +229,7 @@ router.get('/search', auth, async (req, res) => {
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, created_at
        FROM identities
-       WHERE LOWER(display_name) LIKE LOWER($1)
+       WHERE (LOWER(display_name) LIKE LOWER($1) OR LOWER(bridge_id) LIKE LOWER($1))
        AND identity_type = 'entity' AND status = 'active'
        AND identity_id != $2
        ORDER BY display_name LIMIT 10`,
