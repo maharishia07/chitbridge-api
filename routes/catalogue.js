@@ -37,10 +37,15 @@ router.get('/:bridge_id', async (req, res) => {
     const fields = await query(
       `SELECT field_key, field_name, field_type, required, min_value, display_order
        FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`, [sch.rows[0].schema_id]);
+    const items = await query(
+      `SELECT item_id, item_data FROM catalogue_items
+       WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`,
+      [entity.identity_id]);
     res.json({
       shop:   { bridge_id: entity.bridge_id, display_name: entity.display_name, currency_code: entity.currency_code },
       schema: sch.rows[0],
-      fields: fields.rows
+      fields: fields.rows,
+      items:  items.rows           // B3.7a — the actual products
     });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: err.message }); }
 });

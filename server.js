@@ -55,6 +55,7 @@ const schemasRouter     = require('./routes/schemas');
 const actorsRouter      = require('./routes/actors');
 const relationshipsRouter = require('./routes/relationships');
 const catalogueRouter   = require('./routes/catalogue');
+const productsRouter    = require('./routes/products');
 
 app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
@@ -63,6 +64,7 @@ app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);
 app.use('/api/relationships', relationshipsRouter);
 app.use('/api/catalogue',   catalogueRouter);
+app.use('/api/products',    productsRouter);
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
