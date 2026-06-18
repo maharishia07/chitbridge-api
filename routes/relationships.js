@@ -111,6 +111,7 @@ router.get('/customers', auth, async (req, res) => {
       `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
               cl.txn_count, cl.last_txn_at,
               i.identity_id AS customer_identity_id, i.bridge_id, i.display_name,
+              i.email, i.identity_type, i.owner_scope,
               COALESCE(cl.segment_override,
                 CASE WHEN cl.last_txn_at < NOW() - INTERVAL '90 days' THEN 'inactive'
                      WHEN cl.txn_count >= 3 THEN 'regular'
