@@ -1,7 +1,8 @@
 // middleware/auth.js — JWT validation middleware
 const jwt = require('jsonwebtoken');
+const { query } = require('../db');
 
-const auth = (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
     // Get token from Authorization header
     const authHeader = req.headers.authorization;
@@ -22,10 +23,28 @@ const auth = (req, res, next) => {
       identity_id:      decoded.identity_id,
       bridge_id:        decoded.bridge_id,
       display_name:     decoded.display_name,
-      email:            decoded.email,
       identity_type:    decoded.identity_type,
+      email:            decoded.email,
       parent_entity_id: decoded.parent_entity_id || null,
     };
+
+    // Revalidate actor status — a removed/deactivated co-assist must lose access
+    // immediately on their next request, not whenever the JWT happens to expire.
+    // (Stateless JWTs can't be deleted server-side; this is the standard revocation.)
+    if (decoded.identity_type === 'actor') {
+      const r = await query(
+        `SELECT break_status FROM identities
+         WHERE identity_id = $1 AND identity_type = 'actor'`,
+        [decoded.identity_id]
+      );
+      const status = r.rows[0]?.break_status;
+      if (!r.rows.length || status === 'removed' || status === 'deactivated') {
+        return res.status(401).json({
+          error: 'Unauthorised',
+          message: 'Your access has been revoked. Contact your admin.'
+        });
+      }
+    }
 
     next();
   } catch (err) {

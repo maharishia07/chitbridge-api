@@ -414,11 +414,13 @@ router.post('/login',
 
       const a = actor.rows[0];
 
-      // Check not removed
-      if (a.break_status === 'removed') {
+      // Check access not revoked (removed OR deactivated)
+      if (a.break_status === 'removed' || a.break_status === 'deactivated') {
         return res.status(400).json({
           error: 'Login failed',
-          message: 'This account has been removed. Contact your admin.'
+          message: a.break_status === 'removed'
+            ? 'This account has been removed. Contact your admin.'
+            : 'This account has been deactivated. Contact your admin.'
         });
       }
 
@@ -521,7 +523,7 @@ router.post('/login',
           parent_bridge_id: parent_entity.bridge_id,
         },
         process.env.JWT_SECRET,
-        { expiresIn: '30d' }
+        { expiresIn: '7d' }
       );
 
       console.log(`Actor login: ${actor_key}@${entity_name}`);
