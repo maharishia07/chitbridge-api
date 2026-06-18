@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { query } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
+const auth = require('../middleware/auth');
 
 const genBridge = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -18,7 +19,7 @@ const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 async function resolveEntity(bridge_id) {
   const r = await query(
-    `SELECT identity_id, display_name, bridge_id, currency_code
+    `SELECT identity_id, display_name, bridge_id, currency_code, gstn, is_verified, logo_url, address
      FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active'`,
     [bridge_id]);
   return r.rows[0] || null;
@@ -42,7 +43,12 @@ router.get('/:bridge_id', async (req, res) => {
        WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`,
       [entity.identity_id]);
     res.json({
-      shop:   { bridge_id: entity.bridge_id, display_name: entity.display_name, currency_code: entity.currency_code },
+      shop: {
+        bridge_id: entity.bridge_id, display_name: entity.display_name,
+        currency_code: entity.currency_code,
+        gstn: entity.gstn, is_verified: entity.is_verified,
+        logo_url: entity.logo_url, address: entity.address   // B3.9 — identity/trust
+      },
       schema: sch.rows[0],
       fields: fields.rows,
       items:  items.rows           // B3.7a — the actual products
@@ -176,5 +182,45 @@ router.post('/:bridge_id/order/confirm',
       res.json({ message: 'Order placed', chit_id, shop: entity.display_name, summary: summary_json, token });
     } catch (err) { console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: err.message }); }
   });
+
+// ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
+router.post('/:bridge_id/login/verify',
+  [ body('phone').trim().notEmpty(), body('otp').trim().isLength({ min: 6, max: 6 }) ],
+  validate,
+  async (req, res) => {
+    try {
+      const entity = await resolveEntity(req.params.bridge_id);
+      if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+      const phone  = cleanPhone(req.body.phone);
+      const handle = `${phone}@${entity.bridge_id}.cr`;
+      const cr = await query(
+        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at
+         FROM identities WHERE email = $1`, [handle]);
+      if (!cr.rows.length) return res.status(400).json({ error: 'Sign-in failed', message: 'No account — place an order first' });
+      const c = cr.rows[0];
+      if (c.otp_code !== req.body.otp.trim())      return res.status(400).json({ error: 'Sign-in failed', message: 'Incorrect code' });
+      if (new Date() > new Date(c.otp_expires_at)) return res.status(400).json({ error: 'Sign-in failed', message: 'Code expired' });
+      await query(`UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
+      const token = jwt.sign(
+        { identity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name,
+          email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id },
+        process.env.JWT_SECRET, { expiresIn: '7d' });
+      res.json({ message: 'Signed in', token, name: c.display_name });
+    } catch (err) { res.status(500).json({ error: 'Sign-in failed', message: err.message }); }
+  });
+
+// ── CJ-F1: the signed-in customer's orders + live status ──
+router.get('/:bridge_id/my-orders', auth, async (req, res) => {
+  try {
+    const me = req.identity.identity_id;
+    const r = await query(
+      `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status
+       FROM chit_header ch
+       JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
+       WHERE ch.entity_id = $1 AND ch.purpose = 'order'
+       ORDER BY ch.created_at DESC`, [me]);
+    res.json({ orders: r.rows, count: r.rows.length });
+  } catch (err) { res.status(500).json({ error: 'Orders failed', message: err.message }); }
+});
 
 module.exports = router;
