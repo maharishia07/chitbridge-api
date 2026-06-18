@@ -233,16 +233,25 @@ router.post('/send',
         );
 
         // B3.6 — auto-add this receiver to sender's customer_list (D-065).
+        // BUT skip if the receiver is the sender's SUPPLIER: ordering from a supplier
+        // is a purchase, not a sale, so they must not be mis-filed as a customer.
         // Never breaks /send: a missing table or any error is logged and ignored.
         try {
-          await query(
-            `INSERT INTO customer_list
-               (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-             VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
-             ON CONFLICT (owner_entity_id, customer_identity_id)
-             DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
+          const isSupplier = await query(
+            `SELECT 1 FROM supplier_list
+             WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
             [sender_id, receiver.entity_id]
           );
+          if (isSupplier.rows.length === 0) {
+            await query(
+              `INSERT INTO customer_list
+                 (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+               VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
+               ON CONFLICT (owner_entity_id, customer_identity_id)
+               DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
+              [sender_id, receiver.entity_id]
+            );
+          }
         } catch (e) { console.log('customer auto-add skipped:', e.message); }
       }
 

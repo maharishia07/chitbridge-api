@@ -119,6 +119,10 @@ router.get('/customers', auth, async (req, res) => {
        FROM customer_list cl
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
+         AND NOT EXISTS (
+           SELECT 1 FROM supplier_list sl
+           WHERE sl.owner_entity_id = $1 AND sl.supplier_entity_id = cl.customer_identity_id
+         )
        ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]);
     const rows = segment ? r.rows.filter(c => c.segment === segment) : r.rows;
     res.json({ customers: rows, count: rows.length });
