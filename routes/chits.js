@@ -294,6 +294,7 @@ router.get('/inbox', auth, async (req, res) => {
          ch.chit_id,
          ch.sender_entity_display_name,
          ch.sender_entity_bridge_id,
+         ch.all_recipients,
          ch.purpose,
          ch.auto_subject,
          ch.manual_subject,
@@ -311,7 +312,14 @@ router.get('/inbox', auth, async (req, res) => {
          (SELECT COUNT(*) FROM chit_messages cm
           WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
-          WHERE cm2.chit_id = ch.chit_id AND cm2.visibility_entity_id IS NULL) AS last_message_at
+          WHERE cm2.chit_id = ch.chit_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
+         (SELECT sl.action_by_display_name FROM state_log sl
+          WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
+          ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_name,
+         (SELECT i.identity_type FROM state_log sl
+          LEFT JOIN identities i ON i.identity_id = sl.action_by_identity_id
+          WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
+          ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_type
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
