@@ -165,7 +165,7 @@ router.post('/verify',
       const otp = req.body.otp.trim();
 
       const result = await query(
-        `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at
+        `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, owner_scope
          FROM identities WHERE email = $1`,
         [email]
       );
@@ -194,7 +194,8 @@ router.post('/verify',
       // 7 days JWT — longer session for testing
       const token = jwt.sign(
         { identity_id: identity.identity_id, bridge_id: identity.bridge_id,
-          display_name: identity.display_name, email: identity.email, identity_type: 'entity' },
+          display_name: identity.display_name, email: identity.email, identity_type: 'entity',
+          owner_scope: identity.owner_scope || 'entity' },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
@@ -276,5 +277,15 @@ router.patch('/profile', auth,
       res.json({ message: 'Profile updated' });
     } catch (err) { res.status(500).json({ error: 'Profile update failed', message: err.message }); }
   });
+
+// PATCH /entities/:id/erase — mark an identity erased (tombstone). Platform-scope only.
+// Full PII-redaction sweep is a separate ops routine; this just flips the markers.
+router.patch('/:id/erase', auth, async (req, res) => {
+  if (req.identity.owner_scope !== 'platform') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
+    res.json({ message: 'Identity tombstoned', id: req.params.id });
+  } catch (err) { res.status(500).json({ error: 'Erase failed', message: err.message }); }
+});
 
 module.exports = router;

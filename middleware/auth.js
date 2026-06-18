@@ -26,6 +26,7 @@ const auth = async (req, res, next) => {
       identity_type:    decoded.identity_type,
       email:            decoded.email,
       parent_entity_id: decoded.parent_entity_id || null,
+      owner_scope:      decoded.owner_scope || null,
     };
 
     // Revalidate actor status — a removed/deactivated co-assist must lose access

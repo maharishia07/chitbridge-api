@@ -690,70 +690,109 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
   }
 });
 
+// ─── B3.10 — targeted + erasure-aware dispute helpers ────────
+// integrity-critical categories whose audience the platform widens by obligation (opt-in via env)
+const WIDEN_CATEGORIES = (process.env.CB_DISPUTE_WIDEN_CATEGORIES || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
+async function probeParity(chit_id, target_entity_id) {
+  if (!target_entity_id) return { parity_state: null, mode: 'two_sided', answerable: true, target_display_name: null };
+  const idn = await query(`SELECT display_name, status, is_erased FROM identities WHERE identity_id=$1`, [target_entity_id]);
+  if (idn.rows.length === 0) return { parity_state:'absent', mode:'one_sided', answerable:false, target_display_name:'[unknown]' };
+  const t = idn.rows[0];
+  if (t.is_erased)            return { parity_state:'erased', mode:'one_sided', answerable:false, target_display_name:'[erased]' };
+  if (t.status !== 'active')  return { parity_state:'defunct', mode:'one_sided', answerable:false, target_display_name:t.display_name };
+  const cs = await query(`SELECT deleted_at FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, target_entity_id]);
+  if (cs.rows.length === 0)   return { parity_state:'absent', mode:'one_sided', answerable:false, target_display_name:t.display_name };
+  if (cs.rows[0].deleted_at)  return { parity_state:'archived', mode:'two_sided', answerable:true, target_display_name:t.display_name };
+  return { parity_state:'present', mode:'two_sided', answerable:true, target_display_name:t.display_name };
+}
+
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
 router.post('/:chit_id/disputes',
   [
     body('category').isIn(['quality','quantity','delivery','payment','docs','other']).withMessage('Invalid category'),
     body('reason').trim().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'),
+    body('target_entity_id').optional({ nullable:true }).isUUID().withMessage('Bad target'),
+    body('chit_wide').optional().isBoolean(),
+    body('via').optional().isIn(['chit','mailbox']),
   ],
   validate,
   auth,
   async (req, res) => {
-    const { chit_id }  = req.params;
-    const { category, reason } = req.body;
+    const { chit_id } = req.params;
+    const { category, reason, target_entity_id = null, chit_wide = false, via = 'chit' } = req.body;
     const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
     const display_name = req.identity.display_name;
-
     try {
-      const access = await query(
-        `SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
-      if (access.rows.length === 0) return res.status(403).json({ error: 'Not a participant' });
+      // 1. raiser must be a participant
+      const access = await query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+      if (access.rows.length === 0) return res.status(403).json({ error:'Not a participant' });
 
-      // Block duplicate open dispute in same category from same entity
-      const existing = await query(
-        `SELECT dispute_id FROM chit_disputes WHERE chit_id = $1 AND raised_by_entity_id = $2 AND status = 'open' AND category = $3`,
-        [chit_id, entity_id, category]
-      );
-      if (existing.rows.length > 0) {
-        return res.status(400).json({ error: 'Dispute exists', message: `You already have an open ${category} dispute on this chit` });
-      }
+      // 2. can't target yourself
+      if (target_entity_id && target_entity_id === entity_id)
+        return res.status(400).json({ error:'Invalid target', message:'You cannot raise a dispute against yourself' });
 
+      // 3. decide scope + probe parity → mode
+      let scope = (chit_wide || !target_entity_id) ? 'chit_wide' : 'targeted';
+      const parity = await probeParity(chit_id, scope === 'targeted' ? target_entity_id : null);
+
+      // 4. platform widen by obligation
+      let widened = false;
+      if (scope === 'targeted' && WIDEN_CATEGORIES.includes(category)) { scope = 'chit_wide'; widened = true; }
+
+      // 5. duplicate guard (raiser + category + same target + open)
+      const dup = await query(
+        `SELECT dispute_id FROM chit_disputes
+          WHERE chit_id=$1 AND raised_by_entity_id=$2 AND status='open' AND category=$3
+            AND COALESCE(target_entity_id::text,'') = COALESCE($4::text,'')`,
+        [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]);
+      if (dup.rows.length) return res.status(400).json({ error:'Dispute exists', message:`You already have an open ${category} dispute here` });
+
+      // 6. evidence snapshot — "forward your chit" (survives counterparty erasure)
+      const snap = await query(
+        `SELECT ch.auto_subject, ch.summary_json, cs.current_status AS my_status
+           FROM chit_header ch JOIN chit_status cs ON cs.chit_id=ch.chit_id AND cs.entity_id=$2
+          WHERE ch.chit_id=$1`, [chit_id, entity_id]);
+      const evidence = { ...(snap.rows[0] || {}), captured_at: new Date().toISOString(), via };
+
+      // 7. insert
       const result = await query(
         `INSERT INTO chit_disputes
-           (chit_id, raised_by_entity_id, raised_by_display_name, category, reason, status, created_at)
-         VALUES ($1, $2, $3, $4, $5, 'open', NOW())
+           (chit_id, raised_by_entity_id, raised_by_display_name, target_entity_id, target_display_name,
+            scope, mode, answerable, parity_state, via, category, reason, evidence_snapshot, status, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'open',NOW())
          RETURNING *`,
-        [chit_id, entity_id, display_name, category, reason]
-      );
+        [chit_id, entity_id, display_name,
+         scope === 'targeted' ? target_entity_id : null,
+         scope === 'targeted' ? parity.target_display_name : null,
+         scope, parity.mode, parity.answerable, parity.parity_state, via,
+         category, reason, JSON.stringify(evidence)]);
 
-      // Log in state_log for timeline — sender's entity view
+      // 8. timeline (raiser's view)
       await query(
-        `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1, $2, 'dispute_raised', $3, $4, $5)`,
-        [chit_id, entity_id, entity_id, display_name, `Dispute raised — ${category}: ${reason.slice(0,100)}`]
-      );
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+         VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+        [chit_id, entity_id, entity_id, display_name,
+         `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0,80)}`]);
 
+      const d = result.rows[0];
       res.json({
-        dispute_id:           result.rows[0].dispute_id,
-        category,
-        reason,
-        status:               'open',
+        dispute_id: d.dispute_id, category, reason, status:'open',
+        scope, mode: d.mode, answerable: d.answerable, parity_state: d.parity_state,
+        target_display_name: d.target_display_name,
         raised_by_display_name: display_name,
-        created_at:           result.rows[0].created_at,
-        message:              'Dispute raised',
+        alert: d.mode === 'one_sided'
+          ? `The other side is no longer reachable (${d.parity_state}). This is lodged as a unilateral record on your own copy.`
+          : (widened ? 'This category notifies all parties — raised chit-wide.' : 'Dispute raised with the selected party.'),
+        message: 'Dispute raised',
       });
     } catch (err) {
       console.error('Raise dispute error:', err.message);
-      if (err.message.includes('chit_disputes')) {
-        return res.status(500).json({ error: 'Table not found', message: 'Run B3.5 migration SQL first', sql_needed: true });
-      }
-      res.status(500).json({ error: 'Raise dispute failed', message: err.message });
+      if (err.message.includes('chit_disputes')) return res.status(500).json({ error:'Table not found', message:'Run B3.5 + B3.10 migrations', sql_needed:true });
+      res.status(500).json({ error:'Raise dispute failed', message: err.message });
     }
-  }
-);
+  });
 
 // ─── GET /chits/:chit_id/disputes ────────────────────────────
 // All participants see all disputes on a chit
@@ -768,9 +807,12 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     );
     if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
 
+    // B3.10 — scoped: you see chit-wide disputes, ones you raised, or ones targeting you
     const result = await query(
-      `SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`,
-      [chit_id]
+      `SELECT * FROM chit_disputes
+         WHERE chit_id = $1 AND (scope='chit_wide' OR raised_by_entity_id=$2 OR target_entity_id=$2)
+         ORDER BY created_at ASC`,
+      [chit_id, entity_id]
     );
     res.json({ disputes: result.rows, open_count: result.rows.filter(d => d.status === 'open').length });
   } catch (err) {
@@ -841,10 +883,12 @@ router.get('/disputes/queue', auth, async (req, res) => {
        JOIN chit_status cs ON cs.chit_id = cd.chit_id AND cs.entity_id = $1
        LEFT JOIN identities se ON se.identity_id = ch.sender_entity_id
        WHERE cd.status = 'open'
+         AND (cd.scope='chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1)
        ORDER BY cd.created_at ASC`,
       [entity_id]
     );
 
+    // "other" now means disputes targeting me (untargeted ones no longer leak)
     const myDisputes    = result.rows.filter(d => d.raised_by_entity_id === entity_id);
     const otherDisputes = result.rows.filter(d => d.raised_by_entity_id !== entity_id);
 
