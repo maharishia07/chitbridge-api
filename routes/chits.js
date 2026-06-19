@@ -831,6 +831,82 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
   }
 });
 
+// ─── GET /chits/:chit_id/diagnosis ───────────────────────────
+// DEMO-5: read-only diagnosis over B3.10 disputes. One card per dispute the
+// viewer is party to. probe (fault) → localise (coordinate) → route (routing) + proof.
+// Never writes anything; never returns evidence_snapshot contents.
+const FAULT_SUMMARY = {
+  present:  'Both sides present — workable',
+  archived: 'Counterparty archived their copy — still workable',
+  erased:   'Counterparty erased — no live other side',
+  defunct:  'Counterparty no longer active',
+  absent:   'No counterparty copy found on this chit',
+};
+router.get('/:chit_id/diagnosis', auth, async (req, res) => {
+  const { chit_id } = req.params;
+  const entity_id   = req.identity.parent_entity_id || req.identity.identity_id;
+  try {
+    const access = await query(`SELECT 1 FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
+
+    const hdr = await query(
+      `SELECT auto_subject, schema_version FROM chit_header WHERE chit_id=$1 AND entity_id=$2`,
+      [chit_id, entity_id]);
+    const det = await query(
+      `SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`,
+      [chit_id, entity_id]);
+    let itemLabel = null;
+    try {
+      const raw = det.rows[0]?.line_items;
+      const li = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : [];
+      if (Array.isArray(li) && li.length) {
+        itemLabel = li.map(i => i.particulars || i.product).filter(Boolean).join(', ') || null;
+      }
+    } catch { itemLabel = null; }
+
+    // same audience rule as GET disputes — never leak someone else's dispute
+    const d = await query(
+      `SELECT dispute_id, category, reason, status, created_at,
+              target_display_name, scope, mode, answerable, parity_state, via,
+              (evidence_snapshot IS NOT NULL) AS has_evidence
+         FROM chit_disputes
+        WHERE chit_id=$1 AND (scope='chit_wide' OR raised_by_entity_id=$2 OR target_entity_id=$2)
+        ORDER BY created_at ASC`,
+      [chit_id, entity_id]);
+
+    const diagnoses = d.rows.map(x => ({
+      dispute_id: x.dispute_id,
+      category:   x.category,
+      reason:     x.reason,
+      status:     x.status,
+      created_at: x.created_at,
+      resolvable: x.mode === 'two_sided',
+      // probe → the fault
+      fault: {
+        state:    x.parity_state || 'present',
+        category: x.category,
+        summary:  FAULT_SUMMARY[x.parity_state] || FAULT_SUMMARY.present,
+      },
+      // localise → the coordinate (who / what / which version)
+      coordinate: {
+        party:          x.target_display_name || 'all parties',
+        line_item:      itemLabel,
+        schema_version: hdr.rows[0]?.schema_version ?? null,
+      },
+      // route → how it is handled
+      routing: { scope: x.scope, mode: x.mode, answerable: x.answerable },
+      // proof → presence only + provenance (never the contents)
+      proof: { evidence_captured: x.has_evidence, arose_from: x.via },
+    }));
+
+    res.json({ chit_id, chit_subject: hdr.rows[0]?.auto_subject || null, diagnoses, count: diagnoses.length });
+  } catch (err) {
+    if (err.message.includes('chit_disputes')) return res.json({ chit_id, chit_subject: null, diagnoses: [], count: 0 });
+    console.error('Diagnosis error:', err.message);
+    res.status(500).json({ error: 'Diagnosis failed', message: err.message });
+  }
+});
+
 // ─── PUT /chits/:chit_id/disputes/:dispute_id/resolve ────────
 // Only the entity that raised the dispute can resolve it
 router.put('/:chit_id/disputes/:dispute_id/resolve',
