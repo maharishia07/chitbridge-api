@@ -83,19 +83,27 @@ router.delete('/suppliers/:id', auth, async (req, res) => {
   }
 });
 
-// Fetch a supplier's catalogue (active default schema) to render an order form (D-059)
+// Fetch a supplier's catalogue (schema fields + products) to draft an order chit (D-059).
+// Mirrors the PHP supplierCompose flow: select supplier -> see their catalogue -> compose.
 router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) => {
   try {
     const sid = req.params.supplier_entity_id;
+    const sup = await query(
+      `SELECT identity_id, display_name, bridge_id, currency_code, business_status
+       FROM identities WHERE identity_id = $1 AND identity_type = 'entity'`, [sid]);
+    const supplier = sup.rows[0] || null;
     const schema = await query(
       `SELECT schema_id, schema_name FROM entity_schemas
        WHERE entity_id = $1 AND status = 'active' AND is_default = true LIMIT 1`, [sid]);
-    if (schema.rows.length === 0) return res.json({ schema: null, fields: [] });
+    if (schema.rows.length === 0) return res.json({ supplier, schema: null, fields: [], items: [] });
     const fields = await query(
       `SELECT field_key, field_name, field_type, required, display_order
        FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`,
       [schema.rows[0].schema_id]);
-    res.json({ schema: schema.rows[0], fields: fields.rows });
+    const items = await query(
+      `SELECT item_id, item_data FROM catalogue_items
+       WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`, [sid]);
+    res.json({ supplier, schema: schema.rows[0], fields: fields.rows, items: items.rows });
   } catch (err) {
     res.status(500).json({ error: 'Get catalogue failed', message: err.message });
   }
