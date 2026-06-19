@@ -814,7 +814,9 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
          ORDER BY created_at ASC`,
       [chit_id, entity_id]
     );
-    res.json({ disputes: result.rows, open_count: result.rows.filter(d => d.status === 'open').length });
+    // evidence_snapshot is PII — expose presence only, never its contents
+    const disputes = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
+    res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
     res.status(500).json({ error: 'Get disputes failed', message: err.message });
@@ -888,15 +890,17 @@ router.get('/disputes/queue', auth, async (req, res) => {
       [entity_id]
     );
 
+    // evidence_snapshot is PII — expose presence only, never its contents
+    const rows = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
     // "other" now means disputes targeting me (untargeted ones no longer leak)
-    const myDisputes    = result.rows.filter(d => d.raised_by_entity_id === entity_id);
-    const otherDisputes = result.rows.filter(d => d.raised_by_entity_id !== entity_id);
+    const myDisputes    = rows.filter(d => d.raised_by_entity_id === entity_id);
+    const otherDisputes = rows.filter(d => d.raised_by_entity_id !== entity_id);
 
     res.json({
-      disputes:       result.rows,
+      disputes:       rows,
       my_disputes:    myDisputes,
       other_disputes: otherDisputes,
-      total_open:     result.rows.length,
+      total_open:     rows.length,
     });
   } catch (err) {
     if (err.message.includes('chit_disputes')) {
