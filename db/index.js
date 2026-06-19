@@ -71,4 +71,23 @@ const query = async (text, params) => {
   }
 };
 
-module.exports = { query, get pool() { return pool; } };
+// ── Run a set of writes atomically: BEGIN → fn(client) → COMMIT, else ROLLBACK ──
+// Pass a function that does ALL its queries on the supplied `client` (NOT the pool
+// `query`, or they won't be in the transaction). Returns whatever fn returns.
+const withTransaction = async (fn) => {
+  if (!pool) throw new Error('Database not connected — check DATABASE_URL in Railway environment variables');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
+    throw err;
+  } finally {
+    client.release();   // always return the connection to the pool
+  }
+};
+
+module.exports = { query, withTransaction, get pool() { return pool; } };

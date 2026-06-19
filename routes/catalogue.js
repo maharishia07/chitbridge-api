@@ -4,7 +4,7 @@ const router  = express.Router();
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../db');
+const { query, withTransaction } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
@@ -112,8 +112,6 @@ router.post('/:bridge_id/order/confirm',
       const c = cr.rows[0];
       if (c.otp_code !== req.body.otp.trim())          return res.status(400).json({ error: 'Verify failed', message: 'Incorrect code' });
       if (new Date() > new Date(c.otp_expires_at))     return res.status(400).json({ error: 'Verify failed', message: 'Code expired' });
-      await query(`UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
-
       // build the guaranteed chit: customer = sender, shop = receiver
       const line_items = req.body.line_items;
       const chit_id = uuidv4();
@@ -130,40 +128,57 @@ router.post('/:bridge_id/order/confirm',
       const ar = JSON.stringify(all_recipients);
       const sj = JSON.stringify(summary_json);
 
-      // sender (customer) record
-      await query(
-        `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
-           all_recipients, purpose, auto_subject, summary_json, sent_at, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,'order',$7,$8,NOW(),NOW())`,
-        [chit_id, c.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj]);
-      await query(
-        `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items, payload_delivered_at)
-         VALUES ($1,$2,'order',$3,$4,$5,$6,NOW())`,
-        [chit_id, c.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li]);
-      await query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'delivered')`, [chit_id, c.identity_id]);
+      // freeze-at-send (A10): governing schema = the SHOP's active default schema
+      const schemaRow = await query(
+        `SELECT schema_id, schema_version FROM entity_schemas
+          WHERE entity_id = $1 AND status = 'active' AND is_default = true
+          ORDER BY created_at DESC LIMIT 1`,
+        [entity.identity_id]
+      );
+      const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
+      const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
 
-      // receiver (shop) record
-      await query(
-        `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
-           all_recipients, purpose, auto_subject, summary_json, sent_at, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,'order',$7,$8,NOW(),NOW())`,
-        [chit_id, entity.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj]);
-      await query(
-        `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items)
-         VALUES ($1,$2,'order',$3,$4,$5,$6)`,
-        [chit_id, entity.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li]);
-      await query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'pending')`, [chit_id, entity.identity_id]);
+      // guaranteed write: OTP consume + both chit records + timeline, all-or-nothing (INV-2)
+      await withTransaction(async (client) => {
+        await client.query(
+          `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, last_active_at=NOW()
+            WHERE identity_id=$1`, [c.identity_id]);
 
-      // state log (best-effort)
-      try {
-        await query(
+        // sender (customer) record
+        await client.query(
+          `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
+             all_recipients, purpose, auto_subject, summary_json, schema_version, schema_id, sent_at, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,'order',$7,$8,$9,$10,NOW(),NOW())`,
+          [chit_id, c.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj,
+           frozen_schema_version, frozen_schema_id]);
+        await client.query(
+          `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items, payload_delivered_at)
+           VALUES ($1,$2,'order',$3,$4,$5,$6,NOW())`,
+          [chit_id, c.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li]);
+        await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'delivered')`, [chit_id, c.identity_id]);
+
+        // receiver (shop) record
+        await client.query(
+          `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
+             all_recipients, purpose, auto_subject, summary_json, schema_version, schema_id, sent_at, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,'order',$7,$8,$9,$10,NOW(),NOW())`,
+          [chit_id, entity.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj,
+           frozen_schema_version, frozen_schema_id]);
+        await client.query(
+          `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items)
+           VALUES ($1,$2,'order',$3,$4,$5,$6)`,
+          [chit_id, entity.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li]);
+        await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'pending')`, [chit_id, entity.identity_id]);
+
+        // timeline — both sides, in the same commit (was best-effort; now guaranteed)
+        await client.query(
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1,$2,'created',$3,$4,'delivered',$5),($1,$6,'delivered',$3,$4,'pending',$7)`,
           [chit_id, c.identity_id, c.identity_id, c.display_name, `Order placed to ${entity.display_name}`,
            entity.identity_id, `Order received from ${c.display_name}`]);
-      } catch (e) { console.log('state_log skipped:', e.message); }
+      });
 
-      // CJ-06: auto-add customer → shop's customer_list as end_customer / catalogue (never breaks the order)
+      // CJ-06: best-effort CRM auto-add — after commit, never breaks the order
       try {
         await query(
           `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)

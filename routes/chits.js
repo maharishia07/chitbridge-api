@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../db');
+const { query, withTransaction } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
@@ -145,101 +145,108 @@ router.post('/send',
         is_promotion: !!(business_json && business_json.is_promotion)
       };
 
-      // ── Create records for SENDER ──
-      await query(
-        `INSERT INTO chit_header
-         (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
-          sender_entity_display_name, all_recipients, purpose,
-          auto_subject, manual_subject, summary_json, business_json,
-          sent_at, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),NOW())`,
-        [chit_id, sender_id, sender_id, sender_bridge_id,
-         sender_display_name, JSON.stringify(all_recipients), purpose,
-         auto_subject, manual_subject || null,
-         JSON.stringify(summary_json),
-         business_json ? JSON.stringify(business_json) : null]
+      // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
+      const schemaRow = await query(
+        `SELECT schema_id, schema_version
+           FROM entity_schemas
+          WHERE entity_id = $1 AND status = 'active' AND is_default = true
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [sender_id]
       );
+      const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
+      const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
+      const created_by_actor_id   = req.identity.identity_id;   // who actually pressed send
 
-      await query(
-        `INSERT INTO chit_detail
-         (chit_id, entity_id, detail_type, line_item_count,
-          total_value, currency_code, line_items, payload_delivered_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())`,
-        [chit_id, sender_id, purpose,
-         summary.line_item_count, summary.total_value,
-         summary_json.currency_code,
-         line_items.length > 0 ? JSON.stringify(line_items) : null]
-      );
-
-      await query(
-        `INSERT INTO chit_status
-         (chit_id, entity_id, current_status)
-         VALUES ($1,$2,'delivered')`,
-        [chit_id, sender_id]
-      );
-
-      // Log for sender
-      await query(
-        `INSERT INTO state_log
-         (chit_id, entity_id, action, action_by_identity_id,
-          action_by_display_name, new_status, detail)
-         VALUES ($1,$2,'created',$3,$4,'delivered',$5)`,
-        [chit_id, sender_id, sender_id, sender_display_name,
-         `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
-      );
-
-      // ── Create records for EACH RECEIVER ──
-      for (const receiver of receiverDetails) {
-        await query(
+      // ── Guaranteed write: every row for this chit commits together, or none do (INV-2) ──
+      await withTransaction(async (client) => {
+        // SENDER
+        await client.query(
           `INSERT INTO chit_header
            (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
             sender_entity_display_name, all_recipients, purpose,
             auto_subject, manual_subject, summary_json, business_json,
-            sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),NOW())`,
-          [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
+            schema_version, schema_id, created_by_actor_id, sent_at, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())`,
+          [chit_id, sender_id, sender_id, sender_bridge_id,
            sender_display_name, JSON.stringify(all_recipients), purpose,
            auto_subject, manual_subject || null,
            JSON.stringify(summary_json),
-           business_json ? JSON.stringify(business_json) : null]
+           business_json ? JSON.stringify(business_json) : null,
+           frozen_schema_version, frozen_schema_id, created_by_actor_id]
         );
-
-        await query(
+        await client.query(
           `INSERT INTO chit_detail
            (chit_id, entity_id, detail_type, line_item_count,
-            total_value, currency_code, line_items)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [chit_id, receiver.entity_id, purpose,
+            total_value, currency_code, line_items, payload_delivered_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())`,
+          [chit_id, sender_id, purpose,
            summary.line_item_count, summary.total_value,
            summary_json.currency_code,
            line_items.length > 0 ? JSON.stringify(line_items) : null]
         );
-
-        await query(
-          `INSERT INTO chit_status
-           (chit_id, entity_id, current_status)
-           VALUES ($1,$2,'pending')`,
-          [chit_id, receiver.entity_id]
+        await client.query(
+          `INSERT INTO chit_status (chit_id, entity_id, current_status)
+           VALUES ($1,$2,'delivered')`,
+          [chit_id, sender_id]
         );
-
-        // Log for receiver
-        await query(
+        await client.query(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, new_status, detail)
-           VALUES ($1,$2,'delivered',$3,$4,'pending',$5)`,
-          [chit_id, receiver.entity_id, sender_id, sender_display_name,
-           `Chit received from ${sender_display_name}`]
+           VALUES ($1,$2,'created',$3,$4,'delivered',$5)`,
+          [chit_id, sender_id, sender_id, sender_display_name,
+           `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
         );
 
-        // B3.6 — auto-add this receiver to sender's customer_list (D-065).
-        // BUT skip if the receiver is the sender's SUPPLIER: ordering from a supplier
-        // is a purchase, not a sale, so they must not be mis-filed as a customer.
-        // Never breaks /send: a missing table or any error is logged and ignored.
+        // RECEIVERS
+        for (const receiver of receiverDetails) {
+          await client.query(
+            `INSERT INTO chit_header
+             (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
+              sender_entity_display_name, all_recipients, purpose,
+              auto_subject, manual_subject, summary_json, business_json,
+              schema_version, schema_id, created_by_actor_id, sent_at, created_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())`,
+            [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
+             sender_display_name, JSON.stringify(all_recipients), purpose,
+             auto_subject, manual_subject || null,
+             JSON.stringify(summary_json),
+             business_json ? JSON.stringify(business_json) : null,
+             frozen_schema_version, frozen_schema_id, created_by_actor_id]
+          );
+          await client.query(
+            `INSERT INTO chit_detail
+             (chit_id, entity_id, detail_type, line_item_count,
+              total_value, currency_code, line_items)
+             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+            [chit_id, receiver.entity_id, purpose,
+             summary.line_item_count, summary.total_value,
+             summary_json.currency_code,
+             line_items.length > 0 ? JSON.stringify(line_items) : null]
+          );
+          await client.query(
+            `INSERT INTO chit_status (chit_id, entity_id, current_status)
+             VALUES ($1,$2,'pending')`,
+            [chit_id, receiver.entity_id]
+          );
+          await client.query(
+            `INSERT INTO state_log
+             (chit_id, entity_id, action, action_by_identity_id,
+              action_by_display_name, new_status, detail)
+             VALUES ($1,$2,'delivered',$3,$4,'pending',$5)`,
+            [chit_id, receiver.entity_id, sender_id, sender_display_name,
+             `Chit received from ${sender_display_name}`]
+          );
+        }
+      });
+
+      // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
+      for (const receiver of receiverDetails) {
         try {
           const isSupplier = await query(
             `SELECT 1 FROM supplier_list
-             WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
+              WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
             [sender_id, receiver.entity_id]
           );
           if (isSupplier.rows.length === 0) {
@@ -756,27 +763,28 @@ router.post('/:chit_id/disputes',
           WHERE ch.chit_id=$1`, [chit_id, entity_id]);
       const evidence = { ...(snap.rows[0] || {}), captured_at: new Date().toISOString(), via };
 
-      // 7. insert
-      const result = await query(
-        `INSERT INTO chit_disputes
-           (chit_id, raised_by_entity_id, raised_by_display_name, target_entity_id, target_display_name,
-            scope, mode, answerable, parity_state, via, category, reason, evidence_snapshot, status, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'open',NOW())
-         RETURNING *`,
-        [chit_id, entity_id, display_name,
-         scope === 'targeted' ? target_entity_id : null,
-         scope === 'targeted' ? parity.target_display_name : null,
-         scope, parity.mode, parity.answerable, parity.parity_state, via,
-         category, reason, JSON.stringify(evidence)]);
-
-      // 8. timeline (raiser's view)
-      await query(
-        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-        [chit_id, entity_id, entity_id, display_name,
-         `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0,80)}`]);
-
-      const d = result.rows[0];
+      // 7 + 8. insert dispute + timeline atomically (INV-2)
+      const d = await withTransaction(async (client) => {
+        const result = await client.query(
+          `INSERT INTO chit_disputes
+             (chit_id, raised_by_entity_id, raised_by_display_name, target_entity_id, target_display_name,
+              scope, mode, answerable, parity_state, via, category, reason, evidence_snapshot, status, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'open',NOW())
+           RETURNING *`,
+          [chit_id, entity_id, display_name,
+           scope === 'targeted' ? target_entity_id : null,
+           scope === 'targeted' ? parity.target_display_name : null,
+           scope, parity.mode, parity.answerable, parity.parity_state, via,
+           category, reason, JSON.stringify(evidence)]
+        );
+        await client.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+          [chit_id, entity_id, entity_id, display_name,
+           `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0,80)}`]
+        );
+        return result.rows[0];
+      });
       res.json({
         dispute_id: d.dispute_id, category, reason, status:'open',
         scope, mode: d.mode, answerable: d.answerable, parity_state: d.parity_state,
