@@ -19,7 +19,7 @@ const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 async function resolveEntity(bridge_id) {
   const r = await query(
-    `SELECT identity_id, display_name, bridge_id, currency_code, gstn, is_verified, logo_url, address
+    `SELECT identity_id, display_name, bridge_id, currency_code, gstn, is_verified, logo_url, address, business_status
      FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active'`,
     [bridge_id]);
   return r.rows[0] || null;
@@ -47,7 +47,8 @@ router.get('/:bridge_id', async (req, res) => {
         bridge_id: entity.bridge_id, display_name: entity.display_name,
         currency_code: entity.currency_code,
         gstn: entity.gstn, is_verified: entity.is_verified,
-        logo_url: entity.logo_url, address: entity.address   // B3.9 — identity/trust
+        logo_url: entity.logo_url, address: entity.address,   // B3.9 — identity/trust
+        business_status: entity.business_status || 'open'      // B3.11 — open | closed | away
       },
       schema: sch.rows[0],
       fields: fields.rows,
@@ -64,6 +65,8 @@ router.post('/:bridge_id/order/start',
     try {
       const entity = await resolveEntity(req.params.bridge_id);
       if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+      if (entity.business_status === 'closed')
+        return res.status(403).json({ error: 'Shop closed', message: 'This shop is currently closed and not accepting orders.' });
       const phone  = cleanPhone(req.body.phone);
       const name   = sanitise(req.body.name || '') || phone;
       const handle = `${phone}@${entity.bridge_id}.cr`;          // .cr marker + entity scope
@@ -102,6 +105,8 @@ router.post('/:bridge_id/order/confirm',
     try {
       const entity = await resolveEntity(req.params.bridge_id);
       if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+      if (entity.business_status === 'closed')
+        return res.status(403).json({ error: 'Shop closed', message: 'This shop is currently closed and not accepting orders.' });
       const phone  = cleanPhone(req.body.phone);
       const handle = `${phone}@${entity.bridge_id}.cr`;
 

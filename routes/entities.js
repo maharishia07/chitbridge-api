@@ -248,7 +248,7 @@ router.get('/me', auth, async (req, res) => {
   try {
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, email, country, currency_code, created_at, last_active_at,
-              gstn, is_verified, logo_url, address
+              gstn, is_verified, logo_url, address, business_status
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
     );
@@ -265,15 +265,18 @@ router.get('/me', auth, async (req, res) => {
 router.patch('/profile', auth,
   [ body('gstn').optional().trim().isLength({ max: 15 }),
     body('logo_url').optional().trim(),
-    body('address').optional().trim() ],
+    body('address').optional().trim(),
+    body('business_status').optional().isIn(['open','closed','away']) ],
   validate,
   async (req, res) => {
     try {
       const id = req.identity.identity_id;
       await query(
-        `UPDATE identities SET gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address)
-         WHERE identity_id=$4`,
-        [req.body.gstn || null, req.body.logo_url || null, req.body.address || null, id]);
+        `UPDATE identities SET gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
+                business_status=COALESCE($4,business_status)
+         WHERE identity_id=$5`,
+        [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
+         req.body.business_status || null, id]);
       res.json({ message: 'Profile updated' });
     } catch (err) { res.status(500).json({ error: 'Profile update failed', message: err.message }); }
   });
