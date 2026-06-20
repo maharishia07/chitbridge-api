@@ -56,6 +56,7 @@ const actorsRouter      = require('./routes/actors');
 const relationshipsRouter = require('./routes/relationships');
 const catalogueRouter   = require('./routes/catalogue');
 const productsRouter    = require('./routes/products');
+const governanceRouter  = require('./routes/governance');
 
 app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
@@ -65,6 +66,7 @@ app.use('/api/actors',      actorsRouter);
 app.use('/api/relationships', relationshipsRouter);
 app.use('/api/catalogue',   catalogueRouter);
 app.use('/api/products',    productsRouter);
+app.use('/api/governance',  governanceRouter);
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
