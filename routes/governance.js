@@ -8,7 +8,7 @@ const { query, withTransaction } = require('../db');
 const auth = require('../middleware/auth');
 
 const { resolve, driftStatus } = require('../governance/resolver');
-const { mintEntity }           = require('../governance/mint');
+const { mintEntity, reattest } = require('../governance/mint');
 const { planFor, checkCount, checkRate, checkCapability } = require('../governance/entitlements');
 
 const genBridge = () => {
@@ -120,6 +120,35 @@ router.post('/entities', auth, async (req, res) => {
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'email already exists' });
     res.status(500).json({ error: 'governed create failed', message: err.message });
+  }
+});
+
+// ── POST /api/governance/entities/:id/reattest — re-stamp to active version (clears drift) ──
+// Forward-only: an entity's NEW chits then resolve under the active constitution;
+// chits already sent stay frozen at their original version (handled at send/freeze time).
+router.post('/entities/:id/reattest', auth, async (req, res) => {
+  if (req.identity.owner_scope !== 'platform')
+    return res.status(403).json({ error: 'Forbidden', message: 'Re-attest is platform-scope only' });
+  try {
+    const { rows } = await query(
+      `SELECT params_override FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`,
+      [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'entity not found or not governed' });
+
+    const active = await loadActiveConstitution();
+    if (!active) return res.status(503).json({ error: 'no active constitution' });
+
+    let ra;
+    try { ra = reattest(active, rows[0].params_override || {}); }
+    catch (e) { return res.status(422).json({ error: 'conformance', code: e.code, detail: e.message }); }
+
+    await query(
+      `UPDATE identities SET constitution_version = $1 WHERE identity_id = $2`,
+      [ra.constitution_version, req.params.id]);
+    res.json({ message: 'Re-attested', constitution_version: ra.constitution_version,
+               drift: false, effective: ra.effective, exceptions: ra.exceptions });
+  } catch (err) {
+    res.status(500).json({ error: 'reattest failed', message: err.message });
   }
 });
 
