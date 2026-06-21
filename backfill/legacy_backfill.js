@@ -24,6 +24,7 @@ const { v4: uuid } = require("uuid");
 const toLabel = (b) => String(b).toUpperCase().replace(/-/g, "_").replace(/[^A-Z0-9_]/g, "_");
 // 0000-00-00 / empty -> null
 const nz = (d) => (!d || String(d).startsWith("0000-00-00")) ? null : d;
+const num = (v) => (v === "" || v == null) ? null : v;   // empty string -> null for numeric columns
 const jb = (v) => (v == null || v === "") ? null : (typeof v === "string" ? v : JSON.stringify(v));
 const modeFromBusinessType = (bt) => bt === "Business" ? "b2c" : (bt === "Aggregator" || bt === "Circle") ? "b2b" : "b2b";
 const stateFromStatus = (s) => ({ Requested:"requested", Accepted:"active", Denied:"declined", Deleted:"disconnected" }[s] || "requested");
@@ -48,12 +49,8 @@ async function main() {
   }
 
   // ---- 1. reference / master ----
-  for (const [legacy, target, cols] of [
-    ["currency",  "cb_currency",  null],
-    ["city",      "cb_city",      null],
-    ["industry",  "cb_industry",  null],
-    ["building",  "cb_building",  null],
-  ]) await preload(target);
+  // cb_currency has no legacy_id (it's keyed by `code` + on-conflict); the others carry legacy_id.
+  for (const target of ["cb_city", "cb_industry", "cb_building"]) await preload(target);
 
   for (const r of await q("select * from currency")) {
     if (map("cb_currency").has(String(r.id))) continue;
@@ -117,9 +114,9 @@ async function main() {
       [u.bridge_id, name, modeFromBusinessType(u.business_type), toLabel(u.bridge_id),
        (u.status||"active").toLowerCase().startsWith("act") ? "active" : "active", u.id, u.username, u.password,
        u.account_type, u.business_type, u.firstname, u.lastname, u.contact_no, u.email_id, u.company_name,
-       u.company_detail_short, u.company_detail_long, u.company_image, u.profileimage, u.location, u.latitude, u.longitude,
+       u.company_detail_short, u.company_detail_long, u.company_image, u.profileimage, u.location, num(u.latitude), num(u.longitude),
        u.geohash, u.city, u.state, u.country, u.currency_code, map("cb_currency").get(String(u.currency_code_id))||null,
-       u.time_zone_id||0, u.time_zone_offset||0, u.setting_row_per_page,
+       num(u.time_zone_id)||0, num(u.time_zone_offset)||0, num(u.setting_row_per_page),
        !!u.external_connection, u.newsletter!==0, u.terms_and_condition!==0, u.business_status, !!u.sms_status,
        jb(u.field_json_data), !!u.login_status, nz(u.last_activity), nz(u.created_date)]);
     map("cb_entity").set(String(u.id), row.id);
@@ -144,8 +141,7 @@ async function main() {
   // NOTE: ltree paths above seed every entity as its own root. Re-deriving the live hierarchy from
   // active edges (reparent down the tree) is a deliberate follow-up — legacy was a flat peer graph.
 
-  // ---- 3b. employees / contacts / suppliers / devices ----
-  await preload("cb_entity_employee");
+  // ---- 3b. employees / contacts / suppliers / devices (no legacy_id; dedup via unique constraints) ----
   for (const r of await q("select * from users_employee")) {
     const owner = eid(r.owner_bridge_id), emp = eid(r.employee_bridge_id);
     if (!owner || !emp) continue;
@@ -233,7 +229,7 @@ async function main() {
       [id, h.chit_hash_id, originator, parent, eid(h.from_bridge_id), eid(h.to_bridge_id), eid(h.for_bridge_id),
        eid(h.info_bridge_id), eid(h.assign_to_bridge_id), eid(h.assign_by_bridge_id),
        h.transaction_status || "Active", h.subject, h.purpose, h.contact_number, h.for_non_bridge_name,
-       h.bridge_status, h.physical_status, h.read_status, h.priority, h.location, h.latitude, h.longitude, h.geohash,
+       h.bridge_status, h.physical_status, h.read_status, h.priority, h.location, num(h.latitude), num(h.longitude), h.geohash,
        !!h.template_flag, h.template_ver_no||0, h.folder_location, h.header_note, h.footer_note,
        jb(h.task_comment), jb(h.task_flag), h.signature, h.currency_code, map("cb_currency").get(String(h.currency_code_id))||null,
        h.chit_item_count||0, h.total_chit_item_value||0, nz(h.expected_delivery_time), nz(h.estimated_delivery_time),
@@ -251,8 +247,8 @@ async function main() {
       `insert into cb_chit_item(chit_id,particulars,particulars_code,qty,price,total,
          reply_particulars,reply_qty,reply_price,reply_total,status,previous_status)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,coalesce($11,'Active'),coalesce($12,'Active'))`,
-      [cid, d.particulars, d.particulars_code, d.quantity||0, d.price||0, d.total||0,
-       d.reply_particulars, d.reply_quantity, d.reply_price, d.reply_total, d.current_status, d.previous_status]);
+      [cid, d.particulars, d.particulars_code, num(d.quantity)||0, num(d.price)||0, num(d.total)||0,
+       d.reply_particulars, num(d.reply_quantity), num(d.reply_price), num(d.reply_total), d.current_status, d.previous_status]);
   }
 
   // ---- 7. logs / tasks / txn history / CRM ----
