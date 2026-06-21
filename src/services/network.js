@@ -106,8 +106,8 @@ async function disconnect({ edgeId, settle = false }) {
 async function subtree(entityId) {
   const e = await getById(entityId); if (!e) throw err(404, "not found", "NOT_FOUND");
   const { rows } = await pool.query(
-    `select id, bridge_id, name, path::text, nlevel(path)-nlevel($2::ltree) as depth
-     from cb_entity where path <@ ($2::ltree) order by path`, [entityId, e.path]);
+    `select id, bridge_id, name, path::text, nlevel(path)-nlevel($1::ltree) as depth
+     from cb_entity where path <@ ($1::ltree) order by path`, [e.path]);
   return rows;
 }
 async function connections(entityId) {
