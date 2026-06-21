@@ -5,6 +5,6 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 app.use("/api/network", require("./routes/network"));
-// app.use("/api/network", require("./routes/chit"));      // <- add with NET-02
+app.use("/api/network", require("./routes/chit"));         // NET-02
 // app.use("/api/network", require("./routes/catalogue")); // <- add with NET-03
 module.exports = app;   // export BEFORE any app.listen()

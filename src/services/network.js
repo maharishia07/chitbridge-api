@@ -1,5 +1,6 @@
 const { pool, withTx } = require("../db");
 const bridge = require("../lib/bridgeId");
+const chit = require("./chit");   // NET-02 §F: real in-flight check
 const err = (status, message, code) => Object.assign(new Error(message), { status, code });
 async function register({ name, mode = "b2b", ownerScope = "entity", claimed = true, appRef = null }) {
   if (!name) throw err(400, "name required", "NAME_REQUIRED");
@@ -90,8 +91,14 @@ async function disconnect({ edgeId, settle = false }) {
     const { rows: [edge] } = await c.query(`select * from cb_edge where id=$1 for update`, [edgeId]);
     if (!edge) throw err(404, "edge not found", "EDGE_NOT_FOUND");
     if (!["active", "suspended"].includes(edge.state)) throw err(409, `cannot disconnect from ${edge.state}`, "BAD_STATE");
-    if (edge.in_flight && !settle) throw err(409, "in-flight chit on this edge — settle first", "IN_FLIGHT");
-    if (edge.in_flight && settle) await c.query(`update cb_edge set in_flight=false where id=$1`, [edgeId]); // TODO: real compensation saga
+    // NET-02 §F: truth is the open-chit query; in_flight flag kept as an optional cache (so NET-01 T6 still blocks).
+    const open = (await chit.edgeHasOpenChit(edge.id, c)) || edge.in_flight;
+    if (open && !settle) throw err(409, "open chit on this edge — settle first", "IN_FLIGHT");
+    if (open && settle) {   // compensation: withdraw open chits on this edge, clear the cache flag
+      await c.query(`update cb_chit set txn_status='Withdrawn', updated_at=now()
+                     where edge_id=$1 and txn_status in ('Active','Accepted','InProgress','Finished','Hold')`, [edge.id]);
+      await c.query(`update cb_edge set in_flight=false where id=$1`, [edgeId]);
+    }
     const { rows: [child] } = await c.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
     // detach: re-root the child subtree to its own root
     await c.query(
