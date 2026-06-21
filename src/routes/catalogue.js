@@ -1,0 +1,10 @@
+const router = require("express").Router();
+const cat = require("../services/catalogue");
+const h = (fn) => async (req, res) => { try { res.json(await fn(req)); } catch (e) { res.status(e.status||500).json({ error: e.message, code: e.code||"ERR" }); } };
+router.get ("/entities/:id/catalogue",            h((req) => cat.listItems({ entityId: req.params.id, tier: req.query.tier || null })));
+router.post("/entities/:id/catalogue",            h((req) => cat.createItem({ ...req.body, entityId: req.params.id })));
+router.get ("/entities/:id/catalogue/categories", h((req) => cat.listCategories(req.params.id)));
+router.post("/entities/:id/catalogue/categories", h((req) => cat.createCategory({ ...req.body, entityId: req.params.id })));
+router.patch ("/catalogue/:itemId",               h((req) => cat.updateItem(req.params.itemId, req.body)));
+router.delete("/catalogue/:itemId",               h((req) => cat.deleteItem(req.params.itemId)));
+module.exports = router;
