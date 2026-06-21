@@ -10,6 +10,7 @@ function mint() {
 }
 function isValid(id) {
   if (typeof id !== "string") return false;
+  if (/^[0-9a-fA-F]{32}$/.test(id)) return true;   // recon delta: legacy 32-hex MD5 ids stay valid in transition
   const raw = id.toUpperCase().replace(/^CB-/, "").replace(/-/g, "");
   if (!/^[0-9A-HJKMNP-TV-Z]{12}$/.test(raw)) return false;
   let sum = 0; for (const ch of raw.slice(0,11)) sum += ALPH.indexOf(ch);

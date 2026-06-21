@@ -2,8 +2,12 @@ const { pool, withTx } = require("../db");
 const bridge = require("../lib/bridgeId");
 const chit = require("./chit");   // NET-02 §F: real in-flight check
 const err = (status, message, code) => Object.assign(new Error(message), { status, code });
-async function register({ name, mode = "b2b", ownerScope = "entity", claimed = true, appRef = null }) {
+async function register({ name, mode, businessType, ownerScope = "entity", claimed = true, appRef = null }) {
   if (!name) throw err(400, "name required", "NAME_REQUIRED");
+  // recon delta: derive mode from business_type when mode not explicitly given.
+  // Aggregator/Circle = network host/group (b2b); Business = customer-facing leaf (b2c). [mapping to confirm]
+  if (!mode) mode = (businessType === "Business") ? "b2c"
+                  : (businessType === "Aggregator" || businessType === "Circle") ? "b2b" : "b2b";
   for (let t = 0; t < 5; t++) {
     const bid = bridge.mint(), label = bridge.toLabel(bid);
     try {
