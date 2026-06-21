@@ -68,6 +68,12 @@ app.use('/api/catalogue',   catalogueRouter);
 app.use('/api/products',    productsRouter);
 app.use('/api/governance',  governanceRouter);
 
+// ── NET (feat/net-full): network + chit + catalogue on /api/network ──
+// (jest uses src/app.js; this exposes the same routers on the live server.js entry)
+app.use('/api/network', require('./src/routes/network'));
+app.use('/api/network', require('./src/routes/chit'));
+app.use('/api/network', require('./src/routes/catalogue'));
+
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
 
