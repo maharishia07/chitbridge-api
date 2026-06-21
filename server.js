@@ -74,6 +74,9 @@ app.use('/api/network', require('./src/routes/network'));
 app.use('/api/network', require('./src/routes/chit'));
 app.use('/api/network', require('./src/routes/catalogue'));
 
+// ── Public showcase API for the /tour page (SimulatorPage) ───
+app.use('/api/simulator', require('./routes/simulator'));
+
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
 
