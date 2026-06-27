@@ -1188,6 +1188,17 @@ router.put('/:chit_id/priority-flag',
         [flag, chit_id]
       );
 
+      // Trail parity with internal urgent: log who/when as an action message.
+      // External thread (visibility NULL) — the customer flag is cross-edge, so both parties see the trail.
+      await query(
+        `INSERT INTO chit_messages
+           (chit_id, sender_entity_id, sender_display_name,
+            thread_type, visibility_entity_id, message_text, msg_type, created_at)
+         VALUES ($1,$2,$3,'external',NULL,$4,'action',NOW())`,
+        [chit_id, entity_id, req.identity.display_name,
+         flag ? 'Customer marked this chit as priority' : 'Customer cleared priority']
+      );
+
       res.json({ message: 'Customer priority set', chit_id, customer_priority: flag, locked: true });
     } catch (err) {
       console.error('Customer flag error:', err.message);
