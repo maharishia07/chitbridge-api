@@ -247,7 +247,7 @@ router.get('/search', auth, async (req, res) => {
 router.get('/me', auth, async (req, res) => {
   try {
     const result = await query(
-      `SELECT identity_id, bridge_id, display_name, email, country, currency_code, created_at, last_active_at,
+      `SELECT identity_id, bridge_id, display_name, email, user_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
@@ -261,24 +261,55 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-// PATCH /entities/profile — set shop GSTN / logo / address (B3.9)
+// GET /entities/lookup?user_id=<x> — resolve an entity by its external user_id (ATH-114).
+// The resolution primitive for adding suppliers / connecting by user_id instead of bridge_id.
+router.get('/lookup', auth, async (req, res) => {
+  try {
+    const uid = String(req.query.user_id || '').trim();
+    if (!uid) return res.status(400).json({ error: 'Missing user_id', message: 'Provide ?user_id=' });
+    const result = await query(
+      `SELECT identity_id, bridge_id, display_name, user_id
+         FROM identities
+        WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`,
+      [uid]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No entity with that user_id' });
+    res.json({ entity: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Lookup failed', message: err.message });
+  }
+});
+
+// PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
 router.patch('/profile', auth,
   [ body('gstn').optional().trim().isLength({ max: 15 }),
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
-    body('business_status').optional().isIn(['open','closed','away']) ],
+    body('business_status').optional().isIn(['open','closed','away']),
+    body('user_id').optional().trim().custom(v => {
+      if (v === '') return true;
+      const ok = v.includes('@') ? /\S+@\S+\.\S+/.test(v) : v.length >= 8;
+      if (!ok) throw new Error('user_id must be 8+ characters or a valid email');
+      return true;
+    }) ],
   validate,
   async (req, res) => {
     try {
       const id = req.identity.identity_id;
+      // user_id is unique (idx_identities_user_id is case-insensitive); store as given, dedupe by LOWER().
+      const userId = (req.body.user_id !== undefined && String(req.body.user_id).trim() !== '')
+        ? String(req.body.user_id).trim() : null;
       await query(
         `UPDATE identities SET gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
-                business_status=COALESCE($4,business_status)
-         WHERE identity_id=$5`,
+                business_status=COALESCE($4,business_status), user_id=COALESCE($5,user_id)
+         WHERE identity_id=$6`,
         [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
-         req.body.business_status || null, id]);
+         req.body.business_status || null, userId, id]);
       res.json({ message: 'Profile updated' });
-    } catch (err) { res.status(500).json({ error: 'Profile update failed', message: err.message }); }
+    } catch (err) {
+      if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });
+      res.status(500).json({ error: 'Profile update failed', message: err.message });
+    }
   });
 
 // PATCH /entities/:id/erase — mark an identity erased (tombstone). Platform-scope only.
