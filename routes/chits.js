@@ -1081,13 +1081,14 @@ router.get('/disputes/queue', auth, async (req, res) => {
 
   try {
     const result = await query(
-      `SELECT cd.*, ch.auto_subject, ch.purpose,
-              se.display_name AS sender_display_name
+      `SELECT cd.*,
+              (SELECT ch.auto_subject FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS auto_subject,
+              (SELECT ch.purpose      FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS purpose,
+              (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
+                WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
        FROM chit_disputes cd
-       JOIN chit_header ch ON ch.chit_id = cd.chit_id AND ch.entity_id = $1
-       JOIN chit_status cs ON cs.chit_id = cd.chit_id AND cs.entity_id = $1
-       LEFT JOIN identities se ON se.identity_id = ch.sender_entity_id
        WHERE cd.status = 'open'
+         AND EXISTS (SELECT 1 FROM chit_status cs WHERE cs.chit_id=cd.chit_id AND cs.entity_id=$1)
          AND (cd.scope='chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1)
        ORDER BY cd.created_at ASC`,
       [entity_id]
