@@ -68,10 +68,12 @@ app.use('/api/catalogue',   catalogueRouter);
 app.use('/api/products',    productsRouter);
 app.use('/api/governance',  governanceRouter);
 
-// ── NET (feat/net-full): network + chit + catalogue on /api/network ──
+// ── NET (feat/net-full): network + catalogue on /api/network ──
+// cb_chit chit-loop RETIRED in consolidation: all chit writes live on /api/chits (chit_header).
+// The cb_chit TABLE is kept dormant; src/services/chit still backs network.js's
+// disconnect settle-guard (edgeHasOpenChit), so the service stays — only the route is gone.
 // (jest uses src/app.js; this exposes the same routers on the live server.js entry)
 app.use('/api/network', require('./src/routes/network'));
-app.use('/api/network', require('./src/routes/chit'));
 app.use('/api/network', require('./src/routes/catalogue'));
 
 // ── Public showcase API for the /tour page (SimulatorPage) ───
