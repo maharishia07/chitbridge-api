@@ -11,6 +11,7 @@ To restore a branch to it: `git reset --hard <tag>` then `git push --force-with-
 | `baseline-0-pre-consolidation` | `75f653c` | 2026-06-27 | Pre-consolidation live state — cb_chit loop still mounted, original `/send` | Rollback before the consolidation work |
 | `baseline-1-compose-fanout` | `5249f20` | 2026-06-27 | cb_chit chit-loop **retired**; Compose **To/CC/For fan-out** on `chit_header.role`; `fp01` + `user_id` + `role` migrations | **Verified live** on dev (smoke: `fan_out{to,cc,for}`, To=pending / CC=delivered) |
 | `baseline-2-priority` | `9e7efe2` | 2026-06-27 | fp01 priority endpoints: internal `PUT /:id/priority` (urgent→action msg) + customer `PUT /:id/priority-flag` (cross-edge write-once, action-msg trail) | `feat/priority` merged |
+| `baseline-3-user-id` | `e0d67f8` | 2026-06-27 | external `user_id` (ATH-114): `GET /me` returns it · `PATCH /profile` sets it (409 case-insensitive unique) · `GET /lookup?user_id=` resolves | `feat/user-id` merged |
 
 ## chitbridge-web
 
