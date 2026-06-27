@@ -79,6 +79,9 @@ app.use('/api/network', require('./src/routes/catalogue'));
 // ── Public showcase API for the /tour page (SimulatorPage) ───
 app.use('/api/simulator', require('./routes/simulator'));
 
+// ── Derived notification feed (from state_log; no notifications table) ───
+app.use('/api/notifications', require('./routes/notifications'));
+
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
 

@@ -320,6 +320,65 @@ router.post('/send',
 
 // ─── GET /chits/inbox ─────────────────────────────────────────
 // Lightweight inbox — my chit_status only — fast
+// GET /chits/sent — chits I sent (my sender copy), newest first, paginated.
+// Mounted BEFORE /:chit_id so "sent" is never parsed as a chit_id.
+router.get('/sent', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const page   = parseInt(req.query.page || 1);
+    const limit  = parseInt(req.query.limit || 20);
+    const offset = (page - 1) * limit;
+
+    const countResult = await query(
+      `SELECT COUNT(*) FROM chit_header ch
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
+        WHERE ch.entity_id = $1 AND ch.sender_entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`,
+      [entity_id]
+    );
+
+    const result = await query(
+      `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
+              ch.summary_json, ch.created_at, ch.role,
+              cs.current_status, cs.priority_flag, cs.customer_priority
+         FROM chit_header ch
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
+        WHERE ch.entity_id = $1 AND ch.sender_entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL
+        ORDER BY ch.created_at DESC
+        LIMIT $2 OFFSET $3`,
+      [entity_id, limit, offset]
+    );
+
+    res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
+  } catch (err) {
+    console.error('Sent list error:', err.message);
+    res.status(500).json({ error: 'Failed to get sent items', message: err.message });
+  }
+});
+
+// GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
+// No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
+router.get('/rollup', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const groupBy = (req.query.group_by === 'state') ? 'state' : 'counterparty';
+    const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name';
+    const result = await query(
+      `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
+              COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
+         FROM chit_status cs
+         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id
+        WHERE cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL
+        GROUP BY ${keyExpr}
+        ORDER BY chits DESC`,
+      [entity_id]
+    );
+    res.json({ group_by: groupBy, groups: result.rows });
+  } catch (err) {
+    console.error('Rollup error:', err.message);
+    res.status(500).json({ error: 'Rollup failed', message: err.message });
+  }
+});
+
 router.get('/inbox', auth, async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
@@ -329,7 +388,7 @@ router.get('/inbox', auth, async (req, res) => {
     const offset = (page - 1) * limit;
     const status_filter = req.query.status || null;
 
-    let whereClause = `cs.entity_id = $1 AND cs.deleted_at IS NULL`;
+    let whereClause = `cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
     let paramCount = 1;
 
@@ -1206,5 +1265,126 @@ router.put('/:chit_id/priority-flag',
     }
   }
 );
+
+// ─────────────────────────────────────────────────────────────
+// feat/chit-actions — archive (reversible), void (terminal), assign-bulk
+// ─────────────────────────────────────────────────────────────
+
+// POST /chits/:chit_id/archive — hide MY copy from inbox/sent (reversible; never deletes).
+router.post('/:chit_id/archive', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const r = await query(
+      `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
+        WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL AND archived_at IS NULL
+        RETURNING chit_id`,
+      [req.params.chit_id, entity_id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
+    res.json({ message: 'Chit archived', chit_id: req.params.chit_id });
+  } catch (err) { res.status(500).json({ error: 'Archive failed', message: err.message }); }
+});
+
+// POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
+router.post('/:chit_id/unarchive', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const r = await query(
+      `UPDATE chit_status SET archived_at = NULL, updated_at = NOW()
+        WHERE chit_id = $1 AND entity_id = $2 AND archived_at IS NOT NULL
+        RETURNING chit_id`,
+      [req.params.chit_id, entity_id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or not archived' });
+    res.json({ message: 'Chit restored', chit_id: req.params.chit_id });
+  } catch (err) { res.status(500).json({ error: 'Unarchive failed', message: err.message }); }
+});
+
+// PUT /chits/:chit_id/void — recorded hard-cancel by the SENDER; works after acceptance.
+// Terminal 'void' status on ALL participant rows (cross-edge); reason required + logged;
+// chit stays visible as voided, never deleted; the seal is untouched.
+router.put('/:chit_id/void',
+  [ body('reason').trim().notEmpty().withMessage('A reason is required to void') ],
+  validate, auth,
+  async (req, res) => {
+    try {
+      const chit_id   = req.params.chit_id;
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const reason    = sanitise(req.body.reason);
+
+      const own = await query(
+        `SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]);
+      if (own.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+      if (own.rows[0].sender_entity_id !== entity_id) {
+        return res.status(403).json({ error: 'Forbidden', message: 'Only the sender can void a chit' });
+      }
+
+      // Cross-edge terminal void on every participant row (never delete).
+      await query(`UPDATE chit_status SET current_status = 'void', updated_at = NOW() WHERE chit_id = $1`, [chit_id]);
+      // Record who/when/why as an external action message (both parties see it).
+      await query(
+        `INSERT INTO chit_messages
+           (chit_id, sender_entity_id, sender_display_name,
+            thread_type, visibility_entity_id, message_text, msg_type, created_at)
+         VALUES ($1,$2,$3,'external',NULL,$4,'action',NOW())`,
+        [chit_id, entity_id, req.identity.display_name, `Chit VOIDED: ${reason}`]);
+      // State-log the void for the trail (one row per participant).
+      await query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
+         SELECT $1, entity_id, 'voided', $2, $3, 'void', $4 FROM chit_status WHERE chit_id = $1`,
+        [chit_id, req.identity.identity_id, req.identity.display_name, `Voided: ${reason}`]);
+
+      res.json({ message: 'Chit voided', chit_id, status: 'void' });
+    } catch (err) {
+      console.error('Void error:', err.message);
+      res.status(500).json({ error: 'Void failed', message: err.message });
+    }
+  });
+
+// POST /chits/assign-bulk — push-assign many chits to one actor (mirrors the single push).
+router.post('/assign-bulk',
+  [ body('chit_ids').isArray({ min: 1 }).withMessage('chit_ids[] required'),
+    body('target_actor_id').isUUID().withMessage('target_actor_id required') ],
+  validate, auth,
+  async (req, res) => {
+    try {
+      const entity_id      = req.identity.parent_entity_id || req.identity.identity_id;
+      const action_by_id   = req.identity.identity_id;
+      const action_by_name = req.identity.display_name;
+      const { chit_ids, target_actor_id } = req.body;
+
+      const target = await query(
+        `SELECT identity_id, display_name FROM identities
+          WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'`,
+        [target_actor_id, entity_id]);
+      if (target.rows.length === 0) return res.status(400).json({ error: 'Invalid target', message: 'Target actor not found or not active' });
+      const t = target.rows[0];
+
+      const assigned = []; const skipped = [];
+      for (const chit_id of chit_ids) {
+        const cs = await query(
+          `SELECT assigned_to_actor_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`,
+          [chit_id, entity_id]);
+        if (cs.rows.length === 0) { skipped.push({ chit_id, reason: 'not found' }); continue; }
+        if (cs.rows[0].assigned_to_actor_id) {
+          await query(`UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1) WHERE identity_id = $1`, [cs.rows[0].assigned_to_actor_id]);
+        }
+        await query(
+          `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
+                  assigned_at = NOW(), assignment_type = 'push', current_status = 'pending', updated_at = NOW()
+            WHERE chit_id = $3 AND entity_id = $4`,
+          [t.identity_id, t.display_name, chit_id, entity_id]);
+        await query(`UPDATE identities SET current_task_count = current_task_count + 1 WHERE identity_id = $1`, [t.identity_id]);
+        await query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM chit_status WHERE chit_id = $1`,
+          [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`]);
+        assigned.push(chit_id);
+      }
+      res.json({ message: 'Bulk assign complete', assigned_to: t.display_name, assigned: assigned.length, skipped });
+    } catch (err) {
+      console.error('Bulk assign error:', err.message);
+      res.status(500).json({ error: 'Bulk assign failed', message: err.message });
+    }
+  });
 
 module.exports = router;
