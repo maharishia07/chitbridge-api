@@ -105,25 +105,29 @@ router.post('/register',
           console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
       } else {
-        // Display name login — look up entity by name
+        // Login by user_id (ATH-114) OR display_name — entity must already exist (login-only path).
+        // A user_id match wins over a display_name match (ORDER BY ... DESC + LIMIT 1).
         const found = await query(
-          `SELECT identity_id, bridge_id, email, display_name FROM identities
-           WHERE LOWER(display_name) = LOWER($1)
+          `SELECT identity_id, bridge_id, email, display_name, user_id FROM identities
+           WHERE (LOWER(user_id) = LOWER($1) OR LOWER(display_name) = LOWER($1))
            AND identity_type = 'entity'
-           AND status = 'active'`,
+           AND status = 'active'
+           ORDER BY (LOWER(user_id) = LOWER($1)) DESC
+           LIMIT 1`,
           [input]
         );
         if (found.rows.length === 0) {
           return res.status(400).json({
             error: 'Not found',
-            message: 'Entity not found — check your name or use your email address'
+            message: 'No account for that user ID or name — check it, or use your email address'
           });
         }
         identity_id   = found.rows[0].identity_id;
         bridge_id     = found.rows[0].bridge_id;
         email         = found.rows[0].email;
         display_name  = found.rows[0].display_name;
-        console.log(`Display name login: ${display_name} → ${email}`);
+        const _loginBy = (found.rows[0].user_id && found.rows[0].user_id.toLowerCase() === input.toLowerCase()) ? 'user_id' : 'display_name';
+        console.log(`Login by ${_loginBy}: ${display_name} -> ${email}`);
       }
 
       const otp = generateOTP();
