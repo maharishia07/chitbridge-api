@@ -62,6 +62,7 @@ router.post('/send',
       return true;
     }),
     body('purpose')
+      .optional()
       .trim()
       .isIn(['order','invoice','receipt','inquiry','delivery_note','general'])
       .withMessage('Invalid purpose'),
@@ -76,10 +77,12 @@ router.post('/send',
       const sender_id = req.identity.identity_id;
       const sender_bridge_id = req.identity.bridge_id;
       const sender_display_name = req.identity.display_name;
-      const purpose = req.body.purpose;
-      const manual_subject = sanitise(req.body.manual_subject || '');
+      // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
+      const purpose = req.body.purpose || 'order';
+      const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
       const line_items = req.body.line_items || [];
-      const business_json = req.body.business_json || null;
+      const business_json = req.body.business_json
+        || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
       const is_draft = !!req.body.is_draft;
 
       // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
