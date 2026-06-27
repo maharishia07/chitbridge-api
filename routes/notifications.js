@@ -13,14 +13,15 @@ router.get('/', auth, async (req, res) => {
 
     const result = await query(
       `SELECT sl.chit_id, sl.action, sl.action_by_display_name,
-              sl.new_status, sl.detail, sl.created_at,
+              sl.new_status, sl.detail, sl.created_at, cs.direction,
               ch.auto_subject, ch.manual_subject
          FROM state_log sl
          JOIN chit_status cs
            ON cs.chit_id = sl.chit_id AND cs.entity_id = $1 AND cs.deleted_at IS NULL
          LEFT JOIN chit_header ch
-           ON ch.chit_id = sl.chit_id AND ch.entity_id = $1
-        WHERE sl.action_by_identity_id <> $1
+           ON ch.chit_id = sl.chit_id AND ch.entity_id = $1 AND ch.direction = cs.direction
+        WHERE (sl.action_by_identity_id <> $1
+               OR sl.action IN ('dispute_raised','dispute_resolved','voided'))
         ORDER BY sl.created_at DESC
         LIMIT $2`,
       [entity_id, limit]
