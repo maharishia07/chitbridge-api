@@ -1101,4 +1101,110 @@ router.delete('/:chit_id', auth, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────
+// Slice 2 — fp01 priority endpoints (internal queue + customer cross-edge)
+// ─────────────────────────────────────────────────────────────
+
+// PUT /chits/:chit_id/priority — INTERNAL queue priority. Never crosses the edge.
+// urgent requires a reason, logged as an internal action message.
+router.put('/:chit_id/priority',
+  [
+    body('priority').trim().isIn(['normal','high','urgent']).withMessage('priority must be normal|high|urgent'),
+    body('reason').optional().trim().isLength({ max: 500 }),
+  ],
+  validate,
+  auth,
+  async (req, res) => {
+    try {
+      const chit_id   = req.params.chit_id;
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const priority  = req.body.priority;
+      const reason    = sanitise(req.body.reason || '');
+
+      if (priority === 'urgent' && !reason) {
+        return res.status(400).json({ error: 'Reason required', message: 'An urgent priority needs a reason' });
+      }
+
+      const access = await query(
+        `SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+      if (access.rows.length === 0) {
+        return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
+      }
+
+      await query(
+        `UPDATE chit_status SET priority_flag = $1, updated_at = NOW()
+         WHERE chit_id = $2 AND entity_id = $3`,
+        [priority, chit_id, entity_id]
+      );
+
+      // urgent → record an internal action message (only this entity's internal thread)
+      if (priority === 'urgent') {
+        await query(
+          `INSERT INTO chit_messages
+             (chit_id, sender_entity_id, sender_display_name,
+              thread_type, visibility_entity_id, message_text, msg_type, created_at)
+           VALUES ($1,$2,$3,'internal',$2,$4,'action',NOW())`,
+          [chit_id, entity_id, req.identity.display_name, `Marked URGENT: ${reason}`]
+        );
+      }
+
+      res.json({ message: 'Priority updated', chit_id, priority_flag: priority });
+    } catch (err) {
+      console.error('Set priority error:', err.message);
+      res.status(500).json({ error: 'Priority update failed', message: err.message });
+    }
+  }
+);
+
+// PUT /chits/:chit_id/priority-flag — CUSTOMER cross-edge priority, WRITE-ONCE.
+// DESIGN (review): set + lock on EVERY participant row so the counterparty sees it;
+// reject once customer_priority_locked is true.
+router.put('/:chit_id/priority-flag',
+  [ body('priority').isBoolean().withMessage('priority must be true or false') ],
+  validate,
+  auth,
+  async (req, res) => {
+    try {
+      const chit_id   = req.params.chit_id;
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const flag      = req.body.priority === true || req.body.priority === 'true';
+
+      const access = await query(
+        `SELECT customer_priority_locked FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+      if (access.rows.length === 0) {
+        return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
+      }
+      if (access.rows[0].customer_priority_locked) {
+        return res.status(409).json({ error: 'Locked', message: 'Customer priority is write-once and already set' });
+      }
+
+      await query(
+        `UPDATE chit_status SET customer_priority = $1, customer_priority_locked = true, updated_at = NOW()
+         WHERE chit_id = $2`,
+        [flag, chit_id]
+      );
+
+      // Trail parity with internal urgent: log who/when as an action message.
+      // External thread (visibility NULL) — the customer flag is cross-edge, so both parties see the trail.
+      await query(
+        `INSERT INTO chit_messages
+           (chit_id, sender_entity_id, sender_display_name,
+            thread_type, visibility_entity_id, message_text, msg_type, created_at)
+         VALUES ($1,$2,$3,'external',NULL,$4,'action',NOW())`,
+        [chit_id, entity_id, req.identity.display_name,
+         flag ? 'Customer marked this chit as priority' : 'Customer cleared priority']
+      );
+
+      res.json({ message: 'Customer priority set', chit_id, customer_priority: flag, locked: true });
+    } catch (err) {
+      console.error('Customer flag error:', err.message);
+      res.status(500).json({ error: 'Customer flag failed', message: err.message });
+    }
+  }
+);
+
 module.exports = router;
