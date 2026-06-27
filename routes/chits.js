@@ -112,6 +112,9 @@ router.post('/send',
       const receiverDetails = [];
       const seen = new Set();
       for (const r of rawList) {
+        // Self recipient (the "+ Self" own-record path): the sender already holds the origin
+        // copy, so skip the lookup rather than 404 — this is how a self-chit is authored.
+        if (r.self === true || ['self','me'].includes(String(r.name || '').trim().toLowerCase())) continue;
         let rec;
         if (r.entity_id) {
           rec = await query(
@@ -136,10 +139,8 @@ router.post('/send',
         }
 
         const rid = rec.rows[0].identity_id;
-        // Cannot send to self (the sender already holds the origin copy)
-        if (rid === sender_id) {
-          return res.status(400).json({ error: 'Invalid recipient', message: 'Cannot send to yourself' });
-        }
+        // Resolved to self -> skip (don't error); the sender already holds the origin copy.
+        if (rid === sender_id) continue;
         if (seen.has(rid)) continue;   // de-dupe: one chit_header row per entity (composite PK)
         seen.add(rid);
 
