@@ -24,11 +24,12 @@ Apply in this order:
 | 14 | `migrations/net02_chit.sql` | cb_chit / cb_chit_item (**DORMANT**, Q3 — table kept, chit-loop ROUTE retired) |
 | 15 | `migrations/net03_full_schema.sql` | NET full-schema enhancement |
 | 16 | `migrations/sim01_simulator.sql` | /tour showcase tables |
-| 17 | `fp01` | priority + typed messages + entity message_type_mode — **APPLIED to prod 2026-06-25** |
-| 18 | `migration_chit_header_role.sql` | per-copy role on chit_header (Compose To/CC/For fan-out) |
+| 17 | `migration_fp01.sql` | priority (customer_priority/locked + priority_flag) + typed messages (msg_type) + identities.message_type_mode — **applied to prod 2026-06-25; reconstructed from spine v2.34** |
+| 18 | `migration_user_id_identities.sql` | ATH-114 external `identities.user_id` (unique, ci) for login/lookup/connect |
+| 19 | `migration_chit_header_role.sql` | per-copy role on chit_header (Compose To/CC/For fan-out) |
 
 ## Notes / open items
-- **fp01 (#17):** already applied to the legacy production Supabase, but the **canonical SQL file is NOT in this repo** (or anywhere on the build machine). The `files20/migrations-fixed/001_002_003` set is the **WRONG** `cb_*`-messaging version — do NOT use it. The real fp01 SQL must be sourced and dropped in here before this chain is reproducible from scratch. **Flagged for Athi.**
+- **fp01 (#17):** already applied to legacy prod Supabase 2026-06-25. The canonical original file was not in the repo, so `migration_fp01.sql` here is a **faithful reconstruction from spine v2.34's documented columns** (idempotent `IF NOT EXISTS`, so re-running against prod is a safe no-op). The `files20/migrations-fixed/001_002_003` set is the **WRONG** `cb_*`-messaging version — do NOT use it. If the original surfaces from Supabase migration history, diff it against this reconstruction.
 - **cb_chit (#14) is dormant:** the table stays (Q3, reversible); only the `/api/network` chit-loop *route* was retired. `src/services/chit.js` is retained because `src/services/network.js` uses `edgeHasOpenChit` for the disconnect settle-guard.
 - All `migration_*.sql` are written idempotent (`IF NOT EXISTS` / safe re-run).
 - Physical collapse of files into a single `migrations/NNN_*.sql` sequence is deferred to avoid churn; this manifest is the ordered source of truth meanwhile.
