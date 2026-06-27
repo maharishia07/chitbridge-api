@@ -15,6 +15,7 @@ To restore a branch to it: `git reset --hard <tag>` then `git push --force-with-
 | `baseline-4-chit-actions` | `c50d283` | 2026-06-27 | `/sent` · `/rollup` (counterparty\|state) · `/archive`+`/unarchive` · `/void` (sender terminal, cross-edge) · `/assign-bulk` · `/api/notifications` (derived) | `feat/chit-actions` merged; needs `archived_at` migration |
 | `baseline-5-compose-fix` | `cb7bdd8` | 2026-06-27 | compose `/send` works without `purpose` (defaults `order`; accepts panel `subject`/`schema_values`) | `feat/compose-fix` merged; verified live |
 | `baseline-6-self-chit` | `cd37703` | 2026-06-27 | self-chit send works — skip self recipients instead of 404/400 | `feat/self-chit-send` merged; verified live |
+| `baseline-7-two-copy` | `7406866` | 2026-06-27 | **two-copy principle**: every chit = `sent`(Order)+`received`(Task) rows; self-chit gets both, independent statuses; Task/Order filter by direction; `self_copy_pref` | `feat/two-copy-direction` merged; needs `migration_chit_direction.sql`; smoke 8/8 |
 
 ## chitbridge-web
 
