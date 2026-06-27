@@ -108,13 +108,24 @@ router.post('/send',
         return res.status(400).json({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` });
       }
 
-      // Existence check only — connection NOT required to send. Resolve + de-dupe (one chit_header row per entity).
+      // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
+      const prefRow = await query(`SELECT self_copy_pref FROM identities WHERE identity_id = $1`, [sender_id]);
+      const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'both';
+      const makeSelfReceiver = (k) => ({ entity_id: sender_id, bridge_id: sender_bridge_id,
+        display_name: sender_display_name, kind: k, role: ROLE_MAP[k], all_role: k === 'to' ? 'receiver' : k });
+      let hasSelf = false;
+
+      // Existence check — connection NOT required. Resolve + de-dupe (one row per entity per direction).
       const receiverDetails = [];
       const seen = new Set();
       for (const r of rawList) {
-        // Self recipient (the "+ Self" own-record path): the sender already holds the origin
-        // copy, so skip the lookup rather than 404 — this is how a self-chit is authored.
-        if (r.self === true || ['self','me'].includes(String(r.name || '').trim().toLowerCase())) continue;
+        // Self recipient ("+ Self" or your own name): always create the entity's 'received' (Task)
+        // copy here; the 'sent' (Order) copy is the SENDER block below. Two copies, always.
+        if (r.self === true || ['self','me'].includes(String(r.name || '').trim().toLowerCase())) {
+          if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
+          hasSelf = true;
+          continue;
+        }
         let rec;
         if (r.entity_id) {
           rec = await query(
@@ -139,9 +150,13 @@ router.post('/send',
         }
 
         const rid = rec.rows[0].identity_id;
-        // Resolved to self -> skip (don't error); the sender already holds the origin copy.
-        if (rid === sender_id) continue;
-        if (seen.has(rid)) continue;   // de-dupe: one chit_header row per entity (composite PK)
+        // Resolved to self (you typed your own name): same as "+ Self" — create the received copy.
+        if (rid === sender_id) {
+          if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
+          hasSelf = true;
+          continue;
+        }
+        if (seen.has(rid)) continue;   // de-dupe external recipients
         seen.add(rid);
 
         receiverDetails.push({
@@ -206,29 +221,29 @@ router.post('/send',
            (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
             sender_entity_display_name, all_recipients, purpose,
             auto_subject, manual_subject, summary_json, business_json,
-            schema_version, schema_id, created_by_actor_id, role, chit_ref, sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,NOW(),NOW())`,
+            schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())`,
           [chit_id, sender_id, sender_id, sender_bridge_id,
            sender_display_name, JSON.stringify(all_recipients), purpose,
            auto_subject, manual_subject || null,
            JSON.stringify(summary_json),
            business_json ? JSON.stringify(business_json) : null,
            frozen_schema_version, frozen_schema_id, created_by_actor_id,
-           is_draft ? 'Draft' : 'Act', chit_id]
+           is_draft ? 'Draft' : 'Act', chit_id, 'sent']
         );
         await client.query(
           `INSERT INTO chit_detail
            (chit_id, entity_id, detail_type, line_item_count,
-            total_value, currency_code, line_items, payload_delivered_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())`,
+            total_value, currency_code, line_items, direction, payload_delivered_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())`,
           [chit_id, sender_id, purpose,
            summary.line_item_count, summary.total_value,
            summary_json.currency_code,
-           line_items.length > 0 ? JSON.stringify(line_items) : null]
+           line_items.length > 0 ? JSON.stringify(line_items) : null, 'sent']
         );
         await client.query(
-          `INSERT INTO chit_status (chit_id, entity_id, current_status)
-           VALUES ($1,$2,'delivered')`,
+          `INSERT INTO chit_status (chit_id, entity_id, current_status, direction)
+           VALUES ($1,$2,'delivered','sent')`,
           [chit_id, sender_id]
         );
         await client.query(
@@ -248,29 +263,29 @@ router.post('/send',
              (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
               sender_entity_display_name, all_recipients, purpose,
               auto_subject, manual_subject, summary_json, business_json,
-              schema_version, schema_id, created_by_actor_id, role, chit_ref, sent_at, created_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,NOW(),NOW())`,
+              schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())`,
             [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
              sender_display_name, JSON.stringify(all_recipients), purpose,
              auto_subject, manual_subject || null,
              JSON.stringify(summary_json),
              business_json ? JSON.stringify(business_json) : null,
              frozen_schema_version, frozen_schema_id, created_by_actor_id,
-             receiver.role, chit_id]
+             receiver.role, chit_id, 'received']
           );
           await client.query(
             `INSERT INTO chit_detail
              (chit_id, entity_id, detail_type, line_item_count,
-              total_value, currency_code, line_items)
-             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+              total_value, currency_code, line_items, direction)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
             [chit_id, receiver.entity_id, purpose,
              summary.line_item_count, summary.total_value,
              summary_json.currency_code,
-             line_items.length > 0 ? JSON.stringify(line_items) : null]
+             line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']
           );
           await client.query(
-            `INSERT INTO chit_status (chit_id, entity_id, current_status)
-             VALUES ($1,$2,$3)`,
+            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction)
+             VALUES ($1,$2,$3,'received')`,
             [chit_id, receiver.entity_id, rcv_status]
           );
           await client.query(
@@ -335,8 +350,8 @@ router.get('/sent', auth, async (req, res) => {
 
     const countResult = await query(
       `SELECT COUNT(*) FROM chit_header ch
-         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
-        WHERE ch.entity_id = $1 AND ch.sender_entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`,
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction
+        WHERE ch.entity_id = $1 AND ch.direction = 'sent' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`,
       [entity_id]
     );
 
@@ -345,8 +360,8 @@ router.get('/sent', auth, async (req, res) => {
               ch.summary_json, ch.created_at, ch.role,
               cs.current_status, cs.priority_flag, cs.customer_priority
          FROM chit_header ch
-         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
-        WHERE ch.entity_id = $1 AND ch.sender_entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction
+        WHERE ch.entity_id = $1 AND ch.direction = 'sent' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL
         ORDER BY ch.created_at DESC
         LIMIT $2 OFFSET $3`,
       [entity_id, limit, offset]
@@ -370,7 +385,7 @@ router.get('/rollup', auth, async (req, res) => {
       `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
          FROM chit_status cs
-         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id
+         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL
         GROUP BY ${keyExpr}
         ORDER BY chits DESC`,
@@ -392,7 +407,7 @@ router.get('/inbox', auth, async (req, res) => {
     const offset = (page - 1) * limit;
     const status_filter = req.query.status || null;
 
-    let whereClause = `cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
+    let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
     let paramCount = 1;
 
@@ -588,7 +603,7 @@ router.put('/:chit_id/status',
       // Get current status
       const current = await query(
         `SELECT current_status FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2`,
+         WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'`,
         [chit_id, entity_id]
       );
 
@@ -630,7 +645,7 @@ router.put('/:chit_id/status',
       await query(
         `UPDATE chit_status
          SET current_status = $1, updated_at = NOW()
-         WHERE chit_id = $2 AND entity_id = $3`,
+         WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`,
         [new_status, chit_id, entity_id]
       );
 

@@ -247,7 +247,7 @@ router.get('/search', auth, async (req, res) => {
 router.get('/me', auth, async (req, res) => {
   try {
     const result = await query(
-      `SELECT identity_id, bridge_id, display_name, email, user_id, country, currency_code, created_at, last_active_at,
+      `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
@@ -286,6 +286,7 @@ router.patch('/profile', auth,
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
     body('business_status').optional().isIn(['open','closed','away']),
+    body('self_copy_pref').optional().isIn(['both','sent','received']),
     body('user_id').optional().trim().custom(v => {
       if (v === '') return true;
       const ok = v.includes('@') ? /\S+@\S+\.\S+/.test(v) : v.length >= 8;
@@ -301,10 +302,11 @@ router.patch('/profile', auth,
         ? String(req.body.user_id).trim() : null;
       await query(
         `UPDATE identities SET gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
-                business_status=COALESCE($4,business_status), user_id=COALESCE($5,user_id)
-         WHERE identity_id=$6`,
+                business_status=COALESCE($4,business_status), user_id=COALESCE($5,user_id),
+                self_copy_pref=COALESCE($6,self_copy_pref)
+         WHERE identity_id=$7`,
         [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
-         req.body.business_status || null, userId, id]);
+         req.body.business_status || null, userId, req.body.self_copy_pref || null, id]);
       res.json({ message: 'Profile updated' });
     } catch (err) {
       if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });
