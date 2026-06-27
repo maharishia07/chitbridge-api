@@ -22,6 +22,7 @@ To restore a branch to it: `git reset --hard <tag>` then `git push --force-with-
 | `baseline-0-web-pre-fanout-panel` | `e6d52e7` | 2026-06-27 | Older task panel (no To/CC/For) | Rollback before the fan-out panel |
 | `baseline-1-web-fanout-panel` | `593c843` | 2026-06-27 | Fan-out task panel (To/CC/For) at `/app.html`, `STAGE=dev` → live API | Test URL: https://chitbridge-web.vercel.app/app.html |
 | `baseline-2-web-auto-refresh` | `bbe87eb` | 2026-06-27 | auto-refresh active list every 20s (skips while typing/reading/composing/modal/hidden) | `feat/auto-refresh` merged |
+| `baseline-3-web-compose-catalogue` | `b96516d` | 2026-06-27 | compose reads the real catalogue (not demo); empty-catalogue prompt → Catalogue (option B) | `feat/compose-catalogue` merged |
 
 ## Convention going forward
 - Feature work happens on `feat/<feature>` branches.
