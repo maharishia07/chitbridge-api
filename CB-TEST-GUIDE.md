@@ -33,7 +33,18 @@ Manual + smoke test guide for the dev deployment.
 | TC-10 | Same `user_id` on another entity | **409** taken (case-insensitive) |
 | TC-11 | `GET /api/entities/lookup?user_id=` and `GET /api/entities/me` | Lookup returns the entity; `me` shows `user_id` |
 
+## 4. Chit actions  (baseline-4, live)
+
+| # | Action | Expected |
+|---|---|---|
+| TC-12 | `GET /api/chits/sent` after sending | the sent chit appears |
+| TC-13 | `POST /:id/archive` then `/unarchive` | archived hides from inbox/sent; unarchive restores |
+| TC-14 | `PUT /:id/void` — no reason / non-sender / sender+reason | 400 / 403 / 200 (`status:void`, cross-edge, never deleted) |
+| TC-15 | `GET /api/chits/rollup?group_by=state` (or `counterparty`) | grouped counts + totals (read-only) |
+| TC-16 | counterparty acts on your chit → `GET /api/notifications` | their activity appears in your feed |
+| TC-17 | `POST /api/chits/assign-bulk` to an active actor | chits reassigned (bad target → 400) |
+
 ## Notes
-- TC-1–TC-8 are **live now**; TC-9–TC-11 need `feat/user-id` merged → deployed.
+- **TC-1–TC-17 are all live now** (baselines 1–4). `assign-bulk` full happy-path needs an onboarded active actor.
 - Auth flow: register returns `dev_otp` when `DEV_OTP` is set on Railway (fixed `123456`).
 - Test entities/chits created are disposable dev data.

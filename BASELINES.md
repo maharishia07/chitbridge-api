@@ -12,6 +12,7 @@ To restore a branch to it: `git reset --hard <tag>` then `git push --force-with-
 | `baseline-1-compose-fanout` | `5249f20` | 2026-06-27 | cb_chit chit-loop **retired**; Compose **To/CC/For fan-out** on `chit_header.role`; `fp01` + `user_id` + `role` migrations | **Verified live** on dev (smoke: `fan_out{to,cc,for}`, To=pending / CC=delivered) |
 | `baseline-2-priority` | `9e7efe2` | 2026-06-27 | fp01 priority endpoints: internal `PUT /:id/priority` (urgent→action msg) + customer `PUT /:id/priority-flag` (cross-edge write-once, action-msg trail) | `feat/priority` merged |
 | `baseline-3-user-id` | `e0d67f8` | 2026-06-27 | external `user_id` (ATH-114): `GET /me` returns it · `PATCH /profile` sets it (409 case-insensitive unique) · `GET /lookup?user_id=` resolves | `feat/user-id` merged |
+| `baseline-4-chit-actions` | `c50d283` | 2026-06-27 | `/sent` · `/rollup` (counterparty\|state) · `/archive`+`/unarchive` · `/void` (sender terminal, cross-edge) · `/assign-bulk` · `/api/notifications` (derived) | `feat/chit-actions` merged; needs `archived_at` migration |
 
 ## chitbridge-web
 
