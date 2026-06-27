@@ -320,6 +320,41 @@ router.post('/send',
 
 // ─── GET /chits/inbox ─────────────────────────────────────────
 // Lightweight inbox — my chit_status only — fast
+// GET /chits/sent — chits I sent (my sender copy), newest first, paginated.
+// Mounted BEFORE /:chit_id so "sent" is never parsed as a chit_id.
+router.get('/sent', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const page   = parseInt(req.query.page || 1);
+    const limit  = parseInt(req.query.limit || 20);
+    const offset = (page - 1) * limit;
+
+    const countResult = await query(
+      `SELECT COUNT(*) FROM chit_header ch
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
+        WHERE ch.entity_id = $1 AND ch.sender_entity_id = $1 AND cs.deleted_at IS NULL`,
+      [entity_id]
+    );
+
+    const result = await query(
+      `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
+              ch.summary_json, ch.created_at, ch.role,
+              cs.current_status, cs.priority_flag, cs.customer_priority
+         FROM chit_header ch
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
+        WHERE ch.entity_id = $1 AND ch.sender_entity_id = $1 AND cs.deleted_at IS NULL
+        ORDER BY ch.created_at DESC
+        LIMIT $2 OFFSET $3`,
+      [entity_id, limit, offset]
+    );
+
+    res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
+  } catch (err) {
+    console.error('Sent list error:', err.message);
+    res.status(500).json({ error: 'Failed to get sent items', message: err.message });
+  }
+});
+
 router.get('/inbox', auth, async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
