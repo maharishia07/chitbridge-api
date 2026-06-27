@@ -45,13 +45,18 @@ const calculateSummary = (lineItems) => {
 // Send a chit from sender to one or more receivers
 router.post('/send',
   [
-    body('receivers')
-      .isArray({ min: 1 })
-      .withMessage('At least one receiver required'),
-    body('receivers').custom((receivers) => {
-      for (const r of receivers) {
-        if (!r.entity_id && !r.display_name) {
-          throw new Error('Each receiver must have entity_id or display_name');
+    // Accept legacy `receivers` (all = To) OR fan-out `recipients` [{..., role:'to'|'cc'|'for'}];
+    // a draft may have no recipients. (ATH-119)
+    body().custom((_v, { req }) => {
+      const list = Array.isArray(req.body.recipients) ? req.body.recipients
+                 : Array.isArray(req.body.receivers)  ? req.body.receivers
+                 : [];
+      if (!req.body.is_draft && list.length === 0) {
+        throw new Error('At least one recipient required');
+      }
+      for (const r of list) {
+        if (!r.entity_id && !r.display_name && !r.name) {
+          throw new Error('Each recipient must have entity_id, display_name, or name');
         }
       }
       return true;
@@ -75,12 +80,35 @@ router.post('/send',
       const manual_subject = sanitise(req.body.manual_subject || '');
       const line_items = req.body.line_items || [];
       const business_json = req.body.business_json || null;
-      const receivers = req.body.receivers;
+      const is_draft = !!req.body.is_draft;
 
-      // Existence check only — connection NOT required to send
+      // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
+      const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
+      const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
+      const rawList = (Array.isArray(req.body.recipients) ? req.body.recipients
+                     : Array.isArray(req.body.receivers)  ? req.body.receivers
+                     : []
+                    ).map(r => ({ ...r, kind: String(r.role || 'to').toLowerCase() }));
+
+      // Server-side LIMITS re-check — never trust the client (ATH-120).
+      const counts = { to: 0, cc: 0, for: 0 };
+      for (const r of rawList) {
+        if (!(r.kind in counts)) {
+          return res.status(400).json({ error: 'Invalid recipient role', message: `role must be to|cc|for, got "${r.kind}"` });
+        }
+        counts[r.kind]++;
+      }
+      if (counts.to > LIMITS.to || counts.cc > LIMITS.cc || counts.for > LIMITS.for) {
+        return res.status(400).json({ error: 'Limit exceeded', message: `Recipient caps — to:${LIMITS.to}, cc:${LIMITS.cc}, for:${LIMITS.for}` });
+      }
+      if (line_items.length > LIMITS.items) {
+        return res.status(400).json({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` });
+      }
+
+      // Existence check only — connection NOT required to send. Resolve + de-dupe (one chit_header row per entity).
       const receiverDetails = [];
-      for (const r of receivers) {
-        // Support both entity_id (UUID) and display_name lookup
+      const seen = new Set();
+      for (const r of rawList) {
         let rec;
         if (r.entity_id) {
           rec = await query(
@@ -88,32 +116,37 @@ router.post('/send',
              WHERE identity_id = $1 AND status = 'active'`,
             [r.entity_id]
           );
-        } else if (r.display_name) {
+        } else if (r.display_name || r.name) {
           rec = await query(
             `SELECT identity_id, bridge_id, display_name FROM identities
              WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
              AND identity_type = 'entity'`,
-            [r.display_name.trim()]
+            [(r.display_name || r.name).trim()]
           );
         }
 
         if (!rec || rec.rows.length === 0) {
           return res.status(404).json({
             error: 'Not found',
-            message: `Receiver "${r.entity_id || r.display_name}" not found in the platform`
+            message: `Recipient "${r.entity_id || r.display_name || r.name}" not found in the platform`
           });
         }
 
-        // Check not sending to self
-        if (rec.rows[0].identity_id === sender_id) {
-          return res.status(400).json({ error: 'Invalid receiver', message: 'Cannot send to yourself' });
+        const rid = rec.rows[0].identity_id;
+        // Cannot send to self (the sender already holds the origin copy)
+        if (rid === sender_id) {
+          return res.status(400).json({ error: 'Invalid recipient', message: 'Cannot send to yourself' });
         }
+        if (seen.has(rid)) continue;   // de-dupe: one chit_header row per entity (composite PK)
+        seen.add(rid);
 
         receiverDetails.push({
-          entity_id: rec.rows[0].identity_id,
+          entity_id: rid,
           bridge_id: rec.rows[0].bridge_id,
           display_name: rec.rows[0].display_name,
-          role: 'receiver'
+          kind: r.kind,                                   // to | cc | for
+          role: ROLE_MAP[r.kind],                         // Act | Info | For (chit_header.role)
+          all_role: r.kind === 'to' ? 'receiver' : r.kind // for the all_recipients snapshot
         });
       }
 
@@ -121,7 +154,7 @@ router.post('/send',
       const chit_id = uuidv4();
       const now = new Date();
 
-      // Build all_recipients — snapshot with sender + all receivers
+      // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
       const all_recipients = [
         {
           entity_id: sender_id,
@@ -129,7 +162,10 @@ router.post('/send',
           display_name: sender_display_name,
           role: 'sender'
         },
-        ...receiverDetails
+        ...receiverDetails.map(r => ({
+          entity_id: r.entity_id, bridge_id: r.bridge_id,
+          display_name: r.display_name, role: r.all_role
+        }))
       ];
 
       // Generate auto subject
@@ -166,14 +202,15 @@ router.post('/send',
            (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
             sender_entity_display_name, all_recipients, purpose,
             auto_subject, manual_subject, summary_json, business_json,
-            schema_version, schema_id, created_by_actor_id, sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())`,
+            schema_version, schema_id, created_by_actor_id, role, chit_ref, sent_at, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,NOW(),NOW())`,
           [chit_id, sender_id, sender_id, sender_bridge_id,
            sender_display_name, JSON.stringify(all_recipients), purpose,
            auto_subject, manual_subject || null,
            JSON.stringify(summary_json),
            business_json ? JSON.stringify(business_json) : null,
-           frozen_schema_version, frozen_schema_id, created_by_actor_id]
+           frozen_schema_version, frozen_schema_id, created_by_actor_id,
+           is_draft ? 'Draft' : 'Act', chit_id]
         );
         await client.query(
           `INSERT INTO chit_detail
@@ -199,21 +236,23 @@ router.post('/send',
            `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
         );
 
-        // RECEIVERS
-        for (const receiver of receiverDetails) {
+        // RECIPIENTS (skipped for drafts — a draft is the author's copy only)
+        if (!is_draft) for (const receiver of receiverDetails) {
+          const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered'; // To acts; CC/For are informational
           await client.query(
             `INSERT INTO chit_header
              (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
               sender_entity_display_name, all_recipients, purpose,
               auto_subject, manual_subject, summary_json, business_json,
-              schema_version, schema_id, created_by_actor_id, sent_at, created_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW())`,
+              schema_version, schema_id, created_by_actor_id, role, chit_ref, sent_at, created_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,NOW(),NOW())`,
             [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
              sender_display_name, JSON.stringify(all_recipients), purpose,
              auto_subject, manual_subject || null,
              JSON.stringify(summary_json),
              business_json ? JSON.stringify(business_json) : null,
-             frozen_schema_version, frozen_schema_id, created_by_actor_id]
+             frozen_schema_version, frozen_schema_id, created_by_actor_id,
+             receiver.role, chit_id]
           );
           await client.query(
             `INSERT INTO chit_detail
@@ -227,22 +266,22 @@ router.post('/send',
           );
           await client.query(
             `INSERT INTO chit_status (chit_id, entity_id, current_status)
-             VALUES ($1,$2,'pending')`,
-            [chit_id, receiver.entity_id]
+             VALUES ($1,$2,$3)`,
+            [chit_id, receiver.entity_id, rcv_status]
           );
           await client.query(
             `INSERT INTO state_log
              (chit_id, entity_id, action, action_by_identity_id,
               action_by_display_name, new_status, detail)
-             VALUES ($1,$2,'delivered',$3,$4,'pending',$5)`,
-            [chit_id, receiver.entity_id, sender_id, sender_display_name,
-             `Chit received from ${sender_display_name}`]
+             VALUES ($1,$2,'delivered',$3,$4,$5,$6)`,
+            [chit_id, receiver.entity_id, sender_id, sender_display_name, rcv_status,
+             `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`]
           );
         }
       });
 
       // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
-      for (const receiver of receiverDetails) {
+      if (!is_draft) for (const receiver of receiverDetails) {
         try {
           const isSupplier = await query(
             `SELECT 1 FROM supplier_list
@@ -263,10 +302,12 @@ router.post('/send',
       }
 
       res.json({
-        message: 'Chit sent successfully',
+        message: is_draft ? 'Draft saved' : 'Chit sent successfully',
         chit_id,
         auto_subject,
-        recipients: receiverDetails.length,
+        is_draft,
+        recipients: is_draft ? 0 : receiverDetails.length,
+        fan_out: { to: counts.to, cc: counts.cc, for: counts.for },
         summary: summary_json
       });
 
