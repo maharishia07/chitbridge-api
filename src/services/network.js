@@ -56,7 +56,8 @@ async function approve({ edgeId, actingEntityId = null }) {
     if (edge.state !== "requested") throw err(409, `cannot approve from ${edge.state}`, "BAD_STATE");
     const parent = await getById(edge.parent_id, c);
     const { rows: [child] } = await c.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
-    if (actingEntityId && actingEntityId !== child.id) throw err(403, "only the child entity can consent", "NOT_APPROVER");
+    if (!actingEntityId) throw err(400, "actingEntityId required — only the child entity can consent", "ACTOR_REQUIRED");
+    if (actingEntityId !== child.id) throw err(403, "only the child entity can consent", "NOT_APPROVER");
     if (!child.claimed) throw err(409, "child is an unclaimed stub — cannot consent", "UNCLAIMED");
     if (await hasLiveParent(child.id, c)) throw err(409, "child already in a network (tree-only)", "HAS_PARENT");
     const { rows: [{ bad }] } = await c.query(`select (($1::ltree) <@ ($2::ltree)) as bad`, [parent.path, child.path]);
@@ -129,8 +130,13 @@ async function connections(entityId) {
      order by e.created_at desc`, [entityId]);
   return rows;
 }
-async function claim(entityId) {   // stub claim = identity verified (ATH-86 in real build)
-  const { rows: [e] } = await pool.query(`update cb_entity set claimed=true where id=$1 returning *`, [entityId]);
-  if (!e) throw err(404, "not found", "NOT_FOUND"); return e;
+async function claim(entityId) {   // full identity verification is ATH-86 (needs the cb_entity<->identities bridge).
+  // Until then, at least prevent re-claiming an already-owned entity (no hijack of a claimed node).
+  const { rows: [e] } = await pool.query(
+    `update cb_entity set claimed=true where id=$1 and claimed=false returning *`, [entityId]);
+  if (e) return e;
+  const { rows: [exists] } = await pool.query(`select claimed from cb_entity where id=$1`, [entityId]);
+  if (!exists) throw err(404, "not found", "NOT_FOUND");
+  throw err(409, "already claimed", "ALREADY_CLAIMED");
 }
 module.exports = { register, lookup, getById, requestConnect, approve, decline, suspend, resume, disconnect, subtree, connections, claim, _full };
