@@ -1,0 +1,91 @@
+name: CI
+
+# A5 — gate every push/PR. The `static` job runs now and blocks merges on syntax/CRLF defects (it would have
+# caught the smoke-script CRLF + the assist.js boot-breaker class). The `integration` job runs the smoke + A4
+# isolation suites against a throwaway Postgres — it is GATED (see its `if:`) until the prerequisites land.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  static:
+    name: static checks (syntax + LF)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: node --check every JS file (excl. node_modules)
+        run: |
+          set -e
+          find . -path ./node_modules -prune -o -name '*.js' -print | while read -r f; do
+            node --check "$f"
+          done
+      - name: bash -n every shell script
+        run: |
+          set -e
+          for f in scripts/*.sh; do bash -n "$f"; done
+      - name: shell scripts must be LF (no CRLF)
+        run: |
+          if grep -lUP '\r' scripts/*.sh; then
+            echo "::error::CRLF found in a shell script (must be LF — see .gitattributes)"; exit 1
+          fi
+
+  integration:
+    name: integration (smoke + isolation) — DB-backed
+    # GATED until the prerequisites land, then flip on by setting repo variable CI_INTEGRATION=true:
+    #   1) db/index.js must honour a plain DATABASE_URL (it currently hardcodes the Supabase pooler host/ref and
+    #      ignores the URL's host — so it cannot connect to this CI Postgres). See TECH-HARDENING-BACKLOG
+    #      "Remove hardcodes in db/index.js".
+    #   2) the schema bootstrap below must apply cleanly (order/extensions confirmed on a first real run).
+    # Until then this job is skipped, so the build stays green while the static gate still protects every merge.
+    if: ${{ vars.CI_INTEGRATION == 'true' }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cb_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/cb_test
+      NODE_ENV: development
+      JWT_SECRET: ci_test_secret_at_least_32_chars_padding
+      DEV_OTP: "123456"
+      PORT: "3000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: Bootstrap schema + migrations (MANIFEST order — confirm on first run)
+        run: |
+          set -e
+          export PGPASSWORD=postgres
+          PSQL="psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d cb_test -f"
+          $PSQL db/schema.sql
+          $PSQL db/schema_b2_migration.sql
+          $PSQL db/schema_b3_pin_migration.sql
+          for m in migration_b35 migration_b36 migration_b37 migration_b37a migration_b39 \
+                   migration_b310 migration_b310a_freeze migration_b311_shop_status \
+                   migration_gov01_protected_entity migration_fp01 migration_user_id_identities \
+                   migration_chit_header_role migration_chit_direction migration_dispute_routing \
+                   migration_chit_reads migration_check_constraints migration_otp_attempts \
+                   migration_customer_contact; do
+            $PSQL "$m.sql"
+          done
+      - name: Start API + wait for health
+        run: |
+          node server.js &
+          for i in $(seq 1 20); do curl -sf http://localhost:3000/health && break || sleep 1; done
+      - name: Smoke (review fixes)
+        run: API_BASE=http://localhost:3000 bash scripts/smoke-review-fixes.sh
+      - name: Isolation suite (A4)
+        run: API_BASE=http://localhost:3000 bash scripts/isolation-suite.sh
