@@ -1318,6 +1318,28 @@ router.post('/:chit_id/unarchive', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Unarchive failed', message: err.message }); }
 });
 
+// POST /chits/:chit_id/restore — bring MY copy back from Trash (undo a soft delete).
+// Mirrors DELETE /:chit_id (which sets deleted_at); clears deleted_at on this entity's copy only + logs it.
+router.post('/:chit_id/restore', auth, async (req, res) => {
+  try {
+    const chit_id        = req.params.chit_id;
+    const entity_id      = req.identity.parent_entity_id || req.identity.identity_id;
+    const action_by_id   = req.identity.identity_id;
+    const action_by_name = req.identity.display_name;
+    const r = await query(
+      `UPDATE chit_status SET deleted_at = NULL, updated_at = NOW()
+        WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NOT NULL
+        RETURNING chit_id`,
+      [chit_id, entity_id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found in Trash' });
+    await query(
+      `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+       VALUES ($1, $2, 'restored', $3, $4, $5)`,
+      [chit_id, entity_id, action_by_id, action_by_name, `Chit restored from Trash by ${action_by_name}`]);
+    res.json({ message: 'Chit restored from Trash', chit_id });
+  } catch (err) { res.status(500).json({ error: 'Restore failed', message: err.message }); }
+});
+
 // PUT /chits/:chit_id/void — recorded hard-cancel by the SENDER; works after acceptance.
 // Terminal 'void' status on ALL participant rows (cross-edge); reason required + logged;
 // chit stays visible as voided, never deleted; the seal is untouched.
