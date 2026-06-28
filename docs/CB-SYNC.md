@@ -8,6 +8,10 @@ Detailed dispute change-log: `docs/HANDOFF-dispute-notifications-2026-06-28.md`.
 - Web `chitbridge-web` — local `C:\Users\mahar\Downloads\chitbridge-web-v1.0 (5)\chitbridge-react`
 - DB: Supabase `bzacyrdrnzdbficjplcn` · API: Railway · "live" = the dev env
 - Backup repo: private `maharishia07/cb-context-backup`
+- **Web has two sides** (one SPA, switched by `CFG.STAGE`): **demo** (`web_demo`, mock, no-login — do NOT
+  touch/wire) vs **dev/uat/live** (real API, the working model). Demo is contained in `DEMO`/`STORE`/
+  `demoApi()` and gets stripped at UAT/Prod. Always wire the real API to the working model, never demo.
+  Hardcode = bug only if it runs in the live path. See memory `feedback-demo-vs-dev-segregation`.
 
 ---
 
