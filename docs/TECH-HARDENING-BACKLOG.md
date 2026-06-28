@@ -57,6 +57,16 @@ gates orders; `safeErr`. **FIXED:** `/api/catalogue` now rate-limited (7a63490).
   quantity. A deliberate price of 0 is allowed; null/'' price is treated as "not set" → rejected. Algorithm
   unit-tested. **Confirm in dev smoke:** the real customer line-item shape (name/`item_id`) and that price lives
   in `item_data.price`.
+- **[DONE — branch `feat/must-fixes`] Dual-channel customer OTP (F2 product half)** — one identifier (phone OR
+  email), delivered on the same channel; `lib/notify.js` (`sendOtpEmail` extracted from `entities.js` + pluggable
+  `sendOtpSms`), `identities.otp_contact` (`migration_customer_contact.sql`), full-email `.cr` key (`@`→`=`) so two
+  customers never collapse. OTP never returned in a prod response.
+- **[BACKLOG] F2 mechanical half — OTP-delivery boot guard** — `sendOtpSms` is a **dormant stub** (no provider
+  adapter) and there is **no boot-time check** that a customer OTP channel is configured for production. Add a
+  guard in `server.js` (mirroring the `JWT_SECRET` / `DEV_OTP` guards): in `NODE_ENV=production`, **abort boot** if
+  neither email (`OTP_EMAIL_ENABLED=true` + `RESEND_API_KEY`) nor SMS (`SMS_PROVIDER` + `SMS_API_KEY`) is configured
+  — so prod can never silently drop customer OTPs. Then implement a real SMS adapter (e.g. Twilio/MSG91) in
+  `sendOtpSms` using `SMS_SENDER_ID`. (Pairs with the dual-channel product half above.)
 - **[CONFIRM] Public exposure** — the public catalogue returns `gstn` + `address` (acceptable for a storefront — confirm intended).
 - **[BACKLOG] Bounded read** — public catalogue `items` query has no LIMIT (folds into the max-`?limit=` cap).
 
