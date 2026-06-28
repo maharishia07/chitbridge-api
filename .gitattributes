@@ -1,0 +1,4 @@
+# Keep shell scripts LF on every OS so bash can run them.
+# (Windows autocrlf would otherwise inject CRLF and break `bash -n` at the first line.)
+# .js / .sql are intentionally left to the default handling.
+*.sh text eol=lf
