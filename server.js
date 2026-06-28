@@ -11,6 +11,14 @@ const rateLimit = require('express-rate-limit');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// Fail fast on a missing/weak JWT_SECRET — auth integrity depends entirely on it (see the P0 isolation
+// invariant). In production a bad secret aborts boot; in dev it warns loudly.
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  const msg = 'JWT_SECRET is missing or shorter than 32 chars';
+  if (process.env.NODE_ENV === 'production') { console.error('FATAL:', msg); process.exit(1); }
+  else console.warn('WARNING:', msg, '— set a strong JWT_SECRET before any real deploy.');
+}
+
 // Trust Railway's proxy
 app.set('trust proxy', 1);
 
