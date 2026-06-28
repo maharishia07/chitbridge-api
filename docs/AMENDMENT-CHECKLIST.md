@@ -16,8 +16,12 @@ behaviours we've established. **This is a living list — add a new line wheneve
 - [ ] **Atomicity** — any multi-row write wraps in `withTransaction(fn)` (api). No partial-write paths.
 - [ ] **Void / terminal-state validation** — actions respect terminal states (void/cancelled/completed):
       can't mutate a voided chit, can't delete with an open dispute, can't double-advance past final.
-- [ ] **Circular reference** — for tree/graph writes (network reparent), keep the cycle guard
-      (`parent <@ child` ltree check). For new modules, no `require` cycles (keep the DAG one-directional).
+- [ ] **Circular reference** — (1) tree/graph writes (network reparent) keep the ltree cycle guard
+      (`parent <@ child`); (2) new modules have no `require` cycles (DAG, one-directional); (3) **any
+      auto-routing / delegation between actors** (default-assignee, reroute-on-overload, reroute-on-break)
+      MUST detect assignment cycles — track visited actors + cap hops, and reject/break `A→B→C→A` with a
+      clear message (fall back to pool). Assignment is a direct set today; this guard is mandatory before any
+      auto-routing ships.
 - [ ] **Idempotency / double-fire** — mutations tolerate a retry; the web `api()` double-fire lock covers UI.
 - [ ] **Soft-delete respected** — reads filter `deleted_at IS NULL` / `archived_at IS NULL` where applicable.
 

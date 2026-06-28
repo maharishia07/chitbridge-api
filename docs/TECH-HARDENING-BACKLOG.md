@@ -54,6 +54,15 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
   panels into modules. Maintainability + reviewability.
 - **[BACKLOG] Token storage** — `localStorage` is XSS-reachable; evaluate httpOnly cookie auth (pairs with CSP).
 
+## Assignment-cycle guard (design requirement — no live gap yet)
+Today actor assignment is a **direct set** (`actors.js` push/pull): over-capacity is only a warning, break
+returns tasks to the **pool**, and there is no `default_assignee`/delegation field — so **no cycle is possible now**.
+- **[BACKLOG — mandatory when built]** If a default-assignee / delegation / auto-reroute-on-overload-or-break
+  model is added (likely via the assignment `settings`), it MUST detect assignment cycles: walk the routing
+  chain with a **visited-actor set + a hop cap**; if it would revisit an actor (`A→B→C→A`), stop, surface a
+  clear message, and fall back to the pool (never loop). Add a test for a 3-actor cycle. This is in the
+  AMENDMENT-CHECKLIST so it can't be shipped without the guard.
+
 ## Settings-level future path (document & follow)
 - **[BACKLOG] Generic entity settings** — today each toggle is its own column (`self_copy_pref`,
   `dispute_handler_actor_id`). For future flags without a migration per toggle, add a single `settings JSONB`
