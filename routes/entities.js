@@ -98,15 +98,15 @@ router.post('/register',
         [otp, expires, identity_id]
       );
 
-      await sendOtpEmail(email, display_name, otp);
-
-      const emailDisabled = process.env.OTP_EMAIL_ENABLED !== 'true';
+      // F2-entity: gate dev_otp on the sender's `dev` flag (false in production) so the OTP is NEVER returned in
+      // a prod response. Soft message on a real send failure so we don't report success on failure.
+      const sent = await sendOtpEmail(email, display_name, otp);
       res.json({
-        message: process.env.DEV_OTP
-          ? `Dev mode — use OTP: ${otp}`
-          : 'Verification code sent to your email',
+        message: sent.delivered ? 'Verification code sent to your email'
+               : sent.dev       ? 'Dev mode — verification code issued'
+               :                  "We couldn't send your code — please try again.",
         email,
-        ...((process.env.DEV_OTP || emailDisabled) && { dev_otp: otp })
+        ...(sent.dev && { dev_otp: otp })   // dev/dormant only — NEVER in production
       });
 
     } catch (err) {
