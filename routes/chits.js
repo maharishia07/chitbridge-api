@@ -482,6 +482,25 @@ router.get('/inbox', auth, async (req, res) => {
 
 // ─── GET /chits/:chit_id ──────────────────────────────────────
 // Full chit detail — all participants, full state log, line items
+// GET /chits/unread — chit_ids that are unread FOR THE CALLING ACTOR (per-actor read state).
+// Unread = no chit_reads row yet, or the copy changed (cs.updated_at) after the actor last opened it.
+// Entity (non-actor) logins get [] — they use the entity-level read_at. Mounted BEFORE /:chit_id.
+router.get('/unread', auth, async (req, res) => {
+  try {
+    if (req.identity.identity_type !== 'actor') return res.json({ unread: [] });
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const actor_id  = req.identity.identity_id;
+    const r = await query(
+      `SELECT DISTINCT cs.chit_id
+         FROM chit_status cs
+         LEFT JOIN chit_reads cr ON cr.chit_id = cs.chit_id AND cr.actor_id = $2
+        WHERE cs.entity_id = $1 AND cs.deleted_at IS NULL
+          AND (cr.read_at IS NULL OR cs.updated_at > cr.read_at)`,
+      [entity_id, actor_id]);
+    res.json({ unread: r.rows.map(x => x.chit_id) });
+  } catch (err) { res.status(500).json({ error: 'Unread failed', message: err.message }); }
+});
+
 router.get('/:chit_id', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -500,6 +519,14 @@ router.get('/:chit_id', auth, async (req, res) => {
         error: 'Not found',
         message: 'Chit not found or you do not have access'
       });
+    }
+
+    // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
+    if (req.identity.identity_type === 'actor') {
+      await query(
+        `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
+         ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
+        [chit_id, req.identity.identity_id]);
     }
 
     // Get my header
