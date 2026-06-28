@@ -14,9 +14,14 @@ A4 isolation suite passes on dev with RLS **forced**. This doc is for Athi + rev
 3. The entity = what routes already compute: `req.identity.parent_entity_id || req.identity.identity_id`.
 
 ### ⚠️ Constraint from THIS code (drives the whole design)
-- `db/index.js` uses a **`max: 1` pool** — one shared connection. A bare `SET` would **persist across requests
-  and leak** one tenant's context into the next. → The context MUST be **`SET LOCAL` inside an explicit
-  transaction** (`BEGIN … SET LOCAL … COMMIT`), which auto-resets on commit/rollback.
+- `db/index.js` connects via Supabase's **transaction pooler (port 6543)** with a **`max: 10`** runtime pool
+  (correction: the earlier `max: 1` was only the throwaway connection *probe*). On a transaction pooler a bare
+  `SET` does **not** persist (each statement may land on a different backing connection), and on any shared pool
+  it could **leak** to the next request. → The context MUST be **`SET LOCAL` inside an explicit transaction**
+  (`BEGIN … SET LOCAL … COMMIT`), which is transaction-scoped and auto-resets on commit/rollback.
+- ✅ **Built (`withEntity()` in `db/index.js`):** the additive primitive — `withEntity(entityId, fn)` runs `fn`
+  inside `withTransaction` after `SELECT set_config('app.current_entity', $1, true)` (= SET LOCAL). Routes opt in.
+  Inert until RLS is enabled + the `cb_app` role is in place.
 - Today most reads use the global single-statement `query()` (not in a transaction). So **B1 needs an
   entity-context data layer first** — this is **B2 (the choke-point) arriving early**, as the vehicle for B1.
 
@@ -107,11 +112,12 @@ not enabled yet). Keep the old `postgres` URL to revert. Setting the custom GUC 
 
 ## OPEN QUESTIONS — remaining (recommended defaults in [brackets]; confirm or override)
 1. ✅ **DB role / BYPASSRLS — ANSWERED:** bypassed (`postgres`/BYPASSRLS); needs the `cb_app` role above first.
-2. **`identities` policy:** carve-out (A) or discovery-aware policy (B)?
-3. **Connection model:** OK to move tenant reads into per-request transactions (the `max:1` pool already
-   serialises; perf impact should be minimal but confirm)?
-4. **Scope of first cut:** agree Stage-1 = the Direct group only (chits/state_log/catalogue) as the proof, before
-   the harder indirect/identities work?
+2. ✅ **`identities` policy — DECIDED:** **carve-out (A)** — leave `identities` out of strict RLS (cross-tenant
+   discovery is intended); RLS goes on the data tables where the leak risk lives.
+3. ✅ **Connection model — DECIDED:** **yes**, route tenant reads through per-request transactions via
+   `withEntity()` (the `max:10` pool handles concurrency; perf impact negligible on dev).
+4. ✅ **First cut — DECIDED:** **Stage-1 = the Direct group only** (`chit_header/status/detail`, `state_log`,
+   `catalogue_items`) as the proof, before the harder indirect/`identities` work.
 
 ## Effort / sequencing
 Part 1 plumbing + Stage-0 guard ≈ the bulk of the work (touches `db/index.js` + each route file incrementally).

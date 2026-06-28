@@ -90,4 +90,18 @@ const withTransaction = async (fn) => {
   }
 };
 
-module.exports = { query, withTransaction, get pool() { return pool; } };
+// ── B1 (RLS Stage-0) — entity-context primitive ──────────────────────────────────────────────────────────
+// Run fn() inside a transaction with the caller's entity bound to the session, so RLS policies (once enabled)
+// scope to it. Pass a function that does ALL its queries on the supplied `client` (the transaction) — exactly
+// like withTransaction. ADDITIVE: changes nothing about existing query()/withTransaction; routes opt in
+// incrementally (`withEntity(callerEntity, db => db.query(...))`). `set_config(name, value, is_local=true)` is
+// `SET LOCAL`, so the binding is transaction-scoped — correct for Supabase's transaction pooler (a bare SET
+// would not persist there anyway) and it auto-resets on COMMIT/ROLLBACK so it can never leak to the next request.
+const withEntity = async (entityId, fn) => {
+  return withTransaction(async (client) => {
+    await client.query(`SELECT set_config('app.current_entity', $1, true)`, [entityId == null ? '' : String(entityId)]);
+    return fn(client);
+  });
+};
+
+module.exports = { query, withTransaction, withEntity, get pool() { return pool; } };
