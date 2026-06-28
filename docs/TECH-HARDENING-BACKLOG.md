@@ -71,7 +71,8 @@ returns tasks to the **pool**, and there is no `default_assignee`/delegation fie
   `auto_return_on_short_break` are **stored but not enforced** (dead settings). Wire them, or mark "coming soon".
 - **[BACKLOG] Entity-bounds-actor** — per-actor `max_tasks` is unbounded by entity policy; cap `max_tasks` ≤ the
   entity's, and apply `default_max_tasks` on create. (Subscription bounds the actor *count*.)
-- **[QUICK] Atomicity** — wrap actor break/leave/remove task-reassignment in `withTransaction` (partial-write risk).
+- **[DONE] Atomicity** — actor status-change (deactivate/remove) + break/leave task-reassignment now wrapped in
+  `withTransaction` (route + count + status commit together; target validated before the tx). (`assign-bulk` still pending.)
 
 ## Settings-level future path (document & follow)
 - **[BACKLOG] Generic entity settings** — today each toggle is its own column (`self_copy_pref`,
