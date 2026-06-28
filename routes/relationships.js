@@ -23,10 +23,14 @@ router.post('/suppliers',
       const bridge   = req.body.supplier_bridge_id.trim();
       const category = sanitise(req.body.category || '') || null;
 
+      // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
+      // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
       const sup = await query(
-        `SELECT identity_id, display_name FROM identities WHERE bridge_id = $1`, [bridge]);
+        `SELECT identity_id, display_name FROM identities
+         WHERE bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)
+         LIMIT 1`, [bridge]);
       if (sup.rows.length === 0)
-        return res.status(404).json({ error: 'Not found', message: 'No entity with that bridge ID' });
+        return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
       if (sup.rows[0].identity_id === owner)
         return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
 
