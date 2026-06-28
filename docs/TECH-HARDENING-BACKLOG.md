@@ -44,8 +44,13 @@ Backend `catalogue.js`. **Healthy:** order is transactional (two-copy, INV-2); c
 (`parent_entity_id`); public catalogue **visibility-gated** (only `visibility='public'` schemas); **my-orders
 isolated per customer** (keyed on the token identity, not the path — no cross-customer leak); `business_status`
 gates orders; `safeErr`. **FIXED:** `/api/catalogue` now rate-limited (7a63490).
-- **[BACKLOG] OTP attempt-counter** — `order/confirm` + `login/verify` compare the 6-digit OTP with **no
-  per-account attempt cap** (rate-limit now mitigates, but add `otp_attempts` + lock after N as defense-in-depth; needs a column).
+- **[DRAFTED — branch `feat/must-fixes`] OTP attempt-counter** — `lib/otp.js` `verifyOtp()` caps wrong tries per
+  account (`MAX_OTP_ATTEMPTS`, default 5) and locks the current OTP until a fresh one is issued. Wired into
+  `catalogue.js` (order/confirm + login/verify) and `entities.js` (owner verify); counter resets on issue +
+  success. Adds **`migration_otp_attempts.sql`** (the column was referenced in code but had no migration).
+  Unit-tested (increment → lock → 429). *Note:* the internal actor-login OTP (`actors.js`, admin-shared) is left
+  as a follow-up. **Fixed test OTP:** `DEV_OTP=123456` stays for dev/UAT; a boot guard now **aborts prod** if
+  `DEV_OTP` is set (must be unset before production).
 - **[DRAFTED — branch `feat/must-fixes`] Order price/line-item validation** — `repriceAgainstCatalogue()` in
   `catalogue.js` re-prices every customer line against the shop's active `catalogue_items` (matched by `item_id`
   or name) and recomputes totals **server-side**; fails CLOSED (422) on an unknown item, an unset price, or a bad
@@ -64,8 +69,9 @@ gates orders; `safeErr`. **FIXED:** `/api/catalogue` now rate-limited (7a63490).
   the global handler was already sanitized.
 - **[DONE] Auth-specific rate limit** — `server.js` adds a stricter limiter (30/15m, `AUTH_RATE_LIMIT_MAX`) on
   `register`/`verify`/`actors/login`/`set-pin`.
-- **[BACKLOG] Atomicity gaps** — `assign-bulk` (chits.js:~1392) loops writes on the pool (not `withTransaction`)
-  → a mid-loop failure leaves a partial assign. Wrap it (and any other multi-write added later) in a transaction.
+- **[DRAFTED — branch `feat/must-fixes`] Atomicity gaps** — `assign-bulk` (chits.js) now runs inside
+  `withTransaction` (counts + `chit_status` + `state_log` commit together or roll back; target validated in the
+  tx). No more partial assigns on a mid-loop failure.
 - **[BACKLOG] Centralize enums/constants** — status (`pending|accepted|in_progress|...`), roles (`to|cc|for`/
   `Act|Info|For`), scopes, directions are string literals scattered across routes → typo risk. One `constants.js`
   shared by routes (and ideally mirrored to the frontend).

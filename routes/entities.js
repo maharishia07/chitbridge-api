@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 
 const generateBridgeId = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -131,7 +132,7 @@ router.post('/register',
       const expires = new Date(Date.now() + 60 * 60 * 1000);
 
       await query(
-        `UPDATE identities SET otp_code = $1, otp_expires_at = $2 WHERE identity_id = $3`,
+        `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
         [otp, expires, identity_id]
       );
 
@@ -166,7 +167,7 @@ router.post('/verify',
       const otp = req.body.otp.trim();
 
       const result = await query(
-        `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, owner_scope
+        `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, otp_attempts, owner_scope
          FROM identities WHERE email = $1`,
         [email]
       );
@@ -177,17 +178,14 @@ router.post('/verify',
 
       const identity = result.rows[0];
 
-      if (identity.otp_code !== otp) {
-        return res.status(400).json({ error: 'Verification failed', message: 'Incorrect verification code' });
-      }
-
-      if (new Date() > new Date(identity.otp_expires_at)) {
-        return res.status(400).json({ error: 'Verification failed', message: 'Verification code expired — please register again' });
+      const otpCheck = await verifyOtp(query, identity, otp);
+      if (!otpCheck.ok) {
+        return res.status(otpCheck.status).json({ error: 'Verification failed', message: otpCheck.message });
       }
 
       await query(
         `UPDATE identities SET email_verified = TRUE, status = 'active',
-         otp_code = NULL, otp_expires_at = NULL, last_active_at = NOW()
+         otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0, last_active_at = NOW()
          WHERE identity_id = $1`,
         [identity.identity_id]
       );

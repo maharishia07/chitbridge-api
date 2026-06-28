@@ -52,7 +52,18 @@ merge this branch and re-smoke:
    `503`). *Smoke check:* network reads work; writes return `NET_WRITE_DISABLED` unless the flag is set in dev.
    The **full** fix (derive `actingEntityId` from `req.identity` via the `cb_entity↔identities` bridge) remains
    Track B / ATH-86 — see `NETWORK-AUTHORITY.md`.
-3. (Recommended same pass, NOT yet drafted) **OTP attempt-counter**; wrap **`assign-bulk`** in `withTransaction`.
+3. **OTP attempt-counter** ✅ drafted — `lib/otp.js` + wiring in `catalogue.js`/`entities.js`; needs
+   **`migration_otp_attempts.sql`** applied. *Smoke check:* 5 wrong OTPs → locked (429); a fresh OTP unlocks.
+4. **`assign-bulk` transactional** ✅ drafted (`chits.js` now uses `withTransaction`). *Smoke check:* bulk-assign
+   several chits succeeds; counts stay consistent.
+
+### Migrations added by this branch
+Apply on the DEV DB together with the §3 list: **`migration_otp_attempts.sql`** (adds `identities.otp_attempts`).
+
+### ⚠️ Before PROD (enforced at boot)
+`DEV_OTP` pins every OTP to a fixed value (`123456`) for testing. It's allowed in dev/UAT, but the server now
+**aborts boot in production if `DEV_OTP` is set** (alongside the `JWT_SECRET` guard). **Unset `DEV_OTP` for prod**
+so OTPs are random.
 
 ## 6. Promote to PROD — separate, conscious, reviewed step
 Re-check `TECH-HARDENING-BACKLOG.md` "Re-check before UAT/Prod". Set prod env (strong secret, prod CORS origin).

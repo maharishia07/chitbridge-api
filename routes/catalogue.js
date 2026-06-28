@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 
 const genBridge = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -122,7 +123,7 @@ router.post('/:bridge_id/order/start',
           [identity_id, bridge_id, name, handle, phone, entity.identity_id]);
       }
       const otp = genOTP();
-      await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2 WHERE identity_id = $3`,
+      await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
         [otp, new Date(Date.now() + 60 * 60 * 1000), identity_id]);
       console.log(`[DEV] Customer OTP for ${handle}: ${otp}`);   // no SMS in dev/testing
       const emailDisabled = process.env.OTP_EMAIL_ENABLED !== 'true';
@@ -149,12 +150,12 @@ router.post('/:bridge_id/order/confirm',
       const handle = `${phone}@${entity.bridge_id}.cr`;
 
       const cr = await query(
-        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at
+        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
          FROM identities WHERE email = $1`, [handle]);
       if (!cr.rows.length) return res.status(400).json({ error: 'Verify failed', message: 'Start the order first' });
       const c = cr.rows[0];
-      if (c.otp_code !== req.body.otp.trim())          return res.status(400).json({ error: 'Verify failed', message: 'Incorrect code' });
-      if (new Date() > new Date(c.otp_expires_at))     return res.status(400).json({ error: 'Verify failed', message: 'Code expired' });
+      const otpCheck = await verifyOtp(query, c, req.body.otp);
+      if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
@@ -187,7 +188,7 @@ router.post('/:bridge_id/order/confirm',
       // guaranteed write: OTP consume + both chit records + timeline, all-or-nothing (INV-2)
       await withTransaction(async (client) => {
         await client.query(
-          `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, last_active_at=NOW()
+          `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW()
             WHERE identity_id=$1`, [c.identity_id]);
 
         // sender (customer) record
@@ -255,13 +256,13 @@ router.post('/:bridge_id/login/verify',
       const phone  = cleanPhone(req.body.phone);
       const handle = `${phone}@${entity.bridge_id}.cr`;
       const cr = await query(
-        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at
+        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
          FROM identities WHERE email = $1`, [handle]);
       if (!cr.rows.length) return res.status(400).json({ error: 'Sign-in failed', message: 'No account — place an order first' });
       const c = cr.rows[0];
-      if (c.otp_code !== req.body.otp.trim())      return res.status(400).json({ error: 'Sign-in failed', message: 'Incorrect code' });
-      if (new Date() > new Date(c.otp_expires_at)) return res.status(400).json({ error: 'Sign-in failed', message: 'Code expired' });
-      await query(`UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
+      const otpCheck = await verifyOtp(query, c, req.body.otp);
+      if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Sign-in failed', message: otpCheck.message });
+      await query(`UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
       const token = jwt.sign(
         { identity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name,
           email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id },
