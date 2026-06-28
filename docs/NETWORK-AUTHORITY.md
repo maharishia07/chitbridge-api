@@ -36,9 +36,10 @@ not just a security patch.
    approve/decline (from token); subtree/connections scoped to the caller's subtree; claim via identity proof.
 3. **ltree makes the cascade cheap:** "X has authority over Y" = `Y.path <@ X.path` (Y is in X's subtree). One
    containment check gives the whole top-down cascade.
-4. **Immediate sub-fix (within the current model):** make `actingEntityId` **required** on `approve` so consent
-   can't be bypassed by omission (still spoofable until the bridge, but closes the omit-to-bypass hole); guard
-   `claim`.
+4. **Immediate sub-fixes — DONE (2bd37ee):** `approve` now **requires** `actingEntityId` (no omit-to-bypass consent);
+   `claim` only succeeds on an **unclaimed** entity (no hijack of an owned node). Both still spoofable until the
+   bridge, but the two worst footguns are closed. NOTE: the frontend `netApprove` (empty body) now 400s until it
+   passes the consenting entity — that path needs the bridge anyway.
 5. Tests for each authority rule (parent-can/child-can/stranger-cannot).
 
 Related: P0 item in `TECH-HARDENING-BACKLOG.md` (auth mitigated; this is the authority half),
