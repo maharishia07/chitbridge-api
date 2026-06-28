@@ -1082,19 +1082,20 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it' });
       }
 
-      await query(
-        `UPDATE chit_disputes
-         SET status = 'resolved', resolution_note = $1, resolved_by_entity_id = $2, resolved_at = NOW()
-         WHERE dispute_id = $3`,
-        [resolution_note, entity_id, dispute_id]
-      );
-
-      await query(
-        `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1, $2, 'dispute_resolved', $3, $4, $5)`,
-        [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]
-      );
+      await withTransaction(async (client) => {
+        await client.query(
+          `UPDATE chit_disputes
+           SET status = 'resolved', resolution_note = $1, resolved_by_entity_id = $2, resolved_at = NOW()
+           WHERE dispute_id = $3`,
+          [resolution_note, entity_id, dispute_id]
+        );
+        await client.query(
+          `INSERT INTO state_log
+             (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1, $2, 'dispute_resolved', $3, $4, $5)`,
+          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]
+        );
+      });
 
       res.json({ dispute_id, status: 'resolved', resolution_note, resolved_by: display_name, message: 'Dispute resolved' });
     } catch (err) {
