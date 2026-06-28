@@ -25,6 +25,13 @@ behaviours we've established. **This is a living list — add a new line wheneve
 - [ ] **Idempotency / double-fire** — mutations tolerate a retry; the web `api()` double-fire lock covers UI.
 - [ ] **Soft-delete respected** — reads filter `deleted_at IS NULL` / `archived_at IS NULL` where applicable.
 
+## Observability & runaway (see OBSERVABILITY-AND-SAFETY.md)
+- [ ] **Leveled logging** — use `lib/logger.js` (`log.info/warn/error/critical`), not raw `console.*`; include
+      `req.id` for traceability. Log **CRITICAL** for integrity events (isolation breach, runaway guard tripped).
+- [ ] **Loop/runaway guard** — any chain-follow (assignment/routing/forward) has a visited-set + hop cap; any
+      `while`/`for` over external/derived data is bounded; mutations are idempotent-safe on retry.
+- [ ] **Bounded reads** — list endpoints cap `?limit=`; no unbounded result sets.
+
 ## UX & messaging
 - [ ] **Appropriate message** — every action has success + failure feedback via the `MSG` catalogue
       (contextual: chit code / actor name). No silent returns. In-progress is covered by the `api()` indicator.

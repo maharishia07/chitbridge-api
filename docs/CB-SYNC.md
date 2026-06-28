@@ -159,7 +159,10 @@ See `docs/TECH-HARDENING-BACKLOG.md` — prioritized [QUICK]/[BACKLOG] items + t
 (generic `settings JSONB`, feature flags). All [QUICK] wins done: XSS `esc()` (rows + dispute/message/detail/
 line-items), boot-time `JWT_SECRET` guard, auth rate limiter, direction CHECK migration, error-envelope sweep
 (`lib/respond.js` `safeErr`, 71 leaks closed). **Before ANY change, run `docs/AMENDMENT-CHECKLIST.md`** (living
-gate: tenant scope, esc, safeErr, transactions, void/terminal, circular-ref, MSG messages, demo segregation).
+gate: tenant scope, esc, safeErr, transactions, void/terminal, circular-ref, MSG messages, demo segregation,
+leveled logging, loop/runaway guard, bounded reads).
+Observability + runaway-safety design (loop-risk catalogue, severity model, sinks, phased plan):
+`docs/OBSERVABILITY-AND-SAFETY.md`. Built: `lib/logger.js` (leveled, `LOG_LEVEL`) + request-id tracing.
 
 ## DEPLOY RUNBOOK (when the push throttle lifts)
 

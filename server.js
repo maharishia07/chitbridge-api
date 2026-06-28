@@ -7,6 +7,7 @@ const cors    = require('cors');
 const path    = require('path');
 const helmet  = require('helmet');
 const rateLimit = require('express-rate-limit');
+const log     = require('./lib/logger');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -15,8 +16,8 @@ const PORT = process.env.PORT || 3000;
 // invariant). In production a bad secret aborts boot; in dev it warns loudly.
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   const msg = 'JWT_SECRET is missing or shorter than 32 chars';
-  if (process.env.NODE_ENV === 'production') { console.error('FATAL:', msg); process.exit(1); }
-  else console.warn('WARNING:', msg, '— set a strong JWT_SECRET before any real deploy.');
+  if (process.env.NODE_ENV === 'production') { log.critical('boot aborted', { reason: msg }); process.exit(1); }
+  else log.warn('weak JWT_SECRET', { reason: msg + ' — set a strong JWT_SECRET before any real deploy' });
 }
 
 // Trust Railway's proxy
@@ -50,9 +51,16 @@ app.use(helmet({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Request logger
+// Request id for traceability — propagate an incoming id or mint one; echo it back; expose as req.id.
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path} — origin: ${req.headers.origin || 'none'}`);
+  req.id = req.headers['x-request-id'] || require('crypto').randomBytes(8).toString('hex');
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
+
+// Request logger (leveled — quiet with LOG_LEVEL=warn, verbose with LOG_LEVEL=debug)
+app.use((req, res, next) => {
+  log.info('request', { id: req.id, method: req.method, path: req.path, origin: req.headers.origin || null });
   next();
 });
 
@@ -128,8 +136,8 @@ app.use((req, res) => {
 
 // ── Error handler ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);   // full detail stays in server logs only
-  // Never leak internal error text to the client — prevents info disclosure on any env.
+  // Full detail stays in server logs (with the request id for traceability); client gets a generic message.
+  log.error('unhandled', { id: req.id, path: req.path, err: err.message, stack: err.stack });
   res.status(500).json({ error: 'Server error', message: 'Something went wrong' });
 });
 

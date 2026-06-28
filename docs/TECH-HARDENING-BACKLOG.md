@@ -35,8 +35,11 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
   a tiny runner (or adopt a tool) so prod/UAT apply the same set in order, idempotently.
 - **[BACKLOG] Remove hardcodes in `db/index.js`** — the Supabase project `ref` is hardcoded (line 30); derive it
   from `DATABASE_URL`. Region list is hardcoded too — env-drive or document.
-- **[BACKLOG] Structured logging + request IDs** — replace `console.log` with a logger (level, JSON, a per-request
-  correlation id) for traceability.
+- **[DONE→ongoing] Structured logging + request IDs** — `lib/logger.js` (leveled, `LOG_LEVEL`-toggleable, JSON,
+  CRITICAL sink hook) + request-id middleware, wired into the request log / `safeErr` / global handler / boot.
+  **[BACKLOG remaining]** replace the rest of `console.*`; wire `log.onCritical` → `error_log` table + alert
+  channel; add max-`?limit=` cap + DB `statement_timeout`; (with connectors) circuit breaker + idempotency keys.
+  Full design + risk catalogue: `docs/OBSERVABILITY-AND-SAFETY.md`.
 - **[BACKLOG] Token lifecycle** — entity JWTs are 7-day, stateless, no revocation (only actors re-checked). Add a
   short access TTL + refresh, or a token-version column for server-side revoke.
 - **[BACKLOG] Avoid `SELECT *`** in hot reads (chit detail) — list explicit columns (contract stability + no
