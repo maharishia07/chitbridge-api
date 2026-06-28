@@ -38,6 +38,13 @@ Nothing is lost if GitHub stays unreachable.
 > **Manual QA script (register→full lifecycle, screen by screen):** `docs/MANUAL-TEST-SCRIPT.md`.
 > **Strategic stabilisation plan (do BEFORE the next level — Tracks A–H, prioritised):** `docs/CORE-STABILISATION-BACKLOG.md`.
 > **Threat model (actors / assets / trust boundaries / residual gaps):** `docs/THREAT-MODEL.md`.
+> **CODING DISCIPLINE — load every CLI session:** `docs/CB-CODING-DISCIPLINE.md`.
+>
+> ✅ **REVIEWER SIGN-OFF (v9 / `8d5b181`):** GO for **DEV deploy + experimentation**, **NOT prod**. F0–F7 closed
+> in code; the v9 hardening pass (C3/D3/H1) is regression-free; KB/TRUST claims are honest; no open code defects.
+> **Prod gate (≥1 month out, behind real scrutiny):** dev-smoke GREEN + migrations confirmed + the P0
+> stabilisation items landed (A1/A2 → B1 → A4/A5 → C1/C2 → E1/E2). Keep **`ASSIST_LLM` / SMS / customer storefront
+> DORMANT** this phase. *The smoke (`scripts/smoke-review-fixes.sh` + §13.3–13.7) is the gate.*
 > **Push is blocked two ways:** the GitHub secondary throttle AND it needs Athi's interactive Git Credential
 > Manager auth (the non-interactive agent shell gets `exit 128`). Athi runs the push from his own terminal.
 

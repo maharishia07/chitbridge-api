@@ -12,10 +12,18 @@ Tactical sub-items that already live in `TECH-HARDENING-BACKLOG.md` are cross-re
 > **Do-first — the three tracks that change the risk profile most: A (prove it) → B (architectural isolation) →
 > C (close the single point of failure).** Everything else is real but secondary to these.
 
-## Suggested order (Sprint 0 → 2)
-- **Sprint 0 (unblock proof):** A1 → A2 → A3 → E1 → E2; quick TRUE-claims fix D3; finish C3.
-- **Sprint 1 (architectural net):** A4 → B1 → C1 → C2 → B3; H1.
-- **Sprint 2 (breadth):** B2, C4, D1/D2, E3/E4/E5, F1, G1, A5/CI, H2.
+## REVIEWER-APPROVED ORDER (v9 sign-off, `8d5b181`) — do the architecture EARLY so every experiment inherits the net
+1. **A1/A2** — stand up a non-prod test DB; run the smoke. *Turns "should work" into "does work."*
+2. **B1** — Postgres RLS isolation backstop. **THE highest-leverage item — do it BEFORE adding new endpoints.**
+3. **A4** — automated tenant-isolation test suite; **A5** — wire it into CI to block merges.
+4. **C1/C2** — entity-token revocation + short TTL + refresh; `JWT_SECRET` rotation / secret management.
+5. **E1/E2** — migration ledger (or boot-time column probe) + diff `fp01` vs the real prod schema.
+- Then **P1:** D1/D2 (per-actor hats) · F1 (monolith / CSP / token-storage) · E3/E4 (staging + off-laptop backups).
+- **Already done (DB-free wins):** D3 ✓ · C3 ✓ · H1 ✓.
+
+> **"Done" = the item's DB-backed test/smoke passes — NOT `node --check`.** Static-verify is *ready to test*, not
+> done. Each item lands as its own commit, held; never push past a red; bring results back for re-verify.
+> (See `docs/CB-CODING-DISCIPLINE.md`.)
 
 ---
 
