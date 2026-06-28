@@ -1,6 +1,17 @@
-const request = require("supertest");
+const supertest = require("supertest");
+const jwt = require("jsonwebtoken");
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret-at-least-32-characters-long-xx";
 const app = require("../src/app");           // export the Express app from app.js
 const { pool } = require("../src/db");
+// Network routes now require auth — attach a valid token to every request.
+// identity_type:'entity' makes auth skip the actor DB revalidation, so no DB dependency for the token check.
+const TOKEN = "Bearer " + jwt.sign({ identity_id: "00000000-0000-0000-0000-000000000000", identity_type: "entity" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+const _agent = supertest(app);
+const _withAuth = (t) => t.set("Authorization", TOKEN);
+const request = () => ({
+  get:  (url) => _withAuth(_agent.get(url)),
+  post: (url) => _withAuth(_agent.post(url)),
+});
 const reg  = (name, body = {}) => request(app).post("/api/network/entities").send({ name, ...body });
 const look = (bridgeId) => request(app).get("/api/network/entities/lookup").query({ bridgeId });
 const reqC = (parentId, childBridgeId) => request(app).post("/api/network/connections").send({ parentId, childBridgeId });
