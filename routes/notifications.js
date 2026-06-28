@@ -32,6 +32,11 @@ router.get('/', auth, async (req, res) => {
            ON ch.chit_id = sl.chit_id AND ch.entity_id = $1 AND ch.direction = cs.direction
         WHERE (sl.action_by_identity_id <> $2
                OR sl.action IN ('dispute_raised','dispute_resolved','voided'))
+          -- F3 (P0 isolation): only the caller's OWN copy's state_log row, OR a genuinely cross-party event.
+          -- Stops the counterparty's INTERNAL actions (read / archive / delete / restore / internal assign +
+          -- their actor names) leaking into this feed; disputes/voids still cross. Status changes already fan a
+          -- row to each copy (chits.js:688), so a counterparty status change still shows via the caller's own row.
+          AND ( sl.entity_id = $1 OR sl.action IN ('dispute_raised','dispute_resolved','voided') )
         ORDER BY sl.created_at DESC
         LIMIT $4`,
       [entity_id, caller_id, dispute_handler, limit]

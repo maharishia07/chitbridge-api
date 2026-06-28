@@ -1041,9 +1041,9 @@ router.put('/assign/:chit_id',
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
            SELECT $1, entity_id, 'assigned', $2, $3, $4
-           FROM chit_status WHERE chit_id = $1`,
+           FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
           [chit_id, action_by_id, action_by_name,
-           `Pulled by ${action_by_name}`]
+           `Pulled by ${action_by_name}`, entity_id]
         );
         // Log status reset to pending so it appears in Open tab for the new assignee
         await db(
@@ -1051,10 +1051,10 @@ router.put('/assign/:chit_id',
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
            SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
-           FROM chit_status WHERE chit_id = $1`,
+           FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
           [chit_id, action_by_id, action_by_name,
            previousStatusOnPull,
-           `Reset to pending — pulled by ${action_by_name}`]
+           `Reset to pending — pulled by ${action_by_name}`, entity_id]
         );
         return res.json({
           message: 'Chit pulled to your My Task',
@@ -1119,10 +1119,10 @@ router.put('/assign/:chit_id',
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
            SELECT $1, entity_id, $2, $3, $4, $5
-           FROM chit_status WHERE chit_id = $1`,
+           FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
           [chit_id,
            isTransfer ? 'transferred' : 'assigned',
-           action_by_id, action_by_name, assignDetail]
+           action_by_id, action_by_name, assignDetail, entity_id]
         );
         // Log status reset to pending so it appears in Open tab for the new assignee
         await db(
@@ -1130,10 +1130,10 @@ router.put('/assign/:chit_id',
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
            SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
-           FROM chit_status WHERE chit_id = $1`,
+           FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
           [chit_id, action_by_id, action_by_name,
            previousStatusOnPush,
-           `Reset to pending — assigned to ${t.display_name} by ${action_by_name}`]
+           `Reset to pending — assigned to ${t.display_name} by ${action_by_name}`, entity_id]
         );
         return res.json({
           message: `Chit pushed to ${t.display_name}`,
@@ -1166,10 +1166,10 @@ router.put('/assign/:chit_id',
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
            SELECT $1, entity_id, 'returned', $2, $3, $4
-           FROM chit_status WHERE chit_id = $1`,
+           FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
           [chit_id,
            action_by_id, action_by_name,
-           `Returned to entity pool${cs.actor_name ? ` from ${cs.actor_name}` : ''} by ${action_by_name}`]
+           `Returned to entity pool${cs.actor_name ? ` from ${cs.actor_name}` : ''} by ${action_by_name}`, entity_id]
         );
         return res.json({
           message: 'Chit returned to entity pool',

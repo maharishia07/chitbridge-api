@@ -1452,9 +1452,11 @@ router.post('/assign-bulk',
             [t.identity_id, t.display_name, chit_id, entity_id]);
           await client.query(`UPDATE identities SET current_task_count = current_task_count + 1 WHERE identity_id = $1`, [t.identity_id]);
           await client.query(
+            // F3: assignment is INTERNAL — write ONLY the assigning entity's own row (was fanning to every copy,
+            // leaking the assign + actor names to the counterparty).
             `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM chit_status WHERE chit_id = $1`,
-            [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`]);
+             SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
+            [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`, entity_id]);
           assigned.push(chit_id);
         }
         return { t, assigned, skipped };
