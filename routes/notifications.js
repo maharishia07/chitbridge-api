@@ -9,22 +9,31 @@ const auth = require('../middleware/auth');
 router.get('/', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const caller_id = req.identity.identity_id;   // the actor (or entity) actually making the call
     const limit = Math.min(parseInt(req.query.limit || 30), 100);
+
+    // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
+    // regardless of which actor the individual chit is assigned to.
+    const h = await query(`SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]);
+    const dispute_handler = h.rows[0]?.dispute_handler_actor_id || null;
 
     const result = await query(
       `SELECT sl.chit_id, sl.action, sl.action_by_display_name,
               sl.new_status, sl.detail, sl.created_at, cs.direction,
-              ch.auto_subject, ch.manual_subject
+              cs.assigned_to_actor_id,
+              ch.auto_subject, ch.manual_subject,
+              (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
+              (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me
          FROM state_log sl
          JOIN chit_status cs
            ON cs.chit_id = sl.chit_id AND cs.entity_id = $1 AND cs.deleted_at IS NULL
          LEFT JOIN chit_header ch
            ON ch.chit_id = sl.chit_id AND ch.entity_id = $1 AND ch.direction = cs.direction
-        WHERE (sl.action_by_identity_id <> $1
+        WHERE (sl.action_by_identity_id <> $2
                OR sl.action IN ('dispute_raised','dispute_resolved','voided'))
         ORDER BY sl.created_at DESC
-        LIMIT $2`,
-      [entity_id, limit]
+        LIMIT $4`,
+      [entity_id, caller_id, dispute_handler, limit]
     );
 
     res.json({ notifications: result.rows, count: result.rows.length });

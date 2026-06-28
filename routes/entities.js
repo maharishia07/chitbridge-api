@@ -247,7 +247,7 @@ router.get('/search', auth, async (req, res) => {
 router.get('/me', auth, async (req, res) => {
   try {
     const result = await query(
-      `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, country, currency_code, created_at, last_active_at,
+      `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
@@ -287,6 +287,7 @@ router.patch('/profile', auth,
     body('address').optional().trim(),
     body('business_status').optional().isIn(['open','closed','away']),
     body('self_copy_pref').optional().isIn(['both','sent','received']),
+    body('dispute_handler_actor_id').optional().isUUID(),
     body('user_id').optional().trim().custom(v => {
       if (v === '') return true;
       const ok = v.includes('@') ? /\S+@\S+\.\S+/.test(v) : v.length >= 8;
@@ -300,13 +301,22 @@ router.patch('/profile', auth,
       // user_id is unique (idx_identities_user_id is case-insensitive); store as given, dedupe by LOWER().
       const userId = (req.body.user_id !== undefined && String(req.body.user_id).trim() !== '')
         ? String(req.body.user_id).trim() : null;
+      // dispute_handler must be one of MY OWN actors — never an arbitrary identity.
+      const handler = req.body.dispute_handler_actor_id || null;
+      if (handler) {
+        const ok = await query(
+          `SELECT 1 FROM identities WHERE identity_id=$1 AND identity_type='actor' AND parent_entity_id=$2`,
+          [handler, id]);
+        if (!ok.rows.length) return res.status(400).json({ error: 'Bad handler', message: 'dispute_handler_actor_id must be an actor under your entity' });
+      }
       await query(
         `UPDATE identities SET gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
                 business_status=COALESCE($4,business_status), user_id=COALESCE($5,user_id),
-                self_copy_pref=COALESCE($6,self_copy_pref)
-         WHERE identity_id=$7`,
+                self_copy_pref=COALESCE($6,self_copy_pref),
+                dispute_handler_actor_id=COALESCE($7,dispute_handler_actor_id)
+         WHERE identity_id=$8`,
         [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
-         req.body.business_status || null, userId, req.body.self_copy_pref || null, id]);
+         req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id]);
       res.json({ message: 'Profile updated' });
     } catch (err) {
       if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });
