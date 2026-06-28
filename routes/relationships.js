@@ -97,9 +97,13 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
       `SELECT identity_id, display_name, bridge_id, currency_code, business_status
        FROM identities WHERE identity_id = $1 AND identity_type = 'entity'`, [sid]);
     const supplier = sup.rows[0] || null;
+    // F7 (cross-entity read): only expose a supplier's catalogue if they have PUBLISHED it (a public default
+    // schema) — mirrors the public storefront endpoint (catalogue.js GET /:bridge_id). Without this, any
+    // logged-in entity could read any other entity's full catalogue + prices via the :id in the URL.
+    // (Interim gate per Athi; a supplier/connection-relationship check is a later tightening, not now.)
     const schema = await query(
       `SELECT schema_id, schema_name FROM entity_schemas
-       WHERE entity_id = $1 AND status = 'active' AND is_default = true LIMIT 1`, [sid]);
+       WHERE entity_id = $1 AND status = 'active' AND is_default = true AND visibility = 'public' LIMIT 1`, [sid]);
     if (schema.rows.length === 0) return res.json({ supplier, schema: null, fields: [], items: [] });
     const fields = await query(
       `SELECT field_key, field_name, field_type, required, display_order
