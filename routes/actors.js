@@ -11,6 +11,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
+const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap (F5)
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -397,7 +398,7 @@ router.post('/login',
       const actor = await db(
         `SELECT identity_id, bridge_id, display_name, actor_key,
                 actor_role, actor_type, break_status,
-                otp_code, otp_expires_at, max_tasks,
+                otp_code, otp_expires_at, otp_attempts, max_tasks,
                 pin_hash, pin_attempts, pin_locked_at
          FROM identities
          WHERE actor_key = $1
@@ -485,24 +486,16 @@ router.post('/login',
             use_otp: true
           });
         }
-        // Check OTP
-        if (a.otp_code !== otp) {
-          return res.status(400).json({
-            error: 'Login failed',
-            message: 'Incorrect OTP. Ask your admin to reset.'
-          });
+        // F5: per-account OTP attempt cap — verifyOtp increments otp_attempts on a wrong code and 429s once
+        // capped (MAX_OTP_ATTEMPTS). authLimiter (30/15m) still sits in front of this route too.
+        const otpCheck = await verifyOtp(db, a, otp);
+        if (!otpCheck.ok) {
+          return res.status(otpCheck.status).json({ error: 'Login failed', message: otpCheck.message });
         }
-        // Check OTP not expired
-        if (new Date() > new Date(a.otp_expires_at)) {
-          return res.status(400).json({
-            error: 'Login failed',
-            message: 'OTP expired. Ask your admin to reset your access.'
-          });
-        }
-        // Clear OTP — one time use
+        // Clear OTP — one time use; reset the attempt counter
         await db(
           `UPDATE identities
-           SET otp_code = NULL, otp_expires_at = NULL,
+           SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0,
                status = 'active', last_active_at = NOW()
            WHERE identity_id = $1`,
           [a.identity_id]
