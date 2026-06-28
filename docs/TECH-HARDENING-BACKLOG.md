@@ -89,8 +89,10 @@ gates orders; `safeErr`. **FIXED:** `/api/catalogue` now rate-limited (7a63490).
   but not uniformly (e.g. `/send` body). Audit every mutating route for input validation + length/type caps.
 - **[BACKLOG] Migration discipline** — migrations are hand-run `.sql` files. Add a `schema_migrations` ledger +
   a tiny runner (or adopt a tool) so prod/UAT apply the same set in order, idempotently.
-- **[BACKLOG] Remove hardcodes in `db/index.js`** — the Supabase project `ref` is hardcoded (line 30); derive it
-  from `DATABASE_URL`. Region list is hardcoded too — env-drive or document.
+- **[DONE `ddb44ce`] Remove hardcodes in `db/index.js`** — now tries the plain `DATABASE_URL` directly first
+  (connects to CI/local/any direct Postgres), and the project `ref` is env-overridable (`SUPABASE_REF`, default
+  kept). Pooler region list still hardcoded as the *fallback* only (acceptable; env-drive later if needed).
+  This unblocked CI integration (A5) + jest/DB suites (A3).
 - **[DONE→ongoing] Structured logging + request IDs** — `lib/logger.js` (leveled, `LOG_LEVEL`-toggleable, JSON,
   CRITICAL sink hook) + request-id middleware, wired into the request log / `safeErr` / global handler / boot.
   **[BACKLOG remaining]** replace the rest of `console.*`; wire `log.onCritical` → `error_log` table + alert
