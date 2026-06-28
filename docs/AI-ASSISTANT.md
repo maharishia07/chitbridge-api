@@ -101,6 +101,18 @@ of failure.*
 3. Flip `CFG.ASSIST_LLM=true` on the web (`app.html`).
 Until step 2 the endpoint returns 503 and the assistant runs on its free library floor — no cost, no behaviour change.
 
+### Screen contexts — `coassists` + `schema` added
+**DONE.** Sharper, screen-specific entries so the assistant is useful on those surfaces:
+- **`coassists`** (5 curated entries): what a co-assist is, push/pull/bulk assignment, scoping/limits, break/leave
+  returning work to the pool, and the honest "non-human participants are planned, not live yet".
+- **`schema`** (5 curated entries): what a schema/blueprint is, changing the fields a deal carries, no developer
+  needed, sealed-record behaviour when a schema changes, and how schemas differ across businesses. Tagged
+  `context:["schema","compose","register"]` so they surface where schema is actually touched (Compose + register),
+  since there is no standalone schema screen yet.
+- **Server (`routes/assist.js`):** a `CONTEXT_HINTS` map turns the `context` the client sends (`curScreen()`) into
+  a one-line steer injected into the prompt (`coassists`, `schema`, `compose`, `disputes`, `network`, `catalogue`,
+  `suppliers`) — so the real Haiku answer is tailored to the screen, not generic.
+
 - **Next:** real screen clips into `public/app/assets/`; (later) optionally extend the same backbone to
   AI-assisted **schema building** and richer **co-assist** guidance — both bigger features on top of this seam,
   not a flag flip.
