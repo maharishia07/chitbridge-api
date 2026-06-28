@@ -35,8 +35,13 @@ help + KB. You describe your problem; it points you to the right tool/facility. 
   `uc_aggregator`, `uc_compare` (same engine, different schema). Media renders gracefully: a missing asset hides
   cleanly and shows a "screen clip coming" caption, so no broken images until the real clips land. Drop the clips
   in `public/app/assets/` per its README.
-- **Next:** real screen clips into `public/app/assets/`; optionally repoint the "?" overlays to render straight
-  from `ASSIST_LIB` (single render path); then the real AI behind `assistAsk` (LLM over the library + live context).
+- **DONE (web 26e9360):** the "?" overlays now render from `ASSIST_LIB` (`helpBoxFromLib`) — so the "?" and the
+  floating assistant share **both content AND rendering** (one library, one render path, via `assistEntryHTML`).
+  The old `coHelpBox`/`composeHelpBox`/`menuHelp` render functions are now unused (safe to delete later); the
+  content arrays (`HELP_PACKS`/`CO_HELP`/`COMPOSE_HELP`) remain as the source folded by `buildAssistLib`, and
+  `HELP_PACKS[key].msg` still feeds the inline banner.
+- **Next:** real screen clips into `public/app/assets/`; then the real AI behind `assistAsk`/`helpAsk` (LLM over
+  the library + live context, keeping the honest / no-oversell guardrail).
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.
