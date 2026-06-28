@@ -81,10 +81,32 @@ parent_entity_id = current`) would **break these legitimate look-ups**. Options 
   rows *with RLS forced*. B1 is closed only when A4 is green on dev under FORCE — not on `node --check`.
 - Re-run `scripts/smoke-review-fixes.sh` to confirm no regression in the happy path.
 
-## OPEN QUESTIONS — must be answered before implementation
-1. **DB role / BYPASSRLS (critical, esp. Supabase):** does the dev API connect as a **superuser or
-   `service_role`**? Those **bypass RLS entirely** — B1 would be a no-op. We likely need a dedicated app role
-   *without* `BYPASSRLS`/superuser. What role is `DATABASE_URL` using on dev?
+## STAGE-0 PREREQUISITE (answered 2026-06-28) — a non-BYPASSRLS app role
+**Finding (`scripts/check-db-role.js`):** the API connects as **`postgres`** with **`rolbypassrls = true`**
+(`rolsuper = false` — Supabase de-superusered `postgres`, but it keeps BYPASSRLS). **`BYPASSRLS` overrides even
+`FORCE ROW LEVEL SECURITY`**, so RLS would do NOTHING for the app today. → **B1 cannot work until the API
+connects as a role without BYPASSRLS.**
+
+**Remediation (do on dev, reversible — safe to do NOW because no table has RLS yet, so behaviour is unchanged):**
+```sql
+-- 1) dedicated app role, no superuser, no bypassrls
+CREATE ROLE cb_app LOGIN PASSWORD '<strong-secret>' NOSUPERUSER NOBYPASSRLS;
+-- 2) privileges (tables + sequences + future objects)
+GRANT USAGE ON SCHEMA public TO cb_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO cb_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO cb_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO cb_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO cb_app;
+```
+Then point the dev **`DATABASE_URL`** at `cb_app` and **restart + smoke** (app should behave identically — RLS is
+not enabled yet). Keep the old `postgres` URL to revert. Setting the custom GUC `app.current_entity` via
+`set_config('app.current_entity', …, true)` works for any role (namespaced custom params need no registration).
+- **Supabase connection caveat to verify:** a custom role typically uses the **direct** connection (port 5432),
+  not the transaction pooler (6543) which expects `postgres`/`<role>.<ref>` formats — confirm the working DSN.
+- **Verify the switch:** re-run `node scripts/check-db-role.js` → expect `cb_app / false / false` (RLS ENFORCED ✅).
+
+## OPEN QUESTIONS — remaining (recommended defaults in [brackets]; confirm or override)
+1. ✅ **DB role / BYPASSRLS — ANSWERED:** bypassed (`postgres`/BYPASSRLS); needs the `cb_app` role above first.
 2. **`identities` policy:** carve-out (A) or discovery-aware policy (B)?
 3. **Connection model:** OK to move tenant reads into per-request transactions (the `max:1` pool already
    serialises; perf impact should be minimal but confirm)?

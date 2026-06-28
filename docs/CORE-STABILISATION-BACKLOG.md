@@ -43,7 +43,7 @@ The invariant currently lives in each dev's `WHERE` clause; this review found ba
 
 | ID | Item | Sev | Status | Depends | Definition of done |
 |----|------|-----|--------|---------|--------------------|
-| B1 | Postgres Row-Level Security backstop (policies key on session entity) | P0 | **DESIGN — await approval** (`docs/B1-RLS-DESIGN.md`) | A1 ✓ | RLS on tenant tables so a forgotten app-layer `WHERE` *cannot* leak; app scoping stays. **Blocked on 4 open questions — esp. the dev DB role / BYPASSRLS (Supabase `service_role` bypasses RLS).** |
+| B1 | Postgres Row-Level Security backstop (policies key on session entity) | P0 | **DESIGN — prereq found** (`docs/B1-RLS-DESIGN.md`) | A1 ✓ | RLS on tenant tables so a forgotten app-layer `WHERE` *cannot* leak. **Q1 ANSWERED:** API connects as `postgres` with `BYPASSRLS=true` → RLS is a no-op until the API uses a dedicated `cb_app` role (NOBYPASSRLS) — Stage-0 prerequisite documented. Q2–Q4 have recommended defaults; then build Stage-0 plumbing + A4. |
 | B2 | Single audited data-access choke-point (always injects `entity_id = req.identity`) | P1 | OPEN | — | Reads/writes routed through a thin layer instead of hand-written per-route queries |
 | B3 | Isolation lint/CI check (flag tenant-table queries not scoped on the verified identity) | P1 | OPEN | A5 | A static check that fails CI on an unscoped tenant query |
 
