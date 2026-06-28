@@ -78,13 +78,32 @@ of failure.*
 - **Gating:** with no `ASSIST_LLM_PROVIDER` + `ASSIST_LLM_API_KEY` env (the default/held state) it returns **503**
   ("not configured") and logs an **info** line — the client catches it and uses its library floor. If a provider
   is set but the SDK call isn't implemented yet it returns **501**. Smoke-tested: empty/long→422, valid→503.
-- **Only remaining piece for real AI:** drop the provider SDK call into the marked `TODO` (run under
-  `SYSTEM_PROMPT`, ground on the KB + — only when `identity` is set — that caller's tenant-scoped context, never
-  another entity's; return non-200 on any provider error so the floor still answers), set the two env vars, and
-  flip `CFG.ASSIST_LLM=true` on the web.
+### Real Haiku call — WIRED (dormant; turns on only when you add a key)
+**DONE.** The provider call is implemented in `routes/assist.js` using `@anthropic-ai/sdk` (added to
+`package.json`):
+- **Model:** `claude-haiku-4-5-20251001` by default (override with `ASSIST_LLM_MODEL`) — small/fast/cheap, right
+  for help/onboarding. `max_tokens: 400` bounds output cost.
+- **Grounding:** `lib/assist-kb.js` — a server-side, **honest** knowledge base (every line must be TRUE; planned
+  features are listed under "NOT YET BUILT"). Kept server-side so it's tamper-proof and **prompt-cached**
+  (`cache_control: ephemeral`) — the repeated grounding is charged ~90% less after the first call. Usage
+  (incl. `cache_read`/`cache_write` tokens) is logged per call.
+- **Guardrail:** the no-oversell `SYSTEM_PROMPT` is always the first system block.
+- **Isolation:** anonymous callers are grounded on the public KB only. A tenant-scoped block would be added ONLY
+  when `identity` is set (P0 invariant — never another entity's data). None is sent yet.
+- **Degradation:** SDK lazy-required (missing dep → 503, not a boot crash); 8 s timeout + 1 retry; **any** model
+  or network error → **502**, so the web client falls through to its library floor. Verified: no key → 503,
+  bad key → real API 401 → 502, empty/long q → 422.
 
-- **Next:** real screen clips into `public/app/assets/`; then implement the provider SDK call in
-  `routes/assist.js` (above) and flip `CFG.ASSIST_LLM=true` — keeping the no-oversell guardrail + mandatory fall-through.
+**To turn it on (when you choose):**
+1. Get an Anthropic API key (console.anthropic.com) and **set a low monthly spend cap** (e.g. $5–10).
+2. Add to the API env (`.env`, never the client): `ASSIST_LLM_PROVIDER=anthropic` and `ASSIST_LLM_API_KEY=...`
+   (optionally `ASSIST_LLM_MODEL=...`, `ASSIST_RATE_LIMIT_MAX=...`).
+3. Flip `CFG.ASSIST_LLM=true` on the web (`app.html`).
+Until step 2 the endpoint returns 503 and the assistant runs on its free library floor — no cost, no behaviour change.
+
+- **Next:** real screen clips into `public/app/assets/`; (later) optionally extend the same backbone to
+  AI-assisted **schema building** and richer **co-assist** guidance — both bigger features on top of this seam,
+  not a flag flip.
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.

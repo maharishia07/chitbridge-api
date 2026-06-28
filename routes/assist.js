@@ -12,6 +12,7 @@ const router  = express.Router();
 const jwt     = require('jsonwebtoken');
 const { safeErr } = require('../lib/respond');
 const log     = require('../lib/logger');
+const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
 // so it can't be inspected or bypassed. The real implementation injects this as the system prompt.
@@ -58,11 +59,46 @@ router.post('/', async (req, res) => {
       return res.status(503).json({ error: 'Assistant unavailable', message: 'The assistant model is not configured yet.' });
     }
 
-    // TODO (real): call `provider` with SYSTEM_PROMPT + grounding + q; map the reply to { answer, fit?, media? }.
-    // Until that SDK call lands, behave as not-yet-wired so the client keeps using its deterministic floor.
-    void SYSTEM_PROMPT;
-    log.warn('assist provider configured but model call not implemented', { id: req.id, provider });
-    return res.status(501).json({ error: 'Not implemented', message: 'Assistant model call is not wired yet.' });
+    if (provider !== 'anthropic') {
+      log.warn('assist: unsupported provider', { id: req.id, provider });
+      return res.status(501).json({ error: 'Not implemented', message: 'That assistant provider is not wired.' });
+    }
+
+    // Lazy-require the SDK so a missing dependency degrades gracefully (client floor) instead of crashing boot.
+    let Anthropic;
+    try { Anthropic = require('@anthropic-ai/sdk'); }
+    catch (_) { log.error('assist: @anthropic-ai/sdk not installed', { id: req.id });
+                return res.status(503).json({ error: 'Assistant unavailable', message: 'The assistant is not available right now.' }); }
+
+    const model = process.env.ASSIST_LLM_MODEL || 'claude-haiku-4-5-20251001';   // small/fast/cheap by default
+    const client = new (Anthropic.Anthropic || Anthropic)({ apiKey, timeout: 8000, maxRetries: 1 });
+
+    try {
+      const msg = await client.messages.create({
+        model,
+        max_tokens: 400,                                  // bound output -> bound cost
+        system: [
+          { type: 'text', text: SYSTEM_PROMPT },          // the no-oversell guardrail
+          { type: 'text', text: ASSIST_KB, cache_control: { type: 'ephemeral' } },  // grounding — prompt-cached (repeated each call)
+        ],
+        // Only the public KB grounds anonymous callers. A tenant-scoped block would be added here ONLY when
+        // `identity` is set (honour the P0 isolation invariant — never another entity's data). None yet.
+        messages: [ { role: 'user', content: `Screen: ${context || 'unknown'}\nUser question: ${q}` } ],
+      });
+      const answer = (msg.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+      if (!answer) {
+        log.warn('assist: empty model answer', { id: req.id, model });
+        return res.status(502).json({ error: 'Assistant error', message: 'No answer produced — try again.' });
+      }
+      const u = msg.usage || {};
+      log.info('assist answered', { id: req.id, model, context, auth: !!identity,
+        in: u.input_tokens, out: u.output_tokens, cache_read: u.cache_read_input_tokens, cache_write: u.cache_creation_input_tokens });
+      return res.json({ answer });   // shape: { answer } (fit/media can be added later); client wraps it like a lib entry
+    } catch (mErr) {
+      // Model/network failure -> non-200 so the web client falls through to its deterministic library floor.
+      log.error('assist: model call failed', { id: req.id, model, err: mErr.message, status: mErr.status });
+      return res.status(502).json({ error: 'Assistant upstream error', message: 'The assistant is busy — please try again.' });
+    }
 
   } catch (err) {
     res.status(500).json({ error: 'Assistant error', message: safeErr(err) });
