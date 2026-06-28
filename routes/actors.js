@@ -8,7 +8,7 @@ const { body, param, query } = require('express-validator');
 const jwt     = require('jsonwebtoken');
 const bcrypt  = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { query: db } = require('../db');
+const { query: db, withTransaction } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
 
@@ -747,74 +747,8 @@ router.put('/:id/status',
         });
       }
 
-      // Route tasks if needed
-      let tasks_routed = 0;
-      if (a.current_task_count > 0 && task_action) {
-        if (task_action === 'pool') {
-          // Clear assignment — return to entity pool (active tasks only)
-          const result = await db(
-            `UPDATE chit_status
-             SET assigned_to_actor_id = NULL,
-                 assigned_to_actor_display_name = NULL,
-                 assigned_at = NULL, assignment_type = NULL
-             WHERE assigned_to_actor_id = $1
-             AND current_status NOT IN ('completed','cancelled','rejected')`,
-            [actor_id]
-          );
-          tasks_routed = result.rowCount;
-        } else if (task_action === 'actor' && target_actor_id) {
-          // Pass to specific actor (active tasks only)
-          const target = await db(
-            `SELECT identity_id, display_name FROM identities
-             WHERE identity_id = $1 AND parent_entity_id = $2
-             AND break_status = 'active'`,
-            [target_actor_id, entity_id]
-          );
-          if (target.rows.length === 0) {
-            return res.status(400).json({ error: 'Target actor not found or not active' });
-          }
-          const result = await db(
-            `UPDATE chit_status
-             SET assigned_to_actor_id = $1,
-                 assigned_to_actor_display_name = $2,
-                 assigned_at = NOW(), assignment_type = 'push'
-             WHERE assigned_to_actor_id = $3
-             AND current_status NOT IN ('completed','cancelled','rejected')`,
-            [target.rows[0].identity_id, target.rows[0].display_name, actor_id]
-          );
-          tasks_routed = result.rowCount;
-          // Update task counts
-          await db(`UPDATE identities SET current_task_count = current_task_count + $1 WHERE identity_id = $2`,
-            [tasks_routed, target_actor_id]);
-        }
-        // Reset actor task count
-        await db(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
-      }
-
-      // Apply status change
-      if (action === 'deactivate') {
-        await db(
-          `UPDATE identities
-           SET break_status = 'deactivated',
-               deactivated_at = NOW(),
-               deactivated_by = $1,
-               return_date = $2,
-               otp_code = NULL
-           WHERE identity_id = $3`,
-          [req.identity.identity_id, return_date || null, actor_id]
-        );
-      } else if (action === 'remove') {
-        await db(
-          `UPDATE identities
-           SET break_status = 'removed',
-               removed_at = NOW(),
-               removed_by = $1,
-               otp_code = NULL,
-               otp_expires_at = NULL
-           WHERE identity_id = $2`,
-          [req.identity.identity_id, actor_id]
-        );
-      } else if (action === 'reactivate') {
+      // Reactivate is a single write (no task routing) — handle and return.
+      if (action === 'reactivate') {
         const otp     = generateOTP();
         const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         await db(
@@ -834,6 +768,67 @@ router.put('/:id/status',
           login_format: `${a.actor_key}@${req.identity.display_name}`
         });
       }
+
+      // Validate the target actor up-front (read) so the transaction below holds only writes.
+      let targetActor = null;
+      if (a.current_task_count > 0 && task_action === 'actor') {
+        if (!target_actor_id) return res.status(400).json({ error: 'Target actor required' });
+        const tr = await db(
+          `SELECT identity_id, display_name FROM identities
+           WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'`,
+          [target_actor_id, entity_id]
+        );
+        if (tr.rows.length === 0) return res.status(400).json({ error: 'Target actor not found or not active' });
+        targetActor = tr.rows[0];
+      }
+
+      // Atomic: route this actor's active tasks AND apply the status change together.
+      let tasks_routed = 0;
+      await withTransaction(async (client) => {
+        if (a.current_task_count > 0 && task_action) {
+          if (task_action === 'pool') {
+            const result = await client.query(
+              `UPDATE chit_status
+               SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL,
+                   assigned_at = NULL, assignment_type = NULL
+               WHERE assigned_to_actor_id = $1
+               AND current_status NOT IN ('completed','cancelled','rejected')`,
+              [actor_id]
+            );
+            tasks_routed = result.rowCount;
+          } else if (task_action === 'actor' && targetActor) {
+            const result = await client.query(
+              `UPDATE chit_status
+               SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
+                   assigned_at = NOW(), assignment_type = 'push'
+               WHERE assigned_to_actor_id = $3
+               AND current_status NOT IN ('completed','cancelled','rejected')`,
+              [targetActor.identity_id, targetActor.display_name, actor_id]
+            );
+            tasks_routed = result.rowCount;
+            await client.query(`UPDATE identities SET current_task_count = current_task_count + $1 WHERE identity_id = $2`,
+              [tasks_routed, target_actor_id]);
+          }
+          await client.query(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
+        }
+        if (action === 'deactivate') {
+          await client.query(
+            `UPDATE identities
+             SET break_status = 'deactivated', deactivated_at = NOW(), deactivated_by = $1,
+                 return_date = $2, otp_code = NULL
+             WHERE identity_id = $3`,
+            [req.identity.identity_id, return_date || null, actor_id]
+          );
+        } else if (action === 'remove') {
+          await client.query(
+            `UPDATE identities
+             SET break_status = 'removed', removed_at = NOW(), removed_by = $1,
+                 otp_code = NULL, otp_expires_at = NULL
+             WHERE identity_id = $2`,
+            [req.identity.identity_id, actor_id]
+          );
+        }
+      });
 
       res.json({
         message: `Actor ${action}d successfully`,
@@ -920,48 +915,50 @@ router.put('/break',
           });
         }
 
-        // Route tasks
-        if (count > 0) {
-          if (task_action === 'pool') {
-            await db(
-              `UPDATE chit_status
-               SET assigned_to_actor_id = NULL,
-                   assigned_to_actor_display_name = NULL,
-                   assigned_at = NULL, assignment_type = NULL
-               WHERE assigned_to_actor_id = $1
-               AND current_status NOT IN ('completed','cancelled','rejected')`,
-              [actor_id]
-            );
-          } else if (task_action === 'actor' && target_actor_id) {
-            const target = await db(
-              `SELECT identity_id, display_name FROM identities
-               WHERE identity_id = $1 AND break_status = 'active'`,
-              [target_actor_id]
-            );
-            if (target.rows.length === 0) {
-              return res.status(400).json({ error: 'Target actor not found or not active' });
-            }
-            await db(
-              `UPDATE chit_status
-               SET assigned_to_actor_id = $1,
-                   assigned_to_actor_display_name = $2,
-                   assigned_at = NOW(), assignment_type = 'push'
-               WHERE assigned_to_actor_id = $3
-               AND current_status NOT IN ('completed','cancelled','rejected')`,
-              [target.rows[0].identity_id, target.rows[0].display_name, actor_id]
-            );
-          }
-          await db(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
+        // Validate the target up-front (read) so the transaction holds only writes.
+        let targetActor = null;
+        if (count > 0 && task_action === 'actor') {
+          if (!target_actor_id) return res.status(400).json({ error: 'Target actor required' });
+          const tr = await db(
+            `SELECT identity_id, display_name FROM identities
+             WHERE identity_id = $1 AND break_status = 'active'`,
+            [target_actor_id]
+          );
+          if (tr.rows.length === 0) return res.status(400).json({ error: 'Target actor not found or not active' });
+          targetActor = tr.rows[0];
         }
 
-        await db(
-          `UPDATE identities
-           SET break_status = 'leave',
-               break_type = 'leave',
-               break_started_at = NOW()
-           WHERE identity_id = $1`,
-          [actor_id]
-        );
+        // Atomic: route tasks + reset count + set leave together.
+        await withTransaction(async (client) => {
+          if (count > 0) {
+            if (task_action === 'pool') {
+              await client.query(
+                `UPDATE chit_status
+                 SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL,
+                     assigned_at = NULL, assignment_type = NULL
+                 WHERE assigned_to_actor_id = $1
+                 AND current_status NOT IN ('completed','cancelled','rejected')`,
+                [actor_id]
+              );
+            } else if (task_action === 'actor' && targetActor) {
+              await client.query(
+                `UPDATE chit_status
+                 SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
+                     assigned_at = NOW(), assignment_type = 'push'
+                 WHERE assigned_to_actor_id = $3
+                 AND current_status NOT IN ('completed','cancelled','rejected')`,
+                [targetActor.identity_id, targetActor.display_name, actor_id]
+              );
+            }
+            await client.query(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
+          }
+          await client.query(
+            `UPDATE identities
+             SET break_status = 'leave', break_type = 'leave', break_started_at = NOW()
+             WHERE identity_id = $1`,
+            [actor_id]
+          );
+        });
 
         return res.json({
           message: 'Leave started — tasks routed',
