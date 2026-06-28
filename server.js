@@ -80,6 +80,15 @@ const authLimiter = rateLimit({
 });
 app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', '/api/actors/set-pin'], authLimiter);
 
+// Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
+// (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
+const catalogueLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.CATALOGUE_RATE_LIMIT_MAX || '60'),
+  message: { error: 'Too many requests', message: 'Too many attempts — please try again in a few minutes' }
+});
+app.use('/api/catalogue', catalogueLimiter);
+
 // ── Routes ───────────────────────────────────────────────────
 const entitiesRouter    = require('./routes/entities');
 const connectionsRouter = require('./routes/connections');
