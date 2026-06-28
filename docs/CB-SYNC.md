@@ -4,8 +4,8 @@
 notifications, dispute routing, what's deployed vs. held, decisions, next-cycle, and the deploy runbook.
 Detailed dispute change-log: `docs/HANDOFF-dispute-notifications-2026-06-28.md`.
 
-- Repo `chitbridge-api` — local `C:\Users\mahar\Downloads\chitbridge-mvp-v1.0\chitbridge-mvp`
-- Web `chitbridge-web` — local `C:\Users\mahar\Downloads\chitbridge-web-v1.0 (5)\chitbridge-react`
+- Repo `chitbridge-api` — local **`C:\dev\chitbridge-api`** (moved off `Downloads` 2026-06-28 — see hazard note)
+- Web `chitbridge-web` — local **`C:\dev\chitbridge-web`** (moved off `Downloads` 2026-06-28)
 - DB: Supabase `bzacyrdrnzdbficjplcn` · API: Railway · "live" = the dev env
 - Backup repo: private `maharishia07/cb-context-backup`
 - **Web has two sides** (one SPA, switched by `CFG.STAGE`): **demo** (`web_demo`, mock, no-login — do NOT
@@ -22,7 +22,7 @@ held on purpose (Athi batches the push + cross-examines first) AND blocked by a 
 push rate-limit** (writes fail `exit 128`, reads OK — clears in up to ~1h; batch pushes to avoid it).
 
 Safety: commits are durable on local disk; a full-history **git bundle** sits at
-`C:\Users\mahar\Downloads\cb-api-backup.bundle` (restore with `git clone cb-api-backup.bundle`).
+`C:\dev\cb-api-backup.bundle` (restore with `git clone cb-api-backup.bundle`).
 Nothing is lost if GitHub stays unreachable.
 
 | Item | Where | State |
@@ -46,8 +46,16 @@ Nothing is lost if GitHub stays unreachable.
 > (`MODULE_NOT_FOUND` for `./routes/assist`) found in review. **Recovered from `39aad4d` + re-applied the lost
 > CONTEXT_HINTS, committed `fa5522a`, and PROVEN by booting the server (no MODULE_NOT_FOUND; `POST /api/assist`
 > → 503).** Standing rule for any session here: after writing a file, **verify it's still on disk *and* in
-> `git ls-tree HEAD` before trusting a commit**; prefer `git restore` immediately after commit; consider moving
-> the repos off the synced/scanned `Downloads` folder.
+> `git ls-tree HEAD` before trusting a commit**; prefer `git restore` immediately after commit.
+>
+> **ROOT CAUSE + RESOLUTION (2026-06-28):** the machine had a **runaway Windows Search Indexer — 150+
+> `SearchProtocolHost` processes** hammering the `Downloads` tree (indexing all of `node_modules` + `.git`),
+> locking files and triggering the deletions. **Both repos were moved out of `Downloads` to `C:\dev`**
+> (`C:\dev\chitbridge-api`, `C:\dev\chitbridge-web`) — outside the indexed user-profile scope. Verified: git
+> history + all branches intact, `npm install` clean, server boots from `C:\dev` (`POST /api/assist` → 503).
+> The old `Downloads` copies are left as a fallback (delete after confirming). **Still recommended:** add a
+> Windows Search **and** Defender exclusion for `C:\dev`, and restart the Search service (the 150 hosts are
+> abnormal — a reboot or `Stop-Service WSearch; Start-Service WSearch` clears them).
 
 ---
 
