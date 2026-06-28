@@ -1,6 +1,7 @@
 // routes/relationships.js — B3.6 Supplier List + Customer List + Promotions
 const express = require('express');
 const router  = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { query } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
@@ -44,7 +45,7 @@ router.post('/suppliers',
         supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, category } });
     } catch (err) {
       console.error('Add supplier error:', err.message);
-      res.status(500).json({ error: 'Add supplier failed', message: err.message });
+      res.status(500).json({ error: 'Add supplier failed', message: safeErr(err) });
     }
   });
 
@@ -65,7 +66,7 @@ router.get('/suppliers', auth, async (req, res) => {
     res.json({ suppliers: r.rows, count: r.rows.length });
   } catch (err) {
     console.error('Get suppliers error:', err.message);
-    res.status(500).json({ error: 'Get suppliers failed', message: err.message });
+    res.status(500).json({ error: 'Get suppliers failed', message: safeErr(err) });
   }
 });
 
@@ -79,7 +80,7 @@ router.delete('/suppliers/:id', auth, async (req, res) => {
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Supplier removed' });
   } catch (err) {
-    res.status(500).json({ error: 'Remove supplier failed', message: err.message });
+    res.status(500).json({ error: 'Remove supplier failed', message: safeErr(err) });
   }
 });
 
@@ -105,7 +106,7 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
        WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`, [sid]);
     res.json({ supplier, schema: schema.rows[0], fields: fields.rows, items: items.rows });
   } catch (err) {
-    res.status(500).json({ error: 'Get catalogue failed', message: err.message });
+    res.status(500).json({ error: 'Get catalogue failed', message: safeErr(err) });
   }
 });
 
@@ -136,7 +137,7 @@ router.get('/customers', auth, async (req, res) => {
     res.json({ customers: rows, count: rows.length });
   } catch (err) {
     console.error('Get customers error:', err.message);
-    res.status(500).json({ error: 'Get customers failed', message: err.message });
+    res.status(500).json({ error: 'Get customers failed', message: safeErr(err) });
   }
 });
 
@@ -154,7 +155,7 @@ router.patch('/customers/:id',
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
       res.json({ message: 'Segment updated' });
     } catch (err) {
-      res.status(500).json({ error: 'Update segment failed', message: err.message });
+      res.status(500).json({ error: 'Update segment failed', message: safeErr(err) });
     }
   });
 

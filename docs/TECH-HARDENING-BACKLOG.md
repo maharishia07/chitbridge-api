@@ -19,9 +19,9 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
 - **[DONE] DB CHECK — direction** — `migration_check_constraints.sql` adds `CHECK (direction IN ('sent','received'))`
   NOT VALID on chit_header/status/detail. **[QUICK remaining]** add CHECK on `current_status` + `scope` after
   confirming `SELECT DISTINCT` values (don't break existing writes).
-- **[QUICK] Per-route error envelope** — many route `catch` blocks still `res.json({ message: err.message })`,
-  leaking internal/DB text (info disclosure). Add one `sendError(res, status, code, msg)` helper + a generic
-  client message; keep detail in logs. (Mechanical multi-file sweep — the one remaining QUICK item; do as a focused diff.)
+- **[DONE] Per-route error envelope** — `lib/respond.js` `safeErr(err)` logs the real error server-side and
+  returns a generic client message. Swept all 71 leaks across 11 route files (0 `message: err.message` remain);
+  the global handler was already sanitized.
 - **[DONE] Auth-specific rate limit** — `server.js` adds a stricter limiter (30/15m, `AUTH_RATE_LIMIT_MAX`) on
   `register`/`verify`/`actors/login`/`set-pin`.
 - **[BACKLOG] Atomicity gaps** — `assign-bulk` (chits.js:~1392) loops writes on the pool (not `withTransaction`)

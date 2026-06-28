@@ -1,6 +1,7 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search
 const express = require('express');
 const router  = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { query } = require('../db');
 const { validate } = require('../middleware/validate');
@@ -49,7 +50,7 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
        VALUES ($1,$2,$3) RETURNING *`,
       [entity_id, schema_id, JSON.stringify(req.body.item_data)]);
     res.json({ message: 'Product added', item: r.rows[0] });
-  } catch (e) { res.status(500).json({ error: 'Add failed', message: e.message }); }
+  } catch (e) { res.status(500).json({ error: 'Add failed', message: safeErr(e) }); }
 });
 
 // READ + SEARCH — list my products, optional ?q=
@@ -67,7 +68,7 @@ router.get('/', auth, async (req, res) => {
            WHERE entity_id=$1 AND is_active=true
            ORDER BY created_at DESC`, [entity_id]);
     res.json({ items: r.rows, count: r.rows.length });
-  } catch (e) { res.status(500).json({ error: 'List failed', message: e.message }); }
+  } catch (e) { res.status(500).json({ error: 'List failed', message: safeErr(e) }); }
 });
 
 // UPDATE — edit a product
@@ -82,7 +83,7 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
       [JSON.stringify(req.body.item_data), req.params.id, entity_id]);
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Product updated', item: r.rows[0] });
-  } catch (e) { res.status(500).json({ error: 'Update failed', message: e.message }); }
+  } catch (e) { res.status(500).json({ error: 'Update failed', message: safeErr(e) }); }
 });
 
 // DELETE — soft remove
@@ -95,7 +96,7 @@ router.delete('/:id', auth, async (req, res) => {
       [req.params.id, entity_id]);
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Product removed' });
-  } catch (e) { res.status(500).json({ error: 'Delete failed', message: e.message }); }
+  } catch (e) { res.status(500).json({ error: 'Delete failed', message: safeErr(e) }); }
 });
 
 module.exports = router;

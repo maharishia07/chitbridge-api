@@ -3,6 +3,7 @@
 
 const express = require('express');
 const router  = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
 const jwt     = require('jsonwebtoken');
 const bcrypt  = require('bcryptjs');
@@ -77,7 +78,7 @@ router.post('/suggest-key',
         ]
       });
     } catch (err) {
-      res.status(500).json({ error: 'Suggest failed', message: err.message });
+      res.status(500).json({ error: 'Suggest failed', message: safeErr(err) });
     }
   }
 );
@@ -106,7 +107,7 @@ router.post('/check-key',
           : `${actor_key} is already taken under this entity`
       });
     } catch (err) {
-      res.status(500).json({ error: 'Check failed', message: err.message });
+      res.status(500).json({ error: 'Check failed', message: safeErr(err) });
     }
   }
 );
@@ -184,7 +185,7 @@ router.post('/',
 
     } catch (err) {
       console.error('Create actor error:', err.message);
-      res.status(500).json({ error: 'Create failed', message: err.message });
+      res.status(500).json({ error: 'Create failed', message: safeErr(err) });
     }
   }
 );
@@ -253,7 +254,7 @@ router.post('/set-pin',
       );
       res.json({ message: 'PIN set successfully — use PIN for future logins' });
     } catch (err) {
-      res.status(500).json({ error: 'Set PIN failed', message: err.message });
+      res.status(500).json({ error: 'Set PIN failed', message: safeErr(err) });
     }
   }
 );
@@ -308,7 +309,7 @@ router.put('/change-pin',
       );
       res.json({ message: 'PIN changed successfully' });
     } catch (err) {
-      res.status(500).json({ error: 'Change PIN failed', message: err.message });
+      res.status(500).json({ error: 'Change PIN failed', message: safeErr(err) });
     }
   }
 );
@@ -343,7 +344,7 @@ router.delete('/:id/pin',
         actor_name: actor.rows[0].display_name
       });
     } catch (err) {
-      res.status(500).json({ error: 'Clear PIN failed', message: err.message });
+      res.status(500).json({ error: 'Clear PIN failed', message: safeErr(err) });
     }
   }
 );
@@ -546,7 +547,7 @@ router.post('/login',
 
     } catch (err) {
       console.error('Actor login error:', err.message);
-      res.status(500).json({ error: 'Login failed', message: err.message });
+      res.status(500).json({ error: 'Login failed', message: safeErr(err) });
     }
   }
 );
@@ -635,7 +636,7 @@ router.get('/',
 
     } catch (err) {
       console.error('List actors error:', err.message);
-      res.status(500).json({ error: 'Failed to list actors', message: err.message });
+      res.status(500).json({ error: 'Failed to list actors', message: safeErr(err) });
     }
   }
 );
@@ -683,7 +684,7 @@ router.post('/:id/otp',
       });
 
     } catch (err) {
-      res.status(500).json({ error: 'OTP reset failed', message: err.message });
+      res.status(500).json({ error: 'OTP reset failed', message: safeErr(err) });
     }
   }
 );
@@ -845,7 +846,7 @@ router.put('/:id/status',
 
     } catch (err) {
       console.error('Actor status error:', err.message);
-      res.status(500).json({ error: 'Status change failed', message: err.message });
+      res.status(500).json({ error: 'Status change failed', message: safeErr(err) });
     }
   }
 );
@@ -972,7 +973,7 @@ router.put('/break',
 
     } catch (err) {
       console.error('Break error:', err.message);
-      res.status(500).json({ error: 'Break failed', message: err.message });
+      res.status(500).json({ error: 'Break failed', message: safeErr(err) });
     }
   }
 );
@@ -1181,7 +1182,7 @@ router.put('/assign/:chit_id',
 
     } catch (err) {
       console.error('Assign error:', err.message);
-      res.status(500).json({ error: 'Assignment failed', message: err.message });
+      res.status(500).json({ error: 'Assignment failed', message: safeErr(err) });
     }
   }
 );
@@ -1209,7 +1210,7 @@ router.get('/settings', auth, async (req, res) => {
 
     res.json({ settings: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to get settings', message: err.message });
+    res.status(500).json({ error: 'Failed to get settings', message: safeErr(err) });
   }
 });
 
@@ -1244,7 +1245,7 @@ router.put('/settings',
       const updated = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
       res.json({ message: 'Settings updated', settings: updated.rows[0] });
     } catch (err) {
-      res.status(500).json({ error: 'Settings update failed', message: err.message });
+      res.status(500).json({ error: 'Settings update failed', message: safeErr(err) });
     }
   }
 );

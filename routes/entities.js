@@ -1,6 +1,7 @@
 // routes/entities.js — Entity registration, login, search
 const express = require('express');
 const router = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
@@ -147,7 +148,7 @@ router.post('/register',
 
     } catch (err) {
       console.error('Register error:', err.message);
-      res.status(500).json({ error: 'Registration failed', message: err.message });
+      res.status(500).json({ error: 'Registration failed', message: safeErr(err) });
     }
   }
 );
@@ -215,7 +216,7 @@ router.post('/verify',
 
     } catch (err) {
       console.error('Verify error:', err.message);
-      res.status(500).json({ error: 'Verification failed', message: err.message });
+      res.status(500).json({ error: 'Verification failed', message: safeErr(err) });
     }
   }
 );
@@ -239,7 +240,7 @@ router.get('/search', auth, async (req, res) => {
     res.json({ results: result.rows, count: result.rows.length });
   } catch (err) {
     console.error('Search error:', err.message);
-    res.status(500).json({ error: 'Search failed', message: err.message });
+    res.status(500).json({ error: 'Search failed', message: safeErr(err) });
   }
 });
 
@@ -257,7 +258,7 @@ router.get('/me', auth, async (req, res) => {
     res.json({ entity: result.rows[0] });
   } catch (err) {
     console.error('Profile error:', err.message);
-    res.status(500).json({ error: 'Failed to get profile', message: err.message });
+    res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
   }
 });
 
@@ -276,7 +277,7 @@ router.get('/lookup', auth, async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No entity with that user_id' });
     res.json({ entity: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: 'Lookup failed', message: err.message });
+    res.status(500).json({ error: 'Lookup failed', message: safeErr(err) });
   }
 });
 
@@ -320,7 +321,7 @@ router.patch('/profile', auth,
       res.json({ message: 'Profile updated' });
     } catch (err) {
       if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });
-      res.status(500).json({ error: 'Profile update failed', message: err.message });
+      res.status(500).json({ error: 'Profile update failed', message: safeErr(err) });
     }
   });
 
@@ -331,7 +332,7 @@ router.patch('/:id/erase', auth, async (req, res) => {
   try {
     await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
     res.json({ message: 'Identity tombstoned', id: req.params.id });
-  } catch (err) { res.status(500).json({ error: 'Erase failed', message: err.message }); }
+  } catch (err) { res.status(500).json({ error: 'Erase failed', message: safeErr(err) }); }
 });
 
 module.exports = router;

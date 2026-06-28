@@ -1,6 +1,7 @@
 // routes/schemas.js — Schema engine basic
 const express = require('express');
 const router  = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { query } = require('../db');
 const { validate } = require('../middleware/validate');
@@ -21,7 +22,7 @@ router.get('/my', auth, async (req, res) => {
     res.json({ schema: schema.rows[0] || null });
   } catch (err) {
     console.error('Schema fetch error:', err.message);
-    res.status(500).json({ error: 'Failed to get schema', message: err.message });
+    res.status(500).json({ error: 'Failed to get schema', message: safeErr(err) });
   }
 });
 
@@ -71,7 +72,7 @@ router.post('/create-default', auth, async (req, res) => {
     res.json({ message: 'Schema created', schema: result.rows[0] });
   } catch (err) {
     console.error('Schema create error:', err.message);
-    res.status(500).json({ error: 'Failed to create schema', message: err.message });
+    res.status(500).json({ error: 'Failed to create schema', message: safeErr(err) });
   }
 });
 
@@ -89,7 +90,7 @@ router.get('/fields', auth, async (req, res) => {
     res.json({ fields: fields.rows });
   } catch (err) {
     console.error('Schema fields error:', err.message);
-    res.status(500).json({ error: 'Failed to get fields', message: err.message });
+    res.status(500).json({ error: 'Failed to get fields', message: safeErr(err) });
   }
 });
 
@@ -106,7 +107,7 @@ router.patch('/visibility', auth,
         [req.body.visibility, entity_id]);
       if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No active catalogue to update' });
       res.json({ message: 'Visibility updated', visibility: r.rows[0].visibility });
-    } catch (err) { res.status(500).json({ error: 'Visibility update failed', message: err.message }); }
+    } catch (err) { res.status(500).json({ error: 'Visibility update failed', message: safeErr(err) }); }
   });
 
 module.exports = router;

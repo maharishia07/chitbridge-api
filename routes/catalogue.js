@@ -1,6 +1,7 @@
 // routes/catalogue.js — B3.7 Public catalogue + end-customer order (no business login)
 const express = require('express');
 const router  = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
@@ -54,7 +55,7 @@ router.get('/:bridge_id', async (req, res) => {
       fields: fields.rows,
       items:  items.rows           // B3.7a — the actual products
     });
-  } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: err.message }); }
+  } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
 
 // ── CJ-05a: order-first — enter phone → create/find end_customer scoped to entity → OTP ──
@@ -92,7 +93,7 @@ router.post('/:bridge_id/order/start',
         message: process.env.DEV_OTP ? `Dev mode — OTP: ${otp}` : 'Code sent to your phone',
         ...((process.env.DEV_OTP || emailDisabled) && { dev_otp: otp })
       });
-    } catch (err) { console.error('order/start:', err.message); res.status(500).json({ error: 'Order start failed', message: err.message }); }
+    } catch (err) { console.error('order/start:', err.message); res.status(500).json({ error: 'Order start failed', message: safeErr(err) }); }
   });
 
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
@@ -200,7 +201,7 @@ router.post('/:bridge_id/order/confirm',
         process.env.JWT_SECRET, { expiresIn: '7d' });
 
       res.json({ message: 'Order placed', chit_id, shop: entity.display_name, summary: summary_json, token });
-    } catch (err) { console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: err.message }); }
+    } catch (err) { console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: safeErr(err) }); }
   });
 
 // ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
@@ -226,7 +227,7 @@ router.post('/:bridge_id/login/verify',
           email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id },
         process.env.JWT_SECRET, { expiresIn: '7d' });
       res.json({ message: 'Signed in', token, name: c.display_name });
-    } catch (err) { res.status(500).json({ error: 'Sign-in failed', message: err.message }); }
+    } catch (err) { res.status(500).json({ error: 'Sign-in failed', message: safeErr(err) }); }
   });
 
 // ── CJ-F1: the signed-in customer's orders + live status ──
@@ -240,7 +241,7 @@ router.get('/:bridge_id/my-orders', auth, async (req, res) => {
        WHERE ch.entity_id = $1 AND ch.purpose = 'order'
        ORDER BY ch.created_at DESC`, [me]);
     res.json({ orders: r.rows, count: r.rows.length });
-  } catch (err) { res.status(500).json({ error: 'Orders failed', message: err.message }); }
+  } catch (err) { res.status(500).json({ error: 'Orders failed', message: safeErr(err) }); }
 });
 
 module.exports = router;

@@ -1,6 +1,7 @@
 // routes/connections.js — Connection handshake
 const express = require('express');
 const router = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query } = require('../db');
@@ -113,7 +114,7 @@ router.post('/request',
 
     } catch (err) {
       console.error('Connection request error:', err.message);
-      res.status(500).json({ error: 'Request failed', message: err.message });
+      res.status(500).json({ error: 'Request failed', message: safeErr(err) });
     }
   }
 );
@@ -138,7 +139,7 @@ router.get('/pending', auth, async (req, res) => {
 
   } catch (err) {
     console.error('Pending connections error:', err.message);
-    res.status(500).json({ error: 'Failed to get requests', message: err.message });
+    res.status(500).json({ error: 'Failed to get requests', message: safeErr(err) });
   }
 });
 
@@ -220,7 +221,7 @@ router.put('/:id/respond',
 
     } catch (err) {
       console.error('Connection respond error:', err.message);
-      res.status(500).json({ error: 'Response failed', message: err.message });
+      res.status(500).json({ error: 'Response failed', message: safeErr(err) });
     }
   }
 );
@@ -254,7 +255,7 @@ router.get('/list', auth, async (req, res) => {
 
   } catch (err) {
     console.error('Connections list error:', err.message);
-    res.status(500).json({ error: 'Failed to get connections', message: err.message });
+    res.status(500).json({ error: 'Failed to get connections', message: safeErr(err) });
   }
 });
 

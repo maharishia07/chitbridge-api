@@ -6,6 +6,7 @@
 // the legacy identities tables and the cb_* network tables.
 const express = require('express');
 const router = express.Router();
+const { safeErr } = require('../lib/respond');
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 
@@ -54,7 +55,7 @@ router.get('/content', async (_req, res) => {
     });
   } catch (err) {
     console.error('[SIM] content error:', err.message);
-    res.status(500).json({ error: 'Failed to load content', message: err.message });
+    res.status(500).json({ error: 'Failed to load content', message: safeErr(err) });
   }
 });
 

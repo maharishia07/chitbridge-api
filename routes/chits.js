@@ -1,6 +1,7 @@
 // routes/chits.js — Chit send, inbox, detail, status update
 const express = require('express');
 const router = express.Router();
+const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction } = require('../db');
@@ -332,7 +333,7 @@ router.post('/send',
 
     } catch (err) {
       console.error('Send chit error:', err.message);
-      res.status(500).json({ error: 'Send failed', message: err.message });
+      res.status(500).json({ error: 'Send failed', message: safeErr(err) });
     }
   }
 );
@@ -370,7 +371,7 @@ router.get('/sent', auth, async (req, res) => {
     res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
   } catch (err) {
     console.error('Sent list error:', err.message);
-    res.status(500).json({ error: 'Failed to get sent items', message: err.message });
+    res.status(500).json({ error: 'Failed to get sent items', message: safeErr(err) });
   }
 });
 
@@ -394,7 +395,7 @@ router.get('/rollup', auth, async (req, res) => {
     res.json({ group_by: groupBy, groups: result.rows });
   } catch (err) {
     console.error('Rollup error:', err.message);
-    res.status(500).json({ error: 'Rollup failed', message: err.message });
+    res.status(500).json({ error: 'Rollup failed', message: safeErr(err) });
   }
 });
 
@@ -476,7 +477,7 @@ router.get('/inbox', auth, async (req, res) => {
 
   } catch (err) {
     console.error('Inbox error:', err.message);
-    res.status(500).json({ error: 'Failed to get inbox', message: err.message });
+    res.status(500).json({ error: 'Failed to get inbox', message: safeErr(err) });
   }
 });
 
@@ -498,7 +499,7 @@ router.get('/unread', auth, async (req, res) => {
           AND (cr.read_at IS NULL OR cs.updated_at > cr.read_at)`,
       [entity_id, actor_id]);
     res.json({ unread: r.rows.map(x => x.chit_id) });
-  } catch (err) { res.status(500).json({ error: 'Unread failed', message: err.message }); }
+  } catch (err) { res.status(500).json({ error: 'Unread failed', message: safeErr(err) }); }
 });
 
 router.get('/:chit_id', auth, async (req, res) => {
@@ -603,7 +604,7 @@ router.get('/:chit_id', auth, async (req, res) => {
 
   } catch (err) {
     console.error('Chit detail error:', err.message);
-    res.status(500).json({ error: 'Failed to get chit', message: err.message });
+    res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
   }
 });
 
@@ -734,7 +735,7 @@ router.put('/:chit_id/status',
 
     } catch (err) {
       console.error('Update status error:', err.message);
-      res.status(500).json({ error: 'Update failed', message: err.message });
+      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
     }
   }
 );
@@ -806,7 +807,7 @@ router.post('/:chit_id/messages',
       if (err.message.includes('chit_messages')) {
         return res.status(500).json({ error: 'Table not found', message: 'Run B3.5 migration SQL first', sql_needed: true });
       }
-      res.status(500).json({ error: 'Send message failed', message: err.message });
+      res.status(500).json({ error: 'Send message failed', message: safeErr(err) });
     }
   }
 );
@@ -842,7 +843,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
   } catch (err) {
     console.error('Get messages error:', err.message);
     if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0 });
-    res.status(500).json({ error: 'Get messages failed', message: err.message });
+    res.status(500).json({ error: 'Get messages failed', message: safeErr(err) });
   }
 });
 
@@ -947,7 +948,7 @@ router.post('/:chit_id/disputes',
     } catch (err) {
       console.error('Raise dispute error:', err.message);
       if (err.message.includes('chit_disputes')) return res.status(500).json({ error:'Table not found', message:'Run B3.5 + B3.10 migrations', sql_needed:true });
-      res.status(500).json({ error:'Raise dispute failed', message: err.message });
+      res.status(500).json({ error:'Raise dispute failed', message: safeErr(err) });
     }
   });
 
@@ -976,7 +977,7 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
-    res.status(500).json({ error: 'Get disputes failed', message: err.message });
+    res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
   }
 });
 
@@ -1052,7 +1053,7 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ chit_id, chit_subject: null, diagnoses: [], count: 0 });
     console.error('Diagnosis error:', err.message);
-    res.status(500).json({ error: 'Diagnosis failed', message: err.message });
+    res.status(500).json({ error: 'Diagnosis failed', message: safeErr(err) });
   }
 });
 
@@ -1098,7 +1099,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
       res.json({ dispute_id, status: 'resolved', resolution_note, resolved_by: display_name, message: 'Dispute resolved' });
     } catch (err) {
       console.error('Resolve dispute error:', err.message);
-      res.status(500).json({ error: 'Resolve failed', message: err.message });
+      res.status(500).json({ error: 'Resolve failed', message: safeErr(err) });
     }
   }
 );
@@ -1140,7 +1141,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
     if (err.message.includes('chit_disputes')) {
       return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0 });
     }
-    res.status(500).json({ error: 'Get dispute queue failed', message: err.message });
+    res.status(500).json({ error: 'Get dispute queue failed', message: safeErr(err) });
   }
 });
 
@@ -1206,7 +1207,7 @@ router.delete('/:chit_id', auth, async (req, res) => {
 
   } catch (err) {
     console.error('Delete chit error:', err.message);
-    res.status(500).json({ error: 'Delete failed', message: err.message });
+    res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
   }
 });
 
@@ -1262,7 +1263,7 @@ router.put('/:chit_id/priority',
       res.json({ message: 'Priority updated', chit_id, priority_flag: priority });
     } catch (err) {
       console.error('Set priority error:', err.message);
-      res.status(500).json({ error: 'Priority update failed', message: err.message });
+      res.status(500).json({ error: 'Priority update failed', message: safeErr(err) });
     }
   }
 );
@@ -1311,7 +1312,7 @@ router.put('/:chit_id/priority-flag',
       res.json({ message: 'Customer priority set', chit_id, customer_priority: flag, locked: true });
     } catch (err) {
       console.error('Customer flag error:', err.message);
-      res.status(500).json({ error: 'Customer flag failed', message: err.message });
+      res.status(500).json({ error: 'Customer flag failed', message: safeErr(err) });
     }
   }
 );
@@ -1331,7 +1332,7 @@ router.post('/:chit_id/archive', auth, async (req, res) => {
       [req.params.chit_id, entity_id]);
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
     res.json({ message: 'Chit archived', chit_id: req.params.chit_id });
-  } catch (err) { res.status(500).json({ error: 'Archive failed', message: err.message }); }
+  } catch (err) { res.status(500).json({ error: 'Archive failed', message: safeErr(err) }); }
 });
 
 // POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
@@ -1345,7 +1346,7 @@ router.post('/:chit_id/unarchive', auth, async (req, res) => {
       [req.params.chit_id, entity_id]);
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or not archived' });
     res.json({ message: 'Chit restored', chit_id: req.params.chit_id });
-  } catch (err) { res.status(500).json({ error: 'Unarchive failed', message: err.message }); }
+  } catch (err) { res.status(500).json({ error: 'Unarchive failed', message: safeErr(err) }); }
 });
 
 // POST /chits/:chit_id/restore — bring MY copy back from Trash (undo a soft delete).
@@ -1367,7 +1368,7 @@ router.post('/:chit_id/restore', auth, async (req, res) => {
        VALUES ($1, $2, 'restored', $3, $4, $5)`,
       [chit_id, entity_id, action_by_id, action_by_name, `Chit restored from Trash by ${action_by_name}`]);
     res.json({ message: 'Chit restored from Trash', chit_id });
-  } catch (err) { res.status(500).json({ error: 'Restore failed', message: err.message }); }
+  } catch (err) { res.status(500).json({ error: 'Restore failed', message: safeErr(err) }); }
 });
 
 // PUT /chits/:chit_id/void — recorded hard-cancel by the SENDER; works after acceptance.
@@ -1408,7 +1409,7 @@ router.put('/:chit_id/void',
       res.json({ message: 'Chit voided', chit_id, status: 'void' });
     } catch (err) {
       console.error('Void error:', err.message);
-      res.status(500).json({ error: 'Void failed', message: err.message });
+      res.status(500).json({ error: 'Void failed', message: safeErr(err) });
     }
   });
 
@@ -1455,7 +1456,7 @@ router.post('/assign-bulk',
       res.json({ message: 'Bulk assign complete', assigned_to: t.display_name, assigned: assigned.length, skipped });
     } catch (err) {
       console.error('Bulk assign error:', err.message);
-      res.status(500).json({ error: 'Bulk assign failed', message: err.message });
+      res.status(500).json({ error: 'Bulk assign failed', message: safeErr(err) });
     }
   });
 

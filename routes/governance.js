@@ -4,6 +4,7 @@
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
 const express = require('express');
 const router  = express.Router();
+const { safeErr } = require('../lib/respond');
 const { query, withTransaction } = require('../db');
 const auth = require('../middleware/auth');
 
@@ -67,7 +68,7 @@ router.get('/entities/:id', auth, async (req, res) => {
       exceptions,
     });
   } catch (err) {
-    res.status(500).json({ error: 'governance view failed', message: err.message });
+    res.status(500).json({ error: 'governance view failed', message: safeErr(err) });
   }
 });
 
@@ -119,7 +120,7 @@ router.post('/entities', auth, async (req, res) => {
     res.status(201).json({ id: out.id, effective: stamp.effective, exceptions: stamp.exceptions });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'email already exists' });
-    res.status(500).json({ error: 'governed create failed', message: err.message });
+    res.status(500).json({ error: 'governed create failed', message: safeErr(err) });
   }
 });
 
@@ -148,7 +149,7 @@ router.post('/entities/:id/reattest', auth, async (req, res) => {
     res.json({ message: 'Re-attested', constitution_version: ra.constitution_version,
                drift: false, effective: ra.effective, exceptions: ra.exceptions });
   } catch (err) {
-    res.status(500).json({ error: 'reattest failed', message: err.message });
+    res.status(500).json({ error: 'reattest failed', message: safeErr(err) });
   }
 });
 

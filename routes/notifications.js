@@ -2,6 +2,7 @@
 // Computed from state_log: recent activity by OTHERS on chits I am a party to.
 const express = require('express');
 const router = express.Router();
+const { safeErr } = require('../lib/respond');
 const { query } = require('../db');
 const auth = require('../middleware/auth');
 
@@ -39,7 +40,7 @@ router.get('/', auth, async (req, res) => {
     res.json({ notifications: result.rows, count: result.rows.length });
   } catch (err) {
     console.error('Notifications error:', err.message);
-    res.status(500).json({ error: 'Failed to get notifications', message: err.message });
+    res.status(500).json({ error: 'Failed to get notifications', message: safeErr(err) });
   }
 });
 
