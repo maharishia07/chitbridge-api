@@ -2,7 +2,9 @@
 
 Three perspectives: **Entity owner** (the business admin) · **Actor** (co-assist / sub-user) · **End-customer**
 (the external, no-login buyer). ✓ audited · ~ incidental/partial · ✗ not yet · — N/A.
-Honest headline: **Entity + Actor are well covered; End-customer (the Customer flow) is NOT yet audited.**
+Honest headline (updated 2026-06-28): **all three perspectives now audited** — Entity + Actor + End-customer.
+The Customer flow audit is done (`catalogue.js`); remaining items are backlog (OTP attempt-counter, order price
+validation), not unexamined gaps.
 
 | Module | Entity owner | Actor (co-assist) | End-customer | Notes |
 |---|---|---|---|---|
@@ -18,7 +20,7 @@ Honest headline: **Entity + Actor are well covered; End-customer (the Customer f
 | Network | ✓ (auth fix + cascade analysis) | — | — | entity-level |
 | Settings | ✓ | ✓ (settings affect actors) | — | settings labeled "not yet active" |
 | Profile | ✓ (user_id fix) | ~ (actor profile not separately audited) | — | |
-| **Customer flow** | — | — | **✗ NOT AUDITED** | catalogue browse, OTP login, my-orders, customer dispute/messages |
+| **Customer flow** | — | — | ✓ (audited 7a63490) | browse visibility-gated · per-shop scope · my-orders isolated · rate-limited; OTP attempt-counter + price validation backlogged |
 
 ## What "from both perspectives" really means here
 - **Actor coverage is genuinely deep:** assignment (push/pull/bulk), per-actor unread (`chit_reads`), dispute-handler

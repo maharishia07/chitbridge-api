@@ -34,6 +34,19 @@ Original finding: the endpoints had **no auth** and took `actingEntityId` from t
 - **Note:** the frontend Network panel sends minimal bodies (e.g. `netApprove` sends `{}` — no `actingEntityId`),
   so live network ops from the panel may not work end-to-end anyway (wired mostly against demo). Awaiting decision.
 
+## Customer flow (external, no-login) — audit 2026-06-28
+Backend `catalogue.js`. **Healthy:** order is transactional (two-copy, INV-2); customers scoped per-shop
+(`parent_entity_id`); public catalogue **visibility-gated** (only `visibility='public'` schemas); **my-orders
+isolated per customer** (keyed on the token identity, not the path — no cross-customer leak); `business_status`
+gates orders; `safeErr`. **FIXED:** `/api/catalogue` now rate-limited (7a63490).
+- **[BACKLOG] OTP attempt-counter** — `order/confirm` + `login/verify` compare the 6-digit OTP with **no
+  per-account attempt cap** (rate-limit now mitigates, but add `otp_attempts` + lock after N as defense-in-depth; needs a column).
+- **[BACKLOG] Order price/line-item validation** — the customer sends their own `line_items` (incl. price); not
+  checked against the shop's catalogue, so an order can be placed at arbitrary/zero prices. Validate items+prices
+  server-side against `catalogue_items` before sealing the chit.
+- **[CONFIRM] Public exposure** — the public catalogue returns `gstn` + `address` (acceptable for a storefront — confirm intended).
+- **[BACKLOG] Bounded read** — public catalogue `items` query has no LIMIT (folds into the max-`?limit=` cap).
+
 ## API backlog
 - **[DONE] DB CHECK — direction** — `migration_check_constraints.sql` adds `CHECK (direction IN ('sent','received'))`
   NOT VALID on chit_header/status/detail. **[QUICK remaining]** add CHECK on `current_status` + `scope` after
