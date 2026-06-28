@@ -15,11 +15,11 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
 - **[DONE] Boot-time config guard** — `server.js` aborts in production (warns in dev) if `JWT_SECRET` is
   missing or < 32 chars.
 
-## ⚠️ P0 — /api/network is unauthenticated + body-authority (deployed)
-The `src/routes/network.js` endpoints (register, claim, connect, approve, decline, suspend, resume, disconnect,
-subtree, connections) have **NO `auth` middleware** and take **`actingEntityId` from `req.body`** (client-supplied)
-as their authority. Anyone can call them and assert any acting entity → register/reparent/disconnect the tree,
-read any subtree/connections. Violates the P0 isolation invariant. **It is mounted in prod** (`/api/network`).
+## ⚠️ P0 — /api/network authority (deployed) — auth MITIGATED, bridge still TODO
+**MITIGATED (e6789b0):** all `src/routes/network.js` routes now require `auth` — unauthenticated access is closed
+(tests updated to attach a token). **STILL OPEN:** authority is still taken from **`actingEntityId` in `req.body`**
+(client-supplied) — a logged-in user can still assert a different acting entity. Full fix below.
+Original finding: the endpoints had **no auth** and took `actingEntityId` from the body; mounted in prod.
 - **Scope:** the cb_* network is a SEPARATE entity space (`cb_entity`), not the core `identities`/chit data (that path
   IS JWT-scoped). So this is network-structure manipulation, not a core-tenant-data leak. The tree logic + cycle
   guard themselves are sound (tests pass).
