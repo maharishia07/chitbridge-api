@@ -9,6 +9,7 @@ const { query } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
+const { sendOtpEmail } = require('../lib/notify');   // shared OTP email sender (F2 — extracted from here)
 
 const generateBridgeId = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -21,46 +22,7 @@ const generateBridgeId = () => {
 // No DEV_OTP = random 6-digit OTP
 const generateOTP = () => (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
 
-const sendOTPEmail = async (email, displayName, otp) => {
-  // Skip email if DEV_OTP is set — OTP is fixed and known
-  if (process.env.DEV_OTP) {
-    console.log(`[DEV] Fixed OTP for ${email}: ${otp}`);
-    return true;
-  }
-  // Skip email if OTP_EMAIL_ENABLED is not true
-  if (process.env.OTP_EMAIL_ENABLED !== 'true') {
-    console.log(`[OTP] ${email}: ${otp}`);
-    return true;
-  }
-  try {
-    const { Resend } = require('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'noreply@chitandbridge.com',
-      to: email,
-      subject: 'Your Chit and Bridge verification code',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
-          <h2 style="color: #0D47A1;">Chit and Bridge</h2>
-          <p>Hello ${displayName},</p>
-          <p>Your verification code is:</p>
-          <div style="background: #f5f5f5; padding: 20px; text-align: center;
-                      font-size: 32px; font-weight: bold; letter-spacing: 8px;
-                      color: #0D47A1; border-radius: 8px; margin: 20px 0;">
-            ${otp}
-          </div>
-          <p>This code expires in 1 hour.</p>
-          <p style="color: #888; font-size: 12px;">If you did not request this, please ignore this email.</p>
-        </div>
-      `
-    });
-    return true;
-  } catch (err) {
-    console.error('Email send error:', err.message);
-    console.log(`[FALLBACK OTP] ${email}: ${otp}`);
-    return false;
-  }
-};
+// (F2) The OTP email sender now lives in lib/notify.js (`sendOtpEmail`), shared with the customer order flow.
 
 // POST /entities/register
 // Accepts email (athi@test.com) OR display name (Athi) for entity login
@@ -136,7 +98,7 @@ router.post('/register',
         [otp, expires, identity_id]
       );
 
-      await sendOTPEmail(email, display_name, otp);
+      await sendOtpEmail(email, display_name, otp);
 
       const emailDisabled = process.env.OTP_EMAIL_ENABLED !== 'true';
       res.json({

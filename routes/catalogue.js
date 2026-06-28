@@ -9,6 +9,7 @@ const { query, withTransaction } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
+const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 
 const genBridge = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -18,6 +19,33 @@ const genBridge = () => {
 };
 const genOTP = () => (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
+
+// F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email
+// channel, else phone. Returns { channel, raw } (raw = cleaned phone or normalised email) or { error }.
+function resolveContact(body) {
+  const ph = String(body.phone ?? '').trim();
+  const em = String(body.email ?? '').trim();
+  const id = String(body.identifier ?? '').trim();
+  if (ph && em) return { error: 'Give just one — a phone OR an email, not both.' };
+  const raw = id || ph || em;
+  if (!raw) return { error: 'Enter a phone number or an email.' };
+  if (raw.includes('@')) {
+    const email = raw.toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: 'Enter a valid email address.' };
+    return { channel: 'email', raw: email };
+  }
+  const phone = cleanPhone(raw);
+  if (phone.length < 6 || phone.length > 20) return { error: 'Enter a valid phone number.' };
+  return { channel: 'phone', raw: phone };
+}
+// Per-entity .cr handle = the identities.email key. Email uses the FULL address (swap '@' -> '=') so
+// xyz@gmail.com and xyz@yahoo.com at the SAME shop stay DISTINCT — using the local part alone would collapse
+// them into one identity (cross-customer order visibility + OTP misroute). Same builder used in all 3 spots so
+// a returning customer regenerates the same handle.
+function crHandle(channel, raw, bridge) {
+  const local = channel === 'email' ? raw.replace('@', '=') : raw;
+  return `${local}@${bridge}.cr`;
+}
 
 // CJ-07 (security) — PRICE INTEGRITY. A no-login customer sends their own line_items incl. price; never trust it.
 // Re-price every line against THIS shop's own catalogue and recompute totals server-side. Fails CLOSED: a line
@@ -98,17 +126,18 @@ router.get('/:bridge_id', async (req, res) => {
 
 // ── CJ-05a: order-first — enter phone → create/find end_customer scoped to entity → OTP ──
 router.post('/:bridge_id/order/start',
-  [ body('phone').trim().isLength({ min: 6, max: 20 }).withMessage('Phone required') ],
-  validate,
+  validate,   // identifier (phone|email) validated in-handler via resolveContact
   async (req, res) => {
     try {
       const entity = await resolveEntity(req.params.bridge_id);
       if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
       if (entity.business_status === 'closed')
         return res.status(403).json({ error: 'Shop closed', message: 'This shop is currently closed and not accepting orders.' });
-      const phone  = cleanPhone(req.body.phone);
-      const name   = sanitise(req.body.name || '') || phone;
-      const handle = `${phone}@${entity.bridge_id}.cr`;          // .cr marker + entity scope
+      const c = resolveContact(req.body);
+      if (c.error) return res.status(422).json({ error: 'Bad request', message: c.error });
+      const { channel, raw } = c;
+      const name   = sanitise(req.body.name || '') || raw;
+      const handle = crHandle(channel, raw, entity.bridge_id);    // per-entity .cr key (full-email = collision-free)
 
       let existing = await query(`SELECT identity_id, bridge_id FROM identities WHERE email = $1`, [handle]);
       let identity_id, bridge_id;
@@ -118,26 +147,26 @@ router.post('/:bridge_id/order/start',
         identity_id = uuidv4(); bridge_id = genBridge();
         await query(
           `INSERT INTO identities
-             (identity_id, bridge_id, display_name, email, phone, identity_type, parent_entity_id, owner_scope, auth_method, status)
-           VALUES ($1,$2,$3,$4,$5,'customer',$6,'entity','otp','pending')`,
-          [identity_id, bridge_id, name, handle, phone, entity.identity_id]);
+             (identity_id, bridge_id, display_name, email, phone, otp_contact, identity_type, parent_entity_id, owner_scope, auth_method, status)
+           VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending')`,
+          [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
       }
       const otp = genOTP();
-      await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
-        [otp, new Date(Date.now() + 60 * 60 * 1000), identity_id]);
-      console.log(`[DEV] Customer OTP for ${handle}: ${otp}`);   // no SMS in dev/testing
-      const emailDisabled = process.env.OTP_EMAIL_ENABLED !== 'true';
+      await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0, otp_contact = $3 WHERE identity_id = $4`,
+        [otp, new Date(Date.now() + 60 * 60 * 1000), raw, identity_id]);
+      // F2: deliver the OTP on the SAME channel, to the RAW contact (never the .cr handle).
+      const sent = await sendOtp(channel, raw, name, otp);
       res.json({
-        message: process.env.DEV_OTP ? `Dev mode — OTP: ${otp}` : 'Code sent to your phone',
-        ...((process.env.DEV_OTP || emailDisabled) && { dev_otp: otp })
+        message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
+        channel,
+        ...(sent.dev && { dev_otp: otp })   // dev/dormant only — NEVER returned in production
       });
     } catch (err) { console.error('order/start:', err.message); res.status(500).json({ error: 'Order start failed', message: safeErr(err) }); }
   });
 
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
 router.post('/:bridge_id/order/confirm',
-  [ body('phone').trim().notEmpty(),
-    body('otp').trim().isLength({ min: 6, max: 6 }),
+  [ body('otp').trim().isLength({ min: 6, max: 6 }),
     body('line_items').isArray({ min: 1 }).withMessage('Order is empty') ],
   validate,
   async (req, res) => {
@@ -146,8 +175,9 @@ router.post('/:bridge_id/order/confirm',
       if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
       if (entity.business_status === 'closed')
         return res.status(403).json({ error: 'Shop closed', message: 'This shop is currently closed and not accepting orders.' });
-      const phone  = cleanPhone(req.body.phone);
-      const handle = `${phone}@${entity.bridge_id}.cr`;
+      const c0 = resolveContact(req.body);
+      if (c0.error) return res.status(422).json({ error: 'Verify failed', message: c0.error });
+      const handle = crHandle(c0.channel, c0.raw, entity.bridge_id);
 
       const cr = await query(
         `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
@@ -247,14 +277,15 @@ router.post('/:bridge_id/order/confirm',
 
 // ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
 router.post('/:bridge_id/login/verify',
-  [ body('phone').trim().notEmpty(), body('otp').trim().isLength({ min: 6, max: 6 }) ],
+  [ body('otp').trim().isLength({ min: 6, max: 6 }) ],
   validate,
   async (req, res) => {
     try {
       const entity = await resolveEntity(req.params.bridge_id);
       if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
-      const phone  = cleanPhone(req.body.phone);
-      const handle = `${phone}@${entity.bridge_id}.cr`;
+      const c0 = resolveContact(req.body);
+      if (c0.error) return res.status(422).json({ error: 'Sign-in failed', message: c0.error });
+      const handle = crHandle(c0.channel, c0.raw, entity.bridge_id);
       const cr = await query(
         `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
          FROM identities WHERE email = $1`, [handle]);
@@ -286,3 +317,5 @@ router.get('/:bridge_id/my-orders', auth, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.resolveContact = resolveContact;   // exported for unit tests (F2 channel detection)
+module.exports.crHandle = crHandle;               // exported for unit tests (collision-free .cr handle)

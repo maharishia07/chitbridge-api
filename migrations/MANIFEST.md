@@ -27,6 +27,12 @@ Apply in this order:
 | 17 | `migration_fp01.sql` | priority (customer_priority/locked + priority_flag) + typed messages (msg_type) + identities.message_type_mode — **applied to prod 2026-06-25; reconstructed from spine v2.34** |
 | 18 | `migration_user_id_identities.sql` | ATH-114 external `identities.user_id` (unique, ci) for login/lookup/connect |
 | 19 | `migration_chit_header_role.sql` | per-copy role on chit_header (Compose To/CC/For fan-out) |
+| 20 | `migration_chit_direction.sql` | two-copy `direction` on chit_header/status/detail |
+| 21 | `migration_dispute_routing.sql` | `identities.dispute_handler_actor_id` |
+| 22 | `migration_chit_reads.sql` | `chit_reads` (per-actor unread) |
+| 23 | `migration_check_constraints.sql` | CHECK `direction IN ('sent','received')` (NOT VALID) |
+| 24 | `migration_otp_attempts.sql` | `identities.otp_attempts` (OTP attempt cap) |
+| 25 | `migration_customer_contact.sql` | `identities.otp_contact` (F2 dual-channel customer OTP) |
 
 ## Notes / open items
 - **fp01 (#17):** already applied to legacy prod Supabase 2026-06-25. The canonical original file was not in the repo, so `migration_fp01.sql` here is a **faithful reconstruction from spine v2.34's documented columns** (idempotent `IF NOT EXISTS`, so re-running against prod is a safe no-op). The `files20/migrations-fixed/001_002_003` set is the **WRONG** `cb_*`-messaging version — do NOT use it. If the original surfaces from Supabase migration history, diff it against this reconstruction.
