@@ -522,11 +522,14 @@ router.get('/:chit_id', auth, async (req, res) => {
     }
 
     // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
+    // Best-effort — never let read-tracking break the chit view (e.g. if the migration lags).
     if (req.identity.identity_type === 'actor') {
-      await query(
-        `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
-         ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
-        [chit_id, req.identity.identity_id]);
+      try {
+        await query(
+          `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
+           ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
+          [chit_id, req.identity.identity_id]);
+      } catch (e) { console.error('mark-read skipped:', e.message); }
     }
 
     // Get my header
