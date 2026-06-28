@@ -165,6 +165,8 @@ Observability + runaway-safety design (loop-risk catalogue, severity model, sink
 `docs/OBSERVABILITY-AND-SAFETY.md`. Built: `lib/logger.js` (leveled, `LOG_LEVEL`) + request-id tracing.
 Subscription / entitlements / quotas (plan-driven feature gating + hard caps at the billing root, feature
 dependency graph): `docs/SUBSCRIPTION-ENTITLEMENTS.md`. Mechanism built: `lib/plans.js` (tiers are placeholders — set from the real plan).
+Customer-facing **trust base** (plain-language "why you can trust us", every claim mapped to shipped work):
+`docs/TRUST.md` (+ `docs/KB-your-data-is-safe.md`). Keep claims TRUE; extend as we harden.
 
 ## DEPLOY RUNBOOK (when the push throttle lifts)
 
