@@ -167,6 +167,9 @@ Subscription / entitlements / quotas (plan-driven feature gating + hard caps at 
 dependency graph): `docs/SUBSCRIPTION-ENTITLEMENTS.md`. Mechanism built: `lib/plans.js` (tiers are placeholders — set from the real plan).
 Customer-facing **trust base** (plain-language "why you can trust us", every claim mapped to shipped work):
 `docs/TRUST.md` (+ `docs/KB-your-data-is-safe.md`). Keep claims TRUE; extend as we harden.
+**Schema-customization KB** (rigid container + your schema = your behaviour; the product pitch spine; has
+[TO BE ADDED] use-case placeholders to fill with Athi): `docs/KB-SCHEMA-CUSTOMIZATION.md`.
+ACID/BASE consistency assessment (rigid core / BASE periphery): `docs/CONSISTENCY-MODEL.md`.
 Actor (co-assist) settings↔behaviour map + override/bounding hierarchy + gaps (entity_actor_settings are stored
 but NOT enforced; actor not bounded by entity; presence/leave IS wired): `docs/ACTOR-SETTINGS-BEHAVIOUR.md`.
 
