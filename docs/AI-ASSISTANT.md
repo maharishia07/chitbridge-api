@@ -28,9 +28,11 @@ help + KB. You describe your problem; it points you to the right tool/facility. 
   at first open — with topics derived from each question and `context` set to the screen. So the floating assistant
   draws from the same content as the per-screen "?" overlays (no duplication; the source arrays stay as-is and also
   feed the "?" boxes + the banner `HELP_PACKS[key].msg`).
-- **Next:** distill the KB docs (`TRUST.md`, `KB-SCHEMA-CUSTOMIZATION.md`, `KB-your-data-is-safe.md`) into curated
-  entries; add use-case entries with `media` (screens/clips); optionally repoint the "?" overlays to render straight
-  from `ASSIST_LIB` so there's a single render path too.
+- **DONE (web 4728ab1):** the KB docs (`TRUST.md`, `KB-SCHEMA-CUSTOMIZATION.md`, `KB-your-data-is-safe.md`) are
+  distilled into 13 curated `ASSIST_LIB` entries — isolation, durability, security, audit/record, no-dev
+  customization, plus the honest pre-auth "new company" + "might not fit you" (with `fit` signals).
+- **Next:** add use-case entries with `media` (screens/clips); optionally repoint the "?" overlays to render
+  straight from `ASSIST_LIB` so there's a single render path too; then the real AI behind `assistAsk`.
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.
