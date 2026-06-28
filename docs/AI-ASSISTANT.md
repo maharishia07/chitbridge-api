@@ -31,8 +31,12 @@ help + KB. You describe your problem; it points you to the right tool/facility. 
 - **DONE (web 4728ab1):** the KB docs (`TRUST.md`, `KB-SCHEMA-CUSTOMIZATION.md`, `KB-your-data-is-safe.md`) are
   distilled into 13 curated `ASSIST_LIB` entries — isolation, durability, security, audit/record, no-dev
   customization, plus the honest pre-auth "new company" + "might not fit you" (with `fit` signals).
-- **Next:** add use-case entries with `media` (screens/clips); optionally repoint the "?" overlays to render
-  straight from `ASSIST_LIB` so there's a single render path too; then the real AI behind `assistAsk`.
+- **DONE (web 65b3946):** 5 use-case entries with `media` — `uc_timber`, `uc_pharma`, `uc_services`,
+  `uc_aggregator`, `uc_compare` (same engine, different schema). Media renders gracefully: a missing asset hides
+  cleanly and shows a "screen clip coming" caption, so no broken images until the real clips land. Drop the clips
+  in `public/app/assets/` per its README.
+- **Next:** real screen clips into `public/app/assets/`; optionally repoint the "?" overlays to render straight
+  from `ASSIST_LIB` (single render path); then the real AI behind `assistAsk` (LLM over the library + live context).
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.
