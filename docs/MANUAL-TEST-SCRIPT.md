@@ -124,8 +124,14 @@ Legend: **Do** = action · **See** = expected · **Proves** = area covered.
 |---|---|---|---|
 |13.1| Log in as **Entity B** (separate browser). | B sees only B's own chits/orders/catalogue — **nothing of A's**. | **Tenant isolation (P0)** |
 |13.2| Try to open one of **A's** chit links/ids while logged in as B. | Denied / not found (no cross-entity data). | Isolation on direct access |
+|13.3| **(F3 — shared-chit internal-action leak)** A sends a chit to B (both participate). As **A**: open/read it, **archive** then **unarchive** it, and **bulk-assign** it to an A actor. Then as **B** open 🔔 / `GET /api/notifications`. | B sees **NONE** of A's read / archive / restore / assign actions and **NONE of A's actor names**. B **still** sees genuinely cross-party events (a dispute A raises, a void, a status change). | **F3 isolation** — *any A-internal action in B's feed = drop-everything P0* |
+|13.4| **(F3 — self-chit regression, must NOT change)** Raise a dispute on a **self-chit**. Also: have the counterparty raise a dispute; void a shared chit; change a shared chit's status. | Self-chit dispute → **exactly 2** notifications (one per direction copy). Counterparty's dispute still appears; a void shows to **both** parties; a status change shows **once per copy** (not doubled). | F3 did not break cross-party events |
+|13.5| **(F7 — supplier catalogue)** As **B**, `GET /api/relationships/suppliers/<A-entity-id>/catalogue` where A has **no public default schema**. Then give A a **public** default schema and repeat. | No public schema → **empty items** (`{schema:null, items:[]}`) — was A's full catalogue+prices. Public → items returned. | **F7** cross-entity read gate |
+|13.6| **(F5 — actor-login OTP cap)** Issue an actor OTP, then attempt actor login with a **wrong** OTP **5×**, then with a fresh code. | After the cap → **429** "too many attempts"; a freshly issued code **unlocks**. | **F5** actor OTP attempt cap |
+|13.7| **(F6 — ambiguous name + caps)** Give a shop **two active catalogue items with the SAME name**. Place a customer order with a line matched by **name only** → then by **item_id**. Also: customer order with **>200 line items**; bulk-assign with **>200 chit_ids**. | Name-only line → **422** "matches more than one product"; the `item_id` line **prices correctly**. >200 line items → **422**; >200 `chit_ids` → **400**. | **F6** reprice ambiguity + batch caps |
 
 > **Any** cross-entity leak in §13 is a **drop-everything P0** — report immediately with steps.
+> **Automated:** `scripts/smoke-review-fixes.sh` exercises 13.3–13.7 against the dev API (run it after the dev deploy).
 
 ---
 
