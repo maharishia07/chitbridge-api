@@ -28,10 +28,16 @@ Nothing is lost if GitHub stays unreachable.
 | Item | Where | State |
 |---|---|---|
 | baseline-7 two-copy | `origin/main` `f846fa6`, tag `baseline-7-two-copy` | **DEPLOYED (live)** |
-| baseline-8 self-chit dispute notify + queue dedup | `main` `75ba6aa`, tag `baseline-8-self-dispute` | merged local, unpushed |
-| baseline-9 actor dispute routing + dispute team | branch `feat/dispute-actor-routing` | built local, NOT merged, unpushed |
-| baseline-10 security hardening (JWT alg / CORS / error handler) | branch `feat/security-hardening` | built local, NOT merged, unpushed |
+| baseline-8→10 (self-dispute, routing, security) | folded into `feat/restore-endpoint` | merged local, unpushed |
+| **api base batch** (hardening + assistant backend + all docs) | branch **`feat/restore-endpoint`** `5096426` | held — push to DEV first |
+| **web batch** (panel-fixes + MSG + XSS esc + "?" help + floating AI assistant) | branch **`feat/panel-fixes`** `52acb99` | held — push to DEV first |
+| **api must-fixes** (price / network-gate / OTP cap / bulk-tx / DEV_OTP guard) | branch **`feat/must-fixes`** `c42c62e` | held — land AFTER dev smoke |
 | backup repo sync (memory + spine + these docs) | `cb-context-backup` | pending throttle |
+
+> **Canonical deploy steps:** `docs/DEPLOY-RUNBOOK.md` (dev-first → migrations → smoke → must-fixes → prod).
+> **Manual QA script (register→full lifecycle, screen by screen):** `docs/MANUAL-TEST-SCRIPT.md`.
+> **Push is blocked two ways:** the GitHub secondary throttle AND it needs Athi's interactive Git Credential
+> Manager auth (the non-interactive agent shell gets `exit 128`). Athi runs the push from his own terminal.
 
 ---
 
@@ -173,7 +179,36 @@ ACID/BASE consistency assessment (rigid core / BASE periphery): `docs/CONSISTENC
 Actor (co-assist) settings↔behaviour map + override/bounding hierarchy + gaps (entity_actor_settings are stored
 but NOT enforced; actor not bounded by entity; presence/leave IS wired): `docs/ACTOR-SETTINGS-BEHAVIOUR.md`.
 
-## DEPLOY RUNBOOK (when the push throttle lifts)
+## THREAD 5 — AI assistant + must-fixes + deploy prep (2026-06-28, this session)
+
+**AI assistant (web + api):**
+- Floating **💬 assistant** on every page (pre + post auth), context-sensitive, library-backed (`ASSIST_LIB`),
+  honest / no-oversell, media-ready. The per-screen **"?"** renders from the SAME library (`helpBoxFromLib`) —
+  one library, one render path (`assistEntryHTML`), one matcher.
+- **`answer()` seam** (app.html): tiered fallback — LLM → `matchLibrary` (client-side floor) → static — so the
+  assistant **degrades, never breaks**. `async` so the LLM slots in without touching callers.
+- **Real Claude Haiku WIRED but DORMANT.** Web `CFG.ASSIST_LLM` (default **false**) → api **`POST /api/assist`**
+  (`routes/assist.js`): model key stays SERVER-side, grounded on `lib/assist-kb.js` (honest KB, prompt-cached),
+  no-oversell `SYSTEM_PROMPT`, per-screen `CONTEXT_HINTS`. No key set → **503 → client uses the library floor**
+  (no cost, no behaviour change). Turn on later: set `ASSIST_LLM_PROVIDER=anthropic` + `ASSIST_LLM_API_KEY`,
+  flip `CFG.ASSIST_LLM=true`. Full design: `docs/AI-ASSISTANT.md`. Contexts added: **coassists + schema**.
+
+**Must-fixes (branch `feat/must-fixes`, drafted + held, land after dev smoke):**
+1. **Order price integrity** — `catalogue.js` `repriceAgainstCatalogue()` re-prices every customer line vs the
+   shop's `catalogue_items` (server-authoritative), fails CLOSED (422). Stops arbitrary/zero-price orders.
+2. **Network write-gate** — `cb_entity` is DORMANT; body-authority mutation routes disabled unless
+   `NETWORK_WRITE_ENABLED=true` (→ 503). The real fix (derive authority from `req.identity` via the bridge) is
+   Track B / ATH-86 (`docs/NETWORK-AUTHORITY.md`).
+3. **OTP attempt-counter** — `lib/otp.js` `verifyOtp()` caps wrong tries (`MAX_OTP_ATTEMPTS`, default 5) + locks;
+   wired into `catalogue.js` + `entities.js`. Needs **`migration_otp_attempts.sql`**.
+4. **`assign-bulk` transactional** — wrapped in `withTransaction` (no partial assigns).
+5. **`server.js` boot guard** — aborts PROD if `DEV_OTP` is set. Fixed test OTP `123456` stays for dev/UAT;
+   must be unset before prod (so OTPs become random).
+
+**Migrations to apply on DEV before smoke:** `chit_reads`, `dispute_routing`, `chit_direction`,
+`check_constraints`, **`otp_attempts`** (new). No `schema_migrations` ledger yet — applied state is manual.
+
+## DEPLOY RUNBOOK (when the push throttle lifts) — see `docs/DEPLOY-RUNBOOK.md` for the full current sequence
 
 1. Run `migration_dispute_routing.sql` on Supabase `bzacyrdrnzdbficjplcn` (1 additive column).
 2. Merge `feat/dispute-actor-routing` → `main`; tag `baseline-9-dispute-routing`; add a BASELINES.md row.
