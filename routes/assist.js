@@ -27,7 +27,7 @@ const SYSTEM_PROMPT = [
 // Per-screen focus hints — turn the `context` the client sends (curScreen()) into a one-line steer so the model
 // answers for the screen the user is actually on. Keep each TRUE and aligned with the KB.
 const CONTEXT_HINTS = {
-  coassists: 'On the Co-assists screen: people (and, planned, systems) that act for the user under scoped access — push/pull/bulk assignment, shifts, breaks/leave returning work to the pool.',
+  coassists: 'On the Co-assists screen: people (and, planned, systems) that act for the user within the entity\'s scope — push/pull/bulk assignment, shifts, breaks/leave returning work to the pool. (Per-actor scoping is planned, not yet enforced — a co-assist currently sees all of the entity\'s chits.)',
   schema:    'Asking about schemas/blueprints: the configurable fields and rules a deal carries (configuration, not code). The container — record, privacy, audit — stays fixed.',
   compose:   'On Compose: authoring a chit. Fields are schema-driven; line items come from the catalogue; sending creates a two-copy shared record (sent + received).',
   disputes:  'On Disputes: either side raises a disagreement; it is recorded, both sides see it, and it is resolved on the record.',
