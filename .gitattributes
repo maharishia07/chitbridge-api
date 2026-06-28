@@ -2,3 +2,6 @@
 # (Windows autocrlf would otherwise inject CRLF and break `bash -n` at the first line.)
 # .js / .sql are intentionally left to the default handling.
 *.sh text eol=lf
+# Workflow YAML embeds bash `run:` blocks — keep LF so the runner's shell doesn't choke on CRLF.
+*.yml text eol=lf
+*.yaml text eol=lf
