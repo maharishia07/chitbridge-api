@@ -79,6 +79,22 @@ disputed chits. When per-actor **view hats** (scoped view) are introduced:
 > act/resolve rights. Add a test: a dispute-handler with a narrow view hat can GET a disputed chit they
 > don't own, cannot mutate it, and loses GET access once the dispute resolves.
 
+### Order-side (sent) workflow — READY, ~no change needed
+
+The two-copy refactor made `sent` and `received` **structurally identical** rows in `chit_status`
+(keyed by `(chit_id, entity_id, direction)`). So the Order/sent copy **already carries the same
+assignment columns** as the Task side — `assigned_to_actor_id`, `assigned_to_actor_display_name`,
+`assignment_type`, `assigned_at` (`db/schema.sql:209-212`). **No migration to add an order-side workflow.**
+
+- The assign endpoint (`chits.js:1391`) filters by `(chit_id, entity_id)` with **no `direction`**, so on a
+  **normal** chit the sender can already assign their single `sent` copy through the existing endpoint.
+- **Self-chit caveat = the real (small) work:** a self-chit holds BOTH copies under one entity, so the
+  current direction-agnostic `WHERE` would assign both sides at once. Add an **optional `direction` param**
+  to the assign read/update (a few lines, no migration). This is what lets a self-chit run **independent
+  workflows on the Order side vs the Task side** — different assignees/states per copy.
+- To surface it: include `assigned_to_*` in the `/sent` (Order) list (the inbox query already selects
+  those columns), and reuse the shared per-copy `current_status` state machine for any order-specific states.
+
 Smaller follow-ups: web Settings UI for `self_copy_pref` + `dispute_handler_actor_id`; surface
 `assigned_to_me`/`dispute_for_me` in the web notifications panel; dispute team as a list (join table) later.
 
