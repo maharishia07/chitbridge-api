@@ -1425,6 +1425,7 @@ router.post('/assign-bulk',
       const action_by_id   = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const { chit_ids, target_actor_id } = req.body;
+      if (chit_ids.length > 200) return res.status(400).json({ error: 'Too many', message: 'Assign at most 200 chits at once.' });   // F4: bound the batch (long tx / lock contention)
 
       // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
       // a mid-loop failure no longer leaves a partial assign. Target validated inside the tx.
