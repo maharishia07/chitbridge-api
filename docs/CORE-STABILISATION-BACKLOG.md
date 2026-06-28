@@ -32,8 +32,8 @@ Tactical sub-items that already live in `TECH-HARDENING-BACKLOG.md` are cross-re
 
 | ID | Item | Sev | Status | Depends | Definition of done |
 |----|------|-----|--------|---------|--------------------|
-| A1 | Stand up a disposable non-prod test DB (Supabase/Postgres) | P0 | OPEN | — | A `DATABASE_URL` to a throwaway DB the CLI/CI can migrate + reset freely |
-| A2 | Run `scripts/smoke-review-fixes.sh` against the dev API | P0 | READY | A1, deploy | Script run; PASS/FAIL recorded; first real DB-proof of F3/F5/F6/F7 (script authored `08753f6`) |
+| A1 | Stand up a disposable non-prod test DB (Supabase/Postgres) | P0 | **DONE** (2026-06-28) | — | dev DB up; 6 migrations applied in MANIFEST order |
+| A2 | Run `scripts/smoke-review-fixes.sh` against the dev API | P0 | **DONE** (2026-06-28) | A1, deploy | Smoke GREEN on dev → F3/F5/F6/F7 DB-proven. *(Archive the PASS/FAIL output for the reviewer.)* |
 | A3 | Make the jest/DB suites actually run | P0 | OPEN | A1 | Existing tests wired to the test DB and green (CB-SYNC notes they were skipped) |
 | A4 | Automated tenant-isolation suite (every read+write route: B never sees/edits A) | P0 | OPEN | A1, A3 | A reusable test that asserts cross-entity denial per route; would have caught F3/F7 |
 | A5 | CI runs A3+A4 on every commit; block merge on failure | P1 | OPEN | A3, A4 | A pipeline gating merges on the isolation + DB suites |

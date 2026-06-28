@@ -45,6 +45,11 @@ Nothing is lost if GitHub stays unreachable.
 > **Prod gate (≥1 month out, behind real scrutiny):** dev-smoke GREEN + migrations confirmed + the P0
 > stabilisation items landed (A1/A2 → B1 → A4/A5 → C1/C2 → E1/E2). Keep **`ASSIST_LLM` / SMS / customer storefront
 > DORMANT** this phase. *The smoke (`scripts/smoke-review-fixes.sh` + §13.3–13.7) is the gate.*
+>
+> 🟢 **DEV MILESTONE (2026-06-28):** `feat/must-fixes` + `feat/panel-fixes` **PUSHED + DEPLOYED to dev**, 6 migrations
+> applied, **smoke GREEN**. So F3/F5/F6/F7 are now **DB-proven**, not just static-verified — **A1 + A2 DONE.**
+> Next per the approved order: **B1 (Postgres RLS isolation backstop) — before any new endpoints.**
+> *(For the reviewer's re-verify loop: archive the smoke run's PASS/FAIL output alongside this.)*
 > **Push is blocked two ways:** the GitHub secondary throttle AND it needs Athi's interactive Git Credential
 > Manager auth (the non-interactive agent shell gets `exit 128`). Athi runs the push from his own terminal.
 
