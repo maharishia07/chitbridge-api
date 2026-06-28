@@ -58,21 +58,29 @@ const _norm = (s) => String(s == null ? '' : s).trim().toLowerCase();
 const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
 async function repriceAgainstCatalogue(entity_id, rawItems) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
+  if (rawItems.length > 200) throw _422('Too many line items — max 200 per order');   // F6: bound the line count
   const cat = await query(
     `SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id]);
-  const byId = new Map(), byName = new Map();
+  const byId = new Map(), byName = new Map(), nameCount = new Map();   // F6: nameCount flags ambiguous names
   for (const row of cat.rows) {
     const d = row.item_data || {};
     // null/undefined/'' price = NOT SET -> NaN (rejected below). A deliberate 0 stays a valid price.
     const price = (d.price === null || d.price === undefined || d.price === '') ? NaN : Number(d.price);
     const rec = { item_id: row.item_id, name: d.name ?? d.particulars ?? '', price, unit: d.unit ?? null };
     byId.set(String(row.item_id), rec);
-    if (rec.name) byName.set(_norm(rec.name), rec);
+    if (rec.name) { const k = _norm(rec.name); nameCount.set(k, (nameCount.get(k) || 0) + 1); byName.set(k, rec); }
   }
   const MAX_QTY = 100000;
   const items = rawItems.map((li, idx) => {
     const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
-    const ref  = (li.item_id != null && byId.get(String(li.item_id))) || byName.get(_norm(name));
+    // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
+    // instead of silently pricing against the wrong variant.
+    let ref = (li.item_id != null) ? byId.get(String(li.item_id)) : null;
+    if (!ref) {
+      const k = _norm(name);
+      if ((nameCount.get(k) || 0) > 1) throw _422(`"${name}" matches more than one product — select the item to order it`);
+      ref = byName.get(k);
+    }
     if (!ref) throw _422(`"${name || ('item ' + (idx + 1))}" is not available in this shop's catalogue`);
     if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
     const qty = Number(li.quantity ?? li.qty);
