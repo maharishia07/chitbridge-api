@@ -20,6 +20,10 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
 (tests updated to attach a token). **STILL OPEN:** authority is still taken from **`actingEntityId` in `req.body`**
 (client-supplied) — a logged-in user can still assert a different acting entity. Full fix below.
 Original finding: the endpoints had **no auth** and took `actingEntityId` from the body; mounted in prod.
+- **Authority cascade is ALSO absent** (the deeper half) — full per-operation gap analysis + fix spec in
+  `docs/NETWORK-AUTHORITY.md`. Standouts: `approve` consent is bypassable (optional `actingEntityId`); `claim`
+  is wide open (anyone takes ownership); suspend/resume/disconnect/subtree/connections have **no** authority check.
+  ltree gives the cascade cheaply (`Y.path <@ X.path`). This cascade also underpins the billing-root subtree quota.
 - **Scope:** the cb_* network is a SEPARATE entity space (`cb_entity`), not the core `identities`/chit data (that path
   IS JWT-scoped). So this is network-structure manipulation, not a core-tenant-data leak. The tree logic + cycle
   guard themselves are sound (tests pass).
