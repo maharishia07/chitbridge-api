@@ -68,16 +68,23 @@ of failure.*
 - So flipping `CFG.ASSIST_LLM=true` *before* the backend exists is safe: `/api/assist` 404s → caught → library
   floor answers. The fall-through is observable in the tester log (`cblog` warns the 404).
 
-**Backend contract to build next — `POST /api/assist`** (the only remaining piece for real AI):
-- **Request:** `{ q:string, context:string, stage:string }` (+ `Authorization: Bearer` when post-auth).
-- **Response:** `{ answer:string, fit?:'good'|'maybe'|'no', media?:{type,src,caption} }` (shape matches a lib entry).
-- **Server responsibilities:** hold the model key; inject the **no-oversell system prompt**; **ground** the model on
-  `ASSIST_LIB` (+ post-auth, the caller's live, tenant-scoped context — honoring the P0 isolation invariant: never
-  feed another entity's data); rate-limit; on its own model failure return a non-200 so the client floor takes over.
-- Until then the stub stays gated off; the library matcher is the shipping behaviour.
+**Backend proxy `POST /api/assist` — STUB BUILT (api `routes/assist.js`, mounted + rate-limited in `server.js`):**
+- **Request:** `{ q:string, context:string, stage:string }` (+ optional `Authorization: Bearer` for post-auth).
+- **Response (real):** `{ answer:string, fit?:'good'|'maybe'|'no', media?:{type,src,caption} }` (matches a lib entry).
+- **In place now:** input validation (`q` required, ≤500 chars → 422); **soft/optional auth** (`softIdentity` —
+  attaches a minimal tenant-scoped identity if a valid token is present, else anonymous/public-KB-only; never
+  throws, so the assistant works pre-auth); the **no-oversell `SYSTEM_PROMPT`** held server-side; a dedicated
+  rate limiter (`ASSIST_RATE_LIMIT_MAX`, default 40/15m); `safeErr` on 500.
+- **Gating:** with no `ASSIST_LLM_PROVIDER` + `ASSIST_LLM_API_KEY` env (the default/held state) it returns **503**
+  ("not configured") and logs an **info** line — the client catches it and uses its library floor. If a provider
+  is set but the SDK call isn't implemented yet it returns **501**. Smoke-tested: empty/long→422, valid→503.
+- **Only remaining piece for real AI:** drop the provider SDK call into the marked `TODO` (run under
+  `SYSTEM_PROMPT`, ground on the KB + — only when `identity` is set — that caller's tenant-scoped context, never
+  another entity's; return non-200 on any provider error so the floor still answers), set the two env vars, and
+  flip `CFG.ASSIST_LLM=true` on the web.
 
-- **Next:** real screen clips into `public/app/assets/`; then build `POST /api/assist` (above) and flip
-  `CFG.ASSIST_LLM=true` — keeping the honest / no-oversell guardrail and the mandatory fall-through.
+- **Next:** real screen clips into `public/app/assets/`; then implement the provider SDK call in
+  `routes/assist.js` (above) and flip `CFG.ASSIST_LLM=true` — keeping the no-oversell guardrail + mandatory fall-through.
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.

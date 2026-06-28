@@ -89,6 +89,15 @@ const catalogueLimiter = rateLimit({
 });
 app.use('/api/catalogue', catalogueLimiter);
 
+// Assistant LLM proxy — rate-limit the tier-1 seam (blunts cost/abuse on a model-backed endpoint).
+// If this is hit too hard, the client simply falls through to its own library floor (no hard failure).
+const assistLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.ASSIST_RATE_LIMIT_MAX || '40'),
+  message: { error: 'Too many requests', message: 'Too many assistant requests — please try again shortly.' }
+});
+app.use('/api/assist', assistLimiter);
+
 // ── Routes ───────────────────────────────────────────────────
 const entitiesRouter    = require('./routes/entities');
 const connectionsRouter = require('./routes/connections');
@@ -123,6 +132,9 @@ app.use('/api/simulator', require('./routes/simulator'));
 
 // ── Derived notification feed (from state_log; no notifications table) ───
 app.use('/api/notifications', require('./routes/notifications'));
+
+// ── Assistant tier-1 LLM proxy (STUB — model key stays server-side; client falls through to its library floor) ───
+app.use('/api/assist', require('./routes/assist'));
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
