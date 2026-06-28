@@ -151,6 +151,20 @@ returns tasks to the **pool**, and there is no `default_assignee`/delegation fie
   once answered, Claude locks the catalogue + wires migration + `requireQuota`/`requireFeature`.
   (Supersedes the simple feature-flag idea.)
 
+## Deferred — 2026-06-28 consolidated review (do NOT do now)
+- **[BACKLOG] Full Option-A write cleanup (follow-up to F3)** — natively fan `dispute_raised`/`dispute_resolved`
+  to the dispute's own audience (`one_sided`→self, `targeted`→raiser+target, chit-wide→all) and drop the special
+  `action IN (...)` arm from `notifications.js`. Bigger refactor; needs the self-chit dispute smoke re-run.
+- **[BACKLOG] Migration discipline (interim)** — no `schema_migrations` ledger. Add a cheap **boot-time
+  `information_schema` probe** that the columns the running code needs (e.g. `otp_attempts`, `otp_contact`,
+  `dispute_handler_actor_id`, `direction`) actually exist, ahead of a full ledger. (See also `MANIFEST.md`.)
+- **[BACKLOG] Network Track-B bridge** — `cb_entity ↔ identities`; the real fix behind the network/catalogue
+  write-gate AND the F7 client-supplied-`:id` residual (derive entity from `req.identity`, not the URL).
+- **[PARKED] Customer storefront** — stays parked / un-smoked this cycle; **customer social sign-in (email path)**
+  is a next-cycle Track-E slice.
+- **[BEFORE PROD] `fp01`** — `migration_fp01.sql` is a reconstruction of already-applied prod columns; **diff it
+  against the real prod schema before any production apply**.
+
 ## How to use this
 Treat **[QUICK]** items as the next small hardening slice (mostly additive, low-risk). **[BACKLOG]** items are
 separate implementations — pull them as dedicated tickets. Re-check this list before UAT/Prod promotion.

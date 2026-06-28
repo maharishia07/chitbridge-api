@@ -31,7 +31,7 @@ Nothing is lost if GitHub stays unreachable.
 | baseline-8→10 (self-dispute, routing, security) | folded into `feat/restore-endpoint` | merged local, unpushed |
 | **api base batch** (hardening + assistant backend + all docs) | branch **`feat/restore-endpoint`** `5096426` | held — push to DEV first |
 | **web batch** (panel-fixes + MSG + XSS esc + "?" help + floating AI assistant) | branch **`feat/panel-fixes`** `52acb99` | held — push to DEV first |
-| **api must-fixes** (price / network-gate / OTP cap / bulk-tx / DEV_OTP guard + **assist F0 restore**) | branch **`feat/must-fixes`** `fa5522a` | held — land AFTER dev smoke |
+| **api must-fixes** (4 must-fixes + assist F0 + **review fixes F1–F7**) | branch **`feat/must-fixes`** `cb88b46` | held — land AFTER dev smoke |
 | backup repo sync (memory + spine + these docs) | `cb-context-backup` | pending throttle |
 
 > **Canonical deploy steps:** `docs/DEPLOY-RUNBOOK.md` (dev-first → migrations → smoke → must-fixes → prod).
@@ -196,6 +196,22 @@ Customer-facing **trust base** (plain-language "why you can trust us", every cla
 ACID/BASE consistency assessment (rigid core / BASE periphery): `docs/CONSISTENCY-MODEL.md`.
 Actor (co-assist) settings↔behaviour map + override/bounding hierarchy + gaps (entity_actor_settings are stored
 but NOT enforced; actor not bounded by entity; presence/leave IS wired): `docs/ACTOR-SETTINGS-BEHAVIOUR.md`.
+
+## THREAD 6 — consolidated review fixes (2026-06-28, all held on `feat/must-fixes`)
+From the reviewing-Claude hand-off (`CB-REMAINING-FINDINGS-for-CLI.md`), each its own commit:
+- **F0** `fa5522a` — restored `routes/assist.js` (lost to the deleter); server boots, `/api/assist` → 503.
+- **F1** `327dd3c` — `src/routes/catalogue.js` (mounted at `/api/network`) now `auth` on all routes + `gateWrite`.
+- **F2** `32d1587` (customer) + **F2-entity** `af2652b` — dual-channel OTP; OTP never returned in a prod response.
+- **F3** `961f3c0` (P0) — notifications feed no longer leaks the counterparty's INTERNAL actions: `notifications.js`
+  WHERE `(sl.entity_id = caller OR dispute/void)`; `assign-bulk` + 5 `actors.js` push/pull/return `state_log`
+  fan-outs now write only the acting entity's row. Status-change (chits.js:692) + voided still fan (intended).
+- **F4** `a2351f9` — `assign-bulk` capped at 200. **F5** `cb88b46` — actor-login OTP now uses `verifyOtp` (cap).
+- **F6** `27ac4bd` — reprice prefers `item_id`, rejects ambiguous name, caps line count.
+- **F7** `6c448c0` — supplier-catalogue read gated on `visibility='public'` (was any-entity full-catalogue read).
+- Deferred (recorded in `TECH-HARDENING-BACKLOG.md`): full Option-A dispute-fan cleanup, `information_schema` boot
+  probe, Network Track-B bridge, customer storefront parked, `fp01` prod-diff.
+- **DB-dependent smokes** (F3 leak/regression, F5/OTP lockout, F6/F7 reads) verified by query-logic + `node --check`
+  here; run end-to-end on dev per `DEV-DEPLOY-CHECKLIST.md` + `MANUAL-TEST-SCRIPT.md`.
 
 ## THREAD 5 — AI assistant + must-fixes + deploy prep (2026-06-28, this session)
 
