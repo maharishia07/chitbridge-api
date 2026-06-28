@@ -154,6 +154,11 @@ Smaller follow-ups: web Settings UI for `self_copy_pref` + `dispute_handler_acto
 
 ---
 
+## Code-level hardening
+See `docs/TECH-HARDENING-BACKLOG.md` — prioritized [QUICK]/[BACKLOG] items + the settings-level future path
+(generic `settings JSONB`, feature flags). Done this pass: row-renderer XSS `esc()` fix + boot-time
+`JWT_SECRET` guard. Re-check the list before UAT/Prod.
+
 ## DEPLOY RUNBOOK (when the push throttle lifts)
 
 1. Run `migration_dispute_routing.sql` on Supabase `bzacyrdrnzdbficjplcn` (1 additive column).
