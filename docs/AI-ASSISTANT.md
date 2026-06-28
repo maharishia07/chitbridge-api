@@ -57,8 +57,27 @@ never breaks**:
 `answer()` is **async on purpose** so the LLM tier drops in later **without changing any caller**. Principle (keep
 it): *the deterministic library answer is the floor; the LLM is an enhancement that must never be a single point
 of failure.*
-- **Next:** real screen clips into `public/app/assets/`; then wire the real LLM as tier 1 inside `answer()`
-  (over the library + live context), keeping the honest / no-oversell guardrail and the mandatory fall-through.
+### Tier-1 LLM stub — wired (client seam), gated OFF
+**DONE (client).** The tier-1 seam is now real but disabled by default:
+- `CFG.ASSIST_LLM` (default **`false`**) gates tier 1 — with it off, `answer()` is matcher-only (no behaviour change).
+- `askLLM(question, contextKey)` is the stub: it **calls our backend proxy** `EP.assist → POST /api/assist`
+  (the model key **never** touches the client), and returns a library-shaped `{q,a,fit?,media?}` or `null`.
+- `answer()` runs `Promise.race([askLLM, _timeout(6000)])` inside try/catch; **any** failure (disabled / demo /
+  endpoint-missing / timeout / network / bad shape) falls through to `matchLibrary`. `askLLM` also returns `null`
+  in demo mode (never call a model from the no-login mock).
+- So flipping `CFG.ASSIST_LLM=true` *before* the backend exists is safe: `/api/assist` 404s → caught → library
+  floor answers. The fall-through is observable in the tester log (`cblog` warns the 404).
+
+**Backend contract to build next — `POST /api/assist`** (the only remaining piece for real AI):
+- **Request:** `{ q:string, context:string, stage:string }` (+ `Authorization: Bearer` when post-auth).
+- **Response:** `{ answer:string, fit?:'good'|'maybe'|'no', media?:{type,src,caption} }` (shape matches a lib entry).
+- **Server responsibilities:** hold the model key; inject the **no-oversell system prompt**; **ground** the model on
+  `ASSIST_LIB` (+ post-auth, the caller's live, tenant-scoped context — honoring the P0 isolation invariant: never
+  feed another entity's data); rate-limit; on its own model failure return a non-200 so the client floor takes over.
+- Until then the stub stays gated off; the library matcher is the shipping behaviour.
+
+- **Next:** real screen clips into `public/app/assets/`; then build `POST /api/assist` (above) and flip
+  `CFG.ASSIST_LLM=true` — keeping the honest / no-oversell guardrail and the mandatory fall-through.
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.
