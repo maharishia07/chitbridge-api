@@ -31,13 +31,23 @@ Nothing is lost if GitHub stays unreachable.
 | baseline-8→10 (self-dispute, routing, security) | folded into `feat/restore-endpoint` | merged local, unpushed |
 | **api base batch** (hardening + assistant backend + all docs) | branch **`feat/restore-endpoint`** `5096426` | held — push to DEV first |
 | **web batch** (panel-fixes + MSG + XSS esc + "?" help + floating AI assistant) | branch **`feat/panel-fixes`** `52acb99` | held — push to DEV first |
-| **api must-fixes** (price / network-gate / OTP cap / bulk-tx / DEV_OTP guard) | branch **`feat/must-fixes`** `c42c62e` | held — land AFTER dev smoke |
+| **api must-fixes** (price / network-gate / OTP cap / bulk-tx / DEV_OTP guard + **assist F0 restore**) | branch **`feat/must-fixes`** `fa5522a` | held — land AFTER dev smoke |
 | backup repo sync (memory + spine + these docs) | `cb-context-backup` | pending throttle |
 
 > **Canonical deploy steps:** `docs/DEPLOY-RUNBOOK.md` (dev-first → migrations → smoke → must-fixes → prod).
 > **Manual QA script (register→full lifecycle, screen by screen):** `docs/MANUAL-TEST-SCRIPT.md`.
 > **Push is blocked two ways:** the GitHub secondary throttle AND it needs Athi's interactive Git Credential
 > Manager auth (the non-interactive agent shell gets `exit 128`). Athi runs the push from his own terminal.
+
+> ⚠️ **ENVIRONMENT HAZARD — a working-tree file deleter.** Something on this machine (antivirus / OneDrive-style
+> sync on `Downloads`) intermittently **deletes freshly-written `.js` files** from the working tree — it has hit
+> `public/app.html` repeatedly and, on 2026-06-28, silently removed **`routes/assist.js`**; a `git add` then
+> committed the *deletion* (commit `4d3d25a`, misleading message), producing an F0 boot-breaker
+> (`MODULE_NOT_FOUND` for `./routes/assist`) found in review. **Recovered from `39aad4d` + re-applied the lost
+> CONTEXT_HINTS, committed `fa5522a`, and PROVEN by booting the server (no MODULE_NOT_FOUND; `POST /api/assist`
+> → 503).** Standing rule for any session here: after writing a file, **verify it's still on disk *and* in
+> `git ls-tree HEAD` before trusting a commit**; prefer `git restore` immediately after commit; consider moving
+> the repos off the synced/scanned `Downloads` folder.
 
 ---
 
