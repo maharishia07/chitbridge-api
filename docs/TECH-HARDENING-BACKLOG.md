@@ -15,10 +15,15 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
 - **[DONE] Boot-time config guard** — `server.js` aborts in production (warns in dev) if `JWT_SECRET` is
   missing or < 32 chars.
 
-## ⚠️ P0 — /api/network authority (deployed) — auth MITIGATED, bridge still TODO
+## ⚠️ P0 — /api/network authority (deployed) — auth MITIGATED, writes now GATED, bridge still TODO
 **MITIGATED (e6789b0):** all `src/routes/network.js` routes now require `auth` — unauthenticated access is closed
-(tests updated to attach a token). **STILL OPEN:** authority is still taken from **`actingEntityId` in `req.body`**
-(client-supplied) — a logged-in user can still assert a different acting entity. Full fix below.
+(tests updated to attach a token). **INTERIM GATE (DRAFTED — branch `feat/must-fixes`):** because `cb_entity`
+is dormant (2026-06-27 ruling) and there is still no `cb_entity↔identities` bridge, the body-authority MUTATION
+routes (register/claim/connect/approve/decline/suspend/resume/disconnect) are now **disabled unless
+`NETWORK_WRITE_ENABLED=true`** (dev only) — they return `503 NET_WRITE_DISABLED`. Reads stay (auth required).
+This removes the body-authority exposure in prod without shipping the half-built authority model.
+**STILL OPEN (real fix):** authority is still taken from **`actingEntityId` in `req.body`** when writes are
+enabled — a logged-in user could assert a different acting entity. Full fix below (Track B / ATH-86).
 Original finding: the endpoints had **no auth** and took `actingEntityId` from the body; mounted in prod.
 - **Authority cascade is ALSO absent** (the deeper half) — full per-operation gap analysis + fix spec in
   `docs/NETWORK-AUTHORITY.md`. Standouts: `approve` consent is bypassable (optional `actingEntityId`); `claim`
@@ -41,9 +46,12 @@ isolated per customer** (keyed on the token identity, not the path — no cross-
 gates orders; `safeErr`. **FIXED:** `/api/catalogue` now rate-limited (7a63490).
 - **[BACKLOG] OTP attempt-counter** — `order/confirm` + `login/verify` compare the 6-digit OTP with **no
   per-account attempt cap** (rate-limit now mitigates, but add `otp_attempts` + lock after N as defense-in-depth; needs a column).
-- **[BACKLOG] Order price/line-item validation** — the customer sends their own `line_items` (incl. price); not
-  checked against the shop's catalogue, so an order can be placed at arbitrary/zero prices. Validate items+prices
-  server-side against `catalogue_items` before sealing the chit.
+- **[DRAFTED — branch `feat/must-fixes`] Order price/line-item validation** — `repriceAgainstCatalogue()` in
+  `catalogue.js` re-prices every customer line against the shop's active `catalogue_items` (matched by `item_id`
+  or name) and recomputes totals **server-side**; fails CLOSED (422) on an unknown item, an unset price, or a bad
+  quantity. A deliberate price of 0 is allowed; null/'' price is treated as "not set" → rejected. Algorithm
+  unit-tested. **Confirm in dev smoke:** the real customer line-item shape (name/`item_id`) and that price lives
+  in `item_data.price`.
 - **[CONFIRM] Public exposure** — the public catalogue returns `gstn` + `address` (acceptable for a storefront — confirm intended).
 - **[BACKLOG] Bounded read** — public catalogue `items` query has no LIMIT (folds into the max-`?limit=` cap).
 

@@ -42,13 +42,17 @@ Apply with `psql "$DATABASE_URL" -f <file>`. These are additive / NOT VALID, so 
   push/pull → notifications/bell → **customer storefront order** → **demo path still works** → **💬 assistant +
   "?" on each screen** (incl. new coassists/schema contexts) answer from the library floor.
 
-## 5. Fix the must-fixes (then re-test on dev)
-Before any prod promotion:
-1. **Network body-authority** — derive `actingEntityId` from `req.identity` (bridge `cb_entity ↔ identities`), not
-   `req.body`; add the per-op authority/cascade checks. Spec: `NETWORK-AUTHORITY.md`. (Mounted in prod today.)
-2. **Order price validation** — validate customer `line_items` + prices against `catalogue_items` server-side
-   before sealing the chit (today a customer can order at arbitrary/zero price). `catalogue.js`.
-3. (Recommended same pass) **OTP attempt-counter**; wrap **`assign-bulk`** in `withTransaction`.
+## 5. Land the must-fixes — DRAFTED on branch `feat/must-fixes` (merge after dev smoke)
+Both are drafted/held on `feat/must-fixes` (off `feat/restore-endpoint`). After the dev smoke on the base batch,
+merge this branch and re-smoke:
+1. **Order price validation** ✅ drafted — `repriceAgainstCatalogue()` in `catalogue.js` (server-authoritative
+   prices, fail-closed). *Smoke check:* place a real storefront order; confirm a tampered price is ignored and an
+   honest order still succeeds (verifies the line-item shape + `item_data.price` assumptions).
+2. **Network body-authority** ✅ interim drafted — writes gated off via `NETWORK_WRITE_ENABLED` (default false →
+   `503`). *Smoke check:* network reads work; writes return `NET_WRITE_DISABLED` unless the flag is set in dev.
+   The **full** fix (derive `actingEntityId` from `req.identity` via the `cb_entity↔identities` bridge) remains
+   Track B / ATH-86 — see `NETWORK-AUTHORITY.md`.
+3. (Recommended same pass, NOT yet drafted) **OTP attempt-counter**; wrap **`assign-bulk`** in `withTransaction`.
 
 ## 6. Promote to PROD — separate, conscious, reviewed step
 Re-check `TECH-HARDENING-BACKLOG.md` "Re-check before UAT/Prod". Set prod env (strong secret, prod CORS origin).

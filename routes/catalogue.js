@@ -18,6 +18,43 @@ const genBridge = () => {
 const genOTP = () => (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
+// CJ-07 (security) — PRICE INTEGRITY. A no-login customer sends their own line_items incl. price; never trust it.
+// Re-price every line against THIS shop's own catalogue and recompute totals server-side. Fails CLOSED: a line
+// that can't be matched to an active catalogue item, or whose catalogue price isn't set, is rejected (422) — so
+// no order can be placed at an arbitrary or zero price.
+// ASSUMPTIONS to confirm during dev smoke (adjust here if the real shape differs):
+//   (1) a customer line identifies its product by `item_id`, or by name (`particulars`/`name`);
+//   (2) the unit price lives in `catalogue_items.item_data.price`.
+const _norm = (s) => String(s == null ? '' : s).trim().toLowerCase();
+const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
+async function repriceAgainstCatalogue(entity_id, rawItems) {
+  if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
+  const cat = await query(
+    `SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id]);
+  const byId = new Map(), byName = new Map();
+  for (const row of cat.rows) {
+    const d = row.item_data || {};
+    // null/undefined/'' price = NOT SET -> NaN (rejected below). A deliberate 0 stays a valid price.
+    const price = (d.price === null || d.price === undefined || d.price === '') ? NaN : Number(d.price);
+    const rec = { item_id: row.item_id, name: d.name ?? d.particulars ?? '', price, unit: d.unit ?? null };
+    byId.set(String(row.item_id), rec);
+    if (rec.name) byName.set(_norm(rec.name), rec);
+  }
+  const MAX_QTY = 100000;
+  const items = rawItems.map((li, idx) => {
+    const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
+    const ref  = (li.item_id != null && byId.get(String(li.item_id))) || byName.get(_norm(name));
+    if (!ref) throw _422(`"${name || ('item ' + (idx + 1))}" is not available in this shop's catalogue`);
+    if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
+    const qty = Number(li.quantity ?? li.qty);
+    if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
+    const total = Math.round(ref.price * qty * 100) / 100;
+    return { item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty, price: ref.price, total };
+  });
+  const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
+  return { items, total };
+}
+
 async function resolveEntity(bridge_id) {
   const r = await query(
     `SELECT identity_id, display_name, bridge_id, currency_code, gstn, is_verified, logo_url, address, business_status
@@ -119,9 +156,12 @@ router.post('/:bridge_id/order/confirm',
       if (c.otp_code !== req.body.otp.trim())          return res.status(400).json({ error: 'Verify failed', message: 'Incorrect code' });
       if (new Date() > new Date(c.otp_expires_at))     return res.status(400).json({ error: 'Verify failed', message: 'Code expired' });
       // build the guaranteed chit: customer = sender, shop = receiver
-      const line_items = req.body.line_items;
+      // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
+      // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
+      let line_items, total;
+      try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items)); }
+      catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }
       const chit_id = uuidv4();
-      const total = line_items.reduce((s, i) => s + parseFloat(i.total || i.price * i.quantity || 0), 0);
       const summary_json = { line_item_count: line_items.length, total_value: Math.round(total * 100) / 100,
                              currency_code: entity.currency_code || 'INR', purpose: 'order', is_promotion: false };
       const auto_subject = `Order from ${c.display_name} — ` +
