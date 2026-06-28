@@ -156,8 +156,10 @@ Smaller follow-ups: web Settings UI for `self_copy_pref` + `dispute_handler_acto
 
 ## Code-level hardening
 See `docs/TECH-HARDENING-BACKLOG.md` — prioritized [QUICK]/[BACKLOG] items + the settings-level future path
-(generic `settings JSONB`, feature flags). Done this pass: row-renderer XSS `esc()` fix + boot-time
-`JWT_SECRET` guard. Re-check the list before UAT/Prod.
+(generic `settings JSONB`, feature flags). All [QUICK] wins done: XSS `esc()` (rows + dispute/message/detail/
+line-items), boot-time `JWT_SECRET` guard, auth rate limiter, direction CHECK migration, error-envelope sweep
+(`lib/respond.js` `safeErr`, 71 leaks closed). **Before ANY change, run `docs/AMENDMENT-CHECKLIST.md`** (living
+gate: tenant scope, esc, safeErr, transactions, void/terminal, circular-ref, MSG messages, demo segregation).
 
 ## DEPLOY RUNBOOK (when the push throttle lifts)
 
