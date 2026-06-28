@@ -15,6 +15,21 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
 - **[DONE] Boot-time config guard** — `server.js` aborts in production (warns in dev) if `JWT_SECRET` is
   missing or < 32 chars.
 
+## ⚠️ P0 — /api/network is unauthenticated + body-authority (deployed)
+The `src/routes/network.js` endpoints (register, claim, connect, approve, decline, suspend, resume, disconnect,
+subtree, connections) have **NO `auth` middleware** and take **`actingEntityId` from `req.body`** (client-supplied)
+as their authority. Anyone can call them and assert any acting entity → register/reparent/disconnect the tree,
+read any subtree/connections. Violates the P0 isolation invariant. **It is mounted in prod** (`/api/network`).
+- **Scope:** the cb_* network is a SEPARATE entity space (`cb_entity`), not the core `identities`/chit data (that path
+  IS JWT-scoped). So this is network-structure manipulation, not a core-tenant-data leak. The tree logic + cycle
+  guard themselves are sound (tests pass).
+- **Root cause:** the network module was built standalone (own `app.js`/`db`/entity space) with body-authority, never
+  integrated with the JWT — the deferred "Track B" `cb_entity ↔ identities` bridge.
+- **Proper fix:** add `auth`; bridge `cb_entity ↔ identities`; derive `actingEntityId` from `req.identity` (verified),
+  not the body; verify the caller's authority over the edge; update `tests/network.test.js` to authenticate.
+- **Note:** the frontend Network panel sends minimal bodies (e.g. `netApprove` sends `{}` — no `actingEntityId`),
+  so live network ops from the panel may not work end-to-end anyway (wired mostly against demo). Awaiting decision.
+
 ## API backlog
 - **[DONE] DB CHECK — direction** — `migration_check_constraints.sql` adds `CHECK (direction IN ('sent','received'))`
   NOT VALID on chit_header/status/detail. **[QUICK remaining]** add CHECK on `current_status` + `scope` after
