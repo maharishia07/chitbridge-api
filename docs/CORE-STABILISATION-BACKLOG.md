@@ -35,7 +35,7 @@ Tactical sub-items that already live in `TECH-HARDENING-BACKLOG.md` are cross-re
 | A1 | Stand up a disposable non-prod test DB (Supabase/Postgres) | P0 | **DONE** (2026-06-28) | — | dev DB up; 6 migrations applied in MANIFEST order |
 | A2 | Run `scripts/smoke-review-fixes.sh` against the dev API | P0 | **DONE** (2026-06-28) | A1, deploy | Smoke GREEN on dev → F3/F5/F6/F7 DB-proven. *(Archive the PASS/FAIL output for the reviewer.)* |
 | A3 | Make the jest/DB suites actually run | P0 | OPEN | A1 | Existing tests wired to the test DB and green (CB-SYNC notes they were skipped) |
-| A4 | Automated tenant-isolation suite (every read+write route: B never sees/edits A) | P0 | OPEN | A1, A3 | A reusable test that asserts cross-entity denial per route; would have caught F3/F7 |
+| A4 | Automated tenant-isolation suite (every read+write route: B never sees/edits A) | P0 | **AUTHORED — run on dev** `5040fe8` (`scripts/isolation-suite.sh`) | A1 ✓ | B denied every read/write of A's chit (detail/messages/status/dispute/archive/void/delete/bulk-assign) + notifications/supplier-catalogue/products; positive control; `bash -n` clean. **Done = GREEN on dev** (and again with RLS forced = the B1 proof). Next: A5 wires it into CI. |
 | A5 | CI runs A3+A4 on every commit; block merge on failure | P1 | OPEN | A3, A4 | A pipeline gating merges on the isolation + DB suites |
 
 ## TRACK B — Make isolation architectural, not disciplinary
