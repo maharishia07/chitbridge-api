@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const net = require("../services/network");
 const auth = require("../../middleware/auth");   // require a valid JWT on every network route
+const { safeErr } = require("../../lib/respond");   // generic client error + server-side log (C3)
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
 // authority from the request body (`actingEntityId`) — there is no cb_entity<->identities bridge yet to verify
 // that the caller actually owns the entity/edge they are acting on. Until that bridge lands (Track B / ATH-86:
@@ -13,7 +14,12 @@ const gateWrite = (req, res, next) => WRITES_ENABLED ? next()
       message: "Network changes aren't available yet.", code: "NET_WRITE_DISABLED" });
 const h = (fn) => async (req, res) => {
   try { res.json(await fn(req)); }
-  catch (e) { res.status(e.status || 500).json({ error: e.message, code: e.code || "ERR" }); }
+  catch (e) {
+    // C3: deliberate service errors (err(status,msg,code)) carry a safe message; anything else is unexpected —
+    // log it server-side + return a generic message so we never leak err.message (DB/stack) to the client.
+    if (e.status) return res.status(e.status).json({ error: e.message, code: e.code || "ERR" });
+    res.status(500).json({ error: safeErr(e), code: "ERR" });
+  }
 };
 router.post("/entities",               auth, gateWrite, h((req) => net.register(req.body)));
 router.get ("/entities/lookup",        auth, h(async (req) => { const c = await net.lookup(req.query.bridgeId || ""); return c ? { found: true, entity: c } : { found: false }; }));
