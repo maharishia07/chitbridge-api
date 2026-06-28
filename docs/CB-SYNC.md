@@ -132,6 +132,19 @@ assignment columns** as the Task side — `assigned_to_actor_id`, `assigned_to_a
 - To surface it: include `assigned_to_*` in the `/sent` (Order) list (the inbox query already selects
   those columns), and reuse the shared per-copy `current_status` state machine for any order-specific states.
 
+### Web task-panel fixes + per-actor unread (spec held)
+
+Icon audit of the task panel (2026-06-28) found 4 divergences + a new model. Full spec lives in the WEB
+repo `docs/PANEL-FIXES.md`, branch `feat/panel-fixes` (held, no code yet). API-side prerequisites:
+- **`baseline-11` restore endpoint** — `POST /api/chits/:id/restore` (clear `deleted_at` on caller's copy,
+  mirror `/unarchive` chits.js:1307) to un-stub "Restore from Trash".
+- **Per-actor unread** (Athi chose per-actor over per-entity): migration `chit_reads(chit_id, actor_id,
+  direction, read_at, PK(chit_id,actor_id,direction))`; mark-read on open; clear the assignee's read row
+  on (re)assignment/activity-by-others; inbox `LEFT JOIN chit_reads ON actor_id=caller` to compute unread.
+  Today read_at is per-ENTITY (`chit_status.read_at`) and the panel row shows NO chit-unread colour.
+- Frontend then: real 🔔 count (un-hardcode `app.html:918`), wire bulk-assign to `/chits/assign-bulk`,
+  replace hardcoded actor `'a1'` with `SESSION.actorId`, wire restore, add per-actor unread row colour.
+
 Smaller follow-ups: web Settings UI for `self_copy_pref` + `dispute_handler_actor_id`; surface
 `assigned_to_me`/`dispute_for_me` in the web notifications panel; dispute team as a list (join table) later.
 
