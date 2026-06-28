@@ -36,7 +36,7 @@ Tactical sub-items that already live in `TECH-HARDENING-BACKLOG.md` are cross-re
 | A2 | Run `scripts/smoke-review-fixes.sh` against the dev API | P0 | **DONE** (2026-06-28) | A1, deploy | Smoke GREEN on dev → F3/F5/F6/F7 DB-proven. *(Archive the PASS/FAIL output for the reviewer.)* |
 | A3 | Make the jest/DB suites actually run | P0 | OPEN | A1 | Existing tests wired to the test DB and green (CB-SYNC notes they were skipped) |
 | A4 | Automated tenant-isolation suite (every read+write route: B never sees/edits A) | P0 | **AUTHORED — run on dev** `5040fe8` (`scripts/isolation-suite.sh`) | A1 ✓ | B denied every read/write of A's chit (detail/messages/status/dispute/archive/void/delete/bulk-assign) + notifications/supplier-catalogue/products; positive control; `bash -n` clean. **Done = GREEN on dev** (and again with RLS forced = the B1 proof). Next: A5 wires it into CI. |
-| A5 | CI runs A3+A4 on every commit; block merge on failure | P1 | OPEN | A3, A4 | A pipeline gating merges on the isolation + DB suites |
+| A5 | CI runs A3+A4 on every commit; block merge on failure | P1 | **PARTIAL** `dd947c7` (`.github/workflows/ci.yml`) | A4 ✓ | **Static gate LIVE** on every push/PR (`node --check` all JS + `bash -n` + LF check — would've caught the CRLF/boot-breaker class). **Integration gate** (Postgres + smoke + isolation suites) **scaffolded but gated** (`vars.CI_INTEGRATION`) until **db/index.js honours a plain `DATABASE_URL`** (it hardcodes the Supabase pooler — see `TECH-HARDENING-BACKLOG` "Remove hardcodes") + the schema bootstrap is confirmed on a first run. |
 
 ## TRACK B — Make isolation architectural, not disciplinary
 The invariant currently lives in each dev's `WHERE` clause; this review found basic gaps (F1/F3/F7) in an isolation-first product.
