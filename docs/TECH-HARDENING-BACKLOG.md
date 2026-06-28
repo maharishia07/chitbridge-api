@@ -74,8 +74,10 @@ returns tasks to the **pool**, and there is no `default_assignee`/delegation fie
   queried/indexed (then a real column). Mirror to the web `getSettings`/`saveSettings` path.
 - **[BACKLOG] Subscription / entitlements / quotas** — plan-driven feature gating + hard usage caps (chits,
   entities-under-the-top-node, actors, network depth, suppliers), controlled at the billing root, with a
-  feature-dependency graph (minimal-viable bundles). Mechanism built: `lib/plans.js`. Full design + phased
-  path: `docs/SUBSCRIPTION-ENTITLEMENTS.md`. (Supersedes the simple feature-flag idea.)
+  feature-dependency graph (minimal-viable bundles). Mechanism built: `lib/plans.js` (placeholder tiers).
+  **PARKED — 9 open product questions to decide together at the top of `docs/SUBSCRIPTION-ENTITLEMENTS.md`**;
+  once answered, Claude locks the catalogue + wires migration + `requireQuota`/`requireFeature`.
+  (Supersedes the simple feature-flag idea.)
 
 ## How to use this
 Treat **[QUICK]** items as the next small hardening slice (mostly additive, low-risk). **[BACKLOG]** items are

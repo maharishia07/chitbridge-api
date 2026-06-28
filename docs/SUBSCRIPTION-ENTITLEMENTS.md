@@ -2,6 +2,28 @@
 
 How we cap usage and gate features by subscription. Settle before going hard to prod.
 
+## ❓ OPEN QUESTIONS — decide together (Athi + Claude)  [BACKLOG]
+Status: **mechanism built (`lib/plans.js`), tiers are placeholders. Parked as backlog.** Answer these together
+to lock the catalogue; then Claude wires the migration + `requireQuota`/`requireFeature` middleware.
+
+1. **Tiers** — plan names/levels? (e.g. Starter / Team / Business / Enterprise, or your own set.)
+2. **Quota numbers per tier** — fill the grid: `entities` (TOTAL under the top node), `actors`,
+   `chits_per_month`, `network_depth`, `suppliers`. (Numbers in `lib/plans.js` are guesses.)
+3. **Chit quota period & counting** — per month / per billing cycle / lifetime? Counted as sent copies only,
+   or both copies of the two-copy model?
+4. **Features per tier** — which modules in each tier (`task / order / catalogue / suppliers / network /
+   disputes / mis / coassists`)?
+5. **Minimal viable base** — confirm `catalogue + chits + task` (vs your earlier minimal-bundle discussion).
+   What is the smallest sellable unit?
+6. **Dependency graph** — confirm `FEATURE_DEPS` (order→chits, disputes→chits, mis→chits, suppliers→catalogue,
+   chits→catalogue). Any missing edges?
+7. **Inheritance** — does the whole subtree share the root's plan, or can a child hold its own sub-allocation?
+   (MVP assumes shared.)
+8. **Overage behaviour** — at a quota hit: hard block / soft-warn + grace / auto-upgrade prompt?
+9. **Plan assignment** — platform-admin only, or self-serve upgrade?
+
+---
+
 ## Current state (honest)
 **No plan / subscription / quota / entitlement model exists** (0 in schema). Only ad-hoc caps:
 - Compose fan-out: `to 5 / cc 5 / for 1 / items 50 / attachments 10` (`chits.js:90`) — structural, not billing.
