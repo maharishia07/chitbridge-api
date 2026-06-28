@@ -31,6 +31,9 @@ behaviours we've established. **This is a living list — add a new line wheneve
 - [ ] **Loop/runaway guard** — any chain-follow (assignment/routing/forward) has a visited-set + hop cap; any
       `while`/`for` over external/derived data is bounded; mutations are idempotent-safe on retry.
 - [ ] **Bounded reads** — list endpoints cap `?limit=`; no unbounded result sets.
+- [ ] **Entitlement + quota** — a new feature/module is gated by `requireFeature` and a new countable resource
+      (chits/entities/actors/depth/suppliers) is checked against the plan quota (`lib/plans.js`), enforced
+      server-side at the billing root. No ungated/uncapped feature ships.
 
 ## UX & messaging
 - [ ] **Appropriate message** — every action has success + failure feedback via the `MSG` catalogue

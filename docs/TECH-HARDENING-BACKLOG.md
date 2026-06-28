@@ -72,8 +72,10 @@ returns tasks to the **pool**, and there is no `default_assignee`/delegation fie
   column on `identities` (default `{}`) + a `GET/PATCH /entities/settings` accessor, and read flags from it.
   **Convention going forward:** new per-entity behaviour toggles live in `settings` JSONB unless they need to be
   queried/indexed (then a real column). Mirror to the web `getSettings`/`saveSettings` path.
-- **[BACKLOG] Feature flags** — a small server-driven flag map (env or a `feature_flags` table) so unfinished
-  panels/actions can be gated cleanly instead of `todo()` placeholders.
+- **[BACKLOG] Subscription / entitlements / quotas** — plan-driven feature gating + hard usage caps (chits,
+  entities-under-the-top-node, actors, network depth, suppliers), controlled at the billing root, with a
+  feature-dependency graph (minimal-viable bundles). Mechanism built: `lib/plans.js`. Full design + phased
+  path: `docs/SUBSCRIPTION-ENTITLEMENTS.md`. (Supersedes the simple feature-flag idea.)
 
 ## How to use this
 Treat **[QUICK]** items as the next small hardening slice (mostly additive, low-risk). **[BACKLOG]** items are

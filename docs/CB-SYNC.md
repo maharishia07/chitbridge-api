@@ -163,6 +163,8 @@ gate: tenant scope, esc, safeErr, transactions, void/terminal, circular-ref, MSG
 leveled logging, loop/runaway guard, bounded reads).
 Observability + runaway-safety design (loop-risk catalogue, severity model, sinks, phased plan):
 `docs/OBSERVABILITY-AND-SAFETY.md`. Built: `lib/logger.js` (leveled, `LOG_LEVEL`) + request-id tracing.
+Subscription / entitlements / quotas (plan-driven feature gating + hard caps at the billing root, feature
+dependency graph): `docs/SUBSCRIPTION-ENTITLEMENTS.md`. Mechanism built: `lib/plans.js` (tiers are placeholders — set from the real plan).
 
 ## DEPLOY RUNBOOK (when the push throttle lifts)
 
