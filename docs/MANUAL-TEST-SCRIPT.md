@@ -105,6 +105,7 @@ Legend: **Do** = action · **See** = expected · **Proves** = area covered.
 |---|---|---|---|
 |11.1| **Network** → view your structure (reads). | The tree/connections load (auth required). | Network reads |
 |11.2| Try a **write** (register/connect/approve/claim) on dev. | Unless `NETWORK_WRITE_ENABLED=true` is set on dev, you get **"Network editing disabled"** (503). | **Network write-gate** |
+|11.3| Hit `GET /api/network/entities/<any-id>/catalogue` and `POST` the same path **with NO Authorization header** (e.g. curl/Postman). | Both rejected **401 Unauthorised** (no token). With a valid token: GET → 200, POST → 503 (NET_WRITE_DISABLED). | **cb_* catalogue auth (F1 fix)** |
 
 ## 12. AI assistant (library mode — no AI key yet)
 | # | Do | See | Proves |
