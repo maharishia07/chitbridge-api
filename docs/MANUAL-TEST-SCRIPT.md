@@ -93,7 +93,10 @@ Legend: **Do** = action · **See** = expected · **Proves** = area covered.
 | # | Do | See | Proves |
 |---|---|---|---|
 |10.1| Open the shop's **public catalogue** URL (no login). | Only **public** products show, with shop name/identity. | Public, visibility-gated browse |
-|10.2| Add items to an order, enter a **phone**, start order. | "Code sent" (dev → `123456`). | Customer OTP issue |
+|10.2| Add items to an order, enter a **phone**, start order. | "Code sent to your phone" (dev → `123456`; dev log shows `[OTP:sms-dormant]`). | Customer OTP issue (phone) |
+|10.2b| **(New) Email channel:** start another order entering an **email** instead of a phone. | "Code sent to your email" (dev log shows `[OTP:email-dormant] <your raw email>`; the code goes to the **real** email, not the `.cr` handle). | **Dual-channel OTP (email)** |
+|10.2c| **(New) Reject both/neither:** try starting with **both** a phone and an email, then with **neither**. | Both rejected **422** ("give just one…" / "enter a phone or email"). | Identifier validation |
+|10.2d| **(New) Collision-free:** place orders as `xyz@gmail.com` and `xyz@yahoo.com` at the **same** shop; then the **same** email at **two different** shops. | Each is a **separate** customer/my-orders (no cross-customer mixing); same email at different shops also separate. | Full-email `.cr` key (no UNIQUE collapse) |
 |10.3| **(New) Price tamper test:** before confirming, if you can alter the request, set a line **price to 0/1**; otherwise just confirm a normal order. | Order total is the **shop's catalogue price**, NOT the tampered value; an item **not** in the catalogue is **rejected** (422). | **Order price integrity** (`repriceAgainstCatalogue`) |
 |10.4| Confirm with OTP `123456`. | "Order placed"; you get an order/customer token. | Customer order (two-copy, atomic) |
 |10.5| **(New) Customer OTP cap:** start another order, enter a wrong OTP 5×. | Locks out after the cap (429), same as §1.3. | OTP cap on the public surface |
