@@ -21,16 +21,32 @@ async function tryConnect(config) {
   });
 }
 
+// SSL: off for local/CI Postgres, relaxed-verify for managed hosts (Supabase).
+function sslForHost(hostname) {
+  return ['localhost', '127.0.0.1', '::1'].includes(hostname) ? false : { rejectUnauthorized: false };
+}
+
 async function createPool() {
   const rawUrl = process.env.DATABASE_URL || '';
   let parsed;
   try { parsed = new URL(rawUrl); } catch (e) { throw new Error('Invalid DATABASE_URL'); }
 
-  const password = decodeURIComponent(parsed.password);
-  const ref = 'bzacyrdrnzdbficjplcn';
-  const sslConfig = { rejectUnauthorized: false };
+  // 1) Try the DATABASE_URL exactly as given — a standard DSN. This honours a plain Postgres (CI / local / any
+  //    direct connection) instead of forcing the Supabase pooler. On failure it falls through to the pooler
+  //    discovery below, so the managed dev/prod path is preserved unchanged.
+  const directSsl = sslForHost(parsed.hostname);
+  try {
+    await tryConnect({ connectionString: rawUrl, ssl: directSsl });
+    console.log(`DB connected via DATABASE_URL: ${parsed.hostname}:${parsed.port || '5432'}`);
+    return new Pool({ connectionString: rawUrl, ssl: directSsl, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 });
+  } catch (e) {
+    console.log(`Direct DATABASE_URL connect failed (${e.message}); trying Supabase pooler fallback…`);
+  }
 
-  // Try each pooler region with both username formats
+  // 2) Supabase pooler fallback (managed dev/prod). Project ref is env-overridable; default kept for back-compat.
+  const password = decodeURIComponent(parsed.password);
+  const ref = process.env.SUPABASE_REF || 'bzacyrdrnzdbficjplcn';
+  const sslConfig = { rejectUnauthorized: false };
   for (const region of POOLER_REGIONS) {
     const host = `${region}.pooler.supabase.com`;
     for (const user of [`postgres.${ref}`, 'postgres']) {
@@ -44,7 +60,7 @@ async function createPool() {
       }
     }
   }
-  throw new Error('All pooler regions failed — enable Connection Pooling in Supabase Settings → Database');
+  throw new Error('All connection attempts failed (direct DATABASE_URL + Supabase pooler regions)');
 }
 
 let pool;
@@ -104,4 +120,4 @@ const withEntity = async (entityId, fn) => {
   });
 };
 
-module.exports = { query, withTransaction, withEntity, get pool() { return pool; } };
+module.exports = { query, withTransaction, withEntity, sslForHost, get pool() { return pool; } };
