@@ -23,12 +23,14 @@ help + KB. You describe your problem; it points you to the right tool/facility. 
 }
 ```
 
-## Consolidation plan (single source)
-Fold the scattered help into `ASSIST_LIB` over time, so there's one library behind the "?" overlays AND the
-floating assistant:
-- `HELP_PACKS` (per-screen menu help), `CO_HELP`, `COMPOSE_HELP` → migrate into `ASSIST_LIB` entries with `context`.
-- The KB docs (`TRUST.md`, `KB-SCHEMA-CUSTOMIZATION.md`, `KB-your-data-is-safe.md`) → distilled into entries.
-- Use cases (the `[TO BE ADDED]` items in the schema KB) → entries with `media` (screens/clips).
+## Consolidation (single source)
+- **DONE (web 9658a74):** `buildAssistLib()` folds **`HELP_PACKS.qa` + `CO_HELP` + `COMPOSE_HELP`** into `ASSIST_LIB`
+  at first open — with topics derived from each question and `context` set to the screen. So the floating assistant
+  draws from the same content as the per-screen "?" overlays (no duplication; the source arrays stay as-is and also
+  feed the "?" boxes + the banner `HELP_PACKS[key].msg`).
+- **Next:** distill the KB docs (`TRUST.md`, `KB-SCHEMA-CUSTOMIZATION.md`, `KB-your-data-is-safe.md`) into curated
+  entries; add use-case entries with `media` (screens/clips); optionally repoint the "?" overlays to render straight
+  from `ASSIST_LIB` so there's a single render path too.
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.
