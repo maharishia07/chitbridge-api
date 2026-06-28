@@ -16,13 +16,14 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
   missing or < 32 chars.
 
 ## API backlog
-- **[QUICK] DB CHECK constraints** — add `CHECK (direction IN ('sent','received'))` on chit_header/status/detail,
-  and CHECK on `current_status`, `scope`, `self_copy_pref` (some exist). Enforce invariants at the DB, not just code. (Additive migration.)
+- **[DONE] DB CHECK — direction** — `migration_check_constraints.sql` adds `CHECK (direction IN ('sent','received'))`
+  NOT VALID on chit_header/status/detail. **[QUICK remaining]** add CHECK on `current_status` + `scope` after
+  confirming `SELECT DISTINCT` values (don't break existing writes).
 - **[QUICK] Per-route error envelope** — many route `catch` blocks still `res.json({ message: err.message })`,
   leaking internal/DB text (info disclosure). Add one `sendError(res, status, code, msg)` helper + a generic
-  client message; keep detail in logs. (Mechanical sweep.)
-- **[QUICK] Auth-specific rate limit** — global limiter exists (500/15m); add a stricter limiter on
-  `register`/`verify`/`actors/login`/`set-pin` to blunt OTP/PIN brute force.
+  client message; keep detail in logs. (Mechanical multi-file sweep — the one remaining QUICK item; do as a focused diff.)
+- **[DONE] Auth-specific rate limit** — `server.js` adds a stricter limiter (30/15m, `AUTH_RATE_LIMIT_MAX`) on
+  `register`/`verify`/`actors/login`/`set-pin`.
 - **[BACKLOG] Atomicity gaps** — `assign-bulk` (chits.js:~1392) loops writes on the pool (not `withTransaction`)
   → a mid-loop failure leaves a partial assign. Wrap it (and any other multi-write added later) in a transaction.
 - **[BACKLOG] Centralize enums/constants** — status (`pending|accepted|in_progress|...`), roles (`to|cc|for`/
@@ -44,8 +45,8 @@ Items are tagged **[DONE]**, **[QUICK]** (safe, do soon), or **[BACKLOG]** (own 
   (the P0 isolation guarantee), plus core chit/auth flows; wire into CI.
 
 ## Web backlog
-- **[QUICK] Finish the `esc()` audit** — row path is fixed; sweep the other render functions (chit detail,
-  messages, disputes, network cards) for any `${apiData}` going into `innerHTML` unescaped. (Highest residual risk.)
+- **[DONE] `esc()` audit** — escaped API data in the row renderer, dispute cards, message bubbles, chit detail
+  header/parties, line items, and attachment titles. (Sweep other minor render paths opportunistically.)
 - **[BACKLOG] Enable a CSP** — `helmet` currently disables CSP (`contentSecurityPolicy:false`, server.js). A CSP
   is the strongest defence-in-depth against XSS; design one that allows the app's inline scripts/styles (or move
   to nonces) and turn it on.
