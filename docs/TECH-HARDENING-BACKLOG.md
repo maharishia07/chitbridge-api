@@ -93,6 +93,14 @@ returns tasks to the **pool**, and there is no `default_assignee`/delegation fie
 - **[DONE] Atomicity** — actor status-change (deactivate/remove) + break/leave task-reassignment now wrapped in
   `withTransaction` (route + count + status commit together; target validated before the tx). (`assign-bulk` still pending.)
 
+## Consistency (ACID/BASE) — see CONSISTENCY-MODEL.md
+- **[BACKLOG] MIS → server-side rollup** — MIS is computed CLIENT-SIDE from several reads (not authoritative, can
+  be inconsistent). Move aggregation server-side; per metric decide live-rollup vs on-read. (Principle: business
+  logic decides client vs server — no client-side computation of authoritative data.)
+- **[BACKLOG] Counter drift** — `current_task_count` is soft state; increment always in the assignment's
+  transaction, or compute-on-read, or add a reconcile job.
+- **[BACKLOG] Universalise transactions** — wrap any remaining multi-write (e.g. `assign-bulk`) in `withTransaction`.
+
 ## Settings-level future path (document & follow)
 - **[BACKLOG] Generic entity settings** — today each toggle is its own column (`self_copy_pref`,
   `dispute_handler_actor_id`). For future flags without a migration per toggle, add a single `settings JSONB`
