@@ -64,6 +64,14 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '30'),
+  message: { error: 'Too many attempts', message: 'Too many login/OTP attempts — please try again in 15 minutes' }
+});
+app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', '/api/actors/set-pin'], authLimiter);
+
 // ── Routes ───────────────────────────────────────────────────
 const entitiesRouter    = require('./routes/entities');
 const connectionsRouter = require('./routes/connections');
