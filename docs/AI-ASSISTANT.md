@@ -37,11 +37,28 @@ help + KB. You describe your problem; it points you to the right tool/facility. 
   in `public/app/assets/` per its README.
 - **DONE (web 26e9360):** the "?" overlays now render from `ASSIST_LIB` (`helpBoxFromLib`) — so the "?" and the
   floating assistant share **both content AND rendering** (one library, one render path, via `assistEntryHTML`).
-  The old `coHelpBox`/`composeHelpBox`/`menuHelp` render functions are now unused (safe to delete later); the
-  content arrays (`HELP_PACKS`/`CO_HELP`/`COMPOSE_HELP`) remain as the source folded by `buildAssistLib`, and
+  The content arrays (`HELP_PACKS`/`CO_HELP`/`COMPOSE_HELP`) remain as the source folded by `buildAssistLib`, and
   `HELP_PACKS[key].msg` still feeds the inline banner.
-- **Next:** real screen clips into `public/app/assets/`; then the real AI behind `assistAsk`/`helpAsk` (LLM over
-  the library + live context, keeping the honest / no-oversell guardrail).
+- **DONE (dead-code removal):** the now-unused render functions `coHelpBox`/`coAsk`/`coAskFree`,
+  `composeHelpBox`/`composeAsk`/`composeAskFree`, and `menuHelp`/`mAsk` are deleted. Retained: `coBanner` (inline
+  banner), `menuAssist` (inline banner), and `mAskFree` (still used by `assistPage`'s Ask box).
+
+## Reliability seam — `answer()` (continuity if the AI ever fails)
+**DONE.** Both consumers (`assistAsk`, `helpAsk`) now route through a single **`answer(question, contextKey)`**
+seam, with the keyword matcher factored into `matchLibrary()`. The seam is **tiered so the assistant degrades,
+never breaks**:
+1. **tier 1 — LLM (future):** slots in ABOVE `matchLibrary`, wrapped in a **timeout + try/catch**; on ANY
+   error/timeout/rate-limit it **falls through to tier 2 in the same turn** — the user sees no error, just a
+   slightly-less-smart answer.
+2. **tier 2 — `matchLibrary` (the floor):** deterministic keyword match over `ASSIST_LIB`, **pure client-side,
+   zero network** — works offline / API-down / LLM-down. *This is the always-on chatbot; it cannot be "down."*
+3. **tier 3 — caller's static fallback:** suggested Q&A buttons + curated overlay when tier 2 finds nothing.
+
+`answer()` is **async on purpose** so the LLM tier drops in later **without changing any caller**. Principle (keep
+it): *the deterministic library answer is the floor; the LLM is an enhancement that must never be a single point
+of failure.*
+- **Next:** real screen clips into `public/app/assets/`; then wire the real LLM as tier 1 inside `answer()`
+  (over the library + live context), keeping the honest / no-oversell guardrail and the mandatory fall-through.
 
 ## Phased roadmap
 1. **v1 (done):** floating widget + seed library + keyword match + context + media support + fit-check.
