@@ -25,10 +25,32 @@ Nothing is lost if GitHub stays unreachable.
 |---|---|---|
 | baseline-7 two-copy | `origin/main` `f846fa6`, tag `baseline-7-two-copy` | **DEPLOYED (live)** |
 | baseline-8 self-chit dispute notify + queue dedup | `main` `75ba6aa`, tag `baseline-8-self-dispute` | merged local, unpushed |
-| baseline-9 actor dispute routing + dispute team | branch `feat/dispute-actor-routing` `c4b04f0` | built local, NOT merged, unpushed |
+| baseline-9 actor dispute routing + dispute team | branch `feat/dispute-actor-routing` | built local, NOT merged, unpushed |
+| baseline-10 security hardening (JWT alg / CORS / error handler) | branch `feat/security-hardening` | built local, NOT merged, unpushed |
 | backup repo sync (memory + spine + these docs) | `cb-context-backup` | pending throttle |
 
 ---
+
+## ⚠️ CRITICAL INVARIANT — tenant data isolation (P0)
+
+**No entity may ever see another entity's records except through an explicit, permissioned share
+(network architecture).** This is the platform's #1 promise. It currently holds by design:
+- `entity_id` is **always** derived from the verified JWT (`req.identity`), **never** from client input
+  (body/params/query) — confirmed 0/~40 endpoints take it from the client.
+- Data is **physically owned per entity** (each entity has its own `chit_header/status/detail/state_log`
+  rows); every read filters `entity_id = caller`. `GET /:chit_id` 404s non-participants (chits.js:491).
+- All SQL is parameterized (no injection cross-tenant escape). Auth on every data route; actors confined
+  to `parent_entity_id`; removed actors lose access next request.
+
+**The only real attack surface is authentication compromise** — a leaked `JWT_SECRET` (forge any token)
+or a stolen user token (XSS/device). Not a data-model hole.
+
+> **STANDING INSTRUCTION TO CLAUDE (and to whoever updates the spine):** treat any sign of cross-entity
+> data leakage as **P0 — drop everything and fix immediately.** When reviewing ANY new endpoint/query,
+> verify it scopes on `req.identity` (never client input) and filters by `entity_id`. This invariant
+> must be mirrored into the spine and any other canonical context doc; if a future mechanism (new route,
+> join, sharing feature, raw SQL, reporting/export, admin tool) ever exposes another entity's rows,
+> it is the highest-priority bug in the system. Keep `JWT_SECRET` strong, secret-managed, and rotated.
 
 ## THREAD 1 — Two-copy / self-chit (baseline-7, DEPLOYED)
 
@@ -67,6 +89,21 @@ actually applied on dev). This is the non-negotiable base principle.
 5. Dispute team is **notify + view, NOT act** (no act/resolve rights from being handler).
 
 ---
+
+## THREAD 4 — Security hardening (baseline-10)
+
+Defense-in-depth on the isolation perimeter (the model itself was already sound). Built locally, held.
+- `middleware/auth.js`: JWT verify **pins `algorithms: ['HS256']`** (closes alg-confusion ambiguity).
+- `server.js`: **CORS locked to an allowlist** (`ALLOWED_ORIGINS` env, default
+  `https://chitbridge-web.vercel.app,http://localhost:5173,http://localhost:3000`; no-Origin
+  requests like server-to-server/smoke tests still pass). Global **error handler no longer leaks
+  `err.message`** to clients on any env (full detail stays in server logs).
+- **Deploy note:** if the web app ever moves to a custom domain or you need Vercel preview origins,
+  set `ALLOWED_ORIGINS` on Railway BEFORE deploy, else the browser frontend gets CORS-blocked.
+
+Known follow-ups (not in this slice): per-route `catch` blocks still return `err.message` (broader
+info-disclosure sweep); add a boot-time check that `JWT_SECRET` is present & strong; consider
+server-side revocation/short TTL for entity tokens (only actors are re-checked per request today).
 
 ## NEXT CYCLE — "view hat" (NOT built; currently harmless)
 

@@ -16,7 +16,9 @@ const auth = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Pin the algorithm: tokens are signed HS256, so only accept HS256 — closes any
+    // algorithm-confusion ambiguity (e.g. a token claiming a different alg).
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
     // Attach identity to request
     req.identity = {

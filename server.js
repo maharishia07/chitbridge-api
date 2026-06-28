@@ -14,14 +14,23 @@ const PORT = process.env.PORT || 3000;
 // Trust Railway's proxy
 app.set('trust proxy', 1);
 
-// ── CORS first — allow all origins, methods, headers ─────────
-app.use(cors({
-  origin: true,
+// ── CORS — locked to known origins ───────────────────────────
+// Extend/override the allowlist via ALLOWED_ORIGINS (comma-separated) on the host.
+// Requests with no Origin header (server-to-server, curl, PowerShell smoke tests) are allowed.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ||
+  'https://chitbridge-web.vercel.app,http://localhost:5173,http://localhost:3000')
+  .split(',').map(s => s.trim()).filter(Boolean);
+const corsOptions = {
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    return cb(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-}));
-app.options('*', cors({ origin: true, credentials: true }));
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // ── Security middleware ───────────────────────────────────────
 app.use(helmet({
@@ -103,11 +112,9 @@ app.use((req, res) => {
 
 // ── Error handler ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    error: 'Server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
-  });
+  console.error('Unhandled error:', err);   // full detail stays in server logs only
+  // Never leak internal error text to the client — prevents info disclosure on any env.
+  res.status(500).json({ error: 'Server error', message: 'Something went wrong' });
 });
 
 // ── Start ─────────────────────────────────────────────────────
