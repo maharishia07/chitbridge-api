@@ -46,7 +46,7 @@ Canon: "the only real attack surface is authentication compromise." There is no 
 |----|------|-----|--------|---------|--------------------|
 | C1 | Entity-token revocation + short access TTL + refresh | P0 | OPEN | — | Stolen/old entity token can be killed (mirror the actor `break_status` re-check); short TTL + refresh |
 | C2 | `JWT_SECRET` rotation + managed secret store | P0 | OPEN | — | Documented rotation; secret in a managed store; never in repo/env dump |
-| C3 | Finish the error-envelope sweep (`safeErr` universal) | P1 | PARTIAL | — | 0 per-route `catch` blocks return `err.message` (the big sweep is done; finish stragglers) |
+| C3 | Finish the error-envelope sweep (`safeErr` universal) | P1 | **DONE** `6216298` | — | cb_* network/catalogue `h()` helper no longer leaks `err.message` on unexpected errors (deliberate service messages kept). 0 known leaks. |
 | C4 | Rate-limit hardening (per-account/token, not just per-IP) on OTP/auth | P1 | OPEN | — | Per-account limits behind the OTP cap; `*_RATE_LIMIT_MAX` values revisited |
 
 ## TRACK D — Within-entity least privilege (a promised feature that isn't built)
@@ -56,7 +56,7 @@ Canon: "the only real attack surface is authentication compromise." There is no 
 |----|------|-----|--------|---------|--------------------|
 | D1 | Per-actor view-hat / permission model (+ dispute-handler implicit view-only on open disputes) | P1 | OPEN | — | Scoped per-actor view enforced; test per CB-SYNC "view hat" notes |
 | D2 | Enforce `entity_actor_settings` (presence/leave already wired) | P1 | OPEN | — | The stored settings actually gate behaviour (see `ACTOR-SETTINGS-BEHAVIOUR.md`) |
-| D3 | **Until D1 lands, soften the KB/TRUST "scoped access" claim so it's TRUE** | P0-doc | OPEN | — | `assist-kb.js` + `TRUST.md` say co-assists act *within the entity's scope; per-actor scoping is coming* |
+| D3 | **Until D1 lands, soften the KB/TRUST "scoped access" claim so it's TRUE** | P0-doc | **DONE** api `346f443` / web `113e830` | — | `assist-kb.js` + `assist.js` hint + 4 web ASSIST_LIB/CO_HELP entries now say entity-scope only; per-actor scoping is planned/not-enforced. (`TRUST.md` had no such claim.) |
 
 ## TRACK E — Deploy & operational hardening
 
@@ -86,7 +86,7 @@ Canon: "the only real attack surface is authentication compromise." There is no 
 
 | ID | Item | Sev | Status | Depends | Definition of done |
 |----|------|-----|--------|---------|--------------------|
-| H1 | One-page threat model (actors, assets, trust boundaries) | P0 | OPEN | — | A doc that turns "find leaks by review luck" into "check against a known list" |
+| H1 | One-page threat model (actors, assets, trust boundaries) | P0 | **DONE** | — | `docs/THREAT-MODEL.md` — assets, trust boundaries, 7 actors → attempt/mitigation/residual-gap (mapped to tracks), top-3 risks |
 | H2 | Enforced pre-prod security checklist (a gate, not just docs) | P1 | OPEN | A4 | A pass/fail gate: isolation tests green, no OTP-in-prod, secrets managed, migrations applied, error sweep done |
 | H3 | Independent security review / light pen-test before real-money onboarding | P2 | OPEN | — | External review completed |
 

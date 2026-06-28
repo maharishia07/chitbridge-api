@@ -37,6 +37,7 @@ Nothing is lost if GitHub stays unreachable.
 > **Canonical deploy steps:** `docs/DEPLOY-RUNBOOK.md` (dev-first → migrations → smoke → must-fixes → prod).
 > **Manual QA script (register→full lifecycle, screen by screen):** `docs/MANUAL-TEST-SCRIPT.md`.
 > **Strategic stabilisation plan (do BEFORE the next level — Tracks A–H, prioritised):** `docs/CORE-STABILISATION-BACKLOG.md`.
+> **Threat model (actors / assets / trust boundaries / residual gaps):** `docs/THREAT-MODEL.md`.
 > **Push is blocked two ways:** the GitHub secondary throttle AND it needs Athi's interactive Git Credential
 > Manager auth (the non-interactive agent shell gets `exit 128`). Athi runs the push from his own terminal.
 
