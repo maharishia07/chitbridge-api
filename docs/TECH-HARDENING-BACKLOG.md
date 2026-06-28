@@ -66,6 +66,13 @@ returns tasks to the **pool**, and there is no `default_assignee`/delegation fie
   clear message, and fall back to the pool (never loop). Add a test for a 3-actor cycle. This is in the
   AMENDMENT-CHECKLIST so it can't be shipped without the guard.
 
+## Actor settings → behaviour (gaps; see ACTOR-SETTINGS-BEHAVIOUR.md)
+- **[BACKLOG] Wire `entity_actor_settings`** — `assignment_model` / `default_max_tasks` / `all_task_visible` /
+  `auto_return_on_short_break` are **stored but not enforced** (dead settings). Wire them, or mark "coming soon".
+- **[BACKLOG] Entity-bounds-actor** — per-actor `max_tasks` is unbounded by entity policy; cap `max_tasks` ≤ the
+  entity's, and apply `default_max_tasks` on create. (Subscription bounds the actor *count*.)
+- **[QUICK] Atomicity** — wrap actor break/leave/remove task-reassignment in `withTransaction` (partial-write risk).
+
 ## Settings-level future path (document & follow)
 - **[BACKLOG] Generic entity settings** — today each toggle is its own column (`self_copy_pref`,
   `dispute_handler_actor_id`). For future flags without a migration per toggle, add a single `settings JSONB`
