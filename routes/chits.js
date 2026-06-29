@@ -459,6 +459,7 @@ router.get('/inbox', auth, async (req, res) => {
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
+                          AND ch.direction = cs.direction
        WHERE ${whereClause}
        ORDER BY ch.created_at DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
