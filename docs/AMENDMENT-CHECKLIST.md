@@ -41,6 +41,10 @@ behaviours we've established. **This is a living list — add a new line wheneve
 - [ ] **No dead clicks** — placeholders use `MSG.comingSoon(...)`, not nothing.
 - [ ] **Demo vs dev/prod** — wire the real API to the **working model only**; never touch `DEMO`/`STORE`/
       `demoApi`. A hardcode is a bug only in the live path.
+- [ ] **Demo fidelity** — at a milestone (a feature shipped, gated, or removed), **regress the demo** so its
+      static data + flows still honestly reflect **shipped + enforced** dev behaviour — no implied-but-unbuilt
+      features (aspirational ones badged "preview"). The demo is a **trust artifact** we use to prove our claims
+      (isolation, two-copy, messaging, assistant), so it must stay true. Run `docs/DEMO-FIDELITY.md`.
 
 ## Process
 - [ ] **Syntax check** — `node --check` (extract inline JS for `app.html`); both repos clean.

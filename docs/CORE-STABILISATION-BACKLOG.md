@@ -80,8 +80,12 @@ Canon: "the only real attack surface is authentication compromise." There is no 
 
 | ID | Item | Sev | Status | Depends | Definition of done |
 |----|------|-----|--------|---------|--------------------|
-| F1 | Security pass on the monolith (esc() coverage complete; `DEMO`/`demoApi()` can never hit a real API; token storage) | P1 | OPEN | — | Audited; XSS-safe; demo/dev segregation proven not just disciplined |
+| F1 | Security pass on the monolith (esc() coverage complete; `DEMO`/`demoApi()` can never hit a real API; token storage) | P1 | **segregation ✓** (2026-06-29) | — | Audited: demo makes 0 real API calls (`web_demo` base=null, `core.js` returns `demoApi()` before the only fetch). esc()/token-storage audit still open. |
 | F2 | De-monolith `app.html` into modules | P2 | OPEN | — | Reviewable module split (core.js started it) |
+| **G-demo-1** | Demo fidelity: align Network demo to dev (writes gated/503; drop per-node `cap` grants) or badge "preview" | P1 | OPEN | — | Demo no longer shows a fully-working network we haven't shipped. See `DEMO-FIDELITY.md`. |
+| **G-demo-2** | Demo fidelity: actors show free-text role labels, no implied enforced view-only/audit (matches D3) | P1 | OPEN | — | Per-actor capability shown only when D1 (view-hats) ships. |
+| **G-demo-3** | Demo fidelity: **"view as counterparty" perspective switch** (+ second-entity blob) to PROVE isolation + two-party message visibility | P1 | OPEN | — | The highest-value demo upgrade for proving the security/multitenancy story; needs design. |
+| **G-demo-0** | **Practice:** regress the demo every milestone (`DEMO-FIDELITY.md` + amendment-checklist line) | P1 | **ADOPTED** (2026-06-29) | — | Demo is a trust artifact; its data integrity rides with each milestone. |
 
 ## TRACK G — Customer surface (parked, but listed)
 
