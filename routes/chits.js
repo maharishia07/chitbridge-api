@@ -945,6 +945,12 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     }
 
     const result = await query(q, params);
+    // attach per-message files (bytes pulled on demand via GET /api/attachments/:id)
+    const msgIds = result.rows.map(m => m.message_id).filter(Boolean);
+    const atts = await storage.listForMessages(msgIds).catch(() => []);
+    const byMsg = {};
+    for (const a of atts) { (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a); }
+    for (const m of result.rows) { m.attachments = byMsg[m.message_id] || []; }
     res.json({ messages: result.rows, count: result.rows.length });
   } catch (err) {
     console.error('Get messages error:', err.message);
