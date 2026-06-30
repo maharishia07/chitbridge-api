@@ -468,6 +468,10 @@ router.get('/inbox', auth, async (req, res) => {
 
     res.json({
       chits: result.rows,
+      // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
+      total: parseInt(countResult.rows[0].count),
+      page,
+      limit,
       pagination: {
         total: parseInt(countResult.rows[0].count),
         page,
