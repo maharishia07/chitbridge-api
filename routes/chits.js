@@ -194,8 +194,7 @@ router.post('/send',
 
       // Calculate summary from line items
       const summary = calculateSummary(line_items);
-      const currency_code = ((typeof req.body.currency === 'string' && /^[A-Z]{3}$/.test(req.body.currency)) ? req.body.currency
-                             : (business_json && business_json.currency)) || 'INR';
+      const currency_code = (business_json && business_json.currency) || 'INR';
       const summary_json = {
         ...summary,
         currency_code,
@@ -291,9 +290,9 @@ router.post('/send',
              line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']
           );
           await client.query(
-            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag)
-             VALUES ($1,$2,$3,'received',$4)`,
-            [chit_id, receiver.entity_id, rcv_status, send_priority]
+            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction)
+             VALUES ($1,$2,$3,'received')`,
+            [chit_id, receiver.entity_id, rcv_status]
           );
           await client.query(
             `INSERT INTO state_log
