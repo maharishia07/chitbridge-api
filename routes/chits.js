@@ -290,9 +290,9 @@ router.post('/send',
              line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']
           );
           await client.query(
-            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction)
-             VALUES ($1,$2,$3,'received')`,
-            [chit_id, receiver.entity_id, rcv_status]
+            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag)
+             VALUES ($1,$2,$3,'received',$4)`,
+            [chit_id, receiver.entity_id, rcv_status, send_priority]
           );
           await client.query(
             `INSERT INTO state_log
