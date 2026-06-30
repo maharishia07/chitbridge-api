@@ -375,7 +375,7 @@ router.get('/sent', auth, async (req, res) => {
 
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
     const params = [entity_id];
-    let where = `ch.entity_id = $1 AND ch.direction = 'sent' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
+    let where = `ch.entity_id = $1 AND ch.direction = 'sent' AND ch.role <> 'Draft' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     if (q_search) {
       params.push('%' + q_search + '%');
       where += ` AND (ch.manual_subject ILIKE $${params.length} OR ch.auto_subject ILIKE $${params.length} OR ch.all_recipients::text ILIKE $${params.length} OR ch.purpose ILIKE $${params.length})`;
@@ -742,6 +742,12 @@ router.put('/:chit_id/status',
       }
 
       const previous_status = current.rows[0].current_status;
+
+      // Idempotent: advancing to the status it's already in is a no-op success (not a 400).
+      // Fixes the "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. (E — symptom fix; direction-scoping still backlog.)
+      if (new_status === previous_status) {
+        return res.json({ message: `Already ${new_status}`, chit_id, status: new_status, noop: true });
+      }
 
       // Validate state transitions
       // Arrow model: Open(pending/delivered/read) → in_progress → completed
