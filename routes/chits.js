@@ -369,7 +369,7 @@ router.get('/sent', auth, async (req, res) => {
               cs.current_status, cs.priority_flag, cs.customer_priority
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ch.created_at DESC
+        ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:'cs.priority_flag'}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
       [...params, limit, offset]
     );
@@ -476,7 +476,7 @@ router.get('/inbox', auth, async (req, res) => {
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ch.created_at DESC
+       ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:'ch.sender_entity_display_name',amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:'cs.priority_flag'}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
       [...params, limit, offset]
     );
