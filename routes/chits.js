@@ -195,9 +195,12 @@ router.post('/send',
       // Calculate summary from line items
       const summary = calculateSummary(line_items);
       const currency_code = (business_json && business_json.currency) || 'INR';
+      // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
+      const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
       const summary_json = {
         ...summary,
         currency_code,
+        priority_external: ext_priority,
         purpose,
         is_promotion: !!(business_json && business_json.is_promotion),
         // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
@@ -250,7 +253,7 @@ router.post('/send',
         await client.query(
           `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag)
            VALUES ($1,$2,'delivered','sent',$3)`,
-          [chit_id, sender_id, send_priority]
+          [chit_id, sender_id, 'normal']  // internal priority starts normal; each party sets its own (external rides on summary_json)
         );
         await client.query(
           `INSERT INTO state_log
