@@ -56,8 +56,8 @@ app.use(helmet({
 }));
 
 // Parse JSON
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: '8mb' }));   // raised for base64 attachment uploads
+app.use(express.urlencoded({ extended: true, limit: '8mb' }));
 
 // Request id for traceability — propagate an incoming id or mint one; echo it back; expose as req.id.
 app.use((req, res, next) => {
@@ -116,6 +116,7 @@ const relationshipsRouter = require('./routes/relationships');
 const catalogueRouter   = require('./routes/catalogue');
 const productsRouter    = require('./routes/products');
 const governanceRouter  = require('./routes/governance');
+const attachmentsRouter = require('./routes/attachments');
 
 app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
@@ -126,6 +127,7 @@ app.use('/api/relationships', relationshipsRouter);
 app.use('/api/catalogue',   catalogueRouter);
 app.use('/api/products',    productsRouter);
 app.use('/api/governance',  governanceRouter);
+app.use('/api/attachments', attachmentsRouter);
 
 // ── NET (feat/net-full): network + catalogue on /api/network ──
 // cb_chit chit-loop RETIRED in consolidation: all chit writes live on /api/chits (chit_header).

@@ -5,6 +5,7 @@ const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction } = require('../db');
+const storage = require('../lib/storage');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
@@ -691,11 +692,13 @@ router.get('/:chit_id', auth, async (req, res) => {
       );
     }
 
+    const attachments = await storage.listForChit(chit_id).catch(() => []);
     res.json({
       header: header.rows[0],
       detail: detail.rows[0] || null,
       participants: allStatuses.rows,
-      state_log: log.rows
+      state_log: log.rows,
+      attachments
     });
 
   } catch (err) {
