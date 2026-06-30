@@ -348,24 +348,30 @@ router.get('/sent', auth, async (req, res) => {
     const page   = parseInt(req.query.page || 1);
     const limit  = parseInt(req.query.limit || 20);
     const offset = (page - 1) * limit;
+    const q_search = (req.query.q || '').trim();
 
-    const countResult = await query(
-      `SELECT COUNT(*) FROM chit_header ch
-         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction
-        WHERE ch.entity_id = $1 AND ch.direction = 'sent' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`,
-      [entity_id]
-    );
+    // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
+    const params = [entity_id];
+    let where = `ch.entity_id = $1 AND ch.direction = 'sent' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
+    if (q_search) {
+      params.push('%' + q_search + '%');
+      where += ` AND (ch.manual_subject ILIKE $${params.length} OR ch.auto_subject ILIKE $${params.length} OR ch.all_recipients::text ILIKE $${params.length} OR ch.purpose ILIKE $${params.length})`;
+    }
+    const joinFrom = `FROM chit_header ch
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction`;
 
+    const countResult = await query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
+
+    const limIdx = params.length + 1, offIdx = params.length + 2;
     const result = await query(
       `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
               cs.current_status, cs.priority_flag, cs.customer_priority
-         FROM chit_header ch
-         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction
-        WHERE ch.entity_id = $1 AND ch.direction = 'sent' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL
+         ${joinFrom}
+        WHERE ${where}
         ORDER BY ch.created_at DESC
-        LIMIT $2 OFFSET $3`,
-      [entity_id, limit, offset]
+        LIMIT $${limIdx} OFFSET $${offIdx}`,
+      [...params, limit, offset]
     );
 
     res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
@@ -407,6 +413,7 @@ router.get('/inbox', auth, async (req, res) => {
     const limit = parseInt(req.query.limit || 20);
     const offset = (page - 1) * limit;
     const status_filter = req.query.status || null;
+    const q_search = (req.query.q || '').trim();
 
     let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
@@ -418,9 +425,17 @@ router.get('/inbox', auth, async (req, res) => {
       params.push(status_filter);
     }
 
-    // Count total
+    if (q_search) {
+      paramCount++;
+      whereClause += ` AND (ch.manual_subject ILIKE $${paramCount} OR ch.auto_subject ILIKE $${paramCount} OR ch.sender_entity_display_name ILIKE $${paramCount} OR ch.all_recipients::text ILIKE $${paramCount} OR ch.purpose ILIKE $${paramCount})`;
+      params.push('%' + q_search + '%');
+    }
+
+    // Count total (join the header only when searching its fields)
     const countResult = await query(
-      `SELECT COUNT(*) FROM chit_status cs WHERE ${whereClause}`,
+      `SELECT COUNT(*) FROM chit_status cs
+        ${q_search ? 'JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction' : ''}
+        WHERE ${whereClause}`,
       params
     );
 
