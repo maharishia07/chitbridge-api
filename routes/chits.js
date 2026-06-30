@@ -383,6 +383,51 @@ router.get('/sent', auth, async (req, res) => {
   }
 });
 
+// GET /chits/folder?view=drafts|trash|archive — mailbox folders (both directions), paginated + searchable + sortable.
+// Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
+router.get('/folder', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const page   = parseInt(req.query.page || 1);
+    const limit  = parseInt(req.query.limit || 20);
+    const offset = (page - 1) * limit;
+    const view   = req.query.view || 'drafts';
+    const q_search = (req.query.q || '').trim();
+
+    const params = [entity_id];
+    let where = `cs.entity_id = $1`;
+    if (view === 'trash')        where += ` AND cs.deleted_at IS NOT NULL`;
+    else if (view === 'archive') where += ` AND cs.archived_at IS NOT NULL AND cs.deleted_at IS NULL`;
+    else                         where += ` AND ch.role = 'Draft' AND cs.deleted_at IS NULL`;   // drafts
+    if (q_search) {
+      params.push('%' + q_search + '%');
+      where += ` AND (ch.manual_subject ILIKE $${params.length} OR ch.auto_subject ILIKE $${params.length} OR ch.all_recipients::text ILIKE $${params.length} OR ch.purpose ILIKE $${params.length})`;
+    }
+    const joinFrom = `FROM chit_status cs
+         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction`;
+    const countResult = await query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
+
+    const orderBy = ({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:'cs.priority_flag'}[req.query.sort] || 'ch.created_at')
+                  + ' ' + ((String(req.query.dir||'').toLowerCase()==='asc') ? 'ASC' : 'DESC');
+    const result = await query(
+      `SELECT ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
+              ch.purpose, ch.auto_subject, ch.manual_subject, ch.summary_json, ch.created_at,
+              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction,
+              (SELECT COUNT(*) FROM chit_messages cm
+                WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
+         ${joinFrom}
+        WHERE ${where}
+        ORDER BY ${orderBy}, ch.created_at DESC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
+    );
+    res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit, view });
+  } catch (err) {
+    console.error('Folder error:', err.message);
+    res.status(500).json({ error: 'Failed to get folder', message: safeErr(err) });
+  }
+});
+
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
 router.get('/rollup', auth, async (req, res) => {
