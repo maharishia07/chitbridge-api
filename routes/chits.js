@@ -407,20 +407,25 @@ router.get('/folder', auth, async (req, res) => {
     }
     const joinFrom = `FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction`;
-    const countResult = await query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
+    // dedupe self-chits (both copies in trash/archive) to one row per chit, preferring the sent copy
+    const countResult = await query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
-    const orderBy = ({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:'cs.priority_flag'}[req.query.sort] || 'ch.created_at')
+    const orderBy = ({date:'created_at',subject:'COALESCE(manual_subject, auto_subject)',amount:"(summary_json->>'total_value')::numeric",status:'current_status',priority:'priority_flag'}[req.query.sort] || 'created_at')
                   + ' ' + ((String(req.query.dir||'').toLowerCase()==='asc') ? 'ASC' : 'DESC');
     const result = await query(
-      `SELECT ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
+      `SELECT * FROM (
+         SELECT DISTINCT ON (ch.chit_id)
+              ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
               ch.purpose, ch.auto_subject, ch.manual_subject, ch.summary_json, ch.created_at,
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction,
               (SELECT COUNT(*) FROM chit_messages cm
                 WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
-         ${joinFrom}
-        WHERE ${where}
-        ORDER BY ${orderBy}, ch.created_at DESC
-        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+           ${joinFrom}
+          WHERE ${where}
+          ORDER BY ch.chit_id, (ch.direction = 'sent') DESC
+       ) t
+       ORDER BY ${orderBy}, created_at DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, limit, offset]
     );
     res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit, view });
