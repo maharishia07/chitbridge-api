@@ -198,7 +198,9 @@ router.post('/send',
         ...summary,
         currency_code,
         purpose,
-        is_promotion: !!(business_json && business_json.is_promotion)
+        is_promotion: !!(business_json && business_json.is_promotion),
+        // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
+        forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
