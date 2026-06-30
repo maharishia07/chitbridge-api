@@ -791,7 +791,7 @@ router.put('/:chit_id/status',
          (chit_id, entity_id, action, action_by_identity_id,
           action_by_display_name, previous_status, new_status, detail)
          SELECT $1, entity_id, $2, $3, $4, $5, $6, $7
-         FROM chit_status WHERE chit_id = $1`,
+         FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) cs`,
         [chit_id, `status_${new_status}`,
          action_by_id, action_by_name,
          previous_status, new_status, detail]
@@ -885,7 +885,8 @@ router.post('/:chit_id/messages',
       // Log external messages in state_log so all participants see it in their timeline
       if (thread_type === 'external') {
         const participants = await query(
-          `SELECT entity_id FROM chit_status WHERE chit_id = $1`,
+          // DISTINCT entity: a self-chit has two copies under one entity — log the event once per entity, not per copy.
+          `SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`,
           [chit_id]
         );
         for (const p of participants.rows) {
