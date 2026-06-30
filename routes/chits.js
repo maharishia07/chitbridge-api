@@ -370,7 +370,7 @@ router.get('/sent', auth, async (req, res) => {
     const result = await query(
       `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
-              cs.current_status, cs.priority_flag, cs.customer_priority
+              cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag
          ${joinFrom}
         WHERE ${where}
         ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:'cs.priority_flag'}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
@@ -1408,6 +1408,31 @@ router.post('/:chit_id/archive', auth, async (req, res) => {
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
     res.json({ message: 'Chit archived', chit_id: req.params.chit_id });
   } catch (err) { res.status(500).json({ error: 'Archive failed', message: safeErr(err) }); }
+});
+
+// PUT /chits/:chit_id/star — toggle the star/flag on MY copies (kept in sync across both directions).
+router.put('/:chit_id/star', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const cur = await query(`SELECT star_flag FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`,
+      [req.params.chit_id, entity_id]);
+    if (cur.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    const next = !cur.rows[0].star_flag;
+    await query(`UPDATE chit_status SET star_flag = $3, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`,
+      [req.params.chit_id, entity_id, next]);
+    res.json({ message: 'Star toggled', chit_id: req.params.chit_id, star_flag: next });
+  } catch (err) { res.status(500).json({ error: 'Star failed', message: safeErr(err) }); }
+});
+
+// POST /chits/:chit_id/unread — mark MY copy unread (clear read_at).
+router.post('/:chit_id/unread', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const r = await query(`UPDATE chit_status SET read_at = NULL, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
+      [req.params.chit_id, entity_id]);
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    res.json({ message: 'Marked unread', chit_id: req.params.chit_id });
+  } catch (err) { res.status(500).json({ error: 'Mark-unread failed', message: safeErr(err) }); }
 });
 
 // POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
