@@ -346,6 +346,25 @@ router.post('/send',
 // Lightweight inbox — my chit_status only — fast
 // GET /chits/sent — chits I sent (my sender copy), newest first, paginated.
 // Mounted BEFORE /:chit_id so "sent" is never parsed as a chit_id.
+// Advanced-search filters shared by the chit lists: amount range, date range, priority, status bucket.
+// All parameterised (no injection). Used by /inbox, /sent, /folder. (Criteria set can become schema-driven later.)
+function chitFilters(req, where, params){
+  const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+  const amin = num(req.query.amount_min), amax = num(req.query.amount_max);
+  if (amin !== null) { params.push(amin); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`; }
+  if (amax !== null) { params.push(amax); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`; }
+  if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
+  if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
+  if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
+  if (req.query.fstatus)   {
+    const B = { open:['pending','delivered','read'], act:['accepted','in_progress','partial'], close:['completed','cancelled','rejected'] };
+    const L = B[req.query.fstatus] || [req.query.fstatus];
+    const ph = L.map(s => { params.push(s); return '$'+params.length; }).join(',');
+    where += ` AND cs.current_status IN (${ph})`;
+  }
+  return where;
+}
+
 router.get('/sent', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
@@ -364,6 +383,7 @@ router.get('/sent', auth, async (req, res) => {
     const joinFrom = `FROM chit_header ch
          JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction`;
 
+    where = chitFilters(req, where, params);
     const countResult = await query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
 
     const limIdx = params.length + 1, offIdx = params.length + 2;
@@ -408,6 +428,7 @@ router.get('/folder', auth, async (req, res) => {
     const joinFrom = `FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction`;
     // dedupe self-chits (both copies in trash/archive) to one row per chit, preferring the sent copy
+    where = chitFilters(req, where, params);
     const countResult = await query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
     const orderBy = ({date:'created_at',subject:'COALESCE(manual_subject, auto_subject)',amount:"(summary_json->>'total_value')::numeric",status:'current_status',priority:'priority_flag'}[req.query.sort] || 'created_at')
@@ -485,10 +506,11 @@ router.get('/inbox', auth, async (req, res) => {
       params.push('%' + q_search + '%');
     }
 
-    // Count total (join the header only when searching its fields)
+    whereClause = chitFilters(req, whereClause, params);
+    paramCount = params.length;
     const countResult = await query(
       `SELECT COUNT(*) FROM chit_status cs
-        ${q_search ? 'JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction' : ''}
+        JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${whereClause}`,
       params
     );
