@@ -219,8 +219,6 @@ router.post('/send',
       const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
       const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
       const created_by_actor_id   = req.identity.identity_id;   // who actually pressed send
-      // Importance set at compose/draft time (sender's internal queue priority). Whitelisted to the CHECK set.
-      const send_priority = ['normal','high','urgent'].includes((req.body.priority || '').trim()) ? req.body.priority.trim() : 'normal';
 
       // ── Guaranteed write: every row for this chit commits together, or none do (INV-2) ──
       await withTransaction(async (client) => {
