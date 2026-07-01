@@ -1515,6 +1515,30 @@ router.post('/:chit_id/restore', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Restore failed', message: safeErr(err) }); }
 });
 
+// DELETE /chits/:chit_id/purge — permanently remove a DRAFT (owner only). Real chits are immutable co-held
+// records and can NEVER be hard-deleted here; only role='Draft' (un-bridged, sender-only) qualifies.
+router.delete('/:chit_id/purge', auth, async (req, res) => {
+  try {
+    const chit_id   = req.params.chit_id;
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const chk = await query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+    if (chk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
+    if (chk.rows[0].role !== 'Draft') return res.status(403).json({ error: 'Forbidden', message: 'Only drafts can be permanently deleted — sent chits are immutable co-held records.' });
+    await withTransaction(async (client) => {
+      await client.query(`DELETE FROM chit_messages WHERE chit_id = $1`, [chit_id]);
+      await client.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      await client.query(`DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      await client.query(`DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      await client.query(`DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      try { await client.query(`DELETE FROM cb_attachment WHERE chit_id = $1`, [chit_id]); } catch (e) { /* attachment table may not exist */ }
+    });
+    res.json({ message: 'Draft permanently deleted', chit_id });
+  } catch (err) {
+    console.error('Purge draft error:', err.message);
+    res.status(500).json({ error: 'Purge failed', message: safeErr(err) });
+  }
+});
+
 // PUT /chits/:chit_id/void — recorded hard-cancel by the SENDER; works after acceptance.
 // Terminal 'void' status on ALL participant rows (cross-edge); reason required + logged;
 // chit stays visible as voided, never deleted; the seal is untouched.
