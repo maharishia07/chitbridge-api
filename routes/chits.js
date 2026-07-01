@@ -449,7 +449,11 @@ router.get('/folder', auth, async (req, res) => {
     let where = `cs.entity_id = $1`;
     if (view === 'trash')        where += ` AND cs.deleted_at IS NOT NULL`;
     else if (view === 'archive') where += ` AND cs.archived_at IS NOT NULL AND cs.deleted_at IS NULL`;
-    else                         where += ` AND ch.role = 'Draft' AND cs.deleted_at IS NULL`;   // drafts
+    else {                       where += ` AND ch.role = 'Draft' AND cs.deleted_at IS NULL`;   // drafts
+      // Drafts are personal WIP until sent: an actor sees ONLY the drafts they authored (mailing model).
+      params.push(req.identity.identity_id);
+      where += ` AND cs.created_by_actor_id = $${params.length}`;
+    }
     if (q_search) {
       params.push('%' + q_search + '%');
       where += ` AND (ch.manual_subject ILIKE $${params.length} OR ch.auto_subject ILIKE $${params.length} OR ch.all_recipients::text ILIKE $${params.length} OR ch.purpose ILIKE $${params.length})`;
@@ -1543,9 +1547,10 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
   try {
     const chit_id   = req.params.chit_id;
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
-    const chk = await query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+    const chk = await query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
     if (chk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
     if (chk.rows[0].role !== 'Draft') return res.status(403).json({ error: 'Forbidden', message: 'Only drafts can be permanently deleted — sent chits are immutable co-held records.' });
+    if (chk.rows[0].created_by_actor_id !== req.identity.identity_id) return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
     await withTransaction(async (client) => {
       await client.query(`DELETE FROM chit_messages WHERE chit_id = $1`, [chit_id]);
       await client.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
