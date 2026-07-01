@@ -12,16 +12,22 @@ const ctx = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
 
-// Add a supplier by bridge_id
+// Add a supplier by bridge_id — with optional owner-side fields (your naming / preferred / notes)
 router.post('/suppliers',
   [ body('supplier_bridge_id').trim().notEmpty().withMessage('Supplier bridge ID required'),
-    body('category').optional().trim().isLength({ max: 50 }) ],
+    body('category').optional().trim().isLength({ max: 50 }),
+    body('nickname').optional().trim().isLength({ max: 80 }),
+    body('notes').optional().trim().isLength({ max: 2000 }),
+    body('preferred').optional().isBoolean() ],
   validate, auth,
   async (req, res) => {
     try {
-      const owner    = ctx(req);
-      const bridge   = req.body.supplier_bridge_id.trim();
-      const category = sanitise(req.body.category || '') || null;
+      const owner     = ctx(req);
+      const bridge    = req.body.supplier_bridge_id.trim();
+      const category  = sanitise(req.body.category || '') || null;
+      const nickname  = sanitise(req.body.nickname || '') || null;
+      const notes     = sanitise(req.body.notes || '') || null;
+      const preferred = req.body.preferred === true || req.body.preferred === 'true';
 
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
       // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
@@ -41,12 +47,12 @@ router.post('/suppliers',
         return res.status(409).json({ error: 'Exists', message: 'Already in your supplier list' });
 
       await query(
-        `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, category, added_via)
-         VALUES ($1, $2, $3, 'manual')`,
-        [owner, sup.rows[0].identity_id, category]);
+        `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, category, nickname, notes, preferred, added_via)
+         VALUES ($1, $2, $3, $4, $5, $6, 'manual')`,
+        [owner, sup.rows[0].identity_id, category, nickname, notes, preferred]);
 
       res.json({ message: 'Supplier added',
-        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, category } });
+        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, category, nickname, notes, preferred } });
     } catch (err) {
       console.error('Add supplier error:', err.message);
       res.status(500).json({ error: 'Add supplier failed', message: safeErr(err) });
@@ -58,7 +64,7 @@ router.get('/suppliers', auth, async (req, res) => {
   try {
     const owner = ctx(req);
     const r = await query(
-      `SELECT sl.supplier_list_id, sl.category, sl.created_at,
+      `SELECT sl.supplier_list_id, sl.category, sl.nickname, sl.preferred, sl.notes, sl.created_at,
               i.bridge_id, i.display_name, i.identity_id AS supplier_entity_id,
               EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
@@ -66,13 +72,42 @@ router.get('/suppliers', auth, async (req, res) => {
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
-       ORDER BY sl.created_at DESC`, [owner]);
+       ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]);
     res.json({ suppliers: r.rows, count: r.rows.length });
   } catch (err) {
     console.error('Get suppliers error:', err.message);
     res.status(500).json({ error: 'Get suppliers failed', message: safeErr(err) });
   }
 });
+
+// Update owner-side fields on a supplier relationship — your naming / preferred / notes / category.
+// Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
+router.patch('/suppliers/:id',
+  [ body('nickname').optional({ nullable: true }).trim().isLength({ max: 80 }),
+    body('category').optional({ nullable: true }).trim().isLength({ max: 50 }),
+    body('notes').optional({ nullable: true }).trim().isLength({ max: 2000 }),
+    body('preferred').optional().isBoolean() ],
+  validate, auth,
+  async (req, res) => {
+    try {
+      const owner = ctx(req);
+      const sets = [], vals = []; let n = 1;
+      if ('nickname'  in req.body) { sets.push(`nickname = $${n++}`);  vals.push(sanitise(req.body.nickname || '') || null); }
+      if ('category'  in req.body) { sets.push(`category = $${n++}`);  vals.push(sanitise(req.body.category || '') || null); }
+      if ('notes'     in req.body) { sets.push(`notes = $${n++}`);     vals.push(sanitise(req.body.notes || '') || null); }
+      if ('preferred' in req.body) { sets.push(`preferred = $${n++}`); vals.push(req.body.preferred === true || req.body.preferred === 'true'); }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide nickname, category, notes, or preferred' });
+      vals.push(req.params.id, owner);
+      const r = await query(
+        `UPDATE supplier_list SET ${sets.join(', ')}
+         WHERE supplier_list_id = $${n++} AND owner_entity_id = $${n} RETURNING supplier_list_id`, vals);
+      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+      res.json({ message: 'Supplier updated' });
+    } catch (err) {
+      console.error('Update supplier error:', err.message);
+      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
+    }
+  });
 
 // Remove from my list (does not affect the supplier)
 router.delete('/suppliers/:id', auth, async (req, res) => {

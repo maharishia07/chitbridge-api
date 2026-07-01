@@ -191,6 +191,42 @@ router.post('/',
   }
 );
 
+// ── PATCH /api/actors/:id ────────────────────────────────────
+// Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
+// Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
+router.patch('/:id',
+  auth,
+  [
+    body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
+    body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
+    body('phone').optional({ nullable: true }).trim().isLength({ max: 20 }),
+    body('max_tasks').optional().isInt({ min: 1, max: 100 }),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const entity_id = req.identity.identity_id;   // the entity that owns the actor
+      const actor_id  = req.params.id;
+      const sets = [], vals = []; let n = 1;
+      if ('display_name' in req.body) { sets.push(`display_name = $${n++}`); vals.push(sanitise(req.body.display_name)); }
+      if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
+      if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
+      if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, or max_tasks' });
+      vals.push(actor_id, entity_id);
+      const r = await db(
+        `UPDATE identities SET ${sets.join(', ')}
+         WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
+         RETURNING identity_id, display_name, actor_role, phone, max_tasks`, vals);
+      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
+      res.json({ message: 'Co-assist updated', actor: r.rows[0] });
+    } catch (err) {
+      console.error('Update actor error:', err.message);
+      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
+    }
+  }
+);
+
 // ── POST /api/actors/login ───────────────────────────────────
 // ── GET /api/actors/check-login ─────────────────────────────
 // Check if actor has PIN set — frontend shows correct field
