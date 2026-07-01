@@ -452,7 +452,7 @@ router.get('/folder', auth, async (req, res) => {
     else {                       where += ` AND ch.role = 'Draft' AND cs.deleted_at IS NULL`;   // drafts
       // Drafts are personal WIP until sent: an actor sees ONLY the drafts they authored (mailing model).
       params.push(req.identity.identity_id);
-      where += ` AND cs.created_by_actor_id = $${params.length}`;
+      where += ` AND ch.created_by_actor_id = $${params.length}`;
     }
     if (q_search) {
       params.push('%' + q_search + '%');
