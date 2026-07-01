@@ -145,6 +145,11 @@ router.post('/send',
         }
 
         if (!rec || rec.rows.length === 0) {
+          if (is_draft) {   // a draft is WIP — keep the entered recipient name (unresolved); resolution is enforced only on send
+            receiverDetails.push({ entity_id: null, bridge_id: null, display_name: (r.display_name || r.name || '').toString().trim(),
+              kind: r.kind, role: ROLE_MAP[r.kind], all_role: r.kind === 'to' ? 'receiver' : r.kind });
+            continue;
+          }
           return res.status(404).json({
             error: 'Not found',
             message: `Recipient "${r.entity_id || r.display_name || r.name}" not found in the platform`
