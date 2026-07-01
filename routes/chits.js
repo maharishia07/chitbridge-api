@@ -86,6 +86,9 @@ router.post('/send',
       const business_json = req.body.business_json
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
       const is_draft = !!req.body.is_draft;
+      // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
+      // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
+      const promote_draft_id = (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id) ? req.body.promote_draft_id : null;
 
       // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
       const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
@@ -176,8 +179,15 @@ router.post('/send',
         });
       }
 
-      // Generate chit_id — same for ALL participants
-      const chit_id = uuidv4();
+      // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
+      //    and other send-time rules will plug in here when we build Suppliers.) ──
+      if (promote_draft_id) {
+        const dchk = await query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]);
+        if (dchk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
+        if (dchk.rows[0].role !== 'Draft') return res.status(400).json({ error: 'Not a draft', message: 'This chit has already been sent' });
+      }
+      // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
+      const chit_id = promote_draft_id || uuidv4();
       const now = new Date();
 
       // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
@@ -227,6 +237,12 @@ router.post('/send',
 
       // ── Guaranteed write: every row for this chit commits together, or none do (INV-2) ──
       await withTransaction(async (client) => {
+        if (promote_draft_id) {   // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
+          await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+          await client.query('DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+          await client.query('DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+          await client.query('DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+        }
         // SENDER
         await client.query(
           `INSERT INTO chit_header
