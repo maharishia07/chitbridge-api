@@ -76,9 +76,15 @@ router.post('/send',
   auth,
   async (req, res) => {
     try {
-      const sender_id = req.identity.identity_id;
-      const sender_bridge_id = req.identity.bridge_id;
-      const sender_display_name = req.identity.display_name;
+      // Uniform actor model: an actor acts FOR its entity, so the chit is ALWAYS owned by the entity, never the actor.
+      // (created_by_actor_id below records WHO pressed send — the only actor-specific bit, for audit.)
+      const sender_id = req.identity.parent_entity_id || req.identity.identity_id;
+      let sender_bridge_id = req.identity.bridge_id;
+      let sender_display_name = req.identity.display_name;
+      if (req.identity.identity_type === 'actor' && req.identity.parent_entity_id) {
+        const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
+        if (_ent.rows[0]) { sender_bridge_id = _ent.rows[0].bridge_id; sender_display_name = _ent.rows[0].display_name; }
+      }
       // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
       const purpose = req.body.purpose || 'order';
       const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
