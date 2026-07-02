@@ -391,6 +391,13 @@ function chitFilters(req, where, params){
     const ph = L.map(s => { params.push(s); return '$'+params.length; }).join(',');
     where += ` AND cs.current_status IN (${ph})`;
   }
+  // Delegation scope: unassigned = the entity's own pool; assigned = delegated to a co-assist. assigned_to=me|<id>
+  // scopes to one actor (fixes actor "My Task"). No param = everything (back-compat).
+  if (req.query.assignment === 'unassigned')      where += ` AND cs.assigned_to_actor_id IS NULL`;
+  else if (req.query.assignment === 'assigned')   where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
+  const at = req.query.assigned_to;
+  if (at === 'me')                            { params.push(req.identity.identity_id); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
+  else if (at && at !== 'me' && at !== 'all') { params.push(at); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
   return where;
 }
 
@@ -502,6 +509,9 @@ router.get('/rollup', auth, async (req, res) => {
     const params = [entity_id];
     let where = `cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     if (dir) { params.push(dir); where += ` AND cs.direction = $${params.length}`; }
+    if (req.query.assignment === 'unassigned')      where += ` AND cs.assigned_to_actor_id IS NULL`;
+    else if (req.query.assignment === 'assigned')   where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
+    else if (req.query.assigned_to === 'me')        { params.push(req.identity.identity_id); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
     const result = await query(
       `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
