@@ -1640,12 +1640,20 @@ router.post('/assign-bulk',
       // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
       // a mid-loop failure no longer leaves a partial assign. Target validated inside the tx.
       const out = await withTransaction(async (client) => {
+        // (e) Assignment rule from settings: honour pull/push mode + per-actor capacity BEFORE assigning.
+        const st = await client.query(`SELECT assignment_model, default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+        const model  = (st.rows[0] && st.rows[0].assignment_model) || 'both';
+        const defMax = (st.rows[0] && st.rows[0].default_max_tasks) || 10;
+        if (model === 'pull') { const e = new Error('Push-assign is off — this entity is in pull mode (co-assists take tasks themselves).'); e.status = 400; throw e; }
+
         const target = await client.query(
-          `SELECT identity_id, display_name FROM identities
+          `SELECT identity_id, display_name, max_tasks, current_task_count FROM identities
             WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'`,
           [target_actor_id, entity_id]);
-        if (target.rows.length === 0) { const e = new Error('Target actor not found or not active'); e.status = 400; throw e; }
+        if (target.rows.length === 0) { const e = new Error('Target co-assist not found or not on shift'); e.status = 400; throw e; }
         const t = target.rows[0];
+        const cap = t.max_tasks || defMax;
+        let load = t.current_task_count || 0;
 
         const assigned = []; const skipped = [];
         for (const chit_id of chit_ids) {
@@ -1653,24 +1661,26 @@ router.post('/assign-bulk',
             `SELECT assigned_to_actor_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`,
             [chit_id, entity_id]);
           if (cs.rows.length === 0) { skipped.push({ chit_id, reason: 'not found' }); continue; }
-          if (cs.rows[0].assigned_to_actor_id) {
-            await client.query(`UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1) WHERE identity_id = $1`, [cs.rows[0].assigned_to_actor_id]);
-          }
+          const already = cs.rows[0].assigned_to_actor_id;
+          if (already === t.identity_id) { assigned.push(chit_id); continue; }              // already theirs — no change, no cost
+          if (load >= cap) { skipped.push({ chit_id, reason: `at capacity (${cap})` }); continue; }   // (e) capacity gate
+          if (already) { await client.query(`UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1) WHERE identity_id = $1`, [already]); }
           await client.query(
             `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
                     assigned_at = NOW(), assignment_type = 'push', current_status = 'pending', updated_at = NOW()
               WHERE chit_id = $3 AND entity_id = $4`,
             [t.identity_id, t.display_name, chit_id, entity_id]);
           await client.query(`UPDATE identities SET current_task_count = current_task_count + 1 WHERE identity_id = $1`, [t.identity_id]);
+          load++;
           await client.query(
-            // F3: assignment is INTERNAL — write ONLY the assigning entity's own row (was fanning to every copy,
-            // leaking the assign + actor names to the counterparty).
+            // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the
+            // derived notifications feed (assigned_to_me) — step (d) of the workflow.
             `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
              SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
             [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`, entity_id]);
           assigned.push(chit_id);
         }
-        return { t, assigned, skipped };
+        return { t, assigned, skipped, cap };
       });
       res.json({ message: 'Bulk assign complete', assigned_to: out.t.display_name, assigned: out.assigned.length, skipped: out.skipped });
     } catch (err) {
