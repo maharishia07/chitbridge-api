@@ -496,17 +496,23 @@ router.get('/rollup', auth, async (req, res) => {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const groupBy = (req.query.group_by === 'state') ? 'state' : 'counterparty';
     const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name';
+    // direction scopes the rollup to Task (received) or Order (sent); omit for both. Without it, self-chits
+    // (sent+received held by one entity) would double-count.
+    const dir = (req.query.direction === 'sent' || req.query.direction === 'received') ? req.query.direction : null;
+    const params = [entity_id];
+    let where = `cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
+    if (dir) { params.push(dir); where += ` AND cs.direction = $${params.length}`; }
     const result = await query(
       `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
-        WHERE cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL
+        WHERE ${where}
         GROUP BY ${keyExpr}
         ORDER BY chits DESC`,
-      [entity_id]
+      params
     );
-    res.json({ group_by: groupBy, groups: result.rows });
+    res.json({ group_by: groupBy, direction: dir, groups: result.rows });
   } catch (err) {
     console.error('Rollup error:', err.message);
     res.status(500).json({ error: 'Rollup failed', message: safeErr(err) });
