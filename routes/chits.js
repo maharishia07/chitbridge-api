@@ -4,7 +4,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const { query, withTransaction } = require('../db');
+const { query, withTransaction, withEntity } = require('../db');
 const storage = require('../lib/storage');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
@@ -515,10 +515,12 @@ router.get('/sent', auth, async (req, res) => {
          JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction`;
 
     where = chitFilters(req, where, params);
-    const countResult = await query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
+    // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
+    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const countResult = await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
 
     const limIdx = params.length + 1, offIdx = params.length + 2;
-    const result = await query(
+    const result = await db.query(
       `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
               cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag
@@ -528,6 +530,8 @@ router.get('/sent', auth, async (req, res) => {
         LIMIT $${limIdx} OFFSET $${offIdx}`,
       [...params, limit, offset]
     );
+    return { countResult, result };
+    });
 
     res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
   } catch (err) {
@@ -564,11 +568,13 @@ router.get('/folder', auth, async (req, res) => {
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction`;
     // dedupe self-chits (both copies in trash/archive) to one row per chit, preferring the sent copy
     where = chitFilters(req, where, params);
-    const countResult = await query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
+    // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
+    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const countResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
     const orderBy = ({date:'created_at',subject:'COALESCE(manual_subject, auto_subject)',amount:"(summary_json->>'total_value')::numeric",status:'current_status',priority:"CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort] || 'created_at')
                   + ' ' + ((String(req.query.dir||'').toLowerCase()==='asc') ? 'ASC' : 'DESC');
-    const result = await query(
+    const result = await db.query(
       `SELECT * FROM (
          SELECT DISTINCT ON (ch.chit_id)
               ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
@@ -584,6 +590,8 @@ router.get('/folder', auth, async (req, res) => {
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, limit, offset]
     );
+    return { countResult, result };
+    });
     res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit, view });
   } catch (err) {
     console.error('Folder error:', err.message);
@@ -607,7 +615,9 @@ router.get('/rollup', auth, async (req, res) => {
     if (req.query.assignment === 'unassigned')      where += ` AND cs.assigned_to_actor_id IS NULL`;
     else if (req.query.assignment === 'assigned')   where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
     else if (req.query.assigned_to === 'me')        { params.push(req.identity.identity_id); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
-    const result = await query(
+    // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
+    const { result, disp } = await withEntity(entity_id, async (db) => {
+    const result = await db.query(
       `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
          FROM chit_status cs
@@ -619,7 +629,7 @@ router.get('/rollup', auth, async (req, res) => {
     );
     // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
     // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
-    const disp = await query(
+    const disp = await db.query(
       `SELECT COUNT(DISTINCT cs.chit_id)::int AS n
          FROM chit_status cs
         WHERE ${where}
@@ -627,6 +637,8 @@ router.get('/rollup', auth, async (req, res) => {
                        AND (cd.scope = 'chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1
                             OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $1)))`,
       params).catch(() => ({ rows: [{ n: 0 }] }));
+    return { result, disp };
+    });
     res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
@@ -662,7 +674,9 @@ router.get('/inbox', auth, async (req, res) => {
 
     whereClause = chitFilters(req, whereClause, params);
     paramCount = params.length;
-    const countResult = await query(
+    // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
+    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const countResult = await db.query(
       `SELECT COUNT(*) FROM chit_status cs
         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${whereClause}`,
@@ -670,7 +684,7 @@ router.get('/inbox', auth, async (req, res) => {
     );
 
     // Get inbox — lightweight — no payload
-    const result = await query(
+    const result = await db.query(
       `SELECT
          ch.chit_id,
          ch.sender_entity_display_name,
@@ -710,6 +724,8 @@ router.get('/inbox', auth, async (req, res) => {
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
       [...params, limit, offset]
     );
+    return { countResult, result };
+    });
 
     res.json({
       chits: result.rows,
@@ -741,13 +757,14 @@ router.get('/unread', auth, async (req, res) => {
     if (req.identity.identity_type !== 'actor') return res.json({ unread: [] });
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const actor_id  = req.identity.identity_id;
-    const r = await query(
+    // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
+    const r = await withEntity(entity_id, (db) => db.query(
       `SELECT DISTINCT cs.chit_id
          FROM chit_status cs
          LEFT JOIN chit_reads cr ON cr.chit_id = cs.chit_id AND cr.actor_id = $2
         WHERE cs.entity_id = $1 AND cs.deleted_at IS NULL
           AND (cr.read_at IS NULL OR cs.updated_at > cr.read_at)`,
-      [entity_id, actor_id]);
+      [entity_id, actor_id]));
     res.json({ unread: r.rows.map(x => x.chit_id) });
   } catch (err) { res.status(500).json({ error: 'Unread failed', message: safeErr(err) }); }
 });
