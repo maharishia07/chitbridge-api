@@ -754,7 +754,7 @@ router.put('/:id/status',
       // Verify actor belongs to entity
       const actor = await db(
         `SELECT identity_id, display_name, actor_key,
-                break_status, current_task_count
+                break_status, current_task_count, delegate_actor_id
          FROM identities
          WHERE identity_id = $1
          AND parent_entity_id = $2
@@ -826,7 +826,7 @@ router.put('/:id/status',
       }
 
       // Atomic: route this actor's active tasks AND apply the status change together.
-      let tasks_routed = 0;
+      let tasks_routed = 0, covers_removed = 0, was_default_assignee = false, disputes_cleared = 0;
       await withTransaction(async (client) => {
         if (a.current_task_count > 0 && task_action) {
           if (task_action === 'pool') {
@@ -873,8 +873,16 @@ router.put('/:id/status',
         }
         // Cover cleanup: a deactivated/removed actor can no longer be anyone's leave-cover — clear inbound
         // pointers too (its own cover pointer was cleared above). Leaves no dangling cover to a gone actor.
-        await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [actor_id, entity_id]);
+        const _cc = await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [actor_id, entity_id]);
+        covers_removed = _cc.rowCount || 0;
+        // Default auto-assign assignee: if it points to this actor, clear it (would otherwise route to a gone actor).
+        const _da = await client.query(`UPDATE entity_actor_settings SET default_assignee_actor_id = NULL WHERE entity_id = $1 AND default_assignee_actor_id = $2`, [entity_id, actor_id]);
+        was_default_assignee = (_da.rowCount || 0) > 0;
       });
+
+      // Best-effort (outside the tx — the dispute-routing column may not be migrated): drop any dispute-handler
+      // assignment to this actor so open disputes aren't routed to a gone person.
+      try { const _dh = await db(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id]); disputes_cleared = (_dh && _dh.rowCount) || 0; } catch (_) {}
 
       res.json({
         message: `Actor ${action}d successfully`,
@@ -882,7 +890,11 @@ router.put('/:id/status',
         action,
         tasks_routed,
         task_action: task_action || null,
-        return_date: return_date || null
+        return_date: return_date || null,
+        covers_removed,
+        was_default_assignee,
+        disputes_cleared,
+        had_cover: !!a.delegate_actor_id
       });
 
     } catch (err) {
