@@ -1670,10 +1670,11 @@ router.put('/:chit_id/priority-flag',
       const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
       const flag      = req.body.priority === true || req.body.priority === 'true';
 
-      const access = await query(
+      // B1 RLS: write-once lock check on own copy -> withEntity(me).
+      const access = await withEntity(entity_id, (db) => db.query(
         `SELECT customer_priority_locked FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
-      );
+      ));
       if (access.rows.length === 0) {
         return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
       }
@@ -1681,11 +1682,15 @@ router.put('/:chit_id/priority-flag',
         return res.status(409).json({ error: 'Locked', message: 'Customer priority is write-once and already set' });
       }
 
-      await query(
-        `UPDATE chit_status SET customer_priority = $1, customer_priority_locked = true, updated_at = NOW()
-         WHERE chit_id = $2`,
-        [flag, chit_id]
-      );
+      // Customer flag is cross-edge (write-once) -> set on ALL participant rows via chit_set_customer_priority_all
+      // (validated: caller must be a participant). Fallback = the legacy all-rows update when b50 isn't applied.
+      await crossing(entity_id,
+        `SELECT chit_set_customer_priority_all($1,$2)`,
+        [chit_id, flag],
+        (db) => db.query(
+          `UPDATE chit_status SET customer_priority = $1, customer_priority_locked = true, updated_at = NOW()
+           WHERE chit_id = $2`,
+          [flag, chit_id]));
 
       // Trail parity with internal urgent: log who/when as an action message.
       // External thread (visibility NULL) — the customer flag is cross-edge, so both parties see the trail.
@@ -1836,16 +1841,21 @@ router.put('/:chit_id/void',
       const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
       const reason    = sanitise(req.body.reason);
 
-      const own = await query(
+      // B1 RLS: sender check on own copy -> withEntity(me).
+      const own = await withEntity(entity_id, (db) => db.query(
         `SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]);
+        [chit_id, entity_id]));
       if (own.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
       if (own.rows[0].sender_entity_id !== entity_id) {
         return res.status(403).json({ error: 'Forbidden', message: 'Only the sender can void a chit' });
       }
 
-      // Cross-edge terminal void on every participant row (never delete).
-      await query(`UPDATE chit_status SET current_status = 'void', updated_at = NOW() WHERE chit_id = $1`, [chit_id]);
+      // Cross-edge terminal void on every participant row (never delete) -> chit_set_status_all
+      // (validated: caller must be the sender). Fallback = the legacy all-rows update when b50 isn't applied.
+      await crossing(entity_id,
+        `SELECT chit_set_status_all($1,$2)`,
+        [chit_id, 'void'],
+        (db) => db.query(`UPDATE chit_status SET current_status = 'void', updated_at = NOW() WHERE chit_id = $1`, [chit_id]));
       // Record who/when/why as an external action message (both parties see it).
       await query(
         `INSERT INTO chit_messages
@@ -1853,11 +1863,14 @@ router.put('/:chit_id/void',
             thread_type, visibility_entity_id, message_text, msg_type, created_at)
          VALUES ($1,$2,$3,'external',NULL,$4,'action',NOW())`,
         [chit_id, entity_id, req.identity.display_name, `Chit VOIDED: ${reason}`]);
-      // State-log the void for the trail (one row per participant).
-      await query(
-        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
-         SELECT $1, entity_id, 'voided', $2, $3, 'void', $4 FROM chit_status WHERE chit_id = $1`,
-        [chit_id, req.identity.identity_id, req.identity.display_name, `Voided: ${reason}`]);
+      // State-log the void into every participant's timeline -> chit_log_all. Fallback = the legacy INSERT...SELECT.
+      await crossing(entity_id,
+        `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
+        [chit_id, 'voided', req.identity.identity_id, req.identity.display_name, null, 'void', `Voided: ${reason}`],
+        (db) => db.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
+           SELECT $1, entity_id, 'voided', $2, $3, 'void', $4 FROM chit_status WHERE chit_id = $1`,
+          [chit_id, req.identity.identity_id, req.identity.display_name, `Voided: ${reason}`]));
 
       res.json({ message: 'Chit voided', chit_id, status: 'void' });
     } catch (err) {
