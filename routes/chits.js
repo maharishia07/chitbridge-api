@@ -66,7 +66,8 @@ async function resolveDelegateTarget(client, entity_id, actorId) {
 // Auto-assign a freshly-received chit per the entity's mode. Atomic + idempotent (skips if already
 // assigned). Caller runs it best-effort AFTER commit so it can never fail the guaranteed chit.
 async function autoAssignReceived(entity_id, chit_id) {
-  await withTransaction(async (client) => {
+  // B1 RLS: the receiver auto-assigns within its OWN roster -> withEntity(receiver), not withTransaction.
+  await withEntity(entity_id, async (client) => {
     const st = (await client.query(
       `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
          FROM entity_actor_settings WHERE entity_id = $1`, [entity_id])).rows[0];
@@ -1103,10 +1104,11 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
   const thread_filter = req.query.thread_type || 'all';
 
   try {
-    const access = await query(
+    // B1 RLS: participant access check on own copy -> withEntity(me).
+    const access = await withEntity(entity_id, (db) => db.query(
       `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
       [chit_id, entity_id]
-    );
+    ));
     if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
 
     let q, params;
@@ -1285,10 +1287,11 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
   const entity_id   = req.identity.parent_entity_id || req.identity.identity_id;
 
   try {
-    const access = await query(
+    // B1 RLS: participant access check on own copy -> withEntity(me).
+    const access = await withEntity(entity_id, (db) => db.query(
       `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
       [chit_id, entity_id]
-    );
+    ));
     if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
 
     // B3.10 + D4 — scoped: you see chit-wide disputes, ones you raised/target, or ones you're a listed party to
@@ -1329,15 +1332,20 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
   const { chit_id } = req.params;
   const entity_id   = req.identity.parent_entity_id || req.identity.identity_id;
   try {
-    const access = await query(`SELECT 1 FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
-    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
-
-    const hdr = await query(
-      `SELECT auto_subject, schema_version FROM chit_header WHERE chit_id=$1 AND entity_id=$2`,
-      [chit_id, entity_id]);
-    const det = await query(
-      `SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`,
-      [chit_id, entity_id]);
+    // B1 RLS: own-copy reads (status/header/detail) -> withEntity(me).
+    const rls = await withEntity(entity_id, async (db) => {
+      const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+      if (access.rows.length === 0) return null;
+      const hdr = await db.query(
+        `SELECT auto_subject, schema_version FROM chit_header WHERE chit_id=$1 AND entity_id=$2`,
+        [chit_id, entity_id]);
+      const det = await db.query(
+        `SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`,
+        [chit_id, entity_id]);
+      return { hdr, det };
+    });
+    if (!rls) return res.status(403).json({ error: 'Forbidden' });
+    const { hdr, det } = rls;
     let itemLabel = null;
     try {
       const raw = det.rows[0]?.line_items;
@@ -1454,7 +1462,8 @@ router.get('/disputes/queue', auth, async (req, res) => {
   const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
 
   try {
-    const result = await query(
+    // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me).
+    const result = await withEntity(entity_id, (db) => db.query(
       `SELECT cd.*,
               (SELECT ch.auto_subject FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS auto_subject,
               (SELECT ch.purpose      FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS purpose,
@@ -1466,7 +1475,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
          AND (cd.scope='chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1)
        ORDER BY cd.created_at ASC`,
       [entity_id]
-    );
+    ));
 
     // evidence_snapshot is PII — expose presence only, never its contents
     const rows = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
@@ -1499,8 +1508,10 @@ router.delete('/:chit_id', auth, async (req, res) => {
     const action_by_id   = req.identity.identity_id;
     const action_by_name = req.identity.display_name;
 
+    // B1 RLS: caller deletes only its own copy -> withEntity(me).
+    await withEntity(entity_id, async (db) => {
     // Verify this entity has a (non-deleted) copy of the chit
-    const current = await query(
+    const current = await db.query(
       `SELECT current_status FROM chit_status
        WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`,
       [chit_id, entity_id]
@@ -1514,7 +1525,7 @@ router.delete('/:chit_id', auth, async (req, res) => {
     }
 
     // Guard: cannot delete while an open dispute is registered
-    const openDisputes = await query(
+    const openDisputes = await db.query(
       `SELECT COUNT(*)::int AS count FROM chit_disputes
        WHERE chit_id = $1 AND status = 'open'`,
       [chit_id]
@@ -1528,7 +1539,7 @@ router.delete('/:chit_id', auth, async (req, res) => {
     }
 
     // Soft delete this entity's copy only
-    await query(
+    await db.query(
       `UPDATE chit_status
        SET deleted_at = NOW(), updated_at = NOW()
        WHERE chit_id = $1 AND entity_id = $2`,
@@ -1536,7 +1547,7 @@ router.delete('/:chit_id', auth, async (req, res) => {
     );
 
     // Audit trail — one row for this entity's copy
-    await query(
+    await db.query(
       `INSERT INTO state_log
        (chit_id, entity_id, action, action_by_identity_id,
         action_by_display_name, previous_status, new_status, detail)
@@ -1547,6 +1558,7 @@ router.delete('/:chit_id', auth, async (req, res) => {
     );
 
     res.json({ message: 'Chit deleted', chit_id });
+    });
 
   } catch (err) {
     console.error('Delete chit error:', err.message);
@@ -1578,7 +1590,9 @@ router.put('/:chit_id/priority',
         return res.status(400).json({ error: 'Reason required', message: 'An urgent priority needs a reason' });
       }
 
-      const access = await query(
+      // B1 RLS: caller sets priority on its own copy -> withEntity(me).
+      await withEntity(entity_id, async (db) => {
+      const access = await db.query(
         `SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
       );
@@ -1586,7 +1600,7 @@ router.put('/:chit_id/priority',
         return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
       }
 
-      await query(
+      await db.query(
         `UPDATE chit_status SET priority_flag = $1, updated_at = NOW()
          WHERE chit_id = $2 AND entity_id = $3`,
         [priority, chit_id, entity_id]
@@ -1594,7 +1608,7 @@ router.put('/:chit_id/priority',
 
       // urgent → record an internal action message (only this entity's internal thread)
       if (priority === 'urgent') {
-        await query(
+        await db.query(
           `INSERT INTO chit_messages
              (chit_id, sender_entity_id, sender_display_name,
               thread_type, visibility_entity_id, message_text, msg_type, created_at)
@@ -1604,6 +1618,7 @@ router.put('/:chit_id/priority',
       }
 
       res.json({ message: 'Priority updated', chit_id, priority_flag: priority });
+      });
     } catch (err) {
       console.error('Set priority error:', err.message);
       res.status(500).json({ error: 'Priority update failed', message: safeErr(err) });
@@ -1672,11 +1687,12 @@ router.post('/:chit_id/archive', auth, async (req, res) => {
     const openD = await query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
       [req.params.chit_id]).catch(() => ({ rows: [{ count: 0 }] }));
     if (openD.rows[0].count > 0) return res.status(409).json({ error: 'Dispute active', message: 'Cannot archive a chit with an open dispute. Resolve the dispute first.' });
-    const r = await query(
+    // B1 RLS: caller archives only its own copy -> withEntity(me).
+    const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
         WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL AND archived_at IS NULL
         RETURNING chit_id`,
-      [req.params.chit_id, entity_id]);
+      [req.params.chit_id, entity_id]));
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
     res.json({ message: 'Chit archived', chit_id: req.params.chit_id });
   } catch (err) { res.status(500).json({ error: 'Archive failed', message: safeErr(err) }); }
@@ -1686,13 +1702,16 @@ router.post('/:chit_id/archive', auth, async (req, res) => {
 router.put('/:chit_id/star', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
-    const cur = await query(`SELECT star_flag FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`,
+    // B1 RLS: caller acts only on its own copy -> withEntity(me).
+    await withEntity(entity_id, async (db) => {
+    const cur = await db.query(`SELECT star_flag FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`,
       [req.params.chit_id, entity_id]);
     if (cur.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
     const next = !cur.rows[0].star_flag;
-    await query(`UPDATE chit_status SET star_flag = $3, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`,
+    await db.query(`UPDATE chit_status SET star_flag = $3, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`,
       [req.params.chit_id, entity_id, next]);
     res.json({ message: 'Star toggled', chit_id: req.params.chit_id, star_flag: next });
+    });
   } catch (err) { res.status(500).json({ error: 'Star failed', message: safeErr(err) }); }
 });
 
@@ -1700,8 +1719,9 @@ router.put('/:chit_id/star', auth, async (req, res) => {
 router.post('/:chit_id/unread', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
-    const r = await query(`UPDATE chit_status SET read_at = NULL, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
-      [req.params.chit_id, entity_id]);
+    // B1 RLS: caller acts only on its own copy -> withEntity(me).
+    const r = await withEntity(entity_id, (db) => db.query(`UPDATE chit_status SET read_at = NULL, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
+      [req.params.chit_id, entity_id]));
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
     res.json({ message: 'Marked unread', chit_id: req.params.chit_id });
   } catch (err) { res.status(500).json({ error: 'Mark-unread failed', message: safeErr(err) }); }
@@ -1711,11 +1731,12 @@ router.post('/:chit_id/unread', auth, async (req, res) => {
 router.post('/:chit_id/unarchive', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
-    const r = await query(
+    // B1 RLS: caller acts only on its own copy -> withEntity(me).
+    const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE chit_status SET archived_at = NULL, updated_at = NOW()
         WHERE chit_id = $1 AND entity_id = $2 AND archived_at IS NOT NULL
         RETURNING chit_id`,
-      [req.params.chit_id, entity_id]);
+      [req.params.chit_id, entity_id]));
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or not archived' });
     res.json({ message: 'Chit restored', chit_id: req.params.chit_id });
   } catch (err) { res.status(500).json({ error: 'Unarchive failed', message: safeErr(err) }); }
@@ -1729,17 +1750,20 @@ router.post('/:chit_id/restore', auth, async (req, res) => {
     const entity_id      = req.identity.parent_entity_id || req.identity.identity_id;
     const action_by_id   = req.identity.identity_id;
     const action_by_name = req.identity.display_name;
-    const r = await query(
+    // B1 RLS: caller restores only its own copy -> withEntity(me).
+    await withEntity(entity_id, async (db) => {
+    const r = await db.query(
       `UPDATE chit_status SET deleted_at = NULL, updated_at = NOW()
         WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NOT NULL
         RETURNING chit_id`,
       [chit_id, entity_id]);
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found in Trash' });
-    await query(
+    await db.query(
       `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
        VALUES ($1, $2, 'restored', $3, $4, $5)`,
       [chit_id, entity_id, action_by_id, action_by_name, `Chit restored from Trash by ${action_by_name}`]);
     res.json({ message: 'Chit restored from Trash', chit_id });
+    });
   } catch (err) { res.status(500).json({ error: 'Restore failed', message: safeErr(err) }); }
 });
 
@@ -1749,19 +1773,20 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
   try {
     const chit_id   = req.params.chit_id;
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
-    const chk = await query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-    if (chk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
-    if (chk.rows[0].role !== 'Draft') return res.status(403).json({ error: 'Forbidden', message: 'Only drafts can be permanently deleted — sent chits are immutable co-held records.' });
-    if (chk.rows[0].created_by_actor_id !== req.identity.identity_id) return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
-    await withTransaction(async (client) => {
-      await client.query(`DELETE FROM chit_messages WHERE chit_id = $1`, [chit_id]);
-      await client.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      await client.query(`DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      await client.query(`DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      await client.query(`DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      try { await client.query(`DELETE FROM cb_attachment WHERE chit_id = $1`, [chit_id]); } catch (e) { /* attachment table may not exist */ }
+    // B1 RLS: caller purges only its own draft copy -> withEntity(me) (was withTransaction).
+    await withEntity(entity_id, async (db) => {
+      const chk = await db.query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      if (chk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
+      if (chk.rows[0].role !== 'Draft') return res.status(403).json({ error: 'Forbidden', message: 'Only drafts can be permanently deleted — sent chits are immutable co-held records.' });
+      if (chk.rows[0].created_by_actor_id !== req.identity.identity_id) return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
+      await db.query(`DELETE FROM chit_messages WHERE chit_id = $1`, [chit_id]);
+      await db.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      await db.query(`DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      await db.query(`DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      await db.query(`DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      try { await db.query(`DELETE FROM cb_attachment WHERE chit_id = $1`, [chit_id]); } catch (e) { /* attachment table may not exist */ }
+      res.json({ message: 'Draft permanently deleted', chit_id });
     });
-    res.json({ message: 'Draft permanently deleted', chit_id });
   } catch (err) {
     console.error('Purge draft error:', err.message);
     res.status(500).json({ error: 'Purge failed', message: safeErr(err) });
@@ -1825,7 +1850,8 @@ router.post('/assign-bulk',
 
       // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
       // a mid-loop failure no longer leaves a partial assign. Target validated inside the tx.
-      const out = await withTransaction(async (client) => {
+      // B1 RLS: bulk-assign writes only the assigning entity's own rows -> withEntity(me), not withTransaction.
+      const out = await withEntity(entity_id, async (client) => {
         // (e) Assignment rule from settings: honour pull/push mode + per-actor capacity BEFORE assigning.
         const st = await client.query(`SELECT assignment_model, default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
         const model  = (st.rows[0] && st.rows[0].assignment_model) || 'both';
