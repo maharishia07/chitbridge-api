@@ -365,7 +365,7 @@ router.delete('/:id/pin',
       const actor_id  = req.params.id;
       // Verify actor belongs to this entity
       const actor = await db(
-        `SELECT identity_id, display_name FROM identities
+        `SELECT identity_id, display_name, actor_key FROM identities
          WHERE identity_id = $1 AND parent_entity_id = $2
          AND identity_type = 'actor'`,
         [actor_id, entity_id]
@@ -373,16 +373,23 @@ router.delete('/:id/pin',
       if (actor.rows.length === 0) {
         return res.status(404).json({ error: 'Actor not found' });
       }
+      // Clear the PIN AND issue a fresh OTP. The actor's original OTP was consumed at first login, so without
+      // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
+      const otp     = generateOTP();
+      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await db(
         `UPDATE identities
-         SET pin_hash = NULL, pin_set_at = NULL,
-             pin_attempts = 0, pin_locked_at = NULL
+         SET pin_hash = NULL, pin_set_at = NULL, pin_attempts = 0, pin_locked_at = NULL,
+             otp_code = $2, otp_expires_at = $3
          WHERE identity_id = $1`,
-        [actor_id]
+        [actor_id, otp, expires]
       );
       res.json({
-        message: 'PIN cleared — actor must set new PIN on next OTP login',
-        actor_name: actor.rows[0].display_name
+        message: 'PIN reset — share the new one-time code; they set a new PIN on next login',
+        actor_name: actor.rows[0].display_name,
+        otp,
+        ...(process.env.DEV_OTP && { dev_otp: otp }),
+        login_format: `${actor.rows[0].actor_key}@${req.identity.display_name}`
       });
     } catch (err) {
       res.status(500).json({ error: 'Clear PIN failed', message: safeErr(err) });
