@@ -178,6 +178,34 @@ router.post('/gap', async (req, res) => {
   }
 });
 
+// POST /api/assist/publish — the help desk publishes a resolved Q&A to ITS catalogue => the projection trigger
+// serves it live. Auth; the caller MUST be the Help entity itself (only it edits its own knowledge base).
+router.post('/publish', auth, async (req, res) => {
+  try {
+    const b        = req.body || {};
+    const question = (typeof b.question === 'string') ? b.question.trim() : '';
+    const answer   = (typeof b.answer === 'string')   ? b.answer.trim()   : '';
+    if (!question || !answer) return res.status(422).json({ ok: false, error: 'question and answer are required.' });
+    const context  = Array.isArray(b.context) ? b.context.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim()) : [];
+
+    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
+    const helpId = ent.rows[0] && ent.rows[0].identity_id;
+    if (!helpId) return res.status(503).json({ ok: false, error: 'Help entity not provisioned.' });
+    const sender = req.identity.parent_entity_id || req.identity.identity_id;
+    if (sender !== helpId) return res.status(403).json({ ok: false, error: 'Only the help desk can publish to its catalogue.' });
+
+    const sch = await query(`SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [helpId]);
+    const schema_id = sch.rows[0] ? sch.rows[0].schema_id : null;
+    const qaId = 'pub_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const item_data = { qa_id: qaId, question, answer, context, topics: [], fit: null, media: null, status: 'approved' };
+    await query(
+      `INSERT INTO catalogue_items (entity_id, schema_id, item_data, is_active) VALUES ($1, $2, $3, true)`,
+      [helpId, schema_id, JSON.stringify(item_data)]);
+    log.info('assist published', { id: req.id, qa_id: qaId, ctx: context.join(',') });
+    res.json({ ok: true, qa_id: qaId });
+  } catch (err) { log.error('assist/publish failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: 'Could not publish.' }); }
+});
+
 // ── Review / triage (#3) — auth-gated (TODO: tighten to owner_scope='platform' before production) ──
 
 // GET /api/assist/gaps — captured gaps (draft questions) awaiting review, newest first.
