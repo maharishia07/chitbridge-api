@@ -13,6 +13,7 @@ const jwt     = require('jsonwebtoken');
 const { safeErr } = require('../lib/respond');
 const log     = require('../lib/logger');
 const { query } = require('../db');              // DB access for the Q&A library (assist_qa)
+const auth    = require('../middleware/auth');   // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
@@ -175,6 +176,60 @@ router.post('/gap', async (req, res) => {
     log.error('assist/gap failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: 'Could not capture the question.' });
   }
+});
+
+// ── Review / triage (#3) — auth-gated (TODO: tighten to owner_scope='platform' before production) ──
+
+// GET /api/assist/gaps — captured gaps (draft questions) awaiting review, newest first.
+router.get('/gaps', auth, async (req, res) => {
+  try {
+    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
+    const entity_id = ent.rows[0] && ent.rows[0].identity_id;
+    if (!entity_id) return res.json({ ok: true, data: [] });
+    const r = await query(
+      `SELECT item_data->>'qa_id' AS qa_id, item_data->>'question' AS question,
+              item_data->'context' AS context, created_at
+         FROM catalogue_items
+        WHERE entity_id = $1 AND item_data->>'status' = 'gap'
+        ORDER BY created_at DESC`, [entity_id]);
+    res.json({ ok: true, data: r.rows });
+  } catch (err) { log.error('assist/gaps failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: 'Could not list gaps.' }); }
+});
+
+// POST /api/assist/resolve — { qa_id, action:'approve'|'reject', answer?, context?[], topics?[] }.
+// approve => writes the answer + status=approved + is_active=true => the projection trigger serves it live.
+// reject  => status=rejected + is_active=false (kept for audit, never served).
+router.post('/resolve', auth, async (req, res) => {
+  try {
+    const b      = req.body || {};
+    const qa_id  = (typeof b.qa_id === 'string') ? b.qa_id.trim() : '';
+    const action = (b.action === 'approve' || b.action === 'reject') ? b.action : '';
+    if (!qa_id || !action) return res.status(422).json({ ok: false, error: 'qa_id and a valid action are required.' });
+
+    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
+    const entity_id = ent.rows[0] && ent.rows[0].identity_id;
+    if (!entity_id) return res.status(503).json({ ok: false, error: 'Help entity not provisioned.' });
+
+    if (action === 'reject') {
+      const r = await query(
+        `UPDATE catalogue_items SET item_data = jsonb_set(item_data, '{status}', '"rejected"'), is_active = false, updated_at = now()
+          WHERE entity_id = $1 AND item_data->>'qa_id' = $2`, [entity_id, qa_id]);
+      return res.json({ ok: true, action: 'reject', changed: r.rowCount });
+    }
+
+    const answer = (typeof b.answer === 'string') ? b.answer.trim() : '';
+    if (!answer) return res.status(422).json({ ok: false, error: 'An answer is required to approve.' });
+    const context = Array.isArray(b.context) ? b.context.filter(x => typeof x === 'string') : [];
+    const topics  = Array.isArray(b.topics)  ? b.topics.filter(x => typeof x === 'string')  : [];
+    const r = await query(
+      `UPDATE catalogue_items
+          SET item_data = item_data || jsonb_build_object('answer', $3::text, 'status', 'approved', 'context', $4::jsonb, 'topics', $5::jsonb),
+              is_active = true, updated_at = now()
+        WHERE entity_id = $1 AND item_data->>'qa_id' = $2`,
+      [entity_id, qa_id, answer, JSON.stringify(context), JSON.stringify(topics)]);
+    log.info('assist gap resolved', { id: req.id, qa_id, action, by: req.identity && req.identity.identity_id });
+    res.json({ ok: true, action: 'approve', changed: r.rowCount });
+  } catch (err) { log.error('assist/resolve failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: 'Could not resolve.' }); }
 });
 
 module.exports = router;
