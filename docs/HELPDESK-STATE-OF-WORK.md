@@ -50,8 +50,13 @@ Built the platform's own help desk as a real tenant and ran the full loop on the
 Governance foundation (protected root + versioned constitution + version-freeze + Class-A/B/C exceptions) is
 pre-existing, real code — not a stub.
 
-## 3. The layer model (the map to prove against)
-Each of the seven layers answers a distinct question; status is honest.
+## 3. The CAPABILITY STACK (architecture — the map to prove against)
+**Two stacks — do not confuse (canon fix, reviewer 2026-07-04):** what follows is the **capability stack**
+(architecture). It is DISTINCT from the **governance cascade** (config inheritance: Constitution → Jurisdiction →
+Vertical → Standards → Content → Connectors → User preference). Both previously said "L3" for different things —
+**always name which stack.** The L1–L7 below are **capability-stack** layers.
+
+Each answers a distinct question; status is honest.
 
 | # | Layer | What it holds | Status |
 |---|-------|---------------|--------|
@@ -62,6 +67,14 @@ Each of the seven layers answers a distinct question; status is honest.
 | **L5** | **Intelligence — AI agents** | AI as a co-assist (draft/answer/visualise); **shared model across tenants, grounded ONLY on each tenant's isolated data** | **HOOK only** (`ai_agent` type + `/api/assist` LLM proxy stub with a "ground only on this caller's data" rule); shared+protected = **DESIGNED** |
 | **L6** | **Delivery — Channels & Experience** | message, public catalogue, **embeddable widget/plugin**, call-center; **white-label UX** ("powered by Chit & Bridge", per-locale) | message/catalogue/projection **PROVEN**; widget + white-label + call-center = **OPEN** |
 | **L7** | **Operate — Feedback & Monetization** | learning loop (gap → review → publish); plans, entitlements, **metering, billing** | feedback loop **PROVEN**; plans/quotas exist in the constitution; metering + billing = **OPEN** |
+
+**Reviewer notes (2026-07-04), folded in:**
+- **L5 may not be its own layer** — AI is a co-assist *actor type* (`ai_agent`); consider folding "Intelligence" into
+  L4 (Capabilities/actors) rather than a standalone layer.
+- **RLS (inside L1) is now the #1 priority and the FLOOR under L5** — do NOT wire shared-AI onto tenant data until RLS
+  is green; it makes cross-tenant leakage *structurally impossible* (RLS-scoped retrieval), not a prompt-level promise. See §6–§7.
+- **Mint path unified** — `create_helpdesk`/`is_helpdesk` are now thin wrappers over `create_from_blueprint` + a
+  blueprint **registry** + `is_instance_of` (one mint path, N blueprints).
 
 ## 4. The through-line (the design principle)
 The business layer *always exists*; customization always lives there. The move that makes it a platform (not bespoke
