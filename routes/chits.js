@@ -909,16 +909,18 @@ router.put('/:chit_id/status',
       // Arrow model: Open(pending/delivered/read) → in_progress → completed
       // ← regress: in_progress/accepted → pending, completed → in_progress
       // Legacy accepted step kept for backward compat (ChitDetailPage still uses it)
+      // 3-state UI model (Open / Act / Close) is bidirectional: from any state you can reach any of the three
+      // canonical targets — pending (Open), in_progress (Act), completed (Close). Sub-statuses kept for compat.
       const validTransitions = {
-        'pending':     ['in_progress', 'accepted', 'rejected', 'cancelled'],
-        'delivered':   ['in_progress', 'accepted', 'rejected', 'cancelled'],
-        'read':        ['in_progress', 'accepted', 'rejected', 'cancelled'],
-        'accepted':    ['in_progress', 'pending', 'rejected', 'cancelled'],
+        'pending':     ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled'],
+        'delivered':   ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
+        'read':        ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
+        'accepted':    ['in_progress', 'completed', 'pending', 'rejected', 'cancelled'],
         'in_progress': ['partial', 'completed', 'pending', 'accepted', 'cancelled'],
-        'partial':     ['in_progress', 'completed', 'cancelled'],
-        'completed':   ['in_progress'],
-        'rejected':    ['accepted'],
-        'cancelled':   ['accepted'],
+        'partial':     ['in_progress', 'completed', 'pending', 'cancelled'],
+        'completed':   ['in_progress', 'pending'],
+        'rejected':    ['accepted', 'pending', 'in_progress', 'completed'],
+        'cancelled':   ['accepted', 'pending', 'in_progress', 'completed'],
       };
 
       const allowed = validTransitions[previous_status] || [];
