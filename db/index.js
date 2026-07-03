@@ -72,8 +72,42 @@ createPool().then(p => {
   console.error('DB init failed — server stays up, queries will retry:', err.message);
 });
 
+// ── B1 (RLS Stage-0) — the NO-CONTEXT GUARD ──────────────────────────────────────────────────────────────
+// A tripwire: the module-level `query()` is the CONTEXT-FREE path (no entity bound), so any tenant-table access
+// through it means a route FORGOT withEntity() — under FORCE RLS that query fails closed and the feature quietly
+// returns empty. The guard makes that mistake LOUD in dev/CI, long before it reaches prod. Legitimate tenant
+// access goes through withEntity()'s `client.query(...)` (the transaction), which never passes through here.
+//
+// The table list MUST equal the RLS-policy set in migration_b49 exactly — no more, no less. `identities` is the
+// deliberate carve-out (cross-tenant discovery) and is intentionally ABSENT.
+//
+// PLATFORM-CONFIGURABILITY (Athi): mode is env-driven, never hardcoded — RLS_GUARD = off | warn | throw.
+//   • prod default = off  (a guard must NEVER hard-block production traffic)
+//   • dev/CI default = warn (visible during the incremental route migration without breaking un-migrated routes)
+//   • set RLS_GUARD=throw in CI (and locally once all Direct-group routes are on withEntity) to ENFORCE it.
+const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'state_log', 'catalogue_items', 'customer_list'];
+const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
+
+function rlsGuardMode() {
+  const explicit = (process.env.RLS_GUARD || '').toLowerCase();
+  if (explicit === 'off' || explicit === 'warn' || explicit === 'throw') return explicit;
+  return process.env.NODE_ENV === 'production' ? 'off' : 'warn';   // safe defaults; override via RLS_GUARD
+}
+
+function rlsGuardCheck(text) {
+  const mode = rlsGuardMode();
+  if (mode === 'off') return;
+  const m = RLS_TENANT_RE.exec(text);
+  if (!m) return;
+  const msg = `[RLS-GUARD] tenant table "${m[1]}" queried via context-free query() — route must use `
+    + `withEntity(entityId, db => db.query(...)). SQL: ${text.replace(/\s+/g, ' ').trim().substring(0, 140)}`;
+  if (mode === 'throw') throw new Error(msg);
+  console.warn(msg);
+}
+
 const query = async (text, params) => {
   if (!pool) throw new Error('Database not connected — check DATABASE_URL in Railway environment variables');
+  rlsGuardCheck(text);
   const start = Date.now();
   try {
     const result = await pool.query(text, params);
@@ -120,4 +154,4 @@ const withEntity = async (entityId, fn) => {
   });
 };
 
-module.exports = { query, withTransaction, withEntity, sslForHost, get pool() { return pool; } };
+module.exports = { query, withTransaction, withEntity, sslForHost, RLS_TENANT_TABLES, get pool() { return pool; } };
