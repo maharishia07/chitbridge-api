@@ -634,7 +634,8 @@ router.get('/',
            break_status, break_type, break_started_at,
            return_date, max_tasks, current_task_count,
            phone, created_at, last_active_at,
-           delegate_actor_id, last_assigned_at
+           delegate_actor_id, last_assigned_at,
+           pin_set_at, otp_code, otp_expires_at
          FROM identities
          WHERE ${where}
          ORDER BY
