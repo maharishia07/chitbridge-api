@@ -102,6 +102,33 @@ metering** last.
 - What's the **biggest risk we're underweighting**?
 - Do you agree with **isolation + rules first**, or a different order?
 
+## 9. Platform foundation already built (what the helpdesk rests on)
+The helpdesk thread sits on a substantial, **deployed** web-MVP foundation — all PROVEN/live unless noted. This is why
+the spine is credible: the helpdesk reuses machinery that already works.
+- **Mailbox core:** Task / Order / Drafts / Trash / Archive; read + single-step advance (now **bidirectional 3-state**);
+  **Compose** (wide 2-column modal, recipient autocomplete, catalogue line items, attachments, delivery, live summary);
+  **Disputes** (multi-party raise/resolve, filter + count, archive/delete guard while open, dispute-tagged messages);
+  Suppliers / Catalogue / Network; Message centre; Notifications (derived from `state_log` — a proper channel is backlog).
+- **Attachments:** platform-independent `StorageAdapter` (DB now; S3/Azure/GCS pluggable), participant-checked
+  upload/stream, media pulled on demand.
+- **Confirmed decisions (built + deployed):** **D2** actor **hats** (view/act/audit/mis/manager; assignability gate on
+  every assign path); **D1** **auto-assign on receipt** (off / default-assignee / least-loaded; least-recently-assigned
+  tie-break; overflow; on-leave → delegate chain, cycle-guarded); **D4** **disputes** (participants, filter+count,
+  archive guard, dispute messages).
+- **Co-assist (workforce) module:** full lifecycle — create→OTP→set-PIN→PIN login, re-invite/reset-PIN, hats,
+  **leave-cover** (buddy pairs + concurrency check), duty/break shift, deactivate/reactivate/remove with **full binding
+  cleanup**, roster. Has a use-case library + regression cases (`COASSIST-*.md`). *(This is the machinery L4/L5 reuse:
+  co-assists + hats = the roles/workflow; `ai_agent` is a planned actor type here.)*
+- **Capability modularisation:** `app.html` split into progressively-loaded capabilities — `core.js` + `helpers.js`
+  (eager) + `ensureCap`/`CAP_OF` loader + lazy `cap-admin` / `cap-workforce` / `cap-help` / `cap-legend`. The **🔑
+  Legend** is a live capability→feature map in-app.
+- **Governance + schema engine:** protected root + versioned constitution + version-freeze + Class-A/B/C exceptions +
+  entitlement **plans** (free/pro/enterprise quotas) + drift/reattest; **schema engine** (`entity_schemas`/
+  `schema_fields`, arbitrary typed fields) + **catalogue** (`catalogue_items` JSON validated vs schema). *(L1 + the
+  substrate for L2/L3.)*
+- **Deploy/infra:** two loosely-coupled repos (web→Vercel, api→Railway, DB→Supabase); REST/JSON + stateless JWT;
+  config-driven base URL (dev/uat/live).
+
 ## Appendix — repos / where things live
 - **Web** (SPA, Vercel): `public/app.html` + `public/app/core.js|helpers.js|cap-*.js` (lazy capabilities). Assistant
   engine + gates in `app.html`; admin/KB screen in `cap-admin.js`.
