@@ -124,6 +124,7 @@ router.post('/',
     body('actor_role').optional().trim().isLength({ max: 100 }),
     body('phone').optional().trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
+    body('hat').optional().isIn(['view_only','act','audit','mis','manager']),
   ],
   validate,
   async (req, res) => {
@@ -135,6 +136,7 @@ router.post('/',
       const actor_role   = sanitise(req.body.actor_role || '');
       const phone        = req.body.phone || null;
       const max_tasks    = req.body.max_tasks || 10;
+      const hat          = ['view_only','act','audit','mis','manager'].includes(req.body.hat) ? req.body.hat : 'act';
 
       // Check key available
       const available = await isKeyAvailable(actor_key, entity_id);
@@ -158,11 +160,11 @@ router.post('/',
           identity_id, bridge_id, display_name, actor_key,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at
-        ) VALUES ($1,$2,$3,$4,'human',$5,$6,$7,$8,'actor','active','active',$9,$10)`,
+          otp_code, otp_expires_at, hat
+        ) VALUES ($1,$2,$3,$4,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11)`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires]
+         otp, otp_expires, hat]
       );
 
       console.log(`Actor created: ${actor_key}@${entity_name} — OTP: ${otp}`);
@@ -201,6 +203,7 @@ router.patch('/:id',
     body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
     body('phone').optional({ nullable: true }).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
+    body('hat').optional().isIn(['view_only','act','audit','mis','manager']),
   ],
   validate,
   async (req, res) => {
@@ -212,12 +215,13 @@ router.patch('/:id',
       if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
       if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
       if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
-      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, or max_tasks' });
+      if ('hat'          in req.body) { sets.push(`hat = $${n++}`);          vals.push(req.body.hat); }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, max_tasks, or hat' });
       vals.push(actor_id, entity_id);
       const r = await db(
         `UPDATE identities SET ${sets.join(', ')}
          WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
-         RETURNING identity_id, display_name, actor_role, phone, max_tasks`, vals);
+         RETURNING identity_id, display_name, actor_role, phone, max_tasks, hat`, vals);
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
       res.json({ message: 'Co-assist updated', actor: r.rows[0] });
     } catch (err) {
@@ -619,10 +623,11 @@ router.get('/',
       const result = await db(
         `SELECT
            identity_id, bridge_id, display_name,
-           actor_key, actor_role, actor_type,
+           actor_key, actor_role, actor_type, hat,
            break_status, break_type, break_started_at,
            return_date, max_tasks, current_task_count,
-           phone, created_at, last_active_at
+           phone, created_at, last_active_at,
+           delegate_actor_id, last_assigned_at
          FROM identities
          WHERE ${where}
          ORDER BY
@@ -804,7 +809,8 @@ router.put('/:id/status',
         if (!target_actor_id) return res.status(400).json({ error: 'Target actor required' });
         const tr = await db(
           `SELECT identity_id, display_name FROM identities
-           WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'`,
+           WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'
+             AND hat IN ('act','manager')`,
           [target_actor_id, entity_id]
         );
         if (tr.rows.length === 0) return res.status(400).json({ error: 'Target actor not found or not active' });
@@ -950,7 +956,8 @@ router.put('/break',
           if (!target_actor_id) return res.status(400).json({ error: 'Target actor required' });
           const tr = await db(
             `SELECT identity_id, display_name FROM identities
-             WHERE identity_id = $1 AND break_status = 'active'`,
+             WHERE identity_id = $1 AND break_status = 'active'
+               AND hat IN ('act','manager')`,
             [target_actor_id]
           );
           if (tr.rows.length === 0) return res.status(400).json({ error: 'Target actor not found or not active' });
@@ -1060,7 +1067,7 @@ router.put('/assign/:chit_id',
           [action_by_id, action_by_name, chit_id, entity_id]
         );
         await db(
-          `UPDATE identities SET current_task_count = current_task_count + 1
+          `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
            WHERE identity_id = $1`,
           [action_by_id]
         );
@@ -1102,7 +1109,8 @@ router.put('/assign/:chit_id',
            FROM identities
            WHERE identity_id = $1
            AND parent_entity_id = $2
-           AND break_status = 'active'`,
+           AND break_status = 'active'
+           AND hat IN ('act','manager')`,
           [target_actor_id, entity_id]
         );
         if (target.rows.length === 0) {
@@ -1134,7 +1142,7 @@ router.put('/assign/:chit_id',
           [t.identity_id, t.display_name, chit_id, entity_id]
         );
         await db(
-          `UPDATE identities SET current_task_count = current_task_count + 1
+          `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
            WHERE identity_id = $1`,
           [t.identity_id]
         );
@@ -1248,30 +1256,89 @@ router.put('/settings',
     body('default_max_tasks').optional().isInt({ min: 1, max: 100 }),
     body('all_task_visible').optional().isBoolean(),
     body('auto_return_on_short_break').optional().isBoolean(),
+    body('auto_assign_mode').optional().isIn(['off','default_assignee','least_loaded']),
+    body('default_assignee_actor_id').optional({ nullable: true }).isUUID(),
   ],
   validate,
   async (req, res) => {
     try {
       const entity_id = req.identity.identity_id;
-      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break } = req.body;
+      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
+              auto_assign_mode, default_assignee_actor_id } = req.body;
+
+      // If a default assignee is named, it must be an assignable (Act/Manager) actor of this entity.
+      if (default_assignee_actor_id) {
+        const chk = await db(
+          `SELECT 1 FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
+             AND identity_type = 'actor' AND hat IN ('act','manager')`,
+          [default_assignee_actor_id, entity_id]);
+        if (chk.rows.length === 0) return res.status(400).json({ error: 'Invalid default assignee', message: 'The default assignee must be an Act or Manager co-assist of this entity.' });
+      }
 
       await db(
         `INSERT INTO entity_actor_settings
-           (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break)
-         VALUES ($1, $2, $3, $4, $5)
+           (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
+            auto_assign_mode, default_assignee_actor_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (entity_id) DO UPDATE SET
            assignment_model = COALESCE($2, entity_actor_settings.assignment_model),
            default_max_tasks = COALESCE($3, entity_actor_settings.default_max_tasks),
            all_task_visible = COALESCE($4, entity_actor_settings.all_task_visible),
            auto_return_on_short_break = COALESCE($5, entity_actor_settings.auto_return_on_short_break),
+           auto_assign_mode = COALESCE($6, entity_actor_settings.auto_assign_mode),
+           default_assignee_actor_id = COALESCE($7, entity_actor_settings.default_assignee_actor_id),
            updated_at = NOW()`,
-        [entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break]
+        [entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
+         auto_assign_mode || null, default_assignee_actor_id || null]
       );
 
       const updated = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
       res.json({ message: 'Settings updated', settings: updated.rows[0] });
     } catch (err) {
       res.status(500).json({ error: 'Settings update failed', message: safeErr(err) });
+    }
+  }
+);
+
+// ── PUT /api/actors/:id/delegate ── leave-cover delegate (D1) ──
+// Who covers this actor's auto-assigned work while they're on leave. Loop-prevented: the chain that
+// starts at the new delegate must never lead back to this actor.
+router.put('/:id/delegate',
+  auth,
+  [ body('delegate_actor_id').optional({ nullable: true }).isUUID() ],
+  validate,
+  async (req, res) => {
+    try {
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const actorId = req.params.id;
+      const delegate = req.body.delegate_actor_id || null;
+
+      if (delegate) {
+        if (delegate === actorId) return res.status(400).json({ error: 'Invalid delegate', message: 'An actor cannot delegate to themselves.' });
+        const d = await db(
+          `SELECT delegate_actor_id FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
+             AND identity_type = 'actor' AND hat IN ('act','manager')`,
+          [delegate, entity_id]);
+        if (d.rows.length === 0) return res.status(400).json({ error: 'Invalid delegate', message: 'The delegate must be an Act or Manager co-assist of this entity.' });
+        // Loop check: walk the delegate's existing chain; it must not reach back to actorId.
+        const seen = new Set([actorId]); let cur = d.rows[0].delegate_actor_id; let depth = 0;
+        while (cur && depth < 20) {
+          if (cur === actorId || seen.has(cur)) return res.status(400).json({ error: 'Delegation loop', message: 'That delegate eventually routes back here — pick someone else.' });
+          seen.add(cur);
+          const n = await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1 AND parent_entity_id = $2`, [cur, entity_id]);
+          cur = n.rows[0] && n.rows[0].delegate_actor_id; depth++;
+        }
+      }
+
+      const upd = await db(
+        `UPDATE identities SET delegate_actor_id = $1
+           WHERE identity_id = $2 AND parent_entity_id = $3 AND identity_type = 'actor'
+         RETURNING identity_id, display_name, delegate_actor_id`,
+        [delegate, actorId, entity_id]);
+      if (upd.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found.' });
+      res.json({ message: delegate ? 'Delegate set' : 'Delegate cleared', actor: upd.rows[0] });
+    } catch (err) {
+      res.status(500).json({ error: 'Delegate update failed', message: safeErr(err) });
     }
   }
 );
@@ -1409,7 +1476,8 @@ router.put('/:id/tasks/route',
           `SELECT identity_id, display_name, current_task_count, max_tasks
            FROM identities
            WHERE identity_id = $1 AND parent_entity_id = $2
-           AND break_status = 'active'`,
+           AND break_status = 'active'
+           AND hat IN ('act','manager')`,
           [to_actor_id, entity_id]
         );
         if (toActor.rows.length === 0) {
@@ -1433,7 +1501,7 @@ router.put('/:id/tasks/route',
         );
         await db(
           `UPDATE identities
-           SET current_task_count = current_task_count + 1
+           SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
            WHERE identity_id = $1`,
           [to_actor_id]
         );

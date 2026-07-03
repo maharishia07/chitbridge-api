@@ -43,6 +43,84 @@ const calculateSummary = (lineItems) => {
   };
 };
 
+// ─── D1 auto-assign on receipt ─────────────────────────────────
+// Walk the delegate chain when the chosen actor is on leave / not-assignable. Returns an assignable
+// actor id (active + Act/Manager hat) or null. Loop-guarded (visited set + depth cap). Capacity is
+// NOT re-checked here — the default/overflow assignee absorbs excess by design (D1).
+async function resolveDelegateTarget(client, entity_id, actorId) {
+  const seen = new Set(); let cur = actorId; let depth = 0;
+  while (cur && depth < 12) {
+    if (seen.has(cur)) return null;                    // cycle → give up (set-time check is the primary guard)
+    seen.add(cur);
+    const r = (await client.query(
+      `SELECT identity_id, break_status, hat, delegate_actor_id
+         FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
+      [cur, entity_id])).rows[0];
+    if (!r) return null;
+    if (r.break_status === 'active' && (r.hat === 'act' || r.hat === 'manager')) return r.identity_id;
+    cur = r.delegate_actor_id; depth++;                // on leave / not assignable → try their delegate
+  }
+  return null;
+}
+
+// Auto-assign a freshly-received chit per the entity's mode. Atomic + idempotent (skips if already
+// assigned). Caller runs it best-effort AFTER commit so it can never fail the guaranteed chit.
+async function autoAssignReceived(entity_id, chit_id) {
+  await withTransaction(async (client) => {
+    const st = (await client.query(
+      `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
+         FROM entity_actor_settings WHERE entity_id = $1`, [entity_id])).rows[0];
+    const mode = (st && st.auto_assign_mode) || 'off';
+    if (mode === 'off') return;
+    const defMax = (st && st.default_max_tasks) || 10;
+    const defaultAssignee = (st && st.default_assignee_actor_id) || null;
+
+    // Idempotency + scope: only the actionable received copy, still unassigned.
+    const cs = (await client.query(
+      `SELECT assigned_to_actor_id FROM chit_status
+         WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received' AND deleted_at IS NULL`,
+      [chit_id, entity_id])).rows[0];
+    if (!cs || cs.assigned_to_actor_id) return;
+
+    let target = null;
+    if (mode === 'default_assignee') {
+      target = defaultAssignee;
+    } else if (mode === 'least_loaded') {
+      const cand = (await client.query(
+        `SELECT identity_id, max_tasks, current_task_count FROM identities
+           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND break_status = 'active'
+             AND hat IN ('act','manager')
+           ORDER BY current_task_count ASC, last_assigned_at ASC NULLS FIRST
+           LIMIT 10`, [entity_id])).rows;
+      const room = cand.find(a => (a.current_task_count || 0) < (a.max_tasks || defMax));
+      target = room ? room.identity_id : defaultAssignee;   // all full → overflow to the default assignee
+    }
+    if (!target) return;                               // no eligible actor + no default → stays in the pool
+
+    target = await resolveDelegateTarget(client, entity_id, target);   // route past anyone on leave
+    if (!target) return;
+
+    const t = (await client.query(
+      `SELECT identity_id, display_name FROM identities
+         WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
+      [target, entity_id])).rows[0];
+    if (!t) return;
+
+    await client.query(
+      `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
+              assigned_at = NOW(), assignment_type = 'auto', current_status = 'pending', updated_at = NOW()
+        WHERE chit_id = $3 AND entity_id = $4 AND direction = 'received'`,
+      [t.identity_id, t.display_name, chit_id, entity_id]);
+    await client.query(
+      `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`,
+      [t.identity_id]);
+    await client.query(
+      `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
+       VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
+      [chit_id, entity_id, `Auto-assigned to ${t.display_name} (${mode === 'least_loaded' ? 'least-loaded' : 'default assignee'})`]);
+  });
+}
+
 // ─── POST /chits/send ─────────────────────────────────────────
 // Send a chit from sender to one or more receivers
 router.post('/send',
@@ -354,6 +432,15 @@ router.post('/send',
         } catch (e) { console.log('customer auto-add skipped:', e.message); }
       }
 
+      // ── Best-effort auto-assign on receipt (D1) — AFTER commit; never fails the guaranteed chit ──
+      // Only the actionable 'to' copy is auto-assigned; CC/For stay informational. Each receiver entity
+      // resolves against ITS OWN settings/roster (the receiver decides how its inbox auto-assigns).
+      if (!is_draft) for (const receiver of receiverDetails) {
+        if (receiver.kind !== 'to' || !receiver.entity_id) continue;
+        try { await autoAssignReceived(receiver.entity_id, chit_id); }
+        catch (e) { console.log('auto-assign skipped:', e.message); }
+      }
+
       res.json({
         message: is_draft ? 'Draft saved' : 'Chit sent successfully',
         chit_id,
@@ -398,6 +485,14 @@ function chitFilters(req, where, params){
   const at = req.query.assigned_to;
   if (at === 'me')                            { params.push(req.identity.identity_id); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
   else if (at && at !== 'me' && at !== 'all') { params.push(at); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
+  // D4: dispute filter — chits with an OPEN dispute this entity is involved in (raiser / target / listed party / chit-wide).
+  if (req.query.dispute === 'open' || req.query.dispute === 'active') {
+    params.push(req.identity.parent_entity_id || req.identity.identity_id);
+    const e = params.length;
+    where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open'
+                 AND (cd.scope = 'chit_wide' OR cd.raised_by_entity_id = $${e} OR cd.target_entity_id = $${e}
+                      OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $${e})))`;
+  }
   return where;
 }
 
@@ -522,7 +617,17 @@ router.get('/rollup', auth, async (req, res) => {
         ORDER BY chits DESC`,
       params
     );
-    res.json({ group_by: groupBy, direction: dir, groups: result.rows });
+    // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
+    // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
+    const disp = await query(
+      `SELECT COUNT(DISTINCT cs.chit_id)::int AS n
+         FROM chit_status cs
+        WHERE ${where}
+          AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.status = 'open'
+                       AND (cd.scope = 'chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1
+                            OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $1)))`,
+      params).catch(() => ({ rows: [{ n: 0 }] }));
+    res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
     res.status(500).json({ error: 'Rollup failed', message: safeErr(err) });
@@ -903,6 +1008,8 @@ router.post('/:chit_id/messages',
   [
     body('message_text').trim().notEmpty().withMessage('Message text required'),
     body('thread_type').isIn(['external','internal']).withMessage('thread_type must be external or internal'),
+    body('is_dispute').optional().isBoolean(),
+    body('dispute_id').optional({ nullable:true }).isUUID(),
   ],
   validate,
   auth,
@@ -923,14 +1030,17 @@ router.post('/:chit_id/messages',
 
       // NULL visibility = external (all see); entity_id = internal (only sender sees)
       const visibility_entity_id = thread_type === 'internal' ? entity_id : null;
+      // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
+      const isDispute = req.body.is_dispute === true || req.body.is_dispute === 'true';
+      const disputeId = req.body.dispute_id || null;
 
       const result = await query(
         `INSERT INTO chit_messages
            (chit_id, sender_entity_id, sender_display_name,
-            thread_type, visibility_entity_id, message_text, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
          RETURNING *`,
-        [chit_id, entity_id, display_name, thread_type, visibility_entity_id, message_text]
+        [chit_id, entity_id, display_name, thread_type, visibility_entity_id, message_text, isDispute, disputeId]
       );
 
       // Log external messages in state_log so all participants see it in their timeline
@@ -992,6 +1102,9 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
       params = [chit_id, entity_id];
     }
 
+    // D4: dispute-only view — filter the thread to dispute-tagged messages (works after a dispute closes).
+    if (req.query.dispute === '1' || req.query.dispute === 'true') q = q.replace('ORDER BY created_at ASC', 'AND is_dispute = true ORDER BY created_at ASC');
+
     const result = await query(q, params);
     // attach per-message files (bytes pulled on demand via GET /api/attachments/:id)
     const msgIds = result.rows.map(m => m.message_id).filter(Boolean);
@@ -1031,6 +1144,7 @@ router.post('/:chit_id/disputes',
     body('category').isIn(['quality','quantity','delivery','payment','docs','other']).withMessage('Invalid category'),
     body('reason').trim().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'),
     body('target_entity_id').optional({ nullable:true }).isUUID().withMessage('Bad target'),
+    body('participant_entity_ids').optional().isArray().withMessage('participant_entity_ids must be an array'),
     body('chit_wide').optional().isBoolean(),
     body('via').optional().isIn(['chit','mailbox']),
   ],
@@ -1051,8 +1165,12 @@ router.post('/:chit_id/disputes',
         return res.status(400).json({ error:'Invalid target', message:'You cannot raise a dispute against yourself' });
 
       // 3. decide scope + probe parity → mode
-      let scope = (chit_wide || !target_entity_id) ? 'chit_wide' : 'targeted';
-      const parity = await probeParity(chit_id, scope === 'targeted' ? target_entity_id : null);
+      // D4: an explicit party checklist means a TARGETED dispute (only those parties see it), even when no
+      // single target_entity_id is given. Only fall through to chit_wide when NO parties were selected.
+      const selParties = Array.isArray(req.body.participant_entity_ids)
+        ? req.body.participant_entity_ids.filter(x => x && x !== entity_id) : [];
+      let scope = chit_wide ? 'chit_wide' : ((target_entity_id || selParties.length) ? 'targeted' : 'chit_wide');
+      const parity = await probeParity(chit_id, scope === 'targeted' ? (target_entity_id || null) : null);
 
       // 4. platform widen by obligation
       let widened = false;
@@ -1065,6 +1183,17 @@ router.post('/:chit_id/disputes',
             AND COALESCE(target_entity_id::text,'') = COALESCE($4::text,'')`,
         [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]);
       if (dup.rows.length) return res.status(400).json({ error:'Dispute exists', message:`You already have an open ${category} dispute here` });
+
+      // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
+      //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
+      const partyIds = selParties.length
+        ? [...new Set(selParties)]
+        : (scope === 'targeted' && target_entity_id ? [target_entity_id] : []);
+      let partyNames = {};
+      if (partyIds.length) {
+        const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);
+        nm.rows.forEach(r => { partyNames[r.identity_id] = r.display_name; });
+      }
 
       // 6. evidence snapshot — "forward your chit" (survives counterparty erasure)
       const snap = await query(
@@ -1093,6 +1222,24 @@ router.post('/:chit_id/disputes',
           [chit_id, entity_id, entity_id, display_name,
            `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0,80)}`]
         );
+        // D4 — involved-parties roster + per-party status. Raiser is always a participant; each selected
+        // party is added and NOTIFIED on their own copy (derived-notifications feed). Dispute status is
+        // set only for the involved participants, never chit-wide unless the scope says so.
+        const did = result.rows[0].dispute_id;
+        await client.query(
+          `INSERT INTO dispute_participants (dispute_id, chit_id, entity_id, display_name, role, dispute_status)
+           VALUES ($1,$2,$3,$4,'raiser','open') ON CONFLICT (dispute_id, entity_id) DO NOTHING`,
+          [did, chit_id, entity_id, display_name]);
+        for (const pid of partyIds) {
+          await client.query(
+            `INSERT INTO dispute_participants (dispute_id, chit_id, entity_id, display_name, role, dispute_status)
+             VALUES ($1,$2,$3,$4,'party','open') ON CONFLICT (dispute_id, entity_id) DO NOTHING`,
+            [did, chit_id, pid, partyNames[pid] || null]);
+          await client.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+            [chit_id, pid, entity_id, display_name, `Dispute raised against you — ${category}: ${reason.slice(0,80)}`]);
+        }
         return result.rows[0];
       });
       res.json({
@@ -1125,18 +1272,25 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     );
     if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
 
-    // B3.10 — scoped: you see chit-wide disputes, ones you raised, or ones targeting you
+    // B3.10 + D4 — scoped: you see chit-wide disputes, ones you raised/target, or ones you're a listed party to
     const result = await query(
-      `SELECT * FROM chit_disputes
-         WHERE chit_id = $1 AND (scope='chit_wide' OR raised_by_entity_id=$2 OR target_entity_id=$2)
-         ORDER BY created_at ASC`,
+      `SELECT * FROM chit_disputes cd
+         WHERE cd.chit_id = $1 AND (cd.scope='chit_wide' OR cd.raised_by_entity_id=$2 OR cd.target_entity_id=$2
+                OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $2))
+         ORDER BY cd.created_at ASC`,
       [chit_id, entity_id]
     );
+    // D4 — attach the involved-parties roster (best-effort; empty on a pre-migration DB)
+    let partsByD = {};
+    try {
+      const pr = await query(`SELECT dispute_id, entity_id, display_name, role, dispute_status FROM dispute_participants WHERE chit_id = $1`, [chit_id]);
+      pr.rows.forEach(r => { (partsByD[r.dispute_id] = partsByD[r.dispute_id] || []).push(r); });
+    } catch (_) {}
     // evidence_snapshot is PII — expose presence only, never its contents
-    const disputes = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
+    const disputes = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null, participants: partsByD[d.dispute_id] || [] }));
     res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length });
   } catch (err) {
-    if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
+    if (err.message.includes('chit_disputes') || err.message.includes('dispute_participants')) return res.json({ disputes: [], open_count: 0 });
     res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
   }
 });
@@ -1255,6 +1409,15 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
            VALUES ($1, $2, 'dispute_resolved', $3, $4, $5)`,
           [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]
         );
+        // D4 — clear the roster's per-party status and notify each involved party on their own copy.
+        await client.query(`UPDATE dispute_participants SET dispute_status = 'resolved' WHERE dispute_id = $1`, [dispute_id]);
+        const parties = await client.query(`SELECT entity_id FROM dispute_participants WHERE dispute_id = $1 AND entity_id <> $2`, [dispute_id, entity_id]);
+        for (const p of parties.rows) {
+          await client.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+            [chit_id, p.entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]);
+        }
       });
 
       res.json({ dispute_id, status: 'resolved', resolution_note, resolved_by: display_name, message: 'Dispute resolved' });
@@ -1486,6 +1649,10 @@ router.put('/:chit_id/priority-flag',
 router.post('/:chit_id/archive', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    // D4 guard: a chit with an OPEN dispute can't be archived (parity with the delete guard) — resolve first.
+    const openD = await query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
+      [req.params.chit_id]).catch(() => ({ rows: [{ count: 0 }] }));
+    if (openD.rows[0].count > 0) return res.status(409).json({ error: 'Dispute active', message: 'Cannot archive a chit with an open dispute. Resolve the dispute first.' });
     const r = await query(
       `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
         WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL AND archived_at IS NULL
@@ -1648,9 +1815,10 @@ router.post('/assign-bulk',
 
         const target = await client.query(
           `SELECT identity_id, display_name, max_tasks, current_task_count FROM identities
-            WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'`,
+            WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'
+              AND hat IN ('act','manager')`,
           [target_actor_id, entity_id]);
-        if (target.rows.length === 0) { const e = new Error('Target co-assist not found or not on shift'); e.status = 400; throw e; }
+        if (target.rows.length === 0) { const e = new Error('Target co-assist not found, not on shift, or not an assignable hat (Act/Manager)'); e.status = 400; throw e; }
         const t = target.rows[0];
         const cap = t.max_tasks || defMax;
         let load = t.current_task_count || 0;
@@ -1670,7 +1838,7 @@ router.post('/assign-bulk',
                     assigned_at = NOW(), assignment_type = 'push', current_status = 'pending', updated_at = NOW()
               WHERE chit_id = $3 AND entity_id = $4`,
             [t.identity_id, t.display_name, chit_id, entity_id]);
-          await client.query(`UPDATE identities SET current_task_count = current_task_count + 1 WHERE identity_id = $1`, [t.identity_id]);
+          await client.query(`UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`, [t.identity_id]);
           load++;
           await client.query(
             // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the
