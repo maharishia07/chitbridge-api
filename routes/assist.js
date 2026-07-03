@@ -188,11 +188,13 @@ router.post('/publish', auth, async (req, res) => {
     if (!question || !answer) return res.status(422).json({ ok: false, error: 'question and answer are required.' });
     const context  = Array.isArray(b.context) ? b.context.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim()) : [];
 
-    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
-    const helpId = ent.rows[0] && ent.rows[0].identity_id;
-    if (!helpId) return res.status(503).json({ ok: false, error: 'Help entity not provisioned.' });
+    // Generalised (blueprint): the CALLER must be a helpdesk (carries the 'Assistant Q&A' schema); it publishes to
+    // ITS OWN catalogue. GOV-01-Help carries that schema -> backward compatible.
     const sender = req.identity.parent_entity_id || req.identity.identity_id;
-    if (sender !== helpId) return res.status(403).json({ ok: false, error: 'Only the help desk can publish to its catalogue.' });
+    const hd = await query(
+      `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [sender]);
+    if (!hd.rows.length) return res.status(403).json({ ok: false, error: 'Only a help desk can publish to its catalogue.' });
+    const helpId = sender;
 
     // Refine an existing answer when qa_id is supplied and found; else publish new.
     const qaIn = (typeof b.qa_id === 'string' && b.qa_id.trim()) ? b.qa_id.trim() : '';
@@ -269,6 +271,17 @@ router.post('/resolve', auth, async (req, res) => {
     log.info('assist gap resolved', { id: req.id, qa_id, action, by: req.identity && req.identity.identity_id });
     res.json({ ok: true, action: 'approve', changed: r.rowCount });
   } catch (err) { log.error('assist/resolve failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: 'Could not resolve.' }); }
+});
+
+// GET /api/assist/whoami — is the logged-in entity a helpdesk instance? Drives the helpdesk business-layer gate
+// (generalises off the hardcoded 'GOV-01-Help' name). Never throws.
+router.get('/whoami', auth, async (req, res) => {
+  try {
+    const entity = req.identity.parent_entity_id || req.identity.identity_id;
+    const r = await query(
+      `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
+    res.json({ ok: true, is_helpdesk: r.rows.length > 0 });
+  } catch (_) { res.json({ ok: true, is_helpdesk: false }); }
 });
 
 module.exports = router;
