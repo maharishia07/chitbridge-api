@@ -776,99 +776,115 @@ router.get('/:chit_id', auth, async (req, res) => {
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
 
-    // Verify entity participates in this chit
-    const participation = await query(
-      `SELECT 1 FROM chit_header
-       WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    );
+    // B1 RLS: everything here is the caller's OWN copy -> withEntity(me).
+    const data = await withEntity(entity_id, async (db) => {
+      // Verify entity participates in this chit
+      const participation = await db.query(
+        `SELECT 1 FROM chit_header
+         WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+      if (participation.rows.length === 0) return { notFound: true };
 
-    if (participation.rows.length === 0) {
+      // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
+      // Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
+      if (req.identity.identity_type === 'actor') {
+        try {
+          await db.query(
+            `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
+             ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
+            [chit_id, req.identity.identity_id]);
+        } catch (e) { console.error('mark-read skipped:', e.message); }
+      }
+
+      // Get my header
+      const header = await db.query(
+        `SELECT * FROM chit_header
+         WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+
+      // Get my detail — line items if still present
+      const detail = await db.query(
+        `SELECT detail_type, line_item_count, total_value, currency_code,
+                line_items, payload_delivered_at, payload_deleted_at
+         FROM chit_detail
+         WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+
+      // Each participant has their own copy (entity_id = their entity).
+      const log = await db.query(
+        `SELECT action, action_by_display_name, previous_status,
+                new_status, detail, created_at
+         FROM state_log
+         WHERE chit_id = $1 AND entity_id = $2 AND action != 'read'
+         ORDER BY created_at ASC`,
+        [chit_id, entity_id]
+      );
+
+      // Check if first time reading (before update) to decide whether to log it
+      const preCheck = await db.query(
+        `SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+      const wasUnread = !preCheck.rows[0]?.read_at;
+
+      // Update read_at FIRST so the participants panel reflects this read
+      await db.query(
+        `UPDATE chit_status
+         SET read_at = NOW()
+         WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]
+      );
+
+      if (wasUnread) {
+        await db.query(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id,
+            action_by_display_name, detail)
+           VALUES ($1,$2,'read',$3,$4,'Chit opened and read')`,
+          [chit_id, entity_id, entity_id, req.identity.display_name]
+        );
+      }
+      return { header, detail, log };
+    });
+
+    if (data.notFound) {
       return res.status(404).json({
         error: 'Not found',
         message: 'Chit not found or you do not have access'
       });
     }
 
-    // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
-    // Best-effort — never let read-tracking break the chit view (e.g. if the migration lags).
-    if (req.identity.identity_type === 'actor') {
-      try {
-        await query(
-          `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
-           ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
-          [chit_id, req.identity.identity_id]);
-      } catch (e) { console.error('mark-read skipped:', e.message); }
-    }
-
-    // Get my header
-    const header = await query(
-      `SELECT * FROM chit_header
-       WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    );
-
-    // Get my detail — line items if still present
-    const detail = await query(
-      `SELECT detail_type, line_item_count, total_value, currency_code,
-              line_items, payload_delivered_at, payload_deleted_at
-       FROM chit_detail
-       WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    );
-
-    // Each participant has their own copy (entity_id = their entity).
-    // Filtering by entity_id means one party deleting their rows never affects others.
-    const log = await query(
-      `SELECT action, action_by_display_name, previous_status,
-              new_status, detail, created_at
-       FROM state_log
-       WHERE chit_id = $1 AND entity_id = $2 AND action != 'read'
-       ORDER BY created_at ASC`,
-      [chit_id, entity_id]
-    );
-
-    // Check if first time reading (before update) to decide whether to log it
-    const preCheck = await query(
-      `SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    );
-    const wasUnread = !preCheck.rows[0]?.read_at;
-
-    // Update read_at FIRST so allStatuses fetch below reflects this read
-    await query(
-      `UPDATE chit_status
-       SET read_at = NOW()
-       WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    );
-
-    // Get ALL participants status AFTER update — ensures current reader's read_at is fresh
-    const allStatuses = await query(
-      `SELECT cs.entity_id, cs.current_status, cs.read_at,
-              cs.assigned_to_actor_display_name, cs.updated_at,
-              i.display_name, i.bridge_id
-       FROM chit_status cs
-       JOIN identities i ON i.identity_id = cs.entity_id
-       WHERE cs.chit_id = $1`,
-      [chit_id]
-    );
-    if (wasUnread) {
-      await query(
-        `INSERT INTO state_log
-         (chit_id, entity_id, action, action_by_identity_id,
-          action_by_display_name, detail)
-         VALUES ($1,$2,'read',$3,$4,'Chit opened and read')`,
-        [chit_id, entity_id, entity_id, req.identity.display_name]
-      );
+    // Participants panel = a deliberate CROSS-entity read (who has read/accepted). Under RLS it is served by the
+    // b50 SECURITY DEFINER fn chit_participants (validates caller is a participant, then crosses). Fallback to the
+    // direct join when the delivery layer (b50) isn't applied yet, so the page works before/after the migration;
+    // under FORCE without the fn the fallback scopes to self (degraded panel, never a leak).
+    let participants;
+    try {
+      const ps = await withEntity(entity_id, (db) => db.query(`SELECT * FROM chit_participants($1)`, [chit_id]));
+      participants = ps.rows;
+    } catch (e) {
+      if (e && (e.code === '42883' || /chit_participants/.test(e.message || ''))) {
+        const ps = await withEntity(entity_id, (db) => db.query(
+          `SELECT cs.entity_id, cs.current_status, cs.read_at,
+                  cs.assigned_to_actor_display_name, cs.updated_at,
+                  i.display_name, i.bridge_id
+           FROM chit_status cs
+           JOIN identities i ON i.identity_id = cs.entity_id
+           WHERE cs.chit_id = $1`,
+          [chit_id]));
+        participants = ps.rows;
+      } else throw e;
     }
 
     const attachments = await storage.listForChit(chit_id).catch(() => []);
     res.json({
-      header: header.rows[0],
-      detail: detail.rows[0] || null,
-      participants: allStatuses.rows,
-      state_log: log.rows,
+      header: data.header.rows[0],
+      detail: data.detail.rows[0] || null,
+      participants,
+      state_log: data.log.rows,
       attachments
     });
 
