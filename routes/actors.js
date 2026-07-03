@@ -909,6 +909,17 @@ router.put('/break',
         return res.status(400).json({ error: 'Only actors can use break endpoint' });
       }
 
+      // Buddy-cover concurrency: don't leave anyone uncovered when going off (both directions; skip on end_break).
+      if (break_type !== 'end_break') {
+        const deps = (await db(`SELECT display_name FROM identities WHERE delegate_actor_id = $1 AND break_status IN ('short_break','leave')`, [actor_id])).rows;
+        if (deps.length) return res.status(400).json({ error: 'Cover conflict', message: `You're covering ${deps.map(d=>d.display_name).join(', ')} who ${deps.length>1?'are':'is'} away — you can't go off until they're back.` });
+        const me = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
+        if (me && me.delegate_actor_id) {
+          const cov = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [me.delegate_actor_id])).rows[0];
+          if (cov && cov.break_status !== 'active') return res.status(400).json({ error: 'Cover conflict', message: `Your leave-cover ${cov.display_name} is also away — you can't both be off at once.` });
+        }
+      }
+
       if (break_type === 'end_break') {
         // Return from any break
         await db(
@@ -1329,14 +1340,9 @@ router.put('/:id/delegate',
              AND identity_type = 'actor' AND hat IN ('act','manager')`,
           [delegate, entity_id]);
         if (d.rows.length === 0) return res.status(400).json({ error: 'Invalid delegate', message: 'The delegate must be an Act or Manager co-assist of this entity.' });
-        // Loop check: walk the delegate's existing chain; it must not reach back to actorId.
-        const seen = new Set([actorId]); let cur = d.rows[0].delegate_actor_id; let depth = 0;
-        while (cur && depth < 20) {
-          if (cur === actorId || seen.has(cur)) return res.status(400).json({ error: 'Delegation loop', message: 'That delegate eventually routes back here — pick someone else.' });
-          seen.add(cur);
-          const n = await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1 AND parent_entity_id = $2`, [cur, entity_id]);
-          cur = n.rows[0] && n.rows[0].delegate_actor_id; depth++;
-        }
+        // Cycles (buddy pairs: A covers B, B covers A) are ALLOWED for leave-cover. Integrity is protected by
+        // (a) the auto-assign resolver's runtime cycle guard, and (b) the /break concurrency check that stops
+        // two people in a cover relationship from being away at the same time. Only self-delegation is blocked.
       }
 
       const upd = await db(
