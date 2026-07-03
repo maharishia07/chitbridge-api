@@ -9,6 +9,25 @@ const storage = require('../lib/storage');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
+// ── B1 RLS — the crossing helper ─────────────────────────────────────────────────────────────────────────
+// A few chit operations legitimately cross the entity boundary (log an event into every/selected participant,
+// propagate a cancel/void, set the customer flag). Under RLS those are served by the b50/b51 SECURITY DEFINER
+// "delivery-agent" fns. `crossing()` runs the definer inside withEntity(caller); if the delivery layer isn't
+// applied yet (pre-b50), it runs a legacy direct-SQL fallback in its OWN transaction — so a missing-function
+// error can't poison a shared tx, and the feature keeps working before/after the migration. Under FORCE without
+// the fn the fallback fails closed (degraded, never a cross-tenant leak). Once b50 is applied the definer wins.
+const DEFINER_MISSING = /chit_(deliver|participants|log_all|log_targets|set_status_all|set_customer_priority_all)/;
+async function crossing(entity, definerSql, definerParams, fallback) {
+  try {
+    return await withEntity(entity, (db) => db.query(definerSql, definerParams));
+  } catch (e) {
+    if (e && (e.code === '42883' || (e.message && DEFINER_MISSING.test(e.message)))) {
+      return await withEntity(entity, fallback);   // fallback(db) runs the legacy direct SQL in its own tx
+    }
+    throw e;
+  }
+}
+
 // Connection check removed — existence check only
 // Sender can send to any entity that exists in the system
 
@@ -966,58 +985,50 @@ router.put('/:chit_id/status',
         });
       }
 
-      // Update chit_status
-      await query(
+      // Update chit_status — the caller's OWN received copy.
+      await withEntity(entity_id, (db) => db.query(
         `UPDATE chit_status
          SET current_status = $1, updated_at = NOW()
          WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`,
         [new_status, chit_id, entity_id]
-      );
+      ));
 
-      // One log row per participant — each entity owns their copy independently
+      // One log row per participant — a CROSS-entity write, so via the b50 delivery-agent fn chit_log_all
+      // (validated: caller must be a participant). Fallback = the legacy INSERT...SELECT when b50 isn't applied.
       const detail = note ||
         `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`;
 
-      await query(
-        `INSERT INTO state_log
-         (chit_id, entity_id, action, action_by_identity_id,
-          action_by_display_name, previous_status, new_status, detail)
-         SELECT $1, entity_id, $2, $3, $4, $5, $6, $7
-         FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) cs`,
-        [chit_id, `status_${new_status}`,
-         action_by_id, action_by_name,
-         previous_status, new_status, detail]
-      );
+      await crossing(entity_id,
+        `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
+        [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail],
+        (db) => db.query(
+          `INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id,
+            action_by_display_name, previous_status, new_status, detail)
+           SELECT $1, entity_id, $2, $3, $4, $5, $6, $7
+           FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) cs`,
+          [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail]));
 
-      // Get header to check sender and propagate cancellation to receivers
-      const header = await query(
+      // Get header to check sender and propagate cancellation to receivers (own copy).
+      const header = await withEntity(entity_id, (db) => db.query(
         `SELECT sender_entity_id FROM chit_header
          WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
-      );
+      ));
 
       const isSender = header.rows.length > 0 &&
                        header.rows[0].sender_entity_id === entity_id;
 
-      // One log entry per status change — state_log is queried by chit_id only
-      // so all participants already see every entry; no need to duplicate per entity
-
-      // When sender cancels — push cancellation to all receivers
+      // When the sender cancels — terminal cancel on the WHOLE chit (every participant + the sender's own copy,
+      // consistent with /void). CROSS-entity write -> chit_set_status_all (validated: caller must be the sender).
+      // Fallback = a single all-rows update when b50 isn't applied.
       if (isSender && new_status === 'cancelled') {
-        const receivers = await query(
-          `SELECT entity_id FROM chit_status
-           WHERE chit_id = $1 AND entity_id != $2`,
-          [chit_id, entity_id]
-        );
-        for (const r of receivers.rows) {
-          await query(
-            `UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW()
-             WHERE chit_id = $1 AND entity_id = $2`,
-            [chit_id, r.entity_id]
-          );
-          // No separate log insert — the per-participant INSERT...SELECT above
-          // already wrote a cancelled row for every entity on this chit
-        }
+        await crossing(entity_id,
+          `SELECT chit_set_status_all($1,$2)`,
+          [chit_id, 'cancelled'],
+          (db) => db.query(
+            `UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW() WHERE chit_id = $1`,
+            [chit_id]));
       }
 
       res.json({
@@ -1056,10 +1067,11 @@ router.post('/:chit_id/messages',
     const display_name = req.identity.display_name;
 
     try {
-      const access = await query(
+      // B1 RLS: participant access check on own copy -> withEntity(me).
+      const access = await withEntity(entity_id, (db) => db.query(
         `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
-      );
+      ));
       if (access.rows.length === 0) {
         return res.status(403).json({ error: 'Forbidden', message: 'Not a participant on this chit' });
       }
@@ -1079,20 +1091,23 @@ router.post('/:chit_id/messages',
         [chit_id, entity_id, display_name, thread_type, visibility_entity_id, message_text, isDispute, disputeId]
       );
 
-      // Log external messages in state_log so all participants see it in their timeline
+      // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
+      // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
       if (thread_type === 'external') {
-        const participants = await query(
-          // DISTINCT entity: a self-chit has two copies under one entity — log the event once per entity, not per copy.
-          `SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`,
-          [chit_id]
-        );
-        for (const p of participants.rows) {
-          await query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
-          );
-        }
+        await crossing(entity_id,
+          `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
+          [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
+          async (db) => {
+            // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
+            const participants = await db.query(
+              `SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
+            for (const p of participants.rows) {
+              await db.query(
+                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+                [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]);
+            }
+          });
       }
 
       res.json({
