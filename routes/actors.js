@@ -858,7 +858,7 @@ router.put('/:id/status',
           await client.query(
             `UPDATE identities
              SET break_status = 'deactivated', deactivated_at = NOW(), deactivated_by = $1,
-                 return_date = $2, otp_code = NULL
+                 return_date = $2, otp_code = NULL, delegate_actor_id = NULL
              WHERE identity_id = $3`,
             [req.identity.identity_id, return_date || null, actor_id]
           );
@@ -866,11 +866,14 @@ router.put('/:id/status',
           await client.query(
             `UPDATE identities
              SET break_status = 'removed', removed_at = NOW(), removed_by = $1,
-                 otp_code = NULL, otp_expires_at = NULL
+                 otp_code = NULL, otp_expires_at = NULL, delegate_actor_id = NULL
              WHERE identity_id = $2`,
             [req.identity.identity_id, actor_id]
           );
         }
+        // Cover cleanup: a deactivated/removed actor can no longer be anyone's leave-cover — clear inbound
+        // pointers too (its own cover pointer was cleared above). Leaves no dangling cover to a gone actor.
+        await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [actor_id, entity_id]);
       });
 
       res.json({
