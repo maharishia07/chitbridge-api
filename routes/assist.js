@@ -194,6 +194,17 @@ router.post('/publish', auth, async (req, res) => {
     const sender = req.identity.parent_entity_id || req.identity.identity_id;
     if (sender !== helpId) return res.status(403).json({ ok: false, error: 'Only the help desk can publish to its catalogue.' });
 
+    // Refine an existing answer when qa_id is supplied and found; else publish new.
+    const qaIn = (typeof b.qa_id === 'string' && b.qa_id.trim()) ? b.qa_id.trim() : '';
+    if (qaIn) {
+      const upd = await query(
+        `UPDATE catalogue_items
+            SET item_data = item_data || jsonb_build_object('question',$3::text,'answer',$4::text,'context',$5::jsonb,'status','approved'),
+                is_active = true, updated_at = now()
+          WHERE entity_id = $1 AND item_data->>'qa_id' = $2`,
+        [helpId, qaIn, question, answer, JSON.stringify(context)]);
+      if (upd.rowCount) { log.info('assist updated', { id: req.id, qa_id: qaIn }); return res.json({ ok: true, qa_id: qaIn, updated: true }); }
+    }
     const sch = await query(`SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [helpId]);
     const schema_id = sch.rows[0] ? sch.rows[0].schema_id : null;
     const qaId = 'pub_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
