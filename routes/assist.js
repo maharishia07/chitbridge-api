@@ -12,6 +12,7 @@ const router  = express.Router();
 const jwt     = require('jsonwebtoken');
 const { safeErr } = require('../lib/respond');
 const log     = require('../lib/logger');
+const { query } = require('../db');              // DB access for the Q&A library (assist_qa)
 const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
@@ -117,6 +118,25 @@ router.post('/', async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ error: 'Assistant error', message: safeErr(err) });
+  }
+});
+
+// GET /api/assist/questions?context=<screen> — the assistant Q&A library, served FROM THE DB (single source of
+// truth; also the grounding feed for the model). PUBLIC (works pre-auth on welcome/login/register). Returns
+// entries whose context matches the screen OR '*'; no context -> all active. Shape: {ok:true, data:[{id,q,a,...}]}.
+router.get('/questions', async (req, res) => {
+  try {
+    const ctx = (req.query && typeof req.query.context === 'string') ? req.query.context.slice(0, 64).trim() : '';
+    const params = [];
+    let where = 'active = true';
+    if (ctx) { params.push(ctx); where += ` AND ($1 = ANY(context) OR '*' = ANY(context))`; }
+    const r = await query(
+      `SELECT id, question AS q, answer AS a, topics, context, fit, media
+         FROM assist_qa WHERE ${where} ORDER BY sort, id`, params);
+    res.json({ ok: true, data: r.rows });
+  } catch (err) {
+    log.error('assist/questions failed', { id: req.id, err: err.message });
+    res.status(500).json({ ok: false, error: 'Could not load assistant questions.' });
   }
 });
 
