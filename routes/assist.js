@@ -140,4 +140,41 @@ router.get('/questions', async (req, res) => {
   }
 });
 
+// POST /api/assist/gap — capture a question the assistant could NOT answer, as a DRAFT under the Help entity.
+// item_data.status='gap', is_active=false => the projection trigger keeps it OUT of serving until a human answers +
+// approves it in review (#3). Public + rate-limited (assistLimiter on /api/assist). Deduped by normalised question.
+router.post('/gap', async (req, res) => {
+  try {
+    const question = (req.body && typeof req.body.q === 'string')       ? req.body.q.trim()             : '';
+    const context  = (req.body && typeof req.body.context === 'string') ? req.body.context.slice(0, 64) : '';
+    if (!question || question.length < 3) return res.status(422).json({ ok: false, error: 'Ask a question.' });
+    if (question.length > 400)            return res.status(422).json({ ok: false, error: 'Question is too long.' });
+
+    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
+    const entity_id = ent.rows[0] && ent.rows[0].identity_id;
+    if (!entity_id) return res.status(503).json({ ok: false, error: 'Help entity not provisioned.' });
+    const sch = await query(
+      `SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [entity_id]);
+    const schema_id = sch.rows[0] ? sch.rows[0].schema_id : null;
+
+    // dedup: same question already captured as a gap?
+    const dup = await query(
+      `SELECT 1 FROM catalogue_items
+        WHERE entity_id = $1 AND item_data->>'status' = 'gap'
+          AND lower(item_data->>'question') = lower($2) LIMIT 1`, [entity_id, question]);
+    if (dup.rows.length) return res.json({ ok: true, deduped: true });
+
+    const qaId = 'gap_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const item_data = { qa_id: qaId, question, answer: '', context: context ? [context] : [], topics: [], fit: null, media: null, status: 'gap' };
+    await query(
+      `INSERT INTO catalogue_items (entity_id, schema_id, item_data, is_active) VALUES ($1, $2, $3, false)`,
+      [entity_id, schema_id, JSON.stringify(item_data)]);
+    log.info('assist gap captured', { id: req.id, context, len: question.length });
+    res.json({ ok: true, captured: true });
+  } catch (err) {
+    log.error('assist/gap failed', { id: req.id, err: err.message });
+    res.status(500).json({ ok: false, error: 'Could not capture the question.' });
+  }
+});
+
 module.exports = router;
