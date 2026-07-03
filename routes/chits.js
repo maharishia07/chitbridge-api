@@ -16,16 +16,29 @@ const auth = require('../middleware/auth');
 // applied yet (pre-b50), it runs a legacy direct-SQL fallback in its OWN transaction — so a missing-function
 // error can't poison a shared tx, and the feature keeps working before/after the migration. Under FORCE without
 // the fn the fallback fails closed (degraded, never a cross-tenant leak). Once b50 is applied the definer wins.
-const DEFINER_MISSING = /chit_(deliver|participants|log_all|log_targets|set_status_all|set_customer_priority_all)/;
-async function crossing(entity, definerSql, definerParams, fallback) {
+// Are the b50/b51/b52 delivery-agent fns installed? Latches true once seen; keeps re-probing while false, so it
+// self-heals when the migration lands (no restart needed). A tenant-table-free probe -> the RLS guard stays silent.
+let _definersReady = false;
+async function definersReady() {
+  if (_definersReady) return true;
   try {
+    const r = await query(
+      `SELECT (to_regprocedure('chit_deliver(uuid,boolean,jsonb)') IS NOT NULL
+           AND to_regprocedure('chit_log_targets(uuid,uuid[],text,uuid,text,text)') IS NOT NULL
+           AND to_regprocedure('chit_participant_parity(uuid,uuid)') IS NOT NULL) AS ok`);
+    _definersReady = !!(r.rows[0] && r.rows[0].ok);
+  } catch (_) { /* leave false — fall back to legacy */ }
+  return _definersReady;
+}
+
+// Run a b50/b51/b52 definer inside withEntity(caller); before the delivery layer is applied, run the legacy
+// direct-SQL fallback instead (fallback(db) receives the tx client). Keeps every crossing feature working
+// before/after the migration; once the fns exist the definer path wins, so writes cross safely + audited.
+async function crossing(entity, definerSql, definerParams, fallback) {
+  if (await definersReady()) {
     return await withEntity(entity, (db) => db.query(definerSql, definerParams));
-  } catch (e) {
-    if (e && (e.code === '42883' || (e.message && DEFINER_MISSING.test(e.message)))) {
-      return await withEntity(entity, fallback);   // fallback(db) runs the legacy direct SQL in its own tx
-    }
-    throw e;
   }
+  return await withEntity(entity, fallback);
 }
 
 // Connection check removed — existence check only
@@ -1177,14 +1190,18 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
 const WIDEN_CATEGORIES = (process.env.CB_DISPUTE_WIDEN_CATEGORIES || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 
-async function probeParity(chit_id, target_entity_id) {
+async function probeParity(chit_id, target_entity_id, caller_entity_id) {
   if (!target_entity_id) return { parity_state: null, mode: 'two_sided', answerable: true, target_display_name: null };
   const idn = await query(`SELECT display_name, status, is_erased FROM identities WHERE identity_id=$1`, [target_entity_id]);
   if (idn.rows.length === 0) return { parity_state:'absent', mode:'one_sided', answerable:false, target_display_name:'[unknown]' };
   const t = idn.rows[0];
   if (t.is_erased)            return { parity_state:'erased', mode:'one_sided', answerable:false, target_display_name:'[erased]' };
   if (t.status !== 'active')  return { parity_state:'defunct', mode:'one_sided', answerable:false, target_display_name:t.display_name };
-  const cs = await query(`SELECT deleted_at FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, target_entity_id]);
+  // Cross-entity read of the counterparty's copy -> b52 chit_participant_parity (validated participant);
+  // fallback to the legacy direct read pre-b52. Same row-presence semantics either way.
+  const cs = await crossing(caller_entity_id,
+    `SELECT * FROM chit_participant_parity($1,$2)`, [chit_id, target_entity_id],
+    (db) => db.query(`SELECT deleted_at FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, target_entity_id]));
   if (cs.rows.length === 0)   return { parity_state:'absent', mode:'one_sided', answerable:false, target_display_name:t.display_name };
   if (cs.rows[0].deleted_at)  return { parity_state:'archived', mode:'two_sided', answerable:true, target_display_name:t.display_name };
   return { parity_state:'present', mode:'two_sided', answerable:true, target_display_name:t.display_name };
@@ -1209,7 +1226,7 @@ router.post('/:chit_id/disputes',
     const display_name = req.identity.display_name;
     try {
       // 1. raiser must be a participant
-      const access = await query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+      const access = await withEntity(entity_id, (db) => db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]));
       if (access.rows.length === 0) return res.status(403).json({ error:'Not a participant' });
 
       // 2. can't target yourself
@@ -1222,7 +1239,7 @@ router.post('/:chit_id/disputes',
       const selParties = Array.isArray(req.body.participant_entity_ids)
         ? req.body.participant_entity_ids.filter(x => x && x !== entity_id) : [];
       let scope = chit_wide ? 'chit_wide' : ((target_entity_id || selParties.length) ? 'targeted' : 'chit_wide');
-      const parity = await probeParity(chit_id, scope === 'targeted' ? (target_entity_id || null) : null);
+      const parity = await probeParity(chit_id, scope === 'targeted' ? (target_entity_id || null) : null, entity_id);
 
       // 4. platform widen by obligation
       let widened = false;
@@ -1248,14 +1265,17 @@ router.post('/:chit_id/disputes',
       }
 
       // 6. evidence snapshot — "forward your chit" (survives counterparty erasure)
-      const snap = await query(
+      const snap = await withEntity(entity_id, (db) => db.query(
         `SELECT ch.auto_subject, ch.summary_json, cs.current_status AS my_status
            FROM chit_header ch JOIN chit_status cs ON cs.chit_id=ch.chit_id AND cs.entity_id=$2
-          WHERE ch.chit_id=$1`, [chit_id, entity_id]);
+          WHERE ch.chit_id=$1`, [chit_id, entity_id]));
       const evidence = { ...(snap.rows[0] || {}), captured_at: new Date().toISOString(), via };
 
-      // 7 + 8. insert dispute + timeline atomically (INV-2)
-      const d = await withTransaction(async (client) => {
+      // 7 + 8. insert dispute + timeline atomically (INV-2). chit_disputes/dispute_participants are not RLS-scoped
+      // and the raiser's OWN state_log is entity_id=caller, so all run in withEntity(me); the per-party notices are
+      // a CROSS write into each party's own state_log -> chit_log_targets (validated participant), legacy loop pre-b50.
+      const ready = await definersReady();
+      const d = await withEntity(entity_id, async (client) => {
         const result = await client.query(
           `INSERT INTO chit_disputes
              (chit_id, raised_by_entity_id, raised_by_display_name, target_entity_id, target_display_name,
@@ -1287,10 +1307,21 @@ router.post('/:chit_id/disputes',
             `INSERT INTO dispute_participants (dispute_id, chit_id, entity_id, display_name, role, dispute_status)
              VALUES ($1,$2,$3,$4,'party','open') ON CONFLICT (dispute_id, entity_id) DO NOTHING`,
             [did, chit_id, pid, partyNames[pid] || null]);
-          await client.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-            [chit_id, pid, entity_id, display_name, `Dispute raised against you — ${category}: ${reason.slice(0,80)}`]);
+        }
+        // Per-party timeline notices — CROSS write into each party's own state_log copy.
+        if (partyIds.length) {
+          const notice = `Dispute raised against you — ${category}: ${reason.slice(0,80)}`;
+          if (ready) {
+            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
+              [chit_id, partyIds, 'dispute_raised', entity_id, display_name, notice]);
+          } else {
+            for (const pid of partyIds) {
+              await client.query(
+                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+                 VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+                [chit_id, pid, entity_id, display_name, notice]);
+            }
+          }
         }
         return result.rows[0];
       });
@@ -1454,7 +1485,10 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it' });
       }
 
-      await withTransaction(async (client) => {
+      // chit_disputes/dispute_participants are not RLS-scoped and the resolver's own state_log is entity_id=caller,
+      // so all run in withEntity(me); the per-party notices are a CROSS write -> chit_log_targets, legacy loop pre-b50.
+      const ready = await definersReady();
+      await withEntity(entity_id, async (client) => {
         await client.query(
           `UPDATE chit_disputes
            SET status = 'resolved', resolution_note = $1, resolved_by_entity_id = $2, resolved_at = NOW()
@@ -1470,11 +1504,20 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         // D4 — clear the roster's per-party status and notify each involved party on their own copy.
         await client.query(`UPDATE dispute_participants SET dispute_status = 'resolved' WHERE dispute_id = $1`, [dispute_id]);
         const parties = await client.query(`SELECT entity_id FROM dispute_participants WHERE dispute_id = $1 AND entity_id <> $2`, [dispute_id, entity_id]);
-        for (const p of parties.rows) {
-          await client.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-            [chit_id, p.entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]);
+        const partyIds = parties.rows.map(p => p.entity_id);
+        if (partyIds.length) {
+          const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`;
+          if (ready) {
+            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
+              [chit_id, partyIds, 'dispute_resolved', entity_id, display_name, notice]);
+          } else {
+            for (const p of parties.rows) {
+              await client.query(
+                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+                 VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+                [chit_id, p.entity_id, entity_id, display_name, notice]);
+            }
+          }
         }
       });
 
