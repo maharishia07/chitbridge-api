@@ -1262,7 +1262,8 @@ router.put('/settings',
   validate,
   async (req, res) => {
     try {
-      const entity_id = req.identity.identity_id;
+      // Settings are entity-level. Actors resolve to their parent entity (must match GET /settings).
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
       const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
               auto_assign_mode, default_assignee_actor_id } = req.body;
 
@@ -1279,7 +1280,7 @@ router.put('/settings',
         `INSERT INTO entity_actor_settings
            (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
             auto_assign_mode, default_assignee_actor_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         VALUES ($1, COALESCE($2,'both'), COALESCE($3,10), COALESCE($4,false), COALESCE($5,false), COALESCE($6,'off'), $7)
          ON CONFLICT (entity_id) DO UPDATE SET
            assignment_model = COALESCE($2, entity_actor_settings.assignment_model),
            default_max_tasks = COALESCE($3, entity_actor_settings.default_max_tasks),
