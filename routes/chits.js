@@ -299,7 +299,7 @@ router.post('/send',
       // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
       //    and other send-time rules will plug in here when we build Suppliers.) ──
       if (promote_draft_id) {
-        const dchk = await query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]);
+        const dchk = await withEntity(sender_id, (db) => db.query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]));
         if (dchk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
         if (dchk.rows[0].role !== 'Draft') return res.status(400).json({ error: 'Not a draft', message: 'This chit has already been sent' });
       }
@@ -352,7 +352,46 @@ router.post('/send',
       const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
       const created_by_actor_id   = req.identity.identity_id;   // who actually pressed send
 
-      // ── Guaranteed write: every row for this chit commits together, or none do (INV-2) ──
+      // ── Compose the per-participant copies for the delivery layer (SENDER always; RECEIVERS unless draft).
+      //    Every copy carries the SAME sender = the caller, which is chit_deliver's isolation gate. ──
+      const headerCommon = {
+        sender_entity_id: sender_id, sender_entity_bridge_id: sender_bridge_id,
+        sender_entity_display_name: sender_display_name, all_recipients, purpose,
+        auto_subject, manual_subject: manual_subject || null, summary_json,
+        schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
+        detail_type: purpose, line_item_count: summary.line_item_count,
+        total_value: summary.total_value, currency_code: summary_json.currency_code,
+      };
+      const mkCopy = (extra) => {
+        const c = { ...headerCommon, ...extra };
+        if (business_json) c.business_json = business_json;     // omit -> SQL NULL (matches legacy)
+        if (line_items.length > 0) c.line_items = line_items;   // omit -> SQL NULL
+        return c;
+      };
+      const copies = [ mkCopy({
+        entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
+        current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
+        log: { action: 'created', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
+               new_status: 'delivered', detail: `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}` },
+      }) ];
+      if (!is_draft) for (const receiver of receiverDetails) {
+        const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered';   // To acts; CC/For informational
+        copies.push(mkCopy({
+          entity_id: receiver.entity_id, direction: 'received', role: receiver.role,
+          current_status: rcv_status, priority_flag: 'normal',
+          log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
+                 new_status: rcv_status, detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})` },
+        }));
+      }
+
+      // ── Guaranteed write: every row for this chit commits together, or none do (INV-2). Delivery is a substrate
+      //    op (writes each participant's copy, incl. receivers) -> the b50 SECURITY DEFINER fn chit_deliver, run in
+      //    withEntity(sender). Fallback to the legacy in-tx fan-out when b50 isn't applied. ──
+      if (await definersReady()) {
+        await withEntity(sender_id, (db) => db.query(
+          `SELECT chit_deliver($1,$2,$3::jsonb)`,
+          [chit_id, !!promote_draft_id, JSON.stringify(copies)]));
+      } else {
       await withTransaction(async (client) => {
         if (promote_draft_id) {   // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
           await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
@@ -443,25 +482,30 @@ router.post('/send',
           );
         }
       });
+      }
 
       // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
+      // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
+      // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
       if (!is_draft) for (const receiver of receiverDetails) {
         try {
-          const isSupplier = await query(
-            `SELECT 1 FROM supplier_list
-              WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
-            [sender_id, receiver.entity_id]
-          );
-          if (isSupplier.rows.length === 0) {
-            await query(
-              `INSERT INTO customer_list
-                 (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-               VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
-               ON CONFLICT (owner_entity_id, customer_identity_id)
-               DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
+          await withEntity(sender_id, async (db) => {
+            const isSupplier = await db.query(
+              `SELECT 1 FROM supplier_list
+                WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
               [sender_id, receiver.entity_id]
             );
-          }
+            if (isSupplier.rows.length === 0) {
+              await db.query(
+                `INSERT INTO customer_list
+                   (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+                 VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
+                 ON CONFLICT (owner_entity_id, customer_identity_id)
+                 DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
+                [sender_id, receiver.entity_id]
+              );
+            }
+          });
         } catch (e) { console.log('customer auto-add skipped:', e.message); }
       }
 
@@ -950,11 +994,12 @@ router.put('/:chit_id/status',
       const note = sanitise(req.body.note || '');
 
       // Get current status
-      const current = await query(
+      // B1 RLS: own received-copy read -> withEntity(me).
+      const current = await withEntity(entity_id, (db) => db.query(
         `SELECT current_status FROM chit_status
          WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'`,
         [chit_id, entity_id]
-      );
+      ));
 
       if (current.rows.length === 0) {
         return res.status(404).json({
