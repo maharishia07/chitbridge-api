@@ -64,13 +64,11 @@ GET  /actors?status=all                              -> includes deactivated; br
 # negative: assign to non-Act/Manager hat -> 400; delegate to self -> 400; delegate to non-Act/Manager -> 400
 ```
 
-## Modularity / delayed-loading (recheck + target)
-- **Now:** `core.js` (client) + `helpers.js` (eager leaves) + capability loader (`ensureCap`/`CAP_OF`) done; `cap-admin.js` (MIS/Profile/Settings) is **lazy**. **Co-assists is still EAGER** in the inline Core.
-- **Target — extract to a lazy `cap-workforce` capability** (co-assists + future leave/shift/wage load on demand):
-  - MOVE to `app/cap-workforce.js`: coassistsScreen, acVisible/acRowHTML/acRowsHTML/paintAcList/paintAcDetail, selectActor/setAcMode/setAcFlt/acDetailHTML, acReinvite/acResetPin/acStatus/saveActor, loadCoassists, addActorModal/submitActor, actorInviteModal/actorCleanupModal, acLbl/acType/AC_TYPE/acShc/acShLabel/acFlt/acDate/acLogin, coId/acIdPrev/entBiz/defActorHandle.
-  - KEEP in Core (assign pickers use them): `mapApiActor`, `hatLabel`, `hatAssignable`, `HAT_LABEL`, `confirmAsk` (general).
-  - `CAP_OF = { …, coassists:'workforce' }`; remove from inline; validate (node --check + inline vm check); test-after (R-U* above). Same pattern as `cap-admin`.
-- **Verify lazy-loading:** DevTools Network — `cap-*.js` fetched **on first open** of its screen, cached after; Core screens never trigger a cap fetch.
+## Modularity / delayed-loading (DONE — co-assist is now lazy)
+- **Now:** `core.js` + `helpers.js` (eager) + capability loader (`ensureCap`/`CAP_OF`). Lazy caps: `cap-admin.js` (MIS/Profile/Settings), **`cap-workforce.js` (co-assists)**, **`cap-help.js` (help/assistant content)**.
+- **`cap-workforce.js` (functionality)** — `CAP_OF.coassists='workforce'`. Moved: coassistsScreen, acVisible/acRowHTML/acRowsHTML/paintAcList/paintAcDetail, selectActor/setAcMode/setAcFlt/acDetailHTML, acReinvite/acResetPin/acStatus/saveActor, loadCoassists. **Kept in Core** (shared / inline / small leaves): `mapApiActor`, `hatLabel`/`hatAssignable`/`HAT_LABEL` (assign pickers), `acLbl`/`acType`/`acShc`/`acShLabel`/`acFlt`/`acDate`/`acLogin`, `addActorModal`/`submitActor`/`actorInviteModal`/`actorCleanupModal`/`confirmAsk`, `coId`/`acIdPrev`/`entBiz`/`defActorHandle` — the moved cap references them at runtime (Core is eager, loaded first).
+- **`cap-help.js` (content, NOT functionality)** — help/assistant is not always called, so its libraries download only on first use. Moved: `CO_HELP`, `ASSIST_LIB` (seed), `COMPOSE_HELP`. `openHelp`/`openAssist` are now thin **gated stubs** (`ensureCap('help').then(_openHelpImpl/_openAssistImpl)`); the assist engine (helpBoxFromLib/buildAssistLib/matchLibrary/assistSuggest…) stays in Core and touches the arrays only post-gate. **Kept eager in Core:** `HELP_PACKS`/`menuAssist`/`ASSIST_PAGES`/`PURPOSE` (rendered INLINE in a few screens → can't be async). Further-split candidate: make inline `menuAssist` lazy too.
+- **Verify lazy-loading (R-cap):** DevTools Network — `cap-workforce.js` fetched **on first open of Co-assists** (not before); `cap-help.js` fetched **on first "?" or 💬** (not before); both cached after. Core screens never trigger a cap fetch. Functionality is unchanged — only *when* it loads changed.
 
 ## Automation TODO
 - Wire the API assertion sketch into a runnable `scripts/coassist-suite.*` (mirrors `isolation-suite`), green in CI.
