@@ -600,7 +600,9 @@ router.get('/sent', auth, async (req, res) => {
     const result = await db.query(
       `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
-              cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag
+              cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag,
+              (SELECT COUNT(*) FROM chit_disputes cd
+                WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count
          ${joinFrom}
         WHERE ${where}
         ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
