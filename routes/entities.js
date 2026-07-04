@@ -226,7 +226,11 @@ router.get('/me', auth, async (req, res) => {
       capabilities_debug = (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8)
         + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
     } catch (e) { capabilities_debug = 'ERR: ' + String((e && e.message) || e).slice(0, 140); }
-    res.json({ entity: result.rows[0], capabilities, capabilities_debug });
+    // NOTE: the web client's api() runs every body through unwrap(), which returns j.entity for /me and
+    // DROPS sibling keys. So the capability selection MUST ride INSIDE entity to reach SESSION.capabilities
+    // (which gates the itemised capability nav). Top-level copies kept for direct/API callers + curl. [b55/connector]
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug });
+    res.json({ entity: entityOut, capabilities, capabilities_debug });
   } catch (err) {
     console.error('Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
