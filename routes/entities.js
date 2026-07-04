@@ -218,12 +218,15 @@ router.get('/me', auth, async (req, res) => {
     // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles. [b55/connector]
     // Defensive: defaults to [] if the b55 column isn't present in this environment.
     let capabilities = [];
+    let capabilities_debug = 'ok';
     try {
-      const c = await query('SELECT capabilities FROM identities WHERE identity_id = $1',
-        [req.identity.parent_entity_id || req.identity.identity_id]);
+      const eid = req.identity.parent_entity_id || req.identity.identity_id;
+      const c = await query('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
-    } catch (_) {}
-    res.json({ entity: result.rows[0], capabilities });
+      capabilities_debug = (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8)
+        + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
+    } catch (e) { capabilities_debug = 'ERR: ' + String((e && e.message) || e).slice(0, 140); }
+    res.json({ entity: result.rows[0], capabilities, capabilities_debug });
   } catch (err) {
     console.error('Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
