@@ -1068,6 +1068,10 @@ router.put('/assign/:chit_id',
       const action_by_name = req.identity.display_name;
       const { action, target_actor_id } = req.body;
 
+      // B1 RLS: the whole assignment (chit_status + state_log, all own-entity) runs in withEntity(me); `db` is
+      // shadowed to the tx client so the existing calls flow through the context (and the assign becomes atomic).
+      await withEntity(entity_id, async (client) => {
+      const db = (t, p) => client.query(t, p);
       // Verify chit belongs to this entity
       const chit = await db(
         `SELECT cs.*, i.display_name as actor_name
@@ -1250,6 +1254,7 @@ router.put('/assign/:chit_id',
           action: 'return'
         });
       }
+      });
 
     } catch (err) {
       console.error('Assign error:', err.message);
@@ -1406,8 +1411,8 @@ router.get('/:id/tasks',
 
       const a = actor.rows[0];
 
-      // Get all chits assigned to this actor under this entity
-      const tasks = await db(
+      // Get all chits assigned to this actor under this entity — B1 RLS: withEntity(me).
+      const tasks = await withEntity(entity_id, (c) => c.query(
         `SELECT
            cs.chit_id,
            cs.current_status,
@@ -1426,7 +1431,7 @@ router.get('/:id/tasks',
          AND cs.current_status NOT IN ('completed','cancelled','rejected')
          ORDER BY cs.created_at ASC`,
         [entity_id, actor_id]
-      );
+      ));
 
       res.json({
         actor: {
@@ -1463,6 +1468,10 @@ router.put('/:id/tasks/route',
         return res.status(400).json({ error: 'chit_id and action required' });
       }
 
+      // B1 RLS: the whole route op (chit_status + state_log, own-entity) runs in withEntity(me); `db` shadowed to
+      // the tx client so the existing calls flow through the context (and become atomic).
+      await withEntity(entity_id, async (client) => {
+      const db = (t, p) => client.query(t, p);
       // Verify chit belongs to this entity and is assigned to actor
       const chit = await db(
         `SELECT chit_id, assigned_to_actor_id
@@ -1555,6 +1564,7 @@ router.put('/:id/tasks/route',
       }
 
       res.status(400).json({ error: 'Invalid action' });
+      });
 
     } catch (err) {
       console.error('Route task error:', err.message);
