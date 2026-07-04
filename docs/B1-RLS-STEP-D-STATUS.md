@@ -33,15 +33,16 @@ smoke-safe before/after the migration. `autoAssignReceived` binds to the **recei
 
 | Table | Routes migrated? | Blocker to enabling |
 |---|---|---|
-| `chit_header` | chits.js ✅ · governance.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
-| `chit_status` | chits.js ✅ · attachments.js ✅ · actors.js ✅ · notifications.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
-| `chit_detail` | chits.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
-| `state_log` | chits.js ✅ · actors.js ✅ · connections.js ✅ · notifications.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
+| `chit_header` | chits.js ✅ · governance.js ✅ · catalogue.js order ✅ | **none — ready to enable** ✅ |
+| `chit_status` | chits.js ✅ · attachments.js ✅ · actors.js ✅ · notifications.js ✅ · catalogue.js order ✅ | **none — ready to enable** ✅ |
+| `chit_detail` | chits.js ✅ · catalogue.js order ✅ | **none — ready to enable** ✅ |
+| `state_log` | chits.js ✅ · actors.js ✅ · connections.js ✅ · notifications.js ✅ · catalogue.js order ✅ | **none — ready to enable** ✅ |
 | `catalogue_items` | products ✅ · browse reads ✅ (visibility policy) · **assist ❌** | assist help-KB writes — should route via a chit, not a direct write (see below) |
 | `customer_list` | send ✅ · relationships ✅ · catalogue ✅ | **none — ready to enable** ✅ |
 
-**As of this run, the ONLY route work left for the chit tables is `catalogue.js` order/confirm fan-out** — once that's
-done, `chit_header/status/detail` + `state_log` are fully covered. `catalogue_items` waits on the `assist.js` rework.
+**Route migration is COMPLETE for 5 of the 6 tables** — `chit_header/status/detail`, `state_log`, `customer_list`
+are fully covered and ready for the RED→GREEN proof. **`catalogue_items` is the only one waiting**, on the
+`assist.js` rework (gap-capture should send a chit to the help desk, not write its catalogue directly).
 
 `customer_list` is fully covered — it can be the first table enabled in the RED/GREEN proof.
 
@@ -73,10 +74,10 @@ order reprice → `withEntity(null)`; `my-orders` → `withEntity(me)`. So `cata
   respond-**sender** `state_log` write (into the OTHER entity's copy) was **removed**: it violated the owner-only
   rule and was dead data (connection `state_log` is never surfaced — the feed joins `chit_status`, which connections
   lack). The sender learns of the response from the `connections` table via `GET /connections/list`.
-- **`catalogue.js` order/confirm fan-out** — ⏳ **THE LAST REMAINING FILE.** A **delivery** (writes customer + shop
-  copies), so conceptually `chit_deliver` — BUT it atomically consumes the customer OTP (`identities` update) in the
-  same tx, sets **no `direction`**, and the sender is a `customer` identity. Not a clean drop-in; needs a focused
-  pass to preserve INV-2 atomicity (extend `chit_deliver` to take the OTP step, or a dedicated `order_deliver` definer).
+- **`catalogue.js` order/confirm fan-out** — ✅ DONE. Routed through `chit_deliver` in `withEntity(customer)` with
+  the OTP consume in the same tx; legacy inline fan-out kept as a pre-b50 fallback (block-level catch on
+  undefined_function, so a missing `chit_deliver` rolls back the whole tx incl. the OTP and the fallback redoes it —
+  INV-2 preserved). Minor benign delta: `chit_ref` is now `chit_id` (was NULL), matching `/send`.
 - **`assist.js`** — ⏳ **REWORK, not a straight migration.** `publish` writes the caller's OWN catalogue (fine →
   `withEntity(me)`). But `/gap` + `/resolve` write into the **help entity's** catalogue from an outside caller, which
   the owner-only WITH CHECK forbids. Gap-capture should **send a chit** to the help desk (`chit_deliver`), not write
