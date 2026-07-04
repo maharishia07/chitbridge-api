@@ -37,25 +37,27 @@ smoke-safe before/after the migration. `autoAssignReceived` binds to the **recei
 | `chit_status` | chits.js ✅ · attachments.js ✅ · actors.js ❌ · notifications.js ❌ · catalogue.js order ❌ | actors, notifications, catalogue order |
 | `chit_detail` | chits.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
 | `state_log` | chits.js ✅ · actors.js ❌ · connections.js ❌ · notifications.js ❌ · catalogue.js order ❌ | actors, connections, notifications, catalogue order |
-| `catalogue_items` | products ✅ · **browse reads ❌** · assist ❌ | **the privacy decision below** + assist |
+| `catalogue_items` | products ✅ · browse reads ✅ (visibility policy) · **assist ❌** | assist help-KB writes — should route via a chit, not a direct write (see below) |
 | `customer_list` | send ✅ · relationships ✅ · catalogue ✅ | **none — ready to enable** ✅ |
 
 `customer_list` is fully covered — it can be the first table enabled in the RED/GREEN proof.
 
-## THE decision you need to make: is `catalogue_items` private or browsable?
+## `catalogue_items` — DECIDED & IMPLEMENTED (Athi 2026-07-04): visibility-aware policy
 
-`relationships.js` (`GET /catalogue/:supplier`) and `catalogue.js` (public catalogue) **read other entities'**
-`catalogue_items` (`WHERE entity_id = <a supplier's id> AND is_active = true`) — a **marketplace browse**. That is an
-**intended cross-entity read**, which *contradicts* putting `catalogue_items` in strict entity-private RLS (the
-guidance's Direct group). Two ways to resolve — your call:
+A catalogue is a **showcase**, so `catalogue_items` stays RLS-protected but the READ policy is **visibility-aware**
+(committed in `b49`):
+- **writes** are strictly owner-only (`WITH CHECK entity_id = caller`) — **nobody can write another entity's
+  catalogue**; the DB now enforces this, not just the app.
+- **reads**: you always see your own; you see another entity's items only if its **catalogue-level visibility**
+  (its active default schema's `visibility`) is `public`. `public | private` now; `network` (B2B connected-only)
+  is a later OR-branch (slot noted in the policy). A public/no-context storefront reader (`withEntity(null)`) gets
+  only public rows (via `NULLIF`).
+- **item-level** hiding is a SEPARATE app-layer availability filter applied at **send** time (a row/column marked
+  unavailable is never sent), NOT this policy.
 
-- **(A) Carve-out** — treat `catalogue_items` like `identities`: keep it OUT of strict RLS, rely on app-layer
-  `is_active`/visibility scoping (browsing others' active products is the point). Simplest; matches the marketplace.
-- **(B) Definer browse-read** — keep `catalogue_items` RLS-scoped and add a `catalogue_browse(entity_id)` SECURITY
-  DEFINER read that returns only `is_active` rows of a target shop. More work; keeps writes strictly private.
-
-My lean: **(A)** — a shop's active catalogue is meant to be seen; the leak risk lives in chits/customers, not in
-public product listings. But it changes the guidance's table set, so I left it for you.
+Browse reads migrated: `relationships.js` supplier catalogue → `withEntity(me)`; `catalogue.js` public storefront +
+order reprice → `withEntity(null)`; `my-orders` → `withEntity(me)`. So `catalogue_items` is fully covered **except
+`assist.js`** (below).
 
 ## Remaining route files (not yet migrated — analysis + recommendation)
 
@@ -74,9 +76,11 @@ public product listings. But it changes the guidance's table set, so I left it f
   documented scope. Flagged.
 - **`governance.js`** — `countChitsToday` counts `chit_header WHERE sender_entity_id = <entity>` for a **governed**
   entity (platform scope, may not be the caller). Likely a platform carve-out or a definer count. Flagged.
-- **`assist.js`** — writes `catalogue_items` for the **help entity** (gap capture / resolve) and for the caller
-  (publish, own). The help-KB writes are cross-entity (a caller writing the help desk's catalogue). Also flagged
-  **vestigial** (the `/gap` + gaps-review path is being superseded by chit→Task). Decide alongside its retirement.
+- **`assist.js`** — `publish` writes the caller's OWN catalogue (fine → `withEntity(me)`). BUT `/gap` + `/resolve`
+  write into the **help entity's** catalogue from an arbitrary/public caller — which the owner-only WITH CHECK now
+  forbids unless the platform impersonates the help entity. That's the "nobody writes another's catalogue" anti-
+  pattern: gap-capture should **send a chit** to the help desk (`chit_deliver`), not write its catalogue directly.
+  Already flagged **vestigial** (superseded by chit→Task). Rework/retire rather than migrate as-is.
 
 ## Migration / deploy run order (for the team)
 
