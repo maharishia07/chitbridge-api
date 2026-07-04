@@ -1,6 +1,6 @@
 -- migration_b49_rls_policies.sql — B1 RLS · STEP E: ENABLE + FORCE RLS + per-table policy on the Direct group.
 -- Run as postgres (DDL needs the table owner). Policies key on entity_id (row-level) -> robust to chit_detail
--- column growth. Predicate: entity_id = current_setting('app.current_entity', true)::uuid ; customer_list uses
+-- column growth. Predicate: entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid ; customer_list uses
 -- owner_entity_id (the one predicate trap — NOT a copy-paste). Explicit WITH CHECK on every table (write-time).
 --
 -- ⚠️ NOT ENFORCED until (a) the app connects as cb_app (postgres/BYPASSRLS makes these a NO-OP), AND (b) the
@@ -17,24 +17,24 @@ ALTER TABLE chit_header ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chit_header FORCE  ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS rls_entity ON chit_header;
 CREATE POLICY rls_entity ON chit_header
-  USING      (entity_id = current_setting('app.current_entity', true)::uuid)
-  WITH CHECK (entity_id = current_setting('app.current_entity', true)::uuid);
+  USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
+  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
 -- ── 2. chit_status ────────────────────────────────────────────────────────────
 ALTER TABLE chit_status ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chit_status FORCE  ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS rls_entity ON chit_status;
 CREATE POLICY rls_entity ON chit_status
-  USING      (entity_id = current_setting('app.current_entity', true)::uuid)
-  WITH CHECK (entity_id = current_setting('app.current_entity', true)::uuid);
+  USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
+  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
 -- ── 3. state_log ──────────────────────────────────────────────────────────────
 ALTER TABLE state_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE state_log FORCE  ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS rls_entity ON state_log;
 CREATE POLICY rls_entity ON state_log
-  USING      (entity_id = current_setting('app.current_entity', true)::uuid)
-  WITH CHECK (entity_id = current_setting('app.current_entity', true)::uuid);
+  USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
+  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
 -- ── 4. catalogue_items — VISIBILITY-AWARE (Athi 2026-07-04) ─────────────────────
 -- A catalogue is a showcase: you always see your OWN items, and you see another entity's items per that entity's
@@ -65,13 +65,13 @@ ALTER TABLE customer_list ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customer_list FORCE  ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS rls_entity ON customer_list;
 CREATE POLICY rls_entity ON customer_list
-  USING      (owner_entity_id = current_setting('app.current_entity', true)::uuid)
-  WITH CHECK (owner_entity_id = current_setting('app.current_entity', true)::uuid);
+  USING      (owner_entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
+  WITH CHECK (owner_entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
 -- ── 6. chit_detail — LAST (details page keeps gaining columns; policy stays trivial entity_id) ──
 ALTER TABLE chit_detail ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chit_detail FORCE  ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS rls_entity ON chit_detail;
 CREATE POLICY rls_entity ON chit_detail
-  USING      (entity_id = current_setting('app.current_entity', true)::uuid)
-  WITH CHECK (entity_id = current_setting('app.current_entity', true)::uuid);
+  USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
+  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
