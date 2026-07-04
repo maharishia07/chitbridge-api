@@ -3,7 +3,7 @@ const express = require('express');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const ctx = (req) => req.identity.parent_entity_id || req.identity.identity_id;
@@ -45,10 +45,10 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
     const schema_id = await defaultSchemaId(entity_id);
     const verr = await validateItem(schema_id, req.body.item_data);
     if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
-    const r = await query(
+    const r = await withEntity(entity_id, (db) => db.query(
       `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
        VALUES ($1,$2,$3) RETURNING *`,
-      [entity_id, schema_id, JSON.stringify(req.body.item_data)]);
+      [entity_id, schema_id, JSON.stringify(req.body.item_data)]));
     res.json({ message: 'Product added', item: r.rows[0] });
   } catch (e) { res.status(500).json({ error: 'Add failed', message: safeErr(e) }); }
 });
@@ -58,15 +58,15 @@ router.get('/', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const q = (req.query.q || '').trim();
-    const r = q
-      ? await query(
+    const r = await withEntity(entity_id, (db) => q
+      ? db.query(
           `SELECT * FROM catalogue_items
            WHERE entity_id=$1 AND is_active=true AND item_data::text ILIKE $2
            ORDER BY created_at DESC`, [entity_id, `%${q}%`])
-      : await query(
+      : db.query(
           `SELECT * FROM catalogue_items
            WHERE entity_id=$1 AND is_active=true
-           ORDER BY created_at DESC`, [entity_id]);
+           ORDER BY created_at DESC`, [entity_id]));
     res.json({ items: r.rows, count: r.rows.length });
   } catch (e) { res.status(500).json({ error: 'List failed', message: safeErr(e) }); }
 });
@@ -77,10 +77,10 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
     const entity_id = ctx(req);
     const verr = await validateItem(await defaultSchemaId(entity_id), req.body.item_data);
     if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
-    const r = await query(
+    const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE catalogue_items SET item_data=$1, updated_at=NOW()
        WHERE item_id=$2 AND entity_id=$3 RETURNING *`,
-      [JSON.stringify(req.body.item_data), req.params.id, entity_id]);
+      [JSON.stringify(req.body.item_data), req.params.id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) { res.status(500).json({ error: 'Update failed', message: safeErr(e) }); }
@@ -90,10 +90,10 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
 router.delete('/:id', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const r = await query(
+    const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE catalogue_items SET is_active=false
        WHERE item_id=$1 AND entity_id=$2 RETURNING item_id`,
-      [req.params.id, entity_id]);
+      [req.params.id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Product removed' });
   } catch (e) { res.status(500).json({ error: 'Delete failed', message: safeErr(e) }); }

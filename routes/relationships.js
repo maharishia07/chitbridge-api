@@ -3,7 +3,7 @@ const express = require('express');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
@@ -159,7 +159,8 @@ router.get('/customers', auth, async (req, res) => {
   try {
     const owner   = ctx(req);
     const segment = (req.query.segment || '').trim();
-    const r = await query(
+    // B1 RLS: customer_list is owner-scoped (owner_entity_id) -> withEntity(me).
+    const r = await withEntity(owner, (db) => db.query(
       `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
               cl.txn_count, cl.last_txn_at,
               i.identity_id AS customer_identity_id, i.bridge_id, i.display_name,
@@ -175,7 +176,7 @@ router.get('/customers', auth, async (req, res) => {
            SELECT 1 FROM supplier_list sl
            WHERE sl.owner_entity_id = $1 AND sl.supplier_entity_id = cl.customer_identity_id
          )
-       ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]);
+       ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]));
     const rows = segment ? r.rows.filter(c => c.segment === segment) : r.rows;
     res.json({ customers: rows, count: rows.length });
   } catch (err) {
@@ -191,10 +192,10 @@ router.patch('/customers/:id',
   async (req, res) => {
     try {
       const owner = ctx(req);
-      const r = await query(
+      const r = await withEntity(owner, (db) => db.query(
         `UPDATE customer_list SET segment_override = $1
          WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id`,
-        [req.body.segment_override, req.params.id, owner]);
+        [req.body.segment_override, req.params.id, owner]));
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
       res.json({ message: 'Segment updated' });
     } catch (err) {

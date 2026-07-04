@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const { safeErr } = require('../lib/respond');
 const storage = require('../lib/storage');
@@ -10,7 +10,7 @@ const MAX_BYTES = 6 * 1024 * 1024; // 6 MB per file
 // is the caller a participant on this chit (any copy)?
 async function isParticipant(chit_id, entity_id) {
   if (!chit_id) return false;
-  const r = await query(`SELECT 1 FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
+  const r = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]));
   return r.rows.length > 0;
 }
 
