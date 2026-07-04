@@ -227,8 +227,40 @@ router.post('/:bridge_id/order/confirm',
       const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
       const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
 
-      // guaranteed write: OTP consume + both chit records + timeline, all-or-nothing (INV-2)
-      await withTransaction(async (client) => {
+      // guaranteed write: OTP consume + both chit records + timeline, all-or-nothing (INV-2).
+      // Delivery is a substrate op (writes the customer + shop copies) -> the b50 chit_deliver definer, run in
+      // withEntity(sender = the customer), with the OTP consume in the SAME tx. Fallback to the legacy inline
+      // fan-out when b50 isn't applied (chit_deliver missing -> the whole withEntity rolls back incl. the OTP,
+      // then the fallback redoes it). NOTE: chit_deliver sets chit_ref = chit_id (was NULL here) — benign, matches /send.
+      const orderCopies = [
+        { entity_id: c.identity_id, sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
+          sender_entity_display_name: c.display_name, all_recipients, purpose: 'order', auto_subject,
+          summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id,
+          current_status: 'delivered', payload_delivered: true, detail_type: 'order',
+          line_item_count: summary_json.line_item_count, total_value: summary_json.total_value,
+          currency_code: summary_json.currency_code, line_items,
+          log: { action: 'created', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
+                 new_status: 'delivered', detail: `Order placed to ${entity.display_name}` } },
+        { entity_id: entity.identity_id, sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
+          sender_entity_display_name: c.display_name, all_recipients, purpose: 'order', auto_subject,
+          summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id,
+          current_status: 'pending', detail_type: 'order',
+          line_item_count: summary_json.line_item_count, total_value: summary_json.total_value,
+          currency_code: summary_json.currency_code, line_items,
+          log: { action: 'delivered', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
+                 new_status: 'pending', detail: `Order received from ${c.display_name}` } },
+      ];
+      try {
+        await withEntity(c.identity_id, async (client) => {
+          await client.query(
+            `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW()
+              WHERE identity_id=$1`, [c.identity_id]);
+          await client.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(orderCopies)]);
+        });
+      } catch (e) {
+        if (!(e && (e.code === '42883' || /chit_deliver/.test(e.message || '')))) throw e;
+        // pre-b50 fallback: the legacy inline OTP consume + dual-copy fan-out (unchanged).
+        await withTransaction(async (client) => {
         await client.query(
           `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW()
             WHERE identity_id=$1`, [c.identity_id]);
@@ -265,7 +297,8 @@ router.post('/:bridge_id/order/confirm',
            VALUES ($1,$2,'created',$3,$4,'delivered',$5),($1,$6,'delivered',$3,$4,'pending',$7)`,
           [chit_id, c.identity_id, c.identity_id, c.display_name, `Order placed to ${entity.display_name}`,
            entity.identity_id, `Order received from ${c.display_name}`]);
-      });
+        });
+      }
 
       // CJ-06: best-effort CRM auto-add — after commit, never breaks the order.
       // B1 RLS: customer_list is owner-scoped (owner_entity_id = the shop) -> withEntity(shop).
