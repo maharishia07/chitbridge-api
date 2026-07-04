@@ -8,7 +8,7 @@ const { body, param, query } = require('express-validator');
 const jwt     = require('jsonwebtoken');
 const bcrypt  = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { query: db, withTransaction } = require('../db');
+const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap (F5)
@@ -827,7 +827,8 @@ router.put('/:id/status',
 
       // Atomic: route this actor's active tasks AND apply the status change together.
       let tasks_routed = 0, covers_removed = 0, was_default_assignee = false, disputes_cleared = 0;
-      await withTransaction(async (client) => {
+      // B1 RLS: all task-routing chit_status updates are this entity's own rows -> withEntity(me).
+      await withEntity(entity_id, async (client) => {
         if (a.current_task_count > 0 && task_action) {
           if (task_action === 'pool') {
             const result = await client.query(
@@ -918,6 +919,7 @@ router.put('/break',
   async (req, res) => {
     try {
       const actor_id = req.identity.identity_id;
+      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;   // B1 RLS context
       const { break_type, task_action, target_actor_id } = req.body;
 
       if (req.identity.identity_type !== 'actor') {
@@ -967,12 +969,12 @@ router.put('/break',
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const taskCount = await db(
+        const taskCount = await withEntity(entity_id, (c) => c.query(
           `SELECT COUNT(*) as count FROM chit_status
            WHERE assigned_to_actor_id = $1
            AND current_status NOT IN ('completed','cancelled','rejected')`,
           [actor_id]
-        );
+        ));
         const count = parseInt(taskCount.rows[0].count);
 
         if (count > 0 && !task_action) {
@@ -999,7 +1001,8 @@ router.put('/break',
         }
 
         // Atomic: route tasks + reset count + set leave together.
-        await withTransaction(async (client) => {
+        // B1 RLS: the chit_status routing updates are this entity's own rows -> withEntity(me).
+        await withEntity(entity_id, async (client) => {
           if (count > 0) {
             if (task_action === 'pool') {
               await client.query(
