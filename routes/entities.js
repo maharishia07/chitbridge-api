@@ -215,7 +215,15 @@ router.get('/me', auth, async (req, res) => {
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Entity not found' });
     await query('UPDATE identities SET last_active_at = NOW() WHERE identity_id = $1', [req.identity.identity_id]);
-    res.json({ entity: result.rows[0] });
+    // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles.
+    // Defensive: defaults to [] if the b55 column isn't present in this environment.
+    let capabilities = [];
+    try {
+      const c = await query('SELECT capabilities FROM identities WHERE identity_id = $1',
+        [req.identity.parent_entity_id || req.identity.identity_id]);
+      capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
+    } catch (_) {}
+    res.json({ entity: result.rows[0], capabilities });
   } catch (err) {
     console.error('Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
