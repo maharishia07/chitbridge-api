@@ -568,7 +568,7 @@ function chitFilters(req, where, params){
     const e = params.length;
     where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open'
                  AND (cd.scope = 'chit_wide' OR cd.raised_by_entity_id = $${e} OR cd.target_entity_id = $${e}
-                      OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $${e})))`;
+                      OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $${e} AND dp.dispute_status = 'open')))`;
   }
   return where;
 }
@@ -602,7 +602,10 @@ router.get('/sent', auth, async (req, res) => {
               ch.summary_json, ch.created_at, ch.role,
               cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag,
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count
+                WHERE cd.chit_id = ch.chit_id AND cd.status = 'open'
+                  AND (cd.scope='chit_wide' OR cd.raised_by_entity_id=$1 OR cd.target_entity_id=$1
+                       OR EXISTS (SELECT 1 FROM dispute_participants dp
+                                   WHERE dp.dispute_id=cd.dispute_id AND dp.entity_id=$1 AND dp.dispute_status='open'))) AS open_dispute_count
          ${joinFrom}
         WHERE ${where}
         ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
@@ -714,7 +717,7 @@ router.get('/rollup', auth, async (req, res) => {
         WHERE ${where}
           AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.status = 'open'
                        AND (cd.scope = 'chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1
-                            OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $1)))`,
+                            OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $1 AND dp.dispute_status = 'open')))`,
       params).catch(() => ({ rows: [{ n: 0 }] }));
     return { result, disp };
     });
@@ -782,7 +785,10 @@ router.get('/inbox', auth, async (req, res) => {
          cs.assigned_to_actor_id,
          cs.assigned_to_actor_display_name,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open'
+            AND (cd.scope='chit_wide' OR cd.raised_by_entity_id=$1 OR cd.target_entity_id=$1
+                 OR EXISTS (SELECT 1 FROM dispute_participants dp
+                             WHERE dp.dispute_id=cd.dispute_id AND dp.entity_id=$1 AND dp.dispute_status='open'))) AS open_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
           WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
@@ -1202,20 +1208,25 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     ));
     if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
 
-    let q, params;
-    if (thread_filter === 'external') {
-      q = `SELECT * FROM chit_messages WHERE chit_id = $1 AND thread_type = 'external' ORDER BY created_at ASC`;
-      params = [chit_id];
-    } else if (thread_filter === 'internal') {
-      q = `SELECT * FROM chit_messages WHERE chit_id = $1 AND thread_type = 'internal' AND visibility_entity_id = $2 ORDER BY created_at ASC`;
-      params = [chit_id, entity_id];
+    // Dispute messages are scoped to the dispute roster (targeted) or all participants (chit-wide) — a
+    // non-party on the chit must NEVER see them. Non-dispute messages keep the external/internal rules.
+    const disputeVis = `(m.is_dispute = true AND (
+        EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.dispute_id = m.dispute_id AND cd.scope = 'chit_wide')
+        OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = m.dispute_id AND dp.entity_id = $2)
+      ))`;
+    let vis;
+    if (thread_filter === 'internal') {
+      vis = `(COALESCE(m.is_dispute,false)=false AND m.thread_type='internal' AND m.visibility_entity_id=$2)`;
+    } else if (thread_filter === 'external') {
+      vis = `(COALESCE(m.is_dispute,false)=false AND m.thread_type='external') OR ${disputeVis}`;
     } else {
-      q = `SELECT * FROM chit_messages WHERE chit_id = $1 AND (thread_type = 'external' OR (thread_type = 'internal' AND visibility_entity_id = $2)) ORDER BY created_at ASC`;
-      params = [chit_id, entity_id];
+      vis = `(COALESCE(m.is_dispute,false)=false AND (m.thread_type='external' OR (m.thread_type='internal' AND m.visibility_entity_id=$2))) OR ${disputeVis}`;
     }
-
+    let q = `SELECT m.* FROM chit_messages m WHERE m.chit_id = $1 AND (${vis})`;
     // D4: dispute-only view — filter the thread to dispute-tagged messages (works after a dispute closes).
-    if (req.query.dispute === '1' || req.query.dispute === 'true') q = q.replace('ORDER BY created_at ASC', 'AND is_dispute = true ORDER BY created_at ASC');
+    if (req.query.dispute === '1' || req.query.dispute === 'true') q += ` AND m.is_dispute = true`;
+    q += ` ORDER BY m.created_at ASC`;
+    const params = [chit_id, entity_id];
 
     const result = await query(q, params);
     // attach per-message files (bytes pulled on demand via GET /api/attachments/:id)
@@ -1369,7 +1380,25 @@ router.post('/:chit_id/disputes',
                 [chit_id, pid, entity_id, display_name, notice]);
             }
           }
+        } else if (scope === 'chit_wide') {
+          // chit-wide dispute: put it on every other participant's timeline too
+          const notice = `Dispute raised — ${category}: ${reason.slice(0,80)}`;
+          const ps = await client.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id=$1 AND entity_id<>$2`, [chit_id, entity_id]);
+          for (const p of ps.rows) {
+            await client.query(
+              `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+               VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+              [chit_id, p.entity_id, entity_id, display_name, notice]);
+          }
         }
+        // D4 — the dispute REASON as a scoped chit_message so it appears in the Messages panel (not just the
+        // Status log). ONE row; GET /messages scopes visibility to the roster (targeted) or all (chit-wide),
+        // so a non-party on the chit never sees it. chit_messages is not RLS-scoped.
+        await client.query(
+          `INSERT INTO chit_messages
+             (chit_id, sender_entity_id, sender_display_name, thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
+           VALUES ($1,$2,$3,'external',NULL,$4,true,$5,NOW())`,
+          [chit_id, entity_id, display_name, `[${category}] ${reason}`, did]);
         return result.rows[0];
       });
       res.json({
@@ -1510,12 +1539,14 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
 // ─── PUT /chits/:chit_id/disputes/:dispute_id/resolve ────────
 // Only the entity that raised the dispute can resolve it
 router.put('/:chit_id/disputes/:dispute_id/resolve',
-  [body('resolution_note').trim().notEmpty().withMessage('Resolution note required')],
+  [ body('resolution_note').trim().notEmpty().withMessage('Resolution note required'),
+    body('target_entity_id').optional({ nullable:true }).isUUID() ],
   validate,
   auth,
   async (req, res) => {
     const { chit_id, dispute_id } = req.params;
     const { resolution_note }     = req.body;
+    const targetParty  = req.body.target_entity_id || null;   // per-party resolve; null = clear all remaining
     const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
     const display_name = req.identity.display_name;
 
@@ -1534,41 +1565,64 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
 
       // chit_disputes/dispute_participants are not RLS-scoped and the resolver's own state_log is entity_id=caller,
       // so all run in withEntity(me); the per-party notices are a CROSS write -> chit_log_targets, legacy loop pre-b50.
+      // D4 — PER-PARTY resolution: the raiser clears one party at a time; the dispute closes chit-wide only when
+      // NO party is still open. chit_disputes/dispute_participants aren't RLS-scoped; the resolver's own state_log
+      // is entity_id=caller, so all run in withEntity(me). Per-party notices cross -> chit_log_targets (legacy loop pre-b50).
       const ready = await definersReady();
-      await withEntity(entity_id, async (client) => {
+      const out = await withEntity(entity_id, async (client) => {
+        let resolvedPartyIds;
+        if (targetParty) {
+          await client.query(`UPDATE dispute_participants SET dispute_status='resolved' WHERE dispute_id=$1 AND entity_id=$2 AND role='party'`, [dispute_id, targetParty]);
+          resolvedPartyIds = [targetParty];
+        } else {
+          const all = await client.query(`SELECT entity_id FROM dispute_participants WHERE dispute_id=$1 AND role='party' AND dispute_status='open'`, [dispute_id]);
+          resolvedPartyIds = all.rows.map(r => r.entity_id);
+          await client.query(`UPDATE dispute_participants SET dispute_status='resolved' WHERE dispute_id=$1 AND role='party'`, [dispute_id]);
+        }
+        // chit-wide close only when every party is resolved (no 'party' row left open)
+        const remaining = await client.query(`SELECT COUNT(*)::int AS n FROM dispute_participants WHERE dispute_id=$1 AND role='party' AND dispute_status='open'`, [dispute_id]);
+        const allResolved = remaining.rows[0].n === 0;
+        if (allResolved) {
+          await client.query(
+            `UPDATE chit_disputes SET status='resolved', resolution_note=$1, resolved_by_entity_id=$2, resolved_at=NOW() WHERE dispute_id=$3`,
+            [resolution_note, entity_id, dispute_id]);
+          await client.query(`UPDATE dispute_participants SET dispute_status='resolved' WHERE dispute_id=$1`, [dispute_id]); // raiser too
+        }
+        // resolver's own timeline
         await client.query(
-          `UPDATE chit_disputes
-           SET status = 'resolved', resolution_note = $1, resolved_by_entity_id = $2, resolved_at = NOW()
-           WHERE dispute_id = $3`,
-          [resolution_note, entity_id, dispute_id]
-        );
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]);
+        // resolution note as a scoped dispute message (roster / chit-wide only — never a non-party)
         await client.query(
-          `INSERT INTO state_log
-             (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-           VALUES ($1, $2, 'dispute_resolved', $3, $4, $5)`,
-          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]
-        );
-        // D4 — clear the roster's per-party status and notify each involved party on their own copy.
-        await client.query(`UPDATE dispute_participants SET dispute_status = 'resolved' WHERE dispute_id = $1`, [dispute_id]);
-        const parties = await client.query(`SELECT entity_id FROM dispute_participants WHERE dispute_id = $1 AND entity_id <> $2`, [dispute_id, entity_id]);
-        const partyIds = parties.rows.map(p => p.entity_id);
-        if (partyIds.length) {
+          `INSERT INTO chit_messages (chit_id, sender_entity_id, sender_display_name, thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
+           VALUES ($1,$2,$3,'external',NULL,$4,true,$5,NOW())`,
+          [chit_id, entity_id, display_name, `[resolved] ${resolution_note}`, dispute_id]);
+        // notify the cleared parties on their own timeline
+        if (resolvedPartyIds.length) {
           const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`;
           if (ready) {
-            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
-              [chit_id, partyIds, 'dispute_resolved', entity_id, display_name, notice]);
+            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, resolvedPartyIds, 'dispute_resolved', entity_id, display_name, notice]);
           } else {
-            for (const p of parties.rows) {
+            for (const pid of resolvedPartyIds) {
               await client.query(
                 `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
                  VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-                [chit_id, p.entity_id, entity_id, display_name, notice]);
+                [chit_id, pid, entity_id, display_name, notice]);
             }
           }
         }
+        return { allResolved, resolvedPartyIds };
       });
 
-      res.json({ dispute_id, status: 'resolved', resolution_note, resolved_by: display_name, message: 'Dispute resolved' });
+      res.json({
+        dispute_id,
+        status: out.allResolved ? 'resolved' : 'open',
+        resolved_parties: out.resolvedPartyIds,
+        fully_resolved: out.allResolved,
+        resolution_note, resolved_by: display_name,
+        message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others'
+      });
     } catch (err) {
       console.error('Resolve dispute error:', err.message);
       res.status(500).json({ error: 'Resolve failed', message: safeErr(err) });
