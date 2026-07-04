@@ -12,7 +12,7 @@ const router  = express.Router();
 const jwt     = require('jsonwebtoken');
 const { safeErr } = require('../lib/respond');
 const log     = require('../lib/logger');
-const { query } = require('../db');              // DB access for the Q&A library (assist_qa)
+const { query, withEntity } = require('../db');  // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth    = require('../middleware/auth');   // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
 
@@ -141,40 +141,24 @@ router.get('/questions', async (req, res) => {
   }
 });
 
-// POST /api/assist/gap — capture a question the assistant could NOT answer, as a DRAFT under the Help entity.
-// item_data.status='gap', is_active=false => the projection trigger keeps it OUT of serving until a human answers +
-// approves it in review (#3). Public + rate-limited (assistLimiter on /api/assist). Deduped by normalised question.
+// POST /api/assist/gap — DEPRECATED under B1 RLS (2026-07-04). It used to write a DRAFT into the HELP entity's
+// catalogue (entity_id = help) from an outside/anonymous caller — a cross-entity write the owner-only rule now
+// forbids ("nobody writes another entity's catalogue"). The sanctioned capture is a CHIT to the help desk: the web
+// client's "Send to help desk" (askHelpDesk → POST /chits/send) lands the question in GOV-01-Help's Task inbox,
+// where it is answered and Published to the KB. Kept as a no-op ack (so the old fire-and-forget caller doesn't
+// error) that only LOGS the unanswered question as an analytics signal — it writes nothing.
 router.post('/gap', async (req, res) => {
   try {
     const question = (req.body && typeof req.body.q === 'string')       ? req.body.q.trim()             : '';
     const context  = (req.body && typeof req.body.context === 'string') ? req.body.context.slice(0, 64) : '';
     if (!question || question.length < 3) return res.status(422).json({ ok: false, error: 'Ask a question.' });
     if (question.length > 400)            return res.status(422).json({ ok: false, error: 'Question is too long.' });
-
-    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
-    const entity_id = ent.rows[0] && ent.rows[0].identity_id;
-    if (!entity_id) return res.status(503).json({ ok: false, error: 'Help entity not provisioned.' });
-    const sch = await query(
-      `SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [entity_id]);
-    const schema_id = sch.rows[0] ? sch.rows[0].schema_id : null;
-
-    // dedup: same question already captured as a gap?
-    const dup = await query(
-      `SELECT 1 FROM catalogue_items
-        WHERE entity_id = $1 AND item_data->>'status' = 'gap'
-          AND lower(item_data->>'question') = lower($2) LIMIT 1`, [entity_id, question]);
-    if (dup.rows.length) return res.json({ ok: true, deduped: true });
-
-    const qaId = 'gap_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const item_data = { qa_id: qaId, question, answer: '', context: context ? [context] : [], topics: [], fit: null, media: null, status: 'gap' };
-    await query(
-      `INSERT INTO catalogue_items (entity_id, schema_id, item_data, is_active) VALUES ($1, $2, $3, false)`,
-      [entity_id, schema_id, JSON.stringify(item_data)]);
-    log.info('assist gap captured', { id: req.id, context, len: question.length });
-    res.json({ ok: true, captured: true });
+    // No catalogue write. Real capture is the chit flow (Send to help desk → a chit in GOV-01-Help's Task inbox).
+    log.info('assist gap (deprecated — capture is now the chit flow)', { id: req.id, context, len: question.length });
+    res.json({ ok: true, noted: true, via: 'chit' });
   } catch (err) {
     log.error('assist/gap failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: 'Could not capture the question.' });
+    res.status(500).json({ ok: false, error: 'Could not note the question.' });
   }
 });
 
@@ -199,21 +183,22 @@ router.post('/publish', auth, async (req, res) => {
     // Refine an existing answer when qa_id is supplied and found; else publish new.
     const qaIn = (typeof b.qa_id === 'string' && b.qa_id.trim()) ? b.qa_id.trim() : '';
     if (qaIn) {
-      const upd = await query(
+      // B1 RLS: a help desk publishes to ITS OWN catalogue -> withEntity(me).
+      const upd = await withEntity(helpId, (db) => db.query(
         `UPDATE catalogue_items
             SET item_data = item_data || jsonb_build_object('question',$3::text,'answer',$4::text,'context',$5::jsonb,'status','approved'),
                 is_active = true, updated_at = now()
           WHERE entity_id = $1 AND item_data->>'qa_id' = $2`,
-        [helpId, qaIn, question, answer, JSON.stringify(context)]);
+        [helpId, qaIn, question, answer, JSON.stringify(context)]));
       if (upd.rowCount) { log.info('assist updated', { id: req.id, qa_id: qaIn }); return res.json({ ok: true, qa_id: qaIn, updated: true }); }
     }
     const sch = await query(`SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [helpId]);
     const schema_id = sch.rows[0] ? sch.rows[0].schema_id : null;
     const qaId = 'pub_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const item_data = { qa_id: qaId, question, answer, context, topics: [], fit: null, media: null, status: 'approved' };
-    await query(
+    await withEntity(helpId, (db) => db.query(   // B1 RLS: own catalogue -> withEntity(me)
       `INSERT INTO catalogue_items (entity_id, schema_id, item_data, is_active) VALUES ($1, $2, $3, true)`,
-      [helpId, schema_id, JSON.stringify(item_data)]);
+      [helpId, schema_id, JSON.stringify(item_data)]));
     log.info('assist published', { id: req.id, qa_id: qaId, ctx: context.join(',') });
     res.json({ ok: true, qa_id: qaId });
   } catch (err) { log.error('assist/publish failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: 'Could not publish.' }); }
@@ -221,56 +206,19 @@ router.post('/publish', auth, async (req, res) => {
 
 // ── Review / triage (#3) — auth-gated (TODO: tighten to owner_scope='platform' before production) ──
 
-// GET /api/assist/gaps — captured gaps (draft questions) awaiting review, newest first.
+// GET /api/assist/gaps — DEPRECATED under B1 RLS. The gap-review flow is superseded by chit→Task: questions arrive
+// as CHITS in GOV-01-Help's Task inbox (not as catalogue drafts), so there are no catalogue "gaps" to list. Returns
+// empty and reads nothing (the cross-read of the help catalogue is no longer needed).
 router.get('/gaps', auth, async (req, res) => {
-  try {
-    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
-    const entity_id = ent.rows[0] && ent.rows[0].identity_id;
-    if (!entity_id) return res.json({ ok: true, data: [] });
-    const r = await query(
-      `SELECT item_data->>'qa_id' AS qa_id, item_data->>'question' AS question,
-              item_data->'context' AS context, created_at
-         FROM catalogue_items
-        WHERE entity_id = $1 AND item_data->>'status' = 'gap'
-        ORDER BY created_at DESC`, [entity_id]);
-    res.json({ ok: true, data: r.rows });
-  } catch (err) { log.error('assist/gaps failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: 'Could not list gaps.' }); }
+  res.json({ ok: true, data: [], deprecated: true });
 });
 
-// POST /api/assist/resolve — { qa_id, action:'approve'|'reject', answer?, context?[], topics?[] }.
-// approve => writes the answer + status=approved + is_active=true => the projection trigger serves it live.
-// reject  => status=rejected + is_active=false (kept for audit, never served).
+// POST /api/assist/resolve — DEPRECATED under B1 RLS. It updated the HELP entity's catalogue from an outside caller
+// (a cross-entity write, now forbidden). Answering is done on the question's CHIT in GOV-01-Help's Task inbox, then
+// Published via POST /api/assist/publish (own catalogue). This endpoint writes nothing.
 router.post('/resolve', auth, async (req, res) => {
-  try {
-    const b      = req.body || {};
-    const qa_id  = (typeof b.qa_id === 'string') ? b.qa_id.trim() : '';
-    const action = (b.action === 'approve' || b.action === 'reject') ? b.action : '';
-    if (!qa_id || !action) return res.status(422).json({ ok: false, error: 'qa_id and a valid action are required.' });
-
-    const ent = await query(`SELECT identity_id FROM identities WHERE email = 'help@chitbridge.system' LIMIT 1`);
-    const entity_id = ent.rows[0] && ent.rows[0].identity_id;
-    if (!entity_id) return res.status(503).json({ ok: false, error: 'Help entity not provisioned.' });
-
-    if (action === 'reject') {
-      const r = await query(
-        `UPDATE catalogue_items SET item_data = jsonb_set(item_data, '{status}', '"rejected"'), is_active = false, updated_at = now()
-          WHERE entity_id = $1 AND item_data->>'qa_id' = $2`, [entity_id, qa_id]);
-      return res.json({ ok: true, action: 'reject', changed: r.rowCount });
-    }
-
-    const answer = (typeof b.answer === 'string') ? b.answer.trim() : '';
-    if (!answer) return res.status(422).json({ ok: false, error: 'An answer is required to approve.' });
-    const context = Array.isArray(b.context) ? b.context.filter(x => typeof x === 'string') : [];
-    const topics  = Array.isArray(b.topics)  ? b.topics.filter(x => typeof x === 'string')  : [];
-    const r = await query(
-      `UPDATE catalogue_items
-          SET item_data = item_data || jsonb_build_object('answer', $3::text, 'status', 'approved', 'context', $4::jsonb, 'topics', $5::jsonb),
-              is_active = true, updated_at = now()
-        WHERE entity_id = $1 AND item_data->>'qa_id' = $2`,
-      [entity_id, qa_id, answer, JSON.stringify(context), JSON.stringify(topics)]);
-    log.info('assist gap resolved', { id: req.id, qa_id, action, by: req.identity && req.identity.identity_id });
-    res.json({ ok: true, action: 'approve', changed: r.rowCount });
-  } catch (err) { log.error('assist/resolve failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: 'Could not resolve.' }); }
+  res.status(410).json({ ok: false, deprecated: true,
+    error: 'Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB.' });
 });
 
 // GET /api/assist/whoami — is the logged-in entity a helpdesk instance? Drives the helpdesk business-layer gate
