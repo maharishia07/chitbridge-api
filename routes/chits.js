@@ -1591,7 +1591,8 @@ router.get('/disputes/queue', auth, async (req, res) => {
        FROM chit_disputes cd
        WHERE cd.status = 'open'
          AND EXISTS (SELECT 1 FROM chit_status cs WHERE cs.chit_id=cd.chit_id AND cs.entity_id=$1)
-         AND (cd.scope='chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1)
+         AND (cd.scope='chit_wide' OR cd.raised_by_entity_id = $1 OR cd.target_entity_id = $1
+              OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = cd.dispute_id AND dp.entity_id = $1))
        ORDER BY cd.created_at ASC`,
       [entity_id]
     ));
