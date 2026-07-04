@@ -1380,17 +1380,10 @@ router.post('/:chit_id/disputes',
                 [chit_id, pid, entity_id, display_name, notice]);
             }
           }
-        } else if (scope === 'chit_wide') {
-          // chit-wide dispute: put it on every other participant's timeline too
-          const notice = `Dispute raised — ${category}: ${reason.slice(0,80)}`;
-          const ps = await client.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id=$1 AND entity_id<>$2`, [chit_id, entity_id]);
-          for (const p of ps.rows) {
-            await client.query(
-              `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-               VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-              [chit_id, p.entity_id, entity_id, display_name, notice]);
-          }
         }
+        // NOTE: chit-wide participants see the raise via the scoped chit_message below (Messages panel). A
+        // chit-wide Status-LOG fan-out would need the chit_log_all definer (a direct chit_status read here is
+        // RLS-scoped to the raiser and writes cross-entity are rejected) — deferred to the dispute backlog.
         // D4 — the dispute REASON as a scoped chit_message so it appears in the Messages panel (not just the
         // Status log). ONE row; GET /messages scopes visibility to the roster (targeted) or all (chit-wide),
         // so a non-party on the chit never sees it. chit_messages is not RLS-scoped.
@@ -1655,6 +1648,13 @@ router.get('/disputes/queue', auth, async (req, res) => {
 
     // evidence_snapshot is PII — expose presence only, never its contents
     const rows = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
+    // attach the per-party roster (status per party) so the raiser can resolve each party independently
+    const dids = rows.map(d => d.dispute_id);
+    if (dids.length) {
+      const pr = await query(`SELECT dispute_id, entity_id, display_name, role, dispute_status FROM dispute_participants WHERE dispute_id = ANY($1::uuid[])`, [dids]);
+      const byD = {}; pr.rows.forEach(r => { (byD[r.dispute_id] = byD[r.dispute_id] || []).push(r); });
+      rows.forEach(d => { d.participants = byD[d.dispute_id] || []; });
+    }
     // "other" now means disputes targeting me (untargeted ones no longer leak)
     const myDisputes    = rows.filter(d => d.raised_by_entity_id === entity_id);
     const otherDisputes = rows.filter(d => d.raised_by_entity_id !== entity_id);
