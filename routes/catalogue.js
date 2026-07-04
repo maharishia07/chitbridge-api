@@ -5,7 +5,7 @@ const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { query, withTransaction } = require('../db');
+const { query, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
@@ -263,14 +263,15 @@ router.post('/:bridge_id/order/confirm',
            entity.identity_id, `Order received from ${c.display_name}`]);
       });
 
-      // CJ-06: best-effort CRM auto-add — after commit, never breaks the order
+      // CJ-06: best-effort CRM auto-add — after commit, never breaks the order.
+      // B1 RLS: customer_list is owner-scoped (owner_entity_id = the shop) -> withEntity(shop).
       try {
-        await query(
+        await withEntity(entity.identity_id, (db) => db.query(
           `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
            VALUES ($1,$2,'end_customer','catalogue',1,NOW())
            ON CONFLICT (owner_entity_id, customer_identity_id)
            DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-          [entity.identity_id, c.identity_id]);
+          [entity.identity_id, c.identity_id]));
       } catch (e) { console.log('customer auto-add skipped:', e.message); }
 
       // customer token (for future order tracking — CJ-F1)
