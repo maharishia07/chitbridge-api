@@ -37,12 +37,11 @@ smoke-safe before/after the migration. `autoAssignReceived` binds to the **recei
 | `chit_status` | chits.js ✅ · attachments.js ✅ · actors.js ✅ · notifications.js ✅ · catalogue.js order ✅ | **none — ready to enable** ✅ |
 | `chit_detail` | chits.js ✅ · catalogue.js order ✅ | **none — ready to enable** ✅ |
 | `state_log` | chits.js ✅ · actors.js ✅ · connections.js ✅ · notifications.js ✅ · catalogue.js order ✅ | **none — ready to enable** ✅ |
-| `catalogue_items` | products ✅ · browse reads ✅ (visibility policy) · **assist ❌** | assist help-KB writes — should route via a chit, not a direct write (see below) |
+| `catalogue_items` | products ✅ · browse reads ✅ (visibility policy) · assist ✅ (reworked) | **none — ready to enable** ✅ |
 | `customer_list` | send ✅ · relationships ✅ · catalogue ✅ | **none — ready to enable** ✅ |
 
-**Route migration is COMPLETE for 5 of the 6 tables** — `chit_header/status/detail`, `state_log`, `customer_list`
-are fully covered and ready for the RED→GREEN proof. **`catalogue_items` is the only one waiting**, on the
-`assist.js` rework (gap-capture should send a chit to the help desk, not write its catalogue directly).
+**Route migration is COMPLETE for ALL 6 tables** — every route touching a tenant table now uses `withEntity(me)`
+(own rows) or an audited definer (cross ops). Ready for the RED→GREEN proof under FORCE as `cb_app`.
 
 `customer_list` is fully covered — it can be the first table enabled in the RED/GREEN proof.
 
@@ -78,10 +77,9 @@ order reprice → `withEntity(null)`; `my-orders` → `withEntity(me)`. So `cata
   the OTP consume in the same tx; legacy inline fan-out kept as a pre-b50 fallback (block-level catch on
   undefined_function, so a missing `chit_deliver` rolls back the whole tx incl. the OTP and the fallback redoes it —
   INV-2 preserved). Minor benign delta: `chit_ref` is now `chit_id` (was NULL), matching `/send`.
-- **`assist.js`** — ⏳ **REWORK, not a straight migration.** `publish` writes the caller's OWN catalogue (fine →
-  `withEntity(me)`). But `/gap` + `/resolve` write into the **help entity's** catalogue from an outside caller, which
-  the owner-only WITH CHECK forbids. Gap-capture should **send a chit** to the help desk (`chit_deliver`), not write
-  its catalogue. Vestigial (superseded by chit→Task) — rework/retire rather than migrate as-is.
+- **`assist.js`** — ✅ DONE (reworked). `/publish` → `withEntity(me)` (own catalogue). `/gap` `/gaps` `/resolve`
+  deprecated (no catalogue access) — the gap-review flow is superseded by chit→Task: questions arrive as chits in
+  GOV-01-Help's Task inbox, are answered on the chit, then Published. Removes the last cross-entity catalogue write.
 
 ## Migration / deploy run order (for the team)
 
