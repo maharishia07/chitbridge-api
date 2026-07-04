@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 
 // GET /api/notifications?limit= — recent activity (newest first) on my chits, excluding my own actions.
@@ -18,7 +18,10 @@ router.get('/', auth, async (req, res) => {
     const h = await query(`SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]);
     const dispute_handler = h.rows[0]?.dispute_handler_actor_id || null;
 
-    const result = await query(
+    // B1 RLS: the feed reads the caller's OWN state_log copy — cross-party events (status/dispute/void) are already
+    // fanned into it by the definers — so it scopes cleanly to withEntity(me). (The `OR action IN (...)` branch is a
+    // harmless no-op under RLS, since non-own rows aren't visible anyway.)
+    const result = await withEntity(entity_id, (c) => c.query(
       `SELECT sl.chit_id, sl.action, sl.action_by_display_name,
               sl.new_status, sl.detail, sl.created_at, cs.direction,
               cs.assigned_to_actor_id,
@@ -40,7 +43,7 @@ router.get('/', auth, async (req, res) => {
         ORDER BY sl.created_at DESC
         LIMIT $4`,
       [entity_id, caller_id, dispute_handler, limit]
-    );
+    ));
 
     res.json({ notifications: result.rows, count: result.rows.length });
   } catch (err) {

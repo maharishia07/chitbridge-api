@@ -4,7 +4,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
@@ -88,8 +88,8 @@ router.post('/request',
         ]
       );
 
-      // Log to state_log
-      await query(
+      // Log to state_log (the requester's OWN copy). B1 RLS: withEntity(me).
+      await withEntity(from_id, (c) => c.query(
         `INSERT INTO state_log
          (chit_id, entity_id, action, action_by_identity_id,
           action_by_display_name, detail)
@@ -101,7 +101,7 @@ router.post('/request',
           sender.rows[0].display_name,
           `Connection request sent to ${receiver.rows[0].display_name}`
         ]
-      );
+      ));
 
       res.json({
         message: 'Connection request sent',
@@ -193,25 +193,23 @@ router.put('/:id/respond',
         ? `${req.identity.display_name} accepted connection from ${conn.rows[0].from_display_name}`
         : `${req.identity.display_name} rejected connection from ${conn.rows[0].from_display_name}`;
 
-      // Log for receiver
-      await query(
+      // Log for receiver (the responder's OWN copy). B1 RLS: withEntity(me).
+      await withEntity(entity_id, (c) => c.query(
         `INSERT INTO state_log
          (chit_id, entity_id, action, action_by_identity_id,
           action_by_display_name, detail)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [connection_id, entity_id, logAction,
          entity_id, req.identity.display_name, detail]
-      );
+      ));
 
-      // Log for sender
-      await query(
-        `INSERT INTO state_log
-         (chit_id, entity_id, action, action_by_identity_id,
-          action_by_display_name, detail)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [connection_id, conn.rows[0].from_entity_id,
-         logAction, entity_id, req.identity.display_name, detail]
-      );
+      // (Removed under B1 RLS, 2026-07-04) There used to be a second state_log INSERT here with
+      // entity_id = the SENDER (conn.from_entity_id) — the responder writing into the OTHER entity's copy.
+      // That violates "nobody writes another entity's data" (and RLS forbids it), AND it was dead data:
+      // connection state_log rows are never surfaced (the notifications feed joins chit_status by chit_id, and
+      // a connection has no chit_status row). The sender already learns of the response from the `connections`
+      // table (status / responded_at) via GET /connections/list. If a sender-side timeline entry is ever wanted,
+      // model it as a proper cross-notification (a chit, or a connection-scoped definer) — never a direct write.
 
       res.json({
         message: `Connection ${newStatus}`,

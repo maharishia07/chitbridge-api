@@ -5,7 +5,7 @@
 const express = require('express');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
-const { query, withTransaction } = require('../db');
+const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 
 const { resolve, driftStatus } = require('../governance/resolver');
@@ -37,11 +37,12 @@ async function countEntities(rootId) {
   return rows[0].n;
 }
 async function countChitsToday(entityId) {
-  // UTC-day window (absolute-time invariant)
-  const { rows } = await query(
+  // UTC-day window (absolute-time invariant). B1 RLS: an entity's own sent chits -> withEntity(entity). (Dormant
+  // guard — call it OUTSIDE any open entity transaction to avoid nesting when it's eventually wired.)
+  const { rows } = await withEntity(entityId, (c) => c.query(
     `SELECT count(*)::int AS n FROM chit_header
       WHERE sender_entity_id = $1
-        AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`, [entityId]);
+        AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`, [entityId]));
   return rows[0].n;
 }
 
