@@ -33,12 +33,15 @@ smoke-safe before/after the migration. `autoAssignReceived` binds to the **recei
 
 | Table | Routes migrated? | Blocker to enabling |
 |---|---|---|
-| `chit_header` | chits.js ✅ · governance.js ❌ · catalogue.js order ❌ | governance count + catalogue order fan-out |
-| `chit_status` | chits.js ✅ · attachments.js ✅ · actors.js ❌ · notifications.js ❌ · catalogue.js order ❌ | actors, notifications, catalogue order |
+| `chit_header` | chits.js ✅ · governance.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
+| `chit_status` | chits.js ✅ · attachments.js ✅ · actors.js ✅ · notifications.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
 | `chit_detail` | chits.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
-| `state_log` | chits.js ✅ · actors.js ❌ · connections.js ❌ · notifications.js ❌ · catalogue.js order ❌ | actors, connections, notifications, catalogue order |
+| `state_log` | chits.js ✅ · actors.js ✅ · connections.js ✅ · notifications.js ✅ · catalogue.js order ❌ | catalogue order fan-out |
 | `catalogue_items` | products ✅ · browse reads ✅ (visibility policy) · **assist ❌** | assist help-KB writes — should route via a chit, not a direct write (see below) |
 | `customer_list` | send ✅ · relationships ✅ · catalogue ✅ | **none — ready to enable** ✅ |
+
+**As of this run, the ONLY route work left for the chit tables is `catalogue.js` order/confirm fan-out** — once that's
+done, `chit_header/status/detail` + `state_log` are fully covered. `catalogue_items` waits on the `assist.js` rework.
 
 `customer_list` is fully covered — it can be the first table enabled in the RED/GREEN proof.
 
@@ -59,28 +62,25 @@ Browse reads migrated: `relationships.js` supplier catalogue → `withEntity(me)
 order reprice → `withEntity(null)`; `my-orders` → `withEntity(me)`. So `catalogue_items` is fully covered **except
 `assist.js`** (below).
 
-## Remaining route files (not yet migrated — analysis + recommendation)
+## Route files status
 
-- **`actors.js`** — task assignment / break / tasks. **Own-entity** (every `chit_status`/`state_log` write is
-  `WHERE entity_id = <caller>`; `identities` task-count updates are carve-out). **Safe & decision-free, just large.**
-  Recommend: migrate next — wrap the two `withTransaction` blocks (break, status) → `withEntity(me)` and the
-  `assign/:chit_id` handler's sequential `db()` calls → `withEntity(me)`. (`db` is just an alias for `query` there.)
-- **`catalogue.js` order/confirm fan-out** — a **delivery** (writes customer + shop copies), so conceptually
-  `chit_deliver` — BUT it also atomically consumes the customer OTP (`identities` update) and sets **no `direction`**,
-  and the sender is a `customer` identity. Not a clean drop-in; needs care to preserve INV-2 atomicity. Recommend a
-  focused pass (either extend `chit_deliver` usage with the OTP step, or a dedicated `order_deliver` definer).
-- **`connections.js`** — writes `state_log` rows for **both** entities on connect/accept (dual-entity). Needs
-  inspection: is this a cross-write (→ `chit_log_targets`-style) or are connection events keyed differently? Flagged.
-- **`notifications.js`** — the derived feed reads `state_log`/`chit_status`/`chit_header` with an F3 "only my own
-  copy OR a genuine cross-party event" filter — a deliberate **cross-party read**. Needs a definer read or a
-  documented scope. Flagged.
-- **`governance.js`** — `countChitsToday` counts `chit_header WHERE sender_entity_id = <entity>` for a **governed**
-  entity (platform scope, may not be the caller). Likely a platform carve-out or a definer count. Flagged.
-- **`assist.js`** — `publish` writes the caller's OWN catalogue (fine → `withEntity(me)`). BUT `/gap` + `/resolve`
-  write into the **help entity's** catalogue from an arbitrary/public caller — which the owner-only WITH CHECK now
-  forbids unless the platform impersonates the help entity. That's the "nobody writes another's catalogue" anti-
-  pattern: gap-capture should **send a chit** to the help desk (`chit_deliver`), not write its catalogue directly.
-  Already flagged **vestigial** (superseded by chit→Task). Rework/retire rather than migrate as-is.
+- **`actors.js`** — ✅ DONE. Task assignment / break / assign / tasks are own-entity → `withEntity(me)` (the two
+  `withTransaction` blocks + the sequential-`db()` handlers via a shadowed tx client; `identities` counts carve-out).
+- **`notifications.js`** — ✅ DONE. The derived feed reads the caller's OWN `state_log` copy (cross-party events are
+  fanned into it by the definers) → `withEntity(me)`. The old `OR action IN (...)` cross-branch is a no-op under RLS.
+- **`governance.js`** — ✅ DONE. `countChitsToday` (dormant quota guard) → `withEntity(entity)` (own sent chits).
+- **`connections.js`** — ✅ DONE. Request log + respond-receiver log are own-copy → `withEntity(me)`. The
+  respond-**sender** `state_log` write (into the OTHER entity's copy) was **removed**: it violated the owner-only
+  rule and was dead data (connection `state_log` is never surfaced — the feed joins `chit_status`, which connections
+  lack). The sender learns of the response from the `connections` table via `GET /connections/list`.
+- **`catalogue.js` order/confirm fan-out** — ⏳ **THE LAST REMAINING FILE.** A **delivery** (writes customer + shop
+  copies), so conceptually `chit_deliver` — BUT it atomically consumes the customer OTP (`identities` update) in the
+  same tx, sets **no `direction`**, and the sender is a `customer` identity. Not a clean drop-in; needs a focused
+  pass to preserve INV-2 atomicity (extend `chit_deliver` to take the OTP step, or a dedicated `order_deliver` definer).
+- **`assist.js`** — ⏳ **REWORK, not a straight migration.** `publish` writes the caller's OWN catalogue (fine →
+  `withEntity(me)`). But `/gap` + `/resolve` write into the **help entity's** catalogue from an outside caller, which
+  the owner-only WITH CHECK forbids. Gap-capture should **send a chit** to the help desk (`chit_deliver`), not write
+  its catalogue. Vestigial (superseded by chit→Task) — rework/retire rather than migrate as-is.
 
 ## Migration / deploy run order (for the team)
 
