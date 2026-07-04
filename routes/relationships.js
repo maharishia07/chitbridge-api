@@ -144,9 +144,11 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
       `SELECT field_key, field_name, field_type, required, display_order
        FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`,
       [schema.rows[0].schema_id]);
-    const items = await query(
+    // B1 RLS: browsing a supplier's catalogue -> withEntity(me); the visibility-aware policy returns the supplier's
+    // items only if their catalogue is public (your own always). The app-layer public gate above stays (defence in depth).
+    const items = await withEntity(ctx(req), (db) => db.query(
       `SELECT item_id, item_data FROM catalogue_items
-       WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`, [sid]);
+       WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`, [sid]));
     res.json({ supplier, schema: schema.rows[0], fields: fields.rows, items: items.rows });
   } catch (err) {
     res.status(500).json({ error: 'Get catalogue failed', message: safeErr(err) });

@@ -59,8 +59,10 @@ const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
 async function repriceAgainstCatalogue(entity_id, rawItems) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order');   // F6: bound the line count
-  const cat = await query(
-    `SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id]);
+  // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
+  // context, so the visibility-aware policy returns only public items (a private shop can't be ordered from here).
+  const cat = await withEntity(null, (db) => db.query(
+    `SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id]));
   const byId = new Map(), byName = new Map(), nameCount = new Map();   // F6: nameCount flags ambiguous names
   for (const row of cat.rows) {
     const d = row.item_data || {};
@@ -113,10 +115,12 @@ router.get('/:bridge_id', async (req, res) => {
     const fields = await query(
       `SELECT field_key, field_name, field_type, required, min_value, display_order
        FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`, [sch.rows[0].schema_id]);
-    const items = await query(
+    // B1 RLS: public storefront read (unauthenticated) -> withEntity(null) = no tenant context, so the
+    // visibility-aware policy returns only PUBLIC items. (The app-layer public-schema gate above stays.)
+    const items = await withEntity(null, (db) => db.query(
       `SELECT item_id, item_data FROM catalogue_items
        WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`,
-      [entity.identity_id]);
+      [entity.identity_id]));
     res.json({
       shop: {
         bridge_id: entity.bridge_id, display_name: entity.display_name,
@@ -315,12 +319,13 @@ router.post('/:bridge_id/login/verify',
 router.get('/:bridge_id/my-orders', auth, async (req, res) => {
   try {
     const me = req.identity.identity_id;
-    const r = await query(
+    // B1 RLS: the customer's OWN order copies -> withEntity(me).
+    const r = await withEntity(me, (db) => db.query(
       `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status
        FROM chit_header ch
        JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
        WHERE ch.entity_id = $1 AND ch.purpose = 'order'
-       ORDER BY ch.created_at DESC`, [me]);
+       ORDER BY ch.created_at DESC`, [me]));
     res.json({ orders: r.rows, count: r.rows.length });
   } catch (err) { res.status(500).json({ error: 'Orders failed', message: safeErr(err) }); }
 });

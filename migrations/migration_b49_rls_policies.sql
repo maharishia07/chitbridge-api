@@ -36,13 +36,29 @@ CREATE POLICY rls_entity ON state_log
   USING      (entity_id = current_setting('app.current_entity', true)::uuid)
   WITH CHECK (entity_id = current_setting('app.current_entity', true)::uuid);
 
--- ── 4. catalogue_items ────────────────────────────────────────────────────────
+-- ── 4. catalogue_items — VISIBILITY-AWARE (Athi 2026-07-04) ─────────────────────
+-- A catalogue is a showcase: you always see your OWN items, and you see another entity's items per that entity's
+-- CATALOGUE-LEVEL visibility (its active default schema's `visibility`). `public` = showcase (the default — e.g.
+-- the help desk KB, a shop storefront); anything else = private (owner-only). A public/no-context reader (an
+-- unauthenticated storefront hit) has no entity bound -> NULLIF makes the own-branch NULL, so only the public
+-- branch applies. Writes stay strictly owner-only (WITH CHECK). Item-level hiding is a SEPARATE app-layer
+-- availability filter applied at SEND time (a row/column marked unavailable is never sent), NOT this policy.
+--   LATER: `network` (connected-entities-only, B2B) — add an OR branch joining `connections`; the slot is here.
+--   NOTE: relies on entity_schemas being readable to the caller (it is NOT RLS-enforced in this stage).
 ALTER TABLE catalogue_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE catalogue_items FORCE  ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS rls_entity ON catalogue_items;
 CREATE POLICY rls_entity ON catalogue_items
-  USING      (entity_id = current_setting('app.current_entity', true)::uuid)
-  WITH CHECK (entity_id = current_setting('app.current_entity', true)::uuid);
+  USING (
+    entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid   -- always see your own
+    OR EXISTS (                                                                 -- else per the owner's catalogue visibility
+      SELECT 1 FROM entity_schemas es
+       WHERE es.entity_id = catalogue_items.entity_id
+         AND es.is_default = true AND es.status = 'active'
+         AND es.visibility = 'public')
+    -- LATER (network): OR (es.visibility = 'network' AND EXISTS (SELECT 1 FROM connections ... connect caller<->owner))
+  )
+  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
 -- ── 5. customer_list — DISTINCT predicate: owner_entity_id (the trap) ──────────
 ALTER TABLE customer_list ENABLE ROW LEVEL SECURITY;
