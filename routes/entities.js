@@ -215,7 +215,7 @@ router.get('/me', auth, async (req, res) => {
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Entity not found' });
     await query('UPDATE identities SET last_active_at = NOW() WHERE identity_id = $1', [req.identity.identity_id]);
-    // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles.
+    // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles. [b55/connector]
     // Defensive: defaults to [] if the b55 column isn't present in this environment.
     let capabilities = [];
     try {
