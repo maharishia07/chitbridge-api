@@ -1428,7 +1428,7 @@ router.post('/:chit_id/disputes',
         warning: closedWarning,   // C2: set when raised on an already-closed chit
         scope, mode: d.mode, answerable: d.answerable, parity_state: d.parity_state,
         target_display_name: d.target_display_name,
-        raised_by_display_name: display_name,
+        raised_by_display_name: entityName,
         alert: d.mode === 'one_sided'
           ? `The other side is no longer reachable (${d.parity_state}). This is lodged as a unilateral record on your own copy.`
           : (widened ? 'This category notifies all parties — raised chit-wide.' : 'Dispute raised with the selected party.'),
@@ -1572,6 +1572,9 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
     const targetParty  = req.body.target_entity_id || null;   // per-party resolve; null = clear all remaining
     const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
     const display_name = req.identity.display_name;
+    // B3: the resolution message posts in the ENTITY name (the acting actor stays as provenance in the timeline).
+    let entityName = display_name;
+    if (req.identity.parent_entity_id) { const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] })); if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name; }
 
     try {
       const dispute = await query(
@@ -1620,7 +1623,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         await client.query(
           `INSERT INTO chit_messages (chit_id, sender_entity_id, sender_display_name, thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
            VALUES ($1,$2,$3,'external',NULL,$4,true,$5,NOW())`,
-          [chit_id, entity_id, display_name, `[resolved] ${resolution_note}`, dispute_id]);
+          [chit_id, entity_id, entityName, `[resolved] ${resolution_note}`, dispute_id]);
         // notify the cleared parties on their own timeline
         if (resolvedPartyIds.length) {
           const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`;
