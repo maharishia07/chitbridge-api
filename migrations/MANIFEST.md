@@ -52,7 +52,9 @@ migrations in order: **`b58_dispute_msg_fk.sql`** (chit_messages.dispute_id FK, 
 **`b57_connector_actor.sql`** (connector_connection + connector_type — NOT yet applied) →
 **`b59_delivery_lifecycle_blueprint.sql`** (mint-path options seeding + delivery-lifecycle blueprint — NOT yet applied) →
 **`b60_blueprint_catalogue.sql`** (source/template catalogue + provenance/deps + register_blueprint path; seeds CMMI
-standard + moves connector & delivery-lifecycle into the catalogue — the LAST blueprint-mechanism migration; NOT yet applied). The
+standard + moves connector & delivery-lifecycle into the catalogue — the LAST blueprint-mechanism migration; NOT yet applied) →
+**`b61_chit_reads.sql`** (creates the per-actor read table that was never applied — fixed a live actor 500 from
+tx-poisoning; APPLIED to prod 2026-07-05). The
 pre-baseline chain below (`db/schema.sql`, root `migration_*.sql`, `net0x`, `b35..b57`) is **historical record only** —
 superseded by the baseline for a clean build.
 

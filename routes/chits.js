@@ -873,12 +873,18 @@ router.get('/:chit_id', auth, async (req, res) => {
       // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
       // Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
       if (req.identity.identity_type === 'actor') {
+        // SAVEPOINT so a failure here (e.g. a missing table) can't poison the outer transaction and 500 the read.
         try {
+          await db.query('SAVEPOINT mark_read');
           await db.query(
             `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
              ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
             [chit_id, req.identity.identity_id]);
-        } catch (e) { console.error('mark-read skipped:', e.message); }
+          await db.query('RELEASE SAVEPOINT mark_read');
+        } catch (e) {
+          console.error('mark-read skipped:', e.message);
+          try { await db.query('ROLLBACK TO SAVEPOINT mark_read'); } catch (_) {}
+        }
       }
 
       // Get my header
