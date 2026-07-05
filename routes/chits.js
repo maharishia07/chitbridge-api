@@ -605,7 +605,12 @@ router.get('/sent', auth, async (req, res) => {
                 WHERE cd.chit_id = ch.chit_id AND cd.status = 'open'
                   AND (cd.scope='chit_wide' OR cd.raised_by_entity_id=$1 OR cd.target_entity_id=$1
                        OR EXISTS (SELECT 1 FROM dispute_participants dp
-                                   WHERE dp.dispute_id=cd.dispute_id AND dp.entity_id=$1 AND dp.dispute_status='open'))) AS open_dispute_count
+                                   WHERE dp.dispute_id=cd.dispute_id AND dp.entity_id=$1 AND dp.dispute_status='open'))) AS open_dispute_count,
+              (SELECT COUNT(*) FROM chit_disputes cd
+                WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved'
+                  AND (cd.scope='chit_wide' OR cd.raised_by_entity_id=$1 OR cd.target_entity_id=$1
+                       OR EXISTS (SELECT 1 FROM dispute_participants dp
+                                   WHERE dp.dispute_id=cd.dispute_id AND dp.entity_id=$1))) AS resolved_dispute_count
          ${joinFrom}
         WHERE ${where}
         ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
@@ -789,6 +794,11 @@ router.get('/inbox', auth, async (req, res) => {
             AND (cd.scope='chit_wide' OR cd.raised_by_entity_id=$1 OR cd.target_entity_id=$1
                  OR EXISTS (SELECT 1 FROM dispute_participants dp
                              WHERE dp.dispute_id=cd.dispute_id AND dp.entity_id=$1 AND dp.dispute_status='open'))) AS open_dispute_count,
+         (SELECT COUNT(*) FROM chit_disputes cd
+          WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved'
+            AND (cd.scope='chit_wide' OR cd.raised_by_entity_id=$1 OR cd.target_entity_id=$1
+                 OR EXISTS (SELECT 1 FROM dispute_participants dp
+                             WHERE dp.dispute_id=cd.dispute_id AND dp.entity_id=$1))) AS resolved_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
           WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
