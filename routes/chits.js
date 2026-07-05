@@ -1158,6 +1158,12 @@ router.post('/:chit_id/messages',
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
       const isDispute = req.body.is_dispute === true || req.body.is_dispute === 'true';
       const disputeId = req.body.dispute_id || null;
+      // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
+      let senderName = display_name;
+      if (isDispute && req.identity.parent_entity_id) {
+        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] }));
+        if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
+      }
 
       const result = await query(
         `INSERT INTO chit_messages
@@ -1165,7 +1171,7 @@ router.post('/:chit_id/messages',
             thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
          RETURNING *`,
-        [chit_id, entity_id, display_name, thread_type, visibility_entity_id, message_text, isDispute, disputeId]
+        [chit_id, entity_id, senderName, thread_type, visibility_entity_id, message_text, isDispute, disputeId]
       );
 
       // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
@@ -1298,6 +1304,18 @@ router.post('/:chit_id/disputes',
       const access = await withEntity(entity_id, (db) => db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]));
       if (access.rows.length === 0) return res.status(403).json({ error:'Not a participant' });
 
+      // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
+      const _cs = access.rows[0].current_status;
+      const closedWarning = (_cs === 'completed' || _cs === 'cancelled')
+        ? `This chit is already ${_cs} — the dispute is raised anyway. Bring it back to Act if it needs work.`
+        : null;
+      // B3 (Athi): dispute records + messages carry the ENTITY's name; the acting actor stays as provenance in the timeline.
+      let entityName = display_name;
+      if (req.identity.parent_entity_id) {
+        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] }));
+        if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;
+      }
+
       // 2. can't target yourself
       if (target_entity_id && target_entity_id === entity_id)
         return res.status(400).json({ error:'Invalid target', message:'You cannot raise a dispute against yourself' });
@@ -1351,7 +1369,7 @@ router.post('/:chit_id/disputes',
               scope, mode, answerable, parity_state, via, category, reason, evidence_snapshot, status, created_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'open',NOW())
            RETURNING *`,
-          [chit_id, entity_id, display_name,
+          [chit_id, entity_id, entityName,
            scope === 'targeted' ? target_entity_id : null,
            scope === 'targeted' ? parity.target_display_name : null,
            scope, parity.mode, parity.answerable, parity.parity_state, via,
@@ -1402,11 +1420,12 @@ router.post('/:chit_id/disputes',
           `INSERT INTO chit_messages
              (chit_id, sender_entity_id, sender_display_name, thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
            VALUES ($1,$2,$3,'external',NULL,$4,true,$5,NOW())`,
-          [chit_id, entity_id, display_name, `[${category}] ${reason}`, did]);
+          [chit_id, entity_id, entityName, `[${category}] ${reason}`, did]);
         return result.rows[0];
       });
       res.json({
         dispute_id: d.dispute_id, category, reason, status:'open',
+        warning: closedWarning,   // C2: set when raised on an already-closed chit
         scope, mode: d.mode, answerable: d.answerable, parity_state: d.parity_state,
         target_display_name: d.target_display_name,
         raised_by_display_name: display_name,
