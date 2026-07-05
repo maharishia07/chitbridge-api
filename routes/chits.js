@@ -1051,6 +1051,15 @@ router.put('/:chit_id/status',
         });
       }
 
+      // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
+      // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
+      let disputeWarning = null;
+      if (new_status === 'completed' || new_status === 'cancelled') {
+        const openD = await query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
+          [chit_id]).catch(() => ({ rows: [{ count: 0 }] }));
+        if (openD.rows[0].count > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
+      }
+
       // Update chit_status — the caller's OWN received copy.
       await withEntity(entity_id, (db) => db.query(
         `UPDATE chit_status
@@ -1061,8 +1070,9 @@ router.put('/:chit_id/status',
 
       // One log row per participant — a CROSS-entity write, so via the b50 delivery-agent fn chit_log_all
       // (validated: caller must be a participant). Fallback = the legacy INSERT...SELECT when b50 isn't applied.
-      const detail = note ||
-        `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`;
+      const detail = (note ||
+        `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`)
+        + (disputeWarning ? ` ⚠ ${disputeWarning}` : '');
 
       await crossing(entity_id,
         `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
@@ -1099,6 +1109,7 @@ router.put('/:chit_id/status',
 
       res.json({
         message: `Chit ${new_status}`,
+        warning: disputeWarning,   // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
         chit_id,
         previous_status,
         new_status
