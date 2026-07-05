@@ -34,6 +34,29 @@ Apply in this order:
 | 24 | `migration_otp_attempts.sql` | `identities.otp_attempts` (OTP attempt cap) |
 | 25 | `migration_customer_contact.sql` | `identities.otp_contact` (F2 dual-channel customer OTP) |
 
+## Newer migrations (migrations/ folder — not yet chained above)
+`b42_assist_qa` · `b43_help_entity` · `b44_assist_projection` · `b45_gov01help_rename` · `b46_helpdesk_blueprint` ·
+`b47_mint_path` · `b48_cb_app_role` · `b49_rls_policies` · `b50/b51_rls_delivery_functions` · `b52_rls_parity_read` ·
+`b53_assist_residency_qa` · `b54_disable_rls_carveout` · `b55_connector_blueprint_and_capabilities` ·
+`b56_dispute_schema` (idempotent no-op safety — dispute_participants already existed) ·
+`b57_connector_actor` (**NOT applied to prod yet** — connector_connection + identities.connector_type).
+
+## ✅ BASELINE CAPTURED (2026-07-05) — repo now = prod
+Prod had drifted from the repo (the ~30 `idx_*` indexes, `dispute_participants`, `chit_messages.is_dispute`/`dispute_id`
+were added ad-hoc in Supabase, in no committed migration). **FIXED:** `migrations/000_baseline.sql` (tables) +
+`migrations/000_baseline_part2.sql` (constraints, indexes, RLS enable, policies, triggers, functions) were captured from
+prod via a catalog-reconstruction query on 2026-07-05 — the **authoritative schema, matching prod exactly**.
+
+**Fresh-build order:** `000_baseline.sql` → `000_baseline_part2.sql` → `b48_cb_app_role` (role + GRANTs) → any migration
+AFTER b57. The pre-baseline chain below (`db/schema.sql`, root `migration_*.sql`, `net0x`, `b35..b57`) is **historical
+record only** — superseded by the baseline for a clean build.
+
+**Baseline covers:** all 50 tables, all constraints (PK/FK/UNIQUE/CHECK), all indexes, RLS enable-state + the 6 `rls_entity`
+policies, 4 triggers, and our 17 functions (incl. the SECURITY DEFINER rail: `chit_deliver`, `chit_log_all/targets`,
+`chit_participants`, etc.). **Does NOT cover:** the `cb_app` role + GRANTs (→ b48/b49), seed/reference data, or the `ltree`
+extension's internal C functions (provided by `CREATE EXTENSION ltree`). Rule going forward: **all schema changes via a
+committed `migrations/bNN_*.sql` only** — no more ad-hoc Supabase DDL.
+
 ## Notes / open items
 - **fp01 (#17):** already applied to legacy prod Supabase 2026-06-25. The canonical original file was not in the repo, so `migration_fp01.sql` here is a **faithful reconstruction from spine v2.34's documented columns** (idempotent `IF NOT EXISTS`, so re-running against prod is a safe no-op). The `files20/migrations-fixed/001_002_003` set is the **WRONG** `cb_*`-messaging version — do NOT use it. If the original surfaces from Supabase migration history, diff it against this reconstruction.
 - **cb_chit (#14) is dormant:** the table stays (Q3, reversible); only the `/api/network` chit-loop *route* was retired. `src/services/chit.js` is retained because `src/services/network.js` uses `edgeHasOpenChit` for the disconnect settle-guard.
