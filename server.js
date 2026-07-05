@@ -112,6 +112,7 @@ const connectionsRouter = require('./routes/connections');
 const chitsRouter       = require('./routes/chits');
 const schemasRouter     = require('./routes/schemas');
 const actorsRouter      = require('./routes/actors');
+const connectorsRouter  = require('./routes/connectors');   // L3.1 connector actors + connections
 const relationshipsRouter = require('./routes/relationships');
 const catalogueRouter   = require('./routes/catalogue');
 const productsRouter    = require('./routes/products');
@@ -123,6 +124,7 @@ app.use('/api/connections', connectionsRouter);
 app.use('/api/chits',       chitsRouter);
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);
+app.use('/api/connectors',  connectorsRouter);
 app.use('/api/relationships', relationshipsRouter);
 app.use('/api/catalogue',   catalogueRouter);
 app.use('/api/products',    productsRouter);
