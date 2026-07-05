@@ -47,9 +47,10 @@ were added ad-hoc in Supabase, in no committed migration). **FIXED:** `migration
 `migrations/000_baseline_part2.sql` (constraints, indexes, RLS enable, policies, triggers, functions) were captured from
 prod via a catalog-reconstruction query on 2026-07-05 — the **authoritative schema, matching prod exactly**.
 
-**Fresh-build order:** `000_baseline.sql` → `000_baseline_part2.sql` → `b48_cb_app_role` (role + GRANTs) → any migration
-AFTER b57. The pre-baseline chain below (`db/schema.sql`, root `migration_*.sql`, `net0x`, `b35..b57`) is **historical
-record only** — superseded by the baseline for a clean build.
+**Fresh-build order:** `000_baseline.sql` → `000_baseline_part2.sql` → `b48_cb_app_role` (role + GRANTs) → post-baseline
+migrations in order: **`b58_dispute_msg_fk.sql`** (chit_messages.dispute_id FK, applied to prod 2026-07-05). The
+pre-baseline chain below (`db/schema.sql`, root `migration_*.sql`, `net0x`, `b35..b57`) is **historical record only** —
+superseded by the baseline for a clean build.
 
 **Baseline covers:** all 50 tables, all constraints (PK/FK/UNIQUE/CHECK), all indexes, RLS enable-state + the 6 `rls_entity`
 policies, 4 triggers, and our 17 functions (incl. the SECURITY DEFINER rail: `chit_deliver`, `chit_log_all/targets`,
