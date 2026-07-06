@@ -19,6 +19,7 @@
  *   GATEWAY_EMAIL=gw01@connector.iot  TO=<counterparty entity_id>  node scripts/connector-gateway-sim.js
  */
 const https = require('https');
+const fs = require('fs');
 const { URL } = require('url');
 
 const API_BASE = process.env.API_BASE || 'https://chitbridge-api-production.up.railway.app';
@@ -49,8 +50,19 @@ function req(method, path, body, token){
   });
 }
 
-// --- the DEVICE READ. On a real Pi, replace with an MQTT subscribe / Modbus poll / GPIO read. ---
-function readSignal(){ return { device_id:cfg.device, signal:cfg.signal, value:cfg.value, unit:cfg.unit }; }
+// --- the DEVICE READ. On a real Pi this auto-reads the on-board CPU temperature (no extra hardware,
+//     perfect first sensor). Swap this body for an MQTT subscribe / Modbus poll / GPIO / I2C read for a
+//     real sensor — the API call below is unchanged. An explicit VALUE= env always wins (manual override). ---
+function readSignal(){
+  if(!process.env.VALUE){
+    try{
+      const raw = fs.readFileSync('/sys/class/thermal/thermal_zone0/temp', 'utf8').trim();
+      const c = (parseInt(raw, 10) / 1000);
+      if(isFinite(c) && c > 0) return { device_id:cfg.device, signal:'cpu_temperature', value:c.toFixed(1), unit:'C' };
+    }catch(_){ /* not a Pi (e.g. laptop) — fall back to the env / default value */ }
+  }
+  return { device_id:cfg.device, signal:cfg.signal, value:cfg.value, unit:cfg.unit };
+}
 
 async function ensureToken(){
   if(cfg.token) return cfg.token;
