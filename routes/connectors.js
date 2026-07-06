@@ -1,10 +1,11 @@
-// routes/connectors.js — L3.1: connector as a first-class ACTOR (an `identities` row) + its endpoints (connections).
-// A connector actor = identities row {identity_type:'actor', connector_type:'iot'|'erp'} under the entity — so it
-// shows in Co-assists as a VISIBLE IDENTITY and reuses the actor/RLS-carveout infra. Endpoints live in
-// `connector_connection` (b57). Every route is auth'd + gated on the entity's `connector` capability.
-// Emit-through-connection + receipts = the next step (L3.4); the manual emit (cap-connector.js) still works meanwhile.
+// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1),
+// holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref),
+// owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and
+// CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the
+// pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)
 const express = require('express');
 const router  = express.Router();
+const crypto  = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { query: db } = require('../db');
 const { safeErr } = require('../lib/respond');
@@ -12,17 +13,15 @@ const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
 
-const generateBridgeId = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id = 'CB';
-  for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
-  return id;
-};
+const generateBridgeId = () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let id='CB'; for (let i=0;i<8;i++) id+=c[Math.floor(Math.random()*c.length)]; return id; };
+const genKey  = () => crypto.randomBytes(24).toString('base64url');            // ActorKey — returned ONCE on IoT push create
+const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex');    // only the hash is stored
+// health from last_seen: never / stale >15m = offline, >3m = slow, else live
+function health(last_seen){ if (!last_seen) return 'offline'; const age = Date.now() - new Date(last_seen).getTime(); if (age > 15*60*1000) return 'offline'; if (age > 3*60*1000) return 'slow'; return 'live'; }
 
-// the OWNING entity for the caller (an actor acts under its parent entity)
 const ownerEntityId = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 
-// capability gate — the entity must carry 'connector' in identities.capabilities (L3.5: API-enforced, not just UI)
+// capability gate — the entity must carry 'connector' (API-enforced, not just UI)
 async function requireConnector(req, res, next) {
   try {
     const eid = ownerEntityId(req);
@@ -30,70 +29,110 @@ async function requireConnector(req, res, next) {
     const caps = (r.rows[0] && r.rows[0].capabilities) || [];
     if (Array.isArray(caps) && caps.indexOf('connector') >= 0) return next();
     return res.status(403).json({ error: 'Capability off', message: 'The connector capability is not enabled for this entity.' });
-  } catch (err) {
-    return res.status(500).json({ error: 'Gate check failed', message: safeErr(err) });
-  }
+  } catch (err) { return res.status(500).json({ error: 'Gate check failed', message: safeErr(err) }); }
 }
 
 // ownership guard — the connector actor must be an actor identities row under this entity
 async function ownedConnector(actor_id, entity_id) {
   const r = await db(
-    `SELECT identity_id, display_name, connector_type FROM identities
+    `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen
+       FROM identities
       WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`,
     [actor_id, entity_id]);
   return r.rows[0] || null;
 }
 
-// POST /api/connectors — create a connector actor (visible in Co-assists)
+// POST /api/connectors — create a connector actor (a Pi, or an ERP system). IoT push → we ISSUE an ActorKey (once).
 router.post('/', auth, requireConnector,
   [ body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
     body('type').isIn(['iot', 'erp']).withMessage('type must be iot or erp'),
-    body('actor_key').optional().trim().matches(/^[a-z0-9]+$/) ],
+    body('site').optional().trim(),
+    body('config').optional().isObject() ],
   validate,
   async (req, res) => {
     try {
       const entity_id    = ownerEntityId(req);
       const display_name = sanitise(req.body.display_name);
       const type         = req.body.type;
-      const actor_key    = (req.body.actor_key || ('conn' + Math.random().toString(36).slice(2, 7))).toLowerCase();
+      const site         = req.body.site ? sanitise(req.body.site) : null;
+      const config       = req.body.config || {};   // IoT: {mode:'push'|'pull', endpoint, host, port} · ERP: {base_url, auth_type, auth_ref}
+      const actor_key    = ('conn' + Math.random().toString(36).slice(2, 7)).toLowerCase();
       const identity_id  = uuidv4();
       const bridge_id    = generateBridgeId();
-      // passive machine identity: OTP fields set (mirror the proven actor insert) but never used for login.
       const otp          = Math.floor(100000 + Math.random() * 900000).toString();
       const otp_expires  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      // IoT push: issue the device ActorKey now, store only its hash, return the raw ONCE (for provisioning the Pi).
+      let provision_key = null, key_hash = null;
+      if (type === 'iot' && (config.mode || 'push') === 'push') { provision_key = genKey(); key_hash = hashKey(provision_key); }
       await db(
         `INSERT INTO identities
            (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone,
-            max_tasks, identity_type, status, break_status, otp_code, otp_expires_at, hat, connector_type)
-         VALUES ($1,$2,$3,$4,'human',$5,NULL,NULL,10,'actor','active','active',$6,$7,'act',$8)`,
-        [identity_id, bridge_id, display_name, actor_key, entity_id, otp, otp_expires, type]);
-      res.json({ message: 'Connector created', connector: { identity_id, display_name, type, actor_key, bridge_id } });
-    } catch (err) {
-      res.status(500).json({ error: 'Create failed', message: safeErr(err) });
-    }
+            max_tasks, identity_type, status, break_status, otp_code, otp_expires_at, hat, connector_type,
+            site, connector_config, provision_key_hash)
+         VALUES ($1,$2,$3,$4,'human',$5,NULL,NULL,10,'actor','active','active',$6,$7,'act',$8,$9,$10,$11)`,
+        [identity_id, bridge_id, display_name, actor_key, entity_id, otp, otp_expires, type,
+         site, JSON.stringify(config), key_hash]);
+      res.json({ message: 'Connector created',
+        connector: { identity_id, display_name, type, bridge_id, site, connector_config: config, health: 'offline' },
+        provision_key });   // shown ONCE
+    } catch (err) { res.status(500).json({ error: 'Create failed', message: safeErr(err) }); }
   });
 
-// GET /api/connectors — list this entity's connector actors
+// GET /api/connectors — list connector actors (site, config, health) so the UI can group by site
 router.get('/', auth, requireConnector, async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const r = await db(
-      `SELECT identity_id, display_name, actor_key, connector_type, status, created_at
+      `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status, created_at,
+              (SELECT COUNT(*) FROM connector_connection cc WHERE cc.actor_id = identities.identity_id) AS connection_count
          FROM identities
         WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL
-        ORDER BY created_at DESC`, [entity_id]);
-    res.json({ connectors: r.rows });
+        ORDER BY site NULLS LAST, created_at DESC`, [entity_id]);
+    res.json({ connectors: r.rows.map(a => ({ ...a, health: health(a.last_seen) })) });
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
-// POST /api/connectors/:actorId/connections — add an endpoint/device binding under a connector actor
+// GET /api/connectors/:actorId/provisioning — the connection string to put on the Pi (IoT) / the ERP system config
+router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return res.status(404).json({ error: 'Not found' });
+    const conns = await db(`SELECT bridge_id, ref, conn_config FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at`, [actor.identity_id, entity_id]);
+    const cfg = actor.connector_config || {};
+    if (actor.connector_type === 'iot') {
+      return res.json({ type: 'iot', mode: cfg.mode || 'push',
+        endpoint: cfg.endpoint || 'ingest.chitbridge.io:8883',
+        note: 'ActorKey is shown once at creation — Regenerate to re-issue. Flash Endpoint + ActorKey on the Pi; it publishes these BridgeIds.',
+        publishes: conns.rows.map(c => ({ bridge_id: c.bridge_id, ref: c.ref, topic: (c.conn_config || {}).topic || null })) });
+    }
+    return res.json({ type: 'erp', base_url: cfg.base_url || null, auth_type: cfg.auth_type || null, auth_ref: cfg.auth_ref || null,
+      endpoints: conns.rows.map(c => ({ bridge_id: c.bridge_id, ref: c.ref, path: (c.conn_config || {}).path || null })) });
+  } catch (err) { res.status(500).json({ error: 'Provisioning failed', message: safeErr(err) }); }
+});
+
+// POST /api/connectors/:actorId/ping — heartbeat seam: marks the connector (and optionally one bridge) live.
+// Used by the app "Test connection" button today; the real device/gateway will call the ingest path (next milestone).
+router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return res.status(404).json({ error: 'Not found' });
+    await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+    if (req.body && req.body.bridge_id) await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, req.body.bridge_id]);
+    res.json({ message: 'pong', last_seen: new Date().toISOString(), health: 'live' });
+  } catch (err) { res.status(500).json({ error: 'Ping failed', message: safeErr(err) }); }
+});
+
+// POST /api/connectors/:actorId/connections — add a device/endpoint (its own bridge_id + type-specific config)
 router.post('/:actorId/connections', auth, requireConnector,
   [ param('actorId').isUUID(),
     body('direction').optional().isIn(['in', 'out']),
     body('ref').trim().isLength({ min: 1 }).withMessage('endpoint/device ref required'),
     body('schema_ref').optional().trim(),
     body('counterparty_entity_id').optional().isUUID(),
-    body('retention').optional().isIn(['never_persist', 'persist_then_purge']) ],
+    body('retention').optional().isIn(['never_persist', 'persist_then_purge']),
+    body('config').optional().isObject() ],
   validate,
   async (req, res) => {
     try {
@@ -104,29 +143,30 @@ router.post('/:actorId/connections', auth, requireConnector,
       const schema_ref   = req.body.schema_ref || null;
       const counterparty = req.body.counterparty_entity_id || null;
       const retention    = req.body.retention || 'never_persist';
+      const config       = req.body.config || {};   // IoT: {protocol,host,port,topic,device_id} · ERP: {path}
+      const bridge_id    = generateBridgeId();
       const r = await db(
         `INSERT INTO connector_connection
-           (actor_id, entity_id, direction, ref, schema_ref, counterparty_entity_id, retention)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-        [actor.identity_id, entity_id, direction, sanitise(req.body.ref), schema_ref, counterparty, retention]);
+           (actor_id, entity_id, direction, ref, schema_ref, counterparty_entity_id, retention, bridge_id, conn_config)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+        [actor.identity_id, entity_id, direction, sanitise(req.body.ref), schema_ref, counterparty, retention, bridge_id, JSON.stringify(config)]);
       res.json({ message: 'Connection added', connection: r.rows[0] });
     } catch (err) { res.status(500).json({ error: 'Add connection failed', message: safeErr(err) }); }
   });
 
-// GET /api/connectors/:actorId/connections — list a connector's connections
-router.get('/:actorId/connections', auth, requireConnector,
-  [ param('actorId').isUUID() ], validate,
-  async (req, res) => {
-    try {
-      const entity_id = ownerEntityId(req);
-      const actor = await ownedConnector(req.params.actorId, entity_id);
-      if (!actor) return res.status(404).json({ error: 'Not found' });
-      const r = await db(
-        `SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`,
-        [actor.identity_id, entity_id]);
-      res.json({ connections: r.rows });
-    } catch (err) { res.status(500).json({ error: 'List connections failed', message: safeErr(err) }); }
-  });
+// GET /api/connectors/:actorId/connections — list; signal CASCADES from the actor's health
+router.get('/:actorId/connections', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return res.status(404).json({ error: 'Not found' });
+    const actorHealth = health(actor.last_seen);
+    const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
+    // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
+    const connections = r.rows.map(c => ({ ...c, signal: actorHealth === 'offline' ? 'no_signal' : health(c.last_seen) }));
+    res.json({ actor_health: actorHealth, connections });
+  } catch (err) { res.status(500).json({ error: 'List connections failed', message: safeErr(err) }); }
+});
 
 // PATCH /api/connectors/:actorId/connections/:connId — enable/disable a connection (per-endpoint kill switch)
 router.patch('/:actorId/connections/:connId', auth, requireConnector,
