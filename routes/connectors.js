@@ -207,6 +207,19 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
   } catch (err) { res.status(500).json({ error: 'Provisioning failed', message: safeErr(err) }); }
 });
 
+// POST /api/connectors/:actorId/regenerate-key — issue a FRESH ActorKey (invalidates the old one, since we only
+// ever store the hash). Returned ONCE. This is the recovery path when the create-time key wasn't copied.
+router.post('/:actorId/regenerate-key', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return res.status(404).json({ error: 'Not found' });
+    const provision_key = genKey();
+    await db(`UPDATE identities SET provision_key_hash = $1 WHERE identity_id = $2`, [hashKey(provision_key), actor.identity_id]);
+    res.json({ message: 'ActorKey regenerated', provision_key });   // shown ONCE — the old key stops working immediately
+  } catch (err) { res.status(500).json({ error: 'Regenerate failed', message: safeErr(err) }); }
+});
+
 // POST /api/connectors/:actorId/ping — heartbeat seam: marks the connector (and optionally one bridge) live.
 // Used by the app "Test connection" button today; the real device/gateway will call the ingest path (next milestone).
 router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
