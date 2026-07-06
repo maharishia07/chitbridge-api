@@ -7,7 +7,7 @@ const express = require('express');
 const router  = express.Router();
 const crypto  = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-const { query: db } = require('../db');
+const { query: db, withEntity } = require('../db');
 const { safeErr } = require('../lib/respond');
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
@@ -76,6 +76,102 @@ router.post('/', auth, requireConnector,
         connector: { identity_id, display_name, type, bridge_id, site, connector_config: config, health: 'offline' },
         provision_key });   // shown ONCE
     } catch (err) { res.status(500).json({ error: 'Create failed', message: safeErr(err) }); }
+  });
+
+// Build + deliver a Device Signal chit (sender = the connector's OWNING ENTITY, receiver = the counterparty),
+// reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
+// Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
+async function emitSignalChit({ entity_id, actor, counterparty, signal, value, unit, device_id, bridge_id }) {
+  const ent = await db(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
+  const sender = ent.rows[0]; if (!sender) throw new Error('owning entity not found');
+  const rc = await db(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [counterparty]);
+  const receiver = rc.rows[0]; if (!receiver) throw new Error('counterparty not found or inactive');
+
+  const chit_id = uuidv4();
+  const purpose = 'general';
+  const now = new Date();
+  const business_json = { kind: 'device_signal', device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString() };
+  const manual_subject = 'Signal: ' + signal + (value != null ? (' = ' + value + (unit || '')) : '');
+  const auto_subject = 'Signal from ' + (actor.display_name || sender.display_name) + ' — ' + now.toISOString().slice(0, 10);
+  const all_recipients = [
+    { entity_id, bridge_id: sender.bridge_id, display_name: sender.display_name, role: 'sender' },
+    { entity_id: receiver.identity_id, bridge_id: receiver.bridge_id, display_name: receiver.display_name, role: 'receiver' },
+  ];
+  const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose, is_promotion: false, forwarded_from: null };
+  const headerCommon = {
+    sender_entity_id: entity_id, sender_entity_bridge_id: sender.bridge_id, sender_entity_display_name: sender.display_name,
+    all_recipients, purpose, auto_subject, manual_subject, summary_json,
+    schema_version: null, schema_id: null, created_by_actor_id: actor.identity_id,
+    detail_type: purpose, line_item_count: 0, total_value: 0, currency_code: 'INR',
+  };
+  const copies = [
+    { ...headerCommon, business_json, entity_id, direction: 'sent', role: 'Act',
+      current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
+      log: { action: 'created', action_by_identity_id: entity_id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: 'Device signal emitted to ' + receiver.display_name } },
+    { ...headerCommon, business_json, entity_id: receiver.identity_id, direction: 'received', role: 'Act',
+      current_status: 'pending', priority_flag: 'normal',
+      log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: sender.display_name, new_status: 'pending', detail: 'Device signal received from ' + sender.display_name } },
+  ];
+  await withEntity(entity_id, (dbx) => dbx.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(copies)]));
+  return chit_id;
+}
+
+// POST /api/connectors/ingest — DEVICE-FACING. Auth by the CB-issued ActorKey (X-Bridge-Key header), NOT a user JWT.
+// The Pi/gateway calls THIS: (1) prove identity with its own key, (2) heartbeat -> the cockpit health dot goes LIVE,
+// (3) emit the reading as a co-held Device Signal chit to the connection's counterparty. One call, own credential.
+// By design there is NO `auth` middleware here (a device has no session); abuse-throttling is a tracked backlog item.
+router.post('/ingest',
+  [ body('signal').optional().trim().isLength({ max: 64 }),
+    body('bridge_id').optional().trim(),
+    body('unit').optional().trim().isLength({ max: 16 }),
+    body('device_id').optional().trim().isLength({ max: 64 }) ],
+  validate,
+  async (req, res) => {
+    try {
+      const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
+      if (!key) return res.status(401).json({ error: 'No key', message: 'Send the ActorKey in the X-Bridge-Key header.' });
+      const ar = await db(
+        `SELECT identity_id, parent_entity_id, display_name, connector_type, status
+           FROM identities
+          WHERE provision_key_hash = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [hashKey(key)]);
+      const actor = ar.rows[0];
+      if (!actor || actor.status !== 'active') return res.status(401).json({ error: 'Bad key', message: 'ActorKey not recognised, or the connector is inactive.' });
+
+      const entity_id = actor.parent_entity_id;
+      const bridge_id = req.body.bridge_id ? String(req.body.bridge_id).trim() : null;
+
+      // Resolve the device/connection when a BridgeId is given — it must belong to THIS actor and be enabled.
+      let conn = null;
+      if (bridge_id) {
+        const cr = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+        conn = cr.rows[0] || null;
+        if (!conn) return res.status(404).json({ error: 'Unknown device', message: 'No connection with that bridge_id under this connector.' });
+        if (conn.enabled === false) return res.status(409).json({ error: 'Disabled', message: 'This connection is disabled.' });
+      }
+
+      // (2) HEARTBEAT — health goes live for the Pi (and this device). Saved independently of the chit emit below.
+      await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+      if (bridge_id) await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+
+      // (3) EMIT the reading as a chit to the counterparty (best-effort — the heartbeat is already committed).
+      const counterparty = (conn && conn.counterparty_entity_id) || (req.body.to ? String(req.body.to).trim() : null);
+      let chit_id = null, note = null;
+      if (!counterparty) {
+        note = 'Heartbeat only — no counterparty on the connection (set one to route signals as chits).';
+      } else {
+        try {
+          chit_id = await emitSignalChit({
+            entity_id, actor, counterparty,
+            signal: req.body.signal || 'signal',
+            value: (req.body.value != null ? String(req.body.value) : null),
+            unit: req.body.unit || null,
+            device_id: req.body.device_id || (conn && conn.ref) || null,
+            bridge_id,
+          });
+        } catch (e) { note = 'Health updated, but the signal chit could not be delivered: ' + safeErr(e); }
+      }
+      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, note });
+    } catch (err) { res.status(500).json({ error: 'Ingest failed', message: safeErr(err) }); }
   });
 
 // GET /api/connectors — list connector actors (site, config, health) so the UI can group by site

@@ -6,16 +6,21 @@
  * The signal lands in the counterparty's Task inbox as a sealed, co-held record. This is the adapter seam
  * made concrete — swap readSignal() for a real MQTT/Modbus/GPIO read and the API call is unchanged.
  *
- * AUTH (honest): machine-to-machine API keys are still a backlog item, so this authenticates with a session
- * TOKEN. Preferred: paste an existing entity's TOKEN. Dev fallback: mint one via the dev-OTP flow.
+ * AUTH: PREFERRED = device-key ingest — the CB-issued ActorKey (BRIDGE_KEY) hits POST /api/connectors/ingest,
+ * which heartbeats (health goes LIVE in the cockpit) AND emits the chit in one call, using the device's OWN
+ * credential (no user session). FALLBACK (no key) = a session TOKEN + POST /api/chits/send (kept for demos).
  * Zero dependencies (Node's https) so it runs on a bare Raspberry Pi.
  *
  * Usage:
- *   # preferred — use a real entity's bearer token (sign in on the web, copy the token)
+ *   # PREFERRED — device-key ingest (create the connector + a device in the app, copy the ActorKey + BridgeId)
+ *   BRIDGE_KEY=<ActorKey>  BRIDGE_ID=<device BridgeId>  DEVICE_ID=pi4-lab-01 \
+ *     node scripts/connector-gateway-sim.js
+ *
+ *   # FALLBACK — a real entity's bearer token (sign in on the web, copy the token)
  *   TOKEN=<bearer>  TO=<counterparty entity_id>  DEVICE_ID=edge-gw-01 SIGNAL=temperature VALUE=42 UNIT=C \
  *     node scripts/connector-gateway-sim.js
  *
- *   # dev fallback — mint a token via dev OTP (Railway runs NODE_ENV=development, DEV_OTP=123456)
+ *   # FALLBACK (dev) — mint a token via dev OTP (Railway runs NODE_ENV=development, DEV_OTP=123456)
  *   GATEWAY_EMAIL=gw01@connector.iot  TO=<counterparty entity_id>  node scripts/connector-gateway-sim.js
  */
 const https = require('https');
@@ -24,9 +29,11 @@ const { URL } = require('url');
 
 const API_BASE = process.env.API_BASE || 'https://chitbridge-api-production.up.railway.app';
 const cfg = {
+  key:    process.env.BRIDGE_KEY || '',      // PREFERRED: the CB-issued ActorKey -> device-key ingest (no user token)
+  bridge: process.env.BRIDGE_ID || '',       // the device BridgeId under the connector (for ingest routing/health)
   token:  process.env.TOKEN || '',
-  email:  process.env.GATEWAY_EMAIL || '',   // dev-only: mint a token via OTP when no TOKEN
-  to:     process.env.TO || '',              // counterparty entity_id (REQUIRED) — who receives the signal
+  email:  process.env.GATEWAY_EMAIL || '',   // dev-only: mint a token via OTP when no TOKEN / no BRIDGE_KEY
+  to:     process.env.TO || '',              // counterparty entity_id — who receives the signal (from the connection if omitted)
   device: process.env.DEVICE_ID || 'edge-gw-01',
   signal: process.env.SIGNAL || 'temperature',
   value:  process.env.VALUE || '42',
@@ -34,13 +41,14 @@ const cfg = {
   devOtp: process.env.DEV_OTP || '123456',
 };
 
-function req(method, path, body, token){
+function req(method, path, body, token, extraHeaders){
   return new Promise((resolve, reject)=>{
     const u = new URL(API_BASE + path);
     const data = body ? JSON.stringify(body) : null;
     const opts = { method, hostname:u.hostname, port:u.port||443, path:u.pathname+u.search,
       headers:{ 'Content-Type':'application/json',
         ...(token?{Authorization:'Bearer '+token}:{}),
+        ...(extraHeaders||{}),
         ...(data?{'Content-Length':Buffer.byteLength(data)}:{}) } };
     const r = https.request(opts, res=>{ let b=''; res.on('data',c=>b+=c); res.on('end',()=>{
       let j; try{ j=JSON.parse(b); }catch(_){ j=b; }
@@ -77,7 +85,22 @@ async function ensureToken(){
 
 (async ()=>{
   try{
-    if(!cfg.to) throw new Error('Set TO=<counterparty entity_id> — the entity that should receive the signal chit.');
+    // PREFERRED PATH — device-key ingest: authenticate with the CB-issued ActorKey (no user token), heartbeat +
+    // emit in ONE call. The counterparty comes from the connection (TO optional). This is what a real Pi should use.
+    if(cfg.key){
+      const s = readSignal();
+      console.log('[read]', JSON.stringify(s));
+      const out = await req('POST','/api/connectors/ingest',
+        { bridge_id:cfg.bridge||undefined, signal:s.signal, value:s.value, unit:s.unit, device_id:s.device_id, to:cfg.to||undefined },
+        null, { 'X-Bridge-Key':cfg.key });
+      console.log('[ingest] OK — health is now LIVE in the co-assist cockpit; reading sent over the rail.');
+      console.log('        chit_id:', out && (out.chit_id||'(none — heartbeat only)'));
+      if(out && out.note) console.log('        note:', out.note);
+      console.log('        raw:', JSON.stringify(out).slice(0,300));
+      return;
+    }
+    // FALLBACK PATH — session-token + /chits/send (M2M device keys weren't available; kept for demos without a key).
+    if(!cfg.to) throw new Error('Set BRIDGE_KEY=<ActorKey> (preferred), or TO=<counterparty entity_id> for the token path.');
     const token = await ensureToken();
     const s = readSignal();
     console.log('[read]', JSON.stringify(s));
