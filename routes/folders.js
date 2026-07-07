@@ -3,7 +3,7 @@
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
 const router  = express.Router();
-const { query, withEntity } = require('../db');
+const { withEntity } = require('../db');   // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
 const { safeErr } = require('../lib/respond');
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
@@ -34,9 +34,13 @@ router.post('/', auth,
   validate, async (req, res) => {
   try {
     const e = ent(req); const name = sanitise(req.body.name); const parent = req.body.parent_id || null;
-    if (parent) { const p = await query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]); if (!p.rows.length) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' }); }
-    const r = await query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]);
-    res.json({ folder: { ...r.rows[0], count: 0 } });
+    const row = await withEntity(e, async (db) => {
+      if (parent) { const p = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]); if (!p.rows.length) return { badParent: true }; }
+      const r = await db.query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]);
+      return { folder: r.rows[0] };
+    });
+    if (row.badParent) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' });
+    res.json({ folder: { ...row.folder, count: 0 } });
   } catch (err) { res.status(500).json({ error: 'Create failed', message: safeErr(err) }); }
 });
 
@@ -55,7 +59,7 @@ router.patch('/:id', auth,
     }
     if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
     n++; const idIdx = n; params.push(req.params.id); n++; params.push(e);
-    const r = await query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${n} RETURNING folder_id, parent_id, name`, params);
+    const r = await withEntity(e, (db) => db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${n} RETURNING folder_id, parent_id, name`, params));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ folder: r.rows[0] });
   } catch (err) { res.status(500).json({ error: 'Update failed', message: safeErr(err) }); }
@@ -65,12 +69,15 @@ router.patch('/:id', auth,
 router.delete('/:id', auth, [ param('id').isUUID() ], validate, async (req, res) => {
   try {
     const e = ent(req);
-    await withEntity(e, (db) => db.query(
-      `UPDATE chit_status SET folder_id = NULL
-        WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM folder WHERE entity_id = $1 AND (folder_id = $2 OR parent_id = $2))`,
-      [e, req.params.id]));
-    const r = await query(`DELETE FROM folder WHERE folder_id = $1 AND entity_id = $2`, [req.params.id, e]);
-    res.json({ deleted: r.rowCount });
+    const deleted = await withEntity(e, async (db) => {
+      await db.query(
+        `UPDATE chit_status SET folder_id = NULL
+          WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM folder WHERE entity_id = $1 AND (folder_id = $2 OR parent_id = $2))`,
+        [e, req.params.id]);
+      const r = await db.query(`DELETE FROM folder WHERE folder_id = $1 AND entity_id = $2`, [req.params.id, e]);
+      return r.rowCount;
+    });
+    res.json({ deleted });
   } catch (err) { res.status(500).json({ error: 'Delete failed', message: safeErr(err) }); }
 });
 
@@ -80,9 +87,13 @@ router.post('/move', auth,
   validate, async (req, res) => {
   try {
     const e = ent(req); const fid = req.body.folder_id || null;
-    if (fid) { const f = await query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); if (!f.rows.length) return res.status(400).json({ error: 'No such folder' }); }
-    const r = await withEntity(e, (db) => db.query(`UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3`, [fid, req.body.chit_id, e]));
-    res.json({ moved: r.rowCount, folder_id: fid });
+    const result = await withEntity(e, async (db) => {
+      if (fid) { const f = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); if (!f.rows.length) return { noFolder: true }; }
+      const r = await db.query(`UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3`, [fid, req.body.chit_id, e]);
+      return { moved: r.rowCount };
+    });
+    if (result.noFolder) return res.status(400).json({ error: 'No such folder' });
+    res.json({ moved: result.moved, folder_id: fid });
   } catch (err) { res.status(500).json({ error: 'Move failed', message: safeErr(err) }); }
 });
 
