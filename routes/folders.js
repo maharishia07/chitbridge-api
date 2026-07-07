@@ -11,21 +11,6 @@ const auth = require('../middleware/auth');
 
 const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 
-// GET /api/folders/_rls — DEFINITIVE RLS posture check (auth'd, read-only): per table, is RLS enabled + forced, and
-// how many policies exist. This is the ground truth for "with RLS or without" — not the app-WHERE-confounded functional test.
-router.get('/_rls', auth, async (req, res) => {
-  try {
-    const e = ent(req);
-    const r = await withEntity(e, (db) => db.query(
-      `SELECT c.relname AS table, c.relrowsecurity AS rls_enabled, c.relforcerowsecurity AS rls_forced,
-              (SELECT count(*)::int FROM pg_policies p WHERE p.schemaname='public' AND p.tablename = c.relname) AS policies
-         FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE n.nspname='public' AND c.relname = ANY($1) ORDER BY c.relname`,
-      [['folder', 'chit_status', 'chit_header', 'cb_attachment']]));
-    res.json({ rls: r.rows });
-  } catch (err) { res.status(500).json({ error: 'rls check failed', message: safeErr(err) }); }
-});
-
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
 router.get('/', auth, async (req, res) => {
   try {
