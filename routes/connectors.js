@@ -198,7 +198,7 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
     const cfg = actor.connector_config || {};
     if (actor.connector_type === 'iot') {
       return res.json({ type: 'iot', mode: cfg.mode || 'push',
-        endpoint: cfg.endpoint || 'ingest.chitbridge.io:8883',
+        endpoint: cfg.endpoint || 'https://chitbridge-api-production.up.railway.app  (HTTPS · POST /api/connectors/ingest)',
         note: 'ActorKey is shown once at creation — Regenerate to re-issue. Flash Endpoint + ActorKey on the Pi; it publishes these BridgeIds.',
         publishes: conns.rows.map(c => ({ bridge_id: c.bridge_id, ref: c.ref, topic: (c.conn_config || {}).topic || null })) });
     }
@@ -273,7 +273,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
     const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
     // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
     const connections = r.rows.map(c => ({ ...c, signal: actorHealth === 'offline' ? 'no_signal' : health(c.last_seen) }));
-    res.json({ actor_health: actorHealth, connections });
+    res.json({ actor_health: actorHealth, actor_last_seen: actor.last_seen, connections });
   } catch (err) { res.status(500).json({ error: 'List connections failed', message: safeErr(err) }); }
 });
 
