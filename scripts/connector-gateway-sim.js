@@ -36,6 +36,8 @@ const cfg = {
   to:     process.env.TO || '',              // counterparty entity_id — who receives the signal (from the connection if omitted)
   device: process.env.DEVICE_ID || 'edge-gw-01',
   signal: process.env.SIGNAL || 'temperature',
+  sub:    process.env.SUB_TYPE || '',        // the class this exception is (e.g. 'tanker') — group / count by it
+  proofFile: process.env.PROOF_FILE || '',   // path to a JPEG the edge captured — attached to the chit as proof
   value:  process.env.VALUE || '42',
   unit:   process.env.UNIT || 'C',
   devOtp: process.env.DEV_OTP || '123456',
@@ -89,11 +91,14 @@ async function ensureToken(){
     // emit in ONE call. The counterparty comes from the connection (TO optional). This is what a real Pi should use.
     if(cfg.key){
       const s = readSignal();
-      console.log('[read]', JSON.stringify(s));
+      var proof, proofName;
+      if(cfg.proofFile){ try{ proof = fs.readFileSync(cfg.proofFile).toString('base64'); proofName = cfg.proofFile.split(/[\\/]/).pop(); }catch(e){ console.error('[warn] could not read PROOF_FILE:', e.message); } }
+      console.log('[read]', JSON.stringify(s), cfg.sub?('sub_type='+cfg.sub):'', proof?('+proof('+proofName+')'):'');
       const out = await req('POST','/api/connectors/ingest',
-        { bridge_id:cfg.bridge||undefined, signal:s.signal, value:s.value, unit:s.unit, device_id:s.device_id, to:cfg.to||undefined },
+        { bridge_id:cfg.bridge||undefined, signal:s.signal, value:s.value, unit:s.unit, device_id:s.device_id,
+          sub_type:cfg.sub||undefined, proof:proof||undefined, proof_name:proofName||undefined, to:cfg.to||undefined },
         null, { 'X-Bridge-Key':cfg.key });
-      console.log('[ingest] OK — health is now LIVE in the co-assist cockpit; reading sent over the rail.');
+      console.log('[ingest] OK — health is now LIVE in the co-assist cockpit; exception filed over the rail.');
       console.log('        chit_id:', out && (out.chit_id||'(none — heartbeat only)'));
       if(out && out.note) console.log('        note:', out.note);
       console.log('        raw:', JSON.stringify(out).slice(0,300));

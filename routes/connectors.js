@@ -9,6 +9,7 @@ const crypto  = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withEntity } = require('../db');
 const { safeErr } = require('../lib/respond');
+const storage = require('../lib/storage');
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
@@ -81,37 +82,52 @@ router.post('/', auth, requireConnector,
 // Build + deliver a Device Signal chit (sender = the connector's OWNING ENTITY, receiver = the counterparty),
 // reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
 // Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
-async function emitSignalChit({ entity_id, actor, counterparty, signal, value, unit, device_id, bridge_id }) {
+async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id }) {
   const ent = await db(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
-  const sender = ent.rows[0]; if (!sender) throw new Error('owning entity not found');
-  const rc = await db(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [counterparty]);
-  const receiver = rc.rows[0]; if (!receiver) throw new Error('counterparty not found or inactive');
+  const self = ent.rows[0]; if (!self) throw new Error('owning entity not found');
+  // Exceptions are SELF-CHITS filed into a named FOLDER (they stay inside the entity); CC = an optional partner who
+  // co-holds the same sealed proof. An invalid CC is skipped, never fatal.
+  let ccRow = null;
+  if (cc && cc !== entity_id) {
+    const r = await db(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [cc]);
+    ccRow = r.rows[0] || null;
+  }
 
   const chit_id = uuidv4();
   const purpose = 'general';
   const now = new Date();
-  const business_json = { kind: 'device_signal', device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString() };
-  const manual_subject = 'Signal: ' + signal + (value != null ? (' = ' + value + (unit || '')) : '');
-  const auto_subject = 'Signal from ' + (actor.display_name || sender.display_name) + ' — ' + now.toISOString().slice(0, 10);
+  const label = sub_type || signal || 'signal';
+  const business_json = { kind: 'device_signal', folder: folder || null, sub_type: sub_type || null,
+    device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString() };
+  const manual_subject = (folder ? ('[' + folder + '] ') : '') + 'Signal: ' + label + (value != null ? (' = ' + value + (unit || '')) : '');
+  const auto_subject = 'Signal from ' + (actor.display_name || self.display_name) + ' — ' + now.toISOString().slice(0, 10);
+
   const all_recipients = [
-    { entity_id, bridge_id: sender.bridge_id, display_name: sender.display_name, role: 'sender' },
-    { entity_id: receiver.identity_id, bridge_id: receiver.bridge_id, display_name: receiver.display_name, role: 'receiver' },
+    { entity_id, bridge_id: self.bridge_id, display_name: self.display_name, role: 'sender' },
+    { entity_id, bridge_id: self.bridge_id, display_name: self.display_name, role: 'receiver' },
   ];
+  if (ccRow) all_recipients.push({ entity_id: ccRow.identity_id, bridge_id: ccRow.bridge_id, display_name: ccRow.display_name, role: 'cc' });
+
   const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose, is_promotion: false, forwarded_from: null };
   const headerCommon = {
-    sender_entity_id: entity_id, sender_entity_bridge_id: sender.bridge_id, sender_entity_display_name: sender.display_name,
+    sender_entity_id: entity_id, sender_entity_bridge_id: self.bridge_id, sender_entity_display_name: self.display_name,
     all_recipients, purpose, auto_subject, manual_subject, summary_json,
     schema_version: null, schema_id: null, created_by_actor_id: actor.identity_id,
     detail_type: purpose, line_item_count: 0, total_value: 0, currency_code: 'INR',
   };
+  const fdetail = folder ? (' · ' + folder) : '';
   const copies = [
     { ...headerCommon, business_json, entity_id, direction: 'sent', role: 'Act',
       current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
-      log: { action: 'created', action_by_identity_id: entity_id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: 'Device signal emitted to ' + receiver.display_name } },
-    { ...headerCommon, business_json, entity_id: receiver.identity_id, direction: 'received', role: 'Act',
+      log: { action: 'created', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'delivered', detail: 'Device exception filed' + fdetail } },
+    { ...headerCommon, business_json, entity_id, direction: 'received', role: 'Act',
       current_status: 'pending', priority_flag: 'normal',
-      log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: sender.display_name, new_status: 'pending', detail: 'Device signal received from ' + sender.display_name } },
+      log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'pending', detail: 'Device exception' + fdetail } },
   ];
+  if (ccRow) copies.push({ ...headerCommon, business_json, entity_id: ccRow.identity_id, direction: 'received', role: 'Info',
+    current_status: 'delivered', priority_flag: 'normal',
+    log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'delivered', detail: 'CC — device exception from ' + self.display_name } });
+
   await withEntity(entity_id, (dbx) => dbx.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(copies)]));
   return chit_id;
 }
@@ -122,6 +138,8 @@ async function emitSignalChit({ entity_id, actor, counterparty, signal, value, u
 // By design there is NO `auth` middleware here (a device has no session); abuse-throttling is a tracked backlog item.
 router.post('/ingest',
   [ body('signal').optional().trim().isLength({ max: 64 }),
+    body('sub_type').optional().trim().isLength({ max: 64 }),
+    body('folder').optional().trim().isLength({ max: 80 }),
     body('bridge_id').optional().trim(),
     body('unit').optional().trim().isLength({ max: 16 }),
     body('device_id').optional().trim().isLength({ max: 64 }) ],
@@ -153,24 +171,39 @@ router.post('/ingest',
       await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
       if (bridge_id) await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
 
-      // (3) EMIT the reading as a chit to the counterparty (best-effort — the heartbeat is already committed).
-      const counterparty = (conn && conn.counterparty_entity_id) || (req.body.to ? String(req.body.to).trim() : null);
-      let chit_id = null, note = null;
-      if (!counterparty) {
-        note = 'Heartbeat only — no counterparty on the connection (set one to route signals as chits).';
+      // (3) EMIT the exception as a co-held chit — a SELF-CHIT filed into the device's FOLDER, CC the partner if set.
+      //     A pure liveness ping can pass heartbeat_only=true to refresh health WITHOUT raising a chit (no inbox flood).
+      const cfg = (conn && conn.conn_config) || {};
+      const folder = cfg.folder || (req.body.folder ? String(req.body.folder).trim() : null);
+      const sub_type = req.body.sub_type ? String(req.body.sub_type).trim()
+                     : (Array.isArray(cfg.classes) && cfg.classes.length === 1 ? cfg.classes[0] : null);
+      const cc = (conn && conn.counterparty_entity_id) || (req.body.to ? String(req.body.to).trim() : null);
+      let chit_id = null, note = null, proof_id = null;
+      if (req.body.heartbeat_only) {
+        note = 'Heartbeat only — health refreshed, no chit raised.';
       } else {
         try {
           chit_id = await emitSignalChit({
-            entity_id, actor, counterparty,
+            entity_id, actor, folder, sub_type, cc,
             signal: req.body.signal || 'signal',
             value: (req.body.value != null ? String(req.body.value) : null),
             unit: req.body.unit || null,
             device_id: req.body.device_id || (conn && conn.ref) || null,
             bridge_id,
           });
-        } catch (e) { note = 'Health updated, but the signal chit could not be delivered: ' + safeErr(e); }
+          // PROOF — attach the edge image (base64) to the chit; bytes fetched on demand via GET /api/attachments/:id.
+          if (chit_id && req.body.proof) {
+            try {
+              const buf = Buffer.from(String(req.body.proof).replace(/^data:[^;]+;base64,/, ''), 'base64');
+              if (buf.length > 0 && buf.length <= 6 * 1024 * 1024) {
+                proof_id = await storage.put({ chit_id, name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200),
+                  mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120), size: buf.length, buffer: buf, uploaded_by: actor.identity_id });
+              }
+            } catch (_) { /* proof is best-effort — never fail the chit over it */ }
+          }
+        } catch (e) { note = 'Health updated, but the exception chit could not be delivered: ' + safeErr(e); }
       }
-      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, note });
+      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, note });
     } catch (err) { res.status(500).json({ error: 'Ingest failed', message: safeErr(err) }); }
   });
 
