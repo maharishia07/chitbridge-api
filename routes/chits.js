@@ -886,11 +886,15 @@ router.get('/:chit_id', auth, async (req, res) => {
     const data = await withEntity(entity_id, async (db) => {
       // Verify entity participates in this chit
       const participation = await db.query(
-        `SELECT 1 FROM chit_header
+        `SELECT role, created_by_actor_id FROM chit_header
          WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
       );
       if (participation.rows.length === 0) return { notFound: true };
+      // Draft privacy: a draft is the author's PRIVATE WIP — another actor of the SAME entity must not read it,
+      // even by direct id. The drafts LIST is author-scoped (created_by_actor_id); the detail read must be too.
+      const _draft = participation.rows.find(r => r.role === 'Draft');
+      if (_draft && _draft.created_by_actor_id !== req.identity.identity_id) return { notFound: true };
 
       // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
       // Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
