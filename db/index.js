@@ -85,7 +85,7 @@ createPool().then(p => {
 //   • prod default = off  (a guard must NEVER hard-block production traffic)
 //   • dev/CI default = warn (visible during the incremental route migration without breaking un-migrated routes)
 //   • set RLS_GUARD=throw in CI (and locally once all Direct-group routes are on withEntity) to ENFORCE it.
-const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'state_log', 'catalogue_items', 'customer_list', 'folder'];
+const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'state_log', 'catalogue_items', 'customer_list', 'folder', 'cb_attachment'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {

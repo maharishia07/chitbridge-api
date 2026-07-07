@@ -144,7 +144,9 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
       });
     } catch (e) { folderErr = (e && e.message) || String(e); console.warn('[connectors] folder auto-file failed:', folderErr); }   // best-effort, but LOUD + surfaced
   }
-  return { chit_id, folder_id: filedFolderId, folder_error: folderErr };
+  // participants = the entities that hold a copy (owner + CC if any) — for per-entity proof replication (b66).
+  const participants = [entity_id]; if (ccRow) participants.push(ccRow.identity_id);
+  return { chit_id, folder_id: filedFolderId, folder_error: folderErr, participants };
 }
 
 // POST /api/connectors/ingest — DEVICE-FACING. Auth by the CB-issued ActorKey (X-Bridge-Key header), NOT a user JWT.
@@ -212,8 +214,10 @@ router.post('/ingest',
             try {
               const buf = Buffer.from(String(req.body.proof).replace(/^data:[^;]+;base64,/, ''), 'base64');
               if (buf.length > 0 && buf.length <= 6 * 1024 * 1024) {
-                proof_id = await storage.put({ chit_id, name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200),
-                  mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120), size: buf.length, buffer: buf, uploaded_by: actor.identity_id });
+                // PER-ENTITY: replicate the proof to every participant (owner + CC) — each holds its own copy.
+                proof_id = await storage.putForParticipants({ chit_id, name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200),
+                  mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120), size: buf.length, buffer: buf,
+                  uploaded_by: actor.identity_id, participants: emit.participants, forEntity: entity_id });
               }
             } catch (e) { proof_err = (e && e.message) || String(e); console.warn('[connectors] proof attach failed:', proof_err); }
           }

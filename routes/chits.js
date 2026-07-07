@@ -995,7 +995,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       } else throw e;
     }
 
-    const attachments = await storage.listForChit(chit_id).catch(() => []);
+    const attachments = await storage.listForChit(chit_id, entity_id).catch(() => []);   // per-entity: the caller's OWN copies only
     res.json({
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
@@ -1280,7 +1280,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     const result = await query(q, params);
     // attach per-message files (bytes pulled on demand via GET /api/attachments/:id)
     const msgIds = result.rows.map(m => m.message_id).filter(Boolean);
-    const atts = await storage.listForMessages(msgIds).catch(() => []);
+    const atts = await storage.listForMessages(msgIds, entity_id).catch(() => []);   // per-entity: caller's own copies
     const byMsg = {};
     for (const a of atts) { (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a); }
     for (const m of result.rows) { m.attachments = byMsg[m.message_id] || []; }
