@@ -34,6 +34,17 @@ async function definersReady() {
 // Run a b50/b51/b52 definer inside withEntity(caller); before the delivery layer is applied, run the legacy
 // direct-SQL fallback instead (fallback(db) receives the tx client). Keeps every crossing feature working
 // before/after the migration; once the fns exist the definer path wins, so writes cross safely + audited.
+// b63 folders: is chit_status.folder_id present? Cached probe so the inbox can hide FILED chits (mailing-model "move"
+// is a QUERY, not data movement — the chit stays put; Task just excludes what's filed) WITHOUT ever erroring if the
+// migration isn't applied yet. Self-heals the moment the column exists.
+let _folderColReady = null;
+async function folderColReady() {
+  if (_folderColReady !== null) return _folderColReady;
+  try { const r = await query(`SELECT 1 FROM information_schema.columns WHERE table_name = 'chit_status' AND column_name = 'folder_id' LIMIT 1`); _folderColReady = r.rows.length > 0; }
+  catch (_) { _folderColReady = false; }
+  return _folderColReady;
+}
+
 async function crossing(entity, definerSql, definerParams, fallback) {
   if (await definersReady()) {
     return await withEntity(entity, (db) => db.query(definerSql, definerParams));
@@ -746,6 +757,7 @@ router.get('/inbox', auth, async (req, res) => {
     let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
     let paramCount = 1;
+    if (await folderColReady()) whereClause += ` AND cs.folder_id IS NULL`;   // filed chits show in their folder view, not Task (query-only — no data moved; guarded so a missing column never blanks Task)
 
     if (status_filter) {
       paramCount++;
