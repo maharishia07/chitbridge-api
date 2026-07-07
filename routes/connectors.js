@@ -343,4 +343,26 @@ router.patch('/:actorId/connections/:connId', auth, requireConnector,
     } catch (err) { res.status(500).json({ error: 'Update failed', message: safeErr(err) }); }
   });
 
+// DELETE /api/connectors/:actorId — retire a connector. RULE (Athi): hard-delete ONLY if it has NO devices attached
+// (a bare connector is cheap to recreate); if any connection exists, REFUSE (protect the attached devices — detach
+// first). Also refuses if the connector has raised records that reference it (FK) — that's a "problem", so keep it.
+router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return res.status(404).json({ error: 'Not found', message: 'No such connector under this entity.' });
+    const cc = await db(`SELECT COUNT(*)::int AS n FROM connector_connection WHERE actor_id = $1`, [actor.identity_id]);
+    if (cc.rows[0].n > 0) return res.status(409).json({ error: 'Has devices',
+      message: 'This connector has ' + cc.rows[0].n + ' device' + (cc.rows[0].n === 1 ? '' : 's') + ' attached — remove them before deleting.' });
+    try {
+      await db(`DELETE FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [actor.identity_id, entity_id]);
+    } catch (e) {
+      if (e && e.code === '23503')   // FK — it raised chits/records that point back to it; deleting would orphan them
+        return res.status(409).json({ error: 'In use', message: 'This connector has raised records and cannot be hard-deleted. Disable its devices instead.' });
+      throw e;
+    }
+    res.json({ deleted: 1 });
+  } catch (err) { res.status(500).json({ error: 'Delete failed', message: safeErr(err) }); }
+});
+
 module.exports = router;

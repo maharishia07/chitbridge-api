@@ -11,16 +11,6 @@ const auth = require('../middleware/auth');
 
 const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 
-// GET /api/folders/_ctx — TEMP diagnostic: is app.current_entity actually bound inside withEntity on the prod pooler?
-router.get('/_ctx', auth, async (req, res) => {
-  try {
-    const e = ent(req);
-    const r = await withEntity(e, (db) => db.query(`SELECT current_setting('app.current_entity', true) AS ctx`));
-    const pol = await withEntity(e, (db) => db.query(`SELECT policyname, cmd FROM pg_policies WHERE tablename = 'folder'`));
-    res.json({ expected_entity: e, bound_ctx: r.rows[0] && r.rows[0].ctx, folder_policies: pol.rows });
-  } catch (err) { res.status(500).json({ error: 'ctx failed', message: safeErr(err) }); }
-});
-
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
 router.get('/', auth, async (req, res) => {
   try {
