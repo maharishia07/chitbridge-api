@@ -131,6 +131,7 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   await withEntity(entity_id, (dbx) => dbx.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(copies)]));
   // AUTO-FILE the exception into the named folder (create it if new) so it lands in Folders, not loose in Task.
   // Best-effort — if the folders schema (b63) isn't there, the chit still lands normally.
+  let filedFolderId = null, folderErr = null;
   if (folder) {
     try {
       // ALL folder-table access runs inside withEntity so app.current_entity is bound — the `folder` table is
@@ -139,11 +140,11 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
         let fr = await dbx.query(`SELECT folder_id FROM folder WHERE entity_id = $1 AND lower(name) = lower($2) LIMIT 1`, [entity_id, folder]);
         let fid = fr.rows[0] && fr.rows[0].folder_id;
         if (!fid) { const ins = await dbx.query(`INSERT INTO folder (entity_id, name) VALUES ($1,$2) RETURNING folder_id`, [entity_id, folder]); fid = ins.rows[0].folder_id; }
-        if (fid) await dbx.query(`UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`, [fid, chit_id, entity_id]);
+        if (fid) { await dbx.query(`UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`, [fid, chit_id, entity_id]); filedFolderId = fid; }
       });
-    } catch (e) { console.warn('[connectors] folder auto-file failed:', (e && e.message) || e); }   // best-effort, but LOUD (not swallowed)
+    } catch (e) { folderErr = (e && e.message) || String(e); console.warn('[connectors] folder auto-file failed:', folderErr); }   // best-effort, but LOUD + surfaced
   }
-  return chit_id;
+  return { chit_id, folder_id: filedFolderId, folder_error: folderErr };
 }
 
 // POST /api/connectors/ingest — DEVICE-FACING. Auth by the CB-issued ActorKey (X-Bridge-Key header), NOT a user JWT.
@@ -192,12 +193,12 @@ router.post('/ingest',
       const sub_type = req.body.sub_type ? String(req.body.sub_type).trim()
                      : (Array.isArray(cfg.classes) && cfg.classes.length === 1 ? cfg.classes[0] : null);
       const cc = (conn && conn.counterparty_entity_id) || (req.body.to ? String(req.body.to).trim() : null);
-      let chit_id = null, note = null, proof_id = null;
+      let chit_id = null, note = null, proof_id = null, filed = null, file_err = null, proof_err = null;
       if (req.body.heartbeat_only) {
         note = 'Heartbeat only — health refreshed, no chit raised.';
       } else {
         try {
-          chit_id = await emitSignalChit({
+          const emit = await emitSignalChit({
             entity_id, actor, folder, sub_type, cc,
             signal: req.body.signal || 'signal',
             value: (req.body.value != null ? String(req.body.value) : null),
@@ -205,6 +206,7 @@ router.post('/ingest',
             device_id: req.body.device_id || (conn && conn.ref) || null,
             bridge_id,
           });
+          chit_id = emit.chit_id; filed = emit.folder_id; file_err = emit.folder_error;   // filed = folder it landed in; file_err surfaces a filing failure
           // PROOF — attach the edge image (base64) to the chit; bytes fetched on demand via GET /api/attachments/:id.
           if (chit_id && req.body.proof) {
             try {
@@ -213,11 +215,11 @@ router.post('/ingest',
                 proof_id = await storage.put({ chit_id, name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200),
                   mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120), size: buf.length, buffer: buf, uploaded_by: actor.identity_id });
               }
-            } catch (_) { /* proof is best-effort — never fail the chit over it */ }
+            } catch (e) { proof_err = (e && e.message) || String(e); console.warn('[connectors] proof attach failed:', proof_err); }
           }
         } catch (e) { note = 'Health updated, but the exception chit could not be delivered: ' + safeErr(e); }
       }
-      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, note });
+      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, filed, file_err, proof_err, note });
     } catch (err) { res.status(500).json({ error: 'Ingest failed', message: safeErr(err) }); }
   });
 
