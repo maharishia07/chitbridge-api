@@ -93,6 +93,8 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
     const e = ent(req); const arch = (req.query.archived === '1' || req.query.archived === 'true');
     const r = await withEntity(e, (db) => db.query(
       `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
+              ch.business_json, ch.created_by_actor_id,
+              (SELECT display_name FROM identities WHERE identity_id = ch.created_by_actor_id) AS raiser_name,
               cs.direction, cs.current_status
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction

@@ -129,6 +129,16 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
     log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'delivered', detail: 'CC — device exception from ' + self.display_name } });
 
   await withEntity(entity_id, (dbx) => dbx.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(copies)]));
+  // AUTO-FILE the exception into the named folder (create it if new) so it lands in Folders, not loose in Task.
+  // Best-effort — if the folders schema (b63) isn't there, the chit still lands normally.
+  if (folder) {
+    try {
+      let fr = await db(`SELECT folder_id FROM folder WHERE entity_id = $1 AND lower(name) = lower($2) LIMIT 1`, [entity_id, folder]);
+      let fid = fr.rows[0] && fr.rows[0].folder_id;
+      if (!fid) { const ins = await db(`INSERT INTO folder (entity_id, name) VALUES ($1,$2) RETURNING folder_id`, [entity_id, folder]); fid = ins.rows[0].folder_id; }
+      if (fid) await withEntity(entity_id, (dbx) => dbx.query(`UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`, [fid, chit_id, entity_id]));
+    } catch (_) { /* folder filing is best-effort */ }
+  }
   return chit_id;
 }
 
