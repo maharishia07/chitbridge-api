@@ -743,15 +743,9 @@ router.get('/inbox', auth, async (req, res) => {
     const status_filter = req.query.status || null;
     const q_search = (req.query.q || '').trim();
 
-    // Current vs Archive reuses cs.archived_at. Folders: ?folder=<id> shows that folder; default = unfiled (main view),
-    // so filing a chit into a folder removes it from the main Task list (mailing-model "move" semantics).
-    const showArchived = (req.query.archived === '1' || req.query.archived === 'true');
-    let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS ${showArchived ? 'NOT NULL' : 'NULL'}`;
+    let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
     let paramCount = 1;
-    const folderQ = (req.query.folder || '').trim();
-    if (folderQ) { paramCount++; whereClause += ` AND cs.folder_id = $${paramCount}`; params.push(folderQ); }
-    else { whereClause += ` AND cs.folder_id IS NULL`; }
 
     if (status_filter) {
       paramCount++;

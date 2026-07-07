@@ -86,4 +86,20 @@ router.post('/move', auth,
   } catch (err) { res.status(500).json({ error: 'Move failed', message: safeErr(err) }); }
 });
 
+// GET /api/folders/:id/chits?archived=0|1 — the chits filed in this folder (spans BOTH directions: task + order).
+// Isolated from the core inbox query on purpose. Lightweight shape for the folder list.
+router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+  try {
+    const e = ent(req); const arch = (req.query.archived === '1' || req.query.archived === 'true');
+    const r = await withEntity(e, (db) => db.query(
+      `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
+              cs.direction, cs.current_status
+         FROM chit_status cs
+         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
+        WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${arch ? 'NOT NULL' : 'NULL'}
+        ORDER BY ch.created_at DESC LIMIT 100`, [e, req.params.id]));
+    res.json({ chits: r.rows });
+  } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
