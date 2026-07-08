@@ -1109,16 +1109,15 @@ router.put('/:chit_id/status',
       const isSender = header.rows.length > 0 &&
                        header.rows[0].sender_entity_id === entity_id;
 
-      // When the sender cancels — terminal cancel on the WHOLE chit (every participant + the sender's own copy,
-      // consistent with /void). CROSS-entity write -> chit_set_status_all (validated: caller must be the sender).
-      // Fallback = a single all-rows update when b50 isn't applied.
+      // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
+      // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
       if (isSender && new_status === 'cancelled') {
-        await crossing(entity_id,
-          `SELECT chit_set_status_all($1,$2)`,
-          [chit_id, 'cancelled'],
-          (db) => db.query(
-            `UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW() WHERE chit_id = $1`,
-            [chit_id]));
+        await withEntity(entity_id, (db) => db.query(
+          `UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`,
+          [chit_id, entity_id]));   // own copy only
+        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: action_by_name,
+          thread_type: 'external', msg_type: 'action',
+          message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}` });
       }
 
       res.json({
@@ -1983,23 +1982,18 @@ router.put('/:chit_id/void',
         return res.status(403).json({ error: 'Forbidden', message: 'Only the sender can void a chit' });
       }
 
-      // Cross-edge terminal void on every participant row (never delete) -> chit_set_status_all
-      // (validated: caller must be the sender). Fallback = the legacy all-rows update when b50 isn't applied.
-      await crossing(entity_id,
-        `SELECT chit_set_status_all($1,$2)`,
-        [chit_id, 'void'],
-        (db) => db.query(`UPDATE chit_status SET current_status = 'void', updated_at = NOW() WHERE chit_id = $1`, [chit_id]));
-      // Record who/when/why as an external action message (each participant gets their own copy).
-      await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
-        thread_type: 'external', message_text: `Chit VOIDED: ${reason}`, msg_type: 'action' });
-      // State-log the void into every participant's timeline -> chit_log_all. Fallback = the legacy INSERT...SELECT.
-      await crossing(entity_id,
-        `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-        [chit_id, 'voided', req.identity.identity_id, req.identity.display_name, null, 'void', `Voided: ${reason}`],
-        (db) => db.query(
+      // Void = the sender withdraws ITS OWN copy and REQUESTS cancellation from the recipients — never a cross-entity
+      // write. Each recipient acts on its own copy at its own will (it sees the flagged message below).
+      await withEntity(entity_id, async (db) => {
+        await db.query(`UPDATE chit_status SET current_status = 'void', updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);   // own copy only
+        await db.query(
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
-           SELECT $1, entity_id, 'voided', $2, $3, 'void', $4 FROM chit_status WHERE chit_id = $1`,
-          [chit_id, req.identity.identity_id, req.identity.display_name, `Voided: ${reason}`]));
+           VALUES ($1, $2, 'voided', $3, $4, 'void', $5)`,
+          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Voided: ${reason}`]);   // own timeline only
+      });
+      // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
+      await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
+        thread_type: 'external', msg_type: 'action', message_text: `[cancel requested] ${reason}` });
 
       res.json({ message: 'Chit voided', chit_id, status: 'void' });
     } catch (err) {
