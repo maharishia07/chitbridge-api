@@ -1240,7 +1240,7 @@ router.post('/:chit_id/messages',
       });
     } catch (err) {
       console.error('Send message error:', err.message);
-      res.status(500).json({ error: 'Send message failed', message: err.message });
+      res.status(500).json({ error: 'Send message failed', message: safeErr(err) });
     }
   }
 );
