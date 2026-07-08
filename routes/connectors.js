@@ -173,6 +173,41 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   return { chit_id, folder_id: filedFolderId, folder_error: folderErr, participants };
 }
 
+// Shared ERP process-then-forget CORE (used by both the key-authed /erp-ingest and the owner-authed /erp-test).
+// (1) Claim the receipt slot = the idempotency lock (a retry returns the first receipt, no re-emit). (2) PROCESS by
+// emitting only the SUMMARY (doc_type/ref/amount) as a co-held chit. (3) FORGET — finalise the receipt; the raw
+// payload is NEVER written. Returns the receipt shape. Callers pass the already-resolved actor/entity/cfg/cc.
+async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc }) {
+  const payload_hash = hashPayload(payload);   // the ONLY trace of the raw document we keep
+  const receipt_id = uuidv4();
+  const claim = await withEntity(entity_id, (c) => c.query(
+    `INSERT INTO connector_receipt (receipt_id, entity_id, actor_id, doc_type, doc_ref, payload_hash, outcome)
+     VALUES ($1,$2,$3,$4,$5,$6,'pending')
+     ON CONFLICT (actor_id, payload_hash) DO NOTHING RETURNING receipt_id`,
+    [receipt_id, entity_id, actor.identity_id, doc_type, doc_ref, payload_hash]));
+  if (claim.rows.length === 0) {
+    const ex = await withEntity(entity_id, (c) => c.query(
+      `SELECT receipt_id, outcome, chit_id FROM connector_receipt WHERE actor_id = $1 AND payload_hash = $2`,
+      [actor.identity_id, payload_hash]));
+    const r = ex.rows[0] || {};
+    return { receipt_id: r.receipt_id || null, payload_hash, outcome: 'duplicate', chit_id: r.chit_id || null, idempotent: true, note: null };
+  }
+  let chit_id = null, outcome = cc ? 'processed' : 'logged', note = null;
+  try {
+    const extra = { doc_type, doc_ref };
+    if (payload.amount != null) extra.amount = payload.amount;
+    if (payload.currency) extra.currency = String(payload.currency).slice(0, 8);
+    const emit = await emitSignalChit({
+      entity_id, actor, folder: cfg.folder || 'ERP', sub_type: 'erp:' + doc_type, cc,
+      kind: 'erp_document', signal: doc_type, value: doc_ref, extra, device_id: doc_ref, bridge_id: null,
+    });
+    chit_id = emit.chit_id;
+  } catch (e) { outcome = 'failed'; note = 'Receipt kept, but the outcome chit could not be delivered: ' + safeErr(e); }
+  await withEntity(entity_id, (c) => c.query(
+    `UPDATE connector_receipt SET outcome = $1, chit_id = $2 WHERE receipt_id = $3`, [outcome, chit_id, receipt_id]));
+  return { receipt_id, payload_hash, outcome, chit_id, idempotent: false, note };
+}
+
 // POST /api/connectors/ingest — DEVICE-FACING. Auth by the CB-issued ActorKey (X-Bridge-Key header), NOT a user JWT.
 // The Pi/gateway calls THIS: (1) prove identity with its own key, (2) heartbeat -> the cockpit health dot goes LIVE,
 // (3) emit the reading as a co-held Device Signal chit to the connection's counterparty. One call, own credential.
@@ -273,51 +308,17 @@ router.post('/erp-ingest',
       if (!actor || actor.status !== 'active') return res.status(401).json({ error: 'Bad key', message: 'ActorKey not recognised, or the connector is inactive.' });
       if (actor.connector_type !== 'erp') return res.status(409).json({ error: 'Wrong type', message: 'This endpoint is for ERP connectors. IoT devices use /ingest.' });
 
-      const entity_id    = actor.parent_entity_id;
-      const cfg          = actor.connector_config || {};
-      const payload_hash = hashPayload(req.body.payload);   // the ONLY trace of the raw document we keep
-      const doc_type     = req.body.doc_type ? String(req.body.doc_type).trim() : (req.body.payload.doc_type ? String(req.body.payload.doc_type).slice(0, 64) : 'document');
-      const doc_ref      = req.body.doc_ref ? String(req.body.doc_ref).trim() : (req.body.payload.doc_ref ? String(req.body.payload.doc_ref).slice(0, 120) : null);
-      const cc           = req.body.to ? String(req.body.to).trim() : (cfg.counterparty_entity_id || null);
+      const entity_id = actor.parent_entity_id;
+      const cfg       = actor.connector_config || {};
+      const doc_type  = req.body.doc_type ? String(req.body.doc_type).trim() : (req.body.payload.doc_type ? String(req.body.payload.doc_type).slice(0, 64) : 'document');
+      const doc_ref   = req.body.doc_ref ? String(req.body.doc_ref).trim() : (req.body.payload.doc_ref ? String(req.body.payload.doc_ref).slice(0, 120) : null);
+      const cc        = req.body.to ? String(req.body.to).trim() : (cfg.counterparty_entity_id || null);
 
       // Heartbeat — health goes live for the ERP connector (independent of processing below).
       await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
 
-      // Claim the idempotency slot FIRST (receipt-as-lock). If the hash already exists, this is a retry → return the
-      // first receipt, do NOT re-emit. Winning the insert means we own the effect; then we process + finalise outcome.
-      const receipt_id = uuidv4();
-      const claim = await withEntity(entity_id, (c) => c.query(
-        `INSERT INTO connector_receipt (receipt_id, entity_id, actor_id, doc_type, doc_ref, payload_hash, outcome)
-         VALUES ($1,$2,$3,$4,$5,$6,'pending')
-         ON CONFLICT (actor_id, payload_hash) DO NOTHING RETURNING receipt_id`,
-        [receipt_id, entity_id, actor.identity_id, doc_type, doc_ref, payload_hash]));
-      if (claim.rows.length === 0) {
-        const ex = await withEntity(entity_id, (c) => c.query(
-          `SELECT receipt_id, outcome, chit_id FROM connector_receipt WHERE actor_id = $1 AND payload_hash = $2`,
-          [actor.identity_id, payload_hash]));
-        const r = ex.rows[0] || {};
-        return res.json({ message: 'duplicate', receipt_id: r.receipt_id || null, payload_hash, outcome: 'duplicate', chit_id: r.chit_id || null, idempotent: true });
-      }
-
-      // PROCESS — deliver the business outcome as a co-held chit. Only the SUMMARY travels (doc_type/ref/amount),
-      // never the raw payload. A missing counterparty is fine: the receipt still stands (outcome 'logged').
-      let chit_id = null, outcome = cc ? 'processed' : 'logged', note = null;
-      try {
-        const extra = { doc_type, doc_ref };
-        if (req.body.payload.amount != null) extra.amount = req.body.payload.amount;
-        if (req.body.payload.currency) extra.currency = String(req.body.payload.currency).slice(0, 8);
-        const emit = await emitSignalChit({
-          entity_id, actor, folder: cfg.folder || 'ERP', sub_type: 'erp:' + doc_type, cc,
-          kind: 'erp_document', signal: doc_type, value: doc_ref, extra,
-          device_id: doc_ref, bridge_id: null,
-        });
-        chit_id = emit.chit_id;
-      } catch (e) { outcome = 'failed'; note = 'Receipt kept, but the outcome chit could not be delivered: ' + safeErr(e); }
-
-      // FORGET — finalise the receipt with the outcome + chit pointer. The raw payload was never stored.
-      await withEntity(entity_id, (c) => c.query(
-        `UPDATE connector_receipt SET outcome = $1, chit_id = $2 WHERE receipt_id = $3`, [outcome, chit_id, receipt_id]));
-      res.json({ message: 'received', receipt_id, payload_hash, outcome, chit_id, idempotent: false, note });
+      const out = await processErpDocument({ actor, entity_id, cfg, payload: req.body.payload, doc_type, doc_ref, cc });
+      res.json({ message: out.idempotent ? 'duplicate' : 'received', ...out });
     } catch (err) { res.status(500).json({ error: 'ERP ingest failed', message: safeErr(err) }); }
   });
 
@@ -334,6 +335,35 @@ router.get('/:actorId/receipts', auth, requireConnector,
            FROM connector_receipt WHERE actor_id = $1 ORDER BY received_at DESC LIMIT 200`, [req.params.actorId]));
       res.json({ receipts: r.rows });
     } catch (err) { res.status(500).json({ error: 'List receipts failed', message: safeErr(err) }); }
+  });
+
+// POST /api/connectors/:actorId/erp-test — OWNER-authed test cycle. The cockpit CANNOT call /erp-ingest (that needs the
+// ActorKey, which the UI never holds — we store only its hash). So the owner (JWT) triggers the SAME process-then-forget
+// core with a generated sample document. A fresh nonce keeps every run unique so it is never swallowed by idempotency —
+// each press produces a real receipt + a real co-held chit, letting a human see the whole ERP loop from the cockpit.
+router.post('/:actorId/erp-test', auth, requireConnector,
+  [ param('actorId').isUUID() ], validate,
+  async (req, res) => {
+    try {
+      const entity_id = ownerEntityId(req);
+      const ar = await db(
+        `SELECT identity_id, parent_entity_id, display_name, connector_type, connector_config
+           FROM identities
+          WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type = 'erp'`,
+        [req.params.actorId, entity_id]);
+      const actor = ar.rows[0];
+      if (!actor) return res.status(404).json({ error: 'Not found', message: 'No ERP connector with that id under this entity.' });
+      const cfg = actor.connector_config || {};
+      const cc  = cfg.counterparty_entity_id || null;
+      // A representative sample document. The nonce makes it unique per run (else the 2nd test would dedupe to 'duplicate').
+      const kinds    = ['invoice', 'order', 'grn', 'payment'];
+      const doc_type = kinds[Math.floor(Math.random() * kinds.length)];
+      const doc_ref  = 'TEST-' + Date.now().toString().slice(-6);
+      const payload  = { doc_type, doc_ref, amount: Math.round(100 + Math.random() * 9900), currency: 'INR', test: true, nonce: uuidv4(), note: 'sample document — the raw body is processed then forgotten' };
+      await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+      const out = await processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc });
+      res.json({ message: 'test-processed', doc_type, doc_ref, counterparty: cc, ...out });
+    } catch (err) { res.status(500).json({ error: 'ERP test failed', message: safeErr(err) }); }
   });
 
 // GET /api/connectors — list connector actors (site, config, health) so the UI can group by site

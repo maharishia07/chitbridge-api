@@ -85,6 +85,15 @@ async function login(name) {
   const bLed = await api('GET', '/api/connectors/' + id + '/receipts', { token: B });
   check('other entity cannot read the ledger (404)', bLed.status === 404, 'status ' + bLed.status);
 
+  // 6b) OWNER test cycle (the cockpit path — JWT, no ActorKey). Fresh nonce → a new receipt + chit every call.
+  const t1 = await api('POST', '/api/connectors/' + id + '/erp-test', { token: A });
+  check('owner erp-test processes a sample doc', t1.status === 200 && t1.json && t1.json.outcome === 'processed', 'status ' + t1.status);
+  check('erp-test emits a co-held chit', !!(t1.json && t1.json.chit_id));
+  const t2 = await api('POST', '/api/connectors/' + id + '/erp-test', { token: A });
+  check('a second erp-test is NOT deduped (unique nonce)', t2.json && t1.json && t2.json.receipt_id !== t1.json.receipt_id);
+  const bTest = await api('POST', '/api/connectors/' + id + '/erp-test', { token: B });
+  check('other entity cannot run erp-test (404)', bTest.status === 404, 'status ' + bTest.status);
+
   // 7) GUARDS — wrong key, missing payload, and IoT device hitting the ERP path
   const badKey = await api('POST', '/api/connectors/erp-ingest', { key: 'not-a-real-key', body: { payload: doc2 } });
   check('bad key → 401', badKey.status === 401, 'status ' + badKey.status);
