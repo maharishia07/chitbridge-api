@@ -127,10 +127,13 @@ router.post('/', async (req, res) => {
 // entries whose context matches the screen OR '*'; no context -> all active. Shape: {ok:true, data:[{id,q,a,...}]}.
 router.get('/questions', async (req, res) => {
   try {
-    const ctx = (req.query && typeof req.query.context === 'string') ? req.query.context.slice(0, 64).trim() : '';
+    // context may be a CHAIN (comma-list: fine → parent → nav) so a sub-page ADDS its specific Q&A without losing the
+    // broader curated set. Match if the entry's context array OVERLAPS any of them, or is universal ('*').
+    const ctxRaw = (req.query && typeof req.query.context === 'string') ? req.query.context.slice(0, 128).trim() : '';
+    const ctxArr = ctxRaw ? ctxRaw.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6) : [];
     const params = [];
     let where = 'active = true';
-    if (ctx) { params.push(ctx); where += ` AND ($1 = ANY(context) OR '*' = ANY(context))`; }
+    if (ctxArr.length) { params.push(ctxArr); where += ` AND (context && $1::text[] OR '*' = ANY(context))`; }
     const r = await query(
       `SELECT id, question AS q, answer AS a, topics, context, fit, media
          FROM assist_qa WHERE ${where} ORDER BY sort, id`, params);
