@@ -13,6 +13,19 @@ const storage = require('../lib/storage');
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
+const { sendOtpEmail } = require('../lib/notify');
+const { verifyOtp } = require('../lib/otp');
+const genOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// Step-up authorisation for the destructive key reissue: ONLY the entity admin, or a MANAGER-hat delegate.
+async function canReissue(req) {
+  if (req.identity.identity_type === 'entity') return { ok: true, role: 'entity' };
+  if (req.identity.identity_type === 'actor') {
+    const r = await db(`SELECT hat FROM identities WHERE identity_id = $1 AND identity_type = 'actor'`, [req.identity.identity_id]);
+    if (r.rows[0] && r.rows[0].hat === 'manager') return { ok: true, role: 'manager-delegate' };
+  }
+  return { ok: false };
+}
 
 const generateBridgeId = () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let id='CB'; for (let i=0;i<8;i++) id+=c[Math.floor(Math.random()*c.length)]; return id; };
 const genKey  = () => crypto.randomBytes(24).toString('base64url');            // ActorKey — returned ONCE on IoT push create
@@ -260,15 +273,50 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
   } catch (err) { res.status(500).json({ error: 'Provisioning failed', message: safeErr(err) }); }
 });
 
-// POST /api/connectors/:actorId/regenerate-key — issue a FRESH ActorKey (invalidates the old one, since we only
-// ever store the hash). Returned ONCE. This is the recovery path when the create-time key wasn't copied.
-router.post('/:actorId/regenerate-key', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+// POST /api/connectors/reissue-code — STEP-UP: email a one-time code to the ENTITY's registered email (the account
+// owner), so even a manager delegate cannot reissue a device key without the code the entity controls.
+router.post('/reissue-code', auth, requireConnector, async (req, res) => {
   try {
+    const perm = await canReissue(req);
+    if (!perm.ok) return res.status(403).json({ error: 'Forbidden', message: 'Only the entity admin or a manager delegate may reissue a device key.' });
+    const entity_id = ownerEntityId(req);
+    const e = await db(`SELECT email, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
+    const ent = e.rows[0]; if (!ent || !ent.email) return res.status(400).json({ error: 'No email', message: 'The entity has no registered email to send a code to.' });
+    const otp = genOtp(); const expires = new Date(Date.now() + 10 * 60 * 1000);
+    await db(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, entity_id]);
+    const sent = await sendOtpEmail(ent.email, ent.display_name, otp);
+    res.json({ message: sent.delivered ? 'Code sent to the account email.' : sent.dev ? 'Dev mode — code issued.' : 'Could not send the code — try again.',
+      email: String(ent.email).replace(/(.).*(@.*)/, '$1***$2'), ...(sent.dev && { dev_otp: otp }) });
+  } catch (err) { res.status(500).json({ error: 'Send failed', message: safeErr(err) }); }
+});
+
+// POST /api/connectors/:actorId/regenerate-key — issue a FRESH ActorKey (invalidates the old one). GATED: entity/manager
+// only + re-type the gateway name (the QUESTION) + the one-time code sent to the entity email (the PASSWORD). Audited.
+router.post('/:actorId/regenerate-key', auth, requireConnector,
+  [ param('actorId').isUUID(), body('name').trim().notEmpty().withMessage('Type the gateway name'),
+    body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('6-digit code required') ], validate,
+  async (req, res) => {
+  try {
+    const perm = await canReissue(req);
+    if (!perm.ok) return res.status(403).json({ error: 'Forbidden', message: 'Only the entity admin or a manager delegate may reissue a device key.' });
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
     if (!actor) return res.status(404).json({ error: 'Not found' });
+    // THE QUESTION — the typed gateway name must match exactly (case-insensitive)
+    if (String(req.body.name).trim().toLowerCase() !== String(actor.display_name || '').trim().toLowerCase())
+      return res.status(400).json({ error: 'Name mismatch', message: 'The gateway name you typed does not match.' });
+    // THE PASSWORD — verify the one-time code against the ENTITY's current code
+    const er = await db(`SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities WHERE identity_id = $1`, [entity_id]);
+    const chk = await verifyOtp(db, er.rows[0] || {}, req.body.otp);
+    if (!chk.ok) return res.status(chk.status || 400).json({ error: 'Bad code', message: chk.message });
+    // PASSED — reissue, clear the code, audit (who/when into the connector's own config; no migration needed)
     const provision_key = genKey();
     await db(`UPDATE identities SET provision_key_hash = $1 WHERE identity_id = $2`, [hashKey(provision_key), actor.identity_id]);
+    await db(`UPDATE identities SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0 WHERE identity_id = $1`, [entity_id]);
+    const cfg = actor.connector_config || {};
+    cfg.last_key_reissue = { by_identity_id: req.identity.identity_id, by_name: req.identity.display_name, role: perm.role, at: new Date().toISOString() };
+    await db(`UPDATE identities SET connector_config = $1 WHERE identity_id = $2`, [JSON.stringify(cfg), actor.identity_id]);
+    console.log(`[AUDIT] connector key reissued — connector=${actor.identity_id} by=${req.identity.identity_id}(${perm.role}) entity=${entity_id}`);
     res.json({ message: 'ActorKey regenerated', provision_key });   // shown ONCE — the old key stops working immediately
   } catch (err) { res.status(500).json({ error: 'Regenerate failed', message: safeErr(err) }); }
 });
