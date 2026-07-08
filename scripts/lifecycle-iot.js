@@ -54,9 +54,11 @@ async function api(method, path, { token, key, body } = {}) {
   check('device connection created', !!(d1.json && d1.json.connection));
   check('device got its own bridge_id', !!bridge_id, bridge_id);
 
-  // ---- 3 · REGENERATE KEY (old must die) ----
-  console.log('\n3 · Regenerate key');
-  const rg = await api('POST', '/api/connectors/' + actorId + '/regenerate-key', { token, body: {} });
+  // ---- 3 · REGENERATE KEY (old must die) — via the STEP-UP gate: one-time code (dev 654321) + the exact name ----
+  console.log('\n3 · Regenerate key (step-up: code + name)');
+  const rc = await api('POST', '/api/connectors/reissue-code', { token, body: {} });
+  const rotp = (rc.json && rc.json.dev_otp) || '654321';
+  const rg = await api('POST', '/api/connectors/' + actorId + '/regenerate-key', { token, body: { name: name, otp: rotp } });
   const key2 = rg.json && rg.json.provision_key;
   check('fresh key issued', !!key2);
   check('fresh key differs from original', key2 && key2 !== key1);
