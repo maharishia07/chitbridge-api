@@ -86,3 +86,41 @@ $$;
 GRANT EXECUTE ON FUNCTION chit_dispute_deliver(uuid,uuid,uuid,text,uuid,text,text,text,boolean,text,text,text,text,jsonb,jsonb,uuid[]) TO cb_app;
 GRANT EXECUTE ON FUNCTION chit_dispute_resolve(uuid,uuid,uuid,text) TO cb_app;
 GRANT EXECUTE ON FUNCTION chit_dispute_roster(uuid) TO cb_app;
+
+-- 5. b67's message-deliver read the (now-retired) dispute_participants for the dispute roster. The roster now lives in
+--    the per-copy chit_disputes rows, so repoint it there (else a targeted dispute message falls through to all participants).
+CREATE OR REPLACE FUNCTION chit_message_deliver(
+  p_message_id uuid, p_chit_id uuid, p_sender_entity_id uuid, p_sender_display_name text,
+  p_thread_type text, p_message_text text, p_msg_type text, p_is_dispute boolean, p_dispute_id uuid
+) RETURNS timestamptz
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_created timestamptz := now(); v_ent uuid; v_scope text;
+BEGIN
+  IF p_thread_type = 'internal' THEN
+    INSERT INTO chit_messages (message_id, entity_id, chit_id, sender_entity_id, sender_display_name,
+        thread_type, visibility_entity_id, message_text, msg_type, is_dispute, dispute_id, created_at)
+      VALUES (p_message_id, p_sender_entity_id, p_chit_id, p_sender_entity_id, p_sender_display_name,
+        'internal', p_sender_entity_id, p_message_text, COALESCE(p_msg_type,'info'), COALESCE(p_is_dispute,false), p_dispute_id, v_created);
+    RETURN v_created;
+  END IF;
+  IF COALESCE(p_is_dispute,false) AND p_dispute_id IS NOT NULL THEN
+    SELECT scope INTO v_scope FROM chit_disputes WHERE dispute_id = p_dispute_id LIMIT 1;
+    IF COALESCE(v_scope,'targeted') <> 'chit_wide'
+       AND EXISTS (SELECT 1 FROM chit_disputes WHERE dispute_id = p_dispute_id) THEN
+      FOR v_ent IN SELECT DISTINCT entity_id FROM chit_disputes WHERE dispute_id = p_dispute_id LOOP
+        INSERT INTO chit_messages (message_id, entity_id, chit_id, sender_entity_id, sender_display_name,
+            thread_type, visibility_entity_id, message_text, msg_type, is_dispute, dispute_id, created_at)
+          VALUES (p_message_id, v_ent, p_chit_id, p_sender_entity_id, p_sender_display_name,
+            'external', NULL, p_message_text, COALESCE(p_msg_type,'info'), true, p_dispute_id, v_created);
+      END LOOP;
+      RETURN v_created;
+    END IF;
+  END IF;
+  FOR v_ent IN SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = p_chit_id LOOP
+    INSERT INTO chit_messages (message_id, entity_id, chit_id, sender_entity_id, sender_display_name,
+        thread_type, visibility_entity_id, message_text, msg_type, is_dispute, dispute_id, created_at)
+      VALUES (p_message_id, v_ent, p_chit_id, p_sender_entity_id, p_sender_display_name,
+        p_thread_type, NULL, p_message_text, COALESCE(p_msg_type,'info'), COALESCE(p_is_dispute,false), p_dispute_id, v_created);
+  END LOOP;
+  RETURN v_created;
+END; $$;
