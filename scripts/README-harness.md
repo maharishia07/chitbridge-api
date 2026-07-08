@@ -9,6 +9,7 @@ node scripts/lifecycle-iot.js    # IoT connector lifecycle: create→device→ro
 node scripts/actor-harness.js    # actor perspective: actors share entity data; drafts are author-private (list + detail)
 node scripts/dispute-scope.js    # 3-party chit + targeted dispute: a chit party NOT in the dispute sees 0 dispute messages
 node scripts/cancel-request.js   # sender void = request: own copy voided, recipient's copy untouched, flagged [cancel requested] message
+node scripts/erp-connector.js    # ERP process-then-forget: receipt-only (raw payload never stored), idempotency, per-copy chit, RLS isolation, auth/type guards  [needs b69]
 ```
 
 Override the target with `CB_API=https://... node scripts/<name>.js` (defaults to production).
