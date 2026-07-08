@@ -1160,6 +1160,19 @@ router.put('/:chit_id/status',
 
 // ─── POST /chits/:chit_id/messages ───────────────────────────
 // thread_type: 'external' (all parties see) | 'internal' (sender entity only)
+// ── b67: post a message as PER-ENTITY copies via the SECURITY DEFINER deliver fn (audience computed server-side:
+//   internal → author only · external → all chit participants · dispute → the dispute roster). One logical message_id,
+//   replicated per audience entity; reads are RLS-scoped to "my own copies". Pass a tx `db` client to stay atomic.
+async function postMessageCopies(msg, db) {
+  const runner = db ? (t, p) => db.query(t, p) : query;
+  const message_id = uuidv4();
+  const r = await runner(
+    `SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9) AS created_at`,
+    [message_id, msg.chit_id, msg.sender_entity_id, msg.sender_display_name || null,
+     msg.thread_type, msg.message_text, msg.msg_type || 'info', !!msg.is_dispute, msg.dispute_id || null]);
+  return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
+}
+
 router.post('/:chit_id/messages',
   [
     body('message_text').trim().notEmpty().withMessage('Message text required'),
@@ -1185,8 +1198,6 @@ router.post('/:chit_id/messages',
         return res.status(403).json({ error: 'Forbidden', message: 'Not a participant on this chit' });
       }
 
-      // NULL visibility = external (all see); entity_id = internal (only sender sees)
-      const visibility_entity_id = thread_type === 'internal' ? entity_id : null;
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
       const isDispute = req.body.is_dispute === true || req.body.is_dispute === 'true';
       const disputeId = req.body.dispute_id || null;
@@ -1197,14 +1208,9 @@ router.post('/:chit_id/messages',
         if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
       }
 
-      const result = await query(
-        `INSERT INTO chit_messages
-           (chit_id, sender_entity_id, sender_display_name,
-            thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
-         RETURNING *`,
-        [chit_id, entity_id, senderName, thread_type, visibility_entity_id, message_text, isDispute, disputeId]
-      );
+      // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
+      const result = await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: senderName,
+        thread_type, message_text, msg_type: req.body.msg_type, is_dispute: isDispute, dispute_id: disputeId });
 
       // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
       // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
@@ -1226,11 +1232,11 @@ router.post('/:chit_id/messages',
       }
 
       res.json({
-        message_id:           result.rows[0].message_id,
+        message_id:           result.message_id,
         thread_type,
         message_text,
         sender_display_name:  display_name,
-        created_at:           result.rows[0].created_at,
+        created_at:           result.created_at,
       });
     } catch (err) {
       console.error('Send message error:', err.message);
@@ -1250,35 +1256,20 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
   const thread_filter = req.query.thread_type || 'all';
 
   try {
-    // B1 RLS: participant access check on own copy -> withEntity(me).
-    const access = await withEntity(entity_id, (db) => db.query(
-      `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    ));
-    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
+    // PER-ENTITY (b67): everything runs inside withEntity(me). RLS returns ONLY my own message copies — a row
+    // exists for me only if I was in its audience (internal=author · external=all · dispute=roster). So the old
+    // cross-entity visibility logic is gone; the filter is just by thread_type on my own rows.
+    const result = await withEntity(entity_id, async (db) => {
+      const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
+      if (access.rows.length === 0) return null;   // not a participant
+      let cond = '';
+      if (thread_filter === 'internal')      cond = ` AND COALESCE(is_dispute,false)=false AND thread_type='internal'`;
+      else if (thread_filter === 'external') cond = ` AND ((COALESCE(is_dispute,false)=false AND thread_type='external') OR is_dispute=true)`;
+      if (req.query.dispute === '1' || req.query.dispute === 'true') cond += ` AND is_dispute = true`;
+      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, [chit_id]);
+    });
+    if (result === null) return res.status(403).json({ error: 'Forbidden' });
 
-    // Dispute messages are scoped to the dispute roster (targeted) or all participants (chit-wide) — a
-    // non-party on the chit must NEVER see them. Non-dispute messages keep the external/internal rules.
-    const disputeVis = `(m.is_dispute = true AND (
-        EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.dispute_id = m.dispute_id AND cd.scope = 'chit_wide')
-        OR EXISTS (SELECT 1 FROM dispute_participants dp WHERE dp.dispute_id = m.dispute_id AND dp.entity_id = $2)
-      ))`;
-    let vis;
-    if (thread_filter === 'internal') {
-      vis = `(COALESCE(m.is_dispute,false)=false AND m.thread_type='internal' AND m.visibility_entity_id=$2)`;
-    } else if (thread_filter === 'external') {
-      vis = `(COALESCE(m.is_dispute,false)=false AND m.thread_type='external') OR ${disputeVis}`;
-    } else {
-      vis = `(COALESCE(m.is_dispute,false)=false AND (m.thread_type='external' OR (m.thread_type='internal' AND m.visibility_entity_id=$2))) OR ${disputeVis}`;
-    }
-    let q = `SELECT m.* FROM chit_messages m WHERE m.chit_id = $1 AND (${vis})`;
-    // D4: dispute-only view — filter the thread to dispute-tagged messages (works after a dispute closes).
-    if (req.query.dispute === '1' || req.query.dispute === 'true') q += ` AND m.is_dispute = true`;
-    q += ` ORDER BY m.created_at ASC`;
-    const params = [chit_id, entity_id];
-
-    const result = await query(q, params);
-    // attach per-message files (bytes pulled on demand via GET /api/attachments/:id)
     const msgIds = result.rows.map(m => m.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(() => []);   // per-entity: caller's own copies
     const byMsg = {};
@@ -1448,11 +1439,8 @@ router.post('/:chit_id/disputes',
         // D4 — the dispute REASON as a scoped chit_message so it appears in the Messages panel (not just the
         // Status log). ONE row; GET /messages scopes visibility to the roster (targeted) or all (chit-wide),
         // so a non-party on the chit never sees it. chit_messages is not RLS-scoped.
-        await client.query(
-          `INSERT INTO chit_messages
-             (chit_id, sender_entity_id, sender_display_name, thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
-           VALUES ($1,$2,$3,'external',NULL,$4,true,$5,NOW())`,
-          [chit_id, entity_id, entityName, `[${category}] ${reason}`, did]);
+        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: entityName,
+          thread_type: 'external', message_text: `[${category}] ${reason}`, is_dispute: true, dispute_id: did }, client);
         return result.rows[0];
       });
       res.json({
@@ -1652,10 +1640,8 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
            VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
           [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]);
         // resolution note as a scoped dispute message (roster / chit-wide only — never a non-party)
-        await client.query(
-          `INSERT INTO chit_messages (chit_id, sender_entity_id, sender_display_name, thread_type, visibility_entity_id, message_text, is_dispute, dispute_id, created_at)
-           VALUES ($1,$2,$3,'external',NULL,$4,true,$5,NOW())`,
-          [chit_id, entity_id, entityName, `[resolved] ${resolution_note}`, dispute_id]);
+        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: entityName,
+          thread_type: 'external', message_text: `[resolved] ${resolution_note}`, is_dispute: true, dispute_id }, client);
         // notify the cleared parties on their own timeline
         if (resolvedPartyIds.length) {
           const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`;
@@ -1847,15 +1833,10 @@ router.put('/:chit_id/priority',
         [priority, chit_id, entity_id]
       );
 
-      // urgent → record an internal action message (only this entity's internal thread)
+      // urgent → record an internal action message (only this entity's internal thread — single copy)
       if (priority === 'urgent') {
-        await db.query(
-          `INSERT INTO chit_messages
-             (chit_id, sender_entity_id, sender_display_name,
-              thread_type, visibility_entity_id, message_text, msg_type, created_at)
-           VALUES ($1,$2,$3,'internal',$2,$4,'action',NOW())`,
-          [chit_id, entity_id, req.identity.display_name, `Marked URGENT: ${reason}`]
-        );
+        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
+          thread_type: 'internal', message_text: `Marked URGENT: ${reason}`, msg_type: 'action' }, db);
       }
 
       res.json({ message: 'Priority updated', chit_id, priority_flag: priority });
@@ -1904,14 +1885,9 @@ router.put('/:chit_id/priority-flag',
 
       // Trail parity with internal urgent: log who/when as an action message.
       // External thread (visibility NULL) — the customer flag is cross-edge, so both parties see the trail.
-      await query(
-        `INSERT INTO chit_messages
-           (chit_id, sender_entity_id, sender_display_name,
-            thread_type, visibility_entity_id, message_text, msg_type, created_at)
-         VALUES ($1,$2,$3,'external',NULL,$4,'action',NOW())`,
-        [chit_id, entity_id, req.identity.display_name,
-         flag ? 'Customer marked this chit as priority' : 'Customer cleared priority']
-      );
+      await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
+        thread_type: 'external', msg_type: 'action',
+        message_text: flag ? 'Customer marked this chit as priority' : 'Customer cleared priority' });
 
       res.json({ message: 'Customer priority set', chit_id, customer_priority: flag, locked: true });
     } catch (err) {
@@ -2025,7 +2001,7 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
       if (chk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
       if (chk.rows[0].role !== 'Draft') return res.status(403).json({ error: 'Forbidden', message: 'Only drafts can be permanently deleted — sent chits are immutable co-held records.' });
       if (chk.rows[0].created_by_actor_id !== req.identity.identity_id) return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
-      await db.query(`DELETE FROM chit_messages WHERE chit_id = $1`, [chit_id]);
+      await db.query(`DELETE FROM chit_messages WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);   // per-entity: my own copies only
       await db.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
@@ -2066,13 +2042,9 @@ router.put('/:chit_id/void',
         `SELECT chit_set_status_all($1,$2)`,
         [chit_id, 'void'],
         (db) => db.query(`UPDATE chit_status SET current_status = 'void', updated_at = NOW() WHERE chit_id = $1`, [chit_id]));
-      // Record who/when/why as an external action message (both parties see it).
-      await query(
-        `INSERT INTO chit_messages
-           (chit_id, sender_entity_id, sender_display_name,
-            thread_type, visibility_entity_id, message_text, msg_type, created_at)
-         VALUES ($1,$2,$3,'external',NULL,$4,'action',NOW())`,
-        [chit_id, entity_id, req.identity.display_name, `Chit VOIDED: ${reason}`]);
+      // Record who/when/why as an external action message (each participant gets their own copy).
+      await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
+        thread_type: 'external', message_text: `Chit VOIDED: ${reason}`, msg_type: 'action' });
       // State-log the void into every participant's timeline -> chit_log_all. Fallback = the legacy INSERT...SELECT.
       await crossing(entity_id,
         `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
