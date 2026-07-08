@@ -16,12 +16,14 @@ ALTER TABLE chit_disputes ADD COLUMN IF NOT EXISTS entity_id uuid NOT NULL;
 ALTER TABLE chit_disputes ADD COLUMN IF NOT EXISTS role      text NOT NULL DEFAULT 'party';   -- this copy's owner role: raiser | party
 ALTER TABLE chit_disputes ADD COLUMN IF NOT EXISTS roster    jsonb NOT NULL DEFAULT '[]'::jsonb; -- snapshot [{entity_id,display_name,role}]
 
+-- cut the coupling FIRST: two FKs depend on the old chit_disputes PK (dispute_id). Neither is recreated —
+-- dispute_id is no longer unique per-copy, and a cross-entity FK is exactly the coupling we're removing.
+ALTER TABLE dispute_participants DROP CONSTRAINT IF EXISTS dispute_participants_dispute_id_fkey;
+ALTER TABLE chit_messages       DROP CONSTRAINT IF EXISTS chit_messages_dispute_id_fkey;
+
 ALTER TABLE chit_disputes DROP CONSTRAINT IF EXISTS chit_disputes_pkey;
 ALTER TABLE chit_disputes ADD CONSTRAINT chit_disputes_pkey PRIMARY KEY (dispute_id, entity_id);
 CREATE INDEX IF NOT EXISTS chit_disputes_entity_chit_idx ON chit_disputes(entity_id, chit_id);
-
--- 2. cut the coupling: dispute_participants is retired; drop its FK to chit_disputes so nothing cascades cross-entity
-ALTER TABLE dispute_participants DROP CONSTRAINT IF EXISTS dispute_participants_dispute_id_fkey;
 
 -- 3. RLS — each entity sees ONLY its own dispute copies
 ALTER TABLE chit_disputes ENABLE ROW LEVEL SECURITY;
