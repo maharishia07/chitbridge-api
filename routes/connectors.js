@@ -15,7 +15,9 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
 const { sendOtpEmail } = require('../lib/notify');
 const { verifyOtp } = require('../lib/otp');
-const genOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+// Reissue step-up code. In DEV (DEV_OTP set) use a FIXED 654321 — distinct from the login dev-OTP (123456) so the two
+// are unmistakable during testing. In prod it's a fresh random 6-digit code.
+const genOtp = () => (process.env.DEV_OTP ? '654321' : Math.floor(100000 + Math.random() * 900000).toString());
 
 // Step-up authorisation for the destructive key reissue: ONLY the entity admin, or a MANAGER-hat delegate.
 async function canReissue(req) {
