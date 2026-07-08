@@ -32,6 +32,14 @@ async function canReissue(req) {
 const generateBridgeId = () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let id='CB'; for (let i=0;i<8;i++) id+=c[Math.floor(Math.random()*c.length)]; return id; };
 const genKey  = () => crypto.randomBytes(24).toString('base64url');            // ActorKey — returned ONCE on IoT push create
 const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex');    // only the hash is stored
+// Canonical (key-sorted) hash of an ERP document — the ONLY trace we keep of the raw payload (process-then-forget).
+// Sorting keys makes it order-independent so the SAME document from two clients dedupes to one receipt.
+const stableStringify = (v) => {
+  if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
+  if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+  return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+};
+const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
 // health from last_seen: never / stale >15m = offline, >3m = slow, else live
 function health(last_seen){ if (!last_seen) return 'offline'; const age = Date.now() - new Date(last_seen).getTime(); if (age > 15*60*1000) return 'offline'; if (age > 3*60*1000) return 'slow'; return 'live'; }
 
@@ -77,9 +85,10 @@ router.post('/', auth, requireConnector,
       const bridge_id    = generateBridgeId();
       const otp          = Math.floor(100000 + Math.random() * 900000).toString();
       const otp_expires  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      // IoT push: issue the device ActorKey now, store only its hash, return the raw ONCE (for provisioning the Pi).
+      // Issue the ActorKey now, store only its hash, return the raw ONCE. IoT push needs it to provision the Pi;
+      // ERP needs it to authenticate its document pushes to /erp-ingest (the ERP's own credential, not a user JWT).
       let provision_key = null, key_hash = null;
-      if (type === 'iot' && (config.mode || 'push') === 'push') { provision_key = genKey(); key_hash = hashKey(provision_key); }
+      if ((type === 'iot' && (config.mode || 'push') === 'push') || type === 'erp') { provision_key = genKey(); key_hash = hashKey(provision_key); }
       await db(
         `INSERT INTO identities
            (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone,
@@ -97,7 +106,7 @@ router.post('/', auth, requireConnector,
 // Build + deliver a Device Signal chit (sender = the connector's OWNING ENTITY, receiver = the counterparty),
 // reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
 // Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
-async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id }) {
+async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra }) {
   const ent = await db(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
   const self = ent.rows[0]; if (!self) throw new Error('owning entity not found');
   // Exceptions are SELF-CHITS filed into a named FOLDER (they stay inside the entity); CC = an optional partner who
@@ -112,8 +121,8 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   const purpose = 'general';
   const now = new Date();
   const label = sub_type || signal || 'signal';
-  const business_json = { kind: 'device_signal', folder: folder || null, sub_type: sub_type || null,
-    device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString() };
+  const business_json = { kind: kind || 'device_signal', folder: folder || null, sub_type: sub_type || null,
+    device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString(), ...(extra || {}) };
   const manual_subject = (folder ? ('[' + folder + '] ') : '') + 'Signal: ' + label + (value != null ? (' = ' + value + (unit || '')) : '');
   const auto_subject = 'Signal from ' + (actor.display_name || self.display_name) + ' — ' + now.toISOString().slice(0, 10);
 
@@ -240,6 +249,91 @@ router.post('/ingest',
       }
       res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, filed, file_err, proof_err, note });
     } catch (err) { res.status(500).json({ error: 'Ingest failed', message: safeErr(err) }); }
+  });
+
+// POST /api/connectors/erp-ingest — ERP-FACING, "process-then-forget". An ERP/middleware authenticates with its
+// ActorKey and pushes a DOCUMENT (req.body.payload — arbitrary JSON). We PROCESS it (emit the business outcome as a
+// co-held chit to the counterparty) then FORGET the raw payload, persisting only a RECEIPT: hash + outcome + chit
+// pointer. The raw document is NEVER written to the DB. Idempotent: the receipt row (UNIQUE actor_id+payload_hash)
+// is the lock, so a retried push yields ONE receipt and ONE effect. No user JWT — a system has no session.
+router.post('/erp-ingest',
+  [ body('payload').custom(v => v !== undefined && v !== null && typeof v === 'object').withMessage('payload (JSON object) required'),
+    body('doc_type').optional().trim().isLength({ max: 64 }),
+    body('doc_ref').optional().trim().isLength({ max: 120 }) ],
+  validate,
+  async (req, res) => {
+    try {
+      const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
+      if (!key) return res.status(401).json({ error: 'No key', message: 'Send the ActorKey in the X-Bridge-Key header.' });
+      const ar = await db(
+        `SELECT identity_id, parent_entity_id, display_name, connector_type, status, connector_config
+           FROM identities
+          WHERE provision_key_hash = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [hashKey(key)]);
+      const actor = ar.rows[0];
+      if (!actor || actor.status !== 'active') return res.status(401).json({ error: 'Bad key', message: 'ActorKey not recognised, or the connector is inactive.' });
+      if (actor.connector_type !== 'erp') return res.status(409).json({ error: 'Wrong type', message: 'This endpoint is for ERP connectors. IoT devices use /ingest.' });
+
+      const entity_id    = actor.parent_entity_id;
+      const cfg          = actor.connector_config || {};
+      const payload_hash = hashPayload(req.body.payload);   // the ONLY trace of the raw document we keep
+      const doc_type     = req.body.doc_type ? String(req.body.doc_type).trim() : (req.body.payload.doc_type ? String(req.body.payload.doc_type).slice(0, 64) : 'document');
+      const doc_ref      = req.body.doc_ref ? String(req.body.doc_ref).trim() : (req.body.payload.doc_ref ? String(req.body.payload.doc_ref).slice(0, 120) : null);
+      const cc           = req.body.to ? String(req.body.to).trim() : (cfg.counterparty_entity_id || null);
+
+      // Heartbeat — health goes live for the ERP connector (independent of processing below).
+      await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+
+      // Claim the idempotency slot FIRST (receipt-as-lock). If the hash already exists, this is a retry → return the
+      // first receipt, do NOT re-emit. Winning the insert means we own the effect; then we process + finalise outcome.
+      const receipt_id = uuidv4();
+      const claim = await withEntity(entity_id, (c) => c.query(
+        `INSERT INTO connector_receipt (receipt_id, entity_id, actor_id, doc_type, doc_ref, payload_hash, outcome)
+         VALUES ($1,$2,$3,$4,$5,$6,'pending')
+         ON CONFLICT (actor_id, payload_hash) DO NOTHING RETURNING receipt_id`,
+        [receipt_id, entity_id, actor.identity_id, doc_type, doc_ref, payload_hash]));
+      if (claim.rows.length === 0) {
+        const ex = await withEntity(entity_id, (c) => c.query(
+          `SELECT receipt_id, outcome, chit_id FROM connector_receipt WHERE actor_id = $1 AND payload_hash = $2`,
+          [actor.identity_id, payload_hash]));
+        const r = ex.rows[0] || {};
+        return res.json({ message: 'duplicate', receipt_id: r.receipt_id || null, payload_hash, outcome: 'duplicate', chit_id: r.chit_id || null, idempotent: true });
+      }
+
+      // PROCESS — deliver the business outcome as a co-held chit. Only the SUMMARY travels (doc_type/ref/amount),
+      // never the raw payload. A missing counterparty is fine: the receipt still stands (outcome 'logged').
+      let chit_id = null, outcome = cc ? 'processed' : 'logged', note = null;
+      try {
+        const extra = { doc_type, doc_ref };
+        if (req.body.payload.amount != null) extra.amount = req.body.payload.amount;
+        if (req.body.payload.currency) extra.currency = String(req.body.payload.currency).slice(0, 8);
+        const emit = await emitSignalChit({
+          entity_id, actor, folder: cfg.folder || 'ERP', sub_type: 'erp:' + doc_type, cc,
+          kind: 'erp_document', signal: doc_type, value: doc_ref, extra,
+          device_id: doc_ref, bridge_id: null,
+        });
+        chit_id = emit.chit_id;
+      } catch (e) { outcome = 'failed'; note = 'Receipt kept, but the outcome chit could not be delivered: ' + safeErr(e); }
+
+      // FORGET — finalise the receipt with the outcome + chit pointer. The raw payload was never stored.
+      await withEntity(entity_id, (c) => c.query(
+        `UPDATE connector_receipt SET outcome = $1, chit_id = $2 WHERE receipt_id = $3`, [outcome, chit_id, receipt_id]));
+      res.json({ message: 'received', receipt_id, payload_hash, outcome, chit_id, idempotent: false, note });
+    } catch (err) { res.status(500).json({ error: 'ERP ingest failed', message: safeErr(err) }); }
+  });
+
+// GET /api/connectors/:actorId/receipts — the ERP receipt ledger (hash + outcome, NEVER the raw payload). Entity-scoped.
+router.get('/:actorId/receipts', auth, requireConnector,
+  [ param('actorId').isUUID() ], validate,
+  async (req, res) => {
+    try {
+      const entity_id = ownerEntityId(req);
+      const own = await db(`SELECT 1 FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND connector_type = 'erp'`, [req.params.actorId, entity_id]);
+      if (own.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No ERP connector with that id under this entity.' });
+      const r = await withEntity(entity_id, (c) => c.query(
+        `SELECT receipt_id, doc_type, doc_ref, payload_hash, outcome, chit_id, received_at
+           FROM connector_receipt WHERE actor_id = $1 ORDER BY received_at DESC LIMIT 200`, [req.params.actorId]));
+      res.json({ receipts: r.rows });
+    } catch (err) { res.status(500).json({ error: 'List receipts failed', message: safeErr(err) }); }
   });
 
 // GET /api/connectors — list connector actors (site, config, health) so the UI can group by site

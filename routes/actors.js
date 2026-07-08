@@ -881,9 +881,15 @@ router.put('/:id/status',
         was_default_assignee = (_da.rowCount || 0) > 0;
       });
 
-      // Best-effort (outside the tx — the dispute-routing column may not be migrated): drop any dispute-handler
-      // assignment to this actor so open disputes aren't routed to a gone person.
-      try { const _dh = await db(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id]); disputes_cleared = (_dh && _dh.rowCount) || 0; } catch (_) {}
+      // Drop any dispute-handler assignment to this actor so open disputes aren't routed to a gone person.
+      // B1 RLS (b68): chit_disputes is now per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain
+      // query would fail-closed (0 rows) and silently leave the gone actor as handler. This entity's own copies only.
+      try {
+        await withEntity(entity_id, async (client) => {
+          const _dh = await client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id]);
+          disputes_cleared = (_dh && _dh.rowCount) || 0;
+        });
+      } catch (_) {}
 
       res.json({
         message: `Actor ${action}d successfully`,

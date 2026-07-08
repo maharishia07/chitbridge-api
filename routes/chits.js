@@ -9,6 +9,10 @@ const storage = require('../lib/storage');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
+// The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
+// Single source of truth (was duplicated 26× as `entityId(req)`).
+const entityId = (req) => entityId(req);
+
 // ── B1 RLS — the crossing helper ─────────────────────────────────────────────────────────────────────────
 // A few chit operations legitimately cross the entity boundary (log an event into every/selected participant,
 // propagate a cancel/void, set the customer flag). Under RLS those are served by the b50/b51 SECURITY DEFINER
@@ -200,7 +204,7 @@ router.post('/send',
     try {
       // Uniform actor model: an actor acts FOR its entity, so the chit is ALWAYS owned by the entity, never the actor.
       // (created_by_actor_id below records WHO pressed send — the only actor-specific bit, for audit.)
-      const sender_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const sender_id = entityId(req);
       let sender_bridge_id = req.identity.bridge_id;
       let sender_display_name = req.identity.display_name;
       if (req.identity.identity_type === 'actor' && req.identity.parent_entity_id) {
@@ -582,7 +586,7 @@ function chitFilters(req, where, params){
 
 router.get('/sent', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     const page   = parseInt(req.query.page || 1);
     const limit  = parseInt(req.query.limit || 20);
     const offset = (page - 1) * limit;
@@ -632,7 +636,7 @@ router.get('/sent', auth, async (req, res) => {
 // Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
 router.get('/folder', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     const page   = parseInt(req.query.page || 1);
     const limit  = parseInt(req.query.limit || 20);
     const offset = (page - 1) * limit;
@@ -691,7 +695,7 @@ router.get('/folder', auth, async (req, res) => {
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
 router.get('/rollup', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     const groupBy = (req.query.group_by === 'state') ? 'state' : 'counterparty';
     const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name';
     // direction scopes the rollup to Task (received) or Order (sent); omit for both. Without it, self-chits
@@ -735,7 +739,7 @@ router.get('/rollup', auth, async (req, res) => {
 router.get('/inbox', auth, async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     const page = parseInt(req.query.page || 1);
     const limit = parseInt(req.query.limit || 20);
     const offset = (page - 1) * limit;
@@ -844,7 +848,7 @@ router.get('/inbox', auth, async (req, res) => {
 router.get('/unread', auth, async (req, res) => {
   try {
     if (req.identity.identity_type !== 'actor') return res.json({ unread: [] });
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     const actor_id  = req.identity.identity_id;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const r = await withEntity(entity_id, (db) => db.query(
@@ -862,7 +866,7 @@ router.get('/:chit_id', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
 
     // B1 RLS: everything here is the caller's OWN copy -> withEntity(me).
     const data = await withEntity(entity_id, async (db) => {
@@ -1009,7 +1013,7 @@ router.put('/:chit_id/status',
       const chit_id      = req.params.chit_id;
       // entity_id   = participant entity context (parent for actors, self for entities)
       // action_by_* = whoever is performing — entity admin or actor, never remapped
-      const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id    = entityId(req);
       const action_by_id   = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const new_status = req.body.status;
@@ -1166,7 +1170,7 @@ router.post('/:chit_id/messages',
   async (req, res) => {
     const { chit_id }  = req.params;
     const { message_text, thread_type } = req.body;
-    const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id    = entityId(req);
     const display_name = req.identity.display_name;
 
     try {
@@ -1230,7 +1234,7 @@ router.post('/:chit_id/messages',
 // thread_type query: 'all' | 'external' | 'internal'
 router.get('/:chit_id/messages', auth, async (req, res) => {
   const { chit_id }   = req.params;
-  const entity_id     = req.identity.parent_entity_id || req.identity.identity_id;
+  const entity_id     = entityId(req);
   const thread_filter = req.query.thread_type || 'all';
 
   try {
@@ -1298,7 +1302,7 @@ router.post('/:chit_id/disputes',
   async (req, res) => {
     const { chit_id } = req.params;
     const { category, reason, target_entity_id = null, chit_wide = false, via = 'chit' } = req.body;
-    const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id    = entityId(req);
     const display_name = req.identity.display_name;
     try {
       // 1. raiser must be a participant
@@ -1359,9 +1363,9 @@ router.post('/:chit_id/disputes',
           WHERE ch.chit_id=$1`, [chit_id, entity_id]));
       const evidence = { ...(snap.rows[0] || {}), captured_at: new Date().toISOString(), via };
 
-      // 7 + 8. insert dispute + timeline atomically (INV-2). chit_disputes/dispute_participants are not RLS-scoped
-      // and the raiser's OWN state_log is entity_id=caller, so all run in withEntity(me); the per-party notices are
-      // a CROSS write into each party's own state_log -> chit_log_targets (validated participant), legacy loop pre-b50.
+      // 7 + 8. insert dispute + timeline atomically (INV-2). Post-b68 chit_disputes IS per-copy + FORCE-RLS, so the
+      // raiser's own copy is written in withEntity(me); the per-party copies are a CROSS write served by the
+      // chit_dispute_deliver definer (owner-bypass fan-out). Per-party notices go via chit_log_targets (validated).
       const ready = await definersReady();
       // b68 — per-entity dispute copies. Build the roster snapshot + audience (raiser + parties); the definer
       // replicates one chit_disputes copy per participant (bypasses FORCE-RLS as owner). dispute_participants retired.
@@ -1425,7 +1429,7 @@ router.post('/:chit_id/disputes',
 // All participants see all disputes on a chit
 router.get('/:chit_id/disputes', auth, async (req, res) => {
   const { chit_id } = req.params;
-  const entity_id   = req.identity.parent_entity_id || req.identity.identity_id;
+  const entity_id   = entityId(req);
 
   try {
     // B1 RLS: participant access check on own copy -> withEntity(me).
@@ -1453,7 +1457,7 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     const disputes = result.rows.map(({ evidence_snapshot, roster, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null, participants: partsByD[d.dispute_id] || [] }));
     res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length });
   } catch (err) {
-    if (err.message.includes('chit_disputes') || err.message.includes('dispute_participants')) return res.json({ disputes: [], open_count: 0 });
+    if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
     res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
   }
 });
@@ -1471,7 +1475,7 @@ const FAULT_SUMMARY = {
 };
 router.get('/:chit_id/diagnosis', auth, async (req, res) => {
   const { chit_id } = req.params;
-  const entity_id   = req.identity.parent_entity_id || req.identity.identity_id;
+  const entity_id   = entityId(req);
   try {
     // B1 RLS: own-copy reads (status/header/detail) -> withEntity(me).
     const rls = await withEntity(entity_id, async (db) => {
@@ -1550,7 +1554,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
     const { chit_id, dispute_id } = req.params;
     const { resolution_note }     = req.body;
     const targetParty  = req.body.target_entity_id || null;   // per-party resolve; null = clear all remaining
-    const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id    = entityId(req);
     const display_name = req.identity.display_name;
     // B3: the resolution message posts in the ENTITY name (the acting actor stays as provenance in the timeline).
     let entityName = display_name;
@@ -1624,7 +1628,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
 // All open disputes across all chits for this entity — used by DisputesPage sidebar
 // Safe: /disputes/queue has 2 segments; /:chit_id matches 1 segment only — no conflict
 router.get('/disputes/queue', auth, async (req, res) => {
-  const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+  const entity_id = entityId(req);
 
   try {
     // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me).
@@ -1677,7 +1681,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
 router.delete('/:chit_id', auth, async (req, res) => {
   try {
     const chit_id        = req.params.chit_id;
-    const entity_id      = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id      = entityId(req);
     const action_by_id   = req.identity.identity_id;
     const action_by_name = req.identity.display_name;
 
@@ -1755,7 +1759,7 @@ router.put('/:chit_id/priority',
   async (req, res) => {
     try {
       const chit_id   = req.params.chit_id;
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id = entityId(req);
       const priority  = req.body.priority;
       const reason    = sanitise(req.body.reason || '');
 
@@ -1804,7 +1808,7 @@ router.put('/:chit_id/priority-flag',
   async (req, res) => {
     try {
       const chit_id   = req.params.chit_id;
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id = entityId(req);
       const flag      = req.body.priority === true || req.body.priority === 'true';
 
       // B1 RLS: write-once lock check on own copy -> withEntity(me).
@@ -1850,7 +1854,7 @@ router.put('/:chit_id/priority-flag',
 // POST /chits/:chit_id/archive — hide MY copy from inbox/sent (reversible; never deletes).
 router.post('/:chit_id/archive', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     // D4 guard: a chit with an OPEN dispute can't be archived (parity with the delete guard) — resolve first.
     const openD = await withEntity(entity_id, (db) => db.query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
       [req.params.chit_id])).catch(() => ({ rows: [{ count: 0 }] }));   // per-copy: my own open dispute copies
@@ -1869,7 +1873,7 @@ router.post('/:chit_id/archive', auth, async (req, res) => {
 // PUT /chits/:chit_id/star — toggle the star/flag on MY copies (kept in sync across both directions).
 router.put('/:chit_id/star', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
     await withEntity(entity_id, async (db) => {
     const cur = await db.query(`SELECT star_flag FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`,
@@ -1886,7 +1890,7 @@ router.put('/:chit_id/star', auth, async (req, res) => {
 // POST /chits/:chit_id/unread — mark MY copy unread (clear read_at).
 router.post('/:chit_id/unread', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
     const r = await withEntity(entity_id, (db) => db.query(`UPDATE chit_status SET read_at = NULL, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
       [req.params.chit_id, entity_id]));
@@ -1898,7 +1902,7 @@ router.post('/:chit_id/unread', auth, async (req, res) => {
 // POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
 router.post('/:chit_id/unarchive', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
     const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE chit_status SET archived_at = NULL, updated_at = NOW()
@@ -1915,7 +1919,7 @@ router.post('/:chit_id/unarchive', auth, async (req, res) => {
 router.post('/:chit_id/restore', auth, async (req, res) => {
   try {
     const chit_id        = req.params.chit_id;
-    const entity_id      = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id      = entityId(req);
     const action_by_id   = req.identity.identity_id;
     const action_by_name = req.identity.display_name;
     // B1 RLS: caller restores only its own copy -> withEntity(me).
@@ -1940,7 +1944,7 @@ router.post('/:chit_id/restore', auth, async (req, res) => {
 router.delete('/:chit_id/purge', auth, async (req, res) => {
   try {
     const chit_id   = req.params.chit_id;
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = entityId(req);
     // B1 RLS: caller purges only its own draft copy -> withEntity(me) (was withTransaction).
     await withEntity(entity_id, async (db) => {
       const chk = await db.query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
@@ -1970,7 +1974,7 @@ router.put('/:chit_id/void',
   async (req, res) => {
     try {
       const chit_id   = req.params.chit_id;
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id = entityId(req);
       const reason    = sanitise(req.body.reason);
 
       // B1 RLS: sender check on own copy -> withEntity(me).
@@ -2009,7 +2013,7 @@ router.post('/assign-bulk',
   validate, auth,
   async (req, res) => {
     try {
-      const entity_id      = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id      = entityId(req);
       const action_by_id   = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const { chit_ids, target_actor_id } = req.body;
