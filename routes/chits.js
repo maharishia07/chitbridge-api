@@ -1240,10 +1240,7 @@ router.post('/:chit_id/messages',
       });
     } catch (err) {
       console.error('Send message error:', err.message);
-      if (err.message.includes('chit_messages')) {
-        return res.status(500).json({ error: 'Table not found', message: 'Run B3.5 migration SQL first', sql_needed: true });
-      }
-      res.status(500).json({ error: 'Send message failed', message: safeErr(err) });
+      res.status(500).json({ error: 'Send message failed', message: err.message });
     }
   }
 );
