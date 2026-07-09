@@ -16,6 +16,7 @@ const { query, withEntity } = require('../db');  // DB access for the Q&A librar
 const auth    = require('../middleware/auth');   // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
 const compliance = require('../lib/compliance'); // deterministic conform-check engine (the `ai:conform-verdict@v1` slot floor)
+const catalogueBuild = require('../lib/catalogue-build'); // the `ai:catalogue-structure@v1` slot — source → schema + coloured items
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
 // so it can't be inspected or bypassed. The real implementation injects this as the system prompt.
@@ -185,6 +186,56 @@ router.post('/conform', async (req, res) => {
 
 // GET /api/assist/standards — the conform-check standards available to check against (drives the UI picker).
 router.get('/standards', (req, res) => res.json({ ok: true, data: compliance.listTemplates() }));
+
+// GET /api/assist/catalogue-sources — the catalogue sources the handler can structure (drives the UI picker).
+router.get('/catalogue-sources', (req, res) => res.json({ ok: true, data: catalogueBuild.listSources() }));
+
+// POST /api/assist/catalogue-structure — the `ai:catalogue-structure@v1` slot. Body: { source }. Returns the
+// DETERMINISTIC structured PROPOSAL (schema + coloured items — the AI handler's "interpret once" output), plus a
+// model-drafted designer INTRO when configured (best-effort; degrades to no intro). Returns the `acted_by` deputy
+// stamp. Does NOT persist to a catalogue yet — this is the draft the business confirms before publishing.
+router.post('/catalogue-structure', async (req, res) => {
+  try {
+    const source = (req.body && typeof req.body.source === 'string') ? req.body.source.trim() : 'beta-royale-play@v1';
+    const built = catalogueBuild.build(source);
+    if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.', available: catalogueBuild.listSources() });
+
+    const identity = softIdentity(req);
+    const principal = identity ? ('entity:' + (identity.parent_entity_id || identity.identity_id)) : 'anon';
+    const acted_by = {
+      deputy: 'ai:catalogue-structure@v1', rung: 'extract', tier: 'small', model: null,
+      principal, delegator: identity ? { type: 'human', id: identity.identity_id } : null,
+      confirmed_by: null, grant: 'per-act',
+    };
+
+    // Designer intro — model-drafted RUNG-summarise layer, best-effort. It describes the ALREADY-structured
+    // collection; it never invents items. Absent a key, the structure still stands (intro: null).
+    let intro = null;
+    const provider = process.env.ASSIST_LLM_PROVIDER, apiKey = process.env.ASSIST_LLM_API_KEY;
+    if (provider === 'anthropic' && apiKey) {
+      try {
+        const Anthropic = require('@anthropic-ai/sdk');
+        const model = process.env.ASSIST_LLM_MODEL || 'claude-haiku-4-5-20251001';
+        const client = new (Anthropic.Anthropic || Anthropic)({ apiKey, timeout: 8000, maxRetries: 1 });
+        const names = built.items.map(i => i.name).join(', ');
+        const msg = await client.messages.create({
+          model, max_tokens: 180,
+          system: [{ type: 'text', text: 'You are a catalogue copywriter. Write ONE short, warm intro paragraph (<= 45 words) for a paint retailer\'s designer-finish collection. Do not invent finishes — only use the names given. Honest, no overselling.' }],
+          messages: [{ role: 'user', content: 'Retailer: ' + built.for_entity + '. Collection: ' + built.collection + '. Finishes: ' + names + '.' }],
+        });
+        intro = (msg.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim() || null;
+        if (intro) acted_by.model = model;
+      } catch (mErr) { log.warn('catalogue intro skipped (model)', { id: req.id, err: mErr.message }); }
+    } else {
+      log.info('catalogue-structure (deterministic only — no model configured)', { id: req.id, source, finishes: built.counts.finishes });
+    }
+
+    res.json({ ok: true, ...built, intro, acted_by });
+  } catch (err) {
+    log.error('assist/catalogue-structure failed', { id: req.id, err: err.message });
+    res.status(500).json({ ok: false, error: safeErr(err) });
+  }
+});
 
 // GET /api/assist/questions?context=<screen> — the assistant Q&A library, served FROM THE DB (single source of
 // truth; also the grounding feed for the model). PUBLIC (works pre-auth on welcome/login/register). Returns
