@@ -9,9 +9,10 @@ async function api(m, p, { body } = {}) {
   return { status: r.status, json: j };
 }
 async function registerVerify(name, constitution) {
-  const reg = await api('POST', '/api/entities/register', { body: { email: name } });
+  const email = name.indexOf('@') >= 0 ? name : (name + '@test.com');   // fresh signups need a valid email
+  const reg = await api('POST', '/api/entities/register', { body: { email } });
   const otp = reg.json && reg.json.dev_otp;
-  const body = { email: (reg.json && reg.json.email) || name, otp };
+  const body = { email: (reg.json && reg.json.email) || email, otp };
   if (constitution) body.constitution = constitution;
   return api('POST', '/api/entities/verify', { body });
 }
