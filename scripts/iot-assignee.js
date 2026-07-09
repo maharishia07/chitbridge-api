@@ -54,6 +54,7 @@ async function bridgeOf(token, connId, ref) {
   const det = await api('GET', '/api/chits/' + (ing.json && ing.json.chit_id), { token: A });
   const blob = JSON.stringify(det.json || {});
   check('chit stamped with MINTED blueprint iot-signal@v1 (from work_pattern)', blob.indexOf('iot-signal@v1') >= 0, blob.indexOf('iot-signal@v1') >= 0 ? 'governed.pattern' : 'not found (fallback? migration applied?)');
+  check('chit records its parent CAPABILITY connector@v1 (middle rung)', blob.indexOf('connector@v1') >= 0, blob.indexOf('connector@v1') >= 0 ? 'governed.capability' : 'not found (b71 applied?)');
 
   // device WITHOUT a per-device assignee → cascade falls through (entity default, or none)
   await api('POST', '/api/connectors/' + connId + '/connections', { token: A, body: { ref: 'Gate B', direction: 'in', config: { folder: 'Gate log B', device_id: 'gw-noasg' } } });
