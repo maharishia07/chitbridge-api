@@ -15,6 +15,7 @@ const log     = require('../lib/logger');
 const { query, withEntity } = require('../db');  // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth    = require('../middleware/auth');   // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
+const compliance = require('../lib/compliance'); // deterministic conform-check engine (the `ai:conform-verdict@v1` slot floor)
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
 // so it can't be inspected or bypassed. The real implementation injects this as the system prompt.
@@ -121,6 +122,69 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Assistant error', message: safeErr(err) });
   }
 });
+
+// POST /api/assist/conform — FIRST LIGHT of AI-as-an-actor (bottom-up: the `ai:conform-verdict@v1` slot).
+// Body: { standard, payload }. Runs the DETERMINISTIC conform-check (lib/compliance) FIRST — the verdict is a fact,
+// not a model opinion. THEN, only if a model is configured, adds a rung-2 SUMMARISE narrative ("what's wrong + what
+// to do"). Self-healing: no key / SDK / model failure → the deterministic verdict still returns (narrative: null).
+// Returns the Crux-2 `acted_by` deputy stamp so a caller can carry it onto a chit on send (not persisted here yet).
+router.post('/conform', async (req, res) => {
+  try {
+    const standard = (req.body && typeof req.body.standard === 'string') ? req.body.standard.trim() : '';
+    const payload  = (req.body && req.body.payload && typeof req.body.payload === 'object') ? req.body.payload : {};
+    if (!standard) return res.status(422).json({ ok: false, error: 'Name the standard to check against.' });
+
+    const tpl = compliance.getTemplate(standard);
+    if (!tpl) return res.status(404).json({ ok: false, error: 'Unknown standard.', available: compliance.listTemplates() });
+
+    const verdict = compliance.evaluate(tpl, payload);   // ← deterministic floor; ALWAYS the source of truth
+    const identity = softIdentity(req);
+    const principal = identity ? ('entity:' + (identity.parent_entity_id || identity.identity_id)) : 'anon';
+
+    // The Crux-2 deputy stamp. delegator = the invoking human (invoked mode); grant per-act; NOT confirmed here
+    // (rung-2 recommend-only — a human ratifies before it's acted on). model filled iff the narrative ran.
+    const acted_by = {
+      deputy: 'ai:conform-verdict@v1', rung: 'summarise', tier: 'small', model: null,
+      principal, delegator: identity ? { type: 'human', id: identity.identity_id } : null,
+      confirmed_by: null, grant: 'per-act',
+    };
+
+    // Narrative layer — RUNG-2 SUMMARISE only. It explains the ALREADY-COMPUTED verdict; it never re-decides it.
+    let narrative = null;
+    const provider = process.env.ASSIST_LLM_PROVIDER, apiKey = process.env.ASSIST_LLM_API_KEY;
+    if (provider === 'anthropic' && apiKey) {
+      try {
+        const Anthropic = require('@anthropic-ai/sdk');
+        const model = process.env.ASSIST_LLM_MODEL || 'claude-haiku-4-5-20251001';
+        const client = new (Anthropic.Anthropic || Anthropic)({ apiKey, timeout: 8000, maxRetries: 1 });
+        const sys = 'You are a compliance assistant. You are given a computed conformance verdict (the facts). Do NOT '
+          + 're-decide compliance — explain the verdict plainly and list concrete remediation for each gap. Cite the '
+          + 'standard version. Be brief, honest, never oversell. The entity remains responsible for actual compliance.';
+        const msg = await client.messages.create({
+          model, max_tokens: 250,
+          system: [{ type: 'text', text: sys }],
+          messages: [{ role: 'user', content: 'Verdict JSON (authoritative — do not contradict):\n' + JSON.stringify(verdict) }],
+        });
+        narrative = (msg.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim() || null;
+        if (narrative) acted_by.model = model;
+        log.info('conform narrative added', { id: req.id, standard, compliant: verdict.compliant, model });
+      } catch (mErr) {
+        // Narrative is best-effort — a model failure must NOT sink the deterministic verdict.
+        log.warn('conform narrative skipped (model)', { id: req.id, err: mErr.message });
+      }
+    } else {
+      log.info('conform (deterministic only — no model configured)', { id: req.id, standard, compliant: verdict.compliant });
+    }
+
+    res.json({ ok: true, ...verdict, narrative, acted_by });
+  } catch (err) {
+    log.error('assist/conform failed', { id: req.id, err: err.message });
+    res.status(500).json({ ok: false, error: safeErr(err) });
+  }
+});
+
+// GET /api/assist/standards — the conform-check standards available to check against (drives the UI picker).
+router.get('/standards', (req, res) => res.json({ ok: true, data: compliance.listTemplates() }));
 
 // GET /api/assist/questions?context=<screen> — the assistant Q&A library, served FROM THE DB (single source of
 // truth; also the grounding feed for the model). PUBLIC (works pre-auth on welcome/login/register). Returns
