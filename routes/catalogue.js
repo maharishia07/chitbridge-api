@@ -18,7 +18,8 @@ const genBridge = () => {
   for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
   return id;
 };
-const genOTP = () => (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
+// Customer (storefront) OTP: fixed 123123 in dev (distinct from the entity dev OTP 123456); random in real prod.
+const genOTP = () => ((process.env.DEV_OTP || '').trim() ? '123123' : Math.floor(100000 + Math.random() * 900000).toString());
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 // F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email
