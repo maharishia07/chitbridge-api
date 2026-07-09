@@ -73,8 +73,36 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
     byId.set(String(row.item_id), rec);
     if (rec.name) { const k = _norm(rec.name); nameCount.set(k, (nameCount.get(k) || 0) + 1); byName.set(k, rec); }
   }
+  // Finish map (reference catalogue) — resolve the shop's VISIBLE adoptions → norm(name) -> {price, combos, source}.
+  // Priced from the adoption commercials, SERVER-side (never the customer). Empty if the shop has no finishes.
+  const finishMap = new Map();
+  try {
+    const ado = await withEntity(entity_id, (db) => db.query(
+      `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity_id]));
+    for (const row of ado.rows) {
+      const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
+      if (!resolved) continue;
+      for (const it of (resolved.items || [])) {
+        const p = (it.commercials && it.commercials.price_per_litre != null && it.commercials.price_per_litre !== '') ? Number(it.commercials.price_per_litre) : NaN;
+        finishMap.set(_norm(it.name), { name: it.name, price: p, source: row.source_key, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) });
+      }
+    }
+  } catch (_) { /* no reference catalogue for this shop */ }
   const MAX_QTY = 100000;
   const items = rawItems.map((li, idx) => {
+    // FINISH line (reference catalogue) — priced from the adoption commercials, server-authoritative (never the customer).
+    if (li.kind === 'finish' || li.finish || (li.source && finishMap.size)) {
+      const fname = li.finish ?? li.name ?? li.particulars;
+      const fref = finishMap.get(_norm(fname));
+      if (!fref) throw _422(`"${fname || ('item ' + (idx + 1))}" is not an available finish in this shop`);
+      if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
+      const combo = li.combination ?? li.combo ?? null;
+      if (combo && fref.combos.size && !fref.combos.has(_norm(combo))) throw _422(`"${combo}" is not a colour combination of "${fref.name}"`);
+      const fq = Number(li.quantity ?? li.qty);
+      if (!Number.isFinite(fq) || fq <= 0 || fq > MAX_QTY) throw _422(`Invalid quantity for "${fref.name}"`);
+      return { kind: 'finish', source: fref.source, finish: fref.name, combination: combo || null,
+        particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: 'litre', quantity: fq, price: fref.price, total: Math.round(fref.price * fq * 100) / 100 };
+    }
     const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
     // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
     // instead of silently pricing against the wrong variant.
