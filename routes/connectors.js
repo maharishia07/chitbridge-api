@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query: db, withEntity } = require('../db');
 const { safeErr } = require('../lib/respond');
 const storage = require('../lib/storage');
+const { resolveWorkPattern } = require('../lib/workpattern');   // the resolution seam — resolve-before-act
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
@@ -106,7 +107,7 @@ router.post('/', auth, requireConnector,
 // Build + deliver a Device Signal chit (sender = the connector's OWNING ENTITY, receiver = the counterparty),
 // reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
 // Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
-async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra }) {
+async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra, default_assignee, lifecycle }) {
   const ent = await db(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
   const self = ent.rows[0]; if (!self) throw new Error('owning entity not found');
   // Exceptions are SELF-CHITS filed into a named FOLDER (they stay inside the entity); CC = an optional partner who
@@ -121,8 +122,13 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   const purpose = 'general';
   const now = new Date();
   const label = sub_type || signal || 'signal';
+  // STAMP the resolved governance (values-in-force) onto the chit itself — this `governed` block IS the audit log of
+  // what governed this chit at emit time (the work pattern + the resolved knobs). It travels with the sealed record.
+  const governed = { pattern: (kind === 'erp_document' ? 'erp-document' : 'iot-signal'),
+    folder: folder || null, assignee: default_assignee || null, copy: 'both',
+    next: lifecycle || null, resolved_at: now.toISOString() };   // next = the chit's forward lifecycle (what to do next)
   const business_json = { kind: kind || 'device_signal', folder: folder || null, sub_type: sub_type || null,
-    device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString(), ...(extra || {}) };
+    device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString(), governed, ...(extra || {}) };
   const manual_subject = (folder ? ('[' + folder + '] ') : '') + 'Signal: ' + label + (value != null ? (' = ' + value + (unit || '')) : '');
   const auto_subject = 'Signal from ' + (actor.display_name || self.display_name) + ' — ' + now.toISOString().slice(0, 10);
 
@@ -168,9 +174,25 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
       });
     } catch (e) { folderErr = (e && e.message) || String(e); console.warn('[connectors] folder auto-file failed:', folderErr); }   // best-effort, but LOUD + surfaced
   }
+  // ASSIGN the received (Task) copy to the resolved default-assignee → the signal is OWNED + on someone's radar,
+  // not just filed away (the visibility fix). Best-effort; skipped if none resolved or the assignee isn't an active
+  // co-assist of this entity. (The list-visibility model for filed chits is the next resolvable knob.)
+  let assigned_to = null;
+  if (default_assignee) {
+    try {
+      await withEntity(entity_id, async (dbx) => {
+        const a = await dbx.query(`SELECT display_name FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND status = 'active'`, [default_assignee, entity_id]);
+        if (a.rows[0]) {
+          await dbx.query(`UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2, assigned_at = NOW(), assignment_type = 'auto', updated_at = NOW() WHERE chit_id = $3 AND entity_id = $4 AND direction = 'received'`,
+            [default_assignee, a.rows[0].display_name, chit_id, entity_id]);
+          assigned_to = default_assignee;
+        }
+      });
+    } catch (_) { /* assignment is best-effort — never fail the signal over it */ }
+  }
   // participants = the entities that hold a copy (owner + CC if any) — for per-entity proof replication (b66).
   const participants = [entity_id]; if (ccRow) participants.push(ccRow.identity_id);
-  return { chit_id, folder_id: filedFolderId, folder_error: folderErr, participants };
+  return { chit_id, folder_id: filedFolderId, folder_error: folderErr, participants, assigned_to };
 }
 
 // Shared ERP process-then-forget CORE (used by both the key-authed /erp-ingest and the owner-authed /erp-test).
@@ -225,7 +247,7 @@ router.post('/ingest',
       const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
       if (!key) return res.status(401).json({ error: 'No key', message: 'Send the ActorKey in the X-Bridge-Key header.' });
       const ar = await db(
-        `SELECT identity_id, parent_entity_id, display_name, connector_type, status
+        `SELECT identity_id, parent_entity_id, display_name, connector_type, status, connector_config
            FROM identities
           WHERE provision_key_hash = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [hashKey(key)]);
       const actor = ar.rows[0];
@@ -249,25 +271,29 @@ router.post('/ingest',
 
       // (3) EMIT the exception as a co-held chit — a SELF-CHIT filed into the device's FOLDER, CC the partner if set.
       //     A pure liveness ping can pass heartbeat_only=true to refresh health WITHOUT raising a chit (no inbox flood).
+      // RESOLVE-BEFORE-ACT: resolve the iot-signal work pattern (folder · counterparty · default assignee), cascaded
+      // device → connector → entity, BEFORE emitting. The mode reads its config from the seam — it never hard-codes it.
+      const wp = await resolveWorkPattern('iot-signal', { entity_id, connectorConfig: actor.connector_config || {}, connection: conn }) || {};
       const cfg = (conn && conn.conn_config) || {};
-      const folder = cfg.folder || (req.body.folder ? String(req.body.folder).trim() : null);
+      const folder = wp.folder || (req.body.folder ? String(req.body.folder).trim() : null);
       const sub_type = req.body.sub_type ? String(req.body.sub_type).trim()
                      : (Array.isArray(cfg.classes) && cfg.classes.length === 1 ? cfg.classes[0] : null);
-      const cc = (conn && conn.counterparty_entity_id) || (req.body.to ? String(req.body.to).trim() : null);
-      let chit_id = null, note = null, proof_id = null, filed = null, file_err = null, proof_err = null;
+      const cc = wp.counterparty || (req.body.to ? String(req.body.to).trim() : null);
+      const default_assignee = wp.default_assignee || null;
+      let chit_id = null, note = null, proof_id = null, filed = null, file_err = null, proof_err = null, assigned = null;
       if (req.body.heartbeat_only) {
         note = 'Heartbeat only — health refreshed, no chit raised.';
       } else {
         try {
           const emit = await emitSignalChit({
-            entity_id, actor, folder, sub_type, cc,
+            entity_id, actor, folder, sub_type, cc, default_assignee, lifecycle: wp.lifecycle,
             signal: req.body.signal || 'signal',
             value: (req.body.value != null ? String(req.body.value) : null),
             unit: req.body.unit || null,
             device_id: req.body.device_id || (conn && conn.ref) || null,
             bridge_id,
           });
-          chit_id = emit.chit_id; filed = emit.folder_id; file_err = emit.folder_error;   // filed = folder it landed in; file_err surfaces a filing failure
+          chit_id = emit.chit_id; filed = emit.folder_id; file_err = emit.folder_error; assigned = emit.assigned_to;   // filed = folder it landed in; assigned = resolved default-assignee (if any)
           // PROOF — attach the edge image (base64) to the chit; bytes fetched on demand via GET /api/attachments/:id.
           if (chit_id && req.body.proof) {
             try {
@@ -282,7 +308,7 @@ router.post('/ingest',
           }
         } catch (e) { note = 'Health updated, but the exception chit could not be delivered: ' + safeErr(e); }
       }
-      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, filed, file_err, proof_err, note });
+      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, filed, file_err, proof_err, note, assigned });
     } catch (err) { res.status(500).json({ error: 'Ingest failed', message: safeErr(err) }); }
   });
 
