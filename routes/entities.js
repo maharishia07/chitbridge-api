@@ -10,6 +10,7 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtpEmail } = require('../lib/notify');   // shared OTP email sender (F2 — extracted from here)
+const { resolveEntityGovernance } = require('../lib/govresolve');   // resolve the entity's governance from attributes
 
 const generateBridgeId = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -257,8 +258,12 @@ router.get('/me', auth, async (req, res) => {
     // NOTE: the web client's api() runs every body through unwrap(), which returns j.entity for /me and
     // DROPS sibling keys. So the capability selection MUST ride INSIDE entity to reach SESSION.capabilities
     // (which gates the itemised capability nav). Top-level copies kept for direct/API callers + curl. [b55/connector]
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug });
-    res.json({ entity: entityOut, capabilities, capabilities_debug });
+    // Resolve the entity's GOVERNANCE from attributes (constitution · installation · basics · allowances · jurisdiction).
+    // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
+    let governance = null;
+    try { governance = await resolveEntityGovernance(req.identity.parent_entity_id || req.identity.identity_id); } catch (_) {}
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance });
+    res.json({ entity: entityOut, capabilities, capabilities_debug, governance });
   } catch (err) {
     console.error('Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
