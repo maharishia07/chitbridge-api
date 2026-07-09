@@ -188,7 +188,7 @@ router.post('/conform', async (req, res) => {
 router.get('/standards', (req, res) => res.json({ ok: true, data: compliance.listTemplates() }));
 
 // GET /api/assist/catalogue-sources — the catalogue sources the handler can structure (drives the UI picker).
-router.get('/catalogue-sources', (req, res) => res.json({ ok: true, data: catalogueBuild.listSources() }));
+router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: await catalogueBuild.listSources() }));
 
 // POST /api/assist/catalogue-structure — the `ai:catalogue-structure@v1` slot. Body: { source }. Returns the
 // DETERMINISTIC structured PROPOSAL (schema + coloured items — the AI handler's "interpret once" output), plus a
@@ -197,8 +197,8 @@ router.get('/catalogue-sources', (req, res) => res.json({ ok: true, data: catalo
 router.post('/catalogue-structure', async (req, res) => {
   try {
     const source = (req.body && typeof req.body.source === 'string') ? req.body.source.trim() : 'beta-royale-play@v1';
-    const built = catalogueBuild.build(source);
-    if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.', available: catalogueBuild.listSources() });
+    const built = await catalogueBuild.build(source);
+    if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.', available: await catalogueBuild.listSources() });
 
     const identity = softIdentity(req);
     const principal = identity ? ('entity:' + (identity.parent_entity_id || identity.identity_id)) : 'anon';
@@ -246,7 +246,7 @@ router.post('/catalogue-adopt', async (req, res) => {
     if (!identity) return res.status(401).json({ ok: false, error: 'Sign in to adopt a catalogue.' });
     const entity = identity.parent_entity_id || identity.identity_id;
     const source = (req.body && typeof req.body.source === 'string') ? req.body.source.trim() : 'beta-royale-play@v1';
-    const built = catalogueBuild.build(source);
+    const built = await catalogueBuild.build(source);
     if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.' });
     const commercials = (req.body && req.body.commercials && typeof req.body.commercials === 'object') ? req.body.commercials : {};
     const visible = !(req.body && req.body.visible === false);
@@ -262,7 +262,7 @@ router.post('/catalogue-adopt', async (req, res) => {
       return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
     }
     log.info('catalogue adopted (reference + commercials)', { id: req.id, source, items_priced: Object.keys(commercials).length });
-    res.json({ ok: true, persisted: true, source, resolved: catalogueBuild.resolve(source, commercials),
+    res.json({ ok: true, persisted: true, source, resolved: await catalogueBuild.resolve(source, commercials),
       acted_by: { deputy: 'ai:catalogue-structure@v1', rung: 'extract', principal: 'entity:' + entity,
         delegator: { type: 'human', id: identity.identity_id }, confirmed_by: { id: identity.identity_id }, grant: 'per-act' } });
   } catch (err) {
@@ -286,8 +286,8 @@ router.get('/catalogue-mine', async (req, res) => {
     } catch (dbErr) {
       return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
     }
-    const catalogues = rows.map((row) => ({ source: row.source_key, version: row.version, visible: row.visible, updated_at: row.updated_at,
-      resolved: catalogueBuild.resolve(row.source_key, row.commercials || {}) })).filter((c) => c.resolved);
+    const catalogues = (await Promise.all(rows.map(async (row) => ({ source: row.source_key, version: row.version, visible: row.visible, updated_at: row.updated_at,
+      resolved: await catalogueBuild.resolve(row.source_key, row.commercials || {}) })))).filter((c) => c.resolved);
     res.json({ ok: true, count: catalogues.length, catalogues });
   } catch (err) {
     log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
