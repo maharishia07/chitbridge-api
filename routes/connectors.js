@@ -14,7 +14,7 @@ const { resolveWorkPattern } = require('../lib/workpattern');   // the resolutio
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
-const { sendOtpEmail } = require('../lib/notify');
+const { sendOtpEmail, sendEmail } = require('../lib/notify');
 const { verifyOtp } = require('../lib/otp');
 // Reissue step-up code. In DEV (DEV_OTP set) use a FIXED 654321 — distinct from the login dev-OTP (123456) so the two
 // are unmistakable during testing. In prod it's a fresh random 6-digit code.
@@ -107,7 +107,7 @@ router.post('/', auth, requireConnector,
 // Build + deliver a Device Signal chit (sender = the connector's OWNING ENTITY, receiver = the counterparty),
 // reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
 // Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
-async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra, default_assignee, lifecycle }) {
+async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra, default_assignee, lifecycle, notify_email }) {
   const ent = await db(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
   const self = ent.rows[0]; if (!self) throw new Error('owning entity not found');
   // Exceptions are SELF-CHITS filed into a named FOLDER (they stay inside the entity); CC = an optional partner who
@@ -125,7 +125,7 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   // STAMP the resolved governance (values-in-force) onto the chit itself — this `governed` block IS the audit log of
   // what governed this chit at emit time (the work pattern + the resolved knobs). It travels with the sealed record.
   const governed = { pattern: (kind === 'erp_document' ? 'erp-document' : 'iot-signal'),
-    folder: folder || null, assignee: default_assignee || null, copy: 'both',
+    folder: folder || null, assignee: default_assignee || null, notify: notify_email || null, copy: 'both',
     next: lifecycle || null, resolved_at: now.toISOString() };   // next = the chit's forward lifecycle (what to do next)
   const business_json = { kind: kind || 'device_signal', folder: folder || null, sub_type: sub_type || null,
     device_id, signal, value, unit, bridge_id, source: 'connector_ingest', at: now.toISOString(), governed, ...(extra || {}) };
@@ -189,6 +189,22 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
         }
       });
     } catch (_) { /* assignment is best-effort — never fail the signal over it */ }
+  }
+  // EXTERNAL NOTICE (off-rail): if a notify_email is resolved, send an email NUDGE to someone NOT in the system — a
+  // notice, never the governed payload. Best-effort + gated (only delivers when email is configured); never blocks.
+  if (notify_email) {
+    try {
+      const e = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const subj = 'Chit and Bridge — a signal from ' + e(actor.display_name || self.display_name || 'a device');
+      const html = '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">'
+        + '<h2 style="color:#0D47A1;margin:0 0 8px">Chit &amp; Bridge — signal notice</h2>'
+        + '<p><b>' + e(self.display_name || 'An entity') + '</b> recorded a device signal'
+        + (label ? (' — <b>' + e(label) + '</b>') : '') + (value != null ? (' = ' + e(value) + e(unit || '')) : '') + '.</p>'
+        + (folder ? ('<p>Filed under: <b>' + e(folder) + '</b></p>') : '')
+        + '<p style="color:#555;font-size:13px">This is a notice only. Sign in to Chit &amp; Bridge to view the full record.</p>'
+        + '</div>';
+      await sendEmail(notify_email, subj, html);
+    } catch (_) { /* notice is best-effort — never fail the signal over an email */ }
   }
   // participants = the entities that hold a copy (owner + CC if any) — for per-entity proof replication (b66).
   const participants = [entity_id]; if (ccRow) participants.push(ccRow.identity_id);
@@ -286,7 +302,7 @@ router.post('/ingest',
       } else {
         try {
           const emit = await emitSignalChit({
-            entity_id, actor, folder, sub_type, cc, default_assignee, lifecycle: wp.lifecycle,
+            entity_id, actor, folder, sub_type, cc, default_assignee, lifecycle: wp.lifecycle, notify_email: wp.notify_email,
             signal: req.body.signal || 'signal',
             value: (req.body.value != null ? String(req.body.value) : null),
             unit: req.body.unit || null,
