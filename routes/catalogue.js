@@ -10,6 +10,7 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
+const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 
 const genBridge = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -111,16 +112,33 @@ router.get('/:bridge_id', async (req, res) => {
       `SELECT schema_id, schema_name FROM entity_schemas
        WHERE entity_id = $1 AND status = 'active' AND is_default = true AND visibility = 'public' LIMIT 1`,
       [entity.identity_id]);
-    if (!sch.rows.length) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
-    const fields = await query(
-      `SELECT field_key, field_name, field_type, required, min_value, display_order
-       FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`, [sch.rows[0].schema_id]);
-    // B1 RLS: public storefront read (unauthenticated) -> withEntity(null) = no tenant context, so the
-    // visibility-aware policy returns only PUBLIC items. (The app-layer public-schema gate above stays.)
-    const items = await withEntity(null, (db) => db.query(
-      `SELECT item_id, item_data FROM catalogue_items
-       WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`,
-      [entity.identity_id]));
+    const hasSchema = sch.rows.length > 0;
+    let fieldsRows = [], itemsRows = [];
+    if (hasSchema) {
+      fieldsRows = (await query(
+        `SELECT field_key, field_name, field_type, required, min_value, display_order
+         FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`, [sch.rows[0].schema_id])).rows;
+      // B1 RLS: public storefront read (unauthenticated) -> withEntity(null) = no tenant context, so the
+      // visibility-aware policy returns only PUBLIC items.
+      itemsRows = (await withEntity(null, (db) => db.query(
+        `SELECT item_id, item_data FROM catalogue_items
+         WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`,
+        [entity.identity_id]))).rows;
+    }
+    // B3.7-ref: the shop's adopted REFERENCE catalogue (Royale Play finishes) — design/colour by reference + its
+    // commercials. Read inside withEntity(shop) so the shop's own RLS lets us project its VISIBLE adoptions; resolve
+    // against the shared source. Best-effort: b75 absent / no adoption → no finishes (storefront still works).
+    let finishes = [];
+    try {
+      const ado = await withEntity(entity.identity_id, (db) => db.query(
+        `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity.identity_id]));
+      for (const row of ado.rows) {
+        const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
+        if (resolved) finishes.push({ source: row.source_key, title: resolved.title, collection: resolved.collection, items: resolved.items });
+      }
+    } catch (_) { /* no reference catalogue for this shop */ }
+    // Storefront available if it has EITHER a public products catalogue OR adopted designer finishes.
+    if (!hasSchema && !finishes.length) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
     res.json({
       shop: {
         bridge_id: entity.bridge_id, display_name: entity.display_name,
@@ -129,9 +147,10 @@ router.get('/:bridge_id', async (req, res) => {
         logo_url: entity.logo_url, address: entity.address,   // B3.9 — identity/trust
         business_status: entity.business_status || 'open'      // B3.11 — open | closed | away
       },
-      schema: sch.rows[0],
-      fields: fields.rows,
-      items:  items.rows           // B3.7a — the actual products
+      schema: hasSchema ? sch.rows[0] : null,
+      fields: fieldsRows,
+      items:  itemsRows,           // B3.7a — the actual products
+      finishes: finishes           // B3.7-ref — the adopted designer finishes (reference + commercials)
     });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
