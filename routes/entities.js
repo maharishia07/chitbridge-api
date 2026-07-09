@@ -5,7 +5,7 @@ const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
@@ -152,6 +152,23 @@ router.post('/verify',
         [identity.identity_id]
       );
 
+      // AUTO-MINT the entity's governance stamp onto its CHOSEN vertical (else the default constitution). BEST-EFFORT —
+      // wrapped so it can NEVER fail verification; an un-stamped entity safely defaults to base at resolve time.
+      let mintedConstitution = null;
+      try {
+        const chosen = (req.body.constitution && String(req.body.constitution).trim()) || 'base';
+        let c = (await query(`SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`, [chosen])).rows[0];
+        if (!c) c = (await query(`SELECT constitution_key, version FROM constitution WHERE is_default = true AND active = true LIMIT 1`)).rows[0];
+        if (c) {
+          await withEntity(identity.identity_id, (cl) => cl.query(
+            `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version) VALUES ($1,$2,$3)
+             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, minted_at = now()`,
+            [identity.identity_id, c.constitution_key, c.version]));
+          mintedConstitution = c.constitution_key + '@' + c.version;
+          console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution}`);
+        }
+      } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
+
       // 7 days JWT — longer session for testing
       const token = jwt.sign(
         { identity_id: identity.identity_id, bridge_id: identity.bridge_id,
@@ -171,7 +188,8 @@ router.post('/verify',
           bridge_id: identity.bridge_id,
           display_name: identity.display_name,
           email: identity.email
-        }
+        },
+        constitution: mintedConstitution
       });
 
     } catch (err) {
@@ -180,6 +198,16 @@ router.post('/verify',
     }
   }
 );
+
+// GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
+// shared constitution catalogue. Empty (chooser hidden) if the catalogue isn't there yet.
+router.get('/constitutions', async (req, res) => {
+  try {
+    const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
+      FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
+    res.json({ constitutions: r.rows });
+  } catch (_) { res.json({ constitutions: [] }); }
+});
 
 // GET /entities/search
 router.get('/search', auth, async (req, res) => {
