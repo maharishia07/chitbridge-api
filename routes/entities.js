@@ -161,12 +161,15 @@ router.post('/verify',
         let c = (await query(`SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`, [chosen])).rows[0];
         if (!c) c = (await query(`SELECT constitution_key, version FROM constitution WHERE is_default = true AND active = true LIMIT 1`)).rows[0];
         if (c) {
+          // place the entity on the INSTALLATION that serves its vertical (service-desk → the Mexico platform), else default
+          let installKey = 'platform-0';
+          try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY created_at LIMIT 1`, [c.constitution_key]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; } catch (_) {}
           await withEntity(identity.identity_id, (cl) => cl.query(
-            `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version) VALUES ($1,$2,$3)
-             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, minted_at = now()`,
-            [identity.identity_id, c.constitution_key, c.version]));
+            `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
+             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
+            [identity.identity_id, c.constitution_key, c.version, installKey]));
           mintedConstitution = c.constitution_key + '@' + c.version;
-          console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution}`);
+          console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
         }
       } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
 
