@@ -230,7 +230,11 @@ router.post('/catalogue-structure', async (req, res) => {
       log.info('catalogue-structure (deterministic only — no model configured)', { id: req.id, source, finishes: built.counts.finishes });
     }
 
-    res.json({ ok: true, ...built, intro, acted_by });
+    // NB: the client `unwrap()` (core.js) auto-extracts a top-level `items` array and DROPS the rest — so expose the
+    // finishes as `finishes` (not `items`) or the whole catalogue object gets stripped to just the array. See
+    // reference-chitbridge-deploy. Same reason `resolved`/`catalogues` (nested) are safe.
+    const { items: finishes, ...rest } = built;
+    res.json({ ok: true, ...rest, finishes, intro, acted_by });
   } catch (err) {
     log.error('assist/catalogue-structure failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: safeErr(err) });
