@@ -107,7 +107,7 @@ router.post('/', auth, requireConnector,
 // Build + deliver a Device Signal chit (sender = the connector's OWNING ENTITY, receiver = the counterparty),
 // reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
 // Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
-async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra, default_assignee, lifecycle, notify_email }) {
+async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra, default_assignee, lifecycle, notify_email, blueprint_ref }) {
   const ent = await db(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
   const self = ent.rows[0]; if (!self) throw new Error('owning entity not found');
   // Exceptions are SELF-CHITS filed into a named FOLDER (they stay inside the entity); CC = an optional partner who
@@ -124,7 +124,7 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   const label = sub_type || signal || 'signal';
   // STAMP the resolved governance (values-in-force) onto the chit itself — this `governed` block IS the audit log of
   // what governed this chit at emit time (the work pattern + the resolved knobs). It travels with the sealed record.
-  const governed = { pattern: (kind === 'erp_document' ? 'erp-document' : 'iot-signal'),
+  const governed = { pattern: blueprint_ref || (kind === 'erp_document' ? 'erp-document' : 'iot-signal'),
     folder: folder || null, assignee: default_assignee || null, notify: notify_email || null, copy: 'both',
     next: lifecycle || null, resolved_at: now.toISOString() };   // next = the chit's forward lifecycle (what to do next)
   const business_json = { kind: kind || 'device_signal', folder: folder || null, sub_type: sub_type || null,
@@ -302,7 +302,7 @@ router.post('/ingest',
       } else {
         try {
           const emit = await emitSignalChit({
-            entity_id, actor, folder, sub_type, cc, default_assignee, lifecycle: wp.lifecycle, notify_email: wp.notify_email,
+            entity_id, actor, folder, sub_type, cc, default_assignee, lifecycle: wp.lifecycle, notify_email: wp.notify_email, blueprint_ref: wp._blueprint,
             signal: req.body.signal || 'signal',
             value: (req.body.value != null ? String(req.body.value) : null),
             unit: req.body.unit || null,
