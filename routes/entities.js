@@ -265,7 +265,10 @@ router.get('/me', auth, async (req, res) => {
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
     let governance = null;
     try { governance = await resolveEntityGovernance(req.identity.parent_entity_id || req.identity.identity_id); } catch (_) {}
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance });
+    // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
+    let storefront_access = 'browse';
+    try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access });
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance });
   } catch (err) {
     console.error('Profile error:', err.message);
@@ -298,6 +301,7 @@ router.patch('/profile', auth,
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
     body('business_status').optional().isIn(['open','closed','away']),
+    body('storefront_access').optional().isIn(['browse','login']),
     body('self_copy_pref').optional().isIn(['both','sent','received']),
     body('dispute_handler_actor_id').optional().isUUID(),
     body('user_id').optional().trim().custom(v => {
@@ -329,6 +333,8 @@ router.patch('/profile', auth,
          WHERE identity_id=$8`,
         [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
          req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id]);
+      // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
+      if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
       res.json({ message: 'Profile updated' });
     } catch (err) {
       if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });

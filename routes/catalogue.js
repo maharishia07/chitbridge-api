@@ -168,13 +168,17 @@ router.get('/:bridge_id', async (req, res) => {
     } catch (_) { /* no reference catalogue for this shop */ }
     // Storefront available if it has EITHER a public products catalogue OR adopted designer finishes.
     if (!hasSchema && !finishes.length) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
+    // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
+    let storefront_access = 'browse';
+    try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [entity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
     res.json({
       shop: {
         bridge_id: entity.bridge_id, display_name: entity.display_name,
         currency_code: entity.currency_code,
         gstn: entity.gstn, is_verified: entity.is_verified,
         logo_url: entity.logo_url, address: entity.address,   // B3.9 — identity/trust
-        business_status: entity.business_status || 'open'      // B3.11 — open | closed | away
+        business_status: entity.business_status || 'open',     // B3.11 — open | closed | away
+        storefront_access: storefront_access                    // b77 — browse | login (self-healing)
       },
       schema: hasSchema ? sch.rows[0] : null,
       fields: fieldsRows,
