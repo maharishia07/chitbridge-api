@@ -237,6 +237,64 @@ router.post('/catalogue-structure', async (req, res) => {
   }
 });
 
+// POST /api/assist/catalogue-adopt — PERSIST the entity's adoption: a REFERENCE (source_key + version) + its
+// COMMERCIALS overlay only (NO copy of design/colour). Per-entity, WITH RLS (b75 catalogue_adoption). This is the
+// human CONFIRM/publish of the catalogue-structure slot. Self-healing: if b75 isn't applied, returns 503 (not 500).
+router.post('/catalogue-adopt', async (req, res) => {
+  try {
+    const identity = softIdentity(req);
+    if (!identity) return res.status(401).json({ ok: false, error: 'Sign in to adopt a catalogue.' });
+    const entity = identity.parent_entity_id || identity.identity_id;
+    const source = (req.body && typeof req.body.source === 'string') ? req.body.source.trim() : 'beta-royale-play@v1';
+    const built = catalogueBuild.build(source);
+    if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.' });
+    const commercials = (req.body && req.body.commercials && typeof req.body.commercials === 'object') ? req.body.commercials : {};
+    const visible = !(req.body && req.body.visible === false);
+    try {
+      await withEntity(entity, (db) => db.query(
+        `INSERT INTO catalogue_adoption (entity_id, source_key, version, commercials, visible, updated_at)
+           VALUES ($1, $2, $3, $4::jsonb, $5, now())
+         ON CONFLICT (entity_id, source_key)
+           DO UPDATE SET commercials = EXCLUDED.commercials, visible = EXCLUDED.visible, version = EXCLUDED.version, updated_at = now()`,
+        [entity, source, catalogueBuild.VERSION, JSON.stringify(commercials), visible]));
+    } catch (dbErr) {
+      log.warn('catalogue-adopt: store missing (run b75)', { id: req.id, err: dbErr.message });
+      return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
+    }
+    log.info('catalogue adopted (reference + commercials)', { id: req.id, source, items_priced: Object.keys(commercials).length });
+    res.json({ ok: true, persisted: true, source, resolved: catalogueBuild.resolve(source, commercials),
+      acted_by: { deputy: 'ai:catalogue-structure@v1', rung: 'extract', principal: 'entity:' + entity,
+        delegator: { type: 'human', id: identity.identity_id }, confirmed_by: { id: identity.identity_id }, grant: 'per-act' } });
+  } catch (err) {
+    log.error('assist/catalogue-adopt failed', { id: req.id, err: err.message });
+    res.status(500).json({ ok: false, error: safeErr(err) });
+  }
+});
+
+// GET /api/assist/catalogue-mine — the entity's PERSISTED catalogue(s): its adoption rows (WITH RLS) RESOLVED against
+// the shared source (design/colour by reference) + its commercials overlay. Self-healing (503 if b75 not applied).
+router.get('/catalogue-mine', async (req, res) => {
+  try {
+    const identity = softIdentity(req);
+    if (!identity) return res.status(401).json({ ok: false, error: 'Sign in.' });
+    const entity = identity.parent_entity_id || identity.identity_id;
+    let rows = [];
+    try {
+      const r = await withEntity(entity, (db) => db.query(
+        `SELECT source_key, version, commercials, visible, updated_at FROM catalogue_adoption WHERE entity_id = $1 ORDER BY updated_at DESC`, [entity]));
+      rows = r.rows || [];
+    } catch (dbErr) {
+      return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
+    }
+    const catalogues = rows.map((row) => ({ source: row.source_key, version: row.version, visible: row.visible, updated_at: row.updated_at,
+      resolved: catalogueBuild.resolve(row.source_key, row.commercials || {}) })).filter((c) => c.resolved);
+    res.json({ ok: true, count: catalogues.length, catalogues });
+  } catch (err) {
+    log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
+    res.status(500).json({ ok: false, error: safeErr(err) });
+  }
+});
+
 // GET /api/assist/questions?context=<screen> — the assistant Q&A library, served FROM THE DB (single source of
 // truth; also the grounding feed for the model). PUBLIC (works pre-auth on welcome/login/register). Returns
 // entries whose context matches the screen OR '*'; no context -> all active. Shape: {ok:true, data:[{id,q,a,...}]}.
