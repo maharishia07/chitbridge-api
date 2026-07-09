@@ -50,6 +50,11 @@ async function bridgeOf(token, connId, ref) {
   check('signal filed into the folder', !!(ing.json && ing.json.filed));
   check('signal ASSIGNED to the per-device assignee (seam resolved it)', ing.json && ing.json.assigned === assigneeId, 'assigned=' + (ing.json && ing.json.assigned));
 
+  // verify the chit carries the MINTED blueprint reference in its governed audit stamp (proves b70 + the seam read it)
+  const det = await api('GET', '/api/chits/' + (ing.json && ing.json.chit_id), { token: A });
+  const blob = JSON.stringify(det.json || {});
+  check('chit stamped with MINTED blueprint iot-signal@v1 (from work_pattern)', blob.indexOf('iot-signal@v1') >= 0, blob.indexOf('iot-signal@v1') >= 0 ? 'governed.pattern' : 'not found (fallback? migration applied?)');
+
   // device WITHOUT a per-device assignee → cascade falls through (entity default, or none)
   await api('POST', '/api/connectors/' + connId + '/connections', { token: A, body: { ref: 'Gate B', direction: 'in', config: { folder: 'Gate log B', device_id: 'gw-noasg' } } });
   const bridge2 = await bridgeOf(A, connId, 'Gate B');
