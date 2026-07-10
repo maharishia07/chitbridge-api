@@ -17,6 +17,7 @@ const auth    = require('../middleware/auth');   // review endpoints are auth-ga
 const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
 const compliance = require('../lib/compliance'); // deterministic conform-check engine (the `ai:conform-verdict@v1` slot floor)
 const catalogueBuild = require('../lib/catalogue-build'); // the `ai:catalogue-structure@v1` slot — source → schema + coloured items
+const container = require('../lib/container');            // CONTAINER MODEL (b80) — product pointer over immutable versions
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
 // so it can't be inspected or bypassed. The real implementation injects this as the system prompt.
@@ -338,6 +339,35 @@ router.put('/catalogue-source', auth, async (req, res) => {
     log.error('assist/catalogue-source PUT failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: safeErr(err) });
   }
+});
+
+// PUT /api/assist/container — CONTAINER MODEL (stone 5): author (v1) or ENHANCE (mint the next IMMUTABLE version + move
+// the pointer) a product container. Owner-only. An enhancement never mutates a version → past chits stay verifiable.
+router.put('/container', auth, async (req, res) => {
+  try {
+    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    const b = req.body || {};
+    const container_id = (typeof b.container_id === 'string' && b.container_id.trim()) ? b.container_id.trim() : '';
+    if (!container_id) return res.status(422).json({ ok: false, error: 'container_id is required (e.g. royaleplay/tussar)' });
+    let out;
+    try { out = await container.authorContainer(owner, { container_id, name: b.name, source_key: b.source_key, content: b.content, schema: b.schema, schema_version: b.schema_version }); }
+    catch (e) {
+      if (e.status === 403) return res.status(403).json({ ok: false, error: e.message });
+      return res.status(503).json({ ok: false, code: 'CONTAINER_STORE_MISSING', error: 'Container model not enabled yet — apply migration b80.' });
+    }
+    log.info('container authored', { id: req.id, container_id, version: out.version, is_new: out.is_new_container });
+    res.json({ ok: true, ...out, owner_entity_id: owner });
+  } catch (err) { log.error('assist/container PUT failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: safeErr(err) }); }
+});
+
+// GET /api/assist/container/:id — resolve the CURRENT version (the pointer, auto-latest) or ?version=N (the EXACT
+// immutable version a chit pinned — verification). Public read (the catalogue/experience is shared reference).
+router.get('/container/:id', async (req, res) => {
+  try {
+    const r = await container.resolveContainer(req.params.id, req.query.version);
+    if (!r) return res.status(404).json({ ok: false, error: 'Unknown container or version.' });
+    res.json({ ok: true, ...r });
+  } catch (err) { res.status(500).json({ ok: false, error: safeErr(err) }); }
 });
 
 // GET /api/assist/penetration — STONE 4: the BRAND's aggregated penetration for the sources IT owns (heatmap data).
