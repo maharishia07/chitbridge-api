@@ -156,7 +156,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
 async function resolveEntity(bridge_id) {
   const r = await query(
     `SELECT identity_id, display_name, bridge_id, currency_code, gstn, is_verified, logo_url, address, business_status
-     FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active'`,
+     FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false`,
     [bridge_id]);
   return r.rows[0] || null;
 }

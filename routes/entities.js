@@ -225,6 +225,7 @@ router.get('/search', auth, async (req, res) => {
        FROM identities
        WHERE (LOWER(display_name) LIKE LOWER($1) OR LOWER(bridge_id) LIKE LOWER($1))
        AND identity_type = 'entity' AND status = 'active'
+       AND COALESCE(sealed, false) = false
        AND identity_id != $2
        ORDER BY display_name LIMIT 10`,
       [`%${q}%`, req.identity.identity_id]
@@ -347,6 +348,9 @@ router.patch('/profile', auth,
 router.patch('/:id/erase', auth, async (req, res) => {
   if (req.identity.owner_scope !== 'platform') return res.status(403).json({ error: 'Forbidden' });
   try {
+    // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
+    const s = await query(`SELECT sealed FROM identities WHERE identity_id = $1`, [req.params.id]);
+    if (s.rows[0] && s.rows[0].sealed) return res.status(403).json({ error: 'Forbidden', message: 'Protected (sealed) entity — cannot be erased.' });
     await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
     res.json({ message: 'Identity tombstoned', id: req.params.id });
   } catch (err) { res.status(500).json({ error: 'Erase failed', message: safeErr(err) }); }

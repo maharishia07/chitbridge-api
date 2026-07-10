@@ -130,7 +130,7 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     const sid = req.params.supplier_entity_id;
     const sup = await query(
       `SELECT identity_id, display_name, bridge_id, currency_code, business_status
-       FROM identities WHERE identity_id = $1 AND identity_type = 'entity'`, [sid]);
+       FROM identities WHERE identity_id = $1 AND identity_type = 'entity' AND COALESCE(sealed, false) = false`, [sid]);
     const supplier = sup.rows[0] || null;
     // F7 (cross-entity read): only expose a supplier's catalogue if they have PUBLISHED it (a public default
     // schema) — mirrors the public storefront endpoint (catalogue.js GET /:bridge_id). Without this, any
