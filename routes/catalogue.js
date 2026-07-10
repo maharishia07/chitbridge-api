@@ -83,9 +83,13 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
     for (const row of ado.rows) {
       const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
       if (!resolved) continue;
+      // STONE 2: the SOURCE's governance resolves HERE — an item runs under its source's rules, not the host's.
+      const rules  = (resolved.experience && resolved.experience.rules) || {};
+      const sVer   = (resolved.adoption_model && resolved.adoption_model.version) || 'v1';
+      const sOwner = resolved.owner_entity_id || null;
       for (const it of (resolved.items || [])) {
         const p = (it.commercials && it.commercials.price_per_litre != null && it.commercials.price_per_litre !== '') ? Number(it.commercials.price_per_litre) : NaN;
-        finishMap.set(_norm(it.name), { name: it.name, price: p, source: row.source_key, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) });
+        finishMap.set(_norm(it.name), { name: it.name, price: p, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) });
       }
     }
   } catch (_) { /* no reference catalogue for this shop */ }
@@ -101,8 +105,14 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
       if (combo && fref.combos.size && !fref.combos.has(_norm(combo))) throw _422(`"${combo}" is not a colour combination of "${fref.name}"`);
       const fq = Number(li.quantity ?? li.qty);
       if (!Number.isFinite(fq) || fq <= 0 || fq > MAX_QTY) throw _422(`Invalid quantity for "${fref.name}"`);
-      return { kind: 'finish', source: fref.source, finish: fref.name, combination: combo || null,
-        particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: 'litre', quantity: fq, price: fref.price, total: Math.round(fref.price * fq * 100) / 100 };
+      // STONE 2: ENFORCE the source's rules (governance from the source). Min order is the source's, not the host's.
+      const rules = fref.rules || {};
+      const minL = Number(rules.min_order_litres);
+      if (Number.isFinite(minL) && minL > 0 && fq < minL) throw _422(`"${fref.name}" has a minimum order of ${minL} litres (set by ${fref.source}).`);
+      return { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
+        particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: 'litre', quantity: fq, price: fref.price, total: Math.round(fref.price * fq * 100) / 100,
+        // The order line carries the source's governance stamp — routing is INFORMATION for the ERP; CB does not route.
+        governed: { under: fref.source + '@' + fref.sVer, owner_entity_id: fref.sOwner, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
     }
     const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
     // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
