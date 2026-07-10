@@ -410,6 +410,15 @@ router.put('/region-override', auth, async (req, res) => {
   } catch (err) { log.error('assist/region-override failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: safeErr(err) }); }
 });
 
+// GET /api/assist/regions — the region layers (currency/units/language/jurisdiction) for the spin-the-globe switcher.
+router.get('/regions', async (req, res) => {
+  try {
+    let rows = [];
+    try { const r = await query('SELECT region_code, currency, units, language, jurisdiction FROM region_layer ORDER BY region_code'); rows = r.rows || []; } catch (_) { /* b81 absent */ }
+    res.json({ ok: true, regions: rows });
+  } catch (err) { res.status(500).json({ ok: false, error: safeErr(err) }); }
+});
+
 // GET /api/assist/resolve?container=&version=&region= — SPIN THE GLOBE: the product's presentation + governance
 // RESOLVED for a region (global content + regional override + auto-cascaded basics), SEALED + cached. Public read.
 router.get('/resolve', async (req, res) => {
