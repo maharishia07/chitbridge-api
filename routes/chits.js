@@ -183,8 +183,8 @@ router.post('/send',
         throw new Error('At least one recipient required');
       }
       for (const r of list) {
-        if (!r.entity_id && !r.display_name && !r.name) {
-          throw new Error('Each recipient must have entity_id, display_name, or name');
+        if (!r.entity_id && !r.display_name && !r.name && r.self !== true) {
+          throw new Error('Each recipient must have entity_id, display_name, name, or self:true');
         }
       }
       return true;
