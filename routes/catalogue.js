@@ -163,7 +163,9 @@ router.get('/:bridge_id', async (req, res) => {
         `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity.identity_id]));
       for (const row of ado.rows) {
         const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
-        if (resolved) finishes.push({ source: row.source_key, title: resolved.title, collection: resolved.collection, items: resolved.items });
+        if (resolved) finishes.push({ source: row.source_key, title: resolved.title, collection: resolved.collection, items: resolved.items,
+          owner_entity_id: resolved.owner_entity_id || null,   // b78 — the item runs under its SOURCE's governance, not the host's
+          experience: resolved.experience || {}, formatting: resolved.formatting || {} });
       }
     } catch (_) { /* no reference catalogue for this shop */ }
     // Storefront available if it has EITHER a public products catalogue OR adopted designer finishes.

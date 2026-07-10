@@ -299,6 +299,58 @@ router.get('/catalogue-mine', async (req, res) => {
   }
 });
 
+// PUT /api/assist/catalogue-source — SOURCE-AS-ENTITY: a brand entity AUTHORS/updates its OWN catalogue source
+// (content + the customer-EXPERIENCE blueprint that cascades). Owner-only. catalogue_source is WITHOUT RLS, so
+// ownership is enforced HERE (app-side) by owner_entity_id. Self-healing: 503 if b78 isn't applied yet.
+router.put('/catalogue-source', auth, async (req, res) => {
+  try {
+    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    const b = req.body || {};
+    const source_key = (typeof b.source_key === 'string' && b.source_key.trim()) ? b.source_key.trim() : '';
+    if (!source_key) return res.status(422).json({ ok: false, error: 'source_key is required (e.g. royale-play@v1)' });
+    let exists;
+    try { exists = await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source_key]); }
+    catch (dbErr) { return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' }); }
+    // Owner-only: if the source exists and is owned by someone else, refuse. (Unowned platform-seeds can be claimed.)
+    if (exists.rows.length && exists.rows[0].owner_entity_id && String(exists.rows[0].owner_entity_id) !== String(owner))
+      return res.status(403).json({ ok: false, error: 'This source is owned by another brand.' });
+    const schema = (b.schema && typeof b.schema === 'object') ? b.schema : {};
+    const items = Array.isArray(b.items) ? b.items : [];
+    const commercials_fields = Array.isArray(b.commercials_fields) ? b.commercials_fields : [];
+    const experience = (b.experience && typeof b.experience === 'object') ? b.experience : {};
+    const formatting = (b.formatting && typeof b.formatting === 'object') ? b.formatting : {};
+    try {
+      await query(
+        `INSERT INTO catalogue_source (source_key, version, for_vertical, title, collection, schema, items, commercials_fields, owner_entity_id, experience, formatting, active)
+           VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8::jsonb,$9,$10::jsonb,$11::jsonb,true)
+         ON CONFLICT (source_key) DO UPDATE SET
+           version=EXCLUDED.version, for_vertical=EXCLUDED.for_vertical, title=EXCLUDED.title, collection=EXCLUDED.collection,
+           schema=EXCLUDED.schema, items=EXCLUDED.items, commercials_fields=EXCLUDED.commercials_fields,
+           owner_entity_id=COALESCE(catalogue_source.owner_entity_id, EXCLUDED.owner_entity_id),
+           experience=EXCLUDED.experience, formatting=EXCLUDED.formatting`,
+        [source_key, b.version || 'v1', b.for_vertical || null, b.title || null, b.collection || null,
+         JSON.stringify(schema), JSON.stringify(items), JSON.stringify(commercials_fields),
+         owner, JSON.stringify(experience), JSON.stringify(formatting)]);
+    } catch (dbErr) { return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' }); }
+    log.info('catalogue source authored', { id: req.id, source_key, owner: String(owner).slice(0, 8), items: items.length });
+    res.json({ ok: true, source_key, owner_entity_id: owner, authored: true });
+  } catch (err) {
+    log.error('assist/catalogue-source PUT failed', { id: req.id, err: err.message });
+    res.status(500).json({ ok: false, error: safeErr(err) });
+  }
+});
+
+// GET /api/assist/catalogue-source/:key — read a source (content + EXPERIENCE + formatting). `finishes` not `items`
+// so the client unwrap() doesn't strip the object.
+router.get('/catalogue-source/:key', async (req, res) => {
+  try {
+    const built = await catalogueBuild.build(req.params.key);
+    if (!built) return res.status(404).json({ ok: false, error: 'Unknown source.' });
+    const { items, ...rest } = built;
+    res.json({ ok: true, ...rest, finishes: items });
+  } catch (err) { res.status(500).json({ ok: false, error: safeErr(err) }); }
+});
+
 // GET /api/assist/questions?context=<screen> — the assistant Q&A library, served FROM THE DB (single source of
 // truth; also the grounding feed for the model). PUBLIC (works pre-auth on welcome/login/register). Returns
 // entries whose context matches the screen OR '*'; no context -> all active. Shape: {ok:true, data:[{id,q,a,...}]}.
