@@ -32,7 +32,7 @@ const eid = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base6
 const setPref = (token, pref) => api('PATCH', '/api/entities/profile', { token, body: { self_copy_pref: pref } });
 async function sendSelf(token, subj) {
   const r = await api('POST', '/api/chits/send', { token, body: {
-    recipients: [{ self: true, role: 'to' }], purpose: 'general', manual_subject: subj, business_json: { note: 'scp test' } } });
+    recipients: [{ name: 'self', role: 'to' }], purpose: 'general', manual_subject: subj, business_json: { note: 'scp test' } } });
   return r.json && (r.json.chit_id || (r.json.chit && r.json.chit.chit_id));
 }
 const inOrder = async (token, id) => has((await api('GET', '/api/chits/sent',  { token })).json, id);
