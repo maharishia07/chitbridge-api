@@ -139,7 +139,8 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   ];
   if (ccRow) all_recipients.push({ entity_id: ccRow.identity_id, bridge_id: ccRow.bridge_id, display_name: ccRow.display_name, role: 'cc' });
 
-  const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose, is_promotion: false, forwarded_from: null };
+  const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose, is_promotion: false, forwarded_from: null,
+    copy_policy: { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — IoT self-chit (Task only)', source: 'iot' } };
   const headerCommon = {
     sender_entity_id: entity_id, sender_entity_bridge_id: self.bridge_id, sender_entity_display_name: self.display_name,
     all_recipients, purpose, auto_subject, manual_subject, summary_json,
@@ -147,10 +148,9 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
     detail_type: purpose, line_item_count: 0, total_value: 0, currency_code: 'INR',
   };
   const fdetail = folder ? (' · ' + folder) : '';
+  // IoT self-chit is intrinsically TASK-ONLY — the device never needs an Order copy (declared via summary_json.copy_policy).
+  // Only the received (Task) copy is minted here; the optional CC below is a real cross-entity copy and is kept.
   const copies = [
-    { ...headerCommon, business_json, entity_id, direction: 'sent', role: 'Act',
-      current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
-      log: { action: 'created', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'delivered', detail: 'Device exception filed' + fdetail } },
     { ...headerCommon, business_json, entity_id, direction: 'received', role: 'Act',
       current_status: 'pending', priority_flag: 'normal',
       log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'pending', detail: 'Device exception' + fdetail } },

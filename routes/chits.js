@@ -311,6 +311,25 @@ router.post('/send',
         });
       }
 
+      // ── self_copy_pref (policy-flag #1) — copy suppression is a SELF-CHIT-ONLY affordance. On any inter-entity chit
+      //    BOTH copies are mandatory (sender's Order + receiver's Task = the co-held transfer, cb-core-principle), so we
+      //    only ever suppress on a PURE self-chit (self is the sole recipient). Every suppression is DECLARED on the chit
+      //    via summary_json.copy_policy — the absence is governed + auditable, never a silent gap. ──
+      const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
+      let copyPolicy = null, suppressSentCopy = false;
+      if (pureSelfChit) {                          // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
+        if (selfCopyPref === 'sent') {            // ORDER-only → drop the self Task (received) copy
+          const si = receiverDetails.findIndex(r => r.entity_id === sender_id);
+          if (si >= 0) receiverDetails.splice(si, 1);
+          copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: 'setting' };
+        } else if (selfCopyPref === 'received') { // TASK-only → drop the sender Order (sent) copy
+          suppressSentCopy = true;
+          copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: 'setting' };
+        } else {                                  // BOTH → keep both copies, but STILL declare the self-chit identity
+          copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: 'setting' };
+        }
+      }
+
       // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
       //    and other send-time rules will plug in here when we build Suppliers.) ──
       if (promote_draft_id) {
@@ -351,7 +370,8 @@ router.post('/send',
         purpose,
         is_promotion: !!(business_json && business_json.is_promotion),
         // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
-        forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null
+        forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
+        ...(copyPolicy ? { copy_policy: copyPolicy } : {})
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
@@ -383,7 +403,7 @@ router.post('/send',
         if (line_items.length > 0) c.line_items = line_items;   // omit -> SQL NULL
         return c;
       };
-      const copies = [ mkCopy({
+      const copies = suppressSentCopy ? [] : [ mkCopy({
         entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
         current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
         log: { action: 'created', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
@@ -414,7 +434,8 @@ router.post('/send',
           await client.query('DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
           await client.query('DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
         }
-        // SENDER
+        // SENDER (suppressed for a task-only self-chit — no Order copy needed)
+        if (!suppressSentCopy) {
         await client.query(
           `INSERT INTO chit_header
            (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
@@ -453,6 +474,7 @@ router.post('/send',
           [chit_id, sender_id, sender_id, sender_display_name,
            `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
         );
+        }
 
         // RECIPIENTS (skipped for drafts — a draft is the author's copy only)
         if (!is_draft) for (const receiver of receiverDetails) {
