@@ -131,7 +131,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
       return { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
         particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: 'litre', quantity: fq, price: fref.price, total: Math.round(fref.price * fq * 100) / 100,
         // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
-        governed: { under: fref.source + '@' + fref.sVer, owner_entity_id: fref.sOwner, container: containerFreeze, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
+        governed: { under: fref.source, owner_entity_id: fref.sOwner, container: containerFreeze, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
     }
     const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
     // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
