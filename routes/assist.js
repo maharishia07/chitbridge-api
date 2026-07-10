@@ -374,6 +374,21 @@ router.get('/container/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: safeErr(err) }); }
 });
 
+// GET /api/assist/erp-handoffs — 6b: the DISTRIBUTOR's ERP handoff receipts (refs + routing + hash — process-then-
+// forget; the ERP consumes these and does the routing/fulfillment). Per-entity, WITH RLS (b82). Self-healing (503).
+router.get('/erp-handoffs', auth, async (req, res) => {
+  try {
+    const entity = req.identity.parent_entity_id || req.identity.identity_id;
+    let rows = [];
+    try {
+      const r = await withEntity(entity, (db) => db.query(
+        'SELECT handoff_id, chit_id, summary, payload_hash, status, created_at FROM erp_handoff WHERE entity_id = $1 ORDER BY created_at DESC LIMIT 200', [entity]));
+      rows = r.rows || [];
+    } catch (dbErr) { return res.status(503).json({ ok: false, code: 'HANDOFF_STORE_MISSING', error: 'ERP handoff not enabled yet — apply migration b82.' }); }
+    res.json({ ok: true, count: rows.length, handoffs: rows });
+  } catch (err) { log.error('assist/erp-handoffs failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: safeErr(err) }); }
+});
+
 // PUT /api/assist/region-override — 6a: the source authors a per-REGION override on its OWN container (owner-gated).
 // Hybrid: most of "per region" auto-cascades (currency/units/language); this is the genuinely-local delta (colour
 // names, compliance labels, regional combinations). Self-healing: 503 if b81 isn't applied.

@@ -5,6 +5,7 @@ const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');   // 6b: hash the ERP handoff payload (receipt, not raw payload)
 const { query, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
@@ -405,6 +406,20 @@ router.post('/:bridge_id/order/confirm',
           for (const sk of srcs) await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [sk, entity.identity_id, custLocality]);
         } catch (e) { /* b79 not applied → skip (self-healing) */ }
       }
+
+      // 6b: ERP HANDOFF (receipt-only, process-then-forget). Hand the order + its governance (source@v, frozen
+      // container, routing, locality) to the ERP; keep a RECEIPT (refs + hash), NOT the raw payload. CB does NOT
+      // route/fulfill — the ERP does. This is where CB stops at the information. Best-effort, self-healing.
+      try {
+        const govLines = line_items.filter((l) => l.governed).map((l) => ({ finish: l.name, source: l.governed.under, container: l.governed.container || null, routing: l.governed.routing || null, qty: l.quantity }));
+        if (govLines.length) {
+          const summary = { chit_id, total: summary_json.total_value, currency: summary_json.currency_code, locality: custLocality || null, lines: govLines };
+          const payload_hash = crypto.createHash('sha256').update(JSON.stringify(summary)).digest('hex');
+          await withEntity(entity.identity_id, (db) => db.query(
+            `INSERT INTO erp_handoff (handoff_id, entity_id, chit_id, summary, payload_hash, status) VALUES ($1,$2,$3,$4::jsonb,$5,'handed_off')`,
+            [uuidv4(), entity.identity_id, chit_id, JSON.stringify(summary), payload_hash]));
+        }
+      } catch (e) { /* b82 not applied → skip (self-healing) */ }
 
       // customer token (for future order tracking — CJ-F1)
       const token = jwt.sign(
