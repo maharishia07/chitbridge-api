@@ -363,6 +363,19 @@ router.post('/send',
       const currency_code = (business_json && business_json.currency) || 'INR';
       // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
       const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
+      // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
+      //    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
+      //    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
+      const DEFAULT_RETENTION_DAYS = null;   // governed default resolves from the cascade later
+      let retention = null;
+      {
+        const rd = (Number.isFinite(+req.body.retention_days) && +req.body.retention_days > 0) ? Math.floor(+req.body.retention_days) : null;
+        let exp = null, src = null, days = null;
+        if (typeof req.body.expires_at === 'string' && !isNaN(Date.parse(req.body.expires_at))) { exp = new Date(req.body.expires_at).toISOString(); src = 'manual'; }
+        else if (rd) { exp = new Date(Date.now() + rd * 86400000).toISOString(); src = 'manual'; days = rd; }
+        else if (DEFAULT_RETENTION_DAYS) { exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString(); src = 'default'; days = DEFAULT_RETENTION_DAYS; }
+        if (exp) retention = { expires_at: exp, retention_days: days, source: src };
+      }
       const summary_json = {
         ...summary,
         currency_code,
@@ -371,7 +384,8 @@ router.post('/send',
         is_promotion: !!(business_json && business_json.is_promotion),
         // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
         forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
-        ...(copyPolicy ? { copy_policy: copyPolicy } : {})
+        ...(copyPolicy ? { copy_policy: copyPolicy } : {}),
+        ...(retention ? { retention } : {})
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
