@@ -333,8 +333,11 @@ router.put('/catalogue-source', auth, async (req, res) => {
          JSON.stringify(schema), JSON.stringify(items), JSON.stringify(commercials_fields),
          owner, JSON.stringify(experience), JSON.stringify(formatting)]);
     } catch (dbErr) { return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' }); }
-    log.info('catalogue source authored', { id: req.id, source_key, owner: String(owner).slice(0, 8), items: items.length });
-    res.json({ ok: true, source_key, owner_entity_id: owner, authored: true });
+    // WIRING (stone 5): mirror each item to a CONTAINER (create/enhance, change-detected). Best-effort, self-healing.
+    let containers = 0;
+    try { containers = (await container.syncItemContainers(owner, source_key, items)).length; } catch (_) { /* b80 absent → skip */ }
+    log.info('catalogue source authored', { id: req.id, source_key, owner: String(owner).slice(0, 8), items: items.length, containers });
+    res.json({ ok: true, source_key, owner_entity_id: owner, authored: true, containers });
   } catch (err) {
     log.error('assist/catalogue-source PUT failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: safeErr(err) });

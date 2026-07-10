@@ -11,6 +11,7 @@ const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
+const container = require('../lib/container');              // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
 
 const genBridge = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -99,7 +100,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
     }
   } catch (_) { /* no reference catalogue for this shop */ }
   const MAX_QTY = 100000;
-  const items = rawItems.map((li, idx) => {
+  const items = await Promise.all(rawItems.map(async (li, idx) => {
     // FINISH line (reference catalogue) — priced from the adoption commercials, server-authoritative (never the customer).
     if (li.kind === 'finish' || li.finish || (li.source && finishMap.size)) {
       const fname = li.finish ?? li.name ?? li.particulars;
@@ -123,10 +124,13 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
       const rules = fref.rules || {};
       const minL = Number(rules.min_order_litres);
       if (Number.isFinite(minL) && minL > 0 && fq < minL) throw _422(`"${fref.name}" has a minimum order of ${minL} litres (set by ${fref.source}).`);
+      // WIRING (stone 5): FREEZE the container ref + version (the immutable snapshot the customer saw → chit verifiable forever).
+      let containerFreeze = null;
+      try { const cid = container.itemContainerId(fref.source, fref.name); const cc = await container.getContainer(cid); if (cc) containerFreeze = { ref: cid, content_version: cc.current_version }; } catch (_) {}
       return { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
         particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: 'litre', quantity: fq, price: fref.price, total: Math.round(fref.price * fq * 100) / 100,
-        // The order line carries the source's governance stamp — routing is INFORMATION for the ERP; CB does not route.
-        governed: { under: fref.source + '@' + fref.sVer, owner_entity_id: fref.sOwner, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
+        // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
+        governed: { under: fref.source + '@' + fref.sVer, owner_entity_id: fref.sOwner, container: containerFreeze, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
     }
     const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
     // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
@@ -143,7 +147,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
     if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
     const total = Math.round(ref.price * qty * 100) / 100;
     return { item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty, price: ref.price, total };
-  });
+  }));
   const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
   return { items, total };
 }
