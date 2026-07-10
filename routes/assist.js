@@ -340,6 +340,31 @@ router.put('/catalogue-source', auth, async (req, res) => {
   }
 });
 
+// GET /api/assist/penetration — STONE 4: the BRAND's aggregated penetration for the sources IT owns (heatmap data).
+// AGGREGATE-ONLY: order counts + distributor coverage by locality — NO per-customer PII (the ledger has no customer id).
+// Owner-gated (only your own sources). Self-healing: 503 if b79 isn't applied.
+router.get('/penetration', auth, async (req, res) => {
+  try {
+    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    let rows = [];
+    try {
+      const r = await query(
+        `SELECT sp.source_key, sp.locality,
+                count(*)::int AS orders,
+                count(DISTINCT sp.distributor_entity_id)::int AS distributors
+           FROM source_penetration sp
+           JOIN catalogue_source cs ON cs.source_key = sp.source_key
+          WHERE cs.owner_entity_id = $1 AND sp.locality IS NOT NULL AND sp.locality <> ''
+          GROUP BY sp.source_key, sp.locality
+          ORDER BY orders DESC, sp.locality ASC`, [owner]);
+      rows = r.rows;
+    } catch (dbErr) { return res.status(503).json({ ok: false, code: 'PENETRATION_STORE_MISSING', error: 'Penetration not enabled yet — apply migration b79.' }); }
+    const total_orders = rows.reduce((s, x) => s + x.orders, 0);
+    const localities = Array.from(new Set(rows.map((x) => x.locality)));
+    res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows });
+  } catch (err) { log.error('assist/penetration failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: safeErr(err) }); }
+});
+
 // GET /api/assist/catalogue-source/:key — read a source (content + EXPERIENCE + formatting). `finishes` not `items`
 // so the client unwrap() doesn't strip the object.
 router.get('/catalogue-source/:key', async (req, res) => {

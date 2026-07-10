@@ -283,8 +283,10 @@ router.post('/:bridge_id/order/confirm',
       try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items)); }
       catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }
       const chit_id = uuidv4();
+      const custLocality = (req.body && typeof req.body.location === 'string') ? req.body.location.trim().slice(0, 80) : '';   // STONE 4: consent-provided coarse locality
       const summary_json = { line_item_count: line_items.length, total_value: Math.round(total * 100) / 100,
-                             currency_code: entity.currency_code || 'INR', purpose: 'order', is_promotion: false };
+                             currency_code: entity.currency_code || 'INR', purpose: 'order', is_promotion: false,
+                             customer_locality: custLocality || null };
       const auto_subject = `Order from ${c.display_name} — ` +
         new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
       const all_recipients = [
@@ -390,6 +392,15 @@ router.post('/:bridge_id/order/confirm',
            DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
           [entity.identity_id, c.identity_id]));
       } catch (e) { console.log('customer auto-add skipped:', e.message); }
+
+      // STONE 4: penetration capture — AGGREGATE-ONLY (source + distributor + coarse locality; NO customer identity).
+      // Best-effort, post-commit, never breaks the order; self-heals if b79 isn't applied. Feeds the brand's heatmap.
+      if (custLocality) {
+        try {
+          const srcs = Array.from(new Set(line_items.filter((l) => l.source).map((l) => l.source)));
+          for (const sk of srcs) await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [sk, entity.identity_id, custLocality]);
+        } catch (e) { /* b79 not applied → skip (self-healing) */ }
+      }
 
       // customer token (for future order tracking — CJ-F1)
       const token = jwt.sign(
