@@ -376,6 +376,14 @@ router.post('/send',
         else if (DEFAULT_RETENTION_DAYS) { exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString(); src = 'default'; days = DEFAULT_RETENTION_DAYS; }
         if (exp) retention = { expires_at: exp, retention_days: days, source: src };
       }
+      // ── assimilation seam: resolve the boilerplate for this send — constitution + capability + pattern + the canonical
+      //    SHARED standard (ISO 9000) — and stamp the lineage. Best-effort: never blocks the send. This is the mint
+      //    assimilating a per-brand context AND a shared source into one chit (routes send-chit through the seam). ──
+      let governed = null;
+      try {
+        const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
+        if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard };
+      } catch (_) { /* seam is best-effort */ }
       const summary_json = {
         ...summary,
         currency_code,
@@ -385,7 +393,8 @@ router.post('/send',
         // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
         forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
         ...(copyPolicy ? { copy_policy: copyPolicy } : {}),
-        ...(retention ? { retention } : {})
+        ...(retention ? { retention } : {}),
+        ...(governed ? { governed } : {})
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
