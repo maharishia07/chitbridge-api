@@ -18,6 +18,7 @@ const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cache
 const compliance = require('../lib/compliance'); // deterministic conform-check engine (the `ai:conform-verdict@v1` slot floor)
 const catalogueBuild = require('../lib/catalogue-build'); // the `ai:catalogue-structure@v1` slot — source → schema + coloured items
 const container = require('../lib/container');            // CONTAINER MODEL (b80) — product pointer over immutable versions
+const regional = require('../lib/regional');              // REGIONAL SCATTER (6a, b81) — resolve-and-seal per region
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
 // so it can't be inspected or bypassed. The real implementation injects this as the system prompt.
@@ -368,6 +369,38 @@ router.put('/container', auth, async (req, res) => {
 router.get('/container/:id', async (req, res) => {
   try {
     const r = await container.resolveContainer(req.params.id, req.query.version);
+    if (!r) return res.status(404).json({ ok: false, error: 'Unknown container or version.' });
+    res.json({ ok: true, ...r });
+  } catch (err) { res.status(500).json({ ok: false, error: safeErr(err) }); }
+});
+
+// PUT /api/assist/region-override — 6a: the source authors a per-REGION override on its OWN container (owner-gated).
+// Hybrid: most of "per region" auto-cascades (currency/units/language); this is the genuinely-local delta (colour
+// names, compliance labels, regional combinations). Self-healing: 503 if b81 isn't applied.
+router.put('/region-override', auth, async (req, res) => {
+  try {
+    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    const b = req.body || {};
+    const container_id = (typeof b.container_id === 'string' && b.container_id.trim()) ? b.container_id.trim() : '';
+    const region = (typeof b.region === 'string' && b.region.trim()) ? b.region.trim() : '';
+    if (!container_id || !region) return res.status(422).json({ ok: false, error: 'container_id and region are required' });
+    const overrides = (b.overrides && typeof b.overrides === 'object') ? b.overrides : {};
+    try { await regional.setRegionOverride(owner, container_id, region, overrides); }
+    catch (e) {
+      if (e.status === 403) return res.status(403).json({ ok: false, error: e.message });
+      if (e.status === 404) return res.status(404).json({ ok: false, error: e.message });
+      return res.status(503).json({ ok: false, code: 'REGION_STORE_MISSING', error: 'Regional scatter not enabled yet — apply migration b81.' });
+    }
+    res.json({ ok: true, container_id, region });
+  } catch (err) { log.error('assist/region-override failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: safeErr(err) }); }
+});
+
+// GET /api/assist/resolve?container=&version=&region= — SPIN THE GLOBE: the product's presentation + governance
+// RESOLVED for a region (global content + regional override + auto-cascaded basics), SEALED + cached. Public read.
+router.get('/resolve', async (req, res) => {
+  try {
+    const region = (req.query.region && String(req.query.region).trim()) || 'IN';
+    const r = await regional.resolveRegional(req.query.container, req.query.version, region);
     if (!r) return res.status(404).json({ ok: false, error: 'Unknown container or version.' });
     res.json({ ok: true, ...r });
   } catch (err) { res.status(500).json({ ok: false, error: safeErr(err) }); }
