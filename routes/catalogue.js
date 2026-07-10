@@ -76,7 +76,8 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
   }
   // Finish map (reference catalogue) — resolve the shop's VISIBLE adoptions → norm(name) -> {price, combos, source}.
   // Priced from the adoption commercials, SERVER-side (never the customer). Empty if the shop has no finishes.
-  const finishMap = new Map();
+  const finishMap = new Map();       // STONE 3: keyed 'source|name' so same-named finishes from DIFFERENT brands don't collide
+  const finishByName = new Map();     // name -> { count, rec } — for name-only lines (reject if ambiguous across brands)
   try {
     const ado = await withEntity(entity_id, (db) => db.query(
       `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity_id]));
@@ -89,7 +90,11 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
       const sOwner = resolved.owner_entity_id || null;
       for (const it of (resolved.items || [])) {
         const p = (it.commercials && it.commercials.price_per_litre != null && it.commercials.price_per_litre !== '') ? Number(it.commercials.price_per_litre) : NaN;
-        finishMap.set(_norm(it.name), { name: it.name, price: p, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) });
+        const rec = { name: it.name, price: p, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
+        const nk = _norm(it.name);
+        finishMap.set(row.source_key + '|' + nk, rec);
+        const nb = finishByName.get(nk) || { count: 0, rec: null };
+        finishByName.set(nk, { count: nb.count + 1, rec });
       }
     }
   } catch (_) { /* no reference catalogue for this shop */ }
@@ -98,7 +103,16 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
     // FINISH line (reference catalogue) — priced from the adoption commercials, server-authoritative (never the customer).
     if (li.kind === 'finish' || li.finish || (li.source && finishMap.size)) {
       const fname = li.finish ?? li.name ?? li.particulars;
-      const fref = finishMap.get(_norm(fname));
+      const nk = _norm(fname);
+      const lsrc = (li.source != null) ? String(li.source).trim() : null;
+      // STONE 3: resolve to the RIGHT brand. With a source on the line, exact (source|name); without, only if the name
+      // is unambiguous across the brands this distributor carries (else make them choose the brand).
+      let fref = lsrc ? finishMap.get(lsrc + '|' + nk) : null;
+      if (!fref && !lsrc) {
+        const nb = finishByName.get(nk);
+        if (nb && nb.count > 1) throw _422(`"${fname}" is available from more than one brand — choose the brand to order it`);
+        fref = nb ? nb.rec : null;
+      }
       if (!fref) throw _422(`"${fname || ('item ' + (idx + 1))}" is not an available finish in this shop`);
       if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
       const combo = li.combination ?? li.combo ?? null;
