@@ -250,6 +250,16 @@ router.get('/lanes', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Lanes failed', message: safeErr(err) }); }
 });
 
+// GET /api/governance/track-record — the CALLER's SELF-PROVING REFERENCE (relationship rung of the trust ladder):
+// counterparties / settled dealings / dispute health, DERIVED from its own real chit copies. Aggregate counts only.
+// Self-view: exposing a track record to a buyer is a separate opt-in decision (see SPEC-commercial-attestation.md).
+router.get('/track-record', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/reference').resolveTrackRecord(entity_id));
+  } catch (err) { res.status(500).json({ error: 'Track record failed', message: safeErr(err) }); }
+});
+
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
 // a connection.)
