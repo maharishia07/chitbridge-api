@@ -69,14 +69,18 @@ const S = (o) => JSON.stringify(o || '');
   const itemId = prod.j && prod.j.item && prod.j.item.item_id;
   chk(!!itemId, 'public storefront + priced item  → ' + bridge);
 
-  step(7, 'A customer orders (fields GATHERED from the standard)', '🔨');
-  line('(the capture FORM is the next increment; today the standard flags what to gather)');
+  step(7, 'A customer orders — the storefront GATHERS the standard\'s fields', '✅');
+  const cf = await api('GET', '/api/catalogue/' + bridge + '/capture-fields');
+  const askFields = ((cf.j && cf.j.fields) || []).map(f => f.field);
+  line('the storefront asks the customer for: ' + (askFields.join(', ') || '—'));
+  const captured = {}; for (const f of askFields) captured[f] = 'X-' + f;   // the customer fills them in
   const custEmail = 'buyer-' + ts + '@test.com';
   const start = await api('POST', '/api/catalogue/' + bridge + '/order/start', { body: { email: custEmail, name: 'Walk-in Customer' } });
   const otp = start.j && start.j.dev_otp;
-  const confirm = await api('POST', '/api/catalogue/' + bridge + '/order/confirm', { body: { email: custEmail, otp, line_items: [{ item_id: itemId, quantity: 1 }] } });
+  const confirm = await api('POST', '/api/catalogue/' + bridge + '/order/confirm', { body: { email: custEmail, otp, line_items: [{ item_id: itemId, quantity: 1 }], captured } });
   const chitId = confirm.j && confirm.j.chit_id;
-  chk(confirm.status === 200 && !!chitId, 'order placed → chit minted');
+  chk(askFields.length > 0, 'the STANDARD directed what to gather (' + askFields.length + ' fields)');
+  chk(confirm.status === 200 && !!chitId, 'order placed WITH the gathered fields → chit minted');
 
   step(8, 'The governed chit — full stamp from the mould', '✅');
   const chit = chitId ? await api('GET', '/api/chits/' + chitId, { token }) : { j: null };
@@ -88,6 +92,11 @@ const S = (o) => JSON.stringify(o || '');
   chk(declaredRefs.length > 0 && declaredRefs.every(r => cs.includes(r.split('@')[0])),
     'chit carries the mould\'s DECLARED standards → ' + declaredRefs.join(', '));
   chk(cs.includes('conformance'), 'chit carries the conformance verdict');
+  const gathered = Object.values(captured);
+  chk(gathered.length === 0 || gathered.every(v => cs.includes(v)), 'chit carries the GATHERED capture fields');
+  const passed = (chit.j && chit.j.summary_json && chit.j.summary_json.conformance && chit.j.summary_json.conformance.status === 'pass')
+    || (cs.includes('"conformance"') && !cs.includes('"gaps":["'));   // no remaining gaps
+  chk(passed, 'conformance now PASSES — the standard\'s fields were gathered, not just flagged');
 
   console.log('\n══════════════════════════════════════════════════════════');
   console.log('  RESULT   PASS ' + P + '  ·  FAIL ' + F + '   (fresh demo rows: ' + email + ')');

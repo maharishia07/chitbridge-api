@@ -219,6 +219,18 @@ router.get('/:bridge_id', async (req, res) => {
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
 
+// GET /api/catalogue/:bridge_id/capture-fields — what the storefront must ASK the customer for (increment 3): the
+// chit-scope required items from THIS shop's assimilated standards. The order form renders these; order/confirm captures
+// them → conformance passes. Public (the customer isn't logged in).
+router.get('/:bridge_id/capture-fields', async (req, res) => {
+  try {
+    const entity = await resolveEntity(req.params.bridge_id);
+    if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    const fields = await require('../lib/conformance').captureFieldsForEntity(entity.identity_id);
+    res.json({ shop: entity.display_name, fields });
+  } catch (err) { res.status(500).json({ error: 'Capture fields failed', message: safeErr(err) }); }
+});
+
 // ── CJ-05a: order-first — enter phone → create/find end_customer scoped to entity → OTP ──
 router.post('/:bridge_id/order/start',
   validate,   // identifier (phone|email) validated in-handler via resolveContact
@@ -301,9 +313,14 @@ router.post('/:bridge_id/order/confirm',
         if (cfg) summary_json.governed = { pattern: cfg._blueprint, capability: cfg._capability,
           constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
       } catch (_) { /* seam is best-effort */ }
+      // CAPTURE (increment 3): the storefront GATHERS the standard's required fields from the customer (hs_code,
+      // incoterms, …) and sends them as `captured`. They're stored on the chit and fed into conformance → it now
+      // PASSES instead of flagging. (Fields the standard requires but the form didn't gather still show as gaps.)
+      const captured = (req.body && typeof req.body.captured === 'object' && req.body.captured) ? req.body.captured : {};
+      if (Object.keys(captured).length) summary_json.captured = captured;
       try {
-        const v = await require('../lib/conformance').checkConformance({ ...summary_json, line_items }, 'chit');
-        summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing) };
+        const v = await require('../lib/conformance').checkConformance({ ...summary_json, ...captured, line_items }, 'chit');
+        summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing), captured: Object.keys(captured) };
       } catch (_) { /* advisory is best-effort */ }
       const auto_subject = `Order from ${c.display_name} — ` +
         new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
