@@ -19,7 +19,7 @@ const has = (o, s) => JSON.stringify(o || '').includes(s);
   if (id) {
     const det = await api('GET', '/api/chits/' + id, { token });
     chk('chit carries the governed lineage', has(det.j, '"governed"'));
-    chk('assimilated the SHARED standard — ISO 9000', has(det.j, 'iso-9000@v1'), 'governed.standard');
+    chk('assimilated the SHARED standard — ISO 9000', has(det.j, 'iso-9001@v1'), 'governed.standard');
     chk('assimilated the work-pattern', has(det.j, 'send-chit@'), 'governed.pattern');
     chk('assimilated the constitution (per-entity vertical)', has(det.j, '"constitution"'), 'governed.constitution key present');
   }

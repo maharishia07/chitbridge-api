@@ -382,7 +382,7 @@ router.post('/send',
       let governed = null;
       try {
         const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
-        if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards };
+        if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
       } catch (_) { /* seam is best-effort */ }
       const summary_json = {
         ...summary,

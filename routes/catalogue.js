@@ -299,7 +299,7 @@ router.post('/:bridge_id/order/confirm',
       try {
         const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: entity.identity_id });
         if (cfg) summary_json.governed = { pattern: cfg._blueprint, capability: cfg._capability,
-          constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards };
+          constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
       } catch (_) { /* seam is best-effort */ }
       try {
         const v = await require('../lib/conformance').checkConformance({ ...summary_json, line_items }, 'chit');

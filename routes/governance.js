@@ -182,6 +182,32 @@ router.post('/conformance', auth, async (req, res) => {
   }
 });
 
+// GET /api/governance/boilerplate/:key — read the sealed MOULD: its DECLARED sources + bound locale ("see the mould").
+router.get('/boilerplate/:key', auth, async (req, res) => {
+  try {
+    const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
+    if (!bp) return res.status(404).json({ error: 'Not found', message: 'No such boilerplate' });
+    res.json(bp);
+  } catch (err) { res.status(500).json({ error: 'Boilerplate read failed', message: safeErr(err) }); }
+});
+
+// POST /api/governance/boilerplate/:key/adopt — the minted-path binding: stamp the caller's entity with this mould so
+// it resolves the mould's DECLARED sources (bounded, not global). Upsert; preserves any existing constitution.
+router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
+    if (!bp) return res.status(404).json({ error: 'Not found', message: 'No such boilerplate' });
+    await withEntity(entity_id, (c) => c.query(
+      `INSERT INTO entity_governance (entity_id, constitution_key, boilerplate_key)
+       VALUES ($1, COALESCE((SELECT constitution_key FROM constitution WHERE active = true AND is_default = true LIMIT 1), 'trade'), $2)
+       ON CONFLICT (entity_id) DO UPDATE SET boilerplate_key = EXCLUDED.boilerplate_key`,
+      [entity_id, bp.key]));
+    require('../lib/workpattern').invalidateWorkPattern(entity_id);   // re-stamp → next resolve re-derives
+    res.json({ message: 'Minted from boilerplate', boilerplate: bp.key + '@' + bp.version, standards: bp.standards, locale: bp.locale });
+  } catch (err) { res.status(500).json({ error: 'Adopt failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;

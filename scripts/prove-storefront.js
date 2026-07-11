@@ -42,7 +42,7 @@ const S = (o) => JSON.stringify(o || '');
   let chit = { j: null };
   if (chitId) chit = await api('GET', '/api/chits/' + chitId, { token });
   const cs = S(chit.j);
-  chk('storefront chit assimilates ISO 9000 (quality)', cs.includes('iso-9000'), 'iso-9000 present');
+  chk('storefront chit assimilates ISO 9000 (quality)', cs.includes('iso-9001'), 'iso-9001 present');
   chk('storefront chit assimilates EXIM (trade) — full stamp on the STOREFRONT path', cs.includes('exim-policy'),
     cs.includes('exim-policy') ? 'both standards stamped' : 'EXIM missing — is the wire-up deployed?');
   chk('storefront chit carries a conformance verdict', cs.includes('conformance'), 'verdict present');
