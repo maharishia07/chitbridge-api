@@ -42,9 +42,12 @@ const S = (o) => JSON.stringify(o || '');
   let chit = { j: null };
   if (chitId) chit = await api('GET', '/api/chits/' + chitId, { token });
   const cs = S(chit.j);
-  chk('storefront chit assimilates ISO 9000 (quality)', cs.includes('iso-9001'), 'iso-9001 present');
-  chk('storefront chit assimilates EXIM (trade) — full stamp on the STOREFRONT path', cs.includes('exim-policy'),
-    cs.includes('exim-policy') ? 'both standards stamped' : 'EXIM missing — is the wire-up deployed?');
+  // reference-based, not literal: derive the expected standards from what's DEFINED live (conformance reads them), then
+  // assert the chit carries each. A rename/swap needs zero edits here (loose-coupling principle).
+  const conf = await api('POST', '/api/governance/conformance', { token, body: { data: {}, scope: 'chit' } });
+  const activeRefs = ((conf.j && conf.j.checked) || []).map(c => c.ref);
+  chk('storefront chit carries every DEFINED standard (reference, not literal)',
+    activeRefs.length > 0 && activeRefs.every(r => cs.includes(r.split('@')[0])), activeRefs.join(', ') || '—');
   chk('storefront chit carries a conformance verdict', cs.includes('conformance'), 'verdict present');
   chk('storefront chit still carries the SOURCE/per-line governance (unchanged)', cs.includes('governed'), 'source governance intact');
 

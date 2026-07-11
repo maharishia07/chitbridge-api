@@ -75,7 +75,11 @@ const S = (o) => JSON.stringify(o || '');
   const chit = chitId ? await api('GET', '/api/chits/' + chitId, { token }) : { j: null };
   const cs = S(chit.j);
   chk(cs.includes('royaleplay-bp-india@v1'), 'chit carries the BOILERPLATE it was minted from');
-  chk(cs.includes('iso-9001') && cs.includes('exim-policy'), 'chit carries the mould\'s DECLARED standards (ISO 9001 + EXIM)');
+  // reference-based, not literal: whatever standards the MOULD declares (step 4) is what we expect on the chit — so a
+  // rename/swap of a standard needs ZERO edits here (see the loose-coupling principle).
+  const declaredRefs = Object.values(bpj.standards || {});
+  chk(declaredRefs.length > 0 && declaredRefs.every(r => cs.includes(r.split('@')[0])),
+    'chit carries the mould\'s DECLARED standards → ' + declaredRefs.join(', '));
   chk(cs.includes('conformance'), 'chit carries the conformance verdict');
 
   console.log('\n══════════════════════════════════════════════════════════');
