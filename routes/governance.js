@@ -229,6 +229,39 @@ router.get('/source/:key', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Source read failed', message: safeErr(err) }); }
 });
 
+// GET /api/governance/readiness — the CALLER's own trade readiness (feeds the supplier "trade readiness" view).
+router.get('/readiness', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/readiness').resolveReadiness(entity_id));
+  } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
+});
+
+// GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
+// confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
+// a connection.)
+router.get('/readiness/:bridge_id', auth, async (req, res) => {
+  try {
+    const r = await query(
+      `SELECT identity_id, display_name, bridge_id FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' LIMIT 1`,
+      [req.params.bridge_id]);
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such entity' });
+    const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
+    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, display_name: r.rows[0].display_name }, ...rd });
+  } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
+});
+
+// POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
+router.post('/compliance', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const b = req.body || {};
+    await require('../lib/readiness').gatherDocument(entity_id, {
+      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: b.evidence_ref, valid_until: b.valid_until, status: b.status });
+    res.json({ message: 'Clearance gathered', ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+  } catch (err) { res.status(err.status || 500).json({ error: 'Gather failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;
