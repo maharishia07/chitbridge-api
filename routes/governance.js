@@ -229,12 +229,25 @@ router.get('/source/:key', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Source read failed', message: safeErr(err) }); }
 });
 
-// GET /api/governance/readiness — the CALLER's own trade readiness (feeds the supplier "trade readiness" view).
+// GET /api/governance/readiness — the CALLER's own trade readiness. ?destination=EU&vertical=paint → resolved FOR that
+// destination (spin the globe), with guidance on each gap; otherwise the entity's own standards.
 router.get('/readiness', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
-    res.json(await require('../lib/readiness').resolveReadiness(entity_id));
+    const R = require('../lib/readiness');
+    const out = req.query.destination
+      ? await R.resolveForDestination(entity_id, String(req.query.destination), req.query.vertical, req.query.origin)
+      : await R.resolveReadiness(entity_id);
+    res.json(out);
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
+});
+
+// GET /api/governance/lanes?vertical=paint — the CALLER's market-readiness MATRIX (readiness % per destination + gaps).
+router.get('/lanes', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin));
+  } catch (err) { res.status(500).json({ error: 'Lanes failed', message: safeErr(err) }); }
 });
 
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
