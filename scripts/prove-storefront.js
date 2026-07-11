@@ -34,7 +34,7 @@ const S = (o) => JSON.stringify(o || '');
   const otp = start.j && start.j.dev_otp;
   chk('customer started an order (OTP issued)', !!otp, 'status ' + start.status);
   const confirm = await api('POST', '/api/catalogue/' + bridge + '/order/confirm', {
-    body: { otp, line_items: [{ item_id: itemId, quantity: 1 }], location: 'test-locality' } });
+    body: { email: custEmail, otp, line_items: [{ item_id: itemId, quantity: 1 }], location: 'test-locality' } });
   const chitId = confirm.j && confirm.j.chit_id;
   chk('order placed → storefront chit minted', confirm.status === 200 && !!chitId, 'status ' + confirm.status + ' ' + S(confirm.j).slice(0, 120));
 
