@@ -260,6 +260,22 @@ router.get('/track-record', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Track record failed', message: safeErr(err) }); }
 });
 
+// ── COMMERCE LAYER — the commercial-instrument cluster + the end-to-end settlement chain (derive-not-enumerate). ──
+// GET /api/governance/instruments?incoterm=CIF&cross_border=1 — the cluster of EXIM instruments grouped by RISK covered.
+router.get('/instruments', auth, async (req, res) => {
+  try {
+    const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
+    res.json(require('../lib/instruments').resolveInstruments({ cross_border, incoterm: req.query.incoterm }));
+  } catch (err) { res.status(500).json({ error: 'Instruments failed', message: safeErr(err) }); }
+});
+// GET /api/governance/journey?incoterm=CIF&cross_border=1 — the ordered end-to-end settlement chain (partner + cover per stage).
+router.get('/journey', auth, async (req, res) => {
+  try {
+    const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
+    res.json(require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm }));
+  } catch (err) { res.status(500).json({ error: 'Journey failed', message: safeErr(err) }); }
+});
+
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
 // a connection.)
