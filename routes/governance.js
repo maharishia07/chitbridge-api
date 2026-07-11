@@ -275,6 +275,12 @@ router.get('/journey', auth, async (req, res) => {
     res.json(require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm }));
   } catch (err) { res.status(500).json({ error: 'Journey failed', message: safeErr(err) }); }
 });
+// GET /api/governance/commerce-standards — the commerce standards (Incoterms/UCP/FRM) as governed source-entities (b93).
+router.get('/commerce-standards', auth, async (req, res) => {
+  try {
+    res.json(await require('../lib/instruments').commerceStandards());
+  } catch (err) { res.status(500).json({ error: 'Commerce standards failed', message: safeErr(err) }); }
+});
 
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
