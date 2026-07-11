@@ -1,5 +1,7 @@
-// prove-verify.js — LIVE proof of the TRUST LADDER: declared → documented → verified (registry-checked). Run AFTER
-// b92.  node scripts/prove-verify.js
+// prove-verify.js — LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID
+// is accepted but is NOT "verified" — it is a format-checked claim (rung 'declared'). A malformed ID is refused (422).
+// The 'verified' rung is reserved for a real registry confirmation (set CB_KYB_PROVIDER + keys to make it real).
+// Run AFTER b92.  node scripts/prove-verify.js
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } };
@@ -7,24 +9,25 @@ async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'applicat
 const rungOf = (rd, doc) => { const it = ((rd.j && rd.j.clearances) || []).find(c => c.doc === doc); return it && it.rung; };
 
 (async () => {
-  console.log('== PROVE TRUST LADDER / MACHINE-VERIFY ==  ' + B + '\n');
+  console.log('== PROVE HONEST VERIFICATION ==  ' + B + '\n');
   const ts = Date.now().toString().slice(-6), email = 'ver-' + ts + '@test.com';
   const reg = await api('POST', '/api/entities/register', { body: { email } });
   const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } });
   const token = ver.j && ver.j.token;
   chk('login', !!token);
 
-  // 1 · VERIFIED — machine-check a valid IEC (10 alphanumeric) for exim-policy/iec_code
+  // 1 · a well-formed IEC is ACCEPTED — but NOT verified when no registry is connected (the honest default)
   const v = await api('POST', '/api/governance/verify', { token, body: { standard_key: 'exim-policy', doc_key: 'iec_code', id_type: 'iec', id_value: 'AAACR1234B' } });
-  chk('valid IEC verifies against the registry (hook)', v.status === 200, 'verified ' + (v.j && v.j.verified));
+  chk('well-formed IEC is accepted (200)', v.status === 200, 'method=' + (v.j && v.j.verdict && v.j.verdict.method));
+  chk('with NO registry connected it is method=format (honest)', v.j && v.j.verdict && v.j.verdict.method === 'format');
   let rd = await api('GET', '/api/governance/readiness', { token });
-  chk('iec_code rung is VERIFIED (registry-checked)', rungOf(rd, 'iec_code') === 'verified', rungOf(rd, 'iec_code'));
+  chk('→ rung is NOT verified — it is a DECLARED claim', rungOf(rd, 'iec_code') === 'declared', rungOf(rd, 'iec_code'));
 
-  // 2 · a bad ID is refused (not silently "met")
+  // 2 · a malformed ID is REFUSED (not silently accepted)
   const bad = await api('POST', '/api/governance/verify', { token, body: { standard_key: 'exim-policy', doc_key: 'hs_code', id_type: 'iec', id_value: '123' } });
-  chk('invalid registry ID is REFUSED (422)', bad.status === 422, 'status ' + bad.status);
+  chk('malformed registry ID is REFUSED (422)', bad.status === 422, 'status ' + bad.status);
 
-  // 3 · DOCUMENTED — a gathered doc backed by a chit is one rung below verified
+  // 3 · DOCUMENTED — a gathered doc backed by a chit id is a rung above a bare claim
   await api('POST', '/api/governance/compliance', { token, body: { standard_key: 'exim-policy', doc_key: 'hs_code', evidence_ref: '11111111-2222-3333-4444-555555555555', status: 'gathered' } });
   rd = await api('GET', '/api/governance/readiness', { token });
   chk('a document-backed clearance is DOCUMENTED', rungOf(rd, 'hs_code') === 'documented', rungOf(rd, 'hs_code'));
@@ -34,9 +37,10 @@ const rungOf = (rd, doc) => { const it = ((rd.j && rd.j.clearances) || []).find(
   rd = await api('GET', '/api/governance/readiness', { token });
   chk('a bare claim is DECLARED (lowest rung)', rungOf(rd, 'incoterms') === 'declared', rungOf(rd, 'incoterms'));
 
-  // 5 · the summary counts the rungs
-  chk('summary reports verified/documented counts', rd.j && rd.j.summary && rd.j.summary.verified >= 1 && rd.j.summary.documented >= 1,
+  // 5 · nothing is falsely counted as verified while no registry is connected
+  chk('summary reports ZERO verified (no false "verified")', rd.j && rd.j.summary && rd.j.summary.verified === 0,
     'verified=' + (rd.j && rd.j.summary && rd.j.summary.verified) + ' documented=' + (rd.j && rd.j.summary && rd.j.summary.documented));
+  console.log('\n  (connect CB_KYB_PROVIDER + keys → the same IEC call returns method=registry → rung "verified".)');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
   process.exit(0);
