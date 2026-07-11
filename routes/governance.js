@@ -208,6 +208,27 @@ router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Adopt failed', message: safeErr(err) }); }
 });
 
+// POST /api/governance/source — REGISTER a source as a sealed SOURCE-ENTITY + upload its typed content + stamp it.
+// One call = the runbook's "register entity → upload standard → stamp as source". Idempotent by source_key.
+// (Demo: auth-gated; production would gate this to a platform / source-authority scope.)
+router.post('/source', auth, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const out = await require('../lib/source').registerSource({
+      source_key: (b.source_key || '').trim(), title: b.title, facet: b.facet, kind: b.kind, template: b.template });
+    res.json({ message: 'Source registered & stamped', source: out });
+  } catch (err) { res.status(err.status || 500).json({ error: 'Register source failed', message: safeErr(err) }); }
+});
+
+// GET /api/governance/source/:key — view a source: its typed content + its owning source-entity (stable id + mutable name).
+router.get('/source/:key', auth, async (req, res) => {
+  try {
+    const s = await require('../lib/source').resolveSourceEntity(req.params.key);
+    if (!s) return res.status(404).json({ error: 'Not found', message: 'No such source' });
+    res.json(s);
+  } catch (err) { res.status(500).json({ error: 'Source read failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;

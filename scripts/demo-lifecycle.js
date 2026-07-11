@@ -26,13 +26,20 @@ const S = (o) => JSON.stringify(o || '');
 
   console.log('\n── DDL · define the sources & cast the mould ──────────────');
 
-  step(1, 'ISO 9001 — the quality standard as a source', '🔨');
-  step(2, 'EXIM — the trade standard as a source', '🔨');
-  line('(source-ENTITY registration is the next increment; today the rules live in the shared standard_source)');
-  const conf0 = await api('POST', '/api/governance/conformance', { token, body: { data: {}, scope: 'chit' } });
-  const defined = ((conf0.j && conf0.j.checked) || []).map(c => c.ref);
-  chk(defined.includes('iso-9001@v1'), 'ISO 9001 is defined and readable  → ' + (defined.join(', ') || '—'));
-  chk(defined.includes('exim-policy@v1'), 'EXIM is defined and readable');
+  step(1, 'Register ISO 9001 as a sealed source-entity (register + upload + stamp)', '✅');
+  const s1 = await api('POST', '/api/governance/source', { token, body: { source_key: 'iso-9001',
+    title: 'ISO 9001 — Quality management', facet: 'quality', kind: 'standard',
+    template: { required: ['quality_manual', 'document_control', 'internal_audit', 'management_review', 'corrective_action'], scope: 'entity' } } });
+  const e1 = (s1.j && s1.j.source && s1.j.source.entity) || {};
+  chk(s1.status === 200 && !!e1.identity_id, 'ISO 9001 → source-entity ' + (e1.bridge_id || '—') + '  "' + (e1.display_name || '') + '"');
+
+  step(2, 'Register EXIM as a sealed source-entity', '✅');
+  const s2 = await api('POST', '/api/governance/source', { token, body: { source_key: 'exim-policy',
+    title: 'EXIM — Foreign Trade policy', facet: 'trade', kind: 'standard',
+    template: { required: ['iec_code', 'hs_code', 'export_declaration', 'incoterms'], scope: 'chit' } } });
+  const e2 = (s2.j && s2.j.source && s2.j.source.entity) || {};
+  chk(s2.status === 200 && !!e2.identity_id, 'EXIM → source-entity ' + (e2.bridge_id || '—'));
+  line('stable identity + MUTABLE name → renaming a standard is now ONE field, no ripple');
 
   step(3, 'Royale Play — the brand catalogue source', '◐');
   line('brand source exists → beta-royale-play@v1');
@@ -41,7 +48,7 @@ const S = (o) => JSON.stringify(o || '');
   const bpr = await api('GET', '/api/governance/boilerplate/' + BP, { token });
   const bpj = bpr.j || {};
   chk(bpr.status === 200, 'the mould resolves  → ' + (bpj.label || '—'));
-  line('declares: ' + (bpj.sources || []).map(s => s.source_key + (s.facet ? ' (' + s.facet + ')' : '')).join('  ·  '));
+  line('declares: ' + (bpj.sources || []).map(s => (s.source_name || s.source_key) + (s.facet ? ' (' + s.facet + ')' : '')).join('  ·  '));
   line('locale:   ' + S(bpj.locale));
   chk(bpj.standards && bpj.standards.quality === 'iso-9001@v1' && bpj.standards.trade === 'exim-policy@v1',
     'the mould INHERITS both standards (declared, not global)');
