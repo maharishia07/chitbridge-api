@@ -270,9 +270,24 @@ router.post('/compliance', auth, async (req, res) => {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const b = req.body || {};
     await require('../lib/readiness').gatherDocument(entity_id, {
-      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: b.evidence_ref, valid_until: b.valid_until, status: b.status });
+      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: b.evidence_ref, valid_until: b.valid_until, status: b.status, verification: b.verification });
     res.json({ message: 'Clearance gathered', ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
   } catch (err) { res.status(err.status || 500).json({ error: 'Gather failed', message: safeErr(err) }); }
+});
+
+// POST /api/governance/verify — MACHINE-VERIFY a registry ID (IEC/GSTN/PAN) → the "verified" rung. Un-fakeable once the
+// live registry API is wired; today a format check (the hook). On success, records the clearance as gathered+verified.
+router.post('/verify', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const b = req.body || {};
+    const v = require('../lib/verify').verifyRegistryId(b.id_type, b.id_value);
+    if (!v.ok) return res.status(422).json({ error: 'Verification failed', message: v.note, verdict: v });
+    await require('../lib/readiness').gatherDocument(entity_id, {
+      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: v.value, valid_until: b.valid_until,
+      status: 'gathered', verification: { method: 'registry', id_type: v.id_type, checked: v.checked, note: v.note, verified_at: new Date().toISOString() } });
+    res.json({ message: 'Verified against registry', verdict: v, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+  } catch (err) { res.status(err.status || 500).json({ error: 'Verify failed', message: safeErr(err) }); }
 });
 
 module.exports = router;
