@@ -167,6 +167,21 @@ function assertPublicAllowed(active, plan) {
   if (!c.ok) { const e = new Error('public catalogue not available on this plan'); e.status = 403; throw e; }
 }
 
+// POST /api/governance/conformance — ADVISORY: check a process/chit's data against the ACTIVE canonical standards
+// (ISO 9000 quality + EXIM trade + …) assimilated into the boilerplate, and report contradictions (missing required
+// items). Read-only: computes a verdict, never mutates or blocks anything. This is the runtime "the standard actually
+// governs" surface — the light, deterministic form; an AI co-assist adds semantic judgement on top later.
+router.post('/conformance', auth, async (req, res) => {
+  try {
+    const data = (req.body && typeof req.body.data === 'object' && req.body.data) ? req.body.data : (req.body || {});
+    const scope = (req.body && typeof req.body.scope === 'string') ? req.body.scope : 'chit';
+    const verdict = await require('../lib/conformance').checkConformance(data, scope);
+    res.json(verdict);
+  } catch (err) {
+    res.status(500).json({ error: 'Conformance check failed', message: safeErr(err) });
+  }
+});
+
 module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;
