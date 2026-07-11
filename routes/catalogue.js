@@ -292,6 +292,19 @@ router.post('/:bridge_id/order/confirm',
       const summary_json = { line_item_count: line_items.length, total_value: Math.round(total * 100) / 100,
                              currency_code: entity.currency_code || 'INR', purpose: 'order', is_promotion: false,
                              customer_locality: custLocality || null };
+      // Assimilate the governance SEAM + advisory conformance onto the storefront chit — parity with /chits/send, so a
+      // STOREFRONT order carries the same full stamp (constitution · capability · work-pattern · N standards) as any
+      // other chit, PLUS a runtime conformance verdict. Governed by the SHOP (the selling entity). Best-effort: never
+      // blocks the order. (This is IN ADDITION to the per-line source governance already carried on each line_item.)
+      try {
+        const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: entity.identity_id });
+        if (cfg) summary_json.governed = { pattern: cfg._blueprint, capability: cfg._capability,
+          constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards };
+      } catch (_) { /* seam is best-effort */ }
+      try {
+        const v = await require('../lib/conformance').checkConformance({ ...summary_json, line_items }, 'chit');
+        summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing) };
+      } catch (_) { /* advisory is best-effort */ }
       const auto_subject = `Order from ${c.display_name} — ` +
         new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
       const all_recipients = [
