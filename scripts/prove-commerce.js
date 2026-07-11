@@ -27,6 +27,14 @@ async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'applicat
   const cargo = transit && transit.instruments.find(i => i.key === 'marine_cargo');
   chk('CIF → cargo insured by the SELLER (Incoterm routes it)', cargo && cargo.responsibility === 'seller', cargo && cargo.responsibility);
 
+  // 1b · FRM legitimacy — each trade risk maps onto a canonical FRM class (market/credit/liquidity/operational)
+  chk('cluster declares the FRM framework', inst.j && inst.j.framework === 'FRM');
+  chk('payment risk → FRM credit', payment && payment.frm_class === 'credit', payment && payment.frm_class);
+  chk('currency risk → FRM market', (cl.find(g => g.risk === 'currency') || {}).frm_class === 'market');
+  chk('price/commodity risk → FRM market (CTRM hedges)', (cl.find(g => g.risk === 'price') || {}).frm_class === 'market');
+  chk('transit risk → FRM operational', transit && transit.frm_class === 'operational', transit && transit.frm_class);
+  chk('liquidity risk → FRM liquidity', (cl.find(g => g.risk === 'liquidity') || {}).frm_class === 'liquidity');
+
   // 2 · the same lane on FOB flips the cargo responsibility to the buyer
   const fob = await api('GET', '/api/governance/instruments?incoterm=FOB&cross_border=1', { token });
   const fobCargo = ((fob.j.cluster.find(g => g.risk === 'transit') || {}).instruments || []).find(i => i.key === 'marine_cargo');
