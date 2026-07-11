@@ -16,7 +16,7 @@ const login = async () => { const ts = Date.now().toString().slice(-6) + Math.fl
 
   // 1 · the supplier sees its REQUIRED clearances (from its standards), all pending
   const rd0 = await api('GET', '/api/governance/readiness', { token: supplier.token });
-  const req0 = (rd0.j && rd0.j.items) || [];
+  const req0 = (rd0.j && rd0.j.clearances) || [];
   chk('supplier sees its required clearances', req0.length > 0, req0.length + ' documents · ' + (rd0.j && rd0.j.standards || []).join(', '));
   chk('all pending before gathering', rd0.j && rd0.j.summary && rd0.j.summary.percent === 0, 'percent ' + (rd0.j && rd0.j.summary && rd0.j.summary.percent));
 
@@ -43,7 +43,7 @@ const login = async () => { const ts = Date.now().toString().slice(-6) + Math.fl
     (pass.j && pass.j.supplier && pass.j.supplier.display_name) || '');
   chk('buyer sees the supplier as import-ready', pass.j && pass.j.summary && pass.j.summary.ready === true,
     'met ' + (pass.j && pass.j.summary && pass.j.summary.met) + '/' + (pass.j && pass.j.summary && pass.j.summary.total));
-  chk('passport shows STATUS only (no raw evidence dumped)', pass.j && pass.j.items && pass.j.items.every(x => !x.form),
+  chk('passport shows STATUS only (no raw evidence dumped)', pass.j && pass.j.clearances && pass.j.clearances.every(x => !x.form),
     'status-only projection');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
