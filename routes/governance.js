@@ -282,6 +282,30 @@ router.get('/commerce-standards', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Commerce standards failed', message: safeErr(err) }); }
 });
 
+// ── ENTITY TRADE PROFILE — individual-specific: trade mode + markets + sectors + adopted certs (b96). ──
+router.get('/profile', auth, async (req, res) => {
+  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/profile').getProfile(entity_id));
+  } catch (err) { res.status(500).json({ error: 'Profile failed', message: safeErr(err) }); }
+});
+router.put('/profile', auth, async (req, res) => {
+  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/profile').saveProfile(entity_id, req.body || {}));
+  } catch (err) { res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) }); }
+});
+// the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
+router.get('/profile/readiness', auth, async (req, res) => {
+  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/profile').resolveProfileReadiness(entity_id));
+  } catch (err) { res.status(500).json({ error: 'Profile readiness failed', message: safeErr(err) }); }
+});
+// the forward roadmap — which markets you could reach next and what to add
+router.get('/profile/path', auth, async (req, res) => {
+  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/profile').resolvePath(entity_id));
+  } catch (err) { res.status(500).json({ error: 'Path failed', message: safeErr(err) }); }
+});
+
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
 // a connection.)
