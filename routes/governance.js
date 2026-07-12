@@ -306,6 +306,23 @@ router.get('/profile/path', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Path failed', message: safeErr(err) }); }
 });
 
+// ── AI CO-ASSIST — INVOKED (never autonomous). Drafts a clearance document from the order/product context; returns a
+// draft for the human to confirm (not evidence until accepted). Meters per-entity usage (b99). ──
+router.post('/ai-draft', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const b = req.body || {};
+    res.json(await require('../lib/ai').draftDocument(entity_id, b.doc_type, b.context || {}));
+  } catch (err) { res.status(err.status || 500).json({ error: 'AI draft failed', message: safeErr(err) }); }
+});
+// per-entity AI spend (metering / charge-back)
+router.get('/ai-usage', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    res.json(await require('../lib/ai').usageSummary(entity_id));
+  } catch (err) { res.status(500).json({ error: 'AI usage failed', message: safeErr(err) }); }
+});
+
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
 // a connection.)
