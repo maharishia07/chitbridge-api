@@ -322,6 +322,12 @@ router.get('/ai-usage', auth, async (req, res) => {
     res.json(await require('../lib/ai').usageSummary(entity_id));
   } catch (err) { res.status(500).json({ error: 'AI usage failed', message: safeErr(err) }); }
 });
+// the AI skill INVENTORY — what the one co-assist can be invoked to do (id · category · kind · gate · label). The UI
+// reads this to place "✨ Draft with AI" wherever a skill's category applies. Single source of truth: lib/ai.js SKILLS.
+router.get('/ai-skills', auth, async (req, res) => {
+  try { res.json({ skills: require('../lib/ai').listSkills() }); }
+  catch (err) { res.status(500).json({ error: 'AI skills failed', message: safeErr(err) }); }
+});
 
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
