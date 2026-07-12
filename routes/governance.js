@@ -312,7 +312,7 @@ router.post('/ai-draft', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const b = req.body || {};
-    res.json(await require('../lib/ai').draftDocument(entity_id, b.doc_type, b.context || {}));
+    res.json(await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {}));
   } catch (err) { res.status(err.status || 500).json({ error: 'AI draft failed', message: safeErr(err) }); }
 });
 // per-entity AI spend (metering / charge-back)
