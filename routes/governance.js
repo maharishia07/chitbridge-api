@@ -313,7 +313,12 @@ router.post('/ai-draft', auth, async (req, res) => {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const b = req.body || {};
     res.json(await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {}));
-  } catch (err) { res.status(err.status || 500).json({ error: 'AI draft failed', message: safeErr(err) }); }
+  } catch (err) {
+    // 4xx are intentional, client-safe reasons (gate 402/429 · unknown skill 400 · not-connected 503) → show them;
+    // 5xx keep the generic message (no internal/DB text leaks).
+    const st = err.status || 500;
+    res.status(st).json({ error: 'AI draft failed', message: st < 500 ? (err.message || safeErr(err)) : safeErr(err) });
+  }
 });
 // per-entity AI spend (metering / charge-back)
 router.get('/ai-usage', auth, async (req, res) => {
