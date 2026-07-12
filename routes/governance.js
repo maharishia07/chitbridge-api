@@ -293,6 +293,18 @@ router.put('/profile', auth, async (req, res) => {
     res.json(await require('../lib/profile').saveProfile(entity_id, req.body || {}));
   } catch (err) { res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) }); }
 });
+// TRADE DOCUMENTS VAULT — recurring inputs (identity·signatory·registrations·banking·logistics) that pre-fill forms.
+// GET the schema (what to ask); PUT saves the vault (whitelisted in lib/profile). Vault values also ride in GET /profile.
+router.get('/vault-schema', auth, async (req, res) => {
+  try { res.json({ schema: require('../lib/profile').VAULT_SCHEMA }); }
+  catch (err) { res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) }); }
+});
+router.put('/profile/vault', auth, async (req, res) => {
+  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const b = req.body || {};
+    res.json(await require('../lib/profile').saveVault(entity_id, b.vault || b));
+  } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: (err.status && err.status < 500) ? (err.message || safeErr(err)) : safeErr(err) }); }
+});
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
 router.get('/profile/readiness', auth, async (req, res) => {
   try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
