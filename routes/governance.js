@@ -303,7 +303,7 @@ router.put('/profile/vault', auth, async (req, res) => {
   try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const b = req.body || {};
     res.json(await require('../lib/profile').saveVault(entity_id, b.vault || b));
-  } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: (err.status && err.status < 500) ? (err.message || safeErr(err)) : safeErr(err) }); }
+  } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
 router.get('/profile/readiness', auth, async (req, res) => {
