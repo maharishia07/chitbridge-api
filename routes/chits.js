@@ -396,6 +396,20 @@ router.post('/send',
             valid_until: c.valid_until || null, verified_at: c.verified_at || null, verified_by: c.verified_by || null }));
         if (held.length) folded_clearances = { folded_at: new Date().toISOString(), items: held };
       } catch (_) { /* best-effort */ }
+      // ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
+      //    onto the buyer's copy: payment/transit/currency/credit cover by risk, and which is already evidenced on-rail
+      //    (e.g. performance risk = the supplier's on-rail track record). Framework, not a secured instrument — honest.
+      //    Buyer sees "💳 Commercial cover" beside "🛡 Supplier clearances", frozen. Best-effort — never blocks the send. ──
+      let folded_commercial = null;
+      try {
+        if (folded_clearances) {
+          const inc = (summary && summary.incoterm) || 'CIF';
+          const ci = require('../lib/instruments').resolveInstruments({ cross_border: 1, incoterm: inc });
+          const areas = (ci.cluster || []).map(g => ({ label: g.label, frm_class: g.frm_class,
+            on_rail: !!g.covered_onrail, instruments: (g.instruments || []).map(i => i.name) }));
+          if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
+        }
+      } catch (_) { /* best-effort */ }
       const summary_json = {
         ...summary,
         currency_code,
@@ -407,7 +421,8 @@ router.post('/send',
         ...(copyPolicy ? { copy_policy: copyPolicy } : {}),
         ...(retention ? { retention } : {}),
         ...(governed ? { governed } : {}),
-        ...(folded_clearances ? { clearances: folded_clearances } : {})
+        ...(folded_clearances ? { clearances: folded_clearances } : {}),
+        ...(folded_commercial ? { commercial: folded_commercial } : {})
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
