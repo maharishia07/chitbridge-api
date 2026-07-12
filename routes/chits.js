@@ -384,6 +384,18 @@ router.post('/send',
         const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
         if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
       } catch (_) { /* seam is best-effort */ }
+      // ── ORDER-BINDING: fold the sender's HELD clearances into the chit (per-copy snapshot, FROZEN). The buyer sees, on
+      //    THIS order, exactly the supplier's clearances met + their assurance rung; later changes never alter this copy.
+      //    Best-effort — never blocks the send. ──
+      let folded_clearances = null;
+      try {
+        const rd = await require('../lib/readiness').resolveReadiness(sender_id);
+        const held = (rd.clearances || [])
+          .filter(c => c.status === 'gathered' || c.status === 'expiring')
+          .map(c => ({ standard: c.standard, doc: c.doc, title: c.title, rung: c.rung,
+            valid_until: c.valid_until || null, verified_at: c.verified_at || null, verified_by: c.verified_by || null }));
+        if (held.length) folded_clearances = { folded_at: new Date().toISOString(), items: held };
+      } catch (_) { /* best-effort */ }
       const summary_json = {
         ...summary,
         currency_code,
@@ -394,7 +406,8 @@ router.post('/send',
         forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
         ...(copyPolicy ? { copy_policy: copyPolicy } : {}),
         ...(retention ? { retention } : {}),
-        ...(governed ? { governed } : {})
+        ...(governed ? { governed } : {}),
+        ...(folded_clearances ? { clearances: folded_clearances } : {})
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
