@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS usage_ledger (
 );
 CREATE INDEX IF NOT EXISTS usage_ledger_entity_meter ON usage_ledger (entity_id, meter);
 ALTER TABLE usage_ledger ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_entity ON usage_ledger;
 CREATE POLICY rls_entity ON usage_ledger
   USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
   WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS entity_wallet (
   updated_at   timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE entity_wallet ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_entity ON entity_wallet;
 CREATE POLICY rls_entity ON entity_wallet
   USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
   WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
