@@ -150,6 +150,9 @@ app.use('/api/notifications', require('./routes/notifications'));
 // ── Assistant tier-1 LLM proxy (STUB — model key stays server-side; client falls through to its library floor) ───
 app.use('/api/assist', require('./routes/assist'));
 
+// ── Capture connector — inbound channels (WhatsApp/email/web) → capture → AI structure → confirm → chit (b104) ───
+app.use('/api/capture', require('./routes/capture'));
+
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
 
