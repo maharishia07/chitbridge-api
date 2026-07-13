@@ -1222,12 +1222,16 @@ router.put('/:chit_id/status',
 //   internal → author only · external → all chit participants · dispute → the dispute roster). One logical message_id,
 //   replicated per audience entity; reads are RLS-scoped to "my own copies". Pass a tx `db` client to stay atomic.
 async function postMessageCopies(msg, db) {
-  const runner = db ? (t, p) => db.query(t, p) : query;
   const message_id = uuidv4();
-  const r = await runner(
+  // ROOT FIX (reviewer 2026-07-13): the deliver definer must run with the sender's TRUSTED context set, so it can
+  // verify the claimed sender = the caller (b50 pattern) instead of trusting the parameter. When no tx client is
+  // passed, establish withEntity(sender) here (all callers pass sender = their authenticated entity_id).
+  const call = (runner) => runner(
     `SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9) AS created_at`,
     [message_id, msg.chit_id, msg.sender_entity_id, msg.sender_display_name || null,
      msg.thread_type, msg.message_text, msg.msg_type || 'info', !!msg.is_dispute, msg.dispute_id || null]);
+  const r = db ? await call((t, p) => db.query(t, p))
+              : await withEntity(msg.sender_entity_id, (c) => call((t, p) => c.query(t, p)));
   return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
 }
 
