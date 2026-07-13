@@ -53,6 +53,15 @@ const rungFor = (rd, std, doc) => { const it = ((rd && rd.clearances) || []).fin
   const ok = await api('POST', '/api/chits/' + chitId + '/messages', { token: buy.token, body: { thread_type: 'external', message_text: 'hello' } });
   chk('  └ a normal participant message still posts (no regression)', ok.status === 200 || ok.status === 201, 'status ' + ok.status);
 
+  // ── S1 — a PUBLIC simulator "lead" token must NOT authenticate a platform route (auth bypass → AI spend). ──
+  const lead = await api('POST', '/api/simulator/lead', { body: { name: 'attacker', email: 'a' + ts + '@x.com' } });
+  const simTok = lead.j && lead.j.token;
+  chk('S1 · simulator issues a lead token', !!simTok, 'got token=' + !!simTok);
+  const bypass = await api('POST', '/api/governance/ai-draft', { token: simTok, body: { skill_id: 'hs-code', context: { product: { description: 'x' } } } });
+  chk('S1 · sim_lead token CANNOT call /ai-draft (401, no AI spend)', bypass.status === 401, 'status ' + bypass.status);
+  const bypass2 = await api('GET', '/api/governance/ai-usage', { token: simTok });
+  chk('S1 · sim_lead token rejected on any authed route (401)', bypass2.status === 401, 'status ' + bypass2.status);
+
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
   process.exit(0);
 })().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });

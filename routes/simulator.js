@@ -73,9 +73,12 @@ router.post('/lead', async (req, res) => {
       [name, email, org]
     );
     const leadId = ins.rows[0].id;
+    // S1 (reviewer 2026-07-13) — a marketing tour lead is NOT a platform credential. NEVER sign it with the identity
+    // secret (JWT_SECRET) or it becomes a valid platform token. Use a SEPARATE secret so auth.js can never verify it.
+    const SIM_SECRET = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : 'sim-lead-dev-only');
     const token = jwt.sign(
       { kind: 'sim_lead', leadId, email },
-      process.env.JWT_SECRET,
+      SIM_SECRET,
       { expiresIn: process.env.JWT_TTL || '7d' }
     );
     notify(

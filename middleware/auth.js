@@ -20,6 +20,13 @@ const auth = async (req, res, next) => {
     // algorithm-confusion ambiguity (e.g. a token claiming a different alg).
     const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
+    // S1 (reviewer 2026-07-13) — FAIL CLOSED on any token that is not a REAL identity. The signature being valid is not
+    // enough: a non-identity token (e.g. a marketing `sim_lead` token that happened to be signed with JWT_SECRET) must NOT
+    // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
+    if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
+      return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
+    }
+
     // Attach identity to request
     req.identity = {
       identity_id:      decoded.identity_id,

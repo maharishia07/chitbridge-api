@@ -52,8 +52,18 @@ router.get('/:id', auth, async (req, res) => {
     // PER-ENTITY: getBlob is entity-scoped (RLS) — it returns ONLY the caller's own copy, else nothing. No shared read.
     const a = await storage.getBlob(req.params.id, entity_id);
     if (!a) return res.status(404).json({ error: 'Not found' });
-    res.setHeader('Content-Type', a.mime || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${(a.name || 'file').replace(/"/g, '')}"`);
+    // S2 (reviewer 2026-07-13) — stored-XSS defence. The MIME is uploader-supplied, so we do NOT let the browser render
+    // arbitrary types on our origin. Only image/* and application/pdf may render INLINE; everything else is forced to
+    // DOWNLOAD (attachment). nosniff stops the browser second-guessing the declared type. A text/html payload can no
+    // longer execute a script on the API origin.
+    const rawMime = String(a.mime || 'application/octet-stream').toLowerCase();
+    // NOTE: SVG is deliberately EXCLUDED — image/svg+xml can carry inline <script>, so it is forced to download.
+    const renderable = /^image\/(png|jpe?g|gif|webp|bmp)$/.test(rawMime) || rawMime === 'application/pdf';
+    const safeMime = renderable ? rawMime : 'application/octet-stream';
+    const safeName = (a.name || 'file').replace(/[\r\n"\\]/g, '');
+    res.setHeader('Content-Type', safeMime);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', `${renderable ? 'inline' : 'attachment'}; filename="${safeName}"`);
     res.setHeader('Cache-Control', 'private, max-age=86400');
     res.send(a.data);
   } catch (err) {
