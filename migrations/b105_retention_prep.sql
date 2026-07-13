@@ -22,9 +22,14 @@ UPDATE chit_status SET retire_at = retention_expires_at WHERE retire_at IS NULL;
 ALTER TABLE chit_status ALTER COLUMN retire_at SET DEFAULT (now() + interval '90 days');
 CREATE INDEX IF NOT EXISTS cs_retire_due ON chit_status (retire_at) WHERE deleted_at IS NULL AND retired_at IS NULL;
 
--- configured grace period (NOT hard-coded) — one row.
+-- configured grace period (NOT hard-coded) — one row. RLS POSTURE: this is a GLOBAL platform singleton (not entity data),
+-- so it is intentionally WITHOUT RLS (a per-entity policy would be wrong and would block the trigger from reading it).
+-- cb_app needs SELECT so the dispute-floor trigger can read grace_days in any context.
 CREATE TABLE IF NOT EXISTS retention_config (id int PRIMARY KEY DEFAULT 1, grace_days int NOT NULL DEFAULT 30, soft_delete_days int NOT NULL DEFAULT 7, CHECK (id = 1));
 INSERT INTO retention_config (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+GRANT SELECT ON retention_config TO cb_app;
+-- NOTE: chit_status (which gains retire_at/retired_at above) already carries ENABLE+FORCE ROW LEVEL SECURITY from the
+-- per-copy work — the new columns are covered WITH RLS. No RLS change to chit_status here (only additive columns).
 
 -- 4 · the dispute FLOOR, applied as an isolated trigger (does NOT touch the security-critical resolve definer).
 -- When a dispute copy resolves, lift that copy's retire_at to MAX(retention_end, resolved_at + grace). MAX = a floor.
