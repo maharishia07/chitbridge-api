@@ -365,8 +365,10 @@ router.post('/compliance', auth, async (req, res) => {
   try {
     const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
     const b = req.body || {};
+    // T1 (reviewer 2026-07-13): a self-gathered document is at most `documented`/`declared`. The verification stamp is
+    // the PLATFORM's own attestation and is NEVER accepted from the client here — only /verify may set it. Stripped.
     await require('../lib/readiness').gatherDocument(entity_id, {
-      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: b.evidence_ref, valid_until: b.valid_until, status: b.status, verification: b.verification });
+      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: b.evidence_ref, valid_until: b.valid_until, status: b.status });
     res.json({ message: 'Clearance gathered', ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
   } catch (err) { res.status(err.status || 500).json({ error: 'Gather failed', message: safeErr(err) }); }
 });
@@ -382,7 +384,8 @@ router.post('/verify', auth, async (req, res) => {
     if (!v.ok) return res.status(422).json({ error: 'Verification failed', message: v.note, verdict: v });
     await require('../lib/readiness').gatherDocument(entity_id, {
       standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: v.value, valid_until: b.valid_until,
-      status: 'gathered', verification: { method: v.method, id_type: v.id_type, checked: v.checked, provider: v.provider || null,
+      status: 'gathered', trusted: true,   // T1 — ONLY this platform path may set a verification stamp
+      verification: { method: v.method, id_type: v.id_type, checked: v.checked, provider: v.provider || null,
         registry: v.registry || null, note: v.note, verified_at: new Date().toISOString() } });
     const msg = v.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
     res.json({ message: msg, verdict: v, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });

@@ -1259,6 +1259,17 @@ router.post('/:chit_id/messages',
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
       const isDispute = req.body.is_dispute === true || req.body.is_dispute === 'true';
       const disputeId = req.body.dispute_id || null;
+      // M1 (reviewer 2026-07-13) — a dispute message needs MORE than chit-participation: the sender must be a PARTY to
+      // THIS dispute, and the dispute must belong to THIS chit. RLS makes it one query — under withEntity(sender) the
+      // policy returns only the sender's OWN chit_disputes copy, so a returned row proves BOTH roster membership AND
+      // chit-ownership. No row → 403 (blocks non-party injection AND cross-chit dispute_id injection via the definer).
+      if (isDispute && disputeId) {
+        const party = await withEntity(entity_id, (db) => db.query(
+          `SELECT 1 FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id]));
+        if (party.rows.length === 0) {
+          return res.status(403).json({ error: 'Forbidden', message: 'Not a party to this dispute' });
+        }
+      }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
       let senderName = display_name;
       if (isDispute && req.identity.parent_entity_id) {
