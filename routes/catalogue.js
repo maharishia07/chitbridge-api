@@ -14,14 +14,14 @@ const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delive
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 const container = require('../lib/container');              // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
 
-const genBridge = () => {
+const genBridge = () => {   // S4 — CSPRNG (bridge ids are public, but no reason to use a weak PRNG)
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let id = 'CB';
-  for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 8; i++) id += chars[require('crypto').randomInt(0, chars.length)];
   return id;
 };
-// Customer (storefront) OTP: fixed 123123 in dev (distinct from the entity dev OTP 123456); random in real prod.
-const genOTP = () => ((process.env.DEV_OTP || '').trim() ? '123123' : Math.floor(100000 + Math.random() * 900000).toString());
+// Customer (storefront) OTP: fixed 123123 in dev (distinct from the entity dev OTP 123456); CSPRNG in real prod (S4).
+const genOTP = () => ((process.env.DEV_OTP || '').trim() ? '123123' : require('crypto').randomInt(100000, 1000000).toString());
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 // F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email

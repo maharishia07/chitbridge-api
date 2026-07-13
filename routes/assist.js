@@ -50,6 +50,9 @@ function softIdentity(req) {
     const h = req.headers.authorization;
     if (!h || !h.startsWith('Bearer ')) return null;
     const d = jwt.verify(h.split(' ')[1], process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    // S1b (reviewer 2026-07-13) — a valid signature is not an identity. Reject any token that isn't a real entity/actor
+    // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
+    if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
     return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null };
   } catch (_) { return null; }
 }

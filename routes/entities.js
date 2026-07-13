@@ -21,7 +21,9 @@ const generateBridgeId = () => {
 
 // DEV_OTP in Railway env = fixed OTP for testing e.g. 123456
 // No DEV_OTP = random 6-digit OTP
-const generateOTP = () => (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
+// S4 (reviewer 2026-07-13) — OTP from a CSPRNG (crypto.randomInt), not Math.random() (whose V8 state is recoverable,
+// letting an attacker predict a victim's OTP). DEV_OTP still overrides for team testing when explicitly set.
+const generateOTP = () => (process.env.DEV_OTP || '').trim() || require('crypto').randomInt(100000, 1000000).toString();
 
 // (F2) The OTP email sender now lives in lib/notify.js (`sendOtpEmail`), shared with the customer order flow.
 

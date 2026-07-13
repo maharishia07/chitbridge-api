@@ -85,13 +85,18 @@ createPool().then(p => {
 //   • prod default = off  (a guard must NEVER hard-block production traffic)
 //   • dev/CI default = warn (visible during the incremental route migration without breaking un-migrated routes)
 //   • set RLS_GUARD=throw in CI (and locally once all Direct-group routes are on withEntity) to ENFORCE it.
-const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'state_log', 'catalogue_items', 'customer_list', 'folder', 'cb_attachment', 'chit_disputes'];
+// G1 (reviewer 2026-07-13) — complete the tenant-table list: the guard previously OMITTED chit_messages and the newest
+// (most sensitive) tables entity_compliance / entity_profile (vault) / entity_wallet (money) / usage_ledger.
+const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'chit_messages', 'state_log', 'catalogue_items',
+  'customer_list', 'folder', 'cb_attachment', 'chit_disputes', 'entity_compliance', 'entity_profile', 'entity_wallet', 'usage_ledger'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {
   const explicit = (process.env.RLS_GUARD || '').toLowerCase();
   if (explicit === 'off' || explicit === 'warn' || explicit === 'throw') return explicit;
-  return process.env.NODE_ENV === 'production' ? 'off' : 'warn';   // safe defaults; override via RLS_GUARD
+  // G1 — do NOT default to 'off' in production (that gave comfort where it didn't run). 'warn' logs context-free tenant
+  // queries as a security signal without breaking; set RLS_GUARD=throw to hard-fail, or =off to silence.
+  return 'warn';
 }
 
 function rlsGuardCheck(text) {
