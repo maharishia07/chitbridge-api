@@ -1,5 +1,7 @@
-// prove-security-fixes.js — LIVE proof of the 2026-07-13 reviewer security fixes (T1, T4, M1, NEW-1).
-// These assert the GUARDS (they go RED on the exploit). node scripts/prove-security-fixes.js
+// prove-security-fixes.js — LIVE (API) proof of the reviewer security fixes: T1 · T4 · M1 · S1.
+// These run against the live API and assert the GUARDS (they go RED on the exploit). node scripts/prove-security-fixes.js
+// NOTE (reviewer 2026-07-14): the DEFINER-level guards — NEW-1 · M2 · M3/ROOT — are NOT reachable via the API (the route
+// guards fire first), so they live in scripts/prove-definer-guards.js (DB-direct). This file no longer claims them.
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : ''))); };
