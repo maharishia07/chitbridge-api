@@ -20,13 +20,15 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   else log.warn('weak JWT_SECRET', { reason: msg + ' — set a strong JWT_SECRET before any real deploy' });
 }
 
-// Fixed test OTP guard. DEV_OTP pins every OTP to a constant (e.g. 123456) for testing — a critical auth hole if
-// it ever reaches production. Allowed in dev/UAT for now (the team uses 123456); MUST be unset before prod.
-if (process.env.DEV_OTP) {
-  const msg = 'DEV_OTP is set — OTPs are FIXED (testing only)';
-  if (process.env.NODE_ENV === 'production') { log.critical('boot aborted', { reason: msg + ' — unset DEV_OTP before production' }); process.exit(1); }
-  else log.warn('fixed test OTP active', { reason: msg + ' — make OTPs random (unset DEV_OTP) before the next state' });
+// Fixed test OTP guard — SECURE BY DEFAULT (reviewer GAP 2, 2026-07-14). The old guard depended on NODE_ENV being
+// correct on every host forever, and it was wrong on the only host that matters. Inverted: DEV_OTP pins every OTP to a
+// constant (a critical auth hole), so it is now REFUSED unless the insecure state is asked for EXPLICITLY via
+// ALLOW_DEV_OTP=true. To keep testing with the fixed OTP: set BOTH DEV_OTP and ALLOW_DEV_OTP=true. To go secure: unset DEV_OTP.
+if (process.env.DEV_OTP && process.env.ALLOW_DEV_OTP !== 'true') {
+  log.critical('boot aborted', { reason: 'DEV_OTP is set (fixed OTP = auth hole) without explicit ALLOW_DEV_OTP=true — unset DEV_OTP, or set ALLOW_DEV_OTP=true to opt in to test mode' });
+  process.exit(1);
 }
+if (process.env.DEV_OTP) log.warn('fixed test OTP active', { reason: 'DEV_OTP + ALLOW_DEV_OTP=true — OTPs are FIXED (testing only); unset both before real users' });
 
 // Trust Railway's proxy
 app.set('trust proxy', 1);
