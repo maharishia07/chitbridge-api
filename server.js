@@ -153,6 +153,9 @@ app.use('/api/assist', require('./routes/assist'));
 // ── Capture connector — inbound channels (WhatsApp/email/web) → capture → AI structure → confirm → chit (b104) ───
 app.use('/api/capture', require('./routes/capture'));
 
+// ── "Know your business" value panel — Yourself/Position/Risk (free, computed from owned data) + Field (metered, b107) ───
+app.use('/api/kyb', require('./routes/kyb'));
+
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
 
