@@ -156,6 +156,9 @@ app.use('/api/capture', require('./routes/capture'));
 // ── "Know your business" value panel — Yourself/Position/Risk (free, computed from owned data) + Field (metered, b107) ───
 app.use('/api/kyb', require('./routes/kyb'));
 
+// ── Authority-forms engine — define → resolve (field×source-precedence + provenance) → issue (freeze) → sign (b108) ───
+app.use('/api/forms', require('./routes/forms'));
+
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
 
