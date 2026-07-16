@@ -38,5 +38,9 @@ router.get('/instances/:id', auth, async (req, res) => {
 router.post('/instances/:id/sign', auth, async (req, res) => {
   try { res.json(await forms.signForm(entityId(req), req.params.id, req.body || {})); } catch (err) { fail(res, err, 'Sign form failed'); }
 });
+// transfer — file the issued form onto a chit as a per-copy attachment (rides the rail). body: { chit_id }
+router.post('/instances/:id/attach', auth, async (req, res) => {
+  try { res.json(await forms.attachToChit(entityId(req), req.params.id, (req.body || {}).chit_id, req.identity.identity_id)); } catch (err) { fail(res, err, 'Attach form failed'); }
+});
 
 module.exports = router;

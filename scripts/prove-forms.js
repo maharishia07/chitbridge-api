@@ -67,6 +67,16 @@ const field = (resolved, id) => ((resolved && resolved.fields) || []).find((f) =
       chk('SIGN · signs with the vault signatory, stamps signed_at', sign1.status === 200 && sign1.j.signed_at && sign1.j.signatory && sign1.j.signatory.name === 'A. Narayanan', 'signed_at=' + (sign1.j && sign1.j.signed_at));
       const sign2 = await api('POST', '/api/forms/instances/' + formId + '/sign', { token: me.token, body: {} });
       chk('SIGN · refuses to double-sign (409)', sign2.status === 409, 'status=' + sign2.status);
+
+      // ── TRANSFER · file the issued form onto a chit as a per-copy attachment ──
+      const carry = await api('POST', '/api/chits/send', { token: me.token, body: { recipients: [{ name: 'self', role: 'to' }], purpose: 'general', manual_subject: 'carry-' + ts, line_items: [] } });
+      const carryId = carry.j && (carry.j.chit_id || (carry.j.chit && carry.j.chit.chit_id));
+      if (carryId) {
+        const at = await api('POST', '/api/forms/instances/' + formId + '/attach', { token: me.token, body: { chit_id: carryId } });
+        chk('ATTACH · issued form files onto the chit as a per-copy attachment', at.status === 200 && !!at.j.attachment_id, 'att=' + String(at.j && at.j.attachment_id || '').slice(0, 8));
+        const bad = await api('POST', '/api/forms/instances/' + formId + '/attach', { token: me.token, body: { chit_id: '00000000-0000-0000-0000-000000000000' } });
+        chk('ATTACH · refuses a chit the entity is not a participant on (403)', bad.status === 403, 'status=' + bad.status);
+      } else { skip('ATTACH tests', 'could not mint a carrier chit'); }
     }
   }
 

@@ -13,8 +13,11 @@ CREATE TABLE IF NOT EXISTS form_instance (
   ready        boolean NOT NULL DEFAULT true,
   signatory    jsonb,                          -- {name, designation} — set on sign
   signed_at    timestamptz,                    -- platform-stamped at sign time
+  transfers    jsonb NOT NULL DEFAULT '[]'::jsonb,   -- [{chit_id, attachment_id, at}] — filed onto the rail (per-copy attachment)
   created_at   timestamptz NOT NULL DEFAULT now()
 );
+-- idempotent: if the table was created by an earlier run of b108 (before the transfers column was added), add it now.
+ALTER TABLE form_instance ADD COLUMN IF NOT EXISTS transfers jsonb NOT NULL DEFAULT '[]'::jsonb;
 CREATE INDEX IF NOT EXISTS form_instance_entity ON form_instance (entity_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS form_instance_ctx    ON form_instance (entity_id, context_ref);
 ALTER TABLE form_instance ENABLE ROW LEVEL SECURITY;
