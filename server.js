@@ -106,6 +106,11 @@ const assistLimiter = rateLimit({
 });
 app.use('/api/assist', assistLimiter);
 
+// ── Idempotency (offline outbox, Phase 2) ─────────────────────
+// Opt-in per request (Idempotency-Key header) + self-healing (no-op until b109 is run). Placed before the routers so a
+// replayed mutation short-circuits to the recorded response and never re-executes the handler. Non-mutating verbs pass through.
+app.use('/api', require('./middleware/idempotency'));
+
 // ── Routes ───────────────────────────────────────────────────
 const entitiesRouter    = require('./routes/entities');
 const connectionsRouter = require('./routes/connections');
