@@ -340,9 +340,10 @@ router.get('/ai-usage', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'AI usage failed', message: safeErr(err) }); }
 });
 // the AI skill INVENTORY — what the one co-assist can be invoked to do (id · category · kind · gate · label). The UI
-// reads this to place "✨ Draft with AI" wherever a skill's category applies. Single source of truth: lib/ai.js SKILLS.
+// reads this to place "✨ Draft with AI" wherever a skill's category applies. Single source of truth: the ai_skill TABLE
+// (F5), self-healing to the lib/ai.js SEED until b110 is run.
 router.get('/ai-skills', auth, async (req, res) => {
-  try { res.json({ skills: require('../lib/ai').listSkills() }); }
+  try { res.json({ skills: await require('../lib/ai').listSkills() }); }
   catch (err) { res.status(500).json({ error: 'AI skills failed', message: safeErr(err) }); }
 });
 
