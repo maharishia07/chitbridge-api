@@ -30,46 +30,18 @@ router.get('/my', auth, async (req, res) => {
 router.post('/create-default', auth, async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
-
-    // Check not already created
-    const existing = await query(
-      `SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND status = 'active'`,
-      [entity_id]
-    );
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: 'Schema already exists', message: 'Entity already has a schema' });
-    }
-
-    // Create schema
-    const schema = await query(
-      `INSERT INTO entity_schemas (entity_id, schema_name, schema_type, source, status, is_default)
-       VALUES ($1, 'Product Schema', 'product', 'manual', 'active', true)
-       RETURNING *`,
-      [entity_id]
-    );
-    const schema_id = schema.rows[0].schema_id;
-
-    // Insert three default fields
-    await query(
-      `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, min_value, display_order)
-       VALUES
-         ($1, 'Product', 'product', 'text',   true, null, 1),
-         ($1, 'Quantity', 'quantity', 'number', true, 1,    2),
-         ($1, 'Price',    'price',    'number', true, 0,    3)`,
-      [schema_id]
-    );
-
-    // Fetch with fields
+    // ONE implementation (also called at mint) — idempotent: returns the existing active schema instead of 400.
+    const r = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
+    if (r.error || !r.schema_id) return res.status(500).json({ error: 'Failed to create schema', message: r.error || 'no schema' });
     const result = await query(
       `SELECT es.*, json_agg(sf ORDER BY sf.display_order) as fields
        FROM entity_schemas es
        JOIN schema_fields sf ON sf.schema_id = es.schema_id
        WHERE es.schema_id = $1
        GROUP BY es.schema_id`,
-      [schema_id]
+      [r.schema_id]
     );
-
-    res.json({ message: 'Schema created', schema: result.rows[0] });
+    res.json({ message: r.created ? 'Schema created' : 'Schema already exists', schema: result.rows[0] });
   } catch (err) {
     console.error('Schema create error:', err.message);
     res.status(500).json({ error: 'Failed to create schema', message: safeErr(err) });

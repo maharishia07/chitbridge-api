@@ -175,6 +175,10 @@ router.post('/verify',
         }
       } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
 
+      // BOOTSTRAP the entity's default schema so its catalogue/compose works immediately (no 404 for entity #2).
+      // Reusable + non-fatal; the governed mint path will call the same fn once unification lands (Q2).
+      try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (_) {}
+
       // 7 days JWT — longer session for testing
       const token = jwt.sign(
         { identity_id: identity.identity_id, bridge_id: identity.bridge_id,
