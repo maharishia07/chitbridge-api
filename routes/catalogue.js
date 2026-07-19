@@ -186,6 +186,85 @@ router.get('/network-store/:networkId', async (req, res) => {
   }
 });
 
+// Mint a co-held 2-party chit (sender→receiver) server-side, carrying a trace edge — modelled on emitSignalChit.
+// Used to create the ORDER chit and each fulfilment FRAGMENT without a user token (the network acting as itself).
+async function deliverEdge({ sender, receiver, chit_id, subject, trace, business, status }) {
+  const all_recipients = [
+    { entity_id: sender.id, bridge_id: sender.bridge_id, display_name: sender.display_name, role: 'sender' },
+    { entity_id: receiver.id, bridge_id: receiver.bridge_id, display_name: receiver.display_name, role: 'receiver' },
+  ];
+  const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose: 'order', is_promotion: false, forwarded_from: null, trace };
+  const headerCommon = { sender_entity_id: sender.id, sender_entity_bridge_id: sender.bridge_id, sender_entity_display_name: sender.display_name,
+    all_recipients, purpose: 'order', auto_subject: subject, manual_subject: subject, summary_json,
+    schema_version: null, schema_id: null, created_by_actor_id: sender.id, detail_type: 'order', line_item_count: 0, total_value: 0, currency_code: 'INR' };
+  const copies = [
+    { ...headerCommon, business_json: business, entity_id: sender.id, direction: 'sent', role: 'Act', current_status: 'delivered', priority_flag: 'normal',
+      log: { action: 'created', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: subject } },
+    { ...headerCommon, business_json: business, entity_id: receiver.id, direction: 'received', role: 'Act', current_status: status || 'pending', priority_flag: 'normal',
+      log: { action: 'delivered', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: status || 'pending', detail: subject } },
+  ];
+  await withEntity(sender.id, (dbx) => dbx.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(copies)]));
+}
+
+// ── Network order (finish the loop): a customer completes an order → ONE order chit to the network operator (the
+//    common ORDER_ID the customer sees), then SILENT per-store fragments (operator → each fulfilling store,
+//    parents:[ORDER_ID]). The customer co-holds only the order, so the fragments/stores are invisible to them; the
+//    operator co-holds all and can walk ORDER_ID forward to see them converge. Dev-gated (server acts as the
+//    network); routed purely from public catalogue data (item→store = entity_id, item→operator = item_data.operator). ──
+router.post('/network-store/:networkId/order', async (req, res) => {
+  try {
+    const isDev = !!(process.env.DEV_OTP || '').trim() || String(process.env.NODE_ENV || '').toLowerCase() === 'development';
+    if (!isDev) return res.status(403).json({ error: 'Disabled', message: 'Network order routing is dev-only for now.' });
+    const nid = String(req.params.networkId || '').trim();
+    const cart = Array.isArray(req.body.items) ? req.body.items : [];
+    const cust = req.body.customer || {};
+    if (!nid || !cart.length) return res.status(400).json({ error: 'Bad request', message: 'network id + items required' });
+    const ids = cart.map((c) => c.product_id).filter(Boolean);
+    const rows = (await withEntity(null, (db) => db.query(
+      `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND item_data->>'network_id' = $2 AND is_active = true`, [ids, nid]))).rows;
+    if (!rows.length) return res.status(404).json({ error: 'Not found', message: 'No matching products in this network' });
+    const operatorId = rows.map((r) => r.item_data && r.item_data.operator).find(Boolean);
+    if (!operatorId) return res.status(409).json({ error: 'No operator', message: 'This network has no fulfilment operator set.' });
+    const idset = [...new Set([operatorId, ...rows.map((r) => r.entity_id)])];
+    const idents = {}; (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [idset])).rows.forEach((r) => { idents[r.identity_id] = { id: r.identity_id, bridge_id: r.bridge_id, display_name: r.display_name }; });
+    const operator = idents[operatorId]; if (!operator) return res.status(409).json({ error: 'No operator', message: 'Operator not found' });
+    // resolve-or-create the customer — attaches to the NETWORK (a lightweight buyer identity)
+    const cemail = String(cust.email || '').trim().toLowerCase() || ('cust-' + uuidv4().slice(0, 8) + '@shopper.cb');
+    let crow = (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE email = $1 LIMIT 1`, [cemail])).rows[0];
+    if (!crow) { const cid = uuidv4(), cb = genBridge();
+      await query(`INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status) VALUES ($1,$2,$3,$4,'entity','active')`, [cid, cb, String(cust.name || 'Customer').slice(0, 80), cemail]);
+      crow = { identity_id: cid, bridge_id: cb, display_name: String(cust.name || 'Customer') }; }
+    const customer = { id: crow.identity_id, bridge_id: crow.bridge_id, display_name: crow.display_name };
+    const items = rows.map((r) => { const c = cart.find((x) => x.product_id === r.item_id) || {}; const d = r.item_data || {};
+      return { item_id: r.item_id, store: r.entity_id, name: d.name || 'item', price: Number(d.price || 0), qty: Number(c.qty || 1), category: d.category || '' }; });
+    const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+    // 1) the ORDER chit (customer → operator) — the common id the customer sees
+    const ORDER_ID = uuidv4();
+    await deliverEdge({ sender: customer, receiver: operator, chit_id: ORDER_ID,
+      subject: 'Order — ' + items.length + ' item(s), ₹' + total,
+      trace: { is_origin: true, product: 'ORDER', qty: items.length, unit: 'items', network: { id: nid, operator: operatorId }, order: true },
+      business: { kind: 'network_order', order_id: ORDER_ID, network_id: nid, items: items.map((i) => ({ name: i.name, qty: i.qty, price: i.price, category: i.category })), total, at: new Date().toISOString() },
+      status: 'pending' });
+    // 2) SILENT per-store fragments (operator → store), each parents:[ORDER_ID]
+    const byStore = {}; items.forEach((i) => { (byStore[i.store] = byStore[i.store] || []).push(i); });
+    const fragments = [];
+    for (const storeId of Object.keys(byStore)) {
+      const store = idents[storeId]; if (!store) continue;
+      const sitems = byStore[storeId];
+      const FRAG_ID = uuidv4();
+      await deliverEdge({ sender: operator, receiver: store, chit_id: FRAG_ID,
+        subject: 'Fulfil order ' + ORDER_ID.slice(0, 8) + ' — ' + sitems.length + ' item(s)',
+        trace: { parents: [ORDER_ID], product: 'FULFIL', qty: sitems.length, unit: 'items', network: { id: nid, operator: operatorId } },
+        business: { kind: 'order_fragment', order_id: ORDER_ID, network_id: nid, items: sitems.map((i) => ({ name: i.name, qty: i.qty })), at: new Date().toISOString() },
+        status: 'pending' });
+      fragments.push(FRAG_ID);
+    }
+    res.json({ ok: true, order_id: ORDER_ID, item_count: items.length, total, currency: 'INR', fragment_count: fragments.length });   // customer sees only the order — no stores
+  } catch (err) {
+    res.status(500).json({ error: 'Order failed', message: safeErr(err) });
+  }
+});
+
 // ── CJ-02: public catalogue (only when visibility='public') ──
 router.get('/:bridge_id', async (req, res) => {
   try {
