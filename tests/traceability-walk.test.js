@@ -18,7 +18,7 @@ const fail = (t,d='') => { console.log(`${C.r}❌ FAIL${C.z} ${t}${d?` — ${d}`
 const section = (t) => console.log(`\n${C.bold}${C.b}── ${t} ──${C.z}`);
 
 async function api(method, path, body, token) {
-  const fetch = (await import('node-fetch')).default;
+  const fetch = globalThis.fetch || (await import('node-fetch')).default;
   const res = await fetch(`${BASE_URL}${path}`, {
     method, headers: { 'Content-Type':'application/json', ...(token && { Authorization:`Bearer ${token}` }) },
     ...(body && { body: JSON.stringify(body) }),

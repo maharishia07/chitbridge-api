@@ -12,7 +12,7 @@ const OPERATOR_EMAIL = process.env.OP_EMAIL || 'trace-operator@demo-cb.com';   /
 const C = { g:'\x1b[32m', c:'\x1b[36m', y:'\x1b[33m', z:'\x1b[0m', bold:'\x1b[1m' };
 
 async function api(method, path, body, token) {
-  const fetch = (await import('node-fetch')).default;
+  const fetch = globalThis.fetch || (await import('node-fetch')).default;
   const res = await fetch(`${BASE_URL}${path}`, {
     method, headers: { 'Content-Type':'application/json', ...(token && { Authorization:`Bearer ${token}` }) },
     ...(body && { body: JSON.stringify(body) }),
