@@ -2314,4 +2314,31 @@ router.get('/:id/trace', auth, async (req, res) => {
   }
 });
 
+// ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
+// List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
+// RLS-scoped — the operator sees its network's batches, a party sees only its own; origins listed first.
+router.get('/trace/batches', auth, async (req, res) => {
+  try {
+    const me = entityId(req);
+    const toName = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+      a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null; };
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at
+         FROM chit_header
+        WHERE summary_json->'trace' IS NOT NULL
+        ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC
+        LIMIT 200`));
+    const seen = new Set(); const batches = [];
+    for (const row of r.rows) {
+      if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
+      const t = row.trace || {};
+      batches.push({ chit_id: row.chit_id, product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
+        is_origin: !!t.is_origin, sender_name: row.sender_entity_display_name || null, to_name: toName(row) });
+    }
+    res.json({ count: batches.length, batches });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list batches', message: safeErr(err) });
+  }
+});
+
 module.exports = router;
