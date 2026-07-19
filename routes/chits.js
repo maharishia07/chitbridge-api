@@ -2250,6 +2250,9 @@ router.get('/:id/trace', auth, async (req, res) => {
     if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
     const dir = req.query.dir === 'backward' ? 'backward' : 'forward';
     const MAX_NODES = 2000, MAX_DEPTH = 40;
+    // Optional network scope: when given, the walk follows ONLY edges tagged with this network id, so an entity in
+    // several networks never bleeds one into another (the multi-network leak). Omit to walk all co-held edges.
+    const net = (typeof req.query.network === 'string' && req.query.network.trim()) ? req.query.network.trim() : null;
     const edgeOf = (t) => { t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
       base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] }; };
     // The chain is a graph of HANDOFFS: each node is one co-held edge. Label it by who it went to (to_name) and
@@ -2258,7 +2261,8 @@ router.get('/:id/trace', auth, async (req, res) => {
     const toName = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
       a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null; };
     const fetch1 = (cid) => withEntity(me, (db) => db.query(
-      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1`, [cid]));
+      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+         FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`, net ? [cid, net] : [cid]));
 
     const seed = await fetch1(id);
     if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
@@ -2267,7 +2271,7 @@ router.get('/:id/trace', auth, async (req, res) => {
     const seenEdge = new Set();
     const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
     const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth,
-      sender_name: row.sender_entity_display_name || null, to_name: toName(row), ...edgeOf(row.trace) }); };
+      sender_name: row.sender_entity_display_name || null, to_name: toName(row), network: (row.trace && row.trace.network && row.trace.network.id) || null, ...edgeOf(row.trace) }); };
     put(seed.rows[0], 0);
 
     if (dir === 'forward') {
@@ -2276,8 +2280,8 @@ router.get('/:id/trace', auth, async (req, res) => {
         const r = await withEntity(me, (db) => db.query(
           `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
              FROM chit_header
-            WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))`,
-          [frontier]));
+            WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
+          net ? [frontier, net] : [frontier]));
         const next = [];
         for (const row of r.rows) {
           const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
@@ -2348,7 +2352,7 @@ router.get('/trace/batches', auth, async (req, res) => {
       if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
       const t = row.trace || {};
       batches.push({ chit_id: row.chit_id, product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
-        is_origin: !!t.is_origin, sender_name: row.sender_entity_display_name || null, to_name: toName(row) });
+        is_origin: !!t.is_origin, network: (t.network && t.network.id) || null, sender_name: row.sender_entity_display_name || null, to_name: toName(row) });
     }
     res.json({ count: batches.length, batches });
   } catch (err) {
@@ -2407,6 +2411,27 @@ router.get('/trace/by-batch', auth, async (req, res) => {
       terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })), nodes: nodeArr, edges });
   } catch (err) {
     res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
+  }
+});
+
+// ─── GET /chits/trace/networks ──────────────────────────────────────────────────────────────────────────────
+// The networks the caller participates in (derived from the edges it co-holds — migration-free registry seed).
+// Supports "an entity can be in many networks" + "see where you are": lists each network id, whether the caller
+// is its operator, and how many edges it holds there. RLS-scoped, so you only see networks you're actually in.
+router.get('/trace/networks', auth, async (req, res) => {
+  try {
+    const me = entityId(req);
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT summary_json->'trace'->'network'->>'id' AS network_id,
+              bool_or((summary_json->'trace'->'network'->>'operator') = $1) AS is_operator,
+              count(DISTINCT chit_id) AS edges
+         FROM chit_header
+        WHERE summary_json->'trace'->'network'->>'id' IS NOT NULL
+        GROUP BY 1
+        ORDER BY edges DESC`, [me]));
+    res.json({ networks: r.rows.map((x) => ({ network_id: x.network_id, is_operator: !!x.is_operator, edges: Number(x.edges) })) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list networks', message: safeErr(err) });
   }
 });
 
