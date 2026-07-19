@@ -8,6 +8,7 @@ const { query, withTransaction, withEntity } = require('../db');
 const storage = require('../lib/storage');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const trace = require('../lib/trace');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `req.identity.parent_entity_id || req.identity.identity_id`).
@@ -245,6 +246,25 @@ router.post('/send',
         return res.status(400).json({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` });
       }
 
+      // ── Traceability edge (Fragment 1): a doubly-linked, co-held, FROZEN handoff edge that rides in
+      //    summary_json.trace. Present ONLY when the sender declares `trace` — normal chits are untouched (every
+      //    existing send path behaves exactly as before). HARDENING on the new path: a non-origin handoff MUST carry
+      //    >=1 parent chit the sender CO-HOLDS (no silent holes; can't forge an edge to a chit you don't hold). ──
+      let traceEdge = null;
+      if (req.body.trace && !is_draft) {
+        const built = trace.buildEdge(req.body.trace);
+        if (built.error) return res.status(400).json({ error: 'Invalid handoff', message: built.error });
+        traceEdge = built.edge;
+        if (traceEdge && traceEdge.parents.length) {
+          const held = await withEntity(sender_id, (db) => db.query(
+            `SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`,
+            [traceEdge.parents, sender_id]));
+          const heldSet = new Set(held.rows.map((r) => r.chit_id));
+          const missing = traceEdge.parents.filter((p) => !heldSet.has(p));
+          if (missing.length) return res.status(400).json({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` });
+        }
+      }
+
       // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
       const prefRow = await query(`SELECT self_copy_pref FROM identities WHERE identity_id = $1`, [sender_id]);
       const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'both';
@@ -422,7 +442,9 @@ router.post('/send',
         ...(retention ? { retention } : {}),
         ...(governed ? { governed } : {}),
         ...(folded_clearances ? { clearances: folded_clearances } : {}),
-        ...(folded_commercial ? { commercial: folded_commercial } : {})
+        ...(folded_commercial ? { commercial: folded_commercial } : {}),
+        // Traceability edge — frozen onto every co-held copy (Fragment 1). parents is a SET (forward fan-out is the spread).
+        ...(traceEdge ? { trace: { ...traceEdge, sealed_at: now.toISOString() } } : {})
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
@@ -2161,5 +2183,28 @@ router.post('/assign-bulk',
       res.status(500).json({ error: 'Bulk assign failed', message: safeErr(err) });
     }
   });
+
+// ─── GET /chits/:id/children ──────────────────────────────────────────────────────────────────────────────
+// Forward-link resolver (Fragment 1): the immediate children of a handoff = every chit whose trace.parents SET
+// contains :id. RLS-scoped — the caller sees only children they CO-HOLD, so a rival's downstream edge is invisible
+// by construction (the TR-6 privacy floor). Proves the forward link is a SET: a fan-out node returns all N children.
+// The cross-entity, multi-hop operator WALK (past parties you don't co-hold) is Fragment 2's participant-gated definer.
+router.get('/:id/children', auth, async (req, res) => {
+  try {
+    const me = entityId(req);
+    const id = req.params.id;
+    if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT chit_id, entity_id, direction, manual_subject, auto_subject,
+              summary_json->'trace' AS trace
+         FROM chit_header
+        WHERE summary_json->'trace'->'parents' @> $1::jsonb
+        ORDER BY created_at ASC`,
+      [JSON.stringify(id)]));
+    res.json({ parent_chit_id: id, count: r.rows.length, children: r.rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to get children', message: safeErr(err) });
+  }
+});
 
 module.exports = router;
