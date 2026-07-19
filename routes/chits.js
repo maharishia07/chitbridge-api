@@ -375,6 +375,22 @@ router.post('/send',
         }))
       ];
 
+      // ── Operator mandate (Fragment 2): a network handoff names an OPERATOR that is mandated to CO-HOLD the edge
+      //    for oversight, so it can walk its whole subtree (visibility ≡ co-holding — no god-view, no BYPASSRLS).
+      //    Resolve it here so the participant snapshot lists it; its REDACTED oversight copy (edge only, no
+      //    commercial terms — TR-6) is appended alongside the receiver copies below. Additive on the trace path. ──
+      let operatorInfo = null;
+      if (traceEdge && traceEdge.network && traceEdge.network.operator && !is_draft) {
+        const opId = traceEdge.network.operator;
+        if (opId !== sender_id && !receiverDetails.some((r) => r.entity_id === opId)) {
+          const opRow = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [opId]);
+          if (opRow.rows[0]) {
+            operatorInfo = opRow.rows[0];
+            all_recipients.push({ entity_id: operatorInfo.identity_id, bridge_id: operatorInfo.bridge_id, display_name: operatorInfo.display_name, role: 'operator' });
+          }
+        }
+      }
+
       // Generate auto subject
       const auto_subject = generateAutoSubject(purpose, sender_display_name, now);
 
@@ -490,6 +506,20 @@ router.post('/send',
           log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
                  new_status: rcv_status, detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})` },
         }));
+      }
+
+      // Operator's REDACTED oversight copy — co-holds the EDGE (product/qty/topology) but NOT commercial terms:
+      // no business_json, no line_items, total_value nulled. That is TR-6 at write time — the operator physically
+      // never holds a rival deal's price, it only holds the traceable edge.
+      if (operatorInfo && !is_draft) {
+        const opSummary = { line_item_count: summary_json.line_item_count, purpose: summary_json.purpose, trace: summary_json.trace, oversight: true };
+        copies.push({
+          ...headerCommon, summary_json: opSummary, total_value: null,
+          entity_id: operatorInfo.identity_id, direction: 'received', role: 'For',
+          current_status: 'delivered', priority_flag: 'normal',
+          log: { action: 'oversight', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
+                 new_status: 'delivered', detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}` },
+        });
       }
 
       // ── Guaranteed write: every row for this chit commits together, or none do (INV-2). Delivery is a substrate
@@ -2204,6 +2234,77 @@ router.get('/:id/children', auth, async (req, res) => {
     res.json({ parent_chit_id: id, count: r.rows.length, children: r.rows });
   } catch (err) {
     res.status(500).json({ error: 'Failed to get children', message: safeErr(err) });
+  }
+});
+
+// ─── GET /chits/:id/trace?dir=forward|backward ──────────────────────────────────────────────────────────────
+// The recall WALK (Fragment 2). RLS-scoped, so the caller only ever traverses edges it CO-HOLDS: an ordinary
+// entity sees one hop each way, while the mandated network OPERATOR (co-held onto every network edge) sees its
+// whole subtree — and a rival sees nothing of another's chain (TR-6, the moat, by construction). forward =
+// exposure / recall set (BFS; the visited-set collapses diamonds + cycles); backward = provenance to source.
+// A hop the caller doesn't co-hold is an honest dead-end (the branch stops), never a silent skip to grandchildren.
+router.get('/:id/trace', auth, async (req, res) => {
+  try {
+    const me = entityId(req);
+    const id = req.params.id;
+    if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
+    const dir = req.query.dir === 'backward' ? 'backward' : 'forward';
+    const MAX_NODES = 2000, MAX_DEPTH = 40;
+    const edgeOf = (t) => { t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
+      base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] }; };
+    const fetch1 = (cid) => withEntity(me, (db) => db.query(
+      `SELECT chit_id, entity_id, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1`, [cid]));
+
+    const seed = await fetch1(id);
+    if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
+    const nodes = new Map();
+    const edges = [];
+    const seenEdge = new Set();
+    const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
+    const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth, ...edgeOf(row.trace) }); };
+    put(seed.rows[0], 0);
+
+    if (dir === 'forward') {
+      let frontier = [id], depth = 0;
+      while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
+        const r = await withEntity(me, (db) => db.query(
+          `SELECT chit_id, entity_id, summary_json->'trace' AS trace
+             FROM chit_header
+            WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))`,
+          [frontier]));
+        const next = [];
+        for (const row of r.rows) {
+          const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
+          for (const p of parents) if (frontier.includes(p)) addEdge(p, row.chit_id);
+          if (!nodes.has(row.chit_id)) { put(row, depth + 1); next.push(row.chit_id); }
+        }
+        frontier = next; depth++;
+      }
+      const nodeArr = [...nodes.values()];
+      const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
+      return res.json({ dir, start: id, reachable_count: nodeArr.length,
+        depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0),
+        terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })),
+        nodes: nodeArr, edges });
+    }
+
+    // backward: follow parents toward the origin (records every visible parent edge; advances along the first visible parent).
+    let current = id, depth = 0; const path = [id];
+    while (depth < MAX_DEPTH) {
+      const cur = nodes.get(current);
+      const parents = cur ? cur.parents : [];
+      if (!parents || !parents.length) break;   // origin — or an honest dead-end where provenance isn't co-held
+      let advanced = null;
+      for (const p of parents) {
+        const pr = await fetch1(p);
+        if (pr.rows[0]) { addEdge(p, current); put(pr.rows[0], depth + 1); if (!advanced) advanced = p; }
+      }
+      if (!advanced) break;
+      path.push(advanced); current = advanced; depth++;
+    }
+    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...nodes.values()], edges });
+  } catch (err) {
+    res.status(500).json({ error: 'Trace walk failed', message: safeErr(err) });
   }
 });
 
