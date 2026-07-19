@@ -2252,8 +2252,13 @@ router.get('/:id/trace', auth, async (req, res) => {
     const MAX_NODES = 2000, MAX_DEPTH = 40;
     const edgeOf = (t) => { t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
       base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] }; };
+    // The chain is a graph of HANDOFFS: each node is one co-held edge. Label it by who it went to (to_name) and
+    // came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
+    // co-holds — not commercial terms — so this stays within the TR-6 lens.
+    const toName = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+      a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null; };
     const fetch1 = (cid) => withEntity(me, (db) => db.query(
-      `SELECT chit_id, entity_id, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1`, [cid]));
+      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1`, [cid]));
 
     const seed = await fetch1(id);
     if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
@@ -2261,14 +2266,15 @@ router.get('/:id/trace', auth, async (req, res) => {
     const edges = [];
     const seenEdge = new Set();
     const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
-    const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth, ...edgeOf(row.trace) }); };
+    const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth,
+      sender_name: row.sender_entity_display_name || null, to_name: toName(row), ...edgeOf(row.trace) }); };
     put(seed.rows[0], 0);
 
     if (dir === 'forward') {
       let frontier = [id], depth = 0;
       while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
         const r = await withEntity(me, (db) => db.query(
-          `SELECT chit_id, entity_id, summary_json->'trace' AS trace
+          `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
              FROM chit_header
             WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))`,
           [frontier]));
