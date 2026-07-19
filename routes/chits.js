@@ -2288,8 +2288,23 @@ router.get('/:id/trace', auth, async (req, res) => {
       }
       const nodeArr = [...nodes.values()];
       const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
+      // ── Mass-balance invariant (Fragment 3): at each node, what goes OUT (sum of its children's base_qty) must not
+      //    exceed what came IN (its own base_qty), in the same base unit. out > in ⇒ RED — more claimed out than
+      //    received = theft / dilution / counterfeit, caught with no investigation. Only compares like base units.
+      let flagged = 0;
+      for (const n of nodeArr) {
+        const kids = edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean);
+        if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
+        if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
+        const out = kids.reduce((s, k) => s + k.base_qty, 0);
+        const delta = out - n.base_qty;
+        const red = delta > 1e-9;
+        if (red) flagged++;
+        n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
+      }
       return res.json({ dir, start: id, reachable_count: nodeArr.length,
         depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0),
+        flagged,
         terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })),
         nodes: nodeArr, edges });
     }
