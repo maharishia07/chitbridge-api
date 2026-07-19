@@ -2356,4 +2356,58 @@ router.get('/trace/batches', auth, async (req, res) => {
   }
 });
 
+// ─── GET /chits/trace/by-batch?q=<batch> ────────────────────────────────────────────────────────────────────
+// Reconstruct the chain from SHARED DATA (a batch number) instead of the parent links — proves the graph survives
+// even if the explicit links weren't followed. Finds the caller's chits carrying that batch, then rebuilds the
+// directed chain by PARTY-CHAINING: X → Y when the receiver of X is the sender of Y. No parent_chit_ids used.
+// RLS-scoped (you match only within what you hold). Same response shape as the walk, so the tree render is reused.
+router.get('/trace/by-batch', auth, async (req, res) => {
+  try {
+    const me = entityId(req);
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.status(400).json({ error: 'Bad request', message: 'A batch value (q) is required' });
+    const recipientOf = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+      a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null; };
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+         FROM chit_header
+        WHERE summary_json->'trace' IS NOT NULL
+          AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
+    const seen = new Set(); const items = [];
+    for (const row of r.rows) {
+      if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
+      const rec = recipientOf(row); const t = row.trace || {};
+      items.push({ chit_id: row.chit_id, sender_entity_id: row.sender_entity_id, sender_name: row.sender_entity_display_name || null,
+        to_entity_id: rec ? rec.entity_id : null, to_name: rec ? rec.display_name : null,
+        product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null, base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null });
+    }
+    // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
+    const bySender = {}; items.forEach((it) => { (bySender[it.sender_entity_id] = bySender[it.sender_entity_id] || []).push(it); });
+    const edges = []; const hasParent = new Set();
+    items.forEach((x) => (bySender[x.to_entity_id] || []).forEach((y) => { if (y.chit_id !== x.chit_id) { edges.push({ from: x.chit_id, to: y.chit_id }); hasParent.add(y.chit_id); } }));
+    const nmap = {}; items.forEach((it) => { nmap[it.chit_id] = Object.assign({}, it, { depth: 0, is_origin: !hasParent.has(it.chit_id) }); });
+    // BFS depth from the roots
+    const kidsMap = {}; edges.forEach((e) => { (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to); });
+    let frontier = items.filter((it) => !hasParent.has(it.chit_id)).map((it) => it.chit_id);
+    const seenD = new Set(frontier); let d = 0;
+    while (frontier.length && d < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((k) => { if (!seenD.has(k)) { seenD.add(k); nmap[k].depth = d + 1; next.push(k); } })); frontier = next; d++; }
+    const nodeArr = Object.values(nmap);
+    // mass-balance, same invariant as the walk
+    let flagged = 0;
+    for (const n of nodeArr) {
+      const kids = (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean);
+      if (!kids.length || n.base_qty == null) { n.balance = null; continue; }
+      if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
+      const out = kids.reduce((s, k) => s + k.base_qty, 0); const delta = out - n.base_qty; const red = delta > 1e-9; if (red) flagged++;
+      n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
+    }
+    const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
+    res.json({ dir: 'forward', by_batch: q, reconstructed: true, start: (nodeArr[0] && nodeArr[0].chit_id) || null,
+      reachable_count: nodeArr.length, depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0), flagged,
+      terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })), nodes: nodeArr, edges });
+  } catch (err) {
+    res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
+  }
+});
+
 module.exports = router;
