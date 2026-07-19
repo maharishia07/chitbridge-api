@@ -161,6 +161,31 @@ async function resolveEntity(bridge_id) {
   return r.rows[0] || null;
 }
 
+// ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's nodes into ONE store, with the
+//    holding node STRIPPED OUT. Products self-declare membership via item_data.network_id (migration-free); the
+//    public read runs withEntity(null) so RLS returns ONLY public items — a private department is never exposed.
+//    The customer SEARCHES products by category (= the line of business); they never see the internal tree,
+//    department, or location. The product→node map that routes the order stays server-side, never in this response. ──
+router.get('/network-store/:networkId', async (req, res) => {
+  try {
+    const nid = String(req.params.networkId || '').trim();
+    if (!nid) return res.status(400).json({ error: 'Bad request', message: 'network id required' });
+    const q = String(req.query.q || '').trim().toLowerCase();
+    const cat = String(req.query.category || '').trim();
+    const rows = (await withEntity(null, (db) => db.query(
+      `SELECT item_id, item_data FROM catalogue_items WHERE item_data->>'network_id' = $1 AND is_active = true`, [nid]))).rows;
+    let products = rows.map((r) => { const d = r.item_data || {};
+      return { product_id: r.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
+        price: (d.price != null ? Number(d.price) : null), unit: d.unit || null, image: d.image || null }; });
+    if (cat) products = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase());
+    if (q) products = products.filter((p) => (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0);
+    const categories = [...new Set(products.map((p) => p.category))].sort();
+    res.json({ network_id: nid, categories, count: products.length, products });   // NO node/entity attribution — the internal structure stays hidden
+  } catch (err) {
+    res.status(500).json({ error: 'Storefront failed', message: (err && err.message) || 'error' });
+  }
+});
+
 // ── CJ-02: public catalogue (only when visibility='public') ──
 router.get('/:bridge_id', async (req, res) => {
   try {
