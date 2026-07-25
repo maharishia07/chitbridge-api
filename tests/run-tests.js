@@ -409,6 +409,48 @@ function printResults() {
   }
 }
 
+// ── Entity + KEY (actor provisioning) ─────────────────────────
+async function testActorKey() {
+  section('ENTITY + KEY — actor (co-assist) provisioning');
+  const ts = Date.now();
+  const ent = await registerAndVerify('KeyTest Co', `keytest-${ts}@example.com`);
+  if (!ent) return;
+  const actorKey = 'ops' + (ts % 100000);
+  const r = await api('POST', '/api/actors',
+    { display_name: 'Ops Co-assist', actor_key: actorKey, actor_role: 'operator' }, ent.token);
+  if (r.status !== 200 && r.status !== 201) { fail('Create actor (key)', JSON.stringify(r.data)); return; }
+  const a = r.data.actor || {};
+  if (a.actor_key === actorKey && a.login_format) pass('Create actor (key)', `login ${a.login_format}`);
+  else fail('Create actor (key)', 'unexpected response: ' + JSON.stringify(r.data));
+}
+
+// ── Network design persistence (b111, per-entity, RLS) ─────────
+async function testNetworkDesign() {
+  section('NETWORK DESIGN persistence (b111 — cross-device, RLS)');
+  const ts = Date.now();
+  const A = await registerAndVerify('NetDesign A', `netdesign-a-${ts}@example.com`);
+  const B = await registerAndVerify('NetDesign B', `netdesign-b-${ts}@example.com`);
+  if (!A || !B) return;
+  const design = { id: 'net-test', purpose: 'Smoke design', built: false,
+    nodes: [{ key: 'k1', name: 'HQ', root: true, owned: true, holds: [] }] };
+  const put = await api('PUT', '/api/network-design', { draft: design }, A.token);
+  if (put.status !== 200) { fail('Save design (A)', JSON.stringify(put.data)); return; }
+  pass('Save design (A)', 'updated_at ' + (put.data.updated_at || '?'));
+  const getA = await api('GET', '/api/network-design', null, A.token);
+  if (getA.status === 200 && getA.data.draft && getA.data.draft.nodes &&
+      getA.data.draft.nodes[0] && getA.data.draft.nodes[0].name === 'HQ')
+    pass('Load design (A) round-trip', 'nodes: ' + getA.data.draft.nodes.length);
+  else fail('Load design (A) round-trip', JSON.stringify(getA.data));
+  const getB = await api('GET', '/api/network-design', null, B.token);
+  if (getB.status === 200 && (getB.data.draft === null || getB.data.draft === undefined))
+    pass('RLS isolation — B cannot see A design', 'B draft is null');
+  else fail('RLS isolation — B cannot see A design', 'B saw: ' + JSON.stringify(getB.data.draft));
+  // reject a non-object draft (input guard)
+  const bad = await api('PUT', '/api/network-design', { draft: 'not-an-object' }, A.token);
+  if (bad.status === 400) pass('Reject bad draft (400)', 'guard holds');
+  else fail('Reject bad draft (400)', 'status ' + bad.status);
+}
+
 // ── Main ──────────────────────────────────────────────────────
 async function main() {
   console.log(`\n${C.bold}${C.cyan}
@@ -423,6 +465,8 @@ async function main() {
   try {
     await testHealth();
     await testRegistration();
+    await testActorKey();
+    await testNetworkDesign();
     await testConnections();
     await testSendChit();
     await testChitDetail();
