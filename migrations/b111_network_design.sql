@@ -9,7 +9,7 @@
 -- Rollback: DROP TABLE IF EXISTS network_design;
 
 CREATE TABLE IF NOT EXISTS network_design (
-  entity_id  uuid PRIMARY KEY,                       -- one design per entity; upsert
+  entity_id  uuid PRIMARY KEY REFERENCES identities(identity_id) ON DELETE CASCADE,   -- one design per entity; cascades if the entity is removed
   draft      jsonb NOT NULL DEFAULT '{}'::jsonb,     -- the whole UI.net draft (nodes + per-node catalogue model, etc.)
   updated_at timestamptz DEFAULT now()
 );

@@ -28,7 +28,7 @@ router.put('/', auth, async (req, res) => {
     if (draft === undefined || draft === null || typeof draft !== 'object' || Array.isArray(draft)) {
       return res.status(400).json({ error: 'Bad request', message: 'draft must be an object' });
     }
-    if (JSON.stringify(draft).length > MAX_BYTES) {
+    if (Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
       return res.status(413).json({ error: 'Too large', message: 'design exceeds ' + MAX_BYTES + ' bytes' });
     }
     const r = await withEntity(e, (db) => db.query(
