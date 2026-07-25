@@ -88,7 +88,8 @@ createPool().then(p => {
 // G1 (reviewer 2026-07-13) — complete the tenant-table list: the guard previously OMITTED chit_messages and the newest
 // (most sensitive) tables entity_compliance / entity_profile (vault) / entity_wallet (money) / usage_ledger.
 const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'chit_messages', 'state_log', 'catalogue_items',
-  'customer_list', 'folder', 'cb_attachment', 'chit_disputes', 'entity_compliance', 'entity_profile', 'entity_wallet', 'usage_ledger'];
+  'customer_list', 'folder', 'cb_attachment', 'chit_disputes', 'entity_compliance', 'entity_profile', 'entity_wallet', 'usage_ledger',
+  'network_design'];   // b111 — per-entity design draft (WITH RLS); guard a context-free query the same way
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {
