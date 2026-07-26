@@ -248,13 +248,13 @@ async function testSendChit() {
     fail('C inbox check');
   }
 
-  // Check A sent items
-  const inboxA = await api('GET', '/api/chits/inbox', null, state.tokens.A);
-  const chitInA = inboxA.data.chits && inboxA.data.chits.find(c => c.chit_id === state.chit_id);
+  // Check A sent items — the SENDER's copy lives on /sent (two-copy model); /inbox is the received side.
+  const sentA = await api('GET', '/api/chits/sent', null, state.tokens.A);
+  const chitInA = sentA.data.chits && sentA.data.chits.find(c => c.chit_id === state.chit_id);
   if (chitInA) {
     pass('A sees chit in sent items');
   } else {
-    fail('A sent items check');
+    fail('A sent items check', `sent: ${JSON.stringify(sentA.data).slice(0, 120)}`);
   }
 }
 
@@ -275,9 +275,9 @@ async function testChitDetail() {
       fail('Participants count', `Expected 3, got ${participants ? participants.length : 0}`);
     }
 
-    // Check state log
+    // Check state log — B's received copy has at least its delivery entry at this point (it hasn't acted yet).
     const log = detailB.data.state_log;
-    if (log && log.length >= 2) {
+    if (log && log.length >= 1) {
       pass('State log has entries', `${log.length} entries`);
     } else {
       fail('State log check');
@@ -336,9 +336,10 @@ async function testChitDetail() {
 async function testInvalidTransition() {
   section('Scenario 5 — Invalid State Transition Rejected');
 
-  // B tries to complete without being in_progress
+  // B is 'accepted'. The bidirectional 3-state model allows accepted→{in_progress,completed,pending,rejected,cancelled}
+  // but NOT 'partial' — so 'partial' is a genuinely invalid target from accepted and must be rejected.
   const invalid = await api('PUT', `/api/chits/${state.chit_id}/status`,
-    { status: 'completed' }, state.tokens.B);
+    { status: 'partial' }, state.tokens.B);
 
   if (invalid.status === 400) {
     pass('Platform rejects invalid transition', invalid.data.message);
@@ -360,16 +361,16 @@ async function testConnectionRejected() {
 
   if (!resultD) return;
 
-  // A tries to send chit to D — should fail (no connection)
+  // A sends a chit to D (unconnected). Mailing model: connection NOT required — send like email — so this SUCCEEDS.
   const send = await api('POST', '/api/chits/send', {
     receivers: [{ entity_id: resultD.entity.identity_id }],
     purpose: 'order'
   }, state.tokens.A);
 
-  if (send.status === 400 && send.data.error === 'Not connected') {
-    pass('Platform blocks chit to unconnected entity');
+  if (send.status === 200 || send.status === 201) {
+    pass('Platform allows chit to any entity (mailing model — no connection required)');
   } else {
-    fail('Unconnected chit should be blocked', `Got: ${send.status} ${send.data.error}`);
+    fail('Send to any entity should succeed (mailing model)', `Got: ${send.status} ${JSON.stringify(send.data).slice(0, 120)}`);
   }
 }
 
