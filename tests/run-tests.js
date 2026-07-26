@@ -451,6 +451,33 @@ async function testNetworkDesign() {
   else fail('Reject bad draft (400)', 'status ' + bad.status);
 }
 
+// ── Catalogue face persistence (b112, per-entity, RLS) ─────────
+async function testCatalogueFace() {
+  section('CATALOGUE FACE persistence (b112 — cross-device, RLS)');
+  const ts = Date.now();
+  const A = await registerAndVerify('CatFace A', `catface-a-${ts}@example.com`);
+  const B = await registerAndVerify('CatFace B', `catface-b-${ts}@example.com`);
+  if (!A || !B) return;
+  const face = { method: 'cart', units: ['kg', 'litre'], tax: { label: 'GST', rate: '18' },
+    catalogue: { product: 'Paint', baseUnit: 'litre' }, facets: { variants: true } };
+  const put = await api('PUT', '/api/catalogue-face', { face }, A.token);
+  if (put.status !== 200) { fail('Save face (A)', JSON.stringify(put.data)); return; }
+  pass('Save face (A)', 'updated_at ' + (put.data.updated_at || '?'));
+  const getA = await api('GET', '/api/catalogue-face', null, A.token);
+  if (getA.status === 200 && getA.data.face && Array.isArray(getA.data.face.units) &&
+      getA.data.face.units.join(',') === 'kg,litre' && getA.data.face.method === 'cart')
+    pass('Load face (A) round-trip', 'units: ' + getA.data.face.units.join('·'));
+  else fail('Load face (A) round-trip', JSON.stringify(getA.data));
+  const getB = await api('GET', '/api/catalogue-face', null, B.token);
+  if (getB.status === 200 && (getB.data.face === null || getB.data.face === undefined))
+    pass('RLS isolation — B cannot see A face', 'B face is null');
+  else fail('RLS isolation — B cannot see A face', 'B saw: ' + JSON.stringify(getB.data.face));
+  // reject a non-object face (input guard)
+  const bad = await api('PUT', '/api/catalogue-face', { face: 'not-an-object' }, A.token);
+  if (bad.status === 400) pass('Reject bad face (400)', 'guard holds');
+  else fail('Reject bad face (400)', 'status ' + bad.status);
+}
+
 // ── Main ──────────────────────────────────────────────────────
 async function main() {
   console.log(`\n${C.bold}${C.cyan}
@@ -467,6 +494,7 @@ async function main() {
     await testRegistration();
     await testActorKey();
     await testNetworkDesign();
+    await testCatalogueFace();
     await testConnections();
     await testSendChit();
     await testChitDetail();

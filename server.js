@@ -142,6 +142,7 @@ app.use('/api/products',    productsRouter);
 app.use('/api/governance',  governanceRouter);
 app.use('/api/attachments', attachmentsRouter);
 app.use('/api/network-design', require('./routes/network-design'));   // b111 — per-entity design persistence (RLS)
+app.use('/api/catalogue-face', require('./routes/catalogue-face'));    // b112 — per-entity catalogue face persistence (RLS)
 
 // ── NET (feat/net-full): network + catalogue on /api/network ──
 // cb_chit chit-loop RETIRED in consolidation: all chit writes live on /api/chits (chit_header).
