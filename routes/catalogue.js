@@ -91,7 +91,11 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
       const sVer   = (resolved.adoption_model && resolved.adoption_model.version) || 'v1';
       const sOwner = resolved.owner_entity_id || null;
       for (const it of (resolved.items || [])) {
-        const p = (it.commercials && it.commercials.price_per_litre != null && it.commercials.price_per_litre !== '') ? Number(it.commercials.price_per_litre) : NaN;
+        // Commercials are GENERIC {price, unit}; price_per_litre is the pre-generic paint shape. ADDITIVE — both are
+        // accepted so a non-paint (kg/count) adoption prices correctly and existing paint adoptions are untouched.
+        const _c = it.commercials || {};
+        const _raw = (_c.price != null && _c.price !== '') ? _c.price : _c.price_per_litre;
+        const p = (_raw != null && _raw !== '') ? Number(_raw) : NaN;
         const rec = { name: it.name, price: p, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
         const nk = _norm(it.name);
         finishMap.set(row.source_key + '|' + nk, rec);
