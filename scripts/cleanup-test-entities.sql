@@ -16,7 +16,12 @@
 -- ⚠️ Only domains our own fixtures and script harnesses use are listed. Never add a domain a real customer
 --    could plausibly own. Sources: tests/run-tests.js + scripts/*.js (@test.com dominates), e2e (@test.example).
 
-SET row_security = off;   -- so FORCE-RLS tables (kyb_field_cache, form_instance, idempotency_key) are swept too (postgres/BYPASSRLS)
+-- ⚠️ `SET row_security = off` lasts only for the SESSION that runs it. The Supabase SQL Editor may use a fresh
+--    pooled connection per execution, so it is repeated at the top of every part that needs it (1c and 3).
+--    Do NOT rely on setting it once at the top and running the parts separately — FORCE-RLS tables would be missed.
+-- ⚠️ If PART 3 fails on a foreign-key violation, STOP — do not force it. It means a REAL entity holds a row that
+--    references a test entity (e.g. a real entity received a chit from one). That row is not ours to delete;
+--    bring the error back and we decide per case.
 
 -- ============================ PART 0 · WEIGHT (what is heavy, regardless of test data) ============================
 -- Top 20 tables by total size on disk (heap + indexes + TOAST). Read this BEFORE deciding whether a sweep is even
@@ -59,6 +64,7 @@ SELECT
 
 -- 1c. per-table row counts for EVERY entity_id-scoped table — exactly what Part 3 will delete.
 --     Run this and KEEP THE OUTPUT: it is the before-picture of the sweep.
+SET row_security = off;
 DO $$
 DECLARE tbl text; n bigint; eids uuid[];
 BEGIN
@@ -87,6 +93,7 @@ WHERE email LIKE '%@test.example' OR email LIKE '%@test.com'  OR email LIKE '%@t
 ORDER BY created_at DESC;
 
 -- ============================ PART 3 · DELETE (only after Parts 1 and 2 look right) ============================
+SET row_security = off;
 DO $$
 DECLARE tbl text; eids uuid[];
 BEGIN
