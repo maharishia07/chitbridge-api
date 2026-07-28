@@ -1,28 +1,99 @@
--- cleanup-test-entities.sql — sweep the data the e2e suite creates. DESTRUCTIVE. Run in the Supabase SQL Editor (as the
--- postgres role). Every e2e identity is created with a @test.example email (the fixtures use it exclusively), so that is
--- the ONLY thing this touches — real entities are never matched.
+-- cleanup-test-entities.sql — audit + sweep the data our test drivers create. DESTRUCTIVE (Part 3 only).
+-- Run in the Supabase SQL Editor as the postgres role.
 --
--- HOW TO USE: run PART 1 first, read the counts. If they look right, run PART 2. Nothing deletes until PART 2.
--- ⚠️ NEVER run this against a production database. It is for the dev/test environment only.
+-- HOW TO USE, in order:
+--   PART 0 · WEIGHT     — what is actually heavy in this database (read it, nothing changes)
+--   PART 1 · DRY RUN    — how many test entities, by domain, and what hangs off them (nothing changes)
+--   PART 2 · EYEBALL    — list every matched identity so you can confirm none is real (nothing changes)
+--   PART 3 · DELETE     — the sweep. Only after Parts 1 and 2 look right.
+--   PART 4 · RECLAIM    — optional VACUUM, only if Part 0 showed something genuinely heavy.
+--
+-- ⚠️ CONFIRM WHICH DATABASE YOU ARE POINTED AT before Part 3. The Railway host is named
+--    "…-production…" but is wired to the dev database — the name is not the proof. Check the connection.
+-- ⚠️ THE TEST PREDICATE is the domain list repeated in each part below. It is deliberately NOT factored into a
+--    view: a postgres-owned view over `identities` left behind in `public` is an RLS-bypass footgun. Copy-paste
+--    is the safer trade here. If you edit the list, edit it in ALL FOUR places (Parts 1a, 1c, 2, 3).
+-- ⚠️ Only domains our own fixtures and script harnesses use are listed. Never add a domain a real customer
+--    could plausibly own. Sources: tests/run-tests.js + scripts/*.js (@test.com dominates), e2e (@test.example).
 
 SET row_security = off;   -- so FORCE-RLS tables (kyb_field_cache, form_instance, idempotency_key) are swept too (postgres/BYPASSRLS)
 
--- ============================ PART 1 · DRY RUN (review before deleting) ============================
-WITH e AS (SELECT identity_id FROM identities WHERE email LIKE '%@test.example')
+-- ============================ PART 0 · WEIGHT (what is heavy, regardless of test data) ============================
+-- Top 20 tables by total size on disk (heap + indexes + TOAST). Read this BEFORE deciding whether a sweep is even
+-- worth it, and which tables deserve a retention policy of their own rather than a one-off delete.
+-- est_rows is the planner's estimate (reltuples) — it is approximate and reads -1 on a never-analyzed table.
 SELECT
-  (SELECT count(*) FROM identities WHERE email LIKE '%@test.example')                              AS test_entities,
-  (SELECT count(*) FROM identities WHERE parent_entity_id IN (SELECT identity_id FROM e))          AS their_actors,
-  (SELECT count(*) FROM chit_header WHERE entity_id IN (SELECT identity_id FROM e))                AS chits,
-  (SELECT count(*) FROM entity_schemas WHERE entity_id IN (SELECT identity_id FROM e))             AS schemas;
+  c.relname                                     AS table_name,
+  pg_size_pretty(pg_total_relation_size(c.oid)) AS total_size,
+  pg_size_pretty(pg_relation_size(c.oid))       AS heap_size,
+  pg_size_pretty(pg_indexes_size(c.oid))        AS index_size,
+  to_char(c.reltuples, 'FM999,999,999')         AS est_rows
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public' AND c.relkind = 'r'
+ORDER BY pg_total_relation_size(c.oid) DESC
+LIMIT 20;
 
--- Preview the entities themselves (so you can eyeball they're all test rows):
--- SELECT identity_id, bridge_id, display_name, email, created_at FROM identities WHERE email LIKE '%@test.example' ORDER BY created_at DESC;
+-- ============================ PART 1 · DRY RUN (counts — review before deleting) ============================
+-- 1a. test identities by domain, so you can see WHICH driver made them.
+SELECT split_part(email, '@', 2) AS domain, count(*) AS entities,
+       min(created_at)::date AS first_seen, max(created_at)::date AS last_seen
+FROM identities
+WHERE email LIKE '%@test.example' OR email LIKE '%@test.com'  OR email LIKE '%@test-cb.com'
+   OR email LIKE '%@demo-cb.com'  OR email LIKE '%@example.com' OR email LIKE '%@t.com'
+   OR email LIKE '%@x.com'
+GROUP BY 1 ORDER BY 2 DESC;
 
--- ============================ PART 2 · DELETE (only after reviewing PART 1) ============================
+-- 1b. the blast radius: what hangs off those identities.
+WITH e AS (
+  SELECT identity_id FROM identities
+  WHERE email LIKE '%@test.example' OR email LIKE '%@test.com'  OR email LIKE '%@test-cb.com'
+     OR email LIKE '%@demo-cb.com'  OR email LIKE '%@example.com' OR email LIKE '%@t.com'
+     OR email LIKE '%@x.com'
+)
+SELECT
+  (SELECT count(*) FROM e)                                                              AS test_entities,
+  (SELECT count(*) FROM identities     WHERE parent_entity_id IN (SELECT identity_id FROM e)) AS their_actors,
+  (SELECT count(*) FROM chit_header    WHERE entity_id        IN (SELECT identity_id FROM e)) AS chits,
+  (SELECT count(*) FROM entity_schemas WHERE entity_id        IN (SELECT identity_id FROM e)) AS schemas;
+
+-- 1c. per-table row counts for EVERY entity_id-scoped table — exactly what Part 3 will delete.
+--     Run this and KEEP THE OUTPUT: it is the before-picture of the sweep.
+DO $$
+DECLARE tbl text; n bigint; eids uuid[];
+BEGIN
+  SELECT array_agg(identity_id) INTO eids FROM identities
+  WHERE email LIKE '%@test.example' OR email LIKE '%@test.com'  OR email LIKE '%@test-cb.com'
+     OR email LIKE '%@demo-cb.com'  OR email LIKE '%@example.com' OR email LIKE '%@t.com'
+     OR email LIKE '%@x.com';
+  IF eids IS NULL THEN RAISE NOTICE 'No test entities found.'; RETURN; END IF;
+  RAISE NOTICE 'Test entities: %', array_length(eids, 1);
+  FOR tbl IN
+    SELECT table_name FROM information_schema.columns
+    WHERE column_name = 'entity_id' AND table_schema = 'public' AND table_name <> 'identities'
+    ORDER BY table_name
+  LOOP
+    EXECUTE format('SELECT count(*) FROM public.%I WHERE entity_id = ANY($1)', tbl) INTO n USING eids;
+    IF n > 0 THEN RAISE NOTICE '  % -> % rows', rpad(tbl, 28), n; END IF;
+  END LOOP;
+END $$;
+
+-- ============================ PART 2 · EYEBALL (confirm none of these is real) ============================
+SELECT identity_id, bridge_id, display_name, email, created_at
+FROM identities
+WHERE email LIKE '%@test.example' OR email LIKE '%@test.com'  OR email LIKE '%@test-cb.com'
+   OR email LIKE '%@demo-cb.com'  OR email LIKE '%@example.com' OR email LIKE '%@t.com'
+   OR email LIKE '%@x.com'
+ORDER BY created_at DESC;
+
+-- ============================ PART 3 · DELETE (only after Parts 1 and 2 look right) ============================
 DO $$
 DECLARE tbl text; eids uuid[];
 BEGIN
-  SELECT array_agg(identity_id) INTO eids FROM identities WHERE email LIKE '%@test.example';
+  SELECT array_agg(identity_id) INTO eids FROM identities
+  WHERE email LIKE '%@test.example' OR email LIKE '%@test.com'  OR email LIKE '%@test-cb.com'
+     OR email LIKE '%@demo-cb.com'  OR email LIKE '%@example.com' OR email LIKE '%@t.com'
+     OR email LIKE '%@x.com';
   IF eids IS NULL THEN RAISE NOTICE 'No test entities found — nothing to clean.'; RETURN; END IF;
 
   -- schema_fields hang off entity_schemas by schema_id (no entity_id) — clear them first to avoid a FK block.
@@ -44,5 +115,13 @@ BEGIN
   DELETE FROM identities WHERE parent_entity_id = ANY(eids);
   DELETE FROM identities WHERE identity_id      = ANY(eids);
 
-  RAISE NOTICE 'Cleaned % test entities (+ their actors and all @test.example data).', array_length(eids, 1);
+  RAISE NOTICE 'Cleaned % test entities (+ their actors and all their data).', array_length(eids, 1);
 END $$;
+
+-- ============================ PART 4 · RECLAIM (optional, after Part 3) ============================
+-- DELETE marks rows dead; it does not return disk. Run this only if Part 0 showed a genuinely heavy table.
+-- VACUUM (not FULL) is non-blocking and usually enough — it lets the freed space be reused:
+--   VACUUM (ANALYZE) chit_header, chit_messages, cb_attachment, idempotency_key;
+-- VACUUM FULL rewrites the table under an ACCESS EXCLUSIVE lock (table unavailable for the duration).
+-- Only worth it on a big table with a lot of dead space, and only when nobody is using the system:
+--   VACUUM FULL chit_header;
