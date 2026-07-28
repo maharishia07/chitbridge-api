@@ -60,7 +60,50 @@ function crHandle(channel, raw, bridge) {
 //   (2) the unit price lives in `catalogue_items.item_data.price`.
 const _norm = (s) => String(s == null ? '' : s).trim().toLowerCase();
 const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
-async function repriceAgainstCatalogue(entity_id, rawItems) {
+// ── SPEC-negotiation-position — the shop's order method + the buyer's POSITION on a line ──────────────────────────
+// A negotiation is two parties holding divergent values on ONE co-held record until one settles it — the same shape as
+// a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
+// it extends to quantity, delivery date, spec, incoterm without another migration.
+const ORDER_METHODS = ['cart', 'qty', 'range', 'qtyprice', 'text'];
+const NEGOTIABLE = ['range', 'qtyprice'];              // only these may carry a buyer proposal
+async function getOrderMethod(entity_id) {
+  try {
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
+    const m = r.rows[0] && r.rows[0].face && r.rows[0].face.method;
+    return ORDER_METHODS.includes(m) ? m : 'cart';
+  } catch (_) { return 'cart'; }                        // no face / table absent → today's behaviour
+}
+// Validate the buyer's proposal. NOTHING here feeds price/total — CJ-07 price integrity is untouched: the line price
+// and total stay server-authoritative. This only decides whether a NON-authoritative position is admissible.
+// It is strictly a NEW restriction (a fixed-price shop now REJECTS an offer that it previously ignored).
+const MAX_PROPOSAL = 1e9;
+function validateProposal(raw, method, sellerBand, label) {
+  if (raw == null) return null;
+  if (!NEGOTIABLE.includes(method)) {
+    throw _422(`This shop does not take offers — "${label}" is sold at the listed price`);
+  }
+  const num = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 && n <= MAX_PROPOSAL ? n : null; };
+  const out = {};
+  if (raw.price != null) { const p = num(raw.price); if (p == null) throw _422(`Invalid offer for "${label}"`); out.price = p; }
+  if (raw.min != null)   { const p = num(raw.min);   if (p == null) throw _422(`Invalid offer range for "${label}"`); out.min = p; }
+  if (raw.max != null)   { const p = num(raw.max);   if (p == null) throw _422(`Invalid offer range for "${label}"`); out.max = p; }
+  if (out.min != null && out.max != null && out.min > out.max) throw _422(`Offer range for "${label}" is inverted`);
+  if (raw.note != null)  out.note = String(raw.note).slice(0, 500);
+  if (out.price == null && out.min == null && out.max == null) throw _422(`Offer for "${label}" has no value`);
+  // The SELLER's declared band governs (source-governed distribution — the seller sets the bounds, not the host).
+  const lo = Number(sellerBand && sellerBand.min), hi = Number(sellerBand && sellerBand.max);
+  if (Number.isFinite(lo) || Number.isFinite(hi)) {
+    const band = `${Number.isFinite(lo) ? lo : '…'}–${Number.isFinite(hi) ? hi : '…'}`;
+    for (const v of [out.price, out.min, out.max]) {
+      if (v == null) continue;
+      if (Number.isFinite(lo) && v < lo) throw _422(`Offer for "${label}" is below the seller's range (${band})`);
+      if (Number.isFinite(hi) && v > hi) throw _422(`Offer for "${label}" is above the seller's range (${band})`);
+    }
+  }
+  return out;
+}
+async function repriceAgainstCatalogue(entity_id, rawItems, orderMethod) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order');   // F6: bound the line count
   // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
@@ -96,7 +139,11 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
         const _c = it.commercials || {};
         const _raw = (_c.price != null && _c.price !== '') ? _c.price : _c.price_per_litre;
         const p = (_raw != null && _raw !== '') ? Number(_raw) : NaN;
-        const rec = { name: it.name, price: p, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
+        // the item's OWN unit (kg/count/litre) — was hardcoded 'litre' on the order line, so a kg item's chit recorded litres.
+        const unit = _c.unit || it.unit || 'unit';
+        // the SELLER's declared band (SPEC-negotiation-position §2) — bounds a buyer's offer; absent → unbounded.
+        const band = (_c.price_min != null || _c.price_max != null) ? { min: _c.price_min, max: _c.price_max } : null;
+        const rec = { name: it.name, price: p, unit, band, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
         const nk = _norm(it.name);
         finishMap.set(row.source_key + '|' + nk, rec);
         const nb = finishByName.get(nk) || { count: 0, rec: null };
@@ -132,8 +179,14 @@ async function repriceAgainstCatalogue(entity_id, rawItems) {
       // WIRING (stone 5): FREEZE the container ref + version (the immutable snapshot the customer saw → chit verifiable forever).
       let containerFreeze = null;
       try { const cid = container.itemContainerId(fref.source, fref.name); const cc = await container.getContainer(cid); if (cc) containerFreeze = { ref: cid, content_version: cc.current_version }; } catch (_) {}
+      // The buyer's POSITION. Deliberately computed AFTER price/total below: the seller's price comes from the
+      // catalogue and is authoritative; the buyer's price travels ON THE CHIT and never touches money.
+      const proposal = validateProposal(li.proposal, orderMethod, fref.band, fref.name);
       return { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
-        particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: 'litre', quantity: fq, price: fref.price, total: Math.round(fref.price * fq * 100) / 100,
+        particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: fref.unit || 'unit', quantity: fq,
+        price: fref.price, total: Math.round(fref.price * fq * 100) / 100,
+        ...(fref.band ? { seller_band: fref.band } : {}),
+        ...(proposal ? { proposal } : {}),
         // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
         governed: { under: fref.source, owner_entity_id: fref.sOwner, container: containerFreeze, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
     }
@@ -310,6 +363,10 @@ router.get('/:bridge_id', async (req, res) => {
     // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
     let storefront_access = 'browse';
     try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [entity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
+    // SPEC-negotiation-position §1 — the shop's ORDER METHOD (cart | qty | range | qtyprice | text) decides what the
+    // storefront asks the customer for, and therefore what data comes back. It lives on the face (b112). Best-effort:
+    // no face / table absent → 'cart', so every existing storefront is unaffected.
+    const order_method = await getOrderMethod(entity.identity_id);
     res.json({
       shop: {
         bridge_id: entity.bridge_id, display_name: entity.display_name,
@@ -317,7 +374,8 @@ router.get('/:bridge_id', async (req, res) => {
         gstn: entity.gstn, is_verified: entity.is_verified,
         logo_url: entity.logo_url, address: entity.address,   // B3.9 — identity/trust
         business_status: entity.business_status || 'open',     // B3.11 — open | closed | away
-        storefront_access: storefront_access                    // b77 — browse | login (self-healing)
+        storefront_access: storefront_access,                   // b77 — browse | login (self-healing)
+        order_method: order_method                              // SPEC-negotiation-position — how customers order
       },
       schema: hasSchema ? sch.rows[0] : null,
       fields: fieldsRows,
@@ -405,13 +463,25 @@ router.post('/:bridge_id/order/confirm',
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
       let line_items, total;
-      try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items)); }
+      // The shop's OWN method decides whether a buyer offer is admissible at all — read server-side, never trusted
+      // from the request, so a customer cannot claim a shop is negotiable when it is not.
+      const orderMethod = await getOrderMethod(entity.identity_id);
+      if (orderMethod === 'text')
+        return res.status(403).json({ error: 'Not orderable', message: 'This catalogue is information only — it does not take orders.' });
+      try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, orderMethod)); }
       catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }
+      // A negotiation is an OFFER, not a settled order: total_value stays the seller's catalogue price (CJ-07
+      // untouched); the buyer's numbers ride along under `proposal` on each line.
+      const negotiation = line_items.some((li) => li && li.proposal);
       const chit_id = uuidv4();
       const custLocality = (req.body && typeof req.body.location === 'string') ? req.body.location.trim().slice(0, 80) : '';   // STONE 4: consent-provided coarse locality
       const summary_json = { line_item_count: line_items.length, total_value: Math.round(total * 100) / 100,
                              currency_code: entity.currency_code || 'INR', purpose: 'order', is_promotion: false,
-                             customer_locality: custLocality || null };
+                             customer_locality: custLocality || null,
+                             order_method: orderMethod,
+                             // reads as an OFFER awaiting the seller, not a settled order. total_value above is still
+                             // the seller's catalogue price — the buyer's numbers live on the lines under `proposal`.
+                             ...(negotiation ? { negotiation: true } : {}) };
       // Assimilate the governance SEAM + advisory conformance onto the storefront chit — parity with /chits/send, so a
       // STOREFRONT order carries the same full stamp (constitution · capability · work-pattern · N standards) as any
       // other chit, PLUS a runtime conformance verdict. Governed by the SHOP (the selling entity). Best-effort: never
