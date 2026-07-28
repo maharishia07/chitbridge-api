@@ -35,10 +35,12 @@ const genKey  = () => crypto.randomBytes(24).toString('base64url');            /
 const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex');    // only the hash is stored
 // Canonical (key-sorted) hash of an ERP document — the ONLY trace we keep of the raw payload (process-then-forget).
 // Sorting keys makes it order-independent so the SAME document from two clients dedupes to one receipt.
-const stableStringify = (v) => {
+const CANON_MAX_DEPTH = 256; // bound recursion: a deeply-nested (possibly hostile) payload must not overflow the stack
+const stableStringify = (v, depth = 0) => {
+  if (depth > CANON_MAX_DEPTH) throw new Error('payload nesting exceeds ' + CANON_MAX_DEPTH + ' levels');
   if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
-  if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
-  return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+  if (Array.isArray(v)) return '[' + v.map((x) => stableStringify(x, depth + 1)).join(',') + ']';
+  return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableStringify(v[k], depth + 1)).join(',') + '}';
 };
 const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
 // health from last_seen: never / stale >15m = offline, >3m = slow, else live

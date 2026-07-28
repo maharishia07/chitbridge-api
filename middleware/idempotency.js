@@ -11,10 +11,12 @@ const { withEntity } = require('../db');
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 // deterministic stringify so the request fingerprint is stable regardless of key order
-function stable(o) {
+const CANON_MAX_DEPTH = 256; // bound recursion: a deeply-nested body must not overflow the stack
+function stable(o, depth = 0) {
+  if (depth > CANON_MAX_DEPTH) throw new Error('request body nesting exceeds ' + CANON_MAX_DEPTH + ' levels');
   if (o === null || typeof o !== 'object') return JSON.stringify(o);
-  if (Array.isArray(o)) return '[' + o.map(stable).join(',') + ']';
-  return '{' + Object.keys(o).sort().map((k) => JSON.stringify(k) + ':' + stable(o[k])).join(',') + '}';
+  if (Array.isArray(o)) return '[' + o.map((x) => stable(x, depth + 1)).join(',') + ']';
+  return '{' + Object.keys(o).sort().map((k) => JSON.stringify(k) + ':' + stable(o[k], depth + 1)).join(',') + '}';
 }
 
 // scope from the SAME bearer token auth uses (parent_entity_id || identity_id); null ⇒ let the route's auth reject it
@@ -62,7 +64,9 @@ module.exports = function idempotency(req, res, next) {
   if (!key || !MUTATING.includes(req.method) || String(key).length > 200) return next();
   const entity = scope(req);
   if (!entity) return next();
-  const hash = crypto.createHash('sha256').update(req.method + ' ' + req.path + ' ' + stable(req.body || {})).digest('hex');
+  let hash;
+  try { hash = crypto.createHash('sha256').update(req.method + ' ' + req.path + ' ' + stable(req.body || {})).digest('hex'); }
+  catch (_) { return next(); }   // pathological body (e.g. nesting too deep) → skip idempotency, never break the request (self-healing)
   const windowHrs = Number(process.env.IDEMPOTENCY_WINDOW_HOURS || 48);
 
   begin(entity, key, req.method, req.path, hash, windowHrs).then((r) => {
