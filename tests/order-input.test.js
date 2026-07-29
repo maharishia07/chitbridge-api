@@ -108,5 +108,65 @@ t('resolve() never mutates the shared PRESETS', () => {
   assert.deepStrictEqual(OI.PRESETS.choice.schema.properties.price.enum, [], 'PRESETS leaked mutation');
 });
 
+// ── CARRIED DOCUMENTS — "the line item is the filled form AND its proof" (SPEC-document-carrying phase 1) ──
+const crypto = require('node:crypto');
+const b64 = (s) => Buffer.from(s).toString('base64');
+const pdf = (name, body) => ({ name, mime: 'application/pdf', data_base64: b64(body || name) });
+
+t('docs · a catalogue that declares nothing accepts NO documents (no storefront changes behaviour)', () => {
+  const decl = OI.resolve({ preset: 'form' }).documents;
+  assert.strictEqual(decl, null);
+  const r = OI.validateDocuments([pdf('f.pdf')], decl, crypto);
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errors[0], /does not accept documents/);
+});
+t('docs · a declared document is accepted and HASHED (the proof)', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { max: 2, accept: ['application/pdf'] } }).documents;
+  const r = OI.validateDocuments([pdf('form16.pdf', 'hello')], decl, crypto);
+  assert.strictEqual(r.ok, true, r.errors.join('; '));
+  assert.strictEqual(r.docs[0].size, 5);
+  assert.strictEqual(r.docs[0].sha256, crypto.createHash('sha256').update('hello').digest('hex'), 'sha256 must be of the real bytes');
+  assert.ok(Buffer.isBuffer(r.docs[0].buffer));
+});
+t('docs · a disallowed MIME is rejected before any byte is written', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf'] } }).documents;
+  const r = OI.validateDocuments([{ name: 'x.exe', mime: 'application/x-msdownload', data_base64: 'AA==' }], decl, crypto);
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errors[0], /is not accepted/);
+});
+t('docs · declared caps are enforced, and cannot exceed the platform ceiling', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { max: 2, accept: ['application/pdf'] } }).documents;
+  const over = OI.validateDocuments([pdf('a'), pdf('b'), pdf('c')], decl, crypto);
+  assert.strictEqual(over.ok, false);
+  assert.match(over.errors[0], /At most 2/);
+  const greedy = OI.resolve({ preset: 'form', documents: { max: 99, accept: ['application/pdf', 'text/html'] } }).documents;
+  assert.strictEqual(greedy.max, OI.DOC_MAX_COUNT, 'a declaration may only be MORE restrictive than the ceiling');
+  assert.deepStrictEqual(greedy.accept, ['application/pdf'], 'a declaration cannot widen the MIME allowlist');
+});
+t('docs · a required document that is missing is rejected', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { required: true, label: 'Form 16' } }).documents;
+  const r = OI.validateDocuments([], decl, crypto);
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errors[0], /Form 16 is required/);
+});
+t('docs · an oversized file is rejected', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf'] } }).documents;
+  const big = { name: 'big.pdf', mime: 'application/pdf', data_base64: Buffer.alloc(OI.DOC_MAX_BYTES + 1024).toString('base64') };
+  const r = OI.validateDocuments([big], decl, crypto);
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errors[0], /larger than/);
+});
+t('docs · an empty file is rejected (an empty proof is not a proof)', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf'] } }).documents;
+  const r = OI.validateDocuments([{ name: 'e.pdf', mime: 'application/pdf', data_base64: '' }], decl, crypto);
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errors[0], /empty file/);
+});
+t('docs · no documents and none required → fine (documents are optional by default)', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf'] } }).documents;
+  assert.strictEqual(OI.validateDocuments([], decl, crypto).ok, true);
+  assert.strictEqual(OI.validateDocuments(undefined, decl, crypto).ok, true);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

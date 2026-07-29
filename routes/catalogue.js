@@ -461,7 +461,7 @@ router.post('/:bridge_id/order/confirm',
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
-      let line_items, total;
+      let line_items, total, pendingDocs = [];   // pendingDocs: validated+hashed bytes, stored per-copy after commit
       // The shop's OWN method decides whether a buyer offer is admissible at all — read server-side, never trusted
       // from the request, so a customer cannot claim a shop is negotiable when it is not.
       const oi = await getOrderInput(entity.identity_id);
@@ -476,7 +476,15 @@ router.post('/:bridge_id/order/confirm',
           const label = String(li.finish || li.name || li.particulars || 'Submission').slice(0, 200);
           const v = orderInput.validate(li.payload, oi.schema);
           if (!v.ok) throw _422(v.errors.join('; '));
-          line_items = [{ kind: 'payload', name: label, particulars: label, quantity: 1, price: 0, total: 0, payload: v.value }];
+          // THE LINE ITEM IS THE FILLED FORM **AND ITS PROOF**. Documents are validated and hashed BEFORE anything is
+          // written; the sha256 is sealed onto the chit in the same transaction as the answers, so the record of what
+          // was submitted can never be lost. The bytes are replicated per-copy afterwards (see below) — if that fails
+          // the proof still stands and the blob is re-uploadable against a known hash.
+          const dv = orderInput.validateDocuments(li.documents, oi.documents, crypto);
+          if (!dv.ok) throw _422(dv.errors.join('; '));
+          pendingDocs = dv.docs;
+          line_items = [{ kind: 'payload', name: label, particulars: label, quantity: 1, price: 0, total: 0, payload: v.value,
+                          ...(dv.docs.length ? { documents: dv.docs.map((d) => ({ name: d.name, mime: d.mime, size: d.size, sha256: d.sha256 })) } : {}) }];
           total = 0;
         } catch (ve) { return res.status(ve.status || 422).json({ error: 'Submission rejected', message: ve.message }); }
       } else {
@@ -648,7 +656,27 @@ router.post('/:bridge_id/order/confirm',
           email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id },
         process.env.JWT_SECRET, { expiresIn: '7d' });
 
-      res.json({ message: 'Order placed', chit_id, shop: entity.display_name, summary: summary_json, token });
+      // ── carry the documents: replicate the bytes PER COPY (b66 — each party owns and can purge its own row) ──
+      // Deliberately AFTER the commit. The proof (sha256) is already sealed onto the chit, so a storage failure can
+      // never erase the record of what was submitted — it only means the blob must be re-uploaded against a known
+      // hash. Reuses lib/storage.putForParticipants, which already runs each insert in its own entity context so the
+      // FORCE-RLS WITH CHECK passes for that participant's copy.
+      let documents_stored = pendingDocs.length ? true : undefined;
+      if (pendingDocs.length) {
+        try {
+          const storage = require('../lib/storage');
+          const participants = [c.identity_id, entity.identity_id];
+          for (const d of pendingDocs) {
+            await storage.putForParticipants({ chit_id, message_id: null, line_index: 0, name: d.name, mime: d.mime,
+              size: d.size, buffer: d.buffer, uploaded_by: c.identity_id, participants, forEntity: c.identity_id });
+          }
+        } catch (e) {
+          documents_stored = false;
+          console.error('order/confirm document storage failed (proof is sealed on the chit):', e.message);
+        }
+      }
+      res.json({ message: 'Order placed', chit_id, shop: entity.display_name, summary: summary_json, token,
+                 ...(documents_stored === undefined ? {} : { documents_stored, documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256 })) }) });
     } catch (err) { console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: safeErr(err) }); }
   });
 
