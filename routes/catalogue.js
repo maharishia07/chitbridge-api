@@ -65,18 +65,11 @@ const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
 // a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
 // it extends to quantity, delivery date, spec, incoterm without another migration.
 const orderInput = require('../lib/order-input');
+const catalogueView = require('../lib/catalogue-view');   // ONE catalogue read, shared with the B2B/supplier view
 const MAX_FORMS_PER_SUBMISSION = 5;   // one purpose, several forms (an export bundle, a loan pack) — but bounded
 // The catalogue DECLARES what it receives (lib/order-input.js). Read server-side from the face (b112) and never from
 // the request, so a customer cannot claim a shop is negotiable — or priceless — when it is not.
-async function getOrderInput(entity_id) {
-  try {
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
-    const face = (r.rows[0] && r.rows[0].face) || {};
-    // `order_input` is the declaration; `method` is the pre-declaration field, still honoured as a preset name.
-    return orderInput.resolve(face.order_input || (face.method ? { preset: face.method } : null));
-  } catch (_) { return orderInput.resolve(null); }       // no face / table absent → cart/commerce, today's behaviour
-}
+const getOrderInput = (entity_id) => catalogueView.getOrderInput({ entity_id, withEntity, orderInput });
 // Validate the buyer's proposal. NOTHING here feeds price/total — CJ-07 price integrity is untouched: the line price
 // and total stay server-authoritative. This only decides whether a NON-authoritative position is admissible.
 // It is strictly a NEW restriction (a fixed-price shop now REJECTS an offer that it previously ignored).
@@ -345,63 +338,10 @@ router.get('/:bridge_id', async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
-    const sch = await query(
-      `SELECT schema_id, schema_name FROM entity_schemas
-       WHERE entity_id = $1 AND status = 'active' AND is_default = true AND visibility = 'public' LIMIT 1`,
-      [entity.identity_id]);
-    const hasSchema = sch.rows.length > 0;
-    let fieldsRows = [], itemsRows = [];
-    if (hasSchema) {
-      fieldsRows = (await query(
-        `SELECT field_key, field_name, field_type, required, min_value, display_order
-         FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`, [sch.rows[0].schema_id])).rows;
-      // B1 RLS: public storefront read (unauthenticated) -> withEntity(null) = no tenant context, so the
-      // visibility-aware policy returns only PUBLIC items.
-      itemsRows = (await withEntity(null, (db) => db.query(
-        `SELECT item_id, item_data FROM catalogue_items
-         WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`,
-        [entity.identity_id]))).rows;
-    }
-    // B3.7-ref: the shop's adopted REFERENCE catalogue (Royale Play finishes) — design/colour by reference + its
-    // commercials. Read inside withEntity(shop) so the shop's own RLS lets us project its VISIBLE adoptions; resolve
-    // against the shared source. Best-effort: b75 absent / no adoption → no finishes (storefront still works).
-    let finishes = [];
-    try {
-      const ado = await withEntity(entity.identity_id, (db) => db.query(
-        `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity.identity_id]));
-      for (const row of ado.rows) {
-        const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
-        if (resolved) finishes.push({ source: row.source_key, title: resolved.title, collection: resolved.collection, items: resolved.items,
-          owner_entity_id: resolved.owner_entity_id || null,   // b78 — the item runs under its SOURCE's governance, not the host's
-          experience: resolved.experience || {}, formatting: resolved.formatting || {} });
-      }
-    } catch (_) { /* no reference catalogue for this shop */ }
-    // Storefront available if it has EITHER a public products catalogue OR adopted designer finishes.
-    if (!hasSchema && !finishes.length) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
-    // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
-    let storefront_access = 'browse';
-    try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [entity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
-    // SPEC-negotiation-position §1 — the shop's ORDER METHOD (cart | qty | range | qtyprice | text) decides what the
-    // storefront asks the customer for, and therefore what data comes back. It lives on the face (b112). Best-effort:
-    // no face / table absent → 'cart', so every existing storefront is unaffected.
-    const oi = await getOrderInput(entity.identity_id);
-    res.json({
-      shop: {
-        bridge_id: entity.bridge_id, display_name: entity.display_name,
-        currency_code: entity.currency_code,
-        gstn: entity.gstn, is_verified: entity.is_verified,
-        logo_url: entity.logo_url, address: entity.address,   // B3.9 — identity/trust
-        business_status: entity.business_status || 'open',     // B3.11 — open | closed | away
-        storefront_access: storefront_access,                   // b77 — browse | login (self-healing)
-        // the DECLARED contract: what this catalogue receives, and which pipeline a submission runs through.
-        order_input: { preset: oi.preset, pipeline: oi.pipeline, showsPrice: oi.showsPrice, negotiable: oi.negotiable, schema: oi.schema },
-        order_method: oi.preset                                 // back-compat alias for the preset name
-      },
-      schema: hasSchema ? sch.rows[0] : null,
-      fields: fieldsRows,
-      items:  itemsRows,           // B3.7a — the actual products
-      finishes: finishes           // B3.7-ref — the adopted designer finishes (reference + commercials)
-    });
+    // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
+    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput });
+    if (!view.available) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
+    res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items, finishes: view.finishes });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
 

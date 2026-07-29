@@ -6,6 +6,9 @@ const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const catalogueView  = require('../lib/catalogue-view');    // the SAME catalogue read the public storefront uses
+const catalogueBuild = require('../lib/catalogue-build');
+const orderInput     = require('../lib/order-input');
 
 // actors act in their parent entity's context
 const ctx = (req) => req.identity.parent_entity_id || req.identity.identity_id;
@@ -132,24 +135,23 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
       `SELECT identity_id, display_name, bridge_id, currency_code, business_status
        FROM identities WHERE identity_id = $1 AND identity_type = 'entity' AND COALESCE(sealed, false) = false`, [sid]);
     const supplier = sup.rows[0] || null;
-    // F7 (cross-entity read): only expose a supplier's catalogue if they have PUBLISHED it (a public default
-    // schema) — mirrors the public storefront endpoint (catalogue.js GET /:bridge_id). Without this, any
-    // logged-in entity could read any other entity's full catalogue + prices via the :id in the URL.
-    // (Interim gate per Athi; a supplier/connection-relationship check is a later tightening, not now.)
-    const schema = await query(
-      `SELECT schema_id, schema_name FROM entity_schemas
-       WHERE entity_id = $1 AND status = 'active' AND is_default = true AND visibility = 'public' LIMIT 1`, [sid]);
-    if (schema.rows.length === 0) return res.json({ supplier, schema: null, fields: [], items: [] });
-    const fields = await query(
-      `SELECT field_key, field_name, field_type, required, display_order
-       FROM schema_fields WHERE schema_id = $1 ORDER BY display_order`,
-      [schema.rows[0].schema_id]);
-    // B1 RLS: browsing a supplier's catalogue -> withEntity(me); the visibility-aware policy returns the supplier's
-    // items only if their catalogue is public (your own always). The app-layer public gate above stays (defence in depth).
-    const items = await withEntity(ctx(req), (db) => db.query(
-      `SELECT item_id, item_data FROM catalogue_items
-       WHERE entity_id = $1 AND is_active = true ORDER BY created_at DESC`, [sid]));
-    res.json({ supplier, schema: schema.rows[0], fields: fields.rows, items: items.rows });
+    if (!supplier) return res.json({ supplier: null, schema: null, fields: [], items: [], finishes: [] });
+    // ── ONE CATALOGUE READ (SPEC-one-path-many-principals) ────────────────────────────────────────────────────
+    // This used to be a second, older implementation of "read a catalogue": it returned only the supplier's OWN
+    // catalogue_items and knew nothing of `finishes` (where published/adopted TEMPLATES live) or `order_input` (the
+    // declaration), so a buyer could not even learn what a form asks for. Proven live by scripts/journey-supplier-hop.js.
+    // It now calls the SAME resolver the public storefront uses, so a new surface is a new principal, not a new endpoint.
+    //
+    // ACCESS: this returns exactly the ANONYMOUS storefront payload — no more. That is deliberate and load-bearing:
+    //   • GET /api/catalogue/:bridge_id is PUBLIC, so everything here is already world-readable; serving it to a
+    //     logged-in entity adds ZERO exposure, and the F7 concern (reading another entity's catalogue via the :id in
+    //     the URL) is satisfied by the fact that anyone could read it anonymously anyway.
+    //   • Adding a supplier is UNILATERAL (POST /suppliers inserts with no consent from the supplier), so being
+    //     "related" is SELF-ASSERTED and must NOT authorise anything beyond public. A tier that shows more needs
+    //     bilateral consent, which supplier_list does not model. Do not add one until it does.
+    const view = await catalogueView.buildPublicView({ entity: supplier, query, withEntity, catalogueBuild, orderInput });
+    if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], finishes: [] });
+    res.json({ supplier, shop: view.shop, schema: view.schema, fields: view.fields, items: view.items, finishes: view.finishes });
   } catch (err) {
     res.status(500).json({ error: 'Get catalogue failed', message: safeErr(err) });
   }
