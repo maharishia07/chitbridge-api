@@ -63,14 +63,55 @@ async function createPool() {
   throw new Error('All connection attempts failed (direct DATABASE_URL + Supabase pooler regions)');
 }
 
+// ── COLD-START RACE (fixed 2026-07-29) ────────────────────────────────────────────────────────────────────
+// createPool() is async, but the HTTP server starts listening immediately. On Railway the container SLEEPS when
+// idle, so every wake-up replayed the same failure: the app's first burst (/entities/me, /notifications,
+// /network-design) arrived BEFORE the pool resolved and every one threw "Database not connected" — the user saw
+// errors purely for opening the app after a break. Seen in the deploy log: three such failures at 23:20:36,
+// followed by "DB connected" in the SAME second.
+//
+// Fix: a request that arrives before the pool is up now WAITS for it (bounded) instead of failing. Nothing is
+// weakened — after the wait it either has a real pool or throws the identical error as before.
+//
+// Also makes the old comment true: it claimed "queries will retry" but `pool` simply stayed undefined forever, so
+// a failed init was permanent until redeploy. A failed init now clears itself and the next query retries.
+const BOOT_WAIT_MS = Number(process.env.DB_BOOT_WAIT_MS || 15000);
+const NOT_CONNECTED = 'Database not connected — check DATABASE_URL in Railway environment variables';
 let pool;
+let initPromise = null;
 
-createPool().then(p => {
-  pool = p;
-  p.on('error', err => console.error('Database error:', err.message));
-}).catch(err => {
-  console.error('DB init failed — server stays up, queries will retry:', err.message);
-});
+function startInit() {
+  const p = createPool()
+    .then((created) => {
+      pool = created;
+      created.on('error', (err) => console.error('Database error:', err.message));
+      return created;
+    })
+    .catch((err) => {
+      console.error('DB init failed — the next query will retry:', err.message);
+      initPromise = null;                 // clear, so a later request genuinely retries
+      throw err;
+    });
+  initPromise = p;
+  p.catch(() => {});                      // module-load safety: never an unhandled rejection
+  return p;
+}
+startInit();
+
+// Wait for the pool, bounded — a request must never hang forever on a dead database.
+async function ensurePool() {
+  if (pool) return pool;
+  const p = initPromise || startInit();
+  let timer;
+  try {
+    return await Promise.race([
+      p,
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(NOT_CONNECTED)), BOOT_WAIT_MS); }),
+    ]);
+  } catch (_) {
+    throw new Error(NOT_CONNECTED);       // one canonical message, unchanged from before
+  } finally { clearTimeout(timer); }
+}
 
 // ── B1 (RLS Stage-0) — the NO-CONTEXT GUARD ──────────────────────────────────────────────────────────────
 // A tripwire: the module-level `query()` is the CONTEXT-FREE path (no entity bound), so any tenant-table access
@@ -112,7 +153,7 @@ function rlsGuardCheck(text) {
 }
 
 const query = async (text, params) => {
-  if (!pool) throw new Error('Database not connected — check DATABASE_URL in Railway environment variables');
+  if (!pool) await ensurePool();          // cold start: wait for the pool instead of failing the request
   rlsGuardCheck(text);
   const start = Date.now();
   try {
@@ -131,7 +172,7 @@ const query = async (text, params) => {
 // Pass a function that does ALL its queries on the supplied `client` (NOT the pool
 // `query`, or they won't be in the transaction). Returns whatever fn returns.
 const withTransaction = async (fn) => {
-  if (!pool) throw new Error('Database not connected — check DATABASE_URL in Railway environment variables');
+  if (!pool) await ensurePool();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
