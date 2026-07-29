@@ -21,7 +21,8 @@ const genBridge = () => {   // S4 — CSPRNG (bridge ids are public, but no reas
   return id;
 };
 // Customer (storefront) OTP: fixed 123123 in dev (distinct from the entity dev OTP 123456); CSPRNG in real prod (S4).
-const genOTP = () => ((process.env.DEV_OTP || '').trim() ? '123123' : require('crypto').randomInt(100000, 1000000).toString());
+const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
+const genOTP = () => devOtp.fixedOtp('customer') || require('crypto').randomInt(100000, 1000000).toString();
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 // F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email

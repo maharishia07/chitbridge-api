@@ -24,12 +24,18 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
 // it ever reaches a real environment. KNOWN + DEFERRED decision: allowed in dev/test ONLY during exploration (the
 // team uses 123456 to avoid needing a real inbox per test entity); the registration/login rework + real OTP delivery
 // lands at the UAT cutover, so DEV_OTP is HARD-BLOCKED (fail-closed) in uat/staging/live — it cannot silently ship.
-if (process.env.DEV_OTP) {
-  const msg = 'DEV_OTP is set — OTPs are FIXED (testing only)';
-  const SEALED_ENVS = ['production', 'uat', 'staging', 'live'];
-  if (SEALED_ENVS.includes((process.env.NODE_ENV || '').toLowerCase())) {
-    log.critical('boot aborted', { reason: msg + ' — unset DEV_OTP before ' + process.env.NODE_ENV }); process.exit(1);
-  } else log.warn('fixed test OTP active', { reason: msg + ' — dev/test only; real OTP + login rework lands at the UAT cutover' });
+// The whole OTP posture is decided in ONE place now (lib/dev-otp.js) — the sealed-env list, the three fixed codes,
+// and whether a code may ever be echoed in an HTTP response. This guard refuses to boot in a state that LOOKS sealed
+// but leaks, so the cutover cannot be half-done: naming a sealed env without unsetting DEV_OTP *and* proving real
+// delivery (OTP_EMAIL_ENABLED=true) is fatal, not a warning.
+{
+  const devOtp = require('./lib/dev-otp');
+  const errs = devOtp.otpPostureErrors();
+  if (errs.length) { errs.forEach((e) => log.critical('boot aborted', { reason: e })); process.exit(1); }
+  if (devOtp.armed()) {
+    log.warn('fixed test OTPs active', { reason: 'DEV_OTP is set — entity/customer/connector OTPs are FIXED and are '
+      + 'echoed in API responses. Dev/test ONLY. To seal: see the checklist at the top of lib/dev-otp.js.' });
+  }
 }
 
 // Trust Railway's proxy

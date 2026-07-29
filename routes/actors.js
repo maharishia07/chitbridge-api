@@ -2,6 +2,7 @@
 // All endpoints for create login manage actors
 
 const express = require('express');
+const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on process.env.DEV_OTP directly
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
@@ -182,7 +183,7 @@ router.post('/',
         },
         otp,
         // Always return dev_otp when DEV_OTP env is set
-        ...(process.env.DEV_OTP && { dev_otp: otp }),
+        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
         login_instruction: `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}\nOTP: ${otp}`
       });
 
@@ -388,7 +389,7 @@ router.delete('/:id/pin',
         message: 'PIN reset — share the new one-time code; they set a new PIN on next login',
         actor_name: actor.rows[0].display_name,
         otp,
-        ...(process.env.DEV_OTP && { dev_otp: otp }),
+        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
         login_format: `${actor.rows[0].actor_key}@${req.identity.display_name}`
       });
     } catch (err) {
@@ -720,7 +721,7 @@ router.post('/:id/otp',
         message: 'OTP reset successfully',
         actor_name: actor.rows[0].display_name,
         otp,
-        ...(process.env.DEV_OTP && { dev_otp: otp }),
+        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
         login_format: `${actor.rows[0].actor_key}@${req.identity.display_name}`,
         expires_in: '7 days'
       });
@@ -806,7 +807,7 @@ router.put('/:id/status',
         return res.json({
           message: 'Actor reactivated',
           otp,
-          ...(process.env.DEV_OTP && { dev_otp: otp }),
+          ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
           login_format: `${a.actor_key}@${req.identity.display_name}`
         });
       }
