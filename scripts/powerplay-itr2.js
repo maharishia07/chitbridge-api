@@ -17,6 +17,7 @@
  * implementation, and nothing here is tax advice. The point is the RAIL, not the return.
  */
 const OI = require('../lib/order-input');
+const FH = require('../lib/form-handshake');   // the handshake ENGINE — the mapper below is now a DECLARATION
 
 const B = (s) => '\x1b[1m' + s + '\x1b[0m';
 const G = (s) => '\x1b[32m' + s + '\x1b[0m';
@@ -69,25 +70,29 @@ const FORM_16 = {
   },
 };
 
-// ── 3. THE MAPPER — Form 16 → ITR-2. Deterministic, rule-based; no AI needed for a fixed, published pair. ─────
-// This is the piece that does NOT exist in the product yet. It is small and honest, which is the finding.
-function mapForm16ToItr2(f16) {
-  const a = f16.part_a || {}, b = f16.part_b || {}, via = b.chapter_via || {};
-  return {
-    pan:                     a.employee_pan,
-    assessment_year:         a.assessment_year,
-    gross_salary_17_1:       b.salary_us_17_1,
-    perquisites_17_2:        b.perquisites_us_17_2,
-    exempt_allowances_s10:   b.allowances_exempt_us_10,
-    standard_deduction_16ia: b.standard_deduction_us_16_ia,
-    professional_tax_16iii:  b.professional_tax_us_16_iii,
-    income_from_salary:      b.income_chargeable_salaries,
-    deduction_80c:           via.s_80c,
-    deduction_80d:           via.s_80d,
-    employer_tan:            a.employer_tan,
-    tds_deducted:            a.total_tds,
-  };
-}
+// ── 3. THE SOURCE DECLARATION — Form 16 → ITR-2. Pure DATA now, run by lib/form-handshake.js. ────────────────
+// This used to be a hand-written mapper function in this script. It is now a declaration the engine executes, so
+// swapping in any other form and any other input needs no code at all — which was Athi's requirement.
+const FORM16_SOURCE = {
+  key: 'form_16',
+  label: 'Form 16 (TDS certificate)',
+  map: {
+    'part_a.employee_pan':                'pan',
+    'part_a.assessment_year':             'assessment_year',
+    'part_a.employer_tan':                'employer_tan',
+    'part_a.total_tds':                   'tds_deducted',
+    'part_b.salary_us_17_1':              'gross_salary_17_1',
+    'part_b.perquisites_us_17_2':         'perquisites_17_2',
+    'part_b.allowances_exempt_us_10':     'exempt_allowances_s10',
+    'part_b.standard_deduction_us_16_ia': 'standard_deduction_16ia',
+    'part_b.professional_tax_us_16_iii':  'professional_tax_16iii',
+    'part_b.income_chargeable_salaries':  'income_from_salary',
+    'part_b.chapter_via.s_80c':           'deduction_80c',
+    'part_b.chapter_via.s_80d':           'deduction_80d',
+  },
+};
+// A second source, to show the residue shrinking as evidence arrives (Athi: "a couple more details").
+const CHEQUE_SOURCE = { key: 'cheque_scan', label: 'Cancelled cheque', map: { 'bank.ifsc': 'bank_account_ifsc' } };
 
 // ── RUN ───────────────────────────────────────────────────────────────────────────────────────────────────────
 line('═');
@@ -104,12 +109,22 @@ console.log('   preset          : ' + oi.preset);
 console.log('   pipeline        : ' + oi.pipeline + (oi.pipeline === 'payload' ? G('  ✓ no price, no quantity — correct for a form') : R('  ✗ WRONG')));
 console.log('   declared fields : ' + declared.length + '   required: ' + required.length);
 
-console.log('\n' + B('2 · The customer loads a Form 16; we map it onto the declared fields'));
-const mapped = mapForm16ToItr2(FORM_16);
-const filled = Object.keys(mapped).filter((k) => mapped[k] !== undefined && mapped[k] !== null);
-const missing = declared.filter((k) => filled.indexOf(k) < 0);
+console.log('\n' + B('2a · AT CATALOGUE-BUILD TIME — what the owner is told BEFORE any document exists'));
+const covF16 = FH.coverage(oi.schema, [FORM16_SOURCE]);
+console.log('   ' + G(FH.summarise(covF16, [FORM16_SOURCE])));
+const covBoth = FH.coverage(oi.schema, [FORM16_SOURCE, CHEQUE_SOURCE]);
+console.log('   ' + G(FH.summarise(covBoth, [FORM16_SOURCE, CHEQUE_SOURCE])));
+console.log('   ' + Y('This is declaration maths — no file has been uploaded. The catalogue owner designs with it.'));
+
+console.log('\n' + B('2b · AT FILL TIME — the customer supplies the Form 16'));
+const res = FH.resolve(oi.schema, [FORM16_SOURCE], { form_16: FORM_16 });
+const mapped = res.value;
+const filled = res.filled, missing = res.residue;
 console.log('   autopopulated   : ' + G(filled.length + ' of ' + declared.length) + '  → ' + filled.join(', '));
 console.log('   still needed    : ' + Y(missing.length + ' field(s)') + '  → ' + missing.join(', '));
+const agrees = filled.slice().sort().join() === covF16.covered.slice().sort().join();
+console.log('   matches what the owner was promised at build time? ' + (agrees ? G('yes — same engine, two call sites') : R('NO')));
+console.log('   provenance example : income_from_salary ← ' + JSON.stringify(res.provenance.income_from_salary));
 console.log('   ' + Y('WHY:') + ' a Form 16 is a salary certificate. Capital gains, house property, foreign assets and');
 console.log('   the refund bank account are simply not in it — no extractor can conjure them. This is the four-leg');
 console.log('   story in miniature: one leg (the document) fills what it owns; the customer supplies the rest.');
