@@ -275,7 +275,11 @@ router.get('/me', auth, async (req, res) => {
     // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
     let storefront_access = 'browse';
     try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access });
+    // b114 (self-healing): is this entity's catalogue exposed at all? Pre-b114 there was no such setting and adoption
+    // silently published, so absent the column we report 'public' — the behaviour that was actually in force.
+    let catalogue_visibility = 'public';
+    try { const cv = await query('SELECT catalogue_visibility FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (cv.rows[0] && cv.rows[0].catalogue_visibility) catalogue_visibility = cv.rows[0].catalogue_visibility; } catch (_) {}
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility });
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance });
   } catch (err) {
     console.error('Profile error:', err.message);
@@ -342,6 +346,11 @@ router.patch('/profile', auth,
          req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id]);
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
+      // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
+      // saved separately so a normal profile save still works before b114 is applied.
+      if (['public', 'private'].includes(req.body.catalogue_visibility)) {
+        try { await query('UPDATE identities SET catalogue_visibility=$1 WHERE identity_id=$2', [req.body.catalogue_visibility, id]); } catch (_) {}
+      }
       res.json({ message: 'Profile updated' });
     } catch (err) {
       if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });
