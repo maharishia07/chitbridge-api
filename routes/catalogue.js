@@ -65,6 +65,7 @@ const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
 // a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
 // it extends to quantity, delivery date, spec, incoterm without another migration.
 const orderInput = require('../lib/order-input');
+const MAX_FORMS_PER_SUBMISSION = 5;   // one purpose, several forms (an export bundle, a loan pack) — but bounded
 // The catalogue DECLARES what it receives (lib/order-input.js). Read server-side from the face (b112) and never from
 // the request, so a customer cannot claim a shop is negotiable — or priceless — when it is not.
 async function getOrderInput(entity_id) {
@@ -79,6 +80,26 @@ async function getOrderInput(entity_id) {
 // Validate the buyer's proposal. NOTHING here feeds price/total — CJ-07 price integrity is untouched: the line price
 // and total stay server-authoritative. This only decides whether a NON-authoritative position is admissible.
 // It is strictly a NEW restriction (a fixed-price shop now REJECTS an offer that it previously ignored).
+// A store may offer SEVERAL templates, and each asks for different things — the customer must be shown the fields of
+// the template THEY picked, not one catalogue-wide set. So an item may carry its own `order_input`, merge-patched over
+// the catalogue's (opt-in: no item declaration → the catalogue governs). Resolved SERVER-SIDE at submit, so what gets
+// validated is what the ITEM declares, never what the client claims it declares.
+async function itemDeclFor(entity_id, itemName) {
+  if (!itemName) return null;
+  try {
+    const ado = await withEntity(entity_id, (db) => db.query(
+      `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity_id]));
+    const want = _norm(itemName);
+    for (const row of ado.rows) {
+      const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
+      for (const it of ((resolved && resolved.items) || [])) {
+        if (_norm(it.name) === want) return it.order_input || null;
+      }
+    }
+  } catch (_) { /* no adoption → the catalogue declaration governs */ }
+  return null;
+}
+
 // Validate the buyer's offer AGAINST THE DECLARED SCHEMA, bounded by the seller's own band/options.
 // NOTHING here feeds price/total — CJ-07 price integrity is untouched: the line price and total stay
 // server-authoritative. This only decides whether a NON-authoritative position is admissible.
@@ -471,20 +492,31 @@ router.post('/:bridge_id/order/confirm',
         // (correctly) rejected as unpriced. Same rail, same chit, same governance — only the middle step differs.
         try {
           const raw = Array.isArray(req.body.line_items) ? req.body.line_items : [];
-          if (raw.length !== 1) throw _422('Submit one entry at a time');   // mixed baskets are not allowed (Athi, 2026-07-28)
-          const li = raw[0] || {};
+          // A BUNDLE: one purpose often needs SEVERAL forms (an export = invoice + packing list + certificate of
+          // origin; a loan = application + KYC + income proof). Each entry is still ONE form, validated against ITS
+          // OWN declaration. Mixing a purchase with a form stays impossible for free — the pipeline is shop-level, so
+          // every line here is a payload line by construction.
+          if (!raw.length) throw _422('Nothing to submit');
+          if (raw.length > MAX_FORMS_PER_SUBMISSION) throw _422(`At most ${MAX_FORMS_PER_SUBMISSION} forms in one submission`);
+          line_items = [];
+          for (let idx = 0; idx < raw.length; idx++) {
+          const li = raw[idx] || {};
           const label = String(li.finish || li.name || li.particulars || 'Submission').slice(0, 200);
-          const v = orderInput.validate(li.payload, oi.schema);
-          if (!v.ok) throw _422(v.errors.join('; '));
+          // WHICH template is this entry? Its own declaration governs, so a store offering ITR-2 and a
+          // Commercial Invoice validates each against ITS OWN fields — not one catalogue-wide set.
+          const itemOi = orderInput.forItem(oi, await itemDeclFor(entity.identity_id, label));
+          const v = orderInput.validate(li.payload, itemOi.schema);
+          if (!v.ok) throw _422(`"${label}": ${v.errors.join('; ')}`);
           // THE LINE ITEM IS THE FILLED FORM **AND ITS PROOF**. Documents are validated and hashed BEFORE anything is
           // written; the sha256 is sealed onto the chit in the same transaction as the answers, so the record of what
           // was submitted can never be lost. The bytes are replicated per-copy afterwards (see below) — if that fails
           // the proof still stands and the blob is re-uploadable against a known hash.
-          const dv = orderInput.validateDocuments(li.documents, oi.documents, crypto);
-          if (!dv.ok) throw _422(dv.errors.join('; '));
-          pendingDocs = dv.docs;
-          line_items = [{ kind: 'payload', name: label, particulars: label, quantity: 1, price: 0, total: 0, payload: v.value,
-                          ...(dv.docs.length ? { documents: dv.docs.map((d) => ({ name: d.name, mime: d.mime, size: d.size, sha256: d.sha256 })) } : {}) }];
+          const dv = orderInput.validateDocuments(li.documents, itemOi.documents, crypto);
+          if (!dv.ok) throw _422(`"${label}": ${dv.errors.join('; ')}`);
+          dv.docs.forEach((d) => pendingDocs.push({ ...d, line_index: idx }));   // the proof stays attached to ITS form
+          line_items.push({ kind: 'payload', name: label, particulars: label, quantity: 1, price: 0, total: 0, payload: v.value,
+                            ...(dv.docs.length ? { documents: dv.docs.map((d) => ({ name: d.name, mime: d.mime, size: d.size, sha256: d.sha256 })) } : {}) });
+          }
           total = 0;
         } catch (ve) { return res.status(ve.status || 422).json({ error: 'Submission rejected', message: ve.message }); }
       } else {
@@ -667,7 +699,7 @@ router.post('/:bridge_id/order/confirm',
           const storage = require('../lib/storage');
           const participants = [c.identity_id, entity.identity_id];
           for (const d of pendingDocs) {
-            await storage.putForParticipants({ chit_id, message_id: null, line_index: 0, name: d.name, mime: d.mime,
+            await storage.putForParticipants({ chit_id, message_id: null, line_index: d.line_index, name: d.name, mime: d.mime,
               size: d.size, buffer: d.buffer, uploaded_by: c.identity_id, participants, forEntity: c.identity_id });
           }
         } catch (e) {
