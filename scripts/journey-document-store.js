@@ -98,7 +98,9 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
   try {
     store = await signIn('document.store@test-cb.com', 'Document Services');
     ok(`entity "${store.name}"  ·  bridge_id ${B(store.bridge_id)}`);
-    note(`storefront: ${API.replace('-api-production.up.railway.app', '-web.vercel.app')}/shop.html?b=${store.bridge_id}`);
+    // shop.html reads the param `bridge` — NOT `b`. An earlier version of this line printed ?b= and the link silently
+    // loaded an empty shop, which cost real time to diagnose.
+    note(`storefront: ${API.replace('-api-production.up.railway.app', '-web.vercel.app')}/shop.html?bridge=${store.bridge_id}`);
   } catch (e) { bad('could not create the store — ' + e.message); return finish(); }
 
   // ─────────────────────────────────────────────────────────────────────────────
