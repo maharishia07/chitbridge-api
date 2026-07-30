@@ -54,7 +54,15 @@ const ITR2 = { preset: 'form',
     deduction_80c:      { type: 'number' },
     bank_account_ifsc:  { type: 'string', maxLength: 11 },
   }, required: ['pan', 'assessment_year', 'income_from_salary', 'bank_account_ifsc'] },
-  documents: { max: 2, accept: ['application/pdf'], required: true, label: 'Form 16' } };
+  documents: { max: 2, accept: ['application/pdf'], required: true, label: 'Form 16' },
+  // WHAT THIS TEMPLATE CAN READ. Label-anchored, never a regex — the browser escapes the label and builds the
+  // pattern, so a shop cannot ship catastrophic backtracking to its own customers.
+  sources: [{ key: 'form_16', label: 'Form 16', accept: ['application/pdf'], fields: [
+    { field: 'pan',    after: 'PAN of the Employee', type: 'code',   to: 'pan' },
+    { field: 'ay',     after: 'Assessment Year',     type: 'year',   to: 'assessment_year' },
+    { field: 'salary', after: 'Income chargeable under the head Salaries', type: 'number', to: 'income_from_salary' },
+    { field: 'c80c',   after: 'section 80C',         type: 'number', to: 'deduction_80c' },
+  ] }] };
 
 const INVOICE = { preset: 'form',
   schema: { properties: {
