@@ -189,8 +189,14 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
       }
       if (!fref) throw _422(`"${fname || ('item ' + (idx + 1))}" is not an available finish in this shop`);
       if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
-      const combo = li.combination ?? li.combo ?? null;
-      if (combo && fref.combos.size && !fref.combos.has(_norm(combo))) throw _422(`"${combo}" is not a colour combination of "${fref.name}"`);
+      // T2.5 · `combination` used to be stored RAW: when the resolved item declared no combinations the guard was
+      // skipped entirely, so an arbitrary nested object of any size rode onto BOTH chit copies — flatly contradicting
+      // "an undeclared field is rejected, never carried", which holds on the payload path but did not here.
+      const comboRaw = li.combination ?? li.combo ?? null;
+      if (comboRaw !== null && typeof comboRaw === 'object') throw _422(`"${fref.name}": a colour combination must be a name, not an object`);
+      const combo = comboRaw === null || comboRaw === '' ? null : String(comboRaw).slice(0, 120);
+      if (combo && !fref.combos.size) throw _422(`"${fref.name}" has no colour combinations to choose from`);
+      if (combo && !fref.combos.has(_norm(combo))) throw _422(`"${combo}" is not a colour combination of "${fref.name}"`);
       const fq = Number(li.quantity ?? li.qty);
       if (!Number.isFinite(fq) || fq <= 0 || fq > MAX_QTY) throw _422(`Invalid quantity for "${fref.name}"`);
       // STONE 2: ENFORCE the source's rules (governance from the source). Min order is the source's, not the host's.
@@ -274,6 +280,9 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
   const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose: 'order', is_promotion: false, forwarded_from: null, trace };
   const headerCommon = { sender_entity_id: sender.id, sender_entity_bridge_id: sender.bridge_id, sender_entity_display_name: sender.display_name,
     all_recipients, purpose: 'order', auto_subject: subject, manual_subject: subject, summary_json,
+    // deliverEdge is the NETWORK path (order chit + fulfilment fragments), not the storefront. It is always an
+    // 'order' — there is no negotiation here — and `purpose` is not in scope. A blanket rename briefly made this a
+    // ReferenceError; the test that counts these caught it.
     schema_version: null, schema_id: null, created_by_actor_id: sender.id, detail_type: 'order', line_item_count: 0, total_value: 0, currency_code: 'INR' };
   const copies = [
     { ...headerCommon, business_json: business, entity_id: sender.id, direction: 'sent', role: 'Act', current_status: 'delivered', priority_flag: 'normal',
@@ -476,18 +485,24 @@ router.post('/:bridge_id/order/confirm',
         try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi)); }
         catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }
       }
-      // A negotiation is an OFFER, not a settled order: total_value stays the seller's catalogue price (CJ-07
-      // untouched); the buyer's numbers ride along under `proposal` on each line.
+      // ── T2.1 · AN OFFER MUST NOT CARRY AN ORDER'S MONEY ──────────────────────────────────────────────────────
+      // It used to stamp total_value = the SELLER's list price on a negotiation and label it purpose:'order'. That is
+      // arithmetically defensible (CJ-07 was never breached) and semantically false: it seals a two-party record
+      // asserting a figure NEITHER PARTY AGREED. And it is consumed as fact — lib/kyb.js sums total_value into
+      // per-counterparty trade-history trust signals, so a buyer offering 40% of list inflated the seller's KYB
+      // volume at 100%. On a rail whose USP is disputes, that is a tamper-evident lie.
+      // So: an offer carries NO total_value and is labelled 'offer'. The only numbers on it are the seller's price
+      // per line and the buyer's `proposal`. A settled figure appears if and when the seller accepts.
       const negotiation = line_items.some((li) => li && li.proposal);
+      const purpose = negotiation ? 'offer' : 'order';
       const chit_id = uuidv4();
       const custLocality = (req.body && typeof req.body.location === 'string') ? req.body.location.trim().slice(0, 80) : '';   // STONE 4: consent-provided coarse locality
-      const summary_json = { line_item_count: line_items.length, total_value: Math.round(total * 100) / 100,
-                             currency_code: entity.currency_code || 'INR', purpose: 'order', is_promotion: false,
+      const summary_json = { line_item_count: line_items.length,
+                             total_value: negotiation ? null : Math.round(total * 100) / 100,
+                             currency_code: entity.currency_code || 'INR', purpose, is_promotion: false,
                              customer_locality: custLocality || null,
                              order_preset: oi.preset, pipeline: oi.pipeline,
-                             // reads as an OFFER awaiting the seller, not a settled order. total_value above is still
-                             // the seller's catalogue price — the buyer's numbers live on the lines under `proposal`.
-                             ...(negotiation ? { negotiation: true } : {}) };
+                             ...(negotiation ? { negotiation: true, indicative_total: Math.round(total * 100) / 100 } : {}) };
       // Assimilate the governance SEAM + advisory conformance onto the storefront chit — parity with /chits/send, so a
       // STOREFRONT order carries the same full stamp (constitution · capability · work-pattern · N standards) as any
       // other chit, PLUS a runtime conformance verdict. Governed by the SHOP (the selling entity). Best-effort: never
@@ -500,9 +515,32 @@ router.post('/:bridge_id/order/confirm',
       // CAPTURE (increment 3): the storefront GATHERS the standard's required fields from the customer (hs_code,
       // incoterms, …) and sends them as `captured`. They're stored on the chit and fed into conformance → it now
       // PASSES instead of flagging. (Fields the standard requires but the form didn't gather still show as gaps.)
-      const captured = (req.body && typeof req.body.captured === 'object' && req.body.captured) ? req.body.captured : {};
+      // ── T2.3 · `captured` was an unbounded, unvalidated object from the customer ───────────────────────────────
+      // It was spread over summary_json INTO the conformance input, and `hasItem()` only checks presence — so
+      // {"captured":{"hs_code":"x","incoterms":"x"}} flipped the verdict to PASS and that verdict was sealed onto
+      // both copies. It also overrode authoritative keys in the checker's view, and had no key allow-list and no size
+      // cap, so an 8 MB blob landed in chit_header.summary_json twice. It sat three functions from a closed schema
+      // that rejects every undeclared field.
+      // Now: only the fields THIS SHOP's standards actually ask for are accepted, each a short scalar, and they can
+      // never shadow an authoritative key.
+      let captured = {};
+      try {
+        const allowed = await require('../lib/conformance').captureFieldsForEntity(entity.identity_id);
+        // captureFieldsForEntity returns [{field, standard, facet, title}] — the key is `field`. Getting this wrong
+        // yields an EMPTY allow-list, which silently drops every captured field rather than failing loudly.
+        const allow = new Set((allowed || []).map((f) => (typeof f === 'string' ? f : (f && (f.field || f.key)))).filter(Boolean));
+        const raw = (req.body && typeof req.body.captured === 'object' && !Array.isArray(req.body.captured)) ? req.body.captured : {};
+        for (const k of Object.keys(raw)) {
+          if (!allow.has(k)) continue;                                        // not asked for → not carried
+          const v = raw[k];
+          if (v === null || typeof v === 'object') continue;                  // scalars only
+          captured[k] = String(v).slice(0, 200);
+        }
+      } catch (_) { captured = {}; }                                          // cannot resolve what is asked for → carry nothing
       if (Object.keys(captured).length) summary_json.captured = captured;
       try {
+        // captured goes in UNDER its own key, never spread over the authoritative summary — a customer must not be
+        // able to decide what the checker sees for total_value or line_item_count.
         const v = await require('../lib/conformance').checkConformance({ ...summary_json, ...captured, line_items }, 'chit');
         summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing), captured: Object.keys(captured) };
       } catch (_) { /* advisory is best-effort */ }
@@ -533,18 +571,18 @@ router.post('/:bridge_id/order/confirm',
       // then the fallback redoes it). NOTE: chit_deliver sets chit_ref = chit_id (was NULL here) — benign, matches /send.
       const orderCopies = [
         { entity_id: c.identity_id, sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
-          sender_entity_display_name: c.display_name, all_recipients, purpose: 'order', auto_subject,
+          sender_entity_display_name: c.display_name, all_recipients, purpose, auto_subject,
           summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id,
-          current_status: 'delivered', payload_delivered: true, detail_type: 'order',
+          current_status: 'delivered', payload_delivered: true, detail_type: purpose,
           direction: 'sent', role: 'Act', priority_flag: 'normal',
           line_item_count: summary_json.line_item_count, total_value: summary_json.total_value,
           currency_code: summary_json.currency_code, line_items,
           log: { action: 'created', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
                  new_status: 'delivered', detail: `Order placed to ${entity.display_name}` } },
         { entity_id: entity.identity_id, sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
-          sender_entity_display_name: c.display_name, all_recipients, purpose: 'order', auto_subject,
+          sender_entity_display_name: c.display_name, all_recipients, purpose, auto_subject,
           summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id,
-          current_status: 'pending', detail_type: 'order',
+          current_status: 'pending', detail_type: purpose,
           direction: 'received', role: 'Act', priority_flag: 'normal',
           line_item_count: summary_json.line_item_count, total_value: summary_json.total_value,
           currency_code: summary_json.currency_code, line_items,
@@ -570,26 +608,26 @@ router.post('/:bridge_id/order/confirm',
         await client.query(
           `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
              all_recipients, purpose, auto_subject, summary_json, schema_version, schema_id, sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,'order',$7,$8,$9,$10,NOW(),NOW())`,
+           VALUES ($1,$2,$3,$4,$5,$6,$11,$7,$8,$9,$10,NOW(),NOW())`,
           [chit_id, c.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj,
-           frozen_schema_version, frozen_schema_id]);
+           frozen_schema_version, frozen_schema_id, purpose]);
         await client.query(
           `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items, payload_delivered_at)
-           VALUES ($1,$2,'order',$3,$4,$5,$6,NOW())`,
-          [chit_id, c.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li]);
+           VALUES ($1,$2,$7,$3,$4,$5,$6,NOW())`,
+          [chit_id, c.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li, purpose]);
         await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'delivered')`, [chit_id, c.identity_id]);
 
         // receiver (shop) record
         await client.query(
           `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
              all_recipients, purpose, auto_subject, summary_json, schema_version, schema_id, sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,'order',$7,$8,$9,$10,NOW(),NOW())`,
+           VALUES ($1,$2,$3,$4,$5,$6,$11,$7,$8,$9,$10,NOW(),NOW())`,
           [chit_id, entity.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj,
-           frozen_schema_version, frozen_schema_id]);
+           frozen_schema_version, frozen_schema_id, purpose]);
         await client.query(
           `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items)
-           VALUES ($1,$2,'order',$3,$4,$5,$6)`,
-          [chit_id, entity.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li]);
+           VALUES ($1,$2,$7,$3,$4,$5,$6)`,
+          [chit_id, entity.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li, purpose]);
         await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'pending')`, [chit_id, entity.identity_id]);
 
         // timeline — both sides, in the same commit (was best-effort; now guaranteed)

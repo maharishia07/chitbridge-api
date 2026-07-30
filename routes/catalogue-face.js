@@ -32,6 +32,21 @@ router.put('/', auth, async (req, res) => {
     if (Buffer.byteLength(JSON.stringify(face)) > MAX_BYTES) {
       return res.status(413).json({ error: 'Too large', message: 'face exceeds ' + MAX_BYTES + ' bytes' });
     }
+    // T1.1 follow-up — TELL THE OWNER when a declaration cannot be enforced.
+    // resolve() reports unsupported keywords, but nothing surfaced them, so declaring `pattern` on a GSTIN field was
+    // still silently dropped — the same class of problem the whitelist exists to end, moved one step later. The save
+    // is REJECTED here, at the moment the owner writes it, which is the only point where the message is useful.
+    const orderInput = require('../lib/order-input');
+    const declErrors = [];
+    if (face.order_input) declErrors.push(...orderInput.resolve(face.order_input).errors.map((m) => 'catalogue: ' + m));
+    for (const it of (Array.isArray(face.items) ? face.items : [])) {
+      if (it && it.order_input) {
+        declErrors.push(...orderInput.resolve(it.order_input).errors.map((m) => `item "${(it.name || it.product || '?')}": ${m}`));
+      }
+    }
+    if (declErrors.length) {
+      return res.status(422).json({ error: 'Declaration not supported', message: declErrors.join('; '), errors: declErrors });
+    }
     const r = await withEntity(e, (db) => db.query(
       `INSERT INTO catalogue_face (entity_id, face, updated_at) VALUES ($1, $2, now())
          ON CONFLICT (entity_id) DO UPDATE SET face = EXCLUDED.face, updated_at = now()
