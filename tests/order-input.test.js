@@ -111,7 +111,10 @@ t('resolve() never mutates the shared PRESETS', () => {
 // ── CARRIED DOCUMENTS — "the line item is the filled form AND its proof" (SPEC-document-carrying phase 1) ──
 const crypto = require('node:crypto');
 const b64 = (s) => Buffer.from(s).toString('base64');
-const pdf = (name, body) => ({ name, mime: 'application/pdf', data_base64: b64(body || name) });
+// T3.8 · the declared MIME must now match the BYTES, so fixtures carry a real %PDF header. A test that fed 'hello'
+// as a PDF used to pass, which is precisely the hole the magic-byte check closes.
+const PDF_BYTES = (body) => Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.from(body || 'x')]);
+const pdf = (name, body) => ({ name, mime: 'application/pdf', data_base64: PDF_BYTES(body).toString('base64') });
 
 t('docs · a catalogue that declares nothing accepts NO documents (no storefront changes behaviour)', () => {
   const decl = OI.resolve({ preset: 'form' }).documents;
@@ -122,10 +125,11 @@ t('docs · a catalogue that declares nothing accepts NO documents (no storefront
 });
 t('docs · a declared document is accepted and HASHED (the proof)', () => {
   const decl = OI.resolve({ preset: 'form', documents: { max: 2, accept: ['application/pdf'] } }).documents;
-  const r = OI.validateDocuments([pdf('form16.pdf', 'hello')], decl, crypto);
+  const bytes = PDF_BYTES('hello');
+  const r = OI.validateDocuments([{ name: 'form16.pdf', mime: 'application/pdf', data_base64: bytes.toString('base64') }], decl, crypto);
   assert.strictEqual(r.ok, true, r.errors.join('; '));
-  assert.strictEqual(r.docs[0].size, 5);
-  assert.strictEqual(r.docs[0].sha256, crypto.createHash('sha256').update('hello').digest('hex'), 'sha256 must be of the real bytes');
+  assert.strictEqual(r.docs[0].size, bytes.length);
+  assert.strictEqual(r.docs[0].sha256, crypto.createHash('sha256').update(bytes).digest('hex'), 'sha256 must be of the REAL bytes on the wire');
   assert.ok(Buffer.isBuffer(r.docs[0].buffer));
 });
 t('docs · a disallowed MIME is rejected before any byte is written', () => {
@@ -271,6 +275,49 @@ t('an empty string means NOT PROVIDED — fine when optional, an error when requ
   const req = { type: 'object', properties: { n: { type: 'number' } }, required: ['n'] };
   assert.strictEqual(OI.validate({ n: '' }, req).ok, false, 'blank must not satisfy a required field');
   assert.strictEqual(OI.validate({ n: '   ' }, req).ok, false, 'whitespace must not satisfy it either');
+});
+
+// ── TIER 3 (review 2026-07-29) — composition, cost, and honesty of claims ─────────────────────────────────────
+
+t('T3.8 · the declared MIME must match the actual bytes', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf', 'image/png'] } }).documents;
+  const png = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3, 4]);
+  assert.strictEqual(OI.validateDocuments([{ name: 'a.png', mime: 'image/png', data_base64: png.toString('base64') }], decl, crypto).ok, true);
+  const spoof = OI.validateDocuments([{ name: 'x.pdf', mime: 'application/pdf', data_base64: b64('<html>hi</html>') }], decl, crypto);
+  assert.strictEqual(spoof.ok, false, 'HTML declared as PDF must be rejected — "proof" cannot be just a label');
+  assert.match(spoof.errors.join(), /does not look like/);
+});
+t('T3.8 · lenient base64 that decodes to garbage is rejected', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf'] } }).documents;
+  // Buffer.from(…,'base64') happily turns this into arbitrary bytes, which used to be sealed as a valid PDF.
+  assert.strictEqual(OI.validateDocuments([{ name: 'x.pdf', mime: 'application/pdf', data_base64: '!!!!not base64%%%%' }], decl, crypto).ok, false);
+});
+t('T3.9 · control characters are stripped from the document name AT INGEST', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf'] } }).documents;
+  const r = OI.validateDocuments([{ name: 'x.pdf\r\nX-Evil: 1', mime: 'application/pdf', data_base64: PDF_BYTES().toString('base64') }], decl, crypto);
+  assert.strictEqual(r.ok, true);
+  assert.ok(!/[\r\n]/.test(r.docs[0].name), 'CRLF survived onto the chit; it was only stripped at download');
+});
+t('T3.11 · an oversized document is rejected BEFORE it is decoded', () => {
+  const decl = OI.resolve({ preset: 'form', documents: { accept: ['application/pdf'] } }).documents;
+  const started = Date.now();
+  const r = OI.validateDocuments([{ name: 'big.pdf', mime: 'application/pdf', data_base64: 'A'.repeat(9 * 1024 * 1024) }], decl, crypto);
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errors.join(), /larger than/);
+  assert.ok(Date.now() - started < 500, 'it should reject from the base64 length, not by allocating and hashing first');
+});
+t('T3.2 · an item may not switch the pipeline', () => {
+  const cat = OI.resolve({ preset: 'form', schema: { properties: { notes: { type: 'string', maxLength: 50 } } } });
+  const item = OI.forItem(cat, { preset: 'qtyprice' });
+  assert.ok((item.errors || []).some((e) => /pipeline/.test(e)), 'a commerce preset on a payload catalogue must be refused');
+  assert.strictEqual(item.pipeline, 'payload', 'the catalogue decides the pipeline');
+  assert.ok(!item.schema.properties.price, 'commerce fields must not be re-imported into a form');
+});
+t('T3.2 · an item CAN still refine within the same pipeline', () => {
+  const cat = OI.resolve({ preset: 'form', schema: { properties: { notes: { type: 'string', maxLength: 50 } } } });
+  const item = OI.forItem(cat, { schema: { properties: { extra: { type: 'number' } } } });
+  assert.deepStrictEqual(item.errors, []);
+  assert.ok(item.schema.properties.extra, 'a legitimate item refinement must still work');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

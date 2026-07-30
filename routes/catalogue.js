@@ -78,19 +78,42 @@ const getOrderInput = (entity_id) => catalogueView.getOrderInput({ entity_id, wi
 // the template THEY picked, not one catalogue-wide set. So an item may carry its own `order_input`, merge-patched over
 // the catalogue's (opt-in: no item declaration → the catalogue governs). Resolved SERVER-SIDE at submit, so what gets
 // validated is what the ITEM declares, never what the client claims it declares.
-async function itemDeclFor(entity_id, itemName) {
+async function itemDeclFor(entity_id, itemName, cache) {
   if (!itemName) return null;
   try {
-    const ado = await withEntity(entity_id, (db) => db.query(
-      `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity_id]));
-    const want = _norm(itemName);
-    for (const row of ado.rows) {
-      const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
-      for (const it of ((resolved && resolved.items) || [])) {
-        if (_norm(it.name) === want) return it.order_input || null;
+    // T3.5 · memoise per REQUEST. This ran catalogueBuild.resolve for every visible adoption, once per line item —
+    // up to 5 forms × N adoptions per confirm, on top of the identical loop in repriceAgainstCatalogue. The cache is
+    // passed in by the caller so it lives exactly one request and cannot leak between tenants.
+    const c = cache || {};
+    if (!c._decls) {
+      const ado = await withEntity(entity_id, (db) => db.query(
+        // T3.6 · ORDER BY makes resolution DETERMINISTIC. Without it the same submission could validate against a
+        // different schema on different requests, at the database's discretion.
+        `SELECT source_key, commercials FROM catalogue_adoption
+          WHERE entity_id = $1 AND visible = true ORDER BY source_key`, [entity_id]));
+      const decls = new Map();          // normalised name → [{source_key, order_input}]
+      for (const row of ado.rows) {
+        const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
+        for (const it of ((resolved && resolved.items) || [])) {
+          const k = _norm(it.name);
+          if (!decls.has(k)) decls.set(k, []);
+          decls.get(k).push({ source_key: row.source_key, order_input: it.order_input || null });
+        }
       }
+      c._decls = decls;
     }
+    const hits = c._decls.get(_norm(itemName)) || [];
+    // T3.6 · reject AMBIGUITY rather than silently picking one. The commerce path already refuses when a name exists
+    // under two brands ("available from more than one brand"); the payload path used to take whichever came first.
+    const distinct = hits.filter((h) => h.order_input).map((h) => h.source_key);
+    if (distinct.length > 1) {
+      const err = new Error(`"${itemName}" is offered by more than one source (${distinct.join(', ')}) — choose the source`);
+      err.status = 422;
+      throw err;
+    }
+    if (hits.length) return hits[0].order_input || null;
   } catch (e) {
+    if (e && e.status === 422) throw e;      // ambiguity is the caller's problem to fix, not a retry
     // T1.3 — FAIL CLOSED. This used to swallow the error and return null, so a transient DB fault meant the item's
     // stricter schema (and its REQUIRED document rule) silently did not apply, and the looser submission was sealed
     // onto a chit indistinguishable from a correctly-validated one. A retryable error is far better than that.
@@ -231,7 +254,13 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
     const qty = Number(li.quantity ?? li.qty);
     if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
     const total = Math.round(ref.price * qty * 100) / 100;
-    return { item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty, price: ref.price, total };
+    // T3.3 · the OFFER GUARD applies here too. validateProposal was called only on the finish/reference branch, so
+    // the ordinary product path silently DROPPED `li.proposal` — meaning the documented restriction ("a fixed-price
+    // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
+    // unbounded but still only admissible when the shop declared itself negotiable.
+    const proposal = validateProposal(li.proposal, oi, null, ref.name);
+    return { item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
+             price: ref.price, total, ...(proposal ? { proposal } : {}) };
   }));
   const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
   return { items, total };
@@ -404,8 +433,17 @@ router.post('/:bridge_id/order/start',
           [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
       }
       const otp = genOTP();
-      await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0, otp_contact = $3 WHERE identity_id = $4`,
-        [otp, new Date(Date.now() + 60 * 60 * 1000), raw, identity_id]);
+      // T3.12 · re-issuing a code no longer ZEROES the attempt counter. verifyOtp caps at 5 guesses, but this reset
+      // it on every /order/start — so "start → 5 guesses → start" looped indefinitely and the cap bounded nothing.
+      // The counter now decays with the TTL instead: a fresh window costs a wait, not a single extra request.
+      // The TTL also drops from 60 minutes to 15 — an hour-long reusable ticket has no legitimate use here.
+      const OTP_TTL_MS = 15 * 60 * 1000;
+      await query(
+        `UPDATE identities
+            SET otp_code = $1, otp_expires_at = $2, otp_contact = $3,
+                otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW() THEN 0 ELSE COALESCE(otp_attempts, 0) END
+          WHERE identity_id = $4`,
+        [otp, new Date(Date.now() + OTP_TTL_MS), raw, identity_id]);
       // F2: deliver the OTP on the SAME channel, to the RAW contact (never the .cr handle).
       const sent = await sendOtp(channel, raw, name, otp);
       res.json({
@@ -461,12 +499,16 @@ router.post('/:bridge_id/order/confirm',
           // T1.6 — ONE budget for the whole submission. validateDocuments is called per form, so without a shared
           // accumulator a 5-form bundle could carry 25 files / 150 MB against a stated ceiling of 5 files / 12 MB.
           const docBudget = { count: 0, bytes: 0 };
+          const declCache = {};   // T3.5 — one adoption resolve for the whole submission, not one per line
           for (let idx = 0; idx < raw.length; idx++) {
           const li = raw[idx] || {};
           const label = String(li.finish || li.name || li.particulars || 'Submission').slice(0, 200);
           // WHICH template is this entry? Its own declaration governs, so a store offering ITR-2 and a
           // Commercial Invoice validates each against ITS OWN fields — not one catalogue-wide set.
-          const itemOi = orderInput.forItem(oi, await itemDeclFor(entity.identity_id, label));
+          const itemOi = orderInput.forItem(oi, await itemDeclFor(entity.identity_id, label, declCache));
+          // T3.2 · forItem refuses an item declaration that would switch the pipeline; surface it rather than
+          // proceeding under a contract the item did not actually get.
+          if (itemOi.errors && itemOi.errors.length) throw _422(`"${label}": ${itemOi.errors.join('; ')}`);
           const v = orderInput.validate(li.payload, itemOi.schema);
           if (!v.ok) throw _422(`"${label}": ${v.errors.join('; ')}`);
           // THE LINE ITEM IS THE FILLED FORM **AND ITS PROOF**. Documents are validated and hashed BEFORE anything is
@@ -480,7 +522,14 @@ router.post('/:bridge_id/order/confirm',
                             ...(dv.docs.length ? { documents: dv.docs.map((d) => ({ name: d.name, mime: d.mime, size: d.size, sha256: d.sha256 })) } : {}) });
           }
           total = 0;
-        } catch (ve) { return res.status(ve.status || 422).json({ error: 'Submission rejected', message: ve.message }); }
+        } catch (ve) {
+          // T3.7 · only a DELIBERATE validation message (one we set a status on) is safe to show. Everything else is
+          // an internal error and went out verbatim on an unauthenticated endpoint, without safeErr().
+          const known = ve && (ve.status === 422 || ve.status === 503);
+          if (!known) console.error('order/confirm payload:', ve && ve.message);
+          return res.status(known ? ve.status : 500)
+                    .json({ error: 'Submission rejected', message: known ? ve.message : safeErr(ve) });
+        }
       } else {
         try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi)); }
         catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }

@@ -145,5 +145,25 @@ t('the resolved draft validates through lib/order-input.js (one pipeline, not tw
   assert.strictEqual(typeof v.value.tds_deducted, 'number');
 });
 
+// ── T3.4 · coverage is an UPPER BOUND on resolve, not an equality ─────────────────────────────────────────────
+t('T3.4 · resolve().filled is always a SUBSET of coverage().covered', () => {
+  const form = OI.resolve({ preset: 'form', schema: { properties: {
+    a: { type: 'string' }, b: { type: 'string' }, c: { type: 'string' } } } }).schema;
+  const src = { key: 's', label: 'S', map: { 'x.a': 'a', 'x.b': 'b', 'x.c': 'c' } };
+  // the document is missing one path and blank at another — resolve fills fewer than coverage promised
+  const r = FH.resolve(form, [src], { s: { x: { a: 'A', b: '' } } });
+  const c = FH.coverage(form, [src]);
+  assert.deepStrictEqual(c.covered.sort(), ['a', 'b', 'c'], 'coverage answers what COULD be filled');
+  assert.deepStrictEqual(r.filled.sort(), ['a'], 'resolve answers what WAS filled');
+  r.filled.forEach((f) => assert.ok(c.covered.includes(f), 'filled must never exceed covered'));
+});
+t('T3.4 · two sources with no explicit key no longer clobber each other', () => {
+  const form = OI.resolve({ preset: 'form', schema: { properties: { a: { type: 'string' }, b: { type: 'string' } } } }).schema;
+  const c = FH.coverage(form, [{ label: 'First', map: { p: 'a' } }, { label: 'Second', map: { q: 'b' } }]);
+  const keys = Object.keys(c.bySource);
+  assert.strictEqual(keys.length, 2, 'both sources must appear — they used to collide on the literal key "source"');
+  assert.deepStrictEqual(Object.values(c.bySource).flat().sort(), ['a', 'b'], 'and neither attribution is lost');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
