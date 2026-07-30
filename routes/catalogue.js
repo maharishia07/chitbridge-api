@@ -90,7 +90,16 @@ async function itemDeclFor(entity_id, itemName) {
         if (_norm(it.name) === want) return it.order_input || null;
       }
     }
-  } catch (_) { /* no adoption → the catalogue declaration governs */ }
+  } catch (e) {
+    // T1.3 — FAIL CLOSED. This used to swallow the error and return null, so a transient DB fault meant the item's
+    // stricter schema (and its REQUIRED document rule) silently did not apply, and the looser submission was sealed
+    // onto a chit indistinguishable from a correctly-validated one. A retryable error is far better than that.
+    const err = new Error('Could not resolve the template for "' + itemName + '" — please retry');
+    err.status = 503;
+    throw err;
+  }
+  // No adoption matched the name: there is no item declaration, so the CATALOGUE's contract governs. That is the
+  // designed opt-in path, not a failure.
   return null;
 }
 
@@ -440,6 +449,9 @@ router.post('/:bridge_id/order/confirm',
           if (!raw.length) throw _422('Nothing to submit');
           if (raw.length > MAX_FORMS_PER_SUBMISSION) throw _422(`At most ${MAX_FORMS_PER_SUBMISSION} forms in one submission`);
           line_items = [];
+          // T1.6 — ONE budget for the whole submission. validateDocuments is called per form, so without a shared
+          // accumulator a 5-form bundle could carry 25 files / 150 MB against a stated ceiling of 5 files / 12 MB.
+          const docBudget = { count: 0, bytes: 0 };
           for (let idx = 0; idx < raw.length; idx++) {
           const li = raw[idx] || {};
           const label = String(li.finish || li.name || li.particulars || 'Submission').slice(0, 200);
@@ -452,7 +464,7 @@ router.post('/:bridge_id/order/confirm',
           // written; the sha256 is sealed onto the chit in the same transaction as the answers, so the record of what
           // was submitted can never be lost. The bytes are replicated per-copy afterwards (see below) — if that fails
           // the proof still stands and the blob is re-uploadable against a known hash.
-          const dv = orderInput.validateDocuments(li.documents, itemOi.documents, crypto);
+          const dv = orderInput.validateDocuments(li.documents, itemOi.documents, crypto, docBudget);
           if (!dv.ok) throw _422(`"${label}": ${dv.errors.join('; ')}`);
           dv.docs.forEach((d) => pendingDocs.push({ ...d, line_index: idx }));   // the proof stays attached to ITS form
           line_items.push({ kind: 'payload', name: label, particulars: label, quantity: 1, price: 0, total: 0, payload: v.value,
