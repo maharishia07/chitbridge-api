@@ -9,6 +9,7 @@ const crypto = require('crypto');   // 6b: hash the ERP handoff payload (receipt
 const { query, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const customerAuth = require('../middleware/customer-auth');   // T2.4 — the storefront customer's OWN surface
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
@@ -644,6 +645,22 @@ router.post('/:bridge_id/order/confirm',
             `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW()
               WHERE identity_id=$1`, [c.identity_id]);
           await client.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(orderCopies)]);
+          // T2.2 / T3.10 · the documents commit WITH the chit. Writing them afterwards forced an impossible choice:
+          // 200 with documents_stored:false (a chit asserting evidence nobody holds, and — until the customer surface
+          // existed — no way to ever supply it), or 500 on a submission that had already committed. Inside the
+          // transaction there is no partial state to reconcile: either the form and its proof both land, or neither.
+          if (pendingDocs.length) {
+            const storage = require('../lib/storage');
+            const participants = [c.identity_id, entity.identity_id];
+            for (const d of pendingDocs) {
+              await storage.putForParticipantsInTx(client, { chit_id, message_id: null, line_index: d.line_index,
+                name: d.name, mime: d.mime, size: d.size, buffer: d.buffer, uploaded_by: c.identity_id,
+                participants, forEntity: c.identity_id });
+            }
+            // restore the customer's context — set_config above is transaction-local, and anything after this
+            // (now or later) must not inherit the shop's.
+            await client.query(`SELECT set_config('app.current_entity', $1, true)`, [String(c.identity_id)]);
+          }
         });
       } catch (e) {
         if (!(e && (e.code === '42883' || /chit_deliver/.test(e.message || '')))) throw e;
@@ -685,6 +702,17 @@ router.post('/:bridge_id/order/confirm',
            VALUES ($1,$2,'created',$3,$4,'delivered',$5),($1,$6,'delivered',$3,$4,'pending',$7)`,
           [chit_id, c.identity_id, c.identity_id, c.display_name, `Order placed to ${entity.display_name}`,
            entity.identity_id, `Order received from ${c.display_name}`]);
+
+        // T2.2 · documents commit with the chit on THIS path too, or the fallback would silently lose them.
+        if (pendingDocs.length) {
+          const storage = require('../lib/storage');
+          const participants = [c.identity_id, entity.identity_id];
+          for (const d of pendingDocs) {
+            await storage.putForParticipantsInTx(client, { chit_id, message_id: null, line_index: d.line_index,
+              name: d.name, mime: d.mime, size: d.size, buffer: d.buffer, uploaded_by: c.identity_id,
+              participants, forEntity: c.identity_id });
+          }
+        }
         });
       }
 
@@ -728,27 +756,13 @@ router.post('/:bridge_id/order/confirm',
           email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id },
         process.env.JWT_SECRET, { expiresIn: '7d' });
 
-      // ── carry the documents: replicate the bytes PER COPY (b66 — each party owns and can purge its own row) ──
-      // Deliberately AFTER the commit. The proof (sha256) is already sealed onto the chit, so a storage failure can
-      // never erase the record of what was submitted — it only means the blob must be re-uploaded against a known
-      // hash. Reuses lib/storage.putForParticipants, which already runs each insert in its own entity context so the
-      // FORCE-RLS WITH CHECK passes for that participant's copy.
-      let documents_stored = pendingDocs.length ? true : undefined;
-      if (pendingDocs.length) {
-        try {
-          const storage = require('../lib/storage');
-          const participants = [c.identity_id, entity.identity_id];
-          for (const d of pendingDocs) {
-            await storage.putForParticipants({ chit_id, message_id: null, line_index: d.line_index, name: d.name, mime: d.mime,
-              size: d.size, buffer: d.buffer, uploaded_by: c.identity_id, participants, forEntity: c.identity_id });
-          }
-        } catch (e) {
-          documents_stored = false;
-          console.error('order/confirm document storage failed (proof is sealed on the chit):', e.message);
-        }
-      }
-      res.json({ message: 'Order placed', chit_id, shop: entity.display_name, summary: summary_json, token,
-                 ...(documents_stored === undefined ? {} : { documents_stored, documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256 })) }) });
+      // T2.2 · the documents were written INSIDE the chit transaction above, so reaching here means they committed.
+      // There is no `documents_stored:false` any more: a storage failure rolls the whole submission back and the
+      // customer still has the file on screen to retry with. `documents` is reported so the caller can record the
+      // sealed hashes, with line_index so a bundle can tell which form each proof belongs to.
+      res.json({ message: purpose === 'offer' ? 'Offer sent' : 'Order placed', chit_id, shop: entity.display_name,
+                 summary: summary_json, token,
+                 ...(pendingDocs.length ? { documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256, line_index: d.line_index })) } : {}) });
     } catch (err) { console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: safeErr(err) }); }
   });
 
@@ -780,18 +794,45 @@ router.post('/:bridge_id/login/verify',
   });
 
 // ── CJ-F1: the signed-in customer's orders + live status ──
-router.get('/:bridge_id/my-orders', auth, async (req, res) => {
+// T2.4 · THE CUSTOMER'S OWN SURFACE. This route existed but was mounted on `auth`, which fails closed on
+// identity_type 'customer' — so its only intended caller could never reach it. It now uses customerAuth.
+// Also: `purpose = 'order'` would have hidden every OFFER since T2.1 renamed those; both are listed.
+router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
   try {
-    const me = req.identity.identity_id;
-    // B1 RLS: the customer's OWN order copies -> withEntity(me).
+    const me = req.customer.identity_id;
+    // B1 RLS: the customer's OWN copies -> withEntity(me). Never the shop's copies.
     const r = await withEntity(me, (db) => db.query(
       `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status
        FROM chit_header ch
        JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
-       WHERE ch.entity_id = $1 AND ch.purpose = 'order'
+       WHERE ch.entity_id = $1 AND ch.purpose IN ('order', 'offer')
        ORDER BY ch.created_at DESC`, [me]));
     res.json({ orders: r.rows, count: r.rows.length });
   } catch (err) { res.status(500).json({ error: 'Orders failed', message: safeErr(err) }); }
+});
+
+// T2.4 · the documents the customer themselves submitted — their OWN per-copy rows, nobody else's.
+router.get('/:bridge_id/my-documents', customerAuth, async (req, res) => {
+  try {
+    const me = req.customer.identity_id;
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT id, chit_id, line_index, name, mime, size, created_at
+         FROM cb_attachment WHERE entity_id = $1 ORDER BY created_at DESC LIMIT 200`, [me]));
+    res.json({ documents: r.rows, count: r.rows.length });
+  } catch (err) { res.status(500).json({ error: 'Documents failed', message: safeErr(err) }); }
+});
+
+// T2.4 · and the right to PURGE their own copy. Per-copy independence means each party can delete what it holds
+// without touching the other's — that is the whole point of replicating rather than sharing, and until now the
+// customer's side of it was a claim the code could not honour. The shop's copy is untouched.
+router.delete('/:bridge_id/my-documents/:id', customerAuth, async (req, res) => {
+  try {
+    const me = req.customer.identity_id;
+    const r = await withEntity(me, (db) => db.query(
+      `DELETE FROM cb_attachment WHERE id = $1 AND entity_id = $2 RETURNING id`, [req.params.id, me]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such document of yours' });
+    res.json({ ok: true, deleted: r.rows[0].id });
+  } catch (err) { res.status(500).json({ error: 'Delete failed', message: safeErr(err) }); }
 });
 
 module.exports = router;

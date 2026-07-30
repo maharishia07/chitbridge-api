@@ -194,10 +194,11 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
     if (confirm.status >= 400) { bad(`order/confirm ${confirm.status}: ${JSON.stringify(confirm.json)}`); return finish(); }
     chitId = confirm.json.chit_id;
     ok('submitted — chit ' + B(chitId));
-    if (confirm.json.documents_stored === true) ok('the Form 16 was stored per-copy (both parties hold their own)');
-    else if (confirm.json.documents_stored === false) bad('proof sealed on the chit, but the BLOB write failed');
-    else bad('no documents_stored in the response — the document did not travel');
-    (confirm.json.documents || []).forEach((d) => note(`proof: ${d.name} → sha256 ${d.sha256.slice(0, 24)}…`));
+    // T2.2 · documents now commit INSIDE the chit transaction, so a 200 means they landed — there is no
+    // `documents_stored:false` to check any more. Reaching here at all is the proof.
+    if ((confirm.json.documents || []).length) ok('the Form 16 committed WITH the chit (per-copy; both parties hold their own)');
+    else bad('no documents echoed in the response — the document did not travel');
+    (confirm.json.documents || []).forEach((d) => note(`proof: ${d.name} → sha256 ${d.sha256.slice(0, 24)}… (line ${d.line_index})`));
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

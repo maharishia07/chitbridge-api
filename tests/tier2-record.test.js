@@ -85,5 +85,49 @@ t('face save rejects a declaration using unsupported keywords', () => {
     'a supportable declaration must still save cleanly');
 });
 
+// ── 2.2 / 3.10 · the documents commit WITH the chit ───────────────────────────────────────────────────────────
+t('2.2 · the blob write is INSIDE the chit transaction, on both write paths', () => {
+  const inTx = (ROUTE.match(/putForParticipantsInTx\(client,/g) || []).length;
+  assert.strictEqual(inTx, 2, 'chit_deliver AND the legacy fallback must both write documents in-transaction');
+  assert.ok(!/let documents_stored/.test(ROUTE), 'the post-commit best-effort path must be gone');
+  assert.ok(!/documents_stored: false/.test(ROUTE), 'there is no partial-success state to report any more');
+});
+t('2.2 · the entity context is restored after switching it per participant', () => {
+  // set_config(..., true) is transaction-local; switching to the shop and not switching back would leave the rest
+  // of the transaction running as the wrong tenant.
+  assert.match(ROUTE, /restore the customer's context/, 'the restore must be deliberate and commented');
+  const after = ROUTE.slice(ROUTE.indexOf('putForParticipantsInTx'));
+  assert.match(after, /set_config\('app\.current_entity', \$1, true\)`, \[String\(c\.identity_id\)\]/);
+});
+t('3.10 · the in-tx helper exists and sets the entity context per participant', () => {
+  const storage = fs.readFileSync(path.join(__dirname, '..', 'lib', 'storage.js'), 'utf8');
+  assert.match(storage, /async putForParticipantsInTx\(client,/);
+  assert.match(storage, /set_config\('app\.current_entity', \$1, true\)/, 'RLS WITH CHECK needs the context at INSERT time');
+  assert.match(storage, /async putForParticipants\(/, 'the original is kept — other callers still use it');
+});
+
+// ── 2.4 · the customer has an authenticated surface ───────────────────────────────────────────────────────────
+t('2.4 · customerAuth accepts ONLY identity_type customer', () => {
+  const mw = fs.readFileSync(path.join(__dirname, '..', 'middleware', 'customer-auth.js'), 'utf8');
+  assert.match(mw, /decoded\.identity_type !== 'customer'/, 'an entity or actor token must be refused here');
+  assert.match(mw, /algorithms: \['HS256'\]/, 'the algorithm must be pinned, as in auth.js');
+});
+t('2.4 · the customer routes use customerAuth, never the business `auth`', () => {
+  for (const r of ['my-orders', 'my-documents']) {
+    const line = ROUTE.split('\n').find((l) => l.includes(`/:bridge_id/${r}`) && l.includes('router.'));
+    assert.ok(line, `route ${r} not found`);
+    assert.ok(/customerAuth/.test(line), `${r} must be behind customerAuth`);
+    assert.ok(!/[^r]auth,/.test(line.replace('customerAuth', '')), `${r} must not also accept a business token`);
+  }
+});
+t('2.4 · a customer can PURGE their own copy — per-copy independence, honoured', () => {
+  assert.match(ROUTE, /DELETE FROM cb_attachment WHERE id = \$1 AND entity_id = \$2/, 'scoped to their own row only');
+  assert.match(ROUTE, /router\.delete\('\/:bridge_id\/my-documents\/:id', customerAuth/);
+});
+t('2.4 · my-orders lists OFFERS too, not just orders', () => {
+  // T2.1 renamed negotiations to purpose 'offer'; a filter on 'order' alone would have hidden every offer.
+  assert.match(ROUTE, /ch\.purpose IN \('order', 'offer'\)/);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
