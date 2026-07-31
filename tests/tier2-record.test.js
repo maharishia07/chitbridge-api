@@ -20,7 +20,12 @@ const ROUTE = fs.readFileSync(path.join(__dirname, '..', 'routes', 'catalogue.js
 // price inflated the seller's trust signal by a figure neither party agreed.
 t('2.1 · a negotiation is purpose "offer" with NO total_value', () => {
   assert.match(ROUTE, /const purpose = negotiation \? 'offer' : 'order';/, 'purpose must follow the negotiation flag');
-  assert.match(ROUTE, /total_value: negotiation \? null : Math\.round\(total \* 100\) \/ 100/, 'an offer must carry no settled total');
+  // Was pinned to the literal `total_value: negotiation ? null : …`. The condition gained a second term when a chit
+  // with no currency (help desk / form) also stopped carrying a total, so the literal moved while the PROPERTY —
+  // an offer carries no settled total — held and got stronger. Assert the property.
+  assert.match(ROUTE, /total_value: \(!monetary \|\| negotiation\) \? null : Math\.round\(total \* 100\) \/ 100/,
+    'an offer, and anything non-monetary, must carry no settled total');
+  assert.match(ROUTE, /const monetary = oi\.pipeline === 'commerce'/, 'monetary must be derived from the pipeline, not a new flag');
 });
 t('2.1 · the indicative figure is kept, but under a name that cannot be mistaken for a total', () => {
   assert.match(ROUTE, /indicative_total: Math\.round\(total \* 100\) \/ 100/);
@@ -38,13 +43,24 @@ t('2.1 · purpose reaches BOTH chit copies and both detail rows, on both write p
 });
 t('2.1 · deliverEdge (the NETWORK path) is untouched — `purpose` is not in scope there', () => {
   // A blanket rename briefly turned this into a ReferenceError that `node -c` cannot see.
-  const edge = ROUTE.slice(ROUTE.indexOf('async function deliverEdge'), ROUTE.indexOf('async function deliverEdge') + 1500);
+  // Slice to the END OF THE FUNCTION, not a fixed byte count. This read `+ 1500` and broke the day a comment was
+  // added above `detail_type`, reporting a regression that had not happened. The whole body is also the STRICTER
+  // scope for the negative assertion below, so this widens what is guarded rather than narrowing it.
+  const from = ROUTE.indexOf('async function deliverEdge');
+  const edge = ROUTE.slice(from, ROUTE.indexOf("router.post('/network-store", from));
   assert.match(edge, /detail_type: 'order'/, 'the network path must keep its literal');
   assert.ok(!/detail_type: purpose/.test(edge), 'purpose is undefined in this function');
 });
 t("2.1 · KYB reads total_value, which is why null matters", () => {
   const kyb = fs.readFileSync(path.join(__dirname, '..', 'lib', 'kyb.js'), 'utf8');
-  assert.match(kyb, /COALESCE\(total_value,\s*0\)/, 'if this stops being true, revisit whether null is still the right signal');
+  // This asserted `COALESCE(total_value, 0)` and said: "if this stops being true, revisit whether null is still the
+  // right signal." Revisited. Null IS still the right signal — the COALESCE was the wrong consumer of it. Folding
+  // null to 0 turned every unagreed offer and every help-desk chit into a zero-value TRADE, padding the row count
+  // that the concentration percentage divides by. The invariant is now the opposite and stricter:
+  assert.ok(!/COALESCE\(total_value/.test(kyb), 'kyb must NOT coalesce null away — null means "not applicable", not zero');
+  assert.match(kyb, /SELECT[^`]*currency_code[^`]*FROM chit_header/s, 'kyb must read the currency it is summing');
+  assert.match(kyb, /by_currency/, 'a money summary must be split by currency, never totalled across it');
+  assert.match(kyb, /excluded: \{ non_monetary/, 'what is left out of the money view must be stated, not hidden');
 });
 
 // ── 2.3 · the conformance verdict must not be forgeable ───────────────────────────────────────────────────────

@@ -14,6 +14,8 @@ const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 const container = require('../lib/container');              // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
+const regional = require('../lib/regional');                // GOVERNED CURRENCY — the network path must not invent 'INR'
+const money = require('../lib/money');                      // MONEY TYPE — a price is never a bare number
 
 const genBridge = () => {   // S4 — CSPRNG (bridge ids are public, but no reason to use a weak PRNG)
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -159,7 +161,10 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   for (const row of cat.rows) {
     const d = row.item_data || {};
     // null/undefined/'' price = NOT SET -> NaN (rejected below). A deliberate 0 stays a valid price.
-    const price = (d.price === null || d.price === undefined || d.price === '') ? NaN : Number(d.price);
+    // TOLERANT READ: accepts a legacy bare number AND a stamped { amount, currency }, so rows migrated by
+    // scripts/money-3-apply.sql and rows not yet migrated both work. This must stay tolerant until every price
+    // home is stamped — deleting the number branch early is what turns a product into a free one.
+    const price = money.amountOfLoose(d.price);
     const rec = { item_id: row.item_id, name: d.name ?? d.particulars ?? '', price, unit: d.unit ?? null };
     byId.set(String(row.item_id), rec);
     if (rec.name) { const k = _norm(rec.name); nameCount.set(k, (nameCount.get(k) || 0) + 1); byName.set(k, rec); }
@@ -290,7 +295,9 @@ router.get('/network-store/:networkId', async (req, res) => {
       `SELECT item_id, item_data FROM catalogue_items WHERE item_data->>'network_id' = $1 AND is_active = true`, [nid]))).rows;
     let products = rows.map((r) => { const d = r.item_data || {};
       return { product_id: r.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
-        price: (d.price != null ? Number(d.price) : null), unit: d.unit || null, image: d.image || null }; });
+        // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
+        price: (Number.isFinite(money.amountOfLoose(d.price)) ? money.amountOfLoose(d.price) : null),
+        unit: d.unit || null, image: d.image || null }; });
     if (cat) products = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase());
     if (q) products = products.filter((p) => (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0);
     const categories = [...new Set(products.map((p) => p.category))].sort();
@@ -302,18 +309,27 @@ router.get('/network-store/:networkId', async (req, res) => {
 
 // Mint a co-held 2-party chit (sender→receiver) server-side, carrying a trace edge — modelled on emitSignalChit.
 // Used to create the ORDER chit and each fulfilment FRAGMENT without a user token (the network acting as itself).
-async function deliverEdge({ sender, receiver, chit_id, subject, trace, business, status }) {
+async function deliverEdge({ sender, receiver, chit_id, subject, trace, business, status, currency, total_value }) {
   const all_recipients = [
     { entity_id: sender.id, bridge_id: sender.bridge_id, display_name: sender.display_name, role: 'sender' },
     { entity_id: receiver.id, bridge_id: receiver.bridge_id, display_name: receiver.display_name, role: 'receiver' },
   ];
-  const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose: 'order', is_promotion: false, forwarded_from: null, trace };
+  // CURRENCY comes from the GOVERNANCE LAYER, resolved once by the caller and passed in — never invented here and
+  // never read from the request. Both copies of a co-held chit MUST carry the same code: two parties disagreeing on
+  // the denomination of the same order is exactly the dispute the rail exists to prevent.
+  const currency_code = String(currency || regional.FALLBACK_CURRENCY).toUpperCase();
+  // TOTAL_VALUE was hard-coded 0 here, so every network order and fulfilment fragment claimed to be worth nothing
+  // while carrying real line items — and lib/kyb.js sums this column as trade value. A currency with no value is
+  // meaningless; state both or state neither. null means "not applicable", which 0 never did.
+  const value = (total_value === null || total_value === undefined || !Number.isFinite(Number(total_value)))
+    ? null : money.round2(Number(total_value));
+  const summary_json = { line_item_count: 0, total_value: value, currency_code, priority_external: 'normal', purpose: 'order', is_promotion: false, forwarded_from: null, trace };
   const headerCommon = { sender_entity_id: sender.id, sender_entity_bridge_id: sender.bridge_id, sender_entity_display_name: sender.display_name,
     all_recipients, purpose: 'order', auto_subject: subject, manual_subject: subject, summary_json,
     // deliverEdge is the NETWORK path (order chit + fulfilment fragments), not the storefront. It is always an
     // 'order' — there is no negotiation here — and `purpose` is not in scope. A blanket rename briefly made this a
     // ReferenceError; the test that counts these caught it.
-    schema_version: null, schema_id: null, created_by_actor_id: sender.id, detail_type: 'order', line_item_count: 0, total_value: 0, currency_code: 'INR' };
+    schema_version: null, schema_id: null, created_by_actor_id: sender.id, detail_type: 'order', line_item_count: 0, total_value: value, currency_code };
   const copies = [
     { ...headerCommon, business_json: business, entity_id: sender.id, direction: 'sent', role: 'Act', current_status: 'delivered', priority_flag: 'normal',
       log: { action: 'created', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: subject } },
@@ -353,12 +369,29 @@ router.post('/network-store/:networkId/order', async (req, res) => {
       crow = { identity_id: cid, bridge_id: cb, display_name: String(cust.name || 'Customer') }; }
     const customer = { id: crow.identity_id, bridge_id: crow.bridge_id, display_name: crow.display_name };
     const items = rows.map((r) => { const c = cart.find((x) => x.product_id === r.item_id) || {}; const d = r.item_data || {};
-      return { item_id: r.item_id, store: r.entity_id, name: d.name || 'item', price: Number(d.price || 0), qty: Number(c.qty || 1), category: d.category || '' }; });
-    const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+      // `Number(d.price || 0)` read a stamped price as NaN and an absent one as a FREE item. Both now fail loudly.
+      const amt = money.amountOfLoose(d.price);
+      if (!Number.isFinite(amt)) { const e = new Error(`"${d.name || 'item'}" has no usable price — order cannot be placed`); e.status = 422; throw e; }
+      return { item_id: r.item_id, store: r.entity_id, name: d.name || 'item', price: amt, qty: Number(c.qty || 1), category: d.category || '' }; });
+    // ⚠ CROSS-ENTITY TOTAL. These items come from SEVERAL stores in one network, and a network can span countries —
+    // so unlike every other total in this file the denomination is NOT a constant here. Before the money type this
+    // line added INR to AED without complaint and produced a confident wrong number. It now refuses.
+    //
+    // Stores whose price is still an unstamped bare number contribute no currency, so a wholly unmigrated network
+    // totals exactly as it did before. Once ANY store is stamped, a genuine mismatch surfaces as a 409 rather than
+    // a plausible figure — which is the entire reason for doing this.
+    const perStore = rows.map((r) => (r.item_data || {}).price).filter((p) => money.isMoney(p));
+    if (perStore.length) money.sum(perStore);   // throws 409 naming both currencies
+    const total = money.round2(items.reduce((s, i) => s + i.price * i.qty, 0));
+    // The OPERATOR governs this network, so its governed currency denominates the order and every fragment beneath
+    // it. Resolved ONCE here: the order and its fragments are one transaction and must not drift apart.
+    const currency = await regional.currencyFor(operatorId);
     // 1) the ORDER chit (customer → operator) — the common id the customer sees
     const ORDER_ID = uuidv4();
-    await deliverEdge({ sender: customer, receiver: operator, chit_id: ORDER_ID,
-      subject: 'Order — ' + items.length + ' item(s), ₹' + total,
+    await deliverEdge({ sender: customer, receiver: operator, chit_id: ORDER_ID, currency, total_value: total,
+      // Currency CODE, not a symbol. '₹' was hard-coded here and is unrenderable for any other currency; a code is
+      // unambiguous in every locale and leaves symbol choice to the UI, where presentation belongs.
+      subject: 'Order — ' + items.length + ' item(s), ' + currency + ' ' + total,
       trace: { is_origin: true, product: 'ORDER', qty: items.length, unit: 'items', network: { id: nid, operator: operatorId }, order: true },
       business: { kind: 'network_order', order_id: ORDER_ID, network_id: nid, items: items.map((i) => ({ name: i.name, qty: i.qty, price: i.price, category: i.category })), total, at: new Date().toISOString() },
       status: 'pending' });
@@ -369,14 +402,17 @@ router.post('/network-store/:networkId/order', async (req, res) => {
       const store = idents[storeId]; if (!store) continue;
       const sitems = byStore[storeId];
       const FRAG_ID = uuidv4();
-      await deliverEdge({ sender: operator, receiver: store, chit_id: FRAG_ID,
+      // A fragment carries THIS store's subtotal, not the order's. Stamping the whole total on each fragment would
+      // multiply the network's apparent trade value by the number of stores the moment anyone sums the column.
+      await deliverEdge({ sender: operator, receiver: store, chit_id: FRAG_ID, currency,
+        total_value: money.round2(sitems.reduce((s, i) => s + i.price * i.qty, 0)),
         subject: 'Fulfil order ' + ORDER_ID.slice(0, 8) + ' — ' + sitems.length + ' item(s)',
         trace: { parents: [ORDER_ID], product: 'FULFIL', qty: sitems.length, unit: 'items', network: { id: nid, operator: operatorId } },
         business: { kind: 'order_fragment', order_id: ORDER_ID, network_id: nid, items: sitems.map((i) => ({ name: i.name, qty: i.qty })), at: new Date().toISOString() },
         status: 'pending' });
       fragments.push(FRAG_ID);
     }
-    res.json({ ok: true, order_id: ORDER_ID, item_count: items.length, total, currency: 'INR', fragment_count: fragments.length });   // customer sees only the order — no stores
+    res.json({ ok: true, order_id: ORDER_ID, item_count: items.length, total, currency, fragment_count: fragments.length });   // customer sees only the order — no stores
   } catch (err) {
     res.status(500).json({ error: 'Order failed', message: safeErr(err) });
   }
@@ -547,9 +583,23 @@ router.post('/:bridge_id/order/confirm',
       const purpose = negotiation ? 'offer' : 'order';
       const chit_id = uuidv4();
       const custLocality = (req.body && typeof req.body.location === 'string') ? req.body.location.trim().slice(0, 80) : '';   // STONE 4: consent-provided coarse locality
+      // MONETARY OR NOT — Athi, 2026-07-31: "if the chit does not hold a currency, that means it is information or
+      // helpdesk kind of activity."
+      //
+      // That distinction is not a new flag: it is already carried by the preset's PIPELINE. `commerce` (cart, qty,
+      // range, choice, qtyprice) moves money; `payload` (enquiry, form) carries data and never had a price to state.
+      // So currency presence becomes a DERIVED classification, and a summary can tell the three states apart:
+      //
+      //   currency + value   a monetary claim both parties hold
+      //   currency + null    monetary, not yet agreed — an offer under negotiation
+      //   NO currency        not about money at all — a help desk ticket, an enquiry, a filled form
+      //
+      // Before this, a help-desk chit was stamped 'INR' with total_value 0, so lib/kyb.js counted every support
+      // ticket as a zero-value TRADE and diluted the concentration ratio it exists to compute.
+      const monetary = oi.pipeline === 'commerce';
       const summary_json = { line_item_count: line_items.length,
-                             total_value: negotiation ? null : Math.round(total * 100) / 100,
-                             currency_code: entity.currency_code || 'INR', purpose, is_promotion: false,
+                             total_value: (!monetary || negotiation) ? null : Math.round(total * 100) / 100,
+                             currency_code: monetary ? (entity.currency_code || 'INR') : null, purpose, is_promotion: false,
                              customer_locality: custLocality || null,
                              order_preset: oi.preset, pipeline: oi.pipeline,
                              ...(negotiation ? { negotiation: true, indicative_total: Math.round(total * 100) / 100 } : {}) };
