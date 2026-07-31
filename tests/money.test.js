@@ -89,6 +89,42 @@ t('assertSameCurrency blocks a cross-currency comparison', () => throws(
 t('format emits the CODE, never a guessed symbol', () => assert.strictEqual(M.format({ amount: 3290, currency: 'INR' }), 'INR 3,290'));
 t('format of no price is null, so a caller cannot print "0"', () => assert.strictEqual(M.format(null), null));
 
+// ── summarise: three legitimate modes, and no way to express the wrong one ──────────────────────────────────
+const ROWS = [
+  { value: 329000, currency: 'INR' },
+  { value: 4100,   currency: 'USD' },
+  { value: 15200,  currency: 'AED' },
+  { value: null,   currency: 'AED' },   // an offer nobody has agreed
+  { value: null,   currency: null  },   // a help desk ticket
+];
+t('summarise splits into one row per currency', () => {
+  const s = M.summarise(ROWS);
+  assert.strictEqual(s.by_currency.length, 3);
+  assert.deepStrictEqual(s.by_currency.map((b) => b.currency), ['INR', 'AED', 'USD']);   // by size
+});
+t('summarise flags that the currencies are mixed — "abruptly say so"', () => assert.strictEqual(M.summarise(ROWS).mixed, true));
+t('summarise offers NO cross-currency total — the wrong answer is unavailable, not discouraged', () => {
+  assert.strictEqual(M.summarise(ROWS).total, null);
+  assert.ok(!Object.keys(M.summarise(ROWS)).some((k) => /grand|combined|overall/i.test(k)));
+});
+t('a SINGLE currency does get one total — the common case stays simple', () => {
+  const s = M.summarise([{ value: 100, currency: 'INR' }, { value: 50, currency: 'INR' }]);
+  assert.strictEqual(s.mixed, false);
+  assert.deepStrictEqual(s.total, { currency: 'INR', total: 150, chits: 2 });
+});
+t('summarise states what it excluded rather than hiding it', () => {
+  assert.deepStrictEqual(M.summarise(ROWS).excluded, { non_monetary: 1, awaiting_agreement: 1 });
+});
+t('the 409 tells the caller its three options instead of just blocking', () => {
+  try { M.sum([{ amount: 1, currency: 'INR' }, { amount: 1, currency: 'USD' }]); assert.fail('should throw'); }
+  catch (e) {
+    assert.deepStrictEqual(e.options, ['split_by_currency', 'total_product_only', 'convert_to_reporting_currency']);
+    assert.match(e.message, /group by currency/);
+    assert.match(e.message, /total the PRODUCT/);
+    assert.match(e.message, /reporting currency/);
+  }
+});
+
 // ── the invariant ───────────────────────────────────────────────────────────────────────────────────────────
 t('the module exposes NO conversion of any kind', () => {
   const names = Object.keys(M).join(' ').toLowerCase();
