@@ -225,6 +225,62 @@ t('no file is claimed by two buckets', () => {
   }
 });
 
+// ── STAGE · uncalled is a STAGE, not a defect — but it must be DECLARED ─────────────────────────────────────
+//
+// Athi, 2026-08-04: *"we are consistently doing experiments and that is how the engine is built — experiment, poc,
+// then a test, then finally implement. If it is not called from the app it is not a crime, but we can have a list to
+// know what those experiments are."*
+//
+// Exactly right, and it corrects how the first version of this file framed things: it treated "uncalled" as
+// suspicious. It is not. What is suspicious is uncalled AND undeclared, because that is indistinguishable on a
+// status report from shipped capability.
+//
+// So `live` is DERIVED — if a route requires it, it is live and needs no tag, which keeps 30 files free of churn.
+// Anything a route does NOT reach must carry `@stage` in its header. A new uncalled module fails until someone says
+// what it is. That is the whole mechanism.
+const STAGES = ['experiment', 'poc', 'proven', 'tested', 'held'];
+
+function libStages() {
+  const libDir = path.join(API, 'lib');
+  const routeSrc = fs.readdirSync(path.join(API, 'routes')).filter((f) => f.endsWith('.js'))
+    .map((f) => read(path.join('routes', f))).join('\n');
+  const files = fs.readdirSync(libDir).filter((f) => f.endsWith('.js'));
+  const srcs = Object.fromEntries(files.map((f) => [f, read(path.join('lib', f))]));
+  const reqRe = (n) => new RegExp(`require\\(\\s*['"][^'"]*${n}['"]\\s*\\)`);
+
+  return files.map((f) => {
+    const name = f.replace(/\.js$/, '');
+    const re = reqRe(name);
+    const viaRoute = re.test(routeSrc);
+    const viaLib = Object.entries(srcs).some(([g, s]) => g !== f && re.test(s));
+    const tag = (srcs[f].match(/@stage\s+([a-z-]+)/) || [])[1] || null;
+    return { file: f, reachable: viaRoute || viaLib, viaRoute, tag };
+  });
+}
+
+t('anything a route cannot reach declares an @stage', () => {
+  const undeclared = libStages().filter((m) => !m.reachable && !m.tag).map((m) => m.file);
+  assert.deepStrictEqual(undeclared, [],
+    `${undeclared.join(', ')} is called by nothing and declares no @stage. Add one of ${STAGES.join(' | ')} to the ` +
+    `file header. Being uncalled is fine; being uncalled and unlabelled is not — that is how an experiment gets ` +
+    `mistaken for a shipped feature.`);
+});
+
+t('every @stage is one of the known stages', () => {
+  const bad = libStages().filter((m) => m.tag && !STAGES.includes(m.tag)).map((m) => `${m.file}:${m.tag}`);
+  assert.deepStrictEqual(bad, [], `unknown stage(s): ${bad.join(', ')}. Known: ${STAGES.join(' | ')}`);
+});
+
+t('THE ROSTER — printed every run, so the list is never out of date', () => {
+  const staged = libStages().filter((m) => m.tag).sort((a, b) => STAGES.indexOf(a.tag) - STAGES.indexOf(b.tag));
+  const live = libStages().filter((m) => m.viaRoute).length;
+  console.log(`        live (reachable from a route): ${live}`);
+  for (const m of staged) {
+    console.log(`        ${m.tag.padEnd(10)} ${m.file}${m.reachable ? '  (reached via another lib)' : ''}`);
+  }
+  assert.ok(live > 0, 'no module is reachable from a route — something is very wrong');
+});
+
 // ── HONESTY · "built and tested" is not "in service" ────────────────────────────────────────────────────────
 t('the UNWIRED list is accurate — nothing claims to be in service that is not', () => {
   const searchIn = ['lib', 'routes'].flatMap((d) => {
