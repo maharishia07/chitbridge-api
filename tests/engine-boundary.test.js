@@ -52,6 +52,59 @@ const TIER_B = [
 /** Everything an engine module is permitted to reach for. Deliberately tiny. */
 const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', 'crypto']);
 
+/**
+ * EVERY lib/ file must be classified. This was the first version's real hole: it named 6 files and said NOTHING
+ * about the other 30 — so `lib/forms.js`, which carries a seal hash, sat outside the manifest entirely. A boundary
+ * that only covers what you remembered to list is not a boundary.
+ *
+ * PENDING is deliberate and allowed: an honest "not yet decided" is worth more than a confident wrong taxonomy.
+ * The test PRINTS the pending count every run, so it is visible debt rather than silence.
+ */
+const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "What is NOT engine"
+  'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
+  'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
+  'boilerplate.js', 'plans.js', 'forms.js',
+];
+const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
+  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
+  'vaultcrypto.js', 'retention.js',
+];
+const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
+  'trace.js',             // the doubly-linked, co-held, FROZEN handoff edge — settlement's sibling
+  'container.js',         // the container model: blueprint + version
+  'source.js',            // source-entity: a sealed entity that governs downstream
+  'workpattern.js',       // the resolution seam — resolve-before-act
+  'govresolve.js',        // governance resolution
+];
+/** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
+const PENDING_LIBS = [];
+
+/**
+ * Engine modules that are BUILT AND TESTED but not yet called by any route.
+ *
+ * Naming them is the point. A tested module that nothing calls looks like shipped capability in a status report and
+ * is not — that is exactly the drift that let BACKLOG-review-2026-07-29.md claim "nothing is fixed" for a week after
+ * everything was fixed. The test below asserts this list is ACCURATE in both directions, so it cannot quietly rot.
+ */
+const UNWIRED = [
+  'lib/reporting.js',
+  // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
+  //
+  // form-handshake.js is required by `scripts/` and by its own test — and by NO ROUTE. The engine that maps a
+  // document onto a form is therefore NOT in the serving path. What IS live is `orderInput.validateDocuments()`
+  // (magic bytes, caps, sha256, sealed onto the chit) and the extraction logic in `chitbridge-web/public/shop.html`
+  // (`_VALUE_RE`, `_readDocument`, `_applyRead`), which RE-IMPLEMENTS the label-anchored read client-side.
+  //
+  // Two consequences, both real:
+  //   1. `coverage()` — "fills 12 of 17 before any file is opened" — is NOT shipped. No route calls it and no UI
+  //      surfaces it. The reviewer update claimed a catalogue owner sees this while building. They do not.
+  //   2. There are TWO extraction implementations and nothing asserts they agree. The tested one (17 assertions)
+  //      is the one nobody calls; the untested one is the one that runs in production.
+  //
+  // Do not remove this entry by wiring a route without also making the two implementations verifiably agree.
+  'lib/form-handshake.js',
+];
+
 let pass = 0, fail = 0;
 const t = (name, fn) => {
   try { fn(); console.log(`  PASS  ${name}`); pass++; }
@@ -143,6 +196,63 @@ t('TIER C · the per-copy delivery function is where the manifest says it is', (
   const p = path.join(API, 'migrations', 'migration_b50_rls_delivery_functions.sql');
   assert.ok(fs.existsSync(p), 'chit_deliver migration is missing — per-copy settlement has no definition');
   assert.match(fs.readFileSync(p, 'utf8'), /FUNCTION\s+chit_deliver/i);
+});
+
+// ── COVERAGE · nothing may be silently unclassified ─────────────────────────────────────────────────────────
+t('every lib/ file is classified — engine, adoption, infra, or explicitly pending', () => {
+  const all = fs.readdirSync(path.join(API, 'lib')).filter((f) => f.endsWith('.js'));
+  const known = new Set([
+    ...TIER_A.map((f) => path.basename(f)), ...TIER_B.map((f) => path.basename(f)),
+    ...ENGINE_OTHER, ...ADOPTION_LIBS, ...INFRA_LIBS, ...PENDING_LIBS,
+  ]);
+  const unclassified = all.filter((f) => !known.has(f));
+  assert.deepStrictEqual(unclassified, [],
+    `${unclassified.length} lib file(s) belong to no bucket: ${unclassified.join(', ')}. A new module must be ` +
+    `declared engine or not-engine when it is written — deciding later means never deciding. Add it to a list ` +
+    `above, or to PENDING_LIBS if it genuinely needs thought.`);
+  if (PENDING_LIBS.length) console.log(`        ⚠ ${PENDING_LIBS.length} pending classification: ${PENDING_LIBS.join(', ')}`);
+});
+
+t('no file is claimed by two buckets', () => {
+  const lists = { TIER_A: TIER_A.map((f) => path.basename(f)), TIER_B: TIER_B.map((f) => path.basename(f)),
+    ENGINE_OTHER, ADOPTION_LIBS, INFRA_LIBS, PENDING_LIBS };
+  const seen = new Map();
+  for (const [name, list] of Object.entries(lists)) {
+    for (const f of list) {
+      if (seen.has(f)) assert.fail(`${f} is in both ${seen.get(f)} and ${name} — a file has one classification`);
+      seen.set(f, name);
+    }
+  }
+});
+
+// ── HONESTY · "built and tested" is not "in service" ────────────────────────────────────────────────────────
+t('the UNWIRED list is accurate — nothing claims to be in service that is not', () => {
+  const searchIn = ['lib', 'routes'].flatMap((d) => {
+    const p = path.join(API, d);
+    return fs.existsSync(p) ? fs.readdirSync(p).filter((f) => f.endsWith('.js')).map((f) => path.join(d, f)) : [];
+  });
+  for (const mod of UNWIRED) {
+    const name = path.basename(mod, '.js');
+    const callers = searchIn.filter((f) => f !== mod && new RegExp(`require\\([^)]*${name}['"]`).test(read(f)));
+    assert.deepStrictEqual(callers, [],
+      `${mod} is listed UNWIRED but ${callers.join(', ')} now requires it. Good — remove it from UNWIRED.`);
+  }
+});
+
+t('nothing is quietly unwired without being declared', () => {
+  const routeFiles = fs.existsSync(path.join(API, 'routes'))
+    ? fs.readdirSync(path.join(API, 'routes')).filter((f) => f.endsWith('.js')).map((f) => path.join('routes', f)) : [];
+  const libFiles = fs.readdirSync(path.join(API, 'lib')).filter((f) => f.endsWith('.js')).map((f) => path.join('lib', f));
+  const corpus = [...routeFiles, ...libFiles].map((f) => ({ f, src: read(f) }));
+  const engineFiles = [...TIER_A, ...TIER_B];
+  const orphans = engineFiles.filter((mod) => {
+    const name = path.basename(mod, '.js');
+    return !corpus.some((c) => c.f !== mod && new RegExp(`require\\([^)]*${name}['"]`).test(c.src));
+  });
+  const undeclared = orphans.filter((o) => !UNWIRED.includes(o));
+  assert.deepStrictEqual(undeclared, [],
+    `${undeclared.join(', ')} is called by nothing and is not declared UNWIRED. Either wire it or say so — a ` +
+    `tested module nobody calls reads as shipped capability and is not.`);
 });
 
 // ── the manifest must not go stale ──────────────────────────────────────────────────────────────────────────
