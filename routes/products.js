@@ -8,6 +8,23 @@ const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const money = require('../lib/money');          // a price is never a bare number — stamped on write
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
+
+/**
+ * A DELIBERATE refusal must not be reported as an internal failure.
+ *
+ * Found live: the currency-mismatch guard fired correctly — nothing was stored — but the caller got
+ * `500 "Something went wrong — please try again."` because the catch blocks discarded `e.status`. Retrying would
+ * never have helped, and the one message that would have explained the problem ("this catalogue is priced in INR")
+ * was thrown away. A guard that refuses for a good reason and reports a bad one teaches the user nothing.
+ *
+ * Deliberate 4xx keeps its status and its message; anything else stays a sanitised 500.
+ */
+function fail(res, e, label) {
+  if (e && e.status && e.status >= 400 && e.status < 500) {
+    return res.status(e.status).json({ error: label, message: e.message });
+  }
+  return res.status(500).json({ error: label, message: safeErr(e) });
+}
 const ctx = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 
 async function defaultSchemaId(entity_id) {
@@ -61,7 +78,7 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
        VALUES ($1,$2,$3) RETURNING *`,
       [entity_id, schema_id, JSON.stringify(item_data)]));
     res.json({ message: 'Product added', item: r.rows[0] });
-  } catch (e) { res.status(500).json({ error: 'Add failed', message: safeErr(e) }); }
+  } catch (e) { fail(res, e, 'Add failed'); }
 });
 
 // READ + SEARCH — list my products, optional ?q=
@@ -97,7 +114,7 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
       [JSON.stringify(item_data), req.params.id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Product updated', item: r.rows[0] });
-  } catch (e) { res.status(500).json({ error: 'Update failed', message: safeErr(e) }); }
+  } catch (e) { fail(res, e, 'Update failed'); }
 });
 
 // DELETE — soft remove
