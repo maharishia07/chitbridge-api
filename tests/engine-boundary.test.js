@@ -75,6 +75,8 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
 ];
 const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
   'csv.js',               // catalogue CSV round-trip — zero-dependency, a STANDARD (RFC 4180) we implement
+  'csv-preflight.js',     // ENGINE, not adoption: it decides what a file may NOT set (mode, currency, ids). The
+                          // synonym table is throwaway; the refusal is CB's. Zero-dependency, proposes never decides.
   'gs1.js',               // GS1 keys — zero-dependency, but a STANDARD we implement rather than our own idea
   'trace.js',             // the doubly-linked, co-held, FROZEN handoff edge — settlement's sibling
   'container.js',         // the container model: blueprint + version

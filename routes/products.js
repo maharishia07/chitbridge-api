@@ -10,6 +10,7 @@ const money = require('../lib/money');          // a price is never a bare numbe
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
+const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
 
 /**
  * A DELIBERATE refusal must not be reported as an internal failure.
@@ -184,6 +185,60 @@ router.get('/template', auth, async (req, res) => {
     const t = csv.templateFor({ schema, orderInput: oi, observed });
     res.json({ ...t, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
   } catch (e) { fail(res, e, 'Template failed'); }
+});
+
+/**
+ * PREFLIGHT — read an uploaded file BEFORE any of it becomes data.
+ *
+ * Athi, 2026-08-06: *"what if the columns are different, or named differently? do we have a parser before uploading
+ * and providing any suggestion?"*
+ *
+ * ⚠️ THIS ROUTE WRITES NOTHING. It reads the catalogue only to work out the accepted format, and returns a report:
+ * which incoming column maps to which field, what was matched only by similarity and needs confirming, what is
+ * blocked, what is unrecognised, and which rows would fail and why. The commit half is deliberately NOT built —
+ * bulk-writing someone's catalogue from a guessed mapping is exactly the destructive step that needs a spec and a
+ * human gate, and the report is useful on its own.
+ *
+ * `ready:false` means a person still has to look. It is never a soft warning the client may skip past.
+ */
+router.post('/import/preflight', auth, [ body('csv').isString() ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const text = String(req.body.csv || '');
+    if (!text.trim()) return res.status(400).json({ error: 'Nothing to read', message: 'The file is empty.' });
+
+    // The accepted format, built exactly as the download template is — one definition, so a merchant who fills our
+    // own sheet can never be told a column is unrecognised.
+    let oi = orderInput.resolve(null);
+    try {
+      const f = await withEntity(entity_id, (db) => db.query(
+        `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
+      const face = (f.rows[0] && f.rows[0].face) || {};
+      oi = orderInput.resolve(face.order_input || (face.method ? { preset: face.method } : null));
+    } catch (_) { /* no face declared → the cart default, which is how the shop behaves */ }
+
+    let schema = null;
+    const sid = await defaultSchemaId(entity_id);
+    if (sid) {
+      const f = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1 ORDER BY display_order`, [sid]);
+      schema = { properties: Object.fromEntries(f.rows.map((x) => [x.field_key, {}])) };
+    }
+    const seen = await withEntity(entity_id, (db) => db.query(
+      `SELECT item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true
+       ORDER BY created_at DESC LIMIT 200`, [entity_id]));
+    const observed = [];
+    for (const row of seen.rows) {
+      for (const k of Object.keys(row.item_data || {})) if (!observed.includes(k)) observed.push(k);
+    }
+
+    const template = csv.templateFor({ schema, orderInput: oi, observed });
+    const parsed = csv.parseCSV(text);
+    // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
+    const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
+    const report = preflight.preflight({ headers: parsed.headers, rows, template });
+
+    res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset, dry_run: true });
+  } catch (e) { fail(res, e, 'Could not read the file'); }
 });
 
 // UPDATE — edit a product
