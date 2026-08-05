@@ -1,8 +1,15 @@
 -- WIPE.sql — clean slate. THE ONLY FILE TO RUN. Paste it whole, in one session.
 --
--- v2, 2026-08-05, after v1 failed on:
---   ERROR 23503: update or delete on "identities" violates foreign key constraint
---                "customer_list_customer_identity_id_fkey" on table "customer_list"
+-- v3, 2026-08-05. Two live failures got it here, and both were the script being wrong rather than the database:
+--
+--   v1 → ERROR 23503: violates foreign key "customer_list_customer_identity_id_fkey"
+--        Swept by COLUMN NAME; five tables reference identities under a different name. Fixed in v2.
+--   v2 → ERROR P0001: protected (sealed) identity … cannot be deleted   (trigger guard_sealed_identity)
+--        Tried to delete GOVERNANCE identities. The trigger was right; the script was not. Fixed in v3 — sealed
+--        identities now SURVIVE, which is what sealing them was for.
+--
+-- Neither failure lost anything: the whole file is one transaction, so each exception rolled it back. Verified
+-- after v1 by re-reading the live API — every entity and all 54 assistant rows still present.
 --
 -- ── WHY v1 FAILED, and why the old reset-2-wipe.sql would have failed the same way ─────────────────────────────
 -- Both swept "every table with an `entity_id` column", found dynamically. That sounds general and is not: FIVE
@@ -42,19 +49,22 @@ DECLARE
   failed       int;
   n_identities int;
   n_entities   int;
+  n_sealed     int;
   qa_before    int;  qa_after   int;
   src_before   int;  src_after  int;
   leftover     int;
   targets      text[];
 BEGIN
   -- ── PRE-FLIGHT ───────────────────────────────────────────────────────────────────────────────────────────
-  SELECT count(*) INTO n_identities FROM identities;
-  SELECT count(*) INTO n_entities   FROM identities WHERE identity_type = 'entity';
+  SELECT count(*) INTO n_identities FROM identities WHERE COALESCE(sealed, false) = false;
+  SELECT count(*) INTO n_entities   FROM identities WHERE identity_type = 'entity' AND COALESCE(sealed, false) = false;
+  SELECT count(*) INTO n_sealed     FROM identities WHERE COALESCE(sealed, false) = true;
   SELECT count(*) INTO qa_before    FROM assist_qa;
   SELECT count(*) INTO src_before   FROM catalogue_source;
 
   RAISE NOTICE '──────────────────────────────────────────────────';
-  RAISE NOTICE 'BEFORE:     % identities (% entities)', n_identities, n_entities;
+  RAISE NOTICE 'TO DELETE:  % identities (% entities)', n_identities, n_entities;
+  RAISE NOTICE 'SEALED:     % governance identities — these SURVIVE', n_sealed;
   RAISE NOTICE 'PROTECTED:  assist_qa=%  catalogue_source=%', qa_before, src_before;
 
   IF qa_before = 0 THEN
@@ -105,14 +115,34 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Identities last: children first (actors and storefront customers hang off parent_entity_id), then the rest.
-  DELETE FROM identities WHERE parent_entity_id IS NOT NULL;
-  DELETE FROM identities;
+  -- ── IDENTITIES LAST — and SEALED ONES SURVIVE ────────────────────────────────────────────────────────────
+  -- v2 tried to delete everything and hit:
+  --   P0001: protected (sealed) identity 9ba8ffaf-… cannot be deleted   (trigger guard_sealed_identity)
+  --
+  -- That trigger is right and the script was wrong. `sealed = true` marks the GOVERNANCE identities — platform
+  -- root, GOV-01-Help, and the SOURCE-ENTITIES that own the blueprints (lib/source.js: "a source is a SEALED
+  -- entity that gives its typed content a stable identity_id"). They are the same category as catalogue_source:
+  -- governance, not test data. Deleting them was never the intent — the trigger is defence-in-depth against
+  -- exactly this, and it worked.
+  --
+  -- Good side effect: because their owners survive, the blueprints stay OWNED. The earlier note about
+  -- re-pointing catalogue_source.owner_entity_id after seeding does not apply.
+  --
+  -- A sealed row whose parent was deleted would violate the FK, so detach it first. The trigger permits this:
+  -- it blocks status / is_erased / un-sealing, and treats every other update as benign.
+  UPDATE identities SET parent_entity_id = NULL
+   WHERE COALESCE(sealed, false) = true
+     AND parent_entity_id IS NOT NULL
+     AND parent_entity_id IN (SELECT identity_id FROM identities WHERE COALESCE(sealed, false) = false);
+
+  -- Children first (actors and storefront customers hang off parent_entity_id), then the rest — sealed excluded.
+  DELETE FROM identities WHERE COALESCE(sealed, false) = false AND parent_entity_id IS NOT NULL;
+  DELETE FROM identities WHERE COALESCE(sealed, false) = false;
 
   -- ── VERIFY THE OUTCOME, still inside the transaction ─────────────────────────────────────────────────────
   SELECT count(*) INTO qa_after  FROM assist_qa;
   SELECT count(*) INTO src_after FROM catalogue_source;
-  SELECT count(*) INTO leftover  FROM identities;
+  SELECT count(*) INTO leftover  FROM identities WHERE COALESCE(sealed, false) = false;
 
   IF qa_after <> qa_before THEN
     RAISE EXCEPTION 'ROLLING BACK: assist_qa went from % to %. The assistant library must survive a wipe.', qa_before, qa_after;
@@ -121,25 +151,30 @@ BEGIN
     RAISE EXCEPTION 'ROLLING BACK: catalogue_source went from % to %. Blueprints must survive a wipe.', src_before, src_after;
   END IF;
   IF leftover <> 0 THEN
-    RAISE EXCEPTION 'ROLLING BACK: % identities still present — the wipe did not complete.', leftover;
+    RAISE EXCEPTION 'ROLLING BACK: % unsealed identities still present — the wipe did not complete.', leftover;
   END IF;
 
   RAISE NOTICE '──────────────────────────────────────────────────';
-  RAISE NOTICE 'DONE.       % identities deleted', n_identities;
+  RAISE NOTICE 'DONE.       % identities deleted, % sealed kept', n_identities, n_sealed;
   RAISE NOTICE 'INTACT:     assist_qa=%  catalogue_source=%  (unchanged)', qa_after, src_after;
-  RAISE NOTICE 'Blueprints are now UNOWNED — the seed re-points them.';
+  RAISE NOTICE 'Blueprints stay OWNED — their source-entities are sealed and survived.';
   RAISE NOTICE 'Say "done" and seeding is automatic from here.';
   RAISE NOTICE '──────────────────────────────────────────────────';
 END $$;
 
 COMMIT;
 
--- ── VERIFY (runs after the commit; all four should read as noted) ───────────────────────────────────────────────
-SELECT (SELECT count(*) FROM identities)       AS identities_left,   -- 0
+-- ── VERIFY (runs after the commit) ─────────────────────────────────────────────────────────────────────────────
+SELECT (SELECT count(*) FROM identities WHERE COALESCE(sealed,false) = false) AS unsealed_left,   -- 0
+       (SELECT count(*) FROM identities WHERE COALESCE(sealed,false) = true)  AS sealed_kept,     -- governance, > 0
        (SELECT count(*) FROM chit_header)      AS chits_left,        -- 0
        (SELECT count(*) FROM catalogue_items)  AS items_left,        -- 0
        (SELECT count(*) FROM assist_qa)        AS assistant_kept,    -- ~54, UNCHANGED
        (SELECT count(*) FROM catalogue_source) AS blueprints_kept;   -- UNCHANGED
+
+-- Who survived, and why — worth a look so the survivors are a decision rather than a surprise:
+SELECT identity_id, bridge_id, display_name, identity_type, email
+  FROM identities WHERE COALESCE(sealed, false) = true ORDER BY display_name;
 
 -- Optional, and it cannot run inside a transaction — run it on its own afterwards to reclaim disk:
 --   VACUUM (ANALYZE) identities, chit_header, chit_detail, chit_messages, cb_attachment, catalogue_items;
