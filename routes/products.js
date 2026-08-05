@@ -6,6 +6,8 @@ const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
 const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const money = require('../lib/money');          // a price is never a bare number — stamped on write
+const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const ctx = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 
 async function defaultSchemaId(entity_id) {
@@ -45,10 +47,13 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
     const schema_id = await defaultSchemaId(entity_id);
     const verr = await validateItem(schema_id, req.body.item_data);
     if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
+    // STAMP: the price acquires the OWNING ENTITY's currency here and nowhere else. Validation runs first, on the
+    // raw shape, so the schema still sees the number a person typed.
+    const item_data = money.stampItem(req.body.item_data, await regional.currencyFor(entity_id));
     const r = await withEntity(entity_id, (db) => db.query(
       `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
        VALUES ($1,$2,$3) RETURNING *`,
-      [entity_id, schema_id, JSON.stringify(req.body.item_data)]));
+      [entity_id, schema_id, JSON.stringify(item_data)]));
     res.json({ message: 'Product added', item: r.rows[0] });
   } catch (e) { res.status(500).json({ error: 'Add failed', message: safeErr(e) }); }
 });
@@ -77,10 +82,13 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
     const entity_id = ctx(req);
     const verr = await validateItem(await defaultSchemaId(entity_id), req.body.item_data);
     if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
+    // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
+    // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
+    const item_data = money.stampItem(req.body.item_data, await regional.currencyFor(entity_id));
     const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE catalogue_items SET item_data=$1, updated_at=NOW()
        WHERE item_id=$2 AND entity_id=$3 RETURNING *`,
-      [JSON.stringify(req.body.item_data), req.params.id, entity_id]));
+      [JSON.stringify(item_data), req.params.id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) { res.status(500).json({ error: 'Update failed', message: safeErr(e) }); }

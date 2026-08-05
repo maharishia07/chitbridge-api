@@ -19,6 +19,7 @@ const compliance = require('../lib/compliance'); // deterministic conform-check 
 const catalogueBuild = require('../lib/catalogue-build'); // the `ai:catalogue-structure@v1` slot — source → schema + coloured items
 const container = require('../lib/container');            // CONTAINER MODEL (b80) — product pointer over immutable versions
 const regional = require('../lib/regional');              // REGIONAL SCATTER (6a, b81) — resolve-and-seal per region
+const money = require('../lib/money');                    // adoption commercials are the SECOND price home — stamp them too
 
 // The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
 // so it can't be inspected or bypassed. The real implementation injects this as the system prompt.
@@ -257,7 +258,10 @@ router.post('/catalogue-adopt', async (req, res) => {
     const source = (req.body && typeof req.body.source === 'string') ? req.body.source.trim() : 'beta-royale-play@v1';
     const built = await catalogueBuild.build(source);
     if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.' });
-    const commercials = (req.body && req.body.commercials && typeof req.body.commercials === 'object') ? req.body.commercials : {};
+    // STAMP the adoption's commercials. This is the SECOND price home — `{ "Tussar": { price, unit, … } }` — and the
+    // one the seed scripts mostly use, so missing it would leave half the catalogue unstamped while looking done.
+    const commercialsIn = (req.body && req.body.commercials && typeof req.body.commercials === 'object') ? req.body.commercials : {};
+    const commercials = money.stampCommercials(commercialsIn, await regional.currencyFor(entity));
     const visible = !(req.body && req.body.visible === false);
     try {
       await withEntity(entity, (db) => db.query(

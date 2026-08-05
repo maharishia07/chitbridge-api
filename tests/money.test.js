@@ -125,6 +125,55 @@ t('the 409 tells the caller its three options instead of just blocking', () => {
   }
 });
 
+// ── stamping on write — where a price acquires its currency ─────────────────────────────────────────────────
+t('stampPrice turns a bare number into money', () => assert.deepStrictEqual(M.stampPrice(3290, 'INR'), { amount: 3290, currency: 'INR' }));
+t('stampPrice accepts a numeric string — form fields send strings', () => assert.deepStrictEqual(M.stampPrice('3290', 'INR'), { amount: 3290, currency: 'INR' }));
+t('stampPrice leaves an ABSENT price absent — never invents a zero', () => {
+  assert.strictEqual(M.stampPrice(null, 'INR'), null);
+  assert.strictEqual(M.stampPrice(undefined, 'INR'), undefined);
+  assert.strictEqual(M.stampPrice('', 'INR'), '');
+});
+t('a ROUND-TRIP edit is accepted — same currency passes through', () => assert.deepStrictEqual(
+  M.stampPrice({ amount: 950, currency: 'INR' }, 'INR'), { amount: 950, currency: 'INR' }));
+t('⚠ THE SPOOF CASE: a different currency is REFUSED', () => {
+  try { M.stampPrice({ amount: 950, currency: 'USD' }, 'INR'); assert.fail('should throw'); }
+  catch (e) { assert.strictEqual(e.status, 409); assert.match(e.message, /priced in INR/); assert.match(e.message, /not the request/); }
+});
+t('stampPrice refuses when the entity has no valid currency — never guesses', () => throws(
+  () => M.stampPrice(100, null), /no valid currency/));
+t('stampItem stamps every price key and leaves the rest alone', () => {
+  const out = M.stampItem({ name: 'Teak log', unit: 'tonne', price: 3200, price_min: 2800, price_max: 3600, code: 'X1' }, 'INR');
+  assert.deepStrictEqual(out.price, { amount: 3200, currency: 'INR' });
+  assert.deepStrictEqual(out.price_min, { amount: 2800, currency: 'INR' });
+  assert.deepStrictEqual(out.price_max, { amount: 3600, currency: 'INR' });
+  assert.strictEqual(out.name, 'Teak log'); assert.strictEqual(out.unit, 'tonne'); assert.strictEqual(out.code, 'X1');
+});
+t('stampItem does NOT mutate the caller\'s object', () => {
+  const src = { price: 100 };
+  M.stampItem(src, 'INR');
+  assert.strictEqual(src.price, 100, 'input was mutated — a route would then write a shape it never inspected');
+});
+t('stampItem adds nothing when there is no price key', () => {
+  const qa = { qa_id: 'pub_1', question: 'q', answer: 'a' };
+  assert.deepStrictEqual(M.stampItem(qa, 'INR'), qa, 'a help-desk item is non-monetary and must stay that way');
+});
+t('stampCommercials stamps every entry — the second price home', () => {
+  const out = M.stampCommercials({ Tussar: { price: 950, unit: 'litre' }, Ikkat: { price: 875, unit: 'litre' } }, 'INR');
+  assert.deepStrictEqual(out.Tussar.price, { amount: 950, currency: 'INR' });
+  assert.deepStrictEqual(out.Ikkat.price, { amount: 875, currency: 'INR' });
+  assert.strictEqual(out.Tussar.unit, 'litre');
+});
+t('stampCommercials handles a band (price_min / price_max)', () => {
+  const out = M.stampCommercials({ Coil: { price: 48250, price_min: 45000, price_max: 52000, unit: 'tonne' } }, 'INR');
+  assert.deepStrictEqual(out.Coil.price_min, { amount: 45000, currency: 'INR' });
+  assert.deepStrictEqual(out.Coil.price_max, { amount: 52000, currency: 'INR' });
+});
+t('stamped output is READABLE by the tolerant reader — the round trip closes', () => {
+  const stamped = M.stampItem({ price: 3290 }, 'INR');
+  assert.deepStrictEqual(M.read(stamped.price), { amount: 3290, currency: 'INR' });
+  assert.strictEqual(M.amountOfLoose(stamped.price), 3290);
+});
+
 // ── the invariant ───────────────────────────────────────────────────────────────────────────────────────────
 t('the module exposes NO conversion of any kind', () => {
   const names = Object.keys(M).join(' ').toLowerCase();
