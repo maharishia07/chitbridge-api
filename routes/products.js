@@ -9,6 +9,7 @@ const auth = require('../middleware/auth');
 const money = require('../lib/money');          // a price is never a bare number — stamped on write
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
+const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
 
 /**
  * A DELIBERATE refusal must not be reported as an internal failure.
@@ -132,6 +133,46 @@ router.get('/export.csv', auth, async (req, res) => {
     // Excel assumes the system codepage without this and mangles every non-ASCII product name.
     res.send('﻿' + body);
   } catch (e) { fail(res, e, 'Export failed'); }
+});
+
+/**
+ * TEMPLATE — the blank upload sheet for THIS catalogue.
+ *
+ * Athi, 2026-08-06: *"each entity will have its own catalogue style and accepted format, so the template can be
+ * downloaded and the same format uploaded — that makes the system stable."*
+ *
+ * The header row is a PROJECTION OF THE DECLARATION, so there is no template file anywhere that can drift out of
+ * step with the schema. A cart catalogue is asked for `price`; a range catalogue for `price_min`/`price_max`; a
+ * payload catalogue for no price at all.
+ *
+ * Returns JSON rather than the file directly, because the guidance cannot live inside the CSV — a comment row would
+ * be parsed as a product. The client writes `csv` to a file and shows `notes` beside it.
+ */
+router.get('/template', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+
+    // The shop's own declared contract. Never from the request — a caller must not be able to ask for a band sheet
+    // on a cart shop and then be refused at order time.
+    let oi = orderInput.resolve(null);
+    try {
+      const f = await withEntity(entity_id, (db) => db.query(
+        `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
+      const face = (f.rows[0] && f.rows[0].face) || {};
+      oi = orderInput.resolve(face.order_input || (face.method ? { preset: face.method } : null));
+    } catch (_) { /* no face declared yet → the cart default, which is what the shop behaves as */ }
+
+    let schema = null;
+    const sid = await defaultSchemaId(entity_id);
+    if (sid) {
+      const f = await query(
+        `SELECT field_key FROM schema_fields WHERE schema_id=$1 ORDER BY display_order`, [sid]);
+      schema = { properties: Object.fromEntries(f.rows.map((x) => [x.field_key, {}])) };
+    }
+
+    const t = csv.templateFor({ schema, orderInput: oi });
+    res.json({ ...t, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
+  } catch (e) { fail(res, e, 'Template failed'); }
 });
 
 // UPDATE — edit a product

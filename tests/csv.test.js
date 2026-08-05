@@ -135,5 +135,86 @@ t('TIER A · zero dependencies', () => {
   assert.deepStrictEqual([...src.matchAll(/require\(/g)], [], 'csv.js must stay liftable as a file');
 });
 
-console.log(`\n  ${pass} passed, ${fail} failed\n`);
+// ── the template — a projection of the declaration, not a second artifact ────────────────────────────────────
+console.log('\ncsv · template');
+
+t('a CART catalogue asks for ONE price column', () => {
+  const t1 = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  assert.ok(t1.columns.includes('price'));
+  assert.ok(!t1.columns.includes('price_min'), 'a cart must not ask for a band it cannot use');
+});
+t('a RANGE catalogue asks for the BAND, not a single price', () => {
+  const t1 = CSV.templateFor({ orderInput: { preset: 'range', pipeline: 'commerce' } });
+  assert.ok(t1.columns.includes('price_min') && t1.columns.includes('price_max'));
+  assert.ok(!t1.columns.includes('price'), 'a band catalogue asking for a third price column invites a conflict');
+});
+t('qtyprice is banded too — the buyer names a price inside it', () => {
+  assert.ok(CSV.templateFor({ orderInput: { preset: 'qtyprice', pipeline: 'commerce' } }).columns.includes('price_min'));
+});
+t('a PAYLOAD catalogue asks for NO price at all', () => {
+  const t1 = CSV.templateFor({ orderInput: { preset: 'form', pipeline: 'payload' } });
+  for (const k of ['price', 'price_min', 'price_max']) {
+    assert.ok(!t1.columns.includes(k), `a non-monetary catalogue must not ask for ${k}`);
+  }
+});
+t('⚠ there is NO mode column — governance never travels in a spreadsheet cell', () => {
+  const cols = CSV.templateFor({ orderInput: { preset: 'range', pipeline: 'commerce' } }).columns.join(',');
+  for (const bad of ['mode', 'preset', 'fixed_price', 'negotiable', 'pipeline']) {
+    assert.ok(!cols.includes(bad), `"${bad}" would let someone set something that cannot take effect`);
+  }
+});
+t('⚠ there is NO currency column — the server stamps it', () => {
+  const cols = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  assert.ok(!cols.some((c) => /currency/.test(c)));
+});
+t('the schema\'s own fields are included', () => {
+  const t1 = CSV.templateFor({ schema: { properties: { hsn: {}, finish: {}, quantity: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  assert.ok(t1.columns.includes('hsn') && t1.columns.includes('finish'));
+  assert.ok(!t1.columns.includes('quantity'), 'quantity is set by the CUSTOMER at order time, not by the owner');
+});
+t('a fixed price in a band catalogue is min == max, and the notes say so', () => {
+  const t1 = CSV.templateFor({ orderInput: { preset: 'range', pipeline: 'commerce' } });
+  assert.ok(t1.notes.some((n) => /same number/i.test(n)), 'the sheet must explain how to express a fixed price');
+});
+t('the optional trade columns come last, after the declared fields', () => {
+  const cols = CSV.templateFor({ schema: { properties: { hsn: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  assert.ok(cols.includes('available_qty') && cols.includes('lead_time_days'));
+  assert.ok(cols.indexOf('hsn') < cols.indexOf('availability'), 'a declared field must not be pushed below an optional one');
+});
+t('a trade column the SCHEMA already declares is not duplicated', () => {
+  const cols = CSV.templateFor({ schema: { properties: { availability: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  assert.strictEqual(cols.filter((c) => c === 'availability').length, 1);
+});
+t('⚠ the sheet SAYS available_qty is not stock control — nothing decrements it', () => {
+  const t1 = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  // .find() grabbed the "Optional, may be left blank" line first — read ALL the guidance, not the first match.
+  const warn = t1.notes.join(' ');
+  assert.ok(/not reduced/i.test(warn) && /not\s+(as\s+)?stock control/i.test(warn),
+    'a column that looks like stock control and silently is not would let a merchant oversell');
+  assert.ok(!/shown to buyers(?! yet)/i.test(warn),
+    'shop.html renders name/unit/price only — the sheet must not claim a buyer sees this');
+});
+t('a blank optional cell is ABSENCE, not zero stock', () => {
+  const back = CSV.toItems(CSV.parseCSV('sku,name,available_qty\r\nX1,Thing,\r\n'));
+  assert.strictEqual(back[0].available_qty, undefined, 'a blank must never read as "none left"');
+});
+t('extras:false gives the bare declared sheet', () => {
+  const cols = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' }, extras: false }).columns;
+  assert.deepStrictEqual(cols, ['sku', 'name', 'unit', 'price']);
+});
+t('★ the template ROUND-TRIPS through the parser it was made for', () => {
+  const t1 = CSV.templateFor({ schema: { properties: { hsn: {} } }, orderInput: { preset: 'range', pipeline: 'commerce' } });
+  const back = CSV.toItems(CSV.parseCSV(t1.csv));
+  assert.strictEqual(back.length, 1, 'the example row must parse');
+  assert.strictEqual(back[0].name, 'Example product');
+  assert.strictEqual(back[0].price_min, 90);
+  assert.strictEqual(back[0].price_max, 110);
+});
+
+console.log(`
+  ${pass} passed, ${fail} failed
+`);
 process.exit(fail ? 1 : 0);
