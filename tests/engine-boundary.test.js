@@ -64,12 +64,17 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
   'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
   'boilerplate.js', 'plans.js', 'forms.js',
+  // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
+  // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
+  // a client of someone else's model.
+  'beckn-map.js',
 ];
 const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
   'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
   'vaultcrypto.js', 'retention.js',
 ];
 const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
+  'gs1.js',               // GS1 keys — zero-dependency, but a STANDARD we implement rather than our own idea
   'trace.js',             // the doubly-linked, co-held, FROZEN handoff edge — settlement's sibling
   'container.js',         // the container model: blueprint + version
   'source.js',            // source-entity: a sealed entity that governs downstream
