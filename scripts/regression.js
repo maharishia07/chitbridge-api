@@ -1,9 +1,17 @@
 // Cross-entity REGRESSION harness — drives the core mailing flows on the LIVE API and asserts logic + criss-cross
 // isolation. Finds issues the way the IoT harness did. Run: node regression.js
 const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
-const ALPHA = 'Alpha Timbers', BETA = 'Beta Traders';
-const BETA_ID = '75c378a6-ad7f-4b58-87d2-e1509cbb0482';
-const ALPHA_ID = '71373522-147e-4a75-966a-73de3d8bf045';
+// THE CAST, repointed 2026-08-06 after the clean-slate wipe.
+//
+// This logged in by DISPLAY NAME ('Alpha Timbers', 'Beta Traders') against two hardcoded UUIDs. The wipe deleted
+// both entities, so every run failed at step one with "Entity not found" — the harness testing a cast that no
+// longer existed, while looking like the product was broken.
+//
+// Now it logs in by EMAIL, which is stable across reseeds, and the ids are the current ones. A harness pinned to
+// display names is pinned to the one thing a business is most likely to change.
+const ALPHA = 'alpha@test-cb.com', BETA = 'beta@test-cb.com';
+const BETA_ID = '7ce1b945-96a6-490a-ae98-0bb88c524445';   // Beta Fresh
+const ALPHA_ID = '1f3a4e07-10f8-44ec-bae8-f5f1876d68e6';  // Alpha Paints
 let PASS = 0, FAIL = 0; const ISSUES = [];
 function check(name, ok, detail) {
   if (ok) { PASS++; console.log('  ✓ ' + name + (detail ? '  ' + detail : '')); }
