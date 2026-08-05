@@ -27,7 +27,13 @@ async function validateItem(schema_id, item_data) {
      FROM schema_fields WHERE schema_id = $1`, [schema_id]);
   for (const field of f.rows) {
     if (field.field_key === 'quantity') continue;
-    const v = (item_data?.[field.field_key] == null ? '' : String(item_data[field.field_key])).trim();
+    // A stamped price is `{amount, currency}`, and String() on that is "[object Object]" → NaN → "must be a number".
+    // Found in production, not in tests: it rejected a legitimate ROUND-TRIP EDIT (read an item, change the name,
+    // write it back) and it also swallowed the currency-mismatch case before money.stampPrice could refuse it
+    // properly — so the spoof was blocked by accident of ordering rather than by the guard built for it.
+    // Validate a money value on its AMOUNT; the currency is checked at stamping, where it belongs.
+    const rawV = item_data?.[field.field_key];
+    const v = (money.isMoney(rawV) ? String(rawV.amount) : (rawV == null ? '' : String(rawV))).trim();
     if (field.required && !v) return `${field.field_name} is required`;
     if (field.field_type === 'number' && v !== '') {
       const n = Number(v);
