@@ -170,7 +170,18 @@ router.get('/template', auth, async (req, res) => {
       schema = { properties: Object.fromEntries(f.rows.map((x) => [x.field_key, {}])) };
     }
 
-    const t = csv.templateFor({ schema, orderInput: oi });
+    // What the catalogue ACTUALLY uses, not only what it registered. Found live: Gamma's items carry `code` and
+    // `desc` with no active default schema, so a schema-only template would have asked for neither and a filled
+    // sheet would have come back two columns short.
+    const seen = await withEntity(entity_id, (db) => db.query(
+      `SELECT item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true
+       ORDER BY created_at DESC LIMIT 200`, [entity_id]));
+    const observed = [];
+    for (const row of seen.rows) {
+      for (const k of Object.keys(row.item_data || {})) if (!observed.includes(k)) observed.push(k);
+    }
+
+    const t = csv.templateFor({ schema, orderInput: oi, observed });
     res.json({ ...t, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
   } catch (e) { fail(res, e, 'Template failed'); }
 });

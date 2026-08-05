@@ -205,6 +205,29 @@ t('extras:false gives the bare declared sheet', () => {
   const cols = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' }, extras: false }).columns;
   assert.deepStrictEqual(cols, ['sku', 'name', 'unit', 'price']);
 });
+t('★ the template asks for columns the ITEMS use, not only the ones the schema declares', () => {
+  // Found live: Gamma exported `code` and `desc` but had no active default schema, so a schema-only template asked
+  // for neither — a filled sheet would have come back two columns short.
+  const cols = CSV.templateFor({ schema: null, observed: ['name', 'code', 'desc', 'price'],
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  assert.ok(cols.includes('code') && cols.includes('desc'), 'a column in use but not offered is data lost on upload');
+  assert.strictEqual(cols.filter((c) => c === 'price').length, 1, 'price is placed by the mode, not duplicated');
+});
+t('⚠ order_input and quantity are NEVER offered, however the items carry them', () => {
+  const cols = CSV.templateFor({ observed: ['order_input', 'quantity', 'price_currency', 'item_id', 'code'],
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  for (const bad of ['order_input', 'quantity', 'price_currency', 'item_id']) {
+    assert.ok(!cols.includes(bad), `"${bad}" must not be fillable from a spreadsheet`);
+  }
+  assert.ok(cols.includes('code'), 'a real field alongside them is still offered');
+});
+t('⚠ order_input in a FILE is dropped on import — a mode never arrives in a cell', () => {
+  const csvText = 'sku,name,order_input\r\nX1,Thing,"{""preset"":""range""}"\r\n';
+  const back = CSV.toItems(CSV.parseCSV(csvText));
+  assert.strictEqual(back[0].order_input, undefined,
+    'Gamma\'s live export carried this column — importing it would set a mode from a spreadsheet');
+  assert.strictEqual(back[0].name, 'Thing');
+});
 t('★ the template ROUND-TRIPS through the parser it was made for', () => {
   const t1 = CSV.templateFor({ schema: { properties: { hsn: {} } }, orderInput: { preset: 'range', pipeline: 'commerce' } });
   const back = CSV.toItems(CSV.parseCSV(t1.csv));
