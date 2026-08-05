@@ -8,6 +8,7 @@ const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const money = require('../lib/money');          // a price is never a bare number — stamped on write
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
+const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 
 /**
  * A DELIBERATE refusal must not be reported as an internal failure.
@@ -97,6 +98,40 @@ router.get('/', auth, async (req, res) => {
            ORDER BY created_at DESC`, [entity_id]));
     res.json({ items: r.rows, count: r.rows.length });
   } catch (e) { res.status(500).json({ error: 'List failed', message: safeErr(e) }); }
+});
+
+// EXPORT — the whole catalogue as CSV. "A merchant can leave" is the same argument that justified the Medusa
+// mapper; import already existed and export did not, so the round trip was one-way. That is lock-in whether or not
+// anyone intended it.
+//
+// A GET returning a file, so it works from a browser link, curl, or a spreadsheet's "import from URL" — no client
+// code required to be useful.
+router.get('/export.csv', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT item_data FROM catalogue_items
+       WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, [entity_id]));
+    const items = r.rows.map((x) => x.item_data || {});
+
+    // The schema orders the columns where it can; anything an item carries beyond it is still exported, because a
+    // column dropped here is data lost on the way back in.
+    let schema = null;
+    try {
+      const sid = await defaultSchemaId(entity_id);
+      if (sid) {
+        const f = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1 ORDER BY display_order`, [sid]);
+        schema = { properties: Object.fromEntries(f.rows.map((x) => [x.field_key, {}])) };
+      }
+    } catch (_) { /* no schema is fine — columns then come from the items themselves */ }
+
+    const body = csv.toCSV(items, { schema });
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="catalogue-${stamp}.csv"`);
+    // Excel assumes the system codepage without this and mangles every non-ASCII product name.
+    res.send('﻿' + body);
+  } catch (e) { fail(res, e, 'Export failed'); }
 });
 
 // UPDATE — edit a product
