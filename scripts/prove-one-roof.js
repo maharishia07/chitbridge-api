@@ -124,8 +124,14 @@ const me = async (token) => (await api('/api/entities/me', { token })).json;
     identifier: BUYER, otp,
     line_items: [{ kind: 'finish', source: `${SRC}@v1`, finish: 'Tussar', quantity: 2 }] } });
   say(`order → ${conf.status}`);
-  const frozen = conf.json && JSON.stringify(conf.json).match(/"container":\{[^}]*\}/);
-  ok('the chit line froze a container REF + VERSION', !!frozen, frozen ? frozen[0] : JSON.stringify(conf.json).slice(0, 160));
+  // Read the CHIT, not the confirm response. The confirm returns a receipt — id and totals — while the frozen
+  // container lives on the stored line item, which is the thing that has to stay verifiable years later. Asserting
+  // against the receipt was my error, and it reported a failure where the system was correct.
+  const chitId = conf.json && conf.json.chit_id;
+  const chit = chitId ? await api('/api/chits/' + chitId, { token: shop }) : { json: null };
+  const blob = JSON.stringify(chit.json || {});
+  const frozen = blob.match(/"container":\{[^}]*\}/);
+  ok('the chit line froze a container REF + VERSION', !!frozen, frozen ? frozen[0] : blob.slice(0, 200));
 
   // ── 5 · the BRAND releases a NEW image — v2 ───────────────────────────────────────────────────────────────
   step(5, 'the BRAND releases a NEW image — v2');
