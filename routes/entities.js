@@ -387,7 +387,7 @@ router.patch('/profile', auth,
       // sat in routes/governance.js since it was written, exported, with zero callers and a comment saying "not
       // wired yet". The cap is now resolved from the OPERATOR's provisioning (params_override.caps) and then the
       // plan, and a refusal names who refused — an unattributable refusal reads as a bug.
-      if (['public', 'private'].includes(req.body.catalogue_visibility)) {
+      if (['public', 'private', 'network'].includes(req.body.catalogue_visibility)) {
         const capInfo = await visibilityCapFor(id);
         const verdict = visibilityCap.check(req.body.catalogue_visibility, capInfo);
         if (!verdict.ok) {

@@ -113,6 +113,61 @@ t('★ effective() protects a catalogue whose flag was set BEFORE the cap existe
   assert.strictEqual(V.effective('public', cap), 'private', 'the cap must win at READ time, not only at write time');
 });
 
+
+console.log('\nvisibility-cap · the NETWORK tier');
+
+t('★ network is a valid choice, not a bad request', () => {
+  assert.strictEqual(V.check('network', V.capOf({})).ok, true);
+});
+t('★ an operator cap closes the NETWORK tier too', () => {
+  // A cap bounds how OPEN.  is more open than , so an operator-closed entity is invisible even
+  // to its own peers — which is the point of an operator cap, and the opposite of a warehouse.
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'private' } } });
+  assert.strictEqual(V.check('network', cap).ok, false);
+  assert.strictEqual(V.check('network', cap).status, 403);
+});
+t('★ effective() keeps network as network — a warehouse is not private', () => {
+  // Collapsing it to private would tell the OWNER their catalogue is closed when it is deliberately open to their
+  // network. Whether a given READER may see it is a separate question, answered with the viewer in hand.
+  assert.strictEqual(V.effective('network', V.capOf({})), 'network');
+});
+t('…but a cap still narrows it to private', () => {
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'private' } } });
+  assert.strictEqual(V.effective('network', cap), 'private');
+});
+t('garbage is still a 400, and the message lists all three', () => {
+  const r = V.check('semi-public', V.capOf({}));
+  assert.strictEqual(r.status, 400);
+  assert.ok(/network/.test(r.message));
+});
+
+console.log('\nvisibility-cap · the NETWORK tier');
+
+t('★ network is a valid choice, not a bad request', () => {
+  assert.strictEqual(V.check('network', V.capOf({})).ok, true);
+});
+t('★ an operator cap closes the NETWORK tier too', () => {
+  // A cap bounds how OPEN. `network` is more open than `private`, so an operator-closed entity is invisible even to
+  // its own peers — which is the point of an operator cap, and the opposite of a warehouse.
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'private' } } });
+  assert.strictEqual(V.check('network', cap).ok, false);
+  assert.strictEqual(V.check('network', cap).status, 403);
+});
+t('★ effective() keeps network as network — a warehouse is not private', () => {
+  // Collapsing it to private would tell the OWNER their catalogue is closed when it is deliberately open to their
+  // network. Whether a given READER may see it is a separate question, answered with the viewer in hand.
+  assert.strictEqual(V.effective('network', V.capOf({})), 'network');
+});
+t('…but a cap still narrows it to private', () => {
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'private' } } });
+  assert.strictEqual(V.effective('network', cap), 'private');
+});
+t('garbage is still a 400, and the message lists all three', () => {
+  const r = V.check('semi-public', V.capOf({}));
+  assert.strictEqual(r.status, 400);
+  assert.ok(/network/.test(r.message));
+});
+
 t('TIER A · zero dependencies', () => {
   const src = require('fs').readFileSync(require.resolve('../lib/visibility-cap'), 'utf8');
   assert.deepStrictEqual([...src.matchAll(/require\(/g)], []);

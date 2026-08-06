@@ -156,7 +156,10 @@ app.use('/api/catalogue-face', require('./routes/catalogue-face'));    // b112 �
 // disconnect settle-guard (edgeHasOpenChit), so the service stays — only the route is gone.
 // (jest uses src/app.js; this exposes the same routers on the live server.js entry)
 app.use('/api/network', require('./src/routes/network'));
-app.use('/api/network', require('./src/routes/catalogue'));
+// ARCHIVED 2026-08-06 — the cb_* catalogue routes. A network aggregates its members' catalogues and holds
+// none of its own; these served a third, unread catalogue model. See src/routes/catalogue.js and
+// SPEC-network-storefront.md §6. cb_entity/cb_edge (the network TREE) stays mounted on the line above.
+// app.use('/api/network', require('./src/routes/catalogue'));
 
 // ── Public showcase API for the /tour page (SimulatorPage) ───
 app.use('/api/simulator', require('./routes/simulator'));

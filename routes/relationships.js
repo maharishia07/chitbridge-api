@@ -149,7 +149,10 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     //   • Adding a supplier is UNILATERAL (POST /suppliers inserts with no consent from the supplier), so being
     //     "related" is SELF-ASSERTED and must NOT authorise anything beyond public. A tier that shows more needs
     //     bilateral consent, which supplier_list does not model. Do not add one until it does.
-    const view = await catalogueView.buildPublicView({ entity: supplier, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap') });
+    const view = await catalogueView.buildPublicView({ entity: supplier, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'),
+      // The reader, so a NETWORK-tier catalogue resolves for a fellow member. A supplier link alone still sees
+      // exactly public — membership is decided by the network tree, not by this list.
+      viewer: req.identity && req.identity.bridge_id });
     if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], groups: [], finishes: [] });
     res.json({ supplier, shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
