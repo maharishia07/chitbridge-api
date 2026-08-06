@@ -80,6 +80,9 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
 ];
 const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
   'csv.js',               // catalogue CSV round-trip — zero-dependency, a STANDARD (RFC 4180) we implement
+  'catalogue-read.js',    // ENGINE: it decides WHO MAY CHANGE WHAT — owned is editable, referenced is not, per
+                          // FIELD. That is the ownership rule the per-copy model rests on, not a display concern.
+                          // (catalogue-view.js is adoption: it shapes a payload. This decides authority.)
   'identity.js',          // ENGINE: "which line is this, and which product does it belong to" is the question the
                           // per-copy record is keyed on. A partial identity being NO identity, and a variant being a
                           // line rather than a child row, are CB rules — not a trade's convention.
