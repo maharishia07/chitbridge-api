@@ -246,5 +246,144 @@ t('TIER A · zero dependencies', () => {
   assert.deepStrictEqual([...src.matchAll(/require\(/g)], [], 'csv-preflight.js must stay liftable as a file');
 });
 
+console.log('\ncsv-preflight · the commit half — a decision per column');
+
+const decide = (csvText, decisions, template) => {
+  const p = CSV.parseCSV(csvText);
+  return P.applyDecisions({ headers: p.headers, rows: p.rows.map((r) => p.headers.map((h) => r[h])), template: template || CART, decisions });
+};
+
+t('a mapped column lands on the field the person chose', () => {
+  const r = decide('Particulars,Rate\r\nTussar,950\r\n',
+    [{ incoming: 'Particulars', action: 'map', field: 'name' }, { incoming: 'Rate', action: 'map', field: 'price' }]);
+  assert.deepStrictEqual(r.errors, []);
+  assert.deepStrictEqual(r.items, [{ name: 'Tussar', price: 950 }]);
+});
+t('★ a column with NO decision is ignored — never imported on the strength of a suggestion', () => {
+  const r = decide('Particulars,Rate\r\nTussar,950\r\n', [{ incoming: 'Particulars', action: 'map', field: 'name' }]);
+  assert.deepStrictEqual(r.items, [{ name: 'Tussar' }], 'Rate was suggested but nobody chose it, so it stays out');
+});
+t('★ CREATE extends the declaration — this is how an entity keeps its own format', () => {
+  const r = decide('name,Warehouse Bay\r\nTussar,B12\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Warehouse Bay', action: 'create' }]);
+  assert.deepStrictEqual(r.errors, []);
+  assert.strictEqual(r.newFields.length, 1);
+  assert.strictEqual(r.newFields[0].field_key, 'warehouse_bay');
+  assert.strictEqual(r.newFields[0].field_name, 'Warehouse Bay', 'the heading a person recognises is kept as the label');
+  assert.deepStrictEqual(r.items, [{ name: 'Tussar', warehouse_bay: 'B12' }]);
+});
+t('⚠ a new field is created OPTIONAL — a required one would invalidate every product already stored', () => {
+  const r = decide('name,Bay\r\nTussar,B12\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Bay', action: 'create' }]);
+  assert.strictEqual(r.newFields[0].required, false);
+});
+t('a created column is typed from its values', () => {
+  const r = decide('name,Shelf Life\r\nTussar,24\r\nIkkat,36\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Shelf Life', action: 'create' }]);
+  assert.strictEqual(r.newFields[0].field_type, 'number');
+  assert.strictEqual(r.items[0].shelf_life, 24, 'and the value arrives as a number, not "24"');
+});
+t('a column of mixed values is text, not a number with holes', () => {
+  const r = decide('name,Grade\r\nTussar,A1\r\nIkkat,2\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Grade', action: 'create' }]);
+  assert.strictEqual(r.newFields[0].field_type, 'text');
+});
+t('⚠ a BLOCKED column cannot be mapped, however the client asks', () => {
+  const r = decide('name,order_input\r\nTussar,"{""preset"":""range""}"\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'order_input', action: 'map', field: 'order_input' }]);
+  assert.ok(r.errors.some((e) => /order_input/.test(e)));
+  assert.strictEqual(r.items[0].order_input, undefined, 'the mode must not arrive even when the decision asks for it');
+});
+t('⚠ a BLOCKED column cannot be smuggled in by CREATING it under its own name', () => {
+  const r = decide('name,quantity\r\nTussar,5\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'quantity', action: 'create' }]);
+  assert.ok(r.errors.length, 'creating `quantity` as a product column must be refused');
+  assert.strictEqual(r.items[0].quantity, undefined);
+});
+t('two columns mapped to one field is refused, not silently resolved', () => {
+  const r = decide('Rate,Price,name\r\n900,950,Tussar\r\n', [
+    { incoming: 'Rate', action: 'map', field: 'price' },
+    { incoming: 'Price', action: 'map', field: 'price' },
+    { incoming: 'name', action: 'map', field: 'name' }]);
+  assert.ok(r.errors.some((e) => /Pick one/.test(e)));
+});
+t('creating a column the catalogue already has says "map to it instead"', () => {
+  const r = decide('name,Price\r\nTussar,950\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Price', action: 'create', field: 'price' }]);
+  assert.ok(r.errors.some((e) => /already has a price column/.test(e)));
+});
+t('mapping to a field the catalogue does not accept is refused', () => {
+  const r = decide('name,Floor\r\nTussar,800\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Floor', action: 'map', field: 'price_min' }]);
+  assert.ok(r.errors.some((e) => /does not accept/.test(e)), 'a cart shop has no price_min to map onto');
+});
+t('a decision naming a column the file does not have is an error, not a shrug', () => {
+  const r = decide('name\r\nTussar\r\n', [{ incoming: 'Colour', action: 'map', field: 'name' }]);
+  assert.ok(r.errors.some((e) => /no column called "Colour"/.test(e)));
+});
+t('a nameless row is left out of the import', () => {
+  const r = decide('name,Rate\r\nTussar,950\r\n,875\r\n',
+    [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Rate', action: 'map', field: 'price' }]);
+  assert.strictEqual(r.items.length, 1);
+  assert.deepStrictEqual(r.lines, [2], 'the line numbers must still point at the ORIGINAL file');
+});
+t('a heading becomes a safe field key', () => {
+  assert.strictEqual(P.toFieldKey('Warehouse Bay'), 'warehouse_bay');
+  assert.strictEqual(P.toFieldKey('Price (INR)'), 'price');
+  assert.strictEqual(P.toFieldKey('  3-Year Stock! '), 'year_stock');
+});
+
+console.log('\nstarter-fields · an empty catalogue is not a blank page');
+
+const S = require('../lib/starter-fields');
+
+t('a new catalogue in a trade starts with that trade\'s columns', () => {
+  const gold = S.starterFor('gold');
+  const keys = gold.fields.map((f) => f.field_key);
+  for (const k of ['name', 'unit', 'price', 'fineness', 'assay_cert', 'bar_serial', 'hs_code']) {
+    assert.ok(keys.includes(k), `a gold catalogue without ${k} cannot describe a gold bar`);
+  }
+  assert.strictEqual(gold.unit, 'g');
+});
+t('⚠ a CUSTOMER field never becomes a product column', () => {
+  // room_area_sqft is what the buyer tells you at order time; litres_needed is computed from it. Neither is a
+  // property of the paint, and a product form asking for them is a modelling mistake.
+  const keys = S.starterFor('paint').fields.map((f) => f.field_key);
+  assert.ok(!keys.includes('room_area_sqft'));
+  assert.ok(!keys.includes('litres_needed'));
+  assert.ok(keys.includes('coverage_sqft_per_litre'), 'but coverage IS a property of the paint');
+});
+t('an unknown trade gets the base set, not an empty one', () => {
+  const g = S.starterFor('nonsense');
+  assert.strictEqual(g.vertical, null);
+  assert.ok(g.fields.map((f) => f.field_key).includes('name'));
+});
+t('every starter field carries a leg — where the value comes FROM', () => {
+  for (const [key, v] of Object.entries(S.VERTICALS)) {
+    for (const f of v.fields) assert.ok(f.leg, `${key}.${f.field_key} does not say where its value comes from`);
+  }
+});
+t('★ every starter column survives its own template and preflight', () => {
+  // A standard set that our own preflight cannot place would be a trap: adopt the set, download the template, and
+  // be told your columns are unrecognised.
+  for (const key of Object.keys(S.VERTICALS)) {
+    const set = S.starterFor(key);
+    const tpl = CSV.templateFor({ schema: { properties: Object.fromEntries(set.fields.map((f) => [f.field_key, {}])) },
+      orderInput: { preset: 'cart', pipeline: 'commerce' } });
+    for (const f of set.fields) {
+      if (f.field_key === 'quantity') continue;
+      assert.ok(tpl.columns.includes(f.field_key), `${key}: the template does not offer ${f.field_key}`);
+      const labels = Object.fromEntries(set.fields.map((x) => [x.field_key, x.field_name]));
+      const m = P.matchHeader(f.field_name, tpl.columns, labels);
+      assert.ok(m.canonical || m.how === 'contains' || m.how === 'fuzzy',
+        `${key}: "${f.field_name}" comes back as ${m.how} against a catalogue that declares it`);
+    }
+  }
+});
+t('TIER A · zero dependencies', () => {
+  const src = require('fs').readFileSync(require.resolve('../lib/starter-fields'), 'utf8');
+  assert.deepStrictEqual([...src.matchAll(/require\(/g)], []);
+});
+
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

@@ -68,6 +68,11 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
   // a client of someone else's model.
   'beckn-map.js',
+  // ADOPTION, not engine: "what a gold catalogue records" is the bullion trade's convention, not CB's idea. A
+  // vertical could be added, replaced or wholly deleted and nothing about what ChitBridge IS would change. The
+  // ENGINE part of the same question — that a field says WHERE its value comes from (the four legs), and that a
+  // `customer` field is not a product column — is a rule, and it lives in csv-preflight/the schema, not here.
+  'starter-fields.js',
 ];
 const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
   'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
