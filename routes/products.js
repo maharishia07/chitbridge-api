@@ -42,11 +42,33 @@ async function defaultSchemaId(entity_id) {
 // Validate a product against its schema fields. Returns an error message, or null if valid.
 // Rules: required fields not empty · number fields numeric, not negative, respect min_value.
 // `quantity` is excluded — the customer sets it at order time.
-async function validateItem(schema_id, item_data) {
-  if (!schema_id) return null;
+/**
+ * Read the rules ONCE. Athi, 2026-08-06: *"any of this implementation, if it is greater than O(1), is not required
+ * — it will be very costly."*
+ *
+ * He is right and this was mine: the import loop called validateItem() per row, and validateItem read schema_fields
+ * every time. A 2000-row upload fired 2000 identical queries for a rule set that cannot change mid-import.
+ *
+ * The fields are now fetched once and validated in memory, so validation is O(1) in round trips however many rows
+ * arrive. `validateItem` keeps its old shape for the single-add and single-edit paths, where one query IS the
+ * whole cost.
+ */
+async function schemaFieldsOf(schema_id) {
+  if (!schema_id) return [];
   const f = await query(
     `SELECT field_key, field_name, field_type, required, min_value
      FROM schema_fields WHERE schema_id = $1`, [schema_id]);
+  return f.rows;
+}
+
+async function validateItem(schema_id, item_data) {
+  if (!schema_id) return null;
+  return validateAgainst(await schemaFieldsOf(schema_id), item_data);
+}
+
+/** Pure: the same rules, against rows already in hand. No I/O. */
+function validateAgainst(fieldRows, item_data) {
+  const f = { rows: fieldRows || [] };
   for (const field of f.rows) {
     if (field.field_key === 'quantity') continue;
     // A stamped price is `{amount, currency}`, and String() on that is "[object Object]" → NaN → "must be a number".
@@ -280,6 +302,8 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
     }
 
     const currency = await regional.currencyFor(entity_id);
+    // O(1): the rules are read once for the whole file, not once per row.
+    let ruleRows = await schemaFieldsOf(schema_id);
 
     // EXTEND THE DECLARATION FIRST. The new columns have to exist before the products that use them, and doing it
     // in this order means a failure here leaves nothing half-imported.
@@ -337,6 +361,9 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
       }
     }
 
+    // New columns were just added, so the rule set changed exactly once. Re-read it once — still O(1).
+    if (created.length) ruleRows = await schemaFieldsOf(sid);
+
     // Then the products. Match on the DECLARED identity where the file carries one: a second upload of the same
     // sheet should correct the catalogue, not double it.
     //
@@ -378,7 +405,7 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
         // The SAME validation the single-add form runs. Without this a bulk upload could create products that
         // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
         // not a rule at all.
-        const verr = await validateItem(sid, merged);
+        const verr = validateAgainst(ruleRows, merged);
         if (verr) { outcome.push({ line, sku, action: 'failed', name: item.name, message: verr }); continue; }
         const stamped = money.stampItem(merged, currency);
         if (prior) {
