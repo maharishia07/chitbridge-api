@@ -444,6 +444,7 @@ router.get('/:bridge_id', async (req, res) => {
     if (!view.available) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
     res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
+      unpriced_hidden: view.unpriced_hidden,
       finishes: view.finishes });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });

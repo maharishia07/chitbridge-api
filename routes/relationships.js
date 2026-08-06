@@ -153,6 +153,7 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], groups: [], finishes: [] });
     res.json({ supplier, shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
+      unpriced_hidden: view.unpriced_hidden,
       finishes: view.finishes });
   } catch (err) {
     res.status(500).json({ error: 'Get catalogue failed', message: safeErr(err) });
