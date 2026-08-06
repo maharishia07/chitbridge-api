@@ -334,6 +334,32 @@ t('a decision naming a column the file does not have is an error, not a shrug', 
   const r = decide('name\r\nTussar\r\n', [{ incoming: 'Colour', action: 'map', field: 'name' }]);
   assert.ok(r.errors.some((e) => /no column called "Colour"/.test(e)));
 });
+console.log('\ncsv-preflight · updating what is already there');
+
+t('★ a file of sku + price is a legitimate UPDATE, not an empty import', () => {
+  // Found live: this -- the most ordinary update there is, today's prices -- was refused outright with "no row had
+  // a product name", so changing one number meant resending every column of every row.
+  const r = decide('sku,price\r\nZZ-U1,150\r\n',
+    [{ incoming: 'sku', action: 'map', field: 'sku' }, { incoming: 'price', action: 'map', field: 'price' }]);
+  assert.deepStrictEqual(r.errors, []);
+  assert.deepStrictEqual(r.items, [{ sku: 'ZZ-U1', price: 150 }]);
+});
+t('a row with neither a name nor a code is still left out', () => {
+  const r = decide('sku,price\r\n,150\r\n',
+    [{ incoming: 'sku', action: 'map', field: 'sku' }, { incoming: 'price', action: 'map', field: 'price' }]);
+  assert.strictEqual(r.items.length, 0, 'there is nothing to find it by and nothing to create it from');
+});
+t('⚠ a file with NO code column says every row will be ADDED', () => {
+  // Proved live: a second upload of one unchanged product created a second identical row and reported "1 added".
+  const r = run('name,unit,price\r\nWidget,litre,100\r\n', CART);
+  assert.ok(r.notes.some((n) => /No code column/i.test(n) && /duplicates/i.test(n)),
+    'silently duplicating a catalogue is the worst outcome this tool can have');
+});
+t('a file WITH a code column says nothing of the sort', () => {
+  const r = run('sku,name,unit,price\r\nA1,Widget,litre,100\r\n', CART);
+  assert.ok(!r.notes.some((n) => /No code column/i.test(n)));
+});
+
 t('a nameless row is left out of the import', () => {
   const r = decide('name,Rate\r\nTussar,950\r\n,875\r\n',
     [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'Rate', action: 'map', field: 'price' }]);

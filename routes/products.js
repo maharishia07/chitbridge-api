@@ -349,7 +349,22 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
       const sku = String(item.sku || '').trim();
       const prior = sku ? bySku.get(sku) : null;
       try {
+        // A row with a code but no name is an UPDATE to something that already exists. If nothing matches, there is
+        // no product to patch and not enough to create one — say which, rather than "nothing to import".
+        if (!prior && !String(item.name || '').trim()) {
+          outcome.push({ line, sku, action: 'failed',
+            message: sku ? `no product here has the code "${sku}", and there is no name to create one with`
+                         : 'this row has neither a name nor a code' });
+          continue;
+        }
         const merged = prior ? Object.assign({}, prior.item_data, item) : item;   // an update is a patch, not a wipe
+
+        // A UNIT change on an existing product silently rewrites what its price means: 150/litre and 150/tonne are
+        // not the same offer. Merchants do repack, so this is not refused — but it is never left unsaid.
+        let warning = null;
+        if (prior && item.unit && prior.item_data.unit && item.unit !== prior.item_data.unit) {
+          warning = `unit changed ${prior.item_data.unit} → ${item.unit}; the price now means something different`;
+        }
         // The SAME validation the single-add form runs. Without this a bulk upload could create products that
         // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
         // not a rule at all.
@@ -360,12 +375,12 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
           await withEntity(entity_id, (db) => db.query(
             `UPDATE catalogue_items SET item_data=$1, updated_at=NOW() WHERE item_id=$2 AND entity_id=$3`,
             [JSON.stringify(stamped), prior.item_id, entity_id]));
-          outcome.push({ line, sku, action: 'updated', name: item.name });
+          outcome.push({ line, sku, action: 'updated', name: item.name || prior.item_data.name, warning });
         } else {
           await withEntity(entity_id, (db) => db.query(
             `INSERT INTO catalogue_items (entity_id, schema_id, item_data) VALUES ($1,$2,$3)`,
             [entity_id, sid, JSON.stringify(stamped)]));
-          outcome.push({ line, sku, action: 'created', name: item.name });
+          outcome.push({ line, sku, action: 'created', name: item.name, warning });
         }
       } catch (e) {
         outcome.push({ line, sku, action: 'failed', name: item.name, message: e.message });
