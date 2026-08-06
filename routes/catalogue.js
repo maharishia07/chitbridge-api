@@ -434,6 +434,69 @@ router.post('/network-store/:networkId/order', async (req, res) => {
   }
 });
 
+
+/**
+ * GET /api/catalogue/network/:bridge_id — the NETWORK STOREFRONT.
+ *
+ * Athi: *"when the storefront is calling, it will call the NETWORK, not the individual stores under the network,
+ * so the catalogue of all the entities should be visible where the entity is public."*
+ *
+ * PUBLIC and unauthenticated, like a shop link. It resolves the network root, finds its members on the tree, and
+ * runs each one through the SAME buildPublicView the individual storefront uses — so a private or network-only
+ * department is simply absent, decided in one place. No visibility rule lives in this route or in network-view.js.
+ *
+ * ⚠️ COST: one query for the members, then one buildPublicView PER member. That is O(departments), not O(items),
+ * and it is the honest floor -- each department has its own catalogue, adoptions and face, and there is no single
+ * query that answers for all of them. Capped at MAX_DEPARTMENTS so a deep tree cannot turn one page load into a
+ * hundred reads; the cap is REPORTED, never silent.
+ */
+const MAX_DEPARTMENTS = 40;
+
+router.get('/network/:bridge_id', async (req, res) => {
+  try {
+    const root = await resolveEntity(req.params.bridge_id);
+    if (!root) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+
+    // The members: everything under this root on the cb_entity tree. One query whatever the depth.
+    let members = [];
+    try {
+      const r = await query(
+        `SELECT e.bridge_id FROM cb_entity e
+          WHERE e.path <@ (SELECT path FROM cb_entity WHERE bridge_id = $1 LIMIT 1)
+          ORDER BY nlevel(e.path), e.name`, [root.bridge_id]);
+      members = r.rows.map((x) => x.bridge_id);
+    } catch (_) { members = []; }   // no tree → not a network
+
+    if (!members.length) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    const truncated = members.length > MAX_DEPARTMENTS;
+    const use = members.slice(0, MAX_DEPARTMENTS);
+
+    const departments = [];
+    for (const bid of use) {
+      if (String(bid) === String(root.bridge_id)) continue;      // the root is the front, not a department
+      const ent = await resolveEntity(bid);
+      if (!ent) continue;
+      const view = await catalogueView.buildPublicView({ entity: ent, query, withEntity, catalogueBuild, orderInput,
+        identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
+        container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap') });
+      departments.push({ entity: ent, view });
+    }
+
+    const nv = require('../lib/network-view');
+    let shopfront = nv.assemble({
+      network: { bridge_id: root.bridge_id, display_name: root.display_name },
+      departments,
+    });
+    if (req.query.q) shopfront = nv.search(shopfront, req.query.q);
+    if (truncated) shopfront.truncated = { shown: use.length, total: members.length };
+
+    // A network with no PUBLIC department is indistinguishable from no network at all — same rule as a shop.
+    if (!shopfront.departments.length && !req.query.q) {
+      return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    }
+    res.json(shopfront);
+  } catch (err) { res.status(500).json({ error: 'Network storefront failed', message: safeErr(err) }); }
+});
 // ── CJ-02: public catalogue (only when visibility='public') ──
 router.get('/:bridge_id', async (req, res) => {
   try {
