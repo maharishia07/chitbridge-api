@@ -228,11 +228,50 @@ t('⚠ order_input in a FILE is dropped on import — a mode never arrives in a 
     'Gamma\'s live export carried this column — importing it would set a mode from a spreadsheet');
   assert.strictEqual(back[0].name, 'Thing');
 });
+t('★ column order is STABLE — it comes from the declaration, not from how Postgres stored it', () => {
+  // Live: after one import the sheet came back "… available_qty, min_order_qty, lead_time_days …" — lengths 13,
+  // 13, 14. That is jsonb's normalised order (by key length, then bytewise), not the merchant's. A person's own
+  // template must not change shape every time they upload.
+  const schema = { properties: { code: {}, desc: {} } };
+  const a = CSV.templateFor({ schema, observed: ['lead_time_days', 'my_testing', 'availability', 'min_order_qty'],
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  const b = CSV.templateFor({ schema, observed: ['availability', 'min_order_qty', 'lead_time_days', 'my_testing'],
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  assert.deepStrictEqual(a, b, 'the same catalogue produced two different sheets from the same facts');
+  assert.deepStrictEqual(a, ['sku', 'name', 'unit', 'price', 'code', 'desc', 'my_testing',
+    'availability', 'available_qty', 'lead_time_days', 'min_order_qty']);
+});
+t('the trade extras stay LAST and in their own order, even once items carry them', () => {
+  const cols = CSV.templateFor({ observed: ['availability', 'lead_time_days'],
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  assert.deepStrictEqual(cols.slice(-4), ['availability', 'available_qty', 'lead_time_days', 'min_order_qty']);
+});
+t('★ EVERY column in the example row has a value — a blank one reads as "this failed"', () => {
+  // A merchant added a column, imported it successfully, downloaded the template again and saw their column EMPTY
+  // beside populated ones. The data was stored and exported fine; the template just looked like an export.
+  const t1 = CSV.templateFor({ schema: { properties: { my_testing: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  const row = CSV.parseCSV(t1.csv).rows[0];
+  for (const c of t1.columns) {
+    assert.ok(String(row[c] || '').trim() !== '', `${c} is blank in the example row`);
+  }
+});
+t('★ the example row SAYS it is an example', () => {
+  const t1 = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  assert.ok(/EXAMPLE/i.test(t1.csv), 'a template that can be mistaken for your data is a bad template');
+  assert.ok(/delete this line/i.test(t1.csv));
+});
+t('an EXPORT is stable too — same items, same columns, whatever order the keys arrive in', () => {
+  const one = [{ sku: 'A', name: 'n', zeta: 1, alpha: 2 }];
+  const two = [{ sku: 'A', name: 'n', alpha: 2, zeta: 1 }];
+  assert.deepStrictEqual(CSV.columnsFor(one, null), CSV.columnsFor(two, null));
+  assert.deepStrictEqual(CSV.columnsFor(one, null), ['sku', 'name', 'unit', 'alpha', 'zeta']);
+});
 t('★ the template ROUND-TRIPS through the parser it was made for', () => {
   const t1 = CSV.templateFor({ schema: { properties: { hsn: {} } }, orderInput: { preset: 'range', pipeline: 'commerce' } });
   const back = CSV.toItems(CSV.parseCSV(t1.csv));
   assert.strictEqual(back.length, 1, 'the example row must parse');
-  assert.strictEqual(back[0].name, 'Example product');
+  assert.ok(/EXAMPLE/i.test(back[0].name), 'the example row must announce itself');
   assert.strictEqual(back[0].price_min, 90);
   assert.strictEqual(back[0].price_max, 110);
 });
