@@ -110,6 +110,42 @@ t('the common core is still reachable on a rich line', () => {
   assert.strictEqual(l.fields.price.amount, 1450);
 });
 
+console.log('\ncatalogue-read · the catalogue follows the CONTAINER, the chit pins the version');
+
+// Athi: "we always refer the container which holds the image — if the version changes, that will be directly
+// reflecting. But in the chit we hold the image reference rather than the container."
+const CONTAINERS = {
+  'brand-paints#tomato': {
+    container_id: 'brand-paints#tomato', current_version: 2, version: 2, is_current: true,
+    content: { name: 'Tomato', unit: 'kg', image: 'tomato-v2.jpg' },   // the brand released a NEW image
+  },
+};
+const idFor = (srcKey, name) => String(srcKey || '').split('@')[0] + '#' + String(name || '').toLowerCase().replace(/\s+/g, '-');
+
+t('★ a NEW version reflects in the catalogue without republishing anything', () => {
+  const l = R.lines({ owned: [], sources: SOURCES, me: ME, containers: CONTAINERS, containerIdFor: idFor })[0];
+  assert.strictEqual(l.fields.image, 'tomato-v2.jpg', 'the catalogue served the stale snapshot instead of the pointer');
+  assert.strictEqual(l.container.version, 2);
+  assert.strictEqual(l.container.is_current, true);
+});
+t('★ the line carries WHAT THE CHIT WILL PIN', () => {
+  const l = R.lines({ owned: [], sources: SOURCES, me: ME, containers: CONTAINERS, containerIdFor: idFor })[0];
+  assert.deepStrictEqual({ ref: l.container.ref, version: l.container.version },
+    { ref: 'brand-paints#tomato', version: 2 },
+    'the chit freezes {ref, version} — the image, not the container');
+});
+t('MY overlay still wins over the new version', () => {
+  const l = R.lines({ owned: [], sources: SOURCES, me: ME, containers: CONTAINERS, containerIdFor: idFor })[0];
+  assert.strictEqual(l.fields.price.amount, 40, 'a brand releasing a new image must not reprice my catalogue');
+  assert.strictEqual(l.provenance.price, 'own');
+  assert.strictEqual(l.provenance.image, 'source');
+});
+t('no container (b80 not applied, or never synced) falls back to the snapshot', () => {
+  const l = R.lines({ owned: [], sources: SOURCES, me: ME, containers: {}, containerIdFor: idFor })[0];
+  assert.strictEqual(l.fields.name, 'Tomato');
+  assert.strictEqual(l.container, null, 'and it says so, rather than implying a version it does not have');
+});
+
 console.log('\ncatalogue-read · identity and variants apply to EVERY line');
 
 t('★ an adopted line is grouped and identified like any other', () => {

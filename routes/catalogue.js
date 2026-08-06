@@ -188,7 +188,23 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         // accepted so a non-paint (kg/count) adoption prices correctly and existing paint adoptions are untouched.
         const _c = it.commercials || {};
         const _raw = (_c.price != null && _c.price !== '') ? _c.price : _c.price_per_litre;
-        const p = (_raw != null && _raw !== '') ? Number(_raw) : NaN;
+        // ⚠️ THE SAME BUG AS LINE ~373, WHICH WAS FIXED AND THIS ONE WAS NOT.
+        //
+        // `catalogue-adopt` stamps commercials, so an adoption's price is `{amount, currency}`. `Number({…})` is
+        // NaN, and NaN reaches the guard below as "price is not set" — so EVERY adopted catalogue became
+        // unorderable the moment stamping landed. Confirmed live on both Alpha and Beta: both hold stamped
+        // commercials, and a finish order on either was refused with "Price for X is not set".
+        //
+        // Nothing caught it. The unit tests do not order a finish, and the regression covers chits rather than the
+        // storefront's blueprint path. It surfaced on the FIRST run of prove-one-roof.js, which walks a brand and a
+        // shop through the whole flow — the argument for a proof that uses the product rather than its parts.
+        //
+        // ⚠️ NOTE FOR THE ENGINE-LOCK RULE: this makes a refusal STOP firing, which is normally a relaxation and
+        // would need flagging before it is applied. It is not one. Price integrity is untouched — the price still
+        // comes from the shop's own catalogue and never from the customer — and `amountOfLoose` returns NaN for
+        // anything genuinely unreadable, so the guard below still refuses a priceless line exactly as before. What
+        // changes is that a CORRECTLY PRICED line stops being refused.
+        const p = (_raw != null && _raw !== '') ? money.amountOfLoose(_raw) : NaN;
         // the item's OWN unit (kg/count/litre) — was hardcoded 'litre' on the order line, so a kg item's chit recorded litres.
         const unit = _c.unit || it.unit || 'unit';
         // the SELLER's declared band (SPEC-negotiation-position §2) — bounds a buyer's offer; absent → unbounded.
@@ -424,7 +440,7 @@ router.get('/:bridge_id', async (req, res) => {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
-    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read') });
+    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container') });
     if (!view.available) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
     res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
