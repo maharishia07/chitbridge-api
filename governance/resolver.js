@@ -72,6 +72,32 @@ function resolve(constitution, override) {
         effective.region = val;
         break;
       }
+      case 'caps': {
+        /**
+         * CAPS — what the provisioning operator forbids this entity to choose for itself.
+         *
+         * Athi, 2026-08-06: *"how do we protect a private catalogue — say it is done from the networking side? The
+         * entity should be private, not public."*
+         *
+         * Distinct from `exposure_default`, which is a DEFAULT the entity may then narrow. A cap is a CEILING: the
+         * entity cannot loosen past it, ever, from its own profile screen.
+         *
+         * Recognised here so a capped entity stops carrying "unknown override key 'caps' (allowed, flagged)" — a
+         * governance record that reads as a mistake is worse than none, because the next person cleans it up.
+         *
+         * TIGHTEN-ONLY, like every other cap in this file: `private` is a restriction and is accepted; `public` is
+         * not a licence and is refused, since a cap that can WIDEN what the constitution permits is not a cap.
+         */
+        const caps = (val && typeof val === 'object' && !Array.isArray(val)) ? val : null;
+        if (!caps) { exceptions.push({ klass: 'C_ADVISORY', key, detail: 'caps must be an object — ignored' }); break; }
+        const cv = String(caps.catalogue_visibility || '').trim().toLowerCase();
+        if (cv && cv !== 'private') {
+          throw new GovernanceError('A_INVARIANT',
+            `caps.catalogue_visibility may only tighten to 'private' — '${cv}' would widen what the entity may choose`);
+        }
+        if (cv) effective.cap_catalogue_visibility = 'private';
+        break;
+      }
       default:
         exceptions.push({ klass: 'C_ADVISORY', key, detail: `unknown override key '${key}' (allowed, flagged)` });
     }

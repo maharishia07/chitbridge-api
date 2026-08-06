@@ -278,9 +278,20 @@ router.get('/me', auth, async (req, res) => {
     try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
     // b114 (self-healing): is this entity's catalogue exposed at all? Pre-b114 there was no such setting and adoption
     // silently published, so absent the column we report 'public' — the behaviour that was actually in force.
+    // The EFFECTIVE visibility, plus the cap that produced it. Reporting the stored flag alone would let a capped
+    // entity's own profile read 'public' while the world correctly sees nothing — the owner would have no way to
+    // understand why their link is dead.
     let catalogue_visibility = 'public';
-    try { const cv = await query('SELECT catalogue_visibility FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (cv.rows[0] && cv.rows[0].catalogue_visibility) catalogue_visibility = cv.rows[0].catalogue_visibility; } catch (_) {}
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility });
+    let visibility_cap = { max: 'public', by: null, enforced: false, reason: '' };
+    try {
+      const cv = await query('SELECT catalogue_visibility, plan, params_override FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+      const row = cv.rows[0] || {};
+      let planMenu = null;
+      try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
+      visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
+      catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
+    } catch (_) { /* pre-b114 → the default above */ }
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap });
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance });
   } catch (err) {
     console.error('Profile error:', err.message);
