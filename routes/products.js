@@ -69,7 +69,8 @@ async function validateItem(schema_id, item_data) {
 
 /** The accepted format + the shop's contract, built once so preflight, import and template cannot disagree. */
 async function catalogueShape(entity_id) {
-  const labels = {};   // field_key → the name the merchant sees, so their own column heading matches their own field
+  const labels = {};     // field_key → the name the merchant sees, so their own column heading matches their own field
+  const required = [];   // what the schema actually insists on — NOT 'everything that is not an optional extra'
   let oi = orderInput.resolve(null);
   try {
     const f = await withEntity(entity_id, (db) => db.query(
@@ -81,9 +82,14 @@ async function catalogueShape(entity_id) {
   let schema = null;
   const sid = await defaultSchemaId(entity_id);
   if (sid) {
-    const f = await query(`SELECT field_key, field_name FROM schema_fields WHERE schema_id=$1 ORDER BY display_order`, [sid]);
+    const f = await query(`SELECT field_key, field_name, required FROM schema_fields WHERE schema_id=$1 ORDER BY display_order`, [sid]);
     schema = { properties: Object.fromEntries(f.rows.map((x) => [x.field_key, {}])) };
-    for (const x of f.rows) if (x.field_name) labels[x.field_key] = x.field_name;
+    for (const x of f.rows) {
+      if (x.field_name) labels[x.field_key] = x.field_name;
+      // The SCHEMA decides what a file must carry. Inferring it from 'not optional' told a catalogue that declares
+      // code and desc that every upload was incomplete without them.
+      if (x.required && x.field_key !== 'quantity') required.push(x.field_key);
+    }
   }
   const seen = await withEntity(entity_id, (db) => db.query(
     `SELECT item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true
@@ -92,7 +98,7 @@ async function catalogueShape(entity_id) {
   for (const row of seen.rows) {
     for (const k of Object.keys(row.item_data || {})) if (!observed.includes(k)) observed.push(k);
   }
-  return { schema_id: sid, labels, template: csv.templateFor({ schema, orderInput: oi, observed }), orderInput: oi };
+  return { schema_id: sid, labels, required: required.length ? required : ['name'], template: csv.templateFor({ schema, orderInput: oi, observed }), orderInput: oi };
 }
 
 // CREATE — add a product
@@ -207,11 +213,11 @@ router.post('/import/preflight', auth, [ body('csv').isString() ], validate, asy
 
     // The accepted format, built by the SAME function the download template uses — one definition, so a merchant
     // who fills our own sheet can never be told a column is unrecognised.
-    const { template, labels, orderInput: oi } = await catalogueShape(entity_id);
+    const { template, labels, required, orderInput: oi } = await catalogueShape(entity_id);
     const parsed = csv.parseCSV(text);
     // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required });
 
     res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset, dry_run: true });
   } catch (e) { fail(res, e, 'Could not read the file'); }
@@ -245,14 +251,14 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
     const text = String(req.body.csv || '');
     if (!text.trim()) return res.status(400).json({ error: 'Nothing to import', message: 'The file is empty.' });
 
-    const { schema_id, template, labels } = await catalogueShape(entity_id);
+    const { schema_id, template, labels, required } = await catalogueShape(entity_id);
     const parsed = csv.parseCSV(text);
     if (parsed.rows.length > IMPORT_MAX_ROWS) {
       return res.status(413).json({ error: 'Too many rows',
         message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.` });
     }
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required });
     const rowErrors = report.issues.filter((i) => i.severity === 'error');
     if (rowErrors.length) {
       return res.status(409).json({ error: 'The file has problems', report,

@@ -162,6 +162,19 @@ t('⚠ ready is FALSE while any column was matched only by similarity', () => {
   assert.strictEqual(r.needsConfirming.length, 1);
   assert.strictEqual(r.needsConfirming[0].canonical, 'name');
 });
+t('★ an OPTIONAL column the catalogue declares does not make a file "incomplete"', () => {
+  // This was the flaw: required was inferred as "every accepted column that is not an optional trade extra", so a
+  // catalogue declaring code and desc — both optional — told every upload it was missing something, forever.
+  const r = run('sku,name,unit,price\r\nA1,Tussar,litre,950\r\n', CART);
+  assert.deepStrictEqual(r.missing, [], 'code and desc are optional in the schema; their absence is not a problem');
+  assert.strictEqual(r.ready, true);
+});
+t('the SCHEMA decides what is required, not the preflight', () => {
+  const r = P.preflight({ headers: ['name', 'unit'], rows: [['Tussar', 'litre']], template: CART,
+    required: ['name', 'code'] });
+  assert.deepStrictEqual(r.missing, ['code'], 'a catalogue that insists on a code must say so and be believed');
+  assert.strictEqual(r.ready, false);
+});
 t('a missing required column is named, not discovered on row 300', () => {
   const r = run('sku,unit,price\r\nA1,litre,950\r\n', CART);
   assert.ok(r.missing.includes('name'));
