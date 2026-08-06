@@ -300,6 +300,39 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
       }
     }
 
+    // REGISTER WHAT WE ACCEPT, so a column's position becomes a stored fact.
+    //
+    // Athi, 2026-08-06: *"we have to maintain the order of the column, so always the column comes the same way — we
+    // cannot keep changing the column position."*
+    //
+    // Right, and sorting is not enough on its own. A field IN the schema has a display_order, so its position is
+    // permanent. A column that only exists because some item happens to carry it has no position at all, so it can
+    // only ever be ordered by a rule — and any rule that is not "where you put it" will one day move something.
+    //
+    // So anything a person deliberately MAPPED becomes a declared field, appended at the end in exactly the order
+    // it already appears. Nothing moves at the moment of registration; from then on nothing can move at all.
+    // Additive and optional, like every other extension: this records what the catalogue already accepts, it does
+    // not change what it demands.
+    if (sid) {
+      const hv = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
+      const known = new Set(hv.rows.map((r) => r.field_key));
+      // The order the template renders them in — so registering changes nothing a merchant can see, today.
+      const inOrder = template.columns.filter((c) => applied.mappedFields.includes(c) && !known.has(c)
+        && !preflight.BLOCKED[c] && c !== 'quantity');
+      if (inOrder.length) {
+        const o2 = await query(`SELECT COALESCE(MAX(display_order),0) AS m FROM schema_fields WHERE schema_id=$1`, [sid]);
+        let n2 = Number(o2.rows[0].m) || 0;
+        for (const key of inOrder) {
+          const type = preflight.NUMERIC_FIELDS.includes(key) ? 'number' : 'text';
+          await query(
+            `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, display_order)
+             VALUES ($1,$2,$3,$4,false,$5)`,
+            [sid, labels[key] || key, key, type, ++n2]);
+          created.push(key);
+        }
+      }
+    }
+
     // Then the products. Match on SKU where the file carries one: a second upload of the same sheet should correct
     // the catalogue, not double it.
     const existing = await withEntity(entity_id, (db) => db.query(

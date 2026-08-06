@@ -241,6 +241,19 @@ t('★ column order is STABLE — it comes from the declaration, not from how Po
   assert.deepStrictEqual(a, ['sku', 'name', 'unit', 'price', 'code', 'desc', 'my_testing',
     'availability', 'available_qty', 'lead_time_days', 'min_order_qty']);
 });
+t('★ a NEW column never pushes an existing one out of place', () => {
+  // Athi: "we cannot keep changing the column position." Sorting alone is not enough — an unregistered key landing
+  // alphabetically early would insert IN FRONT of columns already there. A DECLARED field has a stored position,
+  // so this is the property that has to hold: registering a column appends it and moves nothing.
+  const before = CSV.templateFor({ schema: { properties: { code: {}, desc: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  const after = CSV.templateFor({ schema: { properties: { code: {}, desc: {}, aaa_new: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
+  // `aaa_new` sorts first alphabetically — as a DECLARED field it must still land where it was declared: last.
+  assert.deepStrictEqual(after.slice(0, before.indexOf('desc') + 1), before.slice(0, before.indexOf('desc') + 1),
+    'every column that existed before must still be in the same place');
+  assert.ok(after.indexOf('aaa_new') > after.indexOf('desc'), 'a newly declared column appends, it does not insert');
+});
 t('the trade extras stay LAST and in their own order, even once items carry them', () => {
   const cols = CSV.templateFor({ observed: ['availability', 'lead_time_days'],
     orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
