@@ -393,7 +393,30 @@ router.patch('/profile', auth,
         if (!verdict.ok) {
           return res.status(verdict.status).json({ error: 'Not allowed', message: verdict.message, capped_by: capInfo.by });
         }
-        try { await query('UPDATE identities SET catalogue_visibility=$1 WHERE identity_id=$2', [req.body.catalogue_visibility, id]); } catch (_) {}
+        /**
+         * ⚠️ THIS `catch` USED TO SWALLOW EVERYTHING, and it cost twenty minutes and hid my own mistake.
+         *
+         * b114 added `CHECK (catalogue_visibility IN ('public','private'))`. When `network` was introduced, the
+         * UPDATE started failing on that constraint — and the bare catch ate it, so the API answered
+         * `200 {"message":"Profile updated"}` while nothing was written. The write path looked correct, the read
+         * path looked correct, and the value never moved. Exactly the shape this codebase keeps producing:
+         * something reports success and the outcome is absent.
+         *
+         * The catch exists for ONE legitimate reason — self-healing when b114 has not been applied and the column
+         * does not exist (42703). That case, and only that case, stays silent.
+         */
+        try {
+          await query('UPDATE identities SET catalogue_visibility=$1 WHERE identity_id=$2', [req.body.catalogue_visibility, id]);
+        } catch (e) {
+          if (e && e.code === '42703') { /* pre-b114: no column yet — genuinely nothing to do */ }
+          else if (e && e.code === '23514') {
+            return res.status(409).json({ error: 'Not stored',
+              message: `This database does not accept "${req.body.catalogue_visibility}" yet — apply migration b115.`,
+              code: 'VISIBILITY_NOT_MIGRATED' });
+          } else {
+            return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
+          }
+        }
       }
       res.json({ message: 'Profile updated' });
     } catch (err) {
