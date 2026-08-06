@@ -424,9 +424,10 @@ router.get('/:bridge_id', async (req, res) => {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
-    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput });
+    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity') });
     if (!view.available) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
-    res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items, finishes: view.finishes });
+    res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
+      groups: view.groups, finishes: view.finishes });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
 

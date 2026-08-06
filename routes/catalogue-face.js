@@ -4,7 +4,7 @@
 // catalogue_face is RLS-protected (b112) -> every query runs inside withEntity(caller). One row per entity.
 const express = require('express');
 const router  = express.Router();
-const { withEntity } = require('../db');
+const { withEntity, query } = require('../db');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
 
@@ -43,6 +43,23 @@ router.put('/', auth, async (req, res) => {
       if (it && it.order_input) {
         declErrors.push(...orderInput.resolve(it.order_input).errors.map((m) => `item "${(it.name || it.product || '?')}": ${m}`));
       }
+    }
+    // Same rule for the IDENTITY declaration: what makes a line unique, which field names the product it belongs
+    // to, and which fields distinguish variants. A declaration naming a column the catalogue does not have is worse
+    // than no declaration — every line would fail to identify, so every upload would look like a catalogue full of
+    // brand new products, and a second upload of the same sheet would duplicate all of them.
+    if (face.identity) {
+      const identity = require('../lib/identity');
+      const ident = identity.resolve(face);
+      // Plain query, like products.js: schema_fields/entity_schemas are read the same way there.
+      const cols = await query(
+        `SELECT sf.field_key FROM schema_fields sf
+           JOIN entity_schemas es ON es.schema_id = sf.schema_id
+          WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`, [e]).catch(() => ({ rows: [] }));
+      const have = cols.rows.map((r) => r.field_key);
+      // Only check when there is something to check against — an entity with no schema yet would otherwise be told
+      // every field it names is missing.
+      if (have.length) declErrors.push(...identity.check(ident, have).map((m) => 'identity: ' + m));
     }
     if (declErrors.length) {
       return res.status(422).json({ error: 'Declaration not supported', message: declErrors.join('; '), errors: declErrors });

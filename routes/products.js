@@ -11,6 +11,7 @@ const regional = require('../lib/regional');    // the currency comes from the E
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
 const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
+const identity  = require('../lib/identity');       // which line is this, and which product does it belong to
 const starter   = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
 
 /**
@@ -72,11 +73,12 @@ async function catalogueShape(entity_id) {
   const labels = {};     // field_key → the name the merchant sees, so their own column heading matches their own field
   const required = [];   // what the schema actually insists on — NOT 'everything that is not an optional extra'
   let oi = orderInput.resolve(null);
+  let face0 = {};        // the whole declared face — order_input AND identity both come from it
   try {
     const f = await withEntity(entity_id, (db) => db.query(
       `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
-    const face = (f.rows[0] && f.rows[0].face) || {};
-    oi = orderInput.resolve(face.order_input || (face.method ? { preset: face.method } : null));
+    face0 = (f.rows[0] && f.rows[0].face) || {};
+    oi = orderInput.resolve(face0.order_input || (face0.method ? { preset: face0.method } : null));
   } catch (_) { /* no face declared → the cart default, which is how the shop behaves */ }
 
   let schema = null;
@@ -98,7 +100,8 @@ async function catalogueShape(entity_id) {
   for (const row of seen.rows) {
     for (const k of Object.keys(row.item_data || {})) if (!observed.includes(k)) observed.push(k);
   }
-  return { schema_id: sid, labels, required: required.length ? required : ['name'], template: csv.templateFor({ schema, orderInput: oi, observed }), orderInput: oi };
+  const ident = identity.resolve(face0);
+  return { schema_id: sid, labels, identity: ident, identityProblems: identity.check(ident, Object.keys((schema && schema.properties) || {})), required: required.length ? required : ['name'], template: csv.templateFor({ schema, orderInput: oi, observed }), orderInput: oi };
 }
 
 // CREATE — add a product
@@ -213,13 +216,14 @@ router.post('/import/preflight', auth, [ body('csv').isString() ], validate, asy
 
     // The accepted format, built by the SAME function the download template uses — one definition, so a merchant
     // who fills our own sheet can never be told a column is unrecognised.
-    const { template, labels, required, orderInput: oi } = await catalogueShape(entity_id);
+    const { template, labels, required, identity: ident, identityProblems, orderInput: oi } = await catalogueShape(entity_id);
     const parsed = csv.parseCSV(text);
     // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
 
-    res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset, dry_run: true });
+    res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset,
+      identity: ident, identity_problems: identityProblems, dry_run: true });
   } catch (e) { fail(res, e, 'Could not read the file'); }
 });
 
@@ -251,21 +255,21 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
     const text = String(req.body.csv || '');
     if (!text.trim()) return res.status(400).json({ error: 'Nothing to import', message: 'The file is empty.' });
 
-    const { schema_id, template, labels, required } = await catalogueShape(entity_id);
+    const { schema_id, template, labels, required, identity: ident } = await catalogueShape(entity_id);
     const parsed = csv.parseCSV(text);
     if (parsed.rows.length > IMPORT_MAX_ROWS) {
       return res.status(413).json({ error: 'Too many rows',
         message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.` });
     }
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
     const rowErrors = report.issues.filter((i) => i.severity === 'error');
     if (rowErrors.length) {
       return res.status(409).json({ error: 'The file has problems', report,
         message: `${rowErrors.length} row problem(s) must be fixed first. Nothing was imported.` });
     }
 
-    const applied = preflight.applyDecisions({ headers: parsed.headers, rows, template, labels, decisions: req.body.decisions });
+    const applied = preflight.applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions });
     if (applied.errors.length) {
       return res.status(400).json({ error: 'Those choices do not hold up', messages: applied.errors,
         message: applied.errors[0] + ' Nothing was imported.' });
@@ -333,28 +337,34 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
       }
     }
 
-    // Then the products. Match on SKU where the file carries one: a second upload of the same sheet should correct
-    // the catalogue, not double it.
+    // Then the products. Match on the DECLARED identity where the file carries one: a second upload of the same
+    // sheet should correct the catalogue, not double it.
+    //
+    // `sku` was hardcoded here, which was an assumption rather than a rule — pharma identifies a lot by `batch_no`
+    // and a commodity desk may need `hs_code + origin_country`. identity.resolve() falls back to ['sku'], so a
+    // catalogue that has declared nothing behaves exactly as it did.
     const existing = await withEntity(entity_id, (db) => db.query(
       `SELECT item_id, item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true`, [entity_id]));
-    const bySku = new Map();
+    const byIdentity = new Map();
     for (const r of existing.rows) {
-      const s = String((r.item_data || {}).sku || '').trim();
-      if (s) bySku.set(s, r);
+      const k = identity.identityOf(r.item_data || {}, ident);
+      if (k) byIdentity.set(k, r);
     }
+    const idLabel = ident.key.join(' + ');
 
     const outcome = [];
     for (let i = 0; i < applied.items.length; i++) {
       const item = applied.items[i], line = applied.lines[i];
-      const sku = String(item.sku || '').trim();
-      const prior = sku ? bySku.get(sku) : null;
+      const ikey = identity.identityOf(item, ident);       // null when the row carries only PART of the key
+      const sku = ikey || '';
+      const prior = ikey ? byIdentity.get(ikey) : null;
       try {
         // A row with a code but no name is an UPDATE to something that already exists. If nothing matches, there is
         // no product to patch and not enough to create one — say which, rather than "nothing to import".
         if (!prior && !String(item.name || '').trim()) {
           outcome.push({ line, sku, action: 'failed',
-            message: sku ? `no product here has the code "${sku}", and there is no name to create one with`
-                         : 'this row has neither a name nor a code' });
+            message: ikey ? `no product here has ${idLabel} "${ikey}", and there is no name to create one with`
+                         : `this row has neither a name nor a complete ${idLabel} ` });
           continue;
         }
         const merged = prior ? Object.assign({}, prior.item_data, item) : item;   // an update is a patch, not a wipe

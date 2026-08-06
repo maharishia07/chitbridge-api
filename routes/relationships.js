@@ -149,9 +149,10 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     //   • Adding a supplier is UNILATERAL (POST /suppliers inserts with no consent from the supplier), so being
     //     "related" is SELF-ASSERTED and must NOT authorise anything beyond public. A tier that shows more needs
     //     bilateral consent, which supplier_list does not model. Do not add one until it does.
-    const view = await catalogueView.buildPublicView({ entity: supplier, query, withEntity, catalogueBuild, orderInput });
-    if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], finishes: [] });
-    res.json({ supplier, shop: view.shop, schema: view.schema, fields: view.fields, items: view.items, finishes: view.finishes });
+    const view = await catalogueView.buildPublicView({ entity: supplier, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity') });
+    if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], groups: [], finishes: [] });
+    res.json({ supplier, shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
+      groups: view.groups, finishes: view.finishes });
   } catch (err) {
     res.status(500).json({ error: 'Get catalogue failed', message: safeErr(err) });
   }

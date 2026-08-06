@@ -80,6 +80,9 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
 ];
 const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
   'csv.js',               // catalogue CSV round-trip — zero-dependency, a STANDARD (RFC 4180) we implement
+  'identity.js',          // ENGINE: "which line is this, and which product does it belong to" is the question the
+                          // per-copy record is keyed on. A partial identity being NO identity, and a variant being a
+                          // line rather than a child row, are CB rules — not a trade's convention.
   'csv-preflight.js',     // ENGINE, not adoption: it decides what a file may NOT set (mode, currency, ids). The
                           // synonym table is throwaway; the refusal is CB's. Zero-dependency, proposes never decides.
   'gs1.js',               // GS1 keys — zero-dependency, but a STANDARD we implement rather than our own idea

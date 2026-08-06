@@ -349,15 +349,38 @@ t('a row with neither a name nor a code is still left out', () => {
     [{ incoming: 'sku', action: 'map', field: 'sku' }, { incoming: 'price', action: 'map', field: 'price' }]);
   assert.strictEqual(r.items.length, 0, 'there is nothing to find it by and nothing to create it from');
 });
-t('⚠ a file with NO code column says every row will be ADDED', () => {
+t('⚠ a file with NO identity column says every row will be ADDED', () => {
   // Proved live: a second upload of one unchanged product created a second identical row and reported "1 added".
   const r = run('name,unit,price\r\nWidget,litre,100\r\n', CART);
-  assert.ok(r.notes.some((n) => /No code column/i.test(n) && /duplicates/i.test(n)),
+  assert.ok(r.notes.some((n) => /No sku column/i.test(n) && /duplicates/i.test(n)),
     'silently duplicating a catalogue is the worst outcome this tool can have');
 });
-t('a file WITH a code column says nothing of the sort', () => {
+t('a file WITH one says nothing of the sort', () => {
   const r = run('sku,name,unit,price\r\nA1,Widget,litre,100\r\n', CART);
-  assert.ok(!r.notes.some((n) => /No code column/i.test(n)));
+  assert.ok(!r.notes.some((n) => /No sku column/i.test(n)));
+});
+t('★ the warning names the merchant\'s OWN identity field, not "sku"', () => {
+  // A pharma desk identifies a lot by its batch. Telling them "no sku column" would be telling them about a field
+  // they do not have and do not use.
+  const tpl = CSV.templateFor({ schema: { properties: { batch_no: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  const p = CSV.parseCSV('name,price\r\nLot A,100\r\n');
+  const r = P.preflight({ headers: p.headers, rows: p.rows.map((x) => p.headers.map((h) => x[h])),
+    template: tpl, identity: { key: ['batch_no'] } });
+  assert.ok(r.notes.some((n) => /No batch_no column/.test(n)));
+});
+t('★ duplicates are detected on the DECLARED key, not on sku', () => {
+  const tpl = CSV.templateFor({ schema: { properties: { batch_no: {} } },
+    orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  const p = CSV.parseCSV('batch_no,name,price\r\nB1,Lot A,100\r\nB1,Lot A again,120\r\n');
+  const r = P.preflight({ headers: p.headers, rows: p.rows.map((x) => p.headers.map((h) => x[h])),
+    template: tpl, identity: { key: ['batch_no'] } });
+  assert.ok(r.issues.some((i) => i.severity === 'error' && /also appears on line 2/.test(i.message)));
+});
+t('★ VARIANTS are not duplicates — three pack sizes of one paint are three lines', () => {
+  const r = run('sku,name,unit,price\r\nRP-1L,Tussar,litre,950\r\nRP-4L,Tussar,litre,3400\r\nRP-10L,Tussar,litre,7900\r\n', CART);
+  assert.strictEqual(r.summary.errors, 0, 'same name, different codes — that is a product with three sizes');
+  assert.strictEqual(r.summary.importable, 3);
 });
 
 t('a nameless row is left out of the import', () => {
