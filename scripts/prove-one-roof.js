@@ -94,7 +94,12 @@ const me = async (token) => (await api('/api/entities/me', { token })).json;
   // ── 3 · ONE READ — owned and referenced, together, with provenance ────────────────────────────────────────
   step(3, 'ONE catalogue read — both channels, with provenance');
   await api('/api/products', { method: 'POST', token: shop, body: { item_data: { sku: 'OWN-1', name: 'Shop Primer', unit: 'litre', price: 300 } } });
+  // PUBLISHING IS TWO FLAGS, and that is a design smell I flagged days ago: entity_schemas.visibility (the form's
+  // fields are public) and identities.catalogue_visibility (b114 — the shop is published at all). Setting one and
+  // not the other is why the first run of this proof read an empty catalogue. Set BOTH, and say why.
+  await api('/api/schemas/create-default', { method: 'POST', token: shop });
   await api('/api/schemas/visibility', { method: 'PATCH', token: shop, body: { visibility: 'public' } });
+  await api('/api/entities/profile', { method: 'PATCH', token: shop, body: { catalogue_visibility: 'public' } });
   const view1 = await api(`/api/catalogue/${shopBridge}`);
   const lines1 = (view1.json && view1.json.lines) || [];
   const refLine = lines1.find((l) => l.origin === 'source');
@@ -112,10 +117,11 @@ const me = async (token) => (await api('/api/entities/me', { token })).json;
 
   // ── 4 · a CHIT freezes the version it saw ─────────────────────────────────────────────────────────────────
   step(4, 'an ORDER — the chit pins the IMAGE, not the container');
-  const start = await api(`/api/catalogue/${shopBridge}/order/start`, { method: 'POST', body: { identifier: `buyer-${stamp}@test-cb.com`, name: 'Buyer' } });
+  const BUYER = `buyer-${stamp}@test-cb.com`;
+  const start = await api(`/api/catalogue/${shopBridge}/order/start`, { method: 'POST', body: { identifier: BUYER, name: 'Buyer' } });
   const otp = (start.json && (start.json.dev_otp || start.json.otp)) || OTP;
   const conf = await api(`/api/catalogue/${shopBridge}/order/confirm`, { method: 'POST', body: {
-    identifier: `buyer-${stamp}@test-cb.com`, otp,
+    identifier: BUYER, otp,
     line_items: [{ kind: 'finish', source: `${SRC}@v1`, finish: 'Tussar', quantity: 2 }] } });
   say(`order → ${conf.status}`);
   const frozen = conf.json && JSON.stringify(conf.json).match(/"container":\{[^}]*\}/);
