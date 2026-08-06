@@ -34,8 +34,25 @@ SELECT COUNT(*) AS products_still_using_these
  WHERE ci.is_active = true
    AND (ci.item_data ?| ARRAY['shelf_zone','my_testing','aaa_zone']);
 
--- 3 — Drop it, but ONLY where nothing uses it. The NOT EXISTS makes the guard part of the statement rather than
---     something a person has to remember to check between two windows.
+-- 2b — WHICH field is used, and by how many products, ON ITS OWN SCHEMA.
+--
+-- ⚠️ The first version of the guard below asked "is ANY of the three keys in use on this entity?" rather than "is
+-- THIS field in use?" — so one product carrying `my_testing` also protected `aaa_zone` on the same schema. It
+-- refused in the safe direction, but it refused too much, and the count in step 4 then said "1 remaining" without
+-- saying which or why. A guard you cannot interpret is only half a guard.
+SELECT i.display_name,
+       sf.field_key,
+       (SELECT COUNT(*) FROM catalogue_items ci
+         WHERE ci.entity_id = es.entity_id AND ci.is_active = true
+           AND ci.item_data ? sf.field_key) AS products_using_this_field
+  FROM schema_fields sf
+  JOIN entity_schemas es ON es.schema_id = sf.schema_id
+  JOIN identities i      ON i.identity_id = es.entity_id
+ WHERE sf.field_key IN ('shelf_zone','my_testing','aaa_zone')
+ ORDER BY i.display_name, sf.field_key;
+
+-- 3 — Drop it, but ONLY where nothing uses THAT field. The NOT EXISTS makes the guard part of the statement rather
+--     than something a person has to remember to check between two windows.
 DELETE FROM schema_fields sf
  WHERE sf.field_key IN ('shelf_zone','my_testing','aaa_zone')
    AND NOT EXISTS (
@@ -44,11 +61,37 @@ DELETE FROM schema_fields sf
        JOIN entity_schemas es ON es.schema_id = sf.schema_id
       WHERE ci.entity_id = es.entity_id
         AND ci.is_active = true
-        AND (ci.item_data ?| ARRAY['shelf_zone','my_testing','aaa_zone'])
+        AND ci.item_data ? sf.field_key          -- THIS field, not "any of the three"
    );
 
--- 4 — Confirm it is gone. Expect 0 rows.
-SELECT COUNT(*) AS test_fields_remaining
-  FROM schema_fields WHERE field_key IN ('shelf_zone','my_testing','aaa_zone');
+-- 4 — What is left, and why. Anything still here is a field a live product is using.
+SELECT sf.field_key, i.display_name,
+       (SELECT COUNT(*) FROM catalogue_items ci
+         WHERE ci.entity_id = es.entity_id AND ci.is_active = true
+           AND ci.item_data ? sf.field_key) AS still_used_by
+  FROM schema_fields sf
+  JOIN entity_schemas es ON es.schema_id = sf.schema_id
+  JOIN identities i      ON i.identity_id = es.entity_id
+ WHERE sf.field_key IN ('shelf_zone','my_testing','aaa_zone');
 
 COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+-- IF A FIELD SURVIVES because a product is using it, that is the guard doing its job — the column is DATA, not
+-- residue. You have two honest options, and neither should be automatic:
+--
+--   (a) LEAVE IT. It is a real column on a real product. This is the right answer if the value matters.
+--
+--   (b) REMOVE THE VALUE FIRST, THEN THE FIELD. Destructive: it edits products. Run the SELECT first and look at
+--       what you are about to erase. Nothing below runs unless you uncomment it.
+--
+-- SELECT item_id, item_data->>'my_testing' AS value, item_data->>'name' AS product
+--   FROM catalogue_items WHERE is_active = true AND item_data ? 'my_testing';
+--
+-- BEGIN;
+-- UPDATE catalogue_items SET item_data = item_data - 'my_testing', updated_at = NOW()
+--  WHERE is_active = true AND item_data ? 'my_testing';
+-- DELETE FROM schema_fields WHERE field_key = 'my_testing';
+-- COMMIT;
+--
+-- ⚠️ `item_data - 'key'` removes the key entirely. There is no undo and no history table for catalogue_items.
