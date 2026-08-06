@@ -33,21 +33,29 @@ t('the operator cap beats a plan that WOULD allow public', () => {
   assert.strictEqual(cap.max, 'private', 'the most specific statement wins');
 });
 t('an operator cap of PUBLIC is not a licence — the plan still applies', () => {
-  const cap = V.capOf({ plan: 'free', planMenu: MENU, paramsOverride: { caps: { catalogue_visibility: 'public' } } });
+  const cap = V.capOf({ plan: 'free', planMenu: MENU, enforcePlan: true, paramsOverride: { caps: { catalogue_visibility: 'public' } } });
   assert.strictEqual(cap.max, 'private');
   assert.strictEqual(cap.by, 'plan');
 });
 
 console.log('\nvisibility-cap · the plan');
 
-t('a plan that forbids public refuses, and names the plan', () => {
+t('★★ a plan that forbids public does NOT deny unless enforcement is switched on', () => {
+  // The scar: the live constitution declares free.public_facing=false, EVERY entity is on free, and enforcing it
+  // refused Beta Fresh and every other shop. Charging for a public catalogue is a commercial decision.
   const cap = V.capOf({ plan: 'free', planMenu: MENU });
+  assert.strictEqual(cap.max, 'public');
+  assert.strictEqual(cap.enforced, false);
+  assert.ok(/enforcement is off/.test(cap.reason), 'and it must SAY it is not enforcing');
+});
+t('…and DOES deny once enforcePlan is on', () => {
+  const cap = V.capOf({ plan: 'free', planMenu: MENU, enforcePlan: true });
   assert.strictEqual(cap.max, 'private');
   assert.ok(/free plan/.test(cap.reason));
   assert.strictEqual(V.check('public', cap).status, 403);
 });
 t('a plan that allows public allows it', () => {
-  const cap = V.capOf({ plan: 'pro', planMenu: MENU });
+  const cap = V.capOf({ plan: 'pro', planMenu: MENU, enforcePlan: true });
   assert.strictEqual(cap.max, 'public');
   assert.strictEqual(V.check('public', cap).ok, true);
 });
@@ -58,7 +66,7 @@ t('★★ an unknown plan does NOT close every shop on the platform', () => {
   // entitlements.planFor() default-denies an unknown plan — right for a quota, catastrophic here. Every live entity
   // carries plan 'free'; if the constitution's plan_menu has no `free` entry, a strict reading would close the
   // whole platform the moment this is wired, and it would arrive as a silent outage.
-  const cap = V.capOf({ plan: 'free', planMenu: { pro: { public_facing: true } } });
+  const cap = V.capOf({ plan: 'free', planMenu: { pro: { public_facing: true } }, enforcePlan: true });
   assert.strictEqual(cap.max, 'public', 'an absent declaration is not a denial');
   assert.strictEqual(V.check('public', cap).ok, true);
 });
@@ -73,7 +81,7 @@ t('no constitution at all → allowed, unenforced', () => {
   assert.strictEqual(cap.enforced, false);
 });
 t('strict mode flips absence into a denial, for an installation that wants it', () => {
-  const cap = V.capOf({ plan: 'free', planMenu: { pro: {} }, strict: true });
+  const cap = V.capOf({ plan: 'free', planMenu: { pro: {} }, strict: true, enforcePlan: true });
   assert.strictEqual(cap.max, 'private');
   assert.strictEqual(cap.enforced, true);
 });
@@ -86,7 +94,7 @@ t('⚠ an operator cap is enforced even with NO constitution — it is not a pla
 console.log('\nvisibility-cap · the shape of the rule');
 
 t('★ a cap bounds how OPEN you may be, never how closed', () => {
-  const cap = V.capOf({ plan: 'free', planMenu: MENU });
+  const cap = V.capOf({ plan: 'free', planMenu: MENU, enforcePlan: true });
   assert.strictEqual(V.check('private', cap).ok, true, 'going private must always be allowed');
 });
 t('garbage is refused as a bad request, not as a governance failure', () => {
