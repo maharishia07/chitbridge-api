@@ -51,19 +51,25 @@ t('every line says where it came from', () => {
 
 console.log('\ncatalogue-read · who may change what');
 
-t('★ MY line is mine to edit', () => {
+t('★ MY line is mine to edit — every field, right here', () => {
   const l = R.lines({ owned: OWNED, sources: [], me: ME })[0];
-  assert.strictEqual(l.editable, true);
+  assert.strictEqual(l.edit_scope, 'all');
   assert.deepStrictEqual(R.lockedFields(l), [], 'nothing on my own row is locked');
 });
-t('★ AN ADOPTED line is NOT editable — I am showcasing their product', () => {
+t('★ AN ADOPTED line is OVERLAY-ONLY — I am showcasing their product', () => {
   const l = R.lines({ owned: [], sources: SOURCES, me: ME })[0];
-  assert.strictEqual(l.editable, false);
+  assert.strictEqual(l.edit_scope, 'overlay');
+  assert.strictEqual(l.i_own_source, false);
   assert.strictEqual(l.owner_entity_id, BRAND);
 });
-t('★ …unless I AM the source, in which case I edit it at the source', () => {
+t('★★ even the BRAND may not change a source field on an adopter row', () => {
+  // The live read produced 'editable: true' AND 'locked fields: name' on the same row. Changing a source field
+  // changes it for EVERY distributor, so it is a deliberate act at the source — never an inline edit here, and
+  // that is exactly as true when the adopter and the owner are the same business.
   const l = R.lines({ owned: [], sources: SOURCES, me: BRAND })[0];
-  assert.strictEqual(l.editable, true, 'the brand edits its own catalogue and it cascades to every distributor');
+  assert.strictEqual(l.edit_scope, 'overlay', 'owning the source does not make this row freely editable');
+  assert.strictEqual(l.i_own_source, true, 'but the brand may go and change it at the source');
+  assert.deepStrictEqual(R.lockedFields(l), ['name'], 'still locked HERE — it would change for everyone');
 });
 t('★ PER FIELD — the brand owns the name, I own the price, on the SAME row', () => {
   // Athi's rule, precisely: a referenced image is theirs; a price I stated is mine.
@@ -122,11 +128,13 @@ console.log('\ncatalogue-read · a count a person can act on');
 
 t('★ the summary answers "how much of this is mine to change?"', () => {
   const s = R.summary(R.lines({ owned: OWNED, sources: SOURCES, me: ME }));
-  assert.deepStrictEqual(s, { total: 4, own: 2, referenced: 2, editable: 2, sources: ['brand-paints@v1'] });
+  assert.deepStrictEqual(s, { total: 4, own: 2, referenced: 2, fully_mine: 2, overlay_only: 2, i_own_source: 0,
+    sources: ['brand-paints@v1'] });
 });
-t('the brand sees its own source as editable', () => {
+t('the brand is told it owns the source, without that meaning "edit here"', () => {
   const s = R.summary(R.lines({ owned: [], sources: SOURCES, me: BRAND }));
-  assert.strictEqual(s.editable, 2);
+  assert.strictEqual(s.i_own_source, 2);
+  assert.strictEqual(s.fully_mine, 0, 'an adopted row is never fully mine, whoever owns the source');
 });
 t('an empty catalogue is an empty list, not a crash', () => {
   assert.deepStrictEqual(R.lines({}), []);
