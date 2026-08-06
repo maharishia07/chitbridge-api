@@ -5,6 +5,7 @@ const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const visibilityCap = require('../lib/visibility-cap');   // a choice, bounded by a cap
 const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
@@ -307,6 +308,25 @@ router.get('/lookup', auth, async (req, res) => {
 });
 
 // PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
+
+/**
+ * The cap on THIS entity's catalogue visibility — the operator who provisioned it, then the plan.
+ *
+ * One query, whatever the caller. The plan_menu comes from the active constitution; if there is no constitution or
+ * the plan is not declared in it, capOf() allows and reports  rather than denying — see
+ * lib/visibility-cap.js for why an absent declaration must not close every shop on the platform.
+ */
+async function visibilityCapFor(entityId) {
+  let plan = null, paramsOverride = {};
+  try {
+    const r = await query('SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
+    if (r.rows[0]) { plan = r.rows[0].plan; paramsOverride = r.rows[0].params_override || {}; }
+  } catch (_) { /* pre-governance schema — capOf() then reports unenforced */ }
+  let planMenu = null;
+  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
+  return visibilityCap.capOf({ plan, planMenu, paramsOverride });
+}
+
 router.patch('/profile', auth,
   [ body('gstn').optional().trim().isLength({ max: 15 }),
     body('logo_url').optional().trim(),
@@ -348,7 +368,20 @@ router.patch('/profile', auth,
       if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
       // saved separately so a normal profile save still works before b114 is applied.
+      // ── PUBLISHING IS A CHOICE, BOUNDED BY A CAP (2026-08-06) ────────────────────────────────────────────────
+      // Athi: "even a private catalogue can be made public — how do we protect one, say it is done from the
+      // networking side? The entity should be private, not public."
+      //
+      // Until now this was a whitelist and a write: no plan check, no operator check. `assertPublicAllowed()` had
+      // sat in routes/governance.js since it was written, exported, with zero callers and a comment saying "not
+      // wired yet". The cap is now resolved from the OPERATOR's provisioning (params_override.caps) and then the
+      // plan, and a refusal names who refused — an unattributable refusal reads as a bug.
       if (['public', 'private'].includes(req.body.catalogue_visibility)) {
+        const capInfo = await visibilityCapFor(id);
+        const verdict = visibilityCap.check(req.body.catalogue_visibility, capInfo);
+        if (!verdict.ok) {
+          return res.status(verdict.status).json({ error: 'Not allowed', message: verdict.message, capped_by: capInfo.by });
+        }
         try { await query('UPDATE identities SET catalogue_visibility=$1 WHERE identity_id=$2', [req.body.catalogue_visibility, id]); } catch (_) {}
       }
       res.json({ message: 'Profile updated' });
