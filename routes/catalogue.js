@@ -441,7 +441,23 @@ router.get('/:bridge_id', async (req, res) => {
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
     const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap') });
-    if (!view.available) return res.status(404).json({ error: 'Not available', message: 'This shop has no public catalogue' });
+    // ⚠️ A PRIVATE SHOP MUST BE INDISTINGUISHABLE FROM ONE THAT DOES NOT EXIST.
+    //
+    // Athi, 2026-08-06: *"make the entity private and try to open the store using the storefront — it should say
+    // that such entity does not exist."*
+    //
+    // He was right, and this line was the leak. `Not available · This shop has no public catalogue` versus
+    // `Not found · Shop not found` is an EXISTENCE ORACLE: walk the bridge-id space, and the two messages tell you
+    // which ids are real businesses — including every private one. The id is short and guessable enough that this
+    // is a real enumeration, not a theoretical one.
+    //
+    // catalogue-view.js already got this right and says so in its own header — "identical shape to 'this owner has
+    // published nothing'" — and returns {available:false} either way. The library did its job; this line undid it
+    // one step later, which is where these things usually go wrong.
+    //
+    // Both cases now answer with the SAME status and the SAME body. A private catalogue costs nothing and reveals
+    // nothing, including whether it is there at all.
+    if (!view.available) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
       unpriced_hidden: view.unpriced_hidden,
