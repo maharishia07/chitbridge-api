@@ -140,6 +140,11 @@ const DESIGN = (rootKey) => ({
     const v = await api('/api/entities/verify', { method: 'POST', body: { user_id: cloth.handle, otp: cloth.claim_code } });
     clothToken = (v.json || {}).token;
     ok('★★ ' + cloth.handle + ' signed in', !!clothToken, v.status + ' ' + ((v.json || {}).message || ''));
+    // Clothing is the PUBLIC department. It needs stock, or the network storefront reports "no network" for the
+    // same reason a shop with nothing in it does — which would look exactly like a missing tree.
+    await api('/api/schemas/create-default', { method: 'POST', token: clothToken });
+    await api('/api/products', { method: 'POST', token: clothToken,
+      body: { item_data: { name: 'Cotton Shirt', unit: 'each', price: 899 } } });
   } else { ok('★★ store sign-in', false, 'no store to sign in'); }
 
   // ── 7 · THE CAP HOLDS ────────────────────────────────────────────────────────────────────────────────────
@@ -151,19 +156,41 @@ const DESIGN = (rootKey) => ({
     const push = await api('/api/entities/profile', { method: 'PATCH', token: whToken, body: { catalogue_visibility: 'public' } });
     ok('★★ the operator\'s decision survives the store\'s own Settings screen', push.status === 403,
       push.status + ' ' + ((push.json || {}).message || ''));
+    // Give the warehouse something to see. Without a product, step 8's "can a sibling read it" passes on an EMPTY
+    // payload — a test that cannot fail is not a test, and this one is carrying the network tier.
+    await api('/api/schemas/create-default', { method: 'POST', token: whToken });
+    const made = await api('/api/products', { method: 'POST', token: whToken,
+      body: { item_data: { name: 'Pallet — mixed stock', unit: 'each', price: 14500 } } });
+    const mine = await api('/api/products', { token: whToken });
+    // Asserted separately so a SETUP failure can never be read as a VISIBILITY failure. Step 8 is carrying the
+    // network tier; it must not be able to fail for a reason that has nothing to do with visibility.
+    ok('the warehouse has stock to be seen', (((mine.json || {}).items) || []).length > 0,
+      'create ' + made.status + ' · list ' + (((mine.json || {}).items) || []).length
+      + (made.status >= 400 ? ' · ' + JSON.stringify(made.json) : ''));
   } else { ok('★★ provisioning cap', false, 'no warehouse'); }
 
   // ── 8 · IT IS ON THE TREE ────────────────────────────────────────────────────────────────────────────────
   step(8, 'network visibility resolves — the reason the tree exists');
+  // Does the TREE exist at all? The network storefront resolves members from cb_entity.path, so it separates
+  // "the rows were never written" from "the rows are there and visibility said no".
+  const netFront = await api('/api/catalogue/network/' + op.bridge);
+  const depts = ((netFront.json || {}).departments) || [];
+  // The PUBLIC department must actually reach a shopper. This is what caught the two-publish-gates bug: the
+  // storefront 404'd for a store the operator had explicitly designed public, because the schema carried a second
+  // `visibility` flag that defaults to private and nothing set it.
+  ok('★★ the public department reaches a shopper on the network storefront',
+    netFront.status === 200 && depts.length >= 1,
+    netFront.status + ' · ' + depts.length + ' department(s)');
+  ok('★★ the network-only and private departments are ABSENT from it',
+    !JSON.stringify(netFront.json || {}).includes('Warehouse') && !JSON.stringify(netFront.json || {}).includes('"Mens"'));
   if (clothToken && wh) {
     await api('/api/relationships/suppliers', { method: 'POST', token: clothToken, body: { supplier_bridge_id: wh.bridge_id } });
     const sups = await api('/api/relationships/suppliers', { token: clothToken });
     const row = ((sups.json && (sups.json.suppliers || sups.json)) || []).find((x) => x.bridge_id === wh.bridge_id);
     const seen = row ? await api('/api/relationships/suppliers/' + row.supplier_entity_id + '/catalogue', { token: clothToken }) : { status: 0, json: {} };
-    // The warehouse has no products yet, so `available` — not an item count — is what proves membership resolved.
-    const avail = (seen.json || {}).available;
-    ok('★★ a sibling store resolves the network-only warehouse', seen.status === 200 && avail !== false,
-      'available=' + avail);
+    const items = ((seen.json || {}).items) || [];
+    ok('★★ a sibling store READS the network-only warehouse\'s stock', seen.status === 200 && items.length > 0,
+      seen.status + ' · ' + items.length + ' item(s)');
 
     const outsider = await shop('outsider', 'Random Outsider ' + SUFFIX);
     const oShop = await api('/api/shop/' + wh.handle);
