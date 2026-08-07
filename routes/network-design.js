@@ -42,6 +42,41 @@ router.put('/', auth, async (req, res) => {
     if (Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
       return res.status(413).json({ error: 'Too large', message: 'design exceeds ' + MAX_BYTES + ' bytes' });
     }
+    /**
+     * ⚠️ A STALE CLIENT MUST NOT BE ABLE TO UN-RECORD WHAT WAS BUILT.
+     *
+     * `built` and `invited` are not design — they are the RECEIPT of something that actually happened. The rest of
+     * this document is a drawing the client owns and may overwrite wholesale; those two keys are the only part the
+     * server knows more about than the client does.
+     *
+     * Found 2026-08-07 by prove-network-mint.js: a page that had the draft open before a build, then saved, sent a
+     * copy with no `built` markers. The save was accepted, and the next Build saw three existing stores as new —
+     * proposing to create handles that were already taken, so the whole design became "3 not built". Nothing was
+     * damaged, because the unique index refuses a duplicate handle. But the design had silently forgotten its own
+     * network, and the only thing standing between that and a genuine mess was a constraint doing a job nobody had
+     * asked it to do.
+     *
+     * Re-attached BY KEY, so "start over" — which mints fresh keys — still starts over.
+     */
+    const prev = await withEntity(e, (db) => db.query(
+      'SELECT draft FROM network_design WHERE entity_id = $1', [e]));
+    const prevNodes = (prev.rows[0] && prev.rows[0].draft && Array.isArray(prev.rows[0].draft.nodes))
+      ? prev.rows[0].draft.nodes : [];
+    if (prevNodes.length && Array.isArray(draft.nodes)) {
+      const receipts = new Map();
+      prevNodes.forEach((n) => { if (n && n.key && (n.built || n.invited)) receipts.set(n.key, n); });
+      if (receipts.size) {
+        draft.nodes = draft.nodes.map((n) => {
+          const r = n && n.key ? receipts.get(n.key) : null;
+          if (!r) return n;
+          const out = Object.assign({}, n);
+          if (r.built && !out.built) out.built = r.built;
+          if (r.invited && !out.invited) out.invited = r.invited;
+          return out;
+        });
+      }
+    }
+
     const r = await withEntity(e, (db) => db.query(
       `INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now())
          ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()

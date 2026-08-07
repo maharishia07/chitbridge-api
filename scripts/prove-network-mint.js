@@ -82,7 +82,7 @@ const DESIGN = (rootKey) => ({
 
   // ── 2 · save the design ──────────────────────────────────────────────────────────────────────────────────
   step(2, 'save the design (nothing created yet)');
-  const design = DESIGN('root_' + SUFFIX);
+  let design = DESIGN('root_' + SUFFIX);
   const saved = await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: design } });
   ok('design saved', saved.status === 200);
 
@@ -218,8 +218,21 @@ const DESIGN = (rootKey) => ({
 
   // ── 11 · ENHANCING AN EXISTING NETWORK ───────────────────────────────────────────────────────────────────
   step(11, 'change a built store, and build again');
-  design.nodes.find((n) => n.key === 'n_wh').exposure = 'private';   // warehouse: network → private
-  await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: design } });
+  // RE-READ before editing. The server draft now carries the `built` receipts; saving this script's older copy
+  // would send a design that has forgotten its own network. The server re-attaches them defensively, and this
+  // asserts that it does — the client being careful and the server not trusting it are two different guarantees.
+  const reread = await api('/api/network-design', { token: op.token });
+  const live = (reread.json || {}).draft;
+  ok('the saved design carries what was built', !!live && (live.nodes || []).filter((n) => n.built).length === 3,
+    (live && (live.nodes || []).filter((n) => n.built).length) + ' node(s) marked built');
+  const stale = JSON.parse(JSON.stringify(design));   // deliberately WITHOUT the receipts
+  stale.nodes.find((n) => n.key === 'n_wh').exposure = 'private';   // warehouse: network → private
+  await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: stale } });
+  const after = await api('/api/network-design', { token: op.token });
+  ok('★★ a stale save cannot un-record what was built',
+    (((after.json || {}).draft || {}).nodes || []).filter((n) => n.built).length === 3,
+    (((after.json || {}).draft || {}).nodes || []).filter((n) => n.built).length + ' still marked built');
+  design = (after.json || {}).draft || design;   // carry on from what the server actually holds
   const dry3 = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
   const upd = ((dry3.json || {}).update) || [];
   ok('★★ a built store whose visibility changed is offered as a CHANGE, not ignored',
