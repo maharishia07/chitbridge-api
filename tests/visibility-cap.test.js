@@ -168,6 +168,36 @@ t('garbage is still a 400, and the message lists all three', () => {
   assert.ok(/network/.test(r.message));
 });
 
+console.log('\nvisibility cap · the middle rung (the network build issues these)');
+
+t('★★ an operator cap of "network" is ENFORCED, not ignored', () => {
+  // Before the build existed nothing wrote this value, so it fell through to "nothing declared → public" and a
+  // warehouse minted as internal could have published itself to the world.
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'network' } } });
+  assert.strictEqual(cap.max, 'network');
+  assert.strictEqual(cap.by, 'operator');
+  assert.strictEqual(cap.enforced, true);
+});
+
+t('★★ network-capped: public is REFUSED, network and private are allowed', () => {
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'network' } } });
+  assert.strictEqual(V.check('public', cap).ok, false, 'this is the one that matters');
+  assert.strictEqual(V.check('public', cap).status, 403);
+  assert.strictEqual(V.check('network', cap).ok, true);
+  assert.strictEqual(V.check('private', cap).ok, true, 'a cap never bounds how CLOSED you may be');
+});
+
+t('★ effective() narrows by rank, so the profile screen cannot agree with a choice the platform refuses', () => {
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'network' } } });
+  assert.strictEqual(V.effective('public', cap), 'network');
+  assert.strictEqual(V.effective('private', cap), 'private');
+});
+
+t('an operator cap of "public" still bounds nothing', () => {
+  const cap = V.capOf({ paramsOverride: { caps: { catalogue_visibility: 'public' } } });
+  assert.strictEqual(V.check('public', cap).ok, true);
+});
+
 t('TIER A · zero dependencies', () => {
   const src = require('fs').readFileSync(require.resolve('../lib/visibility-cap'), 'utf8');
   assert.deepStrictEqual([...src.matchAll(/require\(/g)], []);

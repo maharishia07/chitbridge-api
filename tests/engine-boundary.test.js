@@ -88,6 +88,12 @@ const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, no
   'catalogue-read.js',    // ENGINE: it decides WHO MAY CHANGE WHAT — owned is editable, referenced is not, per
                           // FIELD. That is the ownership rule the per-copy model rests on, not a display concern.
                           // (catalogue-view.js is adoption: it shapes a payload. This decides authority.)
+  'network-build.js',     // ENGINE: it decides that an OWNED node is created and a PARTNER is only ever invited.
+                          // That asymmetry is what keeps `network` visibility legitimate — a network that could
+                          // absorb an outsider unilaterally could read their warehouse. Governance, not plumbing.
+  'handle.js',            // ENGINE: the NAME an entity is known by across networks. Format, reserved words, and the
+                          // refusal to look like a bridge id are CB's rules — a store carries its handle into any
+                          // network it later joins, so this is identity, not presentation.
   'identity.js',          // ENGINE: "which line is this, and which product does it belong to" is the question the
                           // per-copy record is keyed on. A partial identity being NO identity, and a variant being a
                           // line rather than a child row, are CB rules — not a trade's convention.

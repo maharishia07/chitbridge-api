@@ -1,11 +1,22 @@
 // routes/network-design.js — NETWORK DESIGN persistence: the design-first Network builder's draft, stored
 // per entity so the SAME design follows the user across machines/browsers (was browser-localStorage only).
 // network_design is RLS-protected (b111) -> every query runs inside withEntity(caller). One row per entity.
+//
+// ── AND THE BUILD ────────────────────────────────────────────────────────────────────────────────────────────────
+// POST /build turns the saved design into real entities. It is the first thing on the platform that MINTS an entity
+// on someone else's behalf, so read lib/network-build.js before changing it: the plan is decided there, purely, and
+// this file only executes it. Owned nodes are created; partners are invited and never created.
 const express = require('express');
 const router  = express.Router();
-const { withEntity } = require('../db');
+const crypto  = require('crypto');
+const { v4: uuidv4 } = require('uuid');
+const { query, withEntity } = require('../db');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
+const handleLib = require('../lib/handle');
+const networkBuild = require('../lib/network-build');
+const visibilityCap = require('../lib/visibility-cap');
+const devOtp = require('../lib/dev-otp');
 
 const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 const MAX_BYTES = 2_000_000;   // a design is a modest JSON tree; cap so this never becomes a document store
@@ -37,6 +48,339 @@ router.put('/', auth, async (req, res) => {
        RETURNING updated_at`, [e, draft]));
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
   } catch (err) { res.status(500).json({ error: 'Save failed', message: safeErr(err) }); }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ *  THE BUILD
+ *
+ *  Athi, 2026-08-07: *"start with build that mints, partner as invite-only… the store name is entityid.storename…
+ *  instead of bridgeid it should be user id — Athi is the root, then clothing is athi.clothing."*
+ *
+ *  Three things happen per owned node and they must happen together or not at all:
+ *     1 · an IDENTITY   — bridge id (minted), handle (athi.clothing), display name, and a claim code
+ *     2 · a PLACE       — a row on cb_entity's ltree under the operator's root, which is what makes `network`
+ *                         visibility resolve. Without it the store exists and belongs to no network.
+ *     3 · a CAP         — params_override.caps.catalogue_visibility, so a warehouse the operator designed as
+ *                         internal cannot publish itself from its own Settings screen later.
+ *
+ *  All of it runs in ONE transaction, including the write-back into the design. A build that created stores and
+ *  then failed to record that it had would offer to create them again.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+const BRIDGE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no I/O/0/1 — these get read out over the phone
+const newBridgeId = () => 'CB' + Array.from({ length: 8 }, () => BRIDGE_CHARS[crypto.randomInt(BRIDGE_CHARS.length)]).join('');
+// devOtp.fixedOtp() and NEVER process.env.DEV_OTP directly: a sealed environment must degrade to a real random
+// code even if the variable somehow survived deploy. That is the whole reason lib/dev-otp.js exists.
+const newClaimCode = () => devOtp.fixedOtp('entity') || String(crypto.randomInt(100000, 1000000));
+const CLAIM_DAYS = 7;
+
+/** ltree labels allow [A-Za-z0-9_] only. Bridge ids already qualify; the guard is for anything that ever won't. */
+const label = (bridgeId) => String(bridgeId).toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+
+/** The cap on what the OPERATOR may choose. A minted node can never be more open than the network that minted it. */
+async function operatorCap(entityId) {
+  let plan = null, paramsOverride = {};
+  try {
+    const r = await query('SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
+    if (r.rows[0]) { plan = r.rows[0].plan; paramsOverride = r.rows[0].params_override || {}; }
+  } catch (_) { /* pre-governance schema — capOf() then reports unenforced */ }
+  let planMenu = null;
+  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
+  return visibilityCap.capOf({ plan, planMenu, paramsOverride });
+}
+
+/**
+ * POST /api/network-design/build   { dry_run?: bool, root_handle?: string }
+ *
+ * `dry_run` answers "what would this do" without doing it, and it is the same code path — a preview computed by
+ * different code is a preview that can lie.
+ */
+router.post('/build', auth, async (req, res) => {
+  try {
+    // Only the entity itself mints. A co-assist acting under an entity may run the shop; creating new businesses
+    // in the owner's name, holding their claim codes, is not a delegated act.
+    if (req.identity.parent_entity_id) {
+      return res.status(403).json({ error: 'Not permitted',
+        message: 'Only the business owner can build a network. Sign in as the business itself.' });
+    }
+    const me = req.identity.identity_id;
+    const dryRun = req.body && req.body.dry_run === true;
+
+    const meRow = (await query(
+      `SELECT identity_id, bridge_id, display_name, user_id, country, currency_code
+         FROM identities WHERE identity_id = $1`, [me])).rows[0];
+    if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
+
+    // ── 1 · THE ROOT NAME ────────────────────────────────────────────────────────────────────────────────────
+    // Every handle in the network is built from it, so it is settled before anything else is considered.
+    const askedRoot = String((req.body && req.body.root_handle) || '').trim().toLowerCase();
+    let rootHandle = String(meRow.user_id || '').trim().toLowerCase();
+    let rootClaimed = false;
+
+    if (rootHandle) {
+      const rc = handleLib.check(rootHandle);
+      if (!rc.ok) {
+        // They already have a User ID that cannot be a network root (an email address, most likely). Changing it
+        // would break every reference anyone already holds to them, so this is theirs to decide, not ours.
+        return res.status(409).json({ error: 'Root name unusable', code: 'ROOT_HANDLE_UNUSABLE',
+          message: `Your User ID "${meRow.user_id}" cannot be a network name: ${rc.reason} Change your User ID in Settings first — every store in the network is named from it.`,
+          suggestion: handleLib.slug(meRow.display_name) || null });
+      }
+    } else {
+      const want = askedRoot || handleLib.slug(meRow.display_name);
+      const rc = handleLib.check(want);
+      if (!rc.ok) {
+        return res.status(400).json({ error: 'Root name unusable', code: 'ROOT_HANDLE_NEEDED',
+          message: `Choose a network name. "${want || meRow.display_name}" will not do: ${rc.reason}` });
+      }
+      const clash = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [want]);
+      if (clash.rows.length) {
+        return res.status(409).json({ error: 'Root name taken', code: 'ROOT_HANDLE_TAKEN',
+          message: `"${want}" is already taken. Choose another network name.` });
+      }
+      rootHandle = want;
+      rootClaimed = true;   // written inside the transaction below, not here
+    }
+
+    // ── 2 · THE DESIGN ───────────────────────────────────────────────────────────────────────────────────────
+    const design = await withEntity(me, (db) => db.query(
+      'SELECT draft FROM network_design WHERE entity_id = $1', [me]));
+    const draft = design.rows.length ? design.rows[0].draft : null;
+    const nodes = (draft && Array.isArray(draft.nodes)) ? draft.nodes : [];
+    if (!nodes.length) {
+      return res.status(400).json({ error: 'Nothing designed',
+        message: 'Draw the network first — add the branches and units you want, then build.' });
+    }
+
+    // Only handles under this root can collide with a child of this root, so this stays one small query however
+    // many entities exist on the platform.
+    const takenRows = await query(
+      `SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1`,
+      [rootHandle + '.%']);
+    const taken = takenRows.rows.map((r) => r.h);
+
+    const plan = networkBuild.plan({ rootHandle, nodes, taken });
+
+    // ── 3 · THE CAP ──────────────────────────────────────────────────────────────────────────────────────────
+    const cap = await operatorCap(me);
+    const notes = [];
+    for (const c of plan.create) {
+      if (c.visibility === 'private') continue;
+      const verdict = visibilityCap.check(c.visibility, cap);
+      if (!verdict.ok) {
+        notes.push(`"${c.name}" was designed as ${c.visibility} but is being created private: ${verdict.message}`);
+        c.visibility = 'private';
+      }
+    }
+
+    if (dryRun) {
+      return res.json({ ok: true, dry_run: true, root: rootHandle, root_claimed: rootClaimed,
+        create: plan.create, invite: plan.invite, skip: plan.skip, problems: plan.problems, notes,
+        counts: plan.counts });
+    }
+    if (!plan.create.length && !plan.invite.length) {
+      return res.json({ ok: true, root: rootHandle, created: [], invited: [], skipped: plan.skip,
+        problems: plan.problems, notes, message: plan.problems.length ? 'Nothing could be built — see the reasons.' : 'Everything in this design is already built.' });
+    }
+
+    // ── 4 · DO IT — one transaction ──────────────────────────────────────────────────────────────────────────
+    const result = await withEntity(me, async (db) => {
+      const created = [], invited = [], failedInvites = [];
+
+      if (rootClaimed) {
+        // Unique index on lower(user_id): a concurrent second build would 23505 here and roll the whole thing back,
+        // which is the correct outcome — two networks must not share a root.
+        await db.query('UPDATE identities SET user_id = $1 WHERE identity_id = $2 AND user_id IS NULL',
+          [rootHandle, me]);
+      }
+
+      // The root's own place on the tree. DO NOTHING, never overwrite: if this entity already sits inside somebody
+      // else's network, that placement is theirs and its children hang below wherever it actually is.
+      await db.query(
+        `INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed)
+         VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)
+         ON CONFLICT (bridge_id) DO NOTHING`,
+        [meRow.bridge_id, meRow.display_name, label(meRow.bridge_id)]);
+      const rootPathRow = await db.query('SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1', [meRow.bridge_id]);
+      const rootPath = rootPathRow.rows[0] && rootPathRow.rows[0].path;
+      if (!rootPath) throw new Error('the network root could not be placed on the tree');
+
+      // Where each node sits, by design key. Already-built nodes contribute their REAL path, read back rather than
+      // recomputed — a node moved by hand stays where it was moved to.
+      const pathOf = new Map();
+      const builtBridges = plan.skip.map((s) => s.bridge_id).filter(Boolean);
+      if (builtBridges.length) {
+        const r = await db.query('SELECT bridge_id, path::text AS path FROM cb_entity WHERE bridge_id = ANY($1)', [builtBridges]);
+        const byBridge = new Map(r.rows.map((x) => [x.bridge_id, x.path]));
+        for (const s of plan.skip) if (byBridge.has(s.bridge_id)) pathOf.set(s.key, byBridge.get(s.bridge_id));
+      }
+
+      const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
+
+      for (const c of plan.create) {
+        const parentPath = c.parent_key ? pathOf.get(c.parent_key) : rootPath;
+        if (!parentPath) {
+          // Its parent was built in an earlier run and is not on the tree. Creating it anyway would put a store in
+          // no network at all, which is silently wrong; refusing names the repair.
+          plan.problems.push({ key: c.key, name: c.name,
+            reason: 'Its parent is not on the network tree yet. Rebuild the parent first.' });
+          continue;
+        }
+        const identity_id = uuidv4();
+        const bridge_id = newBridgeId();
+        const claim = newClaimCode();
+
+        await db.query(
+          `INSERT INTO identities
+             (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility,
+              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by)
+           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11)`,
+          [identity_id, bridge_id, c.name, c.handle, c.visibility,
+           // The provisioning cap. visibility-cap.js: "a node provisioned BY A NETWORK is not its own business —
+           // the operator decided, and the entity must not be able to undo that from its own profile screen."
+           JSON.stringify({ caps: { catalogue_visibility: c.visibility } }),
+           meRow.country || 'IN', meRow.currency_code || 'INR', claim, expires, me]);
+
+        const myPath = parentPath + '.' + label(bridge_id);
+        await db.query(
+          `INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed)
+           VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)`,
+          [bridge_id, c.name, myPath]);
+
+        pathOf.set(c.key, myPath);
+        created.push({ key: c.key, name: c.name, handle: c.handle, bridge_id, visibility: c.visibility,
+                       claim_code: claim, expires_at: expires, path: myPath });
+      }
+
+      // ── PARTNERS — a request, never a placement ────────────────────────────────────────────────────────────
+      for (const inv of plan.invite) {
+        const ref = inv.ref;
+        const found = await db.query(
+          `SELECT identity_id, bridge_id, display_name FROM identities
+            WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1))
+              AND identity_type = 'entity' AND status = 'active'`, [ref]);
+        if (!found.rows.length) {
+          failedInvites.push({ key: inv.key, name: inv.name, reason: `No business found with the handle "${ref}".` });
+          continue;
+        }
+        const them = found.rows[0];
+        if (them.identity_id === me) {
+          failedInvites.push({ key: inv.key, name: inv.name, reason: 'That is your own handle.' });
+          continue;
+        }
+        const existing = await db.query(
+          `SELECT status FROM connections
+            WHERE (from_entity_id = $1 AND to_entity_id = $2) OR (from_entity_id = $2 AND to_entity_id = $1)`,
+          [me, them.identity_id]);
+        if (existing.rows.length) {
+          invited.push({ key: inv.key, name: inv.name, handle: ref, bridge_id: them.bridge_id,
+                         status: existing.rows[0].status, already: true });
+          continue;
+        }
+        const connection_id = uuidv4();
+        await db.query(
+          `INSERT INTO connections
+             (connection_id, from_entity_id, from_display_name, from_bridge_id,
+              to_entity_id, to_display_name, to_bridge_id, status, note)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)`,
+          [connection_id, me, meRow.display_name, meRow.bridge_id,
+           them.identity_id, them.display_name, them.bridge_id,
+           `Invitation to join the ${rootHandle} network`]);
+        invited.push({ key: inv.key, name: inv.name, handle: ref, bridge_id: them.bridge_id,
+                       status: 'pending', connection_id });
+      }
+
+      // ── WRITE THE RESULT BACK INTO THE DESIGN ──────────────────────────────────────────────────────────────
+      // Same transaction as the creation. This is what makes a second Build a no-op instead of a duplicate.
+      const byKey = new Map(created.map((c) => [c.key, c]));
+      const invByKey = new Map(invited.map((i) => [i.key, i]));
+      const nextNodes = nodes.map((n) => {
+        const c = byKey.get(n.key);
+        if (c) return Object.assign({}, n, { built: { bridge_id: c.bridge_id, user_id: c.handle, at: new Date().toISOString() } });
+        const i = invByKey.get(n.key);
+        if (i) return Object.assign({}, n, { invited: { bridge_id: i.bridge_id, status: i.status, at: new Date().toISOString() } });
+        return n;
+      });
+      const nextDraft = Object.assign({}, draft, { nodes: nextNodes, root_handle: rootHandle });
+      await db.query(
+        `INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now())
+           ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()`,
+        [me, nextDraft]);
+
+      return { created, invited, failedInvites };
+    });
+
+    const problems = plan.problems.concat(result.failedInvites);
+    res.json({
+      ok: true,
+      root: rootHandle,
+      root_claimed: rootClaimed,
+      created: result.created,
+      invited: result.invited,
+      skipped: plan.skip,
+      problems,
+      notes,
+      // Said once, where the operator will read it. The codes are in `created[].claim_code` and this response is
+      // the only time they are handed out in full — after this, re-issue.
+      claim_note: result.created.length
+        ? `Each new store signs in with its handle and the code shown here. The codes expire in ${CLAIM_DAYS} days — re-issue one from the network page if it lapses.`
+        : '',
+      message: `${result.created.length} store${result.created.length === 1 ? '' : 's'} created`
+             + (result.invited.length ? `, ${result.invited.length} partner invitation${result.invited.length === 1 ? '' : 's'} sent` : '')
+             + (problems.length ? `, ${problems.length} not built` : ''),
+    });
+  } catch (err) {
+    if (err && err.code === '23505') {
+      return res.status(409).json({ error: 'Name taken',
+        message: 'One of these names was taken while the network was being built. Nothing was created — try again.' });
+    }
+    if (err && err.code === '23514') {
+      return res.status(409).json({ error: 'Migration needed', code: 'VISIBILITY_NOT_MIGRATED',
+        message: 'This database does not accept "network" visibility yet — apply migration b115.' });
+    }
+    console.error('Network build error:', err.message);
+    res.status(500).json({ error: 'Build failed', message: safeErr(err) });
+  }
+});
+
+/**
+ * POST /api/network-design/reissue   { user_id }
+ *
+ * Athi: *"he can have the password similar to actor and should be able to circulate the same like actor."* A claim
+ * code that expires with no way to issue another would make every minted store permanently unreachable a week
+ * later — the review's §4 lesson (a capability that exists and cannot be used) in a fresh form.
+ *
+ * Only for stores THIS operator minted: `created_by` is checked, not the tree, because tree membership can be
+ * arranged and `created_by` cannot.
+ */
+router.post('/reissue', auth, async (req, res) => {
+  try {
+    if (req.identity.parent_entity_id) {
+      return res.status(403).json({ error: 'Not permitted', message: 'Only the business owner can re-issue a store code.' });
+    }
+    const me = req.identity.identity_id;
+    const uid = String((req.body && req.body.user_id) || '').trim();
+    if (!uid) return res.status(400).json({ error: 'Bad request', message: 'Which store? Send its handle as user_id.' });
+
+    const r = await query(
+      `SELECT identity_id, display_name, user_id FROM identities
+        WHERE LOWER(user_id) = LOWER($1) AND created_by = $2 AND identity_type = 'entity'`, [uid, me]);
+    if (!r.rows.length) {
+      return res.status(404).json({ error: 'Not found', message: `You did not create a store called "${uid}".` });
+    }
+    const claim = newClaimCode();
+    const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
+    await query(
+      `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
+      [claim, expires, r.rows[0].identity_id]);
+    res.json({ ok: true, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name,
+      claim_code: claim, expires_at: expires,
+      ...(devOtp.mayExposeOtp() && { dev_otp: claim }),
+      message: `New code for ${r.rows[0].user_id}. It expires in ${CLAIM_DAYS} days.` });
+  } catch (err) {
+    console.error('Reissue error:', err.message);
+    res.status(500).json({ error: 'Re-issue failed', message: safeErr(err) });
+  }
 });
 
 module.exports = router;
