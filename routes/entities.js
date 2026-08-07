@@ -73,18 +73,53 @@ router.post('/register',
           console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
       } else {
-        // Display name login — look up entity by name
-        const found = await query(
+        /**
+         * ── HANDLE OR NAME ───────────────────────────────────────────────────────────────────────────────────
+         *
+         * `user_id` FIRST, because it is the only unique one. It carries a UNIQUE index on lower(user_id), and it
+         * is what a network-minted store is given: `<operator bridge id>.<store>` — e.g. CBV97P3TYA.clothing.
+         * Athi, 2026-08-07: *"the store name is entityid.storename which will have a unique bridge id… if the
+         * network store needs to participate in another network, entityid.storename can be used for adding it."*
+         * So the handle is the portable public reference, and the bridge id stays the identity.
+         *
+         * ⚠️ THEN display name — and it must be UNAMBIGUOUS. This used to take `found.rows[0]` with no ORDER BY,
+         * so two active entities sharing a name meant login silently picked one, generated an OTP on THAT account
+         * and mailed it to THAT owner. Not a takeover — the code still reaches the real inbox — but the wrong
+         * person is disturbed, their pending OTP is overwritten, and the legitimate owner of the other account
+         * simply cannot log in by name. Anyone could trigger it repeatedly by typing a name.
+         *
+         * It was latent only because names happened to be distinct. Minting a network of stores called Clothing,
+         * Pharmacy and Grocery is precisely what makes it likely — Athi asked about exactly this collision before
+         * a line of the network build was written.
+         *
+         * Ambiguity is now REFUSED and the person is told how to be specific. Guessing between two accounts is
+         * never the helpful answer.
+         */
+        let found = await query(
           `SELECT identity_id, bridge_id, email, display_name FROM identities
-           WHERE LOWER(display_name) = LOWER($1)
-           AND identity_type = 'entity'
-           AND status = 'active'`,
+           WHERE LOWER(user_id) = LOWER($1) AND identity_type = 'entity' AND status = 'active'`,
           [input]
         );
+        if (!found.rows.length) {
+          found = await query(
+            `SELECT identity_id, bridge_id, email, display_name FROM identities
+             WHERE LOWER(display_name) = LOWER($1)
+             AND identity_type = 'entity'
+             AND status = 'active'`,
+            [input]
+          );
+          if (found.rows.length > 1) {
+            return res.status(409).json({
+              error: 'Ambiguous name',
+              message: `More than one business is called "${input}". Sign in with your email address or your User ID instead.`,
+              code: 'AMBIGUOUS_NAME',
+            });
+          }
+        }
         if (found.rows.length === 0) {
           return res.status(400).json({
             error: 'Not found',
-            message: 'Entity not found — check your name or use your email address'
+            message: 'Entity not found — check your name, User ID, or email address'
           });
         }
         identity_id   = found.rows[0].identity_id;
@@ -101,6 +136,26 @@ router.post('/register',
         `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
         [otp, expires, identity_id]
       );
+
+      /**
+       * ⚠️ A NETWORK-MINTED STORE HAS NO INBOX. It is issued a handle (`<operator bridge>.<store>`) and a claim
+       * code; there is no address to send anything to. Calling the mailer with a null address would either throw or
+       * report "we couldn't send your code", which is a false failure — nothing was meant to be sent.
+       *
+       * Athi, 2026-08-07: *"it should be controlled by the network operator, so he can have the password similar to
+       * an actor and should be able to circulate the same like an actor."* So the credential travels through the
+       * OPERATOR, not through the store's mail — and when it expires the operator RE-ISSUES it, exactly as a
+       * connector's code is re-issued. That is the whole answer to "how does a store log in again": it does not
+       * self-serve, because it does not own itself yet.
+       */
+      if (!email) {
+        return res.json({
+          message: 'This store signs in with the code its network operator issued.',
+          user_id: display_name ? undefined : undefined,
+          handle: (await query('SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
+          operator_issued: true,
+        });
+      }
 
       // F2-entity: gate dev_otp on the sender's `dev` flag (false in production) so the OTP is NEVER returned in
       // a prod response. Soft message on a real send failure so we don't report success on failure.
@@ -123,23 +178,36 @@ router.post('/register',
 // POST /entities/verify
 router.post('/verify',
   [
-    body('email').trim().isEmail().normalizeEmail(),
+    // EMAIL OR HANDLE. A network-minted store is issued a `user_id` and no email, so requiring a valid address
+    // here would have made the handle unusable the moment it was issued — the login half of a credential that
+    // cannot log in. Either is accepted; exactly one is required (checked in the body, where the message is useful).
+    body('email').optional().trim(),
+    body('user_id').optional().trim(),
     body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
   ],
   validate,
   async (req, res) => {
     try {
-      const email = req.body.email.toLowerCase().trim();
       const otp = req.body.otp.trim();
+      const email  = (req.body.email  || '').toLowerCase().trim();
+      const handle = (req.body.user_id || '').trim();
+      if (!email && !handle) {
+        return res.status(400).json({ error: 'Verification failed', message: 'Send your email address or your User ID.' });
+      }
 
-      const result = await query(
-        `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, otp_attempts, owner_scope
-         FROM identities WHERE email = $1`,
-        [email]
-      );
+      // The handle is UNIQUE (a unique index on lower(user_id)), so this lookup can never be ambiguous the way a
+      // display name can — which is the whole reason a minted store is given one.
+      const result = email
+        ? await query(
+            `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, otp_attempts, owner_scope
+             FROM identities WHERE email = $1`, [email])
+        : await query(
+            `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, otp_attempts, owner_scope
+             FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle]);
 
       if (result.rows.length === 0) {
-        return res.status(400).json({ error: 'Verification failed', message: 'Email not found — please register first' });
+        return res.status(400).json({ error: 'Verification failed',
+          message: email ? 'Email not found — please register first' : 'That User ID is not recognised.' });
       }
 
       const identity = result.rows[0];
