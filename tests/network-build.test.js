@@ -228,9 +228,85 @@ t('★ enhancing = adding a store to a network that already exists', () => {
   assert.strictEqual(p.skip.length, 1, 'the existing store is untouched');
 });
 
+console.log('\nnetwork build · the cascade — every parent/child combination');
+
+/**
+ * THE MATRIX. Three levels, three choices each = 27 combinations, exhaustively.
+ *
+ * Athi, 2026-08-08: *"make the cascade for parent and child."* The rule is the narrowest wins, and the only
+ * honest way to state a rule like that is to enumerate it — a spot-check of three cases proves the three cases.
+ */
+const TIERS = [['public', 'public'], ['protected', 'network'], ['private', 'private']];
+const RANKS = { private: 0, network: 1, public: 2 };
+t('★★ a child is never more open than its parent — all 27 combinations', () => {
+  let checked = 0, narrowedCount = 0;
+  for (const [netWord, netVis] of TIERS) {
+    for (const [pWord, pVis] of TIERS) {
+      for (const [cWord, cVis] of TIERS) {
+        const p = NB.plan({
+          rootHandle: 'athi', taken: [], ceiling: netVis,
+          nodes: [ROOT,
+            { key: 'p', name: 'Parent', parent_key: 'r', owned: true, holds: ['catalogue'], exposure: pWord },
+            { key: 'c', name: 'Child', parent_key: 'p', owned: true, holds: ['catalogue'], exposure: cWord }],
+        });
+        const P = p.create.find((x) => x.key === 'p'), C = p.create.find((x) => x.key === 'c');
+        const wantP = Math.min(RANKS[netVis], RANKS[pVis]);
+        const wantC = Math.min(wantP, RANKS[cVis]);
+        assert.strictEqual(RANKS[P.visibility], wantP, `network ${netVis} / parent ${pVis} → ${P.visibility}`);
+        assert.strictEqual(RANKS[C.visibility], wantC,
+          `network ${netVis} / parent ${pVis} / child ${cVis} → ${C.visibility}`);
+        // never OPENED by an ancestor, in any combination
+        assert.ok(RANKS[C.visibility] <= RANKS[cVis], 'a ceiling must never open a node wider than it asked for');
+        if (C.visibility !== cVis || P.visibility !== pVis) narrowedCount++;
+        checked++;
+      }
+    }
+  }
+  assert.strictEqual(checked, 27);
+  assert.ok(narrowedCount > 0, 'the matrix must actually exercise narrowing');
+});
+
+t('★★ the case that was broken: a network-only parent cannot hold a public child', () => {
+  const p = NB.plan({ rootHandle: 'athi', taken: [], ceiling: 'public', nodes: [ROOT,
+    { key: 'w', name: 'Warehouse', parent_key: 'r', owned: true, holds: ['catalogue'], exposure: 'protected' },
+    { key: 'o', name: 'Outlet', parent_key: 'w', owned: true, holds: ['catalogue'], exposure: 'public' }] });
+  assert.strictEqual(p.create.find((x) => x.key === 'o').visibility, 'network');
+  assert.deepStrictEqual(p.narrowed, [{ key: 'o', name: 'Outlet', from: 'public', to: 'network', by: 'parent' }]);
+});
+
+t('★ what was asked for is remembered, so the screen can say why it moved', () => {
+  const p = NB.plan({ rootHandle: 'athi', taken: [], ceiling: 'private', nodes: [ROOT,
+    { key: 'a', name: 'Shop', parent_key: 'r', owned: true, holds: ['catalogue'], exposure: 'public' }] });
+  const c = p.create[0];
+  assert.strictEqual(c.asked, 'public');
+  assert.strictEqual(c.visibility, 'private');
+});
+
+t('★★ closing a parent closes a child that is ALREADY BUILT', () => {
+  // The hole in its most expensive form: the sub-unit exists, is live, and is facing customers.
+  const p = NB.plan({ rootHandle: 'athi', taken: [], ceiling: 'public',
+    live: { CBP: { catalogue_visibility: 'network' }, CBC: { catalogue_visibility: 'public' } },
+    nodes: [ROOT,
+      { key: 'w', name: 'Warehouse', parent_key: 'r', owned: true, exposure: 'protected',
+        built: { bridge_id: 'CBP', user_id: 'athi.warehouse' } },
+      { key: 'o', name: 'Outlet', parent_key: 'w', owned: true, exposure: 'public',
+        built: { bridge_id: 'CBC', user_id: 'athi.outlet' } }] });
+  const u = p.update.find((x) => x.key === 'o');
+  assert.ok(u, 'the live public child must be proposed for change');
+  assert.deepStrictEqual([u.from, u.to], ['public', 'network']);
+});
+
+t('★ a deeper chain narrows all the way down', () => {
+  const p = NB.plan({ rootHandle: 'athi', taken: [], ceiling: 'public', nodes: [ROOT,
+    { key: 'a', name: 'A', parent_key: 'r', owned: true, exposure: 'public' },
+    { key: 'b', name: 'B', parent_key: 'a', owned: true, exposure: 'private' },
+    { key: 'c', name: 'C', parent_key: 'b', owned: true, exposure: 'public' }] });
+  assert.deepStrictEqual(p.create.map((x) => x.name + '=' + x.visibility), ['A=public', 'B=private', 'C=private']);
+});
+
 t('an empty design is a valid plan that does nothing', () => {
   const p = run([]);
-  assert.deepStrictEqual(p.counts, { create: 0, update: 0, invite: 0, skip: 0, problems: 0 });
+  assert.deepStrictEqual(p.counts, { create: 0, update: 0, invite: 0, skip: 0, problems: 0, narrowed: 0 });
 });
 
 t('TIER A · depends on nothing but handle.js', () => {

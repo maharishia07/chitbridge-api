@@ -204,9 +204,10 @@ router.post('/build', auth, async (req, res) => {
       lr.rows.forEach((r) => { live[r.bridge_id] = { catalogue_visibility: r.catalogue_visibility }; });
     }
 
-    const plan = networkBuild.plan({ rootHandle, nodes, taken, live });
-
     // ── 3 · THE CAP ──────────────────────────────────────────────────────────────────────────────────────────
+    // Resolved BEFORE planning: it is now the top of a cascade that runs the whole depth of the tree, not a filter
+    // applied to each node afterwards. Every node's ceiling is its parent's effective visibility, and the root's
+    // ceiling is this.
     let cap = await operatorCap(me);
     /**
      * ── A PRIVATE NETWORK CANNOT CONTAIN A PUBLIC STORE ─────────────────────────────────────────────────────
@@ -231,64 +232,29 @@ router.post('/build', auth, async (req, res) => {
           ? 'This network is private, so a store under it can be visible to the network or to nobody — not to the public.'
           : 'This network is visible to its own network only, so a store under it cannot be public.' };
     }
-    const notes = [];
-    for (const c of plan.create) {
-      if (c.visibility === 'private') continue;
-      const verdict = visibilityCap.check(c.visibility, cap);
-      if (!verdict.ok) {
-        notes.push(`"${c.name}" was designed as ${c.visibility} but is being created private: ${verdict.message}`);
-        c.visibility = 'private';
-      }
-    }
+    // ── 4 · THE PLAN ─────────────────────────────────────────────────────────────────────────────────────────
+    // The cap goes IN as the root ceiling. Every node under it inherits its PARENT's effective visibility, so a
+    // closed department closes its own sub-units — the same rule at every level, which is the only version of it
+    // that can be explained to anyone.
+    const plan = networkBuild.plan({ rootHandle, nodes, taken, live, ceiling: cap.max });
+
+    // Every narrowing is REPORTED. A store that quietly came out less open than it was drawn is the kind of
+    // surprise that makes a person stop trusting the screen.
+    const notes = plan.narrowed.map((n) =>
+      `"${n.name}" was set to ${n.from} but is being built ${n.to}: ${cap.reason || 'what it sits inside is not that open'}`);
     /**
-     * ── CLOSING THE NETWORK CLOSES WHAT IS ALREADY OPEN ─────────────────────────────────────────────────────
+     * ── CLOSING SOMETHING CLOSES WHAT IS ALREADY OPEN UNDER IT ──────────────────────────────────────────────
      * Athi, 2026-08-07: *"even if they select public initially and then change to protected, need to switch
-     * accordingly."*
+     * accordingly."* And 2026-08-08: *"make the cascade for parent and child."*
      *
-     * The update path above only fires when the DESIGN disagrees with the live store. If both say `public` and
-     * the network then closes, they agree with each other and disagree with nothing — so no change is proposed
-     * and a live shop stays facing the public under a network that has declared itself shut. The cap would be a
-     * statement about new stores only, which is not what a cap is.
+     * This is now handled INSIDE the plan and there is deliberately no second pass here. The planner applies the
+     * ceiling to built nodes as well as new ones, so a live store more open than what it sits inside comes back
+     * in `update` on its own — which is the whole "a live shop stays public under a closed network" hole.
      *
-     * So: any built store whose LIVE visibility is more open than the network now allows is brought down to the
-     * cap, whatever the design says. This is the only place the design's opinion is overruled, and it is
-     * overruled in one direction only — narrower, never wider.
+     * There is also no re-check of the cap: `ceiling` IS cap.max and the cascade can only narrow, so nothing the
+     * planner emits can exceed it. A guard that can never fire is dead code wearing a guard's clothes — the same
+     * mistake as `assertPublicAllowed()`, which sat exported with zero callers looking like protection.
      */
-    const capRank = visibilityCap.RANK[cap.max];
-    if (capRank !== undefined) {
-      for (const bid of Object.keys(live)) {
-        const now = String(live[bid].catalogue_visibility || '').toLowerCase();
-        if (visibilityCap.RANK[now] === undefined || visibilityCap.RANK[now] <= capRank) continue;
-        const node = nodes.find((n) => n && n.built && n.built.bridge_id === bid);
-        if (!node) continue;
-        const idx = plan.update.findIndex((u) => u.bridge_id === bid);
-        const forced = { key: node.key, name: node.name, handle: node.built.user_id, bridge_id: bid,
-                         from: now, to: cap.max, forced: true };
-        if (idx >= 0) plan.update[idx] = forced; else plan.update.push(forced);
-        const s = plan.skip.findIndex((x) => x.bridge_id === bid);
-        if (s >= 0) plan.skip.splice(s, 1);
-        notes.push(`"${node.name}" is being closed to ${cap.max}: ${cap.reason}`);
-      }
-    }
-
-    // The same cap governs a CHANGE to an existing store. An update that could open a store wider than the operator
-    // itself may be is refused outright rather than quietly narrowed — the store already exists and someone is
-    // relying on its current setting, so silently doing something else is worse here than not acting.
-    for (let i = plan.update.length - 1; i >= 0; i--) {
-      const u = plan.update[i];
-      if (u.to === 'private') continue;
-      const verdict = visibilityCap.check(u.to, cap);
-      if (!verdict.ok) {
-        plan.problems.push({ key: u.key, name: u.name,
-          reason: `Cannot change "${u.name}" to ${u.to}: ${verdict.message}` });
-        plan.update.splice(i, 1);
-      }
-    }
-
-    // The counts were computed inside plan(); the cap has since forced updates in and filtered others out. A count
-    // that disagrees with the list beside it is the kind of small lie that gets believed.
-    plan.counts = { create: plan.create.length, update: plan.update.length, invite: plan.invite.length,
-                    skip: plan.skip.length, problems: plan.problems.length };
 
     if (dryRun) {
       return res.json({ ok: true, dry_run: true, root: rootHandle, root_claimed: rootClaimed,
