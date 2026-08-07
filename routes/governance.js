@@ -162,9 +162,24 @@ async function assertChitAllowed(entityId, plan) {
   const r = checkRate(planFor(active, plan), 'chits_per_day', used);
   if (!r.ok) { const e = new Error('daily chit limit reached'); e.status = 429; e.quota = r.info; throw e; }
 }
-function assertPublicAllowed(active, plan) {
-  const c = checkCapability(planFor(active, plan), 'public_facing');
-  if (!c.ok) { const e = new Error('public catalogue not available on this plan'); e.status = 403; throw e; }
+/**
+ * ── SUPERSEDED 2026-08-06 · use lib/visibility-cap.js ──────────────────────────────────────────────────────────
+ *
+ * This was the catalogue-visibility guard, exported with zero callers and a note saying "not wired yet". Athi asked
+ * for it to be wired. Wiring it EXACTLY as written took the platform down for a minute: the live constitution
+ * declares `free: { public_facing: false }`, every entity is on `free`, and publishing is the product — so every
+ * shop was refused with "a public catalogue is not available on the free plan".
+ *
+ * What replaced it does three things this could not:
+ *   · the OPERATOR who provisioned an entity outranks the plan (Athi's actual question — the network case)
+ *   · an ABSENT declaration does not deny, and SAYS it is not enforcing rather than pretending
+ *   · the plan half is opt-in (`enforcePlan`), because charging for a public catalogue is a commercial decision
+ *
+ * Kept only as a signpost. A zero-caller function that LOOKS like the guard is worse than no function: the next
+ * person wires it and repeats the outage. Delete this stub once nothing references the name.
+ */
+function assertPublicAllowed() {
+  throw new Error('assertPublicAllowed is superseded — use lib/visibility-cap.js (capOf + check), wired in routes/entities.js PATCH /profile');
 }
 
 // POST /api/governance/conformance — ADVISORY: check a process/chit's data against the ACTIVE canonical standards

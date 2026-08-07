@@ -62,6 +62,9 @@ const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './contain
  */
 const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "What is NOT engine"
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
+  // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
+  // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
+  'network-view.js',
   'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
   'boilerplate.js', 'plans.js', 'forms.js',
   // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
