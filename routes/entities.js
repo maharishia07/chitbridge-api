@@ -77,10 +77,11 @@ router.post('/register',
          * ── HANDLE OR NAME ───────────────────────────────────────────────────────────────────────────────────
          *
          * `user_id` FIRST, because it is the only unique one. It carries a UNIQUE index on lower(user_id), and it
-         * is what a network-minted store is given: `<operator bridge id>.<store>` — e.g. CBV97P3TYA.clothing.
-         * Athi, 2026-08-07: *"the store name is entityid.storename which will have a unique bridge id… if the
-         * network store needs to participate in another network, entityid.storename can be used for adding it."*
-         * So the handle is the portable public reference, and the bridge id stays the identity.
+         * is what a network-minted store is given: `<network name>.<store>` — e.g. athi.clothing. Always exactly
+         * two levels, however deep the store sits on the tree (lib/handle.js).
+         * Athi, 2026-08-07: *"if you keep bridgeid.clothing, people cannot remember the id, so it has to be human
+         * readable names"* and *"if the network store needs to participate in another network, it can be used for
+         * adding it."* So the handle is the portable public reference, and the bridge id stays the identity.
          *
          * ⚠️ THEN display name — and it must be UNAMBIGUOUS. This used to take `found.rows[0]` with no ORDER BY,
          * so two active entities sharing a name meant login silently picked one, generated an OTP on THAT account

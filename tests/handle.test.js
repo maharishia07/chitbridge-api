@@ -19,8 +19,11 @@ console.log('\nhandle · making a name');
 t('★ Athi + Clothing → athi.clothing', () => {
   assert.deepStrictEqual(H.child('athi', 'Clothing'), { handle: 'athi.clothing', label: 'clothing' });
 });
-t('★ the SAME convention at every level', () => {
-  assert.strictEqual(H.child('athi.clothing', 'Mens').handle, 'athi.clothing.mens');
+t('★★ TWO LEVELS, ALWAYS — composing from a department still gives athi.mens', () => {
+  // Athi: "we don't need levels naming convention… otherwise it will keep growing and it would be difficult to
+  // manage if it is 10 levels, and if an employee underneath." The ltree carries depth; the name does not.
+  assert.strictEqual(H.child('athi.clothing', 'Mens').handle, 'athi.mens');
+  assert.strictEqual(H.child('athi', 'Mens').handle, 'athi.mens', 'same answer whichever handle you compose from');
 });
 t('a real shop name becomes a usable label', () => {
   assert.strictEqual(H.slug("Men's Clothing"), 'mens-clothing', 'an apostrophe must not become a dash');
@@ -64,9 +67,18 @@ t('★ it cannot outgrow the column — user_id is varchar(100)', () => {
   const long = 'a'.repeat(60) + '.' + 'b'.repeat(60);
   assert.strictEqual(H.check(long).ok, false, 'a handle longer than the column would be truncated on write');
 });
-t('depth is bounded', () => {
-  assert.strictEqual(H.check('a.b.c.d.e').ok, true);
-  assert.strictEqual(H.check('a.b.c.d.e.f').ok, false);
+t('★★ a third level is REFUSED, and the message says where depth belongs', () => {
+  assert.strictEqual(H.check('athi').ok, true, 'the network root itself');
+  assert.strictEqual(H.check('athi.clothing').ok, true);
+  const r = H.check('athi.clothing.mens');
+  assert.strictEqual(r.ok, false);
+  assert.ok(/network tree, not in the name/.test(r.reason));
+});
+
+t('★ a co-assist login stays sayable', () => {
+  // The reason the depth cap exists: an employee is `ravi@<handle>`. Two levels keeps that at ravi@athi.mens.
+  const h = H.child('athi.clothing.mens', 'Formals');   // even from an over-deep input
+  assert.strictEqual('ravi@' + h.handle, 'ravi@athi.formals');
 });
 t('an unusable ROOT is reported as such, not as a child problem', () => {
   const r = H.child('cb12345678', 'Clothing');

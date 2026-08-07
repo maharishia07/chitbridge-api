@@ -28,11 +28,25 @@ t('★ an owned node becomes athi.<name>', () => {
   assert.strictEqual(p.create[0].name, 'Clothing');
 });
 
-t('★ the same convention at every level, parents first', () => {
+t('★★ a handle is ALWAYS two levels — depth lives in the tree, not the name', () => {
+  // Athi: "we don't need levels naming convention… otherwise it will keep growing and it would be difficult to
+  // manage if it is 10 levels, and if an employee underneath." A co-assist logs in as ravi@athi.mens.
   const p = run([owned('a', 'Clothing'), owned('b', 'Mens', { parent_key: 'a' })]);
-  assert.deepStrictEqual(p.create.map((c) => c.handle), ['athi.clothing', 'athi.clothing.mens']);
-  // Order is not cosmetic: the executor places each node under its parent, so the parent must exist first.
+  assert.deepStrictEqual(p.create.map((c) => c.handle), ['athi.clothing', 'athi.mens']);
+  // Order is still not cosmetic: the executor PLACES each node under its parent, so the parent must exist first —
+  // placement stays hierarchical even though the name is flat.
   assert.ok(p.create.findIndex((c) => c.key === 'a') < p.create.findIndex((c) => c.key === 'b'));
+  assert.strictEqual(p.create.find((c) => c.key === 'b').parent_key, 'a');
+});
+
+t('★ five levels deep is still one dot', () => {
+  const p = run([
+    owned('a', 'Clothing'), owned('b', 'Mens', { parent_key: 'a' }), owned('c', 'Formals', { parent_key: 'b' }),
+    owned('d', 'Shirts', { parent_key: 'c' }), owned('e', 'Cotton', { parent_key: 'd' }),
+  ]);
+  assert.deepStrictEqual(p.create.map((c) => c.handle),
+    ['athi.clothing', 'athi.mens', 'athi.formals', 'athi.shirts', 'athi.cotton']);
+  assert.strictEqual(p.problems.length, 0, 'depth must not be a reason to refuse');
 });
 
 console.log('\nnetwork build · exposure');
@@ -87,10 +101,22 @@ t('★ a name already taken by someone else is refused, not suffixed', () => {
   assert.ok(/already taken/.test(p.problems[0].reason));
 });
 
-t('★ two siblings that would collide are caught BEFORE anything is created', () => {
+t('★ two nodes that would collide are caught BEFORE anything is created', () => {
   const p = run([owned('a', 'Clothing'), owned('b', 'clothing')]);
   assert.strictEqual(p.create.length, 1, 'the first one is fine');
-  assert.ok(/would both be called/.test(p.problems[0].reason));
+  assert.ok(/already using the name/.test(p.problems[0].reason));
+  assert.ok(/Clothing/.test(p.problems[0].reason), 'it must name the OTHER node, not just the clash');
+});
+
+t('★★ the cost of a flat namespace: "Mens" under two different parents is ONE name', () => {
+  // A mirrored handle would have separated these. This is the trade Athi chose, and it must be a clear refusal
+  // rather than a surprise 23505 halfway through the transaction.
+  const p = run([
+    owned('a', 'Clothing'), owned('b', 'Womens wear'),
+    owned('c', 'Mens', { parent_key: 'a' }), owned('d', 'Mens', { parent_key: 'b' }),
+  ]);
+  assert.strictEqual(p.create.filter((x) => x.handle === 'athi.mens').length, 1);
+  assert.ok(/unique across the whole network/.test(p.problems[0].reason));
 });
 
 t('an unusable name blocks that node and its children, nothing else', () => {
@@ -114,14 +140,13 @@ t('★★ a built node is skipped, not created again', () => {
   assert.strictEqual(p.skip.length, 1);
 });
 
-t('★ a new child under an ALREADY-BUILT parent still gets the right handle', () => {
-  // The parent's handle has to come from what was actually built, not from re-deriving it — a node renamed after
-  // its build would otherwise silently reparent its children under a handle that does not exist.
+t('★ a new child under an ALREADY-BUILT parent is named from the root, and placed under the parent', () => {
   const p = run([
     owned('a', 'Clothes now', { built: { bridge_id: 'CBAAAAAAAA', user_id: 'athi.clothing' } }),
     owned('b', 'Mens', { parent_key: 'a' }),
   ]);
-  assert.strictEqual(p.create[0].handle, 'athi.clothing.mens');
+  assert.strictEqual(p.create[0].handle, 'athi.mens', 'the name never inherits the parent');
+  assert.strictEqual(p.create[0].parent_key, 'a', 'but the PLACEMENT does');
 });
 
 t('an empty design is a valid plan that does nothing', () => {

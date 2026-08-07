@@ -92,8 +92,9 @@ const DESIGN = (rootKey) => ({
   const d = dry.json || {};
   ok('dry run answered', dry.status === 200, JSON.stringify(d.counts || d.message || d));
   const handles = (d.create || []).map((c) => c.handle);
-  ok('★ handles are human readable, same convention at every level',
-    handles.includes(ROOT_HANDLE + '.clothing') && handles.includes(ROOT_HANDLE + '.clothing.mens'), handles.join('  '));
+  ok('★★ handles are human readable and ALWAYS two levels — Mens sits under Clothing on the tree, not in the name',
+    handles.includes(ROOT_HANDLE + '.clothing') && handles.includes(ROOT_HANDLE + '.mens')
+    && !handles.some((h) => h.split('.').length > 2), handles.join('  '));
   ok('★ protected → network, no storefront → private',
     (d.create || []).find((c) => c.name === 'Warehouse')?.visibility === 'network'
     && (d.create || []).find((c) => c.name === 'Mens')?.visibility === 'private');
@@ -116,6 +117,11 @@ const DESIGN = (rootKey) => ({
 
   const cloth = created.find((c) => c.handle === ROOT_HANDLE + '.clothing');
   const wh    = created.find((c) => c.handle === ROOT_HANDLE + '.warehouse');
+  const mens  = created.find((c) => c.handle === ROOT_HANDLE + '.mens');
+  // The name is flat; the PLACEMENT is not. This is the half that would silently go missing if the flattening had
+  // been done by dropping the parent rather than by only dropping it from the name.
+  ok('★★ Mens is still placed UNDER Clothing on the tree', !!(mens && cloth && mens.path.indexOf(cloth.path + '.') === 0),
+    mens ? mens.path : 'no Mens');
   ok('★ each store was handed a claim code, once', !!(cloth && cloth.claim_code), cloth ? cloth.handle + ' → ' + cloth.claim_code : '');
 
   // ── 5 · THE PARTNER WAS INVITED, NOT CREATED ─────────────────────────────────────────────────────────────
