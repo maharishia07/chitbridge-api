@@ -189,9 +189,48 @@ t('★ a new child under an ALREADY-BUILT parent is named from the root, and pla
   assert.strictEqual(p.create[0].parent_key, 'a', 'but the PLACEMENT does');
 });
 
+console.log('\nnetwork build · enhancing a network that already exists');
+
+const BUILT = { bridge_id: 'CBAAAAAAAA', user_id: 'athi.warehouse' };
+const withLive = (nodes, live) => NB.plan({ rootHandle: 'athi', nodes: [ROOT, ...nodes], taken: [], live });
+
+t('★★ a built store whose visibility changed is UPDATED, not ignored', () => {
+  // Without this, changing a built store from "Network only" to "Public" edits a drawing and nothing else — the
+  // design and the live network drift apart silently, which is the worst property a governance screen can have.
+  const p = withLive([owned('w', 'Warehouse', { built: BUILT, exposure: 'public' })],
+    { CBAAAAAAAA: { catalogue_visibility: 'network' } });
+  assert.strictEqual(p.create.length, 0);
+  assert.deepStrictEqual(p.update, [{ key: 'w', name: 'Warehouse', handle: 'athi.warehouse',
+    bridge_id: 'CBAAAAAAAA', from: 'network', to: 'public' }]);
+});
+
+t('★ a built store in agreement is skipped, not rewritten', () => {
+  const p = withLive([owned('w', 'Warehouse', { built: BUILT, exposure: 'protected' })],
+    { CBAAAAAAAA: { catalogue_visibility: 'network' } });
+  assert.strictEqual(p.update.length, 0);
+  assert.strictEqual(p.skip.length, 1);
+});
+
+t('★★ with NO live state, nothing is proposed — a draft cannot assert its way over a live store', () => {
+  // The comparison is against what the store is ACTUALLY set to, read fresh. If we could not read it, we do not
+  // guess: the failure mode of guessing is publishing someone's warehouse.
+  const p = withLive([owned('w', 'Warehouse', { built: BUILT, exposure: 'public' })], null);
+  assert.strictEqual(p.update.length, 0);
+  assert.strictEqual(p.skip.length, 1);
+});
+
+t('★ enhancing = adding a store to a network that already exists', () => {
+  const p = withLive([
+    owned('w', 'Warehouse', { built: BUILT, exposure: 'protected' }),
+    owned('n', 'North', { exposure: 'public' }),
+  ], { CBAAAAAAAA: { catalogue_visibility: 'network' } });
+  assert.deepStrictEqual(p.create.map((c) => c.handle), ['athi.north']);
+  assert.strictEqual(p.skip.length, 1, 'the existing store is untouched');
+});
+
 t('an empty design is a valid plan that does nothing', () => {
   const p = run([]);
-  assert.deepStrictEqual(p.counts, { create: 0, invite: 0, skip: 0, problems: 0 });
+  assert.deepStrictEqual(p.counts, { create: 0, update: 0, invite: 0, skip: 0, problems: 0 });
 });
 
 t('TIER A · depends on nothing but handle.js', () => {

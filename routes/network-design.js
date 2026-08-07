@@ -107,7 +107,7 @@ router.post('/build', auth, async (req, res) => {
     const dryRun = req.body && req.body.dry_run === true;
 
     const meRow = (await query(
-      `SELECT identity_id, bridge_id, display_name, user_id, country, currency_code
+      `SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility
          FROM identities WHERE identity_id = $1`, [me])).rows[0];
     if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
 
@@ -159,10 +159,43 @@ router.post('/build', auth, async (req, res) => {
       [rootHandle + '.%']);
     const taken = takenRows.rows.map((r) => r.h);
 
-    const plan = networkBuild.plan({ rootHandle, nodes, taken });
+    // What the already-built stores are ACTUALLY set to. Read fresh, never taken from the draft: a design that has
+    // drifted must not be able to assert its way back over a live store. One query for all of them.
+    const live = {};
+    const builtBridges = nodes.map((n) => n && n.built && n.built.bridge_id).filter(Boolean);
+    if (builtBridges.length) {
+      const lr = await query(
+        'SELECT bridge_id, catalogue_visibility FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
+      lr.rows.forEach((r) => { live[r.bridge_id] = { catalogue_visibility: r.catalogue_visibility }; });
+    }
+
+    const plan = networkBuild.plan({ rootHandle, nodes, taken, live });
 
     // ── 3 · THE CAP ──────────────────────────────────────────────────────────────────────────────────────────
-    const cap = await operatorCap(me);
+    let cap = await operatorCap(me);
+    /**
+     * ── A PRIVATE NETWORK CANNOT CONTAIN A PUBLIC STORE ─────────────────────────────────────────────────────
+     * Athi, 2026-08-07: *"what if the network is private? Then each store can have only network or private
+     * options."*
+     *
+     * Right, and nothing enforced it. The cap was read from the operator's params_override — what somebody ELSE
+     * capped the operator at — and ignored the operator's OWN choice. So a network that had declared itself
+     * closed could still mint public shops under it, and `/api/catalogue/network/:root` would front them on a
+     * public page the operator never meant to have.
+     *
+     * `network` narrows it too: an operator that is itself only visible to its own network cannot put a member
+     * in front of the public either.
+     *
+     * ⚠️ This bounds only what the NETWORK BUILD may set. An entity that publishes itself directly is unaffected
+     * — that is its own business, and this is a cascade from an operator to the nodes it provisions.
+     */
+    const netVis = String(meRow.catalogue_visibility || '').toLowerCase();
+    if ((netVis === 'private' || netVis === 'network') && visibilityCap.RANK[cap.max] > visibilityCap.RANK.network) {
+      cap = { max: 'network', by: 'network', enforced: true,
+        reason: netVis === 'private'
+          ? 'This network is private, so a store under it can be visible to the network or to nobody — not to the public.'
+          : 'This network is visible to its own network only, so a store under it cannot be public.' };
+    }
     const notes = [];
     for (const c of plan.create) {
       if (c.visibility === 'private') continue;
@@ -172,20 +205,34 @@ router.post('/build', auth, async (req, res) => {
         c.visibility = 'private';
       }
     }
+    // The same cap governs a CHANGE to an existing store. An update that could open a store wider than the operator
+    // itself may be is refused outright rather than quietly narrowed — the store already exists and someone is
+    // relying on its current setting, so silently doing something else is worse here than not acting.
+    for (let i = plan.update.length - 1; i >= 0; i--) {
+      const u = plan.update[i];
+      if (u.to === 'private') continue;
+      const verdict = visibilityCap.check(u.to, cap);
+      if (!verdict.ok) {
+        plan.problems.push({ key: u.key, name: u.name,
+          reason: `Cannot change "${u.name}" to ${u.to}: ${verdict.message}` });
+        plan.update.splice(i, 1);
+      }
+    }
 
     if (dryRun) {
       return res.json({ ok: true, dry_run: true, root: rootHandle, root_claimed: rootClaimed,
-        create: plan.create, invite: plan.invite, skip: plan.skip, problems: plan.problems, notes,
-        counts: plan.counts });
+        create: plan.create, update: plan.update, invite: plan.invite, skip: plan.skip,
+        problems: plan.problems, notes, counts: plan.counts });
     }
-    if (!plan.create.length && !plan.invite.length) {
-      return res.json({ ok: true, root: rootHandle, created: [], invited: [], skipped: plan.skip,
-        problems: plan.problems, notes, message: plan.problems.length ? 'Nothing could be built — see the reasons.' : 'Everything in this design is already built.' });
+    if (!plan.create.length && !plan.update.length && !plan.invite.length) {
+      return res.json({ ok: true, root: rootHandle, created: [], updated: [], invited: [], skipped: plan.skip,
+        problems: plan.problems, notes,
+        message: plan.problems.length ? 'Nothing could be built — see the reasons.' : 'The network already matches this design.' });
     }
 
     // ── 4 · DO IT — one transaction ──────────────────────────────────────────────────────────────────────────
     const result = await withEntity(me, async (db) => {
-      const created = [], invited = [], failedInvites = [];
+      const created = [], updated = [], invited = [], failedInvites = [];
 
       if (rootClaimed) {
         // Unique index on lower(user_id): a concurrent second build would 23505 here and roll the whole thing back,
@@ -252,6 +299,31 @@ router.post('/build', auth, async (req, res) => {
                        claim_code: claim, expires_at: expires, path: myPath });
       }
 
+      // ── UPDATES — bring an existing store into line with the design ────────────────────────────────────────
+      // The cap moves WITH the choice: the operator decided, so the operator's cap is restated at the same value.
+      // Leaving the old cap behind would let a store that was opened to `public` be narrowed back by nobody, or a
+      // store closed to `private` still carry a cap that permits publishing.
+      for (const u of plan.update) {
+        const r = await db.query(
+          `UPDATE identities
+              SET catalogue_visibility = $1,
+                  params_override = COALESCE(params_override, '{}'::jsonb)
+                                    || jsonb_build_object('caps',
+                                         COALESCE(params_override->'caps', '{}'::jsonb)
+                                         || jsonb_build_object('catalogue_visibility', $1::text))
+            WHERE bridge_id = $2 AND created_by = $3
+            RETURNING bridge_id`,
+          [u.to, u.bridge_id, me]);
+        // `created_by = me` is the authority check, and it is in the WHERE rather than a prior SELECT so there is
+        // no gap between checking and writing. A store this operator did not mint simply does not match.
+        if (!r.rows.length) {
+          plan.problems.push({ key: u.key, name: u.name,
+            reason: `"${u.name}" was not changed — you did not create that store.` });
+          continue;
+        }
+        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to });
+      }
+
       // ── PARTNERS — a request, never a placement ────────────────────────────────────────────────────────────
       for (const inv of plan.invite) {
         const ref = inv.ref;
@@ -307,7 +379,7 @@ router.post('/build', auth, async (req, res) => {
            ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()`,
         [me, nextDraft]);
 
-      return { created, invited, failedInvites };
+      return { created, updated, invited, failedInvites };
     });
 
     const problems = plan.problems.concat(result.failedInvites);
@@ -316,6 +388,7 @@ router.post('/build', auth, async (req, res) => {
       root: rootHandle,
       root_claimed: rootClaimed,
       created: result.created,
+      updated: result.updated,
       invited: result.invited,
       skipped: plan.skip,
       problems,
@@ -326,6 +399,7 @@ router.post('/build', auth, async (req, res) => {
         ? `Each new store signs in with its handle and the code shown here. The codes expire in ${CLAIM_DAYS} days — re-issue one from the network page if it lapses.`
         : '',
       message: `${result.created.length} store${result.created.length === 1 ? '' : 's'} created`
+             + (result.updated.length ? `, ${result.updated.length} updated` : '')
              + (result.invited.length ? `, ${result.invited.length} partner invitation${result.invited.length === 1 ? '' : 's'} sent` : '')
              + (problems.length ? `, ${problems.length} not built` : ''),
     });

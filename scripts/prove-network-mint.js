@@ -216,6 +216,40 @@ const DESIGN = (rootKey) => ({
     ok('★★ but only for stores THEY minted', notMine.status === 404, notMine.status + '');
   }
 
+  // ── 11 · ENHANCING AN EXISTING NETWORK ───────────────────────────────────────────────────────────────────
+  step(11, 'change a built store, and build again');
+  design.nodes.find((n) => n.key === 'n_wh').exposure = 'private';   // warehouse: network → private
+  await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: design } });
+  const dry3 = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
+  const upd = ((dry3.json || {}).update) || [];
+  ok('★★ a built store whose visibility changed is offered as a CHANGE, not ignored',
+    upd.length === 1 && upd[0].from === 'network' && upd[0].to === 'private',
+    JSON.stringify(upd));
+  const applied = await api('/api/network-design/build', { method: 'POST', token: op.token, body: {} });
+  ok('★ the change is applied', (((applied.json || {}).updated) || []).length === 1, (applied.json || {}).message || '');
+  if (whToken) {
+    const meWh = await api('/api/entities/me', { token: whToken });
+    const nowVis = ((meWh.json || {}).entity || meWh.json || {}).catalogue_visibility;
+    ok('★★ the LIVE store actually moved', nowVis === 'private', 'catalogue_visibility=' + nowVis);
+  }
+  const dry4 = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
+  ok('★ and a third run has nothing left to do', (((dry4.json || {}).update) || []).length === 0
+    && (((dry4.json || {}).create) || []).length === 0, JSON.stringify((dry4.json || {}).counts || {}));
+
+  // ── 12 · A PRIVATE NETWORK CANNOT CONTAIN A PUBLIC STORE ─────────────────────────────────────────────────
+  step(12, 'close the network itself, then try to build a public store');
+  await api('/api/entities/profile', { method: 'PATCH', token: op.token, body: { catalogue_visibility: 'private' } });
+  design.nodes.push({ key: 'n_new', name: 'Pop Up', parent_key: 'root_' + SUFFIX, owned: true,
+                      holds: ['catalogue'], exposure: 'public' });
+  await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: design } });
+  const dry5 = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
+  const pop = (((dry5.json || {}).create) || []).find((c) => c.name === 'Pop Up');
+  ok('★★ a private network caps its stores at network — public is refused, not granted',
+    !!pop && pop.visibility !== 'public',
+    pop ? 'designed public → planned ' + pop.visibility : 'Pop Up missing');
+  ok('★ and the reason is reported, not silent', ((dry5.json || {}).notes || []).some((x) => /private|network/i.test(x)),
+    JSON.stringify((dry5.json || {}).notes || []));
+
   console.log('\n' + '─'.repeat(72));
   console.log(`  ${pass} proved · ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
