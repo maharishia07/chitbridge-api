@@ -49,6 +49,29 @@ t('★★ a node under the ROOT reports parent_key null — the root is the oper
   assert.strictEqual(p.create.find((c) => c.key === 'b').parent_key, 'a', 'hangs off a node in this plan');
 });
 
+t('★★ NO handle a build can produce ever contains a space', () => {
+  // Athi, 2026-08-07: "if they create a store using network again space not permitted."
+  // A store's DISPLAY NAME stays free-form — "South A" is a perfectly good name for a shop, and display_name is a
+  // label, not an identifier. What must never carry a space is the HANDLE, because that is what gets typed into a
+  // login box and into `ravi@<handle>`. So the name is slugged, not refused, and this asserts the outcome rather
+  // than trusting the slug: every handle the planner can emit, from names chosen to be awkward.
+  const p = run([
+    owned('a', 'South A'), owned('b', '  Cold  Storage  '), owned('c', "Men's Formal Wear"),
+    owned('d', 'Unit 7 — North'), owned('e', 'R&D  Lab'),
+  ]);
+  assert.strictEqual(p.problems.length, 0, 'an awkward name is slugged, never refused');
+  p.create.forEach((c) => {
+    assert.ok(!/\s/.test(c.handle), `"${c.name}" produced a handle with whitespace: "${c.handle}"`);
+    assert.ok(/^[a-z0-9]+(-[a-z0-9]+)*\.[a-z0-9]+(-[a-z0-9]+)*$/.test(c.handle), `"${c.handle}" is not a clean handle`);
+  });
+  assert.deepStrictEqual(p.create.map((c) => c.handle),
+    // `R&D Lab` → `r-d-lab`: the ampersand has no spaces around it, so it becomes its own separator. Consistent
+    // with `Pharmacy & Wellness` → `pharmacy-wellness`, where the spaces around it collapse into the same dash.
+    ['athi.south-a', 'athi.cold-storage', 'athi.mens-formal-wear', 'athi.unit-7-north', 'athi.r-d-lab']);
+  // …and the label a person reads is untouched.
+  assert.strictEqual(p.create[0].name, 'South A');
+});
+
 t('★ five levels deep is still one dot', () => {
   const p = run([
     owned('a', 'Clothing'), owned('b', 'Mens', { parent_key: 'a' }), owned('c', 'Formals', { parent_key: 'b' }),
