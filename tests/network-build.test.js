@@ -70,12 +70,19 @@ t('★ a designed storefront carries its exposure; protected → network', () =>
   assert.strictEqual(p.create.find((c) => c.key === 'b').visibility, 'network');
 });
 
-t('★★ no storefront designed → private, never public', () => {
+t('★★ NO CHOICE → private, never public', () => {
   // A back-office node that quietly became a public shop is the one mistake here that cannot be taken back:
-  // it publishes a catalogue nobody meant to publish.
+  // it publishes a catalogue nobody meant to publish. Every other default is recoverable; this one is not.
   assert.strictEqual(run([owned('a', 'Back office')]).create[0].visibility, 'private');
-  assert.strictEqual(NB.visibilityOf({ holds: ['storefront'], exposure: 'nonsense' }), 'private');
+  assert.strictEqual(NB.visibilityOf({ exposure: 'nonsense' }), 'private');
   assert.strictEqual(NB.visibilityOf({}), 'private');
+  assert.strictEqual(NB.visibilityOf(null), 'private');
+});
+
+t('★ visibility is the NODE\'s, not the storefront capability\'s', () => {
+  // It used to need both: a store marked public stayed invisible because a tick three panels away was off.
+  assert.strictEqual(NB.visibilityOf({ exposure: 'public' }), 'public', 'no holds[] at all');
+  assert.strictEqual(NB.visibilityOf({ holds: [], exposure: 'protected' }), 'network');
 });
 
 console.log('\nnetwork build · partners are invited, not created');
