@@ -415,10 +415,31 @@ router.patch('/profile', auth,
     body('storefront_access').optional().isIn(['browse','login']),
     body('self_copy_pref').optional().isIn(['both','sent','received']),
     body('dispute_handler_actor_id').optional().isUUID(),
+    /**
+     * user_id — the handle a person TYPES. Athi, 2026-08-07: *"we should not allow space in the user id."*
+     *
+     * Right, and the rule had never looked at the CONTENT: it checked length or email shape and nothing else, so
+     * `alpha timers` saved happily and then could never be a network root — `lib/handle.js` refuses a space, and
+     * a co-assist signs in as `ravi@alpha timers.west`, which nobody can type or read out. A value that is
+     * accepted here and refused everywhere it is used is worse than a value refused up front.
+     *
+     * Letters, digits, dots and dashes. Dots because a network handle IS dotted (`alpha-timers.west`); dashes
+     * because that is what a space becomes. Case is allowed — uniqueness is already case-insensitive
+     * (idx_identities_user_id is on lower(user_id)) and handle.js lowercases before it checks.
+     *
+     * ⚠️ A TIGHTENING, and it only governs WRITES. Any user_id already stored with a space keeps working for
+     * login; it simply cannot be re-saved unchanged, and cannot be a network root. Rejecting stored values
+     * retroactively would lock those owners out of their own accounts.
+     */
     body('user_id').optional().trim().custom(v => {
       if (v === '') return true;
-      const ok = v.includes('@') ? /\S+@\S+\.\S+/.test(v) : v.length >= 8;
-      if (!ok) throw new Error('user_id must be 8+ characters or a valid email');
+      if (v.includes('@')) {
+        if (!/^\S+@\S+\.\S+$/.test(v)) throw new Error('That is not a valid email address.');
+        return true;
+      }
+      if (/\s/.test(v)) throw new Error('A User ID cannot contain spaces — try "' + v.trim().replace(/\s+/g, '-').toLowerCase() + '".');
+      if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]*$/.test(v)) throw new Error('A User ID can use letters, numbers, dots and dashes only.');
+      if (v.length < 8) throw new Error('A User ID must be at least 8 characters, or an email address.');
       return true;
     }) ],
   validate,
