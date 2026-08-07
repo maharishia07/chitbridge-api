@@ -100,7 +100,7 @@ const DESIGN = (rootKey) => ({
     && (d.create || []).find((c) => c.name === 'Mens')?.visibility === 'private');
   ok('★★ a partner with no handle is NOT created — it is reported',
     !(d.create || []).some((c) => /Ravi/.test(c.name)) && (d.problems || []).some((p) => /Ravi/.test(p.name)));
-  const before = await api('/api/entities/lookup?user_id=' + ROOT_HANDLE + '.clothing');
+  const before = await api('/api/entities/lookup?user_id=' + ROOT_HANDLE + '.clothing', { token: op.token });
   ok('★★ dry run created NOTHING', before.status === 404, 'lookup → ' + before.status);
 
   // ── 4 · name the partner, then BUILD ─────────────────────────────────────────────────────────────────────

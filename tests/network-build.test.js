@@ -39,6 +39,16 @@ t('★★ a handle is ALWAYS two levels — depth lives in the tree, not the nam
   assert.strictEqual(p.create.find((c) => c.key === 'b').parent_key, 'a');
 });
 
+t('★★ a node under the ROOT reports parent_key null — the root is the operator, not part of the plan', () => {
+  // This is the bug the seam test found and these unit tests did not: the planner emitted the root DESIGN NODE's
+  // key, the executor looked it up among nodes it had just created, missed, and refused every top-level store
+  // with "its parent is not on the network tree yet". Both halves were self-consistent and meant different
+  // things by the same field.
+  const p = run([owned('a', 'Clothing'), owned('b', 'Mens', { parent_key: 'a' })]);
+  assert.strictEqual(p.create.find((c) => c.key === 'a').parent_key, null, 'hangs off the operator');
+  assert.strictEqual(p.create.find((c) => c.key === 'b').parent_key, 'a', 'hangs off a node in this plan');
+});
+
 t('★ five levels deep is still one dot', () => {
   const p = run([
     owned('a', 'Clothing'), owned('b', 'Mens', { parent_key: 'a' }), owned('c', 'Formals', { parent_key: 'b' }),
