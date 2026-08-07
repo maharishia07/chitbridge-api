@@ -240,6 +240,37 @@ router.post('/build', auth, async (req, res) => {
         c.visibility = 'private';
       }
     }
+    /**
+     * ── CLOSING THE NETWORK CLOSES WHAT IS ALREADY OPEN ─────────────────────────────────────────────────────
+     * Athi, 2026-08-07: *"even if they select public initially and then change to protected, need to switch
+     * accordingly."*
+     *
+     * The update path above only fires when the DESIGN disagrees with the live store. If both say `public` and
+     * the network then closes, they agree with each other and disagree with nothing — so no change is proposed
+     * and a live shop stays facing the public under a network that has declared itself shut. The cap would be a
+     * statement about new stores only, which is not what a cap is.
+     *
+     * So: any built store whose LIVE visibility is more open than the network now allows is brought down to the
+     * cap, whatever the design says. This is the only place the design's opinion is overruled, and it is
+     * overruled in one direction only — narrower, never wider.
+     */
+    const capRank = visibilityCap.RANK[cap.max];
+    if (capRank !== undefined) {
+      for (const bid of Object.keys(live)) {
+        const now = String(live[bid].catalogue_visibility || '').toLowerCase();
+        if (visibilityCap.RANK[now] === undefined || visibilityCap.RANK[now] <= capRank) continue;
+        const node = nodes.find((n) => n && n.built && n.built.bridge_id === bid);
+        if (!node) continue;
+        const idx = plan.update.findIndex((u) => u.bridge_id === bid);
+        const forced = { key: node.key, name: node.name, handle: node.built.user_id, bridge_id: bid,
+                         from: now, to: cap.max, forced: true };
+        if (idx >= 0) plan.update[idx] = forced; else plan.update.push(forced);
+        const s = plan.skip.findIndex((x) => x.bridge_id === bid);
+        if (s >= 0) plan.skip.splice(s, 1);
+        notes.push(`"${node.name}" is being closed to ${cap.max}: ${cap.reason}`);
+      }
+    }
+
     // The same cap governs a CHANGE to an existing store. An update that could open a store wider than the operator
     // itself may be is refused outright rather than quietly narrowed — the store already exists and someone is
     // relying on its current setting, so silently doing something else is worse here than not acting.
@@ -253,6 +284,11 @@ router.post('/build', auth, async (req, res) => {
         plan.update.splice(i, 1);
       }
     }
+
+    // The counts were computed inside plan(); the cap has since forced updates in and filtered others out. A count
+    // that disagrees with the list beside it is the kind of small lie that gets believed.
+    plan.counts = { create: plan.create.length, update: plan.update.length, invite: plan.invite.length,
+                    skip: plan.skip.length, problems: plan.problems.length };
 
     if (dryRun) {
       return res.json({ ok: true, dry_run: true, root: rootHandle, root_claimed: rootClaimed,

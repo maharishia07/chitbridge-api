@@ -79,6 +79,12 @@ const DESIGN = (rootKey) => ({
   ok('operator holds the root handle', setRoot.status === 200 || setRoot.status === 409, ROOT_HANDLE + '  (' + setRoot.status + ')');
   const partnerRef = 'ravitest' + SUFFIX;
   await api('/api/entities/profile', { method: 'PATCH', token: partner.token, body: { user_id: partnerRef } });
+  // THE FIRST QUESTION. Athi: *"when someone tries to set up the network the first question is, is it a private or
+  // a public network where any of the stores should be visible outside and face the customer."* An entity defaults
+  // to private, and a private network caps every store under it — so without this, a store designed Public is
+  // built network-only and the storefront shows nothing. The design page now asks; the script answers.
+  const openNet = await api('/api/entities/profile', { method: 'PATCH', token: op.token, body: { catalogue_visibility: 'public' } });
+  ok('the network answers the first question: public', openNet.status === 200, openNet.status + '');
 
   // ── 2 · save the design ──────────────────────────────────────────────────────────────────────────────────
   step(2, 'save the design (nothing created yet)');
@@ -262,6 +268,23 @@ const DESIGN = (rootKey) => ({
     pop ? 'designed public → planned ' + pop.visibility : 'Pop Up missing');
   ok('★ and the reason is reported, not silent', ((dry5.json || {}).notes || []).some((x) => /private|network/i.test(x)),
     JSON.stringify((dry5.json || {}).notes || []));
+
+  // ── 13 · CLOSING THE NETWORK CLOSES WHAT IS ALREADY OPEN ─────────────────────────────────────────────────
+  step(13, 'the already-public store must come down too');
+  // Clothing is LIVE and public, and the design still says public — the two agree, so nothing would be proposed
+  // on the ordinary path. The cap has to overrule the design here, or a cap is only a statement about new stores.
+  const forced = (((dry5.json || {}).update) || []).find((u) => u.name === 'Clothing');
+  ok('★★ a store already public under a now-private network is brought DOWN', !!forced && forced.to !== 'public',
+    forced ? forced.from + ' → ' + forced.to + (forced.forced ? ' (forced by the cap)' : '') : 'no change proposed');
+  const closed = await api('/api/network-design/build', { method: 'POST', token: op.token, body: {} });
+  ok('★ applied', (((closed.json || {}).updated) || []).some((u) => u.name === 'Clothing'), (closed.json || {}).message || '');
+  if (clothToken) {
+    const meC = await api('/api/entities/me', { token: clothToken });
+    const nowVis = ((meC.json || {}).entity || meC.json || {}).catalogue_visibility;
+    ok('★★ the LIVE shop is no longer public', nowVis !== 'public', 'catalogue_visibility=' + nowVis);
+  }
+  const gone = await api('/api/catalogue/network/' + op.bridge);
+  ok('★★ and the public storefront is gone', gone.status === 404, 'storefront → ' + gone.status);
 
   console.log('\n' + '─'.repeat(72));
   console.log(`  ${pass} proved · ${fail} failed\n`);
