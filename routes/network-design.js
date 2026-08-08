@@ -603,25 +603,47 @@ router.get('/availability', auth, async (req, res) => {
     const like = '%' + q.toLowerCase() + '%';
     const rows = [];
 
-    for (const bid of use) {
-      const ent = (await query(
-        `SELECT identity_id, bridge_id, display_name, city, lat, lng, currency_code, service_km,
-                dispatch_days, ship_within_days, ship_beyond_days
-           FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active'`, [bid])).rows[0];
-      if (!ent) continue;
+    /**
+     * ⚠️ ONE ROUND TRIP PER STORE, NOT THREE — AND THEY GO TOGETHER.
+     *
+     * Athi, 2026-08-08: *"just only one product in each store, takes long time to find."* It did, and the reason
+     * was shape rather than data: this ran THREE sequential queries per store — the entity row, then
+     * catalogueVisibility's own read, then the items — so five stores meant fifteen round trips to a database on
+     * the other side of the internet, one after another. The work was tiny and the waiting was all latency.
+     *
+     * Now: every entity row in ONE query, visibility resolved IN MEMORY, and the item reads fired in parallel. The
+     * wall clock becomes two round trips instead of fifteen.
+     *
+     * Resolving visibility in memory is exact here rather than a shortcut: `network` means "on the same tree as the
+     * viewer", and every store in this list came FROM the viewer's own subtree — that is how it was found. So the
+     * membership test is already answered and re-asking the database would be paying for a fact we hold.
+     */
+    const ents = (await query(
+      `SELECT identity_id, bridge_id, display_name, city, lat, lng, currency_code, service_km,
+              dispatch_days, ship_within_days, ship_beyond_days,
+              catalogue_visibility, plan, params_override
+         FROM identities
+        WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`, [use])).rows;
 
-      // The catalogue's own gate, with ME as the viewer. Not a second rule invented for stock.
-      const vis = await catalogueView.catalogueVisibility({
-        entity_id: ent.identity_id, query, visibilityCap, viewer: meRow.bridge_id });
-      if (vis === 'private') continue;                       // absent, and not reported as anything
+    const visible = ents.filter((ent) => {
+      const chosen = ent.catalogue_visibility;
+      if (chosen !== 'public' && chosen !== 'network') return false;   // private, or unset → absent
+      // The operator cap still binds: a store capped to private is closed even if it chose otherwise.
+      const cap = visibilityCap.capOf({ plan: ent.plan, paramsOverride: ent.params_override || {} });
+      return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
+    });
 
-      const items = await withEntity(ent.identity_id, (db) => db.query(
+    const perStore = await Promise.all(visible.map((ent) =>
+      withEntity(ent.identity_id, (db) => db.query(
         `SELECT item_id, item_data FROM catalogue_items
           WHERE entity_id = $1 AND is_active = true
             AND (LOWER(item_data->>'name') LIKE $2 OR LOWER(item_data->>'code') LIKE $2 OR LOWER(item_data->>'sku') LIKE $2)
-          LIMIT 5`, [ent.identity_id, like]));
+          LIMIT 5`, [ent.identity_id, like]))
+        .then((r) => ({ ent, rows: r.rows }))
+        .catch(() => ({ ent, rows: [] }))));   // one unreadable store must not fail the whole answer
 
-      for (const it of items.rows) {
+    for (const { ent, rows: itemRows } of perStore) {
+      for (const it of itemRows) {
         const d = it.item_data || {};
         const av = (d.avail && typeof d.avail === 'object') ? d.avail : null;
         // The PRICE, as the holding store stamped it — its own currency, never converted. `money.amountOfLoose`
