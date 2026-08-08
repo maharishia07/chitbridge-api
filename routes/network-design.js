@@ -17,6 +17,7 @@ const handleLib = require('../lib/handle');
 const networkBuild = require('../lib/network-build');
 const visibilityCap = require('../lib/visibility-cap');
 const devOtp = require('../lib/dev-otp');
+const money = require('../lib/money');                    // a price is {amount,currency} — never a bare number
 const availability = require('../lib/availability');      // a quantity is not an answer without a date
 const catalogueView = require('../lib/catalogue-view');   // ONE visibility rule — stock follows the catalogue's
 
@@ -617,8 +618,17 @@ router.get('/availability', auth, async (req, res) => {
       for (const it of items.rows) {
         const d = it.item_data || {};
         const av = (d.avail && typeof d.avail === 'object') ? d.avail : null;
+        // The PRICE, as the holding store stamped it — its own currency, never converted. `money.amountOfLoose`
+        // reads both shapes: a stamped {amount,currency} and a legacy bare number.
+        const rawPrice = d.price;
+        const amt = money.amountOfLoose(rawPrice);
         rows.push({
           store: ent.display_name, bridge_id: ent.bridge_id, city: ent.city || null,
+          // identity_id so a request can be addressed. Not a secret: this store's catalogue is already readable by
+          // this viewer, and the supplier route hands out the same field for exactly the same reason.
+          entity_id: ent.identity_id,
+          price: Number.isFinite(amt) ? amt : null,
+          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || ent.currency_code || null,
           lat: ent.lat == null ? null : Number(ent.lat), lng: ent.lng == null ? null : Number(ent.lng),
           service_km: ent.service_km == null ? null : Number(ent.service_km),
           item_id: it.item_id, name: d.name || d.code || '(unnamed)', code: d.code || d.sku || null,
