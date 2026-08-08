@@ -203,7 +203,7 @@ router.post('/build', auth, async (req, res) => {
     const builtBridges = nodes.map((n) => n && n.built && n.built.bridge_id).filter(Boolean);
     if (builtBridges.length) {
       const lr = await query(
-        'SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, lat, lng, service_km FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
+        'SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
       // The whole row: the planner compares visibility, purpose, order AND place against it.
       lr.rows.forEach((r) => { live[r.bridge_id] = r; });
     }
@@ -322,9 +322,9 @@ router.post('/build', auth, async (req, res) => {
           `INSERT INTO identities
              (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility,
               params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order,
-              address, city, lat, lng, service_km)
+              address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days)
            VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13,
-                   $14, $15, $16, $17, $18)`,
+                   $14, $15, $16, $17, $18, $19, $20, $21)`,
           [identity_id, bridge_id, c.name, c.handle, c.visibility,
            // The provisioning cap. visibility-cap.js: "a node provisioned BY A NETWORK is not its own business —
            // the operator decided, and the entity must not be able to undo that from its own profile screen."
@@ -340,7 +340,9 @@ router.post('/build', auth, async (req, res) => {
            c.purpose || null, c.sort_order,
            // b119 — where it is. A place the design never stated stays NULL rather than becoming an empty string.
            (c.place && c.place.address) || null, (c.place && c.place.city) || null,
-           c.place ? c.place.lat : null, c.place ? c.place.lng : null, c.place ? c.place.service_km : null]);
+           c.place ? c.place.lat : null, c.place ? c.place.lng : null, c.place ? c.place.service_km : null,
+           c.place ? c.place.dispatch_days : null, c.place ? c.place.ship_within_days : null,
+           c.place ? c.place.ship_beyond_days : null]);
 
         const myPath = parentPath + '.' + label(bridge_id);
         await db.query(
@@ -386,6 +388,9 @@ router.post('/build', auth, async (req, res) => {
                   lat        = CASE WHEN $6::jsonb IS NULL THEN lat        ELSE ($6->>'lat')::numeric END,
                   lng        = CASE WHEN $6::jsonb IS NULL THEN lng        ELSE ($6->>'lng')::numeric END,
                   service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END,
+                  dispatch_days    = CASE WHEN $6::jsonb IS NULL THEN dispatch_days    ELSE ($6->>'dispatch_days')::smallint END,
+                  ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END,
+                  ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END,
                   currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code
                                        ELSE COALESCE($6->>'currency', currency_code) END
             WHERE bridge_id = $2 AND created_by = $3
@@ -600,7 +605,8 @@ router.get('/availability', auth, async (req, res) => {
 
     for (const bid of use) {
       const ent = (await query(
-        `SELECT identity_id, bridge_id, display_name, city, lat, lng, currency_code, service_km
+        `SELECT identity_id, bridge_id, display_name, city, lat, lng, currency_code, service_km,
+                dispatch_days, ship_within_days, ship_beyond_days
            FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active'`, [bid])).rows[0];
       if (!ent) continue;
 
@@ -631,6 +637,9 @@ router.get('/availability', auth, async (req, res) => {
           price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || ent.currency_code || null,
           lat: ent.lat == null ? null : Number(ent.lat), lng: ent.lng == null ? null : Number(ent.lng),
           service_km: ent.service_km == null ? null : Number(ent.service_km),
+          dispatch_days: ent.dispatch_days == null ? null : Number(ent.dispatch_days),
+          ship_within_days: ent.ship_within_days == null ? null : Number(ent.ship_within_days),
+          ship_beyond_days: ent.ship_beyond_days == null ? null : Number(ent.ship_beyond_days),
           item_id: it.item_id, name: d.name || d.code || '(unnamed)', code: d.code || d.sku || null,
           currency: ent.currency_code || null,
           // null when the store has never said. NEVER 0 — see the header.

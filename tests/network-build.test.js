@@ -373,7 +373,18 @@ t('★ a place is carried onto the store', () => {
   const p = run([owned('a', 'Coimbatore', { place: { address: ' 12 Avinashi Rd ', city: 'Coimbatore', country: 'IN', lat: 11.0168, lng: 76.9558, km: '50' } })]);
   assert.deepStrictEqual(p.create[0].place,
     { address: '12 Avinashi Rd', city: 'Coimbatore', country: 'IN', currency: null, tz: null,
+      dispatch_days: null, ship_within_days: null, ship_beyond_days: null,
       lat: 11.0168, lng: 76.9558, service_km: 50 });
+});
+
+t('★★ how quickly it can send — declared, and null when not (b120)', () => {
+  const p = run([owned('a', 'Depot', { place: { city: 'X', dispatch: 1, within: '2', beyond: 9 } })]);
+  assert.strictEqual(p.create[0].place.dispatch_days, 1);
+  assert.strictEqual(p.create[0].place.ship_within_days, 2);
+  assert.strictEqual(p.create[0].place.ship_beyond_days, 9);
+  // Not declared stays null — never 0, which would promise same-day dispatch from a store nobody has asked.
+  const q = run([owned('b', 'Quiet', { place: { city: 'Y' } })]);
+  assert.strictEqual(q.create[0].place.dispatch_days, null);
 });
 
 t('★★ a store may trade in its OWN currency — and blank means the network\'s', () => {

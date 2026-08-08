@@ -138,6 +138,58 @@ t('distance is computed, and a store without coordinates still appears', () => {
   assert.strictEqual(a.rows[1].km, null, 'unlocated, not excluded');
 });
 
+console.log('\navailability · how soon (b120)');
+
+const CAN = { dispatch_days: 1, ship_within_days: 1, ship_beyond_days: 6, service_km: 150 };
+
+t('★ inside the service area: dispatch + local transit', () => {
+  assert.deepStrictEqual(A.eta(CAN, 91), { days: 2, declared: true, basis: 'within its service area' });
+});
+
+t('★ outside it is a different lane, not a longer drive', () => {
+  const e = A.eta(CAN, 430);
+  assert.strictEqual(e.days, 7);
+  assert.ok(/beyond/.test(e.basis));
+});
+
+t('★ your own stock is dispatch only', () => {
+  assert.deepStrictEqual(A.eta(Object.assign({ is_me: true }, CAN), 0),
+    { days: 1, declared: true, basis: 'from your own stock' });
+});
+
+t('★★ a store that has not declared gets NO number — not an average', () => {
+  // The whole reason days are declared rather than derived: km ÷ an assumed speed would answer confidently here,
+  // and that answer gets promised to a customer.
+  const e = A.eta({ service_km: 150 }, 91);
+  assert.strictEqual(e.days, null);
+  assert.strictEqual(e.declared, false);
+  assert.ok(/no dispatch time declared/.test(e.basis));
+});
+
+t('★★ distance unknown → the LANE is unknown, so no number', () => {
+  const e = A.eta(CAN, null);
+  assert.strictEqual(e.days, null);
+  assert.ok(/lane is unknown/.test(e.basis), e.basis);
+});
+
+t('★ declared dispatch but no transit for that band still says which is missing', () => {
+  const e = A.eta({ dispatch_days: 1, ship_within_days: 1, service_km: 150 }, 430);
+  assert.strictEqual(e.days, null);
+  assert.ok(/distant transit/.test(e.basis), e.basis);
+});
+
+t('★★ soonest first — and "we do not know" never outranks "four days"', () => {
+  const rows = [
+    // 427 km away and OUTSIDE its 50 km service area, so this exercises the distant lane: 0 dispatch + 2 transit.
+    { store: 'Far but ready', qty: 3, as_of: NOW, lat: 13.08, lng: 80.27, dispatch_days: 0, ship_within_days: 1, ship_beyond_days: 2, service_km: 50 },
+    { store: 'Near but silent', qty: 3, as_of: NOW, lat: 11.34, lng: 77.72 },
+  ];
+  const a = A.answer(rows, { from: HERE, now: NOW });
+  assert.strictEqual(a.rows[0].store, 'Far but ready', '427 km with declared days beats 91 km with none');
+  assert.strictEqual(a.rows[0].eta.days, 2);
+  assert.strictEqual(a.rows[1].eta.declared, false);
+});
+
 t('TIER A · zero dependencies', () => {
   const src = require('fs').readFileSync(require.resolve('../lib/availability'), 'utf8');
   assert.deepStrictEqual([...src.matchAll(/require\(/g)], []);
