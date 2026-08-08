@@ -319,7 +319,7 @@ router.get('/me', auth, async (req, res) => {
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
-              purpose          -- b117: one line saying what this store is for, set by the network build
+              purpose, sort_order   -- b117/b118: what this store is for, and where it sits among its siblings
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
     );

@@ -334,6 +334,39 @@ t('★ a store in agreement on both is still skipped', () => {
   assert.strictEqual(p.skip.length, 1);
 });
 
+console.log('\nnetwork build · the arrangement (b118)');
+
+t('★ a new store carries its position', () => {
+  const p = run([owned('a', 'North', { pos: 2 }), owned('b', 'East', { pos: 0 })]);
+  assert.strictEqual(p.create.find((c) => c.name === 'North').sort_order, 2);
+  assert.strictEqual(p.create.find((c) => c.name === 'East').sort_order, 0);
+});
+
+t('★★ "not arranged" is null, not zero', () => {
+  // A zero would silently pin every un-arranged store to the top and look deliberate. null sorts last, by name,
+  // so a network that nobody has arranged keeps exactly the order it has today.
+  assert.strictEqual(run([owned('a', 'Plain')]).create[0].sort_order, null);
+  assert.strictEqual(NB.orderOf({ pos: 0 }), 0, 'but a real zero is a real position');
+  assert.strictEqual(NB.orderOf({ pos: 'x' }), null);
+});
+
+t('★★ moving a BUILT store is an update, so everyone sees the new order', () => {
+  const built = { bridge_id: 'CBX', user_id: 'athi.north' };
+  const p = withLive([owned('n', 'North', { built, exposure: 'protected', pos: 1 })],
+    { CBX: { catalogue_visibility: 'network', purpose: '', sort_order: 4 } });
+  assert.strictEqual(p.update.length, 1);
+  assert.deepStrictEqual(p.update[0].order, { from: 4, to: 1 });
+  assert.strictEqual(p.update[0].to, undefined, 'visibility did not move');
+});
+
+t('★ same position, nothing to do', () => {
+  const built = { bridge_id: 'CBX', user_id: 'athi.north' };
+  const p = withLive([owned('n', 'North', { built, exposure: 'protected', pos: 3 })],
+    { CBX: { catalogue_visibility: 'network', purpose: '', sort_order: 3 } });
+  assert.strictEqual(p.update.length, 0);
+  assert.strictEqual(p.skip.length, 1);
+});
+
 t('an empty design is a valid plan that does nothing', () => {
   const p = run([]);
   assert.deepStrictEqual(p.counts, { create: 0, update: 0, invite: 0, skip: 0, problems: 0, narrowed: 0 });

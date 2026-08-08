@@ -200,8 +200,8 @@ router.post('/build', auth, async (req, res) => {
     const builtBridges = nodes.map((n) => n && n.built && n.built.bridge_id).filter(Boolean);
     if (builtBridges.length) {
       const lr = await query(
-        'SELECT bridge_id, catalogue_visibility, purpose FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
-      lr.rows.forEach((r) => { live[r.bridge_id] = { catalogue_visibility: r.catalogue_visibility, purpose: r.purpose }; });
+        'SELECT bridge_id, catalogue_visibility, purpose, sort_order FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
+      lr.rows.forEach((r) => { live[r.bridge_id] = { catalogue_visibility: r.catalogue_visibility, purpose: r.purpose, sort_order: r.sort_order }; });
     }
 
     // ── 3 · THE CAP ──────────────────────────────────────────────────────────────────────────────────────────
@@ -317,8 +317,8 @@ router.post('/build', auth, async (req, res) => {
         await db.query(
           `INSERT INTO identities
              (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility,
-              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose)
-           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12)`,
+              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order)
+           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13)`,
           [identity_id, bridge_id, c.name, c.handle, c.visibility,
            // The provisioning cap. visibility-cap.js: "a node provisioned BY A NETWORK is not its own business —
            // the operator decided, and the entity must not be able to undo that from its own profile screen."
@@ -326,7 +326,7 @@ router.post('/build', auth, async (req, res) => {
            meRow.country || 'IN', meRow.currency_code || 'INR', claim, expires, me,
            // The purpose, carried onto the store itself. Empty becomes NULL rather than '' so "never said" and
            // "deliberately blank" are not the same value in the column.
-           c.purpose || null]);
+           c.purpose || null, c.sort_order]);
 
         const myPath = parentPath + '.' + label(bridge_id);
         await db.query(
@@ -348,6 +348,9 @@ router.post('/build', auth, async (req, res) => {
         // written only when it actually changed. COALESCE on a null parameter leaves the column untouched.
         const nextVis = u.to || null;
         const nextPurpose = u.purpose ? (u.purpose.to || '') : null;
+        // -1 is the sentinel for "clear it": a null parameter already means "leave the column alone", so there has
+        // to be some other way to say "this store is no longer arranged".
+        const nextOrder = u.order ? (u.order.to === null ? -1 : u.order.to) : null;
         const r = await db.query(
           `UPDATE identities
               SET catalogue_visibility = COALESCE($1, catalogue_visibility),
@@ -357,10 +360,12 @@ router.post('/build', auth, async (req, res) => {
                                          COALESCE(params_override->'caps', '{}'::jsonb)
                                          || jsonb_build_object('catalogue_visibility', $1::text)) END,
                   purpose = CASE WHEN $4::text IS NULL THEN purpose
-                                 WHEN $4::text = '' THEN NULL ELSE $4::text END
+                                 WHEN $4::text = '' THEN NULL ELSE $4::text END,
+                  sort_order = CASE WHEN $5::int IS NULL THEN sort_order
+                                    WHEN $5::int = -1 THEN NULL ELSE $5::int END
             WHERE bridge_id = $2 AND created_by = $3
             RETURNING bridge_id`,
-          [nextVis, u.bridge_id, me, nextPurpose]);
+          [nextVis, u.bridge_id, me, nextPurpose, nextOrder]);
         // `created_by = me` is the authority check, and it is in the WHERE rather than a prior SELECT so there is
         // no gap between checking and writing. A store this operator did not mint simply does not match.
         if (!r.rows.length) {
@@ -368,7 +373,7 @@ router.post('/build', auth, async (req, res) => {
             reason: `"${u.name}" was not changed — you did not create that store.` });
           continue;
         }
-        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to, purpose: u.purpose });
+        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to, purpose: u.purpose, order: u.order });
       }
 
       // ── PARTNERS — a request, never a placement ────────────────────────────────────────────────────────────
