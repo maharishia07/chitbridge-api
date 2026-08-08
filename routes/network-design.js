@@ -713,7 +713,7 @@ router.get('/availability', auth, async (req, res) => {
      * the answer is identical either way, only the number of round trips differs. Code and migration can land in
      * either order, which is the same self-healing rule catalogue-view.js uses for b114.
      */
-    let single = null;
+    let single = null, degraded = null;
     // A comparison switch, not a feature flag: it forces the ORIGINAL fan-out so scripts/prove-network-search.js
     // can ask the same deployment the same question both ways. It can only make the answer slower, never wider —
     // the fan-out is the stricter path, so this cannot be used to see more than the caller is entitled to.
@@ -722,9 +722,21 @@ router.get('/availability', auth, async (req, res) => {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
       single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, q, SINGLE_LIMIT]);
     } catch (e) {
-      // Missing function (migration not applied yet) or the forced comparison → fall through to the fan-out.
-      // Anything else is a real error and must not be swallowed into a silently slower answer.
-      if (!e.forced && !/does not exist|undefined function/i.test(e.message || '')) throw e;
+      /**
+       * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.
+       *
+       * My first version rethrew anything that was not "function does not exist", which would have turned a
+       * mismatched column type or a permissions slip into a 500 on the whole locator. That is the wrong trade:
+       * the fan-out below produces the IDENTICAL answer by a slower route, so there is never a reason to give a
+       * person an error instead of a correct answer that took longer.
+       *
+       * It is not silent. The failure is logged loudly and the response is marked `degraded`, so a fast path that
+       * has quietly stopped working shows up rather than hiding behind results that still look right.
+       */
+      if (!e.forced) {
+        console.error('network_search unavailable — falling back to per-store fan-out:', e.message);
+        degraded = /does not exist|undefined function/i.test(e.message || '') ? null : 'search-index';
+      }
     }
     if (single) {
       /**
@@ -864,6 +876,8 @@ router.get('/availability', auth, async (req, res) => {
       total: out.total, stores_with_stock: out.stores_with_stock, stores_unknown: out.stores_unknown,
       // Said out loud rather than silently cut — a capped answer that looks complete is worse than a slow one.
       ...(truncated && { truncated: { asked: use.length, of: members.length } }),
+      // The answer is correct either way; this only says it arrived the slow way because the fast path broke.
+      ...(degraded && { degraded }),
     });
   } catch (err) {
     console.error('Availability search error:', err.message);
