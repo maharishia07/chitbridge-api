@@ -405,7 +405,12 @@ router.post('/build', auth, async (req, res) => {
       const invByKey = new Map(invited.map((i) => [i.key, i]));
       const nextNodes = nodes.map((n) => {
         const c = byKey.get(n.key);
-        if (c) return Object.assign({}, n, { built: { bridge_id: c.bridge_id, user_id: c.handle, at: new Date().toISOString() } });
+        // `visibility` is part of the receipt: it is what the store is ACTUALLY set to, so the design page can
+        // tell a drawing that has moved from a shop that has. Without it the tree redraws and a person quite
+        // reasonably assumes the live shops moved with it.
+        if (c) return Object.assign({}, n, { built: { bridge_id: c.bridge_id, user_id: c.handle, visibility: c.visibility, at: new Date().toISOString() } });
+        const up = updated.find((x) => x.key === n.key);
+        if (up) return Object.assign({}, n, { built: Object.assign({}, n.built, { visibility: up.to, at: new Date().toISOString() }) });
         const i = invByKey.get(n.key);
         if (i) return Object.assign({}, n, { invited: { bridge_id: i.bridge_id, status: i.status, at: new Date().toISOString() } });
         return n;
