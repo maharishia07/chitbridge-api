@@ -88,6 +88,9 @@ const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, no
   'catalogue-read.js',    // ENGINE: it decides WHO MAY CHANGE WHAT — owned is editable, referenced is not, per
                           // FIELD. That is the ownership rule the per-copy model rests on, not a display concern.
                           // (catalogue-view.js is adoption: it shapes a payload. This decides authority.)
+  'availability.js',      // ENGINE: "absent is not zero" and "fresh outranks stale" are CB's rules about what may
+                          // be asserted, not a trade's convention. A platform that lets a 200-day-old figure
+                          // outrank a live one has taken a position on truth, and this is where that lives.
   'network-build.js',     // ENGINE: it decides that an OWNED node is created and a PARTNER is only ever invited.
                           // That asymmetry is what keeps `network` visibility legitimate — a network that could
                           // absorb an outsider unilaterally could read their warehouse. Governance, not plumbing.
