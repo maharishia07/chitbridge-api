@@ -23,6 +23,9 @@ const catalogueView = require('../lib/catalogue-view');   // ONE visibility rule
 
 const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 const MAX_BYTES = 2_000_000;   // a design is a modest JSON tree; cap so this never becomes a document store
+// Rows returned by the single-query network search (b122). Generous enough that a real search is whole, bounded
+// so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
+const SINGLE_LIMIT = 200;
 
 // GET /api/network-design — this entity's saved design (null if none yet).
 router.get('/', auth, async (req, res) => {
@@ -697,6 +700,81 @@ router.get('/availability', auth, async (req, res) => {
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
     const like = '%' + q.toLowerCase() + '%';
     const rows = [];
+
+    /**
+     * ── ONE QUERY FOR THE WHOLE NETWORK (b122), WITH THE PER-STORE PATH AS A FALLBACK ────────────────────────
+     * Athi, 2026-08-08: *"can we build an alternate index for the network stores as a single catalogue?"*
+     *
+     * `network_search` is that, without a second copy of the data: a SECURITY DEFINER function that reads the LIVE
+     * rows across the network in one round trip and re-imposes the scoping it stepped outside of. Forty stores
+     * stops being forty queries.
+     *
+     * If the migration has not been applied, this falls through to the per-store path below rather than failing —
+     * the answer is identical either way, only the number of round trips differs. Code and migration can land in
+     * either order, which is the same self-healing rule catalogue-view.js uses for b114.
+     */
+    let single = null;
+    // A comparison switch, not a feature flag: it forces the ORIGINAL fan-out so scripts/prove-network-search.js
+    // can ask the same deployment the same question both ways. It can only make the answer slower, never wider —
+    // the fan-out is the stricter path, so this cannot be used to see more than the caller is entitled to.
+    const forceFanout = req.get('X-CB-Force-Fanout') === '1';
+    try {
+      if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
+      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, q, SINGLE_LIMIT]);
+    } catch (e) {
+      // Missing function (migration not applied yet) or the forced comparison → fall through to the fan-out.
+      // Anything else is a real error and must not be swallowed into a silently slower answer.
+      if (!e.forced && !/does not exist|undefined function/i.test(e.message || '')) throw e;
+    }
+    if (single) {
+      /**
+       * THE PLAN CAP, APPLIED THROUGH THE ONE MODULE THAT OWNS IT.
+       *
+       * SQL narrowed to this network, to stores that CHOSE public/network, and to the text match. It deliberately
+       * did not apply the plan cap — that rule lives in lib/visibility-cap.js and must have exactly one
+       * implementation, or the fast path will one day show a store the slow path hides. Same predicate as
+       * visibleStores(), same module, evaluated once per store rather than once per row.
+       */
+      const capOk = new Map();
+      const allowed = single.rows.filter((r) => {
+        if (!capOk.has(r.entity_id)) {
+          const cap = visibilityCap.capOf({ plan: r.plan, paramsOverride: r.params_override || {} });
+          capOk.set(r.entity_id, visibilityCap.RANK[visibilityCap.effective(r.catalogue_visibility || 'private', cap)] > 0);
+        }
+        return capOk.get(r.entity_id);
+      });
+      for (const r of allowed) {
+        const d = r.item_data || {};
+        const av = (d.avail && typeof d.avail === 'object') ? d.avail : null;
+        const amt = money.amountOfLoose(d.price);
+        rows.push({
+          store: r.store_name, bridge_id: r.bridge_id, city: r.city || null, entity_id: r.entity_id,
+          price: Number.isFinite(amt) ? amt : null,
+          price_currency: (money.isMoney(d.price) && d.price.currency) || r.currency_code || null,
+          lat: r.lat == null ? null : Number(r.lat), lng: r.lng == null ? null : Number(r.lng),
+          service_km: r.service_km == null ? null : Number(r.service_km),
+          dispatch_days: r.dispatch_days == null ? null : Number(r.dispatch_days),
+          ship_within_days: r.ship_within_days == null ? null : Number(r.ship_within_days),
+          ship_beyond_days: r.ship_beyond_days == null ? null : Number(r.ship_beyond_days),
+          item_id: r.item_id, name: d.name || d.code || '(unnamed)', code: d.code || d.sku || null,
+          currency: r.currency_code || null,
+          qty: av && av.qty !== undefined && av.qty !== null ? Number(av.qty) : null,
+          source: av ? av.source : null,
+          as_of: av ? av.as_of : null,
+          is_me: r.entity_id === me,
+        });
+      }
+      const out1 = availability.answer(rows, { from });
+      return res.json({
+        q, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
+        rows: out1.rows, summary: out1.summary, total: out1.total,
+        stores_with_stock: out1.stores_with_stock, stores_unknown: out1.stores_unknown,
+        one_query: true,
+        // The cap is SAID, not silently applied. A capped answer that looks complete is worse than a slow one —
+        // the same rule the per-store path below follows when it has to leave members unasked.
+        ...(single.rows.length >= SINGLE_LIMIT && { truncated: { shown: SINGLE_LIMIT, note: 'narrow the search' } }),
+      });
+    }
 
     /**
      * ⚠️ ONE ROUND TRIP PER STORE, NOT THREE — AND THEY GO TOGETHER.
