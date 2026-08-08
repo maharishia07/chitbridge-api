@@ -200,8 +200,8 @@ router.post('/build', auth, async (req, res) => {
     const builtBridges = nodes.map((n) => n && n.built && n.built.bridge_id).filter(Boolean);
     if (builtBridges.length) {
       const lr = await query(
-        'SELECT bridge_id, catalogue_visibility FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
-      lr.rows.forEach((r) => { live[r.bridge_id] = { catalogue_visibility: r.catalogue_visibility }; });
+        'SELECT bridge_id, catalogue_visibility, purpose FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
+      lr.rows.forEach((r) => { live[r.bridge_id] = { catalogue_visibility: r.catalogue_visibility, purpose: r.purpose }; });
     }
 
     // ── 3 · THE CAP ──────────────────────────────────────────────────────────────────────────────────────────
@@ -317,13 +317,16 @@ router.post('/build', auth, async (req, res) => {
         await db.query(
           `INSERT INTO identities
              (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility,
-              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by)
-           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11)`,
+              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose)
+           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12)`,
           [identity_id, bridge_id, c.name, c.handle, c.visibility,
            // The provisioning cap. visibility-cap.js: "a node provisioned BY A NETWORK is not its own business —
            // the operator decided, and the entity must not be able to undo that from its own profile screen."
            JSON.stringify({ caps: { catalogue_visibility: c.visibility } }),
-           meRow.country || 'IN', meRow.currency_code || 'INR', claim, expires, me]);
+           meRow.country || 'IN', meRow.currency_code || 'INR', claim, expires, me,
+           // The purpose, carried onto the store itself. Empty becomes NULL rather than '' so "never said" and
+           // "deliberately blank" are not the same value in the column.
+           c.purpose || null]);
 
         const myPath = parentPath + '.' + label(bridge_id);
         await db.query(
@@ -341,16 +344,23 @@ router.post('/build', auth, async (req, res) => {
       // Leaving the old cap behind would let a store that was opened to `public` be narrowed back by nobody, or a
       // store closed to `private` still carry a cap that permits publishing.
       for (const u of plan.update) {
+        // Visibility and purpose move independently — a node can be in `update` for either or both — so each is
+        // written only when it actually changed. COALESCE on a null parameter leaves the column untouched.
+        const nextVis = u.to || null;
+        const nextPurpose = u.purpose ? (u.purpose.to || '') : null;
         const r = await db.query(
           `UPDATE identities
-              SET catalogue_visibility = $1,
-                  params_override = COALESCE(params_override, '{}'::jsonb)
+              SET catalogue_visibility = COALESCE($1, catalogue_visibility),
+                  params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE
+                                    COALESCE(params_override, '{}'::jsonb)
                                     || jsonb_build_object('caps',
                                          COALESCE(params_override->'caps', '{}'::jsonb)
-                                         || jsonb_build_object('catalogue_visibility', $1::text))
+                                         || jsonb_build_object('catalogue_visibility', $1::text)) END,
+                  purpose = CASE WHEN $4::text IS NULL THEN purpose
+                                 WHEN $4::text = '' THEN NULL ELSE $4::text END
             WHERE bridge_id = $2 AND created_by = $3
             RETURNING bridge_id`,
-          [u.to, u.bridge_id, me]);
+          [nextVis, u.bridge_id, me, nextPurpose]);
         // `created_by = me` is the authority check, and it is in the WHERE rather than a prior SELECT so there is
         // no gap between checking and writing. A store this operator did not mint simply does not match.
         if (!r.rows.length) {
@@ -358,7 +368,7 @@ router.post('/build', auth, async (req, res) => {
             reason: `"${u.name}" was not changed — you did not create that store.` });
           continue;
         }
-        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to });
+        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to, purpose: u.purpose });
       }
 
       // ── PARTNERS — a request, never a placement ────────────────────────────────────────────────────────────
@@ -410,7 +420,8 @@ router.post('/build', auth, async (req, res) => {
         // reasonably assumes the live shops moved with it.
         if (c) return Object.assign({}, n, { built: { bridge_id: c.bridge_id, user_id: c.handle, visibility: c.visibility, at: new Date().toISOString() } });
         const up = updated.find((x) => x.key === n.key);
-        if (up) return Object.assign({}, n, { built: Object.assign({}, n.built, { visibility: up.to, at: new Date().toISOString() }) });
+        if (up) return Object.assign({}, n, { built: Object.assign({}, n.built,
+          up.to ? { visibility: up.to } : {}, { at: new Date().toISOString() }) });
         const i = invByKey.get(n.key);
         if (i) return Object.assign({}, n, { invited: { bridge_id: i.bridge_id, status: i.status, at: new Date().toISOString() } });
         return n;

@@ -117,9 +117,15 @@ async function disconnect({ edgeId, settle = false }) {
 // ---- reads ----
 async function subtree(entityId) {
   const e = await getById(entityId); if (!e) throw err(404, "not found", "NOT_FOUND");
+  // b117: the PURPOSE joined in, so a member reading the tree sees why each branch exists rather than a list of
+  // bare names. One LEFT JOIN on the same query — never a lookup per node, which at any real depth is the O(1)
+  // rule broken in the least visible way.
   const { rows } = await pool.query(
-    `select id, bridge_id, name, path::text, nlevel(path)-nlevel($1::ltree) as depth
-     from cb_entity where path <@ ($1::ltree) order by path`, [e.path]);
+    `select e.id, e.bridge_id, e.name, e.path::text, nlevel(e.path)-nlevel($1::ltree) as depth,
+            i.purpose
+       from cb_entity e
+       left join identities i on i.bridge_id = e.bridge_id and i.identity_type = 'entity'
+      where e.path <@ ($1::ltree) order by e.path`, [e.path]);
   return rows;
 }
 async function connections(entityId) {

@@ -304,6 +304,36 @@ t('★ a deeper chain narrows all the way down', () => {
   assert.deepStrictEqual(p.create.map((x) => x.name + '=' + x.visibility), ['A=public', 'B=private', 'C=private']);
 });
 
+console.log('\nnetwork build · the purpose travels with the store');
+
+t('★ a new store carries its purpose', () => {
+  const p = run([owned('a', 'Cold Store', { purpose: '  Chilled stock for the east branch  ' })]);
+  assert.strictEqual(p.create[0].purpose, 'Chilled stock for the east branch', 'trimmed, not raw');
+  assert.strictEqual(run([owned('b', 'Plain')]).create[0].purpose, '');
+});
+
+t('★ it is clamped to the column, so a long line can never fail a build', () => {
+  const p = run([owned('a', 'Wordy', { purpose: 'x'.repeat(400) })]);
+  assert.strictEqual(p.create[0].purpose.length, NB.MAX_PURPOSE);
+});
+
+t('★★ editing the purpose of a BUILT store is an update, not a silent divergence', () => {
+  const built = { bridge_id: 'CBX', user_id: 'athi.depot' };
+  const p = withLive([owned('d', 'Depot', { built, exposure: 'protected', purpose: 'Now the cold store' })],
+    { CBX: { catalogue_visibility: 'network', purpose: 'Old text' } });
+  assert.strictEqual(p.update.length, 1);
+  assert.deepStrictEqual(p.update[0].purpose, { from: 'Old text', to: 'Now the cold store' });
+  assert.strictEqual(p.update[0].to, undefined, 'visibility did not move, so it is not claimed to have');
+});
+
+t('★ a store in agreement on both is still skipped', () => {
+  const built = { bridge_id: 'CBX', user_id: 'athi.depot' };
+  const p = withLive([owned('d', 'Depot', { built, exposure: 'protected', purpose: 'Same' })],
+    { CBX: { catalogue_visibility: 'network', purpose: 'Same' } });
+  assert.strictEqual(p.update.length, 0);
+  assert.strictEqual(p.skip.length, 1);
+});
+
 t('an empty design is a valid plan that does nothing', () => {
   const p = run([]);
   assert.deepStrictEqual(p.counts, { create: 0, update: 0, invite: 0, skip: 0, problems: 0, narrowed: 0 });
