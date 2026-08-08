@@ -336,6 +336,7 @@ router.post('/build', auth, async (req, res) => {
 
         pathOf.set(c.key, myPath);
         created.push({ key: c.key, name: c.name, handle: c.handle, bridge_id, visibility: c.visibility,
+                       purpose: c.purpose || null, sort_order: c.sort_order,
                        claim_code: claim, expires_at: expires, path: myPath });
       }
 
