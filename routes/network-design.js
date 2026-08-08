@@ -592,6 +592,81 @@ async function mapLimit(items, limit, fn) {
   return out;
 }
 
+/**
+ * The stores in MY network that I am allowed to see, resolved once.
+ *
+ * Shared by the availability search and the store list so the two can never disagree about who is in the network
+ * or who may be looked at — two answers to "which stores?" is how one of them quietly becomes wrong.
+ */
+async function visibleStores(meRow) {
+  let members = [];
+  try {
+    const r = await query(
+      `SELECT e.bridge_id FROM cb_entity e
+        WHERE e.path <@ (SELECT subpath(path, 0, 1) FROM cb_entity WHERE bridge_id = $1 LIMIT 1)
+        ORDER BY nlevel(e.path), e.name`, [meRow.bridge_id]);
+    members = r.rows.map((x) => x.bridge_id);
+  } catch (_) { members = []; }
+  if (!members.length) return { members: [], visible: [], truncated: null };
+
+  const truncated = members.length > MAX_STORES ? { asked: MAX_STORES, of: members.length } : null;
+  const use = members.slice(0, MAX_STORES);
+
+  const ents = (await query(
+    `SELECT identity_id, bridge_id, display_name, purpose, city, lat, lng, currency_code, service_km,
+            dispatch_days, ship_within_days, ship_beyond_days, sort_order,
+            catalogue_visibility, plan, params_override
+       FROM identities
+      WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`, [use])).rows;
+
+  const visible = ents.filter((ent) => {
+    const chosen = ent.catalogue_visibility;
+    if (chosen !== 'public' && chosen !== 'network') return false;
+    const cap = visibilityCap.capOf({ plan: ent.plan, paramsOverride: ent.params_override || {} });
+    return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
+  });
+  return { members: use, visible, truncated };
+}
+
+/**
+ * GET /api/network-design/stores — who is in my network, and where.
+ *
+ * Athi, 2026-08-08: *"do the browse store catalogue from network, same as supplier format."* Browsing needs a LIST
+ * before it needs a catalogue, and the list must carry each store's identity so the existing supplier catalogue
+ * reader can be pointed at it — the same reader, so the same speed, rather than a second one that drifts.
+ */
+router.get('/stores', auth, async (req, res) => {
+  try {
+    const me = req.identity.parent_entity_id || req.identity.identity_id;
+    const meRow = (await query(
+      'SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
+
+    const { visible, truncated } = await visibleStores(meRow);
+    if (!visible.length) return res.json({ stores: [], not_in_network: true });
+
+    const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
+    const stores = visible.map((e) => ({
+      entity_id: e.identity_id, bridge_id: e.bridge_id, name: e.display_name,
+      purpose: e.purpose || null, city: e.city || null, currency: e.currency_code || null,
+      km: availability.distanceKm(from, { lat: e.lat == null ? null : Number(e.lat), lng: e.lng == null ? null : Number(e.lng) }),
+      is_me: e.identity_id === me,
+      sort_order: e.sort_order == null ? null : Number(e.sort_order),
+    }));
+    // The operator's arrangement (b118) first, then by name — the same order the network tree uses, so a person
+    // reading both sees one network rather than two lists that happen to hold the same stores.
+    stores.sort((a, b) => {
+      const ao = a.sort_order == null ? Number.MAX_SAFE_INTEGER : a.sort_order;
+      const bo = b.sort_order == null ? Number.MAX_SAFE_INTEGER : b.sort_order;
+      return ao !== bo ? ao - bo : String(a.name).localeCompare(String(b.name));
+    });
+    res.json({ stores, ...(truncated && { truncated }) });
+  } catch (err) {
+    console.error('Network stores error:', err.message);
+    res.status(500).json({ error: 'Load failed', message: safeErr(err) });
+  }
+});
+
 router.get('/availability', auth, async (req, res) => {
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
