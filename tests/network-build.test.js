@@ -372,7 +372,25 @@ console.log('\nnetwork build · where the store is (b119)');
 t('★ a place is carried onto the store', () => {
   const p = run([owned('a', 'Coimbatore', { place: { address: ' 12 Avinashi Rd ', city: 'Coimbatore', country: 'IN', lat: 11.0168, lng: 76.9558, km: '50' } })]);
   assert.deepStrictEqual(p.create[0].place,
-    { address: '12 Avinashi Rd', city: 'Coimbatore', country: 'IN', lat: 11.0168, lng: 76.9558, service_km: 50 });
+    { address: '12 Avinashi Rd', city: 'Coimbatore', country: 'IN', currency: null, tz: null,
+      lat: 11.0168, lng: 76.9558, service_km: 50 });
+});
+
+t('★★ a store may trade in its OWN currency — and blank means the network\'s', () => {
+  // Athi, 2026-08-08: currency, place and time are what make a network global. Money is stamped per entity and
+  // never converted, so this is a real decision rather than a display preference.
+  const p = run([owned('a', 'Colombo', { place: { city: 'Colombo', country: 'LK', currency: 'lkr', tz: 'Asia/Colombo' } })]);
+  assert.strictEqual(p.create[0].place.currency, 'LKR', 'normalised to an ISO code');
+  assert.strictEqual(p.create[0].place.tz, 'Asia/Colombo');
+  assert.strictEqual(run([owned('b', 'Erode', { place: { city: 'Erode' } })]).create[0].place.currency, null,
+    'blank must stay null — a pre-filled inherited value looks like a decision somebody made');
+});
+
+t('★ "rupees" is not a currency code', () => {
+  // Refused rather than stored: a bad code reaches the money type, and money that cannot be compared is worse
+  // than money that is absent.
+  assert.strictEqual(NB.placeOf({ place: { city: 'X', currency: 'rupees' } }).currency, null);
+  assert.strictEqual(NB.placeOf({ place: { city: 'X', currency: 'in' } }).currency, null);
 });
 
 t('★★ a coordinate out of range is refused, not stored', () => {

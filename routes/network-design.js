@@ -329,7 +329,9 @@ router.post('/build', auth, async (req, res) => {
            // The store's own country if the design stated one, else the operator's. There is exactly ONE country
            // column and it was very nearly listed twice — Postgres refuses that outright, which is the good case.
            (c.place && c.place.country) || meRow.country || 'IN',
-           meRow.currency_code || 'INR', claim, expires, me,
+           // The store's OWN currency when the design set one — a store trading in another country is stamped
+           // in ITS currency, and money is never converted afterwards. Otherwise the network's.
+           (c.place && c.place.currency) || meRow.currency_code || 'INR', claim, expires, me,
            // The purpose, carried onto the store itself. Empty becomes NULL rather than '' so "never said" and
            // "deliberately blank" are not the same value in the column.
            c.purpose || null, c.sort_order,
@@ -380,7 +382,9 @@ router.post('/build', auth, async (req, res) => {
                   country    = CASE WHEN $6::jsonb IS NULL THEN country    ELSE COALESCE($6->>'country', country) END,
                   lat        = CASE WHEN $6::jsonb IS NULL THEN lat        ELSE ($6->>'lat')::numeric END,
                   lng        = CASE WHEN $6::jsonb IS NULL THEN lng        ELSE ($6->>'lng')::numeric END,
-                  service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END
+                  service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END,
+                  currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code
+                                       ELSE COALESCE($6->>'currency', currency_code) END
             WHERE bridge_id = $2 AND created_by = $3
             RETURNING bridge_id`,
           [nextVis, u.bridge_id, me, nextPurpose, nextOrder,
