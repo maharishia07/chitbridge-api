@@ -7,6 +7,7 @@ const { query, withEntity } = require('../db');
 const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const money = require('../lib/money');          // a price is never a bare number — stamped on write
+const availability = require('../lib/availability');   // a quantity is not an answer without a date
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
@@ -495,6 +496,45 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) { fail(res, e, 'Update failed'); }
 });
+
+/**
+ * PUT /api/products/:id/availability   { qty, source?, as_of? }
+ *
+ * What this store HAS of this item, and when that was last true.
+ *
+ * ── WHY THIS IS NOT `PATCH /:id` WITH A FIELD ───────────────────────────────────────────────────────────────
+ * Availability is not a catalogue field. A catalogue field describes the PRODUCT and is validated against the
+ * schema; this describes the SHELF, changes on its own timetable, and is written by a connector far more often
+ * than by a person. Putting it through validateItem would mean a stock update could be refused because an
+ * unrelated required column was blank — a feed failing for a reason that has nothing to do with the feed.
+ *
+ * It is written into `item_data.avail`, so it lives with the item, inherits the item's per-entity RLS, and needs
+ * no new table. Only the owner can write it: the UPDATE is scoped to entity_id, so there is no window between
+ * checking and writing.
+ */
+router.put('/:id/availability', auth,
+  [ body('qty').exists(), body('source').optional().isString(), body('as_of').optional().isString() ],
+  validate,
+  async (req, res) => {
+    try {
+      const entity_id = ctx(req);
+      const rec = availability.stamp(req.body);
+      if (!rec) {
+        return res.status(400).json({ error: 'Bad quantity',
+          message: 'A quantity must be zero or more. A negative figure means the feed is wrong, and storing it '
+                 + 'would make a full shelf look empty.' });
+      }
+      const r = await withEntity(entity_id, (db) => db.query(
+        `UPDATE catalogue_items
+            SET item_data = COALESCE(item_data, '{}'::jsonb) || jsonb_build_object('avail', $1::jsonb),
+                updated_at = NOW()
+          WHERE item_id = $2 AND entity_id = $3
+        RETURNING item_id, item_data`,
+        [JSON.stringify(rec), req.params.id, entity_id]));
+      if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
+      res.json({ message: 'Availability updated', availability: rec });
+    } catch (e) { fail(res, e, 'Availability update failed'); }
+  });
 
 // DELETE — soft remove
 router.delete('/:id', auth, async (req, res) => {

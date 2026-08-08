@@ -17,6 +17,8 @@ const handleLib = require('../lib/handle');
 const networkBuild = require('../lib/network-build');
 const visibilityCap = require('../lib/visibility-cap');
 const devOtp = require('../lib/dev-otp');
+const availability = require('../lib/availability');      // a quantity is not an answer without a date
+const catalogueView = require('../lib/catalogue-view');   // ONE visibility rule — stock follows the catalogue's
 
 const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 const MAX_BYTES = 2_000_000;   // a design is a modest JSON tree; cap so this never becomes a document store
@@ -535,6 +537,112 @@ router.post('/reissue', auth, async (req, res) => {
   } catch (err) {
     console.error('Reissue error:', err.message);
     res.status(500).json({ error: 'Re-issue failed', message: safeErr(err) });
+  }
+});
+
+/**
+ * GET /api/network-design/availability?q=<text>
+ *
+ * "Who in my network has this, and how fast can it get here?"
+ *
+ * Athi, 2026-08-08: *"if there is a query about one product, how can we provide where exactly the product is and
+ * how quickly this can be sent across?"*
+ *
+ * ── WHO MAY SEE WHOSE STOCK ─────────────────────────────────────────────────────────────────────────────────
+ * The same rule as the catalogue, and deliberately not a new one: a member sees a sibling's items when that
+ * sibling's catalogue resolves as readable FOR THIS VIEWER — `public`, or `network` with both on one tree. A
+ * private store is absent, and absent means absent: it is not listed as "unknown", because that would confirm it
+ * exists. The existence oracle closed on 2026-08-06 stays closed.
+ *
+ * ── ABSENT IS NOT ZERO ──────────────────────────────────────────────────────────────────────────────────────
+ * A store that carries the item but has never reported a quantity comes back `qty: null` and is COUNTED as
+ * unknown, all the way to the summary. Rendering that as 0 would make a silent store look empty and route the
+ * network around a shelf that may be full.
+ *
+ * ── COST ────────────────────────────────────────────────────────────────────────────────────────────────────
+ * One query for the members, then one visibility resolve + one item read per member — O(members), capped and
+ * REPORTED, exactly as the network storefront does it. There is no single query that answers for all of them
+ * because each store's catalogue is its own, which is the point rather than a limitation.
+ */
+const MAX_STORES = 40;
+
+router.get('/availability', auth, async (req, res) => {
+  try {
+    const me = req.identity.parent_entity_id || req.identity.identity_id;
+    const q = String(req.query.q || '').trim();
+    if (q.length < 2) {
+      return res.status(400).json({ error: 'Bad request', message: 'Search for a product — two characters or more.' });
+    }
+
+    const meRow = (await query(
+      'SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
+
+    // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
+    let members = [];
+    try {
+      const r = await query(
+        `SELECT e.bridge_id FROM cb_entity e
+          WHERE e.path <@ (SELECT subpath(path, 0, 1) FROM cb_entity WHERE bridge_id = $1 LIMIT 1)
+          ORDER BY nlevel(e.path), e.name`, [meRow.bridge_id]);
+      members = r.rows.map((x) => x.bridge_id);
+    } catch (_) { members = []; }
+    if (!members.length) {
+      return res.json({ q, rows: [], summary: 'This business is not part of a network.', not_in_network: true });
+    }
+    const truncated = members.length > MAX_STORES;
+    const use = members.slice(0, MAX_STORES);
+
+    const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
+    const like = '%' + q.toLowerCase() + '%';
+    const rows = [];
+
+    for (const bid of use) {
+      const ent = (await query(
+        `SELECT identity_id, bridge_id, display_name, city, lat, lng, currency_code, service_km
+           FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active'`, [bid])).rows[0];
+      if (!ent) continue;
+
+      // The catalogue's own gate, with ME as the viewer. Not a second rule invented for stock.
+      const vis = await catalogueView.catalogueVisibility({
+        entity_id: ent.identity_id, query, visibilityCap, viewer: meRow.bridge_id });
+      if (vis === 'private') continue;                       // absent, and not reported as anything
+
+      const items = await withEntity(ent.identity_id, (db) => db.query(
+        `SELECT item_id, item_data FROM catalogue_items
+          WHERE entity_id = $1 AND is_active = true
+            AND (LOWER(item_data->>'name') LIKE $2 OR LOWER(item_data->>'code') LIKE $2 OR LOWER(item_data->>'sku') LIKE $2)
+          LIMIT 5`, [ent.identity_id, like]));
+
+      for (const it of items.rows) {
+        const d = it.item_data || {};
+        const av = (d.avail && typeof d.avail === 'object') ? d.avail : null;
+        rows.push({
+          store: ent.display_name, bridge_id: ent.bridge_id, city: ent.city || null,
+          lat: ent.lat == null ? null : Number(ent.lat), lng: ent.lng == null ? null : Number(ent.lng),
+          service_km: ent.service_km == null ? null : Number(ent.service_km),
+          item_id: it.item_id, name: d.name || d.code || '(unnamed)', code: d.code || d.sku || null,
+          currency: ent.currency_code || null,
+          // null when the store has never said. NEVER 0 — see the header.
+          qty: av && av.qty !== undefined && av.qty !== null ? Number(av.qty) : null,
+          source: av ? av.source : null,
+          as_of: av ? av.as_of : null,
+          is_me: ent.identity_id === me,
+        });
+      }
+    }
+
+    const out = availability.answer(rows, { from });
+    res.json({
+      q, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
+      rows: out.rows, summary: out.summary,
+      total: out.total, stores_with_stock: out.stores_with_stock, stores_unknown: out.stores_unknown,
+      // Said out loud rather than silently cut — a capped answer that looks complete is worse than a slow one.
+      ...(truncated && { truncated: { asked: use.length, of: members.length } }),
+    });
+  } catch (err) {
+    console.error('Availability search error:', err.message);
+    res.status(500).json({ error: 'Search failed', message: safeErr(err) });
   }
 });
 
