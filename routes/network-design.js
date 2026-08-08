@@ -200,8 +200,9 @@ router.post('/build', auth, async (req, res) => {
     const builtBridges = nodes.map((n) => n && n.built && n.built.bridge_id).filter(Boolean);
     if (builtBridges.length) {
       const lr = await query(
-        'SELECT bridge_id, catalogue_visibility, purpose, sort_order FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
-      lr.rows.forEach((r) => { live[r.bridge_id] = { catalogue_visibility: r.catalogue_visibility, purpose: r.purpose, sort_order: r.sort_order }; });
+        'SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, lat, lng, service_km FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
+      // The whole row: the planner compares visibility, purpose, order AND place against it.
+      lr.rows.forEach((r) => { live[r.bridge_id] = r; });
     }
 
     // ── 3 · THE CAP ──────────────────────────────────────────────────────────────────────────────────────────
@@ -317,16 +318,24 @@ router.post('/build', auth, async (req, res) => {
         await db.query(
           `INSERT INTO identities
              (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility,
-              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order)
-           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13)`,
+              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order,
+              address, city, lat, lng, service_km)
+           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13,
+                   $14, $15, $16, $17, $18)`,
           [identity_id, bridge_id, c.name, c.handle, c.visibility,
            // The provisioning cap. visibility-cap.js: "a node provisioned BY A NETWORK is not its own business —
            // the operator decided, and the entity must not be able to undo that from its own profile screen."
            JSON.stringify({ caps: { catalogue_visibility: c.visibility } }),
-           meRow.country || 'IN', meRow.currency_code || 'INR', claim, expires, me,
+           // The store's own country if the design stated one, else the operator's. There is exactly ONE country
+           // column and it was very nearly listed twice — Postgres refuses that outright, which is the good case.
+           (c.place && c.place.country) || meRow.country || 'IN',
+           meRow.currency_code || 'INR', claim, expires, me,
            // The purpose, carried onto the store itself. Empty becomes NULL rather than '' so "never said" and
            // "deliberately blank" are not the same value in the column.
-           c.purpose || null, c.sort_order]);
+           c.purpose || null, c.sort_order,
+           // b119 — where it is. A place the design never stated stays NULL rather than becoming an empty string.
+           (c.place && c.place.address) || null, (c.place && c.place.city) || null,
+           c.place ? c.place.lat : null, c.place ? c.place.lng : null, c.place ? c.place.service_km : null]);
 
         const myPath = parentPath + '.' + label(bridge_id);
         await db.query(
@@ -336,7 +345,7 @@ router.post('/build', auth, async (req, res) => {
 
         pathOf.set(c.key, myPath);
         created.push({ key: c.key, name: c.name, handle: c.handle, bridge_id, visibility: c.visibility,
-                       purpose: c.purpose || null, sort_order: c.sort_order,
+                       purpose: c.purpose || null, sort_order: c.sort_order, place: c.place || null,
                        claim_code: claim, expires_at: expires, path: myPath });
       }
 
@@ -363,10 +372,19 @@ router.post('/build', auth, async (req, res) => {
                   purpose = CASE WHEN $4::text IS NULL THEN purpose
                                  WHEN $4::text = '' THEN NULL ELSE $4::text END,
                   sort_order = CASE WHEN $5::int IS NULL THEN sort_order
-                                    WHEN $5::int = -1 THEN NULL ELSE $5::int END
+                                    WHEN $5::int = -1 THEN NULL ELSE $5::int END,
+                  -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six
+                  -- independent COALESCEs would let a half-applied place through if one ever went missing.
+                  address    = CASE WHEN $6::jsonb IS NULL THEN address    ELSE $6->>'address' END,
+                  city       = CASE WHEN $6::jsonb IS NULL THEN city       ELSE $6->>'city' END,
+                  country    = CASE WHEN $6::jsonb IS NULL THEN country    ELSE COALESCE($6->>'country', country) END,
+                  lat        = CASE WHEN $6::jsonb IS NULL THEN lat        ELSE ($6->>'lat')::numeric END,
+                  lng        = CASE WHEN $6::jsonb IS NULL THEN lng        ELSE ($6->>'lng')::numeric END,
+                  service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END
             WHERE bridge_id = $2 AND created_by = $3
             RETURNING bridge_id`,
-          [nextVis, u.bridge_id, me, nextPurpose, nextOrder]);
+          [nextVis, u.bridge_id, me, nextPurpose, nextOrder,
+           u.place ? JSON.stringify(u.place.to) : null]);
         // `created_by = me` is the authority check, and it is in the WHERE rather than a prior SELECT so there is
         // no gap between checking and writing. A store this operator did not mint simply does not match.
         if (!r.rows.length) {
@@ -374,7 +392,7 @@ router.post('/build', auth, async (req, res) => {
             reason: `"${u.name}" was not changed — you did not create that store.` });
           continue;
         }
-        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to, purpose: u.purpose, order: u.order });
+        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to, purpose: u.purpose, order: u.order, place: u.place });
       }
 
       // ── PARTNERS — a request, never a placement ────────────────────────────────────────────────────────────

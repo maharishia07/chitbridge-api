@@ -122,7 +122,7 @@ async function subtree(entityId) {
   // rule broken in the least visible way.
   const { rows } = await pool.query(
     `select e.id, e.bridge_id, e.name, e.path::text, nlevel(e.path)-nlevel($1::ltree) as depth,
-            i.purpose, i.sort_order
+            i.purpose, i.sort_order, i.city, i.lat, i.lng, i.service_km
        from cb_entity e
        left join identities i on i.bridge_id = e.bridge_id and i.identity_type = 'entity'
       where e.path <@ ($1::ltree) order by e.path`, [e.path]);

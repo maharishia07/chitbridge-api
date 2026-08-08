@@ -367,6 +367,59 @@ t('★ same position, nothing to do', () => {
   assert.strictEqual(p.skip.length, 1);
 });
 
+console.log('\nnetwork build · where the store is (b119)');
+
+t('★ a place is carried onto the store', () => {
+  const p = run([owned('a', 'Coimbatore', { place: { address: ' 12 Avinashi Rd ', city: 'Coimbatore', country: 'IN', lat: 11.0168, lng: 76.9558, km: '50' } })]);
+  assert.deepStrictEqual(p.create[0].place,
+    { address: '12 Avinashi Rd', city: 'Coimbatore', country: 'IN', lat: 11.0168, lng: 76.9558, service_km: 50 });
+});
+
+t('★★ a coordinate out of range is refused, not stored', () => {
+  // A latitude of 200 is not a place. Storing it would put the store somewhere that does not exist and every
+  // distance from it would be wrong — worse than having no coordinate at all.
+  const p = run([owned('a', 'Nowhere', { place: { address: 'somewhere', lat: 200, lng: 76.9 } })]);
+  assert.strictEqual(p.create[0].place.lat, null);
+  assert.strictEqual(p.create[0].place.address, 'somewhere', 'the address survives');
+});
+
+t('★★ half a coordinate is no coordinate', () => {
+  // One of the pair alone would place the store on a meridian — a confident, wrong point.
+  const p = run([owned('a', 'Half', { place: { lat: 11.0168 } })]);
+  assert.strictEqual(p.create[0].place, null, 'nothing usable was said');
+});
+
+t('★ nothing said → no place at all', () => {
+  assert.strictEqual(run([owned('a', 'Plain')]).create[0].place, null);
+  assert.strictEqual(NB.placeOf({ place: { address: '  ' } }), null);
+});
+
+t('★ a service radius needs a point, and zero is not a radius', () => {
+  assert.strictEqual(NB.placeOf({ place: { lat: 1, lng: 1, km: 0 } }).service_km, null);
+  assert.strictEqual(NB.placeOf({ place: { lat: 1, lng: 1, km: 50.4 } }).service_km, 50);
+});
+
+t('★★ moving a BUILT store updates its place, so the map stops sending people to the old one', () => {
+  const built = { bridge_id: 'CBX', user_id: 'athi.cbe' };
+  const p = withLive([owned('c', 'Coimbatore', { built, exposure: 'protected',
+      place: { address: 'New Rd', city: 'Coimbatore', country: 'IN', lat: 11.1, lng: 76.9, km: 60 } })],
+    { CBX: { catalogue_visibility: 'network', purpose: '', sort_order: null,
+             address: 'Old Rd', city: 'Coimbatore', country: 'IN', lat: 11.1, lng: 76.9, service_km: 60 } });
+  assert.strictEqual(p.update.length, 1);
+  assert.strictEqual(p.update[0].place.from.address, 'Old Rd');
+  assert.strictEqual(p.update[0].place.to.address, 'New Rd');
+});
+
+t('★ an unchanged place is not an update', () => {
+  const built = { bridge_id: 'CBX', user_id: 'athi.cbe' };
+  const same = { address: 'Same Rd', city: 'CBE', country: 'IN', lat: 11.1, lng: 76.9 };
+  const p = withLive([owned('c', 'CBE', { built, exposure: 'protected', place: same })],
+    { CBX: { catalogue_visibility: 'network', purpose: '', sort_order: null,
+             address: 'Same Rd', city: 'CBE', country: 'IN', lat: 11.1, lng: 76.9, service_km: null } });
+  assert.strictEqual(p.update.length, 0);
+  assert.strictEqual(p.skip.length, 1);
+});
+
 t('an empty design is a valid plan that does nothing', () => {
   const p = run([]);
   assert.deepStrictEqual(p.counts, { create: 0, update: 0, invite: 0, skip: 0, problems: 0, narrowed: 0 });
