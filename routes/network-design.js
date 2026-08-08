@@ -572,6 +572,26 @@ router.post('/reissue', auth, async (req, res) => {
  */
 const MAX_STORES = 40;
 
+/**
+ * Run `fn` over `items`, at most `limit` in flight. Results keep the input order.
+ *
+ * Deliberately not Promise.all: the connection pool is 10, and an unbounded fan-out over a large network takes
+ * every client the server has. A search that is fast for one person by making the API unavailable to everyone
+ * else is not fast, it is selfish.
+ */
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i], i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
 router.get('/availability', auth, async (req, res) => {
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
@@ -633,14 +653,25 @@ router.get('/availability', auth, async (req, res) => {
       return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
     });
 
-    const perStore = await Promise.all(visible.map((ent) =>
+    /**
+     * ⚠️ BOUNDED CONCURRENCY — the pool is 10 and each read takes a client for a transaction.
+     *
+     * Firing forty stores at once would take every connection the server has, queue the rest, and stall EVERY OTHER
+     * REQUEST on the API for the duration. One person's search must not be able to do that. Four at a time keeps
+     * the search fast — the cost is dominated by round-trip latency, not by the database — while leaving most of
+     * the pool for everyone else.
+     *
+     * This is the difference between "fast for me" and "fast for the platform", and only the second one survives
+     * more than one user.
+     */
+    const perStore = await mapLimit(visible, 4, (ent) =>
       withEntity(ent.identity_id, (db) => db.query(
         `SELECT item_id, item_data FROM catalogue_items
           WHERE entity_id = $1 AND is_active = true
             AND (LOWER(item_data->>'name') LIKE $2 OR LOWER(item_data->>'code') LIKE $2 OR LOWER(item_data->>'sku') LIKE $2)
           LIMIT 5`, [ent.identity_id, like]))
         .then((r) => ({ ent, rows: r.rows }))
-        .catch(() => ({ ent, rows: [] }))));   // one unreadable store must not fail the whole answer
+        .catch(() => ({ ent, rows: [] })));   // one unreadable store must not fail the whole answer
 
     for (const { ent, rows: itemRows } of perStore) {
       for (const it of itemRows) {
