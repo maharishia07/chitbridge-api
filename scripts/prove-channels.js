@@ -45,9 +45,16 @@ const path = require('path');
     const f = path.join(__dirname, '..', name);
     if (!fs.existsSync(f)) continue;
     for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
       if (!m) continue;
-      const v = m[2].replace(/^['"]|['"]$/g, '');
+      /**
+       * ⚠️ TRIM. `(.*)\s*$` looks like it strips trailing whitespace and does not — `.*` is greedy and eats the
+       * spaces first, leaving `\s*` to match nothing. A single trailing space on the secret line is invisible in
+       * Notepad and produced a signature computed with a DIFFERENT key than the server holds: every delivery came
+       * back 401, and the failure surfaced four checks later as "A did not receive A's message", which points at
+       * the routing rather than at the space. Trim, then strip quotes.
+       */
+      const v = m[2].trim().replace(/^['"]|['"]$/g, '').trim();
       if (!process.env[m[1]] && v) process.env[m[1]] = v;
     }
   }
@@ -120,6 +127,23 @@ const pendingTexts = async (tok) => ((await j('/api/capture/pending', { token: t
     process.exitCode = 2; return;
   }
   console.log('  \x1b[32mok\x1b[0m  precondition: the server rejects a bad signature (401) — enforcement is real');
+  pass++;
+
+  /**
+   * ⚠️ SECOND PRECONDITION — and the one that would have saved an hour. A signature made with OUR secret must be
+   * ACCEPTED. If the two secrets differ by so much as a trailing space, every delivery 401s and the failure
+   * surfaces four checks later as "A did not receive A's message" — which reads like a routing bug and is not.
+   * Say it where it happens.
+   */
+  const hello = await deliver('+000000000000', '+919000000000', 'precondition ' + Date.now());
+  if (hello.status === 401) {
+    console.log('\n  \x1b[31mABORTED — the server rejected a signature made with YOUR secret.\x1b[0m');
+    console.log('  The value here and the value on Railway are not identical.');
+    console.log('\n  Most likely a trailing space, a stray quote, or a partial paste. Compare them character for');
+    console.log('  character — Railway → chitbridge-api → Variables → WHATSAPP_APP_SECRET against your local file.\n');
+    process.exitCode = 2; return;
+  }
+  console.log('  \x1b[32mok\x1b[0m  precondition: a signature made with OUR secret is ACCEPTED — the keys match');
   pass++;
 
   const stamp = Date.now().toString().slice(-6);
