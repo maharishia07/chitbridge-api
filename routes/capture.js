@@ -107,7 +107,10 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
       for (const ch of (entry.changes || [])) {
         const v = (ch && ch.value) || {};
         const to = (v.metadata && (v.metadata.display_phone_number || v.metadata.phone_number_id)) || '';
-        const entity = await channels.ownerOf('whatsapp', to);
+        /* b131 — resolve the OWNER and the line's settings in one SECURITY DEFINER call. Falls back to ownerOf on a
+           pre-b131 database, where auto_raise simply does not exist and every line behaves as it does today. */
+        const bind = await channels.bindingFor('whatsapp', to);
+        const entity = bind ? bind.entity_id : await channels.ownerOf('whatsapp', to);
         if (!entity) continue;                                   // not bound to anyone here — not for us
         const names = {};
         for (const c of (v.contacts || [])) names[c.wa_id] = (c.profile && c.profile.name) || null;
@@ -115,13 +118,26 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
           const text = (m.text && m.text.body) || (m.caption) || '';
           const media = m.image || m.document || m.audio || m.video;
           if (!text && !media) continue;                          // a receipt/status, not a message
-          await capture.createCapture(entity, {
+          const cap = await capture.createCapture(entity, {
             channel: 'whatsapp', sender_ref: m.from, sender_name: names[m.from] || null,
             raw_text: text || ('[' + (m.type || 'media') + ']'),
             media_refs: media && media.id ? [{ name: media.filename || m.type, id: media.id }] : [],
             to_ref: to,     // b126 — the line they wrote to, so a reply can come FROM it
             provider_msg_id: m.id,   // b129 — Meta retries; a redelivery must not become a second order
           });
+          /**
+           * ⚠️ AUTO-RAISE RUNS AFTER WE HAVE ANSWERED, NEVER BEFORE (b131). Reading a message with a co-assist takes
+           * seconds; Meta wants a fast 200 and retries anything slow. Doing this inline would turn every message
+           * into a redelivery storm — and b129's dedupe would then be load-bearing for a problem we created.
+           *
+           * ⚠️ AND A REDELIVERY MUST NOT RAISE TWICE. `cap.duplicate` means this exact provider message id is
+           * already on the queue, so it is skipped: the first delivery owns it. Without this, Meta retrying a
+           * message we already handled would mint a second chit for one request.
+           */
+          if (bind && bind.auto_raise && !cap.duplicate) {
+            const _cid = cap.id, _ent = entity;
+            setImmediate(() => { require('../lib/autoraise').run(_ent, _cid).catch(() => {}); });
+          }
           placed++;
         }
       }

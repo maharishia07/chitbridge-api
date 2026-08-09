@@ -31,6 +31,15 @@ router.post('/:id/provider-ref', auth, async (req, res) => {
 // POST /:id/template — the OWNER states Meta approved a template on their number. { name, state }
 // ⚠️ An entity action, not an admin one: only the owner can see Meta's approval screen, and asserting wrongly
 // costs them a rejected send rather than anyone else's isolation.
+/**
+ * POST /:id/auto-raise { on } — hands-free raising for ONE line (b131).
+ * ⚠️ The switch is not the permission: an unverified binding auto-raises nothing whatever this says.
+ */
+router.post('/:id/auto-raise', auth, async (req, res) => {
+  try { res.json(await channels.setAutoRaise(entityId(req), req.params.id, !!(req.body || {}).on)); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Auto-raise update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+});
+
 router.post('/:id/template', auth, async (req, res) => {
   try { const b = req.body || {}; res.json(await channels.setTemplate(entityId(req), req.params.id, b.name, b.state)); }
   catch (err) { res.status(err.status || 500).json({ error: 'Template update failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
