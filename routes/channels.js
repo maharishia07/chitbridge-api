@@ -16,6 +16,12 @@ router.get('/', auth, async (req, res) => {
   catch (err) { res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
+// GET /outbound — the receipts: what we tried to send back, and what became of it (b126).
+router.get('/outbound', auth, async (req, res) => {
+  try { res.json(await channels.listOutbound(entityId(req), req.query.limit)); }
+  catch (err) { res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) }); }
+});
+
 // POST / — bind an address to this entity. { channel, address, label }
 router.post('/', auth, async (req, res) => {
   try { res.status(201).json(await channels.addBinding(entityId(req), req.body || {})); }
