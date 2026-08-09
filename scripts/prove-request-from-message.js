@@ -81,6 +81,12 @@ async function j(p, o = {}) {
   const prods = await j('/api/products', { token: tok });
   const have = JSON.stringify((prods.b && (prods.b.items || prods.b.products || prods.b)) || {});
   if (!/cement/i.test(have)) await j('/api/products', { method: 'POST', token: tok, body: { item_data: { name: 'cement', unit: 'bags', price: 340 } } });
+  /* ⚠️ CLEAR RESIDUE FROM THE BUILD THAT USED TO WRITE PRODUCTS. An earlier version of raisePayload created a row
+     for anything unrecognised; those rows are still in this test entity and would make "nails was not added" fail
+     for a reason that has nothing to do with today's code. Deleted here so the assertion means what it says. */
+  for (const row of (((await j('/api/products', { token: tok })).b || {}).items || [])) {
+    if ((row.item_data || {}).provisional) await j('/api/products/' + row.item_id, { method: 'DELETE', token: tok });
+  }
   // Snapshot it — the strongest claim in this file is that raising a request leaves this list identical.
   const catBefore = (((await j('/api/products', { token: tok })).b || {}).items || []).map((x) => (x.item_data || x).name).sort();
 
@@ -280,6 +286,36 @@ async function j(p, o = {}) {
       JSON.stringify(fsent.b).slice(0, 160));
     ok(rowsOf(await j('/api/products', { token: ftok })).length === 0,
       '★★★ the factory STILL has no catalogue — nothing was invented for it');
+  }
+
+  /**
+   * ── THE PRICE IN THE MESSAGE ITSELF ────────────────────────────────────────────────────────────────────────────
+   * Athi, 2026-08-09: *"sometimes the message itself may have tomatto, 10kg at 40.00, so add those information as
+   * name, qty and price and send it across."*
+   *
+   * With no catalogue there is nothing to price against, so the only figure in the world is the one they wrote.
+   * Dropping it would throw away the only commercial fact in the message.
+   */
+  const twamid = 'wamid.TOMATO.' + process.pid;
+  const tpayload = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {
+    metadata: { display_phone_number: FLINE, phone_number_id: '000' },
+    contacts: [{ wa_id: FARMER.replace(/^\+/, ''), profile: { name: 'Selvam dairy farm' } }],
+    messages: [{ from: FARMER.replace(/^\+/, ''), id: twamid, type: 'text', text: { body: 'tomato, 10 kg at 40.00' } }],
+  } }] }] });
+  await j('/api/capture/webhook/whatsapp', { method: 'POST', body: tpayload,
+    headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(tpayload).digest('hex') } });
+  const tcap = ((await j('/api/capture/pending', { token: ftok })).b.captures || []).find((c) => /tomato/i.test(c.raw_text || ''));
+  ok(!!tcap, 'the priced message arrived');
+  if (tcap) {
+    await j('/api/capture/' + tcap.id + '/structure', { method: 'POST', token: ftok, body: {} });
+    const tr = await j('/api/capture/' + tcap.id + '/raise', { method: 'POST', token: ftok, body: {} });
+    const tli = (tr.b && tr.b.line_items) || [];
+    const tom = tli.find((l) => /tomato/i.test(l.particulars || ''));
+    ok(!!tom, '★★ "tomato" came through as the name', JSON.stringify(tli));
+    ok(tom && tom.quantity === 10, '★★ 10 came through as the quantity', JSON.stringify(tom));
+    ok(tom && tom.price === 40, '★★★ 40.00 came through as the PRICE — the only figure in the message is kept',
+      JSON.stringify(tom));
+    ok(tom && tom.total === 400, '★ and the line totals to 400', JSON.stringify(tom));
   }
 
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
