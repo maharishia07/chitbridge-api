@@ -101,5 +101,22 @@ t('★★ a missing CB_ADMIN_KEY DISABLES approval — it never means "no check"
   assert.match(gate, /timingSafeEqual/, 'compare the key in constant time');
 });
 
+console.log('\nchannels · ⚠️ the webhook must get the RAW body');
+/**
+ * An HMAC is computed over the exact bytes the provider sent; a re-serialised parsed object is not those bytes.
+ * A global express.json() mounted before the capture router consumed the stream, so the route's own express.raw()
+ * saw an already-parsed object, createHmac().update({}) threw, the route's catch swallowed it, and EVERY delivery
+ * got a cheerful 200. A signature could never be verified and every real message would have been dropped while
+ * Meta was told it had been accepted. Silent, total, and invisible to anything except an actual signed request.
+ */
+t('★★ the raw parser for /api/capture/webhook is mounted BEFORE express.json', () => {
+  const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  const raw = srv.indexOf("app.use('/api/capture/webhook', express.raw(");
+  const json = srv.indexOf('app.use(express.json(');
+  assert.ok(raw > -1, 'the raw mount is missing — signatures cannot be verified');
+  assert.ok(json > -1, 'express.json mount not found; this test needs rewriting');
+  assert.ok(raw < json, 'raw must come FIRST or the body is already consumed and the HMAC can never match');
+});
+
 console.log('\nchannels · ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' assertions)\n');
 process.exit(fail ? 1 : 0);

@@ -65,6 +65,25 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 
+/**
+ * ⚠️ THE PROVIDER WEBHOOKS NEED THE RAW BODY, AND MUST CLAIM IT BEFORE express.json DOES.
+ *
+ * An HMAC is computed over the exact bytes the provider sent. Re-serialising a parsed object does not reproduce
+ * them (key order, spacing, unicode escapes), so the signature can only be checked against the raw buffer.
+ *
+ * routes/capture.js already declares `express.raw()` on its webhook handlers — but this global parser runs FIRST
+ * and consumes the stream, so by the time the route's parser sees the request the body is a plain object. The
+ * effect was silent and total: `createHmac().update({})` threw, the route's own catch swallowed it, and every
+ * delivery got a cheerful `200 {ok:true}`. A signature could never be verified, and every real WhatsApp message
+ * would have been dropped while Meta was told it had been accepted.
+ *
+ * Mounting raw for this prefix first fixes it: body-parser sets `req._body`, and each later parser returns early
+ * when it sees that flag, so JSON parsing is skipped for these two paths only and unchanged everywhere else.
+ *
+ * Found by the precondition in scripts/prove-channels.js — a wrong signature must be REJECTED, and it was not.
+ */
+app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
+
 // Parse JSON
 app.use(express.json({ limit: '8mb' }));   // raised for base64 attachment uploads
 app.use(express.urlencoded({ extended: true, limit: '8mb' }));
