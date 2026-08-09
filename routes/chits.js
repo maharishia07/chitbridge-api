@@ -482,6 +482,20 @@ router.post('/send',
           // What they actually wrote, capped — the full text rides as an attachment, not in every copy's summary.
           raw_excerpt: str(v.raw_excerpt, 400),
           media_count: Number.isFinite(+v.media_count) ? Math.max(0, Math.min(20, +v.media_count)) : 0,
+          label: str(v.label, 40),
+          /* How each line got its price. Re-read key by key rather than spread: the counts must be numbers and the
+             lists must be short, whatever a caller sends. */
+          priced: (() => {
+            const p = v.priced; if (!p || typeof p !== 'object') return undefined;
+            const n = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(999, Math.trunc(+x))) : 0);
+            const arr = (a, f) => (Array.isArray(a) ? a.slice(0, 5).map(f) : []);
+            return {
+              from_catalogue: n(p.from_catalogue), unpriced: n(p.unpriced), created_count: n(p.created_count),
+              created: arr(p.created, (x) => str(x, 200)),
+              ambiguous: arr(p.ambiguous, (x) => ({ name: str(x && x.name, 200), matches: n(x && x.matches) })),
+              asked_differs: arr(p.asked_differs, (x) => ({ name: str(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 })),
+            };
+          })(),
         };
         return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
       })();

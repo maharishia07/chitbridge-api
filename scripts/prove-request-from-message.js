@@ -76,6 +76,12 @@ async function j(p, o = {}) {
   const tok = (v.b && (v.b.token || (v.b.entity && v.b.entity.token))) || null;
   if (!tok) { console.log('  could not sign in\n'); process.exitCode = 1; return; }
 
+  /* The catalogue this proof prices against — created BEFORE the message, so the match is real. "cement" is
+     stocked at 340; "nails" deliberately is not, and must come back unpriced and be added. */
+  const prods = await j('/api/products', { token: tok });
+  const have = JSON.stringify((prods.b && (prods.b.items || prods.b.products || prods.b)) || {});
+  if (!/cement/i.test(have)) await j('/api/products', { method: 'POST', token: tok, body: { item_data: { name: 'cement', unit: 'bags', price: 340 } } });
+
   // bind + approve the business line
   const list = await j('/api/channels', { token: tok });
   const wa = (list.b.channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
@@ -130,6 +136,30 @@ async function j(p, o = {}) {
     '★★ the ORIGINAL message is returned to be attached as evidence');
   ok(pay.original && /Sender verified: NO/.test(pay.original.text),
     '★ the attached original says on its face that the sender is not checked');
+
+  /**
+   * ── PRICING. The entity stocks "cement" at 340; it does not stock nails.
+   * ⚠️ The catalogue row is created BEFORE the raise, so the match is real rather than something this script set up
+   *    to succeed. And "nails" must come back UNPRICED and be ADDED — not quietly priced off some near-miss row.
+   */
+  ok(pay.line_items.some((l) => /cement/i.test(l.particulars) && l.price === 340),
+    '★★ the CATALOGUE price was attached to the line they asked for', JSON.stringify(pay.line_items));
+  ok(pay.line_items.some((l) => /nail/i.test(l.particulars) && !l.price),
+    '★★ an item you do not stock stays UNPRICED — never guessed from a near-miss', JSON.stringify(pay.line_items));
+  const pr = ((pay.business_json || {}).via || {}).priced || {};
+  ok(pr.from_catalogue >= 1, '★ it reports how many lines it priced', JSON.stringify(pr));
+  ok((pr.created || []).some((n) => /nail/i.test(n)), '★★ the unstocked item was ADDED to the catalogue', JSON.stringify(pr.created));
+  ok(/^WhatsApp request — /.test(pay.subject), '★★ the chit says on its subject line that it is a WhatsApp request', pay.subject);
+
+  // ⚠️ AND IT IS NOT ON THE SHOP FRONT. An unpriced row created from a stranger's message must not read as "we
+  //    sell this, at nothing" to the public.
+  const me = await j('/api/entities/me', { token: tok });
+  const bid = (me.b.entity && me.b.entity.bridge_id) || me.b.bridge_id;
+  const shop = await j('/api/catalogue/face/' + bid);
+  const shopNames = JSON.stringify((shop.b && (shop.b.items || shop.b.groups)) || shop.b || {});
+  ok(shop.status === 200, 'the storefront answered (a 404 would fake the next check)', 'got ' + shop.status);
+  ok(!/nail/i.test(shopNames), '★★★ the provisional item is NOT on the public storefront');
+  ok(/cement/i.test(shopNames), '★ a real priced item still IS on the storefront — the filter narrowed nothing else');
 
   const beforeCount = (await j('/api/capture/pending', { token: tok })).b.captures.length;
 
