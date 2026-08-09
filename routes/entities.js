@@ -319,7 +319,7 @@ router.get('/search', auth, async (req, res) => {
  * never heard. An actor acts FOR its entity, so the flags are always the ENTITY's, never the actor's.
  */
 const policy = require('../lib/policy');
-const policyEntity = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const policyEntity = (req) => auth.entityOf(req);
 
 router.get('/policy', auth, async (req, res) => {
   try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND }); }
@@ -347,7 +347,7 @@ router.get('/me', auth, async (req, res) => {
     let capabilities = [];
     let capabilities_debug = 'ok';
     try {
-      const eid = req.identity.parent_entity_id || req.identity.identity_id;
+      const eid = auth.entityOf(req);
       const c = await query('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
       capabilities_debug = (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8)
@@ -359,7 +359,7 @@ router.get('/me', auth, async (req, res) => {
     // Resolve the entity's GOVERNANCE from attributes (constitution · installation · basics · allowances · jurisdiction).
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
     let governance = null;
-    try { governance = await resolveEntityGovernance(req.identity.parent_entity_id || req.identity.identity_id); } catch (_) {}
+    try { governance = await resolveEntityGovernance(auth.entityOf(req)); } catch (_) {}
     // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
     let storefront_access = 'browse';
     try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}

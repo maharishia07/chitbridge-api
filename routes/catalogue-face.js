@@ -8,7 +8,7 @@ const { withEntity, query } = require('../db');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
 
-const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const ent = (req) => auth.entityOf(req);
 const MAX_BYTES = 1_000_000;   // a face is a small config object; cap so this never becomes a document store
 
 // GET /api/catalogue-face — this entity's saved face (null if none yet).

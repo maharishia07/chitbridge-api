@@ -9,7 +9,7 @@ const auth = require('../middleware/auth');
 // GET /api/notifications?limit= — recent activity (newest first) on my chits, excluding my own actions.
 router.get('/', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const caller_id = req.identity.identity_id;   // the actor (or entity) actually making the call
     const limit = Math.min(parseInt(req.query.limit || 30), 100);
 

@@ -21,7 +21,7 @@ const money = require('../lib/money');                    // a price is {amount,
 const availability = require('../lib/availability');      // a quantity is not an answer without a date
 const catalogueView = require('../lib/catalogue-view');   // ONE visibility rule — stock follows the catalogue's
 
-const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const ent = (req) => auth.entityOf(req);
 const MAX_BYTES = 2_000_000;   // a design is a modest JSON tree; cap so this never becomes a document store
 // Rows returned by the single-query network search (b122). Generous enough that a real search is whole, bounded
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
@@ -640,7 +640,7 @@ async function visibleStores(meRow) {
  */
 router.get('/stores', auth, async (req, res) => {
   try {
-    const me = req.identity.parent_entity_id || req.identity.identity_id;
+    const me = auth.entityOf(req);
     const meRow = (await query(
       'SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
     if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
@@ -672,7 +672,7 @@ router.get('/stores', auth, async (req, res) => {
 
 router.get('/availability', auth, async (req, res) => {
   try {
-    const me = req.identity.parent_entity_id || req.identity.identity_id;
+    const me = auth.entityOf(req);
     const q = String(req.query.q || '').trim();
     if (q.length < 2) {
       return res.status(400).json({ error: 'Bad request', message: 'Search for a product — two characters or more.' });

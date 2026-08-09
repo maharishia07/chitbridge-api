@@ -598,7 +598,7 @@ router.get('/',
   async (req, res) => {
     try {
       // Actors can also call this to see colleagues — use parent entity id
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id = auth.entityOf(req);
       const status     = req.query.status || 'active';
       const actor_type = req.query.type   || null;
 
@@ -924,7 +924,7 @@ router.put('/break',
   async (req, res) => {
     try {
       const actor_id = req.identity.identity_id;
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;   // B1 RLS context
+      const entity_id = auth.entityOf(req);   // B1 RLS context
       const { break_type, task_action, target_actor_id } = req.body;
 
       if (req.identity.identity_type !== 'actor') {
@@ -1068,7 +1068,7 @@ router.put('/assign/:chit_id',
       const chit_id      = req.params.chit_id;
       // entity_id   = participant entity context (parent for actors, self for entities)
       // action_by_* = whoever is performing — entity admin or actor, never remapped
-      const entity_id    = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id    = auth.entityOf(req);
       const action_by_id   = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const { action, target_actor_id } = req.body;
@@ -1310,7 +1310,7 @@ router.put('/settings',
   async (req, res) => {
     try {
       // Settings are entity-level. Actors resolve to their parent entity (must match GET /settings).
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id = auth.entityOf(req);
       const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
               auto_assign_mode, default_assignee_actor_id } = req.body;
 
@@ -1357,7 +1357,7 @@ router.put('/:id/delegate',
   validate,
   async (req, res) => {
     try {
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id = auth.entityOf(req);
       const actorId = req.params.id;
       const delegate = req.body.delegate_actor_id || null;
 

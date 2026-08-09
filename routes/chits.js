@@ -11,8 +11,8 @@ const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
-// Single source of truth (was duplicated 26× as `req.identity.parent_entity_id || req.identity.identity_id`).
-const entityId = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+// Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
+const entityId = (req) => auth.entityOf(req);
 
 // ── B1 RLS — the crossing helper ─────────────────────────────────────────────────────────────────────────
 // A few chit operations legitimately cross the entity boundary (log an event into every/selected participant,

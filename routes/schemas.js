@@ -71,7 +71,7 @@ router.patch('/visibility', auth,
   [ body('visibility').isIn(['private','restricted','public']) ], validate,
   async (req, res) => {
     try {
-      const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+      const entity_id = auth.entityOf(req);
       const r = await query(
         `UPDATE entity_schemas SET visibility = $1
          WHERE entity_id = $2 AND status = 'active' AND is_default = true

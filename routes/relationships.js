@@ -11,7 +11,7 @@ const catalogueBuild = require('../lib/catalogue-build');
 const orderInput     = require('../lib/order-input');
 
 // actors act in their parent entity's context
-const ctx = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const ctx = (req) => auth.entityOf(req);
 
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
 

@@ -7,7 +7,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { safeErr } = require('../lib/respond');
 const forms = require('../lib/forms');
-const entityId = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const entityId = (req) => auth.entityOf(req);
 const fail = (res, err, label) => res.status(err.status || 500).json({ error: label, code: err.code, message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err), unresolved: err.unresolved });
 
 // list the form definitions (the registry)

@@ -12,7 +12,7 @@ const MAX_BYTES = 6 * 1024 * 1024; // 6 MB per file
 // (from the caller's all_recipients), EXCEPT an internal-message attachment which stays single (author entity only).
 router.post('/', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const { chit_id, message_id, line_index, name, mime, data_base64 } = req.body || {};
     if (!chit_id || !data_base64 || !name) return res.status(400).json({ error: 'Bad request', message: 'chit_id, name and data_base64 are required' });
 
@@ -48,7 +48,7 @@ router.post('/', auth, async (req, res) => {
 // GET /api/attachments/:id — stream the bytes (on demand). Participant-checked.
 router.get('/:id', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     // PER-ENTITY: getBlob is entity-scoped (RLS) — it returns ONLY the caller's own copy, else nothing. No shared read.
     const a = await storage.getBlob(req.params.id, entity_id);
     if (!a) return res.status(404).json({ error: 'Not found' });

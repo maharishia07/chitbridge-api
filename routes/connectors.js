@@ -48,7 +48,7 @@ const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)
 // health from last_seen: never / stale >15m = offline, >3m = slow, else live
 function health(last_seen){ if (!last_seen) return 'offline'; const age = Date.now() - new Date(last_seen).getTime(); if (age > 15*60*1000) return 'offline'; if (age > 3*60*1000) return 'slow'; return 'live'; }
 
-const ownerEntityId = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const ownerEntityId = (req) => auth.entityOf(req);
 
 // capability gate — the entity must carry 'connector' (API-enforced, not just UI)
 async function requireConnector(req, res, next) {

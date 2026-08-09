@@ -6,7 +6,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { safeErr } = require('../lib/respond');
 const kyb = require('../lib/kyb');
-const entityId = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const entityId = (req) => auth.entityOf(req);
 
 // Section 1 — Yourself (free)
 router.get('/yourself', auth, async (req, res) => {

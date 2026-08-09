@@ -31,7 +31,7 @@ function fail(res, e, label) {
   }
   return res.status(500).json({ error: label, message: safeErr(e) });
 }
-const ctx = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const ctx = (req) => auth.entityOf(req);
 
 async function defaultSchemaId(entity_id) {
   const r = await query(

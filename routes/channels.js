@@ -7,7 +7,7 @@ const auth = require('../middleware/auth');
 const { safeErr } = require('../lib/respond');
 const channels = require('../lib/channels');
 
-const entityId = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const entityId = (req) => auth.entityOf(req);
 
 // GET / — every channel, its provider state, and this entity's bindings. One read, so the panel cannot show a
 // binding and a provider state that disagree with each other.

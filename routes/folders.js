@@ -9,7 +9,7 @@ const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
-const ent = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const ent = (req) => auth.entityOf(req);
 
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
 router.get('/', auth, async (req, res) => {

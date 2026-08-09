@@ -993,7 +993,7 @@ router.delete('/:bridge_id/my-documents/:id', customerAuth, async (req, res) => 
  */
 router.post('/photo-extract', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const images = (req.body && req.body.images) || [];
     if (!Array.isArray(images) || !images.length) return res.status(400).json({ error: 'No images', message: 'Send images: [{ mime, b64 }].' });
     const out = await require('../lib/ai').invokeSkill(entity_id, 'photo-to-items', { images });

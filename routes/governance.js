@@ -206,7 +206,7 @@ router.get('/boilerplate/:key', auth, async (req, res) => {
 // it resolves the mould's DECLARED sources (bounded, not global). Upsert; preserves any existing constitution.
 router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
     if (!bp) return res.status(404).json({ error: 'Not found', message: 'No such boilerplate' });
     await withEntity(entity_id, (c) => c.query(
@@ -244,7 +244,7 @@ router.get('/source/:key', auth, async (req, res) => {
 // destination (spin the globe), with guidance on each gap; otherwise the entity's own standards.
 router.get('/readiness', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const R = require('../lib/readiness');
     const out = req.query.destination
       ? await R.resolveForDestination(entity_id, String(req.query.destination), req.query.vertical, req.query.origin)
@@ -256,7 +256,7 @@ router.get('/readiness', auth, async (req, res) => {
 // GET /api/governance/lanes?vertical=paint — the CALLER's market-readiness MATRIX (readiness % per destination + gaps).
 router.get('/lanes', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     res.json(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin));
   } catch (err) { res.status(500).json({ error: 'Lanes failed', message: safeErr(err) }); }
 });
@@ -266,7 +266,7 @@ router.get('/lanes', auth, async (req, res) => {
 // Self-view: exposing a track record to a buyer is a separate opt-in decision (see SPEC-commercial-attestation.md).
 router.get('/track-record', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     res.json(await require('../lib/reference').resolveTrackRecord(entity_id));
   } catch (err) { res.status(500).json({ error: 'Track record failed', message: safeErr(err) }); }
 });
@@ -295,12 +295,12 @@ router.get('/commerce-standards', auth, async (req, res) => {
 
 // ── ENTITY TRADE PROFILE — individual-specific: trade mode + markets + sectors + adopted certs (b96). ──
 router.get('/profile', auth, async (req, res) => {
-  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+  try { const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').getProfile(entity_id));
   } catch (err) { res.status(500).json({ error: 'Profile failed', message: safeErr(err) }); }
 });
 router.put('/profile', auth, async (req, res) => {
-  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+  try { const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').saveProfile(entity_id, req.body || {}));
   } catch (err) { res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) }); }
 });
@@ -311,20 +311,20 @@ router.get('/vault-schema', auth, async (req, res) => {
   catch (err) { res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) }); }
 });
 router.put('/profile/vault', auth, async (req, res) => {
-  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+  try { const entity_id = auth.entityOf(req);
     const b = req.body || {};
     res.json(await require('../lib/profile').saveVault(entity_id, b.vault || b));
   } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
 router.get('/profile/readiness', auth, async (req, res) => {
-  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+  try { const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').resolveProfileReadiness(entity_id));
   } catch (err) { res.status(500).json({ error: 'Profile readiness failed', message: safeErr(err) }); }
 });
 // the forward roadmap — which markets you could reach next and what to add
 router.get('/profile/path', auth, async (req, res) => {
-  try { const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+  try { const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').resolvePath(entity_id));
   } catch (err) { res.status(500).json({ error: 'Path failed', message: safeErr(err) }); }
 });
@@ -333,7 +333,7 @@ router.get('/profile/path', auth, async (req, res) => {
 // draft for the human to confirm (not evidence until accepted). Meters per-entity usage (b99). ──
 router.post('/ai-draft', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const b = req.body || {};
     res.json(await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {}));
   } catch (err) {
@@ -346,7 +346,7 @@ router.post('/ai-draft', auth, async (req, res) => {
 // per-entity AI spend (metering / charge-back)
 router.get('/ai-usage', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     res.json(await require('../lib/ai').usageSummary(entity_id));
   } catch (err) { res.status(500).json({ error: 'AI usage failed', message: safeErr(err) }); }
 });
@@ -375,7 +375,7 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
 // POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
 router.post('/compliance', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const b = req.body || {};
     // T1 (reviewer 2026-07-13): a self-gathered document is at most `documented`/`declared`. The verification stamp is
     // the PLATFORM's own attestation and is NEVER accepted from the client here — only /verify may set it. Stripped.
@@ -390,7 +390,7 @@ router.post('/compliance', auth, async (req, res) => {
 // format-checked claim (→ NOT verified, honest). A malformed ID or a registry "not-active" is refused with 422.
 router.post('/verify', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const v = await require('../lib/verify').verifyRegistry(b.id_type, b.id_value);
     if (!v.ok) return res.status(422).json({ error: 'Verification failed', message: v.note, verdict: v });

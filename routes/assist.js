@@ -313,7 +313,7 @@ router.get('/catalogue-mine', async (req, res) => {
 // ownership is enforced HERE (app-side) by owner_entity_id. Self-healing: 503 if b78 isn't applied yet.
 router.put('/catalogue-source', auth, async (req, res) => {
   try {
-    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    const owner = auth.entityOf(req);
     const b = req.body || {};
     const source_key = (typeof b.source_key === 'string' && b.source_key.trim()) ? b.source_key.trim() : '';
     if (!source_key) return res.status(422).json({ ok: false, error: 'source_key is required (e.g. royale-play@v1)' });
@@ -356,7 +356,7 @@ router.put('/catalogue-source', auth, async (req, res) => {
 // the pointer) a product container. Owner-only. An enhancement never mutates a version → past chits stay verifiable.
 router.put('/container', auth, async (req, res) => {
   try {
-    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    const owner = auth.entityOf(req);
     const b = req.body || {};
     const container_id = (typeof b.container_id === 'string' && b.container_id.trim()) ? b.container_id.trim() : '';
     if (!container_id) return res.status(422).json({ ok: false, error: 'container_id is required (e.g. royaleplay/tussar)' });
@@ -385,7 +385,7 @@ router.get('/container/:id', async (req, res) => {
 // forget; the ERP consumes these and does the routing/fulfillment). Per-entity, WITH RLS (b82). Self-healing (503).
 router.get('/erp-handoffs', auth, async (req, res) => {
   try {
-    const entity = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity = auth.entityOf(req);
     let rows = [];
     try {
       const r = await withEntity(entity, (db) => db.query(
@@ -401,7 +401,7 @@ router.get('/erp-handoffs', auth, async (req, res) => {
 // names, compliance labels, regional combinations). Self-healing: 503 if b81 isn't applied.
 router.put('/region-override', auth, async (req, res) => {
   try {
-    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    const owner = auth.entityOf(req);
     const b = req.body || {};
     const container_id = (typeof b.container_id === 'string' && b.container_id.trim()) ? b.container_id.trim() : '';
     const region = (typeof b.region === 'string' && b.region.trim()) ? b.region.trim() : '';
@@ -442,7 +442,7 @@ router.get('/resolve', async (req, res) => {
 // Owner-gated (only your own sources). Self-healing: 503 if b79 isn't applied.
 router.get('/penetration', auth, async (req, res) => {
   try {
-    const owner = req.identity.parent_entity_id || req.identity.identity_id;
+    const owner = auth.entityOf(req);
     let rows = [];
     try {
       const r = await query(
@@ -528,7 +528,7 @@ router.post('/publish', auth, async (req, res) => {
 
     // Generalised (blueprint): the CALLER must be a helpdesk (carries the 'Assistant Q&A' schema); it publishes to
     // ITS OWN catalogue. GOV-01-Help carries that schema -> backward compatible.
-    const sender = req.identity.parent_entity_id || req.identity.identity_id;
+    const sender = auth.entityOf(req);
     const hd = await query(
       `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [sender]);
     if (!hd.rows.length) return res.status(403).json({ ok: false, error: 'Only a help desk can publish to its catalogue.' });
@@ -579,7 +579,7 @@ router.post('/resolve', auth, async (req, res) => {
 // (generalises off the hardcoded 'GOV-01-Help' name). Never throws.
 router.get('/whoami', auth, async (req, res) => {
   try {
-    const entity = req.identity.parent_entity_id || req.identity.identity_id;
+    const entity = auth.entityOf(req);
     const r = await query(
       `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
     res.json({ ok: true, is_helpdesk: r.rows.length > 0 });

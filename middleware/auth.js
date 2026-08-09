@@ -72,3 +72,17 @@ const auth = async (req, res, next) => {
 };
 
 module.exports = auth;
+
+/**
+ * entityOf(req) — WHOSE data is this request acting on.
+ *
+ * ⚠️ THE ANSWER IS NEVER "THE ACTOR". A co-assist acts FOR its entity, so everything it touches belongs to the
+ * parent. Getting that backwards would give a co-assist its own private island of data inside a business — which
+ * is why this one-liner is the difference between an actor being staff and an actor being a tenant.
+ *
+ * ⚠️ IT LIVES HERE BECAUSE THIS FILE BUILDS req.identity. The reader belongs with the writer. It had 47 copies —
+ * as `entityId`, `ent`, `entity_id`, `owner`, `entity`, `sender` — and routes/chits.js already carried the note
+ * "Single source of truth (was duplicated 26× ...)", which is the same fix made once, locally, in one file while
+ * the other 46 carried on. Local single-sources-of-truth are how a codebase ends up with several.
+ */
+auth.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;

@@ -17,7 +17,7 @@ function hmacOk(rawBuf, secret, header, prefix) {
   try { return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(mine, 'hex')); } catch (_) { return false; }
 }
 
-const entityId = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const entityId = (req) => auth.entityOf(req);
 
 // ── authenticated intake (the entity's own inbox) ──────────────────────────────────────────────────────────────
 // POST /simulate — record an inbound message as if it arrived on a channel (testable WITHOUT a BSP/inbound-parse).
