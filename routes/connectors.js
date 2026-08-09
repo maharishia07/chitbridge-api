@@ -31,7 +31,8 @@ async function canReissue(req) {
   return { ok: false };
 }
 
-const generateBridgeId = () => { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let id='CB'; for (let i=0;i<8;i++) id+=c[Math.floor(Math.random()*c.length)]; return id; };
+// ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
+const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
 const genKey  = () => crypto.randomBytes(24).toString('base64url');            // ActorKey — returned ONCE on IoT push create
 const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex');    // only the hash is stored
 // Canonical (key-sorted) hash of an ERP document — the ONLY trace we keep of the raw payload (process-then-forget).
@@ -87,7 +88,9 @@ router.post('/', auth, requireConnector,
       const actor_key    = ('conn' + Math.random().toString(36).slice(2, 7)).toLowerCase();
       const identity_id  = uuidv4();
       const bridge_id    = generateBridgeId();
-      const otp          = Math.floor(100000 + Math.random() * 900000).toString();
+      /* ⚠️ SECURITY FIX BY CONSOLIDATION. A predictable OTP that stays valid for SEVEN DAYS (see otp_expires
+         below) is the worst of the three copies. One generator now, from a CSPRNG (lib/otp.js). */
+      const otp          = require('../lib/otp').generateOTP();
       const otp_expires  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       // Issue the ActorKey now, store only its hash, return the raw ONCE. IoT push needs it to provision the Pi;
       // ERP needs it to authenticate its document pushes to /erp-ingest (the ERP's own credential, not a user JWT).

@@ -13,18 +13,17 @@ const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtpEmail } = require('../lib/notify');   // shared OTP email sender (F2 — extracted from here)
 const { resolveEntityGovernance } = require('../lib/govresolve');   // resolve the entity's governance from attributes
 
-const generateBridgeId = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id = 'CB';
-  for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
-  return id;
-};
+// ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
+//    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
+const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
 
 // DEV_OTP in Railway env = fixed OTP for testing e.g. 123456
 // No DEV_OTP = random 6-digit OTP
 // S4 (reviewer 2026-07-13) — OTP from a CSPRNG (crypto.randomInt), not Math.random() (whose V8 state is recoverable,
 // letting an attacker predict a victim's OTP). DEV_OTP still overrides for team testing when explicitly set.
-const generateOTP = () => (process.env.DEV_OTP || '').trim() || require('crypto').randomInt(100000, 1000000).toString();
+// ⚠️ ONE generator (lib/otp.js, next to the verification). This copy was the only one of THREE that ever received
+//    the S4 CSPRNG fix; actors.js and connectors.js kept Math.random() for four weeks. Behaviour here is unchanged.
+const generateOTP = require('../lib/otp').generateOTP;
 
 // (F2) The OTP email sender now lives in lib/notify.js (`sendOtpEmail`), shared with the customer order flow.
 

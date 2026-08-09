@@ -16,15 +16,13 @@ const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap (F
 
 // ── Helpers ─────────────────────────────────────────────────
 
-const generateBridgeId = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id = 'CB';
-  for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
-  return id;
-};
+// ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
+const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
 
-const generateOTP = () =>
-  (process.env.DEV_OTP || '').trim() || Math.floor(100000 + Math.random() * 900000).toString();
+/* ⚠️ SECURITY FIX BY CONSOLIDATION. This issued a co-assist LOGIN OTP from Math.random(), whose V8 state is
+   recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
+   exactly this in 2026-07-13 and was applied to routes/entities.js only; this copy never got it. */
+const generateOTP = require('../lib/otp').generateOTP;
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik

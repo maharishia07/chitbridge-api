@@ -17,12 +17,9 @@ const container = require('../lib/container');              // CONTAINER MODEL (
 const regional = require('../lib/regional');                // GOVERNED CURRENCY — the network path must not invent 'INR'
 const money = require('../lib/money');                      // MONEY TYPE — a price is never a bare number
 
-const genBridge = () => {   // S4 — CSPRNG (bridge ids are public, but no reason to use a weak PRNG)
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id = 'CB';
-  for (let i = 0; i < 8; i++) id += chars[require('crypto').randomInt(0, chars.length)];
-  return id;
-};
+// ⚠️ ONE generator (lib/bridgeid.js). This copy was the ONLY one that ever received the S4 CSPRNG hardening —
+//    the fix was correct and reached one sixth of the code it was written for. That is why it now lives in one file.
+const genBridge = require('../lib/bridgeid').generateBridgeId;
 // Customer (storefront) OTP: fixed 123123 in dev (distinct from the entity dev OTP 123456); CSPRNG in real prod (S4).
 const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
 const genOTP = () => devOtp.fixedOtp('customer') || require('crypto').randomInt(100000, 1000000).toString();

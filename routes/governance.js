@@ -12,12 +12,8 @@ const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
 const { planFor, checkCount, checkRate, checkCapability } = require('../governance/entitlements');
 
-const genBridge = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id = 'CB';
-  for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
-  return id;
-};
+// ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
+const genBridge = require('../lib/bridgeid').generateBridgeId;
 
 // ── load the active constitution (shaped for the resolver) ──
 async function loadActiveConstitution() {
