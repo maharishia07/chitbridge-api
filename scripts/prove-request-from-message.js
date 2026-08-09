@@ -168,13 +168,23 @@ async function j(p, o = {}) {
   ok(sum.copy_policy && sum.copy_policy.source === 'request',
     '★★ the suppression is DECLARED as this send\'s choice, not the account setting', JSON.stringify(sum.copy_policy));
 
-  // ── THE PART THAT MATTERS ON SCREEN: a Task, and NOT an Order.
-  const tasks = await j('/api/chits?folder=task&limit=50', { token: tok });
-  const orders = await j('/api/chits?folder=order&limit=50', { token: tok });
-  const inTask = ((tasks.b && (tasks.b.chits || tasks.b.rows)) || []).some((c) => c.chit_id === chitId);
-  const inOrder = ((orders.b && (orders.b.chits || orders.b.rows)) || []).some((c) => c.chit_id === chitId);
-  ok(inTask, '★★★ it is in the TASK list — the request is in their inbox');
-  ok(!inOrder, '★★★ it is NOT in the Order list — the record never claims they raised it themselves');
+  /**
+   * ── THE PART THAT MATTERS ON SCREEN: a Task, and NOT an Order.
+   *
+   * ⚠️ THE ENDPOINTS ARE /inbox AND /sent, NOT `?folder=`. The first version of this proof asked for
+   * `/api/chits?folder=order`, which 404s — so "it is NOT in the Order list" passed on an error page and proved
+   * precisely nothing. A green tick from a request that never reached a list is worse than no tick, and it is why
+   * both calls are asserted to be 200 BEFORE their contents are read.
+   */
+  const rows = (r) => (r.b && (r.b.chits || r.b.rows || r.b.data)) || [];
+  const tasks = await j('/api/chits/inbox?limit=50', { token: tok });
+  const orders = await j('/api/chits/sent?limit=50', { token: tok });
+  ok(tasks.status === 200 && orders.status === 200, 'both lists actually answered (a 404 would fake the next two)',
+    'inbox=' + tasks.status + ' sent=' + orders.status);
+  ok(rows(tasks).some((c) => c.chit_id === chitId), '★★★ it is in the TASK list — the request is in their inbox',
+    'inbox holds ' + rows(tasks).length + ' chits');
+  ok(!rows(orders).some((c) => c.chit_id === chitId), '★★★ it is NOT in the Order list — the record never claims they raised it themselves',
+    'sent holds ' + rows(orders).length + ' chits');
 
   // ── the customer is NOT a party. This is the gate that must keep holding.
   const parties = (h.all_recipients || []).map((r) => String(r.display_name || ''));
