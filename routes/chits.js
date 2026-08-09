@@ -479,6 +479,9 @@ router.post('/send',
           to: str(v.to, 64), provider_msg_id: str(v.provider_msg_id, 128), capture_id: str(v.capture_id, 64),
           received_at: str(v.received_at, 40), read_by: str(v.read_by, 40),
           sender_verified: v.sender_verified === true,
+          // What they actually wrote, capped — the full text rides as an attachment, not in every copy's summary.
+          raw_excerpt: str(v.raw_excerpt, 400),
+          media_count: Number.isFinite(+v.media_count) ? Math.max(0, Math.min(20, +v.media_count)) : 0,
         };
         return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
       })();

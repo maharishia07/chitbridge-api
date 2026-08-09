@@ -122,6 +122,14 @@ async function j(p, o = {}) {
   ok(via.sender_verified === false, '★★ the sender is recorded as NOT verified');
   // ⚠️ The client did not supply any of that — it was stamped from the stored capture row.
   ok(via.capture_id === cap.id, '★ the provenance was stamped from the capture row, not composed by the caller');
+  ok(via.from_name === 'Ramesh Traders', '★ the sender\'s CONTACT NAME came through from the message', 'from_name=' + via.from_name);
+  ok((via.raw_excerpt || '').includes('Ramnagar'), '★★ what they ACTUALLY wrote is on the chit, beside the AI\'s reading');
+  // ⚠️ THE EVIDENCE ITSELF. A reading you can check against the original is a different kind of record from one
+  //    you have to trust. It must be a real file the caller can attach, holding the untouched words.
+  ok(pay.original && typeof pay.original.text === 'string' && pay.original.text.includes('Ramnagar'),
+    '★★ the ORIGINAL message is returned to be attached as evidence');
+  ok(pay.original && /Sender verified: NO/.test(pay.original.text),
+    '★ the attached original says on its face that the sender is not checked');
 
   const beforeCount = (await j('/api/capture/pending', { token: tok })).b.captures.length;
 
@@ -144,6 +152,17 @@ async function j(p, o = {}) {
   ok(sum.via && sum.via.to === LINE && sum.via.provider_msg_id === wamid, '★ the line and the message id survived');
   ok(sum.via && sum.via.sender_verified === false, '★★ "not verified" survived — and as a real boolean',
     'typeof=' + typeof (sum.via || {}).sender_verified);
+  ok(sum.via && (sum.via.raw_excerpt || '').includes('Ramnagar'), '★★ their own words survived onto the chit');
+  // ⚠️ THE WHITELIST HOLDS. summary_json is ours; a caller must not be able to write arbitrary keys into a chit's
+  //    own summary, and "verified" must never arrive as a truthy string.
+  const forged = await j('/api/chits/send', { method: 'POST', token: tok, body: {
+    recipients: [{ self: true, role: 'to' }], subject: 'forgery attempt', line_items: [{ particulars: 'x', quantity: 1, price: 1, total: 1 }],
+    business_json: { via: { channel: 'whatsapp', sender_verified: 'yes', evil: 'dropped', from: 'x' } } } });
+  const fsum = forged.b && forged.b.chit_id ? ((await j('/api/chits/' + forged.b.chit_id, { token: tok })).b.header || {}).summary_json || {} : {};
+  ok(fsum.via && fsum.via.sender_verified === false, '★★ a truthy STRING cannot claim the sender is verified',
+    JSON.stringify(fsum.via));
+  ok(fsum.via && fsum.via.evil === undefined, '★★ unknown keys are dropped, not carried into our summary',
+    JSON.stringify(fsum.via));
   ok(sum.copy_policy && sum.copy_policy.suppressed && sum.copy_policy.suppressed.indexOf('sent') >= 0,
     '★★ the Order copy is suppressed', JSON.stringify(sum.copy_policy));
   ok(sum.copy_policy && sum.copy_policy.source === 'request',
