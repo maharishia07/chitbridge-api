@@ -6,6 +6,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { safeErr } = require('../lib/respond');
 const capture = require('../lib/capture');
+const channels = require('../lib/channels');   // b123 — the number/address → entity map the webhooks resolve against
 
 // HMAC verify over the RAW request body (constant-time). Providers sign every POST; a shared verify-token is NOT auth.
 // header e.g. WhatsApp `X-Hub-Signature-256: sha256=<hex>`. Returns true only on a valid signature.
@@ -50,11 +51,19 @@ router.post('/:id/dismiss', auth, async (req, res) => {
   catch (err) { res.status(err.status || 500).json({ error: 'Dismiss failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 
-// ── CHANNEL WEBHOOKS (adapters over the SAME pipeline) — wired, but CONFIG-PENDING ─────────────────────────────
-// A real provider (Meta WhatsApp Cloud API / a BSP; SendGrid/Mailgun inbound-parse) POSTs here. Each adapter must map
-// the inbound to a CB entity (which entity owns this number/address) — that mapping does not exist yet, so these are
-// inert until configured. They validate a shared verify token and, when a mapping is present, create a capture.
-// NOTE: no auth middleware (providers can't send a JWT) — the verify token + the entity mapping are the gate.
+// ── CHANNEL WEBHOOKS (adapters over the SAME pipeline) ─────────────────────────────────────────────────────────
+// A real provider (Meta WhatsApp Cloud API / a BSP; SendGrid/Mailgun inbound-parse) POSTs here.
+//
+// ⚠️ THE ENTITY MAP NOW EXISTS (b123, Settings → Channels), so these adapters RESOLVE and CAPTURE rather than
+// no-op. What still gates them is the provider SECRET: with no WHATSAPP_APP_SECRET / EMAIL_INBOUND_SECRET set
+// they return 200 and do nothing, exactly as before. So this stays inert until Athi connects an account — a
+// missing secret cannot become an open door.
+//
+// NOTE: no auth middleware (providers can't send a JWT). The gate is three things together: the HMAC signature,
+// the provider secret, and the binding. None of them comes from the request body.
+//
+// ⚠️ NOT YET EXERCISED AGAINST A REAL PROVIDER. The payload shapes below are from Meta's and Mailgun's documented
+// formats, not from a live delivery. First real message should be watched, not assumed.
 
 // Meta WhatsApp webhook verification handshake (GET) — returns the challenge when the verify token matches.
 router.get('/webhook/whatsapp', (req, res) => {
@@ -64,16 +73,45 @@ router.get('/webhook/whatsapp', (req, res) => {
 });
 // RAW body on the webhook POSTs (needed for HMAC — the parsed JSON can't be re-signed byte-for-byte).
 router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, res) => {
-  // Inert until BOTH an app secret AND a number→entity map exist. Meta expects a fast 200 (no retry-storm).
+  // Inert until BOTH an app secret AND a number→entity binding exist. Meta expects a fast 200 (no retry-storm).
   try {
     const secret = process.env.WHATSAPP_APP_SECRET;
     if (!secret) return res.status(200).json({ ok: true, note: 'whatsapp not configured' });
     // reviewer capture #1 — verify the HMAC signature on EVERY POST (a verify-token guards only the GET handshake).
     if (!hmacOk(req.body, secret, req.headers['x-hub-signature-256'], 'sha256=')) return res.status(401).json({ error: 'bad signature' });
-    // reviewer capture #2 — the entity comes from the number→entity MAP, NEVER the payload (else it is S1 on a public endpoint).
-    //   const evt = JSON.parse(req.body.toString('utf8')); const entity = lookupEntityByWhatsAppNumber(evt…);
-    //   for each message: await capture.createCapture(entity, { channel:'whatsapp', sender_ref, raw_text, media_refs });
-    return res.status(200).json({ ok: true, note: 'signature ok; entity mapping not configured' });
+    /**
+     * reviewer capture #2, now IMPLEMENTED (b123). The entity comes from the number→entity MAP and never from the
+     * payload — anything in the body is a stranger's assertion, and trusting it on a public endpoint would let
+     * anyone post an obligation into anyone's inbox.
+     *
+     * `metadata.display_phone_number` is OUR number (the business line the message was sent TO); `messages[].from`
+     * is theirs. The binding is looked up on OURS. Getting those two the wrong way round is the whole bug this
+     * comment exists to prevent.
+     */
+    const evt = JSON.parse(req.body.toString('utf8'));
+    let placed = 0;
+    for (const entry of (evt.entry || [])) {
+      for (const ch of (entry.changes || [])) {
+        const v = (ch && ch.value) || {};
+        const to = (v.metadata && (v.metadata.display_phone_number || v.metadata.phone_number_id)) || '';
+        const entity = await channels.ownerOf('whatsapp', to);
+        if (!entity) continue;                                   // not bound to anyone here — not for us
+        const names = {};
+        for (const c of (v.contacts || [])) names[c.wa_id] = (c.profile && c.profile.name) || null;
+        for (const m of (v.messages || [])) {
+          const text = (m.text && m.text.body) || (m.caption) || '';
+          const media = m.image || m.document || m.audio || m.video;
+          if (!text && !media) continue;                          // a receipt/status, not a message
+          await capture.createCapture(entity, {
+            channel: 'whatsapp', sender_ref: m.from, sender_name: names[m.from] || null,
+            raw_text: text || ('[' + (m.type || 'media') + ']'),
+            media_refs: media && media.id ? [{ name: media.filename || m.type, id: media.id }] : [],
+          });
+          placed++;
+        }
+      }
+    }
+    return res.status(200).json({ ok: true, captured: placed });
   } catch (_) { return res.status(200).json({ ok: true }); }
 });
 
@@ -83,8 +121,26 @@ router.post('/webhook/email', express.raw({ type: () => true }), async (req, res
     const secret = process.env.EMAIL_INBOUND_SECRET;
     if (!secret) return res.status(200).json({ ok: true, note: 'email inbound not configured' });
     if (!hmacOk(req.body, secret, req.headers['x-mailgun-signature-256'] || req.headers['x-inbound-signature'], '')) return res.status(401).json({ error: 'bad signature' });
-    // entity from the To: address MAP, never the body. createCapture({channel:'email', ...}).
-    return res.status(200).json({ ok: true, note: 'signature ok; entity mapping not configured' });
+    /**
+     * Entity from the To: address MAP, never the body (b123). Inbound-parse providers differ in casing and in
+     * whether they send JSON or form fields, so read tolerantly — but only ever to find WHICH ADDRESS IT WAS SENT
+     * TO. Who sent it is data on the capture; who receives it is a decision, and decisions come from the map.
+     */
+    let body = {};
+    try { body = JSON.parse(req.body.toString('utf8')); }
+    catch (_) { body = Object.fromEntries(new URLSearchParams(req.body.toString('utf8'))); }
+    const to = String(body.to || body.To || body.recipient || '').replace(/.*</, '').replace(/>.*/, '').trim();
+    const entity = await channels.ownerOf('email', to);
+    if (!entity) return res.status(200).json({ ok: true, note: 'no binding for that address' });
+    const text = String(body.text || body['body-plain'] || body.stripped_text || '').trim();
+    if (!text) return res.status(200).json({ ok: true, note: 'nothing to capture' });
+    await capture.createCapture(entity, {
+      channel: 'email',
+      sender_ref: String(body.from || body.From || body.sender || '').replace(/.*</, '').replace(/>.*/, '').trim() || null,
+      subject: String(body.subject || body.Subject || '').slice(0, 200) || null,
+      raw_text: text,
+    });
+    return res.status(200).json({ ok: true, captured: 1 });
   } catch (_) { return res.status(200).json({ ok: true }); }
 });
 

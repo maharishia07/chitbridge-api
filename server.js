@@ -172,6 +172,7 @@ app.use('/api/assist', require('./routes/assist'));
 
 // ── Capture connector — inbound channels (WhatsApp/email/web) → capture → AI structure → confirm → chit (b104) ───
 app.use('/api/capture', require('./routes/capture'));
+app.use('/api/channels', require('./routes/channels'));   // b123 — Settings → Channels: the inbound number/address map
 
 // ── "Know your business" value panel — Yourself/Position/Risk (free, computed from owned data) + Field (metered, b107) ───
 app.use('/api/kyb', require('./routes/kyb'));

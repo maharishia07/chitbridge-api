@@ -130,7 +130,12 @@ async function ensurePool() {
 // (most sensitive) tables entity_compliance / entity_profile (vault) / entity_wallet (money) / usage_ledger.
 const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'chit_messages', 'state_log', 'catalogue_items',
   'customer_list', 'folder', 'cb_attachment', 'chit_disputes', 'entity_compliance', 'entity_profile', 'entity_wallet', 'usage_ledger',
-  'network_design', 'catalogue_face'];   // b111/b112 — per-entity design draft + catalogue face (WITH RLS); guard a context-free query the same way
+  'network_design', 'catalogue_face',   // b111/b112 — per-entity design draft + catalogue face (WITH RLS); guard a context-free query the same way
+  // b104/b123 — the intake queue and the inbound channel map. Both are per-entity FORCE RLS and were missing from
+  // this list, so a context-free query against either went unwatched. The webhook's own lookup is exempt by
+  // construction, not by omission: it goes through the SECURITY DEFINER channel_owner(), whose SQL never names
+  // the table, which is exactly the narrow hole that guard is meant to leave room for.
+  'capture', 'channel_binding'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {
