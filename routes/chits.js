@@ -490,8 +490,7 @@ router.post('/send',
             const n = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(999, Math.trunc(+x))) : 0);
             const arr = (a, f) => (Array.isArray(a) ? a.slice(0, 5).map(f) : []);
             return {
-              from_catalogue: n(p.from_catalogue), unpriced: n(p.unpriced), created_count: n(p.created_count),
-              created: arr(p.created, (x) => str(x, 200)),
+              from_catalogue: n(p.from_catalogue), unpriced: n(p.unpriced),
               ambiguous: arr(p.ambiguous, (x) => ({ name: str(x && x.name, 200), matches: n(x && x.matches) })),
               asked_differs: arr(p.asked_differs, (x) => ({ name: str(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 })),
             };

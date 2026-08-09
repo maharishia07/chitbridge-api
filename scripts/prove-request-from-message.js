@@ -81,6 +81,8 @@ async function j(p, o = {}) {
   const prods = await j('/api/products', { token: tok });
   const have = JSON.stringify((prods.b && (prods.b.items || prods.b.products || prods.b)) || {});
   if (!/cement/i.test(have)) await j('/api/products', { method: 'POST', token: tok, body: { item_data: { name: 'cement', unit: 'bags', price: 340 } } });
+  // Snapshot it — the strongest claim in this file is that raising a request leaves this list identical.
+  const catBefore = (((await j('/api/products', { token: tok })).b || {}).items || []).map((x) => (x.item_data || x).name).sort();
 
   // bind + approve the business line
   const list = await j('/api/channels', { token: tok });
@@ -148,41 +150,18 @@ async function j(p, o = {}) {
     '★★ an item you do not stock stays UNPRICED — never guessed from a near-miss', JSON.stringify(pay.line_items));
   const pr = ((pay.business_json || {}).via || {}).priced || {};
   ok(pr.from_catalogue >= 1, '★ it reports how many lines it priced', JSON.stringify(pr));
-  /* ⚠️ ASSERTED ON THE CATALOGUE, NOT ON `created`. A second run of this script finds "nails" already there and
-     creates nothing — so asserting `created` made the check pass on the first run and fail on every one after,
-     for a reason that had nothing to do with the code. The claim is that the item ENDS UP in the catalogue,
-     unpriced and marked where it came from; who put it there this time is not the claim. */
-  const after = await j('/api/products', { token: tok });
+  /**
+   * ⚠️ THE CATALOGUE MUST BE EXACTLY AS IT WAS. Athi: *"do not touch the catalogue."* An earlier version of this
+   * wrote a row back for every unrecognised item, which made a stranger's message a reason to edit your shop.
+   * Counted before and after, because "it didn't add anything" is only believable as a number.
+   */
   const rowsOf = (r) => { const b = (r.b && (r.b.items || r.b.products || r.b)) || []; return Array.isArray(b) ? b.map((x) => x.item_data || x) : []; };
-  const nail = rowsOf(after).find((d) => /nail/i.test(d.name || ''));
-  ok(!!nail, '★★ the unstocked item is now IN the catalogue', JSON.stringify(rowsOf(after).map((d) => d.name)));
-  ok(nail && nail.provisional === true && nail.price == null,
-    '★★ it is there UNPRICED and marked where it came from', JSON.stringify(nail));
-  ok(nail && /request$/.test(String(nail.source || '')), '★ the row records which channel asked for it', nail && nail.source);
+  const catAfter = rowsOf(await j('/api/products', { token: tok })).map((d) => d.name).sort();
+  ok(JSON.stringify(catAfter) === JSON.stringify(catBefore),
+    '★★★ the catalogue is UNTOUCHED — a request never writes a product',
+    'before ' + JSON.stringify(catBefore) + '\n      after  ' + JSON.stringify(catAfter));
+  ok(!catAfter.some((n) => /nail/i.test(n)), '★★ the unstocked item was NOT added — it is only on the chit');
   ok(/^WhatsApp request — /.test(pay.subject), '★★ the chit says on its subject line that it is a WhatsApp request', pay.subject);
-
-  // ⚠️ AND IT IS NOT ON THE SHOP FRONT. An unpriced row created from a stranger's message must not read as "we
-  //    sell this, at nothing" to the public.
-  const me = await j('/api/entities/me', { token: tok });
-  const bid = (me.b.entity && me.b.entity.bridge_id) || me.b.bridge_id;
-  /* ⚠️ THE SHOP MUST BE PUBLIC OR THE STOREFRONT 404s — and a 404 would make "the provisional item is not on the
-     storefront" pass for the wrong reason. That is exactly how the first version of this check fooled me: it asked
-     /api/catalogue/face/<id>, which does not exist, and went green on the error page. */
-  await j('/api/entities/profile', { method: 'PATCH', token: tok, body: { catalogue_visibility: 'public' } });
-  const shop = await j('/api/catalogue/' + bid);
-  const shopNames = JSON.stringify(shop.b || {});
-  if (shop.status !== 200) {
-    /* ⚠️ REPORTED AS UNVERIFIED, NOT SKIPPED QUIETLY. This entity has no published shop, so the storefront answers
-       404 — and "nails is not in this response" would then be true of an error page, which is how the FIRST
-       version of this check went green while proving nothing. A check that cannot run says so. */
-    fail++;
-    console.log('  \x1b[33m⊘ UNVERIFIED\x1b[0m — this entity has no published shop (storefront ' + shop.status + '),');
-    console.log('      so "the unpriced item is not on the shop front" could not be tested end-to-end here.');
-    console.log('      It rests on catalogue-view\'s existing unpriced rule, which has its own coverage.');
-  } else {
-    ok(!/nail/i.test(shopNames), '★★★ the unpriced item is NOT on the public storefront');
-    ok(/cement/i.test(shopNames), '★ a real priced item still IS on the storefront — nothing else was hidden');
-  }
 
   const beforeCount = (await j('/api/capture/pending', { token: tok })).b.captures.length;
 
@@ -248,6 +227,60 @@ async function j(p, o = {}) {
   ok(again.status === 409, '★★ the same message cannot be raised twice (409)', 'got ' + again.status);
   const afterCount = (await j('/api/capture/pending', { token: tok })).b.captures.length;
   ok(afterCount === beforeCount - 1, '★ it left the intake queue exactly once', beforeCount + ' → ' + afterCount);
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   *  THE FARMER. No catalogue, no price, no product record — and the chit is still complete.
+   * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   * Athi, 2026-08-09: *"in some places they may not even have a catalogue, for example farmers sending a chit
+   * regarding their milk production to the factory... the farmer may say milk 10 l, that is all... the
+   * accumulation of all can help to create a capacity planning for the factory before even the milk arrives."*
+   *
+   * This is the case that would have been silently refused by anything that needed a catalogue to exist, and it is
+   * the reason the catalogue lookup has to be enrichment rather than a step. A fresh entity is used precisely so
+   * there is nothing to look up.
+   */
+  console.log('\n  ── the farmer: no catalogue at all ──');
+  const femail = 'farm-proof@test-cb.com';
+  const FLINE = '+919000000555', FARMER = '+919000000666';
+  await j('/api/entities/register', { method: 'POST', body: { email: femail, display_name: 'Milk Factory' } });
+  const fv = await j('/api/entities/verify', { method: 'POST', body: { email: femail, otp: process.env.DEV_OTP || '123456' } });
+  const ftok = (fv.b && (fv.b.token || (fv.b.entity && fv.b.entity.token))) || null;
+  const fcat = rowsOf(await j('/api/products', { token: ftok }));
+  ok(fcat.length === 0, 'the factory has NO catalogue (so nothing can be looked up)', fcat.length + ' items');
+
+  const flist = await j('/api/channels', { token: ftok });
+  const fwa = (flist.b.channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
+  let fbind = (fwa.bindings || []).find((b) => b.address === FLINE);
+  if (!fbind) { const made = await j('/api/channels', { method: 'POST', token: ftok, body: { channel: 'whatsapp', address: FLINE, label: 'collection line' } }); fbind = made.b; }
+  if (fbind && fbind.status !== 'verified') await j('/api/channels/' + fbind.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
+
+  const fwamid = 'wamid.FARM.' + process.pid;
+  const fpayload = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {
+    metadata: { display_phone_number: FLINE, phone_number_id: '000' },
+    contacts: [{ wa_id: FARMER.replace(/^\+/, ''), profile: { name: 'Selvam dairy farm' } }],
+    messages: [{ from: FARMER.replace(/^\+/, ''), id: fwamid, type: 'text', text: { body: 'milk 10 l' } }],
+  } }] }] });
+  await j('/api/capture/webhook/whatsapp', { method: 'POST', body: fpayload,
+    headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(fpayload).digest('hex') } });
+  const fpend = await j('/api/capture/pending', { token: ftok });
+  const fcap = (fpend.b.captures || []).find((c) => /milk/i.test(c.raw_text || ''));
+  ok(!!fcap, 'the farmer\'s message arrived');
+  if (fcap) {
+    await j('/api/capture/' + fcap.id + '/structure', { method: 'POST', token: ftok, body: {} });
+    const fr = await j('/api/capture/' + fcap.id + '/raise', { method: 'POST', token: ftok, body: {} });
+    ok(fr.status === 200, '★★★ it raises with NO catalogue — the chit is the primitive', JSON.stringify(fr.b).slice(0, 160));
+    const fli = (fr.b && fr.b.line_items) || [];
+    ok(fli.some((l) => /milk/i.test(l.particulars)), '★★ "milk 10 l" became a line', JSON.stringify(fli));
+    ok(fli.every((l) => !l.price), '★ it carries no price, and nothing invented one', JSON.stringify(fli));
+    const fsent = await j('/api/chits/send', { method: 'POST', token: ftok, body: {
+      recipients: fr.b.recipients, subject: fr.b.subject, line_items: fli,
+      purpose: fr.b.purpose, business_json: fr.b.business_json, self_copy: fr.b.self_copy } });
+    ok(fsent.status === 200 || fsent.status === 201, '★★★ and it SENDS — the factory has its notice before the milk moves',
+      JSON.stringify(fsent.b).slice(0, 160));
+    ok(rowsOf(await j('/api/products', { token: ftok })).length === 0,
+      '★★★ the factory STILL has no catalogue — nothing was invented for it');
+  }
 
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
   console.log('  \x1b[33m⚠️\x1b[0m  transport is stood in for — that Meta carried it needs a WhatsApp Business account.\n');
