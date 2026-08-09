@@ -98,6 +98,51 @@ t('★★ it only replies when the chit CAME FROM a channel', () => {
   assert.match(fn, /if \(!cap \|\| !cap\.sender_ref\) return null/, 'no capture → no reply; messaging a number that never wrote to us is unsolicited contact');
 });
 
+console.log('\nwhatsapp-out · ⚠️ templates — the only path that spends on someone not talking to us');
+const tpl = require('../lib/whatsapp-templates');
+t('★ one UTILITY template carries every status', () => {
+  const all = tpl.forDisplay();
+  assert.strictEqual(all.length, 1, 'more templates = more Meta approvals = a business that ships none of them');
+  assert.strictEqual(all[0].category, 'UTILITY', 'an order update is transactional, not marketing — filing it wrong is both a rejection risk and a false description');
+  assert.match(all[0].body, /\{\{1\}\}/, 'the status must travel as a parameter');
+});
+/**
+ * ⚠️ APPROVAL IS PER-WABA. Meta approves a template for one WhatsApp Business Account; our having written it, or
+ * another business having had theirs approved, says nothing about whether THIS number may send it. An absent flag
+ * must therefore read as NO, not as "probably fine".
+ */
+t('★★ an absent approval means NO, not "probably fine"', () => {
+  assert.strictEqual(tpl.approvedOn({}, 'order_status_update'), false);
+  assert.strictEqual(tpl.approvedOn({ templates: {} }, 'order_status_update'), false);
+  assert.strictEqual(tpl.approvedOn({ templates: { order_status_update: 'pending' } }, 'order_status_update'), false);
+  assert.strictEqual(tpl.approvedOn({ templates: { order_status_update: 'approved' } }, 'order_status_update'), true);
+});
+t('★★ outside the window, an unapproved template REFUSES and says both reasons', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'whatsapp-out.js'), 'utf8');
+  const notify = src.slice(src.indexOf('async function notify('), src.indexOf('async function notifyChitStatus'));
+  assert.match(notify, /if \(win\.open\)/, 'the window must still decide which kind of message is even possible');
+  assert.match(notify, /is not approved on this number/, 'the refusal must name the template problem, not just the window');
+  assert.match(notify, /tpl\.approvedOn\(binding, TEMPLATE_FOR_STATUS\)/, 'approval must be read off the BINDING, not a global');
+});
+/**
+ * ⚠️ META REJECTS PARAMETERS WITH NEWLINES, TABS OR RUNS OF SPACES, and a rejected send is indistinguishable from
+ * a lost message at the customer's end. Clean here, where it is certain, rather than trusting whatever the status
+ * sentence happened to contain.
+ */
+t('★★ parameters are cleaned so Meta cannot reject them on formatting', () => {
+  assert.strictEqual(tpl.cleanParam('a\nb\tc'), 'a b c');
+  assert.ok(!/ {4,}/.test(tpl.cleanParam('a' + ' '.repeat(9) + 'b')));
+  assert.strictEqual(tpl.cleanParam(''), '-', 'an empty parameter is rejected outright by Meta');
+  assert.strictEqual(tpl.cleanParam(null), '-');
+});
+t('★ the send payload is the shape Meta documents', () => {
+  const p = tpl.buildSend('+919876543210', 'order_status_update', ['It has been accepted.']);
+  assert.strictEqual(p.type, 'template');
+  assert.strictEqual(p.to, '919876543210', 'Meta takes the number without a leading +');
+  assert.strictEqual(p.template.name, 'order_status_update');
+  assert.strictEqual(p.template.components[0].parameters[0].text, 'It has been accepted.');
+});
+
 console.log('\nwhatsapp-out · ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' assertions)');
 console.log('  \x1b[33m⚠️\x1b[0m  The WIRE CALL to Meta is NOT covered here and cannot be until a real token exists.\n');
 process.exitCode = fail ? 1 : 0;

@@ -22,6 +22,14 @@ router.get('/outbound', auth, async (req, res) => {
   catch (err) { res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
+// POST /:id/template — the OWNER states Meta approved a template on their number. { name, state }
+// ⚠️ An entity action, not an admin one: only the owner can see Meta's approval screen, and asserting wrongly
+// costs them a rejected send rather than anyone else's isolation.
+router.post('/:id/template', auth, async (req, res) => {
+  try { const b = req.body || {}; res.json(await channels.setTemplate(entityId(req), req.params.id, b.name, b.state)); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Template update failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+});
+
 // POST / — bind an address to this entity. { channel, address, label }
 router.post('/', auth, async (req, res) => {
   try { res.status(201).json(await channels.addBinding(entityId(req), req.body || {})); }
