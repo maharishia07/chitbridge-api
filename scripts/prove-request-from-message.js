@@ -148,18 +148,41 @@ async function j(p, o = {}) {
     '★★ an item you do not stock stays UNPRICED — never guessed from a near-miss', JSON.stringify(pay.line_items));
   const pr = ((pay.business_json || {}).via || {}).priced || {};
   ok(pr.from_catalogue >= 1, '★ it reports how many lines it priced', JSON.stringify(pr));
-  ok((pr.created || []).some((n) => /nail/i.test(n)), '★★ the unstocked item was ADDED to the catalogue', JSON.stringify(pr.created));
+  /* ⚠️ ASSERTED ON THE CATALOGUE, NOT ON `created`. A second run of this script finds "nails" already there and
+     creates nothing — so asserting `created` made the check pass on the first run and fail on every one after,
+     for a reason that had nothing to do with the code. The claim is that the item ENDS UP in the catalogue,
+     unpriced and marked where it came from; who put it there this time is not the claim. */
+  const after = await j('/api/products', { token: tok });
+  const rowsOf = (r) => { const b = (r.b && (r.b.items || r.b.products || r.b)) || []; return Array.isArray(b) ? b.map((x) => x.item_data || x) : []; };
+  const nail = rowsOf(after).find((d) => /nail/i.test(d.name || ''));
+  ok(!!nail, '★★ the unstocked item is now IN the catalogue', JSON.stringify(rowsOf(after).map((d) => d.name)));
+  ok(nail && nail.provisional === true && nail.price == null,
+    '★★ it is there UNPRICED and marked where it came from', JSON.stringify(nail));
+  ok(nail && /request$/.test(String(nail.source || '')), '★ the row records which channel asked for it', nail && nail.source);
   ok(/^WhatsApp request — /.test(pay.subject), '★★ the chit says on its subject line that it is a WhatsApp request', pay.subject);
 
   // ⚠️ AND IT IS NOT ON THE SHOP FRONT. An unpriced row created from a stranger's message must not read as "we
   //    sell this, at nothing" to the public.
   const me = await j('/api/entities/me', { token: tok });
   const bid = (me.b.entity && me.b.entity.bridge_id) || me.b.bridge_id;
-  const shop = await j('/api/catalogue/face/' + bid);
-  const shopNames = JSON.stringify((shop.b && (shop.b.items || shop.b.groups)) || shop.b || {});
-  ok(shop.status === 200, 'the storefront answered (a 404 would fake the next check)', 'got ' + shop.status);
-  ok(!/nail/i.test(shopNames), '★★★ the provisional item is NOT on the public storefront');
-  ok(/cement/i.test(shopNames), '★ a real priced item still IS on the storefront — the filter narrowed nothing else');
+  /* ⚠️ THE SHOP MUST BE PUBLIC OR THE STOREFRONT 404s — and a 404 would make "the provisional item is not on the
+     storefront" pass for the wrong reason. That is exactly how the first version of this check fooled me: it asked
+     /api/catalogue/face/<id>, which does not exist, and went green on the error page. */
+  await j('/api/entities/profile', { method: 'PATCH', token: tok, body: { catalogue_visibility: 'public' } });
+  const shop = await j('/api/catalogue/' + bid);
+  const shopNames = JSON.stringify(shop.b || {});
+  if (shop.status !== 200) {
+    /* ⚠️ REPORTED AS UNVERIFIED, NOT SKIPPED QUIETLY. This entity has no published shop, so the storefront answers
+       404 — and "nails is not in this response" would then be true of an error page, which is how the FIRST
+       version of this check went green while proving nothing. A check that cannot run says so. */
+    fail++;
+    console.log('  \x1b[33m⊘ UNVERIFIED\x1b[0m — this entity has no published shop (storefront ' + shop.status + '),');
+    console.log('      so "the unpriced item is not on the shop front" could not be tested end-to-end here.');
+    console.log('      It rests on catalogue-view\'s existing unpriced rule, which has its own coverage.');
+  } else {
+    ok(!/nail/i.test(shopNames), '★★★ the unpriced item is NOT on the public storefront');
+    ok(/cement/i.test(shopNames), '★ a real priced item still IS on the storefront — nothing else was hidden');
+  }
 
   const beforeCount = (await j('/api/capture/pending', { token: tok })).b.captures.length;
 
