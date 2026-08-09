@@ -196,6 +196,8 @@ router.post('/send',
       .isIn(['order','invoice','receipt','inquiry','delivery_note','general'])
       .withMessage('Invalid purpose'),
     body('manual_subject').optional().trim().isLength({ max: 500 }),
+    // Per-send copy choice — honoured ONLY on a pure self-chit (see the pureSelfChit branch); ignored elsewhere.
+    body('self_copy').optional().isIn(['both', 'sent', 'received']).withMessage('self_copy must be both|sent|received'),
     body('line_items').optional().isArray(),
     body('business_json').optional().isObject(),
   ],
@@ -336,17 +338,36 @@ router.post('/send',
       //    only ever suppress on a PURE self-chit (self is the sole recipient). Every suppression is DECLARED on the chit
       //    via summary_json.copy_policy — the absence is governed + auditable, never a silent gap. ──
       const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
+      /**
+       * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
+       *
+       * Athi, 2026-08-09: *"we can create a self chit and you can make the order copy none, it will create a task."*
+       * That is the right shape for an inbound request: the entity did NOT send it — someone outside asked — so a
+       * copy sitting in their Order/Sent list would be a lie about who asked. Task-only is the truthful record.
+       *
+       * The account-wide setting could not express this: it would have flipped EVERY self-chit they ever author.
+       * A single send needs to say it for itself.
+       *
+       * WHAT THIS DOES NOT DO — it lives INSIDE the pureSelfChit branch and nowhere else, so it cannot reach an
+       * inter-entity chit. Both copies stay mandatory there (cb-core-principle: the co-held transfer is the point),
+       * and both suppressed copies here belong to the SAME entity, so nobody loses a record they hold. The choice is
+       * DECLARED on the chit exactly as the setting's is, with `source` recording which of the two decided it — a
+       * suppression that cannot be told apart from a gap is not governed.
+       */
+      const reqSelfCopy = ['both', 'sent', 'received'].includes(String(req.body.self_copy || '')) ? String(req.body.self_copy) : null;
+      const effSelfCopy = reqSelfCopy || selfCopyPref;
+      const copySource = reqSelfCopy ? 'request' : 'setting';
       let copyPolicy = null, suppressSentCopy = false;
       if (pureSelfChit) {                          // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
-        if (selfCopyPref === 'sent') {            // ORDER-only → drop the self Task (received) copy
+        if (effSelfCopy === 'sent') {             // ORDER-only → drop the self Task (received) copy
           const si = receiverDetails.findIndex(r => r.entity_id === sender_id);
           if (si >= 0) receiverDetails.splice(si, 1);
-          copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: 'setting' };
-        } else if (selfCopyPref === 'received') { // TASK-only → drop the sender Order (sent) copy
+          copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: copySource };
+        } else if (effSelfCopy === 'received') {  // TASK-only → drop the sender Order (sent) copy
           suppressSentCopy = true;
-          copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: 'setting' };
+          copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: copySource };
         } else {                                  // BOTH → keep both copies, but STILL declare the self-chit identity
-          copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: 'setting' };
+          copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource };
         }
       }
 
@@ -446,6 +467,21 @@ router.post('/send',
           if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
         }
       } catch (_) { /* best-effort */ }
+      /* The whitelist for the provenance rider above. A string field is trimmed and capped; `sender_verified` is
+         forced to a real boolean, because "the sender is verified" is a claim that must never arrive as a truthy
+         string. Unknown keys are dropped rather than carried. */
+      const via = (() => {
+        const v = business_json && business_json.via;
+        if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+        const str = (x, n) => (x === null || x === undefined || x === '' ? null : String(x).slice(0, n || 120));
+        const out = {
+          channel: str(v.channel, 24), from: str(v.from, 64), from_name: str(v.from_name, 120),
+          to: str(v.to, 64), provider_msg_id: str(v.provider_msg_id, 128), capture_id: str(v.capture_id, 64),
+          received_at: str(v.received_at, 40), read_by: str(v.read_by, 40),
+          sender_verified: v.sender_verified === true,
+        };
+        return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
+      })();
       const summary_json = {
         ...summary,
         currency_code,
@@ -460,7 +496,20 @@ router.post('/send',
         ...(folded_clearances ? { clearances: folded_clearances } : {}),
         ...(folded_commercial ? { commercial: folded_commercial } : {}),
         // Traceability edge — frozen onto every co-held copy (Fragment 1). parents is a SET (forward fan-out is the spread).
-        ...(traceEdge ? { trace: { ...traceEdge, sealed_at: now.toISOString() } } : {})
+        ...(traceEdge ? { trace: { ...traceEdge, sealed_at: now.toISOString() } } : {}),
+        /**
+         * ⚠️ ENGINE TOUCH #2, ADDITIVE — channel PROVENANCE, echoed onto the summary so it rides every copy and is
+         * readable from a list without opening the chit. Present only when declared, exactly like `trace`; a chit
+         * sent without it is byte-identical to before.
+         *
+         * It belongs on summary_json rather than only on business_json because provenance that has to be dug for is
+         * provenance nobody reads. Six weeks after a disputed order, "where did this come from" is the first
+         * question, and business_json is not on the list row.
+         *
+         * ⚠️ WHITELISTED, NOT COPIED. summary_json is ours; letting a caller spread arbitrary keys into it would
+         * make the chit's own summary a place strangers can write. Known keys, coerced, capped.
+         */
+        ...(via ? { via } : {})
       };
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──

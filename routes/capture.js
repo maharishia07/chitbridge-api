@@ -40,6 +40,18 @@ router.post('/:id/structure', auth, async (req, res) => {
   catch (err) { res.status(err.status || 500).json({ error: 'Structure failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 
+/**
+ * POST /:id/raise — build the SEND PAYLOAD for turning this message into a REQUEST addressed to the entity.
+ *
+ * ⚠️ IT CREATES NOTHING. It returns what to send; the caller posts it to /api/chits/send (the one send path) and
+ * then calls /convert. The human confirm gate is exactly where it was — a person still presses send. What this
+ * removes is the typing, not the deciding.
+ */
+router.post('/:id/raise', auth, async (req, res) => {
+  try { res.json(await capture.raisePayload(entityId(req), req.params.id)); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Raise failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+});
+
 // POST /:id/convert — the human has SENT the chit (via /api/chits/send); record the linkage. { chit_id }
 router.post('/:id/convert', auth, async (req, res) => {
   try { res.json(await capture.markConverted(entityId(req), req.params.id, (req.body || {}).chit_id)); }
