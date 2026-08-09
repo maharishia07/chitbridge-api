@@ -22,6 +22,12 @@ router.get('/outbound', auth, async (req, res) => {
   catch (err) { res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
+// POST /:id/provider-ref — Meta's phone_number_id for this line; a send cannot be addressed without it. { provider_ref }
+router.post('/:id/provider-ref', auth, async (req, res) => {
+  try { res.json(await channels.setProviderRef(entityId(req), req.params.id, (req.body || {}).provider_ref)); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+});
+
 // POST /:id/template — the OWNER states Meta approved a template on their number. { name, state }
 // ⚠️ An entity action, not an admin one: only the owner can see Meta's approval screen, and asserting wrongly
 // costs them a rejected send rather than anyone else's isolation.
