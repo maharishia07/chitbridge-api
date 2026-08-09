@@ -1257,6 +1257,26 @@ router.put('/:chit_id/status',
         new_status
       });
 
+      /**
+       * ⚠️ NOTIFY BACK — AFTER res.json(), AND DELIBERATELY NOT AWAITED (b126).
+       *
+       * If this chit came from a channel, the customer who sent the original WhatsApp message is told its status
+       * changed. It runs after the response for one reason: a courtesy message must never delay, fail, or alter
+       * the chit operation that triggered it. The chit is the record; the reply is a notice.
+       *
+       * notifyChitStatus never throws and returns null when there is nothing to say — no capture behind the chit
+       * (composed in the app, so nobody is waiting on WhatsApp), or a status with no customer-facing meaning.
+       * ⚠️ It also refuses outside Meta's 24-hour window rather than posting something that would be rejected;
+       * the refusal is logged, because a notification never attempted is not the same as one that failed.
+       */
+      try {
+        // No subject is in scope here and it is not worth a query for a courtesy line — notifyChitStatus reads it
+        // as optional and simply omits the quoted subject when absent.
+        require('../lib/whatsapp-out')
+          .notifyChitStatus(entity_id, chit_id, new_status, null)
+          .catch(() => {});
+      } catch (_) { /* outbound is never allowed to affect the status change */ }
+
     } catch (err) {
       console.error('Update status error:', err.message);
       res.status(500).json({ error: 'Update failed', message: safeErr(err) });

@@ -106,6 +106,7 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
             channel: 'whatsapp', sender_ref: m.from, sender_name: names[m.from] || null,
             raw_text: text || ('[' + (m.type || 'media') + ']'),
             media_refs: media && media.id ? [{ name: media.filename || m.type, id: media.id }] : [],
+            to_ref: to,     // b126 — the line they wrote to, so a reply can come FROM it
           });
           placed++;
         }
