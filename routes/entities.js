@@ -314,6 +314,24 @@ router.get('/search', auth, async (req, res) => {
 });
 
 // GET /entities/me
+/**
+ * ── POLICY FLAGS (b130) — Settings → Policy flags, persisted where it can be ENFORCED ──────────────────────────
+ * They lived in localStorage: the card said "set ✓", nothing left the browser, and the server that enforces them
+ * never heard. An actor acts FOR its entity, so the flags are always the ENTITY's, never the actor's.
+ */
+const policy = require('../lib/policy');
+const policyEntity = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+
+router.get('/policy', auth, async (req, res) => {
+  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND }); }
+  catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
+});
+
+router.patch('/policy', auth, async (req, res) => {
+  try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+});
+
 router.get('/me', auth, async (req, res) => {
   try {
     const result = await query(
