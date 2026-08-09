@@ -48,7 +48,8 @@ router.post('/:id/structure', auth, async (req, res) => {
  * removes is the typing, not the deciding.
  */
 router.post('/:id/raise', auth, async (req, res) => {
-  try { res.json(await capture.raisePayload(entityId(req), req.params.id)); }
+  // use_catalogue defaults TRUE; false makes every line carry exactly what the message said (see raisePayload).
+  try { res.json(await capture.raisePayload(entityId(req), req.params.id, { useCatalogue: (req.body || {}).use_catalogue !== false })); }
   catch (err) { res.status(err.status || 500).json({ error: 'Raise failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 
