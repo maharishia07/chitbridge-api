@@ -32,9 +32,16 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-/** Load .env.proof (or .env) if present — values already in the environment always take precedence. */
+/**
+ * Load .env.proof (or .env) if present — values already in the environment always take precedence.
+ *
+ * ⚠️ `.env.proof.txt` IS ACCEPTED TOO. Notepad appends `.txt` unless you fight the Save dialog, so telling someone
+ * to create a dotfile on Windows reliably produces `.env.proof.txt` — and then the script says "missing" about a
+ * file that is sitting right there with the correct contents. Accepting both is one line; explaining the Save-as
+ * dance is a support conversation every single time. (`.gitignore` covers `.env.*`, so both are ignored.)
+ */
 (function loadEnvFile() {
-  for (const name of ['.env.proof', '.env']) {
+  for (const name of ['.env.proof', '.env.proof.txt', '.env']) {
     const f = path.join(__dirname, '..', name);
     if (!fs.existsSync(f)) continue;
     for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
@@ -85,8 +92,36 @@ const pendingTexts = async (tok) => ((await j('/api/capture/pending', { token: t
     console.log('    WHATSAPP_APP_SECRET=the-value-you-set-on-railway');
     console.log('    CB_ADMIN_KEY=the-other-value-you-set-on-railway\n');
     console.log('  (it is gitignored). The SAME values must be set on Railway → Variables.\n');
-    process.exit(2);
+    // ⚠️ exitCode + return, never process.exit(): killing the process while fetch still holds keep-alive
+    // sockets trips a libuv assert on Windows ("UV_HANDLE_CLOSING"), which prints a crash after a perfectly
+    // good message and makes a clean refusal look like a bug.
+    process.exitCode = 2; return;
   }
+  /**
+   * ⚠️ PRECONDITION — REFUSE TO RUN AGAINST AN INERT SERVER.
+   *
+   * If WHATSAPP_APP_SECRET is not set on the SERVER, the webhook returns 200 and does nothing for every delivery.
+   * Half the checks below would then pass for entirely the wrong reason — "a declared binding receives nothing"
+   * is trivially true when NOTHING is ever received — and the script would print "all passed" having proved
+   * exactly zero. A test that cannot fail is worse than no test, because it is believed.
+   *
+   * So: a deliberately wrong signature must be REJECTED (401) before anything else runs. That single response is
+   * the proof that the server is really enforcing, and therefore that everything after it means something.
+   */
+  const canary = await j('/api/capture/webhook/whatsapp', { method: 'POST', body: '{}', headers: { 'X-Hub-Signature-256': 'sha256=deadbeef' } });
+  if (canary.status !== 401) {
+    console.log('\n  \x1b[31mABORTED — the server is not enforcing webhook signatures.\x1b[0m');
+    console.log('  A bad signature returned ' + canary.status + ' ' + JSON.stringify(canary.b) + ', expected 401.');
+    console.log('\n  WHATSAPP_APP_SECRET is not set on Railway, so the webhook accepts nothing and does nothing.');
+    console.log('  Running anyway would print "all passed" while proving NOTHING — every delivery check would');
+    console.log('  succeed simply because no delivery ever arrives.\n');
+    console.log('  Set it on Railway → chitbridge-api → Variables (same value as your local file), wait for the');
+    console.log('  redeploy, then run this again.\n');
+    process.exitCode = 2; return;
+  }
+  console.log('  \x1b[32mok\x1b[0m  precondition: the server rejects a bad signature (401) — enforcement is real');
+  pass++;
+
   const stamp = Date.now().toString().slice(-6);
   const NUM_A = '+9199' + stamp + '1', NUM_B = '+9199' + stamp + '2', NUM_UNCLAIMED = '+9199' + stamp + '3';
 
@@ -154,5 +189,5 @@ const pendingTexts = async (tok) => ((await j('/api/capture/pending', { token: t
   console.log('\n  ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' checks)');
   console.log('  \x1b[33m⚠️\x1b[0m  This proves OUR routing, signature check and isolation. It does NOT prove Meta\'s real');
   console.log('     payload matches the shape above — watch the first genuine message.\n');
-  process.exit(fail ? 1 : 0);
+  process.exitCode = fail ? 1 : 0;
 })().catch((e) => { console.error('\nprove-channels crashed:', e && e.message, '\n'); process.exit(1); });
