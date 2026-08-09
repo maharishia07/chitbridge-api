@@ -19,3 +19,7 @@ Thumbs.db
 # Build
 dist/
 build/
+
+# .env.proof holds the WhatsApp app secret + admin key for scripts/prove-channels.js.
+# NOTE: a bare ".env" does NOT match ".env.proof" — it needs its own pattern, or a real secret gets committed.
+.env.*

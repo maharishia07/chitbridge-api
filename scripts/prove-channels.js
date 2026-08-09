@@ -14,12 +14,37 @@
  *   CB_ADMIN_KEY=<another random string>           ← gates platform approval
  *
  * ── RUN ──────────────────────────────────────────────────────────────────────────────────────────────────────
- *   CB_API=https://chitbridge-api-production.up.railway.app \
- *   WHATSAPP_APP_SECRET=... CB_ADMIN_KEY=... node scripts/prove-channels.js
+ *   node scripts/prove-channels.js
+ *
+ * ⚠️ PUT THE SECRETS IN A FILE, NOT ON THE COMMAND LINE. Create `.env.proof` next to package.json:
+ *
+ *     WHATSAPP_APP_SECRET=the-value-you-set-on-railway
+ *     CB_ADMIN_KEY=the-other-value-you-set-on-railway
+ *
+ * It is gitignored (`.env.*` — note a bare `.env` does NOT match `.env.proof`). Reading from a file rather than
+ * an inline `VAR=x cmd` prefix matters for two reasons: that syntax is bash-only and silently breaks in Windows
+ * PowerShell, and a secret typed on a command line ends up in shell history. Environment variables still win if
+ * they are set, so CI can pass them the usual way.
  *
  * It cleans up after itself: every binding and capture it creates is removed at the end.
  */
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+/** Load .env.proof (or .env) if present — values already in the environment always take precedence. */
+(function loadEnvFile() {
+  for (const name of ['.env.proof', '.env']) {
+    const f = path.join(__dirname, '..', name);
+    if (!fs.existsSync(f)) continue;
+    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
+      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+      if (!m) continue;
+      const v = m[2].replace(/^['"]|['"]$/g, '');
+      if (!process.env[m[1]] && v) process.env[m[1]] = v;
+    }
+  }
+})();
 
 const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 const SECRET = process.env.WHATSAPP_APP_SECRET;
@@ -54,7 +79,14 @@ async function deliver(to, from, text) {
 const pendingTexts = async (tok) => ((await j('/api/capture/pending', { token: tok })).b.captures || []).map((c) => c.raw_text);
 
 (async () => {
-  if (!SECRET || !ADMIN) { console.log('\nSet WHATSAPP_APP_SECRET and CB_ADMIN_KEY (see the header).\n'); process.exit(2); }
+  if (!SECRET || !ADMIN) {
+    console.log('\n  Missing: ' + [!SECRET && 'WHATSAPP_APP_SECRET', !ADMIN && 'CB_ADMIN_KEY'].filter(Boolean).join(' and '));
+    console.log('\n  Create ' + path.join(__dirname, '..', '.env.proof') + ' with two lines:\n');
+    console.log('    WHATSAPP_APP_SECRET=the-value-you-set-on-railway');
+    console.log('    CB_ADMIN_KEY=the-other-value-you-set-on-railway\n');
+    console.log('  (it is gitignored). The SAME values must be set on Railway → Variables.\n');
+    process.exit(2);
+  }
   const stamp = Date.now().toString().slice(-6);
   const NUM_A = '+9199' + stamp + '1', NUM_B = '+9199' + stamp + '2', NUM_UNCLAIMED = '+9199' + stamp + '3';
 
