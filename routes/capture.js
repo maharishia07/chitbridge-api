@@ -107,6 +107,7 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
             raw_text: text || ('[' + (m.type || 'media') + ']'),
             media_refs: media && media.id ? [{ name: media.filename || m.type, id: media.id }] : [],
             to_ref: to,     // b126 — the line they wrote to, so a reply can come FROM it
+            provider_msg_id: m.id,   // b129 — Meta retries; a redelivery must not become a second order
           });
           placed++;
         }
