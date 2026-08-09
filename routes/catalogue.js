@@ -983,6 +983,29 @@ router.delete('/:bridge_id/my-documents/:id', customerAuth, async (req, res) => 
   } catch (err) { res.status(500).json({ error: 'Delete failed', message: safeErr(err) }); }
 });
 
+
+/**
+ * POST /photo-extract — read products out of a photo (SPEC-catalogue-photo-vision.md, step 5's server half).
+ *
+ * The thin route the spec describes: it takes already-downscaled bytes from the client and hands them to the
+ * co-assist. It owns no vision logic of its own — the caps, the fence and the multimodal branch all live in
+ * invokeSkill, so there is exactly one place where an image can reach a model.
+ *
+ * ⚠️ PROPOSES, NEVER COMMITS. gate:'confirm' — the owner edits and accepts every row. An AI-read price that
+ * committed itself would be a fabricated number wearing the appearance of evidence.
+ */
+router.post('/photo-extract', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.parent_entity_id || req.identity.identity_id;
+    const images = (req.body && req.body.images) || [];
+    if (!Array.isArray(images) || !images.length) return res.status(400).json({ error: 'No images', message: 'Send images: [{ mime, b64 }].' });
+    const out = await require('../lib/ai').invokeSkill(entity_id, 'photo-to-items', { images });
+    res.json(out);
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Photo read failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) });
+  }
+});
+
 module.exports = router;
 module.exports.resolveContact = resolveContact;   // exported for unit tests (F2 channel detection)
 module.exports.crHandle = crHandle;               // exported for unit tests (collision-free .cr handle)
