@@ -138,4 +138,31 @@ router.get('/:id/metrics', auth, [ param('id').isUUID() ], validate, async (req,
   } catch (err) { res.status(500).json({ error: 'Metrics failed', message: safeErr(err) }); }
 });
 
+/* ── FOLDER RULES (b132) — condition -> file here. The UX Athi asked for lives INSIDE the folder. ────────────── */
+const rules = require('../lib/folder-rules');
+const fail = (res, err, label) => res.status(err.status || 500).json({ error: label, message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+
+router.get('/:id/rules', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+  try { res.json(await rules.list(ent(req), req.params.id)); } catch (err) { fail(res, err, 'Rules list failed'); }
+});
+router.post('/:id/rules', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+  try { res.json(await rules.create(ent(req), req.params.id, req.body || {})); } catch (err) { fail(res, err, 'Rule create failed'); }
+});
+router.patch('/rules/:rule_id', auth, [ param('rule_id').isUUID() ], validate, async (req, res) => {
+  try { res.json(await rules.update(ent(req), req.params.rule_id, req.body || {})); } catch (err) { fail(res, err, 'Rule update failed'); }
+});
+router.delete('/rules/:rule_id', auth, [ param('rule_id').isUUID() ], validate, async (req, res) => {
+  try { res.json(await rules.remove(ent(req), req.params.rule_id)); } catch (err) { fail(res, err, 'Rule delete failed'); }
+});
+
+/* ⚠️ PREVIEW BEFORE SAVE — the most useful route here. A rule is a promise about the future written by someone
+   who cannot see it; running it against chits that already exist turns "I think this catches supplier invoices"
+   into a list you can read first. Needs no rules table, so it works before b132 is run. */
+router.post('/rules/preview', auth, async (req, res) => {
+  try { res.json(await rules.preview(ent(req), (req.body || {}).when, req.body || {})); } catch (err) { fail(res, err, 'Preview failed'); }
+});
+
+/* The condition vocabulary, served to the UI so the builder cannot offer a term the matcher does not know. */
+router.get('/rules/vocabulary', auth, (req, res) => res.json({ keys: require('../lib/match').KEYS }));
+
 module.exports = router;
