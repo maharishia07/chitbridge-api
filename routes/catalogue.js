@@ -67,6 +67,7 @@ const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
 // it extends to quantity, delivery date, spec, incoterm without another migration.
 const orderInput = require('../lib/order-input');
 const catalogueView = require('../lib/catalogue-view');   // ONE catalogue read, shared with the B2B/supplier view
+const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const MAX_FORMS_PER_SUBMISSION = 5;   // one purpose, several forms (an export bundle, a loan pack) — but bounded
 // The catalogue DECLARES what it receives (lib/order-input.js). Read server-side from the face (b112) and never from
 // the request, so a customer cannot claim a shop is negotiable — or priceless — when it is not.
@@ -336,20 +337,21 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
   // meaningless; state both or state neither. null means "not applicable", which 0 never did.
   const value = (total_value === null || total_value === undefined || !Number.isFinite(Number(total_value)))
     ? null : money.round2(Number(total_value));
-  const summary_json = { line_item_count: 0, total_value: value, currency_code, priority_external: 'normal', purpose: 'order', is_promotion: false, forwarded_from: null, trace };
-  const headerCommon = { sender_entity_id: sender.id, sender_entity_bridge_id: sender.bridge_id, sender_entity_display_name: sender.display_name,
-    all_recipients, purpose: 'order', auto_subject: subject, manual_subject: subject, summary_json,
-    // deliverEdge is the NETWORK path (order chit + fulfilment fragments), not the storefront. It is always an
-    // 'order' — there is no negotiation here — and `purpose` is not in scope. A blanket rename briefly made this a
-    // ReferenceError; the test that counts these caught it.
-    schema_version: null, schema_id: null, created_by_actor_id: sender.id, detail_type: 'order', line_item_count: 0, total_value: value, currency_code };
+  /* ⚠️ SHAPE from lib/mint.js; the POLICY above (governance-resolved currency, null-not-zero total) stays here.
+     deliverEdge is the NETWORK path (order chit + fulfilment fragments), not the storefront. It is always an
+     'order' — there is no negotiation here — and `purpose` is not in scope. A blanket rename briefly made this a
+     ReferenceError; the test that counts these caught it. */
+  const summary_json = mint.summary({ line_item_count: 0, total_value: value, currency_code, purpose: 'order', trace });
+  const headerCommon = mint.header({ sender_entity_id: sender.id, sender_entity_bridge_id: sender.bridge_id,
+    sender_entity_display_name: sender.display_name, all_recipients, purpose: 'order',
+    auto_subject: subject, manual_subject: subject, summary_json, created_by_actor_id: sender.id });
   const copies = [
-    { ...headerCommon, business_json: business, entity_id: sender.id, direction: 'sent', role: 'Act', current_status: 'delivered', priority_flag: 'normal',
-      log: { action: 'created', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: subject } },
-    { ...headerCommon, business_json: business, entity_id: receiver.id, direction: 'received', role: 'Act', current_status: status || 'pending', priority_flag: 'normal',
-      log: { action: 'delivered', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: status || 'pending', detail: subject } },
+    mint.party(headerCommon, { entity_id: sender.id, direction: 'sent', role: 'Act', current_status: 'delivered', business_json: business,
+      log: { action: 'created', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: subject } }),
+    mint.party(headerCommon, { entity_id: receiver.id, direction: 'received', role: 'Act', current_status: status || 'pending', business_json: business,
+      log: { action: 'delivered', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: status || 'pending', detail: subject } }),
   ];
-  await withEntity(sender.id, (dbx) => dbx.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(copies)]));
+  await mint.deliver(sender.id, chit_id, copies);
 }
 
 // ── Network order (finish the loop): a customer completes an order → ONE order chit to the network operator (the
@@ -764,32 +766,31 @@ router.post('/:bridge_id/order/confirm',
       // withEntity(sender = the customer), with the OTP consume in the SAME tx. Fallback to the legacy inline
       // fan-out when b50 isn't applied (chit_deliver missing -> the whole withEntity rolls back incl. the OTP,
       // then the fallback redoes it). NOTE: chit_deliver sets chit_ref = chit_id (was NULL here) — benign, matches /send.
+      /* ⚠️ SHAPE from lib/mint.js. This copy pair carried NO manual_subject and NO created_by_actor_id where the
+         other paths did — the customer is not an actor and the subject is generated. header() supplies both as
+         null, which is what the INSERT stored anyway; the difference was that three paths said so and this one
+         left the reader to work it out. */
+      const orderHeader = mint.header({ sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
+        sender_entity_display_name: c.display_name, all_recipients, purpose, auto_subject, manual_subject: null,
+        summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id, detail_type: purpose });
       const orderCopies = [
-        { entity_id: c.identity_id, sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
-          sender_entity_display_name: c.display_name, all_recipients, purpose, auto_subject,
-          summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id,
-          current_status: 'delivered', payload_delivered: true, detail_type: purpose,
-          direction: 'sent', role: 'Act', priority_flag: 'normal',
-          line_item_count: summary_json.line_item_count, total_value: summary_json.total_value,
-          currency_code: summary_json.currency_code, line_items,
+        mint.party(orderHeader, { entity_id: c.identity_id, direction: 'sent', role: 'Act',
+          current_status: 'delivered', payload_delivered: true, line_items,
           log: { action: 'created', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
-                 new_status: 'delivered', detail: `Order placed to ${entity.display_name}` } },
-        { entity_id: entity.identity_id, sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
-          sender_entity_display_name: c.display_name, all_recipients, purpose, auto_subject,
-          summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id,
-          current_status: 'pending', detail_type: purpose,
-          direction: 'received', role: 'Act', priority_flag: 'normal',
-          line_item_count: summary_json.line_item_count, total_value: summary_json.total_value,
-          currency_code: summary_json.currency_code, line_items,
+                 new_status: 'delivered', detail: `Order placed to ${entity.display_name}` } }),
+        mint.party(orderHeader, { entity_id: entity.identity_id, direction: 'received', role: 'Act',
+          current_status: 'pending', line_items,
           log: { action: 'delivered', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
-                 new_status: 'pending', detail: `Order received from ${c.display_name}` } },
+                 new_status: 'pending', detail: `Order received from ${c.display_name}` } }),
       ];
       try {
         await withEntity(c.identity_id, async (client) => {
           await client.query(
             `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW()
               WHERE identity_id=$1`, [c.identity_id]);
-          await client.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(orderCopies)]);
+          /* ⚠️ THE OPEN CLIENT IS PASSED IN, not a new connection — the OTP consume above and the documents below
+             must commit with the chit or not at all. mint.deliver honours opts.client for exactly this. */
+          await mint.deliver(c.identity_id, chit_id, orderCopies, { client });
           // T2.2 / T3.10 · the documents commit WITH the chit. Writing them afterwards forced an impossible choice:
           // 200 with documents_stored:false (a chit asserting evidence nobody holds, and — until the customer surface
           // existed — no way to ever supply it), or 500 on a submission that had already committed. Inside the

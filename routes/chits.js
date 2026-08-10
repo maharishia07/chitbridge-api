@@ -9,6 +9,7 @@ const storage = require('../lib/storage');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
+const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -498,21 +499,25 @@ router.post('/send',
         };
         return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
       })();
-      const summary_json = {
-        ...summary,
+      /* ⚠️ The SKELETON comes from lib/mint.js; every rider below is still decided here. mint.summary() adds a rider
+         only when it is neither undefined nor null — the same test the conditional spreads made by hand, four
+         times, in four files. */
+      const summary_json = mint.summary({
+        line_item_count: summary.line_item_count,
+        total_value: summary.total_value,
         currency_code,
         priority_external: ext_priority,
         purpose,
         is_promotion: !!(business_json && business_json.is_promotion),
         // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
         forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
-        ...(copyPolicy ? { copy_policy: copyPolicy } : {}),
-        ...(retention ? { retention } : {}),
-        ...(governed ? { governed } : {}),
-        ...(folded_clearances ? { clearances: folded_clearances } : {}),
-        ...(folded_commercial ? { commercial: folded_commercial } : {}),
+        copy_policy: copyPolicy,
+        retention,
+        governed,
+        clearances: folded_clearances,
+        commercial: folded_commercial,
         // Traceability edge — frozen onto every co-held copy (Fragment 1). parents is a SET (forward fan-out is the spread).
-        ...(traceEdge ? { trace: { ...traceEdge, sealed_at: now.toISOString() } } : {}),
+        trace: traceEdge ? { ...traceEdge, sealed_at: now.toISOString() } : null,
         /**
          * ⚠️ ENGINE TOUCH #2, ADDITIVE — channel PROVENANCE, echoed onto the summary so it rides every copy and is
          * readable from a list without opening the chit. Present only when declared, exactly like `trace`; a chit
@@ -525,8 +530,8 @@ router.post('/send',
          * ⚠️ WHITELISTED, NOT COPIED. summary_json is ours; letting a caller spread arbitrary keys into it would
          * make the chit's own summary a place strangers can write. Known keys, coerced, capped.
          */
-        ...(via ? { via } : {})
-      };
+        via,
+      });
 
       // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
       const schemaRow = await query(
@@ -543,20 +548,23 @@ router.post('/send',
 
       // ── Compose the per-participant copies for the delivery layer (SENDER always; RECEIVERS unless draft).
       //    Every copy carries the SAME sender = the caller, which is chit_deliver's isolation gate. ──
-      const headerCommon = {
+      /* ⚠️ SHAPE from lib/mint.js — and ONLY the shape. Everything above this line (recipient resolution, the caps,
+         copy_policy, retention, freeze-at-send, the trace edge) is this route's POLICY and has not moved: it is
+         engine-locked and is the reference implementation the other three paths were imitating badly. */
+      const headerCommon = mint.header({
         sender_entity_id: sender_id, sender_entity_bridge_id: sender_bridge_id,
         sender_entity_display_name: sender_display_name, all_recipients, purpose,
         auto_subject, manual_subject: manual_subject || null, summary_json,
         schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
         detail_type: purpose, line_item_count: summary.line_item_count,
         total_value: summary.total_value, currency_code: summary_json.currency_code,
-      };
-      const mkCopy = (extra) => {
-        const c = { ...headerCommon, ...extra };
-        if (business_json) c.business_json = business_json;     // omit -> SQL NULL (matches legacy)
-        if (line_items.length > 0) c.line_items = line_items;   // omit -> SQL NULL
-        return c;
-      };
+      });
+      const mkCopy = (extra) => mint.party(headerCommon, Object.assign({
+        // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON
+        // null are indistinguishable, so passing them conditionally is the same write either way.
+        business_json: business_json || undefined,
+        line_items: line_items.length > 0 ? line_items : undefined,
+      }, extra));
       const copies = suppressSentCopy ? [] : [ mkCopy({
         entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
         current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
@@ -577,23 +585,25 @@ router.post('/send',
       // no business_json, no line_items, total_value nulled. That is TR-6 at write time — the operator physically
       // never holds a rival deal's price, it only holds the traceable edge.
       if (operatorInfo && !is_draft) {
+        /* ⚠️ NOT mint.summary() — DELIBERATELY. This is a REDACTED summary, and its whole purpose is to be missing
+           keys the real one has. Passing it through the skeleton builder would helpfully restore currency_code and
+           total_value, handing the operator the commercial terms this copy exists to withhold. A builder that fills
+           in defaults is the wrong tool for a record defined by what it leaves out. */
         const opSummary = { line_item_count: summary_json.line_item_count, purpose: summary_json.purpose, trace: summary_json.trace, oversight: true };
-        copies.push({
-          ...headerCommon, summary_json: opSummary, total_value: null,
+        copies.push(mint.party(headerCommon, {
+          summary_json: opSummary, total_value: null,
           entity_id: operatorInfo.identity_id, direction: 'received', role: 'For',
-          current_status: 'delivered', priority_flag: 'normal',
+          current_status: 'delivered',
           log: { action: 'oversight', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
                  new_status: 'delivered', detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}` },
-        });
+        }));
       }
 
       // ── Guaranteed write: every row for this chit commits together, or none do (INV-2). Delivery is a substrate
       //    op (writes each participant's copy, incl. receivers) -> the b50 SECURITY DEFINER fn chit_deliver, run in
       //    withEntity(sender). Fallback to the legacy in-tx fan-out when b50 isn't applied. ──
       if (await definersReady()) {
-        await withEntity(sender_id, (db) => db.query(
-          `SELECT chit_deliver($1,$2,$3::jsonb)`,
-          [chit_id, !!promote_draft_id, JSON.stringify(copies)]));
+        await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id });
       } else {
       await withTransaction(async (client) => {
         if (promote_draft_id) {   // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id

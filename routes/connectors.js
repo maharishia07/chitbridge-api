@@ -14,6 +14,7 @@ const { resolveWorkPattern } = require('../lib/workpattern');   // the resolutio
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
+const mint    = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const { sendOtpEmail, sendEmail } = require('../lib/notify');
 const { verifyOtp } = require('../lib/otp');
 // Reissue step-up code. In DEV (DEV_OTP set) use a FIXED 654321 — distinct from the login dev-OTP (123456) so the two
@@ -145,27 +146,28 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   ];
   if (ccRow) all_recipients.push({ entity_id: ccRow.identity_id, bridge_id: ccRow.bridge_id, display_name: ccRow.display_name, role: 'cc' });
 
-  const summary_json = { line_item_count: 0, total_value: 0, currency_code: 'INR', priority_external: 'normal', purpose, is_promotion: false, forwarded_from: null,
-    copy_policy: { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — IoT self-chit (Task only)', source: 'iot' } };
-  const headerCommon = {
+  /* ⚠️ SHAPE from lib/mint.js, POLICY still here. What an IoT chit MEANS — Task-only, no line items, filed into a
+     folder — is this function's business and stays. What a summary and a header ARE is not, and was one of four
+     hand-written copies. */
+  const summary_json = mint.summary({ line_item_count: 0, total_value: 0, currency_code: 'INR', purpose,
+    copy_policy: { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — IoT self-chit (Task only)', source: 'iot' } });
+  const headerCommon = mint.header({
     sender_entity_id: entity_id, sender_entity_bridge_id: self.bridge_id, sender_entity_display_name: self.display_name,
     all_recipients, purpose, auto_subject, manual_subject, summary_json,
-    schema_version: null, schema_id: null, created_by_actor_id: actor.identity_id,
-    detail_type: purpose, line_item_count: 0, total_value: 0, currency_code: 'INR',
-  };
+    created_by_actor_id: actor.identity_id,
+  });
   const fdetail = folder ? (' · ' + folder) : '';
   // IoT self-chit is intrinsically TASK-ONLY — the device never needs an Order copy (declared via summary_json.copy_policy).
   // Only the received (Task) copy is minted here; the optional CC below is a real cross-entity copy and is kept.
   const copies = [
-    { ...headerCommon, business_json, entity_id, direction: 'received', role: 'Act',
-      current_status: 'pending', priority_flag: 'normal',
-      log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'pending', detail: 'Device exception' + fdetail } },
+    mint.party(headerCommon, { entity_id, direction: 'received', role: 'Act', current_status: 'pending', business_json,
+      log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'pending', detail: 'Device exception' + fdetail } }),
   ];
-  if (ccRow) copies.push({ ...headerCommon, business_json, entity_id: ccRow.identity_id, direction: 'received', role: 'Info',
-    current_status: 'delivered', priority_flag: 'normal',
-    log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'delivered', detail: 'CC — device exception from ' + self.display_name } });
+  if (ccRow) copies.push(mint.party(headerCommon, { entity_id: ccRow.identity_id, direction: 'received', role: 'Info',
+    current_status: 'delivered', business_json,
+    log: { action: 'delivered', action_by_identity_id: entity_id, action_by_display_name: self.display_name, new_status: 'delivered', detail: 'CC — device exception from ' + self.display_name } }));
 
-  await withEntity(entity_id, (dbx) => dbx.query(`SELECT chit_deliver($1,$2,$3::jsonb)`, [chit_id, false, JSON.stringify(copies)]));
+  await mint.deliver(entity_id, chit_id, copies);
   // AUTO-FILE the exception into the named folder (create it if new) so it lands in Folders, not loose in Task.
   // Best-effort — if the folders schema (b63) isn't there, the chit still lands normally.
   let filedFolderId = null, folderErr = null;
