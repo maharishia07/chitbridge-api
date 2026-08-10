@@ -23,23 +23,13 @@
  * RUN:  node scripts/prove-request-from-message.js
  */
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
+/* ⚠️ ONE HARNESS (scripts/_proof.js): env loading, the API base, sign-in, and a j() that RETRIES a platform
+   blip (502/503/504, socket errors) but never a real answer. A platform that never replies aborts as
+   "could not test" (exit 2), never as a failed check (exit 1) — conflating those turned a Railway 502 into an
+   overnight open defect on 2026-08-09. This was 9 copies of j() and 31 copies of the base URL. */
+const { API, j, signIn } = require('./_proof');
 
-(function loadEnvFile() {
-  for (const name of ['.env.proof', '.env.proof.txt', '.env']) {
-    const f = path.join(__dirname, '..', name);
-    if (!fs.existsSync(f)) continue;
-    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
-      if (!m) continue;
-      const v = m[2].trim().replace(/^['"]|['"]$/g, '').trim();
-      if (!process.env[m[1]] && v) process.env[m[1]] = v;
-    }
-  }
-})();
 
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 const SECRET = process.env.WHATSAPP_APP_SECRET;
 const ADMIN = process.env.CB_ADMIN_KEY;
 const LINE = '+919000000333';                  // the business line for this proof
@@ -48,13 +38,6 @@ const CUST = '+919000000444';                  // the customer
 let pass = 0, fail = 0;
 const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m ' + m); } else { fail++; console.log('  \x1b[31m✗ ' + m + '\x1b[0m' + (extra ? '\n      ' + extra : '')); } };
 
-async function j(p, o = {}) {
-  const r = await fetch(API + p, { method: o.method || 'GET',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, o.token ? { Authorization: 'Bearer ' + o.token } : {}, o.headers || {}),
-    body: o.body === undefined ? undefined : (typeof o.body === 'string' ? o.body : JSON.stringify(o.body)) });
-  let b = null; try { b = await r.json(); } catch (_) {}
-  return { status: r.status, b };
-}
 
 (async () => {
   console.log('\n  prove-request-from-message — a message becomes a request, not an order\n');

@@ -29,8 +29,12 @@
  * It cleans up after itself: every binding and capture it creates is removed at the end.
  */
 const crypto = require('crypto');
-const fs = require('fs');
 const path = require('path');
+/* ⚠️ ONE HARNESS (scripts/_proof.js): env loading, the API base, sign-in, and a j() that RETRIES a platform
+   blip (502/503/504, socket errors) but never a real answer. A platform that never replies aborts as
+   "could not test" (exit 2), never as a failed check (exit 1) — conflating those turned a Railway 502 into an
+   overnight open defect on 2026-08-09. This was 9 copies of j() and 31 copies of the base URL. */
+const { API, j, signIn } = require('./_proof');
 
 /**
  * Load .env.proof (or .env) if present — values already in the environment always take precedence.
@@ -40,27 +44,7 @@ const path = require('path');
  * file that is sitting right there with the correct contents. Accepting both is one line; explaining the Save-as
  * dance is a support conversation every single time. (`.gitignore` covers `.env.*`, so both are ignored.)
  */
-(function loadEnvFile() {
-  for (const name of ['.env.proof', '.env.proof.txt', '.env']) {
-    const f = path.join(__dirname, '..', name);
-    if (!fs.existsSync(f)) continue;
-    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
-      if (!m) continue;
-      /**
-       * ⚠️ TRIM. `(.*)\s*$` looks like it strips trailing whitespace and does not — `.*` is greedy and eats the
-       * spaces first, leaving `\s*` to match nothing. A single trailing space on the secret line is invisible in
-       * Notepad and produced a signature computed with a DIFFERENT key than the server holds: every delivery came
-       * back 401, and the failure surfaced four checks later as "A did not receive A's message", which points at
-       * the routing rather than at the space. Trim, then strip quotes.
-       */
-      const v = m[2].trim().replace(/^['"]|['"]$/g, '').trim();
-      if (!process.env[m[1]] && v) process.env[m[1]] = v;
-    }
-  }
-})();
 
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 const SECRET = process.env.WHATSAPP_APP_SECRET;
 const ADMIN = process.env.CB_ADMIN_KEY;
 const OTP = process.env.DEV_OTP || '123456';
@@ -68,18 +52,7 @@ const OTP = process.env.DEV_OTP || '123456';
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { if (cond) { console.log('  \x1b[32mok\x1b[0m  ' + name); pass++; } else { console.log('  \x1b[31mXX\x1b[0m  ' + name + (extra ? ' — ' + extra : '')); fail++; } };
 
-async function j(p, o = {}) {
-  const r = await fetch(API + p, { method: o.method || 'GET',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, o.token ? { Authorization: 'Bearer ' + o.token } : {}, o.headers || {}),
-    body: o.body === undefined ? undefined : (typeof o.body === 'string' ? o.body : JSON.stringify(o.body)) });
-  let b = null; try { b = await r.json(); } catch (_) {}
-  return { status: r.status, b };
-}
-async function login(email, name) {
-  await j('/api/entities/register', { method: 'POST', body: { email, display_name: name } });
-  const v = await j('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
-  return (v.b && (v.b.token || (v.b.entity && v.b.entity.token))) || null;
-}
+const login = (email, name) => signIn(email, name);
 /** A Meta-shaped inbound, signed the way Meta signs it. `to` is OUR business line; `from` is the customer. */
 async function deliver(to, from, text) {
   const payload = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {

@@ -25,27 +25,18 @@
  *
  * ⚠️ THIS SENDS A REAL MESSAGE. On a Cloud API test number it is free; on a production number it is billed.
  */
-const fs = require('fs');
 const path = require('path');
+/* ⚠️ ONE HARNESS (scripts/_proof.js): env loading, the API base, sign-in, and a j() that RETRIES a platform
+   blip (502/503/504, socket errors) but never a real answer. A platform that never replies aborts as
+   "could not test" (exit 2), never as a failed check (exit 1) — conflating those turned a Railway 502 into an
+   overnight open defect on 2026-08-09. This was 9 copies of j() and 31 copies of the base URL. */
+const { API, j, signIn } = require('./_proof');
 
-(function loadEnvFile() {
-  for (const name of ['.env.proof', '.env.proof.txt', '.env']) {
-    const f = path.join(__dirname, '..', name);
-    if (!fs.existsSync(f)) continue;
-    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
-      if (!m) continue;
-      const v = m[2].trim().replace(/^['"]|['"]$/g, '').trim();
-      if (!process.env[m[1]] && v) process.env[m[1]] = v;
-    }
-  }
-})();
 
 const GRAPH = process.env.WHATSAPP_GRAPH_BASE || 'https://graph.facebook.com/v21.0';
 const TOKEN = process.env.WHATSAPP_TOKEN;
 const PNID = process.env.WA_PHONE_NUMBER_ID;
 const TO = process.env.WA_TEST_TO;
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 
 const need = [];
 if (!TOKEN) need.push('WHATSAPP_TOKEN');
