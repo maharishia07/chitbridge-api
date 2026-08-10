@@ -197,8 +197,12 @@ router.get('/:id/metrics', auth, [ param('id').isUUID() ], validate, async (req,
   try {
     const me = ent(req);
     const flags = await policy.get(me);      //  is a POLICY, not a constant hidden inside a report
-    const rows = await select.rows(me, { folder_id: req.params.id, archived: req.query.archived === '1' });
-    res.json(Object.assign({ folder_id: req.params.id }, measure.measure(rows, { overdue_days: flags.overdue_days })));
+    /* The folder's own side scopes what it measures — a Task folder's arithmetic is over Task copies. */
+    let fscope = null;
+    try { const f = await withEntity(me, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [req.params.id, me])); fscope = (f.rows[0]||{}).scope || null; } catch (_) {}
+    const rows = await select.rows(me, { folder_id: req.params.id, archived: req.query.archived === '1',
+      direction: fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : undefined });
+    res.json(Object.assign({ folder_id: req.params.id, scope: fscope }, measure.measure(rows, { overdue_days: flags.overdue_days })));
   } catch (err) { console.error("folder metrics:", err.message); res.status(500).json({ error: "Metrics failed", message: safeErr(err) }); }
 });
 
