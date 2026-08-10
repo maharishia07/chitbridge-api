@@ -90,7 +90,9 @@ async function deliver(to, from, text) {
   const sig = 'sha256=' + crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
   return j('/api/capture/webhook/whatsapp', { method: 'POST', body: payload, headers: { 'X-Hub-Signature-256': sig } });
 }
-const pendingTexts = async (tok) => ((await j('/api/capture/pending', { token: tok })).b.captures || []).map((c) => c.raw_text);
+/* ⚠️ `.b` IS null WHEN THE PLATFORM BLIPS. Reading .b.captures straight off a 502 made the whole proof CRASH on a
+   transient error — which reads as "the feature is broken" rather than "the request did not arrive". */
+const pendingTexts = async (tok) => (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).map((c) => c.raw_text);
 
 (async () => {
   if (!SECRET || !ADMIN) {
@@ -205,7 +207,7 @@ const pendingTexts = async (tok) => ((await j('/api/capture/pending', { token: t
   // ── clean up: leave no bindings and no captures behind ────────────────────────────────────────────────────
   for (const [tok, id] of [[A, bindA.b.id], [B, bindB.b.id]]) await j('/api/channels/' + id, { method: 'DELETE', token: tok });
   for (const tok of [A, B]) {
-    const caps = (await j('/api/capture/pending', { token: tok })).b.captures || [];
+    const caps = ((await j("/api/capture/pending", { token: tok })).b || {}).captures || [];
     for (const c of caps) if (String(c.raw_text || '').includes(stamp)) await j('/api/capture/' + c.id + '/dismiss', { method: 'POST', token: tok });
   }
   console.log('  \x1b[36m--\x1b[0m  cleaned up (bindings deleted, test captures dismissed)');

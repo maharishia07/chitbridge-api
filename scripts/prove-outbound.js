@@ -77,7 +77,7 @@ async function deliver(to, from, text) {
   const bind = await j('/api/channels', { method: 'POST', token: A, body: { channel: 'whatsapp', address: NUM, label: 'out proof' } });
   await j('/api/channels/' + bind.b.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
   await deliver(NUM, CUST, 'outbound proof ' + stamp);
-  const caps = (await j('/api/capture/pending', { token: A })).b.captures || [];
+  const caps = ((await j("/api/capture/pending", { token: A })).b || {}).captures || [];
   const cap = caps.find((c) => String(c.raw_text || '').includes('outbound proof ' + stamp));
   ok('the message arrived as a capture', !!cap);
   // ⚠️ b126's whole point: we must know WHICH of our lines they wrote to, or a reply comes from a stranger.
