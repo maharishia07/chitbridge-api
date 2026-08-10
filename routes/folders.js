@@ -10,6 +10,19 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
 const ent = (req) => auth.entityOf(req);
+/**
+ * ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Athi, 2026-08-10: *"tasks and order cannot be on the same folder. folder
+ * are having same characteristics as tasks, so all the icon is possible and arithmetic is possible."*
+ *
+ * Right, and it is the mailbox model being consistent: you ACT on a Task and you CHASE an Order — different lists,
+ * different actions. A folder holding both could inherit neither. Declaring the side makes a folder a SUB-LIST of
+ * its track: same row, same icons, same actions, plus arithmetic over a smaller set.
+ *
+ * SCOPE_COL degrades to a literal so a pre-b133 database keeps a working folder list rather than 500ing on a column
+ * that is not there yet — the lesson from the Channels panel.
+ */
+let SCOPE_COL = 'f.scope';
+const scopeFallback = (e) => { if (e && e.code === '42703') { SCOPE_COL = "NULL::text AS scope"; return true; } return false; };
 const select  = require('../lib/select');    // WHICH chits — shared with the scorecard
 const measure = require('../lib/measure');   // ...and how they are counted
 const policy  = require('../lib/policy');    // overdue is a declared flag, not a magic number
@@ -18,14 +31,17 @@ const policy  = require('../lib/policy');    // overdue is a declared flag, not 
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
-    const r = await withEntity(e, (db) => db.query(
-      `SELECT f.folder_id, f.parent_id, f.name, f.sort,
+    const readFolders = () => withEntity(e, (db) => db.query(
+      `SELECT f.folder_id, f.parent_id, f.name, f.sort, ${SCOPE_COL},
               (SELECT COUNT(*) FROM chit_status cs
                  WHERE cs.entity_id = f.entity_id AND cs.folder_id = f.folder_id
                    AND cs.deleted_at IS NULL AND cs.archived_at IS NULL) AS count
          FROM folder f
         WHERE f.entity_id = $1
         ORDER BY f.parent_id NULLS FIRST, f.sort, f.name`, [e]));
+    let r;
+    try { r = await readFolders(); }
+    catch (e1) { if (!scopeFallback(e1)) throw e1; r = await readFolders(); }   // pre-b133 → one retry, no scope
     res.json({ folders: r.rows });
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
@@ -37,9 +53,14 @@ router.post('/', auth,
   validate, async (req, res) => {
   try {
     const e = ent(req); const name = sanitise(req.body.name); const parent = req.body.parent_id || null;
+    /* ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Task and Order are different lists with different actions; a folder
+       that held both could inherit neither. Default 'task' — the track folders were built for. */
+    const scope = (req.body.scope === 'order') ? 'order' : 'task';
     const row = await withEntity(e, async (db) => {
       if (parent) { const p = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]); if (!p.rows.length) return { badParent: true }; }
-      const r = await db.query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]);
+      let r;
+      try { r = await db.query(`INSERT INTO folder (entity_id, parent_id, name, scope) VALUES ($1,$2,$3,$4) RETURNING folder_id, parent_id, name, sort, scope`, [e, parent, name, scope]); }
+      catch (e1) { if (e1 && e1.code === '42703') r = await db.query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]); else throw e1; }
       return { folder: r.rows[0] };
     });
     if (row.badParent) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' });
@@ -91,7 +112,14 @@ router.post('/move', auth,
   try {
     const e = ent(req); const fid = req.body.folder_id || null;
     const result = await withEntity(e, async (db) => {
-      if (fid) { const f = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); if (!f.rows.length) return { noFolder: true }; }
+      let fscope = null;
+      if (fid) {
+        let f;
+        try { f = await db.query(`SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); }
+        catch (e1) { if (e1 && e1.code === '42703') f = await db.query(`SELECT NULL::text AS scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); else throw e1; }
+        if (!f.rows.length) return { noFolder: true };
+        fscope = f.rows[0].scope;
+      }
       /**
        * ⚠️ `direction` IS OPTIONAL, AND WITHOUT IT A SELF-CHIT MOVES BOTH COPIES.
        *
@@ -105,18 +133,38 @@ router.post('/move', auth,
        * Order are genuinely different things in the mailbox model — filing the Order copy into "Sent to suppliers"
        * should not drag the Task copy along.
        */
-      const dir = (req.body.direction === 'sent' || req.body.direction === 'received') ? req.body.direction : null;
+      let dir = (req.body.direction === 'sent' || req.body.direction === 'received') ? req.body.direction : null;
+      /**
+       * ⚠️ THE FOLDER'S SIDE DECIDES (b133). A Task folder takes received copies; an Order folder takes sent ones.
+       * When the caller names no direction, the folder's scope supplies it — so an old client filing "the chit"
+       * into a Task folder now files the Task copy and leaves the Order copy alone, instead of dragging both.
+       * When the caller DOES name one and it contradicts the folder, that is refused rather than quietly ignored:
+       * silently filing into the wrong track is how a folder stops meaning anything.
+       */
+      const want = fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : null;
+      if (want && dir && dir !== want) return { wrongSide: { folder: fscope, chit: dir } };
+      if (want && !dir) dir = want;
+
       const r = await db.query(
         `UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3` + (dir ? ` AND direction = $4` : ''),
         dir ? [fid, req.body.chit_id, e, dir] : [fid, req.body.chit_id, e]);
-      return { moved: r.rowCount };
+      return { moved: r.rowCount, scope: fscope };
     });
     if (result.noFolder) return res.status(400).json({ error: 'No such folder' });
-    res.json({ moved: result.moved, folder_id: fid });
+    if (result.wrongSide) return res.status(400).json({
+      error: 'Wrong side',
+      message: 'That is a ' + (result.wrongSide.folder === 'order' ? 'Order' : 'Task') + ' folder — it holds '
+             + (result.wrongSide.folder === 'order' ? 'chits you sent' : 'chits that came to you')
+             + '. Task and Order are separate tracks, so a folder belongs to one of them.',
+      code: 'FOLDER_WRONG_SIDE' });
+    res.json({ moved: result.moved, folder_id: fid, scope: result.scope });
   } catch (err) { res.status(500).json({ error: 'Move failed', message: safeErr(err) }); }
 });
 
-// GET /api/folders/:id/chits?archived=0|1 — the chits filed in this folder (spans BOTH directions: task + order).
+// GET /api/folders/:id/chits?archived=0|1 — the chits filed in this folder.
+// ⚠️ ONE SIDE ONLY (b133). Filing enforces it, so a folder cannot acquire the wrong track — but a folder that was
+// mixed BEFORE b133 still holds both, and this list would show them side by side with the wrong actions. The
+// folder's declared scope filters the read too, so the screen is consistent even where the data is not yet.
 // Isolated from the core inbox query on purpose. Lightweight shape for the folder list.
 router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, res) => {
   try {
