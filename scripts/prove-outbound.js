@@ -19,41 +19,25 @@
  * It cleans up after itself.
  */
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
-
-(function loadEnvFile() {
-  for (const name of ['.env.proof', '.env.proof.txt', '.env']) {
-    const f = path.join(__dirname, '..', name);
-    if (!fs.existsSync(f)) continue;
-    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
-      if (!m) continue;
-      const v = m[2].trim().replace(/^['"]|['"]$/g, '').trim();
-      if (!process.env[m[1]] && v) process.env[m[1]] = v;
-    }
-  }
-})();
-
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
+/**
+ * ⚠️ ONE HARNESS (scripts/_proof.js) — and this file is the reason it exists.
+ *
+ * On 2026-08-09 this script reported "4 passed, 1 FAILED — an outbound attempt was RECORDED … rows now 9 (was 9)".
+ * It was written up as an open defect and left overnight. There was no defect: Railway was intermittently
+ * answering 502, one request in the middle did not arrive, and the script read that as the product failing. The
+ * same run printed 5 checks where a healthy run prints 9 — it had been truncated, and nothing said so.
+ *
+ * j() now retries past a platform blip, and a platform that never answers ABORTS as "could not test" (exit 2)
+ * instead of counting as a failed check (exit 1). Those are different answers and must never share an exit code.
+ */
+const { API, j, signIn } = require('./_proof');
 const SECRET = process.env.WHATSAPP_APP_SECRET;
 const ADMIN = process.env.CB_ADMIN_KEY;
 
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { console.log('  \x1b[32mok\x1b[0m  ' + n); pass++; } else { console.log('  \x1b[31mXX\x1b[0m  ' + n + (x ? ' — ' + x : '')); fail++; } };
 
-async function j(p, o = {}) {
-  const r = await fetch(API + p, { method: o.method || 'GET',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, o.token ? { Authorization: 'Bearer ' + o.token } : {}, o.headers || {}),
-    body: o.body === undefined ? undefined : (typeof o.body === 'string' ? o.body : JSON.stringify(o.body)) });
-  let b = null; try { b = await r.json(); } catch (_) {}
-  return { status: r.status, b };
-}
-async function login(email, name) {
-  await j('/api/entities/register', { method: 'POST', body: { email, display_name: name } });
-  const v = await j('/api/entities/verify', { method: 'POST', body: { email, otp: '123456' } });
-  return (v.b && (v.b.token || (v.b.entity && v.b.entity.token))) || null;
-}
+const login = (email, name) => signIn(email, name);
 async function deliver(to, from, text) {
   const payload = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {
     metadata: { display_phone_number: to, phone_number_id: '000' },
@@ -132,4 +116,13 @@ async function deliver(to, from, text) {
   console.log('  \x1b[33m⚠️\x1b[0m  This proves the DECISION to send. The wire call to Meta is NOT covered and cannot be');
   console.log('     until a real WHATSAPP_TOKEN exists — outbound talks to Meta, so there is nothing to self-sign.\n');
   process.exitCode = fail ? 1 : 0;
-})().catch((e) => { console.error('\nprove-outbound crashed:', e && e.message, '\n'); process.exitCode = 1; });
+})().catch((e) => {
+  /* ⚠️ THE PLATFORM NOT ANSWERING IS NOT A FAILING CHECK. exit 2 = nothing was proved either way, re-run;
+     exit 1 = a real result to act on. Conflating them is what turned a 502 into an overnight open defect. */
+  if (e && e.platformDown) {
+    console.log('\n  \x1b[33m⊘ COULD NOT TEST\x1b[0m — the platform did not answer (' + e.message + ').');
+    console.log('    Nothing was proved either way; ' + pass + ' check(s) had passed. Re-run it.\n');
+    process.exitCode = 2; return;
+  }
+  console.error('\nprove-outbound crashed:', e && e.message, '\n'); process.exitCode = 1;
+});
