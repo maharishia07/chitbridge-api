@@ -115,4 +115,52 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
+/**
+ * GET /:id/metrics — WHAT IS IN THIS FOLDER, as numbers.
+ *
+ * Athi, 2026-08-10: *"can we add skills on top of the folders, for example, creating metric for a folder…"*
+ * Layer 1 of SPEC-folder-skills.md, and deliberately the first: it is read-only, needs no migration, and it tells
+ * us whether folders are used the way the later rule/skill layers would assume.
+ *
+ * ── ⚠️ MIXED CURRENCIES ARE NOT SUMMED ─────────────────────────────────────────────────────────────────────────
+ * A single `total_value` across a folder holding INR and AED is a number that means nothing, and it would be
+ * believed because it looks like money. lib/money.js already decided this (`summarise`, mode 1 · split): buckets
+ * per currency, plus a count of rows that carry a currency but no value yet. Adopted here rather than re-derived —
+ * a second opinion about how to add money up is exactly the kind of duplicate that has already cost this codebase
+ * two security fixes.
+ *
+ * ⚠️ WITH RLS, and scoped to the caller's entity twice over: withEntity() sets the tenant, and the WHERE clause
+ * names it again. A folder is per-copy — this counts YOUR copies, never a counterparty's.
+ */
+router.get('/:id/metrics', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+  try {
+    const e = ent(req);
+    const arch = (req.query.archived === '1' || req.query.archived === 'true');
+    const r = await withEntity(e, (db) => db.query(
+      `SELECT cs.current_status, cs.direction, ch.created_at,
+              (ch.summary_json->>'total_value')::numeric AS value,
+              ch.summary_json->>'currency_code'          AS currency
+         FROM chit_status cs
+         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
+        WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL
+          AND cs.archived_at IS ${arch ? 'NOT NULL' : 'NULL'}`, [e, req.params.id]));
+
+    const rows = r.rows;
+    const money = require('../lib/money');
+    const by = (key) => rows.reduce((a, x) => { const k = x[key] || 'unknown'; a[k] = (a[k] || 0) + 1; return a; }, {});
+    /* The oldest thing in a folder is the most useful single number on it: a folder whose oldest item is four
+       months old is a folder nobody is working, and no count will tell you that. */
+    const oldest = rows.reduce((m, x) => (!m || new Date(x.created_at) < new Date(m) ? x.created_at : m), null);
+    res.json({
+      folder_id: req.params.id,
+      count: rows.length,
+      by_status: by('current_status'),
+      by_direction: by('direction'),
+      oldest_at: oldest,
+      // ⚠️ by_currency, never one total. See the note above.
+      money: money.summarise(rows.map((x) => ({ value: x.value === null ? null : Number(x.value), currency: x.currency }))),
+    });
+  } catch (err) { res.status(500).json({ error: 'Metrics failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
