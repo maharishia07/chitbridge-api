@@ -95,6 +95,60 @@ run('prove-folders-scorecard', async (t) => {
     t.ok(true, '  · cleaned up the proof rule');
   }
 
-  await j('/api/folders/' + fid, { method: 'DELETE', token: tok });
-  t.note('cleaned up the proof folder (its chits, if any, are unfiled — never deleted)');
+  /**
+   * ── b133 · A FOLDER BELONGS TO ONE TRACK ──────────────────────────────────────────────────────────────────────
+   * Athi: *"tasks and order cannot be on the same folder."* The claim worth failing on is not that a scope is
+   * STORED — it is that filing the wrong side is REFUSED. A rule nobody enforces is a comment.
+   */
+  const tf = await j('/api/folders', { method: 'POST', token: tok, body: { name: 'Proof · task side ' + String(process.pid).slice(-4), scope: 'task' } });
+  const of = await j('/api/folders', { method: 'POST', token: tok, body: { name: 'Proof · order side ' + String(process.pid).slice(-4), scope: 'order' } });
+  const tfid = tf.b && tf.b.folder && tf.b.folder.folder_id;
+  const ofid = of.b && of.b.folder && of.b.folder.folder_id;
+  t.ok(!!tfid && !!ofid, 'a Task folder and an Order folder can both be created');
+
+  if (tf.b.folder.scope === undefined) {
+    t.ok(false, '★★★ b133 is NOT applied — the folder came back with no scope', 'run migrations/b133_folder_scope.sql');
+  } else {
+    t.ok(tf.b.folder.scope === 'task' && of.b.folder.scope === 'order',
+      '★★ each folder records which side it belongs to', JSON.stringify([tf.b.folder.scope, of.b.folder.scope]));
+
+    /* Take one real chit of each direction to file. */
+    const inbox = ((await j('/api/chits/inbox?limit=5', { token: tok })).b || {}).chits || [];
+    const sentL = ((await j('/api/chits/sent?limit=5',  { token: tok })).b || {}).chits || [];
+    const rcv = inbox[0], snt = sentL[0];
+
+    if (rcv) {
+      const right = await j('/api/folders/move', { method: 'POST', token: tok, body: { chit_id: rcv.chit_id, folder_id: tfid, direction: 'received' } });
+      t.ok(right.status === 200 && right.b.moved >= 1, '★ a received copy files into a TASK folder', JSON.stringify(right.b));
+      const wrong = await j('/api/folders/move', { method: 'POST', token: tok, body: { chit_id: rcv.chit_id, folder_id: ofid, direction: 'received' } });
+      t.ok(wrong.status === 400 && wrong.b.code === 'FOLDER_WRONG_SIDE',
+        '★★★ …and is REFUSED by an ORDER folder — the rule is enforced, not just recorded', 'got ' + wrong.status + ' ' + JSON.stringify(wrong.b).slice(0, 90));
+      t.ok(/Order folder/i.test((wrong.b || {}).message || ''), '★ the refusal explains itself in words a person can act on');
+    } else t.note('no received chits to file — the task-side half could not run');
+
+    if (snt) {
+      const right = await j('/api/folders/move', { method: 'POST', token: tok, body: { chit_id: snt.chit_id, folder_id: ofid, direction: 'sent' } });
+      t.ok(right.status === 200 && right.b.moved >= 1, '★ a sent copy files into an ORDER folder', JSON.stringify(right.b));
+      const wrong = await j('/api/folders/move', { method: 'POST', token: tok, body: { chit_id: snt.chit_id, folder_id: tfid, direction: 'sent' } });
+      t.ok(wrong.status === 400 && wrong.b.code === 'FOLDER_WRONG_SIDE',
+        '★★★ …and is REFUSED by a TASK folder', 'got ' + wrong.status);
+    } else t.note('no sent chits to file — the order-side half could not run');
+
+    /* ⚠️ THE FOLDER'S SIDE MUST ALSO SCOPE WHAT IT MEASURES, or a mixed legacy folder would report both tracks
+       in one set of numbers — exactly what the scope column exists to prevent. */
+    const tm = await j('/api/folders/' + tfid + '/metrics', { token: tok });
+    t.ok(tm.b.scope === 'task', '★★ metrics report which side they measured', 'scope=' + tm.b.scope);
+    t.ok(!tm.b.by_direction || !tm.b.by_direction.sent, '★★★ a Task folder measures ONLY received copies',
+      JSON.stringify(tm.b.by_direction));
+
+    /* And the direction can be inferred from the folder when the caller names none — so an old client cannot
+       drag both copies of a self-chit along. */
+    if (rcv) {
+      const inferred = await j('/api/folders/move', { method: 'POST', token: tok, body: { chit_id: rcv.chit_id, folder_id: tfid } });
+      t.ok(inferred.status === 200, '★★ with no direction given, the FOLDER supplies it', JSON.stringify(inferred.b));
+    }
+  }
+
+  for (const id of [tfid, ofid, fid]) if (id) await j('/api/folders/' + id, { method: 'DELETE', token: tok });
+  t.note('cleaned up the proof folders (their chits are unfiled — never deleted)');
 });

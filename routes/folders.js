@@ -14,16 +14,24 @@ const ent = (req) => auth.entityOf(req);
  * ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Athi, 2026-08-10: *"tasks and order cannot be on the same folder. folder
  * are having same characteristics as tasks, so all the icon is possible and arithmetic is possible."*
  *
- * Right, and it is the mailbox model being consistent: you ACT on a Task and you CHASE an Order — different lists,
- * different actions. A folder holding both could inherit neither. Declaring the side makes a folder a SUB-LIST of
- * its track: same row, same icons, same actions, plus arithmetic over a smaller set.
- *
- * SCOPE_COL degrades to a literal so a pre-b133 database keeps a working folder list rather than 500ing on a column
- * that is not there yet — the lesson from the Channels panel.
+ * You ACT on a Task and you CHASE an Order — different lists, different actions. A folder holding both could inherit
+ * neither. Declaring the side makes a folder a SUB-LIST of its track: same row, same icons, same actions, plus
+ * arithmetic over a smaller set.
  */
-let SCOPE_COL = 'f.scope';
-let HAS_SCOPE = null;   // null = not yet known, true/false = answered once per process (see the create route)
-const scopeFallback = (e) => { if (e && e.code === '42703') { SCOPE_COL = "NULL::text AS scope"; return true; } return false; };
+/**
+ * ⚠️ LATCH TRUE, NEVER FALSE — the same rule routes/chits.js states for the b50 definer probe: *"latches true once
+ * seen; keeps re-probing while false, so it self-heals when the migration lands (no restart needed)."*
+ *
+ * My first version cached BOTH answers. A server process that learned "no scope column" before b133 was applied
+ * kept believing it forever, so folders carried on being created without a side and the proof reported "b133 is
+ * NOT applied" against a database where it plainly was. A negative cache outlives the fact it describes.
+ *
+ * Cost of getting it wrong this way round: one failed query per call until the column appears, then never again.
+ */
+let SCOPE_OK = false;                       // latches TRUE once the column is really there; never latches false
+const missingCol = (e) => e && e.code === '42703';
+/* Always attempt the scoped form unless we have already proved it works — so a pre-b133 database pays one failed
+   query per call (a transient state) and a migrated one pays nothing after the first success. */
 const select  = require('../lib/select');    // WHICH chits — shared with the scorecard
 const measure = require('../lib/measure');   // ...and how they are counted
 const policy  = require('../lib/policy');    // overdue is a declared flag, not a magic number
@@ -32,8 +40,8 @@ const policy  = require('../lib/policy');    // overdue is a declared flag, not 
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
-    const readFolders = () => withEntity(e, (db) => db.query(
-      `SELECT f.folder_id, f.parent_id, f.name, f.sort, ${SCOPE_COL},
+    const readFolders = (withScope) => withEntity(e, (db) => db.query(
+      `SELECT f.folder_id, f.parent_id, f.name, f.sort, ${withScope ? "f.scope" : "NULL::text AS scope"},
               (SELECT COUNT(*) FROM chit_status cs
                  WHERE cs.entity_id = f.entity_id AND cs.folder_id = f.folder_id
                    AND cs.deleted_at IS NULL AND cs.archived_at IS NULL) AS count
@@ -41,8 +49,8 @@ router.get('/', auth, async (req, res) => {
         WHERE f.entity_id = $1
         ORDER BY f.parent_id NULLS FIRST, f.sort, f.name`, [e]));
     let r;
-    try { r = await readFolders(); }
-    catch (e1) { if (!scopeFallback(e1)) throw e1; r = await readFolders(); }   // pre-b133 → one retry, no scope
+    try { r = await readFolders(true); SCOPE_OK = true; }
+    catch (e1) { if (!missingCol(e1)) throw e1; r = await readFolders(false); }   // pre-b133 → retry in a FRESH tx
     res.json({ folders: r.rows });
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
@@ -63,8 +71,7 @@ router.post('/', auth,
      * so the retry died with "current transaction is aborted" and the create returned a folder with no id. The
      * metrics call then 400'd on "id: Invalid value", which points nowhere near the actual cause.
      *
-     * The retry must be a NEW transaction. `HAS_SCOPE` remembers the answer so it is at most one wasted attempt
-     * per process, not one per folder.
+     * The retry must be a NEW transaction, and the negative is never cached (see the latch note above).
      */
     const doInsert = (withScope) => withEntity(e, async (db) => {
       if (parent) { const p = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]); if (!p.rows.length) return { badParent: true }; }
@@ -74,11 +81,8 @@ router.post('/', auth,
       return { folder: r.rows[0] };
     });
     let row;
-    if (HAS_SCOPE === false) row = await doInsert(false);
-    else {
-      try { row = await doInsert(true); HAS_SCOPE = true; }
-      catch (e1) { if (e1 && e1.code === '42703') { HAS_SCOPE = false; row = await doInsert(false); } else throw e1; }
-    }
+    try { row = await doInsert(true); SCOPE_OK = true; }
+    catch (e1) { if (!missingCol(e1)) throw e1; row = await doInsert(false); }
     if (row.badParent) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' });
     res.json({ folder: { ...row.folder, count: 0 } });
   } catch (err) { res.status(500).json({ error: 'Create failed', message: safeErr(err) }); }
@@ -127,16 +131,15 @@ router.post('/move', auth,
   validate, async (req, res) => {
   try {
     const e = ent(req); const fid = req.body.folder_id || null;
-    const doMove = () => withEntity(e, async (db) => {
+    const doMove = (scoped) => withEntity(e, async (db) => {
       let fscope = null;
       if (fid) {
         let f;
-        /* Same rule as the create route: never retry inside an aborted transaction. HAS_SCOPE is known by now
-           in practice, and when it is not, asking for the safe shape costs nothing. */
-        f = await db.query((HAS_SCOPE === false)
-          ? `SELECT NULL::text AS scope FROM folder WHERE folder_id = $1 AND entity_id = $2`
-          : `SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]).catch(async (err) => {
-            if (err && err.code === '42703') { HAS_SCOPE = false; return null; }
+        /* Same rule as the create route: never retry inside an aborted transaction, and never cache the negative. */
+        f = await db.query(scoped
+          ? `SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2`
+          : `SELECT NULL::text AS scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]).catch((err) => {
+            if (missingCol(err)) return null;
             throw err;
           });
         if (f === null) return { retryNoScope: true };
@@ -174,8 +177,9 @@ router.post('/move', auth,
       return { moved: r.rowCount, scope: fscope };
     });
     // The 42703 retry is a FRESH transaction — the aborted one can serve nothing further. At most once per process.
-    let result = await doMove();
-    if (result.retryNoScope) result = await doMove();
+    let result = await doMove(true);
+    if (result.retryNoScope) result = await doMove(false);   // FRESH tx — the aborted one serves nothing
+    else if (!result.noFolder) SCOPE_OK = true;
     if (result.noFolder) return res.status(400).json({ error: 'No such folder' });
     if (result.wrongSide) return res.status(400).json({
       error: 'Wrong side',
