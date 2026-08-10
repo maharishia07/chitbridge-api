@@ -12,18 +12,14 @@
 -- to do (it would put unverified identities on the platform). A LIGHTWEIGHT contact keyed by phone number is the
 -- honest shape: enough to attribute and address, not pretending to be a party.
 --
--- ── ⚠️⚠️ WITHOUT RLS — ATHI'S EXPLICIT INSTRUCTION (2026-08-11: "complete W-1 and W-2, without RLS") ────────────
--- Stating the trade rather than burying it, because the standing rule is that a new entity-data table defaults
--- WITH RLS:
---   · This IS tenant data. `wholesaler_store` holds one wholesaler's shop list, their phone numbers and their
---     addresses. Under RLS a WHERE-clause mistake returns nothing; without it, the same mistake returns another
---     wholesaler's shops.
---   · The compensating control is that EVERY query in lib/stores.js filters on owner_entity_id, and the column is
---     NOT NULL. That is a discipline, not a guarantee — RLS is the guarantee, and it is the difference between a
---     bug being empty and a bug being a leak.
---   · Turning it on later is four lines and needs no data change; they are written at the bottom of this file,
---     commented out, so it is a copy-paste rather than a rediscovery.
--- Built as instructed. Flagged as asked.
+-- ── ⚠️⚠️ WITH RLS (FORCE) — Athi turned it on 2026-08-11 after the trade-off was stated ────────────────────────
+-- Built first WITHOUT (his instruction), then switched on before any second wholesaler exists — which is the
+-- right moment: it costs nothing now and gets expensive to retrofit once two tenants hold data.
+--
+-- ⚠️ TURNING IT ON IS NOT A MIGRATION-ONLY CHANGE. lib/stores.js used plain query(); under FORCE RLS that sees
+-- NOTHING (not everything), so resolve() would have found no existing shop and minted a fresh PROVISIONAL one on
+-- every message — fragmenting one shop across dozens of contacts and silently destroying the attribution W-1
+-- exists to provide. It is now withEntity(owner) throughout. Same lesson as b125.
 
 CREATE TABLE IF NOT EXISTS wholesaler_store (
   store_id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -46,7 +42,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS wholesaler_store_key ON wholesaler_store (owne
 CREATE INDEX IF NOT EXISTS wholesaler_store_owner ON wholesaler_store (owner_entity_id);
 
 COMMENT ON TABLE wholesaler_store IS
-  'b135 — lightweight shop contacts keyed by phone (W-1). NOT a platform identity. ⚠️ WITHOUT RLS by instruction (2026-08-11) — every query must filter owner_entity_id; see the commented policy at the foot of this migration.';
+  'b135 — lightweight shop contacts keyed by phone (W-1). NOT a platform identity. WITH RLS (FORCE) — every query runs inside withEntity(owner); see lib/stores.js.';
 
 -- ── W-2 · VOICE ────────────────────────────────────────────────────────────────────────────────────────────────
 -- *"if it's a voice note, transcribe it. KEEP BOTH the audio and the transcript as evidence; a mis-transcription
@@ -63,17 +59,18 @@ ALTER TABLE capture ADD COLUMN IF NOT EXISTS transcript_at     timestamptz;
 COMMENT ON COLUMN capture.transcript IS
   'b135 — the text a voice note was transcribed to. The audio stays in media_refs; this never replaces it, because a mis-transcription is only provable against the original.';
 
--- ── TO TURN RLS ON LATER (uncomment; no data change needed) ────────────────────────────────────────────────────
--- ALTER TABLE wholesaler_store ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE wholesaler_store FORCE  ROW LEVEL SECURITY;
--- CREATE POLICY wholesaler_store_isolation ON wholesaler_store
---   USING (owner_entity_id = current_setting('app.current_entity', true)::uuid)
---   WITH CHECK (owner_entity_id = current_setting('app.current_entity', true)::uuid);
+-- ── RLS, ON ──────────────────────────────────────────────────────────────────────────────────────────────────
+ALTER TABLE wholesaler_store ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wholesaler_store FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS wholesaler_store_isolation ON wholesaler_store;
+CREATE POLICY wholesaler_store_isolation ON wholesaler_store
+  USING       (owner_entity_id = current_setting('app.current_entity', true)::uuid)
+  WITH CHECK  (owner_entity_id = current_setting('app.current_entity', true)::uuid);
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON wholesaler_store TO cb_app;
 
 DO $$
 BEGIN
-  RAISE NOTICE 'b135: wholesaler_store created WITHOUT RLS (by instruction) — every query filters owner_entity_id in the app';
+  RAISE NOTICE 'b135: wholesaler_store created WITH RLS (FORCE) — lib/stores.js runs every query inside withEntity(owner)';
   RAISE NOTICE 'b135: capture gained transcript / transcript_engine / transcript_at (RLS unchanged — capture keeps b104)';
 END $$;
