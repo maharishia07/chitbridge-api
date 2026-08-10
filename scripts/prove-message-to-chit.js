@@ -45,8 +45,20 @@ async function deliver(to, from, text) {
   return j('/api/capture/webhook/whatsapp', { method: 'POST', body: payload, headers: { 'X-Hub-Signature-256': sig } });
 }
 
-/** What a real customer actually writes — messy, not a form. */
-const MESSAGE = 'Hi, please send 2 boxes of bolts and 5 metres of cable to the Ramnagar site by Friday. Thanks - Ravi';
+/**
+ * What a real customer actually writes — messy, not a form.
+ *
+ * ⚠️ IT CARRIES THE RUN STAMP, and that is not decoration. This was a CONSTANT, and the capture was then found by
+ * exact text match — so a leftover pending capture from an earlier run (an aborted one, say) was picked up instead
+ * of this run's. Its sender and line were the OLD run's numbers, so "it knows who wrote and which line they wrote
+ * to" went red, and "it is NOT a chit yet" went red if that leftover had since been converted.
+ *
+ * Two failures with nothing wrong, in a file whose whole job is to be believed. The phone numbers were already
+ * stamped per run; the message was the one thing that was not. A customer quoting their own reference is exactly
+ * what a real one does, so this costs the message nothing in realism.
+ */
+const messageFor = (stamp) =>
+  'Hi, please send 2 boxes of bolts and 5 metres of cable to the Ramnagar site by Friday. Thanks - Ravi (ref ' + stamp + ')';
 
 (async () => {
   if (!SECRET || !ADMIN) { console.log('\n  Missing WHATSAPP_APP_SECRET / CB_ADMIN_KEY — see prove-channels.js.\n'); process.exitCode = 2; return; }
@@ -60,9 +72,11 @@ const MESSAGE = 'Hi, please send 2 boxes of bolts and 5 metres of cable to the R
   console.log('\n── 1 · a customer writes in ────────────────────────────────────────────────');
   const bind = await j('/api/channels', { method: 'POST', token: A, body: { channel: 'whatsapp', address: NUM, label: 'msg→chit proof' } });
   await j('/api/channels/' + bind.b.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
+  const MESSAGE = messageFor(stamp);
   await deliver(NUM, CUST, MESSAGE);
-  const caps = (await j('/api/capture/pending', { token: A })).b.captures || [];
-  const cap = caps.find((c) => String(c.raw_text || '') === MESSAGE);
+  const caps = ((await j('/api/capture/pending', { token: A })).b || {}).captures || [];
+  // Matched on THIS RUN's stamp, so a leftover capture from another run can never be mistaken for ours.
+  const cap = caps.find((c) => String(c.raw_text || '').includes(stamp));
   ok('★★ the message is in the intake inbox, raw and unaltered', !!cap);
   ok('★ it knows who wrote and which line they wrote to', cap && cap.sender_ref === CUST && cap.to_ref === NUM);
   ok('★★ it is NOT a chit yet — it is pending', cap && cap.status === 'pending' && !cap.chit_id);

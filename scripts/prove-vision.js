@@ -17,37 +17,18 @@
  *
  * Run:  node scripts/prove-vision.js
  */
-const fs = require('fs');
-const path = require('path');
+/* ⚠️ ONE HARNESS (scripts/_proof.js): env loading, the API base, sign-in, and a j() that RETRIES a platform blip
+   (502/503/504, socket errors) but never a real answer. A platform that never replies aborts as "could not test"
+   (exit 2), never as a failed check (exit 1) — conflating those turned a Railway 502 into an overnight open defect
+   on 2026-08-09. This file was skipped by the bulk migration (it had no require to anchor to) and is done by hand
+   rather than left as the one script that still lies when the platform blinks. */
+const { API, j, signIn } = require('./_proof');
 
-(function loadEnvFile() {
-  for (const name of ['.env.proof', '.env.proof.txt', '.env']) {
-    const f = path.join(__dirname, '..', name);
-    if (!fs.existsSync(f)) continue;
-    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
-      if (!m) continue;
-      const v = m[2].trim().replace(/^['"]|['"]$/g, '').trim();
-      if (!process.env[m[1]] && v) process.env[m[1]] = v;
-    }
-  }
-})();
-
-const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { console.log('  \x1b[32mok\x1b[0m  ' + n); pass++; } else { console.log('  \x1b[31mXX\x1b[0m  ' + n + (x ? ' — ' + x : '')); fail++; } };
 
-async function j(p, o = {}) {
-  const r = await fetch(API + p, { method: o.method || 'GET',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, o.token ? { Authorization: 'Bearer ' + o.token } : {}),
-    body: o.body === undefined ? undefined : JSON.stringify(o.body) });
-  let b = null; try { b = await r.json(); } catch (_) {}
-  return { status: r.status, b };
-}
 async function login(email, name) {
-  await j('/api/entities/register', { method: 'POST', body: { email, display_name: name } });
-  const v = await j('/api/entities/verify', { method: 'POST', body: { email, otp: '123456' } });
-  return (v.b && (v.b.token || (v.b.entity && v.b.entity.token))) || null;
+  return signIn(email, name);
 }
 
 /** A 1×1 transparent PNG — legitimately an image, and legitimately unreadable. Spec case 4. */
@@ -102,4 +83,12 @@ const BLANK_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z
   console.log('  \x1b[33m⚠️\x1b[0m  Cases 2, 3 and 5 (a legible label · a 5-row price list · an injection string written');
   console.log('     INTO a photo) need a real photograph and are ATHI\'S LIVE RUN. Nothing here substitutes.\n');
   process.exitCode = fail ? 1 : 0;
-})().catch((e) => { console.error('\nprove-vision crashed:', e && e.message, '\n'); process.exitCode = 1; });
+})().catch((e) => {
+  /* "Could not test" and "test failed" are different answers and must never share an exit code. */
+  if (e && e.platformDown) {
+    console.log('\n  \x1b[33m⊘ COULD NOT TEST\x1b[0m — the platform did not answer (' + e.message + ').');
+    console.log('    Nothing was proved either way; ' + pass + ' check(s) had passed. Re-run it.\n');
+    process.exitCode = 2; return;
+  }
+  console.error('\nprove-vision crashed:', e && e.message, '\n'); process.exitCode = 1;
+});
