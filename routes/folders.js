@@ -263,4 +263,80 @@ router.post('/rules/preview', auth, async (req, res) => {
 /* The condition vocabulary, served to the UI so the builder cannot offer a term the matcher does not know. */
 router.get('/rules/vocabulary', auth, (req, res) => res.json({ keys: require('../lib/match').KEYS }));
 
+/**
+ * GET /reconcile?scope=task|order — ⭐ DOES THE ARITHMETIC ADD UP?
+ *
+ * Athi, 2026-08-10: *"total number of tasks in the database should be the sum of all the tasks under the folder,
+ * according to its status. so the possible segregation is assigned, unassigned, status like act, open, close,
+ * folder and its subfolders list."*
+ *
+ * ⚠️ THIS IS A RECONCILIATION, NOT A REPORT. Filing moves a chit OUT of the Task list and INTO a folder, so the
+ * moment folders exist the headline count stops being the whole truth: Task says 34 while 180 more sit in folders.
+ * Anyone reading the list would conclude the work had shrunk. The invariant is
+ *
+ *        TOTAL  =  unfiled  +  Σ(every folder)
+ *
+ * and it is ASSERTED here rather than assumed — `reconciles` is false if a single chit is unaccounted for. A
+ * number that only balances by accident is a number that will one day not.
+ *
+ * ⚠️ SUBFOLDERS ROLL UP. A parent that reported only its own rows would make the tree total larger than the sum of
+ * its visible branches — so each folder carries `own` (filed directly here) and `tree` (this folder and everything
+ * under it). Both are given, because collapsing them loses the ability to check either.
+ */
+router.get('/reconcile', auth, async (req, res) => {
+  try {
+    const me = ent(req);
+    const scope = (req.query.scope === 'order') ? 'order' : 'task';
+    const direction = scope === 'order' ? 'sent' : 'received';
+    const flags = await policy.get(me);
+
+    // ONE read of every copy on this track — filed and unfiled alike. Counting the pieces separately is how two
+    // numbers come to disagree; here they are literally partitions of the same array.
+    const rows = await select.rows(me, { direction, limit: 5000 });
+    const folders = (await withEntity(me, (db) => db.query(
+      `SELECT folder_id, parent_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, name`, [me]))).rows;
+
+    const byFolder = new Map();
+    let unfiled = 0;
+    for (const r of rows) {
+      if (!r.folder_id) { unfiled++; continue; }
+      byFolder.set(r.folder_id, (byFolder.get(r.folder_id) || []).concat([r]));
+    }
+    // Roll a folder's own rows up through its ancestors, so `tree` is this folder plus everything beneath it.
+    const kids = {};
+    folders.forEach((f) => { (kids[f.parent_id || 'root'] = kids[f.parent_id || 'root'] || []).push(f); });
+    const treeRows = (fid) => (byFolder.get(fid) || []).concat(
+      ((kids[fid] || []).flatMap((c) => treeRows(c.folder_id))));
+
+    const seg = (list) => Object.assign(measure.measure(list, { overdue_days: flags.overdue_days }), {
+      /* ⚠️ ASSIGNED vs UNASSIGNED is a SEGREGATION, not a status. A chit can be open and unassigned, or open and
+         assigned — conflating them hides the pile nobody has picked up, which is the one worth seeing. */
+      assigned: list.filter((x) => x.assigned_to_actor_id).length,
+      unassigned: list.filter((x) => !x.assigned_to_actor_id).length,
+    });
+
+    const out = folders.map((f) => {
+      const own = byFolder.get(f.folder_id) || [];
+      const tree = treeRows(f.folder_id);
+      return { folder_id: f.folder_id, parent_id: f.parent_id, name: f.name,
+               own: own.length, tree: tree.length, segments: seg(own) };
+    });
+
+    const filed = rows.length - unfiled;
+    const summed = out.reduce((n, f) => n + f.own, 0);
+    res.json({
+      scope, direction,
+      total: rows.length,
+      unfiled,
+      filed,
+      folders: out,
+      overall: seg(rows),
+      // ⚠️ The assertion, returned rather than described: `filed` counted from the chits must equal the sum of the
+      //    folders' own counts. If it does not, a chit is filed into a folder this entity cannot see.
+      reconciles: filed === summed,
+      ...(filed === summed ? {} : { discrepancy: { filed, sum_of_folders: summed, missing: filed - summed } }),
+    });
+  } catch (err) { res.status(500).json({ error: 'Reconcile failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
