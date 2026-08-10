@@ -175,4 +175,48 @@ router.post('/webhook/email', express.raw({ type: () => true }), async (req, res
   } catch (_) { return res.status(200).json({ ok: true }); }
 });
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ *  WHOLESALER CONSOLIDATION — the two outputs (directive 2026-08-10).
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * A. the CONSOLIDATED REQUIREMENT for a fulfilment date — what he must source.
+ * B. the ATTRIBUTION — who asked for how much, traceable to the chit and the original message.
+ *
+ * ⚠️ READ-ONLY. It reads chits that already exist and totals them; it mints nothing, sends nothing and prices
+ * nothing. Every rule that could cost money lives in lib/consolidate.js and is proved arithmetically.
+ */
+const consolidate = require('../lib/consolidate');
+const stores = require('../lib/stores');
+
+// GET /api/capture/consolidate?date=YYYY-MM-DD — the requirement + the attribution, per fulfilment date.
+router.get('/consolidate', auth, async (req, res) => {
+  try {
+    const me = entityId(req);
+    const cat = await consolidate.loadCatalogue(me);
+    const cards = await capture.consolidationInput(me, { since: req.query.since });
+    const out = consolidate.consolidate(cards, cat);
+    const want = String(req.query.date || '').trim();
+    const lines = want ? out.lines.filter((l) => l.date === want) : out.lines;
+    /* ⚠️ THE FLAGS TRAVEL WITH THE TOTALS, never in a separate place nobody opens. A total with a gap beside it
+       gets checked; a total that quietly excluded something does not. */
+    res.json({
+      date: want || null,
+      dates: [...new Set(out.lines.map((l) => l.date))].sort(),
+      requirement: lines,
+      flags: out.flags,
+      unmatched_phrase_count: out.flags.unmatched.length,
+      note: 'Flagged lines are EXCLUDED from every total — unmatched, variant-unspecified, date-unspecified. Unit-split lines are shown split, never converted without a declared factor.',
+    });
+  } catch (err) { res.status(500).json({ error: 'Consolidate failed', message: safeErr(err) }); }
+});
+
+// ── the shop list (W-1) ──────────────────────────────────────────────────────────────────────────────────────
+router.get('/stores', auth, async (req, res) => {
+  try { res.json(await stores.list(entityId(req))); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Stores list failed', message: safeErr(err) }); }
+});
+router.post('/stores', auth, async (req, res) => {
+  try { res.json(await stores.upsert(entityId(req), req.body || {})); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Store save failed', message: err.status ? err.message : safeErr(err) }); }
+});
+
 module.exports = router;
