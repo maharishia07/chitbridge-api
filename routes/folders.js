@@ -135,7 +135,7 @@ router.get('/:id/metrics', auth, [ param('id').isUUID() ], validate, async (req,
     const flags = await policy.get(me);      //  is a POLICY, not a constant hidden inside a report
     const rows = await select.rows(me, { folder_id: req.params.id, archived: req.query.archived === '1' });
     res.json(Object.assign({ folder_id: req.params.id }, measure.measure(rows, { overdue_days: flags.overdue_days })));
-  } catch (err) { res.status(500).json({ error: 'Metrics failed', message: safeErr(err) }); }
+  } catch (err) { console.error("folder metrics:", err.message); res.status(500).json({ error: "Metrics failed", message: safeErr(err) }); }
 });
 
 /* ── FOLDER RULES (b132) — condition -> file here. The UX Athi asked for lives INSIDE the folder. ────────────── */
