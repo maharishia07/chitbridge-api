@@ -22,6 +22,7 @@ const ent = (req) => auth.entityOf(req);
  * that is not there yet — the lesson from the Channels panel.
  */
 let SCOPE_COL = 'f.scope';
+let HAS_SCOPE = null;   // null = not yet known, true/false = answered once per process (see the create route)
 const scopeFallback = (e) => { if (e && e.code === '42703') { SCOPE_COL = "NULL::text AS scope"; return true; } return false; };
 const select  = require('../lib/select');    // WHICH chits — shared with the scorecard
 const measure = require('../lib/measure');   // ...and how they are counted
@@ -56,13 +57,28 @@ router.post('/', auth,
     /* ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Task and Order are different lists with different actions; a folder
        that held both could inherit neither. Default 'task' — the track folders were built for. */
     const scope = (req.body.scope === 'order') ? 'order' : 'task';
-    const row = await withEntity(e, async (db) => {
+    /**
+     * ⚠️ A FALLBACK INSIDE A TRANSACTION IS NOT A FALLBACK. The first version caught 42703 (no `scope` column, i.e.
+     * pre-b133) and retried the plain INSERT on the SAME client — but Postgres had already aborted the transaction,
+     * so the retry died with "current transaction is aborted" and the create returned a folder with no id. The
+     * metrics call then 400'd on "id: Invalid value", which points nowhere near the actual cause.
+     *
+     * The retry must be a NEW transaction. `HAS_SCOPE` remembers the answer so it is at most one wasted attempt
+     * per process, not one per folder.
+     */
+    const doInsert = (withScope) => withEntity(e, async (db) => {
       if (parent) { const p = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]); if (!p.rows.length) return { badParent: true }; }
-      let r;
-      try { r = await db.query(`INSERT INTO folder (entity_id, parent_id, name, scope) VALUES ($1,$2,$3,$4) RETURNING folder_id, parent_id, name, sort, scope`, [e, parent, name, scope]); }
-      catch (e1) { if (e1 && e1.code === '42703') r = await db.query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]); else throw e1; }
+      const r = withScope
+        ? await db.query(`INSERT INTO folder (entity_id, parent_id, name, scope) VALUES ($1,$2,$3,$4) RETURNING folder_id, parent_id, name, sort, scope`, [e, parent, name, scope])
+        : await db.query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]);
       return { folder: r.rows[0] };
     });
+    let row;
+    if (HAS_SCOPE === false) row = await doInsert(false);
+    else {
+      try { row = await doInsert(true); HAS_SCOPE = true; }
+      catch (e1) { if (e1 && e1.code === '42703') { HAS_SCOPE = false; row = await doInsert(false); } else throw e1; }
+    }
     if (row.badParent) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' });
     res.json({ folder: { ...row.folder, count: 0 } });
   } catch (err) { res.status(500).json({ error: 'Create failed', message: safeErr(err) }); }
@@ -111,12 +127,19 @@ router.post('/move', auth,
   validate, async (req, res) => {
   try {
     const e = ent(req); const fid = req.body.folder_id || null;
-    const result = await withEntity(e, async (db) => {
+    const doMove = () => withEntity(e, async (db) => {
       let fscope = null;
       if (fid) {
         let f;
-        try { f = await db.query(`SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); }
-        catch (e1) { if (e1 && e1.code === '42703') f = await db.query(`SELECT NULL::text AS scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); else throw e1; }
+        /* Same rule as the create route: never retry inside an aborted transaction. HAS_SCOPE is known by now
+           in practice, and when it is not, asking for the safe shape costs nothing. */
+        f = await db.query((HAS_SCOPE === false)
+          ? `SELECT NULL::text AS scope FROM folder WHERE folder_id = $1 AND entity_id = $2`
+          : `SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]).catch(async (err) => {
+            if (err && err.code === '42703') { HAS_SCOPE = false; return null; }
+            throw err;
+          });
+        if (f === null) return { retryNoScope: true };
         if (!f.rows.length) return { noFolder: true };
         fscope = f.rows[0].scope;
       }
@@ -150,6 +173,9 @@ router.post('/move', auth,
         dir ? [fid, req.body.chit_id, e, dir] : [fid, req.body.chit_id, e]);
       return { moved: r.rowCount, scope: fscope };
     });
+    // The 42703 retry is a FRESH transaction — the aborted one can serve nothing further. At most once per process.
+    let result = await doMove();
+    if (result.retryNoScope) result = await doMove();
     if (result.noFolder) return res.status(400).json({ error: 'No such folder' });
     if (result.wrongSide) return res.status(400).json({
       error: 'Wrong side',
