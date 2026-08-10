@@ -213,4 +213,43 @@ router.patch('/customers/:id',
     }
   });
 
+/**
+ * ── COUNTERPARTY SCORECARD ──────────────────────────────────────────────────────────────────────────────────────
+ * Athi, 2026-08-10, after the procurement research: build the counterparty scorecard.
+ *
+ * ⚠️ IT ASKS NOBODY FOR DATA, AND THAT IS THE WHOLE POINT. Every ERP supplier scorecard is built from ONE side's
+ * records, which is why suppliers argue with them. Here both parties hold matching copies of every chit counted, so
+ * the supplier can run the same arithmetic against their own rows and reach the same answer. A scorecard nobody can
+ * dispute is a different object from a scorecard you have to defend.
+ *
+ * ⚠️ AND IT SCORES BEHAVIOUR, NOT WORTH — no single 0-100 grade. One number invites a ranking, a ranking invites a
+ * decision, and that decision would rest on a weighting nobody agreed to. The components are reported instead.
+ *
+ * GET /api/relationships/scorecard            — everyone you have actually traded with
+ * GET /api/relationships/scorecard/:entity_id — one counterparty, in depth
+ */
+const select  = require('../lib/select');
+const measure = require('../lib/measure');
+const policy  = require('../lib/policy');
+
+router.get('/scorecard', auth, async (req, res) => {
+  try {
+    const me = auth.entityOf(req);
+    // Derived from the CHITS, not from a saved supplier list: a supplier you have never traded with has nothing
+    // to score, and a counterparty you trade with daily belongs here whether or not anyone added them.
+    const list = await select.counterparties(me, { since: req.query.since });
+    res.json({ counterparties: list, note: list.length ? undefined : 'no trades yet — nothing to score' });
+  } catch (err) { res.status(500).json({ error: 'Scorecard list failed', message: safeErr(err) }); }
+});
+
+router.get('/scorecard/:entity_id', auth, async (req, res) => {
+  try {
+    const me = auth.entityOf(req);
+    const flags = await policy.get(me);            // overdue is a POLICY, never a constant baked into a report
+    const rows = await select.rows(me, { counterparty_id: req.params.entity_id, since: req.query.since, limit: 5000 });
+    const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
+    res.json(Object.assign({ counterparty_id: req.params.entity_id, name: (rows[0] || {}).counterparty_name || null }, card));
+  } catch (err) { res.status(500).json({ error: 'Scorecard failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
