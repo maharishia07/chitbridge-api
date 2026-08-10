@@ -84,8 +84,17 @@ async function j(p, o = {}) {
       lastWhy = (e && e.message) || 'network error';
       continue;
     }
-    if (PLATFORM_STATUS.has(r.status)) { lastWhy = 'HTTP ' + r.status; continue; }
     let b = null; try { b = await r.json(); } catch (_) {}
+    /**
+     * ⚠️ A 503 FROM OUR OWN CODE IS AN ANSWER, NOT AN OUTAGE — and this guard got that wrong on its first real
+     * outing. The API returns 503 with a JSON body to mean "that migration has not been run"; the edge returns 503
+     * with no JSON at all to mean "the app never replied". Treating both as platform-down aborted a proof at 23/23
+     * on the very check that was verifying the migration-absent path.
+     *
+     * The discriminator is the BODY: our handlers always answer JSON with an `error` field. If one parsed, the app
+     * spoke — return it and let the check judge. Only a 502/503/504 with nothing readable is really the platform.
+     */
+    if (PLATFORM_STATUS.has(r.status) && !(b && (b.error || b.message))) { lastWhy = 'HTTP ' + r.status; continue; }
     return { status: r.status, b };
   }
   /* ⚠️ ONE ARGUMENT. Passing (method, path, why) silently produced the message "GET" — the two facts that say
