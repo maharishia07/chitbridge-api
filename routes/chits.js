@@ -757,6 +757,16 @@ router.post('/send',
 // Advanced-search filters shared by the chit lists: amount range, date range, priority, status bucket.
 // All parameterised (no injection). Used by /inbox, /sent, /folder. (Criteria set can become schema-driven later.)
 function chitFilters(req, where, params){
+  /**
+   * ⚠️ A FOLDER IS A FILTER ON THIS LIST, NOT A SECOND SCREEN. Athi, 2026-08-10: *"we just pass the parameter as
+   * folder name and filter data accordingly, so the same panel works for each folder."*
+   *
+   * It lives in the SHARED filter builder so Task and Order both get it from one line — a folder under Order is
+   * the Order list filtered, exactly as a folder under Task is the Task list filtered. Putting it in each route
+   * separately is how the two would drift.
+   */
+  const fid = String(req.query.folder_id || '').trim();
+  if (/^[0-9a-f-]{36}$/i.test(fid)) { params.push(fid); where += ` AND cs.folder_id = $${params.length}::uuid`; }
   const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
   const amin = num(req.query.amount_min), amax = num(req.query.amount_max);
   if (amin !== null) { params.push(amin); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`; }
@@ -949,7 +959,22 @@ router.get('/inbox', auth, async (req, res) => {
     let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
     let paramCount = 1;
-    if (await folderColReady()) whereClause += ` AND cs.folder_id IS NULL`;   // filed chits show in their folder view, not Task (query-only — no data moved; guarded so a missing column never blanks Task)
+    /**
+     * ⚠️ A FOLDER IS THIS LIST WITH A FILTER — NOT A SECOND SCREEN. Athi, 2026-08-10: *"we don't need to create
+     * different ux/UI panel for each panel, only task and order panel, we just pass the parameter as folder name
+     * and filter data accordingly, so the same panel works for each folder."*
+     *
+     * Right, and it deletes code rather than adding it: the folder view was a bespoke list that would have drifted
+     * from Task within a month — different columns, different row actions, its own bugs. One list, one filter.
+     *
+     * No folder asked for → hide FILED chits (they live in their folder, not loose in Task). A folder asked for →
+     * show exactly that folder. Same query, one parameter apart.
+     */
+    if (await folderColReady()) {
+      const fid = String(req.query.folder_id || '').trim();
+      if (/^[0-9a-f-]{36}$/i.test(fid)) { paramCount++; whereClause += ` AND cs.folder_id = $${paramCount}::uuid`; params.push(fid); }
+      else whereClause += ` AND cs.folder_id IS NULL`;
+    }
 
     if (status_filter) {
       paramCount++;
