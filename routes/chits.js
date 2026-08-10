@@ -479,6 +479,10 @@ router.post('/send',
           channel: str(v.channel, 24), from: str(v.from, 64), from_name: str(v.from_name, 120),
           to: str(v.to, 64), provider_msg_id: str(v.provider_msg_id, 128), capture_id: str(v.capture_id, 64),
           received_at: str(v.received_at, 40), read_by: str(v.read_by, 40),
+          /* Order-level facts that have no column of their own. `unplaced` is what the reader could not place at
+             all — surfaced, never dropped: a request that quietly lost 'deliver at 7pm' looks correct and is not. */
+          delivery_at: str(v.delivery_at, 120), delivery_address: str(v.delivery_address, 300),
+          notes: str(v.notes, 800), unplaced: str(v.unplaced, 800),
           sender_verified: v.sender_verified === true,
           // What they actually wrote, capped — the full text rides as an attachment, not in every copy's summary.
           raw_excerpt: str(v.raw_excerpt, 400),
