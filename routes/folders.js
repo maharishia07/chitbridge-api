@@ -92,7 +92,23 @@ router.post('/move', auth,
     const e = ent(req); const fid = req.body.folder_id || null;
     const result = await withEntity(e, async (db) => {
       if (fid) { const f = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]); if (!f.rows.length) return { noFolder: true }; }
-      const r = await db.query(`UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3`, [fid, req.body.chit_id, e]);
+      /**
+       * ⚠️ `direction` IS OPTIONAL, AND WITHOUT IT A SELF-CHIT MOVES BOTH COPIES.
+       *
+       * The comment above says "MY copy" — singular — but this UPDATE matched on (chit_id, entity_id) only. On an
+       * inter-entity chit you hold one copy, so there was never a difference. On a SELF-CHIT you hold two (the
+       * Order copy and the Task copy) and both moved together: filing 40 chits produced 80 filed rows, and the
+       * folder honestly reported 80 while a person would say 40.
+       *
+       * Found 2026-08-10 by seeding folders and reading the counts back. Fixed ADDITIVELY: omit `direction` and
+       * the old behaviour is unchanged; pass it and only that copy moves. The UI passes it now, because Task and
+       * Order are genuinely different things in the mailbox model — filing the Order copy into "Sent to suppliers"
+       * should not drag the Task copy along.
+       */
+      const dir = (req.body.direction === 'sent' || req.body.direction === 'received') ? req.body.direction : null;
+      const r = await db.query(
+        `UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3` + (dir ? ` AND direction = $4` : ''),
+        dir ? [fid, req.body.chit_id, e, dir] : [fid, req.body.chit_id, e]);
       return { moved: r.rowCount };
     });
     if (result.noFolder) return res.status(400).json({ error: 'No such folder' });
