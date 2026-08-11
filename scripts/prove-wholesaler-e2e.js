@@ -130,11 +130,14 @@ run('prove-wholesaler-e2e', async (t) => {
   const lines = (R.requirement || []).filter((l) => l.date === fri);
 
   console.log('\n  ══ A · CONSOLIDATED REQUIREMENT for ' + fri + ' ══════════════════════════════════');
-  lines.forEach((l) => console.log('   ' + (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(20)
-    + String(l.total).padStart(6) + ' ' + (l.canonical_unit || '').padEnd(5)
-    + ' · ' + l.stores + ' shop(s)'
-    + (l.conversions_applied ? '  ⚙ converted: ' + l.conversions_applied.map((c) => c.qty + ' ' + c.from_unit + '×' + c.factor).join(', ') : '')
-    + (l.unit_split ? '  ⚠️ SPLIT: ' + l.unit_split.map((u) => u.qty + ' ' + u.unit).join(' + ') : '')));
+  lines.forEach((l) => {
+    console.log('   ' + (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(22)
+      + String(l.total).padStart(6) + ' ' + (l.canonical_unit || '')
+      + '   TOTAL across ' + l.stores + ' shop(s)'
+      + (l.conversions_applied ? '   ⚙ ' + l.conversions_applied.map((c) => c.qty + ' ' + c.from_unit + ' × ' + c.factor + ' = ' + c.became + ' ' + c.to_unit).join(', ') : ''));
+    l.breakdown.forEach((s2) => console.log('       └─ ' + String(s2.store_name).padEnd(20) + String(s2.qty).padStart(5) + ' ' + (s2.unit || l.canonical_unit) + '   (asked: "' + s2.phrase + '")'));
+    if (l.unit_split) console.log('       ⚠️ NOT ADDED: ' + l.unit_split.map((u) => u.qty + ' ' + u.unit).join('  +  ') + '   — no conversion declared');
+  });
   console.log('\n  ══ B · ATTRIBUTION ═════════════════════════════════════════════════════════════');
   lines.forEach((l) => console.log('   ' + (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(20)
     + l.breakdown.map((b) => b.store_name + ' ' + b.qty + (b.unit ? b.unit : '')).join(' · ')));
