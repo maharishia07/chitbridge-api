@@ -1,108 +1,131 @@
 'use strict';
-// prove-amend.js — b137. Corrections are recorded ALONGSIDE the reading, never over it.
+// prove-amend.js — b138. Line-level corrections and THE LIVE SET.
 //
-// ⚠️ WHAT THIS PROVES AND WHAT IT DOES NOT. It exercises the pure layer — apply() and the validation that runs
-// before any DB call — so it needs no database and no migration. It does NOT prove the INSERT, the RLS policy, or
-// the route. Those need b137 applied and a live entity; a green run here is not a green run of the feature.
+// Athi, 2026-08-11: *"just new line item, with all the amendments"* · *"old line deleted and new line is nothing
+// — assume if the stock is not available the sku line will become empty."*
+//
+// ⚠️ SCOPE. The pure layer: liveSet/liveLines and the shape validation that runs before any DB call. No database,
+// no migration needed. It does NOT prove the INSERT, the seq chain under concurrency, the RLS policy, the routes
+// or the UI — those need b138 applied and a live entity.
 //
 // Run: node scripts/prove-amend.js
 const amend = require('../lib/amend');
 
 let pass = 0, fail = 0;
-const ok = (name, cond, detail) => {
-  if (cond) { pass++; console.log('  ✓ ' + name); }
-  else { fail++; console.log('  ✗ ' + name + (detail ? '\n      ' + detail : '')); }
-};
-const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(want),
-  'got  ' + JSON.stringify(got) + '\n      want ' + JSON.stringify(want));
+const ok = (n, c, d) => { if (c) { pass++; console.log('  ✓ ' + n); } else { fail++; console.log('  ✗ ' + n + (d ? '\n      ' + d : '')); } };
+const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' + JSON.stringify(g) + '\n      want ' + JSON.stringify(w));
 
-/* The line the reader actually produced from Athi's message on 2026-08-11:
-   "screw black color 5 inch + type 2 box" — the SIZE became the quantity, "5 inch" vanished, and `unplaced` was
-   empty, so the silent-loss detector reported it clean. This is the line an amendment exists for. */
+/* The reading of Athi's msg 16: "anna 3 kg thakkali venum and 2 packet milk 500ml each also 1 kg vengayam" */
 const LINES = [
-  { particulars: 'screw', quantity: 5, unit: 'box', comment: 'black color, type 2', price: null },
-  { particulars: 'thakkali', quantity: 10, unit: 'kg', price: null },
+  { particulars: 'Tomato', quantity: 3, unit: 'kg', price: 30, total: 90 },
+  { particulars: 'Milk', quantity: 2, unit: 'packet', unit_size: '500ml', price: 25, total: 50 },
+  { particulars: 'Onion', quantity: 1, unit: 'kg', price: 40, total: 40 },
 ];
+const A = (line_index, line, seq, reason_code) => ({ line_index, seq: seq || 1, line, reason_code: reason_code || 'other' });
 
-console.log('\n── b137 · amend ─────────────────────────────────────────────────────────────\n');
+console.log('\n── b138 · line amendment + live set ─────────────────────────────────────────\n');
 
-console.log('1 · the original reading survives the correction');
+console.log('1 · a correction replaces the LINE, and the original survives');
+{
+  const set = amend.liveSet(LINES, [A(0, { particulars: 'Tomato', quantity: 5, unit: 'kg', price: 30 })]);
+  eq('the live line reads 5 kg', set[0].live.quantity, 5);
+  eq('…and the original still says 3', set[0].original.quantity, 3);
+  eq('the original is in the history, for the strike-through', set[0].history.length, 1);
+  ok('untouched lines carry no history', !set[1].history.length && !set[2].history.length);
+  ok('⚠️ the input is NOT mutated — chit_detail.line_items must never change',
+     LINES[0].quantity === 3, JSON.stringify(LINES[0]));
+}
+
+console.log('\n2 · ⭐ REMOVAL IS null, AND IT IS NOT QUANTITY ZERO');
+{
+  const removed = amend.liveSet(LINES, [A(1, null, 1, 'stock_unavailable')]);
+  ok('the removed line is STILL THERE — evidence', removed.length === 3 && removed[1].index === 1);
+  ok('…flagged removed, with live = null', removed[1].removed === true && removed[1].live === null);
+  ok('…and it remembers WHY (a business event, not a misreading)', removed[1].reason_code === 'stock_unavailable');
+  eq('but it counts in NOTHING', amend.liveLines(LINES, [A(1, null, 1, 'stock_unavailable')]).length, 2);
+
+  /* THE RED CASE. If removal were expressed as quantity 0, the line would still be a line — it would survive
+     liveLines(), reach consolidate(), and add a real 0 to a total. Same intent, completely different arithmetic. */
+  const zeroed = amend.liveLines(LINES, [A(1, { particulars: 'Milk', quantity: 0, unit: 'packet' })]);
+  eq('⚠️ amend-to-ZERO is NOT removal — the line still counts', zeroed.length, 3);
+  eq('…and it contributes a real zero', zeroed[1].quantity, 0);
+}
+
+console.log('\n3 · correcting a correction — the chain stays readable');
+{
+  const set = amend.liveSet(LINES, [
+    A(0, { particulars: 'Tomato', quantity: 5, unit: 'kg' }, 1),
+    A(0, { particulars: 'Tomato', quantity: 8, unit: 'kg' }, 2),
+  ]);
+  eq('latest wins', set[0].live.quantity, 8);
+  eq('exactly one live version', set[0].versions, 2);
+  eq('history holds the original AND the middle step, oldest first',
+     set[0].history.map((h) => h.quantity), [3, 5]);
+}
+
+console.log('\n4 · out-of-order rows still resolve by seq, not by arrival');
+{
+  const set = amend.liveSet(LINES, [
+    A(0, { particulars: 'Tomato', quantity: 8, unit: 'kg' }, 2),
+    A(0, { particulars: 'Tomato', quantity: 5, unit: 'kg' }, 1),
+  ]);
+  eq('8 is live because seq 2 > seq 1', set[0].live.quantity, 8);
+}
+
+console.log('\n5 · a removed line can be brought back');
+{
+  const set = amend.liveSet(LINES, [
+    A(2, null, 1, 'stock_unavailable'),
+    A(2, { particulars: 'Onion', quantity: 1, unit: 'kg' }, 2, 'customer_clarified'),
+  ]);
+  ok('it is live again', !set[2].removed && set[2].live.quantity === 1);
+  eq('and it counts once, not twice', amend.liveLines(LINES, [
+    A(2, null, 1), A(2, { particulars: 'Onion', quantity: 1, unit: 'kg' }, 2)]).length, 3);
+}
+
+console.log('\n6 · ⭐ liveLines IS the single definition of what counts');
 {
   const amendments = [
-    { line_index: 0, field: 'quantity', old_value: '5', new_value: '2', kind: 'reading' },
-    { line_index: 0, field: 'unit_size', old_value: null, new_value: '5 inch', kind: 'reading' },
+    A(0, { particulars: 'Tomato', quantity: 5, unit: 'kg' }),
+    A(1, null, 1, 'stock_unavailable'),
   ];
-  const out = amend.apply(LINES, amendments);
-  eq('quantity now reads 2', out[0].quantity, 2);
-  eq('…and still remembers it was read as 5', out[0]._amended.quantity, { from: '5', to: '2' });
-  eq('the lost "5 inch" is restored as the unit size', out[0].unit_size, '5 inch');
-  eq('a field that was ABSENT records from:null — not from:""', out[0]._amended.unit_size.from, null);
-  ok('⚠️ the input array is NOT mutated — the chit\'s own lines must never change',
-     LINES[0].quantity === 5 && LINES[0].unit_size === undefined,
-     'apply() wrote through to the caller\'s objects: ' + JSON.stringify(LINES[0]));
-  ok('an untouched line is untouched', out[1].quantity === 10 && !out[1]._amended);
+  const live = amend.liveLines(LINES, amendments);
+  eq('two lines count', live.length, 2);
+  eq('the corrected quantity, not the misread one', live[0].quantity, 5);
+  ok('the removed one is absent', !live.some((l) => l.particulars === 'Milk'));
+  /* This is the defect group sum shipped with this morning: totalling line_items directly told a trader to source
+     what the machine misheard, and a stock removal changed nothing at all. */
+  ok('⚠️ totalling the ORIGINAL would have been wrong on both counts',
+     LINES[0].quantity === 3 && LINES.length === 3);
 }
 
-console.log('\n2 · quantity stays a NUMBER (the DB hands back text)');
+console.log('\n7 · shape validation refuses what must not become a record');
 {
-  const out = amend.apply([{ particulars: 'x', quantity: 5, price: 3 }],
-    [{ line_index: 0, field: 'quantity', old_value: '5', new_value: '2' }]);
-  ok('typeof quantity === number', typeof out[0].quantity === 'number', 'got ' + typeof out[0].quantity);
-  /* ⚠️ THE RED CASE. If new_value came through as the string "2", the total would be "2"*3 → still 6 by JS
-     coercion, but a later "+" anywhere downstream would concatenate. Assert the total, then assert the type. */
-  eq('the total is recomputed from the corrected quantity', out[0].total, 6);
-}
-
-console.log('\n3 · correcting a correction keeps the FIRST reading, not the middle one');
-{
-  const out = amend.apply(LINES, [
-    { line_index: 0, field: 'quantity', old_value: '5', new_value: '2' },
-    { line_index: 0, field: 'quantity', old_value: '2', new_value: '3' },
-  ]);
-  eq('current value is the latest', out[0].quantity, 3);
-  eq('struck-through value is what the READER produced, not the intermediate human one',
-     out[0]._amended.quantity, { from: '5', to: '3' });
-}
-
-console.log('\n4 · an amendment to a line that no longer exists is ignored, never thrown');
-{
-  let threw = null;
-  try { amend.apply(LINES, [{ line_index: 9, field: 'quantity', old_value: '1', new_value: '2' }]); }
-  catch (e) { threw = e.message; }
-  ok('no throw', threw === null, threw);
-}
-
-console.log('\n5 · chit-level amendments (line_index null) land separately');
-{
-  const r = amend.apply(LINES, [{ line_index: null, field: 'delivery_address', old_value: null, new_value: 'velachery' }], true);
-  eq('the address is a chit fact, not a line fact', r.chit.delivery_address, { from: null, to: 'velachery' });
-  ok('no line was touched', !r.lines[0]._amended && !r.lines[1]._amended);
-}
-
-console.log('\n6 · validation refuses what must not become a record');
-(async () => {
-  const refuses = async (name, edits, expect) => {
-    try { await amend.record('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', edits); }
-    catch (e) { return ok(name, e.status === 400 && new RegExp(expect, 'i').test(e.message), 'got: ' + e.status + ' ' + e.message); }
-    ok(name, false, 'it was ACCEPTED');
+  const refuses = (name, line, expect) => {
+    try { amend.clean(line); ok(name, false, 'it was ACCEPTED'); }
+    catch (e) { ok(name, e.status === 400 && new RegExp(expect, 'i').test(e.message), 'got: ' + e.message); }
   };
-  /* ⚠️ These reject before any DB call, which is why this file needs no database. If that ordering is ever
-     changed, this block starts failing with a connection error rather than silently passing — which is correct. */
-  await refuses('an unknown field is refused', [{ line_index: 0, field: 'total', old_value: '1', new_value: '2' }], 'cannot amend');
-  await refuses('a line-only field is refused at chit level', [{ line_index: null, field: 'quantity', old_value: '1', new_value: '2' }], 'cannot amend');
-  await refuses('a chit-only field is refused on a line', [{ line_index: 0, field: 'delivery_address', old_value: null, new_value: 'x' }], 'cannot amend');
-  await refuses('an amendment that changes nothing is refused', [{ line_index: 0, field: 'quantity', old_value: '5', new_value: '5' }], 'unchanged');
-  await refuses('an empty edit list is refused', [], 'nothing to amend');
+  refuses('a non-numeric quantity is refused, not coerced to NaN', { particulars: 'x', quantity: '2 box' }, 'must be a number');
+  refuses('a line with no item is refused', { quantity: 2, unit: 'kg' }, 'needs an item');
+  /* ⚠️ 45 chits on beta carry {description, qty, rate} because line_items is jsonb and the send path never
+     checked. Rejecting the shape in ONE place beats tolerating it in four readers. */
+  const cleaned = amend.clean({ particulars: 'Tomato', quantity: 2, unit: 'kg', description: 'Widget', qty: 99, rate: 5 });
+  eq('unknown keys are DROPPED, never stored', Object.keys(cleaned).sort(), ['particulars', 'quantity', 'unit']);
+  eq('total is recomputed, never taken from the client',
+     amend.clean({ particulars: 'x', quantity: 3, price: 30, total: 999999 }).total, 90);
+  ok('null is a legal line — that is removal', amend.clean(null) === null);
+}
 
-  console.log('\n7 · the fields a human may correct');
-  ok('particulars/quantity/unit/unit_size/price/comment are all amendable',
-     ['particulars', 'quantity', 'unit', 'unit_size', 'price', 'comment'].every((f) => amend.LINE_FIELDS.includes(f)));
-  ok('⚠️ `total` is NOT amendable — it is derived; amending it would let the arithmetic disagree with its inputs',
-     !amend.LINE_FIELDS.includes('total'));
+console.log('\n8 · the reason codes that mean opposite things');
+{
+  ok('misread_by_ai and stock_unavailable are both recordable',
+     amend.REASONS.includes('misread_by_ai') && amend.REASONS.includes('stock_unavailable'));
+  ok('⚠️ they produce an IDENTICAL empty line — only the reason distinguishes "never asked" from "declining"',
+     amend.REASONS.length === 5);
+}
 
-  console.log('\n────────────────────────────────────────────────────────────────────────────');
-  console.log((fail ? '✗ ' : '✓ ') + pass + ' passed, ' + fail + ' failed');
-  console.log('⚠️  NOT PROVEN HERE: the INSERT, the RLS policy, the route, the UI. Those need b137 applied\n' +
-              '    and a live entity — this file only covers the pure layer.\n');
-  process.exit(fail ? 1 : 0);
-})();
+console.log('\n────────────────────────────────────────────────────────────────────────────');
+console.log((fail ? '✗ ' : '✓ ') + pass + ' passed, ' + fail + ' failed');
+console.log('⚠️  NOT PROVEN HERE: the INSERT, the seq chain under concurrency, RLS, the routes, the UI.\n' +
+            '    Those need b138 applied and a live entity.\n');
+process.exit(fail ? 1 : 0);

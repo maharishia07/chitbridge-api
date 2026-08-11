@@ -1231,11 +1231,13 @@ router.get('/:chit_id', auth, async (req, res) => {
       state_log: data.log.rows,
       attachments,
       amendments: amd.amendments,
-      /* ⚠️ THE UI GATES THE ✎ ON THIS. Without it the pen renders on every line before b137 is applied, and the
-         only way to discover that is to click it and get a 503 — an affordance that exists solely to fail. */
+      /* ⚠️ THE UI GATES THE ✎ ON THIS. Without it the pen renders on every line before b138 is applied, and the
+         only way to discover that is to tap it and get a 503 — an affordance that exists solely to fail. */
       amendments_migrated: amd.migrated !== false,
-      ...(amd.amendments.length && Array.isArray(_lines)
-        ? { amended_lines: amend.apply(_lines, amd.amendments) } : {}),
+      /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
+         Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
+         Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */
+      ...(Array.isArray(_lines) ? { live_set: amend.liveSet(_lines, amd.amendments) } : {}),
     });
 
   } catch (err) {
@@ -1252,7 +1254,10 @@ router.get('/:chit_id', auth, async (req, res) => {
 // route below already refuses anything but a Draft for that reason, and an UPDATE here would quietly undo that
 // guarantee from a different direction. What it writes is a CORRECTION, filed next to the reading it corrects.
 //
-// POST body: { edits: [{ line_index, field, old_value, new_value, kind, reason }] }
+// POST body: { edits: [{ line_index, line: {particulars, quantity, unit, unit_size, price, comment} | null,
+//                        reason_code, reason }] }
+// ⚠️ `line: null` REMOVES the line — Athi: "old line deleted and new line is nothing". It stays visible on the
+//    chit and counts in nothing. That is NOT quantity:0, which is a real zero and would leak into totals.
 router.post('/:chit_id/amend', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -1271,21 +1276,29 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
     /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
        every other action. Best-effort: a missing log must not lose a correction that already committed. */
     try {
-      const n = out.amendments.length;
+      const detail = out.amendments.map((a) => a.line === null
+        ? ('line ' + (a.line_index + 1) + ' removed (' + a.reason_code + ')')
+        : ('line ' + (a.line_index + 1) + ' → ' + [a.line.particulars, a.line.quantity, a.line.unit].filter(Boolean).join(' ') + ' (' + a.reason_code + ')')).join('; ');
       await withEntity(entity_id, (db) => db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
          VALUES ($1,$2,'amended',$3,$4,$5)`,
-        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
-         n + (n === 1 ? ' field amended: ' : ' fields amended: ') +
-         out.amendments.map((a) => a.field + ' "' + (a.old_value ?? '—') + '" → "' + (a.new_value ?? '—') + '"').join('; ')]));
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]));
     } catch (e) { console.error('amend state_log skipped:', e.message); }
 
-    /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A 'naming' correction ("thakkali" → Tomato) is exactly the
-       fact worth learning, but writing it into the catalogue unasked would permanently merge two words on one
-       person's typo, and nothing downstream would ever flag it. The confirmation step is a separate act. */
+    /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A correction that renames an item ("thakkali" → Tomato) is
+       exactly the fact worth learning, but writing it into the catalogue unasked would permanently merge two words
+       on one person's typo, and nothing downstream would ever flag it. Athi's rule (2026-08-11): synonyms may
+       promote automatically, but only on N independent confirmations across entities — never on one. Units and
+       grades never promote automatically at all. */
+    const orig = ((await withEntity(entity_id, (db) => db.query(
+      'SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2 LIMIT 1', [chit_id, entity_id])))
+      .rows[0] || {}).line_items || [];
+    const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
     const candidates = out.amendments
-      .filter((a) => a.kind === 'naming' && a.field === 'particulars' && a.old_value && a.new_value)
-      .map((a) => ({ amendment_id: a.amendment_id, term: a.old_value, means: a.new_value }));
+      .filter((a) => a.line && a.reason_code === 'misread_by_ai')
+      .map((a) => ({ was: (orig[a.line_index] || {}).particulars, now: a.line.particulars, amendment_id: a.amendment_id }))
+      .filter((c) => c.was && c.now && norm(c.was) !== norm(c.now))
+      .map((c) => ({ amendment_id: c.amendment_id, term: c.was, means: c.now }));
 
     res.json({ ...out, ...(candidates.length ? { synonym_candidates: candidates } : {}) });
   } catch (err) {
