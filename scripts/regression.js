@@ -70,7 +70,15 @@ async function holdsCopy(token, chit_id) {
   const subj = 'REG ' + Date.now().toString().slice(-6);
   const snd = await api('POST', '/api/chits/send', { token: A.token, body: {
     recipients: [{ entity_id: BETA_ID, role: 'to' }], purpose: 'general', manual_subject: subj,
-    line_items: [{ description: 'Widget', qty: 2, rate: 100 }], business_json: { note: 'reg test' } } });
+    /* ⚠️ THE CANONICAL LINE SHAPE — particulars/quantity/price, not description/qty/rate. This script used the
+       wrong one for months, and because line_items is jsonb the API stored it verbatim. The result: 45 chits on
+       beta whose lines NO downstream reader can understand — group sum reported them as "undefined · no item
+       phrase", and fmtLine would render them as "Item". The regression was manufacturing malformed records and
+       nothing complained, because nothing on the send path checks the shape.
+       ⚠️ That gap is REAL and is NOT fixed by this edit — a client sending `description` today still produces
+       unreadable lines. Flagged for a decision rather than patched into a reader, because tolerating it downstream
+       would hide it in four places instead of rejecting it in one. */
+    line_items: [{ particulars: 'Widget', quantity: 2, price: 100 }], business_json: { note: 'reg test' } } });
   const chit_id = snd.json && (snd.json.chit_id || (snd.json.chit && snd.json.chit.chit_id));
   check('send returned a chit_id', !!chit_id, chit_id || JSON.stringify(snd.json).slice(0, 200));
   if (!chit_id) return done();
