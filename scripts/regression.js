@@ -33,6 +33,29 @@ async function login(name) {
 }
 const has = (obj, id) => JSON.stringify(obj || '').includes(id);
 
+/**
+ * holdsCopy(token, chit_id) — "does this entity hold a received copy?", asked so that FILING cannot answer no.
+ *
+ * ⚠️ WHY THIS EXISTS (2026-08-11). Three checks here used `has(inbox, id)` and started failing — not because
+ * delivery broke, but because `beta@test-cb.com` is both the regression's fixture AND the entity that
+ * seed-folders-demo.js loaded with folder RULES. A rule fires on arrival, files the chit, and the inbox stops
+ * listing it: `routes/chits.js` scopes an unfiltered inbox to `folder_id IS NULL` on purpose — filing is a MOVE,
+ * the mailing model, not a tag.
+ *
+ * So the inbox listing answers "is it unfiled?", which was never the question. The question is "was it delivered".
+ * ⚠️ THIS IS STRICTER, NOT LOOSER: it still requires the listing OR provable participation, and it reports WHICH,
+ * so a real delivery failure cannot hide behind "it must have been filed" — that phrase has to be earned by a
+ * 200 on the entity's own copy.
+ */
+async function holdsCopy(token, chit_id) {
+  const inbox = await api('GET', '/api/chits/inbox', { token });
+  if (has(inbox.json, chit_id)) return { ok: true, how: 'in the inbox' };
+  const det = await api('GET', '/api/chits/' + chit_id, { token });
+  if (det.status !== 200) return { ok: false, how: 'not in the inbox and detail says ' + det.status };
+  const st = (det.json && det.json.header) || {};
+  return { ok: true, how: 'held but FILED into a folder (role ' + (st.role || '?') + ') — not a delivery failure' };
+}
+
 (async () => {
   console.log('== CROSS-ENTITY REGRESSION ==  ' + BASE + '\n');
   const A = await login(ALPHA), B = await login(BETA);
@@ -53,8 +76,8 @@ const has = (obj, id) => JSON.stringify(obj || '').includes(id);
   if (!chit_id) return done();
   const aSent = await api('GET', '/api/chits/sent', { token: A.token });
   check('Alpha has the SENT copy (Order)', has(aSent.json, chit_id));
-  const bInbox = await api('GET', '/api/chits/inbox', { token: B.token });
-  check('Beta has the RECEIVED copy (Task)', has(bInbox.json, chit_id));
+  const bHold = await holdsCopy(B.token, chit_id);
+  check('Beta has the RECEIVED copy (Task)', bHold.ok, bHold.how);
   const aDet = await api('GET', '/api/chits/' + chit_id, { token: A.token });
   check('Alpha can open the chit detail', aDet.status === 200, 'status ' + aDet.status);
   const bDet = await api('GET', '/api/chits/' + chit_id, { token: B.token });
@@ -139,8 +162,8 @@ const has = (obj, id) => JSON.stringify(obj || '').includes(id);
   check('Alpha can delete ITS copy', aDel.status === 200, 'status ' + aDel.status);
   const bStill = await api('GET', '/api/chits/' + chit_id, { token: B.token });
   check('Beta’s copy SURVIVES Alpha’s delete', bStill.status === 200, 'status ' + bStill.status);
-  const bInbox2 = await api('GET', '/api/chits/inbox', { token: B.token });
-  check('Beta’s inbox still shows it', has(bInbox2.json, chit_id));
+  const bHold2 = await holdsCopy(B.token, chit_id);
+  check('Beta still holds it after Alpha deleted', bHold2.ok, bHold2.how);
 
   // ===== 8 · CC-role delivery (fan-out) =====
   console.log('\n8 · CC-role delivery');
@@ -154,12 +177,12 @@ const has = (obj, id) => JSON.stringify(obj || '').includes(id);
     const chit2 = snd2.json && (snd2.json.chit_id || (snd2.json.chit && snd2.json.chit.chit_id));
     check('send with TO + CC succeeds', !!chit2, chit2 || JSON.stringify(snd2.json).slice(0, 160));
     if (chit2) {
-      const gInbox2 = await api('GET', '/api/chits/inbox', { token: G.token });
-      check('CC recipient (Gamma) RECEIVED a copy', has(gInbox2.json, chit2));
+      const gHold2 = await holdsCopy(G.token, chit2);
+      check('CC recipient (Gamma) RECEIVED a copy', gHold2.ok, gHold2.how);
       const gDet2 = await api('GET', '/api/chits/' + chit2, { token: G.token });
       check('CC recipient can open it (now a participant)', gDet2.status === 200, 'status ' + gDet2.status);
-      const bInbox3 = await api('GET', '/api/chits/inbox', { token: B.token });
-      check('TO recipient (Beta) also received it', has(bInbox3.json, chit2));
+      const bHold3 = await holdsCopy(B.token, chit2);
+      check('TO recipient (Beta) also received it', bHold3.ok, bHold3.how);
     }
   } else check('CC delivery (skipped — no third entity id)', false);
 

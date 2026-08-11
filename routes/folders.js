@@ -264,6 +264,23 @@ router.post('/rules/preview', auth, async (req, res) => {
 router.get('/rules/vocabulary', auth, (req, res) => res.json({ keys: require('../lib/match').KEYS }));
 
 /**
+ * GET /rules — EVERY rule this entity has, across all folders.
+ *
+ * Athi, 2026-08-10: *"even in task, bring metrics and rules as icon, give the same ux and functionalities."*
+ *
+ * ⚠️ THE TRACK NEEDS THIS MORE THAN A FOLDER DOES. Inside one folder you see the three rules that file into it;
+ * what you cannot see is that two OTHER folders are also claiming supplier invoices, and which one wins depends on
+ * sort order and stop_processing. Rules only conflict with each other, so the only place a conflict is visible is
+ * the list of all of them.
+ *
+ * ⚠️ NO NEW LIST FUNCTION — rules.list() already treats a missing folder_id as "all", so this is the same query
+ * with one argument dropped, not a second implementation that can drift from the first.
+ */
+router.get('/rules', auth, async (req, res) => {
+  try { res.json(await rules.list(ent(req), null)); } catch (err) { fail(res, err, 'Rules list failed'); }
+});
+
+/**
  * GET /reconcile?scope=task|order — ⭐ DOES THE ARITHMETIC ADD UP?
  *
  * Athi, 2026-08-10: *"total number of tasks in the database should be the sum of all the tasks under the folder,
