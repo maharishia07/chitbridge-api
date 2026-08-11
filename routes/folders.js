@@ -281,6 +281,34 @@ router.get('/rules', auth, async (req, res) => {
 });
 
 /**
+ * GET /groupsum?scope=task|order&folder_id= — 🧮 WHAT DOES THIS PILE ADD UP TO?
+ *
+ * Athi, 2026-08-11: *"sum all the tasks and find out the total requirement… say 10 parties ordered 1000Kg, on
+ * click the down below need to know who are all asked."*
+ *
+ * ⚠️ OMIT folder_id AND IT SUMS THE WHOLE TRACK, across every folder — Athi: *"at task level, we can ask for that
+ * total sum irrespective of the folders."*  That falls out of select.rows() applying no folder predicate unless
+ * asked, which is also why reconcile can see 157 while the inbox shows 34.
+ *
+ * ⚠️ NO ARITHMETIC LIVES HERE. The requirement is lib/consolidate.js (proved 27/0), the matching is
+ * lib/itemmatch.js, the value is lib/measure.js. This route chooses the rows and nothing else.
+ */
+const groupsum = require('../lib/groupsum');
+router.get('/groupsum', auth, async (req, res) => {
+  try {
+    const me = ent(req);
+    const flags = await policy.get(me);
+    const fid = String(req.query.folder_id || '').trim();
+    res.json(await groupsum.requirement(me, {
+      scope: req.query.scope === 'order' ? 'order' : 'task',
+      folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
+      archived: req.query.archived === '1',
+      overdue_days: flags.overdue_days,
+    }));
+  } catch (err) { console.error('groupsum:', err.message); res.status(500).json({ error: 'Group sum failed', message: safeErr(err) }); }
+});
+
+/**
  * GET /reconcile?scope=task|order — ⭐ DOES THE ARITHMETIC ADD UP?
  *
  * Athi, 2026-08-10: *"total number of tasks in the database should be the sum of all the tasks under the folder,
