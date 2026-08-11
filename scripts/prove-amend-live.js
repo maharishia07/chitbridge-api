@@ -94,12 +94,23 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   console.log('\n6 · ⭐ THE DEFECT THAT SHIPPED THIS MORNING — group sum must total the LIVE set');
   const gs = await j('/api/folders/groupsum?scope=order', { token: A });
   ok('group sum answers', gs.status === 200, 'status ' + gs.status);
-  const line = ((gs.b || {}).requirement || []).find((l) => /tomato/i.test(l.item));
-  const mine = (line && (line.breakdown || []).filter((b) => b.chit_id === id)) || [];
-  eq('★★ this chit contributes the CORRECTED 8, not the misread 3', mine.map((b) => b.qty), [8]);
-  const milk = ((gs.b || {}).requirement || []).find((l) => /milk/i.test(l.item));
-  const milkMine = (milk && (milk.breakdown || []).filter((b) => b.chit_id === id)) || [];
-  eq('★★ the stock-removed line contributes NOTHING', milkMine.length, 0);
+
+  /* ⚠️ ASSERT ACROSS BOTH SIDES, matched AND unmatched. The first version of this check looked only at the
+     `requirement` totals for "Tomato" — but this entity's catalogue has no Tomato, so the line is (correctly)
+     excluded as unmatched and the assertion read `[]`. That is indistinguishable from "the live set was ignored",
+     which is the very thing being tested. Every line the group sum SAW lands in one of the two places, so
+     searching both proves the quantity it saw regardless of whether the catalogue could match it. */
+  const seen = [];
+  ((gs.b || {}).requirement || []).forEach((l) => (l.breakdown || []).forEach((b) => { if (b.chit_id === id) seen.push({ where: 'totalled', phrase: b.phrase, qty: b.qty }); }));
+  ((((gs.b || {}).flags) || {}).unmatched || []).forEach((u) => { if (u.chit_id === id) seen.push({ where: 'flagged', phrase: u.phrase, qty: u.qty }); });
+
+  const tom = seen.filter((s) => /tomato/i.test(s.phrase || ''));
+  eq('★★ this chit contributes the CORRECTED 8, not the misread 3', tom.map((s) => s.qty), [8]);
+  ok('  (it was ' + ((tom[0] || {}).where || 'not seen') + ' — either is fine; the QUANTITY is the point)', tom.length === 1);
+  /* The removed line must be absent from BOTH places — not merely absent from the totals. */
+  eq('★★ the stock-removed line contributes NOTHING, and is not even flagged',
+     seen.filter((s) => /milk/i.test(s.phrase || '')).length, 0);
+  eq('  the untouched line is still there', seen.filter((s) => /onion/i.test(s.phrase || '')).map((s) => s.qty), [1]);
 
   console.log('\n7 · the correction shows in the chit\'s own history');
   ok('★ an "amended" event was logged', (d.state_log || []).some((e) => e.action === 'amended'));
