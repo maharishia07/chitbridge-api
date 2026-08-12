@@ -1329,8 +1329,16 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
        must still work as free text. Saying so explicitly stops the UI inventing an empty picker. */
     if (!cat.items.length) return res.json({ has_catalogue: false, items: [], match: null });
 
+    /* ⚠️ A CATALOGUE PRICE IS {amount, currency}, NOT A NUMBER. Handing the raw object to the amend card meant
+       picking an item set `price: {amount:100,…}` on the replacement line, which clean() then rejected as
+       "must be a number" — so correcting an item from the catalogue would 400. `lib/capture.js` already unwraps
+       via money.amountOf on the raise path; this route did not, which is the same fact stored two ways.
+       Currency travels beside it rather than being dropped: a bare 100 with no code is how two currencies
+       eventually get added together. */
+    const money = require('../lib/money');
     const full = (it) => ({ name: it.name, variant: it.variant || null, unit: it.unit || null,
-      price: (it.price === 0 || it.price) ? it.price : null, unit_size: it.unit_size || null,
+      price: money.amountOf(it.price), currency: money.currencyOf(it.price),
+      unit_size: it.unit_size || null,
       label: it.name + (it.variant ? ' · ' + it.variant : ''), key: it.key });
 
     const m = q ? itemmatch.match(q, req.query.comment || '', cat) : null;
