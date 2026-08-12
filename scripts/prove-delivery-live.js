@@ -91,8 +91,14 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
 
   console.log('\n7 · the header roll-up is derived');
   const sum = (await get(A)).delivery_summary || {};
-  eq('★ 3 lines, 2 complete', [sum.lines, sum.complete], [3, 2]);
-  eq('★ …1 divergent, surfaced at chit level', sum.divergent, 1);
+  /* ⚠️ THREE, not two — my first expectation was wrong. All three lines are fully delivered BY MY OWN CLAIMS
+     (10/10, 20/20, 9/9); the counterparty disagreeing about potato does not make my delivery incomplete. */
+  eq('★ 3 lines, all 3 complete by my own claims', [sum.lines, sum.complete], [3, 3]);
+  /* ⚠️ ONE, and the code was wrong here, not the test. Tomato had only MY claim on it — the counterparty had
+     recorded nothing — and that was being reported as divergence. Almost every delivery starts that way, so the
+     flag fired constantly and would have been ignored by the time a real disagreement arrived. */
+  eq('★★ exactly 1 divergent — only potato, where BOTH sides recorded and disagreed', sum.divergent, 1);
+  eq('★★ …tomato is UNACKNOWLEDGED, which is not the same thing', sum.unacknowledged, 1);
 
   console.log('\n' + (fail ? '\x1b[31m' : '\x1b[32m') + pass + ' passed, ' + fail + ' failed\x1b[0m');
   console.log('  chit left for inspection: ' + id + '  (subject "deliver ' + stamp + '")\n');
