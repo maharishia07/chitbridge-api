@@ -203,24 +203,43 @@ router.patch('/:id',
     body('phone').optional({ nullable: true }).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     body('hat').optional().isIn(['view_only','act','audit','mis','manager']),
+    body('can_see_costs').optional().isBoolean(),
   ],
   validate,
   async (req, res) => {
     try {
       const entity_id = req.identity.identity_id;   // the entity that owns the actor
       const actor_id  = req.params.id;
+      /**
+       * ⚠️ ONLY THE ENTITY LOGIN MAY GRANT MONEY ACCESS (b145).
+       *
+       * `entity_id` above is `req.identity.identity_id`, so an ACTOR calling this route would be scoping the
+       * update to their own identity — which happens to be harmless for the other fields but would let a co-assist
+       * hand themselves `can_see_costs` and read the buying price and the margin. A permission that can grant
+       * itself is not a permission.
+       *
+       * ⚠️ AND THIS IS THE ONLY WAY IN. `can_see_costs` was shipped read-only by mistake: the column and the read
+       * gate existed with nothing able to set them, so the permission was permanently false for everyone and the
+       * feature only worked in its denying half.
+       */
+      if ('can_see_costs' in req.body && req.identity.identity_type === 'actor') {
+        return res.status(403).json({ error: 'Forbidden',
+          message: 'Only the account owner can change who sees costs and margin.' });
+      }
       const sets = [], vals = []; let n = 1;
       if ('display_name' in req.body) { sets.push(`display_name = $${n++}`); vals.push(sanitise(req.body.display_name)); }
       if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
       if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
       if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
       if ('hat'          in req.body) { sets.push(`hat = $${n++}`);          vals.push(req.body.hat); }
-      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, max_tasks, or hat' });
+      /* b145 — the ONLY way this column is ever set. Guarded above: an actor calling this route is refused. */
+      if ('can_see_costs' in req.body) { sets.push(`can_see_costs = $${n++}`); vals.push(!!req.body.can_see_costs); }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, max_tasks, hat, or can_see_costs' });
       vals.push(actor_id, entity_id);
       const r = await db(
         `UPDATE identities SET ${sets.join(', ')}
          WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
-         RETURNING identity_id, display_name, actor_role, phone, max_tasks, hat`, vals);
+         RETURNING identity_id, display_name, actor_role, phone, max_tasks, hat, can_see_costs`, vals);
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
       res.json({ message: 'Co-assist updated', actor: r.rows[0] });
     } catch (err) {
