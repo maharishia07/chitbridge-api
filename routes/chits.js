@@ -220,7 +220,11 @@ router.post('/send',
       // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
       const purpose = req.body.purpose || 'order';
       const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
-      const line_items = req.body.line_items || [];
+      /* ⭐ STAMP IDENTITY AND ORDER AT THE DOOR. Every line gets a `line_id` that survives editing and a `seq`
+         that states its position, instead of position being whatever order the array happened to be built in
+         ("the one you selected comes as the last record"). Done here because this is where a chit is born;
+         mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
+      const line_items = mint.lines(req.body.line_items || []);
       const business_json = req.body.business_json
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
       const is_draft = !!req.body.is_draft;
@@ -1222,7 +1226,10 @@ router.get('/:chit_id', auth, async (req, res) => {
        Deliberately AFTER the main read and outside its transaction — a chit must open whether or not b137 is
        applied, so list() answers `migrated:false` rather than throwing. */
     const amd = await amend.list(entity_id, chit_id).catch(() => ({ amendments: [], migrated: false }));
-    const _lines = (data.detail.rows[0] && data.detail.rows[0].line_items) || null;
+    /* ⚠️ SORTED BY THE STATED ORDER, not by array position. Lines minted before this carry no `seq`, so they sort
+       as 0 and keep their existing sequence — the fix is additive and cannot reshuffle an old chit. */
+    const _lines = (data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items))
+      ? mint.order(data.detail.rows[0].line_items) : null;
 
     res.json({
       header: data.header.rows[0],
