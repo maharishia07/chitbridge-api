@@ -63,6 +63,13 @@ console.log('\n5 · fractions and digits — "half box lemon"');
   eq('"kaal kilo" = 0.25', vals('kaal kilo'), [0.25]);
   eq('digits still count', vals('25 kg onion'), [25]);
   eq('decimals too', vals('1.5 kg'), [1.5]);
+  /* ⚠️ NO SPACE IS THE NORMAL CASE ON WHATSAPP. Missing these made a correct extraction look invented:
+     "3 kg thakkali and 10kg onion" saw only [3], so the right answer 10 would have been flagged. A false alarm
+     on a good order is how people learn to ignore alarms. */
+  eq('"10kg" — digit glued to its unit', vals('10kg onion'), [10]);
+  eq('"500ml" too', vals('2 packet milk 500ml each'), [2, 500]);
+  eq('mixed spacing in one message', vals('3 kg thakkali and 10kg onion'), [3, 10]);
+  ok('…so the correct 10 is NOT flagged', N.verifyQuantity('3 kg thakkali and 10kg onion', 10).ok === true);
 }
 
 console.log('\n6 · several numbers on one line — a SIZE and a COUNT');
