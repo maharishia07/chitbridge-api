@@ -1231,6 +1231,23 @@ router.get('/:chit_id', auth, async (req, res) => {
     const _lines = (data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items))
       ? mint.order(data.detail.rows[0].line_items) : null;
 
+    /* ⭐ b142 — the LIVE rows, when they exist. `readLines` returns null before the migration, and then the live
+       set is replayed from the frozen payload instead. Same answer, two routes, so neither is a special case.
+       ⚠️ The ORIGINAL still comes from `chit_detail.line_items` even when the rows exist — that is the delivered
+       payload and it never changes, which is the only reason a struck-through "was 3" can be trusted. */
+    const _rows = _lines ? await amend.readLines(entity_id, chit_id).catch(() => null) : null;
+    const _byId = new Map((_lines || []).map((l) => [l.line_id, l]));
+    const _live = _rows
+      ? _rows.map((row, i) => {
+          const orig = _byId.get(row.line_id) || (_lines || [])[i] || row;
+          const chain = (amd.amendments || []).filter((a) => a.line_id === row.line_id).sort((x, y) => x.seq - y.seq);
+          return { index: i, line_id: row.line_id, live: row.removed ? null : row, original: orig,
+                   history: chain.length ? [orig].concat(chain.slice(0, -1).map((c) => c.line).filter(Boolean)) : [],
+                   removed: !!row.removed, reason_code: row.removed_reason || (chain.length ? chain[chain.length - 1].reason_code : undefined),
+                   versions: chain.length };
+        })
+      : amend.liveSet(_lines, amd.amendments);
+
     res.json({
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
@@ -1244,7 +1261,12 @@ router.get('/:chit_id', auth, async (req, res) => {
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
          Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */
-      ...(Array.isArray(_lines) ? { live_set: amend.liveSet(_lines, amd.amendments) } : {}),
+      ...(Array.isArray(_lines) ? { live_set: _live } : {}),
+      /* ⚠️ WHICH PATH ANSWERED, said out loud. Before b142 the live set is REPLAYED from the frozen payload plus
+         the audit trail; after it, the live rows are read directly. Both give the same answer — which is exactly
+         why a test can pass without touching the new table and look like it proved it. Naming the source is what
+         makes that checkable instead of assumed. */
+      lines_from: _rows ? 'chit_line' : 'payload',
     });
 
   } catch (err) {
