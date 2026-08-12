@@ -10,7 +10,8 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
-const amend = require('../lib/amend'); // ⚠️ b137 — corrections ride ALONGSIDE the reading; line_items never mutate
+const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
+const assign = require('../lib/assign'); // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch');  // ⚠️ THE one matcher — same resolution the raise path used
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
@@ -1236,6 +1237,7 @@ router.get('/:chit_id', auth, async (req, res) => {
        ⚠️ The ORIGINAL still comes from `chit_detail.line_items` even when the rows exist — that is the delivered
        payload and it never changes, which is the only reason a struck-through "was 3" can be trusted. */
     const _rows = _lines ? await amend.readLines(entity_id, chit_id).catch(() => null) : null;
+    const _assigned = _lines ? await assign.current(entity_id, chit_id).catch(() => null) : null;
     const _byId = new Map((_lines || []).map((l) => [l.line_id, l]));
     const _live = _rows
       ? _rows.map((row, i) => {
@@ -1267,11 +1269,50 @@ router.get('/:chit_id', auth, async (req, res) => {
          why a test can pass without touching the new table and look like it proved it. Naming the source is what
          makes that checkable instead of assumed. */
       lines_from: _rows ? 'chit_line' : 'payload',
+      /* ⚠️ b143 — MY side only. This is a per-copy read under FORCE RLS, so a counterparty calling the same
+         endpoint on their own copy gets their own (empty) map, never mine. Assignment is the private half. */
+      ...(_assigned && _assigned.size ? { line_assignment: Object.fromEntries(_assigned) } : {}),
     });
 
   } catch (err) {
     console.error('Chit detail error:', err.message);
     res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
+  }
+});
+
+// ═══ b143 · PER-LINE ASSIGNMENT — division of labour, and it is PRIVATE ═════════════════════════════════════════
+//
+// Athi, 2026-08-12: assignment private, delivery shared. Nothing here is ever returned to a counterparty.
+//
+// POST body: { edits: [{ line_id, assignee_actor_id|null, assignee_name, assignee_type, task, due_date, note }] }
+// ⚠️ assignee_actor_id: null means UNASSIGN — a deliberate act, and not the same as never having been assigned.
+router.post('/:chit_id/assign-lines', auth, async (req, res) => {
+  try {
+    const chit_id = req.params.chit_id;
+    const entity_id = entityId(req);
+    /* Assign only on a chit I hold. Without this an id in the URL would file work against a document I am not
+       party to — RLS would keep the row mine and harmless, but it would still be a record of someone else's job. */
+    const mine = await withEntity(entity_id, (db) => db.query(
+      `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
+
+    const out = await assign.assign(entity_id, chit_id, req.body.edits || req.body, {
+      actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
+
+    /* ⚠️ LOGGED, BUT INTERNALLY. state_log is per-copy, so this stays on our side of the boundary — the
+       counterparty's log is a different set of rows and never receives it. */
+    try {
+      const detail = out.assignments.map((a) => (a.assignee_name || 'Unassigned') + (a.task ? ' · ' + a.task : '') + (a.due_date ? ' · due ' + String(a.due_date).slice(0, 10) : '')).join('; ');
+      await withEntity(entity_id, (db) => db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+         VALUES ($1,$2,'assigned_line',$3,$4,$5)`,
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]));
+    } catch (e) { console.error('assign state_log skipped:', e.message); }
+
+    res.json(out);
+  } catch (err) {
+    console.error('Assign lines error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to assign', message: safeErr(err) });
   }
 });
 

@@ -293,6 +293,32 @@ router.get('/rules', auth, async (req, res) => {
  * ⚠️ NO ARITHMETIC LIVES HERE. The requirement is lib/consolidate.js (proved 27/0), the matching is
  * lib/itemmatch.js, the value is lib/measure.js. This route chooses the rows and nothing else.
  */
+/**
+ * ⭐ GET /worklist?due_on=YYYY-MM-DD&actor_id= — one person's lines, across EVERY chit.
+ *
+ * Athi, 2026-08-12: division of labour, *"so multiple people, devices or anything it can work at the same time."*
+ *
+ * ⚠️ THIS IS WHAT ASSIGNMENT BUYS. Assigning a line is bookkeeping; this is the payoff — everything Murugan owes
+ * today, assembled from twelve different customers. A chit-level model cannot express it at all, because the chit
+ * is the smallest thing it can hand to anybody.
+ *
+ * ⚠️ PRIVATE. Same read as the chit detail's assignment map, entity-scoped under FORCE RLS. It is on the folders
+ * router because it is a cross-chit QUERY over your own copies — the same family as /reconcile and /groupsum —
+ * not because it has anything to do with folders.
+ */
+const assign = require('../lib/assign');
+router.get('/worklist', auth, async (req, res) => {
+  try {
+    const due = String(req.query.due_on || '').trim();
+    if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) return res.status(400).json({ error: 'Bad request', message: 'due_on must be YYYY-MM-DD' });
+    const aid = String(req.query.actor_id || '').trim();
+    res.json(await assign.byPerson(ent(req), {
+      due_on: due || undefined,
+      actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
+    }));
+  } catch (err) { console.error('worklist:', err.message); res.status(500).json({ error: 'Worklist failed', message: safeErr(err) }); }
+});
+
 const groupsum = require('../lib/groupsum');
 router.get('/groupsum', auth, async (req, res) => {
   try {
