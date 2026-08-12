@@ -11,7 +11,8 @@ const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
-const assign = require('../lib/assign'); // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
+const assign = require('../lib/assign');
+const deliverline = require('../lib/deliverline'); // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch');  // ⚠️ THE one matcher — same resolution the raise path used
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
@@ -1238,6 +1239,7 @@ router.get('/:chit_id', auth, async (req, res) => {
        payload and it never changes, which is the only reason a struck-through "was 3" can be trusted. */
     const _rows = _lines ? await amend.readLines(entity_id, chit_id).catch(() => null) : null;
     const _assigned = _lines ? await assign.current(entity_id, chit_id).catch(() => null) : null;
+    const _prog = _lines ? await deliverline.progress(entity_id, chit_id).catch(() => null) : null;
     const _byId = new Map((_lines || []).map((l) => [l.line_id, l]));
     const _live = _rows
       ? _rows.map((row, i) => {
@@ -1272,11 +1274,41 @@ router.get('/:chit_id', auth, async (req, res) => {
       /* ⚠️ b143 — MY side only. This is a per-copy read under FORCE RLS, so a counterparty calling the same
          endpoint on their own copy gets their own (empty) map, never mine. Assignment is the private half. */
       ...(_assigned && _assigned.size ? { line_assignment: Object.fromEntries(_assigned) } : {}),
+      /* ⚠️ b144 — SHARED, so this is present on BOTH copies. Each side sees its own claims and the other's,
+         attributed; nothing is merged into one number. Totals are summed here, never stored. */
+      ...(_prog && _prog.size ? { line_delivery: Object.fromEntries(_prog), delivery_summary: deliverline.summarise(_prog) } : {}),
     });
 
   } catch (err) {
     console.error('Chit detail error:', err.message);
     res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
+  }
+});
+
+// ═══ b144 · PER-LINE DELIVERY — the SHARED half ════════════════════════════════════════════════════════════════
+//
+// POST body: { rows: [{ line_id, quantity, unit, reference, note }] }
+// ⚠️ quantity may be NEGATIVE — that is a correcting entry, which is how a delivery is undone. Rows are never
+//    edited or deleted, so what was claimed on the day stays legible after someone changes their mind.
+// ⚠️ It writes into EVERY participant's copy via a gated SECURITY DEFINER fn. That is what shared means.
+router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
+  try {
+    const chit_id = req.params.chit_id;
+    const entity_id = entityId(req);
+    const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
+      actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
+    try {
+      const d = out.delivered.map((x) => x.quantity).join(', ');
+      await withEntity(entity_id, (db) => db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+         VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
+         out.delivered.length + ' line(s) delivered: ' + d]));
+    } catch (e) { console.error('deliver state_log skipped:', e.message); }
+    res.json(out);
+  } catch (err) {
+    console.error('Deliver lines error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to record delivery', message: safeErr(err) });
   }
 });
 
