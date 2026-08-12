@@ -64,13 +64,16 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   console.log('\n4 · ⭐⭐ WRITE-WITHOUT-READ — the assertion this whole feature exists for');
   /* A co-assist of Beta, created fresh, so can_see_costs is at its default. */
   const mk = await j('/api/actors', { method: 'POST', token: A, body: {
-    display_name: 'Murugan ' + stamp, actor_role: 'packer', actor_type: 'human' } });
-  const uid = mk.b && (mk.b.user_id || (mk.b.actor && mk.b.actor.user_id) || (mk.b.actor && mk.b.actor.uid));
-  const otp = mk.b && (mk.b.otp_code || (mk.b.actor && mk.b.actor.otp_code));
-  ok('a co-assist was created', !!uid && !!otp, JSON.stringify(mk.b).slice(0, 250));
-  if (!uid || !otp) { console.log('\n  cannot test the gate without an actor login\n'); }
+    display_name: 'Murugan ' + stamp, actor_key: 'murugan' + stamp, actor_role: 'packer', actor_type: 'human' } });
+  /* The OTP is top-level on the response, and the username is actor_key@entity — read from the actual
+     payload rather than guessed a third time. */
+  const act = (mk.b && mk.b.actor) || {};
+  const uname = act.login_format;
+  const otp = mk.b && (mk.b.otp || mk.b.dev_otp);
+  ok('a co-assist was created', !!uname && !!otp, JSON.stringify(mk.b).slice(0, 300));
+  if (!uname || !otp) { console.log('\n  cannot test the gate without an actor login\n'); }
   else {
-    const lg = await j('/api/actors/login', { method: 'POST', body: { user_id: uid, otp } });
+    const lg = await j('/api/actors/login', { method: 'POST', body: { username: uname, otp } });
     const M = lg.b && (lg.b.token || (lg.b.actor && lg.b.actor.token));
     ok('…and can sign in', !!M, JSON.stringify(lg.b).slice(0, 200));
     if (M) {
