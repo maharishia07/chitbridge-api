@@ -41,7 +41,13 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   ok('lines carry ids (b142)', ids1.length === 2 && !!ids1[0] && !!ids2[0]);
 
   console.log('\n1 · hand each line to somebody, with a task and a date');
-  const MURUGAN = eid(A);   // a real uuid; the roster join is not what is under test here
+  /* ⚠️ TWO DISTINCT IDS, and the first version of this file got it wrong. Both names were given the SAME
+     actor_id, so byPerson() correctly grouped them into one person and the "is it off Murugan's list" assertion
+     became untestable — it passed or failed for a reason that had nothing to do with reassignment.
+     assignee_actor_id has no FK on purpose (the name is a snapshot, so a departed co-assist does not blank the
+     history), which is exactly why arbitrary distinct ids are the honest fixture here. */
+  const MURUGAN = '11111111-1111-4111-8111-111111111111';
+  const SELVAM  = '22222222-2222-4222-8222-222222222222';
   const a1 = await j('/api/chits/' + c1 + '/assign-lines', { method: 'POST', token: A, body: { edits: [
     { line_id: ids1[0], assignee_actor_id: MURUGAN, assignee_name: 'Murugan', assignee_type: 'human', task: 'packing', due_date: '2026-08-16' },
     { line_id: ids1[1], assignee_actor_id: null, assignee_name: null, task: 'sourcing' } ] } });
@@ -59,7 +65,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
 
   console.log('\n2 · reassignment keeps the history');
   await j('/api/chits/' + c1 + '/assign-lines', { method: 'POST', token: A, body: { edits: [
-    { line_id: ids1[0], assignee_actor_id: MURUGAN, assignee_name: 'Selvam', assignee_type: 'human', task: 'packing', due_date: '2026-08-16', note: 'Murugan off' } ] } });
+    { line_id: ids1[0], assignee_actor_id: SELVAM, assignee_name: 'Selvam', assignee_type: 'human', task: 'packing', due_date: '2026-08-16', note: 'Murugan off' } ] } });
   const re = (await get(A, c1)).line_assignment || {};
   eq('★★ Selvam holds it now', (re[ids1[0]] || {}).assignee_name, 'Selvam');
   eq('★★ …and it remembers Murugan had it', ((re[ids1[0]] || {}).history || []).map((h) => h.assignee_name), ['Murugan']);
