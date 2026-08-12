@@ -12,7 +12,8 @@ const trace = require('../lib/trace');
 const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
-const deliverline = require('../lib/deliverline'); // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
+const deliverline = require('../lib/deliverline');
+const cost = require('../lib/cost'); // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch');  // ⚠️ THE one matcher — same resolution the raise path used
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
@@ -1282,6 +1283,45 @@ router.get('/:chit_id', auth, async (req, res) => {
   } catch (err) {
     console.error('Chit detail error:', err.message);
     res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
+  }
+});
+
+// ═══ b145 · COST — private to the entity, and gated WITHIN it ══════════════════════════════════════════════════
+//
+// Athi, 2026-08-12: "money cannot be seen by everyone, the cost accumulates here, not the difference" →
+// WRITE-WITHOUT-READ. Anyone may record a cost; only the entity login or an actor with can_see_costs may read
+// totals or margin. A worker always reads back their own rows — someone who cannot check what they typed will
+// type it wrong, and blind entry is worse than none.
+//
+// POST body: { rows: [{ line_id?, kind, amount | (minutes + rate_per_hour), currency?, note }] }
+// ⚠️ line_id omitted = a whole-chit cost (one auto fare for one trip). Splitting that across lines would invent
+//    an allocation nobody agreed to.
+router.post('/:chit_id/costs', auth, async (req, res) => {
+  try {
+    const entity_id = entityId(req);
+    const chit_id = req.params.chit_id;
+    const mine = await withEntity(entity_id, (db) => db.query(
+      `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
+    res.json(await cost.record(entity_id, chit_id, req.body.rows || req.body, {
+      actor_id: req.identity.identity_id, actor_name: req.identity.display_name }));
+  } catch (err) {
+    console.error('Cost record error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to record cost', message: safeErr(err) });
+  }
+});
+
+// GET — everything if permitted; otherwise ONLY the caller's own rows and no totals at all.
+router.get('/:chit_id/costs', auth, async (req, res) => {
+  try {
+    const entity_id = entityId(req);
+    const permitted = await cost.canRead(req, entity_id);
+    const out = await cost.read(entity_id, req.params.chit_id, { permitted, actor_id: req.identity.identity_id });
+    if (out === null) return res.status(503).json({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' });
+    res.json(out);
+  } catch (err) {
+    console.error('Cost read error:', err.message);
+    res.status(500).json({ error: 'Failed to read costs', message: safeErr(err) });
   }
 });
 
