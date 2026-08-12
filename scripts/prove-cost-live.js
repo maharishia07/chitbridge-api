@@ -101,6 +101,27 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
       ok('★ …and his row is attributed to him',
          (all.b.costs || []).some((c) => Number(c.amount) === 75 && /Murugan/.test(c.recorded_by_actor_name || '')),
          JSON.stringify((all.b.costs || []).map((c) => [c.amount, c.recorded_by_actor_name])));
+
+      console.log('\n6 · ⭐ the grant — the only way in, and it cannot grant itself');
+      /* ⚠️ can_see_costs shipped READ-ONLY: the column and the read gate existed with nothing able to set them,
+         so the permission was permanently false and the feature only worked in its denying half. No test asked
+         whether the grant existed, which is why re-reading the migration found it and the suite did not. */
+      const self = await j('/api/actors/' + act.identity_id, { method: 'PATCH', token: M, body: { can_see_costs: true } });
+      ok('★★★ an actor CANNOT grant themselves money access', self.status === 403,
+         'status ' + self.status + ' — a permission that can grant itself is not a permission');
+      const stillBlind = await j('/api/chits/' + id + '/costs', { token: M });
+      ok('★★ …and is still blind after trying', stillBlind.b.can_see_totals === false);
+
+      const grant = await j('/api/actors/' + act.identity_id, { method: 'PATCH', token: A, body: { can_see_costs: true } });
+      ok('★ the owner CAN grant it', grant.status === 200, 'status ' + grant.status + ' ' + JSON.stringify(grant.b).slice(0, 160));
+      const now = await j('/api/chits/' + id + '/costs', { token: M });
+      ok('★★★ and NOW he sees the totals', now.b.can_see_totals === true, JSON.stringify(Object.keys(now.b)));
+      eq('★★ …the same spent the owner sees', now.b.spent, 975);
+
+      const revoke = await j('/api/actors/' + act.identity_id, { method: 'PATCH', token: A, body: { can_see_costs: false } });
+      const after = await j('/api/chits/' + id + '/costs', { token: M });
+      ok('★★ …and it can be taken away again', revoke.status === 200 && after.b.can_see_totals === false,
+         'revoke ' + revoke.status + ' · can_see_totals ' + JSON.stringify(after.b.can_see_totals));
     }
   }
 
