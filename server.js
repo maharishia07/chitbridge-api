@@ -198,6 +198,8 @@ app.use('/api/kyb', require('./routes/kyb'));
 
 // ── Authority-forms engine — define → resolve (field×source-precedence + provenance) → issue (freeze) → sign (b108) ───
 app.use('/api/forms', require('./routes/forms'));
+// b147 — a chit AS A SERVICE REQUEST: the SLA clock, and the PAUSE both parties can dispute.
+app.use('/api/service', require('./routes/service'));
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
