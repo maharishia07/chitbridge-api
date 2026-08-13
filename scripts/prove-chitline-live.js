@@ -61,6 +61,10 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const after = await get(A);
   eq('★★ the live line reads 8', (after.live_set[0].live || {}).quantity, 8);
   eq('★★ …and the ORIGINAL still says 3 — the delivered payload is untouched', after.live_set[0].original.quantity, 3);
+  /* ⚠️ THE ASSERTION THAT WAS MISSING. Every earlier check read live/original, which are built from chit_line and
+     the frozen payload — so an empty history was invisible. Athi's first screenshot showed a corrected line with
+     NO struck-through original, because amend.list() never selected line_id and the chain filter matched nothing. */
+  eq('★★★ the history carries the ORIGINAL, for the strike-through', (after.live_set[0].history || []).map((h) => h.quantity), [3]);
 
   console.log('\n4 · ⭐ RLS — a correction is MY reading of MY copy');
   const theirsAfter = await get(B);
