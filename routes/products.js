@@ -593,7 +593,9 @@ router.put('/:id/status', auth, [ body('status').isString() ], validate, async (
     if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
     const d = r.rows[0].item_data || {};
     res.json({ message: 'Status updated', status: itemstatus.statusOf(d), reads_as: itemstatus.explain(d),
-      matchable: itemstatus.isMatchable(d), item_id: r.rows[0].item_id });
+      matchable: itemstatus.isMatchable(d), item_id: r.rows[0].item_id,
+      /* The schema.org/ItemAvailability equivalent, returned so an integrator never has to learn our four words. */
+      schema_org: d.status_schema_org || itemstatus.SCHEMA_ORG[itemstatus.statusOf(d)] });
   } catch (e) {
     if (e.status) return res.status(e.status).json({ error: 'Bad status', message: e.message });
     fail(res, e, 'Status update failed');
