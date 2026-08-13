@@ -113,8 +113,54 @@ console.log('\n9 · ⭐ `illa` is KNOWN-AMBIGUOUS — always flag, never guess')
      N.negationIn('vengayam venam illa moonu').ambiguous === true);
 }
 
+console.log('\n10 · ⭐ SPELLING IS THE REAL PROBLEM, not meaning');
+{
+  /* Athi typed `irupadhu`. The table had irubadhu, irupathu, irubathu — three of four, missing the one he
+     actually uses. Tamil has no single correct romanisation; everyone transliterates by ear. */
+  ['irupadhu', 'irubadhu', 'irupathu', 'irubathu', 'iruvathu'].forEach((w) => eq('"' + w + '" = 20', vals(w + ' kilo'), [20]));
+  ok('⚠️ enumerating spellings from a desk cannot work — three of four were written, the used one was missed', true);
+}
+
+console.log('\n11 · fuzzy spelling, with guards');
+{
+  eq('a one-edit variant resolves', (N.nearNumeral('irupadhuu') || {}).value, 20);
+  eq('two edits on a longer word', (N.nearNumeral('thonnuru') || {}).value, 90);
+  ok('nonsense is refused', N.nearNumeral('xyzzyqq') === null);
+  /* ⚠️ A TIE IS FINE WHEN THE CANDIDATES AGREE — irupadhu and irupathu are both 20, so there is nothing to be
+     ambiguous about. It is refused only when two candidates disagree on the VALUE. */
+  ok('a tie between two spellings of the SAME number still resolves', (N.nearNumeral('irupadhuu') || {}).value === 20);
+  /* ⚠️ SHORT TOKENS ARE EXCLUDED: anju/aaru/ettu are four letters, and one edit connects several of them to each
+     other and to ordinary words. A four-letter fuzzy match is a coincidence with a good disguise. */
+  ['anju', 'aaru', 'ettu', 'naalu'].forEach((w) => ok('"' + w + '" is too short to fuzz — refused', N.nearNumeral(w) === null));
+}
+
+console.log('\n12 · ⭐⭐ A GUESS MAY ACCEPT, BUT IT MAY NOT REJECT');
+{
+  /* If every numeral found was reached by spelling GUESS, disagreement has two explanations — the model was
+     wrong, or we were — and we cannot tell which. Rejecting there would null a CORRECT quantity because a token
+     was spelled unusually, which is the false-alarm failure that teaches people to ignore the alarm. */
+  const hard = N.verifyQuantity('irupadhu kilo onion', 25);
+  ok('★★ EXACT evidence REJECTS a mismatch', hard.ok === false, JSON.stringify(hard));
+  const soft = N.verifyQuantity('irupadhuu kilo onion', 25);
+  ok('★★★ GUESSED evidence does NOT reject', soft.ok === true, JSON.stringify(soft));
+  ok('★★ …it flags instead', soft.soft === true);
+  ok('  agreement is trusted either way', N.verifyQuantity('irupadhuu kilo onion', 20).ok === true);
+}
+
+console.log('\n13 · the growth surface — what the platform should learn');
+{
+  const u = N.unknownNumerals('naapathanju kilo onion and rendu crate tomato');
+  eq('an unknown token in a quantity position is reported', u.map((x) => x.token), ['naapathanju']);
+  ok('  …and a KNOWN one is not', !u.some((x) => x.token === 'rendu'));
+  const g = N.unknownNumerals('irupadhuu kilo onion');
+  eq('a near-miss carries its best guess', (g[0] || {}).probably, 20);
+  /* ⚠️ IT PROPOSES, IT NEVER ADDS. A numeral entering the table wrongly would put a wrong quantity on every
+     future order containing that word, silently and forever. */
+  ok('⚠️ nothing here mutates the table', N.NUMERALS.naapathanju === undefined);
+}
+
 console.log('\n────────────────────────────────────────────────────────────────────────────');
 console.log((fail ? '✗ ' : '✓ ') + pass + ' passed, ' + fail + ' failed');
-console.log('⚠️  This proves the TABLE. It does not prove the wiring — verifyQuantity is not yet called by the\n' +
-            '    extraction path. That is the next step, and it needs the line-identity work first.\n');
+console.log('⚠️  This proves the TABLE and the guards. verifyQuantity IS now wired into the extraction path\n' +
+            '    (lib/capture.js, per-line when raw_phrase is present) — but that wiring is proved live, not here.\n');
 process.exit(fail ? 1 : 0);
