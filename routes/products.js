@@ -640,9 +640,23 @@ router.get('/:id/versions', auth, async (req, res) => {
       const when = new Date(at);
       if (isNaN(when)) return res.status(400).json({ error: 'Bad date', message: '`at` must be a timestamp.' });
       const r = await withEntity(entity_id, (db) => db.query(
+        /**
+         * ⚠️ TRUNCATED TO MILLISECONDS ON BOTH SIDES, AND THE PROOF IS WHAT FOUND IT.
+         *
+         * Postgres keeps timestamptz to MICROseconds; JSON and JavaScript stop at milliseconds. So a caller who
+         * takes the `valid_from` we just handed them — 17:36:56.030456Z, serialised as 17:36:56.030Z — and asks
+         * "what was live at that moment" was asking about an instant 456µs BEFORE the version began. The row did
+         * not match, the answer came back null, and the as-of query silently failed for the single most natural
+         * way to call it: with a timestamp we ourselves emitted.
+         *
+         * Comparing at the precision we PUBLISH means our own timestamps round-trip exactly, which is the only
+         * behaviour a caller can reason about.
+         */
         `SELECT version_no, snapshot, name, variant, unit, price, sku, status, valid_from, valid_to
            FROM catalogue_item_version
-          WHERE entity_id = $1 AND item_id = $2 AND valid_from <= $3 AND (valid_to IS NULL OR valid_to > $3)
+          WHERE entity_id = $1 AND item_id = $2
+            AND date_trunc('milliseconds', valid_from) <= $3
+            AND (valid_to IS NULL OR date_trunc('milliseconds', valid_to) > $3)
           ORDER BY version_no DESC LIMIT 1`, [entity_id, req.params.id, when.toISOString()]));
       return res.json({ item_id: req.params.id, at: when.toISOString(), version: r.rows[0] || null });
     }
