@@ -2844,11 +2844,43 @@ router.get('/trace/by-batch', auth, async (req, res) => {
     if (!q) return res.status(400).json({ error: 'Bad request', message: 'A batch value (q) is required' });
     const recipientOf = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
       a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null; };
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-         FROM chit_header
-        WHERE summary_json->'trace' IS NOT NULL
-          AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
+    /**
+     * ── ⚠️ THIS ENDPOINT DID NOT MATCH ON A BATCH ─────────────────────────────────────────────────────────────
+     * It matched `summary_json->'trace'->>'product'` — the product NAME — while being called `by-batch`, and the
+     * trace object has never carried a batch at all. So a recall for lot "24B" returned every customer who ever
+     * received that product, at every depth, and the answer looked exactly like a correct one. In a recall that
+     * is not a slightly wide net: it is telling forty customers to destroy stock that was never affected, and
+     * failing to tell the six who hold the bad lot which lot it was.
+     *
+     * ⭐ NOW IT LOOKS FOR A REAL LOT FIRST — `chit_line.flags->'lot'->>'batch'`, GS1 (10), written on the movement
+     * by lib/gs1.lotOf. Serial (21) counts too: a recall by serial is the same question, one unit narrower.
+     *
+     * ⚠️ AND IT STILL FALLS BACK TO PRODUCT CORRELATION, RATHER THAN RETURNING NOTHING. Every chit raised before
+     * lots existed has no batch on any line, and a traceability screen that suddenly answered "no results" for
+     * data it happily walked yesterday would read as data loss. But the fallback ANNOUNCES ITSELF — `matched_on`
+     * travels in the response — because the difference between "these six shipments carried lot 24B" and "these
+     * forty shipments were of this product" is the entire value of the answer, and a screen that cannot tell them
+     * apart will present the second as the first.
+     */
+    let matched_on = 'batch';
+    let r = await withEntity(me, (db) => db.query(
+      `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
+              h.summary_json->'trace' AS trace
+         FROM chit_header h
+         JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
+        WHERE h.summary_json->'trace' IS NOT NULL
+          AND l.removed = false
+          AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
+      [q])).catch(() => ({ rows: [] }));   // pre-b142 there is no chit_line to join — fall through, do not fail
+
+    if (!r.rows.length) {
+      matched_on = 'product';
+      r = await withEntity(me, (db) => db.query(
+        `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+           FROM chit_header
+          WHERE summary_json->'trace' IS NOT NULL
+            AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
+    }
     const seen = new Set(); const items = [];
     for (const row of r.rows) {
       if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
@@ -2878,7 +2910,15 @@ router.get('/trace/by-batch', auth, async (req, res) => {
       n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
     }
     const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
-    res.json({ dir: 'forward', by_batch: q, reconstructed: true, start: (nodeArr[0] && nodeArr[0].chit_id) || null,
+    res.json({ dir: 'forward', by_batch: q, reconstructed: true,
+      /* ⚠️ THE CALLER MUST BE ABLE TO TELL THESE APART. 'batch' = these shipments carried this lot. 'product' =
+         no lot data was found anywhere, so this is every movement of a product with that name — a much wider and
+         much weaker answer, and the one a recall must never be shown without the caveat. */
+      matched_on,
+      matched_note: matched_on === 'batch'
+        ? 'Matched on the lot recorded on each line — GS1 (10) batch or (21) serial.'
+        : 'No lot was recorded on any line, so this is every movement of a product with that name — not a lot-level recall.',
+      start: (nodeArr[0] && nodeArr[0].chit_id) || null,
       reachable_count: nodeArr.length, depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0), flagged,
       terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })), nodes: nodeArr, edges });
   } catch (err) {
