@@ -93,6 +93,26 @@ console.log('\n6 · the rules that were already right, still right');
   ok('an unknown item is unmatched', !im.match('dragonfruit', '', cat).item);
 }
 
+console.log('\n7 · ⭐ A VARIANT NAMED IN ANOTHER LANGUAGE IS STILL NAMED');
+{
+  /* ⚠️ Found seeding a real Tamil catalogue. Variants are recorded in English (big/small/nattu) but customers
+     name them in their own words (periya/chinna/நாட்டு). decideVariant asks whether the text contains the
+     variant WORD, so "periya vengayam" — which says BIG about as plainly as it can be said — came back as
+     "grade not named" and refused to price. On a Tamil catalogue that is EVERY variant line. */
+  const cat = mkCat([
+    item('Onion', { variant: 'big',   price: 40, synonyms: ['vengayam', 'periya vengayam', 'big onion'] }),
+    item('Onion', { variant: 'small', price: 68, synonyms: ['vengayam', 'chinna vengayam', 'shallot'] }),
+  ]);
+  /* A synonym carried by exactly ONE variant means the customer named it. */
+  eq('"periya vengayam" prices as big', im.match('periya vengayam', '', cat).item.price, 40);
+  eq('"chinna vengayam" prices as small', im.match('chinna vengayam', '', cat).item.price, 68);
+  eq('"shallot" too — the language does not matter, the uniqueness does', im.match('shallot', '', cat).item.price, 68);
+  /* ⚠️ AND THE RULE STILL HOLDS WHERE IT MATTERS: a synonym on BOTH variants names neither. */
+  const gen = im.match('vengayam', '', cat);
+  ok('⚠️ a generic term shared by both variants still FLAGS, never picks', gen.variant_unspecified === true, JSON.stringify(gen));
+  eq('…and offers both', (gen.variants || []).sort(), ['big', 'small']);
+}
+
 console.log('\n────────────────────────────────────────────────────────────────────────────');
 console.log((fail ? '✗ ' : '✓ ') + pass + ' passed, ' + fail + ' failed\n');
 process.exit(fail ? 1 : 0);
