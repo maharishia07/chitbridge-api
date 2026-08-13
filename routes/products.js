@@ -8,6 +8,10 @@ const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const money = require('../lib/money');          // a price is never a bare number — stamped on write
 const availability = require('../lib/availability');   // a quantity is not an answer without a date
+/* ⚠️ NOT the same as `availability` above. That is a QUANTITY feed — how many are on the shelf. This is the
+   item's LIFECYCLE — whether it is something you sell at all. A shelf can be empty without the product being
+   retired, and a retired product can still have stock nobody may order. */
+const itemstatus = require('../lib/itemstatus');
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
@@ -159,7 +163,34 @@ router.get('/', auth, async (req, res) => {
           `SELECT * FROM catalogue_items
            WHERE entity_id=$1 AND is_active=true
            ORDER BY created_at DESC`, [entity_id]));
-    res.json({ items: r.rows, count: r.rows.length });
+
+    /**
+     * ⚠️ FILTERED HERE, NOT IN SQL, and deliberately: an ABSENT status means "available", so a WHERE clause on
+     * item_data->>'status' would drop every row written before this field existed. Doing it in JS lets one rule —
+     * statusOf() — decide for both the old rows and the new ones, instead of the database and the code
+     * disagreeing about what a missing value means.
+     *
+     * ⚠️ AND THE DEFAULT IS *EVERYTHING*. Athi asked to *see* the other statuses, not to have them hidden — a
+     * catalogue screen that quietly omits retired items is how someone re-creates a product they already retired.
+     * ?status=available narrows it; ?status=not-available groups the three that cannot be ordered.
+     */
+    const want = String(req.query.status || '').toLowerCase().trim();
+    let items = r.rows;
+    if (want) {
+      const keep = want === 'not-available' ? (s) => s !== 'available'
+        : itemstatus.STATUSES.includes(want) ? (s) => s === want
+        : null;
+      if (!keep) return res.status(400).json({ error: 'Bad status',
+        message: 'status must be one of: ' + itemstatus.STATUSES.join(', ') + ', not-available' });
+      items = r.rows.filter((x) => keep(itemstatus.statusOf(x.item_data)));
+    }
+    /* The tally is over EVERY row, not the filtered set — it is what the tabs count, so it must not change
+       depending on which tab is open. */
+    const counts = {};
+    itemstatus.STATUSES.forEach((s) => { counts[s] = 0; });
+    r.rows.forEach((x) => { counts[itemstatus.statusOf(x.item_data)]++; });
+
+    res.json({ items, count: items.length, total: r.rows.length, status_counts: counts });
   } catch (e) { res.status(500).json({ error: 'List failed', message: safeErr(e) }); }
 });
 
@@ -535,6 +566,39 @@ router.put('/:id/availability', auth,
       res.json({ message: 'Availability updated', availability: rec });
     } catch (e) { fail(res, e, 'Availability update failed'); }
   });
+
+/**
+ * PUT /:id/status — the item's LIFECYCLE. Athi, 2026-08-13: *"so we don't need to amend the catalogue, but we
+ * can set the flag… need to differentiate between temporarily not available to never."*
+ *
+ * body: { status: available|unavailable|redundant|retired, until?: YYYY-MM-DD, replaced_by?, note? }
+ *
+ * ⚠️ THIS IS NOT `/availability`, WHICH IS A QUANTITY FEED. That answers "how many are on the shelf"; this
+ * answers "is this a thing you sell at all". A shelf can be empty without the product being retired, and a
+ * retired product can still have stock nobody may order.
+ *
+ * ⚠️ MERGED, NOT REPLACED. `||` on jsonb keeps every other field — a status change must never be able to lose a
+ * price or a synonym list, which is exactly what PATCH /:id would do if used for this.
+ */
+router.put('/:id/status', auth, [ body('status').isString() ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const rec = itemstatus.stamp(req.body, { actor_name: req.identity.display_name });
+    const r = await withEntity(entity_id, (db) => db.query(
+      `UPDATE catalogue_items
+          SET item_data = COALESCE(item_data, '{}'::jsonb) || $1::jsonb, updated_at = NOW()
+        WHERE item_id = $2 AND entity_id = $3
+      RETURNING item_id, item_data`,
+      [JSON.stringify(rec), req.params.id, entity_id]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
+    const d = r.rows[0].item_data || {};
+    res.json({ message: 'Status updated', status: itemstatus.statusOf(d), reads_as: itemstatus.explain(d),
+      matchable: itemstatus.isMatchable(d), item_id: r.rows[0].item_id });
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: e.message });
+    fail(res, e, 'Status update failed');
+  }
+});
 
 // DELETE — soft remove
 router.delete('/:id', auth, async (req, res) => {
