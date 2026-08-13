@@ -13,7 +13,8 @@ const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one pla
 const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
 const deliverline = require('../lib/deliverline');
-const cost = require('../lib/cost'); // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
+const cost = require('../lib/cost');
+const reprice = require('../lib/reprice'); // pull catalogue prices onto a chit — as AMENDMENTS, never a silent edit // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch');  // ⚠️ THE one matcher — same resolution the raise path used
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
@@ -1283,6 +1284,34 @@ router.get('/:chit_id', auth, async (req, res) => {
   } catch (err) {
     console.error('Chit detail error:', err.message);
     res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
+  }
+});
+
+// ═══ REPRICE — pull prices from the catalogue onto a chit that arrived without them ════════════════════════════
+//
+// Athi, 2026-08-13: *"if the price is not available, there must be a way to pick from the catalogue... either
+// wholistically or for an individual item... whether price is already there or not, it really doesn't matter."*
+//
+// POST body: { line_ids?: [uuid], only_unpriced?: bool, preview?: bool }
+// ⚠️ preview:true COMPUTES AND WRITES NOTHING. Pricing a whole chit in one tap is the useful version and also the
+//    dangerous one, so the decision is made against a list rather than a promise.
+// ⚠️ It writes AMENDMENTS, never a direct price. The old figure stays struck through — a chit is a record.
+router.post('/:chit_id/reprice', auth, async (req, res) => {
+  try {
+    const entity_id = entityId(req);
+    const chit_id = req.params.chit_id;
+    const mine = await withEntity(entity_id, (db) => db.query(
+      `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
+
+    const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
+    const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
+    if (req.body.preview) return res.json(await reprice.plan(entity_id, chit_id, opts));
+    res.json(await reprice.apply(entity_id, chit_id, opts, {
+      actor_id: req.identity.identity_id, actor_name: req.identity.display_name }));
+  } catch (err) {
+    console.error('Reprice error:', err.message);
+    res.status(err.status || 500).json({ error: 'Reprice failed', message: safeErr(err) });
   }
 });
 
