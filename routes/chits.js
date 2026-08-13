@@ -986,8 +986,26 @@ router.get('/inbox', auth, async (req, res) => {
      */
     if (await folderColReady()) {
       const fid = String(req.query.folder_id || '').trim();
+      /**
+       * ⚠️ AN ASSIGNMENT FILTER IS A QUESTION ABOUT WORK, NOT ABOUT FILING (fixed 2026-08-13).
+       *
+       * Athi: *"for the owner panel... the filter is not working correctly."* It was working — and useless.
+       * Filing is a MOVE (the mailing model), so an unfiltered list shows only UNFILED chits. But Beta's rules
+       * file almost everything on arrival, so the moment he assigned a chit it left the pool AND was already
+       * out of the list — both tabs came back empty and the filter looked broken. Reproduced exactly: the chit
+       * was assigned, was in ⚑ Needs attention, and appeared under assignment=assigned only WITHIN that folder.
+       *
+       * "Show me everything assigned" is a question about who is doing what, and who is doing what is not
+       * confined to a folder. So when an assignment scope is asked for and NO folder is named, the unfiled-only
+       * restriction is lifted and the answer spans every folder.
+       *
+       * ⚠️ NAMING A FOLDER STILL WINS. Inside a folder the list stays that folder filtered — the folder-as-a-
+       * filter model is untouched. Only the top-level "Unassigned / Assigned / All Task" question goes wide.
+       */
+      const asksAssignment = req.query.assignment === 'unassigned' || req.query.assignment === 'assigned'
+        || (req.query.assigned_to && req.query.assigned_to !== 'all');
       if (/^[0-9a-f-]{36}$/i.test(fid)) { paramCount++; whereClause += ` AND cs.folder_id = $${paramCount}::uuid`; params.push(fid); }
-      else whereClause += ` AND cs.folder_id IS NULL`;
+      else if (!asksAssignment) whereClause += ` AND cs.folder_id IS NULL`;
     }
 
     if (status_filter) {
