@@ -1530,6 +1530,13 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
       unit_size: it.unit_size || null,
       label: it.name + (it.variant ? ' · ' + it.variant : ''), key: it.key });
 
+    /* The matcher's shortlist, re-read from the catalogue so the picker shows the SAME row shape as everything
+       else — and so the price on it is today's, not whatever the reader saw when the chit was raised. */
+    const shortlist = (m) => (m.candidates || [])
+      .map((c) => { const it = cat.items.find((x) => x.key === c.key);
+        return it ? { ...full(it), status: c.status, status_text: c.status_text } : null; })
+      .filter(Boolean);
+
     const m = q ? itemmatch.match(q, req.query.comment || '', cat) : null;
     const nq = itemmatch.norm(q);
     const items = (nq ? cat.items.filter((it) =>
@@ -1546,7 +1553,13 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
            useful thing to tell someone who is about to confirm a line. */
         ...(m.variant_unspecified ? { variant_unspecified: true, variants: m.variants } : {}),
         ...(m.fuzzy ? { matched_by_spelling: true } : {}) } : null,
-      ...(m && m.ambiguous ? { ambiguous: m.matches } : {}),
+      /* ⚠️ THE SHORTLIST, NOT A COUNT. This returned `ambiguous: 2` — a number the screen could only print as
+         "matches 2 catalogue lines", leaving the person to hunt those two out of a 200-row picker themselves. The
+         matcher knew which two; it just did not say. `shortlist()` shapes them exactly like every other pickable
+         row, so the picker renders one kind of thing whether it is a shortlist or the whole catalogue. */
+      ...(m && m.ambiguous ? { ambiguous: m.matches, candidates: shortlist(m) } : {}),
+      /* Same treatment for "the catalogue has grades and you named none" — one picker, two causes. */
+      ...(m && m.variant_unspecified ? { candidates: shortlist(m) } : {}),
       ...(m && m.unmatched ? { unmatched: m.reason } : {}),
     });
   } catch (err) {

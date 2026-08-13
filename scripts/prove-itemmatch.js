@@ -16,7 +16,12 @@ let pass = 0, fail = 0;
 const ok = (n, c, d) => { if (c) { pass++; console.log('  ✓ ' + n); } else { fail++; console.log('  ✗ ' + n + (d ? '\n      ' + d : '')); } };
 const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' + JSON.stringify(g) + '\n      want ' + JSON.stringify(w));
 
-const item = (name, o = {}) => Object.assign({ name, variant: '', unit: 'kg', price: 10, synonyms: [], conversions: {}, key: im.norm(name) + '|' }, o);
+/* ⚠️ THE KEY IS BUILT BY THE PRODUCT'S OWN keyOf(), NOT REBUILT HERE. This fixture used to compute it from
+   the name alone — before Object.assign applied the variant — so every variant of one product shared a key and a
+   picker choosing Hybrid would have resolved to Native. A fixture that models identity differently from the code
+   proves the wrong thing, confidently. */
+const item = (name, o = {}) => { const it = Object.assign({ name, variant: '', unit: 'kg', price: 10, synonyms: [], conversions: {}, status: 'available' }, o);
+  it.key = im.keyOf(it.name, it.variant); return it; };
 const mkCat = (items) => {
   const variantsOf = {};
   items.forEach((it) => { (variantsOf[im.norm(it.name)] = variantsOf[im.norm(it.name)] || new Set()).add(it.variant || ''); });
@@ -111,6 +116,38 @@ console.log('\n7 · ⭐ A VARIANT NAMED IN ANOTHER LANGUAGE IS STILL NAMED');
   const gen = im.match('vengayam', '', cat);
   ok('⚠️ a generic term shared by both variants still FLAGS, never picks', gen.variant_unspecified === true, JSON.stringify(gen));
   eq('…and offers both', (gen.variants || []).sort(), ['big', 'small']);
+}
+
+console.log('\n8 · ⭐ A REFUSAL MUST HAND BACK ITS SHORTLIST');
+{
+  /* Athi, 2026-08-13: *"we need provision to pick up the right price from the two or three similar items which
+     are ambiguous."* Refusing to guess was always right; refusing and then DISCARDING the two items it was
+     choosing between made the refusal unresolvable — the screen could say "matches 2 catalogue lines" and offer
+     nothing to click. A refusal that keeps its evidence is a question; one that throws it away is a dead end. */
+  const cat = mkCat([
+    item('Tomato', { variant: 'Native', price: 30, unit: 'kg', synonyms: ['thakkali'] }),
+    item('Tomato', { variant: 'Hybrid', price: 36, unit: 'kg', synonyms: ['thakkali'] }),
+    item('Tomato Crate', { price: 450, unit: 'crate', synonyms: ['thakkali'] }),
+  ]);
+  const amb = im.match('thakkali', '', cat);
+  ok('a synonym on three names is still AMBIGUOUS — the shortlist does not soften the refusal',
+    amb.ambiguous === true && !amb.item, JSON.stringify(amb).slice(0, 160));
+  ok('⭐ …and the candidates travel with it', (amb.candidates || []).length === 3, JSON.stringify(amb.candidates));
+  ok('every candidate carries a key, a price and a status — enough to decide from',
+    (amb.candidates || []).every((c) => c.key && c.price != null && c.status),
+    JSON.stringify(amb.candidates));
+  eq('the count still reports the NAMES in play, not the rows', amb.matches, 2);
+
+  /* The other cause of the same question: the grade was never named. One picker must answer both. */
+  const vcat = mkCat([
+    item('Orange', { variant: 'grade 1', price: 80 }),
+    item('Orange', { variant: 'grade 2', price: 60 }),
+  ]);
+  const v = im.match('orange', '', vcat);
+  ok('a variant-unspecified line ALSO hands back candidates', (v.candidates || []).length === 2, JSON.stringify(v.candidates));
+  eq('…and keeps `variants` for the readers that print names', (v.variants || []).sort(), ['grade 1', 'grade 2']);
+  ok('⚠️ a clean match carries NO candidates — a picker must not appear where there is nothing to decide',
+    im.match('orange grade 1', '', vcat).candidates === undefined);
 }
 
 console.log('\n────────────────────────────────────────────────────────────────────────────');
