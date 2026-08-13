@@ -1528,7 +1528,12 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
     const full = (it) => ({ name: it.name, variant: it.variant || null, unit: it.unit || null,
       price: money.amountOf(it.price), currency: money.currencyOf(it.price),
       unit_size: it.unit_size || null,
-      label: it.name + (it.variant ? ' · ' + it.variant : ''), key: it.key });
+      label: it.name + (it.variant ? ' · ' + it.variant : ''), key: it.key,
+      /* The durable identity, so a human pick stamps the same reference the matcher would have. Without it the
+         one path where we are CERTAIN which item was meant would be the only one leaving no reference. */
+      item_id: it.item_id || null, sku: it.sku || null,
+      /* the moment, so a human pick fixes the base exactly as the matcher does — one shape, three paths */
+      as_of: it.as_of || null, hash: itemmatch.stampOf(it) });
 
     /* The matcher's shortlist, re-read from the catalogue so the picker shows the SAME row shape as everything
        else — and so the price on it is today's, not whatever the reader saw when the chit was raised. */

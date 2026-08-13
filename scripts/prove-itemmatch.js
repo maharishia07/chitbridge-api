@@ -150,6 +150,39 @@ console.log('\n8 · ⭐ A REFUSAL MUST HAND BACK ITS SHORTLIST');
     im.match('orange grade 1', '', vcat).candidates === undefined);
 }
 
+console.log('\n9 · ⭐ FIXING THE BASE — what the item WAS at this moment');
+{
+  /* Athi, 2026-08-13: *"the boat is moving and we are trying to fix the base, and it always slips. So the first
+     thing is, at any point in time, what is the reference at this point in time — that fixes the base."*
+     An id says WHICH row. The row keeps moving. The stamp says what it SAID when the chit was made, so drift
+     becomes a checkable fact instead of an argument. */
+  const base = { name: 'Tomato', variant: 'Hybrid', unit: 'kg', price: 36, sku: 'VEG-02', status: 'available' };
+  const h = im.stampOf(base);
+  ok('the same row stamps the same, every time', im.stampOf({ ...base }) === h);
+  ok('⭐ a REPRICE changes the stamp — the whole point', im.stampOf({ ...base, price: 40 }) !== h);
+  ok('⭐ a RENAME changes it', im.stampOf({ ...base, name: 'Tomato Local' }) !== h);
+  ok('⭐ going out of stock changes it', im.stampOf({ ...base, status: 'unavailable' }) !== h);
+  ok('a changed unit changes it', im.stampOf({ ...base, unit: 'crate' }) !== h);
+
+  /* ⚠️ THE SEPARATOR BUG THIS ALMOST SHIPPED WITH. Joining the fields on a SPACE — a character these values
+     legitimately contain — makes two genuinely different rows stamp identically, which is the one thing a stamp
+     must never do. Found by writing this assertion, not by reading the code. */
+  ok('⚠️ "Tomato Hybrid"+"" and "Tomato"+"Hybrid" are DIFFERENT rows and must not share a stamp',
+    im.stampOf({ ...base, name: 'Tomato Hybrid', variant: '' }) !== im.stampOf(base));
+
+  /* ⚠️ A STAMP MUST NEVER BE ABLE TO TAKE THE RAISE PATH DOWN. money.amountOf THROWS on a legacy bare price with
+     no currency — correct when money is being committed, catastrophic in a hashing helper. */
+  let threw = null;
+  try { im.stampOf({ name: 'X', variant: '', unit: 'kg', price: 36, sku: null, status: 'available' }); }
+  catch (e) { threw = e.message; }
+  ok('⚠️ a legacy bare price does NOT throw — evidence is not a transaction', threw === null, threw);
+  ok('…nor does a missing price', (() => { try { return !!im.stampOf({ name: 'X', variant: '', unit: '', price: null, sku: null, status: 'available' }); } catch (_) { return false; } })());
+
+  /* Same price, two shapes — the migration must not look like a change. */
+  eq('a stamped {amount,currency} stamps identically to the bare number it replaced',
+    im.stampOf({ ...base, price: { amount: 36, currency: 'INR' } }), h);
+}
+
 console.log('\n────────────────────────────────────────────────────────────────────────────');
 console.log((fail ? '✗ ' : '✓ ') + pass + ' passed, ' + fail + ' failed\n');
 process.exit(fail ? 1 : 0);

@@ -154,7 +154,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
   // context, so the visibility-aware policy returns only public items (a private shop can't be ordered from here).
   const cat = await withEntity(null, (db) => db.query(
-    `SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id]));
+    `SELECT item_id, item_data, updated_at FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id]));
   const byId = new Map(), byName = new Map(), nameCount = new Map();   // F6: nameCount flags ambiguous names
   for (const row of cat.rows) {
     const d = row.item_data || {};
@@ -163,7 +163,15 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
     // scripts/money-3-apply.sql and rows not yet migrated both work. This must stay tolerant until every price
     // home is stamped — deleting the number branch early is what turns a product into a free one.
     const price = money.amountOfLoose(d.price);
-    const rec = { item_id: row.item_id, name: d.name ?? d.particulars ?? '', price, unit: d.unit ?? null };
+    /* `sku` carried so a storefront line can state the PUBLISHED identifier, not only our internal uuid — it is the
+       half of the reference a counterparty may legitimately hold, because they read it before they ordered.
+       ⚠️ `code` is not read here: the starter set labels it "Code / HSN", so it may be a customs classification
+       rather than an identifier, and stamping one as the other would look exactly right. */
+    const rec = { item_id: row.item_id, name: d.name ?? d.particulars ?? '', price, unit: d.unit ?? null,
+                  sku: String(d.sku || d.gtin || '').trim() || null,
+                  as_of: row.updated_at ? new Date(row.updated_at).toISOString() : null,
+                  /* the same stamp the capture path takes, from the same function — one definition of "what it was" */
+                  hash: require('../lib/itemmatch').stampOf({ name: d.name, variant: d.variant || d.grade, unit: d.unit, price: d.price, sku: String(d.sku || d.gtin || '').trim() || null, status: require('../lib/itemstatus').statusOf(d) }) };
     byId.set(String(row.item_id), rec);
     if (rec.name) { const k = _norm(rec.name); nameCount.set(k, (nameCount.get(k) || 0) + 1); byName.set(k, rec); }
   }
@@ -279,8 +287,20 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
     // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
     // unbounded but still only admissible when the shop declared itself negotiable.
     const proposal = validateProposal(li.proposal, oi, null, ref.name);
+    /**
+     * ⭐ THE SAME REFERENCE SHAPE THE CAPTURE PATH NOW STAMPS. This line already carried a bare `item_id`, which is
+     * kept — other readers use it — but one fact stored two ways is how the two paths drift apart, and a chit that
+     * says `item_id` when it came from a storefront and `ref.item_id` when it came from WhatsApp cannot be queried
+     * as one thing.
+     *
+     * ⚠️ `how: 'picked'` IS THE STRONGEST RUNG ON THE LADDER, and it is the only place entitled to it: the buyer
+     * chose this row from the shop's own catalogue. Nothing was matched, guessed or resolved — so a dispute can
+     * tell it apart from a line a spelling-guess produced, which the other paths cannot claim.
+     */
     return { item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
-             price: ref.price, total, ...(proposal ? { proposal } : {}) };
+             price: ref.price, total, ...(proposal ? { proposal } : {}),
+             ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), how: 'picked',
+                    ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } };
   }));
   const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
   return { items, total };
