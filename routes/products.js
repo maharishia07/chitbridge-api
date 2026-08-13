@@ -615,4 +615,54 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Delete failed', message: safeErr(e) }); }
 });
 
+/**
+ * GET /:id/versions — what this item WAS, in order. (b146)
+ *
+ * Athi, 2026-08-13: *"at any point in time, what is the reference at this point in time — that fixes the base."*
+ * The trigger records it; this is how anyone reads it back. Without a read path the version table is a claim
+ * rather than a fact, and a migration nobody can verify is a migration nobody should trust.
+ *
+ * ?at=<ISO timestamp> answers the single question the whole table exists for — "what was this when that chit was
+ * raised" — rather than making the caller fetch the list and pick a row by comparing timestamps, which is how you
+ * get an off-by-one on the boundary between two versions.
+ */
+router.get('/:id/versions', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    /* ⚠️ SCOPED TO MY OWN ITEM BEFORE ANYTHING IS READ. RLS already confines the rows, but an id in the URL should
+       not be enough to learn that an item exists at all. */
+    const own = await withEntity(entity_id, (db) => db.query(
+      `SELECT item_id FROM catalogue_items WHERE item_id = $1 AND entity_id = $2`, [req.params.id, entity_id]));
+    if (!own.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
+
+    const at = String(req.query.at || '').trim();
+    if (at) {
+      const when = new Date(at);
+      if (isNaN(when)) return res.status(400).json({ error: 'Bad date', message: '`at` must be a timestamp.' });
+      const r = await withEntity(entity_id, (db) => db.query(
+        `SELECT version_no, snapshot, name, variant, unit, price, sku, status, valid_from, valid_to
+           FROM catalogue_item_version
+          WHERE entity_id = $1 AND item_id = $2 AND valid_from <= $3 AND (valid_to IS NULL OR valid_to > $3)
+          ORDER BY version_no DESC LIMIT 1`, [entity_id, req.params.id, when.toISOString()]));
+      return res.json({ item_id: req.params.id, at: when.toISOString(), version: r.rows[0] || null });
+    }
+
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT version_no, name, variant, unit, price, sku, status, valid_from, valid_to, changed_by
+         FROM catalogue_item_version
+        WHERE entity_id = $1 AND item_id = $2
+        ORDER BY version_no DESC LIMIT 200`, [entity_id, req.params.id]));
+    res.json({ item_id: req.params.id, count: r.rows.length,
+      current: r.rows.find((x) => x.valid_to === null) || null, versions: r.rows });
+  } catch (e) {
+    /* ⚠️ THE MIGRATION-ABSENT CASE IS SAID PLAINLY. Twice this week a swallowed 42P01/42703 surfaced as a generic
+       503 and sent Athi back to the SQL editor for a migration that had applied perfectly. */
+    if (e && (e.code === '42P01' || e.code === '42703')) {
+      console.error('versions: b146 not applied —', e.code);
+      return res.status(503).json({ error: 'Not migrated', message: 'Item versions need b146 on this environment.' });
+    }
+    fail(res, e, 'Versions failed');
+  }
+});
+
 module.exports = router;
