@@ -1314,7 +1314,13 @@ router.get('/:chit_id', auth, async (req, res) => {
         (SELECT coalesce(json_agg(x), '[]'::json) FROM (
            SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
                   d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note,
-                  d.recorded_by_entity_id, d.recorded_by_name, d.recorded_by_actor_name, d.delivered_at
+                  d.recorded_by_entity_id, d.recorded_by_name, d.recorded_by_actor_name, d.delivered_at,
+                  -- b152, read through to_jsonb so the columns may not exist yet: naming d.kind directly raises
+                  -- 42703, which deliverline treats as "not migrated" and turns into a null progress — the whole
+                  -- delivery display would vanish between deploying this and running b152.
+                  to_jsonb(d)->>'kind'              AS dkind,
+                  (to_jsonb(d)->>'amount')::numeric AS damount,
+                  to_jsonb(d)->>'particulars'       AS dparticulars
              FROM chit_line l
              LEFT JOIN chit_line_delivery d
                     ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
@@ -1629,8 +1635,13 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
-    /* A settled line is a deliberate refusal, not a failure — say which line and what to do instead. */
-    if (err && err.code === 'LINE_DELIVERED') {
+    /**
+     * A settled line is a deliberate refusal, not a failure — say which line and what to do instead.
+     * b152: three narrower refusals replaced the old blanket "any delivery locks the line". Each keeps its own
+     * code, because the screen's next action differs: a removal or a reduction wants a NEGATIVE delivery, while a
+     * unit change wants the line left alone. One code for all three would send people to the wrong remedy.
+     */
+    if (err && ['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
       return res.status(409).json({ error: 'Already delivered', message: err.message, code: err.code });
     }
     if (err && err.code === '23514') {
