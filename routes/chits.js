@@ -280,7 +280,26 @@ router.post('/send',
 
       // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
       const prefRow = await query(`SELECT self_copy_pref FROM identities WHERE identity_id = $1`, [sender_id]);
-      const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'both';
+      /**
+       * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
+       * no two copies, and you would be very specific about direction."*
+       *
+       * The default was 'both', so every self-chit wrote TWO rows for the SAME entity — a `sent` copy and a
+       * `received` copy. That is not a display quirk: it doubles chit_header, chit_detail AND chit_line, so every
+       * cross-chit read counts the same work twice. It is what made the worklist show four lines per person where
+       * two were assigned, and it made `due_on` and `actor_id` look broken when both were filtering correctly.
+       *
+       * ⚠️ WHY `received` AND NOT `sent`. A self-chit exists because there is work to do. The Order/Sent list is
+       * the record of obligations placed on SOMEONE ELSE, and a self-chit places none — filing it there asserts
+       * "I sent this to a counterparty", which is false. Task asserts "this is mine to act on", which is true. It
+       * is also what the capture path already does: a WhatsApp message becomes a Task, never an Order.
+       *
+       * ⚠️ NARROWED, NOT SILENT. The suppression is declared on the chit as `copy_policy` with its source, exactly
+       * as before — an absence that cannot be told from a gap is not governed. An entity that has explicitly set
+       * `self_copy_pref` keeps its choice; only the unset default moves. Inter-entity chits are untouched: both
+       * copies stay mandatory there, because the co-held transfer is the whole point.
+       */
+      const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'received';
       const makeSelfReceiver = (k) => ({ entity_id: sender_id, bridge_id: sender_bridge_id,
         display_name: sender_display_name, kind: k, role: ROLE_MAP[k], all_role: k === 'to' ? 'receiver' : k });
       let hasSelf = false;
@@ -1610,6 +1629,10 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
+    /* A settled line is a deliberate refusal, not a failure — say which line and what to do instead. */
+    if (err && err.code === 'LINE_DELIVERED') {
+      return res.status(409).json({ error: 'Already delivered', message: err.message, code: err.code });
+    }
     if (err && err.code === '23514') {
       console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
       return res.status(409).json({ error: 'Not an accepted value',

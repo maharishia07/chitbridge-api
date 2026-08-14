@@ -311,10 +311,25 @@ router.get('/worklist', auth, async (req, res) => {
   try {
     const due = String(req.query.due_on || '').trim();
     if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) return res.status(400).json({ error: 'Bad request', message: 'due_on must be YYYY-MM-DD' });
-    const aid = String(req.query.actor_id || '').trim();
+    /**
+     * ── ⚠️ AN ACTOR SEES ONLY THEIR OWN WORK, AND IT IS NOT THEIR CHOICE ────────────────────────────────────────
+     *
+     * `actor_id` arrived as a plain query parameter, so a co-assist could read a colleague's worklist by editing
+     * the URL. RLS does not catch it: every row belongs to the same ENTITY, which is exactly what RLS scopes to —
+     * the boundary being crossed here is between two people inside one business, and that is a boundary only this
+     * route knows about.
+     *
+     * So the caller's own actor id WINS when the caller is an actor. The entity owner keeps the parameter, because
+     * "show me what Murugan has" is the whole point of running the business.
+     */
+    const isActor = req.identity.identity_type === 'actor';
+    const aid = isActor ? String(req.identity.identity_id)
+                        : String(req.query.actor_id || '').trim();
     res.json(await assign.byPerson(ent(req), {
       due_on: due || undefined,
       actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
+      /* So the screen can say "your work" honestly rather than guessing from the row count. */
+      _scoped_to_self: isActor,
     }));
   } catch (err) { console.error('worklist:', err.message); res.status(500).json({ error: 'Worklist failed', message: safeErr(err) }); }
 });
