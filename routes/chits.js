@@ -1258,7 +1258,69 @@ router.get('/:chit_id', auth, async (req, res) => {
       ? mint.order(data.detail.rows[0].line_items) : null;
     _mark('mint_order');
 
-    const bundle = await withEntity(entity_id, async (db) => {
+    /**
+     * ── ⭐ ONE STATEMENT FOR ALL FIVE ROW-SETS ─────────────────────────────────────────────────────────────────
+     *
+     * Measured on this deployment: every SQL statement costs ~250ms, because Railway (Singapore) and Supabase
+     * (Mumbai) are in different regions. That single number explains everything — 4 statements ≈ 1s (/products),
+     * 21 statements ≈ 5s (the previous six-read bundle with its savepoints). Transactions were never the unit that
+     * mattered; STATEMENTS are.
+     *
+     * So: five scalar sub-selects, each returning a JSON array, in ONE round trip. 21 statements → 4.
+     * The savepoints go with it — there is nothing left to isolate when there is only one statement, and they were
+     * costing 12 of the 21.
+     *
+     * ⚠️ THE SHAPING STAYS IN THE LIBS. Only the FETCH moved. Each lib now accepts pre-fetched rows and applies
+     * exactly the transformation it always did, so the fast path and the old path cannot drift.
+     *
+     * ⚠️ AND IT FALLS BACK WHOLE. If any table is missing (an un-migrated environment) this one statement fails
+     * entirely rather than degrading read-by-read — so on failure we simply run the previous per-read path, which
+     * still degrades individually. Fast where it can be, correct everywhere.
+     */
+    const ONE_SHOT = `
+      SELECT
+        (SELECT coalesce(json_agg(x), '[]'::json) FROM (SELECT * FROM chit_participants($2)) x)          AS participants,
+        (SELECT coalesce(json_agg(x), '[]'::json) FROM (
+           SELECT amendment_id, line_index, line_id, seq, line, reason_code, reason, actor_name, created_at
+             FROM chit_line_amendment WHERE entity_id = $1 AND chit_id = $2 ORDER BY line_index, seq) x)  AS amendments,
+        (SELECT coalesce(json_agg(x), '[]'::json) FROM (
+           SELECT line_id, seq, particulars, quantity, unit, unit_size, price, comment,
+                  asked_as, asked_unit, raw_phrase, removed, removed_reason, needs_human, flags
+             FROM chit_line WHERE entity_id = $1 AND chit_id = $2 ORDER BY seq, line_id) x)               AS lines,
+        (SELECT coalesce(json_agg(x), '[]'::json) FROM (
+           SELECT line_id, seq, assignee_actor_id, assignee_name, assignee_type, task, due_date, note, created_at
+             FROM chit_line_assignment WHERE entity_id = $1 AND chit_id = $2 ORDER BY line_id, seq) x)    AS assignments,
+        (SELECT coalesce(json_agg(x), '[]'::json) FROM (
+           SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
+                  d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note,
+                  d.recorded_by_entity_id, d.recorded_by_name, d.recorded_by_actor_name, d.delivered_at
+             FROM chit_line l
+             LEFT JOIN chit_line_delivery d
+                    ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
+            WHERE l.entity_id = $1 AND l.chit_id = $2
+            ORDER BY l.seq, l.line_id, d.delivered_at) x)                                                AS deliveries`;
+
+    let bundle = null;
+    try {
+      bundle = await withEntity(entity_id, async (db) => {
+        const r = await db.query(ONE_SHOT, [entity_id, chit_id]);
+        const g = r.rows[0] || {};
+        return {
+          participants: g.participants || [],
+          amd: await amend.list(entity_id, chit_id, db, g.amendments || []),
+          rows: _lines0 ? await amend.readLines(entity_id, chit_id, db, g.lines || []) : null,
+          assigned: _lines0 ? await assign.current(entity_id, chit_id, db, g.assignments || []) : null,
+          prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
+          _fast: true,
+        };
+      });
+    } catch (e) {
+      console.error('chit detail: one-shot read failed, falling back per-read —', e.code || '', e.message);
+      bundle = null;
+    }
+    _mark('one_shot');
+
+    if (!bundle) bundle = await withEntity(entity_id, async (db) => {
       const participants = await trySavepoint(db,
         (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((r) => r.rows),
         null);
