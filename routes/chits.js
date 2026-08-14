@@ -4,7 +4,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const { query, withTransaction, withEntity } = require('../db');
+const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const storage = require('../lib/storage');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
@@ -1220,24 +1220,52 @@ router.get('/:chit_id', auth, async (req, res) => {
     // b50 SECURITY DEFINER fn chit_participants (validates caller is a participant, then crosses). Fallback to the
     // direct join when the delivery layer (b50) isn't applied yet, so the page works before/after the migration;
     // under FORCE without the fn the fallback scopes to self (degraded panel, never a leak).
-    let participants;
-    try {
-      const ps = await withEntity(entity_id, (db) => db.query(`SELECT * FROM chit_participants($1)`, [chit_id]));
-      participants = ps.rows;
-    } catch (e) {
-      if (e && (e.code === '42883' || /chit_participants/.test(e.message || ''))) {
-        const ps = await withEntity(entity_id, (db) => db.query(
-          `SELECT cs.entity_id, cs.current_status, cs.read_at,
-                  cs.assigned_to_actor_display_name, cs.updated_at,
-                  i.display_name, i.bridge_id
+    /**
+     * ── ⭐ SIX INDEPENDENT READS, ONE TRANSACTION (2026-08-14) ─────────────────────────────────────────────────
+     *
+     * Athi: opening a chit measured 2.8s and saving one line 5.4s. The cause was not a slow query — it was the
+     * NUMBER of round trips. withEntity() wraps each call in its own transaction (BEGIN → set_config → query →
+     * COMMIT = four round trips), and this handler made seven of them SEQUENTIALLY. None of the six below depends
+     * on any other. ~28 round trips to open one chit.
+     *
+     * ⚠️ NOT Promise.all — the pool is max:10, so six parallel transactions per request means two concurrent
+     * readers want twelve connections and the third queues. That trades a slow page for connection timeouts.
+     * One BEGIN, one set_config, six queries, one COMMIT: ~11 round trips, and ONE connection instead of six.
+     *
+     * ⚠️ EVERY OPTIONAL READ IS SAVEPOINTED, and that is what makes this safe rather than clever. Postgres aborts
+     * the whole transaction on any error, and these reads fail routinely and harmlessly on an un-migrated
+     * environment — readLines throws 42P01 before b142, chit_participants throws 42883 before b50. Without a
+     * savepoint the first such failure would poison every read after it, so a chit that used to open WITHOUT its
+     * optional parts would stop opening at all. Each one still degrades exactly as it did before.
+     */
+    const _lines0 = (data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items))
+      ? mint.order(data.detail.rows[0].line_items) : null;
+
+    const bundle = await withEntity(entity_id, async (db) => {
+      const participants = await trySavepoint(db,
+        (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((r) => r.rows),
+        null);
+      /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
+      const participants2 = participants || await trySavepoint(db, (c) => c.query(
+        `SELECT cs.entity_id, cs.current_status, cs.read_at,
+                cs.assigned_to_actor_display_name, cs.updated_at,
+                i.display_name, i.bridge_id
            FROM chit_status cs
            JOIN identities i ON i.identity_id = cs.entity_id
-           WHERE cs.chit_id = $1`,
-          [chit_id]));
-        participants = ps.rows;
-      } else throw e;
-    }
+          WHERE cs.chit_id = $1`, [chit_id]).then((r) => r.rows), []);
 
+      const amd = await trySavepoint(db, () => amend.list(entity_id, chit_id, db),
+        { amendments: [], migrated: false });
+      const rows = _lines0 ? await trySavepoint(db, () => amend.readLines(entity_id, chit_id, db), null) : null;
+      const assigned = _lines0 ? await trySavepoint(db, () => assign.current(entity_id, chit_id, db), null) : null;
+      const prog = _lines0 ? await trySavepoint(db, () => deliverline.progress(entity_id, chit_id, db), null) : null;
+
+      return { participants: participants2, amd, rows, assigned, prog };
+    });
+
+    const participants = bundle.participants;
+    /* ⚠️ ATTACHMENTS STAY OUTSIDE. storage.listForChit reaches a different store and owns its own error handling;
+       dragging it into this transaction would couple a blob read to the chit's own read for no round-trip saving. */
     const attachments = await storage.listForChit(chit_id, entity_id).catch(() => []);   // per-entity: the caller's OWN copies only
 
     /* ── b137 AMENDMENTS ─────────────────────────────────────────────────────────────────────────────────────
@@ -1247,19 +1275,18 @@ router.get('/:chit_id', auth, async (req, res) => {
        whole point of an amendment is that both readings stay on the record.
        Deliberately AFTER the main read and outside its transaction — a chit must open whether or not b137 is
        applied, so list() answers `migrated:false` rather than throwing. */
-    const amd = await amend.list(entity_id, chit_id).catch(() => ({ amendments: [], migrated: false }));
+    const amd = bundle.amd;
     /* ⚠️ SORTED BY THE STATED ORDER, not by array position. Lines minted before this carry no `seq`, so they sort
        as 0 and keep their existing sequence — the fix is additive and cannot reshuffle an old chit. */
-    const _lines = (data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items))
-      ? mint.order(data.detail.rows[0].line_items) : null;
+    const _lines = _lines0;
 
     /* ⭐ b142 — the LIVE rows, when they exist. `readLines` returns null before the migration, and then the live
        set is replayed from the frozen payload instead. Same answer, two routes, so neither is a special case.
        ⚠️ The ORIGINAL still comes from `chit_detail.line_items` even when the rows exist — that is the delivered
        payload and it never changes, which is the only reason a struck-through "was 3" can be trusted. */
-    const _rows = _lines ? await amend.readLines(entity_id, chit_id).catch(() => null) : null;
-    const _assigned = _lines ? await assign.current(entity_id, chit_id).catch(() => null) : null;
-    const _prog = _lines ? await deliverline.progress(entity_id, chit_id).catch(() => null) : null;
+    const _rows = bundle.rows;
+    const _assigned = bundle.assigned;
+    const _prog = bundle.prog;
     const _byId = new Map((_lines || []).map((l) => [l.line_id, l]));
     const _live = _rows
       ? _rows.map((row, i) => {

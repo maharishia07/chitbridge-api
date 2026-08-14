@@ -206,4 +206,45 @@ const withEntity = async (entityId, fn) => {
   });
 };
 
-module.exports = { query, withTransaction, withEntity, sslForHost, RLS_TENANT_TABLES, get pool() { return pool; } };
+/**
+ * ── ⭐ onEntity(entity_id, dbOrNull, fn) — RUN INSIDE A CALLER'S TRANSACTION, OR OPEN YOUR OWN ──────────────────
+ *
+ * Athi, 2026-08-14, after a Playwright run measured 2.8s to open a chit and 5.4s to save one line:
+ * *"go ahead with the round trip fix."*
+ *
+ * withEntity() is correct and stays: it wraps every call in a transaction so the RLS binding is SET LOCAL and can
+ * never leak between requests. But that costs FOUR round trips each — BEGIN, set_config, the query, COMMIT — and
+ * GET /chits/:id made seven of them SEQUENTIALLY, six of which do not depend on each other. Roughly 28 round trips
+ * to open one chit.
+ *
+ * ⚠️ THE FIX IS NOT Promise.all. The pool is max:10, so six parallel transactions per request means two concurrent
+ * readers want twelve connections and the third queues — trading a slow page for connection timeouts, which is a
+ * worse failure and much harder to diagnose.
+ *
+ * This lets a lib run on a client the caller already owns: one BEGIN, one set_config, N queries, one COMMIT.
+ * Called without a client it behaves exactly as before, so every existing caller is untouched.
+ */
+async function onEntity(entity_id, db, fn) {
+  if (db && typeof db.query === 'function') return fn(db);
+  return withEntity(entity_id, fn);
+}
+
+/**
+ * ⚠️ SAVEPOINTS, AND THEY ARE NOT OPTIONAL HERE. Postgres aborts the WHOLE transaction on any error, so sharing one
+ * between six independent reads would mean the first failure poisons every read after it — and these reads fail
+ * routinely and harmlessly: `readLines` throws 42P01 before b142, `chit_participants` throws 42883 before b50, and
+ * each currently degrades on its own. Without a savepoint, opening a chit on an un-migrated environment would stop
+ * returning the chit at all rather than returning it without the optional parts.
+ *
+ * Returns `fallback` on failure, exactly like the per-call try/catch it replaces.
+ */
+let _spN = 0;
+async function trySavepoint(db, fn, fallback) {
+  if (!db || typeof db.query !== 'function') { try { return await fn(); } catch (_) { return fallback; } }
+  const sp = 'sp' + (++_spN);
+  await db.query('SAVEPOINT ' + sp);
+  try { const r = await fn(db); await db.query('RELEASE SAVEPOINT ' + sp); return r; }
+  catch (e) { await db.query('ROLLBACK TO SAVEPOINT ' + sp).catch(() => {}); return fallback; }
+}
+
+module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, sslForHost, RLS_TENANT_TABLES, get pool() { return pool; } };
