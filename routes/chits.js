@@ -1238,8 +1238,25 @@ router.get('/:chit_id', auth, async (req, res) => {
      * savepoint the first such failure would poison every read after it, so a chit that used to open WITHOUT its
      * optional parts would stop opening at all. Each one still degrades exactly as it did before.
      */
+    /**
+     * ⚠️ SELF-MEASUREMENT, because two rounds of reasoning about this were wrong.
+     *
+     * Athi has said all week that screens are slow. I found withEntity's four-round-trips-per-call and fixed it,
+     * predicting the chit open would halve. It moved ~10%. Measuring the endpoint directly then showed the truth:
+     * GET /chits/:id takes ~9 SECONDS server-side on a one-line chit, while /health is 250ms and /products 1.3s
+     * from the same machine. So the cost is inside this handler and I do not yet know which part.
+     *
+     * `?timing=1` returns a per-step breakdown instead of another guess. It costs one Date.now() per step and is
+     * off unless asked for.
+     */
+    const _wantTiming = String(req.query.timing || '') === '1';
+    const _T = {}; let _t0 = Date.now();
+    const _mark = (k) => { if (_wantTiming) { _T[k] = Date.now() - _t0; _t0 = Date.now(); } };
+    _mark('header_detail_log');
+
     const _lines0 = (data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items))
       ? mint.order(data.detail.rows[0].line_items) : null;
+    _mark('mint_order');
 
     const bundle = await withEntity(entity_id, async (db) => {
       const participants = await trySavepoint(db,
@@ -1263,10 +1280,12 @@ router.get('/:chit_id', auth, async (req, res) => {
       return { participants: participants2, amd, rows, assigned, prog };
     });
 
+    _mark('bundle_6_reads');
     const participants = bundle.participants;
     /* ⚠️ ATTACHMENTS STAY OUTSIDE. storage.listForChit reaches a different store and owns its own error handling;
        dragging it into this transaction would couple a blob read to the chit's own read for no round-trip saving. */
-    const attachments = await storage.listForChit(chit_id, entity_id).catch(() => []);   // per-entity: the caller's OWN copies only
+    const attachments = await storage.listForChit(chit_id, entity_id).catch(() => []);
+    _mark('attachments');   // per-entity: the caller's OWN copies only
 
     /* ── b137 AMENDMENTS ─────────────────────────────────────────────────────────────────────────────────────
        ⚠️ `detail.line_items` IS RETURNED UNTOUCHED — it is what the reader produced and it never changes. The
@@ -1299,7 +1318,9 @@ router.get('/:chit_id', auth, async (req, res) => {
         })
       : amend.liveSet(_lines, amd.amendments);
 
+    _mark('assemble');
     res.json({
+      ...(_wantTiming ? { _timing: _T } : {}),
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
       participants,
