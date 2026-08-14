@@ -1120,6 +1120,11 @@ router.get('/unread', auth, async (req, res) => {
 });
 
 router.get('/:chit_id', auth, async (req, res) => {
+  /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
+     'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
+  const _wantTiming = String(req.query.timing || '') === '1';
+  const _T = {}; let _t0 = Date.now();
+  const _mark = (k) => { if (_wantTiming) { _T[k] = Date.now() - _t0; _t0 = Date.now(); } };
   try {
     const chit_id = req.params.chit_id;
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
@@ -1249,10 +1254,7 @@ router.get('/:chit_id', auth, async (req, res) => {
      * `?timing=1` returns a per-step breakdown instead of another guess. It costs one Date.now() per step and is
      * off unless asked for.
      */
-    const _wantTiming = String(req.query.timing || '') === '1';
-    const _T = {}; let _t0 = Date.now();
-    const _mark = (k) => { if (_wantTiming) { _T[k] = Date.now() - _t0; _t0 = Date.now(); } };
-    _mark('header_detail_log');
+    _mark('main_read');
 
     const _lines0 = (data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items))
       ? mint.order(data.detail.rows[0].line_items) : null;
