@@ -1491,7 +1491,21 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
 
     res.json({ ...out, ...(candidates.length ? { synonym_candidates: candidates } : {}) });
   } catch (err) {
-    console.error('Amend error:', err.message);
+    /**
+     * ⚠️ A CHECK-CONSTRAINT VIOLATION IS NOT AN INTERNAL FAILURE, AND REPORTING IT AS ONE COST THREE ROUNDS OF
+     * TESTING. `reason_code` is whitelisted in lib/amend.js AND constrained in the database — the same rule,
+     * written twice — so a value added to one and not the other produced a bare 500 saying "Something went wrong".
+     * From the screen it looked like the save button did nothing. Say which value the database refused, so the
+     * next time the two lists drift the message points straight at the drift.
+     */
+    if (err && err.code === '23514') {
+      console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
+      return res.status(409).json({ error: 'Not an accepted value',
+        message: /reason_code/.test(err.constraint || '')
+          ? 'That amendment reason is not accepted on this environment yet — b148 adds it.'
+          : 'The database refused one of these values: ' + (err.constraint || 'constraint violation') });
+    }
+    console.error('Amend error:', err.code || '', err.message);
     res.status(err.status || 500).json({ error: 'Failed to amend', message: safeErr(err) });
   }
 });
