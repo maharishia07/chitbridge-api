@@ -142,6 +142,22 @@ const ok = (cond, msg, detail) => { T.push({ ok: !!cond, msg, detail }); };
   ok(a.status === 200, '⭐ now 80 → 20 is ALLOWED — the guard tracks the signed total, not "was ever touched"',
     'status ' + a.status);
 
+  console.log('\nB3b · Omitting the unit is a CHANGE to nothing, not "leave it alone"');
+  const O = await send([{ particulars: 'Wheat', quantity: 100, unit: 'kg', price: 40 }], 'GOODS unit drop');
+  const ol = O.lines[0].line_id;
+  await event(O.id, [{ line_id: ol, quantity: 60, unit: 'kg' }]);
+  /* ⚠️ THE BYPASS THIS CLOSES, found by the e2e suite an hour after the guard was written. An amendment stores a
+     full REPLACEMENT line, so a payload with no `unit` writes NULL over "kg". Every existing kg delivery then
+     belongs to a different unit than the line, `delivered` computes as 0, and the below-delivered rule waves
+     through the exact reduction it exists to refuse. The screen never does this — amendSave copies the whole
+     live line — but the API accepted it from anything else, which is the class of hole that only appears when
+     something other than the screen calls in. */
+  a = await amend(O.id, [{ line_index: 0, line_id: ol,
+    line: { particulars: 'Wheat', quantity: 5 }, reason_code: 'quantity_change' }]);
+  ok(a.status === 409 && a.b.code === 'LINE_UNIT_LOCKED',
+    '⭐ dropping the unit while 60 kg is out: REFUSED — it would detach every delivery from the line',
+    'status ' + a.status + ' ' + (a.b && a.b.code));
+
   console.log('\nB4 · An untouched line is never guarded');
   const U = await send([{ particulars: 'Sugar', quantity: 50, unit: 'kg', price: 45 },
                         { particulars: 'Salt', quantity: 10, unit: 'kg', price: 20 }], 'GOODS untouched');
