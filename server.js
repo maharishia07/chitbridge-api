@@ -200,6 +200,8 @@ app.use('/api/kyb', require('./routes/kyb'));
 app.use('/api/forms', require('./routes/forms'));
 // b147 — a chit AS A SERVICE REQUEST: the SLA clock, and the PAUSE both parties can dispute.
 app.use('/api/service', require('./routes/service'));
+/* DEFINITIONS — an entity's own named things (b160). Loose while referenced, FROZEN BY VALUE when stamped. */
+app.use('/api/definitions', require('./routes/definitions'));
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
