@@ -2045,7 +2045,10 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
       /* b155 — one line's thread. Read through to_jsonb so the column may not exist yet: naming line_id directly
          raises 42703 and would take the whole message panel down before the migration runs. */
       const params = [chit_id];
-      if (req.query.line_id) { params.push(req.query.line_id); cond += ` AND to_jsonb(chit_messages)->>'line_id' = ${params.length}`; }
+      /* ⚠️ THE PLACEHOLDER IS "$" + THE INDEX. Written through a shell the dollar was eaten, leaving
+         `= 2` — a uuid compared against the integer two, which matches nothing and returns an empty thread
+         rather than an error. A filter that silently finds nothing looks exactly like "there are no notes". */
+      if (req.query.line_id) { params.push(req.query.line_id); cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length; }
       return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
     });
     if (result === null) return res.status(403).json({ error: 'Forbidden' });
