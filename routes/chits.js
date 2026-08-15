@@ -1542,16 +1542,30 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
        * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
        * (b150 wrote every delivery twice for exactly this reason).
        *
-       * ⚠️ SECURITY DEFINER IS NOT NEEDED AND NOT USED. state_log is written under withEntity(actor) but names
-       * the recipient entity explicitly; if RLS refuses a row the catch below logs and the delivery still stands.
-       * A notification that fails must never undo a movement of goods.
+       * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
+       * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
+       * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
+       * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
+       * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
+       * from the chit's participants and is never a parameter.
+       *
+       * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
+       * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
        */
       await withEntity(entity_id, (db) => db.query(
-        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         SELECT $1, s.entity_id, 'delivered_line', $3, $4, $5
-           FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) s`,
-        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
-         out.delivered.length + ' line(s) delivered: ' + d]));
+        'SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n',
+        [chit_id, 'delivered_line', req.identity.identity_id, req.identity.display_name,
+         out.delivered.length + ' line(s) delivered: ' + d]))
+        /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
+           entirely. The counterparty is not notified until the migration runs, which is the status quo. */
+        .catch(async (e) => {
+          if (!(e && e.code === '42883')) throw e;
+          return withEntity(entity_id, (db) => db.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
+            [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
+             out.delivered.length + ' line(s) delivered: ' + d]));
+        });
     } catch (e) { console.error('deliver state_log skipped:', e.message); }
     res.json(out);
   } catch (err) {
