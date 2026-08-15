@@ -86,11 +86,26 @@ async function login(email, name) {
   console.log('\n3 · ⚠️ retire, never delete');
   const del = await P.j('/api/definitions/' + id, { method: 'DELETE', ...me });
   ok('DELETE retires rather than deleting', del.status === 200 && del.b.retired === true, del.b);
+  /**
+   * ⚠️⚠️ AN ASSERTION ABOUT ABSENCE MUST CHECK THE STATUS CODE.
+   *
+   * This block originally read only "is my row in the array" — and an ERROR's empty array satisfies "not in the
+   * array" perfectly. The list route was answering 500 (an ambiguous `entity_id` across the LEFT JOIN) and this
+   * test reported it as a clean pass: "it leaves the default shelf" was true for entirely the wrong reason.
+   * The bug surfaced only because the NEXT assertion — the positive one — failed.
+   */
   const gone = await P.j('/api/definitions?kind=offer', me);
+  ok('the shelf actually answers (not a 500 masquerading as an empty list)', gone.status === 200, gone.status);
   const listed = (gone.b.definitions || []).filter((d) => d.definition_id === id);
-  ok('…so it leaves the default shelf', listed.length === 0, listed.length);
+  ok('…so it leaves the default shelf', gone.status === 200 && listed.length === 0, listed.length);
   const all = await P.j('/api/definitions?all=1', me);
-  ok('…but is still there when asked for', (all.b.definitions || []).some((d) => d.definition_id === id));
+  ok('?all=1 answers', all.status === 200, all.status);
+  ok('…and a retired definition is still there when asked for',
+     (all.b.definitions || []).some((d) => d.definition_id === id),
+     { status: all.status, rows: (all.b.definitions || []).length });
+  const onlyRetired = await P.j('/api/definitions?status=retired', me);
+  ok('…and ?status=retired finds it directly',
+     (onlyRetired.b.definitions || []).some((d) => d.definition_id === id), onlyRetired.status);
 
   const stillFreezes = await P.j('/api/definitions/freeze', { method: 'POST', ...me, body: { definition_ids: [id] } });
   ok('⚠️ …and a RETIRED definition still freezes — retiring means "stop offering", not "never happened"',

@@ -49,16 +49,24 @@ const MAX_NAME = 120, MAX_NOTE = 500;
 router.get('/', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    /**
+     * ⚠️⚠️ EVERY COLUMN IS QUALIFIED `d.` — the query LEFT JOINs definition_version, which also has `entity_id`,
+     * so a bare `entity_id = $1` is AMBIGUOUS and Postgres refuses the whole statement. The route answered 500.
+     *
+     * ⚠️ AND THE TEST DID NOT NOTICE, which is the more useful lesson. It asserted "is my row in the array" —
+     * and an error's empty array satisfies "not in the array" perfectly. A 500 read as a clean negative result.
+     * An assertion about ABSENCE has to check the status code too, or it passes on a broken endpoint.
+     */
     const params = [entity_id];
-    let where = 'entity_id = $1';
-    if (req.query.kind)   { params.push(String(req.query.kind));   where += ` AND kind = $${params.length}`; }
-    if (req.query.status) { params.push(String(req.query.status)); where += ` AND status = $${params.length}`; }
+    let where = 'd.entity_id = $1';
+    if (req.query.kind)   { params.push(String(req.query.kind));   where += ` AND d.kind = $${params.length}`; }
+    if (req.query.status) { params.push(String(req.query.status)); where += ` AND d.status = $${params.length}`; }
     /**
      * ⚠️ RETIRED IS HIDDEN BY DEFAULT BUT REACHABLE. `?status=retired` returns them, and `?all=1` returns
      * everything. A shelf that silently omits retired items is how someone re-creates a definition they already
      * retired — the same reasoning products.js applies to item status.
      */
-    else if (!req.query.all) where += ` AND status <> 'retired'`;
+    else if (!req.query.all) where += ` AND d.status <> 'retired'`;
 
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT d.*, v.rules, v.created_at AS version_at
