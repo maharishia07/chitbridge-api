@@ -79,8 +79,19 @@ router.get('/', auth, async (req, res) => {
         `SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]));
       seen = s.rows[0] && s.rows[0].seen;
     } catch (e) { /* pre-b157 — leave seen null and every row counts as new */ }
-    const fresh = seen ? result.rows.filter((r) => new Date(r.created_at) > new Date(seen)).length
-                       : result.rows.length;
+    /**
+     * ⚠️ MESSAGES ARE NOT COUNTED HERE — they have their own badge now.
+     *
+     * Measured on a real account: message_sent was 18 of 30 events, so 60% of this badge was counting things the
+     * Messages inbox was ALSO counting, on the same screen, at the same time. Two badges for one fact means
+     * clearing one leaves the other still shouting, and the person learns to trust neither.
+     *
+     * They still APPEAR in the panel — it is an activity feed and the history is worth having. They just do not
+     * drive the number.
+     */
+    const countable = (r) => r.action !== 'message_sent';
+    const fresh = (seen ? result.rows.filter((r) => new Date(r.created_at) > new Date(seen)) : result.rows)
+      .filter(countable).length;
     res.json({ notifications: result.rows, count: fresh, total: result.rows.length, seen_at: seen });
   } catch (err) {
     console.error('Notifications error:', err.message);
