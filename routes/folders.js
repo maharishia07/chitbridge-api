@@ -325,6 +325,20 @@ const assign = require('../lib/assign');
 router.get('/messages', auth, async (req, res) => {
   try {
     const all = req.query.all === '1' || req.query.all === 'true';
+    /**
+     * ⭐ ?count=1 — the badge, without the payload. Called on every app boot, so it must not drag 200 rows and
+     * two joins along to answer a question that is one integer. Unread only: a KEPT message is not news, and a
+     * badge that counted it would never fall to zero while anything was pinned.
+     */
+    if (req.query.count === '1' || req.query.count === 'true') {
+      const c = await withEntity(ent(req), (db) => db.query(
+        `SELECT count(*)::int AS n FROM chit_messages m
+          WHERE m.thread_type = 'external'
+            AND COALESCE(m.is_dispute, false) = false
+            AND m.sender_entity_id <> m.entity_id
+            AND to_jsonb(m)->>'read_at' IS NULL`));
+      return res.json({ count: (c.rows[0] && c.rows[0].n) || 0 });
+    }
     const rows = await withEntity(ent(req), async (db) => {
       /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
          gets every external message rather than a 500, which is the honest degradation. */
