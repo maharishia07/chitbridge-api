@@ -335,7 +335,19 @@ router.get('/messages', auth, async (req, res) => {
                 to_jsonb(m)->>'read_at'                            AS read_at,
                 COALESCE((to_jsonb(m)->>'kept')::boolean, false)   AS kept,
                 h.manual_subject, h.auto_subject,
-                l.particulars
+                l.particulars,
+                /**
+                 * ⭐ THE CHIT'S STATE TRAVELS WITH THE MESSAGE, BUT DOES NOT FILTER IT.
+                 *
+                 * ⚠️ AND THAT IS THE OPPOSITE OF THE WORKLIST, DELIBERATELY. There, a closed chit's lines are
+                 * removed — finished work is not work. Here, a message on a CLOSED chit is often the most
+                 * important thing in the inbox: "you marked it complete but the dal never came" arrives exactly
+                 * then, and an inbox that hid it would hide the one message that needed answering.
+                 *
+                 * So the status is shown, never used to drop a row. Verified live: both parties marked this chit
+                 * completed and three unread messages stayed — which is right, and was previously invisible.
+                 */
+                st.current_status AS chit_status
            FROM chit_messages m
            /* ⚠️ LATERAL + LIMIT 1. chit_header has no unique constraint on (entity_id, chit_id) and a self-chit
               holds two rows for one entity — a plain join here doubles every message. Third time this table has
@@ -345,6 +357,11 @@ router.get('/messages', auth, async (req, res) => {
               WHERE entity_id = m.entity_id AND chit_id = m.chit_id LIMIT 1) h ON true
            LEFT JOIN chit_line l
                   ON l.entity_id = m.entity_id AND l.chit_id = m.chit_id AND l.line_id = m.line_id
+           /* LATERAL again — chit_status has no unique constraint on (entity_id, chit_id) either. */
+           LEFT JOIN LATERAL (
+             SELECT current_status FROM chit_status
+              WHERE entity_id = m.entity_id AND chit_id = m.chit_id AND deleted_at IS NULL
+              ORDER BY updated_at DESC NULLS LAST LIMIT 1) st ON true
           WHERE m.thread_type = 'external'
             AND COALESCE(m.is_dispute, false) = false
             /* ⚠️ NOT MY OWN. An inbox that lists what I sent is a sent-box wearing an unread badge — the count
