@@ -307,6 +307,91 @@ router.get('/rules', auth, async (req, res) => {
  * not because it has anything to do with folders.
  */
 const assign = require('../lib/assign');
+/**
+ * ⭐ GET /api/folders/messages — EVERY EXTERNAL MESSAGE THAT STILL WANTS ME, ACROSS EVERY CHIT.
+ *
+ * Athi, 2026-08-15: *"is there any way we can bring all the external messages under one tab, which are not read
+ * yet … read, reply etc should be done there only"* and *"can we bring external new messages under rail?"*
+ *
+ * ⚠️ IT LIVES HERE FOR THE SAME REASON THE WORKLIST DOES: it is a folder-shaped question — one list assembled
+ * from every chit — and it is the one thing the per-chit message route structurally cannot answer. Someone with
+ * forty open orders had to open forty chits to find the two that had been replied to.
+ *
+ * ⚠️ NO ENTITY PARAMETER, ANYWHERE. withEntity(me) plus RLS decides which copies exist; a message row is mine
+ * only because b67 put it in my audience. There is no widening this query from the client.
+ *
+ * UNREAD or KEPT — see b156 on why those are two columns and not one flag.
+ */
+router.get('/messages', auth, async (req, res) => {
+  try {
+    const all = req.query.all === '1' || req.query.all === 'true';
+    const rows = await withEntity(entityId(req), async (db) => {
+      /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
+         gets every external message rather than a 500, which is the honest degradation. */
+      const cond = all ? '' : " AND (to_jsonb(m)->>'read_at' IS NULL OR (to_jsonb(m)->>'kept')::boolean) ";
+      const q = await db.query(
+        `SELECT m.message_id, m.chit_id, m.line_id, m.sender_display_name, m.sender_entity_id,
+                m.message_text, m.created_at, m.msg_type,
+                to_jsonb(m)->>'read_at'                            AS read_at,
+                COALESCE((to_jsonb(m)->>'kept')::boolean, false)   AS kept,
+                h.manual_subject, h.auto_subject,
+                l.particulars
+           FROM chit_messages m
+           /* ⚠️ LATERAL + LIMIT 1. chit_header has no unique constraint on (entity_id, chit_id) and a self-chit
+              holds two rows for one entity — a plain join here doubles every message. Third time this table has
+              had to be joined this way; the pattern is the fix, not a workaround. */
+           LEFT JOIN LATERAL (
+             SELECT manual_subject, auto_subject FROM chit_header
+              WHERE entity_id = m.entity_id AND chit_id = m.chit_id LIMIT 1) h ON true
+           LEFT JOIN chit_line l
+                  ON l.entity_id = m.entity_id AND l.chit_id = m.chit_id AND l.line_id = m.line_id
+          WHERE m.thread_type = 'external'
+            AND COALESCE(m.is_dispute, false) = false
+            /* ⚠️ NOT MY OWN. An inbox that lists what I sent is a sent-box wearing an unread badge — the count
+               would never fall, because nothing marks my own words as read for me. */
+            AND m.sender_entity_id <> m.entity_id
+            ${cond}
+          ORDER BY m.created_at DESC
+          LIMIT 200`);
+      return q.rows;
+    });
+    res.json({ messages: rows, count: rows.length });
+  } catch (err) {
+    console.error('messages inbox:', err);
+    res.status(500).json({ error: 'Failed', message: safeErr ? safeErr(err) : 'error' });
+  }
+});
+
+/**
+ * POST /api/folders/messages/:message_id/mark  { read?: bool, kept?: bool }
+ *
+ * ⚠️ THE ENTITY IS NEVER A PARAMETER. b156's definer reads it from the session, so a caller cannot mark the
+ * COUNTERPARTY's copy read — which would be both a lie about what they have seen and a way to make a message
+ * vanish from someone else's inbox. Exactly the "server trusts the client's claim about identity" pattern the
+ * reviewer named in July, refused up front this time.
+ */
+router.post('/messages/:message_id/mark', auth, async (req, res) => {
+  const id = String(req.params.message_id || '');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'Bad request', message: 'message_id must be a uuid' });
+  const read = ('read' in req.body) ? !!req.body.read : null;
+  const kept = ('kept' in req.body) ? !!req.body.kept : null;
+  try {
+    const n = await withEntity(entityId(req), (db) => db.query(
+      'SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS n', [id, read, kept]));
+    const touched = (n.rows[0] && Number(n.rows[0].n)) || 0;
+    /* 404 rather than a silent 200: a message id that matched nothing of MINE is either not mine or not real,
+       and both deserve to be said rather than reported as a successful no-op. */
+    if (!touched) return res.status(404).json({ error: 'Not found', message: 'No such message in your copies.' });
+    res.json({ ok: true, updated: touched });
+  } catch (err) {
+    if (err && err.code === '42883') {
+      return res.status(503).json({ error: 'Not migrated', message: 'Message read state needs b156 on this environment.' });
+    }
+    console.error('message mark:', err);
+    res.status(500).json({ error: 'Failed', message: safeErr ? safeErr(err) : 'error' });
+  }
+});
+
 router.get('/worklist', auth, async (req, res) => {
   try {
     const due = String(req.query.due_on || '').trim();
