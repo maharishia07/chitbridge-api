@@ -325,7 +325,7 @@ const assign = require('../lib/assign');
 router.get('/messages', auth, async (req, res) => {
   try {
     const all = req.query.all === '1' || req.query.all === 'true';
-    const rows = await withEntity(entityId(req), async (db) => {
+    const rows = await withEntity(ent(req), async (db) => {
       /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
          gets every external message rather than a 500, which is the honest degradation. */
       const cond = all ? '' : " AND (to_jsonb(m)->>'read_at' IS NULL OR (to_jsonb(m)->>'kept')::boolean) ";
@@ -376,7 +376,7 @@ router.post('/messages/:message_id/mark', auth, async (req, res) => {
   const read = ('read' in req.body) ? !!req.body.read : null;
   const kept = ('kept' in req.body) ? !!req.body.kept : null;
   try {
-    const n = await withEntity(entityId(req), (db) => db.query(
+    const n = await withEntity(ent(req), (db) => db.query(
       'SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS n', [id, read, kept]));
     const touched = (n.rows[0] && Number(n.rows[0].n)) || 0;
     /* 404 rather than a silent 200: a message id that matched nothing of MINE is either not mine or not real,
