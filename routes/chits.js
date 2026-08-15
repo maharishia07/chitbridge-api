@@ -1915,12 +1915,27 @@ async function postMessageCopies(msg, db) {
   // ROOT FIX (reviewer 2026-07-13): the deliver definer must run with the sender's TRUSTED context set, so it can
   // verify the claimed sender = the caller (b50 pattern) instead of trusting the parameter. When no tx client is
   // passed, establish withEntity(sender) here (all callers pass sender = their authenticated entity_id).
+  /* b155 — a message may name the LINE it is about. The audience is decided by the 9-arg form exactly as before;
+     the 10-arg form only stamps line_id onto the copies it created, so this cannot widen who sees anything. */
+  const args = [message_id, msg.chit_id, msg.sender_entity_id, msg.sender_display_name || null,
+                msg.thread_type, msg.message_text, msg.msg_type || 'info', !!msg.is_dispute, msg.dispute_id || null];
   const call = (runner) => runner(
-    `SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9) AS created_at`,
-    [message_id, msg.chit_id, msg.sender_entity_id, msg.sender_display_name || null,
-     msg.thread_type, msg.message_text, msg.msg_type || 'info', !!msg.is_dispute, msg.dispute_id || null]);
-  const r = db ? await call((t, p) => db.query(t, p))
-              : await withEntity(msg.sender_entity_id, (c) => call((t, p) => c.query(t, p)));
+    `SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS created_at`, args.concat([msg.line_id || null]));
+  /* ⚠️ FALL BACK TO THE 9-ARG FORM ONLY WHEN NO LINE WAS NAMED. Code ships before the migration by standing
+     order, so between this deploy and b155 the 10-arg function does not exist (42883). Retrying without it is
+     right for a chit-level message and WRONG for a line-scoped one — that would post the message to the thread
+     while silently losing which line it was about, which is worse than refusing it. */
+  const run = async (q) => {
+    try { return await call(q); }
+    catch (e) {
+      if (e && e.code === '42883' && !msg.line_id) {
+        return q(`SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9) AS created_at`, args);
+      }
+      throw e;
+    }
+  };
+  const r = db ? await run((t, p) => db.query(t, p))
+              : await withEntity(msg.sender_entity_id, (c) => run((t, p) => c.query(t, p)));
   return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
 }
 
@@ -1930,6 +1945,7 @@ router.post('/:chit_id/messages',
     body('thread_type').isIn(['external','internal']).withMessage('thread_type must be external or internal'),
     body('is_dispute').optional().isBoolean(),
     body('dispute_id').optional({ nullable:true }).isUUID(),
+    body('line_id').optional({ nullable:true }).isUUID(),
   ],
   validate,
   auth,
@@ -1972,7 +1988,8 @@ router.post('/:chit_id/messages',
 
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
       const result = await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: senderName,
-        thread_type, message_text, msg_type: req.body.msg_type, is_dispute: isDispute, dispute_id: disputeId });
+        thread_type, message_text, msg_type: req.body.msg_type, is_dispute: isDispute, dispute_id: disputeId,
+        line_id: req.body.line_id || null });
 
       // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
       // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
@@ -2025,7 +2042,11 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
       if (thread_filter === 'internal')      cond = ` AND COALESCE(is_dispute,false)=false AND thread_type='internal'`;
       else if (thread_filter === 'external') cond = ` AND ((COALESCE(is_dispute,false)=false AND thread_type='external') OR is_dispute=true)`;
       if (req.query.dispute === '1' || req.query.dispute === 'true') cond += ` AND is_dispute = true`;
-      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, [chit_id]);
+      /* b155 — one line's thread. Read through to_jsonb so the column may not exist yet: naming line_id directly
+         raises 42703 and would take the whole message panel down before the migration runs. */
+      const params = [chit_id];
+      if (req.query.line_id) { params.push(req.query.line_id); cond += ` AND to_jsonb(chit_messages)->>'line_id' = ${params.length}`; }
+      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
     });
     if (result === null) return res.status(403).json({ error: 'Forbidden' });
 
