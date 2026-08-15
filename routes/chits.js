@@ -1528,9 +1528,28 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
     try {
       const d = out.delivered.map((x) => x.quantity).join(', ');
+      /**
+       * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
+       *
+       * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
+       * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
+       * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
+       * badge stayed at zero and the event never appeared in the feed at all.
+       *
+       * That is the most important event this product has. Goods moved, and the other side was not told.
+       *
+       * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
+       * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
+       * (b150 wrote every delivery twice for exactly this reason).
+       *
+       * ⚠️ SECURITY DEFINER IS NOT NEEDED AND NOT USED. state_log is written under withEntity(actor) but names
+       * the recipient entity explicitly; if RLS refuses a row the catch below logs and the delivery still stands.
+       * A notification that fails must never undo a movement of goods.
+       */
       await withEntity(entity_id, (db) => db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
+         SELECT $1, s.entity_id, 'delivered_line', $3, $4, $5
+           FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) s`,
         [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
          out.delivered.length + ' line(s) delivered: ' + d]));
     } catch (e) { console.error('deliver state_log skipped:', e.message); }
@@ -2861,7 +2880,9 @@ router.post('/assign-bulk',
             // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the
             // derived notifications feed (assigned_to_me) — step (d) of the workflow.
             `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
+             /* DISTINCT — a self-chit holds two chit_status rows for one entity, so this wrote the same
+                assignment event twice. The read side now dedupes it, but writing it twice was still wrong. */
+             SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $5) s`,
             [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`, entity_id]);
           assigned.push(chit_id);
         }
