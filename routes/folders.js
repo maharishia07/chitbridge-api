@@ -325,20 +325,53 @@ const assign = require('../lib/assign');
 router.get('/messages', auth, async (req, res) => {
   try {
     const all = req.query.all === '1' || req.query.all === 'true';
+    const isActor = req.identity && req.identity.identity_type === 'actor';
+    const actorId = isActor ? String(req.identity.identity_id) : null;
+    const params = [];
+    const actorCond = isActor ? (params.push(actorId), `
+            AND EXISTS (
+              SELECT 1 FROM chit_line_assignment a
+               WHERE a.entity_id = m.entity_id
+                 AND a.chit_id   = m.chit_id
+                 AND a.assignee_actor_id = $${params.length}::uuid
+                 AND (m.line_id IS NULL OR a.line_id = m.line_id)
+                 /* the LATEST assignment for that line — a line handed on is no longer theirs */
+                 AND a.seq = (SELECT MAX(s.seq) FROM chit_line_assignment s
+                               WHERE s.entity_id = a.entity_id AND s.chit_id = a.chit_id AND s.line_id = a.line_id))`) : '';
     /**
      * ⭐ ?count=1 — the badge, without the payload. Called on every app boot, so it must not drag 200 rows and
      * two joins along to answer a question that is one integer. Unread only: a KEPT message is not news, and a
      * badge that counted it would never fall to zero while anything was pinned.
      */
     if (req.query.count === '1' || req.query.count === 'true') {
+      /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST. A badge counting conversations the actor cannot open would send
+         them to a screen that says "nothing new" — and worse, it would leak HOW MANY customer conversations the
+         business is having, which is the thing the scope exists to withhold. */
       const c = await withEntity(ent(req), (db) => db.query(
         `SELECT count(*)::int AS n FROM chit_messages m
           WHERE m.thread_type = 'external'
             AND COALESCE(m.is_dispute, false) = false
             AND m.sender_entity_id <> m.entity_id
-            AND to_jsonb(m)->>'read_at' IS NULL`));
+            AND to_jsonb(m)->>'read_at' IS NULL
+            ${actorCond}`, params));
       return res.json({ count: (c.rows[0] && c.rows[0].n) || 0 });
     }
+    /**
+     * ── ⚠️ AN ACTOR SEES ONLY CONVERSATIONS ABOUT WORK THEY HOLD ────────────────────────────────────────────
+     *
+     * Athi, 2026-08-15: *"can you check all sides, like actor replying, and how does it filter for actors?"*
+     *
+     * ⚠️ AND WITHOUT THIS IT FILTERED FOR NOBODY. ent(req) resolves an actor to their PARENT ENTITY, so every
+     * co-assist opening this screen would read every customer conversation in the business — pricing arguments,
+     * complaints, the lot. RLS cannot catch it: every row belongs to the same entity, which is precisely what RLS
+     * scopes to. The boundary here is between two people INSIDE one business, and only this route knows it
+     * exists. Exactly the hole the worklist had, in a place where the content is far more sensitive.
+     *
+     * The rule matches the worklist's: the caller's own actor id WINS when the caller is an actor, and is never
+     * a parameter they can set. A line message reaches them if the line is theirs; a chit-wide message reaches
+     * them if they hold ANY line on that chit — otherwise "ring me before you load" would be invisible to the
+     * person actually loading.
+     */
     const rows = await withEntity(ent(req), async (db) => {
       /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
          gets every external message rather than a 500, which is the honest degradation. */
@@ -349,6 +382,9 @@ router.get('/messages', auth, async (req, res) => {
                 to_jsonb(m)->>'read_at'                            AS read_at,
                 COALESCE((to_jsonb(m)->>'kept')::boolean, false)   AS kept,
                 h.manual_subject, h.auto_subject,
+                /* 'order' = a chit I sent · 'task' = one I received. The same two words the rail uses, so the
+                   chip on a message and the tab it belongs to cannot drift apart. */
+                CASE WHEN h.direction = 'sent' THEN 'order' ELSE 'task' END AS track,
                 l.particulars,
                 /**
                  * ⭐ THE CHIT'S STATE TRAVELS WITH THE MESSAGE, BUT DOES NOT FILTER IT.
@@ -366,9 +402,22 @@ router.get('/messages', auth, async (req, res) => {
            /* ⚠️ LATERAL + LIMIT 1. chit_header has no unique constraint on (entity_id, chit_id) and a self-chit
               holds two rows for one entity — a plain join here doubles every message. Third time this table has
               had to be joined this way; the pattern is the fix, not a workaround. */
+           /**
+            * ⭐ WHICH TRACK THE CONVERSATION BELONGS TO — Athi, 2026-08-15: *"messages are for both task and
+            * order, or only for order? How do we differentiate — is it for my order, or is this a task message?"*
+            *
+            * ⚠️ THE INBOX NEVER CARRIED IT, and the two are different work: "did they answer MY order" and "the
+            * customer said something about the job they gave me" arrive in the same list looking identical.
+            * chit_header.direction already decides it everywhere else — 'sent' is Order, 'received' is Task.
+            *
+            * ⚠️ ORDER BY direction, NOT A BARE LIMIT 1. A self-chit holds BOTH rows for one entity, so an
+            * unordered pick would label the same conversation Order on one refresh and Task on the next. Sent
+            * wins, matching how the chit list itself resolves the same ambiguity.
+            */
            LEFT JOIN LATERAL (
-             SELECT manual_subject, auto_subject FROM chit_header
-              WHERE entity_id = m.entity_id AND chit_id = m.chit_id LIMIT 1) h ON true
+             SELECT manual_subject, auto_subject, direction FROM chit_header
+              WHERE entity_id = m.entity_id AND chit_id = m.chit_id
+              ORDER BY (direction = 'sent') DESC LIMIT 1) h ON true
            LEFT JOIN chit_line l
                   ON l.entity_id = m.entity_id AND l.chit_id = m.chit_id AND l.line_id = m.line_id
            /* LATERAL again — chit_status has no unique constraint on (entity_id, chit_id) either. */
@@ -382,8 +431,9 @@ router.get('/messages', auth, async (req, res) => {
                would never fall, because nothing marks my own words as read for me. */
             AND m.sender_entity_id <> m.entity_id
             ${cond}
+            ${actorCond}
           ORDER BY m.created_at DESC
-          LIMIT 200`);
+          LIMIT 200`, params);
       return q.rows;
     });
     res.json({ messages: rows, count: rows.length });
