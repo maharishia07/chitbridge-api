@@ -1309,7 +1309,12 @@ router.get('/:chit_id', auth, async (req, res) => {
                   asked_as, asked_unit, raw_phrase, removed, removed_reason, needs_human, flags
              FROM chit_line WHERE entity_id = $1 AND chit_id = $2 ORDER BY seq, line_id) x)               AS lines,
         (SELECT coalesce(json_agg(x), '[]'::json) FROM (
-           SELECT line_id, seq, assignee_actor_id, assignee_name, assignee_type, task, due_date, note, created_at
+           -- ⚠️ THE COLUMN LIST HERE IS THE ONE THAT COUNTS. assign.current() has its own SELECT, but it is only
+           -- the fallback — this CTE is what actually serves the chit screen, so adding a column to that query
+           -- alone changes nothing and looks exactly like a deploy that has not landed. b153's state column was
+           -- there first and spent a quarter of an hour being mistaken for a slow Railway build.
+           SELECT line_id, seq, assignee_actor_id, assignee_name, assignee_type, task, due_date, note, created_at,
+                  COALESCE(to_jsonb(chit_line_assignment)->>'state', 'open') AS state
              FROM chit_line_assignment WHERE entity_id = $1 AND chit_id = $2 ORDER BY line_id, seq) x)    AS assignments,
         (SELECT coalesce(json_agg(x), '[]'::json) FROM (
            SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
