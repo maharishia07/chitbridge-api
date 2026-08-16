@@ -1024,6 +1024,88 @@ router.post('/photo-extract', auth, async (req, res) => {
   }
 });
 
+/**
+ * ⭐⭐ PRODUCT ENQUIRY — ask about an item before there is a chit (backlog 9, CASE 2 ONLY).
+ *
+ * Athi: *"need to have a quick enquiry about the product or details about it… it is an enquiry."*
+ *
+ * b161 generalised the anchor; b162 added `enquiry_message_deliver`. This is the surface. An enquiry is the SAME
+ * object as a chit message with a different subject — one thread engine, one inbox, one renderer — which is why
+ * it lives on `chit_messages` and not in a `product_enquiry` table that would need read state, threading, per-copy
+ * delivery and RLS all over again, and would drift from the one that already has them.
+ *
+ * ⚠️ CASE 2 ONLY — business → supplier, both sides CB entities with inboxes. A public storefront customer is not
+ * an entity and has no inbox; answering them needs channel-outbound, which has no receipt yet. Shipping the
+ * inbound half alone would invite a conversation on the storefront that the business cannot hold up its end of.
+ * Cases 1 and 4 ship together, after outbound is proven.
+ *
+ * ⚠️ TWO GATES, ON PURPOSE. The route applies the FULL visibility rule (`buildPublicView`, which honours the plan
+ * cap and network membership); the definer applies a stricter necessary condition that cannot be bypassed. The
+ * route can be wrong and the floor still holds; the floor can be conservative and the route still allows what it
+ * should. Neither is a copy of the other.
+ */
+const enquiryLimitCheck = async (viewer, item_id) => {
+  const it = await query('SELECT item_id, entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id]);
+  if (!it.rows[0]) return { ok: false };
+  const owner_id = it.rows[0].entity_id;
+  if (owner_id === viewer) return { ok: true, owner_id };          // your own product
+  const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
+  if (!ent.rows[0]) return { ok: false };
+  const view = await catalogueView.buildPublicView({
+    entity: ent.rows[0], query, withEntity, catalogueBuild, orderInput,
+    identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
+    container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'), viewer,
+  }).catch(() => null);
+  return (view && view.available !== false) ? { ok: true, owner_id } : { ok: false };
+};
+
+router.get('/enquiry/:item_id', auth, async (req, res) => {
+  try {
+    const me = req.identity.parent_entity_id || req.identity.identity_id;
+    /* ⚠️ NO VISIBILITY GATE ON THE READ, and that is correct: RLS already returns only THIS entity's own copies.
+       You can only read a thread you were delivered into, so there is nothing extra to check and nothing to
+       leak — asking about a product you were never part of returns an empty list, exactly like one with no
+       messages. */
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT * FROM chit_messages
+        WHERE subject_type = 'product' AND subject_id = $1
+        ORDER BY created_at ASC`, [req.params.item_id]));
+    res.json({ messages: r.rows, count: r.rows.length });
+  } catch (err) {
+    /* b161/b162 not applied on this deployment → an empty thread, not a broken screen. */
+    if (err && (err.code === '42703' || err.code === '42883')) return res.json({ messages: [], count: 0, migrated: false });
+    res.status(500).json({ error: 'Enquiry read failed', message: safeErr(err) });
+  }
+});
+
+router.post('/enquiry/:item_id', auth,
+  [ body('message_text').trim().notEmpty().withMessage('Message text required'),
+    body('thread_type').optional().isIn(['external', 'internal']) ],
+  validate,
+  async (req, res) => {
+    try {
+      const me = req.identity.parent_entity_id || req.identity.identity_id;
+      const gate = await enquiryLimitCheck(me, req.params.item_id);
+      /* ⚠️ 404, NOT 403. "You may not ask about this" and "this does not exist" must be the same answer, or the
+         difference is an existence oracle over the item-id space — the same lesson the storefront learned when
+         a private shop said "no public catalogue" and a missing one said "not found". */
+      if (!gate.ok) return res.status(404).json({ error: 'Not found', message: 'No such product' });
+
+      const message_id = uuidv4();
+      const r = await withEntity(me, (db) => db.query(
+        `SELECT enquiry_message_deliver($1,$2,$3,$4,$5,$6,$7) AS created_at`,
+        [message_id, req.params.item_id, me, req.identity.display_name || null,
+         req.body.thread_type === 'internal' ? 'internal' : 'external',
+         req.body.message_text, req.body.msg_type || 'info']));
+      res.status(201).json({ message_id, created_at: r.rows[0] && r.rows[0].created_at });
+    } catch (err) {
+      if (err && err.code === '42883') {
+        return res.status(503).json({ error: 'Not migrated', message: 'Product enquiries need b162 — not applied on this deployment.' });
+      }
+      res.status(500).json({ error: 'Enquiry failed', message: safeErr(err) });
+    }
+  });
+
 module.exports = router;
 module.exports.resolveContact = resolveContact;   // exported for unit tests (F2 channel detection)
 module.exports.crHandle = crHandle;               // exported for unit tests (collision-free .cr handle)
