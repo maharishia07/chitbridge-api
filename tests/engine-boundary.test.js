@@ -125,13 +125,8 @@ const PENDING_LIBS = [];
  * everything was fixed. The test below asserts this list is ACCURATE in both directions, so it cannot quietly rot.
  */
 const UNWIRED = [
-  /* ⚠ units.js — BUILT AND TESTED (6 assertions), WIRED TO NOTHING, 2026-08-16. The one place it belongs is
-     lib/consolidate.js, which is LOCKED engine code on the money path, so the two-line change is written up in
-     BACKLOG-autonomous.md §30 and waits for Athi rather than being applied unattended.
-     ⚠ THE CONSEQUENCE IS LIVE AND SHOULD NOT BE SOFTENED: group sum still cannot total `0 kg + 8 கிலோ`, and six
-     items on the real account remain un-summable. The module existing is not the bug being fixed.
-     Remove this entry the moment consolidate.js requires it. */
-  'lib/units.js',
+  /* units.js was here from 2026-08-16 to 2026-08-17 while it was built-but-unwired. consolidate.js now requires
+     it, so it is live and this test derives that — exactly the mechanism working as intended. */
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //
