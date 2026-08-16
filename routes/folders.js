@@ -506,10 +506,17 @@ router.get('/groupsum', auth, async (req, res) => {
     const me = ent(req);
     const flags = await policy.get(me);
     const fid = String(req.query.folder_id || '').trim();
+    /* ⭐ Optional ticked selection. ⚠️ VALIDATE THE SHAPE AND CAP THE COUNT before it reaches the lib: only
+       well-formed uuids pass, so a junk id can never reach a query, and 500 is far above any real selection
+       (paging is 50) while keeping an unbounded list out of the request. The lib INTERSECTS these with the
+       caller's own rows, so this parameter can only ever narrow what they could already see. */
+    const ids = String(req.query.chit_ids || '').split(',')
+      .map((s) => s.trim()).filter((s) => /^[0-9a-f-]{36}$/i.test(s)).slice(0, 500);
     res.json(await groupsum.requirement(me, {
       scope: req.query.scope === 'order' ? 'order' : 'task',
       folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
       archived: req.query.archived === '1',
+      chit_ids: ids.length ? ids : undefined,
       overdue_days: flags.overdue_days,
     }));
   } catch (err) { console.error('groupsum:', err.message); res.status(500).json({ error: 'Group sum failed', message: safeErr(err) }); }
