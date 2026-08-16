@@ -12,6 +12,7 @@ const trace = require('../lib/trace');
 const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
+const policy = require('../lib/policy');   // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
 const deliverline = require('../lib/deliverline');
 const cost = require('../lib/cost');
 const reprice = require('../lib/reprice'); // pull catalogue prices onto a chit — as AMENDMENTS, never a silent edit // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
@@ -463,6 +464,28 @@ router.post('/send',
         else if (DEFAULT_RETENTION_DAYS) { exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString(); src = 'default'; days = DEFAULT_RETENTION_DAYS; }
         if (exp) retention = { expires_at: exp, retention_days: days, source: src };
       }
+      /**
+       * ⚠️⚠️ RETENTION IS PER COPY, AND EACH COPY'S OWNER SETS ITS FLOOR (backlog 11).
+       *
+       * `retention` above rides on the SHARED summary — it is the sender's DECLARATION, and until now that is
+       * all it was: nothing in the codebase wrote `chit_status.retention_expires_at`, so every copy silently
+       * took the schema default. Applying the declaration without a floor would have handed a sender the power
+       * to set an expiry on the RECEIVER's copy, which is the spoofing route this guards.
+       *
+       * ⚠️ MAX, NEVER MIN. A counterparty may ask you to keep a record longer than your floor and you will; they
+       * can never make your copy disappear sooner. And it is computed PER COPY on purpose — the two parties may
+       * legitimately differ, which is the entire point of a per-copy model.
+       *
+       * ⚠️ Nothing deletes yet (retire is Ph2, purge Ph3, both human-gated), so this ships the guard BEFORE the
+       * thing it guards — which is the only order in which it is worth building.
+       */
+      const _reqDays = (retention && retention.retention_days) ? +retention.retention_days : null;
+      const retainDaysFor = async (owner_id) => {
+        let floor = 90;
+        try { const f = await policy.get(owner_id); if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days; }
+        catch (_) { /* unreadable policy → keep the schema default; never shorten on an error */ }
+        return Math.max(floor, _reqDays || 0);
+      };
       // ── assimilation seam: resolve the boilerplate for this send — constitution + capability + pattern + the canonical
       //    SHARED standard (ISO 9000) — and stamp the lineage. Best-effort: never blocks the send. This is the mint
       //    assimilating a per-brand context AND a shared source into one chit (routes send-chit through the seam). ──
@@ -673,9 +696,11 @@ router.post('/send',
            line_items.length > 0 ? JSON.stringify(line_items) : null, 'sent']
         );
         await client.query(
-          `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag)
-           VALUES ($1,$2,'delivered','sent',$3)`,
-          [chit_id, sender_id, 'normal']  // internal priority starts normal; each party sets its own (external rides on summary_json)
+          `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
+                                    retention_expires_at, retire_at)
+           VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
+          // internal priority starts normal; each party sets its own (external rides on summary_json)
+          [chit_id, sender_id, 'normal', String(await retainDaysFor(sender_id))]
         );
         await client.query(
           `INSERT INTO state_log
@@ -716,9 +741,12 @@ router.post('/send',
              line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']
           );
           await client.query(
-            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction)
-             VALUES ($1,$2,$3,'received')`,
-            [chit_id, receiver.entity_id, rcv_status]
+            /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's — resolved per receiver, so ten recipients with ten
+               different retention policies each keep their copy for their own minimum. */
+            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction,
+                                      retention_expires_at, retire_at)
+             VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
+            [chit_id, receiver.entity_id, rcv_status, String(await retainDaysFor(receiver.entity_id))]
           );
           await client.query(
             `INSERT INTO state_log
