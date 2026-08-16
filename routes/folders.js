@@ -598,4 +598,55 @@ router.get('/reconcile', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Reconcile failed', message: safeErr(err) }); }
 });
 
+/**
+ * ⭐⭐ GET /api/folders/mis — THE SAME MEASUREMENT MIS WAS COMPUTING FOR ITSELF (backlog 29).
+ *
+ * Athi, 2026-08-16: *"if we have it in MIS, we have to reuse"* → *"backlog metrics, bring uniformity."*
+ *
+ * There were THREE implementations of "open / overdue / ageing / unread". Two already agreed, because
+ * lib/measure.js is shared by the folder Metrics pane and the counterparty scorecard — with the reason written
+ * on the endpoint: so a folder and a supplier can never disagree about what open or overdue means. MIS was the
+ * third, computing from `inbox`/`sent` in the browser.
+ *
+ * ⚠️⚠️ AND THE DRIFT WAS ALREADY REAL, not hypothetical. `overdue` is a POLICY — `overdue_days`, set in
+ * Settings, obeyed by the folder pane and the scorecard. **MIS never mentioned overdue at all.** The screen
+ * titled "What is stuck?" did not know what late meant, so setting overdue to 3 days changed every other
+ * surface and left MIS exactly as it was.
+ *
+ * ⚠️ THE DIRECTION ONLY GOES ONE WAY. MIS consumes the server's measurement; the logic is NOT moved into the
+ * browser to be "shared" there, because that would take the folder pane and the scorecard off the definition
+ * they already agree on. One authority, three consumers.
+ *
+ * ⚠️ Both directions in ONE response, measured over ONE read. `all` is not the sum of `received` and `sent` —
+ * it is measure() over the whole array, so medians and rates are computed across the real population rather
+ * than averaged from two halves, which is the classic way a "combined" figure becomes quietly wrong.
+ */
+router.get('/mis', auth, async (req, res) => {
+  try {
+    const me = ent(req);
+    const flags = await policy.get(me);
+    const opts = { overdue_days: flags.overdue_days };
+    /* ⚠️ THE PERIOD MUST TRAVEL WITH THE QUESTION. MIS has a window selector (all · 30d · 90d). If it showed
+       "last 30 days" beside a figure measured over all time, wiring MIS to this endpoint would fix one
+       disagreement by creating another — and a subtler one, because both numbers would look authoritative.
+       Validated as a date; anything unparseable is ignored rather than guessed at. */
+    const sinceRaw = String(req.query.since || '').trim();
+    const since = sinceRaw && !Number.isNaN(Date.parse(sinceRaw)) ? sinceRaw : undefined;
+    /* ⚠️ ONE read, then partitioned — counting the halves separately is how two numbers come to disagree.
+       Same discipline as /reconcile above, and the same limit. */
+    const rows = await select.rows(me, { limit: 5000, since });
+    const received = rows.filter((r) => r.direction === 'received');
+    const sent = rows.filter((r) => r.direction === 'sent');
+    res.json({
+      overdue_days: flags.overdue_days,
+      /* ⚠️ Echoed back so the caller can prove the window it asked for is the window it got — an ignored `since`
+         would otherwise be indistinguishable from an empty one. */
+      since: since || null,
+      all: measure.measure(rows, opts),
+      received: measure.measure(received, opts),
+      sent: measure.measure(sent, opts),
+    });
+  } catch (err) { console.error('mis:', err.message); res.status(500).json({ error: 'MIS failed', message: safeErr(err) }); }
+});
+
 module.exports = router;
