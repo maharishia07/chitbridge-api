@@ -41,6 +41,11 @@ const TIER_A = [
   'lib/order-input.js',      // the declaration: 7 presets, schema fragment, documents, sources
   'lib/form-handshake.js',   // document → field, with provenance; coverage() at design time
   'lib/money.js',            // { amount, currency }; never converts
+  /* ⚠️ THE SIBLING OF money.js, AND FOR THE SAME REASON: it never converts. units.js folds spellings of one unit
+     onto one name (கிலோ → kg) and is forbidden from ever relating two DIFFERENT units (crate → kg), because that
+     needs a factor and a factor is entity-specific. A rename is engine vocabulary; a conversion is a declaration.
+     Zero dependencies, pure data + one fold — Tier A. */
+  'lib/units.js',            // unit aliases: one unit, many spellings; never converts
 ];
 
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
@@ -120,6 +125,13 @@ const PENDING_LIBS = [];
  * everything was fixed. The test below asserts this list is ACCURATE in both directions, so it cannot quietly rot.
  */
 const UNWIRED = [
+  /* ⚠ units.js — BUILT AND TESTED (6 assertions), WIRED TO NOTHING, 2026-08-16. The one place it belongs is
+     lib/consolidate.js, which is LOCKED engine code on the money path, so the two-line change is written up in
+     BACKLOG-autonomous.md §30 and waits for Athi rather than being applied unattended.
+     ⚠ THE CONSEQUENCE IS LIVE AND SHOULD NOT BE SOFTENED: group sum still cannot total `0 kg + 8 கிலோ`, and six
+     items on the real account remain un-summable. The module existing is not the bug being fixed.
+     Remove this entry the moment consolidate.js requires it. */
+  'lib/units.js',
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //
