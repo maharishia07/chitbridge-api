@@ -126,6 +126,118 @@ router.delete('/suppliers/:id', auth, async (req, res) => {
   }
 });
 
+/**
+ * ⭐⭐ GET /api/relationships/suppliers/availability?q=<text> — ONE QUESTION, EVERY SUPPLIER (backlog 8).
+ *
+ * Athi, 2026-08-16: *"do we have a chance to seach the product under all the suppliers, similar to network?"* →
+ * *"we need to have endpoint, keep it as backlog and build it."*
+ *
+ * Shipped first as a CLIENT-SIDE FAN-OUT — the browser fetched every supplier's whole catalogue and filtered
+ * locally. Correct and honest, and the wrong shape past a couple of dozen suppliers: N sequential whole-catalogue
+ * round trips to answer one word.
+ *
+ * ── THE THREE-STATE ANSWER IS THE WHOLE VALUE ───────────────────────────────────────────────────────────────────
+ * `has` · `nocat` · `miss`, and they must stay three.
+ *   · **has**   — their catalogue was read and the product is in it
+ *   · **nocat** — they have published no catalogue, so WE CANNOT TELL. Not "no".
+ *   · **miss**  — their catalogue was read and the product is not in it. This one IS "no".
+ * ⚠️ Collapsing `nocat` into `miss` is the same lie as drawing an unreported store as 0 stock in
+ * lib/availability.js — *absent is not zero*, and a buyer who is told "nobody stocks it" will stop looking.
+ * `err` is a fourth state for the same reason: a read that FAILED is not a supplier who does not stock it.
+ *
+ * ── ACCESS: PUBLIC TIER, DELIBERATELY ───────────────────────────────────────────────────────────────────────────
+ * ⚠️ This calls the SAME `buildPublicView` the anonymous storefront uses, with the same viewer, so it returns no
+ * more than anyone could read without a session. That is load-bearing, not incidental: adding a supplier is
+ * UNILATERAL (see POST /suppliers — no consent from the supplier), so "related" is SELF-ASSERTED and must not
+ * authorise anything. ⚠️ A server-side join is exactly where that would quietly widen, because nothing on screen
+ * would show it had. A tier that shows more needs bilateral consent, which supplier_list does not model.
+ *
+ * ⚠️ Declared BEFORE `/suppliers/:supplier_entity_id/...` so a literal path can never be read as an id.
+ */
+const AVAIL_CONCURRENCY = 6;      // enough to hide latency, low enough not to stampede our own DB
+const AVAIL_HITS_PER_SUPPLIER = 6;
+router.get('/suppliers/availability', auth, async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const q = String(req.query.q || '').trim().toLowerCase();
+    /* Two characters, same floor as the panel. A one-letter query matches most catalogues and answers nothing. */
+    if (q.length < 2) return res.json({ q, results: [], count: 0, searched: 0 });
+
+    const sup = await query(
+      /* ⚠️ The SAME columns the single-catalogue route selects. buildPublicView reads `business_status` for the
+         shop block; selecting a narrower row here would build a subtly different view from the same resolver. */
+      `SELECT sl.supplier_list_id, sl.nickname, sl.preferred,
+              i.identity_id AS supplier_entity_id, i.bridge_id, i.display_name, i.currency_code,
+              i.business_status,
+              EXISTS (SELECT 1 FROM entity_schemas es
+                      WHERE es.entity_id = i.identity_id
+                        AND es.status = 'active' AND es.is_default = true) AS has_catalogue
+         FROM supplier_list sl
+         JOIN identities i ON i.identity_id = sl.supplier_entity_id
+        WHERE sl.owner_entity_id = $1
+          AND COALESCE(i.sealed, false) = false
+        ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]);
+
+    const viewer = req.identity && req.identity.bridge_id;
+    const deps = { query, withEntity, catalogueBuild, orderInput,
+      identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
+      container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'), viewer };
+
+    const matches = (p) => {
+      const d = (p && p.item_data) || p || {};
+      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(q) >= 0;
+    };
+
+    const one = async (s) => {
+      const base = { supplier_list_id: s.supplier_list_id, supplier_entity_id: s.supplier_entity_id,
+                     bridge_id: s.bridge_id, display_name: s.display_name, nickname: s.nickname,
+                     preferred: s.preferred, currency: s.currency_code || null };
+      if (!s.has_catalogue) return Object.assign(base, { state: 'nocat', hits: [] });
+      try {
+        const view = await catalogueView.buildPublicView(Object.assign({ entity: {
+          identity_id: s.supplier_entity_id, display_name: s.display_name, bridge_id: s.bridge_id,
+          currency_code: s.currency_code, business_status: s.business_status } }, deps));
+        /* ⚠️ `available:false` is NOT `miss`. The schema exists but the shop is not showing — that is the same
+           "cannot tell" as having published nothing, and reporting it as "does not stock it" would be a guess. */
+        if (!view.available) return Object.assign(base, { state: 'nocat', hits: [] });
+        const hits = (view.items || []).filter(matches);
+        return Object.assign(base, {
+          state: hits.length ? 'has' : 'miss',
+          /* ⚠️ `currency_code`, not `currency` — that is the key buildPublicView emits (catalogue-view.js:288).
+             Reading `.currency` would have silently fallen through to the identities column, which is usually
+             the same value, so the mistake would have been invisible until a shop overrode it. */
+          currency: (view.shop && view.shop.currency_code) || s.currency_code || null,
+          total_items: (view.items || []).length,
+          hits: hits.slice(0, AVAIL_HITS_PER_SUPPLIER).map((p) => {
+            const d = (p && p.item_data) || p || {};
+            return { item_id: p.item_id || null, name: d.name || d.product || 'item',
+                     unit: d.unit || 'unit', price: d.price == null ? null : d.price,
+                     code: d.code || d.sku || d.hsn || null };
+          }),
+          more: Math.max(0, hits.length - AVAIL_HITS_PER_SUPPLIER),
+        });
+      } catch (e) {
+        /* ⚠️ One unreadable supplier must not fail the whole answer — the other forty are still worth having. */
+        return Object.assign(base, { state: 'err', hits: [], error: safeErr(e) });
+      }
+    };
+
+    /* Bounded concurrency: the client's version was strictly sequential, which is what made 50 suppliers slow. */
+    const rows = sup.rows, results = new Array(rows.length);
+    let next = 0;
+    await Promise.all(Array.from({ length: Math.min(AVAIL_CONCURRENCY, rows.length) }, async () => {
+      for (;;) {
+        const i = next++; if (i >= rows.length) return;
+        results[i] = await one(rows[i]);
+      }
+    }));
+
+    res.json({ q, results, count: results.filter((r) => r && r.state === 'has').length, searched: rows.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Supplier availability failed', message: safeErr(err) });
+  }
+});
+
 // Fetch a supplier's catalogue (schema fields + products) to draft an order chit (D-059).
 // Mirrors the PHP supplierCompose flow: select supplier -> see their catalogue -> compose.
 router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) => {
