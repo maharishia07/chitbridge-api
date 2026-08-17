@@ -69,3 +69,39 @@ test('no spelling is claimed by two different canonical units', () => {
     }
   }
 });
+
+test('⚠️⚠️ THE LANGUAGE TAG IS FOR READING, NOT MATCHING', () => {
+  const { LANGS, aliasesIn } = require('../lib/units');
+  // Every language folds, always — a screen showing Hindi must not stop Tamil resolving.
+  assert.strictEqual(normUnit('கிலோ'), 'kg', 'Tamil');
+  assert.strictEqual(normUnit('किलो'), 'kg', 'Hindi');
+  assert.strictEqual(normUnit('kilos'), 'kg', 'English');
+  // aliasesIn is a VIEW helper: it narrows what is listed and nothing else.
+  assert.ok(aliasesIn('kg', 'hi').includes('किलो'));
+  assert.ok(!aliasesIn('kg', 'hi').includes('கிலோ'), 'a language view lists only that language');
+  assert.ok(aliasesOf('kg').includes('கிலோ') && aliasesOf('kg').includes('किलो'),
+    'the flat list still spans every language');
+  assert.ok(LANGS.length >= 3 && LANGS.every((l) => l.code && l.label));
+});
+
+test('⚠️ पेटी IS DELIBERATELY NOT AN ALIAS OF box', () => {
+  // peti commonly means a CRATE, which holds a different quantity. Folding it onto `box` would be inventing a
+  // conversion rather than recording a rename — the one thing this table may never do.
+  assert.strictEqual(normUnit('पेटी'), 'पेटी');
+  assert.ok(!aliasesOf('box').includes('पेटी'));
+});
+
+test('no spelling is claimed by two units, ACROSS languages', () => {
+  const { ALIASES } = require('../lib/units');
+  const seen = new Map();
+  for (const canon of Object.keys(ALIASES)) {
+    for (const lang of Object.keys(ALIASES[canon])) {
+      for (const a of ALIASES[canon][lang]) {
+        const k = normUnit(a);
+        const prev = seen.get(k);
+        assert.ok(prev === undefined || prev === canon, `"${a}" claimed by both ${prev} and ${canon}`);
+        seen.set(k, canon);
+      }
+    }
+  }
+});
