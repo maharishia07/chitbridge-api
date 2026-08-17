@@ -525,6 +525,49 @@ router.patch('/profile', auth,
             return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
           }
         }
+
+        /**
+         * ⭐⭐ AND THE SAME ANSWER ON THE SCHEMA — without this, TURNING YOUR SHOP PUBLIC DID NOT MAKE IT PUBLIC.
+         *
+         * There are two visibility fields and the storefront reads the OTHER one:
+         *   · `identities.catalogue_visibility` — what the owner chooses here, and the b114 gate
+         *   · `entity_schemas.visibility`       — what `buildPublicView()` actually requires, and what the b49
+         *                                          RLS policy on catalogue_items keys off
+         *
+         * ⚠️ THE SECOND ONE WAS A SNAPSHOT TAKEN AT REGISTRATION AND NEVER UPDATED AGAIN.
+         * `schema-bootstrap.ensureDefaultSchema()` derives it from whatever the entity had declared at the moment
+         * the schema was created — and it is called from inside REGISTRATION (this file, ~line 249), before the
+         * owner has had any chance to choose. So `declared` is still the default and every entity onboarded
+         * through the current flow got a PRIVATE schema, permanently.
+         *
+         * ⚠️ NOTHING IN THE FRONT END EVER CALLED `PATCH /api/schemas/visibility` — the route that would have
+         * fixed it exists and had no caller anywhere in the app. Measured 2026-08-18: a fresh entity with
+         * catalogue_visibility='public', a catalogue face and a product answered 404 on /api/catalogue/:bridge to
+         * an anonymous visitor, to a buyer, AND to its own owner. `alpha` and `gamma` work only because their
+         * schemas happened to be created public by an earlier path.
+         *
+         * ⚠️ THIS RELAXES VISIBILITY, WHICH IS WHY IT WAITED FOR ATHI'S EXPLICIT YES (2026-08-18) rather than
+         * being slipped in with the diagnosis. It runs only AFTER `visibilityCap.check` has approved the value,
+         * so a plan or operator cap still refuses first and this cannot widen anything the cap denied.
+         *
+         * ⚠️ THE MAPPING IS COPIED FROM schema-bootstrap DELIBERATELY, not re-invented: `network` counts as open
+         * here because b114 decides WHO may read it, and a network-only warehouse its own siblings cannot see is
+         * not protected, it is broken. Two places deciding this differently is the bug one layer down.
+         */
+        const schemaVisibility = (req.body.catalogue_visibility === 'public'
+          || req.body.catalogue_visibility === 'network') ? 'public' : 'private';
+        try {
+          await query(
+            `UPDATE entity_schemas SET visibility = $1
+              WHERE entity_id = $2 AND status = 'active' AND is_default = true`,
+            [schemaVisibility, id]);
+        } catch (e) {
+          /* An entity with no default schema yet is not an error — it gets one at first use, and
+             ensureDefaultSchema will then read the value we just wrote above. Anything else is worth surfacing:
+             silently swallowing it is exactly how the identities write hid its own failure for twenty minutes. */
+          if (e && (e.code === '42703' || e.code === '42P01')) { /* pre-migration column/table — nothing to do */ }
+          else return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
+        }
       }
       res.json({ message: 'Profile updated' });
     } catch (err) {
