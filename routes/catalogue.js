@@ -1045,9 +1045,33 @@ router.post('/photo-extract', auth, async (req, res) => {
  * should. Neither is a copy of the other.
  */
 const enquiryLimitCheck = async (viewer, item_id) => {
-  const it = await query('SELECT item_id, entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id]);
-  if (!it.rows[0]) return { ok: false };
-  const owner_id = it.rows[0].entity_id;
+  /**
+   * ⚠️⚠️ THIS READ USED THE CONTEXT-FREE `query()` AGAINST catalogue_items, WHICH IS FORCE RLS (b49) — so it
+   * returned ZERO ROWS for every caller and the endpoint 404'd for everyone, including the product's own owner.
+   * Measured against production 2026-08-18, right after b162 was applied. db/index.js's own guard describes this
+   * exactly: "a route FORGOT withEntity() — under FORCE RLS that query fails closed and the feature quietly
+   * returns empty." It defaults to `warn`, so it logged and nobody was watching.
+   *
+   * ⚠️ withEntity() CANNOT FIX IT: the caller is a buyer asking about SOMEONE ELSE'S product, so under the
+   * viewer's context RLS correctly hides the row — and the owner is the very thing being looked up. b163 adds
+   * catalogue_item_owner(), the same narrow SECURITY DEFINER hole channel_owner() occupies for the webhook, and
+   * it returns the owning entity ONLY — never item_data. The visibility check below is unchanged.
+   */
+  let owner_id = null;
+  try {
+    const o = await query('SELECT catalogue_item_owner($1) AS owner', [item_id]);
+    owner_id = o.rows[0] && o.rows[0].owner;
+  } catch (e) {
+    /* b163 not applied yet → fall back to the viewer's own context. That still lets someone ask about their OWN
+       product (RLS returns it), which is strictly better than the total failure this replaces, and it keeps the
+       route honest rather than pretending. */
+    if (e && (e.code === '42883' || e.code === '42703')) {
+      const own = await withEntity(viewer, (db) => db.query(
+        'SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id])).catch(() => null);
+      owner_id = own && own.rows[0] && own.rows[0].entity_id;
+    } else { throw e; }
+  }
+  if (!owner_id) return { ok: false };
   if (owner_id === viewer) return { ok: true, owner_id };          // your own product
   const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
   if (!ent.rows[0]) return { ok: false };
