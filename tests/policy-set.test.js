@@ -57,3 +57,17 @@ test('every option is a real unit the model publishes', () => {
   const known = new Set(M.UNITS.concat(Object.keys(M.UNIT_ALIASES || {})));
   for (const o of F.options) assert.ok(known.has(o), o + ' is offered but the catalogue model does not know it');
 });
+
+test('⚠️ the selectable languages and lib/units LANGS must not drift apart', () => {
+  // Two lists describing one fact. A language offered in Settings that units.js does not know would render with
+  // no label; one units.js knows but Settings cannot offer is unreachable. Either way the mismatch is silent.
+  const units = require('../lib/units');
+  const opts = policy.FLAGS.languages.options;
+  const codes = units.LANGS.map((l) => l.code);
+  assert.deepStrictEqual([...codes].sort(), [...opts].sort());
+  assert.ok(units.LANGS.every((l) => l.label && l.group), 'every language needs a label and a group');
+});
+
+test('the language default is English alone — an entity opts IN to more', () => {
+  assert.deepStrictEqual(policy.defaults().languages, ['en']);
+});
