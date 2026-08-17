@@ -1057,19 +1057,19 @@ const enquiryLimitCheck = async (viewer, item_id) => {
    * catalogue_item_owner(), the same narrow SECURITY DEFINER hole channel_owner() occupies for the webhook, and
    * it returns the owning entity ONLY — never item_data. The visibility check below is unchanged.
    */
+  /* ⚠️ TWO READS, IN THIS ORDER, AND THE ORDER IS THE FIX.
+     The b49 policy on catalogue_items admits a row when EITHER the caller owns it OR the owner's default schema
+     is visibility='public'. A context-free `query()` therefore sees PUBLIC items fine — but never your own
+     private ones, because the ownership clause needs `app.current_entity`. The original single context-free read
+     meant the owner of a shop that is not public could not enquire about their OWN product: the gate's
+     short-circuit for "your own product" was unreachable, since the row it tests was never returned. */
   let owner_id = null;
-  try {
-    const o = await query('SELECT catalogue_item_owner($1) AS owner', [item_id]);
-    owner_id = o.rows[0] && o.rows[0].owner;
-  } catch (e) {
-    /* b163 not applied yet → fall back to the viewer's own context. That still lets someone ask about their OWN
-       product (RLS returns it), which is strictly better than the total failure this replaces, and it keeps the
-       route honest rather than pretending. */
-    if (e && (e.code === '42883' || e.code === '42703')) {
-      const own = await withEntity(viewer, (db) => db.query(
-        'SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id])).catch(() => null);
-      owner_id = own && own.rows[0] && own.rows[0].entity_id;
-    } else { throw e; }
+  const own = await withEntity(viewer, (db) => db.query(
+    'SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id])).catch(() => null);
+  if (own && own.rows[0]) owner_id = own.rows[0].entity_id;
+  if (!owner_id) {
+    const pub = await query('SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id]);
+    owner_id = pub.rows[0] && pub.rows[0].entity_id;
   }
   if (!owner_id) return { ok: false };
   if (owner_id === viewer) return { ok: true, owner_id };          // your own product
