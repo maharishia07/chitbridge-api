@@ -105,3 +105,27 @@ test('no spelling is claimed by two units, ACROSS languages', () => {
     }
   }
 });
+
+test('⚠️⚠️ AN ENTITY MAY TEACH A WORD, NEVER REDEFINE ONE', () => {
+  // AI-proposed spellings, once a human confirms them, reach normUnit as `extra`. They must be able to add
+  // vocabulary the platform lacks — and must NOT be able to re-point a unit the platform already knows.
+  // Otherwise one accepted proposal quietly shifts every total on that account with nothing to show for it.
+  const mine = { 'മൂട്ട': 'kg', 'petti': 'box', 'kg': 'gram' };
+  assert.strictEqual(normUnit('മൂട്ട'), 'മൂട്ട', 'unknown without the entity map');
+  assert.strictEqual(normUnit('മൂട്ട', mine), 'kg', 'taught by the entity');
+  assert.strictEqual(normUnit('petti', mine), 'box');
+  assert.strictEqual(normUnit('kg', mine), 'kg', 'the curated table WINS — kg cannot become gram');
+});
+
+test('⚠️ an entity word pointing at a unit we do not know resolves to nothing', () => {
+  // A confirmed spelling whose target is junk must not invent a unit; it stays itself and remains un-summable.
+  assert.strictEqual(normUnit('zzz', { zzz: 'not-a-unit' }), 'zzz');
+  assert.strictEqual(normUnit('zzz', { zzz: '' }), 'zzz');
+});
+
+test('the extra map never changes behaviour when absent — the default path is untouched', () => {
+  for (const w of ['kg', 'கிலோ', 'किलो', 'gunny', '']) {
+    assert.strictEqual(normUnit(w), normUnit(w, undefined));
+    assert.strictEqual(normUnit(w), normUnit(w, {}));
+  }
+});
