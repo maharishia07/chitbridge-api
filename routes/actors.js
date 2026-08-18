@@ -129,7 +129,29 @@ router.post('/',
   async (req, res) => {
     try {
       const entity_id    = req.identity.identity_id;
-      const entity_name  = req.identity.display_name;
+      /**
+       * ⭐⭐ THE LOGIN HANDLE IS `key@user_id`, NOT `key@display name`. Athi, 2026-08-18: *"can we say how the
+       * userid of the employee exists — employee-given-name@entity-use-id; this combination should be unique."*
+       *
+       * ⚠️ HE IS RIGHT, AND display_name COULD NEVER HAVE CARRIED IT. display_name has NO unique index;
+       * `user_id` does (idx_identities_user_id, on lower(user_id)). So today:
+       *   · two businesses may both be "Alpha Timers" — `ravi@Alpha Timers` names neither
+       *   · an owner renames the business and every employee's login changes under them, silently
+       *   · it carries spaces and capitals, typed at a counter, in a hurry, often on a phone
+       *
+       * ⚠️ ONE CORRECTION TO THE BRIEF: uniqueness is not enforced on the combined string. The constraint is
+       * `UNIQUE(actor_key, parent_entity_id)` — per entity, which is stronger and already right. A globally
+       * unique user_id makes the RENDERED handle unique as a consequence. The constraint does not change.
+       *
+       * ⚠️ AND IT IS READ FRESH, NOT TAKEN FROM THE TOKEN. user_id is mutable; a copy in a JWT would print a
+       * handle the owner had already changed. Same reasoning as the hat in middleware/auth.js.
+       */
+      let entity_handle = req.identity.display_name;
+      try {
+        const _u = await db('SELECT user_id, display_name FROM identities WHERE identity_id = $1', [entity_id]);
+        if (_u.rows[0]) entity_handle = _u.rows[0].user_id || _u.rows[0].display_name || entity_handle;
+      } catch (_) { /* fall back to the name we already have — never print an empty handle */ }
+      const entity_name  = entity_handle;
       const display_name = sanitise(req.body.display_name);
       const actor_key    = req.body.actor_key.toLowerCase().trim();
       const actor_role   = sanitise(req.body.actor_role || '');
@@ -440,15 +462,46 @@ router.post('/login',
 
       const [actor_key, entity_name] = username.split('@');
 
-      // Find entity
-      const entity = await db(
-        `SELECT identity_id, display_name, bridge_id
+      /**
+       * ⭐ user_id FIRST, display_name SECOND — and the ORDER is the fix.
+       *
+       * ⚠️ IT MUST ACCEPT BOTH OR IT IS AN OUTAGE. Everyone signing in today types `key@Display Name`; accepting
+       * only user_id would lock out every existing co-assist at their next login, with no way to discover the
+       * new form. The new handle is preferred; the old one still resolves.
+       *
+       * ⚠️⚠️ AND THE display_name PATH NOW REFUSES AMBIGUITY, which it never did. It took `entity.rows[0]` with
+       * no ORDER BY, so with two active businesses of one name an actor's login silently resolved to ONE of
+       * them, generated an OTP on that account and mailed it to that owner. Not a takeover — the code still
+       * reaches the real inbox — but the wrong owner is disturbed, their pending OTP is overwritten, and the
+       * legitimate co-assist cannot sign in while the product reports nothing wrong.
+       *
+       * ⭐ This is the SAME defect entity login had FIXED (routes/entities.js, AMBIGUOUS_NAME). That fix was
+       * made locally, in one file, while the identical bug carried on next door — the exact "local
+       * single-source-of-truth" failure this codebase has been paying down all week.
+       */
+      const _at = entity_name.toLowerCase();
+      let entity = await db(
+        `SELECT identity_id, display_name, bridge_id, user_id
          FROM identities
-         WHERE LOWER(display_name) = $1
-         AND identity_type = 'entity'
-         AND status = 'active'`,
-        [entity_name.toLowerCase()]
+         WHERE LOWER(user_id) = $1 AND identity_type = 'entity' AND status = 'active'`,
+        [_at]
       );
+      if (entity.rows.length === 0) {
+        entity = await db(
+          `SELECT identity_id, display_name, bridge_id, user_id
+           FROM identities
+           WHERE LOWER(display_name) = $1 AND identity_type = 'entity' AND status = 'active'`,
+          [_at]
+        );
+        if (entity.rows.length > 1) {
+          return res.status(409).json({
+            error: 'Ambiguous business',
+            message: 'More than one business is called "' + entity_name + '". Sign in with the business User ID '
+              + 'after the @ instead — ask your admin for it.',
+            code: 'AMBIGUOUS_NAME',
+          });
+        }
+      }
 
       if (entity.rows.length === 0) {
         return res.status(400).json({
