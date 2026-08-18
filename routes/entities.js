@@ -497,8 +497,19 @@ const PREF_SETS = {
 };
 
 async function savePrefSet(req, res, kind) {
-  const set = PREF_SETS[kind];
-  if (!set) return res.status(404).json({ error: 'Unknown preference set' });
+  /**
+   * ⚠️ hasOwnProperty, NOT A TRUTHY LOOKUP — found by red-teaming this endpoint rather than by a failure.
+   *
+   * `PREF_SETS[kind]` walks the PROTOTYPE CHAIN, so `kind=__proto__`, `constructor`, `toString` and
+   * `valueOf` all return something truthy and sail past the 404. None of them can write to a table — the
+   * column comes from `set.column`, which is undefined for all of them — but the request then throws deep
+   * inside the handler and surfaces as a 500 with a confusing log, when the honest answer is "no such set".
+   *
+   * The rule this is a case of: a whitelist consulted with bracket notation is not a whitelist unless the
+   * lookup is own-property. That is the same class as interpolating a caller's string into SQL, one step back.
+   */
+  const set = Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null;
+  if (!set || !set.column) return res.status(404).json({ error: 'Unknown preference set' });
   try {
     const body = req.body || {};
     const prefs = {};
