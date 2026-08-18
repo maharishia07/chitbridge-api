@@ -363,6 +363,17 @@ router.get('/me', auth, async (req, res) => {
     // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
     let storefront_access = 'browse';
     try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
+    // b165 (self-healing): the PERSON's localisation choice — language, format and the UTS #35 subtags.
+    // ⚠️ req.identity.identity_id, NOT entityOf(). For an actor that is the actor's OWN row, so a Tamil-reading
+    // clerk at an English-reading firm keeps Tamil instead of inheriting their employer's language.
+    // ⚠️ Read separately rather than added to the SELECT above, because /me is the hottest endpoint on the
+    // platform and this code deploys BEFORE b165 runs — folding the column into the main query would 500 every
+    // boot in the window between the two. Absent the column, '{}' is exactly today's behaviour.
+    let locale_prefs = {};
+    try {
+      const lp = await query('SELECT locale_prefs FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+      if (lp.rows[0] && lp.rows[0].locale_prefs) locale_prefs = lp.rows[0].locale_prefs;
+    } catch (_) {}
     // b114 (self-healing): is this entity's catalogue exposed at all? Pre-b114 there was no such setting and adoption
     // silently published, so absent the column we report 'public' — the behaviour that was actually in force.
     // The EFFECTIVE visibility, plus the cap that produced it. Reporting the stored flag alone would let a capped
@@ -378,11 +389,70 @@ router.get('/me', auth, async (req, res) => {
       visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
       catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
     } catch (_) { /* pre-b114 → the default above */ }
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap });
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs });
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance });
   } catch (err) {
     console.error('Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
+  }
+});
+
+/**
+ * PATCH /entities/me/locale — store the PERSON's localisation choice (b165).
+ *
+ * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
+ * status. This edits how one human reads the screen. Folding a personal preference into the business profile
+ * would mean a co-assist could not change their own language without write access to their employer's record,
+ * and that an owner changing the firm's address would be touching the same object as their clerk's numerals.
+ *
+ * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
+ * caller can write is their own. There is no id parameter to get wrong.
+ *
+ * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. Every value here ends up inside an Intl constructor or a
+ * BCP 47 -u- extension, and BCP 47 admits thousands of valid tags — a whitelist of the nine the screen currently
+ * offers would reject the tenth the day someone needs it, and would drift out of step with CLDR every release.
+ * So the shape is checked syntactically and the MEANING is checked by asking Intl to build the tag. If ICU can
+ * format with it, it is a real subtag; if it throws, it is not. Adopting the standard's own validator beats
+ * maintaining our opinion of what the standard contains.
+ */
+router.patch('/me/locale', auth, async (req, res) => {
+  try {
+    /* The six keys the localisation layer reads. `lang` and `locale` are language tags; the rest are the UTS #35
+       locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
+    const KEYS = ['lang', 'locale', 'nu', 'hc', 'ca', 'fw'];
+    const body = req.body || {};
+    const prefs = {};
+
+    for (const k of KEYS) {
+      if (!(k in body)) continue;
+      const v = String(body[k] == null ? '' : body[k]).trim();
+      if (!v) continue;                                     // empty = "follow the default"; simply absent
+      // Subtags are alphanumerics and hyphens, and none of them is long. Anything else is not a subtag at all.
+      if (!/^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/.test(v)) {
+        return res.status(400).json({ error: 'Bad locale', message: `${k} is not a valid subtag` });
+      }
+      prefs[k] = v;
+    }
+
+    // Ask ICU whether the composition it would actually be used in is real. One test covers all six at once.
+    try {
+      const u = ['nu', 'hc', 'ca', 'fw'].filter((k) => prefs[k]).map((k) => `${k}-${prefs[k]}`);
+      const tag = (prefs.locale || prefs.lang || 'en') + (u.length ? '-u-' + u.join('-') : '');
+      new Intl.NumberFormat(tag);
+      new Intl.DateTimeFormat(tag);
+    } catch (_) {
+      return res.status(400).json({ error: 'Bad locale', message: 'That combination is not a locale ICU recognises' });
+    }
+
+    await query('UPDATE identities SET locale_prefs = $1 WHERE identity_id = $2',
+      [JSON.stringify(prefs), req.identity.identity_id]);
+    res.json({ ok: true, locale_prefs: prefs });
+  } catch (err) {
+    // ⚠️ Before b165 runs, the column does not exist. A person's preference still works from localStorage, so
+    // this must degrade to "not synced yet" rather than surfacing an error over a setting that visibly applied.
+    if (/locale_prefs/.test(String(err && err.message))) return res.json({ ok: false, pending: true });
+    console.error('Locale prefs error:', err.message);
+    res.status(500).json({ error: 'Failed to save', message: safeErr(err) });
   }
 });
 
