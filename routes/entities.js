@@ -454,7 +454,12 @@ const PREF_SETS = {
      locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
   locale: {
     column: 'locale_prefs',
-    keys: ['lang', 'locale', 'nu', 'hc', 'ca', 'fw'],
+    keys: ['lang', 'langs', 'region', 'locale', 'nu', 'hc', 'ca', 'fw'],
+    /* ⚠️ `langs` IS A LIST, so it is the one key whose value may contain commas — RFC 4647 calls it a language
+       priority list ("Tamil, then English, then Hindi"). Widening the generic pattern for every key to admit
+       commas would have been the smaller edit and the wrong one: a comma has no business in a numbering system
+       or an hour cycle, and a validator that accepts more than it needs to stops being a validator. */
+    patterns: { langs: /^[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*(,[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*){0,2}$/ },
     /**
      * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. BCP 47 admits thousands of valid tags; a whitelist of
      * the nine the screen currently offers would reject the tenth the day someone needs it, and would drift out
@@ -503,7 +508,8 @@ async function savePrefSet(req, res, kind) {
       const v = String(body[k] == null ? '' : body[k]).trim();
       if (!v) continue;                                     // empty = "follow the default"; simply absent
       // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
-      if (!/^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/.test(v)) {
+      const pat = (set.patterns && set.patterns[k]) || /^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/;
+      if (!pat.test(v)) {
         return res.status(400).json({ error: 'Bad preference', message: `${k} is not a valid value` });
       }
       prefs[k] = v;
