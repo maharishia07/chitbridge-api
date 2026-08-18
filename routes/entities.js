@@ -369,11 +369,25 @@ router.get('/me', auth, async (req, res) => {
     // ⚠️ Read separately rather than added to the SELECT above, because /me is the hottest endpoint on the
     // platform and this code deploys BEFORE b165 runs — folding the column into the main query would 500 every
     // boot in the window between the two. Absent the column, '{}' is exactly today's behaviour.
-    let locale_prefs = {};
+    /* ⚠️ BOTH PREFERENCE SETS IN ONE QUERY. They are read on every boot from the hottest endpoint on the
+       platform, and two round trips for two small columns on the SAME ROW is a cost with nothing to show for it.
+       ⚠️ Still read separately from the main SELECT, and still in its own try/catch: this code ships BEFORE the
+       migrations, and folding either column into the main query would 500 every boot in the window between. */
+    let locale_prefs = {}, ui_prefs = {};
     try {
-      const lp = await query('SELECT locale_prefs FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
-      if (lp.rows[0] && lp.rows[0].locale_prefs) locale_prefs = lp.rows[0].locale_prefs;
-    } catch (_) {}
+      const lp = await query('SELECT locale_prefs, ui_prefs FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+      if (lp.rows[0]) {
+        locale_prefs = lp.rows[0].locale_prefs || {};
+        ui_prefs = lp.rows[0].ui_prefs || {};
+      }
+    } catch (_) {
+      /* b166 may not have run where b165 has — fall back to reading the older column alone rather than losing
+         the language setting too. A partial migration state must degrade to less, never to nothing. */
+      try {
+        const lp = await query('SELECT locale_prefs FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+        if (lp.rows[0] && lp.rows[0].locale_prefs) locale_prefs = lp.rows[0].locale_prefs;
+      } catch (_2) {}
+    }
     // b114 (self-healing): is this entity's catalogue exposed at all? Pre-b114 there was no such setting and adoption
     // silently published, so absent the column we report 'public' — the behaviour that was actually in force.
     // The EFFECTIVE visibility, plus the cap that produced it. Reporting the stored flag alone would let a capped
@@ -389,7 +403,7 @@ router.get('/me', auth, async (req, res) => {
       visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
       catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
     } catch (_) { /* pre-b114 → the default above */ }
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs });
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs });
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance });
   } catch (err) {
     console.error('Profile error:', err.message);
@@ -415,46 +429,108 @@ router.get('/me', auth, async (req, res) => {
  * format with it, it is a real subtag; if it throws, it is not. Adopting the standard's own validator beats
  * maintaining our opinion of what the standard contains.
  */
-router.patch('/me/locale', auth, async (req, res) => {
+/**
+ * PATCH /entities/me/prefs/:kind — store one of the PERSON's own preference sets (b165 locale · b166 ui).
+ *
+ * ⚠️ ONE HANDLER, TWO COLUMNS — generalised rather than copied. Two near-identical prefs endpoints would drift
+ * the first time one of them gained validation, an audit line or a rate limit, and the one nobody remembered
+ * would be the one carrying somebody's accessibility setting.
+ *
+ * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
+ * status. This edits how one human reads the screen. Folding a personal preference into the business profile
+ * would mean a co-assist could not change their own language or contrast without write access to their
+ * employer's record, and that an owner editing the firm's address would be touching the same object as their
+ * clerk's numerals.
+ *
+ * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
+ * caller can write is their own. There is no id parameter to get wrong.
+ *
+ * ⚠️ AND THE COLUMN NAME IS NEVER TAKEN FROM THE URL. :kind selects an entry in PREF_SETS below; the column
+ * string comes from that entry and never from req.params. An unknown kind is a 404, not a query. Interpolating
+ * a caller-supplied identifier into SQL is exactly how a whitelist stops being a whitelist.
+ */
+const PREF_SETS = {
+  /* The six keys the localisation layer reads. `lang` and `locale` are language tags; the rest are the UTS #35
+     locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
+  locale: {
+    column: 'locale_prefs',
+    keys: ['lang', 'locale', 'nu', 'hc', 'ca', 'fw'],
+    /**
+     * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. BCP 47 admits thousands of valid tags; a whitelist of
+     * the nine the screen currently offers would reject the tenth the day someone needs it, and would drift out
+     * of step with CLDR every release. Syntax is checked generically above; MEANING is checked by asking Intl to
+     * build the tag. If it can format with it, it is a real subtag. Adopting the standard's own validator beats
+     * maintaining our opinion of what the standard contains.
+     */
+    check(prefs) {
+      try {
+        const u = ['nu', 'hc', 'ca', 'fw'].filter((k) => prefs[k]).map((k) => `${k}-${prefs[k]}`);
+        const tag = (prefs.locale || prefs.lang || 'en') + (u.length ? '-u-' + u.join('-') : '');
+        new Intl.NumberFormat(tag);
+        new Intl.DateTimeFormat(tag);
+        return null;
+      } catch (_) {
+        return 'That combination is not a locale ICU recognises';
+      }
+    },
+  },
+  /**
+   * Appearance. ⚠️ HERE A CLOSED LIST IS RIGHT, and the contrast with locale above is the point: these are OUR
+   * enumerations, not a standard's. There is no external registry of themes that could add a sixteenth without
+   * us knowing, so anything outside the list is a bug or a probe rather than a value we have not caught up with.
+   * The theme itself stays open-ended in shape (a short slug) so shipping a new one needs no migration here.
+   */
+  ui: {
+    column: 'ui_prefs',
+    keys: ['theme', 'fs', 'motion'],
+    check(prefs) {
+      if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
+      if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
+      return null;
+    },
+  },
+};
+
+async function savePrefSet(req, res, kind) {
+  const set = PREF_SETS[kind];
+  if (!set) return res.status(404).json({ error: 'Unknown preference set' });
   try {
-    /* The six keys the localisation layer reads. `lang` and `locale` are language tags; the rest are the UTS #35
-       locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
-    const KEYS = ['lang', 'locale', 'nu', 'hc', 'ca', 'fw'];
     const body = req.body || {};
     const prefs = {};
 
-    for (const k of KEYS) {
+    for (const k of set.keys) {
       if (!(k in body)) continue;
       const v = String(body[k] == null ? '' : body[k]).trim();
       if (!v) continue;                                     // empty = "follow the default"; simply absent
-      // Subtags are alphanumerics and hyphens, and none of them is long. Anything else is not a subtag at all.
+      // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
       if (!/^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/.test(v)) {
-        return res.status(400).json({ error: 'Bad locale', message: `${k} is not a valid subtag` });
+        return res.status(400).json({ error: 'Bad preference', message: `${k} is not a valid value` });
       }
       prefs[k] = v;
     }
 
-    // Ask ICU whether the composition it would actually be used in is real. One test covers all six at once.
-    try {
-      const u = ['nu', 'hc', 'ca', 'fw'].filter((k) => prefs[k]).map((k) => `${k}-${prefs[k]}`);
-      const tag = (prefs.locale || prefs.lang || 'en') + (u.length ? '-u-' + u.join('-') : '');
-      new Intl.NumberFormat(tag);
-      new Intl.DateTimeFormat(tag);
-    } catch (_) {
-      return res.status(400).json({ error: 'Bad locale', message: 'That combination is not a locale ICU recognises' });
-    }
+    const bad = set.check(prefs);
+    if (bad) return res.status(400).json({ error: 'Bad preference', message: bad });
 
-    await query('UPDATE identities SET locale_prefs = $1 WHERE identity_id = $2',
+    await query(`UPDATE identities SET ${set.column} = $1 WHERE identity_id = $2`,
       [JSON.stringify(prefs), req.identity.identity_id]);
-    res.json({ ok: true, locale_prefs: prefs });
+    res.json({ ok: true, kind, prefs, [set.column]: prefs });
   } catch (err) {
-    // ⚠️ Before b165 runs, the column does not exist. A person's preference still works from localStorage, so
-    // this must degrade to "not synced yet" rather than surfacing an error over a setting that visibly applied.
-    if (/locale_prefs/.test(String(err && err.message))) return res.json({ ok: false, pending: true });
-    console.error('Locale prefs error:', err.message);
+    /* ⚠️ Before the migration runs, the column does not exist. The person's preference still works from
+       localStorage and visibly applied, so this must degrade to "not synced yet" rather than surfacing an error
+       over a setting they can see took effect. Code ships before the migration, always. */
+    if (new RegExp(set.column).test(String(err && err.message))) return res.json({ ok: false, pending: true });
+    console.error('Prefs error (' + kind + '):', err.message);
     res.status(500).json({ error: 'Failed to save', message: safeErr(err) });
   }
-});
+}
+
+router.patch('/me/prefs/:kind', auth, (req, res) => savePrefSet(req, res, String(req.params.kind || '')));
+
+/* ⚠️ THE SHIPPED PATH, KEPT. Clients deployed before this refactor call /me/locale, and a browser holding a
+   cached app.html will keep calling it after the API updates. Removing it would turn a tidy-up into an outage
+   for exactly as long as those caches live. */
+router.patch('/me/locale', auth, (req, res) => savePrefSet(req, res, 'locale'));
 
 // GET /entities/lookup?user_id=<x> — resolve an entity by its external user_id (ATH-114).
 // The resolution primitive for adding suppliers / connecting by user_id instead of bridge_id.
