@@ -38,6 +38,10 @@ router.get('/', auth, async (req, res) => {
          truncates a chit-ordered list and the newest events fall off the end. */
       `SELECT * FROM (
         SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail)
+              /* ⚠️ log_id IS THE HANDLE A DISMISSAL NEEDS. Without it the client can only DESCRIBE a row
+                 ("that delivery, at that time"), and a description is not an identity — two events a second
+                 apart would clear each other. */
+              sl.log_id,
               sl.chit_id, sl.action, sl.action_by_display_name,
               sl.new_status, sl.detail, sl.created_at, cs.direction,
               cs.assigned_to_actor_id,
@@ -56,6 +60,11 @@ router.get('/', auth, async (req, res) => {
           -- their actor names) leaking into this feed; disputes/voids still cross. Status changes already fan a
           -- row to each copy (chits.js:688), so a counterparty status change still shows via the caller's own row.
           AND ( sl.entity_id = $1 OR sl.action IN ('dispute_raised','dispute_resolved','voided') )
+          /* ⚠️ DISMISSED IS HIDDEN, NEVER DELETED — b164. The feed is a VIEW over state_log, the trail that
+             traceability and disputes are built on; clearing a notification must not touch the event. The
+             LEFT JOIN degrades on its own if b164 is not applied: see the catch below. */
+          AND NOT EXISTS (SELECT 1 FROM notif_dismissed nd
+                           WHERE nd.entity_id = $1 AND nd.log_id = sl.log_id)
         ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail
       ) d
       ORDER BY d.created_at DESC
@@ -118,6 +127,56 @@ router.post('/seen', auth, async (req, res) => {
       return res.status(503).json({ error: 'Not migrated', message: 'Clearing the badge needs b157 on this environment.' });
     }
     console.error('notif seen:', err.message);
+    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+  }
+});
+
+/**
+ * POST /api/notifications/dismiss — clear one Activity row, or several, or all of them.
+ *
+ * ⚠️ IT DELETES NOTHING FROM state_log. The feed is a view over the event trail that traceability, disputes and
+ * every "who did what, when" answer are built on. Clearing a panel is not a reason to lose an event, so this
+ * records a DISMISSAL and the feed hides what this entity has dismissed. The event survives untouched.
+ *
+ * ⚠️ PER ENTITY. Two parties see the same event through their own copies; one clearing it must never clear it
+ * for the other. RLS on notif_dismissed enforces that, and the insert takes the entity from the SESSION — a
+ * body-supplied entity_id would let a caller clear somebody else's feed.
+ *
+ * Body: { log_ids: [uuid, …] }  ·  { all: true } clears everything currently visible.
+ */
+router.post('/dismiss', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const all = req.body && req.body.all === true;
+    const ids = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
+    if (!all && !ids.length) {
+      return res.status(400).json({ error: 'Nothing to clear', message: 'Send log_ids, or all:true.' });
+    }
+    const out = await withEntity(entity_id, async (c) => {
+      if (all) {
+        /* ⚠️ "ALL" MEANS EVERY EVENT THIS ENTITY CAN CURRENTLY SEE, resolved server-side rather than from a list
+           the client sends. A client-supplied list is a snapshot of what was on screen when the panel opened —
+           anything that arrived since would survive a "clear all" and look like the button failed. */
+        return c.query(
+          `INSERT INTO notif_dismissed (entity_id, log_id)
+             SELECT $1, sl.log_id FROM state_log sl
+              WHERE sl.entity_id = $1
+           ON CONFLICT DO NOTHING`, [entity_id]);
+      }
+      return c.query(
+        `INSERT INTO notif_dismissed (entity_id, log_id)
+           SELECT $1, x FROM unnest($2::uuid[]) AS x
+         ON CONFLICT DO NOTHING`, [entity_id, ids]);
+    });
+    res.json({ ok: true, cleared: out.rowCount });
+  } catch (err) {
+    /* Pre-b164 the table does not exist. Say which migration, rather than 500 — the panel still works, only the
+       clearing does not, and the two need different actions from a human. */
+    if (err && (err.code === '42P01' || err.code === '42703')) {
+      return res.status(503).json({ error: 'Not migrated',
+        message: 'Clearing Activity needs b164 on this environment.', code: 'NOTIF_DISMISS_NOT_MIGRATED' });
+    }
+    console.error('notif dismiss:', err.message);
     res.status(500).json({ error: 'Failed', message: safeErr(err) });
   }
 });
