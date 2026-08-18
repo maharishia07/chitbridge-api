@@ -589,13 +589,26 @@ async function visibilityCapFor(entityId) {
 }
 
 router.patch('/profile', auth,
-  [ body('gstn').optional().trim().isLength({ max: 15 }),
+  /**
+   * ⚠️ EVERY RULE SAYS WHAT IT WANTS. Athi, 2026-08-18: *"it says validation failed, not sure what it is. Need
+   * to have explanation so people understand and update accordingly."*
+   *
+   * These had no messages, so express-validator answered "Invalid value" — which names neither the field nor
+   * the rule and leaves someone re-typing at random. A validator that refuses without saying why has moved the
+   * work from the code to the person, which is the wrong direction.
+   */
+  [ body('gstn').optional().trim().isLength({ max: 15 })
+      .withMessage('A GSTIN is 15 characters — check for a missing or extra digit.'),
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
-    body('business_status').optional().isIn(['open','closed','away']),
-    body('storefront_access').optional().isIn(['browse','login']),
-    body('self_copy_pref').optional().isIn(['both','sent','received']),
-    body('dispute_handler_actor_id').optional().isUUID(),
+    body('business_status').optional().isIn(['open','closed','away'])
+      .withMessage('Shop status can be open, closed or away.'),
+    body('storefront_access').optional().isIn(['browse','login'])
+      .withMessage('Storefront access can be "browse" (open catalogue) or "login" (sign in first).'),
+    body('self_copy_pref').optional().isIn(['both','sent','received'])
+      .withMessage('Keep-a-copy can be both, sent or received.'),
+    body('dispute_handler_actor_id').optional().isUUID()
+      .withMessage('Pick a co-assist from the list — that is not a valid id.'),
     /**
      * user_id — the handle a person TYPES. Athi, 2026-08-07: *"we should not allow space in the user id."*
      *
