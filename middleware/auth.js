@@ -42,8 +42,17 @@ const auth = async (req, res, next) => {
     // immediately on their next request, not whenever the JWT happens to expire.
     // (Stateless JWTs can't be deleted server-side; this is the standard revocation.)
     if (decoded.identity_type === 'actor') {
+      /**
+       * ⚠️ THE HAT COMES FROM THE DATABASE, NEVER FROM THE TOKEN — and it rides on the query that was already
+       * here, so it costs no extra round trip.
+       *
+       * A hat in the JWT would mean an owner demoting someone to view_only has NO EFFECT until that token
+       * expires. The person keeps the access the owner just took away, for hours, with nothing to show it. That
+       * is the same reasoning the break_status revocation below already rests on: a permission you cannot
+       * withdraw immediately is not a permission you control.
+       */
       const r = await query(
-        `SELECT break_status FROM identities
+        `SELECT break_status, hat FROM identities
          WHERE identity_id = $1 AND identity_type = 'actor'`,
         [decoded.identity_id]
       );
@@ -54,9 +63,29 @@ const auth = async (req, res, next) => {
           message: 'Your access has been revoked. Contact your admin.'
         });
       }
+      /* Default 'act', matching what POST /actors writes when no hat is given — so an actor created before the
+         column existed behaves exactly as it does today rather than being locked out by an absent value. */
+      req.identity.hat = r.rows[0].hat || 'act';
     }
 
-    next();
+    /**
+     * ⭐⭐ THE HAT GATE RUNS HERE, INSIDE auth, AND THAT PLACEMENT IS THE WHOLE DESIGN.
+     *
+     * ⚠️ I FIRST WROTE IT AS `app.use('/api', hatGate)` IN server.js AND IT WOULD HAVE DONE NOTHING. `auth` is
+     * applied PER ROUTE — `router.post('/send', auth, …)` — not globally, so anything mounted at the app level
+     * runs BEFORE it, sees no `req.identity`, and falls straight through. A permission gate that silently
+     * permits everything is the exact defect it was written to close, reintroduced one layer up.
+     *
+     * ⭐ Here it is unmissable by construction: every protected route already calls auth, so every protected
+     * route is gated, and a new route written next month is gated the moment it asks for authentication. There
+     * is nothing to remember and nothing to opt into.
+     *
+     * ⚠️ AND IT FAILS CLOSED. Anything not on the self-scoped list in hat-gate.js is refused for a restricted
+     * hat. A route I have not thought about REFUSES rather than permits — a loud, immediate, correctable
+     * failure instead of a silent one. Failing open here costs a chit nobody meant to send.
+     */
+    const gate = require('./hat-gate');
+    return gate(req, res, next);
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({
@@ -86,3 +115,16 @@ module.exports = auth;
  * the other 46 carried on. Local single-sources-of-truth are how a codebase ends up with several.
  */
 auth.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+
+/**
+ * ⚠️ requireAct / requireManager USED TO LIVE HERE and are gone deliberately.
+ *
+ * I wrote them, then wrote hat-gate.js, and for a few minutes the codebase had TWO mechanisms for one rule —
+ * an opt-in helper nobody had called yet and a default-deny gate. That is the duplication this project keeps
+ * paying for: two things that must agree, no mechanism to make them, and the one nobody remembered being the
+ * one that mattered. The gate covers every authenticated write; a per-route helper would only ever cover the
+ * routes someone remembered to decorate.
+ *
+ * ⭐ If a route ever needs MANAGER specifically (assigning others, standing in for the entity), add it to
+ * hat-gate.js as a rule there — one file that answers "what may this hat do", not a second convention.
+ */
