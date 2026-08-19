@@ -16,6 +16,7 @@ const { resolveEntityGovernance } = require('../lib/govresolve');   // resolve t
 // ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
 //    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
 const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
+const handleLib = require('../lib/handle');   // slug + check — the same rules the network root uses
 
 // DEV_OTP in Railway env = fixed OTP for testing e.g. 123456
 // No DEV_OTP = random 6-digit OTP
@@ -64,10 +65,36 @@ router.post('/register',
         } else {
           bridge_id = generateBridgeId();
           identity_id = uuidv4();
+          /**
+           * ⭐⭐ CLAIM THE USER ID AT REGISTRATION. Athi, 2026-08-19, after creating "mypharma" and finding the
+           * field empty: *"generally what we say is the id created is userid, and the name is any name."*
+           *
+           * ⚠️ HE IS DESCRIBING WHAT EVERY OTHER PLATFORM DOES, and we did the opposite: registration wrote
+           * display_name and left user_id NULL, so EVERY new entity started life without the one identifier
+           * that its login, its network root and every supplier reference derive from. That empty slot is the
+           * root of the whole "platform-of-platform" confusion — with nothing set, other screens fill the hole
+           * with a guess made from the business name, and a guess rendered like an identifier gets read as one.
+           *
+           * ⚠️ IT IS AN ATTEMPT, NOT A GUARANTEE. The handle must be valid (no spaces, no ambiguous shapes) and
+           * free — user_id is unique platform-wide. If either fails the column stays NULL and the profile says
+           * so, which is the honest outcome: better an empty field that asks than a mangled one that lies.
+           *
+           * ⚠️ AND IT IS THEREFORE NOT A CHOICE THE PERSON MADE, so the profile must let them change it. See
+           * cap-admin.js — shown read-only with an explicit Change, rather than locked.
+           */
+          let claim = null;
+          try {
+            const want = handleLib.slug(display_name);
+            if (want && handleLib.check(want).ok) {
+              const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [want]);
+              if (!taken.rows.length) claim = want;
+            }
+          } catch (_) { /* a failed claim is never a failed registration */ }
+
           await query(
-            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status)
-             VALUES ($1, $2, $3, $4, 'entity', 'pending')`,
-            [identity_id, bridge_id, display_name, email]
+            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id)
+             VALUES ($1, $2, $3, $4, 'entity', 'pending', $5)`,
+            [identity_id, bridge_id, display_name, email, claim]
           );
           console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
