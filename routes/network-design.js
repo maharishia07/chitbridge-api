@@ -168,7 +168,46 @@ router.post('/build', auth, async (req, res) => {
           suggestion: handleLib.slug(meRow.display_name) || null });
       }
     } else {
-      const want = askedRoot || handleLib.slug(meRow.display_name);
+      /**
+       * ⭐⭐ CLAIMING A USER ID IS A DECISION, NOT A SIDE EFFECT OF DESIGNING A NETWORK.
+       *
+       * Athi, 2026-08-19: *"where from key@platform-of-platform — this platform came from? This is the name I
+       * gave in network screen while trying to design the network. The original user id for this network is
+       * mytest."*
+       *
+       * ⚠️⚠️ HE HAD FOUND A REAL ONE. With no User ID set, this branch took the DESIGN LABEL he typed on the
+       * network screen — or, failing that, a slug of his display name — and wrote it to identities.user_id as
+       * his permanent platform identity. `slug("Platform of Platform")` → `platform-of-platform`, which is
+       * exactly what he saw. The disclosure existed, as one clause mid-sentence in a confirm dialog.
+       *
+       * ⚠️ AND ONCE STORES EXIST IT CANNOT BE TAKEN BACK. Every store below is named `<root>.<store>`, so
+       * changing the User ID afterwards orphans them from their root. Athi had NOT built when he reported this
+       * — nothing was written, and the value he saw was the SCREEN'S GUESS. That is the narrower and more
+       * interesting version of the bug: the guess is displayed in enough places to read as a fact, and this
+       * branch is where a fact is what it would have become.
+       *
+       * ⭐ A value that cannot be taken back must not be inferred from a label someone typed while sketching a
+       * diagram — whether or not anyone has reached that point yet.
+       *
+       * ⭐ SO IT NOW REFUSES AND ASKS. A slug of the display name is offered as a SUGGESTION — never applied —
+       * because display_name is not unique and is not an identifier; it is a name, and the two are the
+       * distinction this whole area keeps getting wrong.
+       *
+       * ⚠️ EXPLICIT INTENT STILL WORKS: a caller that sends `root_handle` has chosen. What is refused is the
+       * INFERENCE — a build with no User ID and no stated root.
+       */
+      if (!askedRoot) {
+        return res.status(409).json({
+          error: 'User ID needed',
+          code: 'ROOT_HANDLE_NEEDED',
+          message: 'Set your User ID before building a network. Every store below is named from it '
+            + '(<your-user-id>.store), and it cannot be changed afterwards without orphaning them — so it is '
+            + 'yours to choose, not ours to guess from a diagram label.',
+          suggestion: handleLib.slug(meRow.display_name) || null,
+          where: 'Profile › IAM',
+        });
+      }
+      const want = askedRoot;
       const rc = handleLib.check(want);
       if (!rc.ok) {
         return res.status(400).json({ error: 'Root name unusable', code: 'ROOT_HANDLE_NEEDED',
