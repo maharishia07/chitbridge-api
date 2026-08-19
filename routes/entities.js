@@ -33,6 +33,7 @@ const generateOTP = require('../lib/otp').generateOTP;
 router.post('/register',
   [
     body('display_name').optional().trim().isLength({ min: 2, max: 255 }),
+    body('user_id').optional().trim(),   // validated by handleLib.checkRoot — one rule, not a second regex
     body('email').trim().isLength({ min: 2 }).withMessage('Username required'),
   ],
   validate,
@@ -66,35 +67,44 @@ router.post('/register',
           bridge_id = generateBridgeId();
           identity_id = uuidv4();
           /**
-           * ⭐⭐ CLAIM THE USER ID AT REGISTRATION. Athi, 2026-08-19, after creating "mypharma" and finding the
-           * field empty: *"generally what we say is the id created is userid, and the name is any name."*
+           * ⭐⭐ THE USER ID IS CHOSEN AT REGISTRATION, AND ONLY HERE. Athi, 2026-08-19:
            *
-           * ⚠️ HE IS DESCRIBING WHAT EVERY OTHER PLATFORM DOES, and we did the opposite: registration wrote
-           * display_name and left user_id NULL, so EVERY new entity started life without the one identifier
-           * that its login, its network root and every supplier reference derive from. That empty slot is the
-           * root of the whole "platform-of-platform" confusion — with nothing set, other screens fill the hole
-           * with a guess made from the business name, and a guess rendered like an identifier gets read as one.
+           *   *"through the registration page, only the entity registers. Employee or network or anyone else can
+           *   never register through the registration screen."*  ·  *"the user id registered cannot be changed.
+           *   Once registered, through IAM they can change the display name — anything, any format."*
            *
-           * ⚠️ IT IS AN ATTEMPT, NOT A GUARANTEE. The handle must be valid (no spaces, no ambiguous shapes) and
-           * free — user_id is unique platform-wide. If either fails the column stays NULL and the profile says
-           * so, which is the honest outcome: better an empty field that asks than a mangled one that lies.
+           * ⚠️ IT USED TO BE LEFT NULL. Registration wrote display_name and nothing else, so EVERY entity began
+           * life without the one identifier its login, its network root and every supplier reference derive from.
+           * Screens then filled the empty slot with a guess made from the business name — and a guess rendered
+           * like an identifier gets read as one. That is the whole "platform-of-platform" confusion, at its source.
            *
-           * ⚠️ AND IT IS THEREFORE NOT A CHOICE THE PERSON MADE, so the profile must let them change it. See
-           * cap-admin.js — shown read-only with an explicit Change, rather than locked.
+           * ⚠️ SET ONCE. This INSERT is the only place an entity's user_id is ever written from a person's input;
+           * PATCH /profile refuses to overwrite a value that exists (see below). The Gmail rule, at the write.
            */
-          let claim = null;
-          try {
-            const want = handleLib.slug(display_name);
-            if (want && handleLib.check(want).ok) {
-              const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [want]);
-              if (!taken.rows.length) claim = want;
-            }
-          } catch (_) { /* a failed claim is never a failed registration */ }
+          const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
+          const verdict = handleLib.checkRoot(wanted);
+          if (!verdict.ok) {
+            return res.status(400).json({
+              error: 'Choose a User ID', code: 'USER_ID_INVALID', message: verdict.reason,
+              suggestion: handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null,
+            });
+          }
+          /**
+           * ⚠️ UNIQUE PLATFORM-WIDE, and it must be REFUSED here rather than left to the index. The unique index on
+           * lower(user_id) would raise a 500 that says nothing a person can act on; this says who to be instead.
+           */
+          const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [verdict.value]);
+          if (taken.rows.length) {
+            return res.status(409).json({
+              error: 'That User ID is taken', code: 'USER_ID_TAKEN',
+              message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.',
+            });
+          }
 
           await query(
             `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id)
              VALUES ($1, $2, $3, $4, 'entity', 'pending', $5)`,
-            [identity_id, bridge_id, display_name, email, claim]
+            [identity_id, bridge_id, display_name, email, verdict.value]
           );
           console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
@@ -683,24 +693,57 @@ router.patch('/profile', auth,
      * login; it simply cannot be re-saved unchanged, and cannot be a network root. Rejecting stored values
      * retroactively would lock those owners out of their own accounts.
      */
-    body('user_id').optional().trim().custom(v => {
-      if (v === '') return true;
-      if (v.includes('@')) {
-        if (!/^\S+@\S+\.\S+$/.test(v)) throw new Error('That is not a valid email address.');
-        return true;
-      }
-      if (/\s/.test(v)) throw new Error('A User ID cannot contain spaces — try "' + v.trim().replace(/\s+/g, '-').toLowerCase() + '".');
-      if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]*$/.test(v)) throw new Error('A User ID can use letters, numbers, dots and dashes only.');
-      if (v.length < 8) throw new Error('A User ID must be at least 8 characters, or an email address.');
-      return true;
-    }) ],
+    /**
+     * ⚠️⚠️ THIS HAD ITS OWN PRIVATE REGEX, AND IT WAS THE LOOSE ONE. It allowed dots (`athi.clothing` — a name in
+     * the NETWORK space), capitals (the uniqueness index is on lower(user_id)), emails, and CB-lookalikes that
+     * impersonate a Bridge ID. Two rule sets for one identifier, disagreeing on five of nine cases, and the path a
+     * PERSON types on was the permissive one. Now there is one: handleLib.checkRoot, applied in the handler so the
+     * set-once check and the format check give the same answer.
+     */
+    body('user_id').optional().trim() ],
   validate,
   async (req, res) => {
     try {
       const id = req.identity.identity_id;
-      // user_id is unique (idx_identities_user_id is case-insensitive); store as given, dedupe by LOWER().
-      const userId = (req.body.user_id !== undefined && String(req.body.user_id).trim() !== '')
-        ? String(req.body.user_id).trim() : null;
+      /**
+       * ⚠️⚠️ SET ONCE. Athi, 2026-08-19: *"the registered user id cannot be changed. Are you able to change your
+       * Gmail id? The same way here."*
+       *
+       * The UPDATE below writes COALESCE(user_id, $5) — the existing value always wins — so a change is impossible
+       * at the write even if this check were bypassed. But a write that SILENTLY ignores what you sent is its own
+       * defect: the screen would report "saved" and the value would be unchanged. So say so, out loud, with 409.
+       *
+       * ⚠️ IT STILL ACCEPTS A VALUE WHEN THE COLUMN IS NULL. That is not a loophole, it is the REPAIR PATH —
+       * entities registered before the User ID was collected have none, and must be able to set one once.
+       */
+      let userId = null;
+      if (req.body.user_id !== undefined && String(req.body.user_id).trim() !== '') {
+        const cur = await query('SELECT user_id FROM identities WHERE identity_id = $1', [id]);
+        const existing = cur.rows[0] && cur.rows[0].user_id;
+        const verdict = handleLib.checkRoot(req.body.user_id);
+        if (existing) {
+          if (verdict.value !== String(existing).toLowerCase()) {
+            return res.status(409).json({
+              error: 'A User ID cannot be changed', code: 'USER_ID_IMMUTABLE',
+              message: 'Your User ID is "' + existing + '". It is how people sign in and how everything else '
+                     + 'is named, so it is fixed for the life of the business — like an email address. '
+                     + 'The name above it can be changed to anything.',
+              user_id: existing,
+            });
+          }
+        } else {
+          if (!verdict.ok) {
+            return res.status(400).json({ error: 'Choose a User ID', code: 'USER_ID_INVALID', message: verdict.reason });
+          }
+          const taken = await query(
+            'SELECT 1 FROM identities WHERE LOWER(user_id) = $1 AND identity_id <> $2', [verdict.value, id]);
+          if (taken.rows.length) {
+            return res.status(409).json({ error: 'That User ID is taken', code: 'USER_ID_TAKEN',
+              message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.' });
+          }
+          userId = verdict.value;   // lowercase: the uniqueness index is on lower(user_id)
+        }
+      }
       // dispute_handler must be one of MY OWN actors — never an arbitrary identity.
       const handler = req.body.dispute_handler_actor_id || null;
       if (handler) {
@@ -711,7 +754,8 @@ router.patch('/profile', auth,
       }
       await query(
         `UPDATE identities SET display_name=COALESCE($9,display_name), gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
-                business_status=COALESCE($4,business_status), user_id=COALESCE($5,user_id),
+                business_status=COALESCE($4,business_status),
+                user_id=COALESCE(user_id,$5),
                 self_copy_pref=COALESCE($6,self_copy_pref),
                 dispute_handler_actor_id=COALESCE($7,dispute_handler_actor_id)
          WHERE identity_id=$8`,

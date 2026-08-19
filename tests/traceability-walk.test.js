@@ -28,7 +28,7 @@ async function api(method, path, body, token) {
 }
 async function mint(name) {
   const email = `tw-${name}-${Date.now()}-${Math.floor(Math.random()*1e6)}@test-cb.com`;
-  const reg = await api('POST','/api/entities/register',{ display_name:`TW ${name}`, email });
+  const reg = await api('POST','/api/entities/register',{ display_name:`TW ${name}`, email, user_id: 'e' + Date.now() + Math.floor(Math.random()*1e6) });
   if (!reg.data.dev_otp) throw new Error(`no dev_otp for ${name}`);
   const ver = await api('POST','/api/entities/verify',{ email, otp: reg.data.dev_otp });
   if (ver.status !== 200) throw new Error(`verify ${name}: ${ver.data.message}`);

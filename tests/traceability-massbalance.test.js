@@ -15,7 +15,7 @@ async function api(method, path, body, token){
   let data={}; try{ data=await res.json(); }catch(_){} return { status:res.status, data };
 }
 async function mint(n){ const email=`mb-${n}-${Date.now()}-${Math.floor(Math.random()*1e5)}@test-cb.com`;
-  const reg=await api('POST','/api/entities/register',{ display_name:`MB ${n}`, email }); const otp=reg.data.dev_otp||'123456';
+  const reg=await api('POST','/api/entities/register',{ display_name:`MB ${n}`, email, user_id: 'e' + Date.now() + Math.floor(Math.random()*1e6) }); const otp=reg.data.dev_otp||'123456';
   const v=await api('POST','/api/entities/verify',{ email, otp }); if(v.status!==200) throw new Error('verify '+n); return { id:v.data.entity.identity_id, token:v.data.token, name:n }; }
 async function handoff(from, to, edge, op){
   const r=await api('POST','/api/chits/send',{ receivers:[{entity_id:to.id}], purpose:'delivery_note', manual_subject:`${from.name}->${to.name}`,

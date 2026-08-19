@@ -31,7 +31,7 @@ async function api(method, path, body, token) {
 
 async function mint(name) {
   const email = `trace-${name}-${Date.now()}-${Math.floor(Math.random()*1e6)}@test-cb.com`;
-  const reg = await api('POST', '/api/entities/register', { display_name: `Trace ${name}`, email });
+  const reg = await api('POST', '/api/entities/register', { display_name: `Trace ${name}`, email, user_id: 'e' + Date.now() + Math.floor(Math.random()*1e6) });
   const otp = reg.data.dev_otp;
   if (!otp) throw new Error(`no dev_otp for ${name} — need NODE_ENV=development`);
   const ver = await api('POST', '/api/entities/verify', { email, otp });

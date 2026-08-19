@@ -78,7 +78,8 @@ async function registerAndVerify(name, email) {
   // Register
   const reg = await api('POST', '/api/entities/register', {
     display_name: name,
-    email
+    email,
+    user_id: 'e' + Date.now() + Math.floor(Math.random()*1e6)
   });
 
   if (reg.status !== 200) {

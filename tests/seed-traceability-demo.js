@@ -21,7 +21,7 @@ async function api(method, path, body, token) {
   return { status: res.status, data };
 }
 async function login(email, name) {
-  const reg = await api('POST','/api/entities/register',{ display_name: name, email });
+  const reg = await api('POST','/api/entities/register',{ display_name: name, email, user_id: 'e' + Date.now() + Math.floor(Math.random()*1e6) });
   const otp = reg.data.dev_otp || '123456';
   const ver = await api('POST','/api/entities/verify',{ email, otp });
   if (ver.status !== 200) throw new Error(`login ${email} failed: ${ver.data.message||ver.status}`);
