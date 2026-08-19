@@ -615,7 +615,20 @@ router.patch('/profile', auth,
    * the rule and leaves someone re-typing at random. A validator that refuses without saying why has moved the
    * work from the code to the person, which is the wrong direction.
    */
-  [ body('gstn').optional().trim().isLength({ max: 15 })
+  [ /**
+     * ⚠️⚠️ THE NAME COULD NOT BE CHANGED AT ALL, and the screen had it exactly backwards. Athi, 2026-08-19:
+     * *"if they are different, we should be providing an option to change the name here. Not the user id."*
+     * *"and it looks reverse. That is the problem."*
+     *
+     * He is right twice. This app's own naming table says display_name is *"Change it any time — nothing cites
+     * it, everything cites your ID"* — and yet PATCH /profile had no display_name validator and never wrote it,
+     * while user_id, the handle every other name derives from, was a freely editable input.
+     *
+     * The MUTABLE fact was fixed and the LOAD-BEARING one was loose. Now the name is editable, as documented.
+     */
+    body('display_name').optional().trim().isLength({ min: 2, max: 255 })
+      .withMessage('A business name is 2 characters or more.'),
+    body('gstn').optional().trim().isLength({ max: 15 })
       .withMessage('A GSTIN is 15 characters — check for a missing or extra digit.'),
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
@@ -670,13 +683,15 @@ router.patch('/profile', auth,
         if (!ok.rows.length) return res.status(400).json({ error: 'Bad handler', message: 'dispute_handler_actor_id must be an actor under your entity' });
       }
       await query(
-        `UPDATE identities SET gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
+        `UPDATE identities SET display_name=COALESCE($9,display_name), gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
                 business_status=COALESCE($4,business_status), user_id=COALESCE($5,user_id),
                 self_copy_pref=COALESCE($6,self_copy_pref),
                 dispute_handler_actor_id=COALESCE($7,dispute_handler_actor_id)
          WHERE identity_id=$8`,
         [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
-         req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id]);
+         req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id,
+         /* $9 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
+         (req.body.display_name ? sanitise(req.body.display_name) : null)]);
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
