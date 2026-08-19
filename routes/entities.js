@@ -296,14 +296,32 @@ router.get('/search', auth, async (req, res) => {
       return res.status(400).json({ error: 'Search query too short', message: 'Enter at least 2 characters' });
     }
     const result = await query(
-      `SELECT identity_id, bridge_id, display_name, created_at
+      /**
+       * ⚠️⚠️ THE SEARCH DID NOT MATCH user_id — the one thing it should have matched first.
+       *
+       * Athi, 2026-08-19: *"a supplier can add this entity by alpha-timers only, not with Alpha timers."* He is
+       * right about the principle, and the code was worse than he thought: typing `alpha-timers` found NOTHING.
+       * It matched display_name and bridge_id only, so the ONLY ways to find a business were its NAME — which
+       * may repeat — or a ten-character generated code nobody remembers.
+       *
+       * ⭐ user_id is now matched too, and ORDERED FIRST, so an exact handle wins over a fuzzy name match. The
+       * name stays searchable because finding is not the same act as identifying: you may look someone up by
+       * name, but what gets stored is always their bridge_id.
+       */
+      `SELECT identity_id, bridge_id, display_name, user_id, created_at
        FROM identities
-       WHERE (LOWER(display_name) LIKE LOWER($1) OR LOWER(bridge_id) LIKE LOWER($1))
+       WHERE (LOWER(user_id) LIKE LOWER($1) OR LOWER(display_name) LIKE LOWER($1) OR LOWER(bridge_id) LIKE LOWER($1))
        AND identity_type = 'entity' AND status = 'active'
        AND COALESCE(sealed, false) = false
        AND identity_id != $2
-       ORDER BY display_name LIMIT 10`,
-      [`%${q}%`, req.identity.identity_id]
+       /**
+        * An exact handle beats a fuzzy name — someone who typed the identifier knew what they wanted.
+        * ⚠️ $3, NOT $2. $2 is the CALLER'S identity_id (the "not me" filter); comparing a user_id against it
+        * would never match, and the ordering would be silently inert — a ranking that looks implemented and
+        * ranks nothing. Caught by reading the parameter list rather than the query.
+        */
+       ORDER BY (LOWER(user_id) = LOWER($3)) DESC, display_name LIMIT 10`,
+      [`%${q}%`, req.identity.identity_id, q]
     );
     res.json({ results: result.rows, count: result.rows.length });
   } catch (err) {
