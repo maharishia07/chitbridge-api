@@ -129,7 +129,30 @@ router.post('/',
   validate,
   async (req, res) => {
     try {
-      const entity_id    = req.identity.identity_id;
+      /**
+       * ⭐⭐ PROVISIONING AN IDENTITY IS THE ENTITY'S, NOT A CO-ASSIST'S. IAM-SPEC §29 left this unstated and
+       * Athi asked me to decide, so: creating and modifying co-assists requires the ENTITY login.
+       *
+       * ⚠️ THIS IS NOT ROLE-AS-PERMISSION, which Athi ruled out. Access is binary — editable or read-only —
+       * and that governs WORK. Who may mint an identity is a different axis: it is ownership of the namespace,
+       * not a level in an org chart. The precedent is already in this file: "only the account owner can change
+       * who sees costs and margin."
+       *
+       * ⚠️⚠️ AND IT CLOSES A REAL DEFECT. `entity_id` was req.identity.identity_id — for an ACTOR that is
+       * their OWN id, so an act-hat co-assist (who passes the hat gate) creating a co-assist would parent it
+       * to THEMSELVES: an actor whose parent is an actor. It would belong to no entity, never appear in the
+       * co-assist list that queries parent_entity_id, and take its login handle from the actor's own row. On
+       * PATCH the same bug was harmless BY ACCIDENT — the WHERE matched nothing and returned 404 — which is
+       * exactly why it survived: it looked like a permission working.
+       */
+      if (req.identity.identity_type === 'actor') {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'Only the account owner can add or change co-assists. Ask whoever manages this business.',
+        });
+      }
+
+      const entity_id    = auth.entityOf(req);
       /**
        * ⭐⭐ THE LOGIN HANDLE IS `key@user_id`, NOT `key@display name`. Athi, 2026-08-18: *"can we say how the
        * userid of the employee exists — employee-given-name@entity-use-id; this combination should be unique."*
@@ -231,7 +254,30 @@ router.patch('/:id',
   validate,
   async (req, res) => {
     try {
-      const entity_id = req.identity.identity_id;   // the entity that owns the actor
+      /**
+       * ⭐⭐ PROVISIONING AN IDENTITY IS THE ENTITY'S, NOT A CO-ASSIST'S. IAM-SPEC §29 left this unstated and
+       * Athi asked me to decide, so: creating and modifying co-assists requires the ENTITY login.
+       *
+       * ⚠️ THIS IS NOT ROLE-AS-PERMISSION, which Athi ruled out. Access is binary — editable or read-only —
+       * and that governs WORK. Who may mint an identity is a different axis: it is ownership of the namespace,
+       * not a level in an org chart. The precedent is already in this file: "only the account owner can change
+       * who sees costs and margin."
+       *
+       * ⚠️⚠️ AND IT CLOSES A REAL DEFECT. `entity_id` was req.identity.identity_id — for an ACTOR that is
+       * their OWN id, so an act-hat co-assist (who passes the hat gate) creating a co-assist would parent it
+       * to THEMSELVES: an actor whose parent is an actor. It would belong to no entity, never appear in the
+       * co-assist list that queries parent_entity_id, and take its login handle from the actor's own row. On
+       * PATCH the same bug was harmless BY ACCIDENT — the WHERE matched nothing and returned 404 — which is
+       * exactly why it survived: it looked like a permission working.
+       */
+      if (req.identity.identity_type === 'actor') {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'Only the account owner can add or change co-assists. Ask whoever manages this business.',
+        });
+      }
+
+      const entity_id = auth.entityOf(req);   // the entity that owns it — never the caller's own id
       const actor_id  = req.params.id;
       /**
        * ⚠️ ONLY THE ENTITY LOGIN MAY GRANT MONEY ACCESS (b145).

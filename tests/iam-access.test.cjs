@@ -107,10 +107,60 @@ async function routeCases() {
   srv.close();
 }
 
+/* ── §29 · only the ENTITY may provision an identity ──────────────────────────────────────────────────── */
+async function provisioningCases() {
+  console.log('\n-- 29 . creating and changing co-assists is the entity, not a co-assist --\n');
+
+  let WHO = null;
+  require.cache[require.resolve(API + '/middleware/auth')] = {
+    exports: Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
+      entityOf: (req) => (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
+    }),
+  };
+  require.cache[require.resolve(API + '/db')] = {
+    exports: { query: async () => ({ rows: [] }), withEntity: async (_i, fn) => fn({ query: async () => ({ rows: [] }) }) },
+  };
+
+  delete require.cache[require.resolve(API + '/routes/actors')];
+  const app = express();
+  app.use(express.json());
+  app.use('/api/actors', require(API + '/routes/actors'));
+  const srv = app.listen(0);
+  const port = srv.address().port;
+
+  const call = (method, path, who, body) => new Promise((ok) => {
+    WHO = who;
+    const b = JSON.stringify(body || {});
+    const r = http.request({ host: '127.0.0.1', port, path, method,
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+      (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
+    r.end(b);
+  });
+
+  const ACTOR  = { identity_id: 'a1', identity_type: 'actor', hat: 'act', parent_entity_id: 'e1', display_name: 'A' };
+  const ENTITY = { identity_id: 'e1', identity_type: 'entity', display_name: 'E' };
+
+  /**
+   * ⚠️⚠️ THE DEFECT THIS CLOSES WAS INVISIBLE BECAUSE IT LOOKED LIKE A PERMISSION. On PATCH, entity_id was the
+   * CALLER's identity_id, so an actor's update matched no rows and returned 404 — indistinguishable from
+   * "correctly refused". On POST the same line was not harmless: it would have created an actor parented to an
+   * actor. So this asserts 403, not merely "not 200": a 404 here would be the old bug passing.
+   */
+  t('act co-assist  POST /actors      403 — not 404, which is what the bug looked like',
+    await call('POST', '/api/actors', ACTOR, { display_name: 'New Person', actor_key: 'newp' }), 403);
+  t('act co-assist  PATCH /actors/x   403', await call('PATCH', '/api/actors/x', ACTOR, { hat: 'manager' }), 403);
+  t('  …including promoting THEMSELVES', await call('PATCH', '/api/actors/a1', ACTOR, { hat: 'manager' }), 403);
+  t('entity login   POST /actors      NOT 403',
+    (await call('POST', '/api/actors', ENTITY, { display_name: 'New Person', actor_key: 'newp' })) === 403 ? 403 : 'not-403', 'not-403');
+
+  srv.close();
+}
+
 (async () => {
   await visibilityCases();
   gateCases();
   await routeCases();
+  await provisioningCases();
   console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
 })();
