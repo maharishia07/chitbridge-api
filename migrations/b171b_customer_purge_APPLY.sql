@@ -24,6 +24,21 @@
 --
 -- ⚠️⚠️ IT ENDS IN ROLLBACK. Run it, read the NOTICEs and the final counts, then change the last line to COMMIT
 -- and run again. A destructive migration that commits on its first run gives you nothing to reconsider.
+--
+-- ── RLS ────────────────────────────────────────────────────────────────────────────────────────────────────
+-- MIXED, and the mix matters here:
+--
+--   identities                          WITHOUT RLS  — the deliberate b54 cross-tenant carve-out
+--   every dependent deleted below       WITH RLS     — chit_*, state_log, customer_list, catalogue_items…
+--   access_events, entity_profile       WITH RLS, FORCEd — applies to the table OWNER as well
+--
+-- ⚠️ THIS SCRIPT DOES NOT SET app.entity_id, and it must not: it is deliberately cross-entity. It therefore
+-- relies on running as a role that bypasses RLS — which the Supabase SQL editor does.
+--
+-- ⚠️⚠️ THE TELL IF IT EVER DOES NOT: every NOTICE reports 0 rows while customers plainly exist. Each policy
+-- would be evaluating against a null entity id, matching nothing, and reporting success — and then the final
+-- DELETE FROM identities, which is NOT filtered, would fail on the same foreign keys all over again. Zero
+-- everywhere is not an empty database; it is a silent filter.
 
 BEGIN;
 
