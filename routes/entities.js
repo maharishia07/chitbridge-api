@@ -743,7 +743,10 @@ router.patch('/profile', auth,
       .withMessage('A GSTIN is 15 characters — check for a missing or extra digit.'),
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
-    body('business_status').optional().isIn(['open','closed','away'])
+    body('business_status').optional().isIn(['open','closed','away']),
+    /* ⭐ b177-era: the entity may CHOOSE a currency. Bounded below against what the constitution permits —
+       an enum here would freeze the set, and the whole point is that the layer decides it. */
+    body('currency_code').optional().trim().isLength({ min: 3, max: 3 })
       .withMessage('Shop status can be open, closed or away.'),
     body('storefront_access').optional().isIn(['browse','login'])
       .withMessage('Storefront access can be "browse" (open catalogue) or "login" (sign in first).'),
@@ -849,17 +852,42 @@ router.patch('/profile', auth,
           [handler, id]);
         if (!ok.rows.length) return res.status(400).json({ error: 'Bad handler', message: 'dispute_handler_actor_id must be an actor under your entity' });
       }
+      /**
+       * ⭐⭐ THE REGION BOUNDS THE SET; THE ENTITY PICKS ONE FROM IT. Athi, 2026-08-20: *"under region there can
+       * be MULTIPLE currencies, one of the currency will be chosen."*
+       *
+       * ⚠️ SO IT IS VALIDATED HERE, NOT WITH AN ENUM. An isIn([...]) in the validator would freeze the list in
+       * the route, and the whole point is that the CONSTITUTION decides it. A currency outside the envelope is
+       * refused with the permitted set named, so the answer is actionable rather than "invalid".
+       */
+      let _cur = null;
+      if (req.body.currency_code) {
+        const want = String(req.body.currency_code).toUpperCase();
+        let permitted = null;
+        try { const g = await resolveEntityGovernance(id); permitted = g && g.allowed && g.allowed.currencies; } catch (_) {}
+        if (Array.isArray(permitted) && permitted.length && permitted.indexOf(want) < 0) {
+          return res.status(422).json({
+            error: 'Currency not permitted', code: 'CURRENCY_NOT_ALLOWED',
+            message: want + ' is not available here. Choose one of: ' + permitted.join(', ') + '.',
+            allowed: permitted,
+          });
+        }
+        _cur = want;
+      }
       await query(
         `UPDATE identities SET display_name=COALESCE($9,display_name), gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
                 business_status=COALESCE($4,business_status),
                 user_id=COALESCE(user_id,$5),
                 self_copy_pref=COALESCE($6,self_copy_pref),
-                dispute_handler_actor_id=COALESCE($7,dispute_handler_actor_id)
+                dispute_handler_actor_id=COALESCE($7,dispute_handler_actor_id),
+                currency_code=COALESCE($10,currency_code)
          WHERE identity_id=$8`,
         [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
          req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id,
+         /* $10 — validated against the constitution above; null leaves it alone. */
          /* $9 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
-         (req.body.display_name ? sanitise(req.body.display_name) : null)]);
+         (req.body.display_name ? sanitise(req.body.display_name) : null),
+         _cur]);
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
