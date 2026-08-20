@@ -16,6 +16,7 @@ const { resolveEntityGovernance } = require('../lib/govresolve');   // resolve t
 // ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
 //    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
 const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
+const schema = require('../lib/schema');   // b176 — never name a column from an unrun migration
 const handleLib = require('../lib/handle');   // slug + check — the same rules the network root uses
 
 // DEV_OTP in Railway env = fixed OTP for testing e.g. 123456
@@ -388,11 +389,18 @@ router.patch('/policy', auth, async (req, res) => {
 
 router.get('/me', auth, async (req, res) => {
   try {
+    /* ⚠️⚠️ THE PROBE BELONGS IN THIS FUNCTION. I first put it above the /search query — a different route —
+       so _tzCol was a ReferenceError here and defined where nothing used it. Same borrowed-variable class as
+        this afternoon, and node --check cannot see either. b176 may not be run; a missing column is
+       42703 and throws the whole query. */
+    const _tzCol = await schema.hasColumn('identities', 'timezone');
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
               purpose, sort_order, address, city, lat, lng, service_km,   -- b117/b118/b119
-              actor_key, phone,
+              actor_key, phone${_tzCol ? ', timezone' : ''},
+              /* ⚠️ b176 MAY NOT BE RUN. A missing column is 42703 and throws the WHOLE query — the mistake that
+                 took co-assist sign-in down this morning. Selected through the probe, never named blindly. */
               /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
                  A correlated subselect rather than a second round trip — this route is already on the slow
                  path Athi measured at 9.3s to open a chit, and an extra query for a label is not affordable. */
