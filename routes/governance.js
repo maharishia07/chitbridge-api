@@ -366,12 +366,25 @@ router.get('/ai-skills', auth, async (req, res) => {
 // a connection.)
 router.get('/readiness/:bridge_id', auth, async (req, res) => {
   try {
+    /**
+     * ⚠️ ACCEPTS A user_id TOO — this is the SUPPLIER-FACING read ("how other suppliers will view this
+     * person", Athi 2026-08-20), and a supplier holds a handle, not an internal key. Matching bridge_id alone
+     * meant the one endpoint built for outsiders was the one that only took an insider's identifier.
+     *
+     * ⚠️ bridge_id FIRST: both are unique, but a user_id could equal another entity's key, and the key must
+     * win or a business could shadow another's trade record by choosing the right handle. Same ordering as
+     * resolveEntity in routes/catalogue.js — one rule, two places, deliberately identical.
+     */
     const r = await query(
-      `SELECT identity_id, display_name, bridge_id FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' LIMIT 1`,
+      `SELECT identity_id, display_name, bridge_id, user_id FROM identities
+        WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1)) AND identity_type = 'entity'
+        ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [req.params.bridge_id]);
     if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such entity' });
     const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
-    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, display_name: r.rows[0].display_name }, ...rd });
+    /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
+       stays because it is what the UI keys the row by. */
+    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, ...rd });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });
 
