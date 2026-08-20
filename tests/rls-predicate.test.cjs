@@ -105,5 +105,66 @@ if (noNullif.length) {
   console.log('   sweep, not a surprise in whichever migration is edited next.');
 }
 
-console.log(`\n══ ${fail ? 'FAILED' : 'PASSED'} · ${brokenPolicy.length} broken · ${unsetValue.length + noNullif.length} warning(s) ══\n`);
+/**
+ * ── THE OTHER HALF: a WITH RLS table must be reached through withEntity, on READS TOO ──────────────────────
+ *
+ * ⚠️⚠️ THIS IS THE CHECK THAT WOULD HAVE CAUGHT THE SECOND HALF OF THE SAME BUG. After b175 fixed the policies
+ * and the audit WRITE was scoped, the trail still looked empty — because the READ used the plain helper. It
+ * returned [] beside `applied: true`, which reads as "installed, nothing to show". Fixing the write and
+ * leaving the read is indistinguishable, from outside, from not having fixed anything.
+ *
+ * The heuristic: find every table the migrations put under RLS, then find code that names it, and look back a
+ * few lines for a scoping call. Imperfect by nature — it is a text search over SQL embedded in JS — so a hit
+ * is reported as a WARNING to be looked at, not a failure. The point is that it is impossible to add an
+ * unscoped statement and have nobody mention it.
+ */
+const rlsTables = new Set();
+for (const f of files) {
+  const src = fs.readFileSync(path.join(MIG, f), 'utf8');
+  for (const m of src.matchAll(/ALTER TABLE\s+([a-z0-9_]+)\s+ENABLE ROW LEVEL SECURITY/gi)) rlsTables.add(m[1].toLowerCase());
+}
+
+const SCOPERS = /(withEntity|onEntity|withTransaction|crossing)\s*\(/;
+const unscoped = [];
+for (const dir of ['routes', 'lib']) {
+  const d = path.join(ROOT, dir);
+  if (!fs.existsSync(d)) continue;
+  for (const f of fs.readdirSync(d).filter(n => n.endsWith('.js'))) {
+    const lines = fs.readFileSync(path.join(d, f), 'utf8').split(/\r?\n/);
+    lines.forEach((line, i) => {
+      if (/^\s*(\*|\/\/|\/\*)/.test(line)) return;   // prose mentioning a table is not a statement on it
+      const m = line.match(/\b(?:FROM|JOIN|INTO|UPDATE)\s+([a-z0-9_]+)/i);
+      if (!m) return;
+      const t = m[1].toLowerCase();
+      if (!rlsTables.has(t)) return;
+      /**
+       * ⚠️ SEARCH THE ENCLOSING HANDLER, NOT A FIXED WINDOW. A 12-line lookback produced 112 hits, nearly all
+       * of them statements sitting inside a withEntity block that opened thirty lines earlier — the noisy
+       * check this file's own header warns about, written by the person who wrote the warning. Walk back to
+       * the start of the route handler or function and search that whole span instead.
+       */
+      /* ⚠️ STOP ONLY AT A ROUTE OR A TOP-LEVEL FUNCTION. Including `const x = (…)` in the stop pattern matched
+         the INNER arrow — routes/actors.js shadows `const db = (t,p) => client.query(t,p)` immediately inside
+         its withEntity callback — so the walk halted one line below the very call it was looking for and
+         reported 51 false positives. The enclosing unit is the handler, not the nearest arrow. */
+      let start = i;
+      while (start > 0 && !/^\s*(router\.(get|post|put|patch|delete)\b|(async\s+)?function\s+\w)/.test(lines[start])) start--;
+      const back = lines.slice(start, i + 1).join('\n');
+      if (SCOPERS.test(back)) return;
+      unscoped.push(`${dir}/${f}:${i + 1}  ${t}  ${line.trim().slice(0, 70)}`);
+    });
+  }
+}
+
+if (unscoped.length) {
+  console.log(`\n⚠ ${unscoped.length} statement(s) on a WITH-RLS table with no scoping call in the enclosing handler:`);
+  unscoped.slice(0, 20).forEach(b => console.log('   ' + b));
+  if (unscoped.length > 20) console.log(`   … and ${unscoped.length - 20} more`);
+  console.log('   A plain query sets no app.current_entity, so the policy matches nothing: writes raise 42501');
+  console.log('   and READS SILENTLY RETURN []. Check each — a text search cannot prove the call is missing.');
+} else if (rlsTables.size) {
+  console.log(`✓ every statement naming one of the ${rlsTables.size} WITH-RLS tables is inside a scoping call`);
+}
+
+console.log(`\n══ ${fail ? 'FAILED' : 'PASSED'} · ${brokenPolicy.length} broken · ${unsetValue.length + noNullif.length + unscoped.length} warning(s) ══\n`);
 process.exit(fail ? 1 : 0);

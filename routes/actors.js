@@ -1792,7 +1792,17 @@ router.get('/access-events',
       let where = 'e.entity_id = $1';
       if (subject) { params.push(subject); where += ' AND e.subject_identity_id = $2'; }
 
-      const r = await db(
+      /**
+       * ⚠️⚠️ withEntity ON THE READ TOO — and forgetting it here is why the audit trail still looked empty
+       * AFTER b175 fixed the policy and the write was scoped. access_events is WITH RLS, so a plain query has
+       * no app.current_entity, matches no rows, and returns [] — beside `applied: true`, which reads as
+       * "the feature is installed and there is simply nothing to show".
+       *
+       * ⭐ THAT IS THE WHOLE LESSON OF THIS BUG, TWICE OVER: a WITH RLS table needs the tenant on EVERY
+       * statement, reads included. Fixing the write and leaving the read is indistinguishable, from the
+       * outside, from not having fixed anything.
+       */
+      const r = await withEntity(entity_id, (edb) => edb.query(
         `SELECT e.event_id, e.subject_identity_id, s.display_name AS subject_name, s.actor_key,
                 e.action, e.before_value, e.after_value, e.reason, e.at,
                 e.changed_by, c.display_name AS changed_by_name
@@ -1801,7 +1811,7 @@ router.get('/access-events',
            LEFT JOIN identities c ON c.identity_id = e.changed_by
           WHERE ${where}
           ORDER BY e.at DESC
-          LIMIT 200`, params);
+          LIMIT 200`, params));
 
       res.json({ events: r.rows, applied: true });
     } catch (err) {
