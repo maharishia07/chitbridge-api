@@ -394,11 +394,12 @@ router.get('/me', auth, async (req, res) => {
         this afternoon, and node --check cannot see either. b176 may not be run; a missing column is
        42703 and throws the whole query. */
     const _tzCol = await schema.hasColumn('identities', 'timezone');
+    const _supCol = await schema.hasColumn('identities', 'supplies');
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
               purpose, sort_order, address, city, lat, lng, service_km,   -- b117/b118/b119
-              actor_key, phone${_tzCol ? ', timezone' : ''},
+              actor_key, phone${_tzCol ? ', timezone' : ''}${_supCol ? ', supplies' : ''},
               /* ⚠️ b176 MAY NOT BE RUN. A missing column is 42703 and throws the WHOLE query — the mistake that
                  took co-assist sign-in down this morning. Selected through the probe, never named blindly. */
               /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
@@ -746,7 +747,8 @@ router.patch('/profile', auth,
     body('business_status').optional().isIn(['open','closed','away']),
     /* ⭐ b177-era: the entity may CHOOSE a currency. Bounded below against what the constitution permits —
        an enum here would freeze the set, and the whole point is that the layer decides it. */
-    body('currency_code').optional().trim().isLength({ min: 3, max: 3 })
+    body('currency_code').optional().trim().isLength({ min: 3, max: 3 }),
+    body('supplies').optional().isIn(['goods','services','both'])
       .withMessage('Shop status can be open, closed or away.'),
     body('storefront_access').optional().isIn(['browse','login'])
       .withMessage('Storefront access can be "browse" (open catalogue) or "login" (sign in first).'),
@@ -880,14 +882,15 @@ router.patch('/profile', auth,
                 user_id=COALESCE(user_id,$5),
                 self_copy_pref=COALESCE($6,self_copy_pref),
                 dispute_handler_actor_id=COALESCE($7,dispute_handler_actor_id),
-                currency_code=COALESCE($10,currency_code)
+                currency_code=COALESCE($10,currency_code),
+                supplies=COALESCE($11,supplies)
          WHERE identity_id=$8`,
         [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
          req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id,
          /* $10 — validated against the constitution above; null leaves it alone. */
          /* $9 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
          (req.body.display_name ? sanitise(req.body.display_name) : null),
-         _cur]);
+         _cur, req.body.supplies || null]);
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
