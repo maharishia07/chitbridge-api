@@ -414,6 +414,44 @@ router.get('/me', auth, async (req, res) => {
      * These come from req.identity, which middleware/auth.js has already read FROM THE DATABASE on this very
      * request — never from the token — so a demotion shows here immediately, and it costs no round trip.
      */
+    /**
+     * ⭐⭐ IS THIS ENTITY'S NETWORK STOREFRONT LIVE — DERIVED, NEVER STORED. Athi, 2026-08-20: *"if you change
+     * the option to network, by default it is a PRIVATE network, so no storefront. But if you have any store
+     * under you is public, then the storefront will be public. This way we are avoiding another status field…
+     * otherwise I was wondering how to make a private network."*
+     *
+     * ⭐ A PRIVATE NETWORK NEEDS NO FLAG — it is simply a network where nobody has published. The question
+     * "is this network public?" already has an answer in the data, and storing a second answer beside it
+     * creates the one thing this codebase keeps paying for: two facts that can disagree.
+     *
+     * ⚠️ ONE READ, NOT N. Athi, 2026-08-19: *"again it should not be n reads, it has to be one read only."*
+     * This is a single COUNT riding on a request that was already happening — not a walk of the tree.
+     *
+     * ⭐ MEMBERSHIP IS IN THE HANDLE, so there is nothing to join. lib/handle.js defines a network node as
+     * `root.node`, so every store under `athi` has a user_id beginning `athi.` — which is exactly what a
+     * prefix match asks for.
+     *
+     * ⚠️ THE PREFIX IS ESCAPED. A user_id may not contain % or _ today (checkRoot allows letters, numbers and
+     * dashes), but a LIKE built from user input without an ESCAPE clause is a habit that outlives the
+     * validator that made it safe.
+     */
+    if (req.identity.identity_type !== 'actor' && result.rows[0].user_id) {
+      try {
+        const prefix = String(result.rows[0].user_id).toLowerCase().replace(/([%_\\])/g, '\\$1') + '.';
+        const nc = await query(
+          `SELECT count(*)::int AS n FROM identities
+            WHERE LOWER(user_id) LIKE $1 || '%' ESCAPE '\\'
+              AND identity_type = 'entity' AND status = 'active'
+              AND catalogue_visibility = 'public'`,
+          [prefix]);
+        result.rows[0].network_public_count = nc.rows[0] ? nc.rows[0].n : 0;
+      } catch (_) {
+        /* ⚠️ ABSENT, NOT ZERO. A failed count must not render as "nothing under you is public" — that is a
+           definite statement, and this is the absence of one. The screen shows nothing rather than a lie. */
+        result.rows[0].network_public_count = null;
+      }
+    }
+
     if (req.identity.identity_type === 'actor') {
       result.rows[0].identity_type = 'actor';
       result.rows[0].hat           = req.identity.hat || null;
