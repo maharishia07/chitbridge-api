@@ -159,6 +159,7 @@ app.use('/api/connections', connectionsRouter);
 app.use('/api/chits',       chitsRouter);
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);
+app.use('/api/identity',    require('./routes/identity-docs'));   // b174 — a person's own documents + verification stamp
 app.use('/api/connectors',  connectorsRouter);
 app.use('/api/folders',     foldersRouter);
 app.use('/api/relationships', relationshipsRouter);

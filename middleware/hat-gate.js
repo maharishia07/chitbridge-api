@@ -46,6 +46,16 @@ const SELF_SCOPED = [
   ['/entities/me/prefs', 'their own locale and appearance — a display choice, not a record'],
   ['/entities/me/locale', 'the same, under its pre-b166 name'],
   ['/actors/me', 'their own profile row'],
+  /**
+   * ⭐ A PERSON'S OWN IDENTITY DOCUMENTS ARE THEIRS, NOT THE BUSINESS'S. b174. Athi: *"which HE can submit here
+   * for verification so it become HIS record."* Filing your own PAN changes no business record and creates
+   * nothing on the rail, so an access level about business records has no business refusing it — a Viewer with
+   * an unverifiable identity would be a Viewer nobody could ever verify.
+   *
+   * ⚠️ Safe to open by PREFIX because the route takes NO identity_id: the subject is always req.identity, so
+   * there is no shape of this request that files a document against somebody else.
+   */
+  ['/identity', 'their own identity documents — the subject is always the caller (b174)'],
   ['/actors/break', 'their own break status — a person may say they are on a break'],
   ['/auth', 'signing in cannot require permission to sign in'],
   ['/notifications', 'clearing one\'s own notifications changes no record — b164 writes only a dismissal'],
