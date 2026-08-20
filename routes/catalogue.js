@@ -329,11 +329,32 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   return { items, total };
 }
 
-async function resolveEntity(bridge_id) {
+/**
+ * Resolve a shop from whatever the customer's link carries.
+ *
+ * ⭐⭐ THE PUBLIC HANDLE IS user_id; bridge_id IS THE INTERNAL KEY. Athi, 2026-08-20: *"in the storefront we
+ * should show with user id, not with bridge id — that is for our internal purposes for referential integrity…
+ * assume if the entire logic is based on bridge id, then we need to convert internally, or keep it internally
+ * and use it for our logic purpose."* This function IS that conversion point: one place turns a public handle
+ * into the internal row, and nothing downstream has to change.
+ *
+ * ⚠️⚠️ THE APP ALREADY BUILT LINKS AS /shop.html?s=<user_id> AND THIS MATCHED ONLY bridge_id — so every one of
+ * those links resolved to nothing. A dead link with a plausible shape is why nobody caught it: the row
+ * rendered, the URL looked right, and the page answered "No shop specified".
+ *
+ * ⚠️ bridge_id IS TRIED FIRST. Both columns are unique, but a user_id could in principle equal some other
+ * entity's bridge_id, and the key must win — otherwise a business could shadow another's shop by choosing the
+ * right handle.
+ */
+async function resolveEntity(handle) {
   const r = await query(
     `SELECT identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status
-     FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false`,
-    [bridge_id]);
+     FROM identities
+      WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1))
+        AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false
+      ORDER BY (bridge_id = $1) DESC
+      LIMIT 1`,
+    [handle]);
   return r.rows[0] || null;
 }
 

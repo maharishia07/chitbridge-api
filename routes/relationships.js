@@ -68,7 +68,7 @@ router.get('/suppliers', auth, async (req, res) => {
     const owner = ctx(req);
     const r = await query(
       `SELECT sl.supplier_list_id, sl.category, sl.nickname, sl.preferred, sl.notes, sl.created_at,
-              i.bridge_id, i.display_name, i.identity_id AS supplier_entity_id,
+              i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
               EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
                         AND es.status = 'active' AND es.is_default = true) AS has_catalogue
@@ -167,7 +167,7 @@ router.get('/suppliers/availability', auth, async (req, res) => {
       /* ⚠️ The SAME columns the single-catalogue route selects. buildPublicView reads `business_status` for the
          shop block; selecting a narrower row here would build a subtly different view from the same resolver. */
       `SELECT sl.supplier_list_id, sl.nickname, sl.preferred,
-              i.identity_id AS supplier_entity_id, i.bridge_id, i.display_name, i.currency_code,
+              i.identity_id AS supplier_entity_id, i.bridge_id, i.user_id, i.display_name, i.currency_code,
               i.business_status,
               EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
@@ -285,7 +285,7 @@ router.get('/customers', auth, async (req, res) => {
     const r = await withEntity(owner, (db) => db.query(
       `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
               cl.txn_count, cl.last_txn_at,
-              i.identity_id AS customer_identity_id, i.bridge_id, i.display_name,
+              i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
               i.email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
               COALESCE(cl.segment_override,
                 CASE WHEN cl.last_txn_at < NOW() - INTERVAL '90 days' THEN 'inactive'
