@@ -357,14 +357,24 @@ router.patch('/:id',
       /* ⭐ The audit trail (b172). ONE EVENT PER ACCESS FIELD THAT MOVED — a PATCH setting both hat and
          can_see_costs is TWO access changes, and collapsing them loses which one a reason referred to.
          Swallows everything: recording a change must never be the reason a change fails. */
-      await accessEvents.recordChanges(db, {
+      /**
+       * ⚠️⚠️ ENTITY-SCOPED, BECAUSE access_events IS WITH RLS. This passed the plain `db` helper, which never
+       * sets app.current_entity — so every insert was refused by the policy, and because this writer swallows
+       * all errors by design, it was refused SILENTLY. Confirmed live 2026-08-20: the PATCH returned 200 and
+       * GET /actors/access-events returned []. Every access change since b172 went unrecorded.
+       *
+       * ⭐ AN EXTRA TRANSACTION IS THE RIGHT PRICE HERE. Round trips are the thing this app is slowest at, but
+       * this runs only when someone's access actually changes — not on any read path — and an audit trail that
+       * is cheap and empty is worth less than nothing, because it is believed.
+       */
+      await withEntity(entity_id, (edb) => accessEvents.recordChanges((sql, args) => edb.query(sql, args), {
         entity_id,
         subject_identity_id: actor_id,
         before: beforeRow,
         after: r.rows[0],
         changed_by: req.identity && req.identity.identity_id,
         reason: (req.body.reason || '').trim() || null,
-      });
+      }));
 
       res.json({ message: 'Co-assist updated', actor: r.rows[0] });
     } catch (err) {

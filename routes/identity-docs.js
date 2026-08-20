@@ -21,7 +21,7 @@ const router  = express.Router();
 const auth    = require('../middleware/auth');
 const schema  = require('../lib/schema');
 const vault   = require('../lib/vaultcrypto');
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const crypto  = require('crypto');
 const { safeErr } = require('../lib/respond');
 
@@ -54,10 +54,17 @@ router.get('/documents', auth, async (req, res) => {
        three rules as the write — resolveSubject is the ONE place that decides whose record may be named, so a
        read and a write can never disagree about it. */
     const subject = await resolveSubject(req, req.query.identity_id);
-    const r = await query(
+    /**
+     * ⚠️⚠️ withEntity, NOT query. identity_documents is WITH RLS, and the plain helper never sets
+     * app.current_entity — so the policy matched nothing and this SELECT returned [] for EVERY caller. That is
+     * the dangerous half of this bug: the WRITE failed loudly with 42501, but the READ failed SILENTLY, showing
+     * "no documents on file" to a person whose documents were on file. A wrong answer with a 200 beside it is
+     * worse than an error, because nothing prompts anyone to look.
+     */
+    const r = await withEntity(auth.entityOf(req), (db) => db.query(
       `SELECT scheme, country, value_masked, status, verified_at, verified_by, submitted_by, consent_at
          FROM identity_documents WHERE identity_id = $1 ORDER BY scheme`,
-      [subject.id]);
+      [subject.id]));
     res.json({ documents: r.rows, catalogue: schemesFor(req.query.country || 'IN').map(s => ({ scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store })) });
   } catch (e) {
     /* ⚠️ safeErr RETURNS A STRING — it does not send a response. I first wrote safeErr(res, e, msg) as though
@@ -160,7 +167,9 @@ router.put('/documents/:scheme', auth, async (req, res) => {
                + 'them to enter it themselves from their own profile.' });
     }
 
-    const r = await query(
+    /* ⚠️ withEntity — see the note on the read. WITH RLS means every statement against this table needs the
+       tenant set on its connection, without exception. */
+    const r = await withEntity(entity_id, (db) => db.query(
       `INSERT INTO identity_documents (identity_id, entity_id, country, scheme, value_masked, value_hash, value_enc, status, submitted_by, consent_at)
             VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8,$9)
        ON CONFLICT (identity_id, scheme) DO UPDATE
@@ -169,7 +178,7 @@ router.put('/documents/:scheme', auth, async (req, res) => {
                 submitted_by = EXCLUDED.submitted_by, consent_at = EXCLUDED.consent_at,
                 verified_at = NULL, verified_by = NULL, updated_at = NOW()
        RETURNING scheme, value_masked, status, submitted_by`,
-      [subject.id, entity_id, cc, want, spec.mask(raw), hash, enc, filedBy, consent]);
+      [subject.id, entity_id, cc, want, spec.mask(raw), hash, enc, filedBy, consent]));
 
     res.json({ message: 'Submitted for verification', document: r.rows[0], verified_by: spec.verify });
   } catch (e) {
