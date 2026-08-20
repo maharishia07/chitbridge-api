@@ -30,15 +30,29 @@ const { safeErr } = require('../lib/respond');
  *
  * `store:false` means the value NEVER reaches the database in any form — masked digits only.
  */
+/**
+ * Per-scheme normalisation. ⚠️ NOT one rule for all — see the note at the call site: a blanket toUpperCase
+ * stored an email as CLERK@EXAMPLE.COM and quietly broke the mask, the ciphertext and the dedupe hash.
+ */
+/* ⚠️ THE BACKSLASHES ARE LOAD-BEARING AND A GENERATED EDIT ATE THEM ONCE. This block was written by a script
+   that collapsed \s to s, giving /[s-]/ and /s/ — which after toUpperCase() match nothing at all, so
+   whitespace survived and "TN01 2011 0001234" would have failed the DL pattern for no visible reason. Third
+   time in one session that a script silently dropped an escape; anything touching these lines uses an editor,
+   not a generator. */
+const UP     = (v) => v.toUpperCase().replace(/[\s-]/g, '');   // PAN, Voter ID — case-insensitive, no separators
+const UPKEEP = (v) => v.toUpperCase().replace(/\s/g, '');      // DL — keeps hyphens, which appear in real numbers
+const DIGITS = (v) => v.replace(/[^0-9+]/g, '');               // phone, Aadhaar — a leading + survives
+const LOWER  = (v) => v.trim().toLowerCase();                  // email — lowercased, never stripped
+
 const CATALOGUE = {
   IN: [
-    { scheme: 'PHONE',    label: 'Mobile',         pattern: /^[+]?[0-9]{10,15}$/,        mask: v => '•••••' + v.slice(-4),  store: true,  verify: 'otp' },
-    { scheme: 'EMAIL',    label: 'Email',          pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, mask: v => v.replace(/^(.).*(@.*)$/, '$1•••$2'), store: true, verify: 'otp' },
-    { scheme: 'PAN',      label: 'PAN',            pattern: /^[A-Z]{5}[0-9]{4}[A-Z]$/,   mask: v => v.slice(0,3) + '••••' + v.slice(-3), store: true, verify: 'nsdl' },
-    { scheme: 'VOTER_ID', label: 'Voter ID',       pattern: /^[A-Z]{3}[0-9]{7}$/,        mask: v => '•••' + v.slice(-4),    store: true,  verify: 'manual' },
-    { scheme: 'DL',       label: 'Driving licence',pattern: /^[A-Z0-9-]{8,20}$/,          mask: v => '••••' + v.slice(-4),   store: true,  verify: 'manual' },
+    { scheme: 'PHONE',    label: 'Mobile',         pattern: /^[+]?[0-9]{10,15}$/,        mask: v => '•••••' + v.slice(-4),  store: true,  verify: 'otp', norm: DIGITS },
+    { scheme: 'EMAIL',    label: 'Email',          pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, mask: v => v.replace(/^(.).*(@.*)$/, '$1•••$2'), store: true, verify: 'otp', norm: LOWER },
+    { scheme: 'PAN',      label: 'PAN',            pattern: /^[A-Z]{5}[0-9]{4}[A-Z]$/,   mask: v => v.slice(0,3) + '••••' + v.slice(-3), store: true, verify: 'nsdl', norm: UP },
+    { scheme: 'VOTER_ID', label: 'Voter ID',       pattern: /^[A-Z]{3}[0-9]{7}$/,        mask: v => '•••' + v.slice(-4),    store: true,  verify: 'manual', norm: UP },
+    { scheme: 'DL',       label: 'Driving licence',pattern: /^[A-Z0-9-]{8,20}$/,          mask: v => '••••' + v.slice(-4),   store: true,  verify: 'manual', norm: UPKEEP },
     /* ⚠️ store:false — the ONLY entry with it, and the reason the flag exists at all. */
-    { scheme: 'AADHAAR',  label: 'Aadhaar',        pattern: /^[0-9]{12}$/,               mask: v => 'XXXX XXXX ' + v.slice(-4), store: false, verify: 'uidai-offline' },
+    { scheme: 'AADHAAR',  label: 'Aadhaar',        pattern: /^[0-9]{12}$/,               mask: v => 'XXXX XXXX ' + v.slice(-4), store: false, verify: 'uidai-offline', norm: DIGITS },
   ],
 };
 const schemesFor = (cc) => CATALOGUE[cc] || CATALOGUE.IN;
@@ -128,7 +142,19 @@ router.put('/documents/:scheme', auth, async (req, res) => {
     const spec = schemesFor(cc).find(s => s.scheme === want);
     if (!spec) return res.status(400).json({ error: 'Unknown document', message: 'That document is not recognised for ' + cc + '.' });
 
-    const raw = String(req.body.value || '').trim().toUpperCase().replace(/[\s-]/g, m => (want === 'DL' ? m : ''));
+    /**
+     * ⚠️⚠️ NORMALISATION IS PER SCHEME. One .toUpperCase() for everything stored an email as
+     * "CLERK@EXAMPLE.COM" — confirmed live. Three things broke at once and none of them loudly:
+     *   · the mask displayed the wrong text back to the person who typed it
+     *   · the ENCRYPTED value was uppercased, so a verification code sent to it could go to the wrong
+     *     mailbox — the local part of an address is case-sensitive per RFC 5321, whatever most servers do
+     *   · the hash is taken over the normalised value, so the same address typed correctly later would not
+     *     match, and "is this the same document" — the one question the hash exists to answer — says no
+     *
+     * ⭐ Each entry now declares its own rule, because "make it uppercase" was never a fact about documents,
+     * only about the three Indian ones I happened to write first.
+     */
+    const raw = spec.norm(String(req.body.value || '').trim());
     if (!spec.pattern.test(raw)) {
       return res.status(400).json({ error: 'Validation failed', field: want,
         message: 'That does not look like a ' + spec.label + '. Check it and try again.' });
