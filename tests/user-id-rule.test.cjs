@@ -70,6 +70,34 @@ const srv = app.listen(0, async () => {
   DB.user_id = null;
   t('but still only a legal one', (await patch('/api/entities/profile',{ user_id:'ab.cd' })).status, 400);
 
+  /* ── the CUSTOMER handle — IAM-SPEC §23 ───────────────────────────────────────────────────────────────── */
+  console.log('\n── THE CUSTOMER HANDLE — readable, with a fallback that is load-bearing ──\n');
+  const fs = require('fs');
+  const csrc = fs.readFileSync(API + '/routes/catalogue.js', 'utf8');
+  const ca = csrc.indexOf('function crHandle');
+  const crHandle = new Function(csrc.slice(ca, csrc.indexOf('\n}', ca) + 2) + '; return crHandle;')();
+
+  t('phone + user_id  -> readable',
+    crHandle('phone', '9876512345', { user_id: 'alpha-timers', bridge_id: 'CBZQK5DAH9' }),
+    '9876512345@alpha-timers.cr');
+  t('email: @ becomes = so two providers stay two people',
+    crHandle('email', 'r.kumar@gmail.com', { user_id: 'alpha-timers', bridge_id: 'CBZQK5DAH9' }),
+    'r.kumar=gmail.com@alpha-timers.cr');
+
+  /**
+   * ⚠️⚠️ THE CASE THAT WOULD HAVE BROKEN A LIVE SHOP. Alpha Paints has NO user_id — it predates b170 and it
+   * serves customers today. Without the fallback its storefront would build "…@null.cr", and every returning
+   * customer would fail to match and be recreated as a NEW identity with no order history. Silently.
+   */
+  t('no user_id (a pre-b170 shop) STAYS on the bridge form',
+    crHandle('phone', '9876512345', { user_id: null, bridge_id: 'CB6C7UQHUB' }),
+    '9876512345@CB6C7UQHUB.cr');
+  /* ⚠️ `t` here compares with ===, unlike the one in iam-access.test.cjs which stringifies. Passing the STRING
+     'false' against a boolean false failed while printing "false EXPECTED false", which is the most confusing
+     possible way for a test to be wrong. Two helpers with one name and different semantics. */
+  t('  …and never renders the string "null"',
+    /null/.test(crHandle('phone', '9', { user_id: null, bridge_id: 'CB6C7UQHUB' })), false);
+
   console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');
   srv.close(); process.exit(fail ? 1 : 0);
 });

@@ -47,9 +47,32 @@ function resolveContact(body) {
 // xyz@gmail.com and xyz@yahoo.com at the SAME shop stay DISTINCT — using the local part alone would collapse
 // them into one identity (cross-customer order visibility + OTP misroute). Same builder used in all 3 spots so
 // a returning customer regenerates the same handle.
-function crHandle(channel, raw, bridge) {
+function crHandle(channel, raw, entity) {
   const local = channel === 'email' ? raw.replace('@', '=') : raw;
-  return `${local}@${bridge}.cr`;
+  /**
+   * ⭐⭐ THE USER ID, NOT THE BRIDGE ID. Athi, 2026-08-20: *"use user id not bridge id for customer."*
+   *
+   *     was    9876512345@CBZQK5DAH9.cr      unreadable, unsayable, and meaningless to the person it names
+   *     now    9876512345@alpha-timers.cr    a customer can read who they are a customer OF
+   *
+   * ⚠️ THE BRIDGE ID WAS NOT A BAD CHOICE — IT WAS THE ONLY ONE AVAILABLE. This handle IS the lookup key
+   * (stored as identities.email), so it must be stable and never null, and until registration started claiming
+   * a user_id the bridge id was the only value with both properties. user_id now has exactly that guarantee —
+   * set-once, immutable, enforced in the API and again in the SQL — and it is readable, which the bridge id
+   * never was.
+   *
+   * ⚠️ THE FALLBACK IS NOT DEFENSIVE PADDING, IT IS LOAD-BEARING. Entities registered before b170 have a NULL
+   * user_id — Alpha Paints, which serves customers today, is one of them. Without this branch its storefront
+   * would build a handle reading "@null.cr" and every returning customer would fail to match. A shop that
+   * predates the rule must keep working, and it does: it stays on the bridge form until someone sets its
+   * User ID, and moves to the readable one from then on.
+   *
+   * ⚠️ SO BOTH FORMS CAN EXIST AT ONCE and that is fine, because the handle is only ever COMPARED, never
+   * parsed. What must never happen is one customer regenerating a DIFFERENT handle than last time — hence one
+   * builder, used at all three call sites.
+   */
+  const at = (entity && entity.user_id) || (entity && entity.bridge_id) || '';
+  return `${local}@${at}.cr`;
 }
 
 // CJ-07 (security) — PRICE INTEGRITY. A no-login customer sends their own line_items incl. price; never trust it.
@@ -308,7 +331,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
 
 async function resolveEntity(bridge_id) {
   const r = await query(
-    `SELECT identity_id, display_name, bridge_id, currency_code, gstn, is_verified, logo_url, address, business_status
+    `SELECT identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status
      FROM identities WHERE bridge_id = $1 AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false`,
     [bridge_id]);
   return r.rows[0] || null;
@@ -572,7 +595,7 @@ router.post('/:bridge_id/order/start',
       if (c.error) return res.status(422).json({ error: 'Bad request', message: c.error });
       const { channel, raw } = c;
       const name   = sanitise(req.body.name || '') || raw;
-      const handle = crHandle(channel, raw, entity.bridge_id);    // per-entity .cr key (full-email = collision-free)
+      const handle = crHandle(channel, raw, entity);    // per-entity .cr key (full-email = collision-free)
 
       let existing = await query(`SELECT identity_id, bridge_id FROM identities WHERE email = $1`, [handle]);
       let identity_id, bridge_id;
@@ -621,7 +644,7 @@ router.post('/:bridge_id/order/confirm',
         return res.status(403).json({ error: 'Shop closed', message: 'This shop is currently closed and not accepting orders.' });
       const c0 = resolveContact(req.body);
       if (c0.error) return res.status(422).json({ error: 'Verify failed', message: c0.error });
-      const handle = crHandle(c0.channel, c0.raw, entity.bridge_id);
+      const handle = crHandle(c0.channel, c0.raw, entity);
 
       const cr = await query(
         `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
@@ -942,7 +965,7 @@ router.post('/:bridge_id/login/verify',
       if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
       const c0 = resolveContact(req.body);
       if (c0.error) return res.status(422).json({ error: 'Sign-in failed', message: c0.error });
-      const handle = crHandle(c0.channel, c0.raw, entity.bridge_id);
+      const handle = crHandle(c0.channel, c0.raw, entity);
       const cr = await query(
         `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
          FROM identities WHERE email = $1`, [handle]);
