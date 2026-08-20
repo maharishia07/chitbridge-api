@@ -22,7 +22,7 @@
 --
 -- ⚠️ ENTITIES AND CO-ASSISTS ARE NEVER TOUCHED. Every generated statement is scoped to the customer set.
 --
--- ⚠️⚠️ IT ENDS IN ROLLBACK. Run it, read the NOTICEs and the final counts, then change the last line to COMMIT
+-- ⚠️⚠️ IT ENDS IN ROLLBACK. Run it, read the single result table, then change the last line to COMMIT
 -- and run again. A destructive migration that commits on its first run gives you nothing to reconsider.
 --
 -- ── RLS ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -44,6 +44,16 @@ BEGIN;
 
 CREATE TEMP TABLE _cust ON COMMIT DROP AS
   SELECT identity_id FROM identities WHERE identity_type = 'customer';
+
+/**
+ * ⚠️⚠️ RAISE NOTICE IS INVISIBLE IN THE SUPABASE SQL EDITOR. The first version reported every table and row
+ * count as a NOTICE so the deletion would be legible rather than a silent sweep — and Athi saw none of it,
+ * because that editor returns result sets and drops notices on the floor.
+ *
+ * Same class of mistake as echo two files ago: an assumption about the environment that only surfaced when
+ * he ran it. So the counts now go into a TABLE and are SELECTed at the end, where they cannot be missed.
+ */
+CREATE TEMP TABLE _purged (tbl text, col text, rows_removed bigint) ON COMMIT DROP;
 
 DO $$
 DECLARE
@@ -70,7 +80,7 @@ BEGIN
     EXECUTE format('DELETE FROM %s WHERE %I IN (SELECT identity_id FROM _cust)', r.tbl, r.col);
     GET DIAGNOSTICS n = ROW_COUNT;
     IF n > 0 THEN
-      RAISE NOTICE '  % . %  ->  % row(s)', r.tbl, r.col, n;
+      INSERT INTO _purged VALUES (r.tbl, r.col, n);
       total := total + n;
     END IF;
   END LOOP;
@@ -89,7 +99,7 @@ BEGIN
   LOOP
     EXECUTE format('UPDATE identities SET %I = NULL WHERE %I IN (SELECT identity_id FROM _cust)', r.col, r.col);
     GET DIAGNOSTICS n = ROW_COUNT;
-    IF n > 0 THEN RAISE NOTICE '  identities . % cleared on % row(s)', r.col, n; END IF;
+    IF n > 0 THEN INSERT INTO _purged VALUES ('identities (nulled)', r.col, n); END IF;
   END LOOP;
 
   RAISE NOTICE 'dependent rows removed: %', total;
@@ -97,11 +107,28 @@ END $$;
 
 DELETE FROM identities WHERE identity_type = 'customer';
 
--- customers_remaining MUST be 0. The other two MUST be unchanged from before you ran this.
-SELECT 'after' AS stage,
-       (SELECT count(*) FROM identities WHERE identity_type = 'customer') AS customers_remaining,
-       (SELECT count(*) FROM identities WHERE identity_type = 'entity')   AS entities_untouched,
-       (SELECT count(*) FROM identities WHERE identity_type = 'actor')    AS actors_untouched;
+/**
+ * ⚠️⚠️ ONE RESULT SET, NOT TWO. The Supabase editor shows only the LAST result of a multi-statement run — so
+ * the first version's two SELECTs meant the per-table detail scrolled into oblivion and Athi saw only the
+ * summary. Third time today that an assumption about that editor was wrong (after \echo and RAISE NOTICE),
+ * so this stops assuming and returns everything in a single table.
+ *
+ * Read the WHAT WENT rows before committing: they are the only record of what a COMMIT destroys.
+ */
+SELECT * FROM (
+        SELECT 1 AS ord, 'WHAT WENT'  AS section, tbl AS detail, col AS column_name, rows_removed AS n
+          FROM _purged
+  UNION ALL
+        SELECT 2, 'AFTER — must be 0',         'customers_remaining', '',
+               (SELECT count(*) FROM identities WHERE identity_type = 'customer')
+  UNION ALL
+        SELECT 3, 'AFTER — must be unchanged', 'entities_untouched',  '',
+               (SELECT count(*) FROM identities WHERE identity_type = 'entity')
+  UNION ALL
+        SELECT 4, 'AFTER — must be unchanged', 'actors_untouched',    '',
+               (SELECT count(*) FROM identities WHERE identity_type = 'actor')
+) x
+ORDER BY ord, n DESC, detail;
 
--- ⚠️ CHANGE THIS TO COMMIT ONLY AFTER READING THE NOTICES AND THE COUNTS ABOVE.
+-- ⚠️ CHANGE THIS TO COMMIT ONLY AFTER READING THE ROWS ABOVE.
 ROLLBACK;
