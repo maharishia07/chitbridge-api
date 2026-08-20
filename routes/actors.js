@@ -313,10 +313,24 @@ router.patch('/:id',
        * cheapest place in the product to buy provenance, and the only place it can be bought at all: after
        * the UPDATE the previous value is gone for good.
        */
+      /**
+       * ⚠️⚠️ access_level AND whole_entity WERE MISSING FROM THIS SELECT, so the trail recorded
+       * `{"access_level":null} → {"access_level":"viewer"}` for a person who was a COMMENTER a moment earlier.
+       * Confirmed live 2026-08-20.
+       *
+       * ⭐ "WHAT WAS IT BEFORE" IS THE ONLY QUESTION THIS TABLE EXISTS TO ANSWER. A trail that records the new
+       * value correctly and the old one as null is not a partial record — it is a wrong one, and it reads as
+       * "they had no access until someone granted it", which is a different event from a demotion.
+       *
+       * Third correction to this trail today, after the RLS predicate and the invented break_changed. Every
+       * one was silent, because the writer swallows by design — which is exactly why each needed a live check
+       * rather than a reading of the code.
+       */
       let beforeRow = null;
       try {
+        const _pre = await schema.hasColumn('identities', 'access_level');
         const _b = await db(
-          `SELECT hat, can_see_costs, break_status FROM identities
+          `SELECT hat, can_see_costs, break_status${_pre ? ', access_level, whole_entity' : ''} FROM identities
             WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
           [actor_id, entity_id]);
         beforeRow = _b.rows[0] || null;
