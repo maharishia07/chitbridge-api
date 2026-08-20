@@ -391,11 +391,39 @@ router.get('/me', auth, async (req, res) => {
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
-              purpose, sort_order, address, city, lat, lng, service_km   -- b117/b118/b119
+              purpose, sort_order, address, city, lat, lng, service_km,   -- b117/b118/b119
+              actor_key, phone,
+              /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
+                 A correlated subselect rather than a second round trip — this route is already on the slow
+                 path Athi measured at 9.3s to open a chit, and an extra query for a label is not affordable. */
+              (SELECT p.user_id FROM identities p WHERE p.identity_id = identities.parent_entity_id) AS parent_user_id
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Entity not found' });
+
+    /**
+     * ⭐⭐ AN EMPLOYEE MUST BE ABLE TO SEE THEIR OWN ACCESS. Athi, 2026-08-20: *"in the employee profile, there
+     * is nothing mentioned about his access level… which one he belongs to."*
+     *
+     * ⚠️ The screen could not show it even if it wanted to: this response carried no hat and no access_level,
+     * so the ONE fact an employee most needs about themselves — may I change things, may I answer the other
+     * party — was the one fact the API withheld. A permission you cannot see is one you cannot ask to have
+     * corrected, which is the whole point of "request your manager to modify if required".
+     *
+     * These come from req.identity, which middleware/auth.js has already read FROM THE DATABASE on this very
+     * request — never from the token — so a demotion shows here immediately, and it costs no round trip.
+     */
+    if (req.identity.identity_type === 'actor') {
+      result.rows[0].identity_type = 'actor';
+      result.rows[0].hat           = req.identity.hat || null;
+      result.rows[0].access_level  = req.identity.access_level || null;
+      result.rows[0].whole_entity  = req.identity.whole_entity === true;
+      result.rows[0].parent_entity_id = req.identity.parent_entity_id || null;
+    } else {
+      result.rows[0].identity_type = 'entity';
+    }
+
     await query('UPDATE identities SET last_active_at = NOW() WHERE identity_id = $1', [req.identity.identity_id]);
     // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles. [b55/connector]
     // Defensive: defaults to [] if the b55 column isn't present in this environment.
@@ -716,6 +744,29 @@ router.patch('/profile', auth,
        * ⚠️ IT STILL ACCEPTS A VALUE WHEN THE COLUMN IS NULL. That is not a loophole, it is the REPAIR PATH —
        * entities registered before the User ID was collected have none, and must be able to set one once.
        */
+      /**
+       * ⚠️⚠️ ONLY AN ENTITY MAY CLAIM A USER ID. Athi's rule, 2026-08-19: *"through registration page, ONLY THE
+       * ENTITY REGISTERS. Employee or network or anyone else can never register through the registration
+       * screen."* An employee's login IS `key@entity` — they have no handle of their own and never should.
+       *
+       * ⚠️ THIS WAS OPEN AND I CONFIRMED IT LIVE: a co-assist PATCHed `{"user_id":"clerkstolen"}` here and got
+       * 200. The route writes `req.identity.identity_id` — the CALLER'S row — so the value landed on the actor,
+       * where it is read by nothing. That sounds harmless and is not: `user_id` carries a UNIQUE index across
+       * ALL identities, it is the handle another business types to connect to you, and it is the root of every
+       * network handle. An employee could therefore occupy a name globally — including one a real business
+       * wants — and because the claim is SET-ONCE, nobody could ever take it back.
+       *
+       * ⭐ Refused here rather than in the validator, so the message can say WHY instead of "invalid".
+       */
+      if (req.identity.identity_type === 'actor'
+          && req.body.user_id !== undefined && String(req.body.user_id).trim() !== '') {
+        return res.status(403).json({
+          error: 'Not permitted', code: 'USER_ID_ENTITY_ONLY',
+          message: 'A User ID belongs to the business, not to a person. You sign in as '
+                 + '"key@business" — that is your login, and it cannot be changed here.'
+        });
+      }
+
       let userId = null;
       if (req.body.user_id !== undefined && String(req.body.user_id).trim() !== '') {
         const cur = await query('SELECT user_id FROM identities WHERE identity_id = $1', [id]);
