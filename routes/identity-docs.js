@@ -44,10 +44,24 @@ const UPKEEP = (v) => v.toUpperCase().replace(/\s/g, '');      // DL — keeps h
 const DIGITS = (v) => v.replace(/[^0-9+]/g, '');               // phone, Aadhaar — a leading + survives
 const LOWER  = (v) => v.trim().toLowerCase();                  // email — lowercased, never stripped
 
+/**
+ * ⭐⭐ selfServe — MAY THE PERSON THEMSELVES FILE THIS? Athi, 2026-08-20: *"mobile number and email id, he can
+ * add here, rest everything only the business set and he can see here BECAUSE OTHER ITEMS SOMEONE SHOULD
+ * VERIFY BY SEEING THE PHYSICAL RECORD."*
+ *
+ * ⭐ THE REASON IS THE RULE, AND IT DIVIDES THE CATALOGUE EXACTLY. A phone and an email VERIFY THEMSELVES: send
+ * a code, and possession is the proof — nobody needs to look at anything. A PAN card, a voter ID, an Aadhaar
+ * and a licence are verified by a person holding the document and comparing it. Self-declaring one of those
+ * asserts something nobody checked, and an unverified claim sitting in a record is worse than an empty field,
+ * because the field being filled reads as the check having happened.
+ *
+ * ⚠️ ENFORCED ON THE SERVER, NOT BY HIDING THE INPUT. A UI that omits a field is a suggestion; this route is
+ * where the rule actually lives, because the request can be made without the UI.
+ */
 const CATALOGUE = {
   IN: [
-    { scheme: 'PHONE',    label: 'Mobile',         pattern: /^[+]?[0-9]{10,15}$/,        mask: v => '•••••' + v.slice(-4),  store: true,  verify: 'otp', norm: DIGITS },
-    { scheme: 'EMAIL',    label: 'Email',          pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, mask: v => v.replace(/^(.).*(@.*)$/, '$1•••$2'), store: true, verify: 'otp', norm: LOWER },
+    { scheme: 'PHONE',    label: 'Mobile',         pattern: /^[+]?[0-9]{10,15}$/,        mask: v => '•••••' + v.slice(-4),  store: true,  verify: 'otp', norm: DIGITS, selfServe: true },
+    { scheme: 'EMAIL',    label: 'Email',          pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, mask: v => v.replace(/^(.).*(@.*)$/, '$1•••$2'), store: true, verify: 'otp', norm: LOWER, selfServe: true },
     { scheme: 'PAN',      label: 'PAN',            pattern: /^[A-Z]{5}[0-9]{4}[A-Z]$/,   mask: v => v.slice(0,3) + '••••' + v.slice(-3), store: true, verify: 'nsdl', norm: UP },
     { scheme: 'VOTER_ID', label: 'Voter ID',       pattern: /^[A-Z]{3}[0-9]{7}$/,        mask: v => '•••' + v.slice(-4),    store: true,  verify: 'manual', norm: UP },
     { scheme: 'DL',       label: 'Driving licence',pattern: /^[A-Z0-9-]{8,20}$/,          mask: v => '••••' + v.slice(-4),   store: true,  verify: 'manual', norm: UPKEEP },
@@ -79,7 +93,11 @@ router.get('/documents', auth, async (req, res) => {
       `SELECT scheme, country, value_masked, status, verified_at, verified_by, submitted_by, consent_at
          FROM identity_documents WHERE identity_id = $1 ORDER BY scheme`,
       [subject.id]));
-    res.json({ documents: r.rows, catalogue: schemesFor(req.query.country || 'IN').map(s => ({ scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store })) });
+    res.json({ documents: r.rows, catalogue: schemesFor(req.query.country || 'IN').map(s => ({
+      scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store,
+      /* the client renders an input only where this is true — the server refuses the rest either way */
+      selfServe: !!s.selfServe,
+    })) });
   } catch (e) {
     /* ⚠️ safeErr RETURNS A STRING — it does not send a response. I first wrote safeErr(res, e, msg) as though
        it were a responder, which logs `res` as the error, discards the string, and NEVER REPLIES: the request
@@ -186,6 +204,26 @@ router.put('/documents/:scheme', auth, async (req, res) => {
      * it here would surface as a raw constraint violation — a 500 that tells the person nothing. Refuse in the
      * handler, where the message can say what is missing and why it is being asked for.
      */
+    /**
+     * ⚠️⚠️ AN EMPLOYEE MAY FILE ONLY WHAT VERIFIES ITSELF. Athi: *"mobile number and email id, he can add
+     * here, rest everything only the business set… because other items someone should verify by seeing the
+     * physical record."*
+     *
+     * A code sent to a phone or an address proves possession without anyone looking at anything. A PAN, a
+     * voter ID, an Aadhaar or a licence is verified by a person holding the document — so a self-declared one
+     * records a claim nobody checked, in a field whose being filled reads as the check having happened.
+     *
+     * ⭐ Refused here rather than by leaving the input off the screen. Hiding a field is a suggestion; a route
+     * is where a rule can actually be kept, because the request can be made without the screen.
+     */
+    if (!subject.onBehalf && req.identity.identity_type === 'actor' && !spec.selfServe) {
+      return res.status(403).json({
+        error: 'Not permitted', code: 'IDOC_EMPLOYER_ONLY',
+        message: 'Your ' + spec.label + ' is recorded by your employer, who checks it against the document '
+               + 'itself. You can add your mobile and email here — those are confirmed by a code sent to them.'
+      });
+    }
+
     const consent = (req.body.consent === true || req.body.consent === 'true') ? new Date() : null;
     if (want === 'AADHAAR' && subject.onBehalf && !consent) {
       return res.status(400).json({ error: 'Consent required', code: 'IDOC_CONSENT_REQUIRED',
