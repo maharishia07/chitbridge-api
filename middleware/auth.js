@@ -1,6 +1,7 @@
 // middleware/auth.js — JWT validation middleware
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
+const schema = require('../lib/schema');   // b173 — ask the DB what it has before naming a column
 
 const auth = async (req, res, next) => {
   try {
@@ -51,8 +52,17 @@ const auth = async (req, res, next) => {
        * is the same reasoning the break_status revocation below already rests on: a permission you cannot
        * withdraw immediately is not a permission you control.
        */
+      /**
+       * ⚠️⚠️ THE COLUMN LIST IS BUILT FROM WHAT THE DATABASE ACTUALLY HAS. I previously named access_level and
+       * whole_entity unconditionally and left a comment saying that was safe because they "can be undefined".
+       * That is not how Postgres answers a missing column — it raises 42703 and THE WHOLE QUERY THROWS. This is
+       * the revocation check every authenticated actor request runs, so the real effect was that NO CO-ASSIST
+       * COULD SIGN IN until a hand-run migration landed. The comment described a JavaScript failure mode for a
+       * SQL problem, and that gap is exactly what made it read as handled.
+       */
+      const lvlCols = await schema.hasColumn('identities', 'access_level');
       const r = await query(
-        `SELECT break_status, hat, access_level, whole_entity FROM identities
+        `SELECT break_status, hat${lvlCols ? ', access_level, whole_entity' : ''} FROM identities
          WHERE identity_id = $1 AND identity_type = 'actor'`,
         [decoded.identity_id]
       );
@@ -70,10 +80,10 @@ const auth = async (req, res, next) => {
        * request to check break_status, so the level and the reach flag are free — no extra round trip in an
        * app whose main complaint is round trips.
        *
-       * ⚠️ b173 MAY NOT BE APPLIED YET. Code deploys before Athi runs migrations, always, so access_level and
-       * whole_entity can be undefined here. lib/access.js derives the level from the old `hat` when that
-       * happens, and answers identically either side of the migration. Passing them through as undefined is
-       * correct — it is what tells access.js to fall back.
+       * ⚠️ b173 MAY NOT BE APPLIED YET. Code deploys before Athi runs migrations, always. When the columns are
+       * absent they are not SELECTed at all (see above), so they arrive here as undefined and lib/access.js
+       * derives the level from the old `hat` — answering identically either side of the migration. Passing
+       * undefined through is correct: it is what tells access.js to fall back.
        */
       req.identity.hat          = r.rows[0].hat || 'act';
       req.identity.access_level = r.rows[0].access_level;
@@ -105,9 +115,23 @@ const auth = async (req, res, next) => {
         message: 'Token expired — please log in again'
       });
     }
-    return res.status(401).json({
-      error: 'Unauthorised',
-      message: 'Invalid token'
+    /**
+     * ⚠️⚠️ ONLY A JWT PROBLEM MAY BE REPORTED AS A TOKEN PROBLEM. This catch used to turn EVERY exception into
+     * 401 "Invalid token" — including the Postgres 42703 raised when the revocation query named a column b173
+     * had not created yet. A perfectly valid token, issued seconds earlier by this same process, came back as
+     * invalid. Athi reported it as "sign-in is not working", and the message pointed the whole investigation
+     * at tokens and login when the fault was a missing column two layers down.
+     *
+     * ⭐ A misleading error is worse than a bare failure: it does not merely withhold the answer, it actively
+     * argues for the wrong one. A database fault is a 500 — ours, not the caller's — and it gets logged.
+     */
+    if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
+      return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
+    }
+    console.error('auth: non-JWT failure —', err.code || '', err.message);
+    return res.status(500).json({
+      error: 'Server error',
+      message: 'Could not verify your session. This is our fault, not your login.'
     });
   }
 };

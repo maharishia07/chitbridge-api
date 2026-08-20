@@ -4,6 +4,7 @@
 const express = require('express');
 const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on process.env.DEV_OTP directly
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
+const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
@@ -326,11 +327,24 @@ router.patch('/:id',
       if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
       if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
       if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
-      if ('hat'          in req.body) { sets.push(`hat = ${n++}`);          vals.push(req.body.hat); }
-      if ('access_level' in req.body) { sets.push(`access_level = ${n++}`); vals.push(req.body.access_level); }
+      /**
+       * ⚠️⚠️ THE `$` HERE IS LOAD-BEARING AND I DELETED IT ONCE. Commit 5196018 turned a working
+       * `hat = $${n++}` into `hat = ${n++}` — a scripted edit collapsed the doubled dollar — and added the two
+       * lines below already broken. The generated SQL became `SET hat = 5`: a bare integer where a placeholder
+       * belongs, so EVERY co-assist access edit failed. It reads as a typo and behaves as an outage.
+       *
+       * `$${n++}` inside a template literal is ONE literal dollar plus the interpolation. Anything that
+       * rewrites these lines must preserve both.
+       */
+      if ('hat'          in req.body) { sets.push(`hat = $${n++}`);          vals.push(req.body.hat); }
+      /* ⚠️ b173 MAY NOT BE APPLIED YET. Writing to a column that does not exist is Postgres 42703 and fails the
+         WHOLE PATCH, not just this field — so the level is not written until the migration lands, and `hat`
+         (which the UI sends alongside for exactly this window) carries the change on its own. lib/schema.js. */
+      const _lvlCols = await schema.hasColumn('identities', 'access_level');
+      if (_lvlCols && 'access_level' in req.body) { sets.push(`access_level = $${n++}`); vals.push(req.body.access_level); }
       /* ⚠️ REACH IS THE ENTITY'S TO GRANT, LIKE MONEY. Guarded above with can_see_costs: an actor calling this
          route is refused outright, so a co-assist cannot widen their own reach. */
-      if ('whole_entity' in req.body) { sets.push(`whole_entity = ${n++}`); vals.push(!!req.body.whole_entity); }
+      if (_lvlCols && 'whole_entity' in req.body) { sets.push(`whole_entity = $${n++}`); vals.push(!!req.body.whole_entity); }
       /* b145 — the ONLY way this column is ever set. Guarded above: an actor calling this route is refused. */
       if ('can_see_costs' in req.body) { sets.push(`can_see_costs = $${n++}`); vals.push(!!req.body.can_see_costs); }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, max_tasks, hat, or can_see_costs' });
@@ -338,7 +352,7 @@ router.patch('/:id',
       const r = await db(
         `UPDATE identities SET ${sets.join(', ')}
          WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
-         RETURNING identity_id, display_name, actor_role, phone, max_tasks, hat, access_level, whole_entity, can_see_costs`, vals);
+         RETURNING identity_id, display_name, actor_role, phone, max_tasks, hat, can_see_costs${_lvlCols ? ', access_level, whole_entity' : ''}`, vals);
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
       /* ⭐ The audit trail (b172). ONE EVENT PER ACCESS FIELD THAT MOVED — a PATCH setting both hat and
          can_see_costs is TWO access changes, and collapsing them loses which one a reason referred to.
