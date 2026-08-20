@@ -52,7 +52,7 @@ const auth = async (req, res, next) => {
        * withdraw immediately is not a permission you control.
        */
       const r = await query(
-        `SELECT break_status, hat FROM identities
+        `SELECT break_status, hat, access_level, whole_entity FROM identities
          WHERE identity_id = $1 AND identity_type = 'actor'`,
         [decoded.identity_id]
       );
@@ -65,7 +65,19 @@ const auth = async (req, res, next) => {
       }
       /* Default 'act', matching what POST /actors writes when no hat is given — so an actor created before the
          column existed behaves exactly as it does today rather than being locked out by an absent value. */
-      req.identity.hat = r.rows[0].hat || 'act';
+      /**
+       * ⭐⭐ THE SAME QUERY THAT ALREADY RAN FOR REVOCATION NOW CARRIES ACCESS. It reads the row on every
+       * request to check break_status, so the level and the reach flag are free — no extra round trip in an
+       * app whose main complaint is round trips.
+       *
+       * ⚠️ b173 MAY NOT BE APPLIED YET. Code deploys before Athi runs migrations, always, so access_level and
+       * whole_entity can be undefined here. lib/access.js derives the level from the old `hat` when that
+       * happens, and answers identically either side of the migration. Passing them through as undefined is
+       * correct — it is what tells access.js to fall back.
+       */
+      req.identity.hat          = r.rows[0].hat || 'act';
+      req.identity.access_level = r.rows[0].access_level;
+      req.identity.whole_entity = r.rows[0].whole_entity === true;
     }
 
     /**

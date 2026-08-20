@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
+const access = require('../lib/access');   // b173 — viewer / commenter / editor
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
@@ -2034,12 +2035,13 @@ router.post('/:chit_id/messages',
      * read-only silently gains EXTERNAL messaging until this arrives — and widening is the failure direction
      * that never announces itself.
      */
-    if (thread_type === 'external' && req.identity.identity_type === 'actor'
-        && !['act','manager'].includes(req.identity.hat || 'act')) {
+    if (!access.canMessage(req.identity, thread_type)) {
       return res.status(403).json({
         error: 'Not permitted',
-        message: 'Your access is read-only. You can read this conversation and reply internally, but not to the other party.',
-        hat: req.identity.hat,
+        message: access.levelOf(req.identity) === access.VIEWER
+          ? 'Your access is view-only. You can read this conversation but not post to it.'
+          : 'Your access is comment-only. You can reply internally, but not to the other party.',
+        access_level: access.levelOf(req.identity),
       });
     }
 

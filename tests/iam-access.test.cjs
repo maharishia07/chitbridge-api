@@ -156,7 +156,45 @@ async function provisioningCases() {
   srv.close();
 }
 
+/* ── b173 · Viewer / Commenter / Editor, adopted from Google Workspace ───────────────────────────────── */
+function levelCases() {
+  console.log('\n-- b173 . three levels, and the pre-migration fallback --\n');
+  const access = require(API + '/lib/access');
+
+  const row = (i) => [access.levelOf(i), access.canEdit(i), access.canMessage(i, 'internal'),
+                      access.canMessage(i, 'external'), access.canRaiseDispute(i)].join(' ');
+
+  t('editor    edits, messages anyone',      row({ identity_type:'actor', access_level:'editor' }),    'editor true true true true');
+  t('commenter reads, replies INTERNALLY',   row({ identity_type:'actor', access_level:'commenter' }), 'commenter false true false false');
+  t('viewer    reads and says nothing',      row({ identity_type:'actor', access_level:'viewer' }),    'viewer false false false false');
+  t('an entity is always an editor',         row({ identity_type:'entity' }),                          'editor true true true true');
+
+  /**
+   * ⚠️⚠️ THE FALLBACK IS THE WHOLE REASON THIS SHIPS SAFELY. Code deploys before Athi runs migrations, so for
+   * some minutes every actor has a `hat` and no `access_level`. If the fallback were wrong in the permissive
+   * direction a view_only temp could write; if wrong the other way, every act co-assist is locked out of their
+   * own job. Both are outages, and neither announces itself as a migration problem.
+   */
+  t('pre-b173  act       -> editor',    access.levelOf({ identity_type:'actor', hat:'act' }),       'editor');
+  t('pre-b173  manager   -> editor',    access.levelOf({ identity_type:'actor', hat:'manager' }),   'editor');
+  t('pre-b173  audit     -> commenter', access.levelOf({ identity_type:'actor', hat:'audit' }),     'commenter');
+  t('pre-b173  mis       -> commenter', access.levelOf({ identity_type:'actor', hat:'mis' }),       'commenter');
+  t('pre-b173  view_only -> commenter', access.levelOf({ identity_type:'actor', hat:'view_only' }), 'commenter');
+
+  /* ⚠️ NOTHING AT ALL -> editor, matching what POST /actors writes when no level is given. A hardening that
+     silently demotes existing staff is an outage, not a hardening. */
+  t('no level and no hat -> editor',    access.levelOf({ identity_type:'actor' }),                  'editor');
+
+  /* Reach is a separate dimension — the thing five hat names could never express. */
+  t('reach: default is your own node',  access.seesWholeEntity({ identity_type:'actor' }),          false);
+  t('reach: whole_entity granted',      access.seesWholeEntity({ identity_type:'actor', whole_entity:true }), true);
+  t('an EDITOR can see the whole entity — impossible with five hats',
+    access.canEdit({ identity_type:'actor', access_level:'editor', whole_entity:true })
+      && access.seesWholeEntity({ identity_type:'actor', access_level:'editor', whole_entity:true }), true);
+}
+
 (async () => {
+  levelCases();
   await visibilityCases();
   gateCases();
   await routeCases();

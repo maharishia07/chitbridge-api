@@ -33,9 +33,10 @@
  * hat self-contradictory.
  */
 'use strict';
+const access = require('../lib/access');   // b173 — viewer / commenter / editor
 
-/** Hats that may change the business's records. Everything else may read. */
-const WRITE_HATS = ['act', 'manager'];
+/* ⚠️ WRITE_HATS is gone — lib/access.js owns that question now. It was one of eighteen places comparing
+   against 'manager' / 'audit' / 'mis' / 'view_only' across six files. */
 
 /**
  * Paths a restricted hat may still POST/PATCH/PUT/DELETE, because they are SELF-SCOPED or read-shaped.
@@ -84,10 +85,10 @@ const SELF_SCOPED_EXACT = [
 /** Verbs that change something. GET/HEAD/OPTIONS are never gated. */
 const MUTATING = ['POST', 'PATCH', 'PUT', 'DELETE'];
 
+/* ⚠️ Keyed by LEVEL now, not by the five old hat names. b173 collapsed those to three. */
 const SAYS = {
-  view_only: 'View-only',
-  audit: 'Audit — review only',
-  mis: 'MIS — reports',
+  viewer:    'View-only',
+  commenter: 'Comment-only — read and reply internally',
 };
 
 module.exports = function hatGate(req, res, next) {
@@ -107,8 +108,16 @@ module.exports = function hatGate(req, res, next) {
   /* Absent means 'act', matching what POST /actors writes when no hat is given — so anyone created before the
      column existed keeps exactly today's access. A hardening that silently demotes existing staff is an outage,
      not a hardening. */
-  const hat = req.identity.hat || 'act';
-  if (WRITE_HATS.includes(hat)) return next();
+  /**
+   * ⭐⭐ ONE PLACE DECIDES. This used to read `req.identity.hat` and compare it against a local WRITE_HATS
+   * array — one of eighteen string comparisons against 'manager' / 'audit' / 'mis' / 'view_only' spread over
+   * six files. Any new rule had to be remembered in all of them, and this gate has already shipped one bug
+   * that every unit test passed.
+   *
+   * lib/access.js is now the only thing that knows what a level means, and it derives the answer from the old
+   * `hat` when `access_level` is absent — so this behaves identically either side of b173.
+   */
+  if (access.canEdit(req.identity)) return next();
 
   /**
    * ⚠️⚠️ originalUrl, NOT path — AND THIS ALMOST SHIPPED WRONG. The gate runs inside `auth`, which runs inside
@@ -130,13 +139,17 @@ module.exports = function hatGate(req, res, next) {
    * at a screen reading "View-only" and cannot see why that would stop anything. Naming both ends turns a dead
    * end into an instruction.
    */
+  /**
+   * ⚠️ THE LEVEL, NOT THE HAT. Removing the local `const hat = …` left this line reading an undefined variable
+   * — caught immediately by the test suite, which is the whole argument for having driven these rules through
+   * real express rather than asserting the predicates.
+   */
+  const lvl = access.levelOf(req.identity);
   return res.status(403).json({
     error: 'Not permitted',
-    message: 'Your access is set to "' + (SAYS[hat] || hat) + '", which can read records but not change them. '
+    message: 'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. '
       + 'The account owner can change this in Co-assists.',
-    hat,
+    access_level: lvl,
   });
 };
-
-module.exports.WRITE_HATS = WRITE_HATS;
 module.exports.SELF_SCOPED = SELF_SCOPED;
