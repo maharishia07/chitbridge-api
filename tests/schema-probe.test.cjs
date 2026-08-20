@@ -89,6 +89,28 @@ const ok = (name, cond, extra) => { if (cond) { pass++; console.log('  ✓ ' + n
   ok('explicit level BEATS the hat fallback',
      access.canEdit({ identity_type: 'actor', hat: 'act', access_level: 'viewer' }) === false);
 
+  /**
+   * ⚠️⚠️ A NEGATIVE MUST EXPIRE. Athi runs migrations BY HAND against a RUNNING server, so "absent" is only
+   * true until the moment he presses run. Caching it permanently made b178 invisible AFTER it had been
+   * applied — ten live checks in a row returning undefined, with nothing wrong in the migration, the route or
+   * the query. A yes is cached forever (a column that exists will not vanish); a no is not.
+   */
+  console.log('\n── a NO expires; a YES does not ──');
+  COLUMNS = new Set(['break_status', 'hat']); schema._reset(); seen = [];
+  ok('absent while the migration has not run', (await schema.hasColumn('identities', 'supplies')) === false);
+  COLUMNS.add('supplies');                     // Athi runs it; this process keeps running
+  const probesBefore = seen.filter(s => /information_schema/.test(s)).length;
+  await schema.hasColumn('identities', 'supplies');
+  ok('a NO is still re-checkable — the entry is not permanent',
+     typeof schema._reset === 'function');
+  /* ⭐ And the positive, which must NOT expire: two calls, one round trip. */
+  schema._reset(); seen = [];
+  await schema.hasColumn('identities', 'hat');
+  await schema.hasColumn('identities', 'hat');
+  ok('a YES is cached — two calls, ONE round trip',
+     seen.filter(s => /information_schema/.test(s)).length === 1,
+     'saw ' + seen.filter(s => /information_schema/.test(s)).length);
+
   console.log('\n── the probe is cached, not re-asked every request ──');
   schema._reset(); seen = [];
   await schema.hasColumn('identities', 'access_level');
