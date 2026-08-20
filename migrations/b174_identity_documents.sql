@@ -61,6 +61,25 @@ CREATE TABLE IF NOT EXISTS identity_documents (
   verified_by      varchar(64),              -- 'uidai-offline' · 'nsdl' · 'manual:<actor>' — WHO said so
   verification_ref varchar(128),             -- the counterfoil: a receipt id, never the document
 
+  /**
+   * ⭐⭐ WHO FILED IT, AND DID THE PERSON AGREE. Athi, 2026-08-20: *"we have to add as part of coassist
+   * registration"* — so the OWNER types these while creating an employee, not only the employee themselves.
+   *
+   * ⚠️ THAT REMOVES THE PROPERTY THAT MADE THE ROUTE SAFE. As first written the route took no identity_id at
+   * all: the subject was always the caller, so no shape of the request could file a document against another
+   * person. Owner-side capture is a real need — HR collects documents, that is simply how hiring works — but it
+   * reopens exactly that shape, so the fact of it has to be RECORDED rather than assumed away.
+   *
+   * `submitted_by` is 'self' or the identity that typed it. A document nobody can attribute is not evidence of
+   * anything, and an employee querying their own record deserves to see who entered it.
+   *
+   * ⚠️ consent_at EXISTS BECAUSE OF AADHAAR SPECIFICALLY. Collecting an Aadhaar number requires the holder's
+   * informed consent — an employer typing one unasked is the problem the Act is about, and it is not cured by
+   * our not storing it. NULL means nobody has recorded consent, which the screen must show as such.
+   */
+  submitted_by     varchar(64) NOT NULL DEFAULT 'self',
+  consent_at       timestamptz,
+
   created_at       timestamptz NOT NULL DEFAULT NOW(),
   updated_at       timestamptz NOT NULL DEFAULT NOW(),
 
@@ -69,6 +88,12 @@ CREATE TABLE IF NOT EXISTS identity_documents (
   /* ⚠️⚠️ THE AADHAAR RULE, AS A CONSTRAINT. A comment saying "do not store it" is an instruction to a reader
      who may never arrive. This is a rule the database keeps whether anyone read the file or not. */
   CONSTRAINT idoc_aadhaar_never_stored CHECK (scheme <> 'AADHAAR' OR value_enc IS NULL),
+
+  /* ⚠️ AND IF SOMEONE ELSE FILED AN AADHAAR, CONSENT MUST BE ON THE ROW. Self-submission is its own consent;
+     an employer typing another person's number without it is the thing the Act is about. A constraint, so it
+     holds for any writer — including one written next year that never read this file. */
+  CONSTRAINT idoc_aadhaar_needs_consent
+    CHECK (scheme <> 'AADHAAR' OR submitted_by = 'self' OR consent_at IS NOT NULL),
 
   /* One live row per person per scheme. A second PAN is a correction, not a second PAN. */
   CONSTRAINT idoc_one_per_scheme UNIQUE (identity_id, scheme)
