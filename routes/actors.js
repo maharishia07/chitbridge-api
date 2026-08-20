@@ -3,6 +3,7 @@
 
 const express = require('express');
 const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on process.env.DEV_OTP directly
+const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
@@ -248,6 +249,24 @@ router.patch('/:id',
         return res.status(403).json({ error: 'Forbidden',
           message: 'Only the account owner can change who sees costs and margin.' });
       }
+      /**
+       * ⭐⭐ READ THE BEFORE-ROW. IAM-SPEC §29 — until now nothing recorded that a hat changed, let alone what
+       * it changed FROM. "Ravi is now view_only" does not answer the question actually asked when something
+       * has gone wrong, which is what he was before and who moved him.
+       *
+       * ⚠️ ONE EXTRA READ ON A ROUTE THAT RUNS RARELY. Access changes are not a hot path — this is the
+       * cheapest place in the product to buy provenance, and the only place it can be bought at all: after
+       * the UPDATE the previous value is gone for good.
+       */
+      let beforeRow = null;
+      try {
+        const _b = await db(
+          `SELECT hat, can_see_costs, break_status FROM identities
+            WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
+          [actor_id, entity_id]);
+        beforeRow = _b.rows[0] || null;
+      } catch (_) { /* the audit trail must never be the reason a change fails */ }
+
       const sets = [], vals = []; let n = 1;
       if ('display_name' in req.body) { sets.push(`display_name = $${n++}`); vals.push(sanitise(req.body.display_name)); }
       if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
@@ -263,6 +282,18 @@ router.patch('/:id',
          WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
          RETURNING identity_id, display_name, actor_role, phone, max_tasks, hat, can_see_costs`, vals);
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
+      /* ⭐ The audit trail (b172). ONE EVENT PER ACCESS FIELD THAT MOVED — a PATCH setting both hat and
+         can_see_costs is TWO access changes, and collapsing them loses which one a reason referred to.
+         Swallows everything: recording a change must never be the reason a change fails. */
+      await accessEvents.recordChanges(db, {
+        entity_id,
+        subject_identity_id: actor_id,
+        before: beforeRow,
+        after: r.rows[0],
+        changed_by: req.identity && req.identity.identity_id,
+        reason: (req.body.reason || '').trim() || null,
+      });
+
       res.json({ message: 'Co-assist updated', actor: r.rows[0] });
     } catch (err) {
       console.error('Update actor error:', err.message);
@@ -1646,6 +1677,55 @@ router.put('/:id/tasks/route',
     } catch (err) {
       console.error('Route task error:', err.message);
       res.status(500).json({ error: 'Failed to route task' });
+    }
+  }
+);
+
+/**
+ * GET /api/actors/access-events — the IAM audit trail (b172).
+ *
+ * IAM-SPEC §29. Athi's employee tab says *"request your manager to modify"* — this is what makes the answer
+ * to "did they?" a fact rather than a memory.
+ *
+ * ⭐ DELIBERATELY READABLE BY A READ-ONLY HAT. GET is never gated, and an auditor who cannot read the access
+ * trail cannot audit access — which is the one thing that hat exists for. Athi: *"he is internal gate keeper."*
+ *
+ * ⚠️ SCOPED BY entity_id AND BY RLS BOTH. The WHERE clause is not the protection — the policy on the table is.
+ * The clause is there so that a missing session variable yields an empty list rather than a cross-tenant read,
+ * which is the failure mode that would not announce itself.
+ *
+ * ⚠️ SELF-HEALING: an absent table (pre-b172) returns an empty list with applied:false, never a 500. Code
+ * deploys before Athi runs migrations, always.
+ *
+ * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
+ * later above this line would capture '/access-events' and the failure would look like an empty audit log.
+ */
+router.get('/access-events',
+  auth,
+  async (req, res) => {
+    try {
+      const entity_id = auth.entityOf(req);
+      const subject = String(req.query.subject || '').trim();
+      const params = [entity_id];
+      let where = 'e.entity_id = $1';
+      if (subject) { params.push(subject); where += ' AND e.subject_identity_id = $2'; }
+
+      const r = await db(
+        `SELECT e.event_id, e.subject_identity_id, s.display_name AS subject_name, s.actor_key,
+                e.action, e.before_value, e.after_value, e.reason, e.at,
+                e.changed_by, c.display_name AS changed_by_name
+           FROM access_events e
+           LEFT JOIN identities s ON s.identity_id = e.subject_identity_id
+           LEFT JOIN identities c ON c.identity_id = e.changed_by
+          WHERE ${where}
+          ORDER BY e.at DESC
+          LIMIT 200`, params);
+
+      res.json({ events: r.rows, applied: true });
+    } catch (err) {
+      if (/access_events/.test(err.message || '')) return res.json({ events: [], applied: false });
+      console.error('Access events error:', err.message);
+      res.status(500).json({ error: 'Read failed', message: safeErr(err) });
     }
   }
 );
