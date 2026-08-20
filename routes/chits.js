@@ -2016,6 +2016,33 @@ router.post('/:chit_id/messages',
     const entity_id    = entityId(req);
     const display_name = req.identity.display_name;
 
+    /**
+     * ⭐⭐ READ-ONLY MAY MESSAGE INTERNALLY, NEVER EXTERNALLY. Athi, 2026-08-20:
+     *
+     *   *"Read only is internal messaging only, not external messaging. Edit can pass external messaging."*
+     *   *"The auditor can read the external messaging but cannot respond back — that is the difference."*
+     *   *"He is auditing, he cannot go and ask questions directly to anyone else. He is internal gate keeper."*
+     *
+     * An auditor who can answer a counterparty is not auditing, they are participating.
+     *
+     * ⚠️⚠️ AND THIS CHECK CANNOT LIVE IN THE HAT GATE — which is why it is here, duplicating nothing.
+     * Internal and external are ONE endpoint distinguished by a BODY field. The gate matches on path and
+     * method and never sees a body, so it can only open or close the whole route. A permission that depends
+     * on the CONTENT of a request has to be made where the content is readable.
+     *
+     * ⚠️ THE GATE OPENING AND THIS REFUSAL LANDED IN THE SAME COMMIT, deliberately. Ship the gate first and
+     * read-only silently gains EXTERNAL messaging until this arrives — and widening is the failure direction
+     * that never announces itself.
+     */
+    if (thread_type === 'external' && req.identity.identity_type === 'actor'
+        && !['act','manager'].includes(req.identity.hat || 'act')) {
+      return res.status(403).json({
+        error: 'Not permitted',
+        message: 'Your access is read-only. You can read this conversation and reply internally, but not to the other party.',
+        hat: req.identity.hat,
+      });
+    }
+
     try {
       // B1 RLS: participant access check on own copy -> withEntity(me).
       const access = await withEntity(entity_id, (db) => db.query(

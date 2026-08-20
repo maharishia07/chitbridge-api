@@ -51,6 +51,34 @@ const SELF_SCOPED = [
   ['/assist', 'asking the assistant a question; it creates nothing on the rail'],
   ['/metrics', 'reporting — which is precisely what the mis hat is for'],
   ['/exports', 'the same'],
+
+  /**
+   * ⭐⭐ MESSAGING IS NOT A WRITE TO THE RECORD. Athi, 2026-08-20: *"Though read only, you can pass messages…
+   * read only is internal messaging only, not external messaging."*
+   *
+   * ⚠️⚠️ BEFORE THIS, A READ-ONLY CO-ASSIST COULD NOT MESSAGE AT ALL — the POST was refused outright, so an
+   * auditor could see a conversation and had no way to say anything about it, even to their own colleagues.
+   * That was not a decision anyone made; it fell out of a default-deny gate and an allow-list nobody added
+   * messages to.
+   *
+   * ⚠️ THIS OPENS THE ROUTE, IT DOES NOT DECIDE WHICH MESSAGES ARE ALLOWED. Internal and external share one
+   * endpoint and differ by a BODY field — the gate never sees a body. routes/chits.js refuses
+   * thread_type:'external' for a read-only hat, and it landed in the SAME COMMIT as this line. Opening here
+   * first would silently grant external messaging in the gap, and widening is the failure direction that does
+   * not announce itself.
+   */
+  /* ⚠️⚠️ NOT '/chits' — SEE THE PATTERN LIST BELOW. A prefix entry here would open EVERY mutating route
+     under /chits: creating a chit, changing its status, amending a line. Messaging needs ONE sub-path, and a
+     prefix cannot express "one sub-path". I wrote '/chits' first and caught it before it shipped; leaving this
+     note because the next person adding a nested permission will reach for the same wrong tool. */
+];
+
+/**
+ * ⭐ SELF_SCOPED matches by PREFIX, which is right for a whole area ('/notifications') and wrong for one nested
+ * route. These are matched WHOLE, so nothing else under the same parent is opened by accident.
+ */
+const SELF_SCOPED_EXACT = [
+  [/^\/chits\/[^/]+\/messages$/, 'messaging — the route itself refuses an EXTERNAL thread for a read-only hat'],
 ];
 
 /** Verbs that change something. GET/HEAD/OPTIONS are never gated. */
@@ -94,6 +122,7 @@ module.exports = function hatGate(req, res, next) {
    */
   const p = String(req.originalUrl || req.path || '').split('?')[0].replace(/^\/api(?=\/|$)/, '');
   if (SELF_SCOPED.some(([prefix]) => p === prefix || p.startsWith(prefix + '/'))) return next();
+  if (SELF_SCOPED_EXACT.some(([re]) => re.test(p))) return next();
 
   /**
    * ⚠️ THE MESSAGE NAMES THE HAT AND WHO CAN CHANGE IT. A bare "Forbidden" tells someone they are blocked and
