@@ -424,3 +424,77 @@ module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;
 module.exports.loadActiveConstitution = loadActiveConstitution;
+
+/**
+ * ── SUPPLIER READINESS ACCEPTANCE (b177) ────────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-08-20: *"when supplier is selected, its trade ready can be showcased and ask for acceptance —
+ * that is all, enough now."* The MECHANISM, deliberately without the rule: no requirement list, no matching,
+ * no refusal. Show what they can prove; record that a named person looked and accepted.
+ */
+
+/** POST /api/governance/supplier-acceptance — record that this entity accepted a supplier's readiness. */
+router.post('/supplier-acceptance', auth, async (req, res) => {
+  try {
+    if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
+      return res.status(503).json({ error: 'Not enabled', code: 'SRA_NOT_MIGRATED',
+        message: 'Acceptance is not switched on yet.' });
+    }
+    const entity_id = auth.entityOf(req);
+    const handle = String(req.body.supplier || '').trim();
+    if (!handle) return res.status(400).json({ error: 'Bad request', message: 'Which supplier?' });
+
+    /* ⭐ RESOLVED BY HANDLE OR KEY, key first — the same ordering as resolveEntity and the readiness read. */
+    const s = await query(
+      `SELECT identity_id FROM identities
+        WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1)) AND identity_type = 'entity'
+        ORDER BY (bridge_id = $1) DESC LIMIT 1`, [handle]);
+    if (!s.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such supplier' });
+
+    /**
+     * ⚠️⚠️ THE SUMMARY IS TAKEN HERE, ON THE SERVER — NEVER ACCEPTED FROM THE CLIENT. A snapshot posted by the
+     * browser is a claim about what someone saw, and the whole value of this row is that it is evidence. The
+     * same reasoning that strips a client-supplied verification stamp in /compliance.
+     */
+    const rd = await require('../lib/readiness').resolveReadiness(s.rows[0].identity_id);
+    const r = await withEntity(entity_id, (db) => db.query(
+      `INSERT INTO supplier_readiness_acceptance (entity_id, supplier_id, summary, accepted_by, note)
+            VALUES ($1,$2,$3,$4,$5)
+       RETURNING acceptance_id, accepted_at`,
+      [entity_id, s.rows[0].identity_id, JSON.stringify(rd.summary || {}),
+       req.identity.identity_id, (req.body.note || '').trim() || null]));
+
+    res.json({ message: 'Accepted', acceptance: r.rows[0], summary: rd.summary });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Acceptance failed', message: safeErr(err) });
+  }
+});
+
+/** GET /api/governance/supplier-acceptance/:handle — the LATEST acceptance, if any. */
+router.get('/supplier-acceptance/:handle', auth, async (req, res) => {
+  try {
+    if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
+      return res.json({ acceptance: null, applied: false });
+    }
+    const entity_id = auth.entityOf(req);
+    const s = await query(
+      `SELECT identity_id FROM identities
+        WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1)) AND identity_type = 'entity'
+        ORDER BY (bridge_id = $1) DESC LIMIT 1`, [String(req.params.handle || '').trim()]);
+    if (!s.rows.length) return res.json({ acceptance: null, applied: true });
+
+    /* ⚠️ withEntity — WITH RLS, on the read as well as the write. Fixing one and not the other is
+       indistinguishable from fixing neither; that cost most of an afternoon this morning. */
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT a.acceptance_id, a.summary, a.accepted_at, a.note, i.display_name AS accepted_by_name
+         FROM supplier_readiness_acceptance a
+         LEFT JOIN identities i ON i.identity_id = a.accepted_by
+        WHERE a.entity_id = $1 AND a.supplier_id = $2
+        ORDER BY a.accepted_at DESC LIMIT 1`,
+      [entity_id, s.rows[0].identity_id]));
+
+    res.json({ acceptance: r.rows[0] || null, applied: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Read failed', message: safeErr(err) });
+  }
+});
