@@ -9,11 +9,20 @@
 --     state_log      . entity_id             50
 --     customers_remaining 0 · entities 1218 · actors 412
 --
--- 50 customers, one order each, no messages and no disputes.
+-- ⚠️⚠️ I READ THAT AS "50 CUSTOMERS" AND IT IS NOT. Those are DEPENDENT ROW counts — 50 orders. The customer
+-- count was only ever in a RAISE NOTICE, which the Supabase editor does not display, so the one number this
+-- guard depended on was the one number invisible on screen. EXPECTED was set from a column that meant
+-- something else, and the abort that followed looked exactly like a data change.
 --
--- ⚠️⚠️ IT ABORTS IF THE SHAPE HAS CHANGED. If the customer count is no longer 50, something happened between
--- the simulation and this run — a storefront order, a test suite, another session. The approval was for 50;
--- it was not a blank cheque for whatever is there now. Raise the number deliberately if that is what you want.
+-- The truth, from b171d: 71 customers holding 50 orders between them — 21 signed up and never ordered. Every
+-- one is buyer-<timestamp>@test-cb.com under Alpha Paints or Gamma Exports, created in bursts on 16 August.
+-- Nothing arrived between the simulation and the commit. There was never a data change.
+--
+-- ⭐ SO THE COUNT IS NOW A ROW IN THE RESULT SET. A guard whose input cannot be seen is not a guard.
+--
+-- ⚠️ IT ABORTS IF THE CUSTOMER COUNT IS NO LONGER 71. If it moves between now and the run, something added
+-- customers — a storefront order, a test suite, another session. The approval is for the 71 verified above,
+-- not a blank cheque for whatever is there later. Raise the number only after looking at b171d again.
 --
 -- ⚠️ It is a SEPARATE FILE rather than b171b with the last line changed, so b171b stays permanently safe to
 -- run and nobody reaches for a destructive script by muscle memory.
@@ -37,7 +46,7 @@ DECLARE
   r      record;
   n      bigint;
   ncust  bigint;
-  EXPECTED constant bigint := 50;   -- the number Athi read and approved
+  EXPECTED constant bigint := 71;   -- verified by b171d: 71 customers, all buyer-*@test-cb.com, created 16 Aug
 BEGIN
   SELECT count(*) INTO ncust FROM _cust;
 
@@ -91,13 +100,16 @@ SELECT * FROM (
         SELECT 1 AS ord, 'DELETED' AS section, tbl AS detail, col AS column_name, rows_removed AS n
           FROM _purged
   UNION ALL
-        SELECT 2, 'AFTER — must be 0',         'customers_remaining', '',
+        /* ⭐ THE NUMBER THE GUARD ACTUALLY CHECKS, on screen where it can be read. */
+        SELECT 2, 'CUSTOMERS REMOVED', 'identities (customer)', '', (SELECT count(*) FROM _cust)
+  UNION ALL
+        SELECT 3, 'AFTER — must be 0',         'customers_remaining', '',
                (SELECT count(*) FROM identities WHERE identity_type = 'customer')
   UNION ALL
-        SELECT 3, 'AFTER — must be unchanged', 'entities_untouched',  '',
+        SELECT 4, 'AFTER — must be unchanged', 'entities_untouched',  '',
                (SELECT count(*) FROM identities WHERE identity_type = 'entity')
   UNION ALL
-        SELECT 4, 'AFTER — must be unchanged', 'actors_untouched',    '',
+        SELECT 5, 'AFTER — must be unchanged', 'actors_untouched',    '',
                (SELECT count(*) FROM identities WHERE identity_type = 'actor')
 ) x
 ORDER BY ord, n DESC, detail;
