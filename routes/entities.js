@@ -572,7 +572,52 @@ router.get('/me', auth, async (req, res) => {
       catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
     } catch (_) { /* pre-b114 → the default above */ }
     const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs });
-    res.json({ entity: entityOut, capabilities, capabilities_debug, governance });
+    /**
+     * ⭐⭐ ?include= — ONE HTTP ROUND TRIP INSTEAD OF FOUR. Athi, 2026-08-21: *"why do we need a round trip,
+     * can't the js send all the required information in one shot and get it from the background? We have built
+     * most of the stuff as lazy load, and for each lazy load if we have to do a round trip, that will feel like
+     * waiting forever."*
+     *
+     * ⚠️⚠️ HE IS POINTING AT THE BIGGER OF THE TWO COSTS, AND I HAD BEEN FIXING THE SMALLER ONE. A database
+     * round trip is 1–5ms; an HTTP round trip from India to Railway is 200–400ms. Painting one profile made
+     * FOUR of them — `/entities/me`, `/governance/readiness`, `/channels`, `/governance/profile` — so over a
+     * second of pure network before the screen was complete. Collapsing eight DB queries into five saved ~15ms.
+     * This saves about a second.
+     *
+     * ⭐ INCLUDES, NOT A SCREEN-SHAPED ENDPOINT. A `GET /screen/profile` would bake the UI's current layout into
+     * the API, and twelve of those would make every re-layout a server change. The client names what it wants;
+     * the server has no idea a "profile screen" exists.
+     *
+     * ⚠️ THE SAME LIBRARY FUNCTION THE STANDALONE ROUTE CALLS — `lib/readiness`, `lib/channels`, `lib/profile`.
+     * Not a copy. A bundle that reimplements its parts is how the bundled answer and the direct answer start
+     * disagreeing, and the direct routes stay because other callers use them.
+     *
+     * ⚠️ ONE INCLUDE FAILING MUST NOT COST THE OTHERS OR THE ENTITY. Each is caught alone and reports its own
+     * error in place: the profile still paints without its channels, which is exactly how it behaves today when
+     * one of the four separate fetches fails. Degrade to less, never to nothing.
+     */
+    const want = String(req.query.include || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const included = {};
+    if (want.length) {
+      const eid = auth.entityOf(req);
+      const LOAD = {
+        readiness: () => require('../lib/readiness').resolveReadiness(eid),
+        channels:  () => require('../lib/channels').listChannels(eid),
+        vault:     () => require('../lib/profile').getProfile(eid),
+      };
+      /* ⚠️ SEQUENTIAL, NOT Promise.all. The pool is max:10 and these each open their own transaction — three
+         in parallel per request means two concurrent readers want six connections. The win here is removing
+         three HTTP round trips, not three DB ones; parallelising the small cost to risk the pool is a bad
+         trade. See the note at the top of tools/round-trips.cjs. */
+      for (const k of want) {
+        if (!Object.prototype.hasOwnProperty.call(LOAD, k)) { included[k] = { error: 'unknown include' }; continue; }
+        try { included[k] = await LOAD[k](); }
+        catch (e) { included[k] = { error: safeErr(e) }; }
+      }
+    }
+
+    res.json({ entity: entityOut, capabilities, capabilities_debug, governance,
+      ...(want.length ? { included } : {}) });
   } catch (err) {
     console.error('Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
