@@ -1150,6 +1150,55 @@ router.get('/inbox', auth, async (req, res) => {
 // GET /chits/unread — chit_ids that are unread FOR THE CALLING ACTOR (per-actor read state).
 // Unread = no chit_reads row yet, or the copy changed (cs.updated_at) after the actor last opened it.
 // Entity (non-actor) logins get [] — they use the entity-level read_at. Mounted BEFORE /:chit_id.
+/**
+ * ⭐⭐ GET /pulse — "has anything changed?", so the 20-second refresh stops re-reading a list that has not moved.
+ *
+ * Athi, 2026-08-21: *"the screen keeps refreshing … can we change the model from reading the data to push data,
+ * which avoids the read continuously?"* Push (SSE) is the eventual answer and costs a held connection per
+ * signed-in tab. This is the stepping stone that gets most of the benefit for one cheap query: the client asks
+ * for a WATERMARK, and only fetches the list when the watermark moves.
+ *
+ * ⚠⚠ THE WATERMARK MUST COVER EVERYTHING A LIST ROW DISPLAYS, or the screen goes quietly stale — which is
+ * worse than the flashing it replaces. A row draws from FIVE tables (chit_header, chit_status, chit_disputes,
+ * chit_messages, state_log), so three sources are read:
+ *   · chit_header MAX(created_at)  — a chit arriving, on either copy
+ *   · state_log   MAX(created_at)  — every logged action: advance, assign, dispute, message (27 write sites)
+ *   · chit_status MAX(updated_at)  — a status change, which UPDATES in place and so moves no created_at
+ *
+ * ⚠️ AND A COUNT, because deletion LOWERS nothing. Trash a chit and every MAX above is unchanged; without the
+ * count the list would keep showing a row that is gone.
+ *
+ * ⭐ ONE TRANSACTION, THREE SCALAR SUBQUERIES. Both MAX reads are index-only backward scans
+ * (idx_chit_header_entity_created, idx_state_log_entity — both (entity_id, created_at)). This runs every 20s
+ * per signed-in tab, so it had to be the cheapest thing on the platform, not merely cheaper than the list.
+ *
+ * ⚠️ THE WATERMARK IS OPAQUE ON PURPOSE. The client compares it and never parses it, so its composition can
+ * change — a sixth table, a different column — without touching the client or inventing a version negotiation.
+ */
+router.get('/pulse', auth, async (req, res) => {
+  try {
+    const me = auth.entityOf(req);
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT
+         (SELECT MAX(created_at) FROM chit_header WHERE entity_id = $1) AS h,
+         (SELECT MAX(created_at) FROM state_log   WHERE entity_id = $1) AS s,
+         (SELECT MAX(updated_at) FROM chit_status WHERE entity_id = $1) AS c,
+         (SELECT COUNT(*)        FROM chit_header WHERE entity_id = $1) AS n`,
+      [me]));
+    const x = r.rows[0] || {};
+    const w = ['h', 's', 'c'].map((k) => (x[k] ? new Date(x[k]).getTime() : 0)).join('.') + '.' + (x.n || 0);
+    res.json({ w });
+  } catch (e) {
+    /**
+     * ⚠️ A PULSE THAT FAILS MUST NOT SILENCE THE SCREEN. Answering an error would leave the client with no
+     * watermark and, depending on how it reads that, either refreshing forever or never again. `null` is an
+     * explicit "cannot tell" — the client falls back to refreshing, which is exactly today's behaviour.
+     */
+    console.error('pulse:', e.message);
+    res.json({ w: null });
+  }
+});
+
 router.get('/unread', auth, async (req, res) => {
   try {
     if (req.identity.identity_type !== 'actor') return res.json({ unread: [] });
