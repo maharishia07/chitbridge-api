@@ -31,6 +31,25 @@ const R = path.join(API, 'routes');
 
 const COST = { withEntity: 4, withTransaction: 3, onEntity: 1, query: 1 };
 
+/**
+ * ⚠️⚠️ THE FULL PATH, NOT THE ROUTER-RELATIVE ONE — without it this tool cannot be joined to anything. It used
+ * to print `POST /` for attachments and `GET /` for notifications, so cross-referencing it against
+ * endpoint-usage.cjs matched every root-mounted route to every other one (`''.endsWith('')` is true) and
+ * labelled the attachments upload as `defAdd`. Two tools measuring the same endpoints in two different naming
+ * schemes produce a join that is confidently wrong, which is worse than no join.
+ */
+const mounts = {};
+try {
+  const app = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
+  /* ⚠️ ONE LINE, NOT A WINDOW. A `[\s\S]{0,120}` window let a mount borrow the PATH from a nearby app.use —
+     catalogue.js came out mounted at `/api/network` because that line sits above it. Mounts are one-liners in
+     this file; anything else is better left unmatched than matched to the wrong base. */
+  for (const line of app.split('\n')) {
+    const m = line.match(/app\.use\(\s*['"]([^'"]+)['"].*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/);
+    if (m && !mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];
+  }
+} catch (_) { /* no server.js — paths stay router-relative, and the join simply finds nothing */ }
+
 const files = fs.readdirSync(R).filter((f) => f.endsWith('.js'));
 const rows = [];
 
@@ -97,7 +116,13 @@ for (const f of files) {
 
     const trips = we * COST.withEntity + wt * COST.withTransaction + oe * COST.onEntity + Math.max(0, q) * COST.query;
     rows.push({
-      route: d[1].toUpperCase().padEnd(6) + d[3],
+      /* ⚠️ no regex here on purpose — a trailing-slash strip written as a literal has now had its backslash
+         eaten by a generated edit twice in this file alone. String work cannot be mis-escaped. */
+      route: (() => {
+        let p = (mounts[f] || '') + d[3];
+        if (p.length > 1 && p[p.length - 1] === '/') p = p.slice(0, -1);
+        return d[1].toUpperCase().padEnd(6) + (p || d[3]);
+      })(),
       file: f, we, wt, oe, q: Math.max(0, q), trips,
       /* ⭐ THE ACTIONABLE SIGNAL: more than one transaction opened in one handler. One is unavoidable; the
          second onwards is the pattern onEntity exists to collapse. */

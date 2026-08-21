@@ -84,13 +84,28 @@ router.get('/', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const d = await withEntity(entity_id, (db) => db.query(
-      `SELECT * FROM definition WHERE definition_id = $1`, [req.params.id]));
-    if (!d.rows.length) return res.status(404).json({ error: 'Not found' });
-    const v = await withEntity(entity_id, (db) => db.query(
-      `SELECT version, rules, note, created_at, created_by FROM definition_version
-        WHERE definition_id = $1 ORDER BY version DESC`, [req.params.id]));
-    res.json({ definition: d.rows[0], versions: v.rows });
+    /**
+     * ⚠️ ONE TRANSACTION, NOT TWO. `withEntity()` costs FOUR round trips each — BEGIN · set_config · the query ·
+     * COMMIT (db/index.js) — so reading a definition and its versions cost eight, half of them ceremony. The
+     * two queries always run together and always for the same entity; there was never a reason for two BEGINs.
+     *
+     * ⭐ AND THE VERSIONS ARE ONLY READ IF THE DEFINITION EXISTS, exactly as before. Sharing a transaction is
+     * not merging the queries: the 404 still happens before any version row is fetched, so an id in the URL
+     * still does not reveal that a definition exists. Same order, same guarantee, one BEGIN.
+     *
+     * ⭐ The response is sent OUTSIDE the transaction — holding a connection open across serialisation is the
+     * cost this change exists to remove, not to relocate.
+     */
+    const out = await withEntity(entity_id, async (db) => {
+      const d = await db.query(`SELECT * FROM definition WHERE definition_id = $1`, [req.params.id]);
+      if (!d.rows.length) return null;
+      const v = await db.query(
+        `SELECT version, rules, note, created_at, created_by FROM definition_version
+          WHERE definition_id = $1 ORDER BY version DESC`, [req.params.id]);
+      return { definition: d.rows[0], versions: v.rows };
+    });
+    if (!out) return res.status(404).json({ error: 'Not found' });
+    res.json(out);
   } catch (e) { if (notMigrated(e)) return gone(res);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });

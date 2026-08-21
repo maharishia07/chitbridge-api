@@ -17,7 +17,7 @@ const router = express.Router();
 
 const auth = require('../middleware/auth');
 const { validate } = require('../middleware/validate');   // ⚠️ a NAMED export — the default is the module object
-const { withEntity } = require('../db');
+const { withEntity, onEntity } = require('../db');
 const sla = require('../lib/sla');
 const safeErr = (e) => (e && e.message) || 'Something went wrong';
 
@@ -27,8 +27,16 @@ const gone = (res) => res.status(503).json({ error: 'Not migrated',
 const ctx = (req) => auth.entityOf(req);
 
 /** A chit I actually hold. Same gate the amend route uses — an id in a URL is not authority. */
-async function mine(entity_id, chit_id) {
-  const r = await withEntity(entity_id, (db) => db.query(
+/**
+ * ⚠️ TAKES AN OPTIONAL CLIENT — `onEntity(id, db, fn)` runs on a transaction the caller already owns, or opens
+ * its own when passed nothing (db/index.js). Every one of the eight existing callers passes nothing and is
+ * untouched; the one that has a transaction in hand now shares it instead of opening a second.
+ *
+ * ⚠️ THE ALTERNATIVE WAS TO INLINE THIS QUERY at the one call site that needed it, which is how a check that
+ * eight endpoints share becomes nine slightly different checks. One answerer, optionally hosted.
+ */
+async function mine(entity_id, chit_id, db) {
+  const r = await onEntity(entity_id, db, (c) => c.query(
     `SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
   return !!r.rows.length;
 }
@@ -44,15 +52,34 @@ router.get('/:chit_id', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const chit_id = req.params.chit_id;
-    if (!(await mine(entity_id, chit_id))) return res.status(404).json({ error: 'Not found' });
-
-    const [rec, pauses] = await Promise.all([
-      withEntity(entity_id, (db) => db.query(`SELECT * FROM chit_sla WHERE entity_id=$1 AND chit_id=$2`, [entity_id, chit_id])),
-      withEntity(entity_id, (db) => db.query(
+    /**
+     * ⭐⭐ THREE TRANSACTIONS BECOME ONE. This opened one for the ownership check, then `Promise.all`'d TWO
+     * more — twelve round trips, since `withEntity` costs four each (BEGIN · set_config · query · COMMIT).
+     *
+     * ⚠️ AND Promise.all WAS THE WRONG INSTINCT HERE, not just an inefficient one. The pool is max:10, so two
+     * parallel transactions per request means five concurrent readers of this screen exhaust it and the sixth
+     * queues. That trades a slow page for connection timeouts — a worse failure and much harder to diagnose.
+     * Parallelism is close to free in the BROWSER (six connections per origin); it has a real budget on the
+     * server. The two rules point opposite ways, and this call site had the browser's instinct on the server.
+     *
+     * ⭐ HOW THIS ENDPOINT IS USED: `svcGet` — the SERVICE panel on an open chit (cap-service.js), 2 call
+     * sites. It is opened per chit, so its cost is paid every time someone looks at a service request, not once
+     * per session.
+     *
+     * ⚠️ THE OWNERSHIP CHECK STILL RUNS FIRST AND STILL SHORT-CIRCUITS. Sharing a transaction is not merging
+     * the queries: a chit that is not yours still 404s before either SLA row is read.
+     */
+    const found = await withEntity(entity_id, async (db) => {
+      if (!(await mine(entity_id, chit_id, db))) return null;
+      const rec = await db.query(`SELECT * FROM chit_sla WHERE entity_id=$1 AND chit_id=$2`, [entity_id, chit_id]);
+      const pauses = await db.query(
         `SELECT pause_id, paused_from, paused_to, reason, note, on_counterparty,
                 claimed_by_entity_id, claimed_by_name, accepted, accepted_at, accepted_by
-           FROM chit_sla_pause WHERE entity_id=$1 AND chit_id=$2 ORDER BY paused_from`, [entity_id, chit_id])),
-    ]);
+           FROM chit_sla_pause WHERE entity_id=$1 AND chit_id=$2 ORDER BY paused_from`, [entity_id, chit_id]);
+      return { rec, pauses };
+    });
+    if (!found) return res.status(404).json({ error: 'Not found' });
+    const { rec, pauses } = found;
 
     const r = rec.rows[0] || null;
     if (!r) return res.json({ tracked: false, chit_id, resolution_codes: sla.RESOLUTION_CODES,
@@ -169,27 +196,50 @@ router.post('/:chit_id/pause', auth, [ body('reason').isString() ], validate, as
   try {
     const entity_id = ctx(req);
     const chit_id = req.params.chit_id;
-    if (!(await mine(entity_id, chit_id))) return res.status(404).json({ error: 'Not found' });
+    /* ⚠️ THE CHEAP REFUSAL FIRST — a bad reason needs no database at all, so it is checked before any
+       connection is taken. Validating after opening a transaction pays for a round trip to say "no". */
     const reason = String(req.body.reason);
     if (!sla.PAUSE_REASONS.includes(reason)) return res.status(400).json({ error: 'Bad reason',
       message: 'reason must be one of: ' + sla.PAUSE_REASONS.join(', ') });
 
-    /* ⚠️ ONE OPEN PAUSE AT A TIME, PER CLAIMANT. Two open pauses from the same party overlap by construction, and
-       lib/sla would merge them into one — so the second would look recorded and change nothing. Refuse instead. */
-    const open = await withEntity(entity_id, (db) => db.query(
-      `SELECT pause_id FROM chit_sla_pause
-        WHERE entity_id=$1 AND chit_id=$2 AND paused_to IS NULL AND claimed_by_entity_id=$1 LIMIT 1`,
-      [entity_id, chit_id]));
-    if (open.rows.length) return res.status(409).json({ error: 'Already paused',
-      message: 'This request is already paused by you — end that pause before starting another.' });
-
     const pause_id = crypto.randomUUID();
-    const n = await withEntity(entity_id, (db) => db.query(
-      `SELECT chit_sla_pause_start($1,$2,$3,$4,$5,$6) AS copies`,
-      [chit_id, pause_id, req.body.from || null, reason,
-       req.body.note ? String(req.body.note).slice(0, 300) : null,
-       req.body.on_counterparty === true]));
-    res.json({ message: 'Clock paused', pause_id, copies: n.rows[0].copies });
+
+    /**
+     * ⭐⭐ THREE TRANSACTIONS BECOME ONE — ownership, the already-paused check, and the write. Twelve round
+     * trips, since `withEntity` costs four each (BEGIN · set_config · query · COMMIT, db/index.js).
+     *
+     * ⚠️⚠️ AND HERE IT IS A CORRECTNESS FIX, NOT ONLY A SPEED ONE. The "one open pause at a time" check and the
+     * insert it guards ran in SEPARATE transactions, so two requests arriving together could both read zero
+     * open pauses and both start one. lib/sla merges overlapping pauses from the same claimant, so the second
+     * would look recorded and silently change nothing — the exact outcome the check exists to prevent. Inside
+     * one transaction the read and the write are the same unit of work.
+     *
+     * ⭐ HOW THIS ENDPOINT IS USED: `svcPause` — the PAUSE button on the service panel of an open chit
+     * (cap-service.js). One call site, and it is the write that the whole SLA clock hangs off.
+     */
+    const out = await withEntity(entity_id, async (db) => {
+      if (!(await mine(entity_id, chit_id, db))) return { notFound: true };
+
+      /* ⚠️ ONE OPEN PAUSE AT A TIME, PER CLAIMANT. Two open pauses from the same party overlap by construction,
+         and lib/sla would merge them into one — so the second would look recorded and change nothing. */
+      const open = await db.query(
+        `SELECT pause_id FROM chit_sla_pause
+          WHERE entity_id=$1 AND chit_id=$2 AND paused_to IS NULL AND claimed_by_entity_id=$1 LIMIT 1`,
+        [entity_id, chit_id]);
+      if (open.rows.length) return { already: true };
+
+      const n = await db.query(
+        `SELECT chit_sla_pause_start($1,$2,$3,$4,$5,$6) AS copies`,
+        [chit_id, pause_id, req.body.from || null, reason,
+         req.body.note ? String(req.body.note).slice(0, 300) : null,
+         req.body.on_counterparty === true]);
+      return { copies: n.rows[0].copies };
+    });
+
+    if (out.notFound) return res.status(404).json({ error: 'Not found' });
+    if (out.already) return res.status(409).json({ error: 'Already paused',
+      message: 'This request is already paused by you — end that pause before starting another.' });
+    res.json({ message: 'Clock paused', pause_id, copies: out.copies });
   } catch (e) { if (notMigrated(e)) return gone(res); console.error('service pause:', e.message);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
