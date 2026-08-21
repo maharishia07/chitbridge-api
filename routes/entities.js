@@ -862,6 +862,23 @@ router.patch('/profile', auth,
        * the route, and the whole point is that the CONSTITUTION decides it. A currency outside the envelope is
        * refused with the permitted set named, so the answer is actionable rather than "invalid".
        */
+      /**
+       * ⚠⚠ AND ONLY AN ENTITY MAY SET IT — the same hole as user_id, found the same way. This route writes
+       * `req.identity.identity_id`, the CALLER'S row, so a co-assist submitting a currency wrote it onto their
+       * own actor record where nothing reads it: the screen said saved and the business kept its old currency.
+       * Silent and wrong is worse than refused.
+       *
+       * ⭐ Athi's rule, 2026-08-20: *"the access the employee cannot change — it should be done by entity."*
+       * A trading currency is a fact about the business that every counterparty reads off a price.
+       */
+      if (req.identity.identity_type === 'actor' && req.body.currency_code !== undefined) {
+        return res.status(403).json({
+          error: 'Not permitted', code: 'CURRENCY_ENTITY_ONLY',
+          message: 'The currency your prices are written in belongs to the business. Ask whoever runs the '
+                 + 'account to change it in Settings.'
+        });
+      }
+
       let _cur = null;
       if (req.body.currency_code) {
         const want = String(req.body.currency_code).toUpperCase();
