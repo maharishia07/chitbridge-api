@@ -1168,8 +1168,13 @@ router.get('/inbox', auth, async (req, res) => {
  * ⚠️ AND A COUNT, because deletion LOWERS nothing. Trash a chit and every MAX above is unchanged; without the
  * count the list would keep showing a row that is gone.
  *
- * ⭐ ONE TRANSACTION, THREE SCALAR SUBQUERIES. Both MAX reads are index-only backward scans
- * (idx_chit_header_entity_created, idx_state_log_entity — both (entity_id, created_at)). This runs every 20s
+ * ⭐ ONE TRANSACTION, THREE SCALAR SUBQUERIES. All three MAX reads are index-only backward scans
+ * — idx_chit_header_entity_created and idx_state_log_entity, both (entity_id, created_at), and
+ * cs_entity_updated_idx (entity_id, updated_at DESC) added by b180 for exactly this query. Before b180 the
+ * chit_status read scanned every one of that entity's rows, which was fine at a few hundred and not at fifty
+ * thousand. ⚠️ That index is NOT free: `updated_at` changes on every write to this table, so it is maintained
+ * on every status advance, assignment and read-receipt. The trade was made deliberately — one extra index
+ * write per change against a full per-entity scan every 20 seconds per open tab. This runs every 20s
  * per signed-in tab, so it had to be the cheapest thing on the platform, not merely cheaper than the list.
  *
  * ⚠️ THE WATERMARK IS OPAQUE ON PURPOSE. The client compares it and never parses it, so its composition can

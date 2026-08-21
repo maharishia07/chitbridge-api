@@ -62,6 +62,36 @@ SEPARATE transactions, so two requests arriving together could both read zero op
 change nothing — the exact outcome the check exists to prevent. One transaction makes the read and the write one
 unit of work.
 
+### The polling cost, and what replaced it
+
+⚠️⚠️ **`autoRefresh()` CHECKED SIX THINGS AND NOT ONE WAS "is there a network".** No token, hidden tab,
+compose open, modal open, lightbox open, a focused input, an open detail — every one about whether the refresh
+would **disturb** someone, none about whether it could **succeed**. Offline it fired every 20 seconds, failed,
+fell back to the service-worker cache and repainted the same rows. Each cycle also woke the radio on a phone
+with no signal.
+
+⭐ **`GET /chits/pulse`** replaced the read with a question. One watermark from three indexed sources; the list
+is fetched only when it moves. This is the stepping stone to SSE, not a detour — *what changed* is exactly
+what a push would send.
+
+| source | catches what the others cannot |
+|---|---|
+| `chit_header MAX(created_at)` | a chit arriving, on either copy |
+| `state_log MAX(created_at)` | every logged action — 27 write sites |
+| `chit_status MAX(updated_at)` | ⚠️ a status change **UPDATEs in place** and moves no `created_at` |
+| `COUNT(*)` | ⚠️ **deletion lowers nothing** — every MAX above is unchanged |
+
+⚠️ **b180 ADDS `cs_entity_updated_idx (entity_id, updated_at DESC)` AND IT IS NOT FREE.** `chit_status`
+already carried ten indexes, and `updated_at` changes on **every** write to the row — so this one is
+maintained on every status advance, assignment and read-receipt. The trade is deliberate: one extra index
+write per change, against a full per-entity scan every 20 seconds per open tab. ⭐ The dry run prints
+`rows_per_entity_max` first, because **"the scan is cheap, skip the index" is a real possible answer.**
+
+⚠️ `CREATE INDEX CONCURRENTLY` **cannot run inside a transaction block**, so b180's apply has no BEGIN/COMMIT
+and must be run on its own. And a build that fails part-way leaves an **INVALID** index — present, unused by
+the planner, still costing write maintenance. `b180_..._verify.sql` checks `indisvalid`, because "it exists"
+is not "it works".
+
 ### Deliberately NOT changed
 
 - **`chits.js`** — the chit lifecycle engine is locked after Athi's manual confirm. `PUT /:chit_id/status`,
