@@ -11,7 +11,7 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtpEmail } = require('../lib/notify');   // shared OTP email sender (F2 — extracted from here)
-const { resolveEntityGovernance } = require('../lib/govresolve');   // resolve the entity's governance from attributes
+const { resolveEntityGovernance, currencyRefusal } = require('../lib/govresolve');   // resolve the entity's governance from attributes
 
 // ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
 //    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
@@ -881,17 +881,12 @@ router.patch('/profile', auth,
 
       let _cur = null;
       if (req.body.currency_code) {
-        const want = String(req.body.currency_code).toUpperCase();
-        let permitted = null;
-        try { const g = await resolveEntityGovernance(id); permitted = g && g.allowed && g.allowed.currencies; } catch (_) {}
-        if (Array.isArray(permitted) && permitted.length && permitted.indexOf(want) < 0) {
-          return res.status(422).json({
-            error: 'Currency not permitted', code: 'CURRENCY_NOT_ALLOWED',
-            message: want + ' is not available here. Choose one of: ' + permitted.join(', ') + '.',
-            allowed: permitted,
-          });
-        }
-        _cur = want;
+        /* ⚠️ ONE ANSWERER — see lib/govresolve.currencyRefusal. The envelope check used to be written out here,
+           and the SECOND place that sets this column (network-design/build) was added without it. */
+        const refusal = await currencyRefusal(id, req.body.currency_code);
+        if (refusal) return res.status(refusal.code === 'CURRENCY_MALFORMED' ? 400 : 422).json(
+          Object.assign({ error: 'Currency not permitted' }, refusal));
+        _cur = String(req.body.currency_code).toUpperCase();
       }
       await query(
         `UPDATE identities SET display_name=COALESCE($9,display_name), gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),

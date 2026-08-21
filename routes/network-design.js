@@ -13,6 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query, withEntity } = require('../db');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
+const { currencyRefusal } = require('../lib/govresolve');   // may this entity price in this currency?
 const handleLib = require('../lib/handle');
 const networkBuild = require('../lib/network-build');
 const visibilityCap = require('../lib/visibility-cap');
@@ -348,6 +349,29 @@ router.post('/build', auth, async (req, res) => {
       const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
 
       for (const c of plan.create) {
+        /**
+         * ⚠⚠ THE SECOND PLACE THAT SETS currency_code, AND IT HAD NO ENVELOPE CHECK. PATCH /entities/profile
+         * validated against the constitution; this route — added later — wrote whatever the design plan said. A
+         * network operator could therefore mint a store in a currency the same platform refused one screen away.
+         * Not a loophole anyone opened: a new write path that did not inherit the old one's guard.
+         *
+         * ⚠️ CHECKED AGAINST THE OPERATOR'S ENTITY, because the store does not exist yet and has no governance
+         * of its own — it will inherit the operator's. Checking the store would mean creating it first and
+         * asking afterwards, which is the wrong order for a refusal.
+         *
+         * ⚠️ auth.entityOf(req), NOT the local `me`. `me` is req.identity.identity_id, which for a co-assist is
+         * the ACTOR's row — it carries no governance stamp, so the lookup would quietly resolve `base` instead of
+         * the business's own constitution. `me` is the right answer for created_by and the wrong one for whose
+         * rules apply; the same variable cannot be both.
+         *
+         * ⭐ IT BECOMES A `problem`, NOT A THROWN ERROR. The build is a batch: one bad currency must not abandon
+         * the other nodes, and the operator needs a repair naming the store, exactly like an absent parent above.
+         */
+        const _wantCur = c.place && c.place.currency;
+        if (_wantCur) {
+          const _bad = await currencyRefusal(auth.entityOf(req), _wantCur);
+          if (_bad) { plan.problems.push({ key: c.key, name: c.name, reason: _bad.message }); continue; }
+        }
         const parentPath = c.parent_key ? pathOf.get(c.parent_key) : rootPath;
         if (!parentPath) {
           // Its parent was built in an earlier run and is not on the tree. Creating it anyway would put a store in
@@ -403,6 +427,13 @@ router.post('/build', auth, async (req, res) => {
       // Leaving the old cap behind would let a store that was opened to `public` be narrowed back by nobody, or a
       // store closed to `private` still carry a cap that permits publishing.
       for (const u of plan.update) {
+        /* ⚠️ THE SAME COLUMN, THE SAME OMISSION. A store's place can MOVE, and the place carries a currency —
+           so the update path writes currency_code as surely as the insert does. Both or neither. */
+        const _uCur = u.place && u.place.to && u.place.to.currency;
+        if (_uCur) {
+          const _uBad = await currencyRefusal(auth.entityOf(req), _uCur);
+          if (_uBad) { plan.problems.push({ key: u.key, name: u.name, reason: _uBad.message }); continue; }
+        }
         // Visibility and purpose move independently — a node can be in `update` for either or both — so each is
         // written only when it actually changed. COALESCE on a null parameter leaves the column untouched.
         const nextVis = u.to || null;
