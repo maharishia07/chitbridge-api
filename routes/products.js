@@ -631,15 +631,37 @@ router.get('/:id/versions', auth, async (req, res) => {
     const entity_id = ctx(req);
     /* ⚠️ SCOPED TO MY OWN ITEM BEFORE ANYTHING IS READ. RLS already confines the rows, but an id in the URL should
        not be enough to learn that an item exists at all. */
-    const own = await withEntity(entity_id, (db) => db.query(
-      `SELECT item_id FROM catalogue_items WHERE item_id = $1 AND entity_id = $2`, [req.params.id, entity_id]));
-    if (!own.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
-
+    /**
+     * ⚠️⚠️ ONE TRANSACTION, NOT TWO — the ownership check and the read it guards now share a client.
+     *
+     * `withEntity()` costs FOUR round trips every time it is called: BEGIN · set_config · the query · COMMIT
+     * (db/index.js). This handler opened one to ask "is this item mine", closed it, then opened another to read
+     * the versions — eight round trips to answer one question, half of them spent on transaction ceremony.
+     *
+     * ⭐ Measured by tools/round-trips.cjs, which ranks all 264 endpoints by this cost. 29 of them open more
+     * than one transaction; this was the cleanest to collapse — a GET, no writes, so the only thing that can
+     * change is how long it takes.
+     *
+     * ⚠️ THE CHECK STAYS FIRST AND STAYS SEPARATE. Sharing a transaction is not the same as merging the
+     * queries: an id in the URL must not be enough to learn that an item exists, so the 404 still happens
+     * before any version data is read. Same order, same guarantee, one BEGIN.
+     */
     const at = String(req.query.at || '').trim();
+    let when = null;
     if (at) {
-      const when = new Date(at);
+      when = new Date(at);
       if (isNaN(when)) return res.status(400).json({ error: 'Bad date', message: '`at` must be a timestamp.' });
-      const r = await withEntity(entity_id, (db) => db.query(
+    }
+
+    const out = await withEntity(entity_id, async (db) => {
+      /* ⚠️ SCOPED TO MY OWN ITEM BEFORE ANYTHING IS READ. RLS already confines the rows, but an id in the URL
+         should not be enough to learn that an item exists at all. */
+      const own = await db.query(
+        `SELECT item_id FROM catalogue_items WHERE item_id = $1 AND entity_id = $2`, [req.params.id, entity_id]);
+      if (!own.rows.length) return { notFound: true };
+
+      if (when) {
+        const r = await db.query(
         /**
          * ⚠️ TRUNCATED TO MILLISECONDS ON BOTH SIDES, AND THE PROOF IS WHAT FOUND IT.
          *
@@ -657,17 +679,25 @@ router.get('/:id/versions', auth, async (req, res) => {
           WHERE entity_id = $1 AND item_id = $2
             AND date_trunc('milliseconds', valid_from) <= $3
             AND (valid_to IS NULL OR date_trunc('milliseconds', valid_to) > $3)
-          ORDER BY version_no DESC LIMIT 1`, [entity_id, req.params.id, when.toISOString()]));
-      return res.json({ item_id: req.params.id, at: when.toISOString(), version: r.rows[0] || null });
-    }
+          ORDER BY version_no DESC LIMIT 1`, [entity_id, req.params.id, when.toISOString()]);
+        return { asOf: r.rows[0] || null };
+      }
 
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT version_no, name, variant, unit, price, sku, status, valid_from, valid_to, changed_by
-         FROM catalogue_item_version
-        WHERE entity_id = $1 AND item_id = $2
-        ORDER BY version_no DESC LIMIT 200`, [entity_id, req.params.id]));
-    res.json({ item_id: req.params.id, count: r.rows.length,
-      current: r.rows.find((x) => x.valid_to === null) || null, versions: r.rows });
+      const r = await db.query(
+        `SELECT version_no, name, variant, unit, price, sku, status, valid_from, valid_to, changed_by
+           FROM catalogue_item_version
+          WHERE entity_id = $1 AND item_id = $2
+          ORDER BY version_no DESC LIMIT 200`, [entity_id, req.params.id]);
+      return { rows: r.rows };
+    });
+
+    /* ⚠️ THE RESPONSE IS SENT OUTSIDE THE TRANSACTION, deliberately. Calling res.json() inside the callback
+       would hold the connection open across serialisation, and an error thrown after the response had started
+       would leave a half-written body with an open BEGIN behind it. Return a value; answer with it here. */
+    if (out.notFound) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
+    if (when) return res.json({ item_id: req.params.id, at: when.toISOString(), version: out.asOf });
+    res.json({ item_id: req.params.id, count: out.rows.length,
+      current: out.rows.find((x) => x.valid_to === null) || null, versions: out.rows });
   } catch (e) {
     /* ⚠️ THE MIGRATION-ABSENT CASE IS SAID PLAINLY. Twice this week a swallowed 42P01/42703 surfaced as a generic
        503 and sent Athi back to the SQL editor for a migration that had applied perfectly. */

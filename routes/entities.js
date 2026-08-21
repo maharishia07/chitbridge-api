@@ -395,11 +395,43 @@ router.get('/me', auth, async (req, res) => {
        42703 and throws the whole query. */
     const _tzCol = await schema.hasColumn('identities', 'timezone');
     const _supCol = await schema.hasColumn('identities', 'supplies');
+    /**
+     * ⭐⭐ THREE MORE COLUMNS OFF THE SAME ROW, PROBED — and they used to be TWO EXTRA ROUND TRIPS.
+     *
+     * Athi, 2026-08-21: *"in the code if we make multiple rounds of read, that has to be addressed."* Measured
+     * by tools/round-trips.cjs: `/me` made EIGHT sequential round trips, and FOUR of them were SELECTs against
+     * `identities` — the main one, then `capabilities`, then `storefront_access`, then `locale_prefs/ui_prefs`.
+     * Three of the four read the SAME ROW as each other. This is the hottest endpoint on the platform: every
+     * screen calls it on every boot.
+     *
+     * ⚠️ THEY WERE SEPARATE FOR A GOOD REASON THAT NO LONGER APPLIES, and the old comment says so plainly:
+     * *"this code deploys BEFORE b165 runs — folding the column into the main query would 500 every boot in the
+     * window between the two."* That was correct. It is also exactly what `lib/schema.js` was built to solve
+     * this morning, after a `SELECT access_level` before b173 took co-assist sign-in down: probe what the
+     * database HAS, then name only that. The two lines above already do it for `timezone` and `supplies`.
+     *
+     * ⚠️ PROBED INDIVIDUALLY, NOT AS A GROUP. b166 may not have run where b165 has — `locale_prefs` can exist
+     * while `ui_prefs` does not, which is precisely the case the old nested fallback was written for. One probe
+     * per column keeps that guarantee; a single "are the prefs there" flag would lose it.
+     *
+     * ⚠️ `capabilities` IS DELIBERATELY LEFT OUT. It is read for `auth.entityOf(req)` — the PARENT for an actor
+     * — so for a co-assist it is a DIFFERENT ROW, and folding it in would silently hand an employee their own
+     * empty capability list instead of their employer's. A round trip saved by answering the wrong question is
+     * not a saving.
+     */
+    const _sfCol = await schema.hasColumn('identities', 'storefront_access');
+    const _lpCol = await schema.hasColumn('identities', 'locale_prefs');
+    const _upCol = await schema.hasColumn('identities', 'ui_prefs');
+    /* ⚠️ AND THE VISIBILITY TRIO — a THIRD read of the same row, for `catalogue_visibility, plan,
+       params_override`. Same identity_id, same request: three round trips to read one row. */
+    const _cvCol = await schema.hasColumn('identities', 'catalogue_visibility');
+    const _plCol = await schema.hasColumn('identities', 'plan');
+    const _poCol = await schema.hasColumn('identities', 'params_override');
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
               purpose, sort_order, address, city, lat, lng, service_km,   -- b117/b118/b119
-              actor_key, phone${_tzCol ? ', timezone' : ''}${_supCol ? ', supplies' : ''},
+              actor_key, phone${_tzCol ? ', timezone' : ''}${_supCol ? ', supplies' : ''}${_sfCol ? ', storefront_access' : ''}${_lpCol ? ', locale_prefs' : ''}${_upCol ? ', ui_prefs' : ''}${_cvCol ? ', catalogue_visibility' : ''}${_plCol ? ', plan' : ''}${_poCol ? ', params_override' : ''},
               /* ⚠️ b176 MAY NOT BE RUN. A missing column is 42703 and throws the WHOLE query — the mistake that
                  took co-assist sign-in down this morning. Selected through the probe, never named blindly. */
               /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
@@ -410,6 +442,10 @@ router.get('/me', auth, async (req, res) => {
       [req.identity.identity_id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Entity not found' });
+    /* ⚠️ DECLARED HERE, BESIDE THE QUERY IT COMES FROM. It was declared 40 lines lower, next to the first
+       thing that used it — and the moment a second reader appeared above that point, `const` (not hoisted)
+       threw a TDZ error. A binding belongs with its source, not with its first consumer. */
+    const _me = result.rows[0] || {};
 
     /**
      * ⭐⭐ AN EMPLOYEE MUST BE ABLE TO SEE THEIR OWN ACCESS. Athi, 2026-08-20: *"in the employee profile, there
@@ -478,7 +514,20 @@ router.get('/me', auth, async (req, res) => {
     let capabilities_debug = 'ok';
     try {
       const eid = auth.entityOf(req);
-      const c = await query('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
+      /**
+       * ⭐⭐ FOR AN ENTITY THIS IS THE ROW WE ALREADY HAVE. `entityOf()` returns `parent_entity_id ||
+       * identity_id` — so for an entity caller it IS `req.identity.identity_id`, and this was a second SELECT
+       * against `identities` for the row the main query fetched a few lines above. Entities are the common
+       * case; the extra trip was being paid on almost every request to the platform's hottest endpoint.
+       *
+       * ⚠️ AN ACTOR STILL QUERIES, AND THAT IS NOT AN OVERSIGHT. For a co-assist `entityOf()` is the PARENT —
+       * a different row entirely. Reading `_me.capabilities` for them would hand an employee their own (empty)
+       * capability list instead of their employer's, silently removing every capability-gated nav item. A round
+       * trip saved by answering the wrong question is not a saving.
+       */
+      const c = (eid === req.identity.identity_id && _me)
+        ? { rows: [_me] }
+        : await query('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
       capabilities_debug = (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8)
         + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
@@ -490,34 +539,22 @@ router.get('/me', auth, async (req, res) => {
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
     let governance = null;
     try { governance = await resolveEntityGovernance(auth.entityOf(req)); } catch (_) {}
-    // b77 (self-healing): storefront access mode; default 'browse' if the column isn't present yet.
-    let storefront_access = 'browse';
-    try { const sf = await query('SELECT storefront_access FROM identities WHERE identity_id = $1', [req.identity.identity_id]); if (sf.rows[0] && sf.rows[0].storefront_access) storefront_access = sf.rows[0].storefront_access; } catch (_) {}
-    // b165 (self-healing): the PERSON's localisation choice — language, format and the UTS #35 subtags.
-    // ⚠️ req.identity.identity_id, NOT entityOf(). For an actor that is the actor's OWN row, so a Tamil-reading
-    // clerk at an English-reading firm keeps Tamil instead of inheriting their employer's language.
-    // ⚠️ Read separately rather than added to the SELECT above, because /me is the hottest endpoint on the
-    // platform and this code deploys BEFORE b165 runs — folding the column into the main query would 500 every
-    // boot in the window between the two. Absent the column, '{}' is exactly today's behaviour.
-    /* ⚠️ BOTH PREFERENCE SETS IN ONE QUERY. They are read on every boot from the hottest endpoint on the
-       platform, and two round trips for two small columns on the SAME ROW is a cost with nothing to show for it.
-       ⚠️ Still read separately from the main SELECT, and still in its own try/catch: this code ships BEFORE the
-       migrations, and folding either column into the main query would 500 every boot in the window between. */
-    let locale_prefs = {}, ui_prefs = {};
-    try {
-      const lp = await query('SELECT locale_prefs, ui_prefs FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
-      if (lp.rows[0]) {
-        locale_prefs = lp.rows[0].locale_prefs || {};
-        ui_prefs = lp.rows[0].ui_prefs || {};
-      }
-    } catch (_) {
-      /* b166 may not have run where b165 has — fall back to reading the older column alone rather than losing
-         the language setting too. A partial migration state must degrade to less, never to nothing. */
-      try {
-        const lp = await query('SELECT locale_prefs FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
-        if (lp.rows[0] && lp.rows[0].locale_prefs) locale_prefs = lp.rows[0].locale_prefs;
-      } catch (_2) {}
-    }
+    /**
+     * ⭐⭐ READ FROM THE ROW WE ALREADY HAVE — these were TWO EXTRA ROUND TRIPS against `identities` for the
+     * SAME identity_id the main SELECT above just fetched. On the hottest endpoint on the platform.
+     *
+     * ⚠️ THE SELF-HEALING DEFAULTS ARE UNCHANGED AND THEY ARE NOT COSMETIC. Absent `storefront_access`,
+     * 'browse' is what b77 established. Absent `locale_prefs`, `{}` means "never chosen", which CBLocale.hydrate
+     * treats as "keep what this device has" — NOT as "chose the default". A column that is missing and a column
+     * that is empty must keep answering differently, and folding the reads together must not blur them.
+     *
+     * ⚠️ THE PARTIAL-MIGRATION CASE STILL DEGRADES TO LESS, NEVER TO NOTHING. The old code nested a
+     * try/catch so that b166 missing where b165 had run still returned the language. Per-column probes give the
+     * same guarantee structurally: `locale_prefs` is selected when it exists whether or not `ui_prefs` does.
+     */
+    const storefront_access = _sfCol ? (_me.storefront_access || 'browse') : 'browse';
+    const locale_prefs = (_lpCol && _me.locale_prefs) || {};
+    const ui_prefs     = (_upCol && _me.ui_prefs) || {};
     // b114 (self-healing): is this entity's catalogue exposed at all? Pre-b114 there was no such setting and adoption
     // silently published, so absent the column we report 'public' — the behaviour that was actually in force.
     // The EFFECTIVE visibility, plus the cap that produced it. Reporting the stored flag alone would let a capped
@@ -526,8 +563,9 @@ router.get('/me', auth, async (req, res) => {
     let catalogue_visibility = 'public';
     let visibility_cap = { max: 'public', by: null, enforced: false, reason: '' };
     try {
-      const cv = await query('SELECT catalogue_visibility, plan, params_override FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
-      const row = cv.rows[0] || {};
+      /* ⭐ THE ROW IS ALREADY IN HAND — see the probe note above. This was the THIRD SELECT against `identities`
+         for the same identity_id inside one request. */
+      const row = _me;
       let planMenu = null;
       try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
       visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
