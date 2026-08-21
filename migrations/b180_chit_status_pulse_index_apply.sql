@@ -1,3 +1,25 @@
+-- ⚠⚠⚠ MEASURED 2026-08-22 AND DEFERRED — DO NOT RUN THIS YET.
+--
+-- The dry run answered, and it answered NO:
+--     chit_status rows      1,835        entities                289
+--     rows per entity max     284        rows per entity avg       6
+--     indexes already          12        (~1.35 MB — already larger than the data)
+--
+-- The scan this index replaces is 284 rows at worst and 6 on average, from cache, in microseconds. A
+-- thirteenth index would be maintained on EVERY write to the row — status advance, assign, read-receipt,
+-- star, snooze, archive — to save that. At this size the write cost exceeds the read saving.
+--
+-- ⚠️ AND cs_entity_live_idx (entity_id, direction) ALREADY NARROWS IT to one entity's rows, so the pulse
+-- was never doing a full-table sweep. The gap I reported was real; the SIZE of it was not measured until now.
+--
+-- ⭐ RUN IT WHEN rows_per_entity_max PASSES ~5,000. Re-run the dry run first — it prints that number first
+-- for exactly this decision. Watch the MAX, not the total: 289 entities averaging 6 chits is a demo-shaped
+-- dataset, and real usage concentrating on one busy entity would cross the threshold while the totals still
+-- look small.
+--
+-- Everything below is correct and ready; it is waiting on the number, not on the code.
+--
+
 -- b180 · APPLY — index chit_status for the pulse watermark. Run the dry run first.
 --
 -- ⚠️⚠️ RUN THIS STATEMENT ON ITS OWN. There is deliberately NO BEGIN/COMMIT: `CREATE INDEX CONCURRENTLY`
