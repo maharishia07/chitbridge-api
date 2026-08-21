@@ -28,9 +28,9 @@ SELECT
   c.version::text                                                                        AS version,
   COALESCE((c.governance -> 'allowed' -> 'currencies')::text, '(none — any currency)')    AS currencies_allowed,
   c.governance -> 'defaults' ->> 'currency'                                              AS default_currency,
-  CASE WHEN c.constitution_key = 'base' AND c.governance -> 'allowed' ? 'currencies'
+  CASE WHEN c.constitution_key = 'base' AND jsonb_exists(c.governance -> 'allowed', 'currencies')
        THEN 'WILL BE LIFTED by the apply script'
-       WHEN c.governance -> 'allowed' ? 'currencies'
+       WHEN jsonb_exists(c.governance -> 'allowed', 'currencies')
        THEN 'left alone — a non-base constitution may restrict on purpose'
        ELSE 'no currency restriction' END                                                AS verdict
 FROM constitution c
@@ -46,13 +46,18 @@ SELECT
   CASE WHEN i.currency_code IS NULL THEN 'n/a'
        WHEN EXISTS (SELECT 1 FROM constitution b
                      WHERE b.constitution_key = 'base' AND b.active
-                       AND (b.governance -> 'allowed' -> 'currencies') ? i.currency_code)
+                       AND jsonb_exists(b.governance -> 'allowed' -> 'currencies', i.currency_code))
        THEN 'permitted today'
        ELSE 'REFUSED by the current cap' END                       AS currencies_allowed,
-  NULL                                                            AS default_currency,
+  NULL::text                                                      AS default_currency,
   'businesses'                                                    AS verdict
 FROM identities i
 WHERE i.identity_type = 'entity'
 GROUP BY i.currency_code
 
 ORDER BY report, constitution_key;
+
+-- ⚠️ jsonb_exists(x,'k') IS USED ABOVE RATHER THAN THE x ? 'k' OPERATOR. Several Postgres clients read a bare
+-- `?` as a bind placeholder and either error or bind it away; jsonb_exists is the same operator by its function
+-- name, with nothing for a client to misread. If this query ever returns 0 rows, that is a real answer about
+-- the data — not the query being eaten.
