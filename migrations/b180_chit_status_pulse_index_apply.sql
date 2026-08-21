@@ -1,4 +1,13 @@
--- ⚠⚠⚠ MEASURED 2026-08-22 AND DEFERRED — DO NOT RUN THIS YET.
+-- ✅ APPLIED 2026-08-22. Verified: cs_entity_updated_idx · indisvalid = true · 88 kB ·
+--    CREATE INDEX cs_entity_updated_idx ON public.chit_status USING btree (entity_id, updated_at DESC)
+--
+-- ⚠️ ATHI RAN IT AFTER READING THE MEASUREMENT BELOW, WHICH SAID "not yet". That is his call and the
+--    measurement is kept, not deleted — it records that the trade was made with eyes open rather than by
+--    default. At 1,835 rows the index is 88 kB and the extra write is negligible; the reason to wait was that
+--    it was not yet EARNING its cost, not that it would hurt. Applying early costs a little; discovering the
+--    need late costs a slow screen on a 20-second timer.
+--
+-- ⚠️ THE ORIGINAL DRY-RUN READING, KEPT because it is the baseline anything later is compared against:
 --
 -- The dry run answered, and it answered NO:
 --     chit_status rows      1,835        entities                289

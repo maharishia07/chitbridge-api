@@ -81,7 +81,7 @@ what a push would send.
 | `chit_status MAX(updated_at)` | ⚠️ a status change **UPDATEs in place** and moves no `created_at` |
 | `COUNT(*)` | ⚠️ **deletion lowers nothing** — every MAX above is unchanged |
 
-⚠️ **b180 ADDS `cs_entity_updated_idx (entity_id, updated_at DESC)` AND IT IS NOT FREE.** `chit_status`
+✅ **b180 APPLIED 2026-08-22** — `cs_entity_updated_idx (entity_id, updated_at DESC)`, valid, 88 kB, so all three watermarks are index-only backward scans. ⚠️ **IT IS NOT FREE.** `chit_status`
 already carried ten indexes, and `updated_at` changes on **every** write to the row — so this one is
 maintained on every status advance, assignment and read-receipt. The trade is deliberate: one extra index
 write per change, against a full per-entity scan every 20 seconds per open tab. ⭐ The dry run prints
