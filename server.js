@@ -53,7 +53,21 @@ const corsOptions = {
     return cb(new Error(`Origin ${origin} not allowed by CORS`));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
+  /**
+   * ⚠️⚠️ EVERY HEADER THE BROWSER SENDS MUST BE LISTED HERE OR NOTHING WORKS AT ALL — and the failure does not
+   * look like a CORS failure. Athi, 2026-08-22, mid-test: *"I couldn't create or sign in a store, it says
+   * Sign-in failed: You're offline — this needs a connection."* He was online. The API was up (health 200).
+   *
+   * `X-Request-Id` was added to core.js earlier the same day for log correlation. It is not a CORS-safelisted
+   * header, so adding it turned EVERY request — including GETs — into a preflighted one, and the preflight
+   * refused it because this list did not mention it. The browser then fails `fetch()` with a bare TypeError
+   * that carries no reason, which the offline layer correctly cannot distinguish from a dead network. So one
+   * missing word here presented to the user as "you are offline", on a working connection, for the whole app.
+   *
+   * ⭐ The lesson is the coupling, not the typo: a header added on the client is a change to the SERVER's
+   * contract. `tests/cors-headers.test.cjs` now fails when the two lists disagree.
+   */
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
   credentials: true,
 };
 app.use(cors(corsOptions));
