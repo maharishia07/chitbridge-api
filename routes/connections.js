@@ -15,8 +15,8 @@ router.post('/request',
     body('to_entity_id').trim().notEmpty().withMessage('Receiver entity ID required'),
     body('note').optional().trim().isLength({ max: 500 }),
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const from_id = req.identity.identity_id;
@@ -152,8 +152,8 @@ router.put('/:id/respond',
       .isIn(['accept', 'reject'])
       .withMessage('Action must be accept or reject'),
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const connection_id = req.params.id;

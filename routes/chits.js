@@ -210,8 +210,8 @@ router.post('/send',
     body('line_items').optional().isArray(),
     body('business_json').optional().isObject(),
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       // Uniform actor model: an actor acts FOR its entity, so the chit is ALWAYS owned by the entity, never the actor.
@@ -1864,8 +1864,8 @@ router.put('/:chit_id/status',
       .withMessage('Invalid status'),
     body('note').optional().trim().isLength({ max: 500 }),
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const chit_id      = req.params.chit_id;
@@ -2063,8 +2063,8 @@ router.post('/:chit_id/messages',
     body('dispute_id').optional({ nullable:true }).isUUID(),
     body('line_id').optional({ nullable:true }).isUUID(),
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     const { chit_id }  = req.params;
     const { message_text, thread_type } = req.body;
@@ -2242,8 +2242,8 @@ router.post('/:chit_id/disputes',
     body('chit_wide').optional().isBoolean(),
     body('via').optional().isIn(['chit','mailbox']),
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     const { chit_id } = req.params;
     const { category, reason, target_entity_id = null, chit_wide = false, via = 'chit' } = req.body;
@@ -2493,8 +2493,8 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
 router.put('/:chit_id/disputes/:dispute_id/resolve',
   [ body('resolution_note').trim().notEmpty().withMessage('Resolution note required'),
     body('target_entity_id').optional({ nullable:true }).isUUID() ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     const { chit_id, dispute_id } = req.params;
     const { resolution_note }     = req.body;
@@ -2699,8 +2699,8 @@ router.put('/:chit_id/priority',
     body('priority').trim().isIn(['normal','high','urgent']).withMessage('priority must be normal|high|urgent'),
     body('reason').optional().trim().isLength({ max: 500 }),
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const chit_id   = req.params.chit_id;
@@ -2748,8 +2748,8 @@ router.put('/:chit_id/priority',
 // reject once customer_priority_locked is true.
 router.put('/:chit_id/priority-flag',
   [ body('priority').isBoolean().withMessage('priority must be true or false') ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const chit_id   = req.params.chit_id;
