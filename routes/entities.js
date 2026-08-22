@@ -1053,12 +1053,18 @@ router.patch('/profile', auth,
          * being slipped in with the diagnosis. It runs only AFTER `visibilityCap.check` has approved the value,
          * so a plan or operator cap still refuses first and this cannot widen anything the cap denied.
          *
-         * ⚠️ THE MAPPING IS COPIED FROM schema-bootstrap DELIBERATELY, not re-invented: `network` counts as open
-         * here because b114 decides WHO may read it, and a network-only warehouse its own siblings cannot see is
-         * not protected, it is broken. Two places deciding this differently is the bug one layer down.
+         * ⚠️ THE MAPPING IS SHARED WITH schema-bootstrap, not re-invented: `network` counts as open here because
+         * b114 decides WHO may read it, and a network-only warehouse its own siblings cannot see is not
+         * protected, it is broken. Two places deciding this differently is the bug one layer down.
+         *
+         * ⭐⭐ AND IT USED TO BE A COPY — the line below was the same expression written out a second time, with
+         * a comment saying it had been copied deliberately. A copy that KNOWS it is a copy is still a copy: the
+         * comment travels with the code that was right on the day, and nothing makes the other one follow. This
+         * bug already exists one layer down (two columns for one fact); duplicating its rule was the same
+         * mistake in miniature. `schemaVisibilityFor` is now the only place that decides.
          */
-        const schemaVisibility = (req.body.catalogue_visibility === 'public'
-          || req.body.catalogue_visibility === 'network') ? 'public' : 'private';
+        const { schemaVisibilityFor } = require('../lib/schema-bootstrap');
+        const schemaVisibility = schemaVisibilityFor(req.body.catalogue_visibility);
         try {
           await query(
             `UPDATE entity_schemas SET visibility = $1
