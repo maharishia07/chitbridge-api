@@ -1,3 +1,4 @@
+/** @covers FR-K6 — the brand sees aggregated counts by locality, never a customer identity */
 // penetration.js — STONE 4: consent location capture → the brand's AGGREGATE-ONLY penetration heatmap (no PII).
 // Brand authors a source → distributor adopts → customers order WITH a locality → the brand sees aggregated counts by
 // locality (orders + distributor coverage), never a customer identity. Needs b78 + b79. Run: node scripts/penetration.js

@@ -42,5 +42,5 @@ const stds = (rd) => ((rd.j && rd.j.standards) || []).slice().sort();
   chk('gaps carry GUIDANCE (go as far as we can, guide the rest)', !!gap, gap ? ('e.g. ' + gap.standard + ': ' + String(gap.guidance).slice(0, 60)) : '');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

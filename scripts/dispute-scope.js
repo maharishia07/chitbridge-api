@@ -1,3 +1,4 @@
+/** @covers FR-D2 — a chit participant outside the dispute must not see its messages */
 // Prove dispute-message scoping: a chit participant who is NOT in the dispute must NOT see dispute messages.
 const BASE = 'https://chitbridge-api-production.up.railway.app';
 const ALPHA = 'Alpha Timbers', BETA = 'Beta Traders', ALPHA_ID = '71373522-147e-4a75-966a-73de3d8bf045', BETA_ID = '75c378a6-ad7f-4b58-87d2-e1509cbb0482';
@@ -36,4 +37,4 @@ const has = (o, s) => JSON.stringify(o || '').includes(s);
   check('Gamma (chit party, NOT dispute party) does NOT see it', !has(gMsgs.json, 'DISPUTE-SECRET-' + ts), 'Gamma msg payload len ' + JSON.stringify(gMsgs.json || '').length);
   done();
 })().catch(e => { console.error('ERR', e); done(); });
-function done() { console.log('\n== RESULT ==  PASS ' + PASS + '  ·  FAIL ' + FAIL); process.exit(0); }
+function done() { console.log('\n== RESULT ==  PASS ' + PASS + '  ·  FAIL ' + FAIL); process.exit(FAIL ? 1 : 0); }

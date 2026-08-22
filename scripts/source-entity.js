@@ -1,3 +1,4 @@
+/** @covers FR-K1 — a brand entity authors its own source content + experience, and a distributor adopts it */
 // source-entity.js — SOURCE-AS-ENTITY + experience blueprint (needs b78).
 // A brand entity AUTHORS its own source (content + experience) → a distributor adopts it → the storefront runs the
 // SOURCE's experience (cascade). Also checks the seeded source's experience cascades. Run: node scripts/source-entity.js

@@ -1,3 +1,4 @@
+/** @covers FR-K2 — STONE 2: an order below the SOURCE’s min_order_litres is rejected — the host cannot override it */
 // source-rules.js — STONE 2: the SOURCE's governance resolves + is ENFORCED at order time (not the host's).
 // Brand authors a source with rules.min_order_litres=5 → distributor adopts → an order below 5 L is REJECTED, an
 // order >=5 L is accepted and its line carries the `governed` stamp (under source@v + routing = info). Needs b78.

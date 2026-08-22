@@ -1,4 +1,5 @@
 'use strict';
+/** @covers FR-K5 — the CURRENCY leg only — denomination comes from the governance layer, not a literal */
 /**
  * governed-currency.test.js — the network/B2B order path must denominate from the GOVERNANCE LAYER, never a literal.
  *

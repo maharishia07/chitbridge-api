@@ -52,5 +52,5 @@ const S = (o) => JSON.stringify(o || '');
   chk('storefront chit still carries the SOURCE/per-line governance (unchanged)', cs.includes('governed'), 'source governance intact');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

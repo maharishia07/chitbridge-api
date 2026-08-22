@@ -39,5 +39,5 @@ const keys = (rd) => [...new Set(((rd.j && rd.j.clearances) || []).map(c => c.st
   chk('path lists adoptable voluntary certs', path.j && Array.isArray(path.j.adoptable) && path.j.adoptable.length >= 1, (path.j && path.j.adoptable || []).join(','));
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

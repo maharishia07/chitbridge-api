@@ -1,3 +1,4 @@
+/** @covers FR-K12 — the entity's chosen `units` set is what every downstream picker offers */
 /**
  * POLICY FLAGS · the `set` type — an entity's chosen units (Athi, 2026-08-17).
  *

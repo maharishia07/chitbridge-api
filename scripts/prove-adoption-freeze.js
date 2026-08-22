@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @covers FR-K4 — edit the shelf after sending and the chit does not move — frozen by value when stamped */
 /**
  * prove-adoption-freeze.js — the whole arc, end to end:
  *

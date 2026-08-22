@@ -47,5 +47,5 @@ const login = async () => { const ts = Date.now().toString().slice(-6) + Math.fl
     'status-only projection');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

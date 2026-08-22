@@ -1,4 +1,5 @@
 'use strict';
+/** @covers FR-M3 — the PUSH leg and its per-copy consequence; pool-pull and hat-gating are not asserted here */
 // prove-assign-live.js — b143 on the live rail. Division of labour, and the privacy that makes it safe.
 //
 // The two claims that matter:

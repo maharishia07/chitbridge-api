@@ -1,3 +1,4 @@
+/** @covers FR-T2 — a well-formed registry ID is not treated as verified without a provider */
 // prove-verify.js — LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID
 // is accepted but is NOT "verified" — it is a format-checked claim (rung 'declared'). A malformed ID is refused (422).
 // The 'verified' rung is reserved for a real registry confirmation (set CB_KYB_PROVIDER + keys to make it real).
@@ -43,5 +44,5 @@ const rungOf = (rd, doc) => { const it = ((rd.j && rd.j.clearances) || []).find(
   console.log('\n  (connect CB_KYB_PROVIDER + keys → the same IEC call returns method=registry → rung "verified".)');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

@@ -54,5 +54,5 @@ const S = (o) => JSON.stringify(o || '');
   console.log('\n  ── the boilerplate assimilated:');
   for (const c of ((v1.j && v1.j.checked) || [])) console.log('     ' + c.ref + '  (' + c.facet + ', scope:' + c.scope + ', applied:' + c.applied + ')');
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

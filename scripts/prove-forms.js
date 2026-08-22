@@ -81,5 +81,5 @@ const field = (resolved, id) => ((resolved && resolved.fields) || []).find((f) =
   }
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F + '  ·  SKIP ' + S + (S ? '  (skips need VAULT_ENC_KEY/b100 or b108 — reported, not faked)' : ''));
-  process.exit(0);
-})().catch((e) => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch((e) => { console.error('HARNESS ERROR', e); process.exit(F ? 1 : 0); });

@@ -32,5 +32,5 @@ const dig = (o) => (o && (o.summary_json || (o.chit && o.chit.summary_json) || (
   chk('it carries its assurance rung (documented)', qm && qm.rung === 'documented', qm && qm.rung);
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

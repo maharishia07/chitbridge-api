@@ -1,3 +1,4 @@
+/** @covers FR-K8 — a payload is checked against its template and the verdict names the gaps */
 // conform-check.js — FIRST LIGHT of AI-as-an-actor (bottom-up `ai:conform-verdict@v1` slot).
 // Proves the wire moves: a food-safety payload is checked against the template; the DETERMINISTIC verdict flips
 // compliant↔non-compliant, gaps are named, and the Crux-2 `acted_by` deputy stamp rides the response.

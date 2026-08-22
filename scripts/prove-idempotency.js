@@ -35,5 +35,5 @@ const uuid = () => 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, (c) => { 
   chk('no Idempotency-Key → normal behaviour (new chit)', (r5.status === 200 || r5.status === 201) && !!chitId(r5));
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch((e) => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch((e) => { console.error('HARNESS ERROR', e); process.exit(F ? 1 : 0); });

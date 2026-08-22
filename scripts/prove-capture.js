@@ -39,5 +39,5 @@ async function login(email) { const reg = await api('POST', '/api/entities/regis
   }
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F + (SKIP ? '  ·  SKIP ' + SKIP + ' (pending b104)' : ''));
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

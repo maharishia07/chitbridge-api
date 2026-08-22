@@ -1,3 +1,4 @@
+/** @covers FR-T3 — track record derived from the entity’s own settled chits, not self-asserted */
 // prove-reference.js — LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real
 // chit, the receiver settles it, and the sender's track record reflects 1 counterparty / 1 settled — DERIVED, not
 // entered.  node scripts/prove-reference.js
@@ -44,5 +45,5 @@ async function login(email) { const reg = await api('POST', '/api/entities/regis
     'dealings=' + (trB.j && trB.j.dealings) + ' cps=' + (trB.j && trB.j.counterparties));
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

@@ -33,5 +33,5 @@ async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'applicat
     !rdKeys.includes('incoterms-2020') && !rdKeys.includes('ucp-600') && !rdKeys.includes('frm'), 'readiness standards: ' + rdKeys.join(', '));
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

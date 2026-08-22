@@ -65,5 +65,5 @@ const rungFor = (rd, std, doc) => { const it = ((rd && rd.clearances) || []).fin
   chk('S1 · sim_lead token rejected on any authed route (401)', bypass2.status === 401, 'status ' + bypass2.status);
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

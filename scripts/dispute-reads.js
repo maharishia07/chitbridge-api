@@ -1,3 +1,4 @@
+/** @covers FR-D2 — the per-party roster is what the queue and diagnosis expose */
 // Verify the two dispute READ endpoints rewritten in b68 but NOT covered by the harness: queue + diagnosis.
 const BASE='https://chitbridge-api-production.up.railway.app', ALPHA_ID='71373522-147e-4a75-966a-73de3d8bf045', BETA_ID='75c378a6-ad7f-4b58-87d2-e1509cbb0482';
 let PASS=0,FAIL=0;
@@ -30,4 +31,4 @@ const has=(o,s)=>JSON.stringify(o||'').includes(s);
   check('Alpha diagnosis returns 200 + has the dispute',adiag.status===200&&(has(adiag.json,did)||has(adiag.json,'quality')),'status '+adiag.status);
   done();
 })().catch(e=>{console.error(e);done();});
-function done(){console.log('\n== RESULT ==  PASS '+PASS+'  ·  FAIL '+FAIL);process.exit(0);}
+function done(){console.log('\n== RESULT ==  PASS '+PASS+'  ·  FAIL '+FAIL);process.exit(FAIL ? 1 : 0);}

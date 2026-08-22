@@ -1,3 +1,5 @@
+/** @covers FR-F2 — M3/ROOT: chit_message_deliver with no entity context must RAISE — the governed function refuses to be called bare */
+/** @covers FR-D1 — NEW-1: a non-raiser calling chit_dispute_resolve must RAISE */
 // prove-definer-guards.js — DB-DIRECT proof of the three definer guards the reviewer flagged as untested:
 //   NEW-1  — a non-raiser calling chit_dispute_resolve must RAISE ("only the raiser can resolve")
 //   M2     — an unresolvable dispute roster must RAISE (never fall through to a broadcast)

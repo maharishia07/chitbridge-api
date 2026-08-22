@@ -1,3 +1,5 @@
+/** @covers FR-T6 — the settlement chain carries a partner type and cover per stage */
+/** @covers FR-T5 — the instrument cluster is grouped by risk and the Incoterm routes cargo cover */
 // prove-commerce.js — LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end
 // settlement chain (partner + cover per stage), both DERIVED from the lane (cross_border + Incoterm). Pure catalogue —
 // no schema, no external calls.  node scripts/prove-commerce.js
@@ -60,5 +62,5 @@ async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'applicat
   chk('domestic journey drops export/import customs', !domStages.includes('export_customs') && !domStages.includes('import_customs'), domStages.length + ' stages');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });

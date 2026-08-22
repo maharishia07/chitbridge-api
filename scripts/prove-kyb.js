@@ -1,3 +1,4 @@
+/** @covers FR-T1 — the rung ladder: self-typed stays `declared`, evidence lifts to `documented`, self-write never reaches `verified` */
 // prove-kyb.js — LIVE proof of the "Know your business" panel. node scripts/prove-kyb.js
 // Runs against the live API. Tests the runnable directive boxes (R1/R2/P1/P2/K1/K2 + the Field wall structure F2/F3).
 // F4 (24h cache) + a full F1 drop-test need a connected search provider (UAT) — noted, not faked.
@@ -66,5 +67,5 @@ const rung = (yourself, std) => { const c = ((yourself && yourself.facts && your
   console.log('  ◐ F1 (drop results without source+as-of) + F4 (24h cache free) — enforced in code; full RED test needs a connected search provider (UAT).');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
-  process.exit(0);
-})().catch(e => { console.error('HARNESS ERROR', e); process.exit(0); });
+  process.exit(F ? 1 : 0);
+})().catch(e => { console.error('HARNESS ERROR', e); process.exit(1); });
