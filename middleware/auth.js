@@ -107,7 +107,20 @@ const auth = async (req, res, next) => {
      * failure instead of a silent one. Failing open here costs a chit nobody meant to send.
      */
     const gate = require('./hat-gate');
-    return gate(req, res, next);
+    /**
+     * ⭐⭐ AND WHO IS DOING IT, CARRIED DOWN TO THE TRANSACTION. b146 stamps `changed_by` from
+     * `app.current_actor`, which until now was set by nothing — so every catalogue version row recorded a
+     * change with no author, and `NULLIF` made that look deliberate.
+     *
+     * ⭐ THIS IS THE ONE PLACE THAT KNOWS. `req.identity` is built here, and this is the single point where
+     * auth hands control on, so establishing the scope here covers every route without any of them opting in.
+     * `withEntity` reads it back out — see lib/reqctx.js for why a parameter would have been the wrong answer.
+     *
+     * ⚠️ THE ACTOR IS `identity_id`, NOT `entityOf(req)`. They differ exactly when it matters: a co-assist acts
+     * FOR its parent, so the entity is the business and the actor is the person. Using entityOf here would
+     * write "the business changed it" into a column that exists to name someone.
+     */
+    return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => gate(req, res, next));
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({

@@ -201,7 +201,25 @@ const withTransaction = async (fn) => {
 // would not persist there anyway) and it auto-resets on COMMIT/ROLLBACK so it can never leak to the next request.
 const withEntity = async (entityId, fn) => {
   return withTransaction(async (client) => {
-    await client.query(`SELECT set_config('app.current_entity', $1, true)`, [entityId == null ? '' : String(entityId)]);
+    /**
+     * ⭐⭐ TWO SETTINGS, ONE ROUND TRIP. `app.current_actor` joins `app.current_entity` here because b146's
+     * version trigger stamps `changed_by` from it and NOTHING had ever set it — every catalogue version row
+     * recorded a change with no author, and `NULLIF(current_setting(...,true),'')` turned the omission into a
+     * tidy NULL that looked intended.
+     *
+     * ⚠️ IT MUST NOT COST A TRIP. This function is already four (BEGIN · set_config · the query · COMMIT) and
+     * that count is why `onEntity` exists. Two `set_config` calls in ONE statement keep it at four — a second
+     * `await client.query` would have added a fifth to every transaction on the platform to carry one string.
+     *
+     * ⚠️ SET LOCAL, so both reset on COMMIT/ROLLBACK and neither can leak to the next request off a pooled
+     * connection — the same property that makes the entity binding safe makes this one safe.
+     *
+     * ⚠️ NO REQUEST, NO ACTOR, NO CHANGE. Jobs, migrations and tests have no ALS store, so this writes `''` and
+     * the trigger's NULLIF yields exactly the NULL it yields today. Strictly additive.
+     */
+    await client.query(
+      `SELECT set_config('app.current_entity', $1, true), set_config('app.current_actor', $2, true)`,
+      [entityId == null ? '' : String(entityId), require('../lib/reqctx').currentActor() || '']);
     return fn(client);
   });
 };
