@@ -16,6 +16,8 @@ if [ $? -ne 0 ]; then
   rm -f /tmp/cb-inv.$$
   exit 1
 fi
-grep -a "REGROUPED\|drift" /tmp/cb-inv.$$
+# Anchored: the summary line starts with two spaces. An unanchored match also catches prose
+# in the generated table that merely contains the word "drift".
+grep -aE '^  drift|REGROUPED' /tmp/cb-inv.$$
 rm -f /tmp/cb-inv.$$
 exit 0
