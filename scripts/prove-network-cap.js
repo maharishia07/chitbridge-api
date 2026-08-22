@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @covers FR-N4 — the operator cap bounds the node: it cannot open itself */
 /**
  * prove-network-cap.js — a network provisions a node, and the node cannot open itself.
  *

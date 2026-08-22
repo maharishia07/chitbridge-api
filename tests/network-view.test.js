@@ -1,4 +1,6 @@
 'use strict';
+/** @covers FR-N6 — categories are never invented */
+/** @covers FR-N5 — a private department is absent, not empty */
 /**
  * network-view.test.js — one shopfront over many departments.
  *

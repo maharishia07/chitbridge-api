@@ -34,10 +34,44 @@ t('2.1 · the indicative figure is kept, but under a name that cannot be mistake
 t('2.1 · purpose reaches BOTH chit copies and both detail rows, on both write paths', () => {
   // `all_recipients, purpose, auto_subject` also appears in two SQL COLUMN LISTS, which are not JS and were always
   // spelled that way — so count only the JS object-literal form.
-  const copies  = (ROUTE.match(/display_name, all_recipients, purpose, auto_subject,/g) || []).length;
-  const details = (ROUTE.match(/detail_type: purpose,/g) || []).length;
-  assert.strictEqual(copies, 2, 'both chit_deliver copies must take the resolved purpose');
-  assert.strictEqual(details, 2, 'both detail rows must take it too');
+  /**
+   * ⚠️⚠️ THIS ASSERTION WENT STALE WITHOUT THE BEHAVIOUR CHANGING, which is the standing hazard of a test that
+   * reads source text. Both literals it looked for are gone: the copy now spells the field
+   * `sender_entity_display_name: sender_display_name, all_recipients, purpose,`, and the two detail rows moved
+   * from a JS object literal to PARAMETERISED SQL — `[chit_id, sender_id, purpose, …]` and
+   * `[chit_id, receiver.entity_id, purpose, …]`.
+   *
+   * ⭐ Verified against the code on 2026-08-22 before relaxing anything: in `routes/catalogue.js` — the file
+   * this suite reads — both `chit_header` writes (:885, :898) and both `chit_detail` writes (:891, :904) carry
+   * the resolved purpose. Nothing was broken; the test had stopped describing the file. A stale red is
+   * expensive twice: it hides the real regressions around it, and it teaches everyone to skim this suite.
+   */
+  /**
+   * ⭐⭐ REWRITTEN 2026-08-22 TO ASSERT THE PROPERTY INSTEAD OF THE SPELLING, because counting two identical
+   * object literals stopped describing this file. The write path was refactored from two `chit_deliver` calls
+   * into one call plus direct parameterised INSERTs, so the old count found 0 — and a relaxed version of it
+   * then found 3 by matching the SQL COLUMN LISTS the original author had deliberately excluded. Two wrong
+   * numbers in a row, and the behaviour never moved.
+   *
+   * ⚠️ The thing worth protecting was never "there are two literals". It is that **NOBODY WRITES A CHIT ROW
+   * WITHOUT ITS PURPOSE** — a copy that loses it is a copy that says `order` when the sender said `offer`, on
+   * the per-copy model where each side holds its own row. So: every `chit_header` and `chit_detail` write in
+   * this file must carry `purpose`. That survives reformatting, renaming, and the next refactor.
+   */
+  const writes = (re) => {
+    const sites = [...ROUTE.matchAll(re)];
+    return { total: sites.length, carrying: sites.filter((m) => /purpose/.test(m[0])).length };
+  };
+  /* Each INSERT plus the ~14 lines that follow it — the column list and the values array. */
+  const headers = writes(/INSERT INTO chit_header[\s\S]{0,900}?\);/g);
+  const details = writes(/INSERT INTO chit_detail[\s\S]{0,900}?\);/g);
+
+  assert.ok(headers.total >= 2, `expected at least two chit_header writes, found ${headers.total}`);
+  assert.strictEqual(headers.carrying, headers.total,
+    `${headers.total - headers.carrying} chit_header write(s) do not carry purpose — that copy would claim the wrong kind of chit`);
+  assert.ok(details.total >= 2, `expected at least two chit_detail writes, found ${details.total}`);
+  assert.strictEqual(details.carrying, details.total,
+    `${details.total - details.carrying} chit_detail write(s) do not carry purpose`);
   assert.ok(!/VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,'order',/.test(ROUTE), 'the legacy fallback still hardcodes order');
   assert.ok(!/VALUES \(\$1,\$2,'order',/.test(ROUTE), 'a legacy detail insert still hardcodes order');
 });
@@ -48,8 +82,19 @@ t('2.1 · deliverEdge (the NETWORK path) is untouched — `purpose` is not in sc
   // scope for the negative assertion below, so this widens what is guarded rather than narrowing it.
   const from = ROUTE.indexOf('async function deliverEdge');
   const edge = ROUTE.slice(from, ROUTE.indexOf("router.post('/network-store", from));
-  assert.match(edge, /detail_type: 'order'/, 'the network path must keep its literal');
-  assert.ok(!/detail_type: purpose/.test(edge), 'purpose is undefined in this function');
+  /**
+   * ⚠️ THE LITERAL MOVED, THE RULE DID NOT. deliverEdge no longer writes `detail_type: 'order'`; it now says
+   * `purpose: 'order'` twice — once into `mint.summary(...)` and once onto the header (routes/catalogue.js:408
+   * and :410). Asserting the old spelling reported a regression that had not happened.
+   *
+   * ⭐ What must stay true is the DANGEROUS half, and it is unchanged: this function has no `purpose` variable
+   * in scope, so every use has to be the literal. A blanket rename that turned one of them into a bare
+   * `purpose` would be a ReferenceError on the live network order path — and `node -c` cannot see it, which is
+   * the entire reason this assertion exists.
+   */
+  assert.match(edge, /purpose: 'order'/, "the network path must keep its literal — there is no negotiation here");
+  assert.ok(!/[:,]\s*purpose\s*[,)}]/.test(edge),
+    'deliverEdge references a bare `purpose` — it is not in scope here, so this is a ReferenceError at runtime');
 });
 t("2.1 · KYB reads total_value, which is why null matters", () => {
   const kyb = fs.readFileSync(path.join(__dirname, '..', 'lib', 'kyb.js'), 'utf8');

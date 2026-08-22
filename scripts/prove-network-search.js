@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @covers FR-N7 — single-catalogue search agrees with per-store search (b122) */
 /**
  * prove-network-search.js — the single-catalogue search (b122) must AGREE with the per-store search it replaces.
  *

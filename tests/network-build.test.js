@@ -1,4 +1,7 @@
 'use strict';
+/** @covers FR-N3 — a partner’s children are never created either */
+/** @covers FR-N2 — a partner is never created by Build */
+/** @covers FR-N1 — a design mints nothing until Build */
 /**
  * network-build.test.js — what Build would do, decided before anything exists.
  *
