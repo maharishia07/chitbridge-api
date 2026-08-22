@@ -37,85 +37,11 @@ const read = (p) => fs.readFileSync(path.join(API, p), 'utf8');
 const requiresIn = (src) => [...src.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]);
 
 /** TIER A — must stay at ZERO dependencies, forever. Adding one is a breaking change to CB's identity. */
-const TIER_A = [
-  'lib/order-input.js',      // the declaration: 7 presets, schema fragment, documents, sources
-  'lib/form-handshake.js',   // document → field, with provenance; coverage() at design time
-  'lib/money.js',            // { amount, currency }; never converts
-  /* ⚠️ THE SIBLING OF money.js, AND FOR THE SAME REASON: it never converts. units.js folds spellings of one unit
-     onto one name (கிலோ → kg) and is forbidden from ever relating two DIFFERENT units (crate → kg), because that
-     needs a factor and a factor is entity-specific. A rename is engine vocabulary; a conversion is a declaration.
-     Zero dependencies, pure data + one fold — Tier A. */
-  'lib/units.js',            // unit aliases: one unit, many spellings; never converts
-];
-
-/** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
-const TIER_B = [
-  'lib/regional.js',         // governed currency: entity → region → named fallback
-  'lib/reporting.js',        // the network reporting LENS; structurally un-mintable output
-];
-
-/** Everything an engine module is permitted to reach for. Deliberately tiny. */
-const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', 'crypto']);
-
 /**
- * EVERY lib/ file must be classified. This was the first version's real hole: it named 6 files and said NOTHING
- * about the other 30 — so `lib/forms.js`, which carries a seal hash, sat outside the manifest entirely. A boundary
- * that only covers what you remembered to list is not a boundary.
- *
- * PENDING is deliberate and allowed: an honest "not yet decided" is worth more than a confident wrong taxonomy.
- * The test PRINTS the pending count every run, so it is visible debt rather than silence.
+ * ⭐ THE LISTS THEMSELVES LIVE IN ./engine-manifest.js — one declaration, two readers (this test enforces it,
+ * C:devinventory.cjs reports it platform-wide). Adding a file to a bucket happens there, not here.
  */
-const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "What is NOT engine"
-  'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
-  // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
-  // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
-  'network-view.js',
-  'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
-  'boilerplate.js', 'plans.js', 'forms.js',
-  // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
-  // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
-  // a client of someone else's model.
-  'beckn-map.js',
-  // ADOPTION, not engine: "what a gold catalogue records" is the bullion trade's convention, not CB's idea. A
-  // vertical could be added, replaced or wholly deleted and nothing about what ChitBridge IS would change. The
-  // ENGINE part of the same question — that a field says WHERE its value comes from (the four legs), and that a
-  // `customer` field is not a product column — is a rule, and it lives in csv-preflight/the schema, not here.
-  'starter-fields.js',
-];
-const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
-  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
-  'vaultcrypto.js', 'retention.js',
-];
-const ENGINE_OTHER = [    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
-  'csv.js',               // catalogue CSV round-trip — zero-dependency, a STANDARD (RFC 4180) we implement
-  'visibility-cap.js',    // ENGINE: the CAP/CHOICE split — what an operator permits vs what an entity picks. Who
-                          // may expose a catalogue to the world is governance, not a storefront preference.
-  'catalogue-read.js',    // ENGINE: it decides WHO MAY CHANGE WHAT — owned is editable, referenced is not, per
-                          // FIELD. That is the ownership rule the per-copy model rests on, not a display concern.
-                          // (catalogue-view.js is adoption: it shapes a payload. This decides authority.)
-  'availability.js',      // ENGINE: "absent is not zero" and "fresh outranks stale" are CB's rules about what may
-                          // be asserted, not a trade's convention. A platform that lets a 200-day-old figure
-                          // outrank a live one has taken a position on truth, and this is where that lives.
-  'network-build.js',     // ENGINE: it decides that an OWNED node is created and a PARTNER is only ever invited.
-                          // That asymmetry is what keeps `network` visibility legitimate — a network that could
-                          // absorb an outsider unilaterally could read their warehouse. Governance, not plumbing.
-  'handle.js',            // ENGINE: the NAME an entity is known by across networks. Format, reserved words, and the
-                          // refusal to look like a bridge id are CB's rules — a store carries its handle into any
-                          // network it later joins, so this is identity, not presentation.
-  'identity.js',          // ENGINE: "which line is this, and which product does it belong to" is the question the
-                          // per-copy record is keyed on. A partial identity being NO identity, and a variant being a
-                          // line rather than a child row, are CB rules — not a trade's convention.
-  'csv-preflight.js',     // ENGINE, not adoption: it decides what a file may NOT set (mode, currency, ids). The
-                          // synonym table is throwaway; the refusal is CB's. Zero-dependency, proposes never decides.
-  'gs1.js',               // GS1 keys — zero-dependency, but a STANDARD we implement rather than our own idea
-  'trace.js',             // the doubly-linked, co-held, FROZEN handoff edge — settlement's sibling
-  'container.js',         // the container model: blueprint + version
-  'source.js',            // source-entity: a sealed entity that governs downstream
-  'workpattern.js',       // the resolution seam — resolve-before-act
-  'govresolve.js',        // governance resolution
-];
-/** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
-const PENDING_LIBS = [];
+const { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OTHER, PENDING_LIBS } = require('./engine-manifest');
 
 /**
  * Engine modules that are BUILT AND TESTED but not yet called by any route.
@@ -282,8 +208,20 @@ const STAGES = ['experiment', 'poc', 'proven', 'tested', 'held'];
 
 function libStages() {
   const libDir = path.join(API, 'lib');
-  const routeSrc = fs.readdirSync(path.join(API, 'routes')).filter((f) => f.endsWith('.js'))
-    .map((f) => read(path.join('routes', f))).join('\n');
+  /**
+   * ⚠️⚠️ MIDDLEWARE IS A CALLER TOO, AND SCANNING ONLY ROUTES MADE THIS TEST WRONG. `lib/reqctx.js` is
+   * required by `middleware/auth.js` — which runs on every authenticated request, so it is about as reachable
+   * as code gets — and the test reported it as "called by nothing". A reachability check that cannot see one
+   * of the three layers reports its own blind spot as a finding about the code.
+   *
+   * ⭐ The fix is the simple one: middleware counts. Nothing else about the test changes.
+   */
+  const scanDirs = ['routes', 'middleware'];
+  const routeSrc = scanDirs.flatMap((d) => {
+    const dir = path.join(API, d);
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir).filter((f) => f.endsWith('.js')).map((f) => read(path.join(d, f)));
+  }).join('\n');
   const files = fs.readdirSync(libDir).filter((f) => f.endsWith('.js'));
   const srcs = Object.fromEntries(files.map((f) => [f, read(path.join('lib', f))]));
   const reqRe = (n) => new RegExp(`require\\(\\s*['"][^'"]*${n}['"]\\s*\\)`);
