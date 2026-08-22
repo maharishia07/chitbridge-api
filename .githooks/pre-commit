@@ -1,0 +1,21 @@
+#!/bin/sh
+# Platform inventory gate. Versioned (core.hooksPath=.githooks) so it survives a re-clone.
+#
+# It BLOCKS a commit that leaves a .js file unclassified — the one moment where the cost of
+# classifying is minutes and the cost of not classifying is a two-month archaeology dig.
+#
+# It skips silently where the platform checkout does not exist (CI, another machine, a fresh
+# clone of one repo). A hook that fails on a machine it was never meant to run on gets deleted,
+# and then it protects nothing.
+[ -f /c/dev/inventory.cjs ] || exit 0
+node /c/dev/inventory.cjs > /tmp/cb-inv.$$ 2>&1
+if [ $? -ne 0 ]; then
+  echo ""
+  tail -12 /tmp/cb-inv.$$
+  echo "  commit blocked — classify the file in C:/dev/inventory.cjs, or --no-verify if you must."
+  rm -f /tmp/cb-inv.$$
+  exit 1
+fi
+grep -a "REGROUPED\|drift" /tmp/cb-inv.$$
+rm -f /tmp/cb-inv.$$
+exit 0
