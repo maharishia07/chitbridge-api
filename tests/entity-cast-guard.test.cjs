@@ -20,10 +20,18 @@
  * the row is simply invisible — which is exactly what "no tenant context" should mean, and what the working
  * policies already do.
  *
- * ⚠️ THIS IS A RATCHET, NOT A PASS/FAIL. Thirty of them already exist and fixing them means recreating RLS
- * policies on thirteen tables — a gated migration that needs Athi and a live run. Until then this pins the
- * debt at today's number: an existing file may only ever go DOWN, and a new migration may not add any. Debt
- * you have measured and capped is a different thing from debt that is still growing.
+ * ⚠️ THIS IS A RATCHET, NOT A PASS/FAIL. Thirty of them already exist. This pins the debt at today's number:
+ * an existing file may only ever go DOWN, and a new migration may not add any. Debt you have measured and
+ * capped is a different thing from debt that is still growing.
+ *
+ * ⚠️⚠️ AND IT COUNTS FILES, WHICH ARE NOT THE DATABASE — a distinction b181's dry run proved expensive to
+ * ignore. The sources said 30 casts in 13 files; `pg_policies` on the live database said **12 policies**, and
+ * two of those files (b172, b174) were already GUARDED live because a later migration had superseded them.
+ *
+ * ⭐ SO AFTER b181's APPLY LANDS, THESE NUMBERS ARE HISTORY, NOT A LIVE FAULT. The migration files stay as
+ * written — a migration is a record of what was run, and editing one to make a checker happy would falsify
+ * the history it exists to keep. What this file still earns its place doing is the FORWARD half: no NEW
+ * migration may introduce the pattern. Anyone reading the count below should read this paragraph with it.
  */
 const fs = require('fs');
 const path = require('path');
