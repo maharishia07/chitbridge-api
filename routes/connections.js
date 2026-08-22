@@ -211,6 +211,13 @@ router.put('/:id/respond',
       // table (status / responded_at) via GET /connections/list. If a sender-side timeline entry is ever wanted,
       // model it as a proper cross-notification (a chit, or a connection-scoped definer) — never a direct write.
 
+      /* ⭐ b99 names `network.connect`. Metered only on ACCEPT — a refused request is not a connection, and
+         billing for one would charge for being asked. */
+      if (newStatus === 'accepted') {
+        try { require('../lib/meter').meter(entity_id, 'network.connect', {
+          detail: connection_id, rid: req.id }).catch(() => {}); } catch (_) {}
+      }
+
       res.json({
         message: `Connection ${newStatus}`,
         connection_id,

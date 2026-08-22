@@ -145,6 +145,9 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
       `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
        VALUES ($1,$2,$3) RETURNING *`,
       [entity_id, schema_id, JSON.stringify(item_data)]));
+    /* ⭐ Metered after the write, best-effort, never blocking — see lib/meter.js. */
+    try { require('../lib/meter').meter(entity_id, 'catalogue.item', {
+      detail: r.rows[0] && r.rows[0].item_id, rid: req.id }).catch(() => {}); } catch (_) {}
     res.json({ message: 'Product added', item: r.rows[0] });
   } catch (e) { fail(res, e, 'Add failed'); }
 });

@@ -219,6 +219,14 @@ router.post('/',
 
       console.log(`Actor created: ${actor_key}@${entity_name} — OTP: ${otp}`);
 
+      /**
+       * ⭐ A CO-ASSIST IS A SEAT, and seats are the most conventional thing a platform bills. b99 names
+       * "extra co-assists" in its own header. Metered on CREATION; whether a seat is charged monthly or once
+       * is a pricing question the ledger does not need to answer — it records that one was taken, and when.
+       */
+      try { require('../lib/meter').meter(entity_id, 'coassist.create', {
+        detail: identity_id, rid: req.id }).catch(() => {}); } catch (_) {}
+
       res.json({
         message: 'Actor created successfully',
         actor: {
