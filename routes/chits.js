@@ -795,6 +795,30 @@ router.post('/send',
         catch (e) { console.log('auto-assign skipped:', e.message); }
       }
 
+      /**
+       * ⭐⭐ METER THE SEND. b99 named `chit.send` in its own header two months ago and nothing ever wrote it,
+       * so the ledger has billed AI drafts and KYB lookups while the platform's central act was free.
+       *
+       * ⚠️ AFTER THE WORK, NEVER BEFORE, AND IT CANNOT FAIL THE SEND — `meter()` swallows and warns. A chit
+       * that failed because its meter failed would lose a person's work to protect a fraction of a cent, and
+       * `chit_header` still evidences the send either way.
+       *
+       * ⚠️ DRAFTS ARE NOT METERED. A draft is not an act on the rail — nothing was sent, nobody received a
+       * copy, and billing for one would charge a person for changing their mind.
+       *
+       * ⚠️ NOT AWAITED, deliberately: the response should not wait on a billing row. The `.catch` is belt and
+       * braces — `meter()` already never rejects — but an unhandled rejection here would take the process
+       * down, and this is the hottest path in the product.
+       */
+      if (!is_draft) {
+        try {
+          require('../lib/meter').meter(sender_id, 'chit.send', {
+            detail: chit_id, quantity: 1, rid: req.id,
+            meta: { purpose: purpose || undefined },
+          }).catch(() => {});
+        } catch (_) {}
+      }
+
       res.json({
         message: is_draft ? 'Draft saved' : 'Chit sent successfully',
         chit_id,
