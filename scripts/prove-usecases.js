@@ -97,7 +97,20 @@ const EMAIL = 'cholaauto@email.com';
 
   /* ── the catalogue: what this workshop sells ───────────────────────────────────────────────────────────── */
   console.log('\n0 · THE CATALOGUE — parts and labour, both of them priced');
-  const put = async (d) => (await P.j('/api/products', { method: 'POST', ...auth, body: { item_data: d } })).b;
+  /**
+   * ⚠️⚠️ REUSE WHAT IS ALREADY ON THE SHELF. This posted seven products on EVERY run and never looked first,
+   * so a catalogue that should hold seven rows held thirty-five — and the picker Athi opened showed each part
+   * five times over. *"I am getting pissed off now."* Fair: a proof that dirties the data it proves against
+   * makes every later run harder to read than the last.
+   *
+   * ⭐ A proof must be idempotent for the same reason a migration must be: it gets run again. Matching on the
+   * NAME within this entity is the same identity the catalogue itself uses when a person looks for a part.
+   */
+  const shelf = ((await P.j('/api/products?limit=200', { ...auth })).b) || [];
+  const onShelf = (name) => (Array.isArray(shelf) ? shelf : (shelf.items || []))
+    .find((x) => String(((x.item_data || x).name) || '').toLowerCase() === name.toLowerCase());
+  const put = async (d) => onShelf(d.name)
+    || (await P.j('/api/products', { method: 'POST', ...auth, body: { item_data: d } })).b;
   const CAT = {
     oil:        await put({ name: 'Engine oil 5W-30', unit: 'litre', price: 520,  code: '27101981' }),
     filter:     await put({ name: 'Oil filter',       unit: 'piece', price: 420,  code: '84212300' }),
