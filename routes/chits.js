@@ -812,8 +812,19 @@ router.post('/send',
        */
       if (!is_draft) {
         try {
+          /**
+           * ⭐ THE BASIS TRAVELS WITH THE CHARGE. Athi's reason for wanting cost recorded per chit was that a
+           * later model — profit share, percentage-of-value, tiered — needs the BASIS and the RATE together.
+           * The trade's value is right here at send; carrying it into the ledger row means switching model is
+           * a rate-card change rather than a data-archaeology exercise.
+           *
+           * ⚠️ It is what the value WAS at send, which is the only figure that can be charged against. A later
+           * amend changes the chit and must not retro-change what was billed.
+           */
           require('../lib/meter').meter(sender_id, 'chit.send', {
             detail: chit_id, quantity: 1, rid: req.id,
+            basis: (summary && summary.total_value != null) ? summary.total_value : null,
+            currency: (summary_json && summary_json.currency_code) || null,
             meta: { purpose: purpose || undefined },
           }).catch(() => {});
         } catch (_) {}

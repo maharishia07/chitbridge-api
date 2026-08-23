@@ -73,6 +73,17 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
    * ⭐ So they were split by what they DO. Below: things that could be swapped for another implementation
    * without changing what a chit means.
    */
+  /**
+   * ⚠️ `rates.js` IS A CLOSE CALL AND THE REASONING MATTERS MORE THAN THE VERDICT. The argument for ENGINE is
+   * real: a stamped rate is frozen-at-the-moment evidence, the same discipline a chit applies to its terms, and
+   * "why was this charged that?" is a disputable question.
+   *
+   * ⭐ Filed INFRA anyway, because the engine lock protects **what a chit MEANS between two trading parties**.
+   * A rate card is what ChitBridge charges its own customer — commercial policy, changeable next month without
+   * anything about a chit behaving differently. Locking it would make an ordinary price change need Athi's
+   * sign-off as if it were chit semantics, which devalues the lock rather than strengthening it.
+   */
+  'rates.js',              // the stamped rate card — what CB charges, not what a chit means
   'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
   'access.js',             // reads role/permission; the rules it enforces live in IAM, not here
   'bridgeid.js',           // id formatting

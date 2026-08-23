@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const visibilityCap = require('../lib/visibility-cap');   // a choice, bounded by a cap
 const { query, withEntity } = require('../db');
+const log = require('../lib/logger');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
@@ -1096,6 +1097,86 @@ router.patch('/:id/erase', auth, async (req, res) => {
     await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
     res.json({ message: 'Identity tombstoned', id: req.params.id });
   } catch (err) { res.status(500).json({ error: 'Erase failed', message: safeErr(err) }); }
+});
+
+
+/**
+ * ── GET /api/entities/usage — WHAT THIS ENTITY HAS BEEN BILLED FOR ─────────────────────────────────────────
+ *
+ * Athi, 2026-08-23: *"ledger only design confirmed"* and *"give me a screen to look at the details in the
+ * profile."*
+ *
+ * ⭐ ALWAYS THE CALLER'S OWN LEDGER. There is no entity parameter, so there is no way to ask this question
+ * about somebody else — the safest shape for a billing read, and one fewer thing for RLS to be the last line of
+ * defence on.
+ *
+ * ⚠️⚠️ IT REPORTS **BILLED**, NEVER **SENT**, AND THE RESPONSE SAYS SO IN ITS OWN FIELD NAMES. A meter is
+ * best-effort by design — it must never fail a send — so this total can legitimately sit below the number of
+ * chits in the mailbox. That gap is a FINDING (events that were not billed), not a defect to be reconciled
+ * away by making the numbers agree. `counts: { billed: n }` is named that way so no screen can accidentally
+ * print it as "chits sent".
+ */
+router.get('/usage', auth, async (req, res) => {
+  try {
+    const me = req.identity.identity_id;
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
+
+    const out = await withEntity(me, async (c) => {
+      /* Per day — the accumulation Athi asked about: "it is nothing but accumulation per day". */
+      const daily = await c.query(
+        `SELECT (created_at AT TIME ZONE 'UTC')::date AS day,
+                count(*)::int                          AS events,
+                COALESCE(sum(cost_usd), 0)::numeric(12,4) AS cost
+           FROM usage_ledger
+          WHERE entity_id = $1 AND created_at > now() - ($2 || ' days')::interval
+          GROUP BY 1 ORDER BY 1 DESC`, [me, String(days)]);
+
+      /* Per meter — what KIND of thing is costing. */
+      const byMeter = await c.query(
+        `SELECT meter,
+                count(*)::int                          AS events,
+                COALESCE(sum(quantity), 0)::bigint     AS quantity,
+                COALESCE(sum(cost_usd), 0)::numeric(12,4) AS cost
+           FROM usage_ledger
+          WHERE entity_id = $1 AND created_at > now() - ($2 || ' days')::interval
+          GROUP BY 1 ORDER BY cost DESC, events DESC`, [me, String(days)]);
+
+      /**
+       * The rows themselves. `detail` is the reference — for `chit.send` it is the chit id, so a row can always
+       * be walked back to the trade it charged for. `meta` carries the stamped rate and basis, which is what
+       * makes "why was this charged that?" answerable after the card has changed.
+       */
+      const recent = await c.query(
+        `SELECT meter, detail, quantity, cost_usd, meta, created_at
+           FROM usage_ledger
+          WHERE entity_id = $1
+          ORDER BY created_at DESC
+          LIMIT 100`, [me]);
+
+      return { daily: daily.rows, by_meter: byMeter.rows, recent: recent.rows };
+    });
+
+    const total = out.by_meter.reduce((a, r) => a + Number(r.cost || 0), 0);
+    res.json({
+      ok: true,
+      window_days: days,
+      /* Named for what it is. See the note above: this is the BILLED count. */
+      counts: { billed: out.by_meter.reduce((a, r) => a + Number(r.events || 0), 0) },
+      total_cost_usd: Math.round(total * 10000) / 10000,
+      rate_card: require('../lib/rates').CARD.id,
+      daily: out.daily,
+      by_meter: out.by_meter,
+      recent: out.recent,
+    });
+  } catch (err) {
+    /* ⚠️ A missing table is not an error worth a 500 to the reader: b99 may not be applied in every environment. */
+    if (/relation .*usage_ledger.* does not exist/i.test(String(err.message))) {
+      return res.json({ ok: true, window_days: 0, counts: { billed: 0 }, total_cost_usd: 0,
+        rate_card: null, daily: [], by_meter: [], recent: [], not_enabled: true });
+    }
+    log.error('usage read failed', { id: req.id, err: err.message });
+    res.status(500).json({ error: 'Usage read failed', message: safeErr(err) });
+  }
 });
 
 module.exports = router;
