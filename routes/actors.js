@@ -64,12 +64,26 @@ const suggestKey = (name) => {
 };
 
 // Check if actor_key is available under entity
+/**
+ * ⚠️⚠️ THIS EXCLUDED `removed` AND THE DATABASE DOES NOT, so the app promised a key was free and the INSERT then
+ * violated `uq_actor_key_per_entity UNIQUE (actor_key, parent_entity_id)` — a 500 reading *"Something went
+ * wrong — please try again"*, which invites exactly the retry that can never work. Found 2026-08-23 removing
+ * three test co-assists and trying to recreate them with the same names: the checker said available, the
+ * create failed, and nothing on screen connected the two.
+ *
+ * ⭐⭐ AND THE DATABASE IS RIGHT, WHICH IS WHY THE CHECK MOVED RATHER THAN THE CONSTRAINT. A departed
+ * co-assist's key is stamped into history: `by_actor` on every line event they ever recorded says "Ramesh".
+ * Re-issuing `ramesh` to a different person would silently make those records ambiguous — the job card would
+ * claim work was done by someone who had not joined yet. A key is not a slot to be recycled; it is a name in an
+ * audit trail.
+ *
+ * ⚠️ So the fix is to stop LYING about availability, not to free the key. `removed` counts as taken.
+ */
 const isKeyAvailable = async (actor_key, parent_entity_id) => {
   const result = await db(
     `SELECT 1 FROM identities
      WHERE actor_key = $1
-     AND parent_entity_id = $2
-     AND break_status != 'removed'`,
+     AND parent_entity_id = $2`,
     [actor_key, parent_entity_id]
   );
   return result.rows.length === 0;
@@ -275,6 +289,17 @@ router.post('/',
       });
 
     } catch (err) {
+      /**
+       * ⚠️ A UNIQUE VIOLATION IS NOT A SERVER ERROR AND MUST NOT READ AS ONE. `23505` here means the key is
+       * already held — most often by someone who was REMOVED, whose key stays reserved because their name is
+       * stamped into every line event they recorded. Returning a 500 with "please try again" invited a retry
+       * that could never succeed and gave no way to learn why.
+       */
+      if (err && err.code === '23505') {
+        return res.status(409).json({ error: 'Key taken',
+          message: 'That key already belongs to someone at this entity — including people who have been removed, '
+                 + 'because their name stays on the work they recorded. Choose another.' });
+      }
       console.error('Create actor error:', err.message);
       res.status(500).json({ error: 'Create failed', message: safeErr(err) });
     }
