@@ -6,6 +6,35 @@ const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on proces
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
 const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
 const router  = express.Router();
+
+/**
+ * ── loginIdFor — THE LOGIN A CO-ASSIST ACTUALLY TYPES ──────────────────────────────────────────────────────
+ *
+ * Athi, 2026-08-23: *"when you create the employee user id, you have created as kavya@chola auto care — it
+ * cannot be the case. As the user id, there should not be any space allowed. It has to be
+ * employeename@entity-user-id."*
+ *
+ * ⚠️⚠️ FOUR PLACES BUILT IT FROM `display_name`, WHICH IS THE ONE PART THAT IS ALLOWED TO CHANGE. It happens to
+ * work today only because the login route resolves `user_id` FIRST and `display_name` SECOND — a deliberate
+ * compatibility path so nobody is locked out. So the app was not handing out a broken string; it was **teaching
+ * the wrong handle**, and the difference only shows up later: rename the workshop and every login taught this
+ * way stops matching, while `user_id` — chosen at registration and never changed — would still be true.
+ *
+ * ⚠️ AND A HANDLE WITH SPACES IS WRONG ON ITS FACE. `kavya@Chola Auto Care` is not something a person believes
+ * they should type into a username box, so the correct-looking one gets guessed at instead.
+ *
+ * ⭐ Three other sites already did this properly (they read `user_id` and fall back). This is that lookup, once,
+ * so the four that did not can stop inventing it. `slug()` is the fallback rather than the raw name, because a
+ * fallback that reintroduces spaces defeats the whole point.
+ */
+async function loginIdFor(actor_key, req) {
+  let handle = null;
+  try {
+    const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+    handle = r.rows[0] && r.rows[0].user_id;
+  } catch (_) { /* unreadable → fall through to the slug, never to a name with spaces in it */ }
+  return `${actor_key}@${handle || require('../lib/handle').slug(req.identity.display_name || '')}`;
+}
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
 const jwt     = require('jsonwebtoken');
@@ -72,7 +101,7 @@ router.post('/suggest-key',
       res.json({
         suggested_key: suggested,
         available,
-        login_format: `${suggested}@${req.identity.display_name}`,
+        login_format: await loginIdFor(suggested, req),
         alternatives: [
           suggestKey(name) + '2',
           suggestKey(name) + 'r',
@@ -98,14 +127,15 @@ router.post('/check-key',
       const entity_id = req.identity.identity_id;
       const actor_key = req.body.actor_key.toLowerCase().trim();
       const available = await isKeyAvailable(actor_key, entity_id);
+      /* ⚠️ The MESSAGE matters as much as the field: it is the string a person reads while deciding on a key,
+         so showing the display name here teaches the wrong handle just as effectively. Resolved once. */
+      const login = available ? await loginIdFor(actor_key, req) : null;
       res.json({
         actor_key,
         available,
-        login_format: available
-          ? `${actor_key}@${req.identity.display_name}`
-          : null,
+        login_format: login,
         message: available
-          ? `${actor_key}@${req.identity.display_name} is available`
+          ? `${login} is available`
           : `${actor_key} is already taken under this entity`
       });
     } catch (err) {
@@ -564,7 +594,7 @@ router.delete('/:id/pin',
         actor_name: actor.rows[0].display_name,
         otp,
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        login_format: `${actor.rows[0].actor_key}@${req.identity.display_name}`
+        login_format: await loginIdFor(actor.rows[0].actor_key, req)
       });
     } catch (err) {
       res.status(500).json({ error: 'Clear PIN failed', message: safeErr(err) });
@@ -927,7 +957,7 @@ router.post('/:id/otp',
         actor_name: actor.rows[0].display_name,
         otp,
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        login_format: `${actor.rows[0].actor_key}@${req.identity.display_name}`,
+        login_format: await loginIdFor(actor.rows[0].actor_key, req),
         expires_in: '7 days'
       });
 
@@ -1013,7 +1043,7 @@ router.put('/:id/status',
           message: 'Actor reactivated',
           otp,
           ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-          login_format: `${a.actor_key}@${req.identity.display_name}`
+          login_format: await loginIdFor(a.actor_key, req)
         });
       }
 
