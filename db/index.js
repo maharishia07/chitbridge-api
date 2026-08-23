@@ -163,7 +163,16 @@ const query = async (text, params) => {
   const start = Date.now();
   try {
     const result = await pool.query(text, params);
-    if (process.env.NODE_ENV === 'development') {
+    /**
+     * ⚠️ THIS RODE ON `NODE_ENV === 'development'` AND WAS OFF BY ACCIDENT. The live API runs with a leading
+     * space (" development"), so the comparison has been false in production — fortunate rather than intended.
+     * Trimming it would have been the obvious fix and the wrong one: it would silently switch query logging ON
+     * across production, on the hottest path in the system.
+     *
+     * ⭐ A debug aid gets its OWN switch. Environment names have proven unreliable here, and "should this log
+     * every query" is a decision worth making explicitly rather than inheriting from a word.
+     */
+    if (String(process.env.DB_QUERY_LOG || '').trim() === 'true') {
       console.log(`Query: ${text.substring(0, 50)} | ${Date.now() - start}ms | ${result.rowCount} rows`);
     }
     return result;

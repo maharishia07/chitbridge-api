@@ -16,7 +16,17 @@ const PORT = process.env.PORT || 3000;
 // invariant). In production a bad secret aborts boot; in dev it warns loudly.
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   const msg = 'JWT_SECRET is missing or shorter than 32 chars';
-  if (process.env.NODE_ENV === 'production') { log.critical('boot aborted', { reason: msg }); process.exit(1); }
+  /**
+   * ⚠️⚠️ THIS COMPARISON WAS UNTRIMMED, AND THE CODEBASE ALREADY KNEW WHY THAT IS FATAL. `lib/dev-otp.js` says
+   * it in its own header: *"NODE_ENV is trimmed because production has been observed carrying a leading space
+   * (' development'), which silently defeated every `=== 'production'` comparison in the codebase."* That fix
+   * was applied there and never reached here — so the one guard that aborts boot on a weak JWT_SECRET, the
+   * secret **auth integrity depends entirely on**, would have gone quiet the moment NODE_ENV was set to
+   * " production" with the same stray space this platform demonstrably produces.
+   *
+   * ⭐ There is ONE definition of a sealed environment and it lives in lib/dev-otp.js. Everything asks it.
+   */
+  if (require('./lib/dev-otp').isSealed()) { log.critical('boot aborted', { reason: msg }); process.exit(1); }
   else log.warn('weak JWT_SECRET', { reason: msg + ' — set a strong JWT_SECRET before any real deploy' });
 }
 

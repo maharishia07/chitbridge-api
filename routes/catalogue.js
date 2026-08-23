@@ -425,8 +425,19 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
 //    network); routed purely from public catalogue data (item→store = entity_id, item→operator = item_data.operator). ──
 router.post('/network-store/:networkId/order', async (req, res) => {
   try {
-    const isDev = !!(process.env.DEV_OTP || '').trim() || String(process.env.NODE_ENV || '').toLowerCase() === 'development';
-    if (!isDev) return res.status(403).json({ error: 'Disabled', message: 'Network order routing is dev-only for now.' });
+    /**
+     * ⚠️⚠️ THIS ROUTE TAKES NO AUTH AND CREATES ORDERS, so its gate is the only thing standing in front of it —
+     * and the gate had two faults. It compared NODE_ENV **untrimmed**, which the platform defeats with the
+     * leading space it has been observed producing (" development"); and it treated **DEV_OTP as sufficient on
+     * its own**, so a fixed-test-OTP flag left set could open an unauthenticated order route in an environment
+     * nobody thought was open. A convenience flag for logging in must never be a second key to a different door.
+     *
+     * ⭐ One definition, asked once: dev-only means NOT SEALED. The moment NODE_ENV is set to a sealed value
+     * this closes, whatever DEV_OTP says, and the stray space cannot decide it either way.
+     */
+    if (require('../lib/dev-otp').isSealed()) {
+      return res.status(403).json({ error: 'Disabled', message: 'Network order routing is dev-only for now.' });
+    }
     const nid = String(req.params.networkId || '').trim();
     const cart = Array.isArray(req.body.items) ? req.body.items : [];
     const cust = req.body.customer || {};
