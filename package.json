@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "test": "node tests/run-tests.js",
     "test:jest": "jest",
-    "test:integration": "node tests/run-tests.js"
+    "test:integration": "node tests/run-tests.js",
+    "check:trips": "node tools/round-trips.cjs --check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",
@@ -34,8 +35,12 @@
     "maxWorkers": 1,
     "testTimeout": 30000,
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"],
-    "setupFiles": ["<rootDir>/jest.setup.js"]
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ]
   },
   "engines": {
     "node": ">=18.0.0"

@@ -158,3 +158,80 @@ if (process.argv.indexOf('--all') >= 0) {
     + ' oe=' + r.oe + ' q=' + r.q + '   ' + r.route.padEnd(46) + r.file));
   console.log();
 }
+
+/**
+ * ── THE RATCHET ────────────────────────────────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-08-23, after /entities/me was measured at 3.2 seconds: *"why are we writing round trips in the
+ * first place? Can't we optimise in the first attempt itself? Speed and security should be the anthem of
+ * coding."*
+ *
+ * ⭐⭐ HE IS RIGHT, AND GOOD INTENTIONS ARE NOT THE MECHANISM THAT DELIVERS IT. Nobody wrote thirteen round
+ * trips into one handler; thirteen separate edits each wrote ONE, and every one of them was locally
+ * reasonable. What was missing was not care — it was a NUMBER THAT FAILS. Contrast is measured, hierarchy is
+ * measured, screen reads have been measured since yesterday. Round trips were computed by this very tool, and
+ * nothing ever ran it.
+ *
+ * ⚠️ AND SPEED MUST NOT BE BOUGHT FROM SECURITY HERE. `withEntity` costs 4 trips BECAUSE of RLS: it opens a
+ * transaction and sets the entity context so Postgres itself enforces isolation. Making an endpoint fast by
+ * dropping it would trade the isolation guarantee for latency. The lever is FEWER TRANSACTIONS, never weaker
+ * ones — which is why this budgets transactions and trips rather than telling anyone to avoid `withEntity`.
+ *
+ * ⭐ A ratchet, not a limit: it records today's cost and fails only when an endpoint gets WORSE. A hard
+ * threshold would fail on the day it was written and be deleted by the afternoon.
+ *
+ *   node tools/round-trips.cjs --check     fail if any endpoint costs more than its budget
+ *   node tools/round-trips.cjs --update    record today's costs as the budget
+ */
+{
+  const fsB = require('fs');
+  const pathB = require('path');
+  const BUDGET = pathB.join(__dirname, 'round-trips.budget.json');
+  const now = {};
+  rows.forEach((r) => { now[r.route + '  ' + r.file] = r.trips; });
+
+  if (process.argv.includes('--update')) {
+    const old = fsB.existsSync(BUDGET) ? JSON.parse(fsB.readFileSync(BUDGET, 'utf8')) : {};
+    const raised = [];
+    const next = {};
+    for (const [k, v] of Object.entries(now)) {
+      if (old[k] != null && v > old[k] && !process.argv.includes('--allow-raise')) { raised.push(`${k}  ${old[k]} → ${v}`); next[k] = old[k]; }
+      else next[k] = v;
+    }
+    if (raised.length) {
+      console.error('\n  x refusing to raise a budget — that is the drift this exists to stop:');
+      raised.forEach((r) => console.error('      ' + r));
+      console.error('\n  Collapse the extra transaction, or re-run with --allow-raise if it is genuinely intended.\n');
+      process.exit(1);
+    }
+    fsB.writeFileSync(BUDGET, JSON.stringify(next, null, 1));
+    console.log(`  budget recorded — ${Object.keys(next).length} endpoints\n`);
+    process.exit(0);
+  }
+
+  if (process.argv.includes('--check')) {
+    if (!fsB.existsSync(BUDGET)) { console.error('\n  no budget yet — run: node tools/round-trips.cjs --update\n'); process.exit(1); }
+    const budget = JSON.parse(fsB.readFileSync(BUDGET, 'utf8'));
+    const over = [];
+    const fresh = [];
+    for (const [k, v] of Object.entries(now)) {
+      if (budget[k] == null) { if (v > 8) fresh.push(`${k} = ${v}`); continue; }
+      if (v > budget[k]) over.push(`${k}  ${budget[k]} → ${v}`);
+    }
+    console.log('\n── round trips per endpoint, against their budget ──');
+    console.log(`  ${Object.keys(now).length} endpoints · ${Object.keys(budget).length} budgeted`);
+    /* ⚠️ A NEW endpoint has no budget to exceed, so it gets one rule: 8 trips is two transactions plus change,
+       and anything above that is a design decision someone should have to state out loud. */
+    if (fresh.length) {
+      console.error(`\n  x ${fresh.length} NEW endpoint(s) start above 8 trips:`);
+      fresh.forEach((f) => console.error('      ' + f));
+    }
+    if (over.length) {
+      console.error(`\n  x ${over.length} endpoint(s) now cost MORE than budgeted:`);
+      over.forEach((o) => console.error('      ' + o));
+      console.error('\n  Each extra transaction is ~3 trips, ~250ms each. Collapse it, or --update --allow-raise.\n');
+    }
+    if (!over.length && !fresh.length) console.log('  OK — no endpoint costs more than its budget\n');
+    process.exit(over.length + fresh.length ? 1 : 0);
+  }
+}
