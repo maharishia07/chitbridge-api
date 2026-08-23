@@ -1695,7 +1695,19 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
      * behaves exactly as before.
      */
     try {
-      out.progress = Object.fromEntries(await deliverline.progress(entity_id, chit_id));
+      const _map = await deliverline.progress(entity_id, chit_id);
+      out.progress = Object.fromEntries(_map);
+      /**
+       * ⚠️⚠️ THE SUMMARY HAS TO COME BACK TOO, OR THE SCREEN CONTRADICTS ITSELF. Returning `progress` alone
+       * let the client update every LINE from the response while the HEADER kept whatever the last full read
+       * said — so both complaints on a job read "complete" under a header still saying *"0 of 2 lines
+       * delivered"*. Caught by the design-2 driver, which reads the header and the lines in the same breath.
+       *
+       * ⭐ It is free: the same map, through `summarise()` — the one function that already defines what
+       * "complete" counts as. Computing it a second time in JS would be a second definition, and the two
+       * would disagree the day either changes.
+       */
+      out.summary = deliverline.summarise(_map);
     } catch (e) { /* the write succeeded; a stale screen is not worth failing it */ }
     res.json(out);
   } catch (err) {
