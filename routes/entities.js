@@ -521,7 +521,18 @@ router.get('/me', auth, async (req, res) => {
       result.rows[0].identity_type = 'entity';
     }
 
-    await query('UPDATE identities SET last_active_at = NOW() WHERE identity_id = $1', [req.identity.identity_id]);
+  /**
+   * ⚠️⚠️ A WRITE ON THE HOTTEST READ PATH, AND THE READER WAITED FOR IT. `last_active_at` is telemetry — no
+   * part of this response depends on it — yet every profile paint blocked on an UPDATE to `identities`, the
+   * busiest table in the product. Measured 2026-08-23: the floor for any authed call is ~500 ms
+   * (`/entities/policy` and `/connections/list` both), and `/entities/me` was taking 3,193 ms.
+   *
+   * ⭐ Not awaited now. The response no longer carries the cost of recording that it happened. The write still
+   * runs; if it fails nobody is blocked, and the failure is logged rather than swallowed — a "last seen"
+   * stamp that quietly stops updating is a fact people later rely on.
+   */
+  query('UPDATE identities SET last_active_at = NOW() WHERE identity_id = $1', [req.identity.identity_id])
+    .catch((e) => log.warn('last_active_at not recorded', { id: req.id, err: e.message }));
     // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles. [b55/connector]
     // Defensive: defaults to [] if the b55 column isn't present in this environment.
     let capabilities = [];
