@@ -1685,6 +1685,18 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
              out.delivered.length + ' line(s) delivered: ' + d]));
         });
     } catch (e) { console.error('deliver state_log skipped:', e.message); }
+    /**
+     * ⭐⭐ HAND BACK THE NEW STATE SO THE SCREEN NEED NOT ASK FOR IT. Measured 2026-08-23: recording a
+     * delivery cost ~3.5s, and the FULL CHIT RELOAD the UI ran straight afterwards cost ~4.9s — more than the
+     * write it was confirming. `GET /chits/:id` is twelve round trips and the screen needed one fact from it.
+     *
+     * ⚠️ `progress()` opens one more transaction, so this is not free — it is four trips instead of twelve,
+     * and it removes a whole request from the critical path. Additive: an older client that ignores the field
+     * behaves exactly as before.
+     */
+    try {
+      out.progress = Object.fromEntries(await deliverline.progress(entity_id, chit_id));
+    } catch (e) { /* the write succeeded; a stale screen is not worth failing it */ }
     res.json(out);
   } catch (err) {
     console.error('Deliver lines error:', err.message);
