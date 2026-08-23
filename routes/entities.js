@@ -394,8 +394,21 @@ router.get('/me', auth, async (req, res) => {
        so _tzCol was a ReferenceError here and defined where nothing used it. Same borrowed-variable class as
         this afternoon, and node --check cannot see either. b176 may not be run; a missing column is
        42703 and throws the whole query. */
-    const _tzCol = await schema.hasColumn('identities', 'timezone');
-    const _supCol = await schema.hasColumn('identities', 'supplies');
+    /**
+     * ⭐⭐ ONE PROBE FOR EIGHT COLUMNS. These were eight sequential information_schema queries issued before
+     * the handler read a single row, and they were most of the 3.27 SECONDS this endpoint took — measured
+     * flat across five warm calls on 2026-08-23, after Athi said the system had become slow. He suspected
+     * accumulated test rows. The rows were never the cost; round trips were.
+     *
+     * ⚠️ The cache, the yes-forever / no-for-60s policy and the deploy-before-migration guarantee are all
+     * unchanged — hasColumns writes exactly the entries hasColumn would have. Only the trip count moved.
+     */
+    const _cols = await schema.hasColumns('identities', [
+      'timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs',
+      'catalogue_visibility', 'plan', 'params_override',
+    ]);
+    const _tzCol = _cols.timezone;
+    const _supCol = _cols.supplies;
     /**
      * ⭐⭐ THREE MORE COLUMNS OFF THE SAME ROW, PROBED — and they used to be TWO EXTRA ROUND TRIPS.
      *
@@ -420,14 +433,14 @@ router.get('/me', auth, async (req, res) => {
      * empty capability list instead of their employer's. A round trip saved by answering the wrong question is
      * not a saving.
      */
-    const _sfCol = await schema.hasColumn('identities', 'storefront_access');
-    const _lpCol = await schema.hasColumn('identities', 'locale_prefs');
-    const _upCol = await schema.hasColumn('identities', 'ui_prefs');
+    const _sfCol = _cols.storefront_access;
+    const _lpCol = _cols.locale_prefs;
+    const _upCol = _cols.ui_prefs;
     /* ⚠️ AND THE VISIBILITY TRIO — a THIRD read of the same row, for `catalogue_visibility, plan,
        params_override`. Same identity_id, same request: three round trips to read one row. */
-    const _cvCol = await schema.hasColumn('identities', 'catalogue_visibility');
-    const _plCol = await schema.hasColumn('identities', 'plan');
-    const _poCol = await schema.hasColumn('identities', 'params_override');
+    const _cvCol = _cols.catalogue_visibility;
+    const _plCol = _cols.plan;
+    const _poCol = _cols.params_override;
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
