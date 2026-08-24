@@ -7,6 +7,8 @@ const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const storage = require('../lib/storage');
+/* Cached "does the database actually have this?" probe — cheaper than a savepoint and truer than a guess. */
+const schema = require('../lib/schema');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
@@ -1269,12 +1271,21 @@ router.get('/:chit_id', auth, async (req, res) => {
 
     // B1 RLS: everything here is the caller's OWN copy -> withEntity(me).
     const data = await withEntity(entity_id, async (db) => {
-      // Verify entity participates in this chit
-      const participation = await db.query(
-        `SELECT role, created_by_actor_id FROM chit_header
+      /**
+       * ⭐ ONE READ OF chit_header, NOT TWO. This asked for `role, created_by_actor_id` and then, forty lines
+       * later, asked the SAME TABLE for `*` with the SAME WHERE — two round trips for one row, ~270ms of them
+       * on the Railway→Supabase hop. `*` already contains both columns, so the participation check reads the
+       * header it was going to read anyway.
+       *
+       * ⚠️ The ORDER still matters and is preserved: participation and draft-privacy are decided before the
+       * mark-read write below, so an actor who may not see a draft never marks it read.
+       */
+      const header = await db.query(
+        `SELECT * FROM chit_header
          WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
       );
+      const participation = header;
       if (participation.rows.length === 0) return { notFound: true };
       // Draft privacy: a draft is the author's PRIVATE WIP — another actor of the SAME entity must not read it,
       // even by direct id. The drafts LIST is author-scoped (created_by_actor_id); the detail read must be too.
@@ -1298,12 +1309,7 @@ router.get('/:chit_id', auth, async (req, res) => {
         }
       }
 
-      // Get my header
-      const header = await db.query(
-        `SELECT * FROM chit_header
-         WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
+      // (the header was read above — the participation check and this are the same row)
 
       // Get my detail — line items if still present
       const detail = await db.query(
@@ -1324,20 +1330,26 @@ router.get('/:chit_id', auth, async (req, res) => {
         [chit_id, entity_id]
       );
 
-      // Check if first time reading (before update) to decide whether to log it
-      const preCheck = await db.query(
-        `SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+      /**
+       * ⭐ THE OLD VALUE AND THE NEW ONE, IN ONE STATEMENT. This read `read_at` and then immediately
+       * overwrote it — two round trips to learn one fact ("was this already read?") and set one column.
+       *
+       * ⚠️ THE CTE IS WHAT MAKES IT CORRECT, not a trick: every sub-statement of a data-modifying statement
+       * sees the SAME SNAPSHOT, taken before the UPDATE, so `prev` returns the value as it was. Reading
+       * `RETURNING read_at` instead would return NOW() and every chit would look like it had always been read
+       * — the log entry for "first opened" would never be written again.
+       *
+       * ⚠️ No row at all still means unread: an entity with no `chit_status` row has never opened it, which is
+       * exactly what the old `!preCheck.rows[0]?.read_at` said.
+       */
+      const _rd = await db.query(
+        `WITH prev AS (SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2)
+         UPDATE chit_status SET read_at = NOW()
+          WHERE chit_id = $1 AND entity_id = $2
+         RETURNING (SELECT read_at FROM prev) AS was_read_at`,
         [chit_id, entity_id]
       );
-      const wasUnread = !preCheck.rows[0]?.read_at;
-
-      // Update read_at FIRST so the participants panel reflects this read
-      await db.query(
-        `UPDATE chit_status
-         SET read_at = NOW()
-         WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
+      const wasUnread = !(_rd.rows[0] && _rd.rows[0].was_read_at);
 
       if (wasUnread) {
         await db.query(
@@ -1466,12 +1478,19 @@ router.get('/:chit_id', auth, async (req, res) => {
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
            * already inside a transaction stops paying BEGIN + set_config + COMMIT to read a handful of rows.
            *
-           * ⚠️ SAVEPOINTED like every other optional read here, and for the same reason: `cb_attachment` may
-           * not exist on an un-migrated environment (b65/b66), and Postgres aborts the WHOLE transaction on
-           * any error. Without the savepoint, a missing attachments table would stop the chit opening at all —
-           * which is strictly worse than the empty list it degrades to today.
+           * ⚠️⚠️ PROBE, DO NOT SAVEPOINT — and the first version of this got it wrong in a way only measuring
+           * caught. A savepoint is not free: SAVEPOINT + RELEASE are two more round trips, ~270ms each on this
+           * hop, so wrapping a ~270ms SELECT in one costs ~800ms and folding the read into this transaction
+           * saved almost nothing. Measured: `attachments` went 1074ms → 0ms while `one_shot` went 1076 → 1872.
+           *
+           * ⭐ `schema.hasTable()` is CACHED, so it asks the database once per process and is free thereafter —
+           * the same answer `/me` reached: probe what the database HAS, then name only that. A missing
+           * `cb_attachment` (before b65/b66) now costs nothing at all rather than two round trips per open,
+           * and still cannot poison the transaction, because the query is never issued.
            */
-          attachments: await trySavepoint(db, (c) => storage.listForChit(chit_id, entity_id, c), null),
+          attachments: (await schema.hasTable('cb_attachment'))
+            ? await storage.listForChit(chit_id, entity_id, db)
+            : null,
           _fast: true,
         };
       });
