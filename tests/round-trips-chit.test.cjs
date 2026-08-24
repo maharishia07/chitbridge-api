@@ -92,6 +92,18 @@ const t = (name, cond, extra) => {
  * response. That is a client-visible change and wants a person watching it, not an unattended run.
  */
 const BUDGET = Number(process.env.CHIT_READ_BUDGET || 14);
+/**
+ * The status write's ceiling. It was 25 (7 statements in SIX transactions) when first measured — ~6.7s on the
+ * Railway→Supabase hop, which is why closing twenty-six tasks took minutes. Three same-entity transactions
+ * were folded into one: 20 cold, 18 warm.
+ *
+ * ⚠️ ONE COLLAPSE LEFT AND IT NEEDS CARE: the opening `SELECT current_status` is still its own transaction
+ * because every early exit hangs off it — 404, the idempotent no-op, and the invalid-transition 400 must all
+ * happen BEFORE anything is written. Folding it in means running that validation inside the transaction and
+ * returning sentinels, which is fine but is a second restructuring of a write path, and one per unattended
+ * run is enough.
+ */
+const WRITE_BUDGET = Number(process.env.CHIT_WRITE_BUDGET || 20);
 
 const PORT = 45873;
 const srv = app.listen(PORT, async () => {
@@ -110,7 +122,32 @@ const srv = app.listen(PORT, async () => {
   t('it does not open a transaction per statement',
     txOpens === 0 || queries.length / txOpens >= 1, txOpens + ' transaction(s)');
 
+  /**
+   * ── AND THE WRITE PEOPLE DO IN BULK ────────────────────────────────────────────────────────────────────
+   * Athi, closing twenty-six tasks: *"it takes a while… also, why does it take long time to do this
+   * activity?"* Because one status change is this many round trips, and he does it once per chit.
+   */
+  console.log('\n── changing one chit\'s status ──');
+  queries = [];
+  txOpens = 0;
+  const w = await fetch(`http://localhost:${PORT}/api/chits/00000000-0000-0000-0000-000000000001/status`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'completed' }),
+  }).then((x) => x.status).catch((e) => 'ERR ' + e.message);
+
+  const wTrips = queries.length + txOpens * 3;
+  console.log(`  status ${w} · ${queries.length} statement(s) in ${txOpens} transaction(s) → ${wTrips} round trip(s)`);
+  queries.forEach((q, i) => console.log('    ' + String(i + 1).padStart(2) + '  ' + q.slice(0, 118)));
+
+  t(`changing a status stays within ${WRITE_BUDGET} round trips`, wTrips <= WRITE_BUDGET, wTrips + ' used');
+
   console.log(`\n  ${pass} passed · ${fail} failed\n`);
+  /**
+   * ⚠️ `process.exitCode` AND LET IT CLOSE, never `process.exit()` here. Calling exit() while the http server
+   * is still closing aborts libuv mid-handle — "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)" — and
+   * the process dies non-zero. The suite then reported this file as RED while the file itself printed
+   * "0 failed": a test that passes and reports failure is worse than one that simply fails.
+   */
+  process.exitCode = fail ? 1 : 0;
   srv.close();
-  process.exit(fail ? 1 : 0);
 });

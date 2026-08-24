@@ -2027,20 +2027,50 @@ router.put('/:chit_id/status',
 
       // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
       // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
+      /**
+       * ── ⭐⭐ THREE TRANSACTIONS BECAME ONE ─────────────────────────────────────────────────────────────────
+       *
+       * Athi, closing twenty-six tasks: *"it takes a while… also, why does it take long time to do this
+       * activity?"* Measured: ONE status change was 7 statements in SIX transactions — 25 round trips, ~6.7s
+       * on the Railway→Supabase hop, and he does it once per chit. Three of those transactions were the same
+       * entity's own rows, read and written back to back: the open-dispute count, the status UPDATE and the
+       * header. One BEGIN, one set_config, three statements, one COMMIT.
+       *
+       * ⚠️ NOT Promise.all, for the reason stated elsewhere in this file: the pool is max:10, so parallel
+       * transactions per request means two concurrent users queue the third. Sequential, inside ONE connection.
+       *
+       * ⚠️ THE HEADER IS NOW READ BEFORE THE UPDATE RATHER THAN AFTER. Nothing depends on the order — the
+       * status write does not touch chit_header — and it is read only to decide whether the caller is sender.
+       *
+       * ⚠️ A CACHED PROBE, NOT A SAVEPOINT, for the dispute count. The old code guarded it with .catch(),
+       * which is fine across separate transactions and useless inside a shared one: Postgres aborts the WHOLE
+       * transaction on any error, so a missing chit_disputes would have taken the status change down with it.
+       * A savepoint would fix that and cost two more round trips — measured on the chit read today — while
+       * schema.hasTable costs one query per process.
+       */
       let disputeWarning = null;
-      if (new_status === 'completed' || new_status === 'cancelled') {
-        const openD = await withEntity(entity_id, (db) => db.query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
-          [chit_id])).catch(() => ({ rows: [{ count: 0 }] }));   // per-copy: my own open dispute copies
-        if (openD.rows[0].count > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
-      }
+      const _checkDisputes = (new_status === 'completed' || new_status === 'cancelled')
+        && await schema.hasTable('chit_disputes');
 
-      // Update chit_status — the caller's OWN received copy.
-      await withEntity(entity_id, (db) => db.query(
-        `UPDATE chit_status
-         SET current_status = $1, updated_at = NOW()
-         WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`,
-        [new_status, chit_id, entity_id]
-      ));
+      const _pre = await withEntity(entity_id, async (db) => {
+        const openCount = _checkDisputes
+          ? (((await db.query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
+              [chit_id])).rows[0] || {}).count || 0)
+          : 0;
+        const hdr = await db.query(
+          `SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
+          [chit_id, entity_id]);
+        // Update chit_status — the caller's OWN received copy.
+        await db.query(
+          `UPDATE chit_status SET current_status = $1, updated_at = NOW()
+            WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`,
+          [new_status, chit_id, entity_id]);
+        return { openCount, header: hdr };
+      });
+
+      if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
+
+      // (chit_status was updated inside the transaction above)
 
       // One log row per participant — a CROSS-entity write, so via the b50 delivery-agent fn chit_log_all
       // (validated: caller must be a participant). Fallback = the legacy INSERT...SELECT when b50 isn't applied.
@@ -2059,12 +2089,8 @@ router.put('/:chit_id/status',
            FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) cs`,
           [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail]));
 
-      // Get header to check sender and propagate cancellation to receivers (own copy).
-      const header = await withEntity(entity_id, (db) => db.query(
-        `SELECT sender_entity_id FROM chit_header
-         WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      ));
+      // The header came back with the same transaction, above — read to check sender and propagate a cancel.
+      const header = _pre.header;
 
       const isSender = header.rows.length > 0 &&
                        header.rows[0].sender_entity_id === entity_id;
