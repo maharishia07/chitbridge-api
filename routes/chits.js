@@ -1342,24 +1342,29 @@ router.get('/:chit_id', auth, async (req, res) => {
        * ⚠️ No row at all still means unread: an entity with no `chit_status` row has never opened it, which is
        * exactly what the old `!preCheck.rows[0]?.read_at` said.
        */
-      const _rd = await db.query(
-        `WITH prev AS (SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2)
-         UPDATE chit_status SET read_at = NOW()
-          WHERE chit_id = $1 AND entity_id = $2
-         RETURNING (SELECT read_at FROM prev) AS was_read_at`,
-        [chit_id, entity_id]
+      /**
+       * ⭐ AND THE "FIRST OPENED" LOG ROW RIDES IN THE SAME STATEMENT. Three round trips became one: read the
+       * old `read_at`, stamp the new one, and write the log line only if this was the first open.
+       *
+       * ⚠️ `upd` IS DELIBERATELY UNREFERENCED. A data-modifying CTE always executes whether or not anything
+       * selects from it, so the stamp happens regardless — while making the INSERT depend on it would suppress
+       * the log row for an entity that has no `chit_status` row yet, which the old code logged.
+       *
+       * ⚠️ `NOT EXISTS (… WHERE read_at IS NOT NULL)` is exactly the old `!preCheck.rows[0]?.read_at`: no row
+       * at all, or a row never read, both count as unread. A plain `read_at IS NULL` would miss the first case.
+       */
+      await db.query(
+        `WITH prev AS (SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2),
+              upd  AS (UPDATE chit_status SET read_at = NOW()
+                        WHERE chit_id = $1 AND entity_id = $2 RETURNING 1)
+         INSERT INTO state_log
+           (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+         SELECT $1, $2, 'read', $2, $3, 'Chit opened and read'
+          WHERE NOT EXISTS (SELECT 1 FROM prev WHERE read_at IS NOT NULL)`,
+        [chit_id, entity_id, req.identity.display_name]
       );
-      const wasUnread = !(_rd.rows[0] && _rd.rows[0].was_read_at);
 
-      if (wasUnread) {
-        await db.query(
-          `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, detail)
-           VALUES ($1,$2,'read',$3,$4,'Chit opened and read')`,
-          [chit_id, entity_id, entity_id, req.identity.display_name]
-        );
-      }
+      /* (the "first opened" log row is written by the statement above, in the same round trip) */
       return { header, detail, log };
     });
 

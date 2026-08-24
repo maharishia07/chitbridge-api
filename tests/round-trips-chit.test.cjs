@@ -25,22 +25,36 @@ let txOpens = 0;
 const COLUMNS = new Set(['timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs',
   'capabilities', 'retention_until', 'policy_flags']);
 
+/**
+ * ⭐ The stub answers with PLAUSIBLE rows, not empty ones. Returning `[]` everywhere makes each handler take
+ * its earliest not-found exit, and then the measurement flatters the endpoint by never walking it.
+ */
+function rowsFor(sql) {
+  if (/information_schema\.tables|to_regclass/.test(sql)) return [{ t: 'cb_attachment' }];
+  if (/FROM chit_status/.test(sql) && /current_status/.test(sql)) return [{ current_status: 'pending', read_at: null }];
+  if (/FROM chit_header/.test(sql)) return [{ chit_id: 'c1', entity_id: 'e1', role: 'Receiver', created_by_actor_id: 'e1', sender_entity_id: 'other' }];
+  if (/FROM chit_detail/.test(sql)) return [{ detail_type: 'order', line_item_count: 0, total_value: '0', currency_code: 'INR', line_items: [] }];
+  if (/COUNT\(\*\)/.test(sql)) return [{ count: 0 }];
+  if (/RETURNING/.test(sql)) return [{ was_read_at: null }];
+  return [];
+}
+
 require.cache[require.resolve(API + '/db')] = { exports: {
   query: async (sql, args) => {
     queries.push('Q  ' + String(sql).replace(/\s+/g, ' ').trim());
     if (/information_schema\.columns/.test(sql)) {
       return { rows: COLUMNS.has(args && args[1]) ? [{ '?column?': 1 }] : [] };
     }
-    return { rows: [] };
+    return { rows: rowsFor(String(sql)) };
   },
   /* ⚠️ ONE withEntity IS FOUR TRIPS: BEGIN · set_config · the statement · COMMIT. Counted as such below. */
   withEntity: async (id, fn) => {
     txOpens++;
-    return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: [] }; } });
+    return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: rowsFor(String(s)) }; } });
   },
   withTransaction: async (fn) => {
     txOpens++;
-    return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: [] }; } });
+    return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: rowsFor(String(s)) }; } });
   },
 } };
 
@@ -61,8 +75,23 @@ const t = (name, cond, extra) => {
   else { fail++; console.error('  FAIL ' + name + (extra ? '   ' + extra : '')); }
 };
 
-/* The ceiling. Lower it when the endpoint gets cheaper; never raise it without saying why here. */
-const BUDGET = Number(process.env.CHIT_READ_BUDGET || 12);
+/**
+ * The ceiling. Lower it when the endpoint gets cheaper; never raise it without saying why here.
+ *
+ * ⚠️ 14 IS THE COLD-PROCESS NUMBER. Two of the fourteen are one-time cached probes — `schema.hasTable` and
+ * `storage.ensureTable` — so a warm process opens a chit in 12. The ceiling counts the cold path because that
+ * is what the test actually runs, and a budget you cannot reproduce is a budget nobody trusts.
+ *
+ * ── WHAT IS LEFT, MEASURED — the next person should not have to re-derive it ────────────────────────────────
+ * Live, ?timing=1, after this change: main_read ~1850ms · one_shot ~1320ms · wall ~3.4s (it was ~5.05s).
+ * Two collapses remain, both real and both bigger than anything above:
+ *   · header + detail + state_log are three independent SELECTs in one transaction → one statement saves 2.
+ *   · the two transactions could be one → saves BEGIN + set_config + COMMIT, another 3.
+ * ⚠️ NOT DONE HERE ON PURPOSE. Both need `SELECT *` turned into json subqueries, and `to_jsonb` returns a
+ * numeric as a JSON NUMBER where pg returns it as a STRING today — so `total_value` would change type in the
+ * response. That is a client-visible change and wants a person watching it, not an unattended run.
+ */
+const BUDGET = Number(process.env.CHIT_READ_BUDGET || 14);
 
 const PORT = 45873;
 const srv = app.listen(PORT, async () => {
