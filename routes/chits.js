@@ -1461,6 +1461,17 @@ router.get('/:chit_id', auth, async (req, res) => {
           rows: _lines0 ? await amend.readLines(entity_id, chit_id, db, g.lines || []) : null,
           assigned: _lines0 ? await assign.current(entity_id, chit_id, db, g.assignments || []) : null,
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
+          /**
+           * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
+           * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
+           * already inside a transaction stops paying BEGIN + set_config + COMMIT to read a handful of rows.
+           *
+           * ⚠️ SAVEPOINTED like every other optional read here, and for the same reason: `cb_attachment` may
+           * not exist on an un-migrated environment (b65/b66), and Postgres aborts the WHOLE transaction on
+           * any error. Without the savepoint, a missing attachments table would stop the chit opening at all —
+           * which is strictly worse than the empty list it degrades to today.
+           */
+          attachments: await trySavepoint(db, (c) => storage.listForChit(chit_id, entity_id, c), null),
           _fast: true,
         };
       });
@@ -1496,7 +1507,11 @@ router.get('/:chit_id', auth, async (req, res) => {
     const participants = bundle.participants;
     /* ⚠️ ATTACHMENTS STAY OUTSIDE. storage.listForChit reaches a different store and owns its own error handling;
        dragging it into this transaction would couple a blob read to the chit's own read for no round-trip saving. */
-    const attachments = await storage.listForChit(chit_id, entity_id).catch(() => []);
+    /* ⭐ Already read inside the one-shot transaction when that path ran. Only the FALLBACK path — an
+       environment where the one-shot statement failed — still pays for its own transaction here. */
+    const attachments = (bundle && bundle.attachments != null)
+      ? bundle.attachments
+      : await storage.listForChit(chit_id, entity_id).catch(() => []);
     _mark('attachments');   // per-entity: the caller's OWN copies only
 
     /* ── b137 AMENDMENTS ─────────────────────────────────────────────────────────────────────────────────────
