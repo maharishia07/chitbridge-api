@@ -404,7 +404,7 @@ router.get('/me', auth, async (req, res) => {
      * unchanged — hasColumns writes exactly the entries hasColumn would have. Only the trip count moved.
      */
     const _cols = await schema.hasColumns('identities', [
-      'timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs',
+      'timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs', 'policy_flags',
       'catalogue_visibility', 'plan', 'params_override',
     ]);
     const _tzCol = _cols.timezone;
@@ -435,6 +435,14 @@ router.get('/me', auth, async (req, res) => {
      */
     const _sfCol = _cols.storefront_access;
     const _lpCol = _cols.locale_prefs;
+    /**
+     * ⭐ FREE — `hasColumns` is ONE query for many columns, so probing a tenth costs no round trip.
+     *
+     * ⚠️ The app needs this BEFORE any chit is opened, because it decides which detail page a chit renders on.
+     * Fetching `/entities/policy` at boot instead would put a whole extra round trip on the hottest path, which
+     * is the opposite of the direction this endpoint has been moving.
+     */
+    const _pfCol = _cols.policy_flags;
     const _upCol = _cols.ui_prefs;
     /* ⚠️ AND THE VISIBILITY TRIO — a THIRD read of the same row, for `catalogue_visibility, plan,
        params_override`. Same identity_id, same request: three round trips to read one row. */
@@ -445,7 +453,7 @@ router.get('/me', auth, async (req, res) => {
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
               purpose, sort_order, address, city, lat, lng, service_km,   -- b117/b118/b119
-              actor_key, phone${_tzCol ? ', timezone' : ''}${_supCol ? ', supplies' : ''}${_sfCol ? ', storefront_access' : ''}${_lpCol ? ', locale_prefs' : ''}${_upCol ? ', ui_prefs' : ''}${_cvCol ? ', catalogue_visibility' : ''}${_plCol ? ', plan' : ''}${_poCol ? ', params_override' : ''},
+              actor_key, phone${_tzCol ? ', timezone' : ''}${_supCol ? ', supplies' : ''}${_sfCol ? ', storefront_access' : ''}${_lpCol ? ', locale_prefs' : ''}${_upCol ? ', ui_prefs' : ''}${_cvCol ? ', catalogue_visibility' : ''}${_plCol ? ', plan' : ''}${_poCol ? ', params_override' : ''}${_pfCol ? ', policy_flags' : ''},
               /* ⚠️ b176 MAY NOT BE RUN. A missing column is 42703 and throws the WHOLE query — the mistake that
                  took co-assist sign-in down this morning. Selected through the probe, never named blindly. */
               /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
@@ -580,6 +588,9 @@ router.get('/me', auth, async (req, res) => {
     const storefront_access = _sfCol ? (_me.storefront_access || 'browse') : 'browse';
     const locale_prefs = (_lpCol && _me.locale_prefs) || {};
     const ui_prefs     = (_upCol && _me.ui_prefs) || {};
+    /* ⚠️ Absent the column, `{}` — which reads as "never chosen" and lets every default apply, the same shape
+       locale_prefs uses above. Never a guessed value: a made-up preference is worse than no preference. */
+    const policy_flags = (_pfCol && _me.policy_flags) || {};
     // b114 (self-healing): is this entity's catalogue exposed at all? Pre-b114 there was no such setting and adoption
     // silently published, so absent the column we report 'public' — the behaviour that was actually in force.
     // The EFFECTIVE visibility, plus the cap that produced it. Reporting the stored flag alone would let a capped
@@ -596,7 +607,7 @@ router.get('/me', auth, async (req, res) => {
       visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
       catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
     } catch (_) { /* pre-b114 → the default above */ }
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs });
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs, policy_flags });
     /**
      * ⭐⭐ ?include= — ONE HTTP ROUND TRIP INSTEAD OF FOUR. Athi, 2026-08-21: *"why do we need a round trip,
      * can't the js send all the required information in one shot and get it from the background? We have built

@@ -558,6 +558,22 @@ router.post('/send',
         };
         return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
       })();
+      /**
+       * The sending entity's detail-page preference, resolved once and stamped below.
+       *
+       * ⚠️ `undefined` WHEN IT IS THE DEFAULT, deliberately: `mint.summary()` adds a rider only when it is
+       * neither undefined nor null, so an entity that never chose does not get a stamp claiming it did. That
+       * chit then falls back to whatever its reader prefers — which is the honest reading of "never chosen".
+       *
+       * ⚠️ Best-effort: a policy read that fails must not stop a chit being sent. No stamp is a recoverable
+       * state; a refused send is not.
+       */
+      let _detailDesign;
+      try {
+        const _pf = await policy.get(sender_id);
+        if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') _detailDesign = _pf.detail_design;
+      } catch (e) { /* no stamp; the reader's own preference applies */ }
+
       /* ⚠️ The SKELETON comes from lib/mint.js; every rider below is still decided here. mint.summary() adds a rider
          only when it is neither undefined nor null — the same test the conditional spreads made by hand, four
          times, in four files. */
@@ -572,6 +588,22 @@ router.post('/send',
         forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
         copy_policy: copyPolicy,
         retention,
+        /**
+         * ⭐⭐ THE DESIGN IS STAMPED HERE AND KEPT FOR LIFE. Athi, 2026-08-24: *"attach design 1 or design 2 as
+         * per the choice in the settings, in the header record — so we avoid the complication of moving from
+         * one record type to another and both can be tested independently."*
+         *
+         * ⚠️ A STAMP, NOT A LOOKUP. Reading the preference at render time would mean every existing job silently
+         * changed shape the moment someone touched Settings — a chit reading one way on Monday and another on
+         * Tuesday, with no event to explain it. Written once, at creation, from whatever the preference then was.
+         *
+         * ⚠️ ONLY THE SENDER'S OWN COPY IS STAMPED, and that is a boundary, not an oversight: the design belongs
+         * to the entity that INTERPRETS the work, and one entity may not read another's settings. A recipient's
+         * copy carries no stamp and falls back to their own preference until they have one of their own.
+         *
+         * ⭐ Migration-free — it rides `summary_json` exactly as `copy_policy` and `retention` do.
+         */
+        detail_design: _detailDesign,
         governed,
         clearances: folded_clearances,
         commercial: folded_commercial,
