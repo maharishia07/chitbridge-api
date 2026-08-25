@@ -569,10 +569,38 @@ router.post('/send',
        * state; a refused send is not.
        */
       let _detailDesign;
-      try {
-        const _pf = await policy.get(sender_id);
-        if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') _detailDesign = _pf.detail_design;
-      } catch (e) { /* no stamp; the reader's own preference applies */ }
+      /**
+       * ⭐⭐ ONE LOOKUP PER PARTY, and each copy is stamped with ITS OWN owner's choice — see the note at the
+       * recipient insert. `detail_design` is the single key in summary_json that is allowed to differ between
+       * copies, because it is not a fact about the trade: it is how the holder reads their own work.
+       *
+       * ⚠️ Cached per send. A chit to eight recipients must not be eight extra round trips on the hottest
+       * write in the product, and two recipients are frequently the same entity in different roles.
+       */
+      const _designCache = new Map();
+      const _designFor = async (eid) => {
+        if (!eid) return undefined;
+        if (_designCache.has(eid)) return _designCache.get(eid);
+        let d;
+        try {
+          const _pf = await policy.get(eid);
+          if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') d = _pf.detail_design;
+        } catch (e) { /* no stamp; Order level, which is the default anyway */ }
+        _designCache.set(eid, d);
+        return d;
+      };
+      _detailDesign = await _designFor(sender_id);
+      /* Resolved for every recipient BEFORE the transaction opens — an await inside it would hold a connection
+         open across a policy read for each party. */
+      if (!is_draft) for (const r of receiverDetails) await _designFor(r.entity_id);
+      /** The shared summary, with only this copy's reading swapped in. */
+      const _summaryFor = (eid) => {
+        const d = _designCache.get(eid);
+        if (d === _detailDesign) return summary_json;                 // identical — share the object
+        const s = Object.assign({}, summary_json);
+        if (d) s.detail_design = d; else delete s.detail_design;
+        return s;
+      };
 
       /* ⚠️ The SKELETON comes from lib/mint.js; every rider below is still decided here. mint.summary() adds a rider
          only when it is neither undefined nor null — the same test the conditional spreads made by hand, four
@@ -665,6 +693,15 @@ router.post('/send',
       if (!is_draft) for (const receiver of receiverDetails) {
         const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered';   // To acts; CC/For informational
         copies.push(mkCopy({
+          /**
+           * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor above. Every other key
+           * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
+           * not a fact about the trade but how the holder of THIS copy reads their own work.
+           *
+           * ⚠️ Set on the LIVE path as well as the legacy fan-out below. The operator's redacted copy proved
+           * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
+           */
+          summary_json: _summaryFor(receiver.entity_id),
           entity_id: receiver.entity_id, direction: 'received', role: receiver.role,
           current_status: rcv_status, priority_flag: 'normal',
           log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
@@ -760,7 +797,20 @@ router.post('/send',
             [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
              sender_display_name, JSON.stringify(all_recipients), purpose,
              auto_subject, manual_subject || null,
-             JSON.stringify(summary_json),
+             /**
+              * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
+              * and supplier copy should be the same, but the interpretation can be in another tab — how the
+              * customer request is interpreted can stay within the receiving end."*
+              *
+              * ⚠️⚠️ EVERY OTHER KEY IN summary_json IS THE SHARED RECORD AND MUST NOT DIVERGE — the value, the
+              * lines, the clearances, the provenance. `detail_design` is the one exception, because it is not a
+              * fact about the trade at all: it is how the holder of THIS copy reads their own work. Stamping
+              * the sender's choice here would let a customer decide how a workshop organises its mechanics.
+              *
+              * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
+              * ever sees it — it is the server writing each copy the way its own owner asked to read it.
+              */
+             JSON.stringify(_summaryFor(receiver.entity_id)),
              business_json ? JSON.stringify(business_json) : null,
              frozen_schema_version, frozen_schema_id, created_by_actor_id,
              receiver.role, chit_id, 'received']
