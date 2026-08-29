@@ -7,6 +7,7 @@ const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
+const { memo } = require('../lib/confcache');   // the active constitution is read once a minute, not once a call
 
 const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
@@ -16,15 +17,30 @@ const { planFor, checkCount, checkRate, checkCapability } = require('../governan
 const genBridge = require('../lib/bridgeid').generateBridgeId;
 
 // ── load the active constitution (shaped for the resolver) ──
+/**
+ * ⭐ CACHED — see lib/confcache.js. This runs on EVERY profile paint (routes/entities.js reads plan_menu twice,
+ * network-design once) plus four times in this file, and `platform_constitution` has no writer anywhere in the
+ * API: it is migration-only. That was a round trip per call against a table that changes when a migration says so.
+ *
+ * ⚠️ THE RETURNED OBJECT IS NOW SHARED BETWEEN CALLERS AND MUST NOT BE MUTATED. Checked when this changed:
+ * `resolver.resolve()` reads and `.slice()`s, `entitlements.planFor()` hands `plan_menu[name]` by reference to
+ * `checkCount`/`checkRate`/`checkCapability` which only read, and the three `plan_menu` readers outside this
+ * file only read. Nothing assigns into either. If that ever changes, copy at the read rather than here.
+ *
+ * ⚠️ A THROW IS NOT CACHED (memo stores only a resolved value), so a database blip cannot become a full minute
+ * of "no active constitution" — which every caller in this file turns into a 503.
+ */
 async function loadActiveConstitution() {
-  const { rows } = await query(
-    `SELECT pc.version, pc.params, pc.plan_menu, pc.root_id
-       FROM platform_constitution pc
-       JOIN platform_root pr ON pr.root_id = pc.root_id
-      WHERE pc.is_active LIMIT 1`);
-  if (!rows.length) return null;                  // no-orphan: caller must reject
-  const r = rows[0];
-  return { version: r.version, root_id: r.root_id, plan_menu: r.plan_menu, ...r.params };
+  return memo('platform_constitution:active', async () => {
+    const { rows } = await query(
+      `SELECT pc.version, pc.params, pc.plan_menu, pc.root_id
+         FROM platform_constitution pc
+         JOIN platform_root pr ON pr.root_id = pc.root_id
+        WHERE pc.is_active LIMIT 1`);
+    if (!rows.length) return null;                  // no-orphan: caller must reject
+    const r = rows[0];
+    return { version: r.version, root_id: r.root_id, plan_menu: r.plan_menu, ...r.params };
+  });
 }
 
 async function countEntities(rootId) {

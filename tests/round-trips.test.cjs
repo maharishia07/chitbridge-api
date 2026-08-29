@@ -25,8 +25,23 @@ let COLUMNS = new Set(['timezone', 'supplies', 'storefront_access', 'locale_pref
 require.cache[require.resolve(API + '/db')] = { exports: {
   query: async (sql, args) => {
     queries.push(String(sql).replace(/\s+/g, ' ').trim());
+    /**
+     * ⚠️⚠️ THIS MOCK KNEW ONLY THE SINGULAR PROBE, AND THAT HELD THREE ASSERTIONS BELOW RED ON MAIN.
+     * `hasColumn` asks `SELECT 1 ... AND column_name = $2` — ONE column, in `args[1]`. On 2026-08-23 the eight
+     * sequential probes became ONE `hasColumns` call: `SELECT column_name ... = ANY($2::text[])`, so `args[1]`
+     * is an ARRAY and the answer must NAME the columns it found.
+     *
+     * `COLUMNS.has(['timezone','supplies',...])` is false, so every column read as ABSENT, `/me` returned its
+     * deploy-before-migration defaults, and "the values still arrive" failed for reasons that had nothing to do
+     * with the route. ⭐ The route was right the whole time — the test's picture of the database was one
+     * refactor behind. That is a failure mode a mock has and a real query does not, and it is why the three
+     * assertions it silenced are the ones worth keeping.
+     */
     if (/information_schema\.columns/.test(sql)) {
-      return { rows: COLUMNS.has(args[1]) ? [{ '?column?': 1 }] : [] };
+      if (Array.isArray(args[1])) {                                      // hasColumns — the answer names them
+        return { rows: args[1].filter((c) => COLUMNS.has(c)).map((c) => ({ column_name: c })) };
+      }
+      return { rows: COLUMNS.has(args[1]) ? [{ '?column?': 1 }] : [] };  // hasColumn — presence only
     }
     if (/FROM identities WHERE identity_id/.test(sql)) {
       return { rows: [{ identity_id: 'e1', bridge_id: 'B', display_name: 'Test', email: 't@x.com',
@@ -76,10 +91,24 @@ const srv = app.listen(PORT, async () => {
   t('responds 200', r.status === 200);
 
   /**
-   * ⚠️ THE CEILING IS 8 AND THE MEASURED COST IS 7 (was 9). One spare, deliberately: a genuine new need should not
-   * require editing a test in the same commit, or the number stops being a budget and becomes a formality.
+   * ⚠️ THE CEILING IS 5 AND THE MEASURED COST IS 4 (was 8, then 7, then 4). One spare, deliberately: a genuine
+   * new need should not require editing a test in the same commit, or the number stops being a budget and
+   * becomes a formality. It was lowered from 8 when the platform-config reads started being cached.
    */
-  t('at most 8 round trips', dbHits.length <= 8, 'measured ' + dbHits.length);
+  t('at most 5 round trips', dbHits.length <= 5, 'measured ' + dbHits.length);
+
+  /**
+   * ⭐⭐ THE ASSERTION THAT ACTUALLY HOLDS THE CONFIG CACHE. The count above would still pass if someone
+   * removed the memo and saved a trip somewhere else, and `/me` would quietly go back to reading `constitution`
+   * twice, `installation` and `capability` on every single profile paint — four round trips, roughly a second
+   * from India, against tables no route in this API writes.
+   *
+   * ⚠️ WARM means warm: the first `/me` above populated the cache, so on the second call these must be ABSENT
+   * entirely. Naming the tables rather than counting queries is deliberate — it fails with the reason attached.
+   */
+  const configReads = dbHits.filter((q) => /FROM (constitution|installation|capability|platform_constitution)\b/.test(q));
+  t('platform config is not re-read on a warm process', configReads.length === 0,
+    configReads.length ? configReads.join(' | ') : 'none');
 
   /**
    * ⭐⭐ THE ASSERTION THAT ACTUALLY HOLDS THE FIX. One row, read once. It was read FOUR times — and the count

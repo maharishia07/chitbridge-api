@@ -58,7 +58,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
-  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
+  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
+  'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
   'vaultcrypto.js', 'retention.js',
   /**
    * ⚠️⚠️ THIRTY-ONE FILES HAD DRIFTED OUT OF EVERY BUCKET, which is this test failing at the thing it exists
