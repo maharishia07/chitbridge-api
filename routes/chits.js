@@ -1826,6 +1826,41 @@ router.post('/register/templates', auth, async (req, res) => {
  * ⭐⭐ THE WALK — what this breaks, or (backwards=1) what broke it. Backwards is the one people need, because it
  * is the question asked after something has already gone wrong.
  */
+/**
+ * ⭐⭐ AN ENTRY ON A STANDALONE REGISTER — one attached to a campaign, an audit, a release, and not to any
+ * order. `add()` already took a subject_id; there was simply no way in from outside, so a register opened
+ * against anything other than a chit could be created and then never written to.
+ *
+ * ⚠️ chit_id is NULL here, which b185 made legal by dropping the NOT NULL. That is the whole point of the
+ * subject: the register is attached to the THING, and an order is only one kind of thing.
+ */
+router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => {
+  try {
+    res.json(await raida.add(entityId(req), null, Object.assign({}, req.body, {
+      subject_id: req.params.subject_id,
+      by_name: req.identity.display_name })));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Failed to record it',
+      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
+/**
+ * Close an entry BY ID, wherever it lives.
+ * ⚠️ The existing close hangs off /:chit_id/raida, so an entry on a standalone register had no way to end —
+ * and an entry that cannot be ended is what makes the closure gate unpassable. close() locates the row by
+ * raida_id and reads chit_id back off it, so null here is correct rather than a shortcut.
+ */
+router.post('/register/entries/:raida_id/close', auth, async (req, res) => {
+  try {
+    res.json(await raida.close(entityId(req), null, req.params.raida_id,
+      Object.assign({}, req.body, { by_name: req.identity.display_name })));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Failed to close it',
+      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
 router.get('/register/walk/:from', auth, async (req, res) => {
   try {
     res.json(await raida.walk(entityId(req), req.params.from,

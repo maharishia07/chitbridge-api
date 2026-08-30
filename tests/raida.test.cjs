@@ -197,6 +197,26 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   const boom = await caught(() => raida.attachables());
   t('any other error still throws', !!boom && boom.code === '08006');
 
+
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f route ORDER, which Express decides and nothing else checks --');
+  /* ⭐⭐ `register` is a perfectly good :chit_id. Declared the other way round, every /register/* call would be
+     read as a request for the register OF A CHIT BY THAT NAME and answer EMPTY rather than 404 — a silent wrong
+     answer, which is worse than the error. Nothing but this assertion holds the order. */
+  const routes = require('fs').readFileSync(API + '/routes/chits.js', 'utf8');
+  const firstParam = routes.indexOf("'/:chit_id/raida'");
+  const specific = [];
+  const re = /router\.(get|post)\('(\/register\/[^']*)'/g;
+  let mm;
+  while ((mm = re.exec(routes))) specific.push({ path: mm[2], at: mm.index });
+  t('every /register route is declared', specific.length >= 11, specific.length + ' routes');
+  const late = specific.filter((s) => s.at > firstParam);
+  t('  ...and ALL of them before /:chit_id/raida', firstParam > 0 && late.length === 0,
+    late.map((s) => s.path).join(', '));
+  /* ⚠️ A standalone register (a campaign, an audit) needs BOTH of these or it can be created and never used. */
+  t('a standalone register can be written to',
+    /router\.post\('\/register\/subjects\/:subject_id\/entries'/.test(routes));
+  t('  ...and its entries can be ended', /router\.post\('\/register\/entries\/:raida_id\/close'/.test(routes));
+
   console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
   process.exitCode = fail ? 1 : 0;
 })();
