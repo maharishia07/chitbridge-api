@@ -1,3 +1,19 @@
+-- ⚠️⚠️ POSTSCRIPT, 2026-08-30 — THIS FILE COULD NOT BE RUN WHOLE, AND TWO THINGS DID NOT LAND.
+--
+-- It opened `DO $$` and closed `END $;`. That is not a closing delimiter, so everything from line 51 onward was
+-- one unterminated string and the script had to be run in pieces to get past it. Two pieces were missed:
+--
+--   1. the INSERT that seeds register_attachable — so the registry was EMPTY, and the app reported that nothing
+--      could be attached to anything while every other part of the register worked;
+--   2. register_subject already existed, so `CREATE TABLE IF NOT EXISTS register_subject` was a NO-OP and the
+--      FOREIGN KEY declared inside it was never created.
+--
+-- ⭐ THE SECOND IS WHY THE FIRST STAYED HIDDEN. With no foreign key, `type_key` is only text: opening a register
+-- against an empty registry SUCCEEDED, where the constraint would have refused it and named the problem.
+--
+-- The delimiter is corrected below and b186_register_seed_{dryrun,apply}.sql repairs both. tests/migration-lint
+-- .test.cjs now fails on either shape.
+
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 -- b185 — THE REGISTER AS A CAPABILITY. Attaches to anything · owner · severity · disposition · acceptance · EDGE.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
