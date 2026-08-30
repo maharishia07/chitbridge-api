@@ -1763,6 +1763,100 @@ router.get('/:chit_id/costs', auth, async (req, res) => {
 // ⚠️ THE SAME OWNERSHIP CHECK AS COSTS, FOR THE SAME REASON. Without it an id in the URL is enough to file an
 // entry against a stranger's chit — RLS makes the row harmless but it is still a record nobody asked for, sitting
 // under a chit_id its author never held.
+// ═══ b185 · THE REGISTER AS A CAPABILITY — subjects, the gate, acceptance, the library, the walk ════════════════
+//
+// ⚠️ ALL DECLARED BEFORE /:chit_id/raida. Express matches in order and 'register' is a perfectly good :chit_id;
+// the other way round, every one of these would be read as a request for the register of a chit by that name and
+// answer EMPTY rather than 404 — a silent wrong answer, which is the worse failure.
+
+/** What a register may be attached to. A registry, so a new kind is data. */
+router.get('/register/attachables', auth, async (req, res) => {
+  try { res.json({ attachables: await raida.attachables() }); }
+  catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+});
+
+router.get('/register/subjects', auth, async (req, res) => {
+  try {
+    res.json(await raida.listSubjects(entityId(req), {
+      type_key: req.query.type_key || undefined, open_only: req.query.open === '1' }));
+  } catch (err) { res.status(500).json({ error: 'Failed to list registers', message: safeErr(err) }); }
+});
+
+router.post('/register/subjects', auth, async (req, res) => {
+  try {
+    res.json(await raida.subjectFor(entityId(req), {
+      type_key: req.body.type_key, ref_id: req.body.ref_id,
+      ref_label: req.body.ref_label, name: req.body.name }));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Failed to open the register',
+      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
+/**
+ * ⭐⭐ THE GATE. A register may not close while any entry is undispositioned — and the refusal is a 409 that
+ * NAMES what is outstanding, because "4 still open" without the four sends someone hunting.
+ */
+router.post('/register/subjects/:subject_id/close', auth, async (req, res) => {
+  try {
+    res.json(await raida.closeSubject(entityId(req), req.params.subject_id,
+      { by_name: req.identity.display_name }));
+  } catch (err) {
+    const body = { error: 'Cannot close yet', message: err.status && err.status < 500 ? err.message : safeErr(err) };
+    if (err.outstanding) body.outstanding = err.outstanding;
+    res.status(err.status || 500).json(body);
+  }
+});
+
+/** The library — the same risk turns up everywhere, worded slightly differently. */
+router.get('/register/templates', auth, async (req, res) => {
+  try { res.json(await raida.templates(entityId(req))); }
+  catch (err) { res.status(500).json({ error: 'Failed to read the library', message: safeErr(err) }); }
+});
+
+router.post('/register/templates', auth, async (req, res) => {
+  try { res.json(await raida.addTemplate(entityId(req), req.body || {})); }
+  catch (err) {
+    res.status(err.status || 500).json({ error: 'Failed to save it',
+      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
+/**
+ * ⭐⭐ THE WALK — what this breaks, or (backwards=1) what broke it. Backwards is the one people need, because it
+ * is the question asked after something has already gone wrong.
+ */
+router.get('/register/walk/:from', auth, async (req, res) => {
+  try {
+    res.json(await raida.walk(entityId(req), req.params.from,
+      { backwards: req.query.backwards === '1', depth: req.query.depth }));
+  } catch (err) { res.status(500).json({ error: 'Failed to walk it', message: safeErr(err) }); }
+});
+
+/** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
+router.post('/register/entries/:raida_id/revise', auth, async (req, res) => {
+  try {
+    res.json(await raida.revise(entityId(req), req.params.raida_id,
+      Object.assign({}, req.body, { by_name: req.identity.display_name })));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Failed to revise it',
+      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
+/** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
+router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
+  try {
+    res.json(await raida.accept(entityId(req), req.params.raida_id, {
+      accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
+      authority_level: req.body.authority_level, rationale: req.body.rationale,
+      review_by: req.body.review_by }));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Failed to record the acceptance',
+      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
 /**
  * ⭐⭐ THE ROLL-UP — every entry this entity holds, across every chit. Athi, 2026-08-30: *"where will it reflect
  * as a wholesum across all the chit … so we can see all the open and closed stuff in a single place."*
@@ -1772,7 +1866,13 @@ router.get('/:chit_id/costs', auth, async (req, res) => {
  * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
  */
 router.get('/raida/report', auth, async (req, res) => {
-  try { res.json(await raida.report(entityId(req))); }
+  try {
+    /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
+       of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
+    res.json(await raida.report(entityId(req), {
+      subject_id: req.query.subject_id || undefined,
+      standard_key: req.query.standard || undefined }));
+  }
   catch (err) {
     console.error('Raida report error:', err.message);
     res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
