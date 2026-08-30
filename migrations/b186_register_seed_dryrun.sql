@@ -22,8 +22,7 @@ SELECT
   c.relrowsecurity                                      AS rls_on,
   /* ⚠️ THE PRIVILEGE THAT DECIDES VISIBILITY. information_schema hides a table the role cannot read at all,
      which is how "never created" and "created but never granted" become the same answer to the app. */
-  (SELECT bool_or(has_table_privilege('cb_app', c.oid, 'SELECT'))
-     FROM pg_roles WHERE rolname = 'cb_app')        AS cb_app_can_select,
+  has_table_privilege('cb_app', c.oid, 'SELECT')        AS cb_app_can_select,
   /* Row count without naming the table in SQL — works whether or not it exists, and across schemas. */
   (xpath('/row/c/text()',
          query_to_xml('SELECT count(*) AS c FROM ' || quote_ident(n.nspname) || '.' || quote_ident(c.relname),

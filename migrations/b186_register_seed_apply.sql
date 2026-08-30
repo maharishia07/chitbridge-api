@@ -52,40 +52,45 @@ INSERT INTO register_attachable (type_key, label, points_at) VALUES
   ('other',          'Other',              NULL)
 ON CONFLICT (type_key) DO NOTHING;
 
--- ── 3 · the grant, ONLY IF THE ROLE EXISTS ─────────────────────────────────────────────────────────────────────
--- ⚠️⚠️ 2026-08-30: this line, unguarded, failed with `42704: role "cb_app" does not exist` — so the app does
--- NOT connect as cb_app, and every `GRANT ... TO cb_app` in the migration files has been either failing or
--- meaningless. Isolation here does not rest on the grant: the register tables are FORCE ROW LEVEL SECURITY,
--- which applies the policy even to the table's owner, which is the case that matters when the app connects as
--- the owner. Guarded rather than deleted, so it does the right thing on a database where the role does exist.
-DO $b186$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'cb_app') THEN
-    GRANT SELECT ON register_attachable TO cb_app;
-  END IF;
-END
-$b186$;
+-- ── 3 · the grant ─────────────────────────────────────────────────────────────────────────────────────────────
+-- ⚠️ If this raises 42704 role "cb_app" does not exist, you are in the WRONG SUPABASE PROJECT. The app
+-- connects as cb_app.bzacyrdrnzdbficjplcn — run this in project bzacyrdrnzdbficjplcn, where the role is real.
+GRANT SELECT ON register_attachable TO cb_app;
 
 -- ── 4 · the foreign key CREATE TABLE IF NOT EXISTS skipped ─────────────────────────────────────────────────────
 -- ⭐ THIS IS WHAT MADE THE EMPTY REGISTRY SILENT. Without it `type_key` is only text, so opening a register
 -- against a registry holding nothing SUCCEEDED. With it, the same call is refused and names the problem.
 --
+-- ⚠️⚠️ EXECUTE, NOT A PLAIN IF. PL/pgSQL plans a whole IF expression as ONE statement, so a `FROM
+-- register_subject` inside it is PARSED even when a `to_regclass(...) IS NOT NULL` test in the same expression
+-- would have been false at runtime. Short-circuiting does not save it: the first version of this block died
+-- with 42P01 on a database where register_subject does not exist. Anything naming a table that may be absent
+-- has to be deferred into dynamic SQL, which is not parsed until it runs.
+--
 -- ⚠️ Added only when nothing would violate it. A subject already carrying an unknown kind leaves the constraint
 -- off and is reported by the final SELECT, rather than erroring the whole script.
 DO $b186$
+DECLARE
+  offenders bigint;
 BEGIN
-  IF to_regclass('register_subject') IS NOT NULL
-     AND NOT EXISTS (
-       SELECT 1 FROM pg_constraint
-        WHERE conrelid = to_regclass('register_subject') AND contype = 'f'
-          AND confrelid = to_regclass('register_attachable'))
-     AND NOT EXISTS (
-       SELECT 1 FROM register_subject s
-        WHERE NOT EXISTS (SELECT 1 FROM register_attachable a WHERE a.type_key = s.type_key))
-  THEN
-    ALTER TABLE register_subject
-      ADD CONSTRAINT register_subject_type_key_fkey
-      FOREIGN KEY (type_key) REFERENCES register_attachable(type_key);
+  IF to_regclass('register_subject') IS NULL OR to_regclass('register_attachable') IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM pg_constraint
+              WHERE conrelid = to_regclass('register_subject') AND contype = 'f'
+                AND confrelid = to_regclass('register_attachable')) THEN
+    RETURN;                                  -- already there, nothing to do
+  END IF;
+
+  EXECUTE 'SELECT count(*) FROM register_subject s
+            WHERE NOT EXISTS (SELECT 1 FROM register_attachable a WHERE a.type_key = s.type_key)'
+     INTO offenders;
+
+  IF offenders = 0 THEN
+    EXECUTE 'ALTER TABLE register_subject
+               ADD CONSTRAINT register_subject_type_key_fkey
+               FOREIGN KEY (type_key) REFERENCES register_attachable(type_key)';
   END IF;
 END
 $b186$;
@@ -94,8 +99,7 @@ $b186$;
 SELECT
   (SELECT count(*) FROM register_attachable WHERE active)                        AS registry_rows_active,
   12                                                                             AS registry_rows_expected,
-  (SELECT bool_or(has_table_privilege('cb_app', 'register_attachable', 'SELECT'))
-     FROM pg_roles WHERE rolname = 'cb_app')                 AS cb_app_can_select,
+  has_table_privilege('cb_app', 'register_attachable', 'SELECT')                 AS cb_app_can_select,
   (SELECT count(*) FROM pg_constraint
     WHERE conrelid = to_regclass('register_subject') AND contype = 'f'
       AND confrelid = to_regclass('register_attachable'))                        AS type_key_fk_present,
