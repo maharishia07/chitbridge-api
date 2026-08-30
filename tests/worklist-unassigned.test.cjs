@@ -53,8 +53,14 @@ const flat = () => sql.replace(/\s+/g, ' ');
   /* chit_deliver() writes chit_line rows for drafts too (mint passes is_draft as p_clear_first), and a
      draft's status is not one of the three closed ones — so without this every unsent draft would walk
      onto the worklist as work somebody owes. */
-  t('drafts are excluded', /COALESCE\(h\.is_draft, false\) = false/.test(flat()));
-  t('and the header lateral fetches is_draft', /sender_entity_display_name, is_draft/.test(flat()));
+  t('drafts are excluded by role', /COALESCE\(h\.role, ''\) <> 'Draft'/.test(flat()));
+  t('and the header lateral fetches role', /sender_entity_display_name, role/.test(flat()));
+  /* ⚠️⚠️ NOT is_draft — that column is on cb_chit, the OTHER schema. Naming it on chit_header
+     raised 42703, which this file answers with migrated:false: a BLANK worklist rather than an error,
+     which is the failure mode that takes longest to notice. It reached production for a few minutes.
+     ⚠️ Matched against the CODE, not the prose — the explanation above lives inside the SQL template
+     literal, so a naive /is_draft/ over the query text matches the comment warning about it. */
+  t('never dereferences h.is_draft', !/h\.is_draft/.test(flat()));
   t('closed chits are still excluded', /NOT IN \('completed', 'cancelled', 'rejected'\)/.test(flat()));
 
   console.log('\n-- ⭐⭐ a line with NO assignment lands in the Unassigned bucket --');
