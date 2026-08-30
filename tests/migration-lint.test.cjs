@@ -96,31 +96,25 @@ const stale = ACCEPTED.filter((x) => found.indexOf(x) < 0);
 t('  ...and the baseline names nothing that has since gone', stale.length === 0, stale.join(' | '));
 t('  ...covering every occurrence on disk', found.length === ACCEPTED.length, found.length + ' occurrences');
 
-console.log('\n-- b186 repairs exactly what b185 left --');
-const b186 = fs.existsSync(path.join(DIR, 'b186_register_seed_apply.sql'))
-  ? fs.readFileSync(path.join(DIR, 'b186_register_seed_apply.sql'), 'utf8') : '';
-t('the seed is re-runnable', /INSERT INTO register_attachable/.test(b186) && /ON CONFLICT \(type_key\) DO NOTHING/.test(b186));
-t('the skipped foreign key is added separately', /ALTER TABLE register_subject[\s\S]{0,200}ADD CONSTRAINT/.test(b186));
-/* ⚠️ It must not error on a database where a subject already carries an unknown kind — it reports instead. */
-t('  ...and only when nothing would violate it',
-  /offenders = 0/.test(b186) && /FROM register_subject s/.test(b186));
-t('it changes nothing that exists', !/\bUPDATE\s+register_|\bDELETE\s+FROM\s+register_/i.test(b186));
-/* ⚠️ THE MISTAKE THIS CATCHES, made 2026-08-30: the first b186 dry run opened with
-   `SELECT count(*) FROM register_attachable` and died with 42P01 on the very question it existed to answer.
-   A script that reports whether a table is usable must read the CATALOG, never the table. */
-const dry = fs.existsSync(path.join(DIR, 'b186_register_seed_dryrun.sql'))
-  ? fs.readFileSync(path.join(DIR, 'b186_register_seed_dryrun.sql'), 'utf8') : '';
-const dryCode = dry.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
-t('the dry run reads the catalog, never the table it is checking for',
-  !!dry && !/\bFROM\s+register_/i.test(dryCode));
-t('  ...and still reports rows, schema and privilege',
-  /query_to_xml/.test(dryCode) && /nspname/.test(dryCode) && /has_table_privilege/.test(dryCode));
-/* ⭐ The apply must not create a second copy in public when one already exists in another schema. */
-t('the apply resolves through the search path before creating anything',
-  /to_regclass\('register_attachable'\) IS NULL/.test(b186));
-
-
-
+console.log('\n-- b189 repairs the silent-empty-table class --');
+const rd = (f) => fs.existsSync(path.join(DIR, f)) ? fs.readFileSync(path.join(DIR, f), 'utf8') : '';
+const b189dry = rd('b189_rls_without_policy_dryrun.sql');
+const b189app = rd('b189_rls_without_policy_apply.sql');
+/* ⭐ THE CLASS: RLS enabled with no policy returns ZERO ROWS to every non-owner, silently. The owner is exempt
+   unless FORCE is set, so it looks correct in the SQL editor and empty in the app. */
+t('the audit finds RLS-on-with-no-policy, not just one table',
+  /relrowsecurity/.test(b189dry) && /pg_policy/.test(b189dry) && /needs_policy/.test(b189dry));
+/* ⚠️ It must scan every table, or it answers a narrower question than the one asked. */
+t('  ...across all of public, not a named list',
+  /nspname = 'public'/.test(b189dry) && !/register_attachable/.test(b189dry.replace(/--.*$/gm, '')));
+t('the fix is a policy, so the intent is visible in the database',
+  /CREATE POLICY register_attachable_read_all/.test(b189app) && /FOR SELECT/.test(b189app));
+/* ⚠️ Read-only: nothing writes this table but a migration, so a WITH CHECK would grant more than intended. */
+t('  ...read-only, with no WITH CHECK', !/WITH CHECK/i.test(b189app.replace(/--.*$/gm, '')));
+t('  ...and re-runnable', /DROP POLICY IF EXISTS/.test(b189app));
+/* ⭐ The apply must not quietly stand in for the audit — it reports whether anything else is still affected. */
+t('the apply reports whether other tables are still unreadable',
+  /other_tables_still_unreadable/.test(b189app));
 
 console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
 process.exitCode = fail ? 1 : 0;

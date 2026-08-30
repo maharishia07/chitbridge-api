@@ -175,11 +175,24 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   raise('42P01');
   t('absent table  \u2192 degraded:absent',  (await raida.attachables()).degraded === 'absent');
   raise('42501');
-  /* ⚠️ THE ONE THAT LIED. A missing GRANT is not a missing migration and must not read as one. */
+  /* ⚠️ A missing GRANT is not a missing migration and must not read as one. */
   t('missing GRANT \u2192 degraded:no-grant', (await raida.attachables()).degraded === 'no-grant');
-  ROWS = [];
-  t('present but unseeded \u2192 degraded:empty', (await raida.attachables()).degraded === 'empty');
-  /* Anything else is a real fault and must not be swallowed into a tidy empty list. */
+
+  /* ⭐⭐ THE ONE THAT COST A DAY. RLS enabled with no policy returns zero rows to every non-owner, silently —
+     and the owner is exempt unless FORCE is set, so the SQL editor shows 12 rows while the app shows none. */
+  ROWS = (sql) => (/pg_policy/.test(sql) ? [{ rls: true, policies: '0' }] : []);
+  t('RLS on with no policy \u2192 degraded:rls-no-policy',
+    (await raida.attachables()).degraded === 'rls-no-policy');
+  /* ⚠️ RLS on WITH a policy is not this bug — an empty table is then genuinely empty. */
+  ROWS = (sql) => (/pg_policy/.test(sql) ? [{ rls: true, policies: '2' }] : []);
+  t('  ...but RLS with a policy is just empty', (await raida.attachables()).degraded === 'empty');
+  ROWS = (sql) => (/pg_policy/.test(sql) ? [{ rls: false, policies: '0' }] : []);
+  t('  ...and no RLS at all is just empty', (await raida.attachables()).degraded === 'empty');
+  /* ⚠️ The diagnosis is a courtesy. It must never turn an empty list into a 500. */
+  ROWS = (sql) => { if (/pg_policy/.test(sql)) { const e = new Error('boom'); e.code = '42501'; throw e; } return []; };
+  t('  ...and a failed diagnosis still answers', (await raida.attachables()).degraded === 'empty');
+
+  /* Anything else on the main read is a real fault and must not be swallowed into a tidy empty list. */
   raise('08006');
   const boom = await caught(() => raida.attachables());
   t('any other error still throws', !!boom && boom.code === '08006');
