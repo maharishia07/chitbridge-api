@@ -23,8 +23,10 @@ const t = (name, cond, extra) => {
 const files = fs.readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort();
 
 console.log('\n-- ⚠️⚠️ every dollar-quoted block must CLOSE --');
-/* Strip line comments first: a `$$` inside `-- ...` is prose, not a delimiter. Block comments are left alone
-   because Postgres does not treat -- or /* *​/ as ending a dollar quote either. */
+/* ⚠️ BASELINED, NOT FIXED. b185 is left exactly as it was run — a migration is a record of what was run, and
+   editing one so a checker passes falsifies the history it exists to keep. Its postscript says what went wrong.
+   The guard points FORWARD: no NEW migration may carry the shape. */
+const ACCEPTED_QUOTES = ['b185_register.sql'];
 const badQuotes = [];
 for (const f of files) {
   const src = fs.readFileSync(path.join(DIR, f), 'utf8');
@@ -34,12 +36,19 @@ for (const f of files) {
   const counts = {};
   for (const tag of tags) counts[tag] = (counts[tag] || 0) + 1;
   const odd = Object.keys(counts).filter((k) => counts[k] % 2 !== 0);
-  /* ⚠️ The b185 shape specifically: a block opened and ended with a bare `$;` instead of the delimiter. */
+  /* ⚠️ The b185 shape specifically: a block ended with a bare `$;` instead of the delimiter. Postgres reads
+     `$$` as the opener and looks for another `$$`; `$;` is not one, so the rest of the file becomes an
+     unterminated string and the migration CANNOT BE RUN WHOLE. What follows is worse than an error — it gets
+     run in pieces to get past it, and on 2026-08-30 one piece, a seed INSERT, was never run at all. */
   const strayEnd = /\bEND\s+\$\s*;/.test(code);
   if (odd.length || strayEnd) badQuotes.push(f + (strayEnd ? ' (END $; — not a delimiter)' : ' (unpaired ' + odd.join(',') + ')'));
 }
-t('no migration has an unterminated DO block', badQuotes.length === 0, badQuotes.join(' | '));
+const newBad = badQuotes.filter((b) => ACCEPTED_QUOTES.indexOf(b.split(' ')[0]) < 0);
+t('no NEW migration has an unterminated DO block', newBad.length === 0, newBad.join(' | '));
 t('  ...across every migration on disk', files.length > 100, files.length + ' files scanned');
+/* Anti-rot: the baseline must keep naming a real occurrence, or it is decoration. */
+t('  ...and b185 is still on record as the one that did',
+  badQuotes.some((b) => b.indexOf('b185_register.sql') === 0));
 
 console.log('\n-- ⚠️ a table created with IF NOT EXISTS may silently skip its constraints --');
 /* ⭐ THE b185 SUBJECT BUG. `CREATE TABLE IF NOT EXISTS x (... REFERENCES y ...)` is a NO-OP when x already
