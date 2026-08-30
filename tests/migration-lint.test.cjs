@@ -104,6 +104,47 @@ t('the skipped foreign key is added separately', /ALTER TABLE register_subject[\
 /* ⚠️ It must not error on a database where a subject already carries an unknown kind — it reports instead. */
 t('  ...and only when nothing would violate it', /NOT EXISTS \([\s\S]{0,300}register_subject s/.test(b186));
 t('it changes nothing that exists', !/\bUPDATE\s+register_|\bDELETE\s+FROM\s+register_/i.test(b186));
+/* ⚠️ THE MISTAKE THIS CATCHES, made 2026-08-30: the first b186 dry run opened with
+   `SELECT count(*) FROM register_attachable` and died with 42P01 on the very question it existed to answer.
+   A script that reports whether a table is usable must read the CATALOG, never the table. */
+const dry = fs.existsSync(path.join(DIR, 'b186_register_seed_dryrun.sql'))
+  ? fs.readFileSync(path.join(DIR, 'b186_register_seed_dryrun.sql'), 'utf8') : '';
+const dryCode = dry.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+t('the dry run reads the catalog, never the table it is checking for',
+  !!dry && !/\bFROM\s+register_/i.test(dryCode));
+t('  ...and still reports rows, schema and privilege',
+  /query_to_xml/.test(dryCode) && /nspname/.test(dryCode) && /has_table_privilege/.test(dryCode));
+/* ⭐ The apply must not create a second copy in public when one already exists in another schema. */
+t('the apply resolves through the search path before creating anything',
+  /to_regclass\('register_attachable'\) IS NULL/.test(b186));
+
+console.log('\n-- ⚠️⚠️ a GRANT to a role that does not exist rolls back the WHOLE migration --');
+/* ⭐⭐ THE ROOT CAUSE OF THE b185 EPISODE. `GRANT ... TO cb_app` raises 42704 — the role does not exist on this
+   database. The Supabase editor runs a script as ONE TRANSACTION, so that single error rolls back everything
+   the file did. The only way past it is to run the file in fragments, and a fragment then goes missing: here it
+   was the INSERT seeding register_attachable, which left the registry empty for a day.
+
+   ⚠️ Isolation never rested on these grants. The register tables are FORCE ROW LEVEL SECURITY, which applies
+   the policy even to the table's owner — the case that matters when the app connects as the owner.
+
+   BASELINED, NOT FIXED: 68 files already carry this and they are the record of what was run. The guard points
+   FORWARD — a NEW migration must wrap the GRANT in a pg_roles check, the way b186 does. */
+const grantFiles = files.filter((f) => {
+  const code = fs.readFileSync(path.join(DIR, f), 'utf8')
+    .split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+  if (!/\bTO\s+cb_app\b/i.test(code)) return false;
+  /* Guarded if the file checks pg_roles anywhere — b186's shape. */
+  return !/pg_roles[\s\S]{0,120}cb_app/i.test(code);
+});
+const ACCEPTED_GRANTS = 50;
+t('no NEW migration grants to cb_app unguarded',
+  grantFiles.length <= ACCEPTED_GRANTS, grantFiles.length + ' unguarded (baseline ' + ACCEPTED_GRANTS + ')');
+/* Anti-rot: if the count drops the baseline should come down with it, or it stops meaning anything. */
+t('  ...and the baseline has not drifted above the truth',
+  grantFiles.length === ACCEPTED_GRANTS, grantFiles.length + ' files');
+t('b186 guards its own grant', /pg_roles[\s\S]{0,120}cb_app/i.test(b186));
+
+
 
 console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
 process.exitCode = fail ? 1 : 0;
