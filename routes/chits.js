@@ -1771,7 +1771,7 @@ router.get('/:chit_id/costs', auth, async (req, res) => {
 
 /** What a register may be attached to. A registry, so a new kind is data. */
 router.get('/register/attachables', auth, async (req, res) => {
-  try { res.json({ attachables: await raida.attachables() }); }
+  try { res.json(await raida.attachables()); }
   catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
 });
 

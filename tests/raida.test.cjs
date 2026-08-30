@@ -160,6 +160,30 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   t('no dispute table is written from this file', !/INTO\s+chit_disputes/i.test(code));
   t('only an id is recorded, and only on an issue', /SET dispute_id/.test(code) && /kind = 'issue'/.test(code));
 
+
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f an empty registry must SAY WHY, never just be empty --');
+  /* ⭐⭐ THE 2026-08-30 BUG. `hasTable` reads information_schema, which hides a table the role holds no privilege
+     on — so "never created" and "created but never GRANTed" both arrived as a bare []. The second is invisible
+     from every other angle: the foreign key INTO this table still held, so a register opened fine while the list
+     of what a register may attach to read as empty. Three causes, three answers. */
+  FULL();
+  ROWS = [{ type_key: 'campaign', label: 'Test campaign', points_at: null }];
+  const okAtt = await raida.attachables();
+  t('a readable registry returns its rows, undegraded', okAtt.attachables.length === 1 && okAtt.degraded === null);
+
+  const raise = (code) => { ROWS = () => { const e = new Error(code); e.code = code; throw e; }; };
+  raise('42P01');
+  t('absent table  \u2192 degraded:absent',  (await raida.attachables()).degraded === 'absent');
+  raise('42501');
+  /* ⚠️ THE ONE THAT LIED. A missing GRANT is not a missing migration and must not read as one. */
+  t('missing GRANT \u2192 degraded:no-grant', (await raida.attachables()).degraded === 'no-grant');
+  ROWS = [];
+  t('present but unseeded \u2192 degraded:empty', (await raida.attachables()).degraded === 'empty');
+  /* Anything else is a real fault and must not be swallowed into a tidy empty list. */
+  raise('08006');
+  const boom = await caught(() => raida.attachables());
+  t('any other error still throws', !!boom && boom.code === '08006');
+
   console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
   process.exitCode = fail ? 1 : 0;
 })();

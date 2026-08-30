@@ -60,7 +60,7 @@ BEGIN
        properly. Renamed too, so the catalogue says one thing. */
     ALTER POLICY chit_line_raida_isolation ON register_entry RENAME TO register_entry_isolation;
   END IF;
-END $;
+END $$;
 
 -- ── ⭐⭐ 2 · WHAT A REGISTER MAY HANG OFF — a registry, so a new kind is data ────────────────────────────────────
 CREATE TABLE IF NOT EXISTS register_attachable (
