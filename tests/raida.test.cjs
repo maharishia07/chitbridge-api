@@ -84,11 +84,11 @@ const flat = () => SQL.map((q) => q.text).join(' | ');
 
   console.log('\n-- the SQL asks the right question --');
   SQL = []; await raida.list('e1', 'c1', 'L1');
-  t('a line read also pulls order-level entries', /line_id = \$3 OR line_id IS NULL/.test(flat()));
+  t('a line read also pulls order-level entries', flat().indexOf('(a.line_id = $3 OR a.line_id IS NULL)') >= 0);
   SQL = []; await raida.list('e1', 'c1', null);
   t('null asks for order-level ONLY', /line_id IS NULL/.test(flat()) && !/line_id = \$/.test(flat()));
   SQL = []; await raida.list('e1', 'c1');
-  t('undefined asks for everything on the chit', !/line_id IS NULL/.test(flat()));
+  t('undefined asks for everything on the chit', !/a.line_id IS NULL/.test(flat()));
 
   console.log('\n-- \u26a0\ufe0f what a phase-0 entry may say --');
   ROWS = [{ raida_id: 'n1', created_at: 'now' }];

@@ -199,6 +199,7 @@
  "POST  /api/channels/:id/revoke  channels.js": 0,
  "DELETE/api/channels/:id  channels.js": 0,
  "GET   /:chit_id/costs  chits.js": 0,
+ "GET   /raida/report  chits.js": 0,
  "GET   /:chit_id/raida  chits.js": 0,
  "POST  /:chit_id/raida/:raida_id/close  chits.js": 0,
  "POST  /:chit_id/raida/:raida_id/dispute  chits.js": 0,

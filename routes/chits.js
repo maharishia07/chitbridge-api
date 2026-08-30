@@ -1763,6 +1763,22 @@ router.get('/:chit_id/costs', auth, async (req, res) => {
 // ⚠️ THE SAME OWNERSHIP CHECK AS COSTS, FOR THE SAME REASON. Without it an id in the URL is enough to file an
 // entry against a stranger's chit — RLS makes the row harmless but it is still a record nobody asked for, sitting
 // under a chit_id its author never held.
+/**
+ * ⭐⭐ THE ROLL-UP — every entry this entity holds, across every chit. Athi, 2026-08-30: *"where will it reflect
+ * as a wholesum across all the chit … so we can see all the open and closed stuff in a single place."*
+ *
+ * ⚠️ DECLARED BEFORE /:chit_id/raida ON PURPOSE. Express matches in order, and 'report' is a perfectly good
+ * :chit_id — put this second and every call to it would be read as a request for the register of a chit named
+ * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
+ */
+router.get('/raida/report', auth, async (req, res) => {
+  try { res.json(await raida.report(entityId(req))); }
+  catch (err) {
+    console.error('Raida report error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
+  }
+});
+
 router.get('/:chit_id/raida', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
