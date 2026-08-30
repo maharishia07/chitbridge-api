@@ -114,7 +114,7 @@ t('  ...read-only, with no WITH CHECK', !/WITH CHECK/i.test(b189app.replace(/--.
 t('  ...and re-runnable', /DROP POLICY IF EXISTS/.test(b189app));
 /* ⭐ The apply must not quietly stand in for the audit — it reports whether anything else is still affected. */
 t('the apply reports whether other tables are still unreadable',
-  /other_tables_still_unreadable/.test(b189app));
+  /STILL UNREADABLE TO THE APP/.test(b189app) && /pg_policy/.test(b189app) && /relrowsecurity/.test(b189app));
 
 console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
 process.exitCode = fail ? 1 : 0;
