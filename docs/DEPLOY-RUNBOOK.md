@@ -37,7 +37,10 @@ Apply with `psql "$DATABASE_URL" -f <file>`. These are additive / NOT VALID, so 
 
 ## 4. Verify on DEV (don't skip — nothing was integration-tested live this session)
 - `TEST_URL=<dev api> node tests/run-tests.js` (needs the server up + `dev_otp`, i.e. NODE_ENV=development).
-- `npx jest` (network.test.js etc. — supertest against `src/app.js`).
+- `npm run test:jest` (`tests/*.spec.js` — supertest against `src/app.js`). ⚠️ Needs a LOCAL Postgres:
+  the suites TRUNCATE cb_* tables, and jest.setup.js refuses a non-local DATABASE_URL. Renamed to `.spec.js`
+  2026-08-30 — jest was matching `*.test.js`, which also matched ~35 standalone node scripts whose
+  `process.exit()` killed the run while jest still exited 0.
 - **Manual smoke:** register/login → compose → send (two-copy) → task act → dispute raise/resolve → co-assist
   push/pull → notifications/bell → **customer storefront order** → **demo path still works** → **💬 assistant +
   "?" on each screen** (incl. new coassists/schema contexts) answer from the library floor.

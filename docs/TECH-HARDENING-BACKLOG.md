@@ -35,7 +35,7 @@ Original finding: the endpoints had **no auth** and took `actingEntityId` from t
 - **Root cause:** the network module was built standalone (own `app.js`/`db`/entity space) with body-authority, never
   integrated with the JWT — the deferred "Track B" `cb_entity ↔ identities` bridge.
 - **Proper fix:** add `auth`; bridge `cb_entity ↔ identities`; derive `actingEntityId` from `req.identity` (verified),
-  not the body; verify the caller's authority over the edge; update `tests/network.test.js` to authenticate.
+  not the body; verify the caller's authority over the edge; update `tests/network.spec.js` to authenticate.
 - **Note:** the frontend Network panel sends minimal bodies (e.g. `netApprove` sends `{}` — no `actingEntityId`),
   so live network ops from the panel may not work end-to-end anyway (wired mostly against demo). Awaiting decision.
 

@@ -36,7 +36,7 @@
     "testTimeout": 30000,
     "testEnvironment": "node",
     "testMatch": [
-      "**/tests/**/*.test.js"
+      "**/tests/**/*.spec.js"
     ],
     "setupFiles": [
       "<rootDir>/jest.setup.js"
