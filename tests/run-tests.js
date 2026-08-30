@@ -376,10 +376,29 @@ async function testConnectionRejected() {
 }
 
 // ── Final results ─────────────────────────────────────────────
-function printResults() {
+/**
+ * ⚠️⚠️ THIS PRINTED "ALL TESTS PASSED" AFTER RUNNING ZERO TESTS, AND THE PROCESS EXITED 0.
+ *
+ * With no server on :3000 the very first `fetch` THROWS (ECONNREFUSED) before testHealth() can even
+ * call fail(), so nothing is ever pushed to state.results. main() caught the error, printed one line,
+ * and fell through to here — where `failed === 0` was the only condition on success. Total 0,
+ * Passed 0, and a green "✅ ALL TESTS PASSED — MVP CONCEPT PROVEN".
+ *
+ * ⚠️ THE EXIT CODE WAS THE WORSE HALF. main() never set one, so `npm test` returned 0 no matter what.
+ * A CI job wired to this would go green on a total outage of the API. Found 2026-08-29 while sweeping
+ * the suite; the harness had been reporting success on nothing for as long as it has existed.
+ *
+ * ⭐ A suite that ran nothing has PROVEN nothing. Three things now fail: any failed assertion, an
+ * abort, and an empty result set.
+ *
+ * @param {string|null} aborted  the message that stopped the run, if it stopped
+ * @returns {boolean} whether this run may be called a pass
+ */
+function printResults(aborted) {
   const passed = state.results.filter(r => r.passed).length;
   const failed = state.results.filter(r => !r.passed).length;
   const total = state.results.length;
+  const ok = failed === 0 && total > 0 && !aborted;
 
   console.log(`\n${C.bold}${'═'.repeat(50)}${C.reset}`);
   console.log(`${C.bold}  TEST RESULTS${C.reset}`);
@@ -395,20 +414,24 @@ function printResults() {
   }
   console.log(`${'═'.repeat(50)}`);
 
-  if (failed === 0) {
-    console.log(`\n${C.green}${C.bold}  ✅ ALL TESTS PASSED — MVP CONCEPT PROVEN${C.reset}`);
-    console.log(`\n  Three entities registered`);
-    console.log(`  Entity A connected to B and C`);
-    console.log(`  A sent chit to B and C`);
-    console.log(`  B accepted — C rejected`);
-    console.log(`  A sees both statuses`);
-    console.log(`  Full state log recorded`);
-    console.log(`  Platform enforces state rules`);
-    console.log(`\n  ${C.cyan}Share the Railway URL with your father${C.reset}`);
-    console.log(`  ${C.cyan}He will run the test dashboard from Claude.ai${C.reset}\n`);
+  /**
+   * ⚠️ THE CELEBRATION USED TO LIST SEVEN OUTCOMES — "Three entities registered", "A sent chit to
+   * B and C" — as literal strings, printed whether or not any of them had been checked. On the empty
+   * run it asserted all seven against zero evidence. A summary may only report what it counted.
+   */
+  if (aborted) {
+    console.log(`\n${C.red}${C.bold}  ❌ RUN ABORTED — ${aborted}${C.reset}`);
+    console.log(`  ${C.yellow}${total} assertion(s) had run when it stopped. Nothing after that point was checked.${C.reset}\n`);
+  } else if (total === 0) {
+    console.log(`\n${C.red}${C.bold}  ❌ NO TESTS RAN${C.reset}`);
+    console.log(`  ${C.yellow}A suite that ran nothing has proven nothing. Is the server up at ${BASE_URL}?${C.reset}\n`);
+  } else if (failed === 0) {
+    console.log(`\n${C.green}${C.bold}  ✅ ${passed} ASSERTION(S) PASSED${C.reset}`);
+    console.log(`  ${C.cyan}Server: ${BASE_URL}${C.reset}\n`);
   } else {
-    console.log(`\n${C.red}${C.bold}  ❌ SOME TESTS FAILED — See above${C.reset}\n`);
+    console.log(`\n${C.red}${C.bold}  ❌ ${failed} OF ${total} FAILED — see above${C.reset}\n`);
   }
+  return ok;
 }
 
 // ── Entity + KEY (actor provisioning) ─────────────────────────
@@ -482,6 +505,7 @@ async function testCatalogueFace() {
 
 // ── Main ──────────────────────────────────────────────────────
 async function main() {
+  let aborted = null;
   console.log(`\n${C.bold}${C.cyan}
 ╔══════════════════════════════════════════════════╗
 ║    CHIT AND BRIDGE MVP — TEST HARNESS v1.0       ║
@@ -503,10 +527,24 @@ async function main() {
     await testInvalidTransition();
     await testConnectionRejected();
   } catch (err) {
-    console.log(`\n${C.red}Test suite stopped: ${err.message}${C.reset}`);
+    aborted = (err && err.message) || String(err);
+    console.log(`\n${C.red}Test suite stopped: ${aborted}${C.reset}`);
   }
 
-  printResults();
+  /**
+   * ⚠️⚠️ THE EXIT CODE. main() used to set none at all, so `npm test` returned 0 whatever
+   * happened — a CI job wired to this would have gone green through a total outage of the API. That
+   * is worse than the wrong words on screen, because nobody reads a passing build.
+   *
+   * ⚠️ process.exitCode, NOT process.exit(). process.exit() can truncate stdout that has not
+   * flushed, which on a failing run throws away the very output someone needs. Setting the code lets
+   * the process end on its own with everything printed.
+   */
+  process.exitCode = printResults(aborted) ? 0 : 1;
 }
 
-main();
+/* Requiring this file must not run the suite — tests/run-tests-exit.test.cjs asks printResults()
+   directly for its verdict in each of the four states. */
+if (require.main === module) main();
+
+module.exports = { printResults, state };
