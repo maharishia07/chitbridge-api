@@ -60,6 +60,17 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
 const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
   'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
+  /**
+   * INFRA FOR NOW, AND THE "for now" IS THE POINT. Phase 0 of the register (b182) is an append-only note
+   * table: six kinds, a body, and a closing row. It holds no rule and decides nothing, so it is replaceable
+   * without changing what CB is — which is the infra test.
+   *
+   * It moves to ENGINE the day it starts GOVERNING rather than recording: when entries are DERIVED from the
+   * fit-gap verdicts, or when a shared entry replicates to the counterparty. Both are designed and neither is
+   * built. Classifying it engine today would lock a file that is expected to grow, and the engine lock means
+   * default-no-change.
+   */
+  'raida.js',
   'vaultcrypto.js', 'retention.js',
   /**
    * ⚠️⚠️ THIRTY-ONE FILES HAD DRIFTED OUT OF EVERY BUCKET, which is this test failing at the thing it exists

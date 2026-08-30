@@ -18,6 +18,7 @@ const assign = require('../lib/assign');
 const policy = require('../lib/policy');   // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
 const deliverline = require('../lib/deliverline');
 const cost = require('../lib/cost');
+const raida = require('../lib/raida');   // b182 — the register on a line
 const reprice = require('../lib/reprice'); // pull catalogue prices onto a chit — as AMENDMENTS, never a silent edit // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch');  // ⚠️ THE one matcher — same resolution the raise path used
 
@@ -1753,6 +1754,75 @@ router.get('/:chit_id/costs', auth, async (req, res) => {
   }
 });
 
+
+// ═══ b182 · THE REGISTER ON A LINE — risks, assumptions, issues, dependencies, actions, decisions ══════════════
+//
+// Design: C:\dev\DESIGN-raida-and-cover.md. Phase 0 records facts and nothing else — no owner, no due date, no
+// derivation. State is COMPUTED (open = nothing closes it), so there is no status field to drift.
+//
+// ⚠️ THE SAME OWNERSHIP CHECK AS COSTS, FOR THE SAME REASON. Without it an id in the URL is enough to file an
+// entry against a stranger's chit — RLS makes the row harmless but it is still a record nobody asked for, sitting
+// under a chit_id its author never held.
+router.get('/:chit_id/raida', auth, async (req, res) => {
+  try {
+    const entity_id = entityId(req);
+    /* line_id absent = the whole chit; a uuid = that line PLUS the order-level entries it inherits. */
+    const line_id = req.query.line_id ? String(req.query.line_id) : undefined;
+    res.json(await raida.list(entity_id, req.params.chit_id, line_id));
+  } catch (err) {
+    console.error('Raida read error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
+  }
+});
+
+router.post('/:chit_id/raida', auth, async (req, res) => {
+  try {
+    const entity_id = entityId(req);
+    const chit_id = req.params.chit_id;
+    /* ⭐ ONE TRANSACTION. The ownership check and the insert share it — a second withEntity would pay
+       BEGIN + set_config + COMMIT again to learn what this one already knows. */
+    const out = await withEntity(entity_id, async (db) => {
+      const mine = await db.query(
+        `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      if (!mine.rows.length) { const e = new Error('Chit not found or you do not have access'); e.status = 404; throw e; }
+      return raida.add(entity_id, chit_id, {
+        kind: req.body.kind, body: req.body.body, line_id: req.body.line_id,
+        visibility: req.body.visibility, by_name: req.identity.display_name, db });
+    });
+    res.json(out);
+  } catch (err) {
+    console.error('Raida add error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to record it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
+/* ⭐ CLOSING IS A POST, NOT A DELETE OR A PATCH, and the verb is the design. A close APPENDS the row that
+   closes — it carries who ended it and why, because "we booked the slot" and "the customer withdrew it" are
+   different endings and a flag cannot tell them apart. */
+router.post('/:chit_id/raida/:raida_id/close', auth, async (req, res) => {
+  try {
+    res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id,
+      { body: req.body.body, by_name: req.identity.display_name }));
+  } catch (err) {
+    console.error('Raida close error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to close it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
+
+/**
+ * ⭐⭐ RAISING THE DISPUTE IS NOT DONE HERE — Athi, 2026-08-30: *"if they want to link it as dispute there
+ * should be a facility to raise it as a dispute, just call the dispute here."* The caller raises it the ONE way
+ * disputes are raised, then posts the id back so the register can say it was escalated. Reimplementing any part
+ * of that lifecycle here would be a second answer to a question that already has one.
+ */
+router.post('/:chit_id/raida/:raida_id/dispute', auth, async (req, res) => {
+  try {
+    res.json(await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id));
+  } catch (err) {
+    console.error('Raida dispute link error:', err.message);
+    res.status(err.status || 500).json({ error: 'Failed to link the dispute', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  }
+});
 // ═══ b144 · PER-LINE DELIVERY — the SHARED half ════════════════════════════════════════════════════════════════
 //
 // POST body: { rows: [{ line_id, quantity, unit, reference, note }] }
