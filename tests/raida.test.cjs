@@ -136,7 +136,10 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   /* ⚠️ COPIED, NOT JOINED. Reading standards THROUGH the template would let editing it silently rewrite what an
      audit was told last year — the same per-copy discipline as every other record here. */
   t('its standards are written onto the instance', /INSERT INTO register_entry_standard/.test(flat()));
-  t('  ...carrying the clause, not just the standard', SQL.some((q) => (q.args || []).indexOf('8.4') >= 0));
+  /* ⚠️ The clause travels inside an ARRAY now — the mappings are batched through unnest() rather than
+     inserted one at a time, after query-shape.test.js caught the N+1. Flattened before looking. */
+  const argsFlat = SQL.reduce(function(a, q2){ return a.concat([].concat.apply([], (q2.args||[]))); }, []);
+  t('  ...carrying the clause, not just the standard', argsFlat.indexOf('8.4') >= 0);
 
   console.log('\n-- \u26a0\ufe0f phase 0 still answers exactly as it did --');
   PHASE0();
