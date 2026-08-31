@@ -269,6 +269,40 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   t('  ...but never subject_id or entity_id from the body',
     !/subject_id: req\.body|entity_id: req\.body/.test(addRoute));
 
+
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f a revision must not rename the entry --');
+  /* ⭐⭐ THE BUG: the revision row forced body to '(revised)', and reads fold the latest revision over the
+     original — so revising an OWNER renamed the entry to "(revised)" and the description was gone from every
+     view. Found by REG-09 on 2026-08-31; it would have destroyed descriptions in production. */
+  FULL(); COLS = new Set(['response']);
+  SQL = [];
+  ROWS = (sqlText) => {
+    if (/SELECT chit_id, line_id, subject_id, kind, closes_id, body/.test(sqlText)) {
+      return [{ chit_id: 'c1', line_id: 'L1', subject_id: 'S1', kind: 'risk', closes_id: null,
+                body: 'Coolant pump spares are single-sourced' }];
+    }
+    if (/closes_id = \$2/.test(sqlText)) return [];          // not closed
+    return [{ raida_id: 'rev1', created_at: 'now' }];
+  };
+  const rev = await raida.revise('e1', 'r1', { owner_name: 'Priya' });
+  t('revising one field is accepted', rev.revised === 'r1' && rev.changed.join(',') === 'owner_name');
+  const revIns = SQL.filter((q) => /INSERT INTO register_entry/.test(q.text)).pop();
+  t('  ...and the row carries the ORIGINAL body, not a placeholder',
+    !!revIns && revIns.args.indexOf('Coolant pump spares are single-sourced') >= 0);
+  t('  ...never the string (revised)', !!revIns && revIns.args.indexOf('(revised)') < 0);
+  /* ⚠️ The body IS revisable — it just must not be overwritten when it is not what changed. */
+  SQL = [];
+  await raida.revise('e1', 'r1', { body: 'Reworded properly' });
+  const revIns2 = SQL.filter((q) => /INSERT INTO register_entry/.test(q.text)).pop();
+  t('a deliberate body change still lands', !!revIns2 && revIns2.args.indexOf('Reworded properly') >= 0);
+  /* ⭐ And the response is revisable once b192 has run — settable once and never changeable would be the wrong
+     half, since a register is where a decision gets revisited. */
+  const badRev = await caught(() => raida.revise('e1', 'r1', { response: 'mitigate' }));
+  t('an unknown response is refused on revise too', !!badRev && badRev.status === 400);
+  SQL = [];
+  await raida.revise('e1', 'r1', { response: 'transfer' });
+  t('a valid response revision lands', /response/.test(SQL.map((q) => q.text).join(' ')));
+
   console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
   process.exitCode = fail ? 1 : 0;
 })();
