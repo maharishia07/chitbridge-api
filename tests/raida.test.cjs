@@ -14,7 +14,7 @@
  */
 const API = 'C:/dev/chitbridge-api';
 
-let ROWS = [], SQL = [], TABLES = new Set();
+let ROWS = [], SQL = [], TABLES = new Set(), COLS = new Set();
 const fakeDb = {
   query: async (text, args) => {
     SQL.push({ text: String(text).replace(/\s+/g, ' ').trim(), args });
@@ -29,7 +29,10 @@ require.cache[require.resolve(API + '/db')] = { exports: {
 /* ⭐ Per-table, so both schemas can be driven from one file. A blanket `true` is what made the first version of
    this test claim the full capability on a phase-0 database. */
 require.cache[require.resolve(API + '/lib/schema')] = { exports: {
-  hasTable: async (t) => TABLES.has(t), hasColumn: async () => true, hasColumns: async () => ({}), _reset() {},
+  hasTable: async (t) => TABLES.has(t),
+  /* ⭐ PER-COLUMN, for the same reason hasTable is per-table: b192 adds a column to an existing table, so a
+     blanket true would claim it on a database that has never run it. */
+  hasColumn: async (tbl, col) => COLS.has(col), hasColumns: async () => ({}), _reset() {},
 } };
 const raida = require(API + '/lib/raida');
 
@@ -216,6 +219,55 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   t('a standalone register can be written to',
     /router\.post\('\/register\/subjects\/:subject_id\/entries'/.test(routes));
   t('  ...and its entries can be ended', /router\.post\('\/register\/entries\/:raida_id\/close'/.test(routes));
+
+
+  console.log('\n-- \u2b50\u2b50 the four T\u0027s, and the gap before b192 runs --');
+  /* ⚠️⚠️ b192 adds a COLUMN to a table that already exists, so no table probe can tell whether it has run.
+     Naming `response` before it does is a 42703 — which throws the WHOLE query rather than returning nothing,
+     and that is exactly how a register goes blank in production. */
+  FULL();                                     // b185 present, b192 NOT (hasColumn is mocked false below)
+  COLS = new Set();
+  let sh2 = await raida.shape();
+  t('b185 without b192: full, but no response column', sh2.full === true && sh2.resp === false);
+
+  SQL = []; ROWS = (sqlText) => (/FROM register_subject/.test(sqlText) ? [{ subject_id: 'S1', closed_at: null }]
+                                : [{ raida_id: 'n1', created_at: 'now' }]);
+  await raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'treat' });
+  /* The whole point: the column is not NAMED, and the value is dropped rather than crashing the insert. */
+  t('  ...and the insert does not name it', !/response/.test(flat()));
+  t('  ...nor sends a 24th parameter', SQL.every((q) => !(q.args && q.args.length === 24)));
+
+  COLS = new Set(['response']);
+  sh2 = await raida.shape();
+  t('with b192: the column is seen', sh2.resp === true);
+  SQL = [];
+  await raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'transfer' });
+  const ins = SQL.filter((q) => /INSERT INTO register_entry/.test(q.text)).pop();
+  t('  ...the insert names it', !!ins && /, response\)/.test(ins.text));
+  /* ⭐ APPENDED, never interleaved — a value in the wrong position is a silent data swap, not an error. */
+  t('  ...and its value is LAST, not interleaved',
+    !!ins && ins.args[ins.args.length - 1] === 'transfer', ins && String(ins.args.length) + ' args');
+
+  /* ⚠️ A closed list, because the column exists to be GROUPED on. Free text would defeat the point. */
+  const badResp = await caught(() => raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'mitigate' }));
+  t('an unknown response is refused', !!badResp && badResp.status === 400, badResp && badResp.message);
+  t('  ...and the message lists the four', !!badResp && /tolerate[\s\S]*terminate/.test(badResp.message));
+  t('the four are exactly PRINCE2\u0027s', raida.RESPONSES.join(',') === 'tolerate,treat,transfer,terminate');
+  /* ⚠️ The opportunity set is deliberately NOT folded in — sharing an upside and transferring a downside are
+     opposite decisions, and one column holding both lets a report count them together. */
+  t('  ...with no opportunity verbs mixed in',
+    !/exploit|enhance|reject/.test(raida.RESPONSES.join(',')));
+
+  console.log('\n-- \u26a0\ufe0f a line card raises a WHOLE entry, not four fields --');
+  /* It forwarded kind · body · line_id · visibility and nothing else, so a risk raised from a line arrived with
+     every column that makes a register useful left empty. */
+  const rt = require('fs').readFileSync(API + '/routes/chits.js', 'utf8');
+  const addRoute = rt.slice(rt.indexOf("router.post('/:chit_id/raida'"), rt.indexOf("router.post('/:chit_id/raida/:raida_id/close'"));
+  ['likelihood', 'severity', 'treatment', 'verification_method', 'response', 'owner_name', 'due_date']
+    .forEach((f) => t('  the line card can send ' + f, new RegExp(f + ': req\.body\.' + f).test(addRoute)));
+  /* ⚠️ And the ids it must NOT take from the body — the route proved ownership, the caller did not. */
+  t('  ...but never subject_id or entity_id from the body',
+    !/subject_id: req\.body|entity_id: req\.body/.test(addRoute));
 
   console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
   process.exitCode = fail ? 1 : 0;

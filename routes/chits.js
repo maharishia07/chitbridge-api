@@ -1936,9 +1936,26 @@ router.post('/:chit_id/raida', auth, async (req, res) => {
       const mine = await db.query(
         `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (!mine.rows.length) { const e = new Error('Chit not found or you do not have access'); e.status = 404; throw e; }
+      /**
+       * ⚠️⚠️ THE WHOLE ENTRY, NOT FOUR FIELDS. This forwarded kind · body · line_id · visibility and nothing
+       * else, so a risk raised from a line card could never carry a rating, an owner, a treatment or a
+       * response — it arrived in the register with every column that makes a register useful left empty, and
+       * the only way to fill them was to raise it again somewhere else.
+       *
+       * ⚠️ A WHITELIST, NOT A SPREAD. `subject_id`, `chit_id` and `entity_id` are decided HERE, by the route
+       * that just proved ownership; letting the body carry them would let a caller file a finding against
+       * somebody else's order.
+       */
       return raida.add(entity_id, chit_id, {
         kind: req.body.kind, body: req.body.body, line_id: req.body.line_id,
-        visibility: req.body.visibility, by_name: req.identity.display_name, db });
+        visibility: req.body.visibility,
+        owner_name: req.body.owner_name, due_date: req.body.due_date, review_date: req.body.review_date,
+        likelihood: req.body.likelihood, severity: req.body.severity,
+        treatment: req.body.treatment, verification_method: req.body.verification_method,
+        response: req.body.response, template_id: req.body.template_id,
+        rel_type: req.body.rel_type, to_type: req.body.to_type, to_id: req.body.to_id,
+        to_label: req.body.to_label, needed_by: req.body.needed_by,
+        by_name: req.identity.display_name, db });
     });
     res.json(out);
   } catch (err) {
