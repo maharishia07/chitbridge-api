@@ -785,7 +785,11 @@ router.put('/:id/status', auth, [ body('status').isString() ], validate, async (
     if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
     const d = r.rows[0].item_data || {};
     res.json({ message: 'Status updated', status: itemstatus.statusOf(d), reads_as: itemstatus.explain(d),
-      matchable: itemstatus.isMatchable(d), item_id: r.rows[0].item_id,
+      /* ⚠️ BOTH, because `matchable: true` ALONE READS AS "still on sale" — and it is returned to the owner at
+         the exact moment they marked something out of stock, which is the worst place to be ambiguous.
+         `matchable` answers "will the message matcher still resolve this" (yes, deliberately); `offerable`
+         answers "may a customer take one now" (no). See lib/itemstatus.js. */
+      matchable: itemstatus.isMatchable(d), offerable: itemstatus.isOfferable(d), item_id: r.rows[0].item_id,
       /* The schema.org/ItemAvailability equivalent, returned so an integrator never has to learn our four words. */
       schema_org: d.status_schema_org || itemstatus.SCHEMA_ORG[itemstatus.statusOf(d)] });
   } catch (e) {

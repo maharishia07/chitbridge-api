@@ -121,15 +121,27 @@ t('availability is offered on the same ticked bar', /data-testid="cat-availabili
 
 console.log('\n-- ⭐⭐ an unavailable product is not shown AND cannot be ordered --');
 /* Athi, 2026-09-01: "if stock unavailable is set, then it should not appear at all for the customer to select.
-   It is a temp retirement." */
+   It is a temp retirement."
+
+   ⚠️⚠️ THESE THREE ASSERTIONS PASSED WHILE THE FEATURE WAS BROKEN, and that is worth more than the fix.
+   They checked that the gate CALLS `isMatchable` — and `MATCHABLE` deliberately includes `unavailable`, so the
+   storefront went on listing out-of-stock products and the tests went on agreeing. A test that pins the NAME OF
+   THE FUNCTION CALLED cannot tell you the function was the wrong one; it just freezes the author's belief.
+   Written against `isOfferable` now, and the behavioural half lives in tests/offerable.test.cjs, which asserts
+   what the two predicates ANSWER rather than which one appears in the source. */
 const view = fs.readFileSync(API + '/lib/catalogue-view.js', 'utf8');
 const viewCode = view.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-t('the storefront filters its own items by availability', /itemstatus\.isMatchable/.test(viewCode));
+t('the storefront filters its own items by availability', /itemstatus\.isOfferable/.test(viewCode));
+t('  ...and NOT by isMatchable, which keeps unavailable on purpose', !/itemstatus\.isMatchable/.test(viewCode));
 /* ⚠️ HIDDEN AND COUNTED, the same shape as unpriced_hidden — "where did my items go" needs an answer on the
    screen that caused it. */
 t('  ...and the owner is told how many are hidden', /unavailable_hidden/.test(viewCode));
 t('  ...named apart from unpriced_hidden', /unpriced_hidden/.test(viewCode)
   && viewCode.indexOf('unavailable_hidden') !== viewCode.indexOf('unpriced_hidden'));
+/* ⭐ The opt-in: a counted zero may hide, for a business that keeps counts. Off by default, and it HIDES rather
+   than stamping a status — so the product returns the instant the count does. */
+t('  ...and a counted zero can hide too, when the owner asks', /qty_zero_hidden/.test(viewCode)
+  && /countedZero/.test(viewCode));
 
 const catr = fs.readFileSync(API + '/routes/catalogue.js', 'utf8');
 const catrCode = catr.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -137,10 +149,12 @@ const reprice = catrCode.slice(catrCode.indexOf('async function repriceAgainstCa
                                catrCode.indexOf('async function repriceAgainstCatalogue') + 2500);
 /* ⚠️ HIDING IT FROM THE LIST IS NOT ENOUGH — this path prices by item_id or by name, and both are reachable
    from an open tab, a bookmark or a repeat order. */
-t('the order path skips an unavailable item', /isMatchable\(d\)/.test(reprice));
-t('  ...so it never enters the price maps', /if \(!itemstatus\.isMatchable\(d\)\) continue;/.test(reprice));
+t('the order path skips an unavailable item', /isOfferable\(d\)/.test(reprice));
+t('  ...so it never enters the price maps', /if \(!itemstatus\.isOfferable\(d\)\) continue;/.test(reprice));
 
-/* ⚠️ isMatchable existed and ONE caller used it — the message matcher. That is the whole finding. */
+/* ⚠️ AND THE MATCHER KEEPS isMatchable. Its behaviour is correct and load-bearing: an out-of-stock tomato named
+   in a message must still resolve, or the request comes back "no catalogue match" — indistinguishable from a
+   product nobody sells — and silently loses the line. Two questions, two predicates. */
 const matchers = (fs.readFileSync(API + '/lib/itemmatch.js', 'utf8').match(/isMatchable/g) || []).length;
 t('the message matcher still honours it too', matchers > 0);
 

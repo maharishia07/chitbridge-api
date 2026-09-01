@@ -193,7 +193,10 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
      * ⚠️ SKIPPED, NOT PRICED AT ZERO. It never enters the maps, so the existing "not in this catalogue" refusal
      * answers — one rejection path, not a second one that has to be kept in step with it.
      */
-    if (!itemstatus.isMatchable(d)) continue;
+    /* ⚠️ isOfferable, NOT isMatchable. This is the CUSTOMER's order path, so "out of stock" must refuse here as
+       well as hide from the list — MATCHABLE includes `unavailable` for the matcher's sake and would have let a
+       bookmarked link buy one. */
+    if (!itemstatus.isOfferable(d)) continue;
     // null/undefined/'' price = NOT SET -> NaN (rejected below). A deliberate 0 stays a valid price.
     // TOLERANT READ: accepts a legacy bare number AND a stamped { amount, currency }, so rows migrated by
     // scripts/money-3-apply.sql and rows not yet migrated both work. This must stay tolerant until every price
