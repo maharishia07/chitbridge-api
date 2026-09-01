@@ -477,6 +477,38 @@ router.post('/build', auth, async (req, res) => {
             reason: `"${u.name}" was not changed — you did not create that store.` });
           continue;
         }
+        /**
+         * ⭐⭐ AND THE SAME ANSWER ON THE SCHEMA — the second half of the publish act, which this route was
+         * missing. There are two visibility fields and the storefront reads the OTHER one:
+         *   · `identities.catalogue_visibility` — the publish act, written above, and the b114 gate
+         *   · `entity_schemas.visibility`       — what buildPublicView requires, and what the b49 RLS policy on
+         *                                         catalogue_items keys off with no tenant context
+         *
+         * ⚠️ PATCH /profile has mirrored these since 2026-08-18. THIS ROUTE NEVER DID, so flipping a store to
+         * public from the Network builder left its schema private and the store went on hiding every product it
+         * owned — serving its ADOPTED catalogue to the world while its own shelf stayed dark, with no error.
+         * b193 measured it live on 2026-09-01: 129 of 182 public shops mis-aligned, and the affected list is
+         * full of Cascade / Depot / Outlet / North — the names this route mints.
+         *
+         * ⭐ schemaVisibilityFor, not a third copy of the rule. Two places deciding this differently is the bug
+         * one layer down, and writing the expression out again here would have been the same mistake a third
+         * time. Only when the visibility actually moved: `nextVis` is null when this node changed for some
+         * other reason, and a null must leave the schema alone exactly as the COALESCE above leaves the column.
+         */
+        if (nextVis) {
+          const { schemaVisibilityFor } = require('../lib/schema-bootstrap');
+          try {
+            await db.query(
+              `UPDATE entity_schemas SET visibility = $1
+                WHERE entity_id = (SELECT identity_id FROM identities WHERE bridge_id = $2)
+                  AND status = 'active' AND is_default = true`,
+              [schemaVisibilityFor(nextVis), u.bridge_id]);
+          } catch (e) {
+            /* A store with no default schema yet is not an error — ensureDefaultSchema bootstraps one at first
+               sign-in and reads catalogue_visibility when it does, which is the path that already works. */
+            if (!(e && (e.code === '42703' || e.code === '42P01'))) throw e;
+          }
+        }
         updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to, purpose: u.purpose, order: u.order, place: u.place });
       }
 
