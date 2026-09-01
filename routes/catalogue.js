@@ -89,6 +89,7 @@ const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
 // a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
 // it extends to quantity, delivery date, spec, incoterm without another migration.
 const orderInput = require('../lib/order-input');
+const itemstatus = require('../lib/itemstatus');
 const catalogueView = require('../lib/catalogue-view');   // ONE catalogue read, shared with the B2B/supplier view
 const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const MAX_FORMS_PER_SUBMISSION = 5;   // one purpose, several forms (an export bundle, a loan pack) — but bounded
@@ -181,6 +182,18 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   const byId = new Map(), byName = new Map(), nameCount = new Map();   // F6: nameCount flags ambiguous names
   for (const row of cat.rows) {
     const d = row.item_data || {};
+    /**
+     * ⭐⭐ AN UNAVAILABLE ITEM CANNOT BE ORDERED, not merely hidden from the list.
+     *
+     * ⚠️ HIDING IT FROM THE STOREFRONT IS NOT ENOUGH. This path prices an order by item_id or by name, and both
+     * are reachable by a caller who already holds them — an open tab from before it went out of stock, a
+     * bookmarked link, a repeat order. Filtering only the browse list would mean the product disappeared from
+     * view and could still be bought, which is the worst of both.
+     *
+     * ⚠️ SKIPPED, NOT PRICED AT ZERO. It never enters the maps, so the existing "not in this catalogue" refusal
+     * answers — one rejection path, not a second one that has to be kept in step with it.
+     */
+    if (!itemstatus.isMatchable(d)) continue;
     // null/undefined/'' price = NOT SET -> NaN (rejected below). A deliberate 0 stays a valid price.
     // TOLERANT READ: accepts a legacy bare number AND a stamped { amount, currency }, so rows migrated by
     // scripts/money-3-apply.sql and rows not yet migrated both work. This must stay tolerant until every price

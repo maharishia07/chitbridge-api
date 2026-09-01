@@ -118,5 +118,31 @@ t('  ...attach is still additive, removal still explicit',
   /cur\.indexOf\(c\)\s*<\s*0/.test(cat) && /!B\.remove\.has\(c\)/.test(cat));
 t('availability is offered on the same ticked bar', /data-testid="cat-availability"/.test(web2));
 
+
+console.log('\n-- ⭐⭐ an unavailable product is not shown AND cannot be ordered --');
+/* Athi, 2026-09-01: "if stock unavailable is set, then it should not appear at all for the customer to select.
+   It is a temp retirement." */
+const view = fs.readFileSync(API + '/lib/catalogue-view.js', 'utf8');
+const viewCode = view.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+t('the storefront filters its own items by availability', /itemstatus\.isMatchable/.test(viewCode));
+/* ⚠️ HIDDEN AND COUNTED, the same shape as unpriced_hidden — "where did my items go" needs an answer on the
+   screen that caused it. */
+t('  ...and the owner is told how many are hidden', /unavailable_hidden/.test(viewCode));
+t('  ...named apart from unpriced_hidden', /unpriced_hidden/.test(viewCode)
+  && viewCode.indexOf('unavailable_hidden') !== viewCode.indexOf('unpriced_hidden'));
+
+const catr = fs.readFileSync(API + '/routes/catalogue.js', 'utf8');
+const catrCode = catr.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+const reprice = catrCode.slice(catrCode.indexOf('async function repriceAgainstCatalogue'),
+                               catrCode.indexOf('async function repriceAgainstCatalogue') + 2500);
+/* ⚠️ HIDING IT FROM THE LIST IS NOT ENOUGH — this path prices by item_id or by name, and both are reachable
+   from an open tab, a bookmark or a repeat order. */
+t('the order path skips an unavailable item', /isMatchable\(d\)/.test(reprice));
+t('  ...so it never enters the price maps', /if \(!itemstatus\.isMatchable\(d\)\) continue;/.test(reprice));
+
+/* ⚠️ isMatchable existed and ONE caller used it — the message matcher. That is the whole finding. */
+const matchers = (fs.readFileSync(API + '/lib/itemmatch.js', 'utf8').match(/isMatchable/g) || []).length;
+t('the message matcher still honours it too', matchers > 0);
+
 console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
 process.exitCode = fail ? 1 : 0;
