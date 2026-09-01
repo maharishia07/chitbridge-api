@@ -152,6 +152,76 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
   } catch (e) { fail(res, e, 'Add failed'); }
 });
 
+/**
+ * ⭐⭐ MANY PRODUCTS, ONE ROUND TRIP — Athi, 2026-09-01: *"assigning a category to a set of products, why it
+ * takes loads of time, are you going round trip for each product? can you gather all information at once for
+ * the products selected and update instead of making a round trip."*
+ *
+ * He was right. The catalogue wizard posted to `POST /api/products` once per item, STRICTLY SEQUENTIALLY —
+ * each waiting for the one before. At the measured ~500 ms floor for an authed round trip, forty items is
+ * twenty seconds of watching a toast.
+ *
+ * ⭐ What actually cost the time was not the inserts. Per item it paid: a schema lookup, a currency lookup, a
+ * validation, a BEGIN, a set_config, an INSERT and a COMMIT. The schema and the currency are the SAME for every
+ * item in the request, and the transaction can hold all of them — so this resolves each once and inserts the
+ * lot in a single statement.
+ *
+ * ⚠️ VALIDATE EVERY ITEM BEFORE WRITING ANY. The sequential version tolerated per-item failure by skipping it,
+ * which meant a typo in item 30 left 29 products created and no clear record of what went missing. All-or-
+ * nothing with the failing INDEXES named is the honest trade: nothing is half-done, and the caller is told
+ * exactly which rows to fix.
+ *
+ * ⚠️ CAPPED. A request is not a migration; 200 is far above any real catalogue paste and keeps one caller from
+ * holding a transaction open over thousands of rows.
+ */
+const BULK_MAX = 200;
+
+router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const items = req.body.items;
+    if (items.length > BULK_MAX) {
+      return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
+    }
+    if (!items.every((it) => it && typeof it === 'object' && !Array.isArray(it))) {
+      return res.status(400).json({ error: 'Invalid product', message: 'Every item must be an object.' });
+    }
+
+    /* Resolved ONCE for the whole request — this is most of what the per-item version was paying for. */
+    const schema_id = await defaultSchemaId(entity_id);
+    const currency = await regional.currencyFor(entity_id);
+
+    const bad = [];
+    for (let i = 0; i < items.length; i++) {
+      const verr = await validateItem(schema_id, items[i]);
+      if (verr) bad.push({ index: i, message: verr });
+    }
+    if (bad.length) {
+      return res.status(400).json({ error: 'Invalid product',
+        message: bad.length + ' item(s) were refused and nothing was written.', invalid: bad });
+    }
+
+    /* STAMP after validation, on the raw shape, so the schema still sees the number a person typed. */
+    const stamped = items.map((it) => JSON.stringify(money.stampItem(it, currency)));
+
+    const r = await withEntity(entity_id, (db) => db.query(
+      `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
+       SELECT $1, $2, x FROM unnest($3::jsonb[]) AS x
+       RETURNING *`,
+      [entity_id, schema_id, stamped]));
+
+    /* ⭐ Metered after the write, best-effort, never blocking — one event per item, same as the single add. */
+    try {
+      const meter = require('../lib/meter').meter;
+      for (const row of r.rows) {
+        meter(entity_id, 'catalogue.item', { detail: row.item_id, rid: req.id }).catch(() => {});
+      }
+    } catch (_) {}
+
+    res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows });
+  } catch (e) { fail(res, e, 'Bulk add failed'); }
+});
+
 // READ + SEARCH — list my products, optional ?q=
 router.get('/', auth, async (req, res) => {
   try {
