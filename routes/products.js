@@ -222,6 +222,125 @@ router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, asyn
   } catch (e) { fail(res, e, 'Bulk add failed'); }
 });
 
+/**
+ * ⭐⭐ AVAILABILITY FOR A SET OF PRODUCTS, IN ONE ROUND TRIP.
+ *
+ * Athi, 2026-09-01: *"in catalogue, I couldn't set the status of the product available / unavailable by
+ * selecting the product(s). this is very important feature."*
+ *
+ * The single-item route has existed since the status model was built; there was no way to reach it for more
+ * than one product, and the control that did exist was buried inside the all-fields modal. Same shape as
+ * /bulk: resolve nothing per item that is the same for all of them, and write the lot in one statement.
+ *
+ * ⚠️ AVAILABLE AND UNAVAILABLE ONLY. `retired` and `redundant` are lifecycle decisions that carry a per-item
+ * argument — what replaced it, until when — and a bulk form cannot ask that forty times. Offering them here
+ * would collect one answer and stamp it on rows it was never about.
+ *
+ * ⚠️ ONE STAMP FOR THE WHOLE SET. itemstatus.stamp() records who set it and when; every row in a bulk change
+ * genuinely was one decision by one person at one moment, so sharing the stamp is the honest record, not a
+ * shortcut.
+ */
+const BULK_STATUS = ['available', 'unavailable'];
+
+router.post('/status/bulk', auth,
+  [ body('ids').isArray({ min: 1 }), body('status').isString() ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const ids = req.body.ids;
+    if (ids.length > BULK_MAX) {
+      return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
+    }
+    if (!ids.every((x) => typeof x === 'string' && x)) {
+      return res.status(400).json({ error: 'Bad ids', message: 'Every id must be a string.' });
+    }
+    if (BULK_STATUS.indexOf(req.body.status) < 0) {
+      return res.status(400).json({ error: 'Bad status',
+        message: 'In bulk, status must be one of: ' + BULK_STATUS.join(', ')
+          + '. retired and redundant need a per-item reason, so they are set one at a time.' });
+    }
+    /* ⚠️ THE SAME LIBRARY CALL THE SINGLE ROUTE MAKES — not a copy. A bulk path that re-implements the stamp is
+       how the bulk answer and the single answer start disagreeing about what "unavailable" recorded. */
+    const rec = itemstatus.stamp({ status: req.body.status }, { actor_name: req.identity.display_name });
+
+    const r = await withEntity(entity_id, (db) => db.query(
+      `UPDATE catalogue_items
+          SET item_data = COALESCE(item_data, '{}'::jsonb) || $1::jsonb, updated_at = NOW()
+        WHERE entity_id = $2 AND item_id = ANY($3::uuid[])
+      RETURNING item_id, item_data`,
+      [JSON.stringify(rec), entity_id, ids]));
+
+    /* ⚠️ SAY WHICH ONES DID NOT MOVE. An id that is not in this catalogue simply does not match, and a bulk
+       action that reports "done" while three rows never changed is the reason nobody trusts bulk actions. */
+    const done = r.rows.map((x) => x.item_id);
+    const missed = ids.filter((i) => done.indexOf(i) < 0);
+    res.json({ message: done.length + ' updated', updated: done.length, missed: missed,
+      status: req.body.status,
+      reads_as: r.rows.length ? itemstatus.explain(r.rows[0].item_data || {}) : null });
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: e.message });
+    fail(res, e, 'Bulk status failed');
+  }
+});
+
+/**
+ * ⭐⭐ MANY EDITS, ONE ROUND TRIP — and this is the one Athi actually meant.
+ *
+ * *"assigning a category to a set of products, why it takes loads of time, are you going round trip for each
+ * product?"* — yes. `prodCategoriseApply` looped `await api('prodEdit')` once per product, sequentially, each
+ * paying for its own schema lookup, currency lookup, validation, BEGIN, set_config, UPDATE and COMMIT. Tick
+ * forty rows to attach a category and that is forty round trips before the screen comes back.
+ *
+ * ⚠️ THE SCHEMA AND THE CURRENCY ARE THE SAME FOR EVERY ITEM IN THE REQUEST — that is most of what the loop was
+ * paying for. Resolved once here.
+ *
+ * ⚠️ VALIDATE EVERY ITEM BEFORE WRITING ANY, and name the failing ids. The loop counted failures and carried on,
+ * so a rejected row left the category attached to 39 of 40 and the toast said "39 updated" without saying which
+ * one did not.
+ */
+router.post('/bulk-update', auth, [ body('items').isArray({ min: 1 }) ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const items = req.body.items;
+    if (items.length > BULK_MAX) {
+      return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
+    }
+    const shaped = items.every((it) => it && typeof it === 'object' && typeof it.id === 'string'
+      && it.item_data && typeof it.item_data === 'object' && !Array.isArray(it.item_data));
+    if (!shaped) {
+      return res.status(400).json({ error: 'Bad shape', message: 'Every item must be { id, item_data }.' });
+    }
+
+    const schema_id = await defaultSchemaId(entity_id);
+    const currency = await regional.currencyFor(entity_id);
+
+    const bad = [];
+    for (let i = 0; i < items.length; i++) {
+      const verr = await validateItem(schema_id, items[i].item_data);
+      if (verr) bad.push({ index: i, id: items[i].id, message: verr });
+    }
+    if (bad.length) {
+      return res.status(400).json({ error: 'Invalid product',
+        message: bad.length + ' item(s) were refused and nothing was written.', invalid: bad });
+    }
+
+    const ids = items.map((it) => it.id);
+    const datas = items.map((it) => JSON.stringify(money.stampItem(it.item_data, currency)));
+
+    /* One statement for the lot: unnest pairs each id with its own new item_data. */
+    const r = await withEntity(entity_id, (db) => db.query(
+      `UPDATE catalogue_items AS c
+          SET item_data = u.data::jsonb, updated_at = NOW()
+         FROM unnest($1::uuid[], $2::text[]) AS u(id, data)
+        WHERE c.item_id = u.id AND c.entity_id = $3
+      RETURNING c.item_id`,
+      [ids, datas, entity_id]));
+
+    const done = r.rows.map((x) => x.item_id);
+    const missed = ids.filter((i) => done.indexOf(i) < 0);
+    res.json({ message: done.length + ' updated', updated: done.length, missed: missed });
+  } catch (e) { fail(res, e, 'Bulk update failed'); }
+});
+
 // READ + SEARCH — list my products, optional ?q=
 router.get('/', auth, async (req, res) => {
   try {
