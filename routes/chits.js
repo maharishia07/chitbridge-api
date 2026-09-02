@@ -1000,17 +1000,7 @@ router.get('/sent', auth, async (req, res) => {
     const countResult = await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
 
     const limIdx = params.length + 1, offIdx = params.length + 2;
-    /**
-     * ⚠️⚠️ THE COLUMN IS NAMED ONLY IF IT EXISTS. A missing column is not `undefined` in SQL — it is 42703 and
-     * the WHOLE query throws, which on THIS query means the chit list is empty for everyone until the migration
-     * lands. That exact shape took employee sign-in down on 2026-08-20 (`access_level` before b173), so the rule
-     * this codebase settled on is: ask `lib/schema.js` and shape the SELECT to the answer.
-     *
-     * The trailing comma lives inside the fragment, so an absent column leaves the SELECT list untouched rather
-     * than a dangling `,` before the next expression.
-     */
-    const _cancelCol = (await schema.hasColumn('chit_status', 'cancel_requested_at'))
-      ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '';
+    const _cancelCol = await cancelCols();
     const result = await db.query(
       `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
@@ -1071,12 +1061,14 @@ router.get('/folder', auth, async (req, res) => {
 
     const orderBy = ({date:'created_at',subject:'COALESCE(manual_subject, auto_subject)',amount:"(summary_json->>'total_value')::numeric",status:'current_status',priority:"CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort] || 'created_at')
                   + ' ' + ((String(req.query.dir||'').toLowerCase()==='asc') ? 'ASC' : 'DESC');
+    const _cancelCol = await cancelCols();   // b195 — named only when it exists; see cancelCols()
     const result = await db.query(
       `SELECT * FROM (
          SELECT DISTINCT ON (ch.chit_id)
               ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
               ch.purpose, ch.auto_subject, ch.manual_subject, ch.summary_json, ch.created_at,
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction,
+              ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
                 WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
            ${joinFrom}
@@ -1140,6 +1132,28 @@ router.get('/rollup', auth, async (req, res) => {
     res.status(500).json({ error: 'Rollup failed', message: safeErr(err) });
   }
 });
+
+/**
+ * cancelCols() — the b195 cancel-request columns, named ONLY when they exist.
+ *
+ * ⚠️⚠️ A MISSING COLUMN IS NOT `undefined` IN SQL. It is 42703 and the WHOLE query throws — and on a chit-list
+ * query that means an empty list for every user until the migration lands. Exactly the shape that took employee
+ * sign-in down on 2026-08-20 (`access_level` named before b173 ran). So the rule this codebase settled on is:
+ * ask lib/schema.js and shape the SELECT to the answer. A YES is cached forever; a NO expires in 60s, because
+ * Athi runs migrations by hand against a RUNNING server.
+ *
+ * ⚠️⚠️ AND THERE ARE THREE CHIT-LIST SELECTS, NOT ONE. I added the columns to the first one I found, deployed,
+ * and the flag still did not appear — because `/inbox` is served by a different query, and the row shape said so
+ * the moment I read its keys instead of trusting the edit. Three copies of a fragment is three chances to fix
+ * two of them, so the fragment lives here and all three call it.
+ *
+ * The trailing comma is INSIDE the fragment: an absent column then leaves the SELECT list untouched rather than
+ * a dangling `,` in front of the next expression.
+ */
+async function cancelCols(){
+  return (await schema.hasColumn('chit_status', 'cancel_requested_at'))
+    ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '';
+}
 
 router.get('/inbox', auth, async (req, res) => {
   try {
@@ -1213,6 +1227,7 @@ router.get('/inbox', auth, async (req, res) => {
     );
 
     // Get inbox — lightweight — no payload
+    const _cancelCol = await cancelCols();   // b195 — see cancelCols(); three list selects, one fragment
     const result = await db.query(
       `SELECT
          ch.chit_id,
@@ -1228,6 +1243,7 @@ router.get('/inbox', auth, async (req, res) => {
          cs.read_at,
          cs.star_flag,
          cs.priority_flag,
+         ${_cancelCol}
          cs.assignment_type,
          cs.assigned_to_actor_id,
          cs.assigned_to_actor_display_name,
