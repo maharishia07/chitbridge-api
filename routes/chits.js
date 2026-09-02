@@ -2455,6 +2455,44 @@ router.put('/:chit_id/status',
           message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}` });
       }
 
+      /**
+       * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
+       * and his flag to set as cancelled, change from cancel requested to cancelled in the order copy as well."*
+       *
+       * A withdrawal without this is a request with no reply: the sender could see that they had ASKED and never
+       * that anyone AGREED. b195 answers "somebody asked me"; this answers the opposite question, which is the
+       * one the person who withdrew is actually holding.
+       *
+       * ⚠️ ONLY WHEN THIS COPY WAS ACTUALLY ASKED. A recipient may cancel for their own reasons and that is not a
+       * reply to anything — reporting it to the sender as a confirmation would credit them with an agreement
+       * nobody made. `cancel_requested_at` being set is what makes this an answer rather than a coincidence.
+       *
+       * ⚠️ WITHIN THE SENDER'S CONTEXT, NOT A NULL ONE. The b49 policy is `entity_id = NULLIF(current_setting(…),
+       * '')::uuid`, so a null context matches NOTHING and the UPDATE would write nowhere, silently — the exact
+       * mistake b195 shipped with, caught only by the end-to-end spec.
+       */
+      if (!isSender && new_status === 'cancelled') {
+        try {
+          if (await schema.hasColumn('chit_status', 'cancel_confirmed_at')) {
+            const senderId = header.rows.length ? header.rows[0].sender_entity_id : null;
+            const asked = await withEntity(entity_id, (db) => db.query(
+              `SELECT cancel_requested_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
+              [chit_id, entity_id]));
+            const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
+            if (senderId && senderId !== entity_id && wasAsked) {
+              await withEntity(senderId, (db) => db.query(
+                `UPDATE chit_status
+                    SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
+                  WHERE chit_id = $1 AND entity_id = $3`,
+                [chit_id, action_by_name, senderId]));
+              await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: action_by_name,
+                thread_type: 'external', msg_type: 'action',
+                message_text: `[cancel confirmed] ${action_by_name} has cancelled their copy.` });
+            }
+          }
+        } catch (e) { console.error('cancel confirm:', e.message); }
+      }
+
       res.json({
         message: `Chit ${new_status}`,
         warning: disputeWarning,   // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
@@ -3418,11 +3456,29 @@ router.put('/:chit_id/void',
       // Void = the sender withdraws ITS OWN copy and REQUESTS cancellation from the recipients — never a cross-entity
       // write. Each recipient acts on its own copy at its own will (it sees the flagged message below).
       await withEntity(entity_id, async (db) => {
-        await db.query(`UPDATE chit_status SET current_status = 'void', updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);   // own copy only
+        /**
+         * ⭐⭐ `cancelled`, NOT `void` — Athi, 2026-09-02: *"go with cancelled, retire void."*
+         *
+         * ⚠️⚠️ `void` WAS A STATUS THE FRONT END HAD NEVER HEARD OF. The list maps status → bucket with
+         * `ST[current_status] || 'open'`, and `void` is not in ST — so a withdrawn order fell through the default
+         * and went on reading as **OPEN** in the sender's own list. The withdrawal worked and the screen said it
+         * had not. A vocabulary with one word that only the server knows is not a vocabulary.
+         *
+         * ⭐ AND `cancelled` ALREADY EXISTED, meaning exactly this, already bucketed as closed, already in every
+         * filter and rollup. There were two withdrawal paths — this route, and setting status to `cancelled` as
+         * the sender, which already posted the same `[cancel requested]` message. Two mechanisms for one act, one
+         * of them speaking a private word. This route keeps the door (the button calls it, it enforces
+         * sender-only, it requires a reason) and now writes the vocabulary everything else understands.
+         *
+         * ⚠️ The state_log action stays `voided`: it is a HISTORY row, and rewriting what old entries claim
+         * happened would falsify the record this table exists to keep. b196 converts the stored statuses; the log
+         * keeps saying what the code was called on the day.
+         */
+        await db.query(`UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);   // own copy only
         await db.query(
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
-           VALUES ($1, $2, 'voided', $3, $4, 'void', $5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Voided: ${reason}`]);   // own timeline only
+           VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
+          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]);   // own timeline only
       });
       // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
       await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
@@ -3493,7 +3549,9 @@ router.put('/:chit_id/void',
         }
       } catch (e) { console.error('cancel flag:', e.message); }
 
-      res.json({ message: 'Chit voided', chit_id, status: 'void' });
+      /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
+         the private word this change exists to retire. */
+      res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled' });
     } catch (err) {
       console.error('Void error:', err.message);
       res.status(500).json({ error: 'Void failed', message: safeErr(err) });
