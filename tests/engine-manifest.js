@@ -102,6 +102,10 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
   'channels.js',           // channel binding lookup — plumbing for an inbound number
   'cost.js',               // arithmetic over line costs
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
+  /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
+     flexible while empty, tightened per column once used — and the routes and the screen both read it, so it
+     sits here rather than being re-decided at either end. */
+  'column-rules.js',       // may this column be removed, and if not, why not
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
