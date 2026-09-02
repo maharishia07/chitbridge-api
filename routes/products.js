@@ -16,6 +16,8 @@ const regional = require('../lib/regional');    // the currency comes from the E
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
+/* ⭐ A SPREADSHEET CARRIES ANSWERS, NOT RECORDS — flatten on the way out, stamp on the way in. */
+const sheet = require('../lib/sheet');
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
 const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
 const identity  = require('../lib/identity');       // which line is this, and which product does it belong to
@@ -455,7 +457,16 @@ router.get('/export.csv', auth, async (req, res) => {
       }
     } catch (_) { /* no schema is fine — columns then come from the items themselves */ }
 
-    const body = csv.toCSV(items, { schema });
+    /**
+     * ⭐⭐ PROJECTED FIRST. Athi, 2026-09-02: *"in your download file, you have given availability as a json data,
+     * flag, when and who etc, in a csv file, json is too much for the user and he will not understand."*
+     *
+     * csv.cell() JSON-stringifies any object and the export widens its columns from the rows, so an availability
+     * record landed in a cell as {"qty":12,"source":"manual","as_of":"…"} next to the product names, and
+     * `categories` came out as raw UUIDs. Nobody can maintain that in Excel and nobody should have to. See
+     * lib/sheet.js: available (yes/no) · qty · qty_as_of · qty_source — four plain cells, never one nested one.
+     */
+    const body = csv.toCSV(items.map(sheet.toSheet), { schema });
     const stamp = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="catalogue-${stamp}.csv"`);
@@ -634,7 +645,16 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
 
     const outcome = [];
     for (let i = 0; i < applied.items.length; i++) {
-      const item = applied.items[i], line = applied.lines[i];
+      /**
+       * ⭐⭐ THE ANSWERS BECOME RECORDS HERE. `available: yes` becomes a status AND a fresh stamp; `qty` becomes
+       * the availability record with today's date and this upload as its source.
+       *
+       * ⚠️ AND IT RE-STAMPS EVEN WHEN NOTHING CHANGED — Athi: *"availability and qty should be stamped new even
+       * if the status or value didn't change."* The upload IS the assertion: an identical `yes, 12` says this is
+       * still true TODAY, and the as-of is the part that moved. Deliberately unlike money.stampPrice, which
+       * PRESERVES an existing source/as_of — a quoted price keeps its date, a stock count does not.
+       */
+      const item = sheet.fromSheet(applied.items[i], { source: 'upload' }).item_data, line = applied.lines[i];
       const ikey = identity.identityOf(item, ident);       // null when the row carries only PART of the key
       const sku = ikey || '';
       const prior = ikey ? byIdentity.get(ikey) : null;

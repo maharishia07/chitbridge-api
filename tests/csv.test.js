@@ -180,15 +180,15 @@ t('a fixed price in a band catalogue is min == max, and the notes say so', () =>
 t('the optional trade columns come last, after the declared fields', () => {
   const cols = CSV.templateFor({ schema: { properties: { hsn: {} } },
     orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
-  assert.ok(cols.includes('available_qty') && cols.includes('lead_time_days'));
-  assert.ok(cols.indexOf('hsn') < cols.indexOf('availability'), 'a declared field must not be pushed below an optional one');
+  assert.ok(cols.includes('qty') && cols.includes('lead_time_days'));
+  assert.ok(cols.indexOf('hsn') < cols.indexOf('available'), 'a declared field must not be pushed below an optional one');
 });
 t('a trade column the SCHEMA already declares is not duplicated', () => {
-  const cols = CSV.templateFor({ schema: { properties: { availability: {} } },
+  const cols = CSV.templateFor({ schema: { properties: { available: {} } },
     orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
-  assert.strictEqual(cols.filter((c) => c === 'availability').length, 1);
+  assert.strictEqual(cols.filter((c) => c === 'available').length, 1);
 });
-t('⚠ the sheet SAYS available_qty is not stock control — nothing decrements it', () => {
+t('⚠ the sheet SAYS qty is not stock control — nothing decrements it', () => {
   const t1 = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' } });
   // .find() grabbed the "Optional, may be left blank" line first — read ALL the guidance, not the first match.
   const warn = t1.notes.join(' ');
@@ -233,13 +233,13 @@ t('★ column order is STABLE — it comes from the declaration, not from how Po
   // 13, 14. That is jsonb's normalised order (by key length, then bytewise), not the merchant's. A person's own
   // template must not change shape every time they upload.
   const schema = { properties: { code: {}, desc: {} } };
-  const a = CSV.templateFor({ schema, observed: ['lead_time_days', 'my_testing', 'availability', 'min_order_qty'],
+  const a = CSV.templateFor({ schema, observed: ['lead_time_days', 'my_testing', 'available', 'min_order_qty'],
     orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
-  const b = CSV.templateFor({ schema, observed: ['availability', 'min_order_qty', 'lead_time_days', 'my_testing'],
+  const b = CSV.templateFor({ schema, observed: ['available', 'min_order_qty', 'lead_time_days', 'my_testing'],
     orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
   assert.deepStrictEqual(a, b, 'the same catalogue produced two different sheets from the same facts');
   assert.deepStrictEqual(a, ['sku', 'name', 'unit', 'price', 'code', 'desc', 'my_testing',
-    'availability', 'available_qty', 'lead_time_days', 'min_order_qty']);
+    'available', 'qty', 'lead_time_days', 'min_order_qty']);
 });
 t('★ a NEW column never pushes an existing one out of place', () => {
   // Athi: "we cannot keep changing the column position." Sorting alone is not enough — an unregistered key landing
@@ -255,9 +255,9 @@ t('★ a NEW column never pushes an existing one out of place', () => {
   assert.ok(after.indexOf('aaa_new') > after.indexOf('desc'), 'a newly declared column appends, it does not insert');
 });
 t('the trade extras stay LAST and in their own order, even once items carry them', () => {
-  const cols = CSV.templateFor({ observed: ['availability', 'lead_time_days'],
+  const cols = CSV.templateFor({ observed: ['available', 'lead_time_days'],
     orderInput: { preset: 'cart', pipeline: 'commerce' } }).columns;
-  assert.deepStrictEqual(cols.slice(-4), ['availability', 'available_qty', 'lead_time_days', 'min_order_qty']);
+  assert.deepStrictEqual(cols.slice(-4), ['available', 'qty', 'lead_time_days', 'min_order_qty']);
 });
 t('★ EVERY column in the example row has a value — a blank one reads as "this failed"', () => {
   // A merchant added a column, imported it successfully, downloaded the template again and saw their column EMPTY

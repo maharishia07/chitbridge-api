@@ -120,6 +120,11 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
    * engine lock means default-no-change.
    */
   'catalogue-columns.js',  // what is a column, who declares it, and the one list every surface answers with
+  /* ⭐ INFRA, and the reason is squarely the infra test: it is a PRESENTATION rule — what a spreadsheet shows a
+     person, and how their answers become the system's records. Swap it for a different projection and nothing
+     about what a chit means between two parties changes. The RECORDS it projects (money, availability) are
+     defined elsewhere and keep their own rules; this only decides how they are shown and re-read. */
+  'sheet.js',              // a spreadsheet carries answers, not records: flatten out, stamp in
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
