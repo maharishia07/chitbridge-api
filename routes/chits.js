@@ -3354,9 +3354,20 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
   }
 });
 
-// PUT /chits/:chit_id/void — recorded hard-cancel by the SENDER; works after acceptance.
-// Terminal 'void' status on ALL participant rows (cross-edge); reason required + logged;
-// chit stays visible as voided, never deleted; the seal is untouched.
+// PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
+//
+// ⚠️⚠️ THIS HEADER SAID THE OPPOSITE OF WHAT THE CODE DOES, and said it in the one line anybody skims. It read
+// "Terminal 'void' status on ALL participant rows (cross-edge)" — describing a design that was considered and
+// NOT built. The body below writes the sender's own copy only and asks the recipients, which is the correct
+// behaviour and is explained where it happens. A stale header is worse than no header: it is the version a
+// reader trusts, and the next person to touch this would have "fixed" the code to match the comment.
+//
+// WHAT IT ACTUALLY DOES: the sender's OWN copy goes terminal-void with a reason on its own timeline, and every
+// recipient is sent a flagged `[cancel requested]` message. Each recipient then acts on its own copy at its own
+// will — a supplier who has already cut the stock may refuse, and that disagreement stays visible and disputable
+// rather than being overwritten. Never a cross-entity write: you cannot reach into somebody else's records.
+//
+// Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
 router.put('/:chit_id/void',
   [ body('reason').trim().notEmpty().withMessage('A reason is required to void') ],
   validate, auth,
