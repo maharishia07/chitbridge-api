@@ -37,12 +37,35 @@ t('an exact match is exact', () => {
   assert.strictEqual(m.canonical, 'price');
   assert.strictEqual(m.how, 'exact');
 });
-t('"Rate" and "MRP" are prices — the names every Indian desk actually uses', () => {
-  for (const h of ['Rate', 'MRP', 'Unit Price', 'Selling Price']) {
+t('the trade names for a selling price all land on price', () => {
+  for (const h of ['Rate', 'Unit Price', 'Selling Price', 'Trade Price', 'Net Rate']) {
     const m = P.matchHeader(h, CART.columns);
     assert.strictEqual(m.canonical, 'price', `${h} did not land on price`);
     assert.strictEqual(m.how, 'synonym');
   }
+});
+/**
+ * ⚠️⚠️ THIS TEST REVERSES AN EARLIER DECISION ON PURPOSE, AND THE REASON IS A REAL FILE.
+ *
+ * It used to assert MRP → price unconditionally — "the names every Indian desk actually uses", which is true of a
+ * small retailer and false of a wholesaler. On tests/fixtures/pricelist-wholesaler.csv, which carries BOTH "MRP"
+ * and "Rate (INR)", MRP won the match and Rate was reported as the redundant duplicate: that wholesaler would
+ * have published RETAIL prices to trade customers on every line, silently.
+ *
+ * ⭐ Neither 'always' nor 'never' is right. The FILE says which case it is.
+ */
+t('⭐ MRP alone IS the selling price — a retailer is not asked a question with one answer', () => {
+  const r = P.preflight({ headers: ['Item', 'MRP'], rows: [['Tea', '220']], template: CART });
+  const m = r.mapping.find((x) => x.incoming === 'MRP');
+  assert.strictEqual(m.canonical, 'price');
+  assert.ok(/only price column/i.test(m.why || ''), 'and it says why it read it that way');
+});
+t('⭐⭐ MRP beside a trade price is a CEILING, and must not become the price', () => {
+  const r = P.preflight({ headers: ['Item', 'MRP', 'Rate (INR)'], rows: [['Tea', '220', '180']], template: CART });
+  const rate = r.mapping.find((x) => x.incoming === 'Rate (INR)');
+  const mrp = r.mapping.find((x) => x.incoming === 'MRP');
+  assert.strictEqual(rate.canonical, 'price', 'the trade price is the selling price');
+  assert.notStrictEqual(mrp.canonical, 'price', 'publishing MRP to trade customers is the whole margin');
 });
 t('a typo is matched by similarity and flagged for confirming, not accepted silently', () => {
   // "Prodcut Name" is handled earlier now, by containment — the word `name` survives the typo. A header where NO
@@ -85,7 +108,23 @@ t('★ a cart catalogue is TOLD a band column does not apply — not quietly ben
   const m = P.matchHeader('Min Price', CART.columns);
   assert.strictEqual(m.canonical, null, 'price_min is not in a cart catalogue\'s accepted format');
   assert.strictEqual(m.how, 'not-accepted');
-  assert.ok(/does not use/.test(m.why), 'the merchant must be told WHY, or they will just rename the column');
+  /* ⭐ A MODE CONFLICT IS THE ONE REAL REFUSAL, and it is now distinguished from "you have not declared that
+     column yet" (how: 'addable'). A band column in a fixed-price shop contradicts a declaration the merchant has
+     already made; an HSN column is simply one they have not added. Saying the harsh sentence to both is what
+     made a real wholesaler's price list read as unimportable — see the note in matchHeader. */
+  assert.ok(/contradicts|does not use/.test(m.why), 'the merchant must be told WHY, or they will just rename the column');
+  assert.ok(/no price_min column/.test(m.why), 'and told which column it is refusing');
+});
+t('⭐⭐ a column the catalogue simply does not have YET is offered, not refused', () => {
+  /* HSN, MRP and GST% all came back "your catalogue does not use this" on an ordinary wholesaler's sheet. Every
+     one is a column they could add in a tick — telling them their own price list is unusable is how adoption
+     dies at the first upload. */
+  for (const h of ['HSN Code', 'GST %', 'MRP']) {
+    const m = P.matchHeader(h, CART.columns);
+    assert.strictEqual(m.how, 'addable', h + ' should be offered as a new column');
+    assert.ok(m.suggest, h + ' should name the column it would become');
+    assert.ok(/map it to add it/.test(m.why), h + ' should say what to do next');
+  }
 });
 t('a range catalogue DOES place the band', () => {
   assert.strictEqual(P.matchHeader('Min Price', RANGE.columns).canonical, 'price_min');
@@ -449,3 +488,36 @@ t('TIER A · zero dependencies', () => {
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
+
+/**
+ * ⚠️⚠️ FOUND BY IMPORTING A REAL WHOLESALER'S PRICE LIST, not by reasoning about types.
+ * tests/fixtures/pricelist-wholesaler.csv carries HSN 09024090 for tea. inferType read the column, saw digits,
+ * declared it a number — and looseNumber turned it into 9024090. An HSN code without its leading zero is not a
+ * slightly wrong number, it is an invalid code, and chapters 01–09 are live animals, vegetables, coffee, tea and
+ * spices: the entire Indian grocery trade sits in the range that breaks.
+ */
+t('⭐⭐ an identifier stays TEXT even when every value is digits — the leading zero survives', () => {
+  const tpl = CSV.templateFor({ schema: { properties: { name: {} } }, orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  const out = P.applyDecisions({
+    headers: ['Item', 'HSN Code'],
+    rows: [['Tea', '09024090'], ['Coffee', '09011110']],
+    template: tpl,
+    decisions: [{ incoming: 'Item', action: 'map', field: 'name' },
+                { incoming: 'HSN Code', action: 'create', field: 'hsn' }],
+  });
+  const f = out.newFields.find((x) => x.field_key === 'hsn');
+  assert.strictEqual(f.field_type, 'text', 'an HSN code identifies, it does not measure');
+  assert.strictEqual(out.items[0].hsn, '09024090', 'the leading zero is the difference between valid and invalid');
+});
+
+t('a genuine measure is still inferred as a number', () => {
+  const tpl = CSV.templateFor({ schema: { properties: { name: {} } }, orderInput: { preset: 'cart', pipeline: 'commerce' } });
+  const out = P.applyDecisions({
+    headers: ['Item', 'Net Weight'],
+    rows: [['Tea', '250'], ['Coffee', '500']],
+    template: tpl,
+    decisions: [{ incoming: 'Item', action: 'map', field: 'name' },
+                { incoming: 'Net Weight', action: 'create', field: 'net_weight' }],
+  });
+  assert.strictEqual(out.newFields.find((x) => x.field_key === 'net_weight').field_type, 'number');
+});
