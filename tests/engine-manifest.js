@@ -125,6 +125,11 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
      about what a chit means between two parties changes. The RECORDS it projects (money, availability) are
      defined elsewhere and keep their own rules; this only decides how they are shown and re-read. */
   'sheet.js',              // a spreadsheet carries answers, not records: flatten out, stamp in
+  /* ⭐ INFRA beside sheet.js, and the same test: it decides how a catalogue-level default reaches a row and
+     which of the two answered. A resolution rule, not a claim about what a chit means — swap it and nothing
+     between two trading parties changes. It is the fourth coat on a pattern money.js, the face units and
+     catalogue-read.referencedLine already wear. */
+  'defaults.js',           // the catalogue declares, a row overrides, the system knows which
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
