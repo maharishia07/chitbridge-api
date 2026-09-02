@@ -1151,8 +1151,25 @@ router.get('/rollup', auth, async (req, res) => {
  * a dangling `,` in front of the next expression.
  */
 async function cancelCols(){
-  return (await schema.hasColumn('chit_status', 'cancel_requested_at'))
-    ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '';
+  /**
+   * ⚠️⚠️ TWO MIGRATIONS, TWO INDEPENDENT CHECKS. b195 added the REQUEST columns and b197 the CONFIRM ones, and
+   * they are run by hand on separate days — so one may exist without the other in either direction. A single
+   * check covering both would name three columns that are not there the moment the pair is half-applied, and a
+   * missing column is 42703: the WHOLE query throws, which on a chit-list query is an empty list for everyone.
+   *
+   * ⚠️⚠️ AND b197's COLUMNS WERE WRITTEN AND NEVER READ. The migration ran, the API stamped
+   * `cancel_confirmed_at`, and the value reached nobody — because this fragment still only named b195's. That is
+   * the THIRD time in one session for the same shape: a count computed and whitelisted away, cancel columns
+   * added to one of three list queries, and now a column written but never selected.
+   *
+   * ⭐ THE HABIT THAT CATCHES IT EVERY TIME is the one that caught it here: after adding a column, ask the live
+   * endpoint for a row and look at its KEYS. Reading the write path proves the write; only reading the payload
+   * proves the read.
+   */
+  const req  = await schema.hasColumn('chit_status', 'cancel_requested_at');
+  const conf = await schema.hasColumn('chit_status', 'cancel_confirmed_at');
+  return (req  ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '')
+       + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
 router.get('/inbox', auth, async (req, res) => {
