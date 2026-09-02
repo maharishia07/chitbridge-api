@@ -1000,10 +1000,23 @@ router.get('/sent', auth, async (req, res) => {
     const countResult = await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
 
     const limIdx = params.length + 1, offIdx = params.length + 2;
+    /**
+     * ⚠️⚠️ THE COLUMN IS NAMED ONLY IF IT EXISTS. A missing column is not `undefined` in SQL — it is 42703 and
+     * the WHOLE query throws, which on THIS query means the chit list is empty for everyone until the migration
+     * lands. That exact shape took employee sign-in down on 2026-08-20 (`access_level` before b173), so the rule
+     * this codebase settled on is: ask `lib/schema.js` and shape the SELECT to the answer.
+     *
+     * The trailing comma lives inside the fragment, so an absent column leaves the SELECT list untouched rather
+     * than a dangling `,` before the next expression.
+     */
+    const _cancelCol = (await schema.hasColumn('chit_status', 'cancel_requested_at'))
+      ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '';
     const result = await db.query(
       `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
               cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag,
+              /* b195 cancel-request flag, named only when the column exists — see the note above the query. */
+              ${_cancelCol}
               (SELECT COUNT(*) FROM chit_disputes cd
                 WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
@@ -3398,6 +3411,44 @@ router.put('/:chit_id/void',
       // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
       await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
         thread_type: 'external', msg_type: 'action', message_text: `[cancel requested] ${reason}` });
+
+      /**
+       * ⭐⭐ AND A FLAG ON THEIR COPY, NOT ONLY A MESSAGE (b195). Athi, 2026-09-02: *"it has to be flagged against
+       * the order right away, so we need a flag to show cancel requested."*
+       *
+       * The message alone lands in the Messages tab, behind a click, in a list with everything else — so the one
+       * fact that changes what a supplier should do next arrived looking like chatter. It could not be derived on
+       * the read path either: `msg_type` is CHECK-constrained to eight values, none meaning "cancel request", so
+       * the only marker was a PREFIX IN THE TEXT and every screen would have had to string-match message bodies.
+       *
+       * ⚠️⚠️ THIS IS NOT THE CROSS-ENTITY WRITE THIS ROUTE FORBIDS, and the line is worth being exact about.
+       * `postMessageCopies` directly above ALREADY writes into every recipient's copy — delivering INTO a copy is
+       * what the rail does. What it must never do is decide FOR them:
+       *     cancel_requested_at  — someone has asked. Inbound. Written here.        ✅
+       *     current_status       — their answer. Only they may write it.            ❌ untouched
+       * A supplier who cut the stock at 6am still refuses by leaving their status where it is.
+       *
+       * ⚠️ SCOPED TO THE OTHER PARTICIPANTS: `entity_id <> $2`. The sender's own row is already terminal-void
+       * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
+       * somebody who had been asked.
+       *
+       * ⚠️ withEntity(null): this writes rows belonging to OTHER entities, so it cannot run under the sender's
+       * tenant context — the b49 policy on chit_status would filter them out and the UPDATE would touch nothing,
+       * silently. Delivery is a rail act, like the message copies beside it.
+       *
+       * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
+       * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
+       * an un-flagged request is a smaller fault than a withdrawal that reports failure after doing the work.
+       */
+      try {
+        if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
+          await withEntity(null, (db) => db.query(
+            `UPDATE chit_status
+                SET cancel_requested_at = NOW(), cancel_requested_by = $3, cancel_reason = $4
+              WHERE chit_id = $1 AND entity_id <> $2`,
+            [chit_id, entity_id, req.identity.display_name, reason]));
+        }
+      } catch (e) { console.error('cancel flag:', e.message); }
 
       res.json({ message: 'Chit voided', chit_id, status: 'void' });
     } catch (err) {
