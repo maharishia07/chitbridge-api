@@ -16,6 +16,8 @@ const regional = require('../lib/regional');    // the currency comes from the E
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
+/* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
+const defaults = require('../lib/defaults');
 /* ⭐ A SPREADSHEET CARRIES ANSWERS, NOT RECORDS — flatten on the way out, stamp on the way in. */
 const sheet = require('../lib/sheet');
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
@@ -99,6 +101,15 @@ function validateAgainst(fieldRows, item_data) {
   return null;
 }
 
+/** This entity's declared face (b112). Tolerant: no face is a valid state, not an error. */
+async function faceOf(entity_id) {
+  try {
+    const f = await withEntity(entity_id, (db) => db.query(
+      `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
+    return (f.rows[0] && f.rows[0].face) || {};
+  } catch (_) { return {}; }
+}
+
 /** The accepted format + the shop's contract, built once so preflight, import and template cannot disagree. */
 async function catalogueShape(entity_id) {
   const labels = {};     // field_key → the name the merchant sees, so their own column heading matches their own field
@@ -133,7 +144,23 @@ async function catalogueShape(entity_id) {
       if (x.required && x.field_key !== 'quantity') required.push(x.field_key);
     }
   }
-  const observed = cols.columns;
+  /**
+   * ⭐⭐ A DEFAULTABLE COLUMN APPEARS ONLY WHEN IT HAS EARNED ITS PLACE — Athi: "unit yes, pricing model rarely,
+   * offers never." `unit` is always offered because people genuinely set it per product. `pricing_model` is
+   * offered only once some row actually differs from the catalogue: a shop that prices everything one way should
+   * never be handed a column it has to wonder about, and that is the whole anti-wide-sheet rule.
+   *
+   * ⚠️ It needs the ROWS, not just the declaration, because "does anything differ?" is a question about data.
+   * See lib/defaults.columnsFor.
+   */
+  let defCols = [];
+  try {
+    const sample = await withEntity(entity_id, (db) => db.query(
+      `SELECT item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true`, [entity_id]));
+    defCols = defaults.columnsFor(sample.rows.map((r) => r.item_data || {}), face0);
+  } catch (_) { defCols = defaults.columnsFor([], face0); }
+
+  const observed = cols.columns.concat(defCols.filter((k) => cols.columns.indexOf(k) < 0));
   const ident = identity.resolve(face0);
   return { schema_id: sid, labels, identity: ident, identityProblems: identity.check(ident, Object.keys((schema && schema.properties) || {})), required: required.length ? required : ['name'], template: csv.templateFor({ schema, orderInput: oi, observed }), orderInput: oi };
 }
@@ -438,7 +465,17 @@ router.get('/export.csv', auth, async (req, res) => {
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT item_data FROM catalogue_items
        WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, [entity_id]));
-    const items = r.rows.map((x) => x.item_data || {});
+    /**
+     * ⭐⭐ RESOLVE, THEN PROJECT. A row that inherits its unit from the catalogue stores nothing in `unit` — so
+     * before this, a merchant who set one catalogue-wide unit downloaded a sheet with an EMPTY unit column and
+     * reasonably concluded the data was lost. It was not: the row was silent on purpose, and nothing was
+     * answering for it on the way out.
+     *
+     * ⚠️ AND THE ORDER MATTERS: defaults first, then sheet. Projecting first would flatten a row that still had
+     * holes in it, and the holes would be the columns the catalogue was about to fill.
+     */
+    const face = await faceOf(entity_id);
+    const items = r.rows.map((x) => defaults.effective(x.item_data || {}, face));
 
     /**
      * The schema orders the columns where it can; anything an item carries beyond it is still exported, because a

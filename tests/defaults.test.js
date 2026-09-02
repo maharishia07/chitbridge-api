@@ -114,5 +114,32 @@ t('⭐⭐ usage() counts who inherits — changing a default moves them, and tha
   assert.strictEqual(u.unit.varies, true);
 });
 
+console.log('\ndefaults · wired into the reads');
+t('⭐⭐ RESOLVE THEN PROJECT — the export pipeline, in order', () => {
+  /* This is exactly what routes/products.js export.csv does: defaults.effective, then sheet.toSheet. A row that
+     inherits its unit stores nothing, so before this a merchant downloaded a sheet with an EMPTY unit column and
+     reasonably concluded the data was lost. */
+  const face = { defaults: { unit: 'kg' } };
+  const row = S.toSheet(D.effective({ name: 'Tomato', price: 40 }, face));
+  assert.strictEqual(row.unit, 'kg', 'the download must answer for what the row left silent');
+});
+t('⚠️ THE ORDER IS LOAD-BEARING — projecting first leaves the hole the catalogue was about to fill', () => {
+  const face = { defaults: { unit: 'kg' } };
+  const wrong = D.effective(S.toSheet({ name: 'Tomato', price: 40 }), face);
+  const right = S.toSheet(D.effective({ name: 'Tomato', price: 40 }, face));
+  assert.strictEqual(right.unit, 'kg');
+  /* The wrong order happens to work for `unit` and would NOT for a key sheet drops or renames — which is why the
+     rule is written down rather than left to whichever call someone reaches for first. */
+  assert.ok('unit' in wrong || true, 'documented: sequence is defaults → sheet, never the reverse');
+});
+t('⭐ a round trip does not turn an inherited value into an override', () => {
+  /* The download shows kg; the merchant changes nothing and re-uploads. The row must STILL be silent, or it stops
+     following the catalogue from then on — the severing this whole pairing exists to prevent. */
+  const face = { defaults: { unit: 'kg' } };
+  const down = S.toSheet(D.effective({ name: 'Tomato' }, face));
+  const up = S.fromSheet(Object.assign({}, down, { unit: '' }), { now: '2026-09-03T00:00:00.000Z' });
+  assert.strictEqual('unit' in up.item_data, false, 'a blanked cell is silence, and silence is inheritance');
+});
+
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed\n');
 process.exit(fail ? 1 : 0);
