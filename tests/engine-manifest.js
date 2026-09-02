@@ -130,6 +130,16 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
      between two trading parties changes. It is the fourth coat on a pattern money.js, the face units and
      catalogue-read.referencedLine already wear. */
   'defaults.js',           // the catalogue declares, a row overrides, the system knows which
+  /**
+   * ⚠️ INFRA, AND THE CALL IS CLOSER THAN THE OTHERS. The argument for ENGINE: a tax determination is evidence
+   * that gets sealed onto a chit and disputed later, which is chit semantics. Filed INFRA because it decides no
+   * RATE and holds no table — it applies a rate it was handed and splits it by the supply type. The judgement
+   * that matters (what rate does this HSN attract, in this jurisdiction, today) belongs to the entity or to a
+   * provider, and this file exists precisely so that judgement can be swapped without touching CB.
+   *
+   * ⭐ It moves to ENGINE the day CB itself asserts a rate.
+   */
+  'tax.js',                // GST determination: two addresses in, INV-01 vocabulary out. No rate tables, ever.
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
