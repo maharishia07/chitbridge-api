@@ -53,14 +53,19 @@ gap AS (
     LEFT JOIN declared d ON d.entity_id = o.entity_id AND d.field_key = o.field_key
    WHERE d.field_key IS NULL
 )
+-- ⚠️⚠️ READ items_visible FIRST. catalogue_items carries RLS, and RLS with no context is not "unrestricted",
+-- it is "matches nothing". A session subject to RLS sees zero products, so this would report
+-- columns_to_declare = 0 and look like "nothing to do" when the truth is "I could not see anything". A check
+-- that cannot tell those two apart is not a check. See b198_VERIFY.sql.
 SELECT 1 AS ord, 'SUMMARY' AS section,
+       (SELECT count(*) FROM catalogue_items WHERE is_active = true)::text AS items_visible,
        (SELECT count(DISTINCT entity_id) FROM gap)::text AS entities_affected,
        (SELECT count(*) FROM gap)::text                  AS columns_to_declare,
        (SELECT count(*) FROM entity_schemas WHERE status='active' AND is_default=true)::text AS schemas_total,
        NULL::text AS field_key, NULL::text AS field_type, NULL::text AS used_by
 UNION ALL
 SELECT 2, 'DETAIL',
-       g.entity_id::text, NULL, NULL,
+       NULL, g.entity_id::text, NULL, NULL,
        g.field_key, g.field_type, g.used_by::text
   FROM gap g
  ORDER BY ord, field_key;
