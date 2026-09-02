@@ -689,16 +689,64 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
     const have = await query(`SELECT field_key, COALESCE(MAX(display_order),0) OVER () AS m FROM schema_fields WHERE schema_id=$1`, [sid]);
     const keys = new Set(have.rows.map((r) => r.field_key));
     let n = have.rows.length ? Number(have.rows[0].m) || 0 : 0;
+
+    /**
+     * ⭐⭐ A SUBSET, AND YOUR OWN COLUMNS — Athi, 2026-09-02, of the categories picker and then of this:
+     * *"if we show what those are and provide option to choose from the standard list… plus few more of their
+     * own, so if we can provide facility to add it."*
+     *
+     * ⚠️ THE SET WAS ALL-OR-NOTHING, and a column is heavier than a category: it lands on the template every
+     * product is described by, on the import preflight and on the export. Adopting eleven to get eight left the
+     * other three on every form for ever, because a column with data in it must never be removed.
+     *
+     * ⚠️ ABSENT `fields` MEANS THE WHOLE SET, not none — so every existing caller keeps its behaviour exactly.
+     * An empty array is a different statement and is honoured: "none of the standard ones, only mine".
+     */
+    const wanted = Array.isArray(req.body.fields) ? new Set(req.body.fields.map(String)) : null;
+    const picked = wanted ? set.fields.filter((f) => wanted.has(f.field_key)) : set.fields;
+
     const added = [];
-    for (const f of set.fields) {
+    for (const f of picked) {
       if (keys.has(f.field_key)) continue;                 // additive only — never retype what is already in use
       await query(
         `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, display_order)
          VALUES ($1,$2,$3,$4,false,$5)`, [sid, f.field_name, f.field_key, f.field_type, ++n]);
+      keys.add(f.field_key);
       added.push(f.field_key);
     }
-    res.json({ message: added.length ? `Added ${added.length} column(s) from the ${set.title} set` : 'Your catalogue already has all of those columns',
-      vertical: set.vertical, added, unchanged: set.fields.filter((f) => keys.has(f.field_key)).map((f) => f.field_key) });
+
+    /**
+     * ⭐ AND THE COLUMNS THEY TYPED THEMSELVES. Each carries the TYPE the person chose — unlike a CSV import,
+     * where lib/csv-preflight infers it from the values and asks them to confirm. Nothing to infer from here:
+     * the column is empty by definition, so the only honest source of the type is the person adding it.
+     *
+     * ⚠️ Refused rather than coerced if the type is not one the schema knows: a column silently created as `text`
+     * when someone asked for `number` sorts and totals wrongly for ever, and nothing on screen would say why.
+     */
+    const OK_TYPES = ['text', 'number', 'boolean', 'date', 'choice'];
+    const own = Array.isArray(req.body.custom) ? req.body.custom : [];
+    const rejected = [];
+    for (const c of own.slice(0, 40)) {
+      const label = String((c && c.field_name) || '').trim();
+      if (!label) continue;
+      const type = String((c && c.field_type) || 'text').toLowerCase();
+      if (OK_TYPES.indexOf(type) < 0) { rejected.push(label + ' (unknown type "' + type + '")'); continue; }
+      /* ⭐ THE SAME KEY RULE THE IMPORT USES — `csv-preflight.toFieldKey`. A column somebody types here and the
+         same column arriving in a spreadsheet must land on ONE field, and they only do if one function decides
+         the key. My first version slugged it inline, which is how two spellings of `Bar serial` become two
+         columns nobody can reconcile. */
+      const key = preflight.toFieldKey(label);
+      if (!key || keys.has(key)) continue;                 // already there — same rule as a standard column
+      await query(
+        `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, display_order)
+         VALUES ($1,$2,$3,$4,false,$5)`, [sid, label, key, type, ++n]);
+      keys.add(key);
+      added.push(key);
+    }
+
+    res.json({ message: added.length ? `Added ${added.length} column(s)` : 'Your catalogue already has all of those columns',
+      vertical: set.vertical, added, rejected,
+      unchanged: picked.filter((f) => !added.includes(f.field_key)).map((f) => f.field_key) });
   } catch (e) { fail(res, e, 'Could not adopt the standard set'); }
 });
 
