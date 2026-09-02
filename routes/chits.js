@@ -3448,9 +3448,27 @@ router.put('/:chit_id/void',
        * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
        * somebody who had been asked.
        *
-       * ⚠️ withEntity(null): this writes rows belonging to OTHER entities, so it cannot run under the sender's
-       * tenant context — the b49 policy on chit_status would filter them out and the UPDATE would touch nothing,
-       * silently. Delivery is a rail act, like the message copies beside it.
+       * ⚠️⚠️ ONE CONTEXT PER RECIPIENT — AND MY FIRST VERSION USED `withEntity(null)` AND WROTE NOTHING.
+       *
+       * The b49 policy on chit_status is `entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid`.
+       * With no context that expression is NULL, `entity_id = NULL` is never true, and the UPDATE matched ZERO
+       * rows — inside a catch, so nothing was raised and the withdrawal reported success. The flag simply never
+       * existed. ⭐ THE END-TO-END SPEC IS WHAT CAUGHT IT: every part was green (the button, the banner's render
+       * states, the column reaching the payload) and the join was dead.
+       *
+       * ⚠️ AND THE COMMENT I WROTE ARGUED FOR THE BUG — it said a null context was needed because the sender's
+       * context would filter the rows. A null context filters EVERYTHING. This is the same RLS-with-no-usable-
+       * context blackout diagnosed for the register earlier in this same session; writing it a second time, one
+       * day later, is why the rule is worth stating plainly: **RLS with no context is not "unrestricted", it is
+       * "matches nothing".**
+       *
+       * ⭐ The rail already had the answer beside this line: `postMessageCopies` reaches every copy through the
+       * SECURITY DEFINER `chit_message_deliver`. Without a definer for this, the honest equivalent is to set each
+       * recipient's own context and write their row — the server acting as delivery agent, one copy at a time,
+       * which is exactly what a per-copy rail does.
+       *
+       * ⚠️ Recipients come from the SENDER'S OWN header (`all_recipients`), readable under the sender's context —
+       * so nothing here needs to read across a boundary in order to write across one.
        *
        * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
        * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
@@ -3458,11 +3476,20 @@ router.put('/:chit_id/void',
        */
       try {
         if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
-          await withEntity(null, (db) => db.query(
-            `UPDATE chit_status
-                SET cancel_requested_at = NOW(), cancel_requested_by = $3, cancel_reason = $4
-              WHERE chit_id = $1 AND entity_id <> $2`,
-            [chit_id, entity_id, req.identity.display_name, reason]));
+          const hdr = await withEntity(entity_id, (db) => db.query(
+            `SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+          const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || [])
+            .map((r) => r && r.entity_id)
+            .filter((id) => id && id !== entity_id);
+          /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
+             timestamp for no reason. */
+          for (const rid of [...new Set(parties)]) {
+            await withEntity(rid, (db) => db.query(
+              `UPDATE chit_status
+                  SET cancel_requested_at = NOW(), cancel_requested_by = $2, cancel_reason = $3
+                WHERE chit_id = $1 AND entity_id = $4`,
+              [chit_id, req.identity.display_name, reason, rid]));
+          }
         }
       } catch (e) { console.error('cancel flag:', e.message); }
 
