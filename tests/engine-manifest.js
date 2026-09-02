@@ -58,7 +58,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
-  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
+  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
   /**
    * INFRA FOR NOW, AND THE "for now" IS THE POINT. Phase 0 of the register (b182) is an append-only note
@@ -106,6 +106,20 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
      flexible while empty, tightened per column once used — and the routes and the screen both read it, so it
      sits here rather than being re-decided at either end. */
   'column-rules.js',       // may this column be removed, and if not, why not
+  /**
+   * ⭐ BESIDE column-rules FOR THE SAME REASON, and INFRA for the same reason as raida.js above — the "for now"
+   * is the point. It decides what may become a column at all (a merchant's field yes, the system's bookkeeping
+   * no), when two spellings are one column and when they are merely similar, and it binds the declaration to
+   * the store so every write path answers identically. That is a rule about the CATALOGUE, which is PIM
+   * mechanics — swappable without changing what a chit means between two trading parties, which is the test.
+   *
+   * ⚠️ IT BECOMES A CANDIDATE FOR ENGINE THE DAY A COLUMN CARRIES PROVENANCE. SPEC v2's FIX-4 would give a field
+   * `leg` (system|customer|compute|cb) and `via` (ERP|IoT|AI) — at that point this file would be deciding WHERE
+   * A VALUE COMES FROM, which is engine vocabulary, and the four-leg rule already lives in that language.
+   * Classifying it engine TODAY would lock a file that FIX-2 and FIX-4 are both expected to change, and the
+   * engine lock means default-no-change.
+   */
+  'catalogue-columns.js',  // what is a column, who declares it, and the one list every surface answers with
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status

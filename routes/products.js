@@ -14,6 +14,8 @@ const availability = require('../lib/availability');   // a quantity is not an a
 const itemstatus = require('../lib/itemstatus');
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
+/* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
+const catcols = require('../lib/catalogue-columns');
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
 const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
 const identity  = require('../lib/identity');       // which line is this, and which product does it belong to
@@ -108,25 +110,28 @@ async function catalogueShape(entity_id) {
     oi = orderInput.resolve(face0.order_input || (face0.method ? { preset: face0.method } : null));
   } catch (_) { /* no face declared → the cart default, which is how the shop behaves */ }
 
-  let schema = null;
+  /**
+   * ⭐⭐ ONE RESOLVER, SO THE TEMPLATE CANNOT DISAGREE WITH THE EXPORT OR THE COLUMNS PANEL.
+   *
+   * ⚠️ AND THE `LIMIT 200` IS GONE. This used to observe only the newest 200 items, so a column carried solely by
+   * product #201 was absent from the template and present in the export — a difference with no explanation
+   * available to the person who met it, and no way to even notice it until a round trip lost data. The scan is
+   * one GROUP BY, the same query the Columns panel already runs for its usage counts, so correctness here is
+   * free rather than bought.
+   */
   const sid = await defaultSchemaId(entity_id);
+  const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
+  let schema = null;
   if (sid) {
-    const f = await query(`SELECT field_key, field_name, required FROM schema_fields WHERE schema_id=$1 ORDER BY display_order`, [sid]);
-    schema = { properties: Object.fromEntries(f.rows.map((x) => [x.field_key, {}])) };
-    for (const x of f.rows) {
+    schema = { properties: Object.fromEntries(cols.declared.map((x) => [x.field_key, {}])) };
+    for (const x of cols.declared) {
       if (x.field_name) labels[x.field_key] = x.field_name;
       // The SCHEMA decides what a file must carry. Inferring it from 'not optional' told a catalogue that declares
       // code and desc that every upload was incomplete without them.
       if (x.required && x.field_key !== 'quantity') required.push(x.field_key);
     }
   }
-  const seen = await withEntity(entity_id, (db) => db.query(
-    `SELECT item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true
-     ORDER BY created_at DESC LIMIT 200`, [entity_id]));
-  const observed = [];
-  for (const row of seen.rows) {
-    for (const k of Object.keys(row.item_data || {})) if (!observed.includes(k)) observed.push(k);
-  }
+  const observed = cols.columns;
   const ident = identity.resolve(face0);
   return { schema_id: sid, labels, identity: ident, identityProblems: identity.check(ident, Object.keys((schema && schema.properties) || {})), required: required.length ? required : ['name'], template: csv.templateFor({ schema, orderInput: oi, observed }), orderInput: oi };
 }
@@ -136,19 +141,33 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
   try {
     const entity_id = ctx(req);
     const schema_id = await defaultSchemaId(entity_id);
-    const verr = await validateItem(schema_id, req.body.item_data);
-    if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
+    /**
+     * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
+     * declared `grade`, and simply write it — so a column existed in the DATA that no declaration knew about, and
+     * the Columns panel, the template and the export each answered "what are my columns" differently.
+     *
+     * ⚠️ THE CSV IMPORT ALREADY DID THIS CORRECTLY and this route did not, which is the part that made it a bug
+     * rather than a design: the SAME act — adding a product with a new field — behaved differently depending on
+     * which door it came through. One writer, so there is one behaviour. See lib/catalogue-columns.js.
+     */
+    const decl = await catcols.ensureDeclared({
+      query, entity_id, schema_id, item_data: req.body.item_data,
+      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+      validate: (data, rows) => validateAgainst(rows, data),
+    });
+    if (decl.error) return res.status(400).json({ error: 'Invalid product', message: decl.error });
     // STAMP: the price acquires the OWNING ENTITY's currency here and nowhere else. Validation runs first, on the
     // raw shape, so the schema still sees the number a person typed.
-    const item_data = money.stampItem(req.body.item_data, await regional.currencyFor(entity_id));
+    const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
     const r = await withEntity(entity_id, (db) => db.query(
       `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
        VALUES ($1,$2,$3) RETURNING *`,
-      [entity_id, schema_id, JSON.stringify(item_data)]));
+      [entity_id, decl.schema_id || schema_id, JSON.stringify(item_data)]));
     /* ⭐ Metered after the write, best-effort, never blocking — see lib/meter.js. */
     try { require('../lib/meter').meter(entity_id, 'catalogue.item', {
       detail: r.rows[0] && r.rows[0].item_id, rid: req.id }).catch(() => {}); } catch (_) {}
-    res.json({ message: 'Product added', item: r.rows[0] });
+    /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
+    res.json({ message: 'Product added', item: r.rows[0], declared: decl.declared, warnings: decl.warnings });
   } catch (e) { fail(res, e, 'Add failed'); }
 });
 
@@ -191,9 +210,16 @@ router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, asyn
     const schema_id = await defaultSchemaId(entity_id);
     const currency = await regional.currencyFor(entity_id);
 
+    /**
+     * ⚠️ THE RULES WERE STILL BEING READ ONCE PER ITEM. `validateItem` queries `schema_fields` on every call, so a
+     * 200-item paste fired 200 identical queries for a rule set that cannot change mid-request — the exact cost
+     * the header above says was fixed for the import, in a route written afterwards to be fast. Read once, judge
+     * in memory, the way the import already does.
+     */
+    let ruleRows = await schemaFieldsOf(schema_id);
     const bad = [];
     for (let i = 0; i < items.length; i++) {
-      const verr = await validateItem(schema_id, items[i]);
+      const verr = validateAgainst(ruleRows, items[i]);
       if (verr) bad.push({ index: i, message: verr });
     }
     if (bad.length) {
@@ -201,14 +227,25 @@ router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, asyn
         message: bad.length + ' item(s) were refused and nothing was written.', invalid: bad });
     }
 
+    /**
+     * ⭐ DECLARE FIRST, FOR THE WHOLE BATCH — same rule as the single add, and it must be the same rule or the two
+     * doors disagree again. Validation has already passed above, so nothing is declared for a batch that was
+     * refused; the declaration is committed once, in order, before any row is written.
+     */
+    const decl = await catcols.ensureDeclaredMany({
+      query, entity_id, schema_id, items,
+      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+    });
+    const sid = decl.schema_id || schema_id;
+
     /* STAMP after validation, on the raw shape, so the schema still sees the number a person typed. */
-    const stamped = items.map((it) => JSON.stringify(money.stampItem(it, currency)));
+    const stamped = decl.items.map((it) => JSON.stringify(money.stampItem(it, currency)));
 
     const r = await withEntity(entity_id, (db) => db.query(
       `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
        SELECT $1, $2, x FROM unnest($3::jsonb[]) AS x
        RETURNING *`,
-      [entity_id, schema_id, stamped]));
+      [entity_id, sid, stamped]));
 
     /* ⭐ Metered after the write, best-effort, never blocking — one event per item, same as the single add. */
     try {
@@ -218,7 +255,8 @@ router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, asyn
       }
     } catch (_) {}
 
-    res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows });
+    res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows,
+      declared: decl.declared, warnings: decl.warnings });
   } catch (e) { fail(res, e, 'Bulk add failed'); }
 });
 
@@ -400,14 +438,20 @@ router.get('/export.csv', auth, async (req, res) => {
        WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, [entity_id]));
     const items = r.rows.map((x) => x.item_data || {});
 
-    // The schema orders the columns where it can; anything an item carries beyond it is still exported, because a
-    // column dropped here is data lost on the way back in.
+    /**
+     * The schema orders the columns where it can; anything an item carries beyond it is still exported, because a
+     * column dropped here is data lost on the way back in.
+     *
+     * ⭐ SAME RESOLVER AS THE TEMPLATE AND THE COLUMNS PANEL. It used to read `schema_fields` directly and then let
+     * csv.toCSV widen from the rows — defensible alone, and one of the three different answers to "what are my
+     * columns". Widening still happens; it now starts from the same list everything else starts from.
+     */
     let schema = null;
     try {
       const sid = await defaultSchemaId(entity_id);
       if (sid) {
-        const f = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1 ORDER BY display_order`, [sid]);
-        schema = { properties: Object.fromEntries(f.rows.map((x) => [x.field_key, {}])) };
+        const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
+        schema = { properties: Object.fromEntries(cols.columns.map((k) => [k, {}])) };
       }
     } catch (_) { /* no schema is fine — columns then come from the items themselves */ }
 
@@ -539,17 +583,9 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
         sid = boot.schema_id || null;
       }
       if (!sid) return res.status(500).json({ error: 'No catalogue definition', message: 'Your catalogue has no definition to add columns to.' });
-      const ord = await query(`SELECT COALESCE(MAX(display_order),0) AS m FROM schema_fields WHERE schema_id=$1`, [sid]);
-      let n = Number(ord.rows[0].m) || 0;
-      for (const f of applied.newFields) {
-        // A concurrent import could be adding the same column; the guard is a re-check, not a race-free claim.
-        const dup = await query(`SELECT 1 FROM schema_fields WHERE schema_id=$1 AND field_key=$2`, [sid, f.field_key]);
-        if (dup.rows.length) continue;
-        await query(
-          `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, display_order)
-           VALUES ($1,$2,$3,$4,false,$5)`, [sid, f.field_name, f.field_key, f.field_type, ++n]);
-        created.push(f.field_key);
-      }
+      /* ⭐ ONE APPENDER. This loop WAS the correct implementation — it is now the shared one, so the single add
+         and the bulk paste append a column exactly the way an import does. See lib/catalogue-columns.commitFields. */
+      created.push(...await catcols.commitFields({ query, schema_id: sid, newFields: applied.newFields }));
     }
 
     // REGISTER WHAT WE ACCEPT, so a column's position becomes a stored fact.
@@ -572,16 +608,9 @@ router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray
       const inOrder = template.columns.filter((c) => applied.mappedFields.includes(c) && !known.has(c)
         && !preflight.BLOCKED[c] && c !== 'quantity');
       if (inOrder.length) {
-        const o2 = await query(`SELECT COALESCE(MAX(display_order),0) AS m FROM schema_fields WHERE schema_id=$1`, [sid]);
-        let n2 = Number(o2.rows[0].m) || 0;
-        for (const key of inOrder) {
-          const type = preflight.NUMERIC_FIELDS.includes(key) ? 'number' : 'text';
-          await query(
-            `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, display_order)
-             VALUES ($1,$2,$3,$4,false,$5)`,
-            [sid, labels[key] || key, key, type, ++n2]);
-          created.push(key);
-        }
+        created.push(...await catcols.commitFields({ query, schema_id: sid,
+          newFields: inOrder.map((key) => ({ field_key: key, field_name: labels[key] || key,
+            field_type: preflight.NUMERIC_FIELDS.includes(key) ? 'number' : 'text' })) }));
       }
     }
 
@@ -686,9 +715,10 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
     }
     if (!sid) return res.status(500).json({ error: 'No catalogue definition', message: 'Your catalogue has no definition to add columns to.' });
 
-    const have = await query(`SELECT field_key, COALESCE(MAX(display_order),0) OVER () AS m FROM schema_fields WHERE schema_id=$1`, [sid]);
+    /* ⭐ The running display_order used to be tracked here; commitFields owns it now, so this only needs to know
+       WHICH keys already exist — the additive-only rule. */
+    const have = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
     const keys = new Set(have.rows.map((r) => r.field_key));
-    let n = have.rows.length ? Number(have.rows[0].m) || 0 : 0;
 
     /**
      * ⭐⭐ A SUBSET, AND YOUR OWN COLUMNS — Athi, 2026-09-02, of the categories picker and then of this:
@@ -705,14 +735,13 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
     const wanted = Array.isArray(req.body.fields) ? new Set(req.body.fields.map(String)) : null;
     const picked = wanted ? set.fields.filter((f) => wanted.has(f.field_key)) : set.fields;
 
-    const added = [];
+    /* ⭐ COLLECTED, THEN APPENDED ONCE — see the shared appender below. Additive only: a column already in use
+       is never retyped. */
+    const toAdd = [];
     for (const f of picked) {
-      if (keys.has(f.field_key)) continue;                 // additive only — never retype what is already in use
-      await query(
-        `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, display_order)
-         VALUES ($1,$2,$3,$4,false,$5)`, [sid, f.field_name, f.field_key, f.field_type, ++n]);
+      if (keys.has(f.field_key)) continue;
       keys.add(f.field_key);
-      added.push(f.field_key);
+      toAdd.push({ field_key: f.field_key, field_name: f.field_name, field_type: f.field_type });
     }
 
     /**
@@ -737,12 +766,17 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
          columns nobody can reconcile. */
       const key = preflight.toFieldKey(label);
       if (!key || keys.has(key)) continue;                 // already there — same rule as a standard column
-      await query(
-        `INSERT INTO schema_fields (schema_id, field_name, field_key, field_type, required, display_order)
-         VALUES ($1,$2,$3,$4,false,$5)`, [sid, label, key, type, ++n]);
       keys.add(key);
-      added.push(key);
+      toAdd.push({ field_key: key, field_name: label, field_type: type });
     }
+
+    /**
+     * ⭐⭐ THE ONE APPENDER, for the last two places that had their own. This route hand-rolled the
+     * MAX(display_order) + INSERT twice, the import had it twice more, and the single add had none at all — five
+     * variations of "add a column", which is precisely how the declaration and the store drifted apart in the
+     * first place. lib/catalogue-columns.commitFields is now the only code that writes a schema_fields row.
+     */
+    const added = await catcols.commitFields({ query, schema_id: sid, newFields: toAdd });
 
     res.json({ message: added.length ? `Added ${added.length} column(s)` : 'Your catalogue already has all of those columns',
       vertical: set.vertical, added, rejected,

@@ -10,6 +10,8 @@ const { validate } = require('../middleware/validate');
 /* ⭐ ONE PLACE DECIDES REMOVABILITY — the GET reports it and the DELETE enforces it from the same function, so a
    screen can never be told a column is removable and then refused. */
 const columnRules = require('../lib/column-rules');
+/* ⭐ ONE resolver for every surface that answers "what are my columns". */
+const catcols = require('../lib/catalogue-columns');
 const auth = require('../middleware/auth');
 
 // GET /api/schemas/my — does entity have a schema?
@@ -77,23 +79,20 @@ router.post('/create-default', auth, async (req, res) => {
 router.get('/fields', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
-    const fields = await query(
-      `SELECT sf.* FROM schema_fields sf
-       JOIN entity_schemas es ON es.schema_id = sf.schema_id
-       WHERE es.entity_id = $1 AND es.status = 'active' AND es.is_default = true
-       ORDER BY sf.display_order ASC`,
-      [entity_id]
-    );
-    let used = {};
-    try {
-      const u = await withEntity(entity_id, (db) => db.query(
-        `SELECT kv.key AS field_key, count(*)::int AS n
-           FROM catalogue_items ci, LATERAL jsonb_each_text(ci.item_data) AS kv
-          WHERE ci.entity_id = $1 AND ci.is_active = true
-            AND kv.value IS NOT NULL AND btrim(kv.value) <> ''
-          GROUP BY kv.key`, [entity_id]));
-      u.rows.forEach((r) => { used[r.field_key] = r.n; });
-    } catch (_) { used = {}; }   /* a counting failure must not hide the columns themselves */
+    /**
+     * ⭐⭐ THE ONE RESOLVER. This route used to run its own schema_fields query and its own usage-count query —
+     * correct, and the reason the panel could report a different column list from the template and the export.
+     * It now asks the same function they ask, so "what are my columns" has one answer by construction rather
+     * than by three implementations agreeing. See lib/catalogue-columns.js.
+     */
+    const sr = await query(
+      `SELECT schema_id FROM entity_schemas
+        WHERE entity_id = $1 AND status = 'active' AND is_default = true LIMIT 1`, [entity_id]);
+    const schema_id = sr.rows[0] ? sr.rows[0].schema_id : null;
+    const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id });
+    const used = cols.used;
+    /* The panel wants the whole row (min_value, field_type…), which resolveColumns already read in order. */
+    const fields = { rows: cols.declared };
 
     res.json({ fields: fields.rows.map((f) => Object.assign({}, f, {
       used_by: used[f.field_key] || 0,
@@ -107,6 +106,19 @@ router.get('/fields', auth, async (req, res) => {
          "what every product records" must list them — but they are managed elsewhere and their SHAPE is
          load-bearing, so they travel in their own array rather than as columns with a disabled tickbox. */
       system: columnRules.SYSTEM_FIELDS.map(function(f){ return Object.assign({}, f, { used_by: used[f.field_key] || 0 }); }),
+      /**
+       * ⚠️⚠️ THE COLUMNS THAT EXIST IN THE DATA AND IN NO DECLARATION — and the panel used to be silent about
+       * them. item_data is free-form jsonb and, before the declare-first writer, any write path except the CSV
+       * import could leave a key behind that no column described. Those keys are real: they are in the export,
+       * they are in the template, and a merchant looking at a panel headed "what every product records" was
+       * being shown a SHORTER list than their own spreadsheet. That is the omission that made three surfaces
+       * disagree, and hiding it is what made it hard to find.
+       *
+       * ⭐ It is EMPTY on any catalogue written since the writer landed, and stays empty. A non-empty array here
+       * means legacy rows still need the backfill migration — so the screen can say so rather than quietly
+       * papering over it.
+       */
+      undeclared: (cols.undeclared || []).map(function(k){ return { field_key: k, used_by: used[k] || 0 }; }),
     });
   } catch (err) {
     console.error('Schema fields error:', err.message);
