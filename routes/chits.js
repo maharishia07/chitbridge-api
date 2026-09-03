@@ -94,8 +94,24 @@ const calculateSummary = (lineItems) => {
   if (!lineItems || !Array.isArray(lineItems)) {
     return { line_item_count: 0, total_value: 0 };
   }
+  /**
+   * ⚠️⚠️ A TOTAL OF ZERO IS A TOTAL. `item.total || item.price * item.quantity` treats 0 as absent and falls
+   * through to the full price — so a line given away FREE was silently charged for in the chit's value.
+   *
+   * Athi, 2026-09-03: *"many of the products are sold based on what is coming as free… the chit should
+   * automatically make the oil price as zero and should be informed as freebie."* A freebie is exactly the line
+   * whose total is 0, so this coalesce was wrong precisely where it mattered most, and nowhere else — which is
+   * why nothing caught it: every line anyone had ever sent had a non-zero total.
+   *
+   * ⭐ Same rule this codebase keeps re-learning: ABSENT IS NOT ZERO, and the inverse is just as true — zero is
+   * not absent. `availability.countedZero`, `sheet.fromSheet`'s blank cell, `itemstatus`: same line, drawn again.
+   */
   const total = lineItems.reduce((sum, item) => {
-    return sum + (parseFloat(item.total || item.price * item.quantity || 0));
+    const explicit = (item.total !== undefined && item.total !== null && String(item.total).trim() !== '');
+    const t = explicit
+      ? parseFloat(item.total)
+      : (parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 0);
+    return sum + (Number.isFinite(t) ? t : 0);
   }, 0);
   return {
     line_item_count: lineItems.length,
