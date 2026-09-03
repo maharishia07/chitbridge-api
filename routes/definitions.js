@@ -30,10 +30,13 @@
 const express = require('express');
 const router  = express.Router();
 const { body } = require('express-validator');
-const { withEntity } = require('../db');
+const { query, withEntity } = require('../db');
 const { validate } = require('../middleware/validate');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
+/* The jurisdiction's tax slabs (region_layer, b201) — served beside the entity's own definitions, read-only. */
+const regional = require('../lib/regional');
+const taxGov = require('../lib/tax-governance');
 
 const ctx = (req) => auth.entityOf(req);
 
@@ -75,7 +78,22 @@ router.get('/', auth, async (req, res) => {
            ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE ${where}
         ORDER BY d.kind, d.name`, params));
-    res.json({ definitions: r.rows, count: r.rows.length });
+    /**
+     * ⭐⭐ THE JURISDICTION'S SLABS RIDE ALONG WITH THE ENTITY'S OWN. Athi, 2026-09-04: *"why each entity should
+     * create one for them … it has to come from governance layer and across the country."* India's GST slabs live
+     * on region_layer (b201) and every entity whose jurisdiction is IN receives them here as live, read-only rows
+     * (`governance` set, `entity_id` null, id `IN-GST-18`). Same array, same shape — the product page, the category
+     * and the catalogue default pick from both without a second code path. `?status=draft|retired` never includes
+     * them: a governed slab is always live. See lib/tax-governance.js.
+     */
+    let rows = r.rows;
+    const wantsTax = !req.query.kind || String(req.query.kind) === 'tax';
+    const wantsLive = !req.query.status || String(req.query.status) === 'live';
+    if (wantsTax && wantsLive) {
+      const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+      if (gov.length) rows = rows.concat(gov);
+    }
+    res.json({ definitions: rows, count: rows.length });
   } catch (e) { if (notMigrated(e)) return gone(res);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
@@ -156,8 +174,13 @@ router.post('/', auth,
  * This route is the freeze rule made mechanical. The old rules stay on the old version row forever, so a chit
  * stamped against version 2 can still be explained after the shelf has moved to version 5.
  */
+/* A governed slab is the jurisdiction's, not the entity's: a sentence, not a uuid-cast error. */
+const governedRefusal = (res) => res.status(403).json({ error: 'Governed',
+  message: 'This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own.' });
+
 router.put('/:id', auth, async (req, res) => {
   try {
+    if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
     const entity_id = ctx(req);
     const rules = (req.body && typeof req.body.rules === 'object') ? req.body.rules : null;
     const { name, note, status } = req.body || {};
@@ -213,6 +236,7 @@ router.put('/:id', auth, async (req, res) => {
  */
 router.delete('/:id', auth, async (req, res) => {
   try {
+    if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
     const entity_id = ctx(req);
     const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE definition SET status = 'retired', updated_at = now()
@@ -247,13 +271,19 @@ router.post('/freeze', auth, [ body('definition_ids').isArray() ], validate, asy
     const ids = (req.body.definition_ids || []).map(String).filter(Boolean);
     if (!ids.length) return res.json({ frozen: [], missing: [] });
 
-    const r = await withEntity(entity_id, (db) => db.query(
+    /* ⚠️ A GOVERNED ID IS NOT A UUID and would make the cast below refuse the whole request. Split: the entity's
+       own definitions freeze from their version row; the jurisdiction's slabs freeze as a copy of the regional
+       layer (there is no version row to point at — the copy IS the record, keyed by effective_from). */
+    const govIds = ids.filter(taxGov.isGovernedId);
+    const ownIds = ids.filter((i) => !taxGov.isGovernedId(i));
+
+    const r = ownIds.length ? await withEntity(entity_id, (db) => db.query(
       `SELECT d.definition_id, d.kind, d.sub_kind, d.name, d.status,
               v.version, v.rules
          FROM definition d
          JOIN definition_version v
            ON v.definition_id = d.definition_id AND v.version = d.current_version
-        WHERE d.definition_id = ANY($1::uuid[])`, [ids]));
+        WHERE d.definition_id = ANY($1::uuid[])`, [ownIds])) : { rows: [] };
 
     const at = new Date().toISOString();
     const frozen = r.rows.map((x) => ({
@@ -266,6 +296,10 @@ router.post('/freeze', auth, [ body('definition_ids').isArray() ], validate, asy
      * dispute. RLS also means "not yours" and "does not exist" look identical here, which is correct: neither is
      * something this entity may learn more about.
      */
+    if (govIds.length) {
+      const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+      gov.filter((g) => govIds.includes(g.definition_id)).forEach((g) => frozen.push(taxGov.frozenCopy(g, at)));
+    }
     const found = new Set(frozen.map((f) => String(f.definition_id)));
     res.json({ frozen, missing: ids.filter((i) => !found.has(i)), frozen_at: at });
   } catch (e) { if (notMigrated(e)) return gone(res);

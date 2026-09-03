@@ -151,6 +151,12 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
    * ⭐ It moves to ENGINE the day CB itself decides what a product attracts — the same trigger as tax.js.
    */
   'tax-slab.js',           // which declared slab answers for this product, and who declared it. No rate tables.
+  /**
+   * INFRA, BY THE SAME TEST. `tax-governance.js` serves the JURISDICTION's declared slabs (region_layer, put there
+   * by a migration a person read) to the entities in it, as read-only rows. It still asserts no rate of CB's own —
+   * the data is the jurisdiction's, the file only carries it. Same trigger to become ENGINE as its two siblings.
+   */
+  'tax-governance.js',     // the jurisdiction's slabs, inherited read-only; no rate of CB's own
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
