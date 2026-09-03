@@ -91,6 +91,7 @@ const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
 const orderInput = require('../lib/order-input');
 const itemstatus = require('../lib/itemstatus');
 const catalogueView = require('../lib/catalogue-view');   // ONE catalogue read, shared with the B2B/supplier view
+const taxSlab = require('../lib/tax-slab');   // ⚠️ which slab answers for a line — resolution only, never a rate table
 const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const MAX_FORMS_PER_SUBMISSION = 5;   // one purpose, several forms (an export bundle, a loan pack) — but bounded
 // The catalogue DECLARES what it receives (lib/order-input.js). Read server-side from the face (b112) and never from
@@ -211,9 +212,58 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
                   as_of: row.updated_at ? new Date(row.updated_at).toISOString() : null,
                   /* the same stamp the capture path takes, from the same function — one definition of "what it was" */
                   hash: require('../lib/itemmatch').stampOf({ name: d.name, variant: d.variant || d.grade, unit: d.unit, price: d.price, sku: String(d.sku || d.gtin || '').trim() || null, status: require('../lib/itemstatus').statusOf(d) }) };
+    /* The row itself, so the tax slab can be resolved from it below. ⚠️ NOT exposed on the order line — only
+       `d.tax_slab`, `d.categories` and `d.gst_rate` are ever read from it, by lib/tax-slab. */
+    rec.d = d;
     byId.set(String(row.item_id), rec);
     if (rec.name) { const k = _norm(rec.name); nameCount.set(k, (nameCount.get(k) || 0) + 1); byName.set(k, rec); }
   }
+  /**
+   * ⭐⭐ THE TAX CONTEXT — read ONCE for the whole order, not once per line.
+   *
+   * Athi, 2026-09-03: *"each product has different tax criteria, so it has to be product specific, but there are
+   * slabs, so define slab and attach the slab to the product"*. The product cites a slab; an unset product
+   * inherits from its category and then from the catalogue, so resolving a line needs three things — the slab
+   * shelf, the category shelf, and the face. All three are per-ENTITY and constant across the order, so a
+   * per-line read would be the round-trip cost finding all over again.
+   *
+   * ⚠️ FAILS OPEN, AND THAT IS THE RIGHT ASYMMETRY HERE. If the shelves cannot be read the lines carry NO rate,
+   * which is exactly what they carried before this existed and what an un-migrated entity carries anyway
+   * (definitions need b160). Failing CLOSED would make a tax shelf a prerequisite for placing any order at all.
+   * ⚠️⚠️ PRICE INTEGRITY IS UNTOUCHED — nothing below feeds price or total; `applyToLine` writes only the rate
+   * fields, and only where the line does not already carry one.
+   */
+  let taxCtx = null;
+  try {
+    const [defs, face] = await Promise.all([
+      withEntity(entity_id, (db) => db.query(
+        `SELECT d.definition_id, d.kind, d.name, v.rules
+           FROM definition d
+           LEFT JOIN definition_version v
+             ON v.definition_id = d.definition_id AND v.version = d.current_version
+          WHERE d.entity_id = $1 AND d.kind IN ('tax','category') AND d.status = 'live'`, [entity_id])),
+      catalogueView.getFace({ entity_id, withEntity }),
+    ]);
+    const rows = defs.rows || [];
+    taxCtx = {
+      slabs: taxSlab.indexSlabs(rows.filter((r) => r.kind === 'tax')),
+      categories: rows.filter((r) => r.kind === 'category'),
+      face: face || {},
+    };
+  } catch (_) { taxCtx = null; }
+  /**
+   * ⚠️⚠️ APPLIED TO THIS SHOP'S OWN PRODUCTS ONLY, AND THE FINISH BRANCH IS DELIBERATELY LEFT OUT.
+   *
+   * A finish comes from an ADOPTED catalogue and runs under its SOURCE's governance — stone 2, enforced a few
+   * lines below for minimum order. Stamping the HOST's catalogue default onto a line the source governs would
+   * quietly re-rate somebody else's goods under our rules, which is the same defect the unresolvable-id case in
+   * lib/tax-slab.js exists to avoid, pointed the other way. The source's slab has to reach us before that line
+   * can carry a rate; until then it carries none, which is honest.
+   */
+  const withTax = (line, item_data) => (taxCtx
+    ? taxSlab.applyToLine(line, taxSlab.resolve({ item_data, face: taxCtx.face,
+                                                  slabs: taxCtx.slabs, categories: taxCtx.categories }))
+    : line);
   // Finish map (reference catalogue) — resolve the shop's VISIBLE adoptions → norm(name) -> {price, combos, source}.
   // Priced from the adoption commercials, SERVER-side (never the customer). Empty if the shop has no finishes.
   const finishMap = new Map();       // STONE 3: keyed 'source|name' so same-named finishes from DIFFERENT brands don't collide
@@ -336,10 +386,20 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
      * chose this row from the shop's own catalogue. Nothing was matched, guessed or resolved — so a dispute can
      * tell it apart from a line a spelling-guess produced, which the other paths cannot claim.
      */
-    return { item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
+    /**
+     * ⭐ THE RATE IS RESOLVED HERE, WHERE THE PRICE IS. Athi, 2026-09-03: *"each product has different tax
+     * criteria … define slab and attach the slab to the product"*. A line that knows its price and not its rate
+     * makes the buyer's system guess, and both sides then compute a different invoice from the same order.
+     *
+     * ⚠️ IT ADDS FIELDS AND CHANGES NOTHING. `price` and `total` are untouched — CJ-07 price integrity is exactly
+     * as it was — and `applyToLine` writes nothing at all when nobody has declared a slab. An entity with no tax
+     * shelf produces the same line it produced yesterday.
+     */
+    return withTax({ item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
              price: ref.price, total, ...(proposal ? { proposal } : {}),
              ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), how: 'picked',
-                    ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } };
+                    ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
+             ref.d);
   }));
   const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
   return { items, total };

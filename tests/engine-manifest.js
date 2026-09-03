@@ -140,6 +140,17 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
    * ⭐ It moves to ENGINE the day CB itself asserts a rate.
    */
   'tax.js',                // GST determination: two addresses in, INV-01 vocabulary out. No rate tables, ever.
+  /**
+   * ⭐ INFRA FOR THE SAME REASON AS tax.js, AND THE REASON IS WORTH RE-STATING because it looks like a close call.
+   *
+   * `tax-slab.js` decides WHICH of the entity's own declarations answers for a product — its slab, its category's,
+   * or its catalogue's. That is a lookup over data the ENTITY authored, in the order Tally/Zoho/Odoo all use. CB
+   * asserts nothing: it ships no rates, maps no HSN to any slab, and returns 'none' rather than guessing when
+   * nobody has declared one.
+   *
+   * ⭐ It moves to ENGINE the day CB itself decides what a product attracts — the same trigger as tax.js.
+   */
+  'tax-slab.js',           // which declared slab answers for this product, and who declared it. No rate tables.
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status

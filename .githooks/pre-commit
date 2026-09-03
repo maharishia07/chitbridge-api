@@ -7,6 +7,13 @@
 # It skips silently where the platform checkout does not exist (CI, another machine, a fresh
 # clone of one repo). A hook that fails on a machine it was never meant to run on gets deleted,
 # and then it protects nothing.
+# ⚠️⚠️ THE HOOK ENVIRONMENT LEAKS INTO EVERY git IT SPAWNS. inventory.cjs runs `git ls-files` with a
+# cwd per repo, but git honours GIT_DIR over cwd — so from a WORKTREE (where GIT_DIR is an absolute
+# path) it listed THIS repo's files against the other repo's folder and reported a dozen files that do
+# not exist as unclassified. It happened to work from a main checkout only because git sets a RELATIVE
+# GIT_DIR=.git there, which re-resolves per cwd by accident. Every commit made in a worktree was blocked,
+# which is the workflow we are told to use.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
 [ -f /c/dev/inventory.cjs ] || exit 0
 node /c/dev/inventory.cjs > /tmp/cb-inv.$$ 2>&1
 if [ $? -ne 0 ]; then
