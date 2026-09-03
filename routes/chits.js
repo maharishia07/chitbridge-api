@@ -21,6 +21,12 @@ const cost = require('../lib/cost');
 const raida = require('../lib/raida');   // b182 — the register on a line
 const reprice = require('../lib/reprice'); // pull catalogue prices onto a chit — as AMENDMENTS, never a silent edit // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch');  // ⚠️ THE one matcher — same resolution the raise path used
+/* TAX ON THE CHIT (STUDY-gst-structure §6, 2026-09-04): the shelf that rates a line at send, the line rater, the freeze at completed. */
+const regional = require('../lib/regional');
+const catalogueView = require('../lib/catalogue-view');
+const taxShelf = require('../lib/tax-shelf');
+const taxLines = require('../lib/tax-lines');
+const taxCopy = require('../lib/tax-copy');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -249,7 +255,7 @@ router.post('/send',
          that states its position, instead of position being whatever order the array happened to be built in
          ("the one you selected comes as the last record"). Done here because this is where a chit is born;
          mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
-      const line_items = mint.lines(req.body.line_items || []);
+      let line_items = mint.lines(req.body.line_items || []);   // `let`: rated below, once the sender is known
       const business_json = req.body.business_json
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
       const is_draft = !!req.body.is_draft;
@@ -299,6 +305,18 @@ router.post('/send',
         }
       }
 
+      /**
+       * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
+       * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
+       * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
+       * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
+       * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
+       */
+      try {
+        const shelf = await taxShelf.readShelf(sender_id, { withEntity, query, regionLayer: regional.regionLayer,
+          getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
+        if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: [...shelf.slabs.values()], categories: shelf.categories, face: shelf.face });
+      } catch (_) { /* rate-less lines are what every chit carried until tonight */ }
       // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
       const prefRow = await query(`SELECT self_copy_pref FROM identities WHERE identity_id = $1`, [sender_id]);
       /**
@@ -2449,6 +2467,8 @@ router.put('/:chit_id/status',
           [new_status, chit_id, entity_id]);
         return { openCount, header: hdr };
       });
+      /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
+      if (new_status === 'completed') { try { await taxCopy.freezeOnComplete(chit_id, entity_id); } catch (_) {} }
 
       if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
 

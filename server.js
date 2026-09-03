@@ -227,6 +227,8 @@ app.use('/api/forms', require('./routes/forms'));
 app.use('/api/service', require('./routes/service'));
 /* DEFINITIONS — an entity's own named things (b160). Loose while referenced, FROZEN BY VALUE when stamped. */
 app.use('/api/definitions', require('./routes/definitions'));
+/* TAX — the invoice a copy is stamped with, the month's ledger, the GSTR shapes. Reads only; we do not file. */
+app.use('/api/tax', require('./routes/tax'));
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));

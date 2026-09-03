@@ -157,6 +157,17 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
    * the data is the jurisdiction's, the file only carries it. Same trigger to become ENGINE as its two siblings.
    */
   'tax-governance.js',     // the jurisdiction's slabs, inherited read-only; no rate of CB's own
+  /**
+   * INFRA, THE SAME TEST, THREE MORE TIMES (2026-09-04 night, STUDY §6 G1/G3/G4). `tax-lines.js` rates a line from
+   * what the seller's catalogue answers and builds the INV-01 block from tax.js; `tax-shelf.js` is the one reader
+   * of the shelves both order paths use; `tax-copy.js` is the DB-facing half — MY copy of a chit as a tax record,
+   * the freeze at completed, the month's ledger. None asserts a rate of CB's own; all carry what a party declared.
+   * ⚠️ The freeze writes business_json.invoice on a chit copy — a record OF the chit, not a change to what a chit
+   * means: the lines, parties and status it reads are untouched. That is the line between INFRA and ENGINE here.
+   */
+  'tax-lines.js',          // rate on the line at send · INV-01 for a copy · the month's ledger · GSTR shapes
+  'tax-shelf.js',          // one reader of slabs (own + governed) · categories · face
+  'tax-copy.js',           // my copy as a tax record; freeze at completed; ledger over my copies
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status

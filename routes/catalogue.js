@@ -92,6 +92,7 @@ const orderInput = require('../lib/order-input');
 const itemstatus = require('../lib/itemstatus');
 const catalogueView = require('../lib/catalogue-view');   // ONE catalogue read, shared with the B2B/supplier view
 const taxSlab = require('../lib/tax-slab');   // ⚠️ which slab answers for a line — resolution only, never a rate table
+const taxShelf = require('../lib/tax-shelf'); // the one reader of slabs (own + governed) · categories · face, shared with the send path
 const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const MAX_FORMS_PER_SUBMISSION = 5;   // one purpose, several forms (an export bundle, a loan pack) — but bounded
 // The catalogue DECLARES what it receives (lib/order-input.js). Read server-side from the face (b112) and never from
@@ -233,24 +234,11 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
    * ⚠️⚠️ PRICE INTEGRITY IS UNTOUCHED — nothing below feeds price or total; `applyToLine` writes only the rate
    * fields, and only where the line does not already carry one.
    */
-  let taxCtx = null;
-  try {
-    const [defs, face] = await Promise.all([
-      withEntity(entity_id, (db) => db.query(
-        `SELECT d.definition_id, d.kind, d.name, v.rules
-           FROM definition d
-           LEFT JOIN definition_version v
-             ON v.definition_id = d.definition_id AND v.version = d.current_version
-          WHERE d.entity_id = $1 AND d.kind IN ('tax','category') AND d.status = 'live'`, [entity_id])),
-      catalogueView.getFace({ entity_id, withEntity }),
-    ]);
-    const rows = defs.rows || [];
-    taxCtx = {
-      slabs: taxSlab.indexSlabs(rows.filter((r) => r.kind === 'tax')),
-      categories: rows.filter((r) => r.kind === 'category'),
-      face: face || {},
-    };
-  } catch (_) { taxCtx = null; }
+  /* ⚠️ ONE READER FOR BOTH PATHS (lib/tax-shelf). This route's own copy read the entity's slabs only — a product
+     citing the jurisdiction's IN-GST-18 (b201) resolved NOTHING on a storefront order while the product page showed
+     the split. The shelf reader includes the governed slabs, and the B2B send path now reads the same shelf. */
+  const taxCtx = await taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
+    getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) });
   /**
    * ⚠️⚠️ APPLIED TO THIS SHOP'S OWN PRODUCTS ONLY, AND THE FINISH BRANCH IS DELIBERATELY LEFT OUT.
    *
