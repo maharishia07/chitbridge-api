@@ -13,6 +13,11 @@ const columnRules = require('../lib/column-rules');
 /* ⭐ ONE resolver for every surface that answers "what are my columns". */
 const catcols = require('../lib/catalogue-columns');
 const auth = require('../middleware/auth');
+/* ⚠️ `unit` / `leg` / `via` arrive with migration b200. Until it has run the columns do not exist, and naming one in
+   a query throws 42703 for the WHOLE query — so every read and write of them is gated on hasColumn (cached). */
+const schema = require('../lib/schema');
+const ATTR_COLS = ['unit', 'leg', 'via'];
+async function attrsReady() { return schema.hasColumn('schema_fields', 'unit'); }
 
 // GET /api/schemas/my — does entity have a schema?
 router.get('/my', auth, async (req, res) => {
@@ -94,8 +99,19 @@ router.get('/fields', auth, async (req, res) => {
     /* The panel wants the whole row (min_value, field_type…), which resolveColumns already read in order. */
     const fields = { rows: cols.declared };
 
-    res.json({ fields: fields.rows.map((f) => Object.assign({}, f, {
+    /* ⭐ The column's own attributes (unit · leg · via), merged in when b200 has run; `attrs_ready` tells the
+       screen whether the Types tab may offer them or must say the migration is pending. */
+    const ready = await attrsReady();
+    const attrs = {};
+    if (ready && schema_id) {
+      const a = await query(`SELECT field_key, unit, leg, via FROM schema_fields WHERE schema_id = $1`, [schema_id]);
+      a.rows.forEach((r) => { attrs[r.field_key] = { unit: r.unit || null, leg: r.leg || null, via: r.via || null }; });
+    }
+
+    res.json({ attrs_ready: ready, fields: fields.rows.map((f) => Object.assign({}, f, attrs[f.field_key] || {}, {
       used_by: used[f.field_key] || 0,
+      retypable: columnRules.retypable({ field_key: f.field_key, field_name: f.field_name, used_by: used[f.field_key] || 0 }),
+      retype_because: columnRules.retypeWhy({ field_key: f.field_key, field_name: f.field_name, used_by: used[f.field_key] || 0 }),
       /* ⭐ THE ANSWER, COMPUTED ONCE, SO EVERY SURFACE AGREES. A screen that decides removability for itself is a
          screen that will disagree with the server the day one of them changes. */
       removable: columnRules.removable({ field_key: f.field_key, field_name: f.field_name, required: f.required, used_by: used[f.field_key] || 0 }),
@@ -232,6 +248,105 @@ router.patch('/fields/order', auth,
     } catch (err) {
       console.error('Schema field order error:', err.message);
       res.status(500).json({ error: 'Failed to save the order', message: safeErr(err) });
+    }
+  });
+
+/**
+ * PATCH /api/schemas/fields/:field_key — change what a column IS: its label, datatype, unit, required flag, and
+ * (design intent) where its value should come from.
+ *
+ * Athi, 2026-09-03 (observation 4): *"Under columns panel … you have 3 different information, like column name for
+ * the catalogue and then unit of measure and field datatype, can you bring it in 3 different tabs."* The screen got
+ * its tabs; this is the write those tabs needed, because `schema_fields` had no UPDATE of any attribute at all.
+ *
+ * ⚠️ TIGHTENS ON USE, PER COLUMN — the same rule as removal (lib/column-rules). Label and unit are always free:
+ * they change no stored value. A TYPE change is refused, with the count, once any product records a value.
+ * `required` may be switched on at any time, but the answer says how many products do not satisfy it yet, because
+ * every later edit of those products will be refused until they do.
+ *
+ * ⚠️ MUST SIT AFTER `/fields/order` — Express matches in declaration order and "order" is a valid :field_key.
+ */
+router.patch('/fields/:field_key', auth,
+  [ body('field_name').optional().isString().isLength({ min: 1, max: 80 }),
+    body('field_type').optional().isString(),
+    body('required').optional().isBoolean(),
+    body('unit').optional({ nullable: true }).isString().isLength({ max: 16 }),
+    body('leg').optional({ nullable: true }).isString(),
+    body('via').optional({ nullable: true }).isString() ], validate,
+  async (req, res) => {
+    try {
+      const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
+      const key = String(req.params.field_key || '').trim();
+      const f = await query(
+        `SELECT sf.field_id, sf.field_name, sf.field_type, sf.required, sf.schema_id
+           FROM schema_fields sf
+           JOIN entity_schemas es ON es.schema_id = sf.schema_id
+          WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true AND sf.field_key = $2`,
+        [entity_id, key]);
+      if (!f.rows.length) return res.status(404).json({ error: 'Not found', message: 'Your catalogue has no such column.' });
+      const cur = f.rows[0];
+      const b = req.body || {};
+      const sets = [], vals = [];
+      const set = (col, v) => { vals.push(v); sets.push(`${col} = $${vals.length}`); };
+
+      if (b.field_name !== undefined) set('field_name', String(b.field_name).trim());
+
+      if (b.field_type !== undefined && b.field_type !== cur.field_type) {
+        const t = String(b.field_type);
+        if (!columnRules.TYPES.has(t)) return res.status(400).json({ error: 'Unknown type', message: `A column is text, number, choice or date — not "${t}".` });
+        const u = await withEntity(entity_id, (db) => db.query(
+          `SELECT count(*)::int AS n FROM catalogue_items ci
+            WHERE ci.entity_id = $1 AND ci.is_active = true
+              AND ci.item_data ? $2 AND btrim(COALESCE(ci.item_data->>$2, '')) <> ''`, [entity_id, key]));
+        const n = (u.rows[0] && u.rows[0].n) || 0;
+        const whyNot = columnRules.retypeWhy({ field_key: key, field_name: cur.field_name, used_by: n });
+        if (whyNot) return res.status(409).json({ error: 'Cannot change the type', code: n > 0 ? 'IN_USE' : 'LOCKED', used_by: n, message: whyNot });
+        set('field_type', t);
+      }
+
+      let missing = null;
+      if (b.required !== undefined) {
+        const want = !!b.required;
+        if (!want && columnRules.LOCKED.has(key) && key !== 'unit') {
+          return res.status(409).json({ error: 'Cannot make optional', code: 'LOCKED', message: `"${key}" is required by every catalogue.` });
+        }
+        if (want && !cur.required) {
+          const m = await withEntity(entity_id, (db) => db.query(
+            `SELECT count(*)::int AS n FROM catalogue_items ci
+              WHERE ci.entity_id = $1 AND ci.is_active = true
+                AND btrim(COALESCE(ci.item_data->>$2, '')) = ''`, [entity_id, key]));
+          missing = (m.rows[0] && m.rows[0].n) || 0;
+        }
+        set('required', want);
+      }
+
+      const wantsAttr = ATTR_COLS.some((c) => b[c] !== undefined);
+      if (wantsAttr) {
+        if (!(await attrsReady())) {
+          return res.status(409).json({ error: 'Not yet available', code: 'MIGRATION',
+            message: 'Unit and source need migration b200 on the database. Type, label and required still work.' });
+        }
+        if (b.unit !== undefined) set('unit', b.unit === null || b.unit === '' ? null : String(b.unit).trim().toUpperCase());
+        if (b.leg !== undefined) {
+          if (b.leg !== null && b.leg !== '' && !columnRules.LEGS.has(b.leg)) return res.status(400).json({ error: 'Unknown source', message: 'A value comes from the system, the customer, a computation or ChitBridge.' });
+          set('leg', b.leg || null);
+        }
+        if (b.via !== undefined) {
+          if (b.via !== null && b.via !== '' && !columnRules.VIAS.has(b.via)) return res.status(400).json({ error: 'Unknown channel', message: 'ERP, IoT or AI.' });
+          set('via', b.via || null);
+        }
+      }
+
+      if (!sets.length) return res.json({ message: 'Nothing to change', field_key: key });
+      vals.push(cur.field_id);
+      await query(`UPDATE schema_fields SET ${sets.join(', ')} WHERE field_id = $${vals.length}`, vals);
+      res.json({ message: `Updated "${b.field_name !== undefined ? String(b.field_name).trim() : cur.field_name}"`, field_key: key,
+        /* ⭐ The number a person needs next: switching required ON is honoured, and this says how many products
+           will be refused on their next edit until they carry a value. */
+        missing_required: missing });
+    } catch (err) {
+      console.error('Schema field patch error:', err.message);
+      res.status(500).json({ error: 'Failed to update the column', message: safeErr(err) });
     }
   });
 

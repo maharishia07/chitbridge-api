@@ -68,3 +68,28 @@ test('an unnamed column is refused rather than crashing', () => {
   assert.match(rules.why({}), /does not exist/);
   assert.strictEqual(rules.removable({}), false);
 });
+
+/* ── the column's own attributes (obs 2, 2026-09-03) ───────────────────────────────────────────────────────── */
+test('a type change is free while the column is empty, and refused WITH THE COUNT once it is used', () => {
+  assert.strictEqual(rules.retypeWhy({ field_key: 'grade', field_name: 'Grade', used_by: 0 }), null);
+  assert.strictEqual(rules.retypable({ field_key: 'grade', used_by: 0 }), true);
+  const r = rules.retypeWhy({ field_key: 'grade', field_name: 'Grade', used_by: 7 });
+  assert.match(r, /7 products/);
+  assert.match(r, /fixed/);
+});
+
+test('the three locked columns never change type, even when empty', () => {
+  for (const k of ['name', 'unit', 'price']) assert.match(rules.retypeWhy({ field_key: k, used_by: 0 }), /keeps its type/);
+});
+
+test('retypable() is derived from retypeWhy(), never decided a second time', () => {
+  for (const c of [{ field_key: 'g', used_by: 0 }, { field_key: 'g', used_by: 1 }, { field_key: 'price', used_by: 0 }, {}]) {
+    assert.strictEqual(rules.retypable(c), rules.retypeWhy(c) === null, JSON.stringify(c));
+  }
+});
+
+test('the vocabularies are the adopted ones — Rec 20 units are validated by the screen, legs and vias here', () => {
+  assert.deepStrictEqual([...rules.LEGS].sort(), ['cb', 'compute', 'customer', 'system']);
+  assert.deepStrictEqual([...rules.VIAS].sort(), ['AI', 'ERP', 'IoT']);
+  assert.ok(rules.TYPES.has('number') && rules.TYPES.has('date') && !rules.TYPES.has('json'));
+});
