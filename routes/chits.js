@@ -315,7 +315,7 @@ router.post('/send',
       try {
         const shelf = await taxShelf.readShelf(sender_id, { withEntity, query, regionLayer: regional.regionLayer,
           getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
-        if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: [...shelf.slabs.values()], categories: shelf.categories, face: shelf.face });
+        if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face });   /* the Map, as the storefront passes it — see slabOf */
       } catch (_) { /* rate-less lines are what every chit carried until tonight */ }
       // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
       const prefRow = await query(`SELECT self_copy_pref FROM identities WHERE identity_id = $1`, [sender_id]);

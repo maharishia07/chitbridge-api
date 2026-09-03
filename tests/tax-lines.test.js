@@ -76,3 +76,16 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
   assert.strictEqual(T.otherPartyId({ sender_entity_id: 'S', all_recipients: [{ entity_id: 'S', role: 'sender' }] }, 'S'), null, 'no receiver → null, never self');
   console.log('otherPartyId: 3 passed');
 }
+
+/* [TAX-03] regression: normalised slabs (an array of slabOf() output, or the Map) must rate a line the same way. */
+{
+  const T = require('../lib/tax-lines'); const S = require('../lib/tax-slab'); const assert = require('assert');
+  const raw = [{ definition_id: 'IN-GST-18', name: 'GST 18%', rules: { rate: 18 } }];
+  const items = [{ item_id: 'i1', item_data: { name: 'Rice', tax_slab: 'IN-GST-18' } }];
+  const line = [{ name: 'Rice', quantity: 2, price: 1000 }];
+  const map = S.indexSlabs(raw);
+  assert.strictEqual(T.decorate(line, { items, slabs: raw })[0].gst_rate, 18, 'raw definitions');
+  assert.strictEqual(T.decorate(line, { items, slabs: map })[0].gst_rate, 18, 'the Map');
+  assert.strictEqual(T.decorate(line, { items, slabs: [...map.values()] })[0].gst_rate, 18, 'normalised array (the send path)');
+  console.log('normalised slabs: 3 passed');
+}
