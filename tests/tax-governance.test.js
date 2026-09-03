@@ -83,3 +83,11 @@ test('a frozen copy of a governed slab carries the rules BY VALUE and the jurisd
   assert.equal(f.definition_id, 'IN-GST-18'); assert.equal(f.version, '2017-07-01'); assert.equal(f.rules.rate, 18);
   assert.equal(f.governance.jurisdiction, 'IN');
 });
+
+test('⭐ an INR sub-region with no tax block of its own (TN, HI) inherits India\'s GST slabs', async () => {
+  const TN = { region_code: 'TN', currency: 'INR', jurisdiction: {} };
+  const deps = { query: async () => ({ rows: [{ country: 'TN' }] }), regionLayer: async (c) => (c === 'IN' ? IN : c === 'TN' ? TN : null) };
+  const rows = await G.governedSlabsFor('e1', deps);
+  assert.equal(rows.length, 3);
+  assert.equal(rows[0].governance.jurisdiction, 'IN');
+});
