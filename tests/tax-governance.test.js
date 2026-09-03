@@ -66,6 +66,7 @@ test('jurisdictionFor: identities.country wins; INR alone infers IN; anything el
   assert.equal(await G.jurisdictionFor('e1', q([{ country: 'ae', currency_code: 'INR' }])), 'AE');
   assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: 'INR' }])), 'IN');
   assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: 'USD' }])), null);
+  assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: null }])), 'IN', 'unset = INR = India, as regional.currencyFor decides');
   assert.equal(await G.jurisdictionFor('e1', q([])), null);
 });
 
