@@ -16,6 +16,7 @@ const regional = require('../lib/regional');    // the currency comes from the E
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
+const schedule = require('../lib/schedule');
 /* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
 const defaults = require('../lib/defaults');
 /* ⭐ A SPREADSHEET CARRIES ANSWERS, NOT RECORDS — flatten on the way out, stamp on the way in. */
@@ -412,6 +413,7 @@ router.post('/bulk-update', auth, [ body('items').isArray({ min: 1 }) ], validat
 router.get('/', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    await schedule.applyDue(entity_id);   /* parked changes whose moment has come land BEFORE this read (lib/schedule) */
     const q = (req.query.q || '').trim();
     const r = await withEntity(entity_id, (db) => q
       ? db.query(
@@ -881,6 +883,34 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
  * no new table. Only the owner can write it: the UPDATE is scoped to entity_id, so there is no window between
  * checking and writing.
  */
+/* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
+router.get('/:id/schedule', auth, async (req, res) => {
+  try { res.json({ enabled: await schedule.enabled(), pending: await schedule.pending(ctx(req), req.params.id) }); }
+  catch (e) { fail(res, e, 'Could not read the schedule'); }
+});
+router.post('/:id/schedule', auth, [ body('effective_at').isString(), body('item_data').isObject() ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
+    const decl = await catcols.ensureDeclared({
+      query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: req.body.item_data,
+      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+      validate: () => null,
+    });
+    if (decl.error) return res.status(400).json({ error: 'Invalid change', message: decl.error });
+    const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id]));
+    if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
+    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(Object.assign({}, cur.rows[0].item_data, decl.item_data), await regional.currencyFor(entity_id)));
+    const r = await schedule.schedule(entity_id, req.params.id, req.body.effective_at, patch, (req.identity && req.identity.identity_id) || null);
+    if (r.error) return res.status(r.error === 'not_enabled' ? 409 : 400).json({ error: r.error, message: r.message });
+    res.json({ message: 'Change scheduled', scheduled: r.row });
+  } catch (e) { fail(res, e, 'Could not schedule the change'); }
+});
+router.delete('/:id/schedule/:sid', auth, async (req, res) => {
+  try { res.json({ cancelled: await schedule.cancel(ctx(req), req.params.sid) }); }
+  catch (e) { fail(res, e, 'Could not cancel the change'); }
+});
+
 router.put('/:id/availability', auth,
   [ body('qty').exists(), body('source').optional().isString(), body('as_of').optional().isString() ],
   validate,
