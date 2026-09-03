@@ -845,11 +845,18 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const verr = await validateItem(await defaultSchemaId(entity_id), req.body.item_data);
-    if (verr) return res.status(400).json({ error: 'Invalid product', message: verr });
+    /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
+       validated and wrote the raw body, so a key added on edit — through the API, or through a form that renders
+       declared columns and will one day render one more — could land undeclared again. Same writer, same rule. */
+    const decl = await catcols.ensureDeclared({
+      query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: req.body.item_data,
+      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+      validate: (data, rows) => validateAgainst(rows, data),
+    });
+    if (decl.error) return res.status(400).json({ error: 'Invalid product', message: decl.error });
     // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
     // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
-    const item_data = money.stampItem(req.body.item_data, await regional.currencyFor(entity_id));
+    const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
     const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE catalogue_items SET item_data=$1, updated_at=NOW()
        WHERE item_id=$2 AND entity_id=$3 RETURNING *`,
