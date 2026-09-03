@@ -437,6 +437,15 @@ router.get('/', auth, async (req, res) => {
      */
     const want = String(req.query.status || '').toLowerCase().trim();
     let items = r.rows;
+    /* PARKED CHANGES RIDE ON THE ROW (`scheduled: [...]`, usually empty) — gathered here, ONE query for the list, so the
+       product page shows them without a read of its own (screen-reads budget: prodDetailHTML stays at 2). */
+    try {
+      if (items.length && await schedule.enabled()) {
+        const byItem = new Map();
+        for (const row of await schedule.pending(entity_id)) { const k = String(row.item_id); (byItem.get(k) || byItem.set(k, []).get(k)).push(row); }
+        if (byItem.size) items = items.map((it) => byItem.has(String(it.item_id)) ? Object.assign({}, it, { scheduled: byItem.get(String(it.item_id)) }) : it);
+      }
+    } catch (_) { /* the list never fails for a parked change */ }
     if (want) {
       const keep = want === 'not-available' ? (s) => s !== 'available'
         : itemstatus.STATUSES.includes(want) ? (s) => s === want
