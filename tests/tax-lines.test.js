@@ -65,3 +65,14 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
   const g3 = T.gstr3b(led, { Gstin: '33S' }, '092026');
   assert.equal(g3.sup_details.osup_det.iamt, 18); assert.equal(g3._cb.provisional, true);
 });
+
+/* [TAX-03] regression: all_recipients lists the sender FIRST; the counterparty of a sent copy is the receiver. */
+{
+  const T = require('../lib/tax-lines');
+  const assert = require('assert');
+  const hdr = { sender_entity_id: 'S', all_recipients: [{ entity_id: 'S', role: 'sender' }, { entity_id: 'B', role: 'receiver' }, { entity_id: 'C', role: 'cc' }] };
+  assert.strictEqual(T.otherPartyId(hdr, 'S'), 'B', 'sent → the receiver, not the sender entry');
+  assert.strictEqual(T.otherPartyId(hdr, 'B'), 'S', 'received → the sender');
+  assert.strictEqual(T.otherPartyId({ sender_entity_id: 'S', all_recipients: [{ entity_id: 'S', role: 'sender' }] }, 'S'), null, 'no receiver → null, never self');
+  console.log('otherPartyId: 3 passed');
+}
