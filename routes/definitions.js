@@ -30,7 +30,7 @@
 const express = require('express');
 const router  = express.Router();
 const { body } = require('express-validator');
-const { query, withEntity, withTransaction } = require('../db');
+const { query, withEntity, withTransaction, readBatch } = require('../db');
 const { validate } = require('../middleware/validate');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
@@ -72,13 +72,34 @@ router.get('/', auth, async (req, res) => {
      */
     else if (!req.query.all) where += ` AND d.status <> 'retired'`;
 
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.*, v.rules, v.created_at AS version_at
+    const listSql = `SELECT d.*, v.rules, v.created_at AS version_at
          FROM definition d
          LEFT JOIN definition_version v
            ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE ${where}
-        ORDER BY d.kind, d.name`, params));
+        ORDER BY d.kind, d.name`;
+    const wantsTax = !req.query.kind || String(req.query.kind) === 'tax';
+    const wantsLive = !req.query.status || String(req.query.status) === 'live';
+    /* ⭐⭐ ONE ROUND TRIP (db.readBatch): the list, my identity row and the region layers that decide the governed
+       slabs go as one message — this was a transaction (4 trips) plus two plain queries. Falls back to the old
+       path if the batch cannot be built. */
+    let rows = null;
+    try {
+      const stmts = [{ text: listSql, params }];
+      if (wantsTax && wantsLive) {
+        stmts.push({ text: 'SELECT country, currency_code FROM identities WHERE identity_id = $1', params: [entity_id] });
+        stmts.push({ text: `SELECT region_code, currency, units, language, jurisdiction FROM region_layer WHERE region_code IN ('IN', (SELECT upper(trim(country)) FROM identities WHERE identity_id = $1))`, params: [entity_id] });
+      }
+      const res = await readBatch(entity_id, req.identity && req.identity.identity_id, stmts);
+      rows = res[0].rows;
+      if (wantsTax && wantsLive) {
+        const juris = taxGov.jurisdictionOf(res[1].rows[0]);
+        const layers = new Map(res[2].rows.map((x) => [String(x.region_code).toUpperCase(), x]));
+        const gov = taxGov.governedFromRows(juris, layers.get(juris) || null, layers.get('IN') || null);
+        if (gov.length) rows = rows.concat(gov);
+      }
+    } catch (_) { rows = null; }
+    const r = rows === null ? await withEntity(entity_id, (db) => db.query(listSql, params)) : null;
     /**
      * ⭐⭐ THE JURISDICTION'S SLABS RIDE ALONG WITH THE ENTITY'S OWN. Athi, 2026-09-04: *"why each entity should
      * create one for them … it has to come from governance layer and across the country."* India's GST slabs live
@@ -87,12 +108,12 @@ router.get('/', auth, async (req, res) => {
      * and the catalogue default pick from both without a second code path. `?status=draft|retired` never includes
      * them: a governed slab is always live. See lib/tax-governance.js.
      */
-    let rows = r.rows;
-    const wantsTax = !req.query.kind || String(req.query.kind) === 'tax';
-    const wantsLive = !req.query.status || String(req.query.status) === 'live';
-    if (wantsTax && wantsLive) {
-      const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
-      if (gov.length) rows = rows.concat(gov);
+    if (rows === null) {
+      rows = r.rows;
+      if (wantsTax && wantsLive) {
+        const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+        if (gov.length) rows = rows.concat(gov);
+      }
     }
     res.json({ definitions: rows, count: rows.length });
   } catch (e) { if (notMigrated(e)) return gone(res);
