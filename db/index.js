@@ -274,4 +274,50 @@ async function trySavepoint(db, fn, fallback) {
   catch (e) { await db.query('ROLLBACK TO SAVEPOINT ' + sp).catch(() => {}); return fallback; }
 }
 
-module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, sslForHost, RLS_TENANT_TABLES, get pool() { return pool; } };
+/**
+ * ── ⭐⭐ readBatch — an entity-scoped READ in ONE network round trip ──────────────────────────────────────────────
+ *
+ * withEntity costs four trips (BEGIN · set_config · query · COMMIT). With the API in one region and the database in
+ * another (measured 2026-09-05: ~300 ms a trip, so 1.4–2.4 s per request) that is the whole latency. Postgres takes
+ * several statements in ONE simple-protocol message when no bind parameters are sent, so this inlines the values
+ * as escaped literals and sends BEGIN, the set_config, every statement and COMMIT as one text: one trip, one result
+ * per statement. READS ONLY — nothing here should write (a failure mid-way rolls back, but a write belongs in
+ * withEntity where SAVEPOINTs and the guard live).
+ *
+ * Literals: strings via pg's escapeLiteral (E'' when needed), numbers must be finite, booleans, null, Dates as ISO,
+ * arrays of strings as ARRAY[...]. Anything else throws BEFORE the query is built — a caller then falls back to
+ * withEntity, never to a half-escaped string.
+ *
+ *   const [list, pending] = await readBatch(entityId, actorId, [
+ *     { text: 'SELECT * FROM catalogue_items WHERE entity_id = $1', params: [entityId] },
+ *     { text: 'SELECT … WHERE item_id = ANY($1)', params: [[ids]] },
+ *   ]);
+ */
+const { escapeLiteral } = require('pg');
+function inlineLiteral(v) {
+  if (v === null || v === undefined) return 'NULL';
+  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('readBatch: non-finite number'); return String(v); }
+  if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (v instanceof Date) return escapeLiteral(v.toISOString()) + '::timestamptz';
+  if (typeof v === 'string') return escapeLiteral(v);
+  if (Array.isArray(v)) { if (!v.length) return "'{}'"; if (!v.every((x) => typeof x === 'string')) throw new Error('readBatch: only string arrays'); return 'ARRAY[' + v.map(escapeLiteral).join(',') + ']'; }
+  throw new Error('readBatch: unsupported literal ' + typeof v);
+}
+function inlineSql(text, params) {
+  const p = params || [];
+  const out = String(text).replace(/\$(\d+)/g, (m, n) => { const i = Number(n) - 1; if (i < 0 || i >= p.length) throw new Error('readBatch: $' + n + ' has no value'); return inlineLiteral(p[i]); });
+  /* one statement per entry: a ';' followed by more SQL (outside a literal) is refused */
+  if (/;\s*\S/.test(out.replace(/'[^']*'/g, ''))) throw new Error('readBatch: one statement per entry');
+  return out;
+}
+const readBatch = async (entityId, actorId, statements) => {
+  if (!pool) await ensurePool();
+  const head = "BEGIN; SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true);";
+  const body = statements.map((s) => { rlsGuardCheck(s.text); return inlineSql(s.text, s.params); }).join(';\n') + ';';
+  const text = head + '\n' + body + '\nCOMMIT;';
+  const res = await pool.query(text);          /* no values → simple protocol → one message, many results */
+  const arr = Array.isArray(res) ? res : [res];
+  /* results: BEGIN, set_config, …statements…, COMMIT — hand back the middle */
+  return arr.slice(2, 2 + statements.length);
+};
+module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, sslForHost, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };

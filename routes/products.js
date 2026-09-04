@@ -3,7 +3,7 @@ const express = require('express');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
-const { query, withEntity } = require('../db');
+const { query, withEntity, readBatch } = require('../db');
 const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const money = require('../lib/money');          // a price is never a bare number — stamped on write
@@ -418,20 +418,33 @@ router.get('/', auth, async (req, res) => {
        parked — all on the same client. Three withEntity calls here were twelve round trips (Athi, 2026-09-05:
        "product loading in catalogue taking very long"). */
     let pendingRows = [];
-    const r = await withEntity(entity_id, async (db) => {
-      await schedule.applyDue(entity_id, db);
-      const out = await (q
-        ? db.query(
-            `SELECT * FROM catalogue_items
-             WHERE entity_id=$1 AND is_active=true AND item_data::text ILIKE $2
-             ORDER BY created_at DESC`, [entity_id, `%${q}%`])
-        : db.query(
-            `SELECT * FROM catalogue_items
-             WHERE entity_id=$1 AND is_active=true
-             ORDER BY created_at DESC`, [entity_id]));
-      if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (_) { pendingRows = []; } }
-      return out;
-    });
+    const listSql = q
+      ? { text: `SELECT * FROM catalogue_items WHERE entity_id=$1 AND is_active=true AND item_data::text ILIKE $2 ORDER BY created_at DESC`, params: [entity_id, `%${q}%`] }
+      : { text: `SELECT * FROM catalogue_items WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, params: [entity_id] };
+    /* ⭐⭐ ONE NETWORK ROUND TRIP (db.readBatch): the due-probe, the list and the parked rows go as one message.
+       Only when a parked change is DUE does this take the write path (applyDue inside a transaction) — rare, and
+       then the list is read again after it lands. Athi, 2026-09-05: "reduce the round trip to O(1) if possible". */
+    const sched = await schedule.enabled();
+    const actor = req.identity && req.identity.identity_id;
+    let r = null;
+    try {
+      const stmts = [listSql];
+      if (sched) {
+        stmts.push({ text: `SELECT count(*)::int AS n FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL AND effective_at <= NOW()`, params: [entity_id] });
+        stmts.push({ text: `SELECT schedule_id, item_id, effective_at, patch, created_at FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL ORDER BY effective_at`, params: [entity_id] });
+      }
+      const res = await readBatch(entity_id, actor, stmts);
+      const due = sched ? Number(res[1].rows[0].n) : 0;
+      if (!due) { r = res[0]; pendingRows = sched ? res[2].rows : []; }
+    } catch (_) { r = null; }
+    if (!r) {
+      r = await withEntity(entity_id, async (db) => {
+        await schedule.applyDue(entity_id, db);
+        const out = await db.query(listSql.text, listSql.params);
+        if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (_) { pendingRows = []; } }
+        return out;
+      });
+    }
 
     /**
      * ⚠️ FILTERED HERE, NOT IN SQL, and deliberately: an ABSENT status means "available", so a WHERE clause on
