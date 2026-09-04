@@ -1035,6 +1035,15 @@ router.delete('/:id', auth, async (req, res) => {
    Fails honestly when the store is not configured (503) — the rest of the product is unaffected. ── */
 const objStore = require('../lib/storage-object');
 const MEDIA_MAX = 8 * 1024 * 1024;
+/** A video is a LINK, not bytes: YouTube or Vimeo, parsed to {provider, vid} so the page can embed it. */
+function videoLink(url) {
+  const u = String(url || '').trim();
+  let m = u.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{6,})/);
+  if (m) return { provider: 'youtube', vid: m[1], embed: 'https://www.youtube-nocookie.com/embed/' + m[1] };
+  m = u.match(/vimeo\.com\/(?:video\/)?(\d{5,})/);
+  if (m) return { provider: 'vimeo', vid: m[1], embed: 'https://player.vimeo.com/video/' + m[1] };
+  return null;
+}
 function mediaUrl(req, item_id, mid) {
   const base = process.env.PUBLIC_API_URL || (req.protocol + '://' + req.get('host'));
   return base + '/api/products/media/' + item_id + '/' + mid;
@@ -1043,7 +1052,7 @@ function mediaUrl(req, item_id, mid) {
    item lists (the key is never taken from the URL). */
 router.get('/media/:item_id/:mid', async (req, res) => {
   try {
-    if (!objStore.configured()) return res.status(503).json({ error: 'media store not configured' });
+    if (!(await objStore.available())) return res.status(503).json({ error: 'media store not configured' });
     const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
     const row = r.rows[0]; if (!row) return res.status(404).end();
     const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
@@ -1052,11 +1061,28 @@ router.get('/media/:item_id/:mid', async (req, res) => {
     res.set('Content-Type', m.mime || 'application/octet-stream'); res.set('Cache-Control', 'public, max-age=86400'); res.send(buf);
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
-router.post('/:id/media', auth, [ body('name').isString().trim().notEmpty(), body('data_base64').isString().notEmpty() ], validate, async (req, res) => {
+router.post('/:id/media', auth, async (req, res) => {
   try {
-    if (!objStore.configured()) return res.status(503).json({ error: 'not_configured', message: 'The media store is not configured (S3/Supabase Storage env).' });
     const entity_id = ctx(req);
-    const { name, mime, data_base64 } = req.body;
+    const { name, mime, data_base64, url } = req.body || {};
+    /* a video LINK: no bytes, no store */
+    if (url) {
+      const v = videoLink(url);
+      if (!v) return res.status(400).json({ error: 'not_a_video_link', message: 'Paste a YouTube or Vimeo link.' });
+      const mid = require('crypto').randomUUID();
+      const out = await withEntity(entity_id, async (db) => {
+        const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id]);
+        if (!cur.rows.length) return null;
+        const d = Object.assign({}, cur.rows[0].item_data || {});
+        d.media = (Array.isArray(d.media) ? d.media : []).concat([{ id: mid, kind: 'video', provider: v.provider, vid: v.vid, embed: v.embed, url: String(url).slice(0, 500), name: String(name || v.provider + ' video').slice(0, 200), at: new Date().toISOString() }]);
+        const u = await db.query(`UPDATE catalogue_items SET item_data = $1, updated_at = NOW() WHERE item_id = $2 AND entity_id = $3 RETURNING item_data`, [JSON.stringify(d), req.params.id, entity_id]);
+        return u.rows[0];
+      });
+      if (!out) return res.status(404).json({ error: 'Not found' });
+      return res.json({ message: 'Video linked', id: mid, media: out.item_data.media });
+    }
+    if (!name || !data_base64) return res.status(400).json({ error: 'validation', message: 'name and data_base64, or a video url' });
+    if (!(await objStore.available())) return res.status(503).json({ error: 'not_configured', message: 'The media store is not configured (S3 env, or run b204 for the database store).' });
     const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
     if (!buffer.length) return res.status(400).json({ error: 'empty' });
     if (buffer.length > MEDIA_MAX) return res.status(413).json({ error: 'too_large', message: 'Up to 8 MB per file.' });
@@ -1095,7 +1121,7 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
       return { gone, media: d.media };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
-    if (out.gone && out.gone.key && objStore.configured()) { try { await objStore.del(out.gone.key); } catch (_) {} }
+    if (out.gone && out.gone.key && (await objStore.available())) { try { await objStore.del(out.gone.key); } catch (_) {} }
     res.json({ message: 'Media removed', media: out.media });
   } catch (e) { fail(res, e, 'Could not remove the media'); }
 });
