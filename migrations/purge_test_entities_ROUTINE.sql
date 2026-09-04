@@ -101,6 +101,23 @@ BEGIN
     FOREACH t IN ARRAY pending LOOP what := 'still blocked by a foreign key'; detail := t; rows := -1; RETURN NEXT; END LOOP;
   END IF;
 
+  /* ── every foreign key that points AT identities, whatever the column is called (customer_list.owner_entity_id
+     stopped the second run): rows in ANY table that cite a test entity are removed before the entity itself ── */
+  FOR fk IN
+    SELECT ch.relname AS child, ca.attname AS child_col
+      FROM pg_constraint k
+      JOIN pg_class ch ON ch.oid = k.conrelid JOIN pg_namespace nch ON nch.oid = ch.relnamespace
+      JOIN pg_class pa ON pa.oid = k.confrelid
+      JOIN pg_attribute ca ON ca.attrelid = ch.oid AND ca.attnum = k.conkey[1]
+     WHERE k.contype = 'f' AND array_length(k.conkey, 1) = 1 AND nch.nspname = 'public' AND pa.relname = 'identities' AND ch.relname <> 'identities'
+  LOOP
+    BEGIN
+      EXECUTE format('DELETE FROM %I WHERE %I = ANY($1)', fk.child, fk.child_col) USING ids;
+      GET DIAGNOSTICS n = ROW_COUNT;
+      IF n > 0 THEN what := 'cleared'; detail := fk.child || '.' || fk.child_col || ' (cites a test entity)'; rows := n; RETURN NEXT; END IF;
+    EXCEPTION WHEN OTHERS THEN what := 'skipped'; detail := fk.child || '.' || fk.child_col || ' (' || SQLSTATE || ')'; rows := -1; RETURN NEXT;
+    END;
+  END LOOP;
   BEGIN
     DELETE FROM identities WHERE identity_type = 'actor' AND parent_entity_id = ANY(ids);
     GET DIAGNOSTICS n = ROW_COUNT; what := 'removed'; detail := 'identities (actors of test entities)'; rows := n; RETURN NEXT;
