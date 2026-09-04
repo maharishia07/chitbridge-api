@@ -194,7 +194,7 @@ async function applyLiveOffers(entity, items, total) {
       if (!it || it.kind === 'payload' || !Number.isFinite(Number(it.price)) || !(Number(it.quantity) > 0)) return;
       idx.push(i);
       const d = it.d || {};
-      lines.push({ key: String(i), item_id: it.item_id || null, sku: it.sku || (d.sku || d.code) || null,
+      lines.push({ key: String(i), item_id: it.item_id || null, sku: it.sku || (d.sku || d.code) || null, excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [],
         categories: Array.isArray(d.categories) ? d.categories.map(String) : [], qty: Number(it.quantity), unitPrice: Number(it.price) });
     });
     if (!lines.length) return { items, total, applied: [] };
