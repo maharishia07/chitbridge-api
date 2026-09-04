@@ -37,6 +37,7 @@ const auth = require('../middleware/auth');
 /* The jurisdiction's tax slabs (region_layer, b201) — served beside the entity's own definitions, read-only. */
 const regional = require('../lib/regional');
 const taxGov = require('../lib/tax-governance');
+const slabCites = require('../lib/slab-cites');
 
 const ctx = (req) => auth.entityOf(req);
 
@@ -237,15 +238,37 @@ router.put('/:id', auth, async (req, res) => {
  * pointer to the version it copied, and the pointer must not dead-end. So the verb is kept (a caller expects
  * DELETE) and the behaviour is honest, and the response says which it did rather than letting anyone assume.
  */
+/** the takeover slab: one of my LIVE slabs, or a governed one (lib/slab-cites has the why) */
+async function liveSlabById(db, entity_id, id) {
+  if (taxGov.isGovernedId(id)) {
+    const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+    const g = gov.find((x) => String(x.definition_id) === String(id));
+    return g ? slabCites.S.slabOf(g) : null;
+  }
+  const r = await db.query(`SELECT d.definition_id, d.name, d.status, v.rules FROM definition d
+                            LEFT JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+                           WHERE d.definition_id = $1 AND d.kind = 'tax' AND d.status = 'live'`, [id]);
+  return r.rows.length ? slabCites.S.slabOf(r.rows[0]) : null;
+}
 router.delete('/:id', auth, async (req, res) => {
   try {
     if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
     const entity_id = ctx(req);
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE definition SET status = 'retired', updated_at = now()
-        WHERE definition_id = $1 RETURNING definition_id`, [req.params.id]));
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
-    res.json({ message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true });
+    const out = await withEntity(entity_id, async (db) => {
+      const cur = await db.query(`SELECT kind FROM definition WHERE definition_id = $1`, [req.params.id]);
+      if (!cur.rows.length) return { status: 404, body: { error: 'Not found' } };
+      let moved = null;
+      if (cur.rows[0].kind === 'tax') {
+        /* ⭐ A SLAB DOES NOT GO DARK UNDER ITS PRODUCTS. Refused with the counts; accepted with ?takeover=<slab id>,
+           which re-points every citer first — all inside this one transaction (Athi, 2026-09-05). */
+        const g = await slabCites.guard(db, req.params.id, req.query.takeover, (id) => liveSlabById(db, entity_id, id));
+        if (g && g.status) return g;
+        moved = g ? g.moved : null;
+      }
+      await db.query(`UPDATE definition SET status = 'retired', updated_at = now() WHERE definition_id = $1`, [req.params.id]);
+      return { status: 200, body: { message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true, moved } };
+    });
+    res.status(out.status).json(out.body);
   } catch (e) { if (notMigrated(e)) return gone(res);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
