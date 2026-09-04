@@ -314,3 +314,14 @@ test('slabOf tolerates both shapes the shelf comes in', () => {
      several, and a shape that only half-works is worse than one that refuses. */
   assert.deepStrictEqual(ts.slabOf({ id: 'a', rules: { hsn: '0902' } }).hsn, ['0902']);
 });
+
+/* 2026-09-05 — a product in two categories that name DIFFERENT slabs: the first answers, the conflict is carried and said. */
+test('categories that disagree → conflict carried, first answers, describe() says so', () => {
+  const slabs = [{ definition_id: 'g5', name: 'GST 5%', rules: { rate: 5 } }, { definition_id: 'g0', name: 'GST 0%', rules: { rate: 0 } }];
+  const cats = [{ definition_id: 'a', name: 'Grains', rules: { default_slab: 'g5' } }, { definition_id: 'b', name: 'Rice', rules: { default_slab: 'g0' } }];
+  const r = require('../lib/tax-slab').resolve({ item_data: { categories: ['a', 'b'] }, slabs, categories: cats });
+  assert.strictEqual(r.source, 'category'); assert.strictEqual(r.rate, 5); assert.strictEqual(r.conflict.length, 2);
+  assert.ok(/disagree/.test(require('../lib/tax-slab').describe(r)));
+  const same = require('../lib/tax-slab').resolve({ item_data: { categories: ['a'] }, slabs, categories: cats });
+  assert.strictEqual(same.conflict, undefined);
+});
