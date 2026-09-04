@@ -180,6 +180,7 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders
   'storage-object.js',     // object-store key/put/get
+  'events.js',             // the mailbox bell: SSE subscribers + one-time tickets — plumbing, carries no meaning
   'stores.js',             // store lookup helpers
   'transcribe.js',         // audio → text; an outside service behind one function
   'whatsapp-media.js',     // provider media fetch

@@ -452,6 +452,8 @@ router.post('/send',
       const now = new Date();
 
       // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
+      /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
+      try { require('../lib/events').notifyAfter(res, receiverDetails.map(r => r.entity_id), { kind: 'chit', who: sender_display_name || null }); } catch (_) {}
       const all_recipients = [
         {
           entity_id: sender_id,
