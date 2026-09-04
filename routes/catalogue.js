@@ -678,6 +678,8 @@ router.get('/:bridge_id', async (req, res) => {
     res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
       unpriced_hidden: view.unpriced_hidden,
+      /* ⚠️ the view computed the live offers all along; this line never forwarded them — the customer saw none (Athi, 2026-09-04) */
+      offers: view.offers || [],
       finishes: view.finishes, preview: asOwner ? { visibility: view.visibility || 'private' } : undefined });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
