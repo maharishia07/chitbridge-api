@@ -167,7 +167,7 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
    */
   'tax-lines.js',          // rate on the line at send · INV-01 for a copy · the month's ledger · GSTR shapes
   'tax-shelf.js',          // one reader of slabs (own + governed) · categories · face
-  'tax-copy.js', 'schedule.js',           // my copy as a tax record; freeze at completed; ledger over my copies
+  'tax-copy.js', 'schedule.js', 'slab-cites.js',           // my copy as a tax record; freeze at completed; ledger over my copies
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status

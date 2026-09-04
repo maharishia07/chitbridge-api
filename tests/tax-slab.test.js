@@ -125,11 +125,12 @@ test('⭐⭐ an unresolvable slab id falls back to the TRAVELLING COPY, never to
   assert.strictEqual(r.name, 'GST 12%');
 });
 
-test('an unresolvable id with NO copy says so instead of inheriting something else', () => {
+test('an unresolvable id with NO copy is NAMED and falls through (2026-09-05: a dead citation must not hide a good default)', () => {
   const r = R({ name: 'Rice', tax_slab: 'theirs', categories: ['cGrain'] });
-  assert.strictEqual(r.source, 'none');
   assert.strictEqual(r.unresolved, true);
-  assert.strictEqual(r.rate, null);
+  assert.strictEqual(r.cited, 'theirs');
+  assert.notStrictEqual(r.source, 'product');
+  assert.ok(/theirs/.test(require('../lib/tax-slab').describe(r)) && /not active/.test(require('../lib/tax-slab').describe(r)));
 });
 
 test('a bare gst_rate with no slab is the PRODUCT’s own answer — an imported sheet has answered', () => {

@@ -30,7 +30,7 @@
 const express = require('express');
 const router  = express.Router();
 const { body } = require('express-validator');
-const { query, withEntity } = require('../db');
+const { query, withEntity, withTransaction } = require('../db');
 const { validate } = require('../middleware/validate');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
