@@ -1028,6 +1028,78 @@ router.delete('/:id', auth, async (req, res) => {
  * raised" — rather than making the caller fetch the list and pick a row by comparing timestamps, which is how you
  * get an off-by-one on the boundary between two versions.
  */
+/* ── ⭐ PRODUCT MEDIA — pictures and videos, on the private object store (lib/storage-object; key = entity/yyyy/mm/id).
+   Athi, 2026-09-05: "another page for handling images and videos of the product". The bucket is PRIVATE, so nothing
+   here ever hands out a bucket URL: the API streams the bytes. `item_data.media` = [{id, name, mime, kind, size, at}];
+   `item_data.image` = the public read URL of the FIRST image, which is what the storefront's mediaOf() already reads.
+   Fails honestly when the store is not configured (503) — the rest of the product is unaffected. ── */
+const objStore = require('../lib/storage-object');
+const MEDIA_MAX = 8 * 1024 * 1024;
+function mediaUrl(req, item_id, mid) {
+  const base = process.env.PUBLIC_API_URL || (req.protocol + '://' + req.get('host'));
+  return base + '/api/products/media/' + item_id + '/' + mid;
+}
+/* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the
+   item lists (the key is never taken from the URL). */
+router.get('/media/:item_id/:mid', async (req, res) => {
+  try {
+    if (!objStore.configured()) return res.status(503).json({ error: 'media store not configured' });
+    const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
+    const row = r.rows[0]; if (!row) return res.status(404).end();
+    const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
+    if (!m || !m.key) return res.status(404).end();
+    const buf = await objStore.get(m.key);
+    res.set('Content-Type', m.mime || 'application/octet-stream'); res.set('Cache-Control', 'public, max-age=86400'); res.send(buf);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+router.post('/:id/media', auth, [ body('name').isString().trim().notEmpty(), body('data_base64').isString().notEmpty() ], validate, async (req, res) => {
+  try {
+    if (!objStore.configured()) return res.status(503).json({ error: 'not_configured', message: 'The media store is not configured (S3/Supabase Storage env).' });
+    const entity_id = ctx(req);
+    const { name, mime, data_base64 } = req.body;
+    const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
+    if (!buffer.length) return res.status(400).json({ error: 'empty' });
+    if (buffer.length > MEDIA_MAX) return res.status(413).json({ error: 'too_large', message: 'Up to 8 MB per file.' });
+    const kind = /^video\//.test(mime || '') ? 'video' : (/^image\//.test(mime || '') ? 'image' : 'file');
+    const mid = require('crypto').randomUUID();
+    const key = objStore.objectKey(entity_id, mid);
+    await objStore.put(key, buffer, mime || 'application/octet-stream');
+    const out = await withEntity(entity_id, async (db) => {
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id]);
+      if (!cur.rows.length) return null;
+      const d = Object.assign({}, cur.rows[0].item_data || {});
+      const media = (Array.isArray(d.media) ? d.media : []).concat([{ id: mid, key, name: String(name).slice(0, 200), mime: mime || null, kind, size: buffer.length, at: new Date().toISOString() }]);
+      d.media = media;
+      const firstImg = media.find((x) => x.kind === 'image');
+      if (firstImg) d.image = mediaUrl(req, req.params.id, firstImg.id);
+      const u = await db.query(`UPDATE catalogue_items SET item_data = $1, updated_at = NOW() WHERE item_id = $2 AND entity_id = $3 RETURNING item_data`, [JSON.stringify(d), req.params.id, entity_id]);
+      return u.rows[0];
+    });
+    if (!out) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Media added', id: mid, url: mediaUrl(req, req.params.id, mid), media: out.item_data.media });
+  } catch (e) { fail(res, e, 'Could not add the media'); }
+});
+router.delete('/:id/media/:mid', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const out = await withEntity(entity_id, async (db) => {
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2`, [req.params.id, entity_id]);
+      if (!cur.rows.length) return null;
+      const d = Object.assign({}, cur.rows[0].item_data || {});
+      const media = (Array.isArray(d.media) ? d.media : []);
+      const gone = media.find((x) => x && String(x.id) === String(req.params.mid));
+      d.media = media.filter((x) => x !== gone);
+      const firstImg = d.media.find((x) => x.kind === 'image');
+      if (firstImg) d.image = mediaUrl(req, req.params.id, firstImg.id); else delete d.image;
+      await db.query(`UPDATE catalogue_items SET item_data = $1, updated_at = NOW() WHERE item_id = $2 AND entity_id = $3`, [JSON.stringify(d), req.params.id, entity_id]);
+      return { gone, media: d.media };
+    });
+    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (out.gone && out.gone.key && objStore.configured()) { try { await objStore.del(out.gone.key); } catch (_) {} }
+    res.json({ message: 'Media removed', media: out.media });
+  } catch (e) { fail(res, e, 'Could not remove the media'); }
+});
+
 router.get('/:id/versions', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
