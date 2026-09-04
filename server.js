@@ -241,6 +241,9 @@ app.get('/health', (req, res) => {
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
+    /* which build answers — Railway sets this; it is how a spec that fails right after a push tells 'not deployed yet' from 'broken' */
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.SOURCE_COMMIT || null,
+    region: process.env.RAILWAY_REPLICA_REGION || process.env.RAILWAY_REGION || null,
   });
 });
 
