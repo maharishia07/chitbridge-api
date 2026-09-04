@@ -1027,6 +1027,11 @@ router.patch('/profile', auth,
          _cur, req.body.supplies || null]);
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
+      /* ui_prefs — the business's own UI choices (which product rows show, appearance). MERGED, never replaced, so two
+         screens saving two keys do not erase each other. Guarded by the column probe: b166 may not have run. */
+      if (req.body.ui_prefs && typeof req.body.ui_prefs === 'object' && !Array.isArray(req.body.ui_prefs)) {
+        try { if (await require('../lib/schema').hasColumn('identities', 'ui_prefs')) await query("UPDATE identities SET ui_prefs = COALESCE(ui_prefs, '{}'::jsonb) || $1::jsonb WHERE identity_id=$2", [JSON.stringify(req.body.ui_prefs), id]); } catch (_) {}
+      }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
       // saved separately so a normal profile save still works before b114 is applied.
       // ── PUBLISHING IS A CHOICE, BOUNDED BY A CAP (2026-08-06) ────────────────────────────────────────────────
