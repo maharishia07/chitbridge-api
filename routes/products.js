@@ -91,7 +91,7 @@ function validateAgainst(fieldRows, item_data) {
     const rawV = item_data?.[field.field_key];
     const v = (money.isMoney(rawV) ? String(rawV.amount) : (rawV == null ? '' : String(rawV))).trim();
     if (field.required && !v) return `${field.field_name} is required`;
-    if (field.field_type === 'number' && v !== '') {
+    if (field.field_type === 'number' && v !== '' && !catcols.IDENT_KEYS.has(field.field_key)) {   /* a code is text even when declared number by an early numeric value */
       const n = Number(v);
       if (Number.isNaN(n))            return `${field.field_name} must be a number`;
       if (n < 0)                      return `${field.field_name} cannot be negative`;
