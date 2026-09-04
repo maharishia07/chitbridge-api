@@ -1053,8 +1053,15 @@ function mediaUrl(req, item_id, mid) {
 router.get('/media/:item_id/:mid', async (req, res) => {
   try {
     if (!(await objStore.available())) return res.status(503).json({ error: 'media store not configured' });
-    const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
-    const row = r.rows[0]; if (!row) return res.status(404).end();
+    /* ⚠️ THE OWNER'S OWN PICTURE MUST SHOW WHILE THE CATALOGUE IS PRIVATE. This is a public route, so a bare query runs
+       under the anonymous RLS context and a private catalogue's item is simply not there → 404 for the owner too (the
+       tour's console errors, 2026-09-04). The blob store is WITHOUT RLS and knows the entity: find it by the media id,
+       then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
+    let row = null;
+    try { const own = await query('SELECT entity_id FROM media_blobs WHERE key LIKE $1 LIMIT 1', ['%/' + req.params.mid]);
+      if (own.rows[0]) row = await withEntity(own.rows[0].entity_id, async (db) => (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null); } catch (_) { row = null; }
+    if (!row) { const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]); row = r.rows[0]; }
+    if (!row) return res.status(404).end();
     const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
     if (!m || !m.key) return res.status(404).end();
     const buf = await objStore.get(m.key);
