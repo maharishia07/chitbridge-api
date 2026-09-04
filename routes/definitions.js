@@ -135,6 +135,9 @@ router.post('/', auth,
     try {
       const entity_id = ctx(req);
       const { kind, sub_kind, name, note } = req.body || {};
+      /* 'live' on create — the planner authors several dated offers at once; a second call per row to flip each
+         to live doubled its round trips. Anything else is a draft, as before. */
+      const status0 = (req.body && req.body.status === 'live') ? 'live' : 'draft';
       const rules = (req.body && typeof req.body.rules === 'object' && req.body.rules) || {};
 
       /**
@@ -145,10 +148,10 @@ router.post('/', auth,
       const out = await withEntity(entity_id, async (db) => {
         const d = await db.query(
           `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
-           VALUES ($1,$2,$3,$4,$5,'draft',1,$6) RETURNING *`,
+           VALUES ($1,$2,$3,$4,$5,$7,1,$6) RETURNING *`,
           [entity_id, String(kind).trim(), sub_kind ? String(sub_kind).trim() : null,
            String(name).trim().slice(0, MAX_NAME), note ? String(note).slice(0, MAX_NOTE) : null,
-           req.identity && req.identity.identity_id]);
+           req.identity && req.identity.identity_id, status0]);
         const row = d.rows[0];
         await db.query(
           `INSERT INTO definition_version (definition_id, version, entity_id, rules, note, created_by)
