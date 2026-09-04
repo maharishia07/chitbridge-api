@@ -12,7 +12,7 @@ const router  = express.Router();
 const jwt     = require('jsonwebtoken');
 const { safeErr } = require('../lib/respond');
 const log     = require('../lib/logger');
-const { query, withEntity } = require('../db');  // DB access for the Q&A library (assist_qa) + entity-scoped writes
+const { query, withEntity, readBatch } = require('../db');  // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth    = require('../middleware/auth');   // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb');   // server-side grounding (cacheable, tamper-proof)
 const compliance = require('../lib/compliance'); // deterministic conform-check engine (the `ai:conform-verdict@v1` slot floor)
@@ -293,8 +293,10 @@ router.get('/catalogue-mine', async (req, res) => {
     const entity = identity.parent_entity_id || identity.identity_id;
     let rows = [];
     try {
-      const r = await withEntity(entity, (db) => db.query(
-        `SELECT source_key, version, commercials, visible, updated_at FROM catalogue_adoption WHERE entity_id = $1 ORDER BY updated_at DESC`, [entity]));
+      /* ⭐ ONE network round trip for the adoption rows (readBatch); the transaction path stays as the fallback. */
+      let r;
+      try { r = (await readBatch(entity, null, [{ text: `SELECT source_key, version, commercials, visible, updated_at FROM catalogue_adoption WHERE entity_id = $1 ORDER BY updated_at DESC`, params: [entity] }]))[0]; }
+      catch (_) { r = await withEntity(entity, (db) => db.query(`SELECT source_key, version, commercials, visible, updated_at FROM catalogue_adoption WHERE entity_id = $1 ORDER BY updated_at DESC`, [entity])); }
       rows = r.rows || [];
     } catch (dbErr) {
       return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
