@@ -1184,10 +1184,12 @@ router.get('/:id/versions', auth, async (req, res) => {
       }
 
       const r = await db.query(
-        `SELECT version_no, name, variant, unit, price, sku, status, valid_from, valid_to, changed_by
-           FROM catalogue_item_version
-          WHERE entity_id = $1 AND item_id = $2
-          ORDER BY version_no DESC LIMIT 200`, [entity_id, req.params.id]);
+        /* the author as a NAME — changed_by is the actor's identity id (app.current_actor); a person reads 'Athi', not a uuid (Athi, 2026-09-04: 'cryptic id is appearing in who?') */
+        `SELECT v.version_no, v.name, v.variant, v.unit, v.price, v.sku, v.status, v.valid_from, v.valid_to, v.changed_by, i.display_name AS changed_by_name
+           FROM catalogue_item_version v
+           LEFT JOIN identities i ON i.identity_id::text = v.changed_by
+          WHERE v.entity_id = $1 AND v.item_id = $2
+          ORDER BY v.version_no DESC LIMIT 200`, [entity_id, req.params.id]);
       return { rows: r.rows };
     });
 
