@@ -2310,7 +2310,7 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
       label: it.name + (it.variant ? ' · ' + it.variant : ''), key: it.key,
       /* The durable identity, so a human pick stamps the same reference the matcher would have. Without it the
          one path where we are CERTAIN which item was meant would be the only one leaving no reference. */
-      item_id: it.item_id || null, sku: it.sku || null,
+      item_id: it.item_id || null, sku: it.sku || null, their_ref: (it.their_ref && typeof it.their_ref === "object") ? { system: String(it.their_ref.system || "").slice(0, 120), id: String(it.their_ref.id || "").slice(0, 120) } : null,   /* the BUYER'S id for this line (Identifiers row) — travels so their side can match it */
       /* the moment, so a human pick fixes the base exactly as the matcher does — one shape, three paths */
       as_of: it.as_of || null, hash: itemmatch.stampOf(it) });
 
