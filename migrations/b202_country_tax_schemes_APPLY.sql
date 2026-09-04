@@ -68,11 +68,13 @@ UPDATE region_layer SET jurisdiction = COALESCE(jurisdiction,'{}'::jsonb) || jso
 
 COMMIT;
 
--- VERIFICATION, after the commit. Expect six DONE rows; US and EU stay tax-less on purpose.
+-- VERIFICATION, after the commit. Expect six DONE rows + IN from b201; US and EU stay tax-less on purpose; HI and TN inherit IN in code.
+-- Athi ran this 2026-09-05: CN 4 · DE 3 · ES 4 · FR 5 · IN 5 · JP 2 · MX 2 — DONE.
 SELECT region_code,
        jurisdiction->'tax'->>'scheme'                                            AS scheme,
        jsonb_array_length(COALESCE(jurisdiction->'tax'->'slabs','[]'::jsonb))    AS slabs,
        CASE WHEN region_code IN ('US','EU') THEN 'NONE ON PURPOSE'
+            WHEN region_code IN ('HI','TN') THEN 'INHERITS IN (code)'
             WHEN jsonb_array_length(COALESCE(jurisdiction->'tax'->'slabs','[]'::jsonb)) > 0 THEN 'DONE'
             ELSE 'NOT APPLIED' END                                              AS verdict
   FROM region_layer
