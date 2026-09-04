@@ -174,6 +174,51 @@ function validateProposal(raw, oi, sellerBand, label) {
   if (raw.note != null) out.note = String(raw.note).slice(0, 500);
   return out;
 }
+/**
+ * ⭐ applyLiveOffers — the storefront basket showed "10% off · save ₹100"; the order must SAY the same. Athi,
+ * 2026-09-04: "it is not showing any offer details" → forwarded to the page; and a promise the invoice ignores is
+ * worse than none. Same engine as the page (lib/offers-engine.js = app/offers.js, vendored), same live offers
+ * (catalogue-view.liveOffers), evaluated server-side on the REPRICED lines — the customer's own numbers never enter.
+ *   line-scope  → the line keeps its list price and carries {offer_id, label, off}; its total drops by `off`
+ *   cart-scope  → summary_json.offers [{label, scope, amount}]; the total drops
+ *   tax         → applyToLine stamped only the RATE, so tax follows the reduced total at invoice time
+ * Never throws: an engine failure leaves the order at list price, which is what it was before today.
+ */
+async function applyLiveOffers(entity, items, total) {
+  try {
+    const eng = require('../lib/offers-engine').CBOffers;
+    const offers = await catalogueView.liveOffers({ entity_id: entity.identity_id, withEntity });
+    if (!offers.length || !eng || !eng.evaluate || !eng.perLine) return { items, total, applied: [] };
+    const idx = []; const lines = [];
+    items.forEach((it, i) => {
+      if (!it || it.kind === 'payload' || !Number.isFinite(Number(it.price)) || !(Number(it.quantity) > 0)) return;
+      idx.push(i);
+      const d = it.d || {};
+      lines.push({ key: String(i), item_id: it.item_id || null, sku: it.sku || (d.sku || d.code) || null,
+        categories: Array.isArray(d.categories) ? d.categories.map(String) : [], qty: Number(it.quantity), unitPrice: Number(it.price) });
+    });
+    if (!lines.length) return { items, total, applied: [] };
+    const ev = eng.evaluate({ lines, offers, ctx: { now: new Date(), currency: entity.currency_code || 'INR' } });
+    const per = eng.perLine(ev, lines) || {};
+    let newTotal = 0; const applied = [];
+    items.forEach((it, i) => {
+      const p = per[String(i)];
+      if (p && p.off > 0 && Number.isFinite(Number(it.total))) {
+        it.offer = { offer_id: p.offer_id || null, label: p.label || 'offer', off: money.round2(p.off) };
+        it.total = money.round2(Number(it.total) - p.off);
+        applied.push({ scope: 'line', label: it.offer.label, amount: it.offer.off, item_id: it.item_id || null });
+      }
+      if (Number.isFinite(Number(it.total))) newTotal += Number(it.total);
+    });
+    (ev.adjustments || []).forEach((a) => {
+      if (a.scope === 'line' || a.scope === 'note') return;
+      const amt = money.round2(Math.abs(Number(a.amount) || 0)); if (!amt) return;
+      applied.push({ scope: a.scope || 'cart', label: a.label || a.kind, amount: amt, offer_id: a.offer_id || null });
+      newTotal -= amt;
+    });
+    return { items, total: money.round2(Math.max(0, newTotal)), applied };
+  } catch (_) { return { items, total, applied: [] }; }
+}
 async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order');   // F6: bound the line count
@@ -679,7 +724,7 @@ router.get('/:bridge_id', async (req, res) => {
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
       unpriced_hidden: view.unpriced_hidden,
       /* ⚠️ the view computed the live offers all along; this line never forwarded them — the customer saw none (Athi, 2026-09-04) */
-      offers: view.offers || [],
+      offers: view.offers || [], categories: view.categories || [],
       finishes: view.finishes, preview: asOwner ? { visibility: view.visibility || 'private' } : undefined });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
@@ -770,7 +815,7 @@ router.post('/:bridge_id/order/confirm',
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
-      let line_items, total, pendingDocs = [];   // pendingDocs: validated+hashed bytes, stored per-copy after commit
+      let line_items, total, pendingDocs = [], offersApplied = [];   // pendingDocs: validated+hashed bytes, stored per-copy after commit
       // The shop's OWN method decides whether a buyer offer is admissible at all — read server-side, never trusted
       // from the request, so a customer cannot claim a shop is negotiable when it is not.
       const oi = await getOrderInput(entity.identity_id);
@@ -822,7 +867,8 @@ router.post('/:bridge_id/order/confirm',
                     .json({ error: 'Submission rejected', message: known ? ve.message : safeErr(ve) });
         }
       } else {
-        try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi)); }
+        try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi));
+              ({ items: line_items, total, applied: offersApplied } = await applyLiveOffers(entity, line_items, total)); }
         catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }
       }
       // ── T2.1 · AN OFFER MUST NOT CARRY AN ORDER'S MONEY ──────────────────────────────────────────────────────
@@ -851,7 +897,7 @@ router.post('/:bridge_id/order/confirm',
       // Before this, a help-desk chit was stamped 'INR' with total_value 0, so lib/kyb.js counted every support
       // ticket as a zero-value TRADE and diluted the concentration ratio it exists to compute.
       const monetary = oi.pipeline === 'commerce';
-      const summary_json = { line_item_count: line_items.length,
+      const summary_json = { line_item_count: line_items.length, ...(offersApplied.length ? { offers: offersApplied } : {}),
                              total_value: (!monetary || negotiation) ? null : Math.round(total * 100) / 100,
                              currency_code: monetary ? (entity.currency_code || 'INR') : null, purpose, is_promotion: false,
                              customer_locality: custLocality || null,
