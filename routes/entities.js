@@ -645,11 +645,14 @@ router.get('/me', auth, async (req, res) => {
          in parallel per request means two concurrent readers want six connections. The win here is removing
          three HTTP round trips, not three DB ones; parallelising the small cost to risk the pool is a bad
          trade. See the note at the top of tools/round-trips.cjs. */
-      for (const k of want) {
-        if (!Object.prototype.hasOwnProperty.call(LOAD, k)) { included[k] = { error: 'unknown include' }; continue; }
-        try { included[k] = await LOAD[k](); }
-        catch (e) { included[k] = { error: safeErr(e) }; }
-      }
+      /* ⚠️ REVISITED 2026-09-05. Measured: this request took 7–10 s because the three includes ran one after the other,
+         each ~20 DB round trips across a continent (channels alone opens nine transactions). Three in parallel is three
+         connections of a pool of ten — the note above priced that risk when a trip cost 5 ms; at 300 ms the sequential
+         wait is the worse failure, and every app open pays it. The real fix is readBatch inside each lib. */
+      const keys = want.filter((k) => Object.prototype.hasOwnProperty.call(LOAD, k));
+      want.filter((k) => keys.indexOf(k) < 0).forEach((k) => { included[k] = { error: 'unknown include' }; });
+      const got = await Promise.all(keys.map((k) => LOAD[k]().then((v) => [k, v], (e) => [k, { error: safeErr(e) }])));
+      got.forEach(([k, v]) => { included[k] = v; });
     }
 
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance,
