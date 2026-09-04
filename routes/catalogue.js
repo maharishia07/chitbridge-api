@@ -636,12 +636,28 @@ router.get('/network/:bridge_id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Network storefront failed', message: safeErr(err) }); }
 });
 // ── CJ-02: public catalogue (only when visibility='public') ──
+/**
+ * ⭐ OWNER PREVIEW. Athi, 2026-09-04: "the storefront tab is not showing how the product will be visible to the
+ * customer" — his catalogue is private, so the public read said "Shop not found" (correctly, for a stranger). The
+ * owner is not a stranger: with a valid session for THIS entity, the read bypasses the visibility gate and answers
+ * with `preview: true`. Nothing changes for anyone else — a bad or foreign token is simply anonymous.
+ */
+function ownerOf(req, entity) {
+  try {
+    const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return false;
+    const d = require('jsonwebtoken').verify(h.slice(7), process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
+    const mine = d.parent_entity_id || d.identity_id;
+    return String(mine) === String(entity.identity_id);
+  } catch (_) { return false; }
+}
 router.get('/:bridge_id', async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    const asOwner = req.query.preview === '1' && ownerOf(req, entity);
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
-    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap') });
+    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'), asOwner });
     // ⚠️ A PRIVATE SHOP MUST BE INDISTINGUISHABLE FROM ONE THAT DOES NOT EXIST.
     //
     // Athi, 2026-08-06: *"make the entity private and try to open the store using the storefront — it should say
@@ -662,7 +678,7 @@ router.get('/:bridge_id', async (req, res) => {
     res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
       groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
       unpriced_hidden: view.unpriced_hidden,
-      finishes: view.finishes });
+      finishes: view.finishes, preview: asOwner ? { visibility: view.visibility || 'private' } : undefined });
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
 
