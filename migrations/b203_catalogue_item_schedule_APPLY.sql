@@ -38,6 +38,7 @@ CREATE POLICY catalogue_item_schedule_isolation ON catalogue_item_schedule
 COMMIT;
 
 -- VERIFICATION, after the commit. Expect one row: table present, rls on, 2 indexes, 1 policy.
+-- Athi ran this 2026-09-05: true · true · 2 · 1 — DONE.
 SELECT to_regclass('public.catalogue_item_schedule') IS NOT NULL                                            AS table_present,
        (SELECT relrowsecurity FROM pg_class WHERE relname = 'catalogue_item_schedule')                      AS rls_on,
        (SELECT count(*) FROM pg_indexes WHERE tablename = 'catalogue_item_schedule' AND indexname LIKE 'idx_cis%') AS indexes,
