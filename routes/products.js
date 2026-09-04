@@ -413,17 +413,25 @@ router.post('/bulk-update', auth, [ body('items').isArray({ min: 1 }) ], validat
 router.get('/', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    await schedule.applyDue(entity_id);   /* parked changes whose moment has come land BEFORE this read (lib/schedule) */
     const q = (req.query.q || '').trim();
-    const r = await withEntity(entity_id, (db) => q
-      ? db.query(
-          `SELECT * FROM catalogue_items
-           WHERE entity_id=$1 AND is_active=true AND item_data::text ILIKE $2
-           ORDER BY created_at DESC`, [entity_id, `%${q}%`])
-      : db.query(
-          `SELECT * FROM catalogue_items
-           WHERE entity_id=$1 AND is_active=true
-           ORDER BY created_at DESC`, [entity_id]));
+    /* ⭐ ONE TRANSACTION for the whole read: parked changes due by now land first, then the list, then what is still
+       parked — all on the same client. Three withEntity calls here were twelve round trips (Athi, 2026-09-05:
+       "product loading in catalogue taking very long"). */
+    let pendingRows = [];
+    const r = await withEntity(entity_id, async (db) => {
+      await schedule.applyDue(entity_id, db);
+      const out = await (q
+        ? db.query(
+            `SELECT * FROM catalogue_items
+             WHERE entity_id=$1 AND is_active=true AND item_data::text ILIKE $2
+             ORDER BY created_at DESC`, [entity_id, `%${q}%`])
+        : db.query(
+            `SELECT * FROM catalogue_items
+             WHERE entity_id=$1 AND is_active=true
+             ORDER BY created_at DESC`, [entity_id]));
+      if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (_) { pendingRows = []; } }
+      return out;
+    });
 
     /**
      * ⚠️ FILTERED HERE, NOT IN SQL, and deliberately: an ABSENT status means "available", so a WHERE clause on
@@ -440,9 +448,9 @@ router.get('/', auth, async (req, res) => {
     /* PARKED CHANGES RIDE ON THE ROW (`scheduled: [...]`, usually empty) — gathered here, ONE query for the list, so the
        product page shows them without a read of its own (screen-reads budget: prodDetailHTML stays at 2). */
     try {
-      if (items.length && await schedule.enabled()) {
+      if (pendingRows.length) {
         const byItem = new Map();
-        for (const row of await schedule.pending(entity_id)) { const k = String(row.item_id); (byItem.get(k) || byItem.set(k, []).get(k)).push(row); }
+        for (const row of pendingRows) { const k = String(row.item_id); (byItem.get(k) || byItem.set(k, []).get(k)).push(row); }
         if (byItem.size) items = items.map((it) => byItem.has(String(it.item_id)) ? Object.assign({}, it, { scheduled: byItem.get(String(it.item_id)) }) : it);
       }
     } catch (_) { /* the list never fails for a parked change */ }
