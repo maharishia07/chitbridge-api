@@ -325,3 +325,13 @@ test('categories that disagree → conflict carried, first answers, describe() s
   const same = require('../lib/tax-slab').resolve({ item_data: { categories: ['a'] }, slabs, categories: cats });
   assert.strictEqual(same.conflict, undefined);
 });
+
+/* 2026-09-05 — a child category inherits its parent's slab; the answer names the ancestor. */
+test('a category with no slab asks its parent, up the tree', () => {
+  const S = require('../lib/tax-slab');
+  const slabs = [{ definition_id: 'g5', name: 'GST 5%', rules: { rate: 5 } }];
+  const cats = [{ definition_id: 'top', name: 'Fruits', rules: { default_slab: 'g5' } }, { definition_id: 'kid', name: 'Dried', rules: { parent: 'top' } }, { definition_id: 'gk', name: 'Raisins', rules: { parent: 'kid' } }];
+  const r = S.resolve({ item_data: { categories: ['gk'] }, slabs, categories: cats });
+  assert.strictEqual(r.rate, 5); assert.strictEqual(r.source, 'category'); assert.strictEqual(r.via_category_name, 'Raisins'); assert.strictEqual(r.inherited_from, 'Fruits');
+  assert.ok(/inherits Fruits/.test(S.describe(r)));
+});
