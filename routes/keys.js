@@ -21,7 +21,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { query } = require('../db');
 
-const SCOPES = ['offers', 'connector'];   // connector = products up · orders down · the bell (tools/tally-connector)
+const SCOPES = ['offers', 'pricing', 'tax', 'invoice', 'connector', 'services'];   // services = every service; connector = products up · orders down · the bell
 const sessionOnly = (req, res, next) => { if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'A key cannot manage keys — sign in.' }); next(); };
 
 async function listOf(entity_id) {
@@ -69,4 +69,5 @@ router.delete('/:jti', auth, sessionOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
+router.openapi = { paths: { '/api/keys': { post: { summary: 'Mint an API key (session only)', tags: ['keys'], security: [{ bearer: [] }], requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string', enum: SCOPES } }, days: { type: 'integer' } } } } } }, responses: { 201: { description: 'the key, shown once' } } }, get: { summary: 'List keys (session only)', tags: ['keys'], security: [{ bearer: [] }], responses: { 200: { description: 'keys' } } } }, '/api/keys/{jti}': { delete: { summary: 'Revoke a key (session only)', tags: ['keys'], security: [{ bearer: [] }], parameters: [{ name: 'jti', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'revoked' } } } } }, schemas: {} };
 module.exports = router;

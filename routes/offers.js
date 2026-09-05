@@ -59,8 +59,8 @@ router.post('/evaluate', auth, auth.requireScope('offers'), (req, res) => run(re
 router.post('/explain', auth, auth.requireScope('offers'), (req, res) => run(req, res, true));
 
 /* OpenAPI 3.0 — what another system reads to attach. Kept beside the code that it describes so it cannot drift far. */
-router.get('/openapi.json', (req, res) => {
-  const base = (process.env.PUBLIC_API_BASE || (req.protocol + '://' + req.get('host')));
+router.get('/openapi.json', (req, res) => res.json(require('./openapi').assemble(req)));
+router.openapi = (function () {
   const line = { type: 'object', required: ['qty', 'unitPrice'], properties: { key: { type: 'string' }, item_id: { type: 'string' }, sku: { type: 'string' }, name: { type: 'string' },
     qty: { type: 'number' }, unitPrice: { type: 'number' }, categories: { type: 'array', items: { type: 'string' } }, excluded: { type: 'array', items: { type: 'string' } } } };
   const offer = { type: 'object', required: ['kind'], properties: { id: { type: 'string' }, label: { type: 'string' }, kind: { type: 'string', enum: (eng && eng.kinds) || [] },
@@ -76,17 +76,13 @@ router.get('/openapi.json', (req, res) => {
     skipped: { type: 'array', items: { type: 'object' } }, perLine: { type: 'object' }, offers_considered: { type: 'integer' }, explain: { type: 'array', items: { type: 'object' } } } };
   const body = { type: 'object', required: ['lines'], properties: { lines: { type: 'array', items: line }, offers: { type: 'array', items: offer, description: 'omit to evaluate against the caller entity\'s live offers' },
     ctx: { type: 'object', properties: { currency: { type: 'string' }, now: { type: 'string', format: 'date-time' } } } } };
-  res.json({ openapi: '3.0.3', info: { title: 'ChitBridge offer engine', version: '1.0.0', description: 'Stateless offer evaluation: lines and offers in, adjustments and reasons out. Same engine as the ChitBridge storefront and compose.' },
-    servers: [{ url: base }],
-    components: { securitySchemes: { apiKey: { type: 'apiKey', in: 'header', name: 'X-Api-Key' }, bearer: { type: 'http', scheme: 'bearer' } },
-                  schemas: { Line: line, Offer: offer, Adjustment: adjustment, Result: result, EvaluateBody: body } },
+  return { schemas: { Line: line, Offer: offer, Adjustment: adjustment, Result: result, EvaluateBody: body },
     paths: {
-      '/api/offers/kinds': { get: { summary: 'The registry of offer kinds', responses: { 200: { description: 'kinds', content: { 'application/json': { schema: { type: 'object' } } } } } } },
-      '/api/offers/evaluate': { post: { summary: 'Evaluate offers on lines', security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/EvaluateBody' } } } },
+      '/api/offers/kinds': { get: { summary: 'The registry of offer kinds', tags: ['offers'], responses: { 200: { description: 'kinds', content: { 'application/json': { schema: { type: 'object' } } } } } } },
+      '/api/offers/evaluate': { post: { summary: 'Evaluate offers on lines', tags: ['offers'], security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/EvaluateBody' } } } },
         responses: { 200: { description: 'result', content: { 'application/json': { schema: { $ref: '#/components/schemas/Result' } } } }, 401: { description: 'no or revoked key' }, 403: { description: 'key not scoped for offers' }, 429: { description: 'rate limited (240/min per key)' } } } },
-      '/api/offers/explain': { post: { summary: 'Evaluate, with a one-line reason per adjustment', security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/EvaluateBody' } } } },
+      '/api/offers/explain': { post: { summary: 'Evaluate, with a one-line reason per adjustment', tags: ['offers'], security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/EvaluateBody' } } } },
         responses: { 200: { description: 'result + explain', content: { 'application/json': { schema: { $ref: '#/components/schemas/Result' } } } } } } },
-      '/api/keys': { post: { summary: 'Mint an API key (session only)', security: [{ bearer: [] }], responses: { 201: { description: 'the key, shown once' } } }, get: { summary: 'List keys (session only)', security: [{ bearer: [] }], responses: { 200: { description: 'keys' } } } },
-    } });
-});
+    } };
+})();
 module.exports = router;

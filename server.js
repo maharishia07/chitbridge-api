@@ -182,9 +182,12 @@ app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
 app.use('/api/chits',       chitsRouter);
 app.use('/api/events',      require('./routes/events'));
-app.use('/api/offers',      rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
-                              keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) }),
-                              require('./routes/offers'));   // the offer engine as a service — kinds · evaluate · explain · openapi (lib/offers-engine.js)
+const serviceLimiter = () => rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
+                                        keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) });
+app.use('/api/offers',      serviceLimiter(), require('./routes/offers'));    // ⭐ THE GOVERNED CAPABILITIES AS SERVICES (rung 2): offers
+app.use('/api/pricing',     serviceLimiter(), require('./routes/pricing'));   //   pricing structure → unit price at a quantity
+app.use('/api/invoice',     serviceLimiter(), require('./routes/invoice'));   //   pricing → offers → tax → INV-01, built not issued
+app.use('/api',             require('./routes/openapi'));                     //   /api/openapi.json — one contract for all of them
 app.use('/api/keys',        require('./routes/keys'));     // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);

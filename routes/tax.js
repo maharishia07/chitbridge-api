@@ -56,4 +56,41 @@ router.get('/gstr', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
 });
 
+/* ── THE TAX ENGINE AS A SERVICE (rung 2) ──
+ *   POST /api/tax/rate     (key: tax)  { lines:[{ item_id?|code?|name, hsn? }] } → the slab each line resolves to on THIS entity's shelf
+ *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ name, qty, unit_price, discount?, rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
+ *                                       → the INV-01 block; a line without a rate takes the shelf's; seller omitted = this entity
+ * Global by scheme: GST (state decides intra/inter) or a VAT-type scheme (the border decides domestic/cross) — the line's
+ * or the slab's scheme, the parties' Country. */
+const S = require('../lib/services');
+router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
+  try {
+    const lines = S.normLines(req.body); if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
+    const sh = await S.shelfOf(auth.entityOf(req));
+    const rated = S.rateLines(lines, sh.shelf);
+    res.json({ engine: 'chitbridge-tax', version: 1, lines: rated.map((l) => ({ key: l.key, item_id: l.item_id, code: l.code, name: l.name, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })) });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
+  try {
+    const body = req.body || {}; const lines = S.normLines(body); if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
+    const entity_id = auth.entityOf(req);
+    const needShelf = lines.some((l) => l.gst_rate == null);
+    const sh = needShelf ? await S.shelfOf(entity_id) : null;
+    const rated = sh ? S.rateLines(lines, sh.shelf) : lines;
+    const mine = await S.partyOfEntity(entity_id);
+    const seller = S.party(body.seller, mine); const buyer = S.party(body.buyer, { Country: seller.Country || null, RegType: 'regular' });
+    if (!buyer.State && !buyer.Pos && !buyer.Gstin && seller.State) buyer.Pos = seller.State;
+    const det = S.computeTax({ seller, buyer, lines: rated.map((l) => Object.assign({}, l, { unit_price: l.listPrice })), priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
+    res.json({ engine: 'chitbridge-tax', version: 1, seller: { Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country }, invoice: det, heads: T.heads(det) });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+router.openapi = {
+  paths: {
+    '/api/tax/rate': { post: { summary: 'The tax slab each line resolves to on this entity\'s shelf', tags: ['tax'], security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['lines'], properties: { lines: { type: 'array', items: { type: 'object', properties: { key: { type: 'string' }, item_id: { type: 'string' }, code: { type: 'string' }, name: { type: 'string' }, hsn: { type: 'string' } } } } } } } } }, responses: { 200: { description: 'rated lines' } } } },
+    '/api/tax/compute': { post: { summary: 'Compute tax on lines (INV-01 block); GST by state, VAT-type by border', tags: ['tax'], security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['lines'], properties: { seller: { $ref: '#/components/schemas/Party' }, buyer: { $ref: '#/components/schemas/Party' }, lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } }, scheme: { type: 'string' }, priceIncludesTax: { type: 'boolean' }, reverseCharge: { type: 'boolean' } } } } } }, responses: { 200: { description: 'the INV-01 block and the heads' } } } },
+    '/api/tax/invoice/{chit_id}': { get: { summary: 'The tax invoice of a chit (session)', tags: ['tax'], security: [{ bearer: [] }], parameters: [{ name: 'chit_id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'invoice' } } } },
+  },
+  schemas: {},
+};
 module.exports = router;

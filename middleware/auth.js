@@ -166,6 +166,10 @@ module.exports = auth;
 /** what each scope opens — method + path; a route not listed here is closed to keys whatever else they pass */
 const KEY_ROUTES = {
   offers:    [['*', /^\/api\/offers(\/|$)/]],
+  pricing:   [['*', /^\/api\/pricing(\/|$)/]],
+  tax:       [['POST', /^\/api\/tax\/(rate|compute)$/]],
+  invoice:   [['*', /^\/api\/invoice(\/|$)/]],
+  services:  [['*', /^\/api\/(offers|pricing|invoice)(\/|$)/], ['POST', /^\/api\/tax\/(rate|compute)$/]],
   connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
               ['GET', /^\/api\/chits\/(inbox|pulse|[0-9a-f-]{36})$/], ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/]],
 };
