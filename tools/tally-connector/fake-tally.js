@@ -33,13 +33,14 @@ const server = http.createServer((req, res) => {
     }
     if (/<TALLYREQUEST>\s*Import Data\s*<\/TALLYREQUEST>/i.test(body)) {
       const ref = (/<REFERENCE>([^<]*)<\/REFERENCE>/.exec(body) || [])[1] || '';
-      const items = [...body.matchAll(/<STOCKITEMNAME>([^<]*)<\/STOCKITEMNAME>[\s\S]*?<RATE>([^<]*)<\/RATE>[\s\S]*?<BILLEDQTY>([^<]*)<\/BILLEDQTY>/g)].map((m) => ({ item: m[1], rate: m[2], qty: m[3] }));
+      const items = [...body.matchAll(/<STOCKITEMNAME>([^<]*)<\/STOCKITEMNAME>[\s\S]*?<RATE>([^<]*)<\/RATE>(?:<DISCOUNT>([^<]*)<\/DISCOUNT>)?<AMOUNT>([^<]*)<\/AMOUNT>[\s\S]*?<BILLEDQTY>([^<]*)<\/BILLEDQTY>/g)].map((m) => ({ item: m[1], rate: m[2], discount: m[3] || '', amount: m[4], qty: m[5] }));
+      const narration = (/<NARRATION>([^<]*)<\/NARRATION>/.exec(body) || [])[1] || '';
       const vtype = (/VCHTYPE="([^"]*)"/.exec(body) || [])[1] || '';
       const ledgers = [...body.matchAll(/<LEDGERNAME>([^<]*)<\/LEDGERNAME><ISDEEMEDPOSITIVE>([^<]*)<\/ISDEEMEDPOSITIVE>(?:<ISPARTYLEDGER>[^<]*<\/ISPARTYLEDGER>)?<AMOUNT>([^<]*)<\/AMOUNT>/g)].map((m) => ({ ledger: m[1], dr: m[2] === 'Yes', amount: m[3] }));
       /* master imports (ledgers) are remembered too — GET /_masters */
       if (/<REPORTNAME>All Masters<\/REPORTNAME>/i.test(body)) { const led = [...body.matchAll(/<LEDGER NAME="([^"]*)"[\s\S]*?<PARENT>([^<]*)<\/PARENT>([\s\S]*?)<\/LEDGER>/g)].map((m) => ({ name: m[1].replace(/&amp;/g, '&'), parent: m[2].replace(/&amp;/g, '&'), gstin: (/<PARTYGSTIN>([^<]*)</.exec(m[3]) || [])[1] || '', state: (/<LEDSTATENAME>([^<]*)</.exec(m[3]) || [])[1] || '', duty: (/<GSTDUTYHEAD>([^<]*)</.exec(m[3]) || [])[1] || '' })); masters.push(...led); return res.end(`<RESPONSE><CREATED>${led.length}</CREATED><ALTERED>0</ALTERED><ERRORS>0</ERRORS></RESPONSE>`); }
       const partyGstin = (/<PARTYGSTIN>([^<]*)<\/PARTYGSTIN>/.exec(body) || [])[1] || '', pos = (/<PLACEOFSUPPLY>([^<]*)<\/PLACEOFSUPPLY>/.exec(body) || [])[1] || '';
-      const id = vouchers.length + 1; vouchers.push({ id, ref, vtype, items, ledgers, party_gstin: partyGstin, place_of_supply: pos, at: new Date().toISOString() });
+      const id = vouchers.length + 1; vouchers.push({ id, ref, vtype, items, ledgers, party_gstin: partyGstin, place_of_supply: pos, narration, at: new Date().toISOString() });
       return res.end(`<RESPONSE><CREATED>1</CREATED><ALTERED>0</ALTERED><LASTVCHID>${id}</LASTVCHID><ERRORS>0</ERRORS></RESPONSE>`);
     }
     res.statusCode = 400; res.end('<RESPONSE><ERRORS>1</ERRORS><LINEERROR>unknown request</LINEERROR></RESPONSE>');

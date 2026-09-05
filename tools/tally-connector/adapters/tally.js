@@ -54,6 +54,13 @@ function stateName(code) { const c = String(code || '').padStart(2, '0'); return
 /** the party ledger a registered buyer books under — their legal name, so the ledger reads as the ledger they would keep for us */
 function partyLedgerName(buyer) { return String(buyer.name || buyer.gstin || 'Customer').trim().slice(0, 60); }
 
+/** the offers that shaped the lines, for the accountant's eye — Tally has no field for them, the narration carries the names */
+function offerNote(order) {
+  const seen = new Map();
+  for (const l of order.lines || []) if (l.offer && l.offer.label) seen.set(l.offer.label, (seen.get(l.offer.label) || 0) + (Number(l.offer.off) || 0));
+  if (!seen.size) return '';
+  return ' · offers: ' + [...seen.entries()].map(([k, v]) => k + (v ? ' −' + Math.round(v * 100) / 100 : '')).join(', ');
+}
 function voucherXML(order, opt) {
   const b2b = order.b2b || null;
   const party = b2b ? partyLedgerName(b2b.buyer) : (opt.partyLedger || 'Cash'), sales = opt.salesLedger || 'Sales', vtype = opt.voucherType || 'Sales';
@@ -63,8 +70,16 @@ function voucherXML(order, opt) {
   /* the party owes goods + tax; a walk-in order has no tax lines and the two figures coincide */
   const total = b2b && b2b.total ? Math.round(b2b.total * 100) / 100 : Math.round((goods + taxTotal) * 100) / 100;
   const inv = order.lines.map((l) => {
-    const rate = l.price, qty = l.qty, unit = l.unit || 'nos', amount = Math.round(rate * qty * 100) / 100;
-    const disc = l.list_price != null && l.list_price > rate ? Math.round((1 - rate / l.list_price) * 10000) / 100 : 0;
+    /* ⚠️ THE AMOUNT IS THE CHIT'S LINE TOTAL, NEVER RATE × QTY (Athi, 2026-09-05: "how will our offer module behave to
+       Tally?"). Tally has no offers; it has a listed RATE, a DISCOUNT %, and the AMOUNT. An offer (percent off, a bundle, a
+       threshold) lowered l.total and left l.price listed — sending rate × qty booked MORE than the chit says. Now: rate =
+       the listed price, amount = the chit's total, discount = the difference as a percentage; a free item (buy 1 get 1,
+       a reward) is a zero-rate line that still leaves stock. */
+    const listed = l.list_price != null ? l.list_price : l.price, qty = l.qty, unit = l.unit || 'nos';
+    const gross = Math.round(listed * qty * 100) / 100;
+    const amount = l.total != null && Number.isFinite(Number(l.total)) ? Math.round(Number(l.total) * 100) / 100 : gross;
+    const rate = listed;
+    const disc = gross > 0 && amount < gross ? Math.round((1 - amount / gross) * 10000) / 100 : 0;
     const gstRate = l.gst_rate != null ? l.gst_rate : (b2b && (b2b.items.find((x) => x.name === l.name) || {}).rate);
     return `<ALLINVENTORYENTRIES.LIST><STOCKITEMNAME>${esc(l.name)}</STOCKITEMNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
 <RATE>${rate}/${esc(unit)}</RATE>${disc ? '<DISCOUNT>' + disc + '</DISCOUNT>' : ''}<AMOUNT>${amount}</AMOUNT><ACTUALQTY>${qty} ${esc(unit)}</ACTUALQTY><BILLEDQTY>${qty} ${esc(unit)}</BILLEDQTY>${b2b && gstRate != null ? '<GSTOVRDNTAXABILITY>Taxable</GSTOVRDNTAXABILITY><GSTOVRDNIGSTRATE>' + gstRate + '</GSTOVRDNIGSTRATE>' : ''}
@@ -77,7 +92,7 @@ function voucherXML(order, opt) {
   return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
 <STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
 <VOUCHER VCHTYPE="${esc(vtype)}" ACTION="Create" OBJVIEW="Invoice Voucher View"><DATE>${ymd(eduDate(order.at, opt.eduDates))}</DATE><VOUCHERTYPENAME>${esc(vtype)}</VOUCHERTYPENAME>
-<REFERENCE>CB-${esc(String(order.chit_id).slice(0, 8))}</REFERENCE><NARRATION>${esc('ChitBridge order ' + order.chit_id + ' from ' + order.buyer + (opt.eduDates ? ' (ordered ' + String(order.at || '').slice(0, 10) + '; EDU date)' : ''))}</NARRATION>
+<REFERENCE>CB-${esc(String(order.chit_id).slice(0, 8))}</REFERENCE><NARRATION>${esc('ChitBridge order ' + order.chit_id + ' from ' + order.buyer + offerNote(order) + (opt.eduDates ? ' (ordered ' + String(order.at || '').slice(0, 10) + '; EDU date)' : ''))}</NARRATION>
 <PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME><PARTYNAME>${esc(b2b ? b2b.buyer.name : order.buyer)}</PARTYNAME><ISINVOICE>Yes</ISINVOICE>${b2bHead}
 ${inv}
 <LEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>-${total}</AMOUNT>${b2b ? '<BILLALLOCATIONS.LIST><NAME>CB-' + esc(String(order.chit_id).slice(0, 8)) + '</NAME><BILLTYPE>New Ref</BILLTYPE><AMOUNT>-' + total + '</AMOUNT></BILLALLOCATIONS.LIST>' : ''}</LEDGERENTRIES.LIST>
