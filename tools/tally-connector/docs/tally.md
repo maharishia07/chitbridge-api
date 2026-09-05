@@ -50,3 +50,8 @@ Cash) needs no receipt — the Sales voucher already settled it — and the conn
 The free EDU edition accepts vouchers dated the **1st, 2nd or 31st** of a month only, and refuses others with the unhelpful
 "Voucher date is missing". Set `"eduDates": true` under `tally` in connector.json: the voucher date snaps to the 2nd of its
 month and the narration keeps the real order date. Leave it off on a licensed Tally.
+
+## Seeing the vouchers in Tally
+Gateway of Tally › **D** (Display More Reports) › **D** (Day Book); **F2** to set the period (EDU vouchers sit on the 2nd).
+Alt+G and typing "day book" runs a text search through your transactions and finds nothing — pick the entry under *Reports*.
+Enter on a line opens the voucher: the reference is CB-<first 8 of the chit id>, the narration carries the order and payment.
