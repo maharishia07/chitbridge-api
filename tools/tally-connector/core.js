@@ -210,7 +210,16 @@ async function pushPurchase({ cb, adapter, receipts, log, chit_id }) {
   const last = receipts.last('purchase', chit_id);
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
   if (!adapter.pushPurchase) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'skipped', why: adapter.name + ' has no pushPurchase' }); return { chit_id, outcome: 'skipped' }; }
-  let c, inv; try { c = await cb.chit(chit_id); inv = await cb.invoice(chit_id); } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'failed', why: 'read: ' + e.message }); return { chit_id, outcome: 'failed', why: e.message }; }
+  let c; try { c = await cb.chit(chit_id); } catch (e) { return { chit_id, outcome: 'failed', why: 'read: ' + e.message }; }
+  /* ⚠️ COMPLETION IS THE SELLER'S ACT, LOGGED ON MY COPY. A status change updates only the RECEIVED copy (the seller's) and
+     writes a state_log row on EVERY party's copy — so the buyer's copy stays "pending" while its log says "completed by
+     the seller". That row is the trigger; the buyer's own status (a chit the seller sent to me) counts too. */
+  const h = c.header || c.chit || c; const logRows = c.state_log || c.log || (c.detail && c.detail.state_log) || [];
+  const done = /^(completed|delivered|closed)$/.test(String(h.current_status || h.status || '')) || logRows.some((r) => /^(completed|delivered|closed)$/.test(String(r.new_status || r.to_status || r.status || '')));
+  const dead = /^(cancelled|rejected)$/.test(String(h.current_status || '')) || logRows.some((r) => /^(cancelled|rejected)$/.test(String(r.new_status || r.to_status || '')));
+  if (dead) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'skipped', why: 'cancelled' }); return { chit_id, outcome: 'skipped' }; }
+  if (!done) return { chit_id, outcome: 'waiting' };
+  let inv; try { inv = await cb.invoice(chit_id); } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'failed', why: 'invoice read: ' + e.message }); return { chit_id, outcome: 'failed', why: e.message }; }
   const p = purchaseOf(c, inv);
   if (!p.items.length) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: 'no lines on the invoice' }); return { chit_id, outcome: 'skipped' }; }
   try {
@@ -225,12 +234,16 @@ async function pushPurchase({ cb, adapter, receipts, log, chit_id }) {
     return { chit_id, outcome: 'ok', their_ref: r && r.ref, itc: p.itc_claim };
   } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('purchase ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
 }
-/** every order I placed that I have marked completed and not yet booked as a purchase */
+/** every order I placed that the seller has completed (their act, on my copy's log) and I have not yet booked as a purchase */
 async function syncPurchases({ cb, adapter, receipts, log }) {
   const sent = await cb.sent(100);
-  const rows = (sent.chits || sent.rows || sent.items || (Array.isArray(sent) ? sent : [])).filter((r) => /^(order|offer)$/.test(String(r.purpose || '')) && /^(completed|delivered|closed)$/.test(String(r.current_status || r.status || '')));
+  const rows = (sent.chits || sent.rows || sent.items || (Array.isArray(sent) ? sent : [])).filter((r) => /^(order|offer)$/.test(String(r.purpose || '')) && !/^(cancelled|rejected)$/.test(String(r.current_status || r.status || '')));
   const out = [];
-  for (const r of rows) { const id = r.chit_id || r.id; if (!id) continue; out.push(await pushPurchase({ cb, adapter, receipts, log, chit_id: id })); }
+  for (const r of rows) {
+    const id = r.chit_id || r.id; if (!id) continue;
+    const last = receipts.last('purchase', id); if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) { out.push({ chit_id: id, outcome: 'duplicate' }); continue; }
+    out.push(await pushPurchase({ cb, adapter, receipts, log, chit_id: id }));
+  }
   return out;
 }
 /** catch-up: every received order in the inbox without an ok receipt */

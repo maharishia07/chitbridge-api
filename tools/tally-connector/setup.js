@@ -25,7 +25,7 @@ const cfgFile = path.join(here, 'connector.json');
   console.log('\nChitBridge connector — setup\n');
   let cfg = {}; try { cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); } catch (_) {}
   const api = await ask('ChitBridge API', cfg.api || 'https://chitbridge-api-production.up.railway.app');
-  const adapter = (await ask('Which system (tally / zoho / csv)', cfg.adapter || 'tally')).toLowerCase();
+  const adapter = (await ask('Which system (tally / zoho / gofrugal / csv)', cfg.adapter || 'tally')).toLowerCase();
   let key = cfg.key && !/PASTE/.test(cfg.key) ? cfg.key : '';
   if (key) { const keep = await ask('A key is already saved (…' + key.slice(-4) + '). Keep it? (y/n)', 'y'); if (!/^y/i.test(keep)) key = ''; }
   while (!key) { key = await ask('Paste the key from Settings › Integrations (scope connector)'); if (!key) console.log('  a key is required — mint one under Settings › Integrations'); }
@@ -52,9 +52,13 @@ const cfgFile = path.join(here, 'connector.json');
     catch (e) { console.log('FAILED — ' + e.message); console.log('  In Tally: F1 (Help) › Settings › Connectivity › Client/Server: TallyPrime acts as Both, Enable ODBC/XML, port 9000. Keep the company open.'); const go = await ask('Save the settings anyway and try later? (y/n)', 'y'); if (!/^y/i.test(go)) { rl.close(); process.exit(1); } }
   } else if (adapter === 'zoho') {
     out.zoho = Object.assign({}, cfg.zoho || {}, { base: await ask('Zoho API base', (cfg.zoho && cfg.zoho.base) || 'https://www.zohoapis.in'), org: await ask('Organisation id', (cfg.zoho && cfg.zoho.org) || ''), token: await ask('Access token', (cfg.zoho && cfg.zoho.token) || ''), customer_name: await ask('Customer name for storefront orders', (cfg.zoho && cfg.zoho.customer_name) || 'Walk-in') });
+  } else if (adapter === 'gofrugal') {
+    out.gofrugal = Object.assign({}, cfg.gofrugal || {}, { url: await ask('GoFrugal WebReporter URL', (cfg.gofrugal && cfg.gofrugal.url) || 'http://localhost:8482'), token: await ask('GoFrugal API key (X-Auth-Token)', (cfg.gofrugal && cfg.gofrugal.token) || ''), locationId: (await ask('Location id (blank = all)', (cfg.gofrugal && cfg.gofrugal.locationId) || '')) || null });
   } else {
     out.csv = Object.assign({}, cfg.csv || {}, { products: await ask('Products CSV', (cfg.csv && cfg.csv.products) || 'products.csv'), orders: await ask('Folder for order files', (cfg.csv && cfg.csv.orders) || 'orders') });
   }
+  /* the side(s) this connector books: seller (orders I receive → Sales), buyer (orders I placed and completed → Purchase), both */
+  out.role = (await ask('Role: seller / buyer / both', cfg.role || 'seller')).toLowerCase();
   out.syncMinutes = Number(await ask('Re-read products every N minutes while watching (0 = off)', String(cfg.syncMinutes || 30))) || 0;
   out.stockMinutes = Number(await ask('Re-read stock every N minutes while watching (0 = off)', String(cfg.stockMinutes || 5))) || 0;
   fs.writeFileSync(cfgFile, JSON.stringify(out, null, 2) + '\n');

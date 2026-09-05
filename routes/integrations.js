@@ -29,8 +29,12 @@ const KIT = path.join(__dirname, '..', 'tools', 'tally-connector');
 const CATALOGUE = [
   { id: 'tally', name: 'Tally connector', adapters: ['tally', 'csv'], default_adapter: 'tally', runs_on: 'the store PC (node ≥ 18, no dependencies, outbound internet only)',
     does: 'Products up from Tally into the catalogue (matched by code, receipts); offers back at billing time; orders down into Tally as Sales vouchers the moment the bell rings — once, never twice.',
-    status: 'proven against a fake Tally and the live API; the first live Tally run may need a field or sign correction in adapters/tally.js (README)',
-    steps: ['Settings › Integrations › mint a key, scope connector', 'Download the kit, unzip, paste the key into connector.json', 'node index.js sync-products, then node index.js watch'] },
+    status: 'LIVE on TallyPrime (2026-09-05): products, stock and profile up; Sales and Receipt vouchers down; registered buyers with GSTIN; the buyer side books Purchase vouchers with ITC (role both)',
+    steps: ['Settings › Integrations › mint a key, scope connector', 'Download the kit, unzip, node setup.js (it asks for the key and the ledgers)', 'node index.js watch — it creates the ledgers it needs'] },
+  { id: 'gofrugal', name: 'GoFrugal connector', adapters: ['gofrugal'], default_adapter: 'gofrugal', runs_on: 'the store PC or server (node ≥ 18; GoFrugal\'s WebReporter API with an API key)',
+    does: 'Items with sale price, MRP, GST % and stock per location into the catalogue; every order becomes a GoFrugal Sales Order with our reference — your billing raises the invoice. No profile, receipt or purchase API is published, so those steps are skipped and say so.',
+    status: 'written from GoFrugal\'s published knowledge base, proven against a stand-in; the API is enabled per retailer by GoFrugal (terms theirs)',
+    steps: ['Ask GoFrugal to enable the WebReporter API on your server; note the API key', 'Settings › Integrations › mint a key, scope connector', 'Download the kit; node setup.js → gofrugal; node index.js watch --stock-minutes 5'] },
   { id: 'zoho', name: 'Zoho Books connector', adapters: ['zoho'], default_adapter: 'zoho', runs_on: 'any PC with node ≥ 18 (REST, an OAuth token)',
     does: 'Items from Zoho Books into the catalogue; offers back at billing; every ChitBridge order becomes a Zoho invoice the moment it arrives — once, never twice.',
     status: 'written from the published Zoho Books API, proven against a stand-in; the first live run may need customer_id / item_id corrected in adapters/zoho.js (docs)',
@@ -41,7 +45,7 @@ const CATALOGUE = [
 ];
 
 function kitFiles(adapter) {
-  const names = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'fake-tally.js', 'fake-zoho.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'samples/products.csv', 'samples/profile.csv'];
+  const names = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
   const out = [];
   for (const n of names) { const p = path.join(KIT, n); if (fs.existsSync(p)) out.push({ name: 'chitbridge-connector/' + n, data: fs.readFileSync(p) }); }
   return out;
