@@ -92,7 +92,7 @@ async function evaluate({ cb, lines, offers }) {
 function orderOf(c) {
   const h = c.header || c.chit || c, d = c.detail || {};
   const lines = (d.line_items || c.lines || []).filter((l) => l && l.kind !== 'payload').map((l) => ({
-    name: l.name || l.particulars || '', code: (l.ref && l.ref.sku) || l.sku || null, item_id: l.item_id || (l.ref && l.ref.item_id) || null,
+    name: l.name || l.particulars || '', code: (l.ref && (l.ref.code || l.ref.sku)) || l.code || l.sku || null, item_id: l.item_id || (l.ref && l.ref.item_id) || null,
     qty: Number(l.quantity != null ? l.quantity : l.qty) || 0, unit: l.unit || '', price: Number(l.price) || 0, list_price: l.list_price != null ? Number(l.list_price) : null,
     offer: l.offer ? { label: l.offer.label, off: Number(l.offer.off) || 0 } : null, total: Number(l.total) || 0, gst_rate: l.gst_rate != null ? Number(l.gst_rate) : null, hsn: l.hsn || null }));
   return { chit_id: h.chit_id, at: h.created_at || h.at || null, purpose: h.purpose || null, status: h.current_status || h.status || null,

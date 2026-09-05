@@ -434,7 +434,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
      */
     return withTax({ item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
              price: _unit, total, ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}), ...(proposal ? { proposal } : {}),
-             ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), how: 'picked',
+             ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), ...((ref.d && ref.d.code) ? { code: ref.d.code } : {}), how: 'picked',
                     ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
              ref.d);
   }));
