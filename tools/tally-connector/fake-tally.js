@@ -16,6 +16,9 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/_reset') { vouchers.length = 0; return res.end('ok'); }
   let body = ''; req.on('data', (c) => body += c); req.on('end', () => {
     res.setHeader('Content-Type', 'text/xml');
+    if (/<ID>CBCompany<\/ID>/i.test(body)) {
+      return res.end('<ENVELOPE><BODY><DATA><COLLECTION><COMPANY NAME="Kumar Traders"><NAME>Kumar Traders</NAME><BASICCOMPANYFORMALNAME>Kumar Traders Private Limited</BASICCOMPANYFORMALNAME><ADDRESS.LIST><ADDRESS>16A-105 Perumbakkam Main Road</ADDRESS><ADDRESS>Chennai</ADDRESS></ADDRESS.LIST><STATENAME>Tamil Nadu</STATENAME><PINCODE>600126</PINCODE><COUNTRYNAME>India</COUNTRYNAME><PHONENUMBER>044-12345678</PHONENUMBER><EMAIL>accounts@kumartraders.example</EMAIL><GSTREGISTRATIONNUMBER>33AABCK1234F1Z6</GSTREGISTRATIONNUMBER><GSTREGISTRATIONTYPE>Regular</GSTREGISTRATIONTYPE><INCOMETAXNUMBER>AABCK1234F</INCOMETAXNUMBER><BASECURRENCYSYMBOL>₹</BASECURRENCYSYMBOL></COMPANY></COLLECTION></DATA></BODY></ENVELOPE>');
+    }
     if (/<TALLYREQUEST>\s*Export\s*<\/TALLYREQUEST>/i.test(body) || /<TYPE>Collection<\/TYPE>/i.test(body)) {
       const xml = '<ENVELOPE><BODY><DATA><COLLECTION>' + ITEMS.map((i) => `<STOCKITEM NAME="${i.name}"><NAME>${i.name}</NAME><PARENT>${i.parent}</PARENT><BASEUNITS>${i.unit}</BASEUNITS><PARTNO>${i.part}</PARTNO><STANDARDPRICE>${i.price}/${i.unit}</STANDARDPRICE><HSNCODE>${i.hsn}</HSNCODE><CLOSINGBALANCE>${i.stock || 0} ${i.unit}</CLOSINGBALANCE></STOCKITEM>`).join('') + '</COLLECTION></DATA></BODY></ENVELOPE>';
       return res.end(xml);

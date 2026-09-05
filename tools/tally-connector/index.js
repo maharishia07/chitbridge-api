@@ -5,6 +5,7 @@
  *   node index.js evaluate       --config connector.json --lines lines.json          (basket lines → what comes off, and why)
  *   node index.js once           --config connector.json                              (catch-up: push every received order not yet pushed)
  *   node index.js sync-stock     --config connector.json                              (closing stock → stamped availability, now)
+ *   node index.js sync-profile   --config connector.json                              (the store's name · GSTIN · state · address … from its own system)
  *   node index.js watch          --config connector.json [--sync-minutes 30] [--stock-minutes 5]
  *                                (catch-up, hold the push stream; re-read products every N min, stock every M min; answer the storefront's stock asks)
  * connector.json: { "api": "https://chitbridge-api-production.up.railway.app", "key": "<API key, scope connector>",
@@ -31,6 +32,7 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   if (cmd !== 'help') cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd });
   if (cmd === 'sync-products') { const r = await core.syncProducts({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }
+  if (cmd === 'sync-profile') { const r = await core.syncProfile({ cb, adapter, receipts, log }); console.log(JSON.stringify(r && { written: r.written, kept: r.kept, filled: r.filled, total: r.total, issues: r.issues })); return; }
   if (cmd === 'sync-stock') { const r = await core.syncStock({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'once') { const r = await core.catchUp({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'watch') {

@@ -24,6 +24,13 @@ function exportRequest(company) {
 <TDL><TDLMESSAGE><COLLECTION NAME="CBStockItems" ISMODIFY="No"><TYPE>StockItem</TYPE>
 <FETCH>NAME, PARENT, BASEUNITS, PARTNO, GSTAPPLICABLE, STANDARDPRICE, CLOSINGRATE, HSNCODE, CLOSINGBALANCE</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
 }
+/** the company master: name · formal name · address lines · state · PIN · country · phone · email · GSTIN · PAN */
+function companyRequest(company) {
+  return `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBCompany</ID></HEADER>
+<BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$SysName:XML</SVEXPORTFORMAT>${company ? '<SVCURRENTCOMPANY>' + esc(company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES>
+<TDL><TDLMESSAGE><COLLECTION NAME="CBCompany" ISMODIFY="No"><TYPE>Company</TYPE>
+<FETCH>NAME, BASICCOMPANYFORMALNAME, ADDRESS, STATENAME, PINCODE, COUNTRYNAME, PHONENUMBER, MOBILENUMBERS, EMAIL, GSTREGISTRATIONNUMBER, GSTREGISTRATIONTYPE, INCOMETAXNUMBER, BASECURRENCYSYMBOL</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+}
 /** the Import Data request: one Sales voucher for the order (invoice view, inventory entries, party + sales ledger) */
 function voucherXML(order, opt) {
   const party = opt.partyLedger || 'Cash', sales = opt.salesLedger || 'Sales', vtype = opt.voucherType || 'Sales';
@@ -67,6 +74,16 @@ module.exports = function tallyAdapter(cfg) {
       const xml = await post(exportRequest(opt.company)); const at = new Date().toISOString();
       return tags('STOCKITEM', xml).map((it) => { const q = num(tag('CLOSINGBALANCE', it)); return { code: unesc(tag('PARTNO', it)) || unesc(tag('NAME', it)), qty: q == null ? null : Math.abs(q), at }; }).filter((r) => r.code && r.qty != null);
     },
+    /** the store's profile from the company master — every value 'copied' with source tally; the API checks and ranks */
+    async readProfile() {
+      const xml = await post(companyRequest(opt.company)); const c = tags('COMPANY', xml)[0] || xml;
+      const lines = tags('ADDRESS', c).map(unesc).map((s) => s.trim()).filter(Boolean);
+      const out = { trade_name: unesc(tag('NAME', c)), legal_name: unesc(tag('BASICCOMPANYFORMALNAME', c)) || unesc(tag('NAME', c)), address: lines.join(', '), city: lines.length > 1 ? lines[lines.length - 1].replace(/[\d-]+$/, '').trim() : '',
+        state: unesc(tag('STATENAME', c)), pincode: unesc(tag('PINCODE', c)), country: /india/i.test(unesc(tag('COUNTRYNAME', c))) ? 'IN' : unesc(tag('COUNTRYNAME', c)), phone: unesc(tag('PHONENUMBER', c)) || unesc(tag('MOBILENUMBERS', c)), email: unesc(tag('EMAIL', c)),
+        gstin: unesc(tag('GSTREGISTRATIONNUMBER', c)), reg_type: /composition/i.test(unesc(tag('GSTREGISTRATIONTYPE', c))) ? 'composition' : (unesc(tag('GSTREGISTRATIONTYPE', c)) ? 'regular' : ''), pan: unesc(tag('INCOMETAXNUMBER', c)), currency: /₹|Rs|INR/i.test(unesc(tag('BASECURRENCYSYMBOL', c))) ? 'INR' : '' };
+      for (const k of Object.keys(out)) if (!out[k]) delete out[k];
+      return out;
+    },
     async pushOrder(order) {
       const xml = voucherXML(order, opt);
       if (dry) { log('[dry] voucher XML for ' + order.chit_id + ':\n' + xml); return { ref: 'dry-run' }; }
@@ -75,6 +92,6 @@ module.exports = function tallyAdapter(cfg) {
       if (errors || !created) throw new Error('Tally refused the voucher: ' + (tag('LINEERROR', res) || res.slice(0, 160)));
       return { ref: tag('VCHID', res) || tag('LASTVCHID', res) || ('created:' + created) };
     },
-    _xml: { exportRequest, voucherXML },
+    _xml: { exportRequest, voucherXML, companyRequest },
   };
 };

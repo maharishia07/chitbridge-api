@@ -43,6 +43,13 @@ module.exports = function csvAdapter(cfg) {
       if (head.indexOf('stock') < 0 && head.indexOf('qty') < 0) return [];
       return rows.slice(1).map((r) => ({ code: col(r, 'code') || col(r, 'sku'), qty: Number(col(r, 'stock') || col(r, 'qty')), at })).filter((x) => x.code && Number.isFinite(x.qty));
     },
+    /** profile.csv beside the kit: two columns, key,value — keys as in the map (legal_name, gstin, state, address, city, pincode, phone, email, pan, reg_type, currency, upi_id) */
+    async readProfile() {
+      const pf = (cfg.csv && cfg.csv.profile) || path.join(dir, 'profile.csv'); if (!fs.existsSync(pf)) return null;
+      const rows = parseCSV(fs.readFileSync(pf, 'utf8')); const out = {};
+      for (const r of rows) { const k = String(r[0] || '').trim().toLowerCase(); const v = String(r[1] || '').trim(); if (k && v && k !== 'key') out[k] = v; }
+      return out;
+    },
     async pushOrder(order) {
       fs.mkdirSync(outDir, { recursive: true });
       const f = path.join(outDir, order.chit_id + '.csv');

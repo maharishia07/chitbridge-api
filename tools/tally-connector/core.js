@@ -45,6 +45,7 @@ class CB {
   inbox() { return this.call('GET', '/api/chits/inbox?limit=100'); }
   ticket() { return this.call('POST', '/api/events/ticket'); }
   stock(items) { return this.call('POST', '/api/products/availability/bulk', { items }); }
+  profile(fields, source) { return this.call('POST', '/api/integrations/profile', { source, as_of: new Date().toISOString(), fields }); }
   /** the heartbeat: Settings › Integrations lists this connector with its last-seen time and counters (never fails a command) */
   async heartbeat(info) { try { return await this.call('POST', '/api/integrations/heartbeat', Object.assign({ host: require('os').hostname(), version: '1.0.0' }, info || {})); } catch (e) { this.log('heartbeat: ' + e.message); return null; } }
 }
@@ -96,6 +97,16 @@ async function syncStock({ cb, adapter, receipts, log, codes }) {
   receipts.add({ kind: 'stock', ref: 'all', hash: hashOf(items.map((x) => [x.code, x.qty])), outcome: 'ok', written, unknown });
   log('stock: ' + written + ' written' + (unknown ? ' · ' + unknown + ' unknown code(s)' : '') + ' · as of ' + at.slice(11, 19));
   return { read: rows.length, written, unknown, at };
+}
+
+/** ── THE PROFILE FROM THEIR SYSTEM: name · GSTIN · state · address … copied with source + as_of; the API checks and ranks ── */
+async function syncProfile({ cb, adapter, receipts, log }) {
+  if (typeof adapter.readProfile !== 'function') { log('profile: the ' + adapter.name + ' adapter has no readProfile'); return null; }
+  const p = await adapter.readProfile(); if (!p || !Object.keys(p).length) { log('profile: nothing read'); return null; }
+  const r = await cb.profile(p, adapter.name);
+  receipts.add({ kind: 'profile', ref: 'store', hash: hashOf(p), outcome: 'ok', written: r.written, kept: r.kept });
+  log('profile: ' + (r.written || []).length + ' written (' + (r.written || []).join(', ') + ')' + ((r.kept || []).length ? ' · kept ' + r.kept.map((k) => k.key).join(', ') : '') + ' · ' + r.filled + '/' + r.total + ' filled' + (r.issues && r.issues.length ? ' · ⚠ ' + r.issues.map((i) => i.issue).join('; ') : ''));
+  return r;
 }
 
 /** ── OFFERS BACK: the outside system's basket lines → what comes off and why (the same engine as the storefront) ── */
@@ -170,4 +181,4 @@ function loadConfig(file) {
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { counts, syncStock, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };

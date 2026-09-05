@@ -171,7 +171,7 @@ const KEY_ROUTES = {
   invoice:   [['*', /^\/api\/invoice(\/|$)/]],
   services:  [['*', /^\/api\/(offers|pricing|invoice)(\/|$)/], ['POST', /^\/api\/tax\/(rate|compute)$/]],
   connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['POST', /^\/api\/products\/availability\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
-              ['GET', /^\/api\/chits\/(inbox|pulse|[0-9a-f-]{36})$/], ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/]],
+              ['GET', /^\/api\/chits\/(inbox|pulse|[0-9a-f-]{36})$/], ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/], ['POST', /^\/api\/integrations\/profile$/], ['GET', /^\/api\/integrations\/profile-map$/]],
 };
 const _keyCache = new Map();   // jti → { ok, at }
 async function keyListed(entity_id, jti) {

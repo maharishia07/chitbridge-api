@@ -183,6 +183,7 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
   'events.js',             // the mailbox bell: SSE subscribers + one-time tickets — plumbing, carries no meaning
   'services.js',           // the governed capabilities as services: shared plumbing behind /api/offers · pricing · tax · invoice
   'zip-store.js',          // a STORE-method zip writer, no dependency — hands a person the connector kit
+  'profile-map.js',        // what we look for about a store · where it comes from · how trusted (declared → copied → checked → verified)
   'stores.js',             // store lookup helpers
   'transcribe.js',         // audio → text; an outside service behind one function
   'whatsapp-media.js',     // provider media fetch

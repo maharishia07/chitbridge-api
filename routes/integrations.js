@@ -41,7 +41,7 @@ const CATALOGUE = [
 ];
 
 function kitFiles(adapter) {
-  const names = ['core.js', 'index.js', 'fake-tally.js', 'fake-zoho.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'samples/products.csv'];
+  const names = ['core.js', 'index.js', 'fake-tally.js', 'fake-zoho.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'samples/products.csv', 'samples/profile.csv'];
   const out = [];
   for (const n of names) { const p = path.join(KIT, n); if (fs.existsSync(p)) out.push({ name: 'chitbridge-connector/' + n, data: fs.readFileSync(p) }); }
   return out;
@@ -125,7 +125,30 @@ router.get('/stock/:handle', async (req, res) => {
     res.json({ stock: r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })), at: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
+/* ── THE PROFILE FROM THEIR SYSTEM (Athi, 2026-09-05): what we look for · where it comes from · how trusted ── */
+const PM = require('../lib/profile-map');
+router.get('/profile-map', auth, async (req, res) => {
+  try { const P = require('../lib/profile'); const values = await P.profileValues(auth.entityOf(req)); res.json(Object.assign({ engine: 'chitbridge-profile-map', version: 1 }, PM.assess(values))); }
+  catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+router.post('/profile', auth, auth.requireScope('connector'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req); const b = req.body || {}; const P = require('../lib/profile');
+    const source = String(b.source || 'connector').slice(0, 40), as_of = (b.as_of && !isNaN(Date.parse(b.as_of))) ? new Date(b.as_of).toISOString() : new Date().toISOString();
+    const incoming = Object.entries(b.fields || {}).filter(([k]) => PM.FIELDS.some((f) => f.key === k)).map(([k, val]) => ({ key: k, value: val, source, as_of, rung: 'copied' }));
+    if (!incoming.length) return res.status(400).json({ error: 'validation', message: 'fields{} required — keys: ' + PM.FIELDS.map((f) => f.key).join(', ') });
+    const current = await P.profileValues(entity_id);
+    const m = PM.merge(current, incoming);
+    /* the checks raise what they can: a GSTIN with a good check digit becomes 'checked', and so on — before it is written */
+    const a = PM.assess(m.values); for (const k of Object.keys(m.values)) if (a.fields[k] && a.fields[k].rung && PM.rank(a.fields[k].rung) > PM.rank(m.values[k].rung)) m.values[k].rung = a.fields[k].rung;
+    for (const k of Object.keys(a.fields)) if (a.fields[k].derived && !m.values[k]) m.values[k] = { value: a.fields[k].value, source: a.fields[k].source, as_of, rung: a.fields[k].rung || 'declared' };
+    const w = await P.applyProfileMap(entity_id, m.values, { source, as_of });
+    res.json(Object.assign({ message: 'Profile updated from ' + source, written: m.written, kept: m.kept, rows: w.rows }, PM.assess(await P.profileValues(entity_id))));
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
 router.openapi = { paths: {
+  '/api/integrations/profile-map': { get: { summary: 'What we look for about the store, where it comes from, how trusted — with the current values', tags: ['keys'], security: [{ bearer: [] }, { apiKey: [] }], responses: { 200: { description: 'the map' } } } },
+  '/api/integrations/profile': { post: { summary: 'The connector writes the store\'s profile from its own system (rung copied; checks may raise it; never below a held rung)', tags: ['keys'], security: [{ apiKey: [] }], requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { source: { type: 'string' }, as_of: { type: 'string' }, fields: { type: 'object' } } } } } }, responses: { 200: { description: 'written · kept · the map' } } } },
   '/api/integrations/ask/{handle}/stock': { post: { summary: 'Ask the store\'s connector for fresh stock (public; answered through the bell)', tags: ['keys'], parameters: [{ name: 'handle', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'asked · listeners' } } } },
   '/api/integrations/stock/{handle}': { get: { summary: 'The stamped stock figures of a public storefront', tags: ['keys'], parameters: [{ name: 'handle', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'stock' } } } },
   '/api/integrations/catalogue': { get: { summary: 'The connectors that exist, with a download each', tags: ['keys'], responses: { 200: { description: 'catalogue' } } } },

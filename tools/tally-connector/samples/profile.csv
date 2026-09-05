@@ -1,0 +1,15 @@
+key,value
+legal_name,Kumar Traders Private Limited
+trade_name,Kumar Traders
+gstin,33AABCK1234F1Z6
+pan,AABCK1234F
+reg_type,regular
+state,Tamil Nadu
+address,16A-105 Perumbakkam Main Road
+city,Chennai
+pincode,600126
+country,IN
+phone,044-12345678
+email,accounts@kumartraders.example
+currency,INR
+upi_id,kumartraders@upi
