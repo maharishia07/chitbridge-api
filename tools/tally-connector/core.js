@@ -130,8 +130,10 @@ function orderOf(c) {
     name: l.name || l.particulars || '', code: (l.ref && (l.ref.code || l.ref.sku)) || l.code || l.sku || null, item_id: l.item_id || (l.ref && l.ref.item_id) || null,
     qty: Number(l.quantity != null ? l.quantity : l.qty) || 0, unit: l.unit || '', price: Number(l.price) || 0, list_price: l.list_price != null ? Number(l.list_price) : null,
     offer: l.offer ? { label: l.offer.label, off: Number(l.offer.off) || 0 } : null, total: Number(l.total) || 0, gst_rate: l.gst_rate != null ? Number(l.gst_rate) : null, hsn: l.hsn || null }));
+  /* a counter bill (Record a sale) names its customer on the chit — the voucher's party is that person, never the shop itself */
+  const cust = (h.business_json && h.business_json.customer) || null;
   return { chit_id: h.chit_id, at: h.created_at || h.at || null, purpose: h.purpose || null, status: h.current_status || h.status || null,
-           subject: h.manual_subject || h.auto_subject || '', buyer: h.sender_entity_display_name || (h.sender && h.sender.display_name) || 'Customer', currency: d.currency_code || 'INR',
+           subject: h.manual_subject || h.auto_subject || '', buyer: (cust && cust.name) || h.sender_entity_display_name || (h.sender && h.sender.display_name) || 'Customer', customer: cust, currency: d.currency_code || 'INR',
            total: (h.summary_json && h.summary_json.total_value) || lines.reduce((t, l) => t + l.total, 0), lines };
 }
 /** the payment the seller recorded on their copy (business_json.payment) — level 1 by hand, level 2 by a gateway */
