@@ -43,7 +43,10 @@ const cfgFile = path.join(here, 'connector.json');
     const company = await ask('Company name in Tally (blank = the open company)', (cfg.tally && cfg.tally.company) || '');
     const party = await ask('Party ledger for storefront orders', (cfg.tally && cfg.tally.partyLedger) || 'Cash');
     const sales = await ask('Sales ledger', (cfg.tally && cfg.tally.salesLedger) || 'Sales');
-    out.tally = Object.assign({}, cfg.tally || {}, { url, company: company || null, partyLedger: party, salesLedger: sales, voucherType: (cfg.tally && cfg.tally.voucherType) || 'Sales' });
+    /* the Receipt voucher when you mark a chit paid: where the money lands (a cash-sale party needs none) */
+    const bank = /^cash$/i.test(party) ? (cfg.tally && cfg.tally.bankLedger) || 'Bank' : await ask('Bank ledger for UPI / card payments (Receipt voucher)', (cfg.tally && cfg.tally.bankLedger) || 'Bank');
+    const cash = /^cash$/i.test(party) ? (cfg.tally && cfg.tally.cashLedger) || 'Cash' : await ask('Cash ledger for cash payments', (cfg.tally && cfg.tally.cashLedger) || 'Cash');
+    out.tally = Object.assign({}, cfg.tally || {}, { url, company: company || null, partyLedger: party, salesLedger: sales, bankLedger: bank, cashLedger: cash, voucherType: (cfg.tally && cfg.tally.voucherType) || 'Sales' });
     process.stdout.write('Checking Tally at ' + url + ' … ');
     try { const t = require('./adapters/tally')(Object.assign({ log: () => {} }, out)); const items = await t.readProducts(); console.log('ok — ' + items.length + ' stock item(s) readable'); }
     catch (e) { console.log('FAILED — ' + e.message); console.log('  In Tally: F1 (Help) › Settings › Connectivity › Client/Server: TallyPrime acts as Both, Enable ODBC/XML, port 9000. Keep the company open.'); const go = await ask('Save the settings anyway and try later? (y/n)', 'y'); if (!/^y/i.test(go)) { rl.close(); process.exit(1); } }

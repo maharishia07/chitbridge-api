@@ -14,7 +14,7 @@ Settings › Integrations › Connectors › Tally › **Download · tally**. Th
 Double-click **start.cmd** (Windows) or run . It asks for the key, where your system listens and the ledgers, tests both ends, writes connector.json, runs the first sync, and prints the next command. Nothing is installed inside Tally or Zoho.
 
 ## 3b. The kit — by hand
-Unzip. Open `connector.json` and paste the key. Check `tally.url` (`http://localhost:9000`) and, if you want, `company`, `partyLedger` (default Cash) and `salesLedger` (default Sales) — these must be ledger names that exist in Tally.
+Unzip. Open `connector.json` and paste the key. Check `tally.url` (`http://localhost:9000`) and, if you want, `company`, `partyLedger` (default Cash), `salesLedger` (default Sales), `bankLedger` / `cashLedger` (the Receipt voucher when you mark a chit paid) — these must be ledger names that exist in Tally.
 
 ## 4. First run, safely
 ```
