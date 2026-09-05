@@ -186,7 +186,12 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
        real `once` then said "already pushed". A dry run leaves a 'dry' receipt — visible in the file, never a duplicate. */
     if (r && r.ref === 'dry-run') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
     receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
-  catch (e) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: e.message }); log('order ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
+  catch (e) {
+    /* the same failure again (a stock item still missing, Tally still closed) is neither logged nor written twice — the
+       receipts file keeps the first, the retry keeps trying quietly */
+    if (last && last.outcome === 'failed' && last.why === e.message) return { chit_id, outcome: 'failed', why: e.message, repeat: true };
+    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: e.message }); log('order ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message };
+  }
 }
 /**
  * ⭐ THE BUYER'S SIDE — ONE CHIT, TWO BOOKS (Athi, 2026-09-05: "when the buyer has a system, the sales record from the seller
@@ -257,8 +262,11 @@ async function catchUp({ cb, adapter, receipts, log }) {
   return out;
 }
 /** live: hold the push stream; on an arrival push that order; reconnect with backoff; the catch-up runs first */
-async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
-  await catchUp({ cb, adapter, receipts, log });
+async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }) {
+  /* ⚠️ A BUYER-ONLY CONNECTOR NEVER BOOKS SALES (found live 2026-09-05: Chola's buyer window tried to post Chola's own
+     service jobs as Sales vouchers into a company that has no such stock items). The seller side runs for seller/both. */
+  const sells = !/^buyer$/.test(String(role || 'seller'));
+  if (sells) await catchUp({ cb, adapter, receipts, log });
   const beat = () => cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching' });
   await beat(); const hb = setInterval(beat, 5 * 60 * 1000); if (signal) signal.addEventListener('abort', () => clearInterval(hb));
   let backoff = 3000;
@@ -276,9 +284,9 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
           const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
           const ev = /^event: (\S+)/m.exec(chunk), data = /^data: (.*)$/m.exec(chunk);
           if (ev && ev[1] === 'cb' && data) { let d = {}; try { d = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(d);
-            if (d.kind === 'chit' && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
+            if (sells && d.kind === 'chit' && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
             /* a bell without the chit id (an order composed by another shop rings `{kind:'chit', who}` only) → the inbox says which */
-            else if (d.kind === 'chit') { try { await catchUp({ cb, adapter, receipts, log }); } catch (e) { log('catch-up on bell: ' + e.message); } }
+            else if (sells && d.kind === 'chit') { try { await catchUp({ cb, adapter, receipts, log }); } catch (e) { log('catch-up on bell: ' + e.message); } }
             /* the seller marked it paid (or a gateway did): the Receipt voucher */
             if (d.kind === 'paid' && d.id) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: d.id }); } catch (e) { log('receipt: ' + e.message); } }
             /* the storefront asked for fresh stock: read the source now, write the stamped figures */

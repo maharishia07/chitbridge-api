@@ -55,9 +55,10 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
     const retryEvery = Number(flag('retry-minutes', cfg.retryMinutes != null ? cfg.retryMinutes : 5)) || 0;
     const buyerSide = async () => { if (!/buyer|both/.test(role)) return; try { const out = await core.syncPurchases({ cb, adapter, receipts, log }); const n = out.filter((x) => x.outcome === 'ok').length; if (n) log('purchases: ' + n + ' booked'); } catch (e) { log('purchases: ' + e.message); } };
     await buyerSide();
-    if (retryEvery > 0) { const t = setInterval(async () => { try { const out = await core.catchUp({ cb, adapter, receipts, log }); const n = out.filter((x) => x.outcome === 'ok').length; if (n) log('catch-up: ' + n + ' order(s) landed'); } catch (e) { log('catch-up: ' + e.message); } await buyerSide(); }, retryEvery * 60 * 1000); t.unref && t.unref(); }
+    const sellerSide = async () => { if (/^buyer$/.test(role)) return; try { const out = await core.catchUp({ cb, adapter, receipts, log }); const n = out.filter((x) => x.outcome === 'ok').length; if (n) log('catch-up: ' + n + ' order(s) landed'); } catch (e) { log('catch-up: ' + e.message); } };
+    if (retryEvery > 0) { const t = setInterval(async () => { await sellerSide(); await buyerSide(); }, retryEvery * 60 * 1000); t.unref && t.unref(); }
     const stockEvery = Number(flag('stock-minutes', cfg.stockMinutes || 0)) || 0;
     if (stockEvery > 0) { const tick = async () => { try { await core.syncStock({ cb, adapter, receipts, log }); } catch (e) { log('stock: ' + e.message); } }; await tick(); const t = setInterval(tick, stockEvery * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('stock re-read every ' + stockEvery + ' min, and on demand'); }
-    await core.watchOrders({ cb, adapter, receipts, log, signal: ac.signal, onEvent: (d) => log('bell: ' + JSON.stringify(d)) }); return; }
+    await core.watchOrders({ cb, adapter, receipts, log, signal: ac.signal, role, onEvent: (d) => log('bell: ' + JSON.stringify(d)) }); return; }
   console.error('unknown command ' + cmd); process.exit(2);
 })().catch((e) => { console.error('connector: ' + (e && e.message)); process.exit(1); });
