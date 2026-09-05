@@ -18,3 +18,7 @@ node index.js watch --config connector.json --sync-minutes 30             # ever
 Import `orders/*.csv` into your system however it takes files. A receipt is kept per order; the same order is never written twice.
 
 **Offers back.** `node index.js evaluate --config connector.json --lines lines.json` with `[{ "code": "BAS-25", "qty": 10, "price": 1000 }]` prints what comes off and why — the same engine the storefront uses.
+
+## When you mark a chit paid
+The connector appends one line to `orders/receipts.csv` — chit, time, method, reference, amount, buyer — the bookkeeper's
+import. Nothing is removed or rewritten; the file only grows.

@@ -137,7 +137,8 @@ async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
   const c = await cb.chit(chit_id); const pay = paymentOf(c); const order = orderOf(c);
   if (!pay) return { chit_id, outcome: 'unpaid' };
-  const p = { chit_id, at: pay.at, method: pay.method, ref: pay.ref, amount: pay.amount != null ? Number(pay.amount) : order.total, buyer: order.buyer };
+  const o = receipts.last('order', chit_id) || {};   /* what THEIR system called the order (invoice id, party) — a hosted system applies the payment to it */
+  const p = { chit_id, at: pay.at, method: pay.method, ref: pay.ref, amount: pay.amount != null ? Number(pay.amount) : order.total, buyer: order.buyer, order: { their_ref: o.their_ref || null, their_id: o.their_id || null, their_party: o.their_party || null } };
   if (!adapter.pushReceipt) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: adapter.name + ' has no pushReceipt' }); return { chit_id, outcome: 'skipped' }; }
   try { const r = await adapter.pushReceipt(p);
     if (r && r.skipped) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: r.skipped }); log('receipt ' + chit_id.slice(0, 8) + ' skipped: ' + r.skipped); return { chit_id, outcome: 'skipped', why: r.skipped }; }
@@ -150,7 +151,7 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   const c = await cb.chit(chit_id);
   const order = orderOf(c);
   if (order.purpose && !/^(order|offer)$/.test(order.purpose)) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'purpose ' + order.purpose }); return { chit_id, outcome: 'skipped' }; }
-  try { const r = await adapter.pushOrder(order); receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
+  try { const r = await adapter.pushOrder(order); receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
   catch (e) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: e.message }); log('order ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
 }
 /** catch-up: every received order in the inbox without an ok receipt */

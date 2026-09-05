@@ -2,6 +2,7 @@
  * ADAPTER: Zoho Books (REST) — the shape a hosted system attaches through: fetch() instead of a local port.
  *   readProducts(): GET /books/v3/items?organization_id=…            → { items:[{ item_id, name, sku, unit, rate, hsn_or_sac, status }] }
  *   pushOrder():    POST /books/v3/invoices?organization_id=…       { customer_name?, reference_number, line_items:[{ name, quantity, rate, discount }] }
+ *   pushReceipt():  POST /books/v3/customerpayments               { customer_id, payment_mode, amount, reference_number, invoices:[{ invoice_id, amount_applied }] } (2026-09-05)
  * Auth: an OAuth2 access token ("Zoho-oauthtoken …"); refresh is the person's Zoho app setting (docs/zoho.md). Region-aware
  * base URL (com · in · eu · …).
  *
@@ -50,7 +51,20 @@ module.exports = function zohoAdapter(cfg) {
           discount: (l.list_price != null && l.list_price > l.price) ? (Math.round((1 - l.price / l.list_price) * 10000) / 100) + '%' : undefined })) };
       if (dry) { log('[dry] Zoho invoice for ' + order.chit_id + ':\n' + JSON.stringify(body, null, 2)); return { ref: 'dry-run' }; }
       const j = await call('POST', '/books/v3/invoices', body);
-      const inv = j.invoice || {}; return { ref: inv.invoice_number || inv.invoice_id || 'created' };
+      const inv = j.invoice || {}; return { ref: inv.invoice_number || inv.invoice_id || 'created', their_id: inv.invoice_id || null, their_party: inv.customer_id || null };
+    },
+    /** a payment recorded in ChitBridge → a Customer Payment applied to that order's invoice (needs the invoice the order push created) */
+    async pushReceipt(p) {
+      const o = p.order || {};
+      if (!o.their_id) return { ref: null, skipped: 'no Zoho invoice on record for this order (the order push did not create one)' };
+      if (!(Number(p.amount) > 0)) return { ref: null, skipped: 'no amount on the payment' };
+      const MODE = { cash: 'cash', card: 'creditcard', bank: 'banktransfer', upi: 'others', other: 'others' };
+      const body = { customer_id: o.their_party || undefined, payment_mode: MODE[p.method] || 'others', amount: Math.round(Number(p.amount) * 100) / 100, date: (p.at || new Date().toISOString()).slice(0, 10),
+        reference_number: p.ref || ('CB-' + String(p.chit_id).slice(0, 8)), description: 'ChitBridge payment ' + String(p.method || '').toUpperCase() + ' for order ' + p.chit_id,
+        invoices: [{ invoice_id: o.their_id, amount_applied: Math.round(Number(p.amount) * 100) / 100 }] };
+      if (dry) { log('[dry] Zoho customer payment for ' + p.chit_id + ':\n' + JSON.stringify(body, null, 2)); return { ref: 'dry-run' }; }
+      const j = await call('POST', '/books/v3/customerpayments', body);
+      const pay = j.payment || {}; return { ref: pay.payment_number || pay.payment_id || 'created' };
     },
   };
 };

@@ -27,3 +27,9 @@ Same three steps as every connector: products up, a dry look at the first invoic
 **Access tokens expire (one hour).** Put the refresh token and client credentials in `connector.json` under `zoho` and the connector will refresh on a 401 in a future release; today, replace `zoho.token` when it expires — the window prints `Zoho 401`.
 
 **Honest note.** Written from Zoho Books' published API and proven against a stand-in. The first live run may need `customer_id` instead of `customer_name`, or `item_id` on lines; both are one-line corrections in `adapters/zoho.js`.
+
+## When you mark a chit paid
+The connector records a **Customer Payment** in Zoho Books against the invoice it created for that order
+(`POST /books/v3/customerpayments`: customer, amount, date, reference = your transaction id, applied to the invoice).
+UPI is sent as payment mode `others` with the description "UPI" — Zoho has no UPI mode of its own. If the order's invoice
+was never created (the order push failed), the receipt is skipped and says so in the receipts file.
