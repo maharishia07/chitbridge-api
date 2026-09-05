@@ -182,7 +182,10 @@ app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
 app.use('/api/chits',       chitsRouter);
 app.use('/api/events',      require('./routes/events'));
-app.use('/api/offers',      require('./routes/offers'));   // the offer engine as a service — kinds · evaluate · explain (lib/offers-engine.js)   // the mailbox bell — server push (SSE), lib/events.js
+app.use('/api/offers',      rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
+                              keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) }),
+                              require('./routes/offers'));   // the offer engine as a service — kinds · evaluate · explain · openapi (lib/offers-engine.js)
+app.use('/api/keys',        require('./routes/keys'));     // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);
 app.use('/api/identity',    require('./routes/identity-docs'));   // b174 — a person's own documents + verification stamp

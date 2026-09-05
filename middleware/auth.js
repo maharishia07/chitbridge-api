@@ -6,7 +6,8 @@ const schema = require('../lib/schema');   // b173 — ask the DB what it has be
 const auth = async (req, res, next) => {
   try {
     // Get token from Authorization header
-    const authHeader = req.headers.authorization;
+    /* ⭐ AN API KEY FOR ANOTHER SYSTEM travels as X-Api-Key or as a Bearer — same verification, then the listing check below */
+    const authHeader = req.headers.authorization || (req.headers['x-api-key'] ? 'Bearer ' + String(req.headers['x-api-key']).trim() : '');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'Unauthorised',
@@ -26,6 +27,13 @@ const auth = async (req, res, next) => {
     // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
     if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
       return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
+    }
+    /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
+       the token's own expiry says. One read per request, cached a minute per jti. */
+    if (decoded.kind === 'api_key') {
+      const ok = await keyListed(decoded.identity_id, decoded.jti);
+      if (!ok) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
+      req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [] };
     }
 
     // Attach identity to request
@@ -150,6 +158,23 @@ const auth = async (req, res, next) => {
 };
 
 module.exports = auth;
+
+const _keyCache = new Map();   // jti → { ok, at }
+async function keyListed(entity_id, jti) {
+  if (!jti) return false;
+  const c = _keyCache.get(jti); if (c && Date.now() - c.at < 60000) return c.ok;
+  let ok = false;
+  try { const { query } = require('../db'); const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+        const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
+        ok = Array.isArray(list) && list.some((k) => k && String(k.jti) === String(jti)); } catch (_) { ok = false; }
+  _keyCache.set(jti, { ok, at: Date.now() }); return ok;
+}
+/** requireScope('offers') — a session may do anything; a key only what it was minted for */
+auth.requireScope = (scope) => (req, res, next) => {
+  if (!req.api_key) return next();
+  if (req.api_key.scopes.includes(scope)) return next();
+  return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scope });
+};
 
 /**
  * entityOf(req) — WHOSE data is this request acting on.
