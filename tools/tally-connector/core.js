@@ -171,7 +171,13 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
                     items: ((inv.invoice && inv.invoice.ItemList) || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd, rate: Number(it.GstRt) || 0, ass: Number(it.AssAmt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 })) };
       if (adapter.ensureParty) { try { const pr = await adapter.ensureParty(order.b2b.buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); } }
     }
-  } catch (e) { log('invoice read (B2B check): ' + e.message + ' — booking as a walk-in order'); }
+  } catch (e) {
+    /* ⚠️ A FAILED READ IS NOT "NO GSTIN". Booking a registered buyer as a walk-in because the API blinked (a redeploy, 11:32 on
+       the first live day) would be a wrong voucher that nothing revisits. Leave the order unpushed; the next catch-up retries. */
+    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: 'invoice read: ' + e.message });
+    log('order ' + chit_id.slice(0, 8) + ' deferred — invoice read failed (' + e.message + '); retried at the next catch-up');
+    return { chit_id, outcome: 'failed', why: 'invoice read: ' + e.message };
+  }
   try { const r = await adapter.pushOrder(order);
     /* ⚠️ A DRY RUN IS NOT A PUSH (first live day, 2026-09-05): it used to write outcome 'ok' with their_ref 'dry-run', and the
        real `once` then said "already pushed". A dry run leaves a 'dry' receipt — visible in the file, never a duplicate. */
