@@ -186,7 +186,7 @@ async function keyListed(entity_id, jti) {
 /** requireScope('offers') — a session may do anything; a key only what it was minted for */
 auth.requireScope = (scope) => (req, res, next) => {
   if (!req.api_key) return next();
-  if (req.api_key.scopes.includes(scope)) return next();
+  if (req.api_key.scopes.includes(scope) || req.api_key.scopes.includes('services')) return next();   /* 'services' = every service */
   return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scope });
 };
 
