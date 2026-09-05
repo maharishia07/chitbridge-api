@@ -7,7 +7,7 @@ const router = express.Router();
 
 function assemble(req) {
   const base = process.env.PUBLIC_API_BASE || (req.protocol + '://' + req.get('host'));
-  const parts = [require('./offers'), require('./pricing'), require('./tax'), require('./invoice'), require('./keys')].map((r) => r.openapi || { paths: {}, schemas: {} });
+  const parts = [require('./offers'), require('./pricing'), require('./tax'), require('./invoice'), require('./keys'), require('./integrations')].map((r) => r.openapi || { paths: {}, schemas: {} });
   const paths = Object.assign({}, ...parts.map((p) => p.paths || {}));
   const schemas = Object.assign({}, ...parts.map((p) => p.schemas || {}));
   return {

@@ -24,8 +24,9 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   const cfg = core.loadConfig(cfgFile); cfg._configFile = cfgFile; cfg.dry = !!flag('dry', false); cfg.log = log;
   const adapterName = flag('adapter', cfg.adapter || 'tally');
   const adapter = require('./adapters/' + adapterName)(cfg);
-  const cb = new core.CB({ api: cfg.api, key: cfg.key, log });
+  const cb = new core.CB({ api: cfg.api, key: cfg.key, log }); cb.name = cfg.name || (adapterName + ' connector');
   const receipts = new core.Receipts(cfg.receipts);
+  if (cmd !== 'help') cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd });
   if (cmd === 'sync-products') { const r = await core.syncProducts({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }
   if (cmd === 'once') { const r = await core.catchUp({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }

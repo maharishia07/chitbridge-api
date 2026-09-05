@@ -187,6 +187,7 @@ const serviceLimiter = () => rateLimit({ windowMs: 60 * 1000, max: 240, standard
 app.use('/api/offers',      serviceLimiter(), require('./routes/offers'));    // ⭐ THE GOVERNED CAPABILITIES AS SERVICES (rung 2): offers
 app.use('/api/pricing',     serviceLimiter(), require('./routes/pricing'));   //   pricing structure → unit price at a quantity
 app.use('/api/invoice',     serviceLimiter(), require('./routes/invoice'));   //   pricing → offers → tax → INV-01, built not issued
+app.use('/api/integrations', require('./routes/integrations'));   //   the home of connectors: catalogue · download · heartbeat · status
 app.use('/api',             require('./routes/openapi'));                     //   /api/openapi.json — one contract for all of them
 app.use('/api/keys',        require('./routes/keys'));     // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas',     schemasRouter);

@@ -44,6 +44,8 @@ class CB {
   chit(id) { return this.call('GET', '/api/chits/' + encodeURIComponent(id)); }
   inbox() { return this.call('GET', '/api/chits/inbox?limit=100'); }
   ticket() { return this.call('POST', '/api/events/ticket'); }
+  /** the heartbeat: Settings › Integrations lists this connector with its last-seen time and counters (never fails a command) */
+  async heartbeat(info) { try { return await this.call('POST', '/api/integrations/heartbeat', Object.assign({ host: require('os').hostname(), version: '1.0.0' }, info || {})); } catch (e) { this.log('heartbeat: ' + e.message); return null; } }
 }
 
 /** ── PRODUCTS UP: the outside system's items become (or update) ChitBridge products, matched by code ── */
@@ -117,6 +119,8 @@ async function catchUp({ cb, adapter, receipts, log }) {
 /** live: hold the push stream; on an arrival push that order; reconnect with backoff; the catch-up runs first */
 async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
   await catchUp({ cb, adapter, receipts, log });
+  const beat = () => cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching' });
+  await beat(); const hb = setInterval(beat, 5 * 60 * 1000); if (signal) signal.addEventListener('abort', () => clearInterval(hb));
   let backoff = 3000;
   while (!(signal && signal.aborted)) {
     try {
@@ -140,10 +144,11 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
   }
 }
 
+function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'order') c.orders_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
 function loadConfig(file) {
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!cfg.api || !cfg.key) throw new Error('config needs api and key (mint one under Settings › Integrations, scope connector)');
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { counts, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
