@@ -19,10 +19,14 @@ const C = require('../lib/tax-copy');
 router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const lines = S.normLines(req.body);
-    if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
+    const lines0 = S.normLines(req.body);
+    if (!lines0.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
     const body = req.body || {};
     const sh = await S.shelfOf(entity_id);
+    /* a line named by CODE is the product: its id (offers aim at ids), its categories (category offers reach it), its opt-outs */
+    const lines = lines0.map((l) => { const prod = sh.productOf(l); return Object.assign({}, l, { item_id: l.item_id || sh.idOf(l), name: l.name || (prod && prod.name) || '',
+      categories: l.categories.length ? l.categories : ((prod && Array.isArray(prod.categories)) ? prod.categories.map(String) : []),
+      excluded: l.excluded.length ? l.excluded : ((prod && Array.isArray(prod.offers_excluded)) ? prod.offers_excluded.map(String) : []) }); });
     /* 1 · pricing structure */
     const priced = lines.map((l) => Object.assign({}, l, S.priceLine(l, sh.productOf(l))));
     /* 2 · offers on the priced lines */
