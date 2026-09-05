@@ -184,10 +184,10 @@ async function keyListed(entity_id, jti) {
   _keyCache.set(jti, { ok, at: Date.now() }); return ok;
 }
 /** requireScope('offers') — a session may do anything; a key only what it was minted for */
-auth.requireScope = (scope) => (req, res, next) => {
+auth.requireScope = (...scopes) => (req, res, next) => {
   if (!req.api_key) return next();
-  if (req.api_key.scopes.includes(scope) || req.api_key.scopes.includes('services')) return next();   /* 'services' = every service */
-  return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scope });
+  if (scopes.some((s) => req.api_key.scopes.includes(s)) || req.api_key.scopes.includes('services')) return next();   /* 'services' = every service; any listed scope will do */
+  return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scopes.join(' / ') });
 };
 
 /**

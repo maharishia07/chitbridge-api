@@ -51,7 +51,7 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
-router.get('/:chit_id', auth, auth.requireScope('invoice'), async (req, res) => {
+router.get('/:chit_id', auth, auth.requireScope('invoice', 'connector') /* the B2B voucher reads the buyer's GSTIN and the tax split from here */, async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const hdr = await C.copyOf(req.params.chit_id, me);
