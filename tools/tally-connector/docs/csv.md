@@ -13,7 +13,7 @@ Beside the kit, `products.csv` with a header row: `name, code, unit, price` (opt
 ## 3. Run
 ```
 node index.js sync-products --config connector.json     # products.csv → catalogue (only changed rows are sent)
-node index.js watch --config connector.json             # every order arrives as orders/<chit>.csv: chit, buyer, name, code, qty, unit, price, list_price, offer, total
+node index.js watch --config connector.json --sync-minutes 30             # every order arrives as orders/<chit>.csv: chit, buyer, name, code, qty, unit, price, list_price, offer, total
 ```
 Import `orders/*.csv` into your system however it takes files. A receipt is kept per order; the same order is never written twice.
 

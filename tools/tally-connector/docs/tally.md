@@ -24,7 +24,7 @@ node index.js once --config connector.json --dry
 ```
 Prints the voucher XML for any order already waiting, without posting it. When it reads right:
 ```
-node index.js watch --config connector.json
+node index.js watch --config connector.json --sync-minutes 30
 ```
 Leave this window open. Place an order on your storefront from a phone: within a second the window prints `bell:` and `order → tally created:1`, and the voucher is in Tally (Day Book) with reference `CB-xxxxxxxx`.
 

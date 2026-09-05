@@ -17,7 +17,7 @@ Unzip. In `connector.json`: paste the key; set `zoho.base` (`https://www.zohoapi
 ```
 node index.js sync-products --config connector.json
 node index.js once --config connector.json --dry
-node index.js watch --config connector.json
+node index.js watch --config connector.json --sync-minutes 30
 ```
 Same three steps as every connector: products up, a dry look at the first invoice, then watch. Settings › Integrations › Running connectors shows it checking in.
 
