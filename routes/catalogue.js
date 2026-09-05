@@ -1109,6 +1109,8 @@ router.post('/:bridge_id/order/confirm',
       // There is no `documents_stored:false` any more: a storage failure rolls the whole submission back and the
       // customer still has the file on screen to retry with. `documents` is reported so the caller can record the
       // sealed hashes, with line_index so a bundle can tell which form each proof belongs to.
+      /* ⭐ THE SELLER'S BELL: a storefront order is the arrival that matters most (lib/events.js) — the transaction above has committed */
+      try { require('../lib/events').emit([entity.identity_id], { kind: 'chit', id: chit_id, who: c.display_name || null, note: purpose === 'offer' ? 'offer' : 'order' }); } catch (_) {}
       res.json({ message: purpose === 'offer' ? 'Offer sent' : 'Order placed', chit_id, shop: entity.display_name,
                  summary: summary_json, token,
                  ...(pendingDocs.length ? { documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256, line_index: d.line_index })) } : {}) });
