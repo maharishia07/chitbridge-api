@@ -403,7 +403,11 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
     if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
     const qty = Number(li.quantity ?? li.qty);
     if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
-    const total = Math.round(ref.price * qty * 100) / 100;
+    /* ⭐ THE PRICING STRUCTURE THE PRODUCT CITES prices the unit at this quantity (lib/pricing-engine.js, vendored from
+       app/pricing.js) — before offers, before tax; the list price rides beside it so the line can say what it re-priced from */
+    const _pe = require('../lib/pricing-engine').CBPricing;
+    const _unit = (ref.d && ref.d.pricing_kind && _pe) ? _pe.unitPrice(ref.d, qty, ref.price).amount : ref.price;
+    const total = Math.round(_unit * qty * 100) / 100;
     // T3.3 · the OFFER GUARD applies here too. validateProposal was called only on the finish/reference branch, so
     // the ordinary product path silently DROPPED `li.proposal` — meaning the documented restriction ("a fixed-price
     // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
@@ -429,7 +433,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
      * shelf produces the same line it produced yesterday.
      */
     return withTax({ item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
-             price: ref.price, total, ...(proposal ? { proposal } : {}),
+             price: _unit, total, ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}), ...(proposal ? { proposal } : {}),
              ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), how: 'picked',
                     ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
              ref.d);
