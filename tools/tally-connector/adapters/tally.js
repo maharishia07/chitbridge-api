@@ -119,6 +119,23 @@ module.exports = function tallyAdapter(cfg) {
       const out = { trade_name: unesc(tag('NAME', c)), legal_name: unesc(tag('BASICCOMPANYFORMALNAME', c)) || unesc(tag('NAME', c)), address: lines.join(', '), city: lines.length > 1 ? lines[lines.length - 1].replace(/[\d-]+$/, '').trim() : '',
         state: unesc(tag('STATENAME', c)), pincode: unesc(tag('PINCODE', c)), country: /india/i.test(unesc(tag('COUNTRYNAME', c))) ? 'IN' : unesc(tag('COUNTRYNAME', c)), phone: unesc(tag('PHONENUMBER', c)) || unesc(tag('MOBILENUMBERS', c)), email: unesc(tag('EMAIL', c)),
         gstin: unesc(tag('GSTREGISTRATIONNUMBER', c)), reg_type: /composition/i.test(unesc(tag('GSTREGISTRATIONTYPE', c))) ? 'composition' : (unesc(tag('GSTREGISTRATIONTYPE', c)) ? 'regular' : ''), pan: unesc(tag('INCOMETAXNUMBER', c)), currency: /₹|Rs|INR/i.test(unesc(tag('BASECURRENCYSYMBOL', c))) ? 'INR' : '' };
+      /* ⭐ THE GSTIN LIVES ON THE VOUCHERS (found live 2026-09-05 with Athi at the keyboard). TallyPrime Release 3+ keeps the
+         registration in a "GST Registration" master the Company object does not expose and whose TDL type FREEZES Tally when
+         asked for; every voucher, though, carries CMPGSTIN · CMPGSTSTATE · CMPGSTREGISTRATIONTYPE — the Voucher object is one
+         Tally answers all day. So: no GSTIN on the company → read it off the most recent voucher, if any exists yet. */
+      if (!out.gstin) {
+        try {
+          const vq = `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBVchG</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}<SVFROMDATE>${ymd(new Date(Date.now() - 400 * 86400000))}</SVFROMDATE><SVTODATE>${ymd(new Date(Date.now() + 400 * 86400000))}</SVTODATE></STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="CBVchG" ISMODIFY="No"><TYPE>Voucher</TYPE><FETCH>CMPGSTIN, CMPGSTSTATE, CMPGSTREGISTRATIONTYPE</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+          const vx = dataOf(await post(vq));
+          const v = tags('VOUCHER', vx).find((x) => unesc(tag('CMPGSTIN', x)).trim());
+          if (v) {
+            out.gstin = unesc(tag('CMPGSTIN', v)).trim();
+            const rt = unesc(tag('CMPGSTREGISTRATIONTYPE', v)); if (rt && !out.reg_type) out.reg_type = /composition/i.test(rt) ? 'composition' : 'regular';
+            const st = unesc(tag('CMPGSTSTATE', v)).trim(); if (st && !out.state) out.state = st;
+            out.gstin_source = 'voucher';
+          }
+        } catch (_) { /* no vouchers yet, or Tally busy — the profile simply has no GSTIN until the first voucher */ }
+      }
       for (const k of Object.keys(out)) if (!out[k]) delete out[k];
       return out;
     },

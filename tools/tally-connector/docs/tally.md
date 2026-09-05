@@ -55,3 +55,8 @@ month and the narration keeps the real order date. Leave it off on a licensed Ta
 Gateway of Tally › **D** (Display More Reports) › **D** (Day Book); **F2** to set the period (EDU vouchers sit on the 2nd).
 Alt+G and typing "day book" runs a text search through your transactions and finds nothing — pick the entry under *Reports*.
 Enter on a line opens the voucher: the reference is CB-<first 8 of the chit id>, the narration carries the order and payment.
+
+## ⚠️ Requests that freeze TallyPrime
+A Collection with an unknown `<TYPE>` makes Tally stop answering its port until someone presses Esc in Tally itself.
+Seen twice on 2026-09-05 with `TaxUnit` and `GSTRegistration`. The connector only ever sends `Company`, `Ledger`,
+`StockItem`, `Voucher` and Import Data — do not add a TYPE you have not seen answer.
