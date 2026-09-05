@@ -122,6 +122,32 @@ module.exports = function tallyAdapter(cfg) {
       for (const k of Object.keys(out)) if (!out[k]) delete out[k];
       return out;
     },
+    /**
+     * ⭐ THE LEDGERS THE VOUCHERS NEED, CREATED BY THE CONNECTOR (Athi, 2026-09-05, after creating "Sales" by hand: "you create
+     * the ledgers"). Reads the Ledger collection, creates what is missing through Tally's own master import — the party
+     * under Sundry Debtors (unless it is the cash ledger), sales under Sales Accounts, the bank under Bank Accounts, cash
+     * under Cash-in-Hand. Never alters an existing ledger; a group that does not exist makes Tally refuse, and we say so.
+     */
+    async ensure() {
+      const req = `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBLed</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="CBLed" ISMODIFY="No"><TYPE>Ledger</TYPE><FETCH>NAME, PARENT</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+      const have = new Set(tags('LEDGER', dataOf(await post(req))).map((l) => unesc(tag('NAME', l)).trim().toLowerCase()));
+      const want = [];
+      const cashName = opt.cashLedger || 'Cash';
+      if (opt.partyLedger && opt.partyLedger.toLowerCase() !== cashName.toLowerCase() && !/^cash$/i.test(opt.partyLedger)) want.push([opt.partyLedger, 'Sundry Debtors']);
+      want.push([opt.salesLedger || 'Sales', 'Sales Accounts']);
+      want.push([opt.bankLedger || 'Bank', 'Bank Accounts']);
+      want.push([cashName, 'Cash-in-Hand']);
+      const missing = want.filter(([n]) => !have.has(String(n).toLowerCase()));
+      if (!missing.length) return { existing: want.map((w) => w[0]), created: [] };
+      const masters = missing.map(([n, g]) => `<LEDGER NAME="${esc(n)}" ACTION="Create"><NAME.LIST><NAME>${esc(n)}</NAME></NAME.LIST><PARENT>${esc(g)}</PARENT>${g === 'Bank Accounts' || g === 'Sundry Debtors' ? '<ISBILLWISEON>Yes</ISBILLWISEON>' : ''}</LEDGER>`).join('\n');
+      const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">\n${masters}\n</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+      if (dry) { log('[dry] ledger masters:\n' + xml); return { existing: want.map((w) => w[0]).filter((n) => have.has(n.toLowerCase())), created: [], would_create: missing.map((m) => m[0] + ' (' + m[1] + ')') }; }
+      const res = await post(xml);
+      const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
+      if (errors || created < missing.length) throw new Error('Tally refused a ledger: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
+      log('ledgers created in Tally: ' + missing.map((m) => m[0] + ' (' + m[1] + ')').join(' · '));
+      return { existing: want.map((w) => w[0]).filter((n) => have.has(n.toLowerCase())), created: missing.map((m) => m[0]) };
+    },
     /** a payment recorded in ChitBridge → a Receipt voucher (skipped for a cash sale — the Sales voucher settled it) */
     async pushReceipt(p) {
       const cashy = /^cash$/i.test(String(opt.partyLedger || 'Cash')) || /^cash$/i.test(String(opt.cashLedger || 'Cash')) && opt.partyLedger === (opt.cashLedger || 'Cash');

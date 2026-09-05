@@ -34,6 +34,9 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }
   if (cmd === 'sync-profile') { const r = await core.syncProfile({ cb, adapter, receipts, log }); console.log(JSON.stringify(r && { written: r.written, kept: r.kept, filled: r.filled, total: r.total, issues: r.issues })); return; }
   if (cmd === 'sync-stock') { const r = await core.syncStock({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
+  /* the ledgers the vouchers need — created in the outside system when the adapter can (Tally: master import); watch does this first */
+  if (cmd === 'ensure') { if (!adapter.ensure) { console.log(adapterName + ' has no ensure step'); return; } const r = await adapter.ensure(); console.log(JSON.stringify(r)); return; }
+  if (cmd === 'watch' && adapter.ensure) { try { const r = await adapter.ensure(); if (r.created && r.created.length) log('created: ' + r.created.join(' · ')); } catch (e) { log('ensure: ' + e.message + ' — vouchers may be refused until the ledgers exist'); } }
   if (cmd === 'once') { const r = await core.catchUp({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'watch') {
     const ac = new AbortController(); process.on('SIGINT', () => { log('stopping'); ac.abort(); });
