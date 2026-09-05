@@ -184,41 +184,10 @@ function validateProposal(raw, oi, sellerBand, label) {
  *   tax         → applyToLine stamped only the RATE, so tax follows the reduced total at invoice time
  * Never throws: an engine failure leaves the order at list price, which is what it was before today.
  */
-async function applyLiveOffers(entity, items, total) {
-  try {
-    const eng = require('../lib/offers-engine').CBOffers;
-    const offers = await catalogueView.liveOffers({ entity_id: entity.identity_id, withEntity });
-    if (!offers.length || !eng || !eng.evaluate || !eng.perLine) return { items, total, applied: [] };
-    const idx = []; const lines = [];
-    items.forEach((it, i) => {
-      if (!it || it.kind === 'payload' || !Number.isFinite(Number(it.price)) || !(Number(it.quantity) > 0)) return;
-      idx.push(i);
-      const d = it.d || {};
-      lines.push({ key: String(i), item_id: it.item_id || null, sku: it.sku || (d.sku || d.code) || null, excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [],
-        categories: Array.isArray(d.categories) ? d.categories.map(String) : [], qty: Number(it.quantity), unitPrice: Number(it.price) });
-    });
-    if (!lines.length) return { items, total, applied: [] };
-    const ev = eng.evaluate({ lines, offers, ctx: { now: new Date(), currency: entity.currency_code || 'INR' } });
-    const per = eng.perLine(ev, lines) || {};
-    let newTotal = 0; const applied = [];
-    items.forEach((it, i) => {
-      const p = per[String(i)];
-      if (p && p.off > 0 && Number.isFinite(Number(it.total))) {
-        it.offer = { offer_id: p.offer_id || null, label: p.label || 'offer', off: money.round2(p.off) };
-        it.total = money.round2(Number(it.total) - p.off);
-        applied.push({ scope: 'line', label: it.offer.label, amount: it.offer.off, item_id: it.item_id || null });
-      }
-      if (Number.isFinite(Number(it.total))) newTotal += Number(it.total);
-    });
-    (ev.adjustments || []).forEach((a) => {
-      if (a.scope === 'line' || a.scope === 'note') return;
-      const amt = money.round2(Math.abs(Number(a.amount) || 0)); if (!amt) return;
-      applied.push({ scope: a.scope || 'cart', label: a.label || a.kind, amount: amt, offer_id: a.offer_id || null });
-      newTotal -= amt;
-    });
-    return { items, total: money.round2(Math.max(0, newTotal)), applied };
-  } catch (_) { return { items, total, applied: [] }; }
-}
+/* ⭐ ONE FUNCTION FOR EVERY PATH (2026-09-05): the body moved to lib/offers-live.js so the send path (Compose · Record a sale · a
+   captured WhatsApp message) applies the same live offers the storefront order does. This name stays for its callers here. */
+async function applyLiveOffers(entity, items, total) { return require('../lib/offers-live').applyLiveOffers(entity, items, total, { withEntity }); }
+
 async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order');   // F6: bound the line count
