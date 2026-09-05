@@ -796,6 +796,22 @@ async function savePrefSet(req, res, kind) {
 
 router.patch('/me/prefs/:kind', auth, (req, res) => savePrefSet(req, res, String(req.params.kind || '')));
 
+/**
+ * PATCH /entities/me/exposure — the business's DEFAULT "Shown to customers" switches (lib/exposure.js KEYS), merged into
+ * policy_flags.storefront_exposure; an item's own switches override them. Only known keys, only booleans.
+ */
+router.patch('/me/exposure', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req); const X = require('../lib/exposure');
+    const body = req.body || {}; const out = {};
+    for (const k of X.KEYS) if (k in body) out[k] = !!body[k];
+    if (!Object.keys(out).length) return res.status(400).json({ error: 'validation', message: 'switches required — keys: ' + X.KEYS.join(', ') });
+    await query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || jsonb_build_object('storefront_exposure', COALESCE(policy_flags->'storefront_exposure','{}'::jsonb) || $1::jsonb) WHERE identity_id = $2`, [JSON.stringify(out), entity_id]);
+    const r = await query(`SELECT policy_flags->'storefront_exposure' AS x FROM identities WHERE identity_id = $1`, [entity_id]);
+    res.json({ message: 'Defaults saved', exposure: Object.assign({}, X.DEFAULTS, (r.rows[0] && r.rows[0].x) || {}) });
+  } catch (err) { res.status(500).json({ error: 'Exposure save failed', message: safeErr(err) }); }
+});
+
 /* ⚠️ THE SHIPPED PATH, KEPT. Clients deployed before this refactor call /me/locale, and a browser holding a
    cached app.html will keep calling it after the API updates. Removing it would turn a tidy-up into an outage
    for exactly as long as those caches live. */
