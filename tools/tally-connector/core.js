@@ -216,6 +216,8 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
           const ev = /^event: (\S+)/m.exec(chunk), data = /^data: (.*)$/m.exec(chunk);
           if (ev && ev[1] === 'cb' && data) { let d = {}; try { d = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(d);
             if (d.kind === 'chit' && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
+            /* a bell without the chit id (an order composed by another shop rings `{kind:'chit', who}` only) → the inbox says which */
+            else if (d.kind === 'chit') { try { await catchUp({ cb, adapter, receipts, log }); } catch (e) { log('catch-up on bell: ' + e.message); } }
             /* the seller marked it paid (or a gateway did): the Receipt voucher */
             if (d.kind === 'paid' && d.id) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: d.id }); } catch (e) { log('receipt: ' + e.message); } }
             /* the storefront asked for fresh stock: read the source now, write the stamped figures */
