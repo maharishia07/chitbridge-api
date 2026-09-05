@@ -41,7 +41,7 @@ const CATALOGUE = [
 ];
 
 function kitFiles(adapter) {
-  const names = ['core.js', 'index.js', 'fake-tally.js', 'fake-zoho.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'samples/products.csv', 'samples/profile.csv'];
+  const names = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'fake-tally.js', 'fake-zoho.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'samples/products.csv', 'samples/profile.csv'];
   const out = [];
   for (const n of names) { const p = path.join(KIT, n); if (fs.existsSync(p)) out.push({ name: 'chitbridge-connector/' + n, data: fs.readFileSync(p) }); }
   return out;

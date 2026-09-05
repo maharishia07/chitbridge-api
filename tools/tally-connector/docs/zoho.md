@@ -10,7 +10,10 @@ Zoho API Console (api-console.zoho.com) › Self Client › scope `ZohoBooks.ful
 ## 2. ChitBridge
 Settings › Integrations › Connectors › Zoho Books › **Download · zoho**. Then Your keys › scope **connector** › Mint; copy the key.
 
-## 3. The kit
+## 3. The kit — the easy way
+Double-click **start.cmd** (Windows) or run . It asks for the key, where your system listens and the ledgers, tests both ends, writes connector.json, runs the first sync, and prints the next command. Nothing is installed inside Tally or Zoho.
+
+## 3b. The kit — by hand
 Unzip. In `connector.json`: paste the key; set `zoho.base` (`https://www.zohoapis.in` for India), `zoho.org` (organisation id), `zoho.token` (the access token), `zoho.customer_name` (the Zoho customer an order is booked to, e.g. `Walk-in`).
 
 ## 4. First run
