@@ -4,7 +4,8 @@
  * Mints a connector key with the session, starts fake-tally on a free port, syncs its three items to the catalogue,
  * evaluates a basket through the key, places a storefront order for one item (the customer rail, dev OTP), runs the
  * catch-up, and checks the voucher reached the fake Tally exactly once — then runs the catch-up again (no duplicate),
- * and revokes the key. Prints PASS/FAIL per step. Leaves the products behind (the shared test account accumulates —
+ * marks the chit paid through the API and checks ONE Receipt voucher reached the fake Tally (and not twice), and revokes
+ * the key. Prints PASS/FAIL per step. Leaves the products behind (the shared test account accumulates —
  * a known cost); the key is revoked; the receipts file is temporary.
  */
 'use strict';
@@ -37,7 +38,8 @@ async function pub(method, p, body) { const r = await fetch(API + p, { method, h
     const cfg = { api: API, key, adapter: 'tally', tally: { url: 'http://localhost:' + port, partyLedger: 'Cash', salesLedger: 'Sales' }, receipts: path.join(tmp, 'receipts.jsonl') };
     const log = (m) => console.log('   · ' + m);
     const cb = new core.CB({ api: API, key, log });
-    const adapter = require('./adapters/tally')(Object.assign({ log }, cfg));
+    /* a credit party, so the Receipt step has something to book (a cash sale books none — that is a PASS of another kind) */
+    const adapter = require('./adapters/tally')(Object.assign({ log }, cfg, { tally: Object.assign({}, cfg.tally || {}, { partyLedger: 'Prove Customer', bankLedger: 'Prove Bank' }) }));
     const receipts = new core.Receipts(cfg.receipts);
 
     /* 2 · products up, twice: added then unchanged */
@@ -75,6 +77,19 @@ async function pub(method, p, body) { const r = await fetch(API + p, { method, h
     const again = c2.find((x) => x.chit_id === chitId);
     const v2 = await new Promise((r) => http.get('http://localhost:' + port + '/_vouchers', (res) => { let b = ''; res.on('data', (c) => b += c); res.on('end', () => r(JSON.parse(b))); }));
     ok(again && again.outcome === 'duplicate' && v2.length === v1.length, 'second catch-up: duplicate, no second voucher');
+
+    /* 5b · the payment loop: Mark paid (session) → the Receipt voucher, once; above the quote → refused */
+    const over = await session('POST', '/api/chits/' + chitId + '/payment', { method: 'upi', ref: 'PROVE-OVER', amount: 999999 });
+    ok(over.status === 422, 'a payment far above the quote is refused (' + over.status + ')');
+    const paid = await session('POST', '/api/chits/' + chitId + '/payment', { method: 'upi', ref: 'PROVE-UPI-1' });
+    ok(paid.status === 200 && paid.j.payment && paid.j.payment.method === 'upi', 'marked paid (' + paid.status + ')');
+    const r1 = await core.pushReceipt({ cb, adapter, receipts, log, chit_id: chitId });
+    const v3 = await new Promise((r) => http.get('http://localhost:' + port + '/_vouchers', (res) => { let b = ''; res.on('data', (c) => b += c); res.on('end', () => r(JSON.parse(b))); }));
+    const rcpt = v3.find((v) => v.vtype === 'Receipt' && v.ref === 'CB-' + String(chitId).slice(0, 8));
+    ok(r1.outcome === 'ok' && rcpt && rcpt.ledgers.some((l) => l.ledger === 'Prove Bank' && l.dr) && rcpt.ledgers.some((l) => l.ledger === 'Prove Customer' && !l.dr), 'the Receipt voucher is in Tally: ' + JSON.stringify(rcpt && rcpt.ledgers));
+    const r2 = await core.pushReceipt({ cb, adapter, receipts, log, chit_id: chitId });
+    const v4 = await new Promise((r) => http.get('http://localhost:' + port + '/_vouchers', (res) => { let b = ''; res.on('data', (c) => b += c); res.on('end', () => r(JSON.parse(b))); }));
+    ok(r2.outcome === 'duplicate' && v4.length === v3.length, 'second receipt push: duplicate, no second voucher');
 
     /* 6 · the key cannot reach a session-only route */
     const bad = await fetch(API + '/api/keys', { headers: { 'X-Api-Key': key } });

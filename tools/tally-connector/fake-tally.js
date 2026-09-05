@@ -26,7 +26,9 @@ const server = http.createServer((req, res) => {
     if (/<TALLYREQUEST>\s*Import Data\s*<\/TALLYREQUEST>/i.test(body)) {
       const ref = (/<REFERENCE>([^<]*)<\/REFERENCE>/.exec(body) || [])[1] || '';
       const items = [...body.matchAll(/<STOCKITEMNAME>([^<]*)<\/STOCKITEMNAME>[\s\S]*?<RATE>([^<]*)<\/RATE>[\s\S]*?<BILLEDQTY>([^<]*)<\/BILLEDQTY>/g)].map((m) => ({ item: m[1], rate: m[2], qty: m[3] }));
-      const id = vouchers.length + 1; vouchers.push({ id, ref, items, at: new Date().toISOString() });
+      const vtype = (/VCHTYPE="([^"]*)"/.exec(body) || [])[1] || '';
+      const ledgers = [...body.matchAll(/<LEDGERNAME>([^<]*)<\/LEDGERNAME><ISDEEMEDPOSITIVE>([^<]*)<\/ISDEEMEDPOSITIVE>(?:<ISPARTYLEDGER>[^<]*<\/ISPARTYLEDGER>)?<AMOUNT>([^<]*)<\/AMOUNT>/g)].map((m) => ({ ledger: m[1], dr: m[2] === 'Yes', amount: m[3] }));
+      const id = vouchers.length + 1; vouchers.push({ id, ref, vtype, items, ledgers, at: new Date().toISOString() });
       return res.end(`<RESPONSE><CREATED>1</CREATED><ALTERED>0</ALTERED><LASTVCHID>${id}</LASTVCHID><ERRORS>0</ERRORS></RESPONSE>`);
     }
     res.statusCode = 400; res.end('<RESPONSE><ERRORS>1</ERRORS><LINEERROR>unknown request</LINEERROR></RESPONSE>');
