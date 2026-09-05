@@ -13,6 +13,9 @@ const XML_HEADERS = { 'Content-Type': 'text/xml' };
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function tag(name, xml) { const re = new RegExp('<' + name + '(?:\\s[^>]*)?>([\\s\\S]*?)</' + name + '>', 'i'); const m = re.exec(xml); return m ? m[1].trim() : ''; }
 function tags(name, xml) { const re = new RegExp('<' + name + '(?:\\s[^>]*)?>([\\s\\S]*?)</' + name + '>', 'gi'); const out = []; let m; while ((m = re.exec(xml))) out.push(m[1]); return out; }
+/** ⚠️ FIRST LIVE TALLY (2026-09-05): every reply opens with a CMPINFO block whose element names COLLIDE with the object
+ *  names (<COMPANY>1</COMPANY>, <STOCKITEM>0</STOCKITEM> are COUNTS) — parse only the <DATA> part */
+function dataOf(xml) { const m = /<DATA>([\s\S]*?)<\/DATA>/i.exec(String(xml || '')); return m ? m[1] : String(xml || ''); }
 function unesc(s) { return String(s || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#4;/g, ''); }
 function num(s) { const m = /-?[\d,]*\.?\d+/.exec(String(s || '').replace(/,/g, '')); return m ? Number(m[0]) : null; }
 function ymd(d) { const x = d ? new Date(d) : new Date(); return x.getFullYear() + String(x.getMonth() + 1).padStart(2, '0') + String(x.getDate()).padStart(2, '0'); }
@@ -63,7 +66,7 @@ module.exports = function tallyAdapter(cfg) {
   return {
     name: 'tally',
     async readProducts() {
-      const xml = await post(exportRequest(opt.company));
+      const xml = dataOf(await post(exportRequest(opt.company)));
       return tags('STOCKITEM', xml).map((it) => ({
         name: unesc(tag('NAME', it)), code: unesc(tag('PARTNO', it)) || unesc(tag('NAME', it)), unit: unesc(tag('BASEUNITS', it)) || 'nos',
         price: num(tag('STANDARDPRICE', it)) != null ? num(tag('STANDARDPRICE', it)) : (num(tag('CLOSINGRATE', it)) || 0),
@@ -71,12 +74,12 @@ module.exports = function tallyAdapter(cfg) {
     },
     /** closing stock per item — Tally's CLOSINGBALANCE reads "12 bag"; a negative balance is stock in hand in Tally's sign convention */
     async readStock() {
-      const xml = await post(exportRequest(opt.company)); const at = new Date().toISOString();
+      const xml = dataOf(await post(exportRequest(opt.company))); const at = new Date().toISOString();
       return tags('STOCKITEM', xml).map((it) => { const q = num(tag('CLOSINGBALANCE', it)); return { code: unesc(tag('PARTNO', it)) || unesc(tag('NAME', it)), qty: q == null ? null : Math.abs(q), at }; }).filter((r) => r.code && r.qty != null);
     },
     /** the store's profile from the company master — every value 'copied' with source tally; the API checks and ranks */
     async readProfile() {
-      const xml = await post(companyRequest(opt.company)); const c = tags('COMPANY', xml)[0] || xml;
+      const xml = dataOf(await post(companyRequest(opt.company))); const c = tags('COMPANY', xml)[0] || xml;
       const lines = tags('ADDRESS', c).map(unesc).map((s) => s.trim()).filter(Boolean);
       const out = { trade_name: unesc(tag('NAME', c)), legal_name: unesc(tag('BASICCOMPANYFORMALNAME', c)) || unesc(tag('NAME', c)), address: lines.join(', '), city: lines.length > 1 ? lines[lines.length - 1].replace(/[\d-]+$/, '').trim() : '',
         state: unesc(tag('STATENAME', c)), pincode: unesc(tag('PINCODE', c)), country: /india/i.test(unesc(tag('COUNTRYNAME', c))) ? 'IN' : unesc(tag('COUNTRYNAME', c)), phone: unesc(tag('PHONENUMBER', c)) || unesc(tag('MOBILENUMBERS', c)), email: unesc(tag('EMAIL', c)),
