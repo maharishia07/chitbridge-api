@@ -66,3 +66,12 @@ The connector keeps a receipt per order. A voucher that failed because Tally was
 (`retryMinutes` in connector.json, `--retry-minutes` on the command line) and lands once, the moment Tally is open again.
 If the PC itself was off, the first `watch` after boot catches up. To start the connector with Windows, put a shortcut to
 `start.cmd` in the Startup folder (Win+R › `shell:startup`).
+
+## When you are the buyer
+Set `"role": "both"` (or `"buyer"`) in connector.json. An order you placed on ChitBridge, once you mark it **completed**
+(goods received), becomes a **Purchase** voucher in your Tally: the seller as a supplier under Sundry Creditors with their
+GSTIN, the materials as stock items (created with unit, HSN and rate if you never stocked them), the input CGST/SGST or
+IGST as your ITC claim, the supplier credited for goods + tax against a bill that carries the seller's reference
+CB-<8> — the same reference on their Sales voucher. `node index.js purchases` runs it once; `watch` runs it every
+`retryMinutes`. The connector checks the voucher's input tax against ChitBridge's own ITC figure and warns on a difference.
+Ledgers it creates for this: Purchase (Purchase Accounts), Input CGST / Input SGST / Input IGST (Duties & Taxes).

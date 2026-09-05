@@ -188,6 +188,8 @@ module.exports = function tallyAdapter(cfg) {
       want.push([cashName, 'Cash-in-Hand']);
       /* the GST tax ledgers a B2B voucher books its heads to (Duties & Taxes, duty head set) — unless told not to */
       if (opt.gstLedgers !== false) { const T = opt.taxLedgers || {}; want.push([T.cgst || 'CGST', 'Duties & Taxes', 'CGST'], [T.sgst || 'SGST', 'Duties & Taxes', 'SGST/UTGST'], [T.igst || 'IGST', 'Duties & Taxes', 'IGST']); }
+      /* the buyer's side: the purchase ledger and the input-tax ledgers (my ITC claim) */
+      if (/buyer|both/.test(String(opt.role || cfg.role || 'seller'))) { const I = opt.inputTaxLedgers || {}; want.push([opt.purchaseLedger || 'Purchase', 'Purchase Accounts'], [I.cgst || 'Input CGST', 'Duties & Taxes', 'CGST'], [I.sgst || 'Input SGST', 'Duties & Taxes', 'SGST/UTGST'], [I.igst || 'Input IGST', 'Duties & Taxes', 'IGST']); }
       const missing = want.filter(([n]) => !have.has(String(n).toLowerCase()));
       if (!missing.length) return { existing: want.map((w) => w[0]), created: [] };
       const masters = missing.map(([n, g, duty]) => `<LEDGER NAME="${esc(n)}" ACTION="Create"><NAME.LIST><NAME>${esc(n)}</NAME></NAME.LIST><PARENT>${esc(g)}</PARENT>${g === 'Bank Accounts' || g === 'Sundry Debtors' ? '<ISBILLWISEON>Yes</ISBILLWISEON>' : ''}${duty ? '<TAXTYPE>GST</TAXTYPE><GSTDUTYHEAD>' + esc(duty) + '</GSTDUTYHEAD>' : ''}</LEDGER>`).join('\n');
@@ -221,6 +223,95 @@ module.exports = function tallyAdapter(cfg) {
       const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
       if (errors || !created) throw new Error('Tally refused the party ledger: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
       return { name, created: name };
+    },
+    /* ══ THE BUYER'S SIDE (2026-09-05): the seller as a supplier, the materials as stock items, the Purchase voucher with ITC ══ */
+    /** the seller → a ledger under Sundry Creditors with their GSTIN · registration type · state · mailing address, once */
+    async ensureSupplier(seller) {
+      const name = partyLedgerName(seller);
+      const req = `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBLed2</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="CBLed2" ISMODIFY="No"><TYPE>Ledger</TYPE><FETCH>NAME, PARENT</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+      const have = tags('LEDGER', dataOf(await post(req))).map((l) => unesc(tag('NAME', l)).trim().toLowerCase());
+      if (have.includes(name.toLowerCase())) return { name, created: null };
+      const st = stateName(seller.state_code);
+      const addr = [seller.addr, seller.loc].filter(Boolean).map((a) => '<ADDRESS>' + esc(a) + '</ADDRESS>').join('');
+      const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
+<LEDGER NAME="${esc(name)}" ACTION="Create"><NAME.LIST><NAME>${esc(name)}</NAME></NAME.LIST><PARENT>Sundry Creditors</PARENT><ISBILLWISEON>Yes</ISBILLWISEON>
+${seller.gstin ? '<PARTYGSTIN>' + esc(seller.gstin) + '</PARTYGSTIN><GSTREGISTRATIONTYPE>' + esc(seller.reg_type || 'Regular') + '</GSTREGISTRATIONTYPE>' : '<GSTREGISTRATIONTYPE>Unregistered</GSTREGISTRATIONTYPE>'}<LEDSTATENAME>${esc(st)}</LEDSTATENAME><COUNTRYNAME>India</COUNTRYNAME>
+<LEDGERMAILINGDETAILS.LIST><APPLICABLEFROM>${ymd(new Date(new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0), 3, 1))}</APPLICABLEFROM><MAILINGNAME>${esc(name)}</MAILINGNAME>${addr ? '<ADDRESS.LIST>' + addr + '</ADDRESS.LIST>' : ''}<STATE>${esc(st)}</STATE><COUNTRY>India</COUNTRY>${seller.pin ? '<PINCODE>' + esc(seller.pin) + '</PINCODE>' : ''}</LEDGERMAILINGDETAILS.LIST>
+</LEDGER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+      if (dry) { log('[dry] supplier ledger:\n' + xml); return { name, created: null, would_create: name }; }
+      const res = await post(xml);
+      const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
+      if (errors || !created) throw new Error('Tally refused the supplier ledger: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
+      return { name, created: name };
+    },
+    /**
+     * the materials I bought → stock items I hold. Matched by name (Tally's key); a material I never stocked is created with the
+     * seller's unit (created too if my Tally lacks it), HSN and GST rate. Never alters an existing item — my price, my group.
+     * ⚠️ the GST-details shape mirrors what Tally EXPORTS (GSTDETAILS.LIST › STATEWISEDETAILS.LIST › RATEDETAILS.LIST); proven on
+     * fake-tally, to be watched on the first live purchase.
+     */
+    async ensureItems(items) {
+      const q = (type, id) => `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>${id}</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="${id}" ISMODIFY="No"><TYPE>${type}</TYPE><FETCH>NAME</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+      const haveItems = new Set(tags('STOCKITEM', dataOf(await post(q('StockItem', 'CBItems')))).map((x) => unesc(tag('NAME', x)).trim().toLowerCase()));
+      const haveUnits = new Set(tags('UNIT', dataOf(await post(q('Unit', 'CBUnits')))).map((x) => unesc(tag('NAME', x)).trim().toLowerCase()));
+      const seen = new Set(); const newItems = [], newUnits = [];
+      for (const it of items) {
+        const name = String(it.name || '').trim(); if (!name || seen.has(name.toLowerCase())) continue; seen.add(name.toLowerCase());
+        const unit = String(it.unit || 'nos').trim() || 'nos';
+        if (!haveUnits.has(unit.toLowerCase()) && !newUnits.some((u) => u.toLowerCase() === unit.toLowerCase())) newUnits.push(unit);
+        if (!haveItems.has(name.toLowerCase())) newItems.push({ name, unit, hsn: it.hsn || null, gst_rate: it.gst_rate });
+      }
+      if (!newItems.length && !newUnits.length) return { created: [], units: [] };
+      const from = ymd(new Date(new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0), 3, 1));
+      const unitXml = newUnits.map((u) => `<UNIT NAME="${esc(u)}" ACTION="Create"><NAME>${esc(u)}</NAME><ISSIMPLEUNIT>Yes</ISSIMPLEUNIT><DECIMALPLACES>3</DECIMALPLACES></UNIT>`).join('\n');
+      const itemXml = newItems.map((it) => {
+        const gst = it.gst_rate != null && it.gst_rate >= 0 ? `<GSTAPPLICABLE>&#4; Applicable</GSTAPPLICABLE><GSTTYPEOFSUPPLY>Goods</GSTTYPEOFSUPPLY>
+<GSTDETAILS.LIST><APPLICABLEFROM>${from}</APPLICABLEFROM><SRCOFGSTDETAILS>Specify Details Here</SRCOFGSTDETAILS><TAXABILITY>Taxable</TAXABILITY><STATEWISEDETAILS.LIST><STATENAME>&#4; Any</STATENAME>
+<RATEDETAILS.LIST><GSTRATEDUTYHEAD>CGST</GSTRATEDUTYHEAD><GSTRATEVALUATIONTYPE>Based on Value</GSTRATEVALUATIONTYPE><GSTRATE>${it.gst_rate / 2}</GSTRATE></RATEDETAILS.LIST>
+<RATEDETAILS.LIST><GSTRATEDUTYHEAD>SGST/UTGST</GSTRATEDUTYHEAD><GSTRATEVALUATIONTYPE>Based on Value</GSTRATEVALUATIONTYPE><GSTRATE>${it.gst_rate / 2}</GSTRATE></RATEDETAILS.LIST>
+<RATEDETAILS.LIST><GSTRATEDUTYHEAD>IGST</GSTRATEDUTYHEAD><GSTRATEVALUATIONTYPE>Based on Value</GSTRATEVALUATIONTYPE><GSTRATE>${it.gst_rate}</GSTRATE></RATEDETAILS.LIST></STATEWISEDETAILS.LIST></GSTDETAILS.LIST>` : '';
+        const hsn = it.hsn ? `<HSNDETAILS.LIST><APPLICABLEFROM>${from}</APPLICABLEFROM><SRCOFHSNDETAILS>Specify Details Here</SRCOFHSNDETAILS><HSNCODE>${esc(it.hsn)}</HSNCODE></HSNDETAILS.LIST>` : '';
+        return `<STOCKITEM NAME="${esc(it.name)}" ACTION="Create"><NAME.LIST><NAME>${esc(it.name)}</NAME></NAME.LIST><PARENT>&#4; Primary</PARENT><BASEUNITS>${esc(it.unit)}</BASEUNITS>${gst}${hsn}</STOCKITEM>`;
+      }).join('\n');
+      const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">\n${unitXml}\n${itemXml}\n</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+      if (dry) { log('[dry] stock masters:\n' + xml); return { created: [], units: [], would_create: newItems.map((i) => i.name), would_create_units: newUnits }; }
+      const res = await post(xml);
+      const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
+      if (errors || created < newItems.length + newUnits.length) throw new Error('Tally refused a stock master: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
+      return { created: newItems.map((i) => i.name), units: newUnits };
+    },
+    /**
+     * the Purchase voucher (invoice view): the goods in (ISDEEMEDPOSITIVE Yes), the purchase ledger, the input tax lines — my
+     * ITC claim — and the supplier credited for goods + tax against a New Ref bill that carries the seller's reference.
+     */
+    async pushPurchase(p) {
+      const party = partyLedgerName(p.seller), purch = opt.purchaseLedger || 'Purchase';
+      const T = opt.inputTaxLedgers || {}; const names = { cgst: T.cgst || 'Input CGST', sgst: T.sgst || 'Input SGST', igst: T.igst || 'Input IGST', cess: T.cess || 'Input Cess' };
+      const total = Math.round(Number(p.total) * 100) / 100;
+      const inv = p.items.map((it) => {
+        const qty = it.qty, unit = it.unit || 'nos', gross = Math.round(it.rate * qty * 100) / 100, amount = Math.round((it.ass || gross) * 100) / 100;
+        const disc = gross > 0 && amount < gross ? Math.round((1 - amount / gross) * 10000) / 100 : 0;
+        return `<ALLINVENTORYENTRIES.LIST><STOCKITEMNAME>${esc(it.name)}</STOCKITEMNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+<RATE>${it.rate}/${esc(unit)}</RATE>${disc ? '<DISCOUNT>' + disc + '</DISCOUNT>' : ''}<AMOUNT>-${amount}</AMOUNT><ACTUALQTY>${qty} ${esc(unit)}</ACTUALQTY><BILLEDQTY>${qty} ${esc(unit)}</BILLEDQTY>
+<ACCOUNTINGALLOCATIONS.LIST><LEDGERNAME>${esc(purch)}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><AMOUNT>-${amount}</AMOUNT></ACCOUNTINGALLOCATIONS.LIST></ALLINVENTORYENTRIES.LIST>`;
+      }).join('\n');
+      const taxLines = [['cgst', p.taxes.cgst], ['sgst', p.taxes.sgst], ['igst', p.taxes.igst], ['cess', p.taxes.cess]].filter(([, v]) => v > 0)
+        .map(([k, v]) => `<LEDGERENTRIES.LIST><LEDGERNAME>${esc(names[k])}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><AMOUNT>-${Math.round(v * 100) / 100}</AMOUNT></LEDGERENTRIES.LIST>`).join('\n');
+      const inputTax = Math.round(((p.taxes.cgst || 0) + (p.taxes.sgst || 0) + (p.taxes.igst || 0) + (p.taxes.cess || 0)) * 100) / 100;
+      const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
+<STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
+<VOUCHER VCHTYPE="Purchase" ACTION="Create" OBJVIEW="Invoice Voucher View"><DATE>${ymd(eduDate(p.at, opt.eduDates))}</DATE><VOUCHERTYPENAME>Purchase</VOUCHERTYPENAME>
+<REFERENCE>${esc(p.ref)}</REFERENCE><REFERENCEDATE>${ymd(eduDate(p.at, opt.eduDates))}</REFERENCEDATE><NARRATION>${esc('ChitBridge purchase ' + p.chit_id + ' from ' + p.seller.name + ' · seller invoice ' + p.ref + ' · ITC ' + inputTax + (opt.eduDates ? ' (EDU date)' : ''))}</NARRATION>
+<PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME><PARTYNAME>${esc(p.seller.name)}</PARTYNAME><ISINVOICE>Yes</ISINVOICE>${p.seller.gstin ? '<PARTYGSTIN>' + esc(p.seller.gstin) + '</PARTYGSTIN>' : ''}${p.buyer_state ? '<PLACEOFSUPPLY>' + esc(stateName(p.buyer_state)) + '</PLACEOFSUPPLY>' : ''}${p.seller.state_code ? '<STATENAME>' + esc(stateName(p.seller.state_code)) + '</STATENAME>' : ''}
+${inv}
+<LEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>${total}</AMOUNT><BILLALLOCATIONS.LIST><NAME>${esc(p.ref)}</NAME><BILLTYPE>New Ref</BILLTYPE><AMOUNT>${total}</AMOUNT></BILLALLOCATIONS.LIST></LEDGERENTRIES.LIST>
+${taxLines}
+</VOUCHER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+      if (dry) { log('[dry] purchase XML for ' + p.chit_id + ':\n' + xml); return { ref: 'dry-run', input_tax: inputTax }; }
+      const res = await post(xml);
+      const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
+      if (errors || !created) throw new Error('Tally refused the purchase: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
+      return { ref: tag('VCHID', res) || tag('LASTVCHID', res) || ('created:' + created), input_tax: inputTax };
     },
     /** a payment recorded in ChitBridge → a Receipt voucher (skipped for a cash sale — the Sales voucher settled it) */
     async pushReceipt(p) {

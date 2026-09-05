@@ -51,6 +51,8 @@ class CB {
   stock(items) { return this.call('POST', '/api/products/availability/bulk', { items }); }
   /** the frozen/built invoice for a chit — the buyer's GSTIN, the place of supply, the CGST/SGST/IGST split (B2B vouchers) */
   invoice(chit_id) { return this.call('GET', '/api/invoice/' + encodeURIComponent(chit_id)); }
+  /** my SENT copies — the orders I placed as a buyer (the Purchase voucher side) */
+  sent(limit) { return this.call('GET', '/api/chits/sent?limit=' + (limit || 100)); }
   profile(fields, source) { return this.call('POST', '/api/integrations/profile', { source, as_of: new Date().toISOString(), fields }); }
   /** the heartbeat: Settings › Integrations lists this connector with its last-seen time and counters (never fails a command) */
   async heartbeat(info) { try { return await this.call('POST', '/api/integrations/heartbeat', Object.assign({ host: require('os').hostname(), version: '1.0.0' }, info || {})); } catch (e) { this.log('heartbeat: ' + e.message); return null; } }
@@ -186,6 +188,51 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
     receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
   catch (e) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: e.message }); log('order ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
 }
+/**
+ * ⭐ THE BUYER'S SIDE — ONE CHIT, TWO BOOKS (Athi, 2026-09-05: "when the buyer has a system, the sales record from the seller
+ * needs to be added into the buyer system — materials, qty and so on; attach the receipt, the GST claim, the arithmetic").
+ * An order I PLACED that I have marked completed (goods received, the invoice frozen on my copy) becomes a PURCHASE in my
+ * books: the seller as a supplier (Sundry Creditors, their GSTIN), the materials as stock items (created if I never stocked
+ * them — unit, HSN, rate from the seller's line), a Purchase voucher with the input tax as my ITC claim, referenced by the
+ * same CB-<8> the seller's Sales voucher carries. The arithmetic is checked here: the voucher's input tax must equal what
+ * our own ledger calls my ITC for that chit; a difference is logged and the voucher still posts (the books decide).
+ */
+function purchaseOf(c, inv) {
+  const h = c.header || c.chit || c; const I = (inv && inv.invoice) || {}; const S = I.SellerDtls || {}; const heads = (inv && inv.heads) || {};
+  const seller = { name: S.LglNm || S.TrdNm || (inv && inv.seller && inv.seller.LglNm) || h.receiver_display_name || 'Supplier', gstin: S.Gstin || (inv && inv.seller && inv.seller.Gstin) || null,
+                   state_code: S.State || (S.Gstin ? String(S.Gstin).slice(0, 2) : null), addr: [S.Addr1, S.Addr2].filter(Boolean).join(', '), loc: S.Loc || '', pin: S.Pin || '', reg_type: 'Regular' };
+  const items = (I.ItemList || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd || null, qty: Number(it.Qty) || 0, unit: it.Unit || 'nos', rate: Number(it.UnitPrice) || 0, discount: Number(it.Discount) || 0, ass: Number(it.AssAmt) || 0, gst_rate: Number(it.GstRt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 }));
+  const taxes = { cgst: Number(heads.cgst) || 0, sgst: Number(heads.sgst) || 0, igst: Number(heads.igst) || 0, cess: Number(heads.cess) || 0 };
+  return { chit_id: h.chit_id, at: (I.frozen_at || h.updated_at || h.created_at || null), ref: 'CB-' + String(h.chit_id).slice(0, 8), seller, items, taxes, taxable: Number(heads.taxable) || 0, total: Number(heads.total) || 0,
+           itc_claim: Math.round(((taxes.cgst + taxes.sgst + taxes.igst + taxes.cess)) * 100) / 100, place_of_supply: (I._cb && I._cb.place_of_supply) || null, buyer_state: (I.BuyerDtls && I.BuyerDtls.State) || null, frozen: !!(inv && inv.frozen) };
+}
+async function pushPurchase({ cb, adapter, receipts, log, chit_id }) {
+  const last = receipts.last('purchase', chit_id);
+  if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
+  if (!adapter.pushPurchase) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'skipped', why: adapter.name + ' has no pushPurchase' }); return { chit_id, outcome: 'skipped' }; }
+  let c, inv; try { c = await cb.chit(chit_id); inv = await cb.invoice(chit_id); } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'failed', why: 'read: ' + e.message }); return { chit_id, outcome: 'failed', why: e.message }; }
+  const p = purchaseOf(c, inv);
+  if (!p.items.length) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: 'no lines on the invoice' }); return { chit_id, outcome: 'skipped' }; }
+  try {
+    if (adapter.ensureSupplier) { const s = await adapter.ensureSupplier(p.seller); if (s && s.created) log('supplier ledger created: ' + s.created); }
+    if (adapter.ensureItems) { const it = await adapter.ensureItems(p.items); if (it && it.created && it.created.length) log('stock items created: ' + it.created.join(' · ')); }
+    const r = await adapter.pushPurchase(p);
+    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
+    const booked = r && r.input_tax != null ? Math.round(Number(r.input_tax) * 100) / 100 : null;
+    if (booked != null && Math.abs(booked - p.itc_claim) > 0.01) log('⚠ ITC arithmetic: the voucher books ' + booked + ' of input tax, our ledger says ' + p.itc_claim + ' for ' + chit_id.slice(0, 8));
+    receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null, itc: p.itc_claim, total: p.total });
+    log('purchase ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '') + ' · ' + p.total + ' incl. ITC ' + p.itc_claim);
+    return { chit_id, outcome: 'ok', their_ref: r && r.ref, itc: p.itc_claim };
+  } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('purchase ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
+}
+/** every order I placed that I have marked completed and not yet booked as a purchase */
+async function syncPurchases({ cb, adapter, receipts, log }) {
+  const sent = await cb.sent(100);
+  const rows = (sent.chits || sent.rows || sent.items || (Array.isArray(sent) ? sent : [])).filter((r) => /^(order|offer)$/.test(String(r.purpose || '')) && /^(completed|delivered|closed)$/.test(String(r.current_status || r.status || '')));
+  const out = [];
+  for (const r of rows) { const id = r.chit_id || r.id; if (!id) continue; out.push(await pushPurchase({ cb, adapter, receipts, log, chit_id: id })); }
+  return out;
+}
 /** catch-up: every received order in the inbox without an ok receipt */
 async function catchUp({ cb, adapter, receipts, log }) {
   const inbox = await cb.inbox();
@@ -231,11 +278,11 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
   }
 }
 
-function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 0, receipts_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'receipt') c.receipts_ok++; else if (r.kind === 'order') c.orders_ok++; else if (r.kind === 'stock') c.stock_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
+function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 0, receipts_ok: 0, purchases_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'receipt') c.receipts_ok++; else if (r.kind === 'purchase') c.purchases_ok++; else if (r.kind === 'order') c.orders_ok++; else if (r.kind === 'stock') c.stock_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
 function loadConfig(file) {
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!cfg.api || !cfg.key) throw new Error('config needs api and key (mint one under Settings › Integrations, scope connector)');
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };

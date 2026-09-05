@@ -27,6 +27,11 @@ const server = http.createServer((req, res) => {
       const all = [{ name: 'Cash', parent: 'Cash-in-Hand' }, { name: 'Profit & Loss A/c', parent: 'Primary' }].concat(masters.map((m) => ({ name: un(m.name), parent: un(m.parent), gstin: m.gstin })));
       return res.end('<ENVELOPE><BODY><DATA><COLLECTION>' + all.map((l) => `<LEDGER NAME="${l.name.replace(/&/g, '&amp;')}"><NAME>${l.name.replace(/&/g, '&amp;')}</NAME><PARENT>${l.parent.replace(/&/g, '&amp;')}</PARENT>${l.gstin ? '<PARTYGSTIN>' + l.gstin + '</PARTYGSTIN>' : ''}</LEDGER>`).join('') + '</COLLECTION></DATA></BODY></ENVELOPE>');
     }
+    /* the Unit collection: the units the items use plus whatever master import created */
+    if (/<TYPE>Unit<\/TYPE>/i.test(body)) {
+      const names = [...new Set(ITEMS.map((i) => i.unit).concat(masters.filter((m) => m.kind === 'unit').map((m) => m.name)))];
+      return res.end('<ENVELOPE><BODY><DATA><COLLECTION>' + names.map((u) => `<UNIT NAME="${u}"><NAME>${u}</NAME></UNIT>`).join('') + '</COLLECTION></DATA></BODY></ENVELOPE>');
+    }
     if (/<TALLYREQUEST>\s*Export\s*<\/TALLYREQUEST>/i.test(body) || /<TYPE>Collection<\/TYPE>/i.test(body)) {
       const xml = '<ENVELOPE><BODY><DATA><COLLECTION>' + ITEMS.map((i) => `<STOCKITEM NAME="${i.name}"><NAME>${i.name}</NAME><PARENT>${i.parent}</PARENT><BASEUNITS>${i.unit}</BASEUNITS><PARTNO>${i.part}</PARTNO><STANDARDPRICE>${i.price}/${i.unit}</STANDARDPRICE><HSNCODE>${i.hsn}</HSNCODE><CLOSINGBALANCE>${i.stock || 0} ${i.unit}</CLOSINGBALANCE></STOCKITEM>`).join('') + '</COLLECTION></DATA></BODY></ENVELOPE>';
       return res.end(xml);
@@ -38,7 +43,13 @@ const server = http.createServer((req, res) => {
       const vtype = (/VCHTYPE="([^"]*)"/.exec(body) || [])[1] || '';
       const ledgers = [...body.matchAll(/<LEDGERNAME>([^<]*)<\/LEDGERNAME><ISDEEMEDPOSITIVE>([^<]*)<\/ISDEEMEDPOSITIVE>(?:<ISPARTYLEDGER>[^<]*<\/ISPARTYLEDGER>)?<AMOUNT>([^<]*)<\/AMOUNT>/g)].map((m) => ({ ledger: m[1], dr: m[2] === 'Yes', amount: m[3] }));
       /* master imports (ledgers) are remembered too — GET /_masters */
-      if (/<REPORTNAME>All Masters<\/REPORTNAME>/i.test(body)) { const led = [...body.matchAll(/<LEDGER NAME="([^"]*)"[\s\S]*?<PARENT>([^<]*)<\/PARENT>([\s\S]*?)<\/LEDGER>/g)].map((m) => ({ name: m[1].replace(/&amp;/g, '&'), parent: m[2].replace(/&amp;/g, '&'), gstin: (/<PARTYGSTIN>([^<]*)</.exec(m[3]) || [])[1] || '', state: (/<LEDSTATENAME>([^<]*)</.exec(m[3]) || [])[1] || '', duty: (/<GSTDUTYHEAD>([^<]*)</.exec(m[3]) || [])[1] || '' })); masters.push(...led); return res.end(`<RESPONSE><CREATED>${led.length}</CREATED><ALTERED>0</ALTERED><ERRORS>0</ERRORS></RESPONSE>`); }
+      if (/<REPORTNAME>All Masters<\/REPORTNAME>/i.test(body)) {
+        const led = [...body.matchAll(/<LEDGER NAME="([^"]*)"[\s\S]*?<PARENT>([^<]*)<\/PARENT>([\s\S]*?)<\/LEDGER>/g)].map((m) => ({ kind: 'ledger', name: m[1].replace(/&amp;/g, '&'), parent: m[2].replace(/&amp;/g, '&'), gstin: (/<PARTYGSTIN>([^<]*)</.exec(m[3]) || [])[1] || '', state: (/<LEDSTATENAME>([^<]*)</.exec(m[3]) || [])[1] || '', duty: (/<GSTDUTYHEAD>([^<]*)</.exec(m[3]) || [])[1] || '' }));
+        /* units and stock items the buyer's connector creates for materials it never stocked */
+        const units = [...body.matchAll(/<UNIT NAME="([^"]*)" ACTION="Create">/g)].map((m) => ({ kind: 'unit', name: m[1] }));
+        const items = [...body.matchAll(/<STOCKITEM NAME="([^"]*)" ACTION="Create">([\s\S]*?)<\/STOCKITEM>/g)].map((m) => ({ kind: 'item', name: m[1], unit: (/<BASEUNITS>([^<]*)</.exec(m[2]) || [])[1] || '', hsn: (/<HSNCODE>([^<]*)</.exec(m[2]) || [])[1] || '', igst: (/<GSTRATEDUTYHEAD>IGST<\/GSTRATEDUTYHEAD>[\s\S]*?<GSTRATE>([^<]*)</.exec(m[2]) || [])[1] || '' }));
+        masters.push(...led, ...units, ...items); for (const it of items) ITEMS.push({ name: it.name, parent: 'Primary', unit: it.unit, part: '', price: 0, hsn: it.hsn, stock: 0 });
+        return res.end(`<RESPONSE><CREATED>${led.length + units.length + items.length}</CREATED><ALTERED>0</ALTERED><ERRORS>0</ERRORS></RESPONSE>`); }
       const partyGstin = (/<PARTYGSTIN>([^<]*)<\/PARTYGSTIN>/.exec(body) || [])[1] || '', pos = (/<PLACEOFSUPPLY>([^<]*)<\/PLACEOFSUPPLY>/.exec(body) || [])[1] || '';
       const id = vouchers.length + 1; vouchers.push({ id, ref, vtype, items, ledgers, party_gstin: partyGstin, place_of_supply: pos, narration, at: new Date().toISOString() });
       return res.end(`<RESPONSE><CREATED>1</CREATED><ALTERED>0</ALTERED><LASTVCHID>${id}</LASTVCHID><ERRORS>0</ERRORS></RESPONSE>`);

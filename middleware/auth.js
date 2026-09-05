@@ -171,7 +171,7 @@ const KEY_ROUTES = {
   invoice:   [['*', /^\/api\/invoice(\/|$)/]],
   services:  [['*', /^\/api\/(offers|pricing|invoice)(\/|$)/], ['POST', /^\/api\/tax\/(rate|compute)$/]],
   connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['POST', /^\/api\/products\/availability\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
-              ['GET', /^\/api\/chits\/(inbox|pulse|[0-9a-f-]{36})$/], ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */, ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/], ['POST', /^\/api\/integrations\/profile$/], ['GET', /^\/api\/integrations\/profile-map$/]],
+              ['GET', /^\/api\/chits\/(inbox|sent|pulse|[0-9a-f-]{36})$/] /* sent: the buyer's connector books its purchases */, ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */, ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/], ['POST', /^\/api\/integrations\/profile$/], ['GET', /^\/api\/integrations\/profile-map$/]],
 };
 const _keyCache = new Map();   // jti → { ok, at }
 async function keyListed(entity_id, jti) {
