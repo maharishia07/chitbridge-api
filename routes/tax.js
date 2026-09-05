@@ -67,7 +67,7 @@ router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
   try {
     const lines = S.normLines(req.body); if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
     const sh = await S.shelfOf(auth.entityOf(req));
-    const rated = S.rateLines(lines, sh.shelf);
+    const rated = S.rateLines(lines, sh);
     res.json({ engine: 'chitbridge-tax', version: 1, lines: rated.map((l) => ({ key: l.key, item_id: l.item_id, code: l.code, name: l.name, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })) });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
@@ -77,7 +77,7 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
     const entity_id = auth.entityOf(req);
     const needShelf = lines.some((l) => l.gst_rate == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
-    const rated = sh ? S.rateLines(lines, sh.shelf) : lines;
+    const rated = sh ? S.rateLines(lines, sh) : lines;
     const mine = await S.partyOfEntity(entity_id);
     const seller = S.party(body.seller, mine); const buyer = S.party(body.buyer, { Country: seller.Country || null, RegType: 'regular' });
     if (!buyer.State && !buyer.Pos && !buyer.Gstin && seller.State) buyer.Pos = seller.State;

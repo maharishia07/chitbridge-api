@@ -31,7 +31,7 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
     const orderOff = (off.ev.adjustments || []).filter((a) => a.scope !== 'line' && a.scope !== 'note').reduce((t, a) => t + Math.abs(Number(a.amount) || 0), 0);
     const withOffers = priced.map((l) => { const p = off.per[l.key] || {}; const lineOff = Number(p.off) || 0; const share = gross > 0 ? orderOff * (l.unit_price * l.qty) / gross : 0; return Object.assign({}, l, { discount: S.R2((l.discount || 0) + lineOff + share), offer_label: p.label || null }); });
     /* 3 · tax rates, then the block */
-    const rated = S.rateLines(withOffers, sh.shelf);
+    const rated = S.rateLines(withOffers, sh);
     const mine = await S.partyOfEntity(entity_id);
     const seller = S.party(body.seller, mine);
     const buyer = S.party(body.buyer, { Country: seller.Country || null, RegType: 'regular' });
