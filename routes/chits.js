@@ -326,7 +326,8 @@ router.post('/send',
        */
       try {
         const bj = business_json || {};
-        if (/^(order|offer|inquiry)$/.test(String(req.body.purpose || 'order')) && (bj.customer || bj.via)) {
+        const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
+        if (/^(order|offer|inquiry)$/.test(String(req.body.purpose || 'order')) && (bj.customer || bj.via || toSelf)) {
           const cur = await require('../lib/regional').currencyFor(sender_id).catch(() => 'INR');
           const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sender_id, currency_code: cur }, line_items, null, { withEntity });
           if (r && r.items) line_items = r.items;
