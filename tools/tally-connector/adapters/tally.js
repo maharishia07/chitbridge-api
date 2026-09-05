@@ -48,23 +48,40 @@ function companyRequest(company) {
 <FETCH>NAME, BASICCOMPANYFORMALNAME, ADDRESS, STATENAME, PINCODE, COUNTRYNAME, PHONENUMBER, MOBILENUMBERS, EMAIL, GSTREGISTRATIONNUMBER, GSTREGISTRATIONTYPE, INCOMETAXNUMBER, BASECURRENCYSYMBOL</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
 }
 /** the Import Data request: one Sales voucher for the order (invoice view, inventory entries, party + sales ledger) */
+/** GST state codes → the names Tally uses (Place of Supply, LEDSTATENAME). The first two digits of a GSTIN. */
+const STATES = { '01': 'Jammu & Kashmir', '02': 'Himachal Pradesh', '03': 'Punjab', '04': 'Chandigarh', '05': 'Uttarakhand', '06': 'Haryana', '07': 'Delhi', '08': 'Rajasthan', '09': 'Uttar Pradesh', '10': 'Bihar', '11': 'Sikkim', '12': 'Arunachal Pradesh', '13': 'Nagaland', '14': 'Manipur', '15': 'Mizoram', '16': 'Tripura', '17': 'Meghalaya', '18': 'Assam', '19': 'West Bengal', '20': 'Jharkhand', '21': 'Odisha', '22': 'Chhattisgarh', '23': 'Madhya Pradesh', '24': 'Gujarat', '26': 'Dadra & Nagar Haveli and Daman & Diu', '27': 'Maharashtra', '29': 'Karnataka', '30': 'Goa', '31': 'Lakshadweep', '32': 'Kerala', '33': 'Tamil Nadu', '34': 'Puducherry', '35': 'Andaman & Nicobar Islands', '36': 'Telangana', '37': 'Andhra Pradesh', '38': 'Ladakh', '97': 'Other Territory' };
+function stateName(code) { const c = String(code || '').padStart(2, '0'); return STATES[c] || String(code || ''); }
+/** the party ledger a registered buyer books under — their legal name, so the ledger reads as the ledger they would keep for us */
+function partyLedgerName(buyer) { return String(buyer.name || buyer.gstin || 'Customer').trim().slice(0, 60); }
+
 function voucherXML(order, opt) {
-  const party = opt.partyLedger || 'Cash', sales = opt.salesLedger || 'Sales', vtype = opt.voucherType || 'Sales';
-  const total = Math.round((order.total || order.lines.reduce((t, l) => t + l.total, 0)) * 100) / 100;
+  const b2b = order.b2b || null;
+  const party = b2b ? partyLedgerName(b2b.buyer) : (opt.partyLedger || 'Cash'), sales = opt.salesLedger || 'Sales', vtype = opt.voucherType || 'Sales';
+  const taxes = b2b ? b2b.taxes : { cgst: 0, sgst: 0, igst: 0, cess: 0 };
+  const taxTotal = Math.round(((taxes.cgst || 0) + (taxes.sgst || 0) + (taxes.igst || 0) + (taxes.cess || 0)) * 100) / 100;
+  const goods = Math.round((order.total || order.lines.reduce((t, l) => t + l.total, 0)) * 100) / 100;
+  /* the party owes goods + tax; a walk-in order has no tax lines and the two figures coincide */
+  const total = b2b && b2b.total ? Math.round(b2b.total * 100) / 100 : Math.round((goods + taxTotal) * 100) / 100;
   const inv = order.lines.map((l) => {
     const rate = l.price, qty = l.qty, unit = l.unit || 'nos', amount = Math.round(rate * qty * 100) / 100;
     const disc = l.list_price != null && l.list_price > rate ? Math.round((1 - rate / l.list_price) * 10000) / 100 : 0;
+    const gstRate = l.gst_rate != null ? l.gst_rate : (b2b && (b2b.items.find((x) => x.name === l.name) || {}).rate);
     return `<ALLINVENTORYENTRIES.LIST><STOCKITEMNAME>${esc(l.name)}</STOCKITEMNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
-<RATE>${rate}/${esc(unit)}</RATE>${disc ? '<DISCOUNT>' + disc + '</DISCOUNT>' : ''}<AMOUNT>${amount}</AMOUNT><ACTUALQTY>${qty} ${esc(unit)}</ACTUALQTY><BILLEDQTY>${qty} ${esc(unit)}</BILLEDQTY>
+<RATE>${rate}/${esc(unit)}</RATE>${disc ? '<DISCOUNT>' + disc + '</DISCOUNT>' : ''}<AMOUNT>${amount}</AMOUNT><ACTUALQTY>${qty} ${esc(unit)}</ACTUALQTY><BILLEDQTY>${qty} ${esc(unit)}</BILLEDQTY>${b2b && gstRate != null ? '<GSTOVRDNTAXABILITY>Taxable</GSTOVRDNTAXABILITY><GSTOVRDNIGSTRATE>' + gstRate + '</GSTOVRDNIGSTRATE>' : ''}
 <ACCOUNTINGALLOCATIONS.LIST><LEDGERNAME>${esc(sales)}</LEDGERNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE><AMOUNT>${amount}</AMOUNT></ACCOUNTINGALLOCATIONS.LIST></ALLINVENTORYENTRIES.LIST>`;
   }).join('\n');
+  /* the tax heads as ledger lines — CGST+SGST within the state, IGST across; the frozen invoice decided which */
+  const taxLines = !b2b ? '' : [['CGST', taxes.cgst], ['SGST', taxes.sgst], ['IGST', taxes.igst], ['Cess', taxes.cess]].filter(([, v]) => v > 0)
+    .map(([n, v]) => `<LEDGERENTRIES.LIST><LEDGERNAME>${esc((opt.taxLedgers || {})[n.toLowerCase()] || n)}</LEDGERNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE><AMOUNT>${Math.round(v * 100) / 100}</AMOUNT></LEDGERENTRIES.LIST>`).join('\n');
+  const b2bHead = !b2b ? '' : `<PARTYGSTIN>${esc(b2b.buyer.gstin)}</PARTYGSTIN><PLACEOFSUPPLY>${esc(stateName(b2b.place_of_supply))}</PLACEOFSUPPLY><STATENAME>${esc(stateName(b2b.buyer.state_code))}</STATENAME><GSTREGISTRATIONTYPE>${esc(b2b.buyer.reg_type || 'Regular')}</GSTREGISTRATIONTYPE>`;
   return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
 <STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
 <VOUCHER VCHTYPE="${esc(vtype)}" ACTION="Create" OBJVIEW="Invoice Voucher View"><DATE>${ymd(eduDate(order.at, opt.eduDates))}</DATE><VOUCHERTYPENAME>${esc(vtype)}</VOUCHERTYPENAME>
 <REFERENCE>CB-${esc(String(order.chit_id).slice(0, 8))}</REFERENCE><NARRATION>${esc('ChitBridge order ' + order.chit_id + ' from ' + order.buyer + (opt.eduDates ? ' (ordered ' + String(order.at || '').slice(0, 10) + '; EDU date)' : ''))}</NARRATION>
-<PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME><PARTYNAME>${esc(order.buyer)}</PARTYNAME><ISINVOICE>Yes</ISINVOICE>
+<PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME><PARTYNAME>${esc(b2b ? b2b.buyer.name : order.buyer)}</PARTYNAME><ISINVOICE>Yes</ISINVOICE>${b2bHead}
 ${inv}
-<LEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>-${total}</AMOUNT></LEDGERENTRIES.LIST>
+<LEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>-${total}</AMOUNT>${b2b ? '<BILLALLOCATIONS.LIST><NAME>CB-' + esc(String(order.chit_id).slice(0, 8)) + '</NAME><BILLTYPE>New Ref</BILLTYPE><AMOUNT>-' + total + '</AMOUNT></BILLALLOCATIONS.LIST>' : ''}</LEDGERENTRIES.LIST>
+${taxLines}
 </VOUCHER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
 }
 
@@ -154,9 +171,11 @@ module.exports = function tallyAdapter(cfg) {
       want.push([opt.salesLedger || 'Sales', 'Sales Accounts']);
       want.push([opt.bankLedger || 'Bank', 'Bank Accounts']);
       want.push([cashName, 'Cash-in-Hand']);
+      /* the GST tax ledgers a B2B voucher books its heads to (Duties & Taxes, duty head set) — unless told not to */
+      if (opt.gstLedgers !== false) { const T = opt.taxLedgers || {}; want.push([T.cgst || 'CGST', 'Duties & Taxes', 'CGST'], [T.sgst || 'SGST', 'Duties & Taxes', 'SGST/UTGST'], [T.igst || 'IGST', 'Duties & Taxes', 'IGST']); }
       const missing = want.filter(([n]) => !have.has(String(n).toLowerCase()));
       if (!missing.length) return { existing: want.map((w) => w[0]), created: [] };
-      const masters = missing.map(([n, g]) => `<LEDGER NAME="${esc(n)}" ACTION="Create"><NAME.LIST><NAME>${esc(n)}</NAME></NAME.LIST><PARENT>${esc(g)}</PARENT>${g === 'Bank Accounts' || g === 'Sundry Debtors' ? '<ISBILLWISEON>Yes</ISBILLWISEON>' : ''}</LEDGER>`).join('\n');
+      const masters = missing.map(([n, g, duty]) => `<LEDGER NAME="${esc(n)}" ACTION="Create"><NAME.LIST><NAME>${esc(n)}</NAME></NAME.LIST><PARENT>${esc(g)}</PARENT>${g === 'Bank Accounts' || g === 'Sundry Debtors' ? '<ISBILLWISEON>Yes</ISBILLWISEON>' : ''}${duty ? '<TAXTYPE>GST</TAXTYPE><GSTDUTYHEAD>' + esc(duty) + '</GSTDUTYHEAD>' : ''}</LEDGER>`).join('\n');
       const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">\n${masters}\n</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
       if (dry) { log('[dry] ledger masters:\n' + xml); return { existing: want.map((w) => w[0]).filter((n) => have.has(n.toLowerCase())), created: [], would_create: missing.map((m) => m[0] + ' (' + m[1] + ')') }; }
       const res = await post(xml);
@@ -164,6 +183,29 @@ module.exports = function tallyAdapter(cfg) {
       if (errors || created < missing.length) throw new Error('Tally refused a ledger: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
       log('ledgers created in Tally: ' + missing.map((m) => m[0] + ' (' + m[1] + ')').join(' · '));
       return { existing: want.map((w) => w[0]).filter((n) => have.has(n.toLowerCase())), created: missing.map((m) => m[0]) };
+    },
+    /**
+     * ⭐ A REGISTERED BUYER'S PARTY LEDGER (B2B, 2026-09-05): named after their legal name, under Sundry Debtors, carrying
+     * their GSTIN · registration type · state · address — created once, never altered (a buyer who changes their GSTIN is
+     * a new ledger in the books, which is what an accountant would do too).
+     */
+    async ensureParty(buyer) {
+      const name = partyLedgerName(buyer);
+      const req = `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBLed1</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="CBLed1" ISMODIFY="No"><TYPE>Ledger</TYPE><FETCH>NAME, PARENT, PARTYGSTIN</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+      const have = tags('LEDGER', dataOf(await post(req))).map((l) => unesc(tag('NAME', l)).trim().toLowerCase());
+      if (have.includes(name.toLowerCase())) return { name, created: null };
+      const st = stateName(buyer.state_code);
+      const addr = [buyer.addr, buyer.loc].filter(Boolean).map((a) => '<ADDRESS>' + esc(a) + '</ADDRESS>').join('');
+      const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
+<LEDGER NAME="${esc(name)}" ACTION="Create"><NAME.LIST><NAME>${esc(name)}</NAME></NAME.LIST><PARENT>Sundry Debtors</PARENT><ISBILLWISEON>Yes</ISBILLWISEON>
+<PARTYGSTIN>${esc(buyer.gstin)}</PARTYGSTIN><GSTREGISTRATIONTYPE>${esc(buyer.reg_type || 'Regular')}</GSTREGISTRATIONTYPE><LEDSTATENAME>${esc(st)}</LEDSTATENAME><COUNTRYNAME>India</COUNTRYNAME>
+<LEDGERMAILINGDETAILS.LIST><APPLICABLEFROM>${ymd(new Date(new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0), 3, 1))}</APPLICABLEFROM><MAILINGNAME>${esc(name)}</MAILINGNAME>${addr ? '<ADDRESS.LIST>' + addr + '</ADDRESS.LIST>' : ''}<STATE>${esc(st)}</STATE><COUNTRY>India</COUNTRY>${buyer.pin ? '<PINCODE>' + esc(buyer.pin) + '</PINCODE>' : ''}</LEDGERMAILINGDETAILS.LIST>
+</LEDGER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+      if (dry) { log('[dry] party ledger:\n' + xml); return { name, created: null, would_create: name }; }
+      const res = await post(xml);
+      const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
+      if (errors || !created) throw new Error('Tally refused the party ledger: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
+      return { name, created: name };
     },
     /** a payment recorded in ChitBridge → a Receipt voucher (skipped for a cash sale — the Sales voucher settled it) */
     async pushReceipt(p) {

@@ -49,6 +49,8 @@ class CB {
   inbox() { return this.call('GET', '/api/chits/inbox?limit=100'); }
   ticket() { return this.call('POST', '/api/events/ticket'); }
   stock(items) { return this.call('POST', '/api/products/availability/bulk', { items }); }
+  /** the frozen/built invoice for a chit — the buyer's GSTIN, the place of supply, the CGST/SGST/IGST split (B2B vouchers) */
+  invoice(chit_id) { return this.call('GET', '/api/invoice/' + encodeURIComponent(chit_id)); }
   profile(fields, source) { return this.call('POST', '/api/integrations/profile', { source, as_of: new Date().toISOString(), fields }); }
   /** the heartbeat: Settings › Integrations lists this connector with its last-seen time and counters (never fails a command) */
   async heartbeat(info) { try { return await this.call('POST', '/api/integrations/heartbeat', Object.assign({ host: require('os').hostname(), version: '1.0.0' }, info || {})); } catch (e) { this.log('heartbeat: ' + e.message); return null; } }
@@ -152,6 +154,24 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   const c = await cb.chit(chit_id);
   const order = orderOf(c);
   if (order.purpose && !/^(order|offer)$/.test(order.purpose)) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'purpose ' + order.purpose }); return { chit_id, outcome: 'skipped' }; }
+  /**
+   * ⭐ B2B (Athi, 2026-09-05: "if we try ordering from another shop instead of the storefront? their GSTIN and so on").
+   * When the buyer is a registered business the seller's books want a party ledger with the buyer's GSTIN, the place of
+   * supply, and the tax split — all of it already on the chit's invoice (the same engine that prints the invoice tab).
+   * The invoice is read once here and handed to the adapter as `order.b2b`; a walk-in order has none and books as before.
+   */
+  try {
+    const inv = await cb.invoice(chit_id);
+    const b = (inv && inv.invoice && inv.invoice.BuyerDtls) || {};
+    if (b.Gstin) {
+      const h = (inv.heads) || {}; const cbx = (inv.invoice && inv.invoice._cb) || {};
+      order.b2b = { buyer: { name: b.LglNm || b.TrdNm || order.buyer, gstin: b.Gstin, state_code: b.State || String(b.Gstin).slice(0, 2), addr: [b.Addr1, b.Addr2].filter(Boolean).join(', '), loc: b.Loc || '', pin: b.Pin || '', reg_type: 'Regular' },
+                    place_of_supply: b.Pos || cbx.place_of_supply || b.State || String(b.Gstin).slice(0, 2), supply: cbx.supply || null,
+                    taxes: { cgst: Number(h.cgst) || 0, sgst: Number(h.sgst) || 0, igst: Number(h.igst) || 0, cess: Number(h.cess) || 0 }, taxable: Number(h.taxable) || 0, total: Number(h.total) || order.total,
+                    items: ((inv.invoice && inv.invoice.ItemList) || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd, rate: Number(it.GstRt) || 0, ass: Number(it.AssAmt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 })) };
+      if (adapter.ensureParty) { try { const pr = await adapter.ensureParty(order.b2b.buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); } }
+    }
+  } catch (e) { log('invoice read (B2B check): ' + e.message + ' — booking as a walk-in order'); }
   try { const r = await adapter.pushOrder(order);
     /* ⚠️ A DRY RUN IS NOT A PUSH (first live day, 2026-09-05): it used to write outcome 'ok' with their_ref 'dry-run', and the
        real `once` then said "already pushed". A dry run leaves a 'dry' receipt — visible in the file, never a duplicate. */
