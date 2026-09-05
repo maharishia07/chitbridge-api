@@ -104,6 +104,31 @@ module.exports = function zohoAdapter(cfg) {
       const j = await call('POST', '/books/v3/invoices', body);
       const inv = j.invoice || {}; return { ref: inv.invoice_number || inv.invoice_id || 'created', their_id: inv.invoice_id || null, their_party: inv.customer_id || null };
     },
+    /* ══ THE BUYER'S SIDE: the seller as a vendor, the purchase as a Bill (Zoho's purchase invoice) with the ITC on the lines ══ */
+    async ensureSupplier(seller) {
+      const name = String(seller.name || seller.gstin || 'Supplier').trim().slice(0, 200);
+      const have = await findContact(name);
+      if (have) return { name, created: null, vendor_id: have.contact_id };
+      const body = { contact_name: name, company_name: name, contact_type: 'vendor', gst_treatment: seller.gstin ? 'business_gst' : 'business_none', gst_no: seller.gstin || undefined, place_of_contact: abbr(seller.state_code) || undefined,
+        billing_address: (seller.addr || seller.loc || seller.pin) ? { address: seller.addr || '', city: seller.loc || '', zip: seller.pin || '', state: abbr(seller.state_code) || '', country: 'India' } : undefined };
+      if (dry) { log('[dry] Zoho vendor:\n' + JSON.stringify(body, null, 2)); return { name, created: null, would_create: name }; }
+      const j = await call('POST', '/books/v3/contacts', body); const c = j.contact || {};
+      return { name, created: name, vendor_id: c.contact_id || null };
+    },
+    /** POST /books/v3/bills — the seller's invoice in my books; the line tax group is my ITC, Zoho splits it from source/destination of supply */
+    async pushPurchase(p) {
+      const s = await this.ensureSupplier(p.seller); const vendor_id = s.vendor_id || null;
+      if (!vendor_id && !dry) throw new Error('no vendor contact for ' + p.seller.name);
+      const lines = [];
+      for (const it of p.items) lines.push({ name: it.name, quantity: it.qty, rate: it.rate, unit: it.unit || undefined, ...(it.hsn ? { hsn_or_sac: it.hsn } : {}), ...(it.rate > 0 && it.ass < Math.round(it.rate * it.qty * 100) / 100 ? { discount: (Math.round((1 - it.ass / (it.rate * it.qty)) * 10000) / 100) + '%' } : {}), ...(await taxIdFor(it.gst_rate) ? { tax_id: await taxIdFor(it.gst_rate) } : {}) });
+      const inputTax = Math.round(((p.taxes.cgst || 0) + (p.taxes.sgst || 0) + (p.taxes.igst || 0) + (p.taxes.cess || 0)) * 100) / 100;
+      const body = { vendor_id: vendor_id || undefined, bill_number: p.ref, date: (p.at || new Date().toISOString()).slice(0, 10), reference_number: p.ref,
+        gst_treatment: p.seller.gstin ? 'business_gst' : 'business_none', gst_no: p.seller.gstin || undefined, source_of_supply: abbr(p.seller.state_code) || undefined, destination_of_supply: abbr(p.buyer_state) || undefined,
+        notes: 'ChitBridge purchase ' + p.chit_id + ' from ' + p.seller.name + ' · seller invoice ' + p.ref + ' · ITC ' + inputTax, line_items: lines };
+      if (dry) { log('[dry] Zoho bill for ' + p.chit_id + ':\n' + JSON.stringify(body, null, 2)); return { ref: 'dry-run', input_tax: inputTax }; }
+      const j = await call('POST', '/books/v3/bills', body); const b = j.bill || {};
+      return { ref: b.bill_number || b.bill_id || 'created', their_id: b.bill_id || null, input_tax: inputTax };
+    },
     /** a payment recorded in ChitBridge → a Customer Payment applied to that order's invoice (needs the invoice the order push created) */
     async pushReceipt(p) {
       const o = p.order || {};

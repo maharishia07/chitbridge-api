@@ -5,6 +5,7 @@ const ITEMS = [{ item_id: 'z1', name: 'Basmati 25kg', sku: 'BAS-25', unit: 'bag'
 const invoices = [];
 const payments = [];   /* GET /_payments lists the customer payments applied */
 const contacts = [];   /* GET /_contacts lists the contacts created (Walk-in, registered buyers with gst_no) */
+const bills = [];      /* GET /_bills lists the vendor bills the buyer's side created */
 http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x'); res.setHeader('Content-Type', 'application/json');
   if (u.pathname === '/_invoices') return res.end(JSON.stringify(invoices));
@@ -18,6 +19,8 @@ http.createServer((req, res) => {
   if (req.method === 'POST' && u.pathname === '/books/v3/contacts') { let b = ''; req.on('data', (c) => b += c); req.on('end', () => { const j = JSON.parse(b || '{}'); const c = Object.assign({ contact_id: 'c' + (contacts.length + 1) }, j); contacts.push(c); res.end(JSON.stringify({ code: 0, message: 'The contact has been added.', contact: c })); }); return; }
   if (req.method === 'POST' && u.pathname === '/books/v3/invoices') { let b = ''; req.on('data', (c) => b += c); req.on('end', () => { const j = JSON.parse(b || '{}'); const n = invoices.length + 1; invoices.push(Object.assign({ invoice_id: 'inv' + n, invoice_number: 'INV-' + String(n).padStart(5, '0') }, j)); res.end(JSON.stringify({ code: 0, message: 'The invoice has been created.', invoice: invoices[n - 1] })); }); return; }
   if (u.pathname === '/_payments') return res.end(JSON.stringify(payments));
+  if (u.pathname === '/_bills') return res.end(JSON.stringify(bills));
+  if (req.method === 'POST' && u.pathname === '/books/v3/bills') { let b = ''; req.on('data', (c) => b += c); req.on('end', () => { const j = JSON.parse(b || '{}'); const n = bills.length + 1; const bill = Object.assign({ bill_id: 'BILL' + n }, j); bills.push(bill); res.end(JSON.stringify({ code: 0, message: 'The bill has been created.', bill })); }); return; }
   if (req.method === 'POST' && u.pathname === '/books/v3/customerpayments') { let b = ''; req.on('data', (c) => b += c); req.on('end', () => { const j = JSON.parse(b || '{}'); const n = payments.length + 1; const pay = Object.assign({ payment_id: 'PAY' + n, payment_number: String(n) }, j); payments.push(pay); res.end(JSON.stringify({ code: 0, message: 'The payment has been created.', payment: pay })); }); return; }
   res.statusCode = 404; res.end(JSON.stringify({ code: 5, message: 'Invalid URL' }));
 }).listen(Number(process.argv[2] || 9200), () => console.log('fake Zoho on http://localhost:' + (process.argv[2] || 9200)));
