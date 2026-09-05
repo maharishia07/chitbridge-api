@@ -16,6 +16,7 @@ function tags(name, xml) { const re = new RegExp('<' + name + '(?:\\s[^>]*)?>([\
 /** ⚠️ FIRST LIVE TALLY (2026-09-05): every reply opens with a CMPINFO block whose element names COLLIDE with the object
  *  names (<COMPANY>1</COMPANY>, <STOCKITEM>0</STOCKITEM> are COUNTS) — parse only the <DATA> part */
 function dataOf(xml) { const m = /<DATA>([\s\S]*?)<\/DATA>/i.exec(String(xml || '')); return m ? m[1] : String(xml || ''); }
+function aliasOf(it) { const list = tags('NAME.LIST', it)[0] || ''; const names = tags('NAME', list).map(unesc).map((x) => x.trim()).filter(Boolean); return names.length > 1 ? names[1] : ''; }
 function unesc(s) { return String(s || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#4;/g, ''); }
 function num(s) { const m = /-?[\d,]*\.?\d+/.exec(String(s || '').replace(/,/g, '')); return m ? Number(m[0]) : null; }
 function ymd(d) { const x = d ? new Date(d) : new Date(); return x.getFullYear() + String(x.getMonth() + 1).padStart(2, '0') + String(x.getDate()).padStart(2, '0'); }
@@ -68,14 +69,15 @@ module.exports = function tallyAdapter(cfg) {
     async readProducts() {
       const xml = dataOf(await post(exportRequest(opt.company)));
       return tags('STOCKITEM', xml).map((it) => ({
-        name: unesc(tag('NAME', it)), code: unesc(tag('PARTNO', it)) || unesc(tag('NAME', it)), unit: unesc(tag('BASEUNITS', it)) || 'nos',
+        /* LIVE TALLY (2026-09-05): the alias is the SECOND <NAME> inside LANGUAGENAME.LIST/NAME.LIST; PARTNO only exists when enabled */
+        name: unesc(tag('NAME', it)), code: unesc(tag('PARTNO', it)) || aliasOf(it) || unesc(tag('NAME', it)), unit: unesc(tag('BASEUNITS', it)) || 'nos',
         price: num(tag('STANDARDPRICE', it)) != null ? num(tag('STANDARDPRICE', it)) : (num(tag('CLOSINGRATE', it)) || 0),
-        category: unesc(tag('PARENT', it)) || null, hsn: unesc(tag('HSNCODE', it)) || null, ref: unesc(tag('NAME', it)) })).filter((p) => p.name);
+        category: (unesc(tag('PARENT', it)).trim() && !/^primary$/i.test(unesc(tag('PARENT', it)).trim())) ? unesc(tag('PARENT', it)).trim() : null, hsn: unesc(tag('HSNCODE', it)) || null, ref: unesc(tag('NAME', it)) })).filter((p) => p.name);
     },
     /** closing stock per item — Tally's CLOSINGBALANCE reads "12 bag"; a negative balance is stock in hand in Tally's sign convention */
     async readStock() {
       const xml = dataOf(await post(exportRequest(opt.company))); const at = new Date().toISOString();
-      return tags('STOCKITEM', xml).map((it) => { const q = num(tag('CLOSINGBALANCE', it)); return { code: unesc(tag('PARTNO', it)) || unesc(tag('NAME', it)), qty: q == null ? null : Math.abs(q), at }; }).filter((r) => r.code && r.qty != null);
+      return tags('STOCKITEM', xml).map((it) => { const q = num(tag('CLOSINGBALANCE', it)); return { code: unesc(tag('PARTNO', it)) || aliasOf(it) || unesc(tag('NAME', it)), qty: q == null ? null : Math.abs(q), at }; }).filter((r) => r.code && r.qty != null);
     },
     /** the store's profile from the company master — every value 'copied' with source tally; the API checks and ranks */
     async readProfile() {
