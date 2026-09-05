@@ -60,3 +60,9 @@ Enter on a line opens the voucher: the reference is CB-<first 8 of the chit id>,
 A Collection with an unknown `<TYPE>` makes Tally stop answering its port until someone presses Esc in Tally itself.
 Seen twice on 2026-09-05 with `TaxUnit` and `GSTRegistration`. The connector only ever sends `Company`, `Ledger`,
 `StockItem`, `Voucher` and Import Data — do not add a TYPE you have not seen answer.
+
+## If Tally was closed when an order came
+The connector keeps a receipt per order. A voucher that failed because Tally was closed is retried every 5 minutes
+(`retryMinutes` in connector.json, `--retry-minutes` on the command line) and lands once, the moment Tally is open again.
+If the PC itself was off, the first `watch` after boot catches up. To start the connector with Windows, put a shortcut to
+`start.cmd` in the Startup folder (Win+R › `shell:startup`).

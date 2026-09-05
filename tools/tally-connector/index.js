@@ -6,7 +6,7 @@
  *   node index.js once           --config connector.json                              (catch-up: push every received order not yet pushed)
  *   node index.js sync-stock     --config connector.json                              (closing stock → stamped availability, now)
  *   node index.js sync-profile   --config connector.json                              (the store's name · GSTIN · state · address … from its own system)
- *   node index.js watch          --config connector.json [--sync-minutes 30] [--stock-minutes 5]
+ *   node index.js watch          --config connector.json [--sync-minutes 30] [--stock-minutes 5] [--retry-minutes 5]
  *                                (catch-up, hold the push stream; re-read products every N min, stock every M min; answer the storefront's stock asks)
  * connector.json: { "api": "https://chitbridge-api-production.up.railway.app", "key": "<API key, scope connector>",
  *                   "adapter": "tally", "tally": { "url": "http://localhost:9000", "company": "…", "partyLedger": "Cash", "salesLedger": "Sales" } }
@@ -44,6 +44,12 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
        only rows whose hash changed are sent, so a quiet shelf costs one read of the source and nothing else. */
     const every = Number(flag('sync-minutes', cfg.syncMinutes || 0)) || 0;
     if (every > 0) { const tick = async () => { try { await core.syncProducts({ cb, adapter, receipts, log }); } catch (e) { log('sync: ' + e.message); } }; await tick(); const t = setInterval(tick, every * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('products re-read every ' + every + ' min'); }
+    /* ⭐ TALLY WAS DOWN, NOW IT IS BACK (Athi, 2026-09-05: "even if Tally is not available and when it is back, automatically
+       sync happens?"). A voucher that failed while Tally was closed left a 'failed' receipt and waited for the next bell or a
+       restart. Now the catch-up runs every retry-minutes (default 5): every order without an ok/dry/skipped receipt is
+       pushed again, receipts included — so a morning's orders land the moment Tally opens, nothing typed, nothing twice. */
+    const retryEvery = Number(flag('retry-minutes', cfg.retryMinutes != null ? cfg.retryMinutes : 5)) || 0;
+    if (retryEvery > 0) { const t = setInterval(async () => { try { const out = await core.catchUp({ cb, adapter, receipts, log }); const n = out.filter((x) => x.outcome === 'ok').length; if (n) log('catch-up: ' + n + ' order(s) landed'); } catch (e) { log('catch-up: ' + e.message); } }, retryEvery * 60 * 1000); t.unref && t.unref(); }
     const stockEvery = Number(flag('stock-minutes', cfg.stockMinutes || 0)) || 0;
     if (stockEvery > 0) { const tick = async () => { try { await core.syncStock({ cb, adapter, receipts, log }); } catch (e) { log('stock: ' + e.message); } }; await tick(); const t = setInterval(tick, stockEvery * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('stock re-read every ' + stockEvery + ' min, and on demand'); }
     await core.watchOrders({ cb, adapter, receipts, log, signal: ac.signal, onEvent: (d) => log('bell: ' + JSON.stringify(d)) }); return; }
