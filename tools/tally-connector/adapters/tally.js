@@ -2,10 +2,11 @@
  * ADAPTER: Tally Prime / Tally.ERP 9 — over its own XML port (Gateway of Tally › F1 Help › Settings › Connectivity:
  * "Enable ODBC/XML" on port 9000). Two functions, as every adapter: readProducts() and pushOrder(order).
  *
- * ⚠️ WRITTEN FROM THE TALLY XML CONTRACT, NOT YET RUN AGAINST A LIVE TALLY (2026-09-05). The shapes below are the
- * documented Export Data / Import Data envelopes; the proof (prove.js) runs against fake-tally.js, which answers the
- * same envelopes. The first live run WILL find a field name or a sign convention to correct — that is expected, and
- * this file is the one place to correct it. Run with --dry first: it prints the voucher XML instead of posting it.
+ * ✅ FIRST LIVE READ 2026-09-05 (TallyPrime EDU 7.x, Athi's laptop): the company master, the stock items, the closing stock
+ * and the GST/HSN details read correctly after three corrections found live — parse only the <DATA> part (the CMPINFO
+ * counts collide with object names), the alias is the second NAME in NAME.LIST, "Primary" is no category.
+ * ⚠️ THE VOUCHER IMPORT (pushOrder) IS STILL PROVEN AGAINST fake-tally.js ONLY. Run with --dry first: it prints the
+ * voucher XML instead of posting it; the first live voucher may need a ledger name or a sign convention corrected here.
  */
 'use strict';
 const XML_HEADERS = { 'Content-Type': 'text/xml' };
@@ -17,6 +18,10 @@ function tags(name, xml) { const re = new RegExp('<' + name + '(?:\\s[^>]*)?>([\
  *  names (<COMPANY>1</COMPANY>, <STOCKITEM>0</STOCKITEM> are COUNTS) — parse only the <DATA> part */
 function dataOf(xml) { const m = /<DATA>([\s\S]*?)<\/DATA>/i.exec(String(xml || '')); return m ? m[1] : String(xml || ''); }
 function aliasOf(it) { const list = tags('NAME.LIST', it)[0] || ''; const names = tags('NAME', list).map(unesc).map((x) => x.trim()).filter(Boolean); return names.length > 1 ? names[1] : ''; }
+/** LIVE TALLY (2026-09-05): the item's GST rate sits in GSTDETAILS.LIST › STATEWISEDETAILS.LIST › RATEDETAILS.LIST as
+ *  { GSTRATEDUTYHEAD: IGST, GSTRATE: 5 } — absent when "As per Company/Stock Group"; the HSN in HSNDETAILS.LIST › HSNCODE */
+function gstRateOf(it) { const heads = tags('RATEDETAILS.LIST', it); for (const h of heads) { if (/IGST/i.test(tag('GSTRATEDUTYHEAD', h))) { const r = num(tag('GSTRATE', h)); if (r != null) return r; } } return null; }
+function hsnOf(it) { const d = tags('HSNDETAILS.LIST', it)[0] || ''; return unesc(tag('HSNCODE', d)) || unesc(tag('HSN', d)) || unesc(tag('HSNCODE', it)) || null; }
 function unesc(s) { return String(s || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#4;/g, ''); }
 function num(s) { const m = /-?[\d,]*\.?\d+/.exec(String(s || '').replace(/,/g, '')); return m ? Number(m[0]) : null; }
 function ymd(d) { const x = d ? new Date(d) : new Date(); return x.getFullYear() + String(x.getMonth() + 1).padStart(2, '0') + String(x.getDate()).padStart(2, '0'); }
@@ -26,7 +31,7 @@ function exportRequest(company) {
   return `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBStockItems</ID></HEADER>
 <BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${company ? '<SVCURRENTCOMPANY>' + esc(company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES>
 <TDL><TDLMESSAGE><COLLECTION NAME="CBStockItems" ISMODIFY="No"><TYPE>StockItem</TYPE>
-<FETCH>NAME, PARENT, BASEUNITS, PARTNO, GSTAPPLICABLE, STANDARDPRICE, CLOSINGRATE, HSNCODE, CLOSINGBALANCE</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+<FETCH>NAME, PARENT, BASEUNITS, PARTNO, GSTAPPLICABLE, STANDARDPRICE, CLOSINGRATE, HSNCODE, CLOSINGBALANCE, GSTDETAILS.LIST, HSNDETAILS.LIST</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
 }
 /** the company master: name · formal name · address lines · state · PIN · country · phone · email · GSTIN · PAN */
 function companyRequest(company) {
@@ -72,7 +77,7 @@ module.exports = function tallyAdapter(cfg) {
         /* LIVE TALLY (2026-09-05): the alias is the SECOND <NAME> inside LANGUAGENAME.LIST/NAME.LIST; PARTNO only exists when enabled */
         name: unesc(tag('NAME', it)), code: unesc(tag('PARTNO', it)) || aliasOf(it) || unesc(tag('NAME', it)), unit: unesc(tag('BASEUNITS', it)) || 'nos',
         price: num(tag('STANDARDPRICE', it)) != null ? num(tag('STANDARDPRICE', it)) : (num(tag('CLOSINGRATE', it)) || 0),
-        category: (unesc(tag('PARENT', it)).trim() && !/^primary$/i.test(unesc(tag('PARENT', it)).trim())) ? unesc(tag('PARENT', it)).trim() : null, hsn: unesc(tag('HSNCODE', it)) || null, ref: unesc(tag('NAME', it)) })).filter((p) => p.name);
+        category: (unesc(tag('PARENT', it)).trim() && !/^primary$/i.test(unesc(tag('PARENT', it)).trim())) ? unesc(tag('PARENT', it)).trim() : null, hsn: hsnOf(it), gst_rate: gstRateOf(it), ref: unesc(tag('NAME', it)) })).filter((p) => p.name);
     },
     /** closing stock per item — Tally's CLOSINGBALANCE reads "12 bag"; a negative balance is stock in hand in Tally's sign convention */
     async readStock() {

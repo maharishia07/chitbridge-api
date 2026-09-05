@@ -21,6 +21,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+/* one unit, three names — the same table the API and the app hold (lib/units.js / app/units.js); a unit we cannot map is kept as spelt */
+const UNITS = (() => { try { return require('../../lib/units'); } catch (_) { return null; } })();
+function unitOf(u) { const k = UNITS && UNITS.unitOf(u); return k || String(u || 'unit').trim().toLowerCase(); }
 function hashOf(o) { return crypto.createHash('sha256').update(JSON.stringify(o)).digest('hex').slice(0, 16); }
 
 class Receipts {
@@ -60,7 +63,7 @@ async function syncProducts({ cb, adapter, receipts, log }) {
   const toAdd = [], toEdit = [], unchanged = [];
   for (const t of theirs) {
     const code = String(t.code || '').trim().toLowerCase(); if (!code || !t.name) continue;
-    const rec = { name: t.name, code: t.code, unit: t.unit || 'unit', price: Number(t.price) || 0, ...(t.hsn ? { hsn: t.hsn } : {}), ...(t.category ? { category_name: t.category } : {}), source_system: adapter.name, source_ref: t.ref || t.code };
+    const rec = { name: t.name, code: t.code, unit: unitOf(t.unit), ...(t.unit && unitOf(t.unit) !== String(t.unit).toLowerCase() ? { unit_source: t.unit } : {}), price: Number(t.price) || 0, ...(t.hsn ? { hsn: t.hsn } : {}), ...(t.gst_rate != null ? { gst_rate: Number(t.gst_rate) } : {}), ...(t.category ? { category_name: t.category } : {}), source_system: adapter.name, source_ref: t.ref || t.code };
     const h = hashOf(rec);
     const last = receipts.last('product', code);
     if (last && last.hash === h && last.outcome === 'ok') { unchanged.push(code); continue; }
