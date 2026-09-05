@@ -161,6 +161,8 @@ router.post('/', auth,
          to live doubled its round trips. Anything else is a draft, as before. */
       const status0 = (req.body && req.body.status === 'live') ? 'live' : 'draft';
       const rules = (req.body && typeof req.body.rules === 'object' && req.body.rules) || {};
+      /* a rule without its value is refused here too (lib/definition-check.js — the form's own sentences) */
+      { const bad = require('../lib/definition-check').missingValue(String(kind || '').trim(), sub_kind ? String(sub_kind).trim() : null, rules); if (bad) return res.status(422).json({ error: 'Incomplete rule', message: bad }); }
 
       /**
        * ⚠️ ONE TRANSACTION, BOTH ROWS. A definition whose version 1 failed to write is a definition with no
@@ -214,6 +216,8 @@ router.put('/:id', auth, async (req, res) => {
       const cur = await db.query(`SELECT * FROM definition WHERE definition_id = $1`, [req.params.id]);
       if (!cur.rows.length) return { missing: true };
       const d = cur.rows[0];
+      /* an edit that removes the value is refused like a create without one */
+      if (rules) { const bad = require('../lib/definition-check').missingValue(d.kind, d.sub_kind, rules); if (bad) return { bad }; }
       let version = d.current_version;
 
       /* ⚠️ A NEW VERSION ONLY WHEN THE RULES CHANGE. Renaming a definition or retiring it is not a change to
@@ -242,6 +246,7 @@ router.put('/:id', auth, async (req, res) => {
     });
 
     if (out.missing) return res.status(404).json({ error: 'Not found' });
+    if (out.bad) return res.status(422).json({ error: 'Incomplete rule', message: out.bad });
     res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved',
                definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {
