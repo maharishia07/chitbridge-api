@@ -33,3 +33,14 @@ The connector records a **Customer Payment** in Zoho Books against the invoice i
 (`POST /books/v3/customerpayments`: customer, amount, date, reference = your transaction id, applied to the invoice).
 UPI is sent as payment mode `others` with the description "UPI" — Zoho has no UPI mode of its own. If the order's invoice
 was never created (the order push failed), the receipt is skipped and says so in the receipts file.
+
+## Registered buyers and walk-ins
+A walk-in order books under one **Walk-in** contact the connector creates (Zoho needs a customer on every invoice). An
+order from a registered business creates that buyer as a customer once — GSTIN, place of contact, billing address — and
+the invoice carries the GSTIN, the place of supply and the org's GST tax group on each line, so Zoho splits CGST/SGST
+against IGST itself. Offers arrive as a discount on the line; the amount stays the chit's.
+
+## Zoho's daily API cap
+Free plan 1,000 calls a day · Standard 2,000 · Professional 5,000 (100 a minute on all). With the default schedule the
+connector uses about 380 a day before orders; set `"syncMinutes": 30` and `"stockMinutes": 15` in connector.json for a
+Zoho org on the Free plan and it is about 140. A 429 from Zoho is retried at the next tick, nothing is lost.
