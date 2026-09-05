@@ -151,6 +151,7 @@ async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   const last = receipts.last('order', chit_id);
   if (last && last.outcome === 'ok') { log('order ' + chit_id.slice(0, 8) + ' already pushed'); return { chit_id, outcome: 'duplicate' }; }
+  if (last && last.outcome === 'skipped') return { chit_id, outcome: 'duplicate' };   /* decided once (not an order); the 5-minute catch-up must not re-record it */
   const c = await cb.chit(chit_id);
   const order = orderOf(c);
   if (order.purpose && !/^(order|offer)$/.test(order.purpose)) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'purpose ' + order.purpose }); return { chit_id, outcome: 'skipped' }; }
