@@ -31,6 +31,12 @@ module.exports = function zohoAdapter(cfg) {
       }
       return out;
     },
+    /** Zoho items carry stock_on_hand / available_stock on the same list */
+    async readStock() {
+      const at = new Date().toISOString(); const out = []; let page = 1;
+      while (page < 50) { const j = await call('GET', '/books/v3/items?page=' + page + '&per_page=200'); for (const it of (j.items || [])) { const q = Number(it.available_stock != null ? it.available_stock : it.stock_on_hand); if (Number.isFinite(q)) out.push({ code: it.sku || it.item_id, qty: q, at }); } if (!(j.page_context && j.page_context.has_more_page)) break; page++; }
+      return out;
+    },
     async pushOrder(order) {
       const body = { customer_name: z.customer_name || order.buyer, reference_number: 'CB-' + String(order.chit_id).slice(0, 8), date: (order.at || new Date().toISOString()).slice(0, 10), notes: 'ChitBridge order ' + order.chit_id + ' from ' + order.buyer,
         line_items: order.lines.map((l) => ({ name: l.name, description: l.code ? 'code ' + l.code : undefined, quantity: l.qty, rate: l.list_price != null ? l.list_price : l.price, unit: l.unit || undefined,

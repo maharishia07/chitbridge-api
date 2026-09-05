@@ -1,31 +1,31 @@
-name,code,unit,price,hsn,category
-Basmati Rice 25kg,RIC-BAS-25,bag,2450,1006,Rice
-Ponni Boiled Rice 25kg,RIC-PON-25,bag,1475,1006,Rice
-Sona Masoori Rice 25kg,RIC-SON-25,bag,1590,1006,Rice
-Idli Rice 25kg,RIC-IDL-25,bag,1380,1006,Rice
-Toor Dal 1kg,DAL-TOR-1,kg,168,0713,Pulses
-Urad Dal 1kg,DAL-URD-1,kg,142,0713,Pulses
-Moong Dal 1kg,DAL-MNG-1,kg,126,0713,Pulses
-Chana Dal 1kg,DAL-CHN-1,kg,98,0713,Pulses
-Groundnut Oil 1L,OIL-GN-1,nos,240,1508,Edible oil
-Sunflower Oil 1L,OIL-SF-1,nos,152,1512,Edible oil
-Gingelly Oil 500ml,OIL-GG-05,nos,195,1515,Edible oil
-Coconut Oil 1L,OIL-CO-1,nos,310,1513,Edible oil
-Sugar 1kg,SUG-WH-1,kg,44,1701,Sugar & jaggery
-Jaggery 1kg,SUG-JG-1,kg,72,1701,Sugar & jaggery
-Turmeric Powder 200g,SPC-TUR-02,nos,58,0910,Spices
-Red Chilli Powder 200g,SPC-CHL-02,nos,64,0904,Spices
-Coriander Powder 200g,SPC-COR-02,nos,46,0909,Spices
-Mustard Seeds 200g,SPC-MUS-02,nos,32,1207,Spices
-Cumin Seeds 200g,SPC-CUM-02,nos,88,0909,Spices
-Cardamom 50g,SPC-CAR-005,nos,145,0908,Spices
-Wheat Flour 5kg,FLR-WHT-5,bag,235,1101,Flours
-Rice Flour 1kg,FLR-RIC-1,kg,52,1102,Flours
-Gram Flour 1kg,FLR-GRM-1,kg,96,1106,Flours
-Tea Dust 500g,BEV-TEA-05,nos,210,0902,Beverages
-Filter Coffee 200g,BEV-COF-02,nos,168,0901,Beverages
-Salt 1kg,GRO-SLT-1,kg,22,2501,Grocery
-Tamarind 500g,GRO-TAM-05,nos,85,0813,Grocery
-Cashew W320 250g,DRY-CSH-025,nos,240,0801,Dry fruits
-Raisins 250g,DRY-RSN-025,nos,95,0806,Dry fruits
-PP Woven Bag 25kg,PKG-PPB-25,nos,18,3923,Packaging
+name,code,unit,price,hsn,category,stock
+Basmati Rice 25kg,RIC-BAS-25,bag,2450,1006,Rice,120
+Ponni Boiled Rice 25kg,RIC-PON-25,bag,1475,1006,Rice,80
+Sona Masoori Rice 25kg,RIC-SON-25,bag,1590,1006,Rice,64
+Idli Rice 25kg,RIC-IDL-25,bag,1380,1006,Rice,40
+Toor Dal 1kg,DAL-TOR-1,kg,168,0713,Pulses,300
+Urad Dal 1kg,DAL-URD-1,kg,142,0713,Pulses,250
+Moong Dal 1kg,DAL-MNG-1,kg,126,0713,Pulses,180
+Chana Dal 1kg,DAL-CHN-1,kg,98,0713,Pulses,210
+Groundnut Oil 1L,OIL-GN-1,nos,240,1508,Edible oil,96
+Sunflower Oil 1L,OIL-SF-1,nos,152,1512,Edible oil,150
+Gingelly Oil 500ml,OIL-GG-05,nos,195,1515,Edible oil,40
+Coconut Oil 1L,OIL-CO-1,nos,310,1513,Edible oil,72
+Sugar 1kg,SUG-WH-1,kg,44,1701,Sugar & jaggery,500
+Jaggery 1kg,SUG-JG-1,kg,72,1701,Sugar & jaggery,120
+Turmeric Powder 200g,SPC-TUR-02,nos,58,0910,Spices,60
+Red Chilli Powder 200g,SPC-CHL-02,nos,64,0904,Spices,55
+Coriander Powder 200g,SPC-COR-02,nos,46,0909,Spices,70
+Mustard Seeds 200g,SPC-MUS-02,nos,32,1207,Spices,90
+Cumin Seeds 200g,SPC-CUM-02,nos,88,0909,Spices,45
+Cardamom 50g,SPC-CAR-005,nos,145,0908,Spices,30
+Wheat Flour 5kg,FLR-WHT-5,bag,235,1101,Flours,84
+Rice Flour 1kg,FLR-RIC-1,kg,52,1102,Flours,110
+Gram Flour 1kg,FLR-GRM-1,kg,96,1106,Flours,75
+Tea Dust 500g,BEV-TEA-05,nos,210,0902,Beverages,48
+Filter Coffee 200g,BEV-COF-02,nos,168,0901,Beverages,36
+Salt 1kg,GRO-SLT-1,kg,22,2501,Grocery,400
+Tamarind 500g,GRO-TAM-05,nos,85,0813,Grocery,66
+Cashew W320 250g,DRY-CSH-025,nos,240,0801,Dry fruits,28
+Raisins 250g,DRY-RSN-025,nos,95,0806,Dry fruits,52
+PP Woven Bag 25kg,PKG-PPB-25,nos,18,3923,Packaging,900

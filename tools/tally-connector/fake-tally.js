@@ -6,7 +6,7 @@
 'use strict';
 const http = require('http');
 const ITEMS = [
-  { name: 'Basmati 25kg', part: 'BAS-25', unit: 'bag', price: 1000, parent: 'Rice', hsn: '1006' },
+  { name: 'Basmati 25kg', part: 'BAS-25', unit: 'bag', price: 1000, parent: 'Rice', hsn: '1006', stock: 42 },
   { name: 'Ponni Boiled 10kg', part: 'PON-10', unit: 'bag', price: 600, parent: 'Rice', hsn: '1006' },
   { name: 'Groundnut Oil 1L', part: 'GNO-1', unit: 'nos', price: 240, parent: 'Oil', hsn: '1508' },
 ];
@@ -17,7 +17,7 @@ const server = http.createServer((req, res) => {
   let body = ''; req.on('data', (c) => body += c); req.on('end', () => {
     res.setHeader('Content-Type', 'text/xml');
     if (/<TALLYREQUEST>\s*Export\s*<\/TALLYREQUEST>/i.test(body) || /<TYPE>Collection<\/TYPE>/i.test(body)) {
-      const xml = '<ENVELOPE><BODY><DATA><COLLECTION>' + ITEMS.map((i) => `<STOCKITEM NAME="${i.name}"><NAME>${i.name}</NAME><PARENT>${i.parent}</PARENT><BASEUNITS>${i.unit}</BASEUNITS><PARTNO>${i.part}</PARTNO><STANDARDPRICE>${i.price}/${i.unit}</STANDARDPRICE><HSNCODE>${i.hsn}</HSNCODE></STOCKITEM>`).join('') + '</COLLECTION></DATA></BODY></ENVELOPE>';
+      const xml = '<ENVELOPE><BODY><DATA><COLLECTION>' + ITEMS.map((i) => `<STOCKITEM NAME="${i.name}"><NAME>${i.name}</NAME><PARENT>${i.parent}</PARENT><BASEUNITS>${i.unit}</BASEUNITS><PARTNO>${i.part}</PARTNO><STANDARDPRICE>${i.price}/${i.unit}</STANDARDPRICE><HSNCODE>${i.hsn}</HSNCODE><CLOSINGBALANCE>${i.stock || 0} ${i.unit}</CLOSINGBALANCE></STOCKITEM>`).join('') + '</COLLECTION></DATA></BODY></ENVELOPE>';
       return res.end(xml);
     }
     if (/<TALLYREQUEST>\s*Import Data\s*<\/TALLYREQUEST>/i.test(body)) {

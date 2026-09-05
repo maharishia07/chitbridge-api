@@ -103,7 +103,31 @@ router.get('/status', auth, async (req, res) => {
   try { const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]); res.json({ connectors: r.rows.map(rowOut) }); }
   catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
+/* ── ON DEMAND (Athi: "does it read on demand, for example availability?"): the storefront asks, the bell carries the
+      ask to the connector that holds it, the connector reads the source and writes the stamped figures; the storefront
+      re-reads them a few seconds later. Public, per handle, rate-limited by the service limiter. ── */
+async function entityOfHandle(h) {
+  const r = await query(`SELECT identity_id FROM identities WHERE (user_id = $1 OR bridge_id = $1) AND identity_type = 'entity' AND status = 'active' LIMIT 1`, [String(h || '')]);
+  return r.rows[0] ? r.rows[0].identity_id : null;
+}
+router.post('/ask/:handle/stock', async (req, res) => {
+  try {
+    const entity_id = await entityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
+    const ask_id = uuidv4();
+    const n = require('../lib/events').emit([entity_id], { kind: 'ask', what: 'stock', ask_id, codes: Array.isArray(req.body && req.body.codes) ? req.body.codes.slice(0, 200) : [] });
+    res.json({ asked: n > 0, listeners: n, ask_id, note: n ? 'a connector is listening — re-read the stock in a few seconds' : 'no connector is listening now — the last stamped figures stand' });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+router.get('/stock/:handle', async (req, res) => {
+  try {
+    const entity_id = await entityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
+    const r = await require('../db').withEntity(entity_id, (db) => db.query(`SELECT item_id, item_data->'avail' AS avail FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data ? 'avail'`, [entity_id]));
+    res.json({ stock: r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })), at: new Date().toISOString() });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
 router.openapi = { paths: {
+  '/api/integrations/ask/{handle}/stock': { post: { summary: 'Ask the store\'s connector for fresh stock (public; answered through the bell)', tags: ['keys'], parameters: [{ name: 'handle', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'asked · listeners' } } } },
+  '/api/integrations/stock/{handle}': { get: { summary: 'The stamped stock figures of a public storefront', tags: ['keys'], parameters: [{ name: 'handle', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'stock' } } } },
   '/api/integrations/catalogue': { get: { summary: 'The connectors that exist, with a download each', tags: ['keys'], responses: { 200: { description: 'catalogue' } } } },
   '/api/integrations/heartbeat': { post: { summary: 'A running connector checks in (key: connector)', tags: ['keys'], security: [{ apiKey: [] }], requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, adapter: { type: 'string' }, host: { type: 'string' }, version: { type: 'string' }, counters: { type: 'object' } } } } } }, responses: { 200: { description: 'seen' } } } },
 }, schemas: {} };

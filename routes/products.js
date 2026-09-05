@@ -941,6 +941,34 @@ router.delete('/:id/schedule/:sid', auth, async (req, res) => {
   catch (e) { fail(res, e, 'Could not cancel the change'); }
 });
 
+/**
+ * ⭐ STOCK WITH A STAMP, IN BULK (Athi, 2026-09-05: "stock with stamp first"). A connector re-reads closing stock from the
+ * source system every few minutes and writes it here in ONE transaction: { items:[{ item_id?|code?, qty, source?, as_of? }] }.
+ * Each figure goes through availability.stamp — a quantity is not an answer without a date — and lands on item_data.avail,
+ * exactly where the single PUT above lands, so every reader (the Stock row, the storefront, the network) sees one shape.
+ */
+router.post('/availability/bulk', auth, [ body('items').isArray({ min: 1, max: 2000 }) ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const out = await withEntity(entity_id, async (db) => {
+      const rows = (await db.query(`SELECT item_id, item_data->>'code' AS code, item_data->>'sku' AS sku FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id])).rows;
+      const byId = new Map(rows.map((r) => [String(r.item_id), r])), byCode = new Map();
+      for (const r of rows) { const c = String(r.code || r.sku || '').trim().toLowerCase(); if (c && !byCode.has(c)) byCode.set(c, r); }
+      let written = 0, unknown = 0, bad = 0;
+      for (const it of req.body.items) {
+        const row = (it.item_id && byId.get(String(it.item_id))) || (it.code && byCode.get(String(it.code).trim().toLowerCase())) || null;
+        if (!row) { unknown++; continue; }
+        const rec = availability.stamp({ qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location });
+        if (!rec) { bad++; continue; }
+        await db.query(`UPDATE catalogue_items SET item_data = COALESCE(item_data,'{}'::jsonb) || jsonb_build_object('avail', $1::jsonb), updated_at = NOW() WHERE item_id = $2 AND entity_id = $3`, [JSON.stringify(rec), row.item_id, entity_id]);
+        written++;
+      }
+      return { written, unknown, bad };
+    });
+    res.json(Object.assign({ message: 'Availability updated' }, out));
+  } catch (e) { fail(res, e, 'Availability bulk update failed'); }
+});
+
 router.put('/:id/availability', auth,
   [ body('qty').exists(), body('source').optional().isString(), body('as_of').optional().isString() ],
   validate,

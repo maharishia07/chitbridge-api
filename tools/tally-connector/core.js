@@ -44,6 +44,7 @@ class CB {
   chit(id) { return this.call('GET', '/api/chits/' + encodeURIComponent(id)); }
   inbox() { return this.call('GET', '/api/chits/inbox?limit=100'); }
   ticket() { return this.call('POST', '/api/events/ticket'); }
+  stock(items) { return this.call('POST', '/api/products/availability/bulk', { items }); }
   /** the heartbeat: Settings › Integrations lists this connector with its last-seen time and counters (never fails a command) */
   async heartbeat(info) { try { return await this.call('POST', '/api/integrations/heartbeat', Object.assign({ host: require('os').hostname(), version: '1.0.0' }, info || {})); } catch (e) { this.log('heartbeat: ' + e.message); return null; } }
 }
@@ -80,6 +81,21 @@ async function syncProducts({ cb, adapter, receipts, log }) {
   const out = { read: theirs.length, added, updated: edited, unchanged: unchanged.length, failed };
   log('products: ' + JSON.stringify(out));
   return out;
+}
+
+/** ── STOCK WITH A STAMP: the source's closing stock, written in one call with the moment it was read ── */
+async function syncStock({ cb, adapter, receipts, log, codes }) {
+  if (typeof adapter.readStock !== 'function') { log('stock: the ' + adapter.name + ' adapter has no readStock'); return { read: 0, written: 0 }; }
+  const at = new Date().toISOString();
+  let rows = await adapter.readStock();
+  if (Array.isArray(codes) && codes.length) { const want = new Set(codes.map((c) => String(c).toLowerCase())); rows = rows.filter((r) => want.has(String(r.code || '').toLowerCase())); }
+  const items = rows.filter((r) => r && r.code && Number.isFinite(Number(r.qty))).map((r) => ({ code: r.code, qty: Math.max(0, Number(r.qty)), source: 'erp', as_of: r.at || at }));
+  if (!items.length) { log('stock: nothing to write'); return { read: rows.length, written: 0 }; }
+  let written = 0, unknown = 0;
+  for (let i = 0; i < items.length; i += 500) { const r = await cb.stock(items.slice(i, i + 500)); written += r.written || 0; unknown += r.unknown || 0; }
+  receipts.add({ kind: 'stock', ref: 'all', hash: hashOf(items.map((x) => [x.code, x.qty])), outcome: 'ok', written, unknown });
+  log('stock: ' + written + ' written' + (unknown ? ' · ' + unknown + ' unknown code(s)' : '') + ' · as of ' + at.slice(11, 19));
+  return { read: rows.length, written, unknown, at };
 }
 
 /** ── OFFERS BACK: the outside system's basket lines → what comes off and why (the same engine as the storefront) ── */
@@ -135,7 +151,10 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
         let i; while ((i = buf.indexOf('\n\n')) >= 0) {
           const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
           const ev = /^event: (\S+)/m.exec(chunk), data = /^data: (.*)$/m.exec(chunk);
-          if (ev && ev[1] === 'cb' && data) { let d = {}; try { d = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(d); if (d.kind === 'chit' && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id }); }
+          if (ev && ev[1] === 'cb' && data) { let d = {}; try { d = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(d);
+            if (d.kind === 'chit' && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
+            /* the storefront asked for fresh stock: read the source now, write the stamped figures */
+            if (d.kind === 'ask' && d.what === 'stock') { try { await syncStock({ cb, adapter, receipts, log, codes: d.codes }); } catch (e) { log('stock on demand: ' + e.message); } } }
         }
       }
       log('stream closed');
@@ -144,11 +163,11 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
   }
 }
 
-function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'order') c.orders_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
+function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'order') c.orders_ok++; else if (r.kind === 'stock') c.stock_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
 function loadConfig(file) {
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!cfg.api || !cfg.key) throw new Error('config needs api and key (mint one under Settings › Integrations, scope connector)');
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { counts, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { counts, syncStock, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };

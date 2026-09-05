@@ -22,7 +22,7 @@ function exportRequest(company) {
   return `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBStockItems</ID></HEADER>
 <BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${company ? '<SVCURRENTCOMPANY>' + esc(company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES>
 <TDL><TDLMESSAGE><COLLECTION NAME="CBStockItems" ISMODIFY="No"><TYPE>StockItem</TYPE>
-<FETCH>NAME, PARENT, BASEUNITS, PARTNO, GSTAPPLICABLE, STANDARDPRICE, CLOSINGRATE, HSNCODE</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
+<FETCH>NAME, PARENT, BASEUNITS, PARTNO, GSTAPPLICABLE, STANDARDPRICE, CLOSINGRATE, HSNCODE, CLOSINGBALANCE</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
 }
 /** the Import Data request: one Sales voucher for the order (invoice view, inventory entries, party + sales ledger) */
 function voucherXML(order, opt) {
@@ -61,6 +61,11 @@ module.exports = function tallyAdapter(cfg) {
         name: unesc(tag('NAME', it)), code: unesc(tag('PARTNO', it)) || unesc(tag('NAME', it)), unit: unesc(tag('BASEUNITS', it)) || 'nos',
         price: num(tag('STANDARDPRICE', it)) != null ? num(tag('STANDARDPRICE', it)) : (num(tag('CLOSINGRATE', it)) || 0),
         category: unesc(tag('PARENT', it)) || null, hsn: unesc(tag('HSNCODE', it)) || null, ref: unesc(tag('NAME', it)) })).filter((p) => p.name);
+    },
+    /** closing stock per item — Tally's CLOSINGBALANCE reads "12 bag"; a negative balance is stock in hand in Tally's sign convention */
+    async readStock() {
+      const xml = await post(exportRequest(opt.company)); const at = new Date().toISOString();
+      return tags('STOCKITEM', xml).map((it) => { const q = num(tag('CLOSINGBALANCE', it)); return { code: unesc(tag('PARTNO', it)) || unesc(tag('NAME', it)), qty: q == null ? null : Math.abs(q), at }; }).filter((r) => r.code && r.qty != null);
     },
     async pushOrder(order) {
       const xml = voucherXML(order, opt);

@@ -170,7 +170,7 @@ const KEY_ROUTES = {
   tax:       [['POST', /^\/api\/tax\/(rate|compute)$/]],
   invoice:   [['*', /^\/api\/invoice(\/|$)/]],
   services:  [['*', /^\/api\/(offers|pricing|invoice)(\/|$)/], ['POST', /^\/api\/tax\/(rate|compute)$/]],
-  connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
+  connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['POST', /^\/api\/products\/availability\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
               ['GET', /^\/api\/chits\/(inbox|pulse|[0-9a-f-]{36})$/], ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/]],
 };
 const _keyCache = new Map();   // jti → { ok, at }

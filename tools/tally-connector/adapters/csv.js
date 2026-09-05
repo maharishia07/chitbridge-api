@@ -33,6 +33,16 @@ module.exports = function csvAdapter(cfg) {
       const col = (r, k) => { const i = head.indexOf(k); return i >= 0 ? String(r[i]).trim() : ''; };
       return rows.slice(1).map((r) => ({ name: col(r, 'name'), code: col(r, 'code') || col(r, 'sku'), unit: col(r, 'unit') || 'unit', price: Number(col(r, 'price')) || 0, hsn: col(r, 'hsn') || null, category: col(r, 'category') || null, ref: col(r, 'code') })).filter((p) => p.name);
     },
+    /** stock: a `stock` column in products.csv, or stock.csv (code, qty) beside it */
+    async readStock() {
+      const at = new Date().toISOString();
+      const sf = (cfg.csv && cfg.csv.stock) || path.join(dir, 'stock.csv');
+      const src = fs.existsSync(sf) ? sf : file;
+      const rows = parseCSV(fs.readFileSync(src, 'utf8')); const head = rows[0].map((h) => String(h).trim().toLowerCase());
+      const col = (r, k) => { const i = head.indexOf(k); return i >= 0 ? String(r[i]).trim() : ''; };
+      if (head.indexOf('stock') < 0 && head.indexOf('qty') < 0) return [];
+      return rows.slice(1).map((r) => ({ code: col(r, 'code') || col(r, 'sku'), qty: Number(col(r, 'stock') || col(r, 'qty')), at })).filter((x) => x.code && Number.isFinite(x.qty));
+    },
     async pushOrder(order) {
       fs.mkdirSync(outDir, { recursive: true });
       const f = path.join(outDir, order.chit_id + '.csv');

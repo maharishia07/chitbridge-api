@@ -4,7 +4,9 @@
  *   node index.js sync-products  --config connector.json [--adapter tally|csv] [--dry]
  *   node index.js evaluate       --config connector.json --lines lines.json          (basket lines → what comes off, and why)
  *   node index.js once           --config connector.json                              (catch-up: push every received order not yet pushed)
- *   node index.js watch          --config connector.json [--sync-minutes 30]           (catch-up, hold the push stream, AND re-read the products every N minutes; Ctrl-C to stop)
+ *   node index.js sync-stock     --config connector.json                              (closing stock → stamped availability, now)
+ *   node index.js watch          --config connector.json [--sync-minutes 30] [--stock-minutes 5]
+ *                                (catch-up, hold the push stream; re-read products every N min, stock every M min; answer the storefront's stock asks)
  * connector.json: { "api": "https://chitbridge-api-production.up.railway.app", "key": "<API key, scope connector>",
  *                   "adapter": "tally", "tally": { "url": "http://localhost:9000", "company": "…", "partyLedger": "Cash", "salesLedger": "Sales" } }
  */
@@ -29,6 +31,7 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   if (cmd !== 'help') cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd });
   if (cmd === 'sync-products') { const r = await core.syncProducts({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }
+  if (cmd === 'sync-stock') { const r = await core.syncStock({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'once') { const r = await core.catchUp({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'watch') {
     const ac = new AbortController(); process.on('SIGINT', () => { log('stopping'); ac.abort(); });
@@ -36,6 +39,8 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
        only rows whose hash changed are sent, so a quiet shelf costs one read of the source and nothing else. */
     const every = Number(flag('sync-minutes', cfg.syncMinutes || 0)) || 0;
     if (every > 0) { const tick = async () => { try { await core.syncProducts({ cb, adapter, receipts, log }); } catch (e) { log('sync: ' + e.message); } }; await tick(); const t = setInterval(tick, every * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('products re-read every ' + every + ' min'); }
+    const stockEvery = Number(flag('stock-minutes', cfg.stockMinutes || 0)) || 0;
+    if (stockEvery > 0) { const tick = async () => { try { await core.syncStock({ cb, adapter, receipts, log }); } catch (e) { log('stock: ' + e.message); } }; await tick(); const t = setInterval(tick, stockEvery * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('stock re-read every ' + stockEvery + ' min, and on demand'); }
     await core.watchOrders({ cb, adapter, receipts, log, signal: ac.signal, onEvent: (d) => log('bell: ' + JSON.stringify(d)) }); return; }
   console.error('unknown command ' + cmd); process.exit(2);
 })().catch((e) => { console.error('connector: ' + (e && e.message)); process.exit(1); });
