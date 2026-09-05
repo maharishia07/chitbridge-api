@@ -25,6 +25,12 @@ function gstRateOf(it) { const heads = tags('RATEDETAILS.LIST', it); for (const 
 function hsnOf(it) { const d = tags('HSNDETAILS.LIST', it)[0] || ''; return unesc(tag('HSNCODE', d)) || unesc(tag('HSN', d)) || unesc(tag('HSNCODE', it)) || null; }
 function unesc(s) { return String(s || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#4;/g, ''); }
 function num(s) { const m = /-?[\d,]*\.?\d+/.exec(String(s || '').replace(/,/g, '')); return m ? Number(m[0]) : null; }
+/**
+ * ⚠️ TALLYPRIME EDUCATIONAL MODE accepts vouchers dated the 1st, 2nd or 31st of a month only (its "Voucher date is missing"
+ * refusal on 2026-09-05, Athi's laptop, said nothing of the kind). With tally.eduDates:true the voucher date snaps to the
+ * 2nd of its month (or stays on the 1st/2nd/31st) and the narration keeps the real date. Off for a licensed Tally.
+ */
+function eduDate(d, on) { const x = d ? new Date(d) : new Date(); if (!on) return x; const day = x.getDate(); if (day === 1 || day === 2 || day === 31) return x; return new Date(x.getFullYear(), x.getMonth(), 2, 12); }
 function ymd(d) { const x = d ? new Date(d) : new Date(); return x.getFullYear() + String(x.getMonth() + 1).padStart(2, '0') + String(x.getDate()).padStart(2, '0'); }
 
 /** the Export Data request: a TDL collection of stock items with the fields we need */
@@ -54,8 +60,8 @@ function voucherXML(order, opt) {
   }).join('\n');
   return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
 <STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
-<VOUCHER VCHTYPE="${esc(vtype)}" ACTION="Create" OBJVIEW="Invoice Voucher View"><DATE>${ymd(order.at)}</DATE><VOUCHERTYPENAME>${esc(vtype)}</VOUCHERTYPENAME>
-<REFERENCE>CB-${esc(String(order.chit_id).slice(0, 8))}</REFERENCE><NARRATION>${esc('ChitBridge order ' + order.chit_id + ' from ' + order.buyer)}</NARRATION>
+<VOUCHER VCHTYPE="${esc(vtype)}" ACTION="Create" OBJVIEW="Invoice Voucher View"><DATE>${ymd(eduDate(order.at, opt.eduDates))}</DATE><VOUCHERTYPENAME>${esc(vtype)}</VOUCHERTYPENAME>
+<REFERENCE>CB-${esc(String(order.chit_id).slice(0, 8))}</REFERENCE><NARRATION>${esc('ChitBridge order ' + order.chit_id + ' from ' + order.buyer + (opt.eduDates ? ' (ordered ' + String(order.at || '').slice(0, 10) + '; EDU date)' : ''))}</NARRATION>
 <PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME><PARTYNAME>${esc(order.buyer)}</PARTYNAME><ISINVOICE>Yes</ISINVOICE>
 ${inv}
 <LEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>-${total}</AMOUNT></LEDGERENTRIES.LIST>
@@ -74,7 +80,7 @@ function receiptXML(p, opt) {
   const amount = Math.round(Number(p.amount) * 100) / 100, ref = 'CB-' + String(p.chit_id).slice(0, 8);
   return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
 <STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
-<VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View"><DATE>${ymd(p.at)}</DATE><VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
+<VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View"><DATE>${ymd(eduDate(p.at, opt.eduDates))}</DATE><VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
 <REFERENCE>${esc(ref)}</REFERENCE><NARRATION>${esc('ChitBridge payment ' + (p.method || '').toUpperCase() + (p.ref ? ' ' + p.ref : '') + ' for order ' + p.chit_id + ' from ' + (p.buyer || 'customer'))}</NARRATION>
 <PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME>
 <ALLLEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>${amount}</AMOUNT>

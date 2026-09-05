@@ -45,3 +45,8 @@ watching connector books a **Receipt** voucher in Tally the same second: Dr your
 `cashLedger` for cash) · Cr the party ledger · against reference CB-<ref>, so the bill closes. A cash sale (`partyLedger` =
 Cash) needs no receipt — the Sales voucher already settled it — and the connector says so in its receipts file.
 `--dry` prints the receipt XML instead of posting it. Both ledgers must exist in Tally (Gateway › Create › Ledger).
+
+## TallyPrime Educational edition
+The free EDU edition accepts vouchers dated the **1st, 2nd or 31st** of a month only, and refuses others with the unhelpful
+"Voucher date is missing". Set `"eduDates": true` under `tally` in connector.json: the voucher date snaps to the 2nd of its
+month and the narration keeps the real order date. Leave it off on a licensed Tally.
