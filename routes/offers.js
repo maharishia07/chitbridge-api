@@ -46,6 +46,8 @@ async function run(req, res, explain) {
     if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required: { key, item_id?, qty, unitPrice }' });
     const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
     const ctx = Object.assign({ now: new Date(), currency: 'INR' }, req.body.ctx || {});
+    /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */
+    if (typeof ctx.money !== 'function') ctx.money = (n) => String(ctx.currency || 'INR') + ' ' + (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
     const ev = eng.evaluate({ lines, offers, ctx });
     const out = { subtotal: ev.subtotal, total: ev.total, adjustments: ev.adjustments || [], notes: ev.notes || [], skipped: ev.skipped || [],
                   perLine: eng.perLine ? eng.perLine(ev, lines) : {}, offers_considered: offers.length, engine: 'chitbridge-offers', version: 1 };
