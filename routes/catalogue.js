@@ -432,8 +432,19 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
      * as it was — and `applyToLine` writes nothing at all when nobody has declared a slab. An entity with no tax
      * shelf produces the same line it produced yesterday.
      */
+    /* ⭐ STOCK WITH A STAMP (Athi, 2026-09-05: "stock with stamp first"). When the connector stamped a figure, the order
+       reads it: a FRESH zero (under an hour old) refuses the line — the customer is told when the shop last counted;
+       a shortfall never refuses (the stamp may be stale, the shop may restock) — it rides the line as `stock` so the
+       seller's chit says "short by N as of HH:MM" and can act. Without a stamp nothing changes. */
+    let stock = null;
+    { const av = ref.d && ref.d.avail; const q = av ? Number(av.qty) : NaN;
+      if (av && Number.isFinite(q) && av.as_of && Number.isFinite(Date.parse(av.as_of))) {
+        const age = Date.now() - Date.parse(av.as_of);
+        if (q <= 0 && age >= 0 && age < 3600e3) throw _422(`"${ref.name}" is out of stock as of ${String(av.as_of).slice(11, 16)} UTC — ask the shop before ordering`);
+        if (q < qty) stock = { qty: q, as_of: av.as_of, short: Math.round((qty - q) * 1000) / 1000, ...(av.source ? { source: av.source } : {}) };
+      } }
     return withTax({ item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
-             price: _unit, total, ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}), ...(proposal ? { proposal } : {}),
+             price: _unit, total, ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}), ...(proposal ? { proposal } : {}), ...(stock ? { stock } : {}),
              ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), ...((ref.d && ref.d.code) ? { code: ref.d.code } : {}), how: 'picked',
                     ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
              ref.d);
