@@ -9,7 +9,11 @@
  *   POST /api/integrations/heartbeat  (key: connector) { name, adapter, host, version, counters } → recorded on the entity
  *   GET  /api/integrations/status     (session)      → the connectors that have checked in: last seen, counters
  *
- * No migration: heartbeats ride identities.policy_flags.connectors (jsonb), like keys do.
+ * ⭐ ONE CONNECTOR CONCEPT (Athi, 2026-09-05: "converge"). A downloaded kit IS a co-assist connector: its first heartbeat
+ * creates the connector ACTOR (identities row, connector_type 'erp', site = the host, connector_config.kit = true) the
+ * co-assist rail already lists with site, health and rights; every later heartbeat writes the actor's last_seen and
+ * counters, so the SAME health(last_seen) answers here and there. The API key stays the kit's credential (scoped,
+ * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
  */
 const express = require('express');
 const fs = require('fs');
@@ -18,6 +22,8 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { query } = require('../db');
 const { zip } = require('../lib/zip-store');
+const { v4: uuidv4 } = require('uuid');
+const { generateBridgeId } = require('../lib/bridgeid');
 
 const KIT = path.join(__dirname, '..', 'tools', 'tally-connector');
 const CATALOGUE = [
@@ -35,7 +41,7 @@ const CATALOGUE = [
 ];
 
 function kitFiles(adapter) {
-  const names = ['core.js', 'index.js', 'fake-tally.js', 'fake-zoho.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md'];
+  const names = ['core.js', 'index.js', 'fake-tally.js', 'fake-zoho.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'samples/products.csv'];
   const out = [];
   for (const n of names) { const p = path.join(KIT, n); if (fs.existsSync(p)) out.push({ name: 'chitbridge-connector/' + n, data: fs.readFileSync(p) }); }
   return out;
@@ -66,25 +72,35 @@ router.get('/download/:id', (req, res) => {
   res.end(buf);
 });
 
-async function listOf(entity_id) {
-  const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
-  const pf = (r.rows[0] && r.rows[0].policy_flags) || {};
-  return Array.isArray(pf.connectors) ? pf.connectors : [];
-}
+function health(last_seen) { if (!last_seen) return 'offline'; const age = Date.now() - new Date(last_seen).getTime(); return age > 15 * 60 * 1000 ? 'offline' : (age > 3 * 60 * 1000 ? 'slow' : 'live'); }
+const KIT_ROWS = `SELECT identity_id, display_name, site, last_seen, connector_type, connector_config, status, created_at
+                    FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND status = 'active'`;
+function rowOut(a) { const c = a.connector_config || {}; return { id: c.kit_id || a.identity_id, actor_id: a.identity_id, name: a.display_name, adapter: c.adapter || (a.connector_type === 'erp' ? 'erp' : a.connector_type), host: a.site || '', version: c.version || '',
+  key_jti: c.key_jti || null, last_seen: a.last_seen, health: health(a.last_seen), counters: c.counters || {}, note: c.note || '', kit: !!c.kit }; }
+
 router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req); const b = req.body || {};
-    const id = String(b.id || ((b.name || 'connector') + '@' + (b.host || 'unknown'))).slice(0, 120);
-    const list = await listOf(entity_id);
-    const rec = { id, name: String(b.name || 'connector').slice(0, 80), adapter: String(b.adapter || '').slice(0, 40), host: String(b.host || '').slice(0, 80), version: String(b.version || '').slice(0, 20),
-                  key_jti: (req.api_key && req.api_key.jti) || null, last_seen: new Date().toISOString(), counters: (b.counters && typeof b.counters === 'object') ? b.counters : {}, note: String(b.note || '').slice(0, 200) };
-    const next = list.filter((x) => x && x.id !== id).concat([rec]).slice(-20);
-    await query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`, [JSON.stringify({ connectors: next }), entity_id]);
-    res.json({ ok: true, id, seen: rec.last_seen });
+    const kit_id = String(b.id || ((b.name || 'connector') + '@' + (b.host || 'unknown'))).slice(0, 120);
+    const name = String(b.name || 'connector').slice(0, 80), host = String(b.host || '').slice(0, 80);
+    const patchCfg = { kit: true, kit_id, adapter: String(b.adapter || '').slice(0, 40), version: String(b.version || '').slice(0, 20), key_jti: (req.api_key && req.api_key.jti) || null,
+                       counters: (b.counters && typeof b.counters === 'object') ? b.counters : {}, note: String(b.note || '').slice(0, 200) };
+    const have = await query(`SELECT identity_id FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND connector_config->>'kit_id' = $2`, [entity_id, kit_id]);
+    let actor_id = have.rows[0] && have.rows[0].identity_id, created = false;
+    if (!actor_id) {
+      /* the kit's first heartbeat: the connector ACTOR the co-assist rail lists — same row shape routes/connectors.js creates */
+      actor_id = uuidv4(); created = true;
+      await query(`INSERT INTO identities (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone, max_tasks, identity_type, status, break_status, hat, connector_type, site, connector_config, last_seen)
+                   VALUES ($1,$2,$3,$4,'human',$5,NULL,NULL,10,'actor','active','active','act','erp',$6,$7,NOW())`,
+                  [actor_id, generateBridgeId(), name, uuidv4(), entity_id, host || null, JSON.stringify(patchCfg)]);
+    } else {
+      await query(`UPDATE identities SET last_seen = NOW(), display_name = $2, site = COALESCE($3, site), connector_config = COALESCE(connector_config,'{}'::jsonb) || $4::jsonb WHERE identity_id = $1`, [actor_id, name, host || null, JSON.stringify(patchCfg)]);
+    }
+    res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 router.get('/status', auth, async (req, res) => {
-  try { const list = await listOf(auth.entityOf(req)); res.json({ connectors: list.sort((a, b) => String(b.last_seen).localeCompare(String(a.last_seen))) }); }
+  try { const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]); res.json({ connectors: r.rows.map(rowOut) }); }
   catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 router.openapi = { paths: {
