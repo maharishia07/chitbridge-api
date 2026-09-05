@@ -392,7 +392,7 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
      * resolveEntity in routes/catalogue.js — one rule, two places, deliberately identical.
      */
     const r = await query(
-      `SELECT identity_id, display_name, bridge_id, user_id FROM identities
+      `SELECT identity_id, display_name, bridge_id, user_id, gstn, country, policy_flags FROM identities
         WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1)) AND identity_type = 'entity'
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [req.params.bridge_id]);
@@ -400,7 +400,9 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
     const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */
-    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, ...rd });
+    /* ⭐ the public facts with their rung — what they gave, what their books say, what we checked (lib/public-facts.js) */
+    let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (_) {}
+    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...rd });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });
 

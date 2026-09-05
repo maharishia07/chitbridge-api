@@ -69,6 +69,7 @@ router.get('/suppliers', auth, async (req, res) => {
     const r = await query(
       `SELECT sl.supplier_list_id, sl.category, sl.nickname, sl.preferred, sl.notes, sl.created_at,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
+              i.gstn, i.country, i.policy_flags,
               EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
                         AND es.status = 'active' AND es.is_default = true) AS has_catalogue
@@ -76,7 +77,10 @@ router.get('/suppliers', auth, async (req, res) => {
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
        ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]);
-    res.json({ suppliers: r.rows, count: r.rows.length });
+    /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
+    const { factsOf } = require('../lib/public-facts');
+    const rows = r.rows.map((x) => { const facts = factsOf(x); const o = Object.assign({}, x); delete o.policy_flags; delete o.gstn; o.facts = facts; return o; });
+    res.json({ suppliers: rows, count: rows.length });
   } catch (err) {
     console.error('Get suppliers error:', err.message);
     res.status(500).json({ error: 'Get suppliers failed', message: safeErr(err) });
@@ -266,10 +270,10 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
       // exactly public — membership is decided by the network tree, not by this list.
       viewer: req.identity && req.identity.bridge_id });
     if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], groups: [], finishes: [] });
-    res.json({ supplier, shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
-      groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
-      unpriced_hidden: view.unpriced_hidden,
-      finishes: view.finishes });
+    /* ⚠️ THE WHOLE VIEW, NOT A HAND-PICKED SUBSET (Athi, 2026-09-05: "still offer not appearing?"). This list named nine
+       fields and left out `offers` and `categories`, so a buyer's Suppliers screen never received the seller's live offers
+       while the storefront — the same view — did. One source of truth means one projection: everything the view says. */
+    res.json(Object.assign({ supplier }, view));
   } catch (err) {
     res.status(500).json({ error: 'Get catalogue failed', message: safeErr(err) });
   }

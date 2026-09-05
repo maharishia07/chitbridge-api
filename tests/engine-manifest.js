@@ -186,6 +186,7 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
   'profile-map.js',        // what we look for about a store · where it comes from · how trusted (declared → copied → checked → verified)
   'units.js',              // one unit, three names: ours · UN/ECE Rec 20 · GST UQC (vendored to app/units.js; the connector maps by code)
   'definition-check.js',   // the value a definition kind cannot do without (the form's sentences, refused by the API too)
+  'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
   'stores.js',             // store lookup helpers
   'transcribe.js',         // audio → text; an outside service behind one function
   'whatsapp-media.js',     // provider media fetch
