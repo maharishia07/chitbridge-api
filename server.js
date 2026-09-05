@@ -181,7 +181,8 @@ const attachmentsRouter = require('./routes/attachments');
 app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
 app.use('/api/chits',       chitsRouter);
-app.use('/api/events',      require('./routes/events'));   // the mailbox bell — server push (SSE), lib/events.js
+app.use('/api/events',      require('./routes/events'));
+app.use('/api/offers',      require('./routes/offers'));   // the offer engine as a service — kinds · evaluate · explain (lib/offers-engine.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);
 app.use('/api/identity',    require('./routes/identity-docs'));   // b174 — a person's own documents + verification stamp
