@@ -1,6 +1,7 @@
 /**
  * ADAPTER: Tally Prime / Tally.ERP 9 — over its own XML port (Gateway of Tally › F1 Help › Settings › Connectivity:
- * "Enable ODBC/XML" on port 9000). Two functions, as every adapter: readProducts() and pushOrder(order).
+ * "Enable ODBC/XML" on port 9000). Two functions, as every adapter: readProducts() and pushOrder(order) — plus the optional
+ * readStock() · readProfile() · pushReceipt(p) (a Receipt voucher when the seller marks the chit paid, 2026-09-05).
  *
  * ✅ FIRST LIVE READ 2026-09-05 (TallyPrime EDU 7.x, Athi's laptop): the company master, the stock items, the closing stock
  * and the GST/HSN details read correctly after three corrections found live — parse only the <DATA> part (the CMPINFO
@@ -61,6 +62,27 @@ ${inv}
 </VOUCHER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
 }
 
+/**
+ * RECEIPT (payment loop, level 1 → Tally, 2026-09-05): the seller marked the chit paid in ChitBridge; Tally gets a Receipt
+ * voucher — Dr the cash/bank ledger, Cr the party ledger, against the sale's reference CB-<ref> (Agst Ref) so the bill
+ * closes. A CASH SALE (partyLedger is the cash ledger) is already settled by the Sales voucher: no receipt is booked.
+ *   opt.cashLedger (default 'Cash') for method cash · opt.bankLedger (default 'Bank') for upi/card/bank/other
+ */
+function receiptXML(p, opt) {
+  const party = opt.partyLedger || 'Cash';
+  const into = p.method === 'cash' ? (opt.cashLedger || 'Cash') : (opt.bankLedger || 'Bank');
+  const amount = Math.round(Number(p.amount) * 100) / 100, ref = 'CB-' + String(p.chit_id).slice(0, 8);
+  return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
+<STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
+<VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View"><DATE>${ymd(p.at)}</DATE><VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
+<REFERENCE>${esc(ref)}</REFERENCE><NARRATION>${esc('ChitBridge payment ' + (p.method || '').toUpperCase() + (p.ref ? ' ' + p.ref : '') + ' for order ' + p.chit_id + ' from ' + (p.buyer || 'customer'))}</NARRATION>
+<PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME>
+<ALLLEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>${amount}</AMOUNT>
+<BILLALLOCATIONS.LIST><NAME>${esc(ref)}</NAME><BILLTYPE>Agst Ref</BILLTYPE><AMOUNT>${amount}</AMOUNT></BILLALLOCATIONS.LIST></ALLLEDGERENTRIES.LIST>
+<ALLLEDGERENTRIES.LIST><LEDGERNAME>${esc(into)}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><AMOUNT>-${amount}</AMOUNT></ALLLEDGERENTRIES.LIST>
+</VOUCHER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+}
+
 module.exports = function tallyAdapter(cfg) {
   const url = (cfg.tally && cfg.tally.url) || 'http://localhost:9000';
   const opt = Object.assign({ company: null, partyLedger: 'Cash', salesLedger: 'Sales', voucherType: 'Sales' }, cfg.tally || {});
@@ -93,6 +115,18 @@ module.exports = function tallyAdapter(cfg) {
         gstin: unesc(tag('GSTREGISTRATIONNUMBER', c)), reg_type: /composition/i.test(unesc(tag('GSTREGISTRATIONTYPE', c))) ? 'composition' : (unesc(tag('GSTREGISTRATIONTYPE', c)) ? 'regular' : ''), pan: unesc(tag('INCOMETAXNUMBER', c)), currency: /₹|Rs|INR/i.test(unesc(tag('BASECURRENCYSYMBOL', c))) ? 'INR' : '' };
       for (const k of Object.keys(out)) if (!out[k]) delete out[k];
       return out;
+    },
+    /** a payment recorded in ChitBridge → a Receipt voucher (skipped for a cash sale — the Sales voucher settled it) */
+    async pushReceipt(p) {
+      const cashy = /^cash$/i.test(String(opt.partyLedger || 'Cash')) || /^cash$/i.test(String(opt.cashLedger || 'Cash')) && opt.partyLedger === (opt.cashLedger || 'Cash');
+      if (cashy) return { ref: null, skipped: 'cash sale (partyLedger ' + (opt.partyLedger || 'Cash') + ') is settled by the Sales voucher' };
+      if (!(Number(p.amount) > 0)) return { ref: null, skipped: 'no amount on the payment' };
+      const xml = receiptXML(p, opt);
+      if (dry) { log('[dry] receipt XML for ' + p.chit_id + ':\n' + xml); return { ref: 'dry-run' }; }
+      const res = await post(xml);
+      const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
+      if (errors || !created) throw new Error('Tally refused the receipt: ' + (tag('LINEERROR', res) || res.slice(0, 200)));
+      return { ref: tag('VCHID', res) || tag('LASTVCHID', res) || ('created:' + created) };
     },
     async pushOrder(order) {
       const xml = voucherXML(order, opt);

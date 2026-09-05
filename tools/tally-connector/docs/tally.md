@@ -38,3 +38,10 @@ Run `watch` when the PC starts (Task Scheduler › At log on › `node C:\path\i
 The window prints `Tally refused the voucher: …`. The usual causes: a ledger name that does not exist (partyLedger / salesLedger), a stock item whose name differs from the catalogue name, or a company not open. Fix the cause and run `node index.js once` — the order is retried; nothing is duplicated.
 
 **Honest note.** This adapter was written from Tally's XML contract and proven against a stand-in. Your first live run may show a field Tally names differently; tell us the message and it is a one-line correction.
+
+## When you mark a chit paid
+Open the order in ChitBridge (Task) → the Payment cell → **Mark paid** (UPI / cash / card / bank, the transaction id). The
+watching connector books a **Receipt** voucher in Tally the same second: Dr your bank ledger (`bankLedger`, default "Bank";
+`cashLedger` for cash) · Cr the party ledger · against reference CB-<ref>, so the bill closes. A cash sale (`partyLedger` =
+Cash) needs no receipt — the Sales voucher already settled it — and the connector says so in its receipts file.
+`--dry` prints the receipt XML instead of posting it. Both ledgers must exist in Tally (Gateway › Create › Ledger).

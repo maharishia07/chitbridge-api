@@ -2367,11 +2367,19 @@ router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'ca
   try {
     const entity_id = auth.entityOf(req);
     const payment = { method: req.body.method, ref: req.body.ref || null, amount: req.body.amount != null ? Number(req.body.amount) : null, note: req.body.note || null, at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || entity_id };
+    /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
+    if (payment.amount != null && !payment.note) {
+      const q = await withEntity(entity_id, (db) => db.query(`SELECT COALESCE((summary_json->>'total_value')::numeric, (business_json->'invoice'->>'grand_total')::numeric) AS quoted FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [req.params.chit_id, entity_id])).catch(() => ({ rows: [] }));
+      const quoted = q.rows[0] && q.rows[0].quoted != null ? Number(q.rows[0].quoted) : null;
+      if (quoted != null && payment.amount > quoted * 1.005 + 1) return res.status(422).json({ error: 'Above the quoted amount', message: 'Received ' + payment.amount + ' against a quote of ' + quoted + '. Add a note saying why, or record the quoted amount.', quoted });
+    }
     const r = await withEntity(entity_id, (db) => db.query(
       `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
       [JSON.stringify(payment), req.params.chit_id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     try { await withEntity(entity_id, (db) => db.query(`INSERT INTO state_log (chit_id, entity_id, from_status, to_status, note, created_at) VALUES ($1, $2, NULL, 'paid', $3, NOW())`, [req.params.chit_id, entity_id, 'Paid · ' + payment.method + (payment.ref ? ' · ' + payment.ref : '') + (payment.amount != null ? ' · ' + payment.amount : '')])); } catch (_) {}
+    /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
+    try { require('../lib/events').emit([entity_id], { kind: 'paid', id: req.params.chit_id, method: payment.method }); } catch (_) {}
     res.json({ message: 'Payment recorded', payment });
   } catch (err) { res.status(500).json({ error: 'Payment failed', message: safeErr(err) }); }
 });

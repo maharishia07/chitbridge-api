@@ -4,7 +4,8 @@
  * Athi, 2026-09-05: "read the product data from the existing system, create offers in ours and pass back to their
  * system; when the order is made we take care of network connectivity and others." — and: "does it mean we can use it
  * for any system which has a similar connector? GoFrugal or any other system in the world?" Yes: this core never knows
- * what Tally is. An adapter is two functions — readProducts() and pushOrder(order) — and a name.
+ * what Tally is. An adapter is two functions — readProducts() and pushOrder(order) — and a name; readStock(), readProfile()
+ * and pushReceipt(p) (the Receipt voucher when the seller marks a chit paid) are optional and skipped when absent.
  *
  * ── WHAT RUNS WHERE ──────────────────────────────────────────────────────────────────────────────────────────
  *   The store PC runs this (node ≥ 18, no dependencies). It needs OUTBOUND internet only: it calls ChitBridge with an
@@ -129,6 +130,20 @@ function orderOf(c) {
            subject: h.manual_subject || h.auto_subject || '', buyer: h.sender_entity_display_name || (h.sender && h.sender.display_name) || 'Customer', currency: d.currency_code || 'INR',
            total: (h.summary_json && h.summary_json.total_value) || lines.reduce((t, l) => t + l.total, 0), lines };
 }
+/** the payment the seller recorded on their copy (business_json.payment) — level 1 by hand, level 2 by a gateway */
+function paymentOf(c) { const h = c.header || c.chit || c; const bj = (h && h.business_json) || c.business_json || {}; return bj.payment || null; }
+async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
+  const last = receipts.last('receipt', chit_id);
+  if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
+  const c = await cb.chit(chit_id); const pay = paymentOf(c); const order = orderOf(c);
+  if (!pay) return { chit_id, outcome: 'unpaid' };
+  const p = { chit_id, at: pay.at, method: pay.method, ref: pay.ref, amount: pay.amount != null ? Number(pay.amount) : order.total, buyer: order.buyer };
+  if (!adapter.pushReceipt) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: adapter.name + ' has no pushReceipt' }); return { chit_id, outcome: 'skipped' }; }
+  try { const r = await adapter.pushReceipt(p);
+    if (r && r.skipped) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: r.skipped }); log('receipt ' + chit_id.slice(0, 8) + ' skipped: ' + r.skipped); return { chit_id, outcome: 'skipped', why: r.skipped }; }
+    receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null }); log('receipt ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
+  catch (e) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('receipt ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
+}
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   const last = receipts.last('order', chit_id);
   if (last && last.outcome === 'ok') { log('order ' + chit_id.slice(0, 8) + ' already pushed'); return { chit_id, outcome: 'duplicate' }; }
@@ -144,6 +159,8 @@ async function catchUp({ cb, adapter, receipts, log }) {
   const rows = (inbox.chits || inbox.rows || inbox.items || (Array.isArray(inbox) ? inbox : [])).filter((r) => /^(order|offer)$/.test(String(r.purpose || '')));
   const out = [];
   for (const r of rows) { const id = r.chit_id || r.id; if (!id) continue; out.push(await pushOrder({ cb, adapter, receipts, log, chit_id: id })); }
+  /* payments recorded while we were away: every pushed order without a receipt receipt */
+  for (const r of rows) { const id = r.chit_id || r.id; if (!id) continue; const o = receipts.last('order', id); if (o && o.outcome === 'ok' && !receipts.last('receipt', id)) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: id }); } catch (e) { log('receipt catch-up: ' + e.message); } } }
   return out;
 }
 /** live: hold the push stream; on an arrival push that order; reconnect with backoff; the catch-up runs first */
@@ -167,6 +184,8 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
           const ev = /^event: (\S+)/m.exec(chunk), data = /^data: (.*)$/m.exec(chunk);
           if (ev && ev[1] === 'cb' && data) { let d = {}; try { d = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(d);
             if (d.kind === 'chit' && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
+            /* the seller marked it paid (or a gateway did): the Receipt voucher */
+            if (d.kind === 'paid' && d.id) { try { await pushReceipt({ cb, adapter, receipts, log, chit_id: d.id }); } catch (e) { log('receipt: ' + e.message); } }
             /* the storefront asked for fresh stock: read the source now, write the stamped figures */
             if (d.kind === 'ask' && d.what === 'stock') { try { await syncStock({ cb, adapter, receipts, log, codes: d.codes }); } catch (e) { log('stock on demand: ' + e.message); } } }
         }
@@ -177,11 +196,11 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal }) {
   }
 }
 
-function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'order') c.orders_ok++; else if (r.kind === 'stock') c.stock_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
+function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 0, receipts_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'receipt') c.receipts_ok++; else if (r.kind === 'order') c.orders_ok++; else if (r.kind === 'stock') c.stock_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
 function loadConfig(file) {
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!cfg.api || !cfg.key) throw new Error('config needs api and key (mint one under Settings › Integrations, scope connector)');
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };

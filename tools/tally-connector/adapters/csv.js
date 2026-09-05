@@ -2,6 +2,7 @@
  * ADAPTER: any system that can export a CSV and read one back — the proof that the core is system-neutral.
  *   readProducts(): products.csv with a header row: name, code, unit, price[, hsn, category]
  *   pushOrder(order): writes orders/<chit_id>.csv (one row per line: chit, buyer, name, code, qty, unit, price, list_price, offer, total)
+ *   pushReceipt(p):   appends one line to orders/receipts.csv when the seller marks the chit paid (chit, at, method, ref, amount, buyer)
  * GoFrugal, Zoho, a spreadsheet — anything that speaks files — attaches this way today; a REST adapter is the same two
  * functions with fetch() instead of fs.
  */
@@ -49,6 +50,13 @@ module.exports = function csvAdapter(cfg) {
       const rows = parseCSV(fs.readFileSync(pf, 'utf8')); const out = {};
       for (const r of rows) { const k = String(r[0] || '').trim().toLowerCase(); const v = String(r[1] || '').trim(); if (k && v && k !== 'key') out[k] = v; }
       return out;
+    },
+    /** a payment recorded in ChitBridge → one line in receipts.csv (the bookkeeper's import) */
+    async pushReceipt(p) {
+      fs.mkdirSync(outDir, { recursive: true });
+      const f = path.join(outDir, 'receipts.csv'); if (!fs.existsSync(f)) fs.writeFileSync(f, 'chit,at,method,ref,amount,buyer\n');
+      fs.appendFileSync(f, [p.chit_id, p.at, p.method, p.ref || '', p.amount, p.buyer || ''].map((x) => '"' + String(x == null ? '' : x).replace(/"/g, '""') + '"').join(',') + '\n');
+      return { ref: 'receipts.csv' };
     },
     async pushOrder(order) {
       fs.mkdirSync(outDir, { recursive: true });
