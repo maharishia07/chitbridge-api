@@ -31,3 +31,6 @@ test-media/
 tools/tally-connector/connector.json
 tools/tally-connector/receipts.jsonl
 tools/tally-connector/orders/
+tools/tally-connector/connector-*.json
+tools/tally-connector/receipts-*.jsonl
+tools/tally-connector/*.log
