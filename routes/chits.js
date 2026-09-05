@@ -2356,6 +2356,34 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
 
 // ─── PUT /chits/:chit_id/status ───────────────────────────────
 // Update chit status — accept, reject, complete etc
+/**
+ * ⭐ PAYMENT, LEVEL 1 (Athi, 2026-09-05: "or QR code and get the payment loop done"). The seller records that a chit was
+ * paid — by UPI against the QR, by cash, or otherwise — on THEIR OWN copy (business_json.payment), the way the frozen
+ * invoice rides business_json. Nothing moves money; a gateway (level 2) will write the same field from its webhook.
+ *   POST /:chit_id/payment { method: 'upi'|'cash'|'card'|'bank'|'other', ref?, amount?, note? } → { payment }
+ *   DELETE /:chit_id/payment → cleared (a mistake undone; the state log keeps the record of both)
+ */
+router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }) ], validate, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const payment = { method: req.body.method, ref: req.body.ref || null, amount: req.body.amount != null ? Number(req.body.amount) : null, note: req.body.note || null, at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || entity_id };
+    const r = await withEntity(entity_id, (db) => db.query(
+      `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
+      [JSON.stringify(payment), req.params.chit_id, entity_id]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    try { await withEntity(entity_id, (db) => db.query(`INSERT INTO state_log (chit_id, entity_id, from_status, to_status, note, created_at) VALUES ($1, $2, NULL, 'paid', $3, NOW())`, [req.params.chit_id, entity_id, 'Paid · ' + payment.method + (payment.ref ? ' · ' + payment.ref : '') + (payment.amount != null ? ' · ' + payment.amount : '')])); } catch (_) {}
+    res.json({ message: 'Payment recorded', payment });
+  } catch (err) { res.status(500).json({ error: 'Payment failed', message: safeErr(err) }); }
+});
+router.delete('/:chit_id/payment', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const r = await withEntity(entity_id, (db) => db.query(`UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`, [req.params.chit_id, entity_id]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Payment cleared' });
+  } catch (err) { res.status(500).json({ error: 'Payment clear failed', message: safeErr(err) }); }
+});
+
 router.put('/:chit_id/status',
   [
     body('status')
