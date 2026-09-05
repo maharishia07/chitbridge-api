@@ -34,6 +34,10 @@ const auth = async (req, res, next) => {
       const ok = await keyListed(decoded.identity_id, decoded.jti);
       if (!ok) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
       req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [] };
+      /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
+      const url = String(req.originalUrl || req.url || '').split('?')[0], m = req.method;
+      const allowed = req.api_key.scopes.some((sc) => (KEY_ROUTES[sc] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
+      if (!allowed) return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
     }
 
     // Attach identity to request
@@ -159,6 +163,12 @@ const auth = async (req, res, next) => {
 
 module.exports = auth;
 
+/** what each scope opens — method + path; a route not listed here is closed to keys whatever else they pass */
+const KEY_ROUTES = {
+  offers:    [['*', /^\/api\/offers(\/|$)/]],
+  connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
+              ['GET', /^\/api\/chits\/(inbox|pulse|[0-9a-f-]{36})$/], ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/]],
+};
 const _keyCache = new Map();   // jti → { ok, at }
 async function keyListed(entity_id, jti) {
   if (!jti) return false;
