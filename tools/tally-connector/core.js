@@ -141,6 +141,7 @@ async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
   const p = { chit_id, at: pay.at, method: pay.method, ref: pay.ref, amount: pay.amount != null ? Number(pay.amount) : order.total, buyer: order.buyer, order: { their_ref: o.their_ref || null, their_id: o.their_id || null, their_party: o.their_party || null } };
   if (!adapter.pushReceipt) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: adapter.name + ' has no pushReceipt' }); return { chit_id, outcome: 'skipped' }; }
   try { const r = await adapter.pushReceipt(p);
+    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
     if (r && r.skipped) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: r.skipped }); log('receipt ' + chit_id.slice(0, 8) + ' skipped: ' + r.skipped); return { chit_id, outcome: 'skipped', why: r.skipped }; }
     receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null }); log('receipt ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
   catch (e) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('receipt ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
@@ -151,7 +152,11 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   const c = await cb.chit(chit_id);
   const order = orderOf(c);
   if (order.purpose && !/^(order|offer)$/.test(order.purpose)) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'purpose ' + order.purpose }); return { chit_id, outcome: 'skipped' }; }
-  try { const r = await adapter.pushOrder(order); receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
+  try { const r = await adapter.pushOrder(order);
+    /* ⚠️ A DRY RUN IS NOT A PUSH (first live day, 2026-09-05): it used to write outcome 'ok' with their_ref 'dry-run', and the
+       real `once` then said "already pushed". A dry run leaves a 'dry' receipt — visible in the file, never a duplicate. */
+    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
+    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
   catch (e) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: e.message }); log('order ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
 }
 /** catch-up: every received order in the inbox without an ok receipt */
