@@ -103,6 +103,13 @@ it('a quantity break by PERCENTAGE is price-independent: 10% from 5 gives ₹180
   assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money })[0].promise, '₹180.00 each from 5');
 });
 
+it('free shipping from an amount: below it a note says how far to go, at it the shipping goes free', () => {
+  const o = { id: 'fs', label: 'Free delivery', kind: 'shipping', free: true, min_amount: 500 };
+  const under = ev([L('a', 200, 2)], [o], { shipping: 60 });
+  assert.strictEqual(under.shipping, 60); assert.strictEqual(under.notes.length, 1); assert.strictEqual(under.notes[0].shortfall, 100);
+  const over = ev([L('a', 200, 3)], [o], { shipping: 60 }); assert.strictEqual(over.shipping, 0);
+});
+
 console.log('— stacking and exclusivity —');
 it('stacking is on the RUNNING amount (industry standard): 10% then 10% on 200 → 180 → 162, not 160', () => {
   const r = ev([L('a', 200, 1)], [{ id: 'p1', label: 'A 10%', kind: 'percent_off', percent: 10, scope: 'line' }, { id: 'p2', label: 'B 10%', kind: 'percent_off', percent: 10, scope: 'line' }]);
