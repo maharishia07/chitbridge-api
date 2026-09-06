@@ -99,8 +99,8 @@ it('a quantity break by PERCENTAGE is price-independent: 10% from 5 gives ₹180
   assert.strictEqual(ev([L('a', 200, 5)], [o]).total, 900);          /* 5 × 180 */
   assert.strictEqual(ev([L('b', 80, 5)], [o]).total, 360);           /* 5 × 72 */
   assert.strictEqual(ev([L('a', 200, 4)], [o]).adjustments.length, 0);
-  assert.strictEqual(eng.promise(o, { now: new Date(), money }), '10% off from 5');
-  assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money })[0].promise, '₹180.00 each from 5');
+  assert.strictEqual(eng.promise(o, { now: new Date(), money }), '10% off from 5');   /* a percentage ladder speaks percentages */
+  assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money })[0].promise, '10% off from 5');
   assert.match(ev([L('a', 200, 5)], [o]).adjustments[0].why, /10% off · ₹200.00 → ₹180.00 each/);   /* the applied line says the percentage */
   assert.match(ev([L('a', 200, 10)], [{ id: 'tq', label: 'Bulk', kind: 'tier_price', tiers: [{ qty: 10, price: 170 }] }]).adjustments[0].why, /15% off/);   /* worked out when the slab was a price */
 });
@@ -220,6 +220,13 @@ it('a spend threshold is cart level only: no row advertises it; the basket still
   const o = { id: 'th', label: 'Spend 500', kind: 'threshold', min_amount: 500, percent: 10 };
   assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money }).length, 0);
   const r = ev([L('a', 200, 1)], [o]); assert.strictEqual(r.notes[0].shortfall, 300);
+});
+
+it('a ladder of percentage slabs says the ladder: "5% off from 3, up to 15% off"; a ladder of prices says the price each', () => {
+  const pctLadder = { id: 'tl', label: 'Bulk', kind: 'tier_price', tiers: [{ qty: 3, percent: 5 }, { qty: 7, percent: 10 }, { qty: 12, percent: 15 }] };
+  assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [pctLadder], { now: new Date(), money })[0].promise, '5% off from 3, up to 15% off');
+  const priceLadder = { id: 'tp2', label: 'Bulk', kind: 'tier_price', tiers: [{ qty: 5, price: 180 }, { qty: 10, price: 160 }] };
+  assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [priceLadder], { now: new Date(), money })[0].promise, '₹180.00 each from 5 (2 price breaks)');
 });
 
 console.log('— what the outlets read —');
