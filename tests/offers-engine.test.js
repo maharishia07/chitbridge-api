@@ -214,6 +214,12 @@ it('a quantity break is never advertised on a row it cannot help: ₹180 from 5 
   assert.strictEqual(ev([L('b', 80, 10)], [o]).adjustments.length, 0);   /* and it never fires there either */
 });
 
+it('a spend threshold is cart level only: no row advertises it; the basket still says how far to go', () => {
+  const o = { id: 'th', label: 'Spend 500', kind: 'threshold', min_amount: 500, percent: 10 };
+  assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money }).length, 0);
+  const r = ev([L('a', 200, 1)], [o]); assert.strictEqual(r.notes[0].shortfall, 300);
+});
+
 console.log('— what the outlets read —');
 it('perLine: line-scope amounts summed per line, every offer id listed, basket-scope excluded', () => {
   const lines = [L('a', 200, 1), L('b', 100, 1)];
