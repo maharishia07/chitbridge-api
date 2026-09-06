@@ -24,6 +24,21 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
 (async () => {
   if (!cmd || cmd === 'help') { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(1, 10).join('\n')); return; }
   const cfgFile = path.resolve(flag('config', 'connector.json'));
+  /* ⭐ RESTART WITH NOBODY THERE (Athi, 2026-09-06: "if the connector fails or stops running, how will that be restarted? no one will be there").
+     Adopt the operating system: a Task Scheduler task starts the watcher every 5 minutes; Task Scheduler's default (do not start a new
+     instance) means it only ever starts when the watcher is NOT running — a crash, a reboot, a closed window all heal within 5 minutes. */
+  if (cmd === 'install' || cmd === 'uninstall') {
+    const taskName = 'ChitBridge connector ' + path.basename(cfgFile, '.json');
+    if (process.platform !== 'win32') { console.log('install registers a Windows scheduled task. On Linux/macOS run the watcher under systemd or launchd — see docs/'); return; }
+    const sp = require('child_process').spawnSync;
+    if (cmd === 'uninstall') { const r = sp('schtasks', ['/Delete', '/F', '/TN', taskName], { encoding: 'utf8' }); console.log(r.status === 0 ? 'Removed "' + taskName + '"' : (r.stderr || r.stdout)); return; }
+    const tr = 'cmd /c cd /d "' + __dirname + '" && node index.js watch --config "' + cfgFile + '" >> watch.log 2>&1';
+    const r = sp('schtasks', ['/Create', '/F', '/SC', 'MINUTE', '/MO', '5', '/TN', taskName, '/TR', tr], { encoding: 'utf8' });
+    console.log(r.status === 0
+      ? 'Registered "' + taskName + '": Task Scheduler starts the watcher every 5 minutes whenever it is not running (crash, reboot, closed window). Log: watch.log. Remove: node index.js uninstall'
+      : 'Could not register the task: ' + (r.stderr || r.stdout || r.error));
+    return;
+  }
   const cfg = core.loadConfig(cfgFile); cfg._configFile = cfgFile; cfg.dry = !!flag('dry', false); cfg.log = log;
   const adapterName = flag('adapter', cfg.adapter || 'tally');
   const adapter = require('./adapters/' + adapterName)(cfg);

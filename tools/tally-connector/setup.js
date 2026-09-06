@@ -75,6 +75,7 @@ const cfgFile = path.join(here, 'connector.json');
       if (typeof ad.readProfile === 'function') { const p = await core.syncProfile({ cb, adapter: ad, receipts, log: (m) => console.log('  · ' + m) }); if (p) console.log('  Profile: ' + (p.written || []).length + ' field(s) copied · ' + p.filled + '/' + p.total + ' filled'); }
     } catch (e) { console.log('  first sync failed: ' + e.message + ' — fix and run: node index.js sync-products --config connector.json'); }
   }
+  console.log('\nTo keep it running with nobody there (Windows):  node index.js install --config connector.json');
   console.log('\nNext:\n  node index.js watch --config connector.json' + (out.syncMinutes ? ' --sync-minutes ' + out.syncMinutes : '') + (out.stockMinutes ? ' --stock-minutes ' + out.stockMinutes : '') + '\n    (leave it running — orders land in ' + adapter + ' as they arrive; Settings › Integrations shows it checking in)\n  node index.js once --config connector.json --dry     (see the first voucher before it is posted)\n');
   rl.close();
 })().catch((e) => { console.error('setup: ' + (e && e.message)); rl.close(); process.exit(1); });
