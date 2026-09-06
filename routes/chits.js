@@ -1759,6 +1759,21 @@ router.get('/:chit_id', auth, async (req, res) => {
                    versions: chain.length };
         })
       : amend.liveSet(_lines, amd.amendments);
+    /**
+     * ⭐⭐ THE PRICED FACTS RIDE THE LIVE LINE ([PAR-03], 2026-09-06). The live set is read from the line TABLE, which has columns for
+     * particulars · quantity · unit · price · total and none for what the send wrote onto the line JSON — discount · offer · gst_rate ·
+     * tax name · sku · item_id · hsn. The header knew ₹360 (total_value) while every row said ₹200 × 2 = ₹400 and no GST. Merged by
+     * position while the two still line up one-to-one (the same rule the client already used for the stock stamp), and only where
+     * the table row is silent — an amendment that changed a price keeps its own value.
+     */
+    try {
+      const KEEP = ['discount', 'offer', 'gst_rate', 'cess_rate', 'tax_name', 'tax_scheme', 'tax_slab_name', 'tax_source', 'hsn', 'sku', 'item_id', 'code'];
+      if (Array.isArray(_lines) && Array.isArray(_live) && _lines.length === _live.length) {
+        _live.forEach((e, i) => { const j = _lines[i]; if (!j || !e) return;
+          [e.live, e.original].forEach((tgt) => { if (!tgt || typeof tgt !== 'object') return; KEEP.forEach((k) => { if ((tgt[k] === undefined || tgt[k] === null) && j[k] !== undefined && j[k] !== null) tgt[k] = j[k]; }); });
+        });
+      }
+    } catch (_) {}
 
     _mark('assemble');
     res.json({
