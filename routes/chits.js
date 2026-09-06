@@ -422,6 +422,7 @@ router.post('/send',
        * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
        * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
        */
+      let offersApplied = [];   /* what the seller's live offers did to these lines (line + cart scope) — recorded on the summary */
       try {
         const bj = business_json || {};
         const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
@@ -429,7 +430,7 @@ router.post('/send',
         if (bj.customer || bj.via || toSelf || orderLike) {
           const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
           const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
-          if (r && r.items) line_items = r.items;
+          if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
         }
       } catch (_) { /* no offers, no change */ }
       const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
@@ -671,6 +672,7 @@ router.post('/send',
       const summary_json = mint.summary({
         line_item_count: summary.line_item_count,
         total_value: summary.total_value,
+        offers: offersApplied,
         currency_code,
         priority_external: ext_priority,
         purpose,
