@@ -874,14 +874,35 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
 });
 
 // UPDATE — edit a product
+/** RFC 7386 merge-patch: an object merges key by key, null deletes a key, anything else replaces. The catalogue standard we adopted
+ *  (golden records, PIM-on-MDM) — and the only safe way for a form that edits ONE field to write. */
+function mergePatch(target, patch) {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return patch;
+  const out = (target && typeof target === 'object' && !Array.isArray(target)) ? Object.assign({}, target) : {};
+  for (const k of Object.keys(patch)) { if (patch[k] === null) delete out[k]; else out[k] = mergePatch(out[k], patch[k]); }
+  return out;
+}
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    /**
+     * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client
+     * comment claimed it merged). The exposure pane sent the whole item_data it had loaded minutes earlier, so a rate set in between
+     * (by the API, the connector, another person) was silently written back off the record — the reset that 'lost' the 5%. With
+     * merge:true the body is an RFC 7386 patch against the stored item_data: send the one key, null removes it, nothing else moves.
+     * Without the flag the old contract holds for the editors that send the whole record on purpose.
+     */
+    let bodyItem = req.body.item_data;
+    if (req.body.merge === true) {
+      const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [req.params.id, entity_id]));
+      if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
+      bodyItem = mergePatch(cur.rows[0].item_data || {}, req.body.item_data);
+    }
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
        validated and wrote the raw body, so a key added on edit — through the API, or through a form that renders
        declared columns and will one day render one more — could land undeclared again. Same writer, same rule. */
     const decl = await catcols.ensureDeclared({
-      query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: req.body.item_data,
+      query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: bodyItem,
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: (data, rows) => validateAgainst(rows, data),
     });
