@@ -8,7 +8,8 @@
 1. **Tally**: F1 (Help) › Settings › Connectivity › Client/Server: **TallyPrime acts as Both**, **Enable ODBC: Yes**, port **9000**. Keep the company open. Check: open http://localhost:9000 in a browser on that PC — Tally replies with a short page.
 2. **Download** the kit from ChitBridge › Settings › Integrations › Connectors › Tally while signed in — **your key is inside**. Unzip on the Tally PC (for example `C:\chitbridge-connector`).
 3. **Double-click start.cmd.** It installs Node.js if the PC has none (say yes to the Windows prompt), asks a few questions (where Tally listens, company, ledgers, Educational edition), tests both ends, syncs your products, registers itself to run on its own, and starts watching.
-4. **How you know it worked**: the window prints `Products: read N · added N`; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows the connector as **live** with a "last seen" a moment ago. Place a test order from the storefront: the voucher appears in Tally › Day Book within seconds.
+4. **Approve this PC** (once): ChitBridge › Settings › Integrations › Running connectors shows "<this PC> · <your Tally company> · waiting for approval" → **Approve this PC**. It happens by itself when your Tally company's GSTIN equals the GSTIN on your ChitBridge profile. A kit that lands on the wrong store's PC never gets past this step: a different GSTIN stops it, and an unknown PC waits for you.
+5. **How you know it worked**: the window prints `Products: read N · added N`; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows the connector as **live** with a "last seen" a moment ago. Place a test order from the storefront: the voucher appears in Tally › Day Book within seconds.
 
 ## 1. Tally
 Gateway of Tally › F1 (Help) › Settings › Connectivity › Client/Server configuration: set **TallyPrime acts as: Both**, **Enable ODBC**: Yes, port **9000**. Keep the company you want to sync open.
@@ -48,6 +49,8 @@ Once: `node index.js install --config connector.json` — a Windows scheduled ta
 | `Checking Tally … FAILED` | Tally's port is off, or the company is not open | Tally: F1 › Settings › Connectivity › acts as Both, ODBC on, port 9000; open the company; the browser test at http://localhost:9000 |
 | `Voucher date is missing` | the free Educational edition accepts only the 1st, 2nd and 31st | answer **y** to "Educational edition" in setup (or `"eduDates": true` in connector.json) |
 | the connector shows **offline** in Settings › Integrations | the watcher is not running | double-click start.cmd, or run `node index.js install` once so Windows restarts it |
+| `waiting for approval` in the window · the row says **waiting for approval** | this PC is not yet approved for this account | Settings › Integrations › Running connectors › Approve this PC (check the PC name and Tally company beside it) |
+| `STOP — gstin mismatch` | the Tally company belongs to a different GSTIN than this ChitBridge account | you are on the wrong store's PC, or signed into the wrong account — download the kit from the right account |
 | an order arrived but no voucher | Tally was closed at that moment | nothing — it is retried every 5 minutes and lands once Tally is open |
 
 ## If Tally refuses a voucher

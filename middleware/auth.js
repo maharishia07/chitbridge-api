@@ -31,11 +31,16 @@ const auth = async (req, res, next) => {
     /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
        the token's own expiry says. One read per request, cached a minute per jti. */
     if (decoded.kind === 'api_key') {
-      const ok = await keyListed(decoded.identity_id, decoded.jti);
-      if (!ok) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
-      req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [] };
-      /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
+      const rec = await keyListed(decoded.identity_id, decoded.jti);
+      if (!rec) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
+      req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [], enrol: (rec && rec.enrol) || null };
       const url = String(req.originalUrl || req.url || '').split('?')[0], m = req.method;
+      /* ⭐ ENROLMENT (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"):
+         a connector key whose kit has NOT been approved for its PC may only heartbeat (routes/integrations.js decides; the owner
+         approves on Settings › Integrations). Everything else answers 403 with `pending:true` so the kit can say why it waits. */
+      if (rec && rec.enrol && rec.enrol.approved === false && !/^\/api\/integrations\/heartbeat$/.test(url))
+        return res.status(403).json({ error: 'Forbidden', pending: true, message: 'This connector is waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC' + (rec.enrol.host ? ' (' + rec.enrol.host + ')' : '') + (rec.enrol.reason ? ' · ' + rec.enrol.reason : '') });
+      /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
       const allowed = req.api_key.scopes.some((sc) => (KEY_ROUTES[sc] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
       if (!allowed) return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
     }
@@ -173,14 +178,15 @@ const KEY_ROUTES = {
   connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['POST', /^\/api\/products\/availability\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
               ['GET', /^\/api\/chits\/(inbox|sent|pulse|[0-9a-f-]{36})$/] /* sent: the buyer's connector books its purchases */, ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */, ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/], ['POST', /^\/api\/integrations\/profile$/], ['GET', /^\/api\/integrations\/profile-map$/]],
 };
-const _keyCache = new Map();   // jti → { ok, at }
+const _keyCache = new Map();   // jti → { ok: the key's listing record (or false), at }
+auth.forgetKey = (jti) => { _keyCache.delete(String(jti)); };   /* an approval must not wait a minute for the cache (routes/integrations.js) */
 async function keyListed(entity_id, jti) {
   if (!jti) return false;
   const c = _keyCache.get(jti); if (c && Date.now() - c.at < 60000) return c.ok;
   let ok = false;
   try { const { query } = require('../db'); const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
         const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
-        ok = Array.isArray(list) && list.some((k) => k && String(k.jti) === String(jti)); } catch (_) { ok = false; }
+        ok = (Array.isArray(list) && list.find((k) => k && String(k.jti) === String(jti))) || false; } catch (_) { ok = false; }
   _keyCache.set(jti, { ok, at: Date.now() }); return ok;
 }
 /** requireScope('offers') — a session may do anything; a key only what it was minted for */

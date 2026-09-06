@@ -269,7 +269,7 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
      service jobs as Sales vouchers into a company that has no such stock items). The seller side runs for seller/both. */
   const sells = !/^buyer$/.test(String(role || 'seller'));
   if (sells) await catchUp({ cb, adapter, receipts, log });
-  const beat = () => cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching' });
+  const beat = () => cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching', tally: cb.tally || {} });
   await beat(); const hb = setInterval(beat, 5 * 60 * 1000); if (signal) signal.addEventListener('abort', () => clearInterval(hb));
   let backoff = 3000;
   while (!(signal && signal.aborted)) {

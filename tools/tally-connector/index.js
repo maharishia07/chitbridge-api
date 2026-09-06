@@ -44,7 +44,21 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   const adapter = require('./adapters/' + adapterName)(cfg);
   const cb = new core.CB({ api: cfg.api, key: cfg.key, log }); cb.name = cfg.name || (adapterName + ' connector');
   const receipts = new core.Receipts(cfg.receipts);
-  if (cmd !== 'help') cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd });
+  /* ⭐ THE HANDSHAKE, KEPT: every run reports this PC and the Tally company; a kit not yet approved for this PC waits (watch: a minute
+     at a time, so approving in the browser makes it go live with nobody at the store PC) or stops (any other command); a GSTIN that
+     differs from the account's stops it for good — wrong store, or wrong account. Server side: routes/integrations.js heartbeat. */
+  if (cmd !== 'help') {
+    let facts = {}; try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); facts = { company: p.trade_name || null, gstin: p.gstin || null }; } } catch (_) {}
+    cb.tally = facts;
+    const gate = async () => {
+      const hb = await cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd, tally: facts });
+      if (!hb || hb.approved !== false) return true;
+      if (/mismatch/.test(hb.reason || '')) { log('STOP — ' + hb.reason + '. This PC\'s Tally company does not belong to this ChitBridge account; nothing will be synced.'); process.exit(3); }
+      log('waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC (' + require('os').hostname() + (facts.company ? ' · ' + facts.company : '') + ')');
+      return false;
+    };
+    while (!(await gate())) { if (cmd !== 'watch') process.exit(4); await new Promise((r) => setTimeout(r, 60000)); }
+  }
   if (cmd === 'sync-products') { const r = await core.syncProducts({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }
   if (cmd === 'sync-profile') { const r = await core.syncProfile({ cb, adapter, receipts, log }); console.log(JSON.stringify(r && { written: r.written, kept: r.kept, filled: r.filled, total: r.total, issues: r.issues })); return; }

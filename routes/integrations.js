@@ -78,7 +78,7 @@ router.get('/download/:id', authIfOffered, async (req, res) => {
                 tally: { url: 'http://localhost:9000', company: null, partyLedger: 'Cash', salesLedger: 'Sales', voucherType: 'Sales' }, csv: { products: 'products.csv', orders: 'orders' },
                 zoho: { base: 'https://www.zohoapis.in', org: 'YOUR ORGANISATION ID', token: 'YOUR ACCESS TOKEN', customer_name: 'Walk-in' } };
   const files = kitFiles(adapter).concat([{ name: 'chitbridge-connector/connector.json', data: JSON.stringify(cfg, null, 2) + '\n' },
-    { name: 'chitbridge-connector/START.txt', data: 'ChitBridge connector — ' + c.name + '\n\n1. On the Tally PC: F1 › Settings › Connectivity › TallyPrime acts as Both · Enable ODBC: Yes · port 9000. Keep the company open.\n2. Double-click start.cmd in this folder. That is all.\n   It installs Node.js if the PC has none, asks a few questions (where Tally listens, company, ledgers, Educational edition), tests both ends,\n   syncs your products, registers itself to run on its own (Windows restarts it after a crash or reboot) and starts watching for orders.\n\nYour key is already inside connector.json' + (minted ? ' (Settings › Integrations › Your keys: "' + minted.name + '", last4 ' + minted.last4 + ')' : ' — no: this zip was fetched without signing in; paste a key from Settings › Integrations, scope connector') + '. Keep this folder private.\n\nHOW YOU KNOW IT WORKED: the window prints Products: read N; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows this connector as live.\n\nEverything else, with a table of what each failure message means: docs/' + c.id + '.md\n' }]);
+    { name: 'chitbridge-connector/START.txt', data: 'ChitBridge connector — ' + c.name + '\n\n1. On the Tally PC: F1 › Settings › Connectivity › TallyPrime acts as Both · Enable ODBC: Yes · port 9000. Keep the company open.\n2. Double-click start.cmd in this folder. That is all.\n   It installs Node.js if the PC has none, asks a few questions (where Tally listens, company, ledgers, Educational edition), tests both ends,\n   syncs your products, registers itself to run on its own (Windows restarts it after a crash or reboot) and starts watching for orders.\n\nYour key is already inside connector.json' + (minted ? ' (Settings › Integrations › Your keys: "' + minted.name + '", last4 ' + minted.last4 + ')' : ' — no: this zip was fetched without signing in; paste a key from Settings › Integrations, scope connector') + '. Keep this folder private.\n\n3. Approve this PC once in ChitBridge › Settings › Integrations › Running connectors (it shows this PC and your Tally company; automatic when the Tally GSTIN equals your profile GSTIN).\n\nHOW YOU KNOW IT WORKED: the window prints Products: read N; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows this connector as live.\n\nEverything else, with a table of what each failure message means: docs/' + c.id + '.md\n' }]);
   const buf = zip(files);
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', 'attachment; filename="chitbridge-connector-' + c.id + '.zip"');
@@ -90,15 +90,41 @@ function health(last_seen) { if (!last_seen) return 'offline'; const age = Date.
 const KIT_ROWS = `SELECT identity_id, display_name, site, last_seen, connector_type, connector_config, status, created_at
                     FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND status = 'active'`;
 function rowOut(a) { const c = a.connector_config || {}; return { id: c.kit_id || a.identity_id, actor_id: a.identity_id, name: a.display_name, adapter: c.adapter || (a.connector_type === 'erp' ? 'erp' : a.connector_type), host: a.site || '', version: c.version || '',
-  key_jti: c.key_jti || null, last_seen: a.last_seen, health: health(a.last_seen), counters: c.counters || {}, note: c.note || '', kit: !!c.kit }; }
+  key_jti: c.key_jti || null, last_seen: a.last_seen, health: health(a.last_seen), counters: c.counters || {}, note: c.note || '', kit: !!c.kit, enrol: c.enrol || null }; }
 
 router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req); const b = req.body || {};
     const kit_id = String(b.id || ((b.name || 'connector') + '@' + (b.host || 'unknown'))).slice(0, 120);
     const name = String(b.name || 'connector').slice(0, 80), host = String(b.host || '').slice(0, 80);
+    /* ⭐ THE HANDSHAKE (Athi, 2026-09-06: "if I sign into my account on another store's PC and run the installer… there should be an
+       authentication process — how does the handshake happen that this is the right store and the right installation?"). Decided here,
+       enforced in middleware/auth.js. A connector key is approved for ONE PC (host). In order:
+         1. the owner already approved THIS PC by hand → approved (their decision stands, whatever the GSTINs say);
+         2. the Tally company's GSTIN equals the account's → approved (the strongest proof of the right store, nobody clicks);
+         3. both have a GSTIN and they differ → pending, and the reason says so loudly (wrong store, or wrong account);
+         4. approved earlier on THIS PC → still approved;  5. approved earlier on ANOTHER PC → pending again ("new PC");
+         6. nothing known → pending: Settings › Integrations › Running connectors › Approve this PC (host · Tally company). */
+    const keysMod = require('./keys'); const jti = req.api_key && req.api_key.jti; let enrol = null;
+    if (jti) {
+      const list = await keysMod.listOf(entity_id); const rec = list.find((k) => k && String(k.jti) === String(jti)) || null;
+      const prior = (rec && rec.enrol) || null; const t = (b.tally && typeof b.tally === 'object') ? b.tally : {};
+      const norm = (g) => String(g || '').replace(/\s/g, '').toUpperCase();
+      const me = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] }));
+      const myG = norm(me.rows[0] && me.rows[0].gstn), theirG = norm(t.gstin); const sameHost = !!(prior && prior.host && host && prior.host === host);
+      let approved, reason;
+      if (prior && prior.approved === true && prior.approved_by && sameHost) { approved = true; reason = 'approved by the owner'; }
+      else if (myG && theirG && myG === theirG) { approved = true; reason = 'gstin match'; }
+      else if (myG && theirG) { approved = false; reason = 'gstin mismatch — Tally company says ' + theirG + ', this account says ' + myG + ' (wrong store, or wrong account)'; }
+      else if (prior && prior.approved === true && (sameHost || !prior.host || !host)) { approved = true; reason = prior.reason || 'approved'; }
+      else if (prior && prior.approved === true) { approved = false; reason = 'new PC ' + host + ' — the approved PC was ' + prior.host; }
+      else { approved = false; reason = 'awaiting approval'; }
+      enrol = { approved, reason, host: host || null, company: String(t.company || '').slice(0, 120) || null, gstin: theirG || null, at: new Date().toISOString(),
+                approved_by: (prior && prior.approved_by) || null, approved_at: (prior && prior.approved_at) || null };
+      if (rec) await keysMod.setEnrol(entity_id, jti, enrol);
+    }
     const patchCfg = { kit: true, kit_id, adapter: String(b.adapter || '').slice(0, 40), version: String(b.version || '').slice(0, 20), key_jti: (req.api_key && req.api_key.jti) || null,
-                       counters: (b.counters && typeof b.counters === 'object') ? b.counters : {}, note: String(b.note || '').slice(0, 200) };
+                       counters: (b.counters && typeof b.counters === 'object') ? b.counters : {}, note: String(b.note || '').slice(0, 200), enrol };
     const have = await query(`SELECT identity_id FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND connector_config->>'kit_id' = $2`, [entity_id, kit_id]);
     let actor_id = have.rows[0] && have.rows[0].identity_id, created = false;
     if (!actor_id) {
@@ -114,7 +140,21 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
       await query(`UPDATE identities SET last_seen = NOW(), display_name = $2, site = COALESCE($3, site), connector_config = COALESCE(connector_config,'{}'::jsonb) || $4::jsonb,
                      actor_type = 'connector', max_tasks = 0 WHERE identity_id = $1`, [actor_id, name, host || null, JSON.stringify(patchCfg)]);
     }
-    res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString() });
+    res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString(), approved: enrol ? enrol.approved : true, reason: enrol ? enrol.reason : null });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+/** the owner approves a PC (session only): the key behind that connector row may now do its work; a later heartbeat from the same host stays approved */
+router.post('/:actor_id/approve', auth, async (req, res) => {
+  try {
+    if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'A key cannot approve itself — sign in.' });
+    const entity_id = auth.entityOf(req);
+    const r = await query(`SELECT identity_id, site, connector_config FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [req.params.actor_id, entity_id]);
+    const a = r.rows[0]; if (!a) return res.status(404).json({ error: 'Not found' });
+    const c = a.connector_config || {}; if (!c.key_jti) return res.status(400).json({ error: 'No key', message: 'This connector has no key to approve' });
+    const patch = { approved: true, reason: 'approved by the owner', host: (c.enrol && c.enrol.host) || a.site || null, approved_by: req.identity.identity_id, approved_at: new Date().toISOString() };
+    const enrol = await require('./keys').setEnrol(entity_id, c.key_jti, patch);
+    await query(`UPDATE identities SET connector_config = COALESCE(connector_config,'{}'::jsonb) || $2::jsonb WHERE identity_id = $1`, [a.identity_id, JSON.stringify({ enrol: Object.assign({}, c.enrol || {}, patch) })]);
+    res.json({ ok: true, enrol });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 router.get('/status', auth, async (req, res) => {

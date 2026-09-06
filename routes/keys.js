@@ -62,6 +62,12 @@ async function mint(entity_id, identity, opts) {
   return Object.assign({ key: token }, rec);
 }
 router.mint = mint;
+router.listOf = listOf;
+/** setEnrol(entity_id, jti, patch) → the key's enrolment record after the patch (null if the key is not listed). Clears the auth cache. */
+router.setEnrol = async (entity_id, jti, patch) => {
+  const keys = await listOf(entity_id); const k = keys.find((x) => x && String(x.jti) === String(jti)); if (!k) return null;
+  k.enrol = Object.assign({}, k.enrol || {}, patch || {}); await save(entity_id, keys); auth.forgetKey(jti); return k.enrol;
+};
 
 router.post('/', auth, sessionOnly, async (req, res) => {
   try {

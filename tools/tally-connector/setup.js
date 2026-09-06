@@ -34,7 +34,7 @@ const cfgFile = path.join(here, 'connector.json');
   /* 1 · the key against ChitBridge */
   process.stdout.write('Checking the key against ' + api + ' … ');
   const cb = new core.CB({ api, key, log: () => {} });
-  try { const r = await cb.call('POST', '/api/integrations/heartbeat', { name: 'setup', adapter, host: require('os').hostname(), version: '1.0.0', note: 'setup' }); console.log('ok (connector ' + (r.created ? 'registered' : 'known') + ')'); }
+  try { const r = await cb.call('POST', '/api/integrations/heartbeat', { name: cfg.name || (adapter + ' connector'), adapter, host: require('os').hostname(), version: '1.0.0', note: 'setup' }); console.log('ok (connector ' + (r.created ? 'registered' : 'known') + ')'); }
   catch (e) { console.log('FAILED — ' + e.message); console.log('  Mint a key with scope connector and paste it exactly.'); rl.close(); process.exit(1); }
 
   /* 2 · the outside system */
@@ -51,7 +51,16 @@ const cfgFile = path.join(here, 'connector.json');
     const edu = /^y/i.test(await ask('Is this the free Educational edition of Tally? (y/n)', (cfg.tally && cfg.tally.eduDates) ? 'y' : 'n'));
     out.tally = Object.assign({}, cfg.tally || {}, { url, company: company || null, partyLedger: party, salesLedger: sales, bankLedger: bank, cashLedger: cash, eduDates: edu, voucherType: (cfg.tally && cfg.tally.voucherType) || 'Sales' });
     process.stdout.write('Checking Tally at ' + url + ' … ');
-    try { const t = require('./adapters/tally')(Object.assign({ log: () => {} }, out)); const items = await t.readProducts(); console.log('ok — ' + items.length + ' stock item(s) readable'); }
+    try { const t = require('./adapters/tally')(Object.assign({ log: () => {} }, out)); const items = await t.readProducts(); console.log('ok — ' + items.length + ' stock item(s) readable');
+      /* ⭐ THE HANDSHAKE (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"): the Tally
+         company's name and GSTIN go up with this PC's name; ChitBridge approves by itself when the GSTIN equals the account's, else the owner
+         approves this PC on Settings › Integrations. A GSTIN that differs stops the setup here — wrong store, or wrong account. */
+      let prof = null; try { prof = await t.readProfile(); } catch (_) {}
+      out.tally.company_seen = prof ? (prof.trade_name || null) : null;
+      const hb = await cb.call('POST', '/api/integrations/heartbeat', { name: cfg.name || (adapter + ' connector'), adapter, host: require('os').hostname(), version: '1.0.0', note: 'setup', tally: prof ? { company: prof.trade_name, gstin: prof.gstin } : {} });
+      if (hb && hb.approved === false && /mismatch/.test(hb.reason || '')) { console.log('\nSTOP — ' + hb.reason + '.\nThis PC\'s Tally company does not belong to the ChitBridge account this kit was downloaded from. Nothing was set up.'); rl.close(); process.exit(1); }
+      if (hb && hb.approved === false) console.log('\nONE MORE STEP: in ChitBridge › Settings › Integrations › Running connectors, approve this PC — "' + require('os').hostname() + (prof && prof.trade_name ? ' · ' + prof.trade_name : '') + '". The connector waits for it and starts by itself.');
+      else if (hb && hb.approved === true) console.log('Approved for this PC (' + (hb.reason || '') + ').'); }
     catch (e) { console.log('FAILED — ' + e.message); console.log('  In Tally: F1 (Help) › Settings › Connectivity › Client/Server: TallyPrime acts as Both, Enable ODBC/XML, port 9000. Keep the company open.'); const go = await ask('Save the settings anyway and try later? (y/n)', 'y'); if (!/^y/i.test(go)) { rl.close(); process.exit(1); } }
   } else if (adapter === 'zoho') {
     out.zoho = Object.assign({}, cfg.zoho || {}, { base: await ask('Zoho API base', (cfg.zoho && cfg.zoho.base) || 'https://www.zohoapis.in'), org: await ask('Organisation id', (cfg.zoho && cfg.zoho.org) || ''), token: await ask('Access token', (cfg.zoho && cfg.zoho.token) || ''), customer_name: await ask('Customer name for storefront orders', (cfg.zoho && cfg.zoho.customer_name) || 'Walk-in') });
