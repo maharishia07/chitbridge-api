@@ -349,12 +349,22 @@ router.post('/send',
              WHERE identity_id = $1 AND status = 'active'`,
             [r.entity_id]
           );
+        } else if (r.bridge || r.bridge_id) {
+          /* ⭐ BY IDENTITY BEFORE BY NAME (Athi, 2026-09-06: renamed tallytest to "Tally Test Shop" on the profile — "now I couldn't send the chit,
+             it says Tally Test Shop not found"). A display name is a VIEW name, free to change; the bridge id and the user id are set once
+             (project-user-id-rule). The Suppliers checkout and Compose now send the id; a name alone is the last resort, kept for typed recipients. */
+          rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE bridge_id = $1 AND status = 'active' AND identity_type = 'entity'`, [String(r.bridge || r.bridge_id).trim()]);
+        } else if (r.user_id) {
+          rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`, [String(r.user_id).trim()]);
         } else if (r.display_name || r.name) {
-          rec = await query(
+          const typed = (r.display_name || r.name).trim();
+          /* a typed handle may be a user id or a bridge id as easily as a name — try those first, then the name */
+          rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR bridge_id = $1) AND status = 'active' AND identity_type = 'entity' LIMIT 1`, [typed]);
+          if (!rec.rows.length) rec = await query(
             `SELECT identity_id, bridge_id, display_name FROM identities
              WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
              AND identity_type = 'entity'`,
-            [(r.display_name || r.name).trim()]
+            [typed]
           );
         }
 
