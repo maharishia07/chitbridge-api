@@ -305,35 +305,6 @@ router.post('/send',
         }
       }
 
-      /**
-       * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
-       * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
-       * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
-       * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
-       * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
-       */
-      try {
-        const shelf = await taxShelf.readShelf(sender_id, { withEntity, query, regionLayer: regional.regionLayer,
-          getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
-        if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face });   /* the Map, as the storefront passes it — see slabOf */
-      } catch (_) { /* rate-less lines are what every chit carried until tonight */ }
-      /**
-       * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
-       * through WhatsApp? check there also — the offer and tax applied correctly"). A counter bill (business_json.customer) and
-       * a captured message (business_json.via — WhatsApp, email, any channel) are sent BY the seller; the storefront applied
-       * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
-       * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
-       */
-      try {
-        const bj = business_json || {};
-        const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
-        /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
-        if (bj.customer || bj.via || toSelf) {
-          const cur = await require('../lib/regional').currencyFor(sender_id).catch(() => 'INR');
-          const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sender_id, currency_code: cur }, line_items, null, { withEntity });
-          if (r && r.items) line_items = r.items;
-        }
-      } catch (_) { /* no offers, no change */ }
       // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
       const prefRow = await query(`SELECT self_copy_pref FROM identities WHERE identity_id = $1`, [sender_id]);
       /**
@@ -423,6 +394,44 @@ router.post('/send',
       //    BOTH copies are mandatory (sender's Order + receiver's Task = the co-held transfer, cb-core-principle), so we
       //    only ever suppress on a PURE self-chit (self is the sole recipient). Every suppression is DECLARED on the chit
       //    via summary_json.copy_policy — the absence is governed + auditable, never a silent gap. ──
+      /**
+       * ⭐⭐ WHO SELLS. Athi, 2026-09-06 10:19 (Chola's order to tallytest: list prices, no offer, no rate — "it has to be the exact cart"):
+       * the rate and the live offers were read from the SENDER's shelf, and the offers only for self/counter/captured chits. An ORDER
+       * is sent by the buyer to the seller — the recipient's shelf and the recipient's offers are the ones that price it, exactly as
+       * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
+       */
+      const orderLike = /^(order|offer)$/.test(String(purpose || ''));
+      const toIds = receiverDetails.filter((r) => r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)).map((r) => String(r.entity_id));
+      const sellerId = (orderLike && toIds.length === 1) ? toIds[0] : sender_id;
+      /**
+       * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
+       * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
+       * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
+       * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
+       * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
+       */
+      try {
+        const shelf = await taxShelf.readShelf(sellerId, { withEntity, query, regionLayer: regional.regionLayer,
+          getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
+        if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face });   /* the Map, as the storefront passes it — see slabOf */
+      } catch (_) { /* rate-less lines are what every chit carried until tonight */ }
+      /**
+       * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
+       * through WhatsApp? check there also — the offer and tax applied correctly"). A counter bill (business_json.customer) and
+       * a captured message (business_json.via — WhatsApp, email, any channel) are sent BY the seller; the storefront applied
+       * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
+       * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
+       */
+      try {
+        const bj = business_json || {};
+        const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
+        /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
+        if (bj.customer || bj.via || toSelf || orderLike) {
+          const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
+          const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity });
+          if (r && r.items) line_items = r.items;
+        }
+      } catch (_) { /* no offers, no change */ }
       const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
       /**
        * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
