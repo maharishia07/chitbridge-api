@@ -113,14 +113,16 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
       const me = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] }));
       const myG = norm(me.rows[0] && me.rows[0].gstn), theirG = norm(t.gstin); const sameHost = !!(prior && prior.host && host && prior.host === host);
       let approved, reason;
-      if (prior && prior.approved === true && prior.approved_by && sameHost) { approved = true; reason = 'approved by the owner'; }
+      /* ⚠️ the owner's approval is FOR ONE HOST (found by INT-01, run 30: the click on STORE-PC rode along to THIRD-PC and let a wrong GSTIN through) */
+      const ownerHere = !!(prior && prior.approved_by && prior.approved_host && host && prior.approved_host === host);
+      if (ownerHere) { approved = true; reason = 'approved by the owner'; }
       else if (myG && theirG && myG === theirG) { approved = true; reason = 'gstin match'; }
       else if (myG && theirG) { approved = false; reason = 'gstin mismatch — Tally company says ' + theirG + ', this account says ' + myG + ' (wrong store, or wrong account)'; }
       else if (prior && prior.approved === true && (sameHost || !prior.host || !host)) { approved = true; reason = prior.reason || 'approved'; }
       else if (prior && prior.approved === true) { approved = false; reason = 'new PC ' + host + ' — the approved PC was ' + prior.host; }
       else { approved = false; reason = 'awaiting approval'; }
       enrol = { approved, reason, host: host || null, company: String(t.company || '').slice(0, 120) || null, gstin: theirG || null, at: new Date().toISOString(),
-                approved_by: (prior && prior.approved_by) || null, approved_at: (prior && prior.approved_at) || null };
+                approved_by: ownerHere ? prior.approved_by : null, approved_at: ownerHere ? prior.approved_at : null, approved_host: ownerHere ? prior.approved_host : null };
       if (rec) await keysMod.setEnrol(entity_id, jti, enrol);
     }
     const patchCfg = { kit: true, kit_id, adapter: String(b.adapter || '').slice(0, 40), version: String(b.version || '').slice(0, 20), key_jti: (req.api_key && req.api_key.jti) || null,
@@ -151,7 +153,8 @@ router.post('/:actor_id/approve', auth, async (req, res) => {
     const r = await query(`SELECT identity_id, site, connector_config FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [req.params.actor_id, entity_id]);
     const a = r.rows[0]; if (!a) return res.status(404).json({ error: 'Not found' });
     const c = a.connector_config || {}; if (!c.key_jti) return res.status(400).json({ error: 'No key', message: 'This connector has no key to approve' });
-    const patch = { approved: true, reason: 'approved by the owner', host: (c.enrol && c.enrol.host) || a.site || null, approved_by: req.identity.identity_id, approved_at: new Date().toISOString() };
+    const hostNow = (c.enrol && c.enrol.host) || a.site || null;
+    const patch = { approved: true, reason: 'approved by the owner', host: hostNow, approved_host: hostNow, approved_by: req.identity.identity_id, approved_at: new Date().toISOString() };
     const enrol = await require('./keys').setEnrol(entity_id, c.key_jti, patch);
     await query(`UPDATE identities SET connector_config = COALESCE(connector_config,'{}'::jsonb) || $2::jsonb WHERE identity_id = $1`, [a.identity_id, JSON.stringify({ enrol: Object.assign({}, c.enrol || {}, patch) })]);
     res.json({ ok: true, enrol });
