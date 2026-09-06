@@ -95,13 +95,21 @@ it('price range is a constraint, not a discount: outside the band → a note, no
 });
 
 console.log('— stacking and exclusivity —');
-it('two line offers stack additively on the list price: 10% + ₹10 on 200 → −30', () => {
-  const r = ev([L('a', 200, 1)], [{ id: 'p', label: 'Flat 10%', kind: 'percent_off', percent: 10, scope: 'line' }, { id: 'm', label: '10 off', kind: 'amount_off', amount: 10, scope: 'line' }]);
-  assert.strictEqual(sum(r), -30); assert.strictEqual(r.total, 170);
+it('stacking is on the RUNNING amount (industry standard): 10% then 10% on 200 → 180 → 162, not 160', () => {
+  const r = ev([L('a', 200, 1)], [{ id: 'p1', label: 'A 10%', kind: 'percent_off', percent: 10, scope: 'line' }, { id: 'p2', label: 'B 10%', kind: 'percent_off', percent: 10, scope: 'line' }]);
+  assert.strictEqual(r.total, 162); assert.strictEqual(r.line_net.a, 162);
 });
-it('a line offer and a basket offer both apply; the basket percent is taken on the LIST value, not the discounted one', () => {
-  const r = ev([L('a', 200, 1)], [{ id: 'p', label: 'Flat 10%', kind: 'percent_off', percent: 10, scope: 'line' }, { id: 'c', label: 'Tier', kind: 'percent_off', percent: 10, scope: 'cart' }]);
-  assert.strictEqual(sum(r, (a) => a.scope === 'line'), -20); assert.strictEqual(sum(r, (a) => a.scope === 'cart'), -20); assert.strictEqual(r.total, 160);
+it('at equal stacking order a percentage runs before an amount: 10% and ₹10 on 200 → 170 whichever way they are listed', () => {
+  const p = { id: 'p', label: 'Flat 10%', kind: 'percent_off', percent: 10, scope: 'line' }, m = { id: 'm', label: '10 off', kind: 'amount_off', amount: 10, scope: 'line' };
+  assert.strictEqual(ev([L('a', 200, 1)], [p, m]).total, 170); assert.strictEqual(ev([L('a', 200, 1)], [m, p]).total, 170);
+  assert.strictEqual(ev([L('a', 200, 1)], [Object.assign({ priority: 1 }, p), Object.assign({ priority: 0 }, m)]).total, 171);   /* an explicit order is obeyed: ₹10 first, then 10% of 190 */
+});
+it('a basket offer is taken on the subtotal AFTER line offers, and allocated across the lines by running net', () => {
+  const r = ev([L('a', 200, 1), L('b', 100, 1)], [{ id: 'p', label: 'Flat 10%', kind: 'percent_off', percent: 10, scope: 'line', applies_to: { item_ids: ['a'] } }, { id: 'c', label: 'Basket 10%', kind: 'percent_off', percent: 10, scope: 'cart' }]);
+  assert.strictEqual(sum(r, (a) => a.scope === 'line'), -20);                 /* a: 200 → 180 */
+  assert.strictEqual(sum(r, (a) => a.scope === 'cart'), -28);                 /* 10% of (180 + 100) */
+  assert.strictEqual(r.line_net.a, 162); assert.strictEqual(r.line_net.b, 90);   /* 18 and 10 allocated by running net */
+  assert.strictEqual(r.cart_shares.a[0].amount, -18); assert.strictEqual(r.cart_shares.b[0].amount, -10); assert.strictEqual(r.total, 252);
 });
 it('EXCLUSIVE means instead of the others: it runs first whatever the stacking numbers say, and the rest are skipped with the reason', () => {
   const r = ev([L('a', 100, 1)], [{ id: 'p', label: 'Flat 10%', kind: 'percent_off', percent: 10, scope: 'line', priority: 0 }, { id: 'x', label: 'Tier 25', kind: 'percent_off', percent: 25, scope: 'cart', exclusive: true, priority: 9 }]);
@@ -116,14 +124,17 @@ it('an exclusive that does NOT fire (wrong group, expired) leaves the others in 
   const stranger = ev([L('a', 100, 1)], offers, { customer_groups: [] }); assert.deepStrictEqual(labels(stranger), ['Flat 10%']); assert.ok(/only for/.test(skippedWhy(stranger, 'Tier 25')));
   const member = ev([L('a', 100, 1)], offers, { customer_groups: ['tier1'] }); assert.deepStrictEqual(labels(member), ['Tier 25']);
 });
-it('non-exclusive offers give the same total whatever order the array lists them in', () => {
+it('the array order never matters: the sort (exclusive · stacking order · percent before amount) decides', () => {
   const a = { id: 'p', label: 'Flat 10%', kind: 'percent_off', percent: 10, scope: 'line' }, b = { id: 'm', label: '10 off', kind: 'amount_off', amount: 10, scope: 'line' }, c = { id: 'c', label: 'Basket 5%', kind: 'percent_off', percent: 5, scope: 'cart' };
   assert.strictEqual(ev([L('a', 200, 2)], [a, b, c]).total, ev([L('a', 200, 2)], [c, b, a]).total);
+  assert.strictEqual(ev([L('a', 200, 2)], [a, b, c]).total, 332.5);   /* 400 → 10% → 360 → ₹10 → 350 → basket 5% of 350 = 17.50 → 332.50 */
 });
-it('the total never goes below zero, and perLine caps a line at its own value', () => {
+it('never below zero: two ₹80 offs on ₹100 give 100 → 20 → 0 (the second capped at the running 20); percentages compound and cannot overshoot', () => {
   const lines = [L('a', 100, 1)];
-  const r = ev(lines, [{ id: 'p1', label: '60% A', kind: 'percent_off', percent: 60, scope: 'line' }, { id: 'p2', label: '60% B', kind: 'percent_off', percent: 60, scope: 'line' }]);
-  assert.strictEqual(r.total, 0); const per = eng.perLine(r, lines); assert.strictEqual(per.a.off, 100); assert.strictEqual(per.a.capped, true);
+  const r = ev(lines, [{ id: 'm1', label: '80 off A', kind: 'amount_off', amount: 80, scope: 'line' }, { id: 'm2', label: '80 off B', kind: 'amount_off', amount: 80, scope: 'line' }]);
+  assert.strictEqual(r.total, 0); assert.strictEqual(eng.perLine(r, lines).a.off, 100); assert.ok(/capped/.test(r.adjustments[1].why));
+  const p = ev(lines, [{ id: 'p1', label: '60% A', kind: 'percent_off', percent: 60, scope: 'line' }, { id: 'p2', label: '60% B', kind: 'percent_off', percent: 60, scope: 'line' }]);
+  assert.strictEqual(p.total, 16); assert.strictEqual(p.line_net.a, 16);
 });
 
 console.log('— who, when, where: the gates —');

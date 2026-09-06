@@ -297,14 +297,20 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
 
 // ── CUSTOMERS (auto-added — D-065; segment computed on read — D-067) ──
 
+/** the seller's named groups — for the Customers pane's chips and the offer editor's "Only for" picker. Before the customers/:id routes. */
+router.get('/customers/groups', auth, async (req, res) => {
+  try { res.json(await customerGroups.namesOf({ seller_id: ctx(req), withEntity })); }
+  catch (err) { res.status(500).json({ error: 'Get groups failed', message: safeErr(err) }); }
+});
 router.get('/customers', auth, async (req, res) => {
   try {
     const owner   = ctx(req);
     const segment = (req.query.segment || '').trim();
     // B1 RLS: customer_list is owner-scoped (owner_entity_id) -> withEntity(me).
-    const r = await withEntity(owner, (db) => db.query(
+    /* the groups column may not be migrated yet: ask with it, and once more without on 42703 */
+    let _g = true; const _run = () => withEntity(owner, (db) => db.query(
       `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
-              cl.txn_count, cl.last_txn_at,
+              cl.txn_count, cl.last_txn_at, ${_g ? 'cl.groups,' : ''}
               i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
               i.email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
               ${customerGroups.SEGMENT_SQL} AS segment
@@ -316,8 +322,9 @@ router.get('/customers', auth, async (req, res) => {
            WHERE sl.owner_entity_id = $1 AND sl.supplier_entity_id = cl.customer_identity_id
          )
        ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]));
-    const rows = segment ? r.rows.filter(c => c.segment === segment) : r.rows;
-    res.json({ customers: rows, count: rows.length });
+    let r; try { r = await _run(); } catch (e) { if (e && e.code === '42703') { _g = false; r = await _run(); } else throw e; }
+    const rows = (segment ? r.rows.filter(c => c.segment === segment) : r.rows).map((c) => Object.assign(c, { groups: Array.isArray(c.groups) ? c.groups : [] }));
+    res.json({ customers: rows, count: rows.length, groups_migrated: _g });
   } catch (err) {
     console.error('Get customers error:', err.message);
     res.status(500).json({ error: 'Get customers failed', message: safeErr(err) });
@@ -355,6 +362,23 @@ router.post('/customers',
       res.status(500).json({ error: 'Add customer failed', message: safeErr(err) });
     }
   });
+
+/**
+ * ⭐ PLACE A CUSTOMER IN NAMED GROUPS (decision 2, 2026-09-06). POST /customers/:id/groups { groups: ['dealers', 'wholesale'] } replaces the
+ * customer's set. Names are cleaned (customer-groups.cleanGroups). Without the migration the answer is 409 and says which file to run.
+ */
+router.post('/customers/:id/groups', auth, async (req, res) => {
+  try {
+    if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to place a customer in a group.' });
+    const owner = ctx(req); const groups = customerGroups.cleanGroups(req.body && req.body.groups);
+    const r = await withEntity(owner, (db) => db.query(`UPDATE customer_list SET groups = $1 WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id, groups`, [groups, req.params.id, owner]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true, groups: r.rows[0].groups });
+  } catch (err) {
+    if (err && err.code === '42703') return res.status(409).json({ error: 'Not migrated', message: 'Named groups need the customer_groups migration (migrations/b205_customer_groups.sql) — run it in the Supabase SQL editor.' });
+    res.status(500).json({ error: 'Set groups failed', message: safeErr(err) });
+  }
+});
 
 // Manual segment override (optional)
 router.patch('/customers/:id',
