@@ -94,6 +94,15 @@ it('price range is a constraint, not a discount: outside the band → a note, no
   assert.strictEqual(r.adjustments.length, 0); assert.ok(/outside/.test(r.notes[0].why)); assert.strictEqual(r.total, 500);
 });
 
+it('a quantity break by PERCENTAGE is price-independent: 10% from 5 gives ₹180 on a ₹200 product and ₹72 on an ₹80 one; the badge says the percentage until the row is known', () => {
+  const o = { id: 'tp', label: 'Bulk %', kind: 'tier_price', tiers: [{ qty: 5, percent: 10 }] };
+  assert.strictEqual(ev([L('a', 200, 5)], [o]).total, 900);          /* 5 × 180 */
+  assert.strictEqual(ev([L('b', 80, 5)], [o]).total, 360);           /* 5 × 72 */
+  assert.strictEqual(ev([L('a', 200, 4)], [o]).adjustments.length, 0);
+  assert.strictEqual(eng.promise(o, { now: new Date(), money }), '10% off from 5');
+  assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money })[0].promise, '₹180.00 each from 5');
+});
+
 console.log('— stacking and exclusivity —');
 it('stacking is on the RUNNING amount (industry standard): 10% then 10% on 200 → 180 → 162, not 160', () => {
   const r = ev([L('a', 200, 1)], [{ id: 'p1', label: 'A 10%', kind: 'percent_off', percent: 10, scope: 'line' }, { id: 'p2', label: 'B 10%', kind: 'percent_off', percent: 10, scope: 'line' }]);
@@ -188,6 +197,14 @@ it('a minimum per PRODUCT (applies_to.min_qty_by_item): grapes need 3, oil needs
   assert.strictEqual(ev([L('a', 100, 3)], [o]).total, 270);
   const fa = eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 100, excluded: [] }, [o], { now: new Date(), money }); assert.strictEqual(fa[0].promise, '10% off 3+');
   const fb = eng.forLine({ item_id: 'b', sku: 'B', categories: [], unitPrice: 100, excluded: [] }, [o], { now: new Date(), money }); assert.strictEqual(fb[0].promise, '10% off');
+});
+
+it('a quantity break is never advertised on a row it cannot help: ₹180 from 5 shows on a ₹200 product, not on an ₹80 one', () => {
+  const o = { id: 't', label: 'Bulk', kind: 'tier_price', tiers: [{ qty: 5, price: 180 }] };
+  const dear = eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money });
+  const cheap = eng.forLine({ item_id: 'b', sku: 'B', categories: [], unitPrice: 80, excluded: [] }, [o], { now: new Date(), money });
+  assert.strictEqual(dear.length, 1); assert.strictEqual(dear[0].promise, '₹180.00 each from 5'); assert.strictEqual(cheap.length, 0);
+  assert.strictEqual(ev([L('b', 80, 10)], [o]).adjustments.length, 0);   /* and it never fires there either */
 });
 
 console.log('— what the outlets read —');
