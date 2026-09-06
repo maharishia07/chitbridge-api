@@ -9,10 +9,13 @@ offers    ◀── /api/offers/explain  ──── ChitBridge engine         
 orders    ◀── the bell (SSE) + catch-up ─ ChitBridge chits  ──▶  adapter.pushOrder(order)   (once, by receipt)
 ```
 
-## Setup
-1. ChitBridge › Settings › Integrations › **Mint a key** — scope `connector`. Copy it once.
+## Setup — the easy way
+Install Node.js (LTS). Tally: F1 › Settings › Connectivity › acts as Both, ODBC on, port 9000. ChitBridge › Settings › Integrations › **Mint a key** (scope `connector`), copy it once. Unzip the kit and **double-click `start.cmd`** — it asks for the key and the ledgers, tests both ends, writes `connector.json`, runs the first sync. Then `node index.js install --config connector.json` once, so Windows keeps it running. The full checklist with a self-test per step: `docs/tally.md` §0.
+
+## Setup — by hand
+1. Mint the key as above.
 2. Copy `connector.example.json` to `connector.json`, paste the key, set the adapter.
-3. Tally: Gateway of Tally › F1 › Settings › Connectivity › enable the XML/ODBC port (default 9000).
+3. Tally: enable the XML/ODBC port (default 9000).
 
 ## Commands (node ≥ 18, no dependencies)
 ```

@@ -4,6 +4,12 @@
 
 **What you need.** A Windows PC with Tally Prime or Tally.ERP 9 and Node.js 18 or newer (nodejs.org, LTS). Outbound internet. Nothing to open on your router.
 
+## 0. The whole installation, in order
+1. **Tally**: F1 (Help) › Settings › Connectivity › Client/Server: **TallyPrime acts as Both**, **Enable ODBC: Yes**, port **9000**. Keep the company open. Check: open http://localhost:9000 in a browser on that PC — Tally replies with a short page.
+2. **Download** the kit from ChitBridge › Settings › Integrations › Connectors › Tally while signed in — **your key is inside**. Unzip on the Tally PC (for example `C:\chitbridge-connector`).
+3. **Double-click start.cmd.** It installs Node.js if the PC has none (say yes to the Windows prompt), asks a few questions (where Tally listens, company, ledgers, Educational edition), tests both ends, syncs your products, registers itself to run on its own, and starts watching.
+4. **How you know it worked**: the window prints `Products: read N · added N`; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows the connector as **live** with a "last seen" a moment ago. Place a test order from the storefront: the voucher appears in Tally › Day Book within seconds.
+
 ## 1. Tally
 Gateway of Tally › F1 (Help) › Settings › Connectivity › Client/Server configuration: set **TallyPrime acts as: Both**, **Enable ODBC**: Yes, port **9000**. Keep the company you want to sync open.
 
@@ -11,7 +17,7 @@ Gateway of Tally › F1 (Help) › Settings › Connectivity › Client/Server c
 Settings › Integrations › Connectors › Tally › **Download · tally**. Then Settings › Integrations › Your keys › scope **connector** › Mint. Copy the key now; it is shown once.
 
 ## 3. The kit — the easy way
-Double-click **start.cmd** (Windows) or run . It asks for the key, where your system listens and the ledgers, tests both ends, writes connector.json, runs the first sync, and prints the next command. Nothing is installed inside Tally or Zoho.
+Double-click **start.cmd** (Windows) or run `node setup.js`. It asks for the key, where your system listens and the ledgers, tests both ends, writes connector.json, runs the first sync, and prints the next command. Nothing is installed inside Tally or Zoho.
 
 ## 3b. The kit — by hand
 Unzip. Open `connector.json` and paste the key. Check `tally.url` (`http://localhost:9000`) and, if you want, `company`, `partyLedger` (default Cash), `salesLedger` (default Sales), `bankLedger` / `cashLedger` (the Receipt voucher when you mark a chit paid) — these must be ledger names that exist in Tally.
@@ -32,10 +38,20 @@ node index.js watch --config connector.json --sync-minutes 30
 Leave this window open. Place an order on your storefront from a phone: within a second the window prints `bell:` and `order → tally created:1`, and the voucher is in Tally (Day Book) with reference `CB-xxxxxxxx`.
 
 ## 5. Every day
-Run `watch` when the PC starts (Task Scheduler › At log on › `node C:\path\index.js watch --config C:\path\connector.json`). `sync-products` whenever you change rates in Tally. Settings › Integrations › Running connectors shows the last time it checked in and what it moved.
+Once: `node index.js install --config connector.json` — a Windows scheduled task starts the watcher every five minutes whenever it is not already running (crash, reboot, closed window); `node index.js uninstall` removes it. (By hand instead: Task Scheduler › At log on › `node C:\path\index.js watch --config C:\path\connector.json`.) `sync-products` whenever you change rates in Tally. Settings › Integrations › Running connectors shows the last time it checked in and what it moved.
+
+## If something does not work — where to look
+| You see | It means | Do |
+|---|---|---|
+| `Node.js is not installed` from start.cmd | no Node on this PC | nodejs.org › LTS › install › run start.cmd again |
+| `Checking the key … FAILED` | the key was not pasted whole, or its scope is not connector | mint a new key (scope connector), paste it in one piece |
+| `Checking Tally … FAILED` | Tally's port is off, or the company is not open | Tally: F1 › Settings › Connectivity › acts as Both, ODBC on, port 9000; open the company; the browser test at http://localhost:9000 |
+| `Voucher date is missing` | the free Educational edition accepts only the 1st, 2nd and 31st | answer **y** to "Educational edition" in setup (or `"eduDates": true` in connector.json) |
+| the connector shows **offline** in Settings › Integrations | the watcher is not running | double-click start.cmd, or run `node index.js install` once so Windows restarts it |
+| an order arrived but no voucher | Tally was closed at that moment | nothing — it is retried every 5 minutes and lands once Tally is open |
 
 ## If Tally refuses a voucher
-The window prints `Tally refused the voucher: …`. The usual causes: a ledger name that does not exist (partyLedger / salesLedger), a stock item whose name differs from the catalogue name, or a company not open. Fix the cause and run `node index.js once` — the order is retried; nothing is duplicated.
+The window prints `Tally refused the voucher: …`. The watcher creates the ledgers it needs (Sales, Cash, Bank) on start; the usual remaining causes: a ledger name you typed that Tally spells differently, a stock item whose name differs from the catalogue name, or a company not open. Fix the cause and run `node index.js once` — the order is retried; nothing is duplicated.
 
 **Honest note.** This adapter was written from Tally's XML contract and proven against a stand-in. Your first live run may show a field Tally names differently; tell us the message and it is a one-line correction.
 

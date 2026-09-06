@@ -38,24 +38,37 @@ router.get('/', auth, sessionOnly, async (req, res) => {
   catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
+/**
+ * mint(entity_id, identity, { name, scopes, days }) → { key, jti, name, scopes, created_at, expires_at, last4 } — the ONE mint.
+ * The POST below calls it, and so does the connector-kit download (routes/integrations.js), which puts the key inside the zip's
+ * connector.json so nobody pastes anything (Athi, 2026-09-06: "download option should autofill everything").
+ * Throws { status, message } on a validation or limit failure.
+ */
+async function mint(entity_id, identity, opts) {
+  opts = opts || {};
+  const name = String(opts.name || '').trim().slice(0, 80) || 'key';
+  const scopes = (Array.isArray(opts.scopes) ? opts.scopes : ['offers']).map(String).filter((s) => SCOPES.includes(s));
+  if (!scopes.length) throw Object.assign(new Error('scopes must include one of: ' + SCOPES.join(', ')), { status: 400 });
+  const days = Math.min(Math.max(Number(opts.days) || 365, 1), 3650);
+  const keys = await listOf(entity_id);
+  if (keys.length >= 20) throw Object.assign(new Error('Twenty keys at most — revoke one first.'), { status: 400 });
+  const jti = crypto.randomBytes(12).toString('hex');
+  const now = Math.floor(Date.now() / 1000), exp = now + days * 86400;
+  const id = identity || {};
+  const token = jwt.sign({ identity_id: entity_id, identity_type: 'entity', bridge_id: id.bridge_id || null, display_name: id.display_name || null,
+                           kind: 'api_key', scopes, jti, iat: now, exp }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+  const rec = { jti, name, scopes, created_at: new Date().toISOString(), expires_at: new Date(exp * 1000).toISOString(), last4: token.slice(-4) };
+  await save(entity_id, keys.concat([rec]));
+  return Object.assign({ key: token }, rec);
+}
+router.mint = mint;
+
 router.post('/', auth, sessionOnly, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const name = String((req.body && req.body.name) || '').trim().slice(0, 80) || 'key';
-    const scopes = (Array.isArray(req.body && req.body.scopes) ? req.body.scopes : ['offers']).map(String).filter((s) => SCOPES.includes(s));
-    if (!scopes.length) return res.status(400).json({ error: 'validation', message: 'scopes must include one of: ' + SCOPES.join(', ') });
-    const days = Math.min(Math.max(Number(req.body && req.body.days) || 365, 1), 3650);
-    const keys = await listOf(entity_id);
-    if (keys.length >= 20) return res.status(400).json({ error: 'limit', message: 'Twenty keys at most — revoke one first.' });
-    const jti = crypto.randomBytes(12).toString('hex');
-    const now = Math.floor(Date.now() / 1000), exp = now + days * 86400;
-    const id = req.identity || {};
-    const token = jwt.sign({ identity_id: entity_id, identity_type: 'entity', bridge_id: id.bridge_id || null, display_name: id.display_name || null,
-                             kind: 'api_key', scopes, jti, iat: now, exp }, process.env.JWT_SECRET, { algorithm: 'HS256' });
-    const rec = { jti, name, scopes, created_at: new Date().toISOString(), expires_at: new Date(exp * 1000).toISOString(), last4: token.slice(-4) };
-    await save(entity_id, keys.concat([rec]));
-    res.status(201).json(Object.assign({ key: token, note: 'Shown once. Send it as Authorization: Bearer <key> or X-Api-Key: <key>.' }, rec));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+    const b = req.body || {};
+    const r = await mint(auth.entityOf(req), req.identity, { name: b.name, scopes: Array.isArray(b.scopes) ? b.scopes : undefined, days: b.days });
+    res.status(201).json(Object.assign({ note: 'Shown once. Send it as Authorization: Bearer <key> or X-Api-Key: <key>.' }, r));
+  } catch (e) { res.status(e && e.status ? e.status : 500).json({ error: e && e.status === 400 ? 'validation' : 'Failed', message: String(e && e.message) }); }
 });
 
 router.delete('/:jti', auth, sessionOnly, async (req, res) => {

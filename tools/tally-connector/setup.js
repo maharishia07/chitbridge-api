@@ -27,7 +27,8 @@ const cfgFile = path.join(here, 'connector.json');
   const api = await ask('ChitBridge API', cfg.api || 'https://chitbridge-api-production.up.railway.app');
   const adapter = (await ask('Which system (tally / zoho / gofrugal / csv)', cfg.adapter || 'tally')).toLowerCase();
   let key = cfg.key && !/PASTE/.test(cfg.key) ? cfg.key : '';
-  if (key) { const keep = await ask('A key is already saved (…' + key.slice(-4) + '). Keep it? (y/n)', 'y'); if (!/^y/i.test(keep)) key = ''; }
+  if (key && cfg.configured === false) console.log('Your key came inside the download (…' + key.slice(-4) + ').');
+  else if (key) { const keep = await ask('A key is already saved (…' + key.slice(-4) + '). Keep it? (y/n)', 'y'); if (!/^y/i.test(keep)) key = ''; }
   while (!key) { key = await ask('Paste the key from Settings › Integrations (scope connector)'); if (!key) console.log('  a key is required — mint one under Settings › Integrations'); }
 
   /* 1 · the key against ChitBridge */
@@ -46,7 +47,9 @@ const cfgFile = path.join(here, 'connector.json');
     /* the Receipt voucher when you mark a chit paid: where the money lands (a cash-sale party needs none) */
     const bank = /^cash$/i.test(party) ? (cfg.tally && cfg.tally.bankLedger) || 'Bank' : await ask('Bank ledger for UPI / card payments (Receipt voucher)', (cfg.tally && cfg.tally.bankLedger) || 'Bank');
     const cash = /^cash$/i.test(party) ? (cfg.tally && cfg.tally.cashLedger) || 'Cash' : await ask('Cash ledger for cash payments', (cfg.tally && cfg.tally.cashLedger) || 'Cash');
-    out.tally = Object.assign({}, cfg.tally || {}, { url, company: company || null, partyLedger: party, salesLedger: sales, bankLedger: bank, cashLedger: cash, voucherType: (cfg.tally && cfg.tally.voucherType) || 'Sales' });
+    /* the free EDU edition takes vouchers dated the 1st, 2nd or 31st only and says "Voucher date is missing" otherwise — asked here so nobody has to read a doc to learn it */
+    const edu = /^y/i.test(await ask('Is this the free Educational edition of Tally? (y/n)', (cfg.tally && cfg.tally.eduDates) ? 'y' : 'n'));
+    out.tally = Object.assign({}, cfg.tally || {}, { url, company: company || null, partyLedger: party, salesLedger: sales, bankLedger: bank, cashLedger: cash, eduDates: edu, voucherType: (cfg.tally && cfg.tally.voucherType) || 'Sales' });
     process.stdout.write('Checking Tally at ' + url + ' … ');
     try { const t = require('./adapters/tally')(Object.assign({ log: () => {} }, out)); const items = await t.readProducts(); console.log('ok — ' + items.length + ' stock item(s) readable'); }
     catch (e) { console.log('FAILED — ' + e.message); console.log('  In Tally: F1 (Help) › Settings › Connectivity › Client/Server: TallyPrime acts as Both, Enable ODBC/XML, port 9000. Keep the company open.'); const go = await ask('Save the settings anyway and try later? (y/n)', 'y'); if (!/^y/i.test(go)) { rl.close(); process.exit(1); } }
@@ -58,9 +61,11 @@ const cfgFile = path.join(here, 'connector.json');
     out.csv = Object.assign({}, cfg.csv || {}, { products: await ask('Products CSV', (cfg.csv && cfg.csv.products) || 'products.csv'), orders: await ask('Folder for order files', (cfg.csv && cfg.csv.orders) || 'orders') });
   }
   /* the side(s) this connector books: seller (orders I receive → Sales), buyer (orders I placed and completed → Purchase), both */
+  console.log('  Role — seller: the orders you RECEIVE become Sales vouchers (the usual case) · buyer: the orders you PLACED become Purchase vouchers · both.');
   out.role = (await ask('Role: seller / buyer / both', cfg.role || 'seller')).toLowerCase();
   out.syncMinutes = Number(await ask('Re-read products every N minutes while watching (0 = off)', String(cfg.syncMinutes || 30))) || 0;
   out.stockMinutes = Number(await ask('Re-read stock every N minutes while watching (0 = off)', String(cfg.stockMinutes || 5))) || 0;
+  out.configured = true;   /* start.cmd reads this: false = run setup first */
   fs.writeFileSync(cfgFile, JSON.stringify(out, null, 2) + '\n');
   console.log('\nSaved ' + cfgFile + ' (the key is stored there — keep this folder private).');
 
@@ -75,7 +80,8 @@ const cfgFile = path.join(here, 'connector.json');
       if (typeof ad.readProfile === 'function') { const p = await core.syncProfile({ cb, adapter: ad, receipts, log: (m) => console.log('  · ' + m) }); if (p) console.log('  Profile: ' + (p.written || []).length + ' field(s) copied · ' + p.filled + '/' + p.total + ' filled'); }
     } catch (e) { console.log('  first sync failed: ' + e.message + ' — fix and run: node index.js sync-products --config connector.json'); }
   }
-  console.log('\nTo keep it running with nobody there (Windows):  node index.js install --config connector.json');
+  console.log('\nCheck: ChitBridge › Catalogue shows your items; Settings › Integrations shows this connector as live.');
+  console.log('\nIf you came here from start.cmd it now registers the background task and starts watching. By hand: node index.js install --config connector.json');
   console.log('\nNext:\n  node index.js watch --config connector.json' + (out.syncMinutes ? ' --sync-minutes ' + out.syncMinutes : '') + (out.stockMinutes ? ' --stock-minutes ' + out.stockMinutes : '') + '\n    (leave it running — orders land in ' + adapter + ' as they arrive; Settings › Integrations shows it checking in)\n  node index.js once --config connector.json --dry     (see the first voucher before it is posted)\n');
   rl.close();
 })().catch((e) => { console.error('setup: ' + (e && e.message)); rl.close(); process.exit(1); });

@@ -30,7 +30,7 @@ const CATALOGUE = [
   { id: 'tally', name: 'Tally connector', adapters: ['tally', 'csv'], default_adapter: 'tally', runs_on: 'the store PC (node ≥ 18, no dependencies, outbound internet only)',
     does: 'Products up from Tally into the catalogue (matched by code, receipts); offers back at billing time; orders down into Tally as Sales vouchers the moment the bell rings — once, never twice.',
     status: 'LIVE on TallyPrime (2026-09-05): products, stock and profile up; Sales and Receipt vouchers down; registered buyers with GSTIN; the buyer side books Purchase vouchers with ITC (role both)',
-    steps: ['Settings › Integrations › mint a key, scope connector', 'Download the kit, unzip, node setup.js (it asks for the key and the ledgers)', 'node index.js watch — it creates the ledgers it needs'] },
+    steps: ['In Tally: F1 › Settings › Connectivity › TallyPrime acts as Both · Enable ODBC · port 9000; keep the company open', 'Download (your key is inside), unzip on the Tally PC, double-click start.cmd — it installs Node.js if needed, asks a few questions, tests Tally, syncs your products and registers itself to run on its own', 'This row turns live; your items appear under Catalogue'] },
   { id: 'gofrugal', name: 'GoFrugal connector', adapters: ['gofrugal'], default_adapter: 'gofrugal', runs_on: 'the store PC or server (node ≥ 18; GoFrugal\'s WebReporter API with an API key)',
     does: 'Items with sale price, MRP, GST % and stock per location into the catalogue; every order becomes a GoFrugal Sales Order with our reference — your billing raises the invoice. No profile, receipt or purchase API is published, so those steps are skipped and say so.',
     status: 'written from GoFrugal\'s published knowledge base, proven against a stand-in; the API is enabled per retailer by GoFrugal (terms theirs)',
@@ -59,16 +59,26 @@ router.get('/docs/:id', (req, res) => {
 });
 router.get('/catalogue', (req, res) => res.json({ connectors: CATALOGUE.map((c) => Object.assign({}, c, { download: '/api/integrations/download/' + c.id, docs: '/api/integrations/docs/' + c.id })) }));
 
-router.get('/download/:id', (req, res) => {
+/* signed in → the zip carries a key; anonymous (a bare link) → the placeholder, as before. auth only runs when credentials are offered. */
+const authIfOffered = (req, res, next) => ((req.headers.authorization || req.headers['x-api-key']) ? auth(req, res, next) : next());
+router.get('/download/:id', authIfOffered, async (req, res) => {
   const c = CATALOGUE.find((x) => x.id === req.params.id);
   if (!c) return res.status(404).json({ error: 'Not found' });
   const adapter = c.adapters.includes(String(req.query.adapter || '')) ? String(req.query.adapter) : c.default_adapter;
   const base = process.env.PUBLIC_API_BASE || (req.protocol + '://' + req.get('host'));
-  const cfg = { api: base, key: 'PASTE THE KEY FROM SETTINGS › INTEGRATIONS (scope: connector)', adapter, name: c.name,
+  /* ⭐ THE KEY IS INSIDE (Athi, 2026-09-06: "download option should autofill everything"): a session download mints a connector key named
+     for this kit and writes it into connector.json — the "shown once" is the zip itself. `configured:false` sends start.cmd through setup
+     (Tally port, company, ledgers) before it ever watches. An anonymous download, or the 20-key limit, falls back to the placeholder. */
+  let key = 'PASTE THE KEY FROM SETTINGS › INTEGRATIONS (scope: connector)', minted = null;
+  if (req.identity && !req.api_key) {
+    try { minted = await require('./keys').mint(auth.entityOf(req), req.identity, { name: 'kit ' + c.id + ' · ' + new Date().toISOString().slice(0, 10), scopes: ['connector', 'services'] }); key = minted.key; }
+    catch (e) { console.log('kit download: key not minted —', e && e.message); }
+  }
+  const cfg = { api: base, key, configured: false, adapter, name: c.name,
                 tally: { url: 'http://localhost:9000', company: null, partyLedger: 'Cash', salesLedger: 'Sales', voucherType: 'Sales' }, csv: { products: 'products.csv', orders: 'orders' },
                 zoho: { base: 'https://www.zohoapis.in', org: 'YOUR ORGANISATION ID', token: 'YOUR ACCESS TOKEN', customer_name: 'Walk-in' } };
   const files = kitFiles(adapter).concat([{ name: 'chitbridge-connector/connector.json', data: JSON.stringify(cfg, null, 2) + '\n' },
-    { name: 'chitbridge-connector/START.txt', data: 'ChitBridge connector — ' + c.name + '\n\n1. Paste your key (Settings › Integrations, scope connector) into connector.json\n2. node index.js sync-products --config connector.json\n3. node index.js watch --config connector.json\n\nWithout Tally: node fake-tally.js 9100 and set tally.url to http://localhost:9100. README.md has the rest.\n' }]);
+    { name: 'chitbridge-connector/START.txt', data: 'ChitBridge connector — ' + c.name + '\n\n1. On the Tally PC: F1 › Settings › Connectivity › TallyPrime acts as Both · Enable ODBC: Yes · port 9000. Keep the company open.\n2. Double-click start.cmd in this folder. That is all.\n   It installs Node.js if the PC has none, asks a few questions (where Tally listens, company, ledgers, Educational edition), tests both ends,\n   syncs your products, registers itself to run on its own (Windows restarts it after a crash or reboot) and starts watching for orders.\n\nYour key is already inside connector.json' + (minted ? ' (Settings › Integrations › Your keys: "' + minted.name + '", last4 ' + minted.last4 + ')' : ' — no: this zip was fetched without signing in; paste a key from Settings › Integrations, scope connector') + '. Keep this folder private.\n\nHOW YOU KNOW IT WORKED: the window prints Products: read N; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows this connector as live.\n\nEverything else, with a table of what each failure message means: docs/' + c.id + '.md\n' }]);
   const buf = zip(files);
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', 'attachment; filename="chitbridge-connector-' + c.id + '.zip"');
