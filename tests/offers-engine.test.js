@@ -101,6 +101,8 @@ it('a quantity break by PERCENTAGE is price-independent: 10% from 5 gives ₹180
   assert.strictEqual(ev([L('a', 200, 4)], [o]).adjustments.length, 0);
   assert.strictEqual(eng.promise(o, { now: new Date(), money }), '10% off from 5');
   assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 200, excluded: [] }, [o], { now: new Date(), money })[0].promise, '₹180.00 each from 5');
+  assert.match(ev([L('a', 200, 5)], [o]).adjustments[0].why, /10% off · ₹200.00 → ₹180.00 each/);   /* the applied line says the percentage */
+  assert.match(ev([L('a', 200, 10)], [{ id: 'tq', label: 'Bulk', kind: 'tier_price', tiers: [{ qty: 10, price: 170 }] }]).adjustments[0].why, /15% off/);   /* worked out when the slab was a price */
 });
 
 it('free shipping from an amount: below it a note says how far to go, at it the shipping goes free', () => {
