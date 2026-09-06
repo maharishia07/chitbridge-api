@@ -95,10 +95,14 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
       /* the kit's first heartbeat: the connector ACTOR the co-assist rail lists — same row shape routes/connectors.js creates */
       actor_id = uuidv4(); created = true;
       await query(`INSERT INTO identities (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone, max_tasks, identity_type, status, break_status, hat, connector_type, site, connector_config, last_seen)
-                   VALUES ($1,$2,$3,$4,'human',$5,NULL,NULL,10,'actor','active','active','act','erp',$6,$7,NOW())`,
+                   /* ⚠️ WAS 'human' with 10 tasks (Athi, 2026-09-06, the co-assist card: "the type says human? and the hat says editor"). A kit is a
+                      CONNECTOR: it takes no tasks (0), it has no login, and the hat stays 'act' — it writes products and stock. */
+                   VALUES ($1,$2,$3,$4,'connector',$5,NULL,NULL,0,'actor','active','active','act','erp',$6,$7,NOW())`,
                   [actor_id, generateBridgeId(), name, uuidv4(), entity_id, host || null, JSON.stringify(patchCfg)]);
     } else {
-      await query(`UPDATE identities SET last_seen = NOW(), display_name = $2, site = COALESCE($3, site), connector_config = COALESCE(connector_config,'{}'::jsonb) || $4::jsonb WHERE identity_id = $1`, [actor_id, name, host || null, JSON.stringify(patchCfg)]);
+      /* self-healing: a kit actor minted as 'human · 10 tasks' before 2026-09-06 becomes a connector on its next heartbeat — no migration to run */
+      await query(`UPDATE identities SET last_seen = NOW(), display_name = $2, site = COALESCE($3, site), connector_config = COALESCE(connector_config,'{}'::jsonb) || $4::jsonb,
+                     actor_type = 'connector', max_tasks = 0 WHERE identity_id = $1`, [actor_id, name, host || null, JSON.stringify(patchCfg)]);
     }
     res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }

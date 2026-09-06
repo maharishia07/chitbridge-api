@@ -896,7 +896,8 @@ router.get('/',
            return_date, max_tasks, current_task_count,
            phone, created_at, last_active_at,
            delegate_actor_id, last_assigned_at,
-           pin_set_at, otp_code, otp_expires_at
+           pin_set_at, otp_code, otp_expires_at,
+           site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
          FROM identities
          WHERE ${where}
          ORDER BY

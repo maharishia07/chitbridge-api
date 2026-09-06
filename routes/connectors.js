@@ -102,9 +102,10 @@ router.post('/', auth, requireConnector,
            (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone,
             max_tasks, identity_type, status, break_status, otp_code, otp_expires_at, hat, connector_type,
             site, connector_config, provision_key_hash)
-         VALUES ($1,$2,$3,$4,'human',$5,NULL,NULL,10,'actor','active','active',$6,$7,'act',$8,$9,$10,$11)`,
+         /* a connector actor is a CONNECTOR (or a device), never 'human · 10 tasks' — the co-assist card said human/editor for a Tally kit (2026-09-06) */
+         VALUES ($1,$2,$3,$4,$12,$5,NULL,NULL,0,'actor','active','active',$6,$7,'act',$8,$9,$10,$11)`,
         [identity_id, bridge_id, display_name, actor_key, entity_id, otp, otp_expires, type,
-         site, JSON.stringify(config), key_hash]);
+         site, JSON.stringify(config), key_hash, (/iot|device|pi|sensor/i.test(String(type || '')) ? 'iot_device' : 'connector')]);
       res.json({ message: 'Connector created',
         connector: { identity_id, display_name, type, bridge_id, site, connector_config: config, health: 'offline' },
         provision_key });   // shown ONCE
