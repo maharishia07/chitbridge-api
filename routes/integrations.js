@@ -175,7 +175,7 @@ router.post('/books', auth, auth.requireScope('connector'), async (req, res) => 
     const kind = /^(order|receipt|purchase)$/.test(String(b.kind || '')) ? String(b.kind) : 'order';
     const rec = { system: String(b.system || 'books').slice(0, 40), ref: b.ref != null ? String(b.ref).slice(0, 120) : null, outcome: /^(ok|failed|dry|skipped)$/.test(String(b.outcome || '')) ? String(b.outcome) : 'ok',
                   why: b.why ? String(b.why).slice(0, 300) : null, at: b.at ? String(b.at).slice(0, 40) : new Date().toISOString(), host: String(b.host || '').slice(0, 80) || null, actor_id: req.identity.identity_id };
-    const r = await withEntity(entity_id, (db) => db.query(
+    const r = await require('../db').withEntity(entity_id, (db) => db.query(
       `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('books', COALESCE(business_json->'books', '{}'::jsonb) || jsonb_build_object($1::text, $2::jsonb))
         WHERE chit_id = $3 AND entity_id = $4 RETURNING chit_id`, [kind, JSON.stringify(rec), b.chit_id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
