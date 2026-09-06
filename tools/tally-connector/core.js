@@ -212,8 +212,7 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
     /* ⚠️ A DRY RUN IS NOT A PUSH (first live day, 2026-09-05): it used to write outcome 'ok' with their_ref 'dry-run', and the
        real `once` then said "already pushed". A dry run leaves a 'dry' receipt — visible in the file, never a duplicate. */
     if (r && r.ref === 'dry-run') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'dry' }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'dry', why: 'dry run — nothing posted' }); return { chit_id, outcome: 'dry' }; }
-    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
-    await tellBooks(cb, 'order', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: (booksGate(c, cb.policy).why) });
+    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: booksGate(c, cb.policy).why }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
   catch (e) {
     /* the same failure again (a stock item still missing, Tally still closed) is neither logged nor written twice — the
        receipts file keeps the first, the retry keeps trying quietly */
