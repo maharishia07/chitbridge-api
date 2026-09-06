@@ -2448,6 +2448,24 @@ router.delete('/:chit_id/payment', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Payment clear failed', message: safeErr(err) }); }
 });
 
+/**
+ * ⭐ "SEND TO BOOKS" BY HAND (Athi, 2026-09-06): with Orders go to the books = manual, this is the trigger; with any other setting it
+ * is "send it now, do not wait for the state". Marks MY copy (business_json.books_request) and rings my own bell so the watching
+ * connector books it within a second; the kit's five-minute catch-up would find it anyway.
+ */
+router.post('/:chit_id/books-request', auth, async (req, res) => {
+  try {
+    if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' });
+    const entity_id = entityId(req);
+    const reqRec = { at: new Date().toISOString(), by: req.identity.identity_id };
+    const r = await withEntity(entity_id, (db) => db.query(
+      `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('books_request', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
+      [JSON.stringify(reqRec), req.params.chit_id, entity_id]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    try { require('../lib/events').emit([entity_id], { kind: 'books', id: req.params.chit_id }); } catch (_) {}
+    res.json({ ok: true, books_request: reqRec });
+  } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+});
 router.put('/:chit_id/status',
   [
     body('status')

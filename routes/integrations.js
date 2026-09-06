@@ -142,7 +142,9 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
       await query(`UPDATE identities SET last_seen = NOW(), display_name = $2, site = COALESCE($3, site), connector_config = COALESCE(connector_config,'{}'::jsonb) || $4::jsonb,
                      actor_type = 'connector', max_tasks = 0 WHERE identity_id = $1`, [actor_id, name, host || null, JSON.stringify(patchCfg)]);
     }
-    res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString(), approved: enrol ? enrol.approved : true, reason: enrol ? enrol.reason : null });
+    /* ⭐ the trigger the kit obeys (Athi, 2026-09-06: "there must be some trigger to be allowed to go to Tally") — Settings › Governance › Orders go to the books */
+    let books_at = 'accepted'; try { const pf = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]); const v = pf.rows[0] && pf.rows[0].policy_flags && pf.rows[0].policy_flags.books_at; if (/^(received|accepted|completed|manual)$/.test(String(v || ''))) books_at = String(v); } catch (_) {}
+    res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString(), approved: enrol ? enrol.approved : true, reason: enrol ? enrol.reason : null, policy: { books_at } });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 /** the owner approves a PC (session only): the key behind that connector row may now do its work; a later heartbeat from the same host stays approved */
@@ -158,6 +160,27 @@ router.post('/:actor_id/approve', auth, async (req, res) => {
     const enrol = await require('./keys').setEnrol(entity_id, c.key_jti, patch);
     await query(`UPDATE identities SET connector_config = COALESCE(connector_config,'{}'::jsonb) || $2::jsonb WHERE identity_id = $1`, [a.identity_id, JSON.stringify({ enrol: Object.assign({}, c.enrol || {}, patch) })]);
     res.json({ ok: true, enrol });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+/**
+ * ⭐ THE BOOKS SAY SO ON THE TASK (Athi, 2026-09-06: "there must be a detail somewhere in the task that it has been written to Tally").
+ * POST /api/integrations/books { chit_id, kind: order|receipt|purchase, system, ref, outcome: ok|failed|dry|skipped, why?, at? }
+ * — the kit's write-back after every push, onto MY copy of the chit (business_json.books[kind]); never a second voucher, only the record
+ * of the one that went (or did not). A connector key with scope connector; the bell rings for the entity so an open Task repaints.
+ */
+router.post('/books', auth, auth.requireScope('connector'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req); const b = req.body || {};
+    if (!b.chit_id || !/^[0-9a-f-]{36}$/.test(String(b.chit_id))) return res.status(400).json({ error: 'validation', message: 'chit_id required' });
+    const kind = /^(order|receipt|purchase)$/.test(String(b.kind || '')) ? String(b.kind) : 'order';
+    const rec = { system: String(b.system || 'books').slice(0, 40), ref: b.ref != null ? String(b.ref).slice(0, 120) : null, outcome: /^(ok|failed|dry|skipped)$/.test(String(b.outcome || '')) ? String(b.outcome) : 'ok',
+                  why: b.why ? String(b.why).slice(0, 300) : null, at: b.at ? String(b.at).slice(0, 40) : new Date().toISOString(), host: String(b.host || '').slice(0, 80) || null, actor_id: req.identity.identity_id };
+    const r = await withEntity(entity_id, (db) => db.query(
+      `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('books', COALESCE(business_json->'books', '{}'::jsonb) || jsonb_build_object($1::text, $2::jsonb))
+        WHERE chit_id = $3 AND entity_id = $4 RETURNING chit_id`, [kind, JSON.stringify(rec), b.chit_id, entity_id]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    try { require('../lib/events').emit([entity_id], { kind: 'chit', id: b.chit_id, note: 'books' }); } catch (_) {}
+    res.json({ ok: true, kind, books: rec });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 router.get('/status', auth, async (req, res) => {

@@ -59,6 +59,13 @@ The window prints `Tally refused the voucher: …`. The watcher creates the ledg
 
 **Honest note.** This adapter was written from Tally's XML contract and proven against a stand-in. Your first live run may show a field Tally names differently; tell us the message and it is a one-line correction.
 
+## When an order goes to Tally — and how the Task says so
+ChitBridge › Settings › Governance › **Orders go to the books**: *received* (the moment it arrives) · **accepted** (once you accept the
+Task — the default) · *completed* · *manual* (only when you press **Send to books** on the Task). An order that has not reached the
+trigger waits; the connector asks again at every bell and every five minutes. After every push the connector writes back onto your
+copy, and the Task's Status shows **Written to Tally · Sales voucher CB-… · 06 Sep 14:02 · accepted**, or **Tally refused: …** with the
+reason, or **Not yet in the books — waits for acceptance**. Payments (Receipt vouchers) and purchases report the same way.
+
 ## When you mark a chit paid
 Open the order in ChitBridge (Task) → the Payment cell → **Mark paid** (UPI / cash / card / bank, the transaction id). The
 watching connector books a **Receipt** voucher in Tally the same second: Dr your bank ledger (`bankLedger`, default "Bank";

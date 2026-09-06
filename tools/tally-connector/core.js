@@ -149,8 +149,27 @@ async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
   try { const r = await adapter.pushReceipt(p);
     if (r && r.ref === 'dry-run') { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
     if (r && r.skipped) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'skipped', why: r.skipped }); log('receipt ' + chit_id.slice(0, 8) + ' skipped: ' + r.skipped); return { chit_id, outcome: 'skipped', why: r.skipped }; }
-    receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null }); log('receipt ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
+    receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null }); await tellBooks(cb, 'receipt', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: 'payment recorded' }); log('receipt ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
   catch (e) { receipts.add({ kind: 'receipt', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('receipt ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
+}
+/** the write-back: the Task says "written to Tally · voucher · when" (or why not) — best effort, never fails a push */
+async function tellBooks(cb, kind, chit_id, rec) { try { await cb.call('POST', '/api/integrations/books', Object.assign({ chit_id, kind, host: require('os').hostname() }, rec)); } catch (e) { (cb.log || (() => {}))('books write-back: ' + e.message); } }
+/**
+ * ⭐ THE TRIGGER (Athi, 2026-09-06: "each task cannot be done on its own, there must be some trigger to be allowed to go to Tally").
+ * cb.policy.books_at (the heartbeat brings it from Settings › Governance): received · accepted · completed · manual. An order whose
+ * state has not reached the trigger WAITS — no receipt, so the next bell or the five-minute catch-up asks again. "Send to books" on the
+ * Task (business_json.books_request) sends it now whatever the setting. Cancelled / rejected never go.
+ */
+function booksGate(c, policy) {
+  const h = c.header || c.chit || c; const st = String(h.current_status || h.status || c.state || '');
+  const bj = h.business_json || c.business_json || {}; const asked = !!(bj && bj.books_request);
+  if (/^(cancelled|rejected)$/.test(st)) return { go: false, why: 'cancelled' };
+  if (asked) return { go: true, why: 'sent to books by hand' };
+  const at = String((policy && policy.books_at) || 'accepted');
+  if (at === 'received') return { go: true, why: 'on arrival' };
+  if (at === 'accepted') return /^(accepted|in_progress|partial|completed)$/.test(st) ? { go: true, why: 'accepted' } : { go: false, why: 'waits for acceptance (state ' + (st || 'pending') + ')' };
+  if (at === 'completed') return st === 'completed' ? { go: true, why: 'completed' } : { go: false, why: 'waits for completion (state ' + (st || 'pending') + ')' };
+  return { go: false, why: 'waits for "Send to books" on the Task' };
 }
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   const last = receipts.last('order', chit_id);
@@ -159,6 +178,12 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   const c = await cb.chit(chit_id);
   const order = orderOf(c);
   if (order.purpose && !/^(order|offer)$/.test(order.purpose)) { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'purpose ' + order.purpose }); return { chit_id, outcome: 'skipped' }; }
+  const gate = booksGate(c, cb.policy);
+  if (!gate.go) {
+    if (gate.why === 'cancelled') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'skipped', why: 'cancelled' }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'skipped', why: 'cancelled' }); return { chit_id, outcome: 'skipped' }; }
+    if (!cb._waited || !cb._waited[chit_id]) { cb._waited = cb._waited || {}; cb._waited[chit_id] = true; log('order ' + chit_id.slice(0, 8) + ' ' + gate.why); }
+    return { chit_id, outcome: 'waiting', why: gate.why };
+  }
   /**
    * ⭐ B2B (Athi, 2026-09-05: "if we try ordering from another shop instead of the storefront? their GSTIN and so on").
    * When the buyer is a registered business the seller's books want a party ledger with the buyer's GSTIN, the place of
@@ -186,13 +211,14 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   try { const r = await adapter.pushOrder(order);
     /* ⚠️ A DRY RUN IS NOT A PUSH (first live day, 2026-09-05): it used to write outcome 'ok' with their_ref 'dry-run', and the
        real `once` then said "already pushed". A dry run leaves a 'dry' receipt — visible in the file, never a duplicate. */
-    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'dry' }); return { chit_id, outcome: 'dry' }; }
+    if (r && r.ref === 'dry-run') { receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'dry' }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'dry', why: 'dry run — nothing posted' }); return { chit_id, outcome: 'dry' }; }
     receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'ok', their_ref: (r && r.ref) || null, ...(r && r.their_id ? { their_id: r.their_id } : {}), ...(r && r.their_party ? { their_party: r.their_party } : {}) }); log('order ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || 'ok')); return { chit_id, outcome: 'ok', their_ref: r && r.ref }; }
+    await tellBooks(cb, 'order', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: (booksGate(c, cb.policy).why) });
   catch (e) {
     /* the same failure again (a stock item still missing, Tally still closed) is neither logged nor written twice — the
        receipts file keeps the first, the retry keeps trying quietly */
     if (last && last.outcome === 'failed' && last.why === e.message) return { chit_id, outcome: 'failed', why: e.message, repeat: true };
-    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: e.message }); log('order ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message };
+    receipts.add({ kind: 'order', ref: chit_id, hash: hashOf(order), outcome: 'failed', why: e.message }); await tellBooks(cb, 'order', chit_id, { system: adapter.name, outcome: 'failed', why: e.message }); log('order ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message };
   }
 }
 /**
@@ -237,6 +263,7 @@ async function pushPurchase({ cb, adapter, receipts, log, chit_id }) {
     const booked = r && r.input_tax != null ? Math.round(Number(r.input_tax) * 100) / 100 : null;
     if (booked != null && Math.abs(booked - p.itc_claim) > 0.01) log('⚠ ITC arithmetic: the voucher books ' + booked + ' of input tax, our ledger says ' + p.itc_claim + ' for ' + chit_id.slice(0, 8));
     receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'ok', their_ref: (r && r.ref) || null, itc: p.itc_claim, total: p.total });
+    await tellBooks(cb, 'purchase', chit_id, { system: adapter.name, ref: (r && r.ref) || null, outcome: 'ok', why: 'completed by the seller' });
     log('purchase ' + chit_id.slice(0, 8) + ' → ' + adapter.name + ' ' + ((r && r.ref) || '') + ' · ' + p.total + ' incl. ITC ' + p.itc_claim);
     return { chit_id, outcome: 'ok', their_ref: r && r.ref, itc: p.itc_claim };
   } catch (e) { receipts.add({ kind: 'purchase', ref: chit_id, hash: hashOf(p), outcome: 'failed', why: e.message }); log('purchase ' + chit_id.slice(0, 8) + ' failed: ' + e.message); return { chit_id, outcome: 'failed', why: e.message }; }
@@ -269,7 +296,7 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
      service jobs as Sales vouchers into a company that has no such stock items). The seller side runs for seller/both. */
   const sells = !/^buyer$/.test(String(role || 'seller'));
   if (sells) await catchUp({ cb, adapter, receipts, log });
-  const beat = () => cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching', tally: cb.tally || {} });
+  const beat = async () => { const hb = await cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching', tally: cb.tally || {} }); if (hb && hb.policy) { if (cb.policy && cb.policy.books_at !== hb.policy.books_at) log('policy: orders go to the books at "' + hb.policy.books_at + '"'); cb.policy = hb.policy; } return hb; };
   await beat(); const hb = setInterval(beat, 5 * 60 * 1000); if (signal) signal.addEventListener('abort', () => clearInterval(hb));
   let backoff = 3000;
   while (!(signal && signal.aborted)) {
@@ -286,7 +313,7 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
           const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
           const ev = /^event: (\S+)/m.exec(chunk), data = /^data: (.*)$/m.exec(chunk);
           if (ev && ev[1] === 'cb' && data) { let d = {}; try { d = JSON.parse(data[1]); } catch (_) {} if (onEvent) onEvent(d);
-            if (sells && d.kind === 'chit' && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
+            if (sells && (d.kind === 'chit' || d.kind === 'books' || d.kind === 'task') && d.id) await pushOrder({ cb, adapter, receipts, log, chit_id: d.id });
             /* a bell without the chit id (an order composed by another shop rings `{kind:'chit', who}` only) → the inbox says which */
             else if (sells && d.kind === 'chit') { try { await catchUp({ cb, adapter, receipts, log }); } catch (e) { log('catch-up on bell: ' + e.message); } }
             /* the seller marked it paid (or a gateway did): the Receipt voucher */
@@ -308,4 +335,4 @@ function loadConfig(file) {
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { booksGate, pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
