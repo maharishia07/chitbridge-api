@@ -38,7 +38,7 @@ const CATALOGUE = [
   { id: 'zoho', name: 'Zoho Books connector', adapters: ['zoho'], default_adapter: 'zoho', runs_on: 'any PC with node ≥ 18 (REST, an OAuth token)',
     does: 'Items from Zoho Books into the catalogue; offers back at billing; every ChitBridge order becomes a Zoho invoice the moment it arrives — once, never twice.',
     status: 'written from the published Zoho Books API, proven against a stand-in; the first live run may need customer_id / item_id corrected in adapters/zoho.js (docs)',
-    steps: ['Settings › Integrations › mint a key, scope connector', 'Download the kit; connector.json: key, zoho.base (region), zoho.org, zoho.token', 'node index.js sync-products, then node index.js watch'] },
+    steps: ['Zoho API console › Self Client: copy Client ID + Secret; Generate Code with scope ZohoBooks.fullaccess.all (10 minutes)', 'Download (your key is inside), unzip, double-click start.cmd — system zoho, region, the id, the secret, the code; it keeps a refresh token, lists your organisations, reads your items', 'Approve this PC once under Running connectors; this row turns live'] },
   { id: 'csv', name: 'File connector (CSV)', adapters: ['csv'], default_adapter: 'csv', runs_on: 'any PC with node ≥ 18',
     does: 'The same connector with files: products.csv in, one CSV per order out. The shape any system that can export a file attaches through today.',
     status: 'proven', steps: ['Mint a key, scope connector', 'Download, unzip, paste the key', 'Put products.csv beside it; node index.js sync-products; node index.js watch'] },

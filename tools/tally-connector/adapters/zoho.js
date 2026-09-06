@@ -13,15 +13,46 @@
  */
 'use strict';
 module.exports = function zohoAdapter(cfg) {
-  const z = Object.assign({ base: 'https://www.zohoapis.in', org: '', token: '', customer_name: 'Walk-in' }, cfg.zoho || {});
+  const z = Object.assign({ base: 'https://www.zohoapis.in', org: '', token: '', customer_name: 'Walk-in', client_id: '', client_secret: '', refresh_token: '', token_at: 0 }, cfg.zoho || {});
   const dry = !!cfg.dry, log = cfg.log || (() => {});
   const H = () => ({ Authorization: 'Zoho-oauthtoken ' + z.token, 'Content-Type': 'application/json' });
-  async function call(method, p, body) {
+  /* ⭐ THE TOKEN RENEWS ITSELF (2026-09-06). Zoho's access token lives an hour; the refresh token lives until revoked. With client_id,
+     client_secret and refresh_token in connector.json the adapter renews before the first call of a run when the token is older than
+     50 minutes, and once more on a 401 — then writes the new token back to connector.json so the next run starts warm. Without a
+     refresh token it behaves as before (a pasted access token, replaced by hand when it dies). Accounts host follows the API region. */
+  const accounts = () => 'https://accounts.zoho.' + ((z.base.match(/zohoapis\.([a-z.]+)/) || [])[1] || 'com');
+  async function tokenCall(params) {
+    const r = await fetch(accounts() + '/oauth/v2/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(params).toString() });
+    const j = await r.json().catch(() => ({})); if (!r.ok || j.error) throw new Error('Zoho OAuth: ' + (j.error || r.status)); return j;
+  }
+  function persist() { try { if (cfg._configFile) { const all = JSON.parse(require('fs').readFileSync(cfg._configFile, 'utf8')); all.zoho = Object.assign({}, all.zoho || {}, { token: z.token, token_at: z.token_at, refresh_token: z.refresh_token }); require('fs').writeFileSync(cfg._configFile, JSON.stringify(all, null, 2) + '\n'); } } catch (_) {} }
+  async function refresh() {
+    if (!z.refresh_token || !z.client_id || !z.client_secret) return false;
+    const j = await tokenCall({ grant_type: 'refresh_token', client_id: z.client_id, client_secret: z.client_secret, refresh_token: z.refresh_token });
+    z.token = j.access_token; z.token_at = Date.now(); persist(); log('zoho: access token renewed'); return true;
+  }
+  /** exchangeCode(code): a Self Client grant code (10-minute life) → refresh token + access token, kept in connector.json */
+  async function exchangeCode(code) {
+    const j = await tokenCall({ grant_type: 'authorization_code', client_id: z.client_id, client_secret: z.client_secret, code: String(code || '').trim() });
+    if (!j.refresh_token) throw new Error('Zoho gave no refresh token — generate the code again with scope ZohoBooks.fullaccess.all (a code can be used once, within 10 minutes)');
+    z.refresh_token = j.refresh_token; z.token = j.access_token; z.token_at = Date.now(); persist(); return { refresh_token: z.refresh_token, access_token: z.token };
+  }
+  let _fresh = null;
+  async function call(method, p, body, _retried) {
+    if (!_fresh) { _fresh = (async () => { try { if (z.refresh_token && (!z.token || Date.now() - Number(z.token_at || 0) > 50 * 60 * 1000)) await refresh(); } catch (e) { log('zoho: ' + e.message); } })(); }
+    await _fresh;
     const url = z.base.replace(/\/$/, '') + p + (p.includes('?') ? '&' : '?') + 'organization_id=' + encodeURIComponent(z.org);
     const r = await fetch(url, { method, headers: H(), body: body ? JSON.stringify(body) : undefined });
     const t = await r.text(); let j; try { j = JSON.parse(t); } catch (_) { j = { raw: t }; }
+    if (r.status === 401 && !_retried && await refresh().catch(() => false)) return call(method, p, body, true);
     if (!r.ok || (j && j.code && j.code !== 0)) throw new Error('Zoho ' + r.status + ' ' + ((j && j.message) || t.slice(0, 120)));
     return j;
+  }
+  /** organisations this token may see — setup lists them so nobody hunts for an id (organization_id is not needed for this call) */
+  async function organisations() {
+    await (_fresh || Promise.resolve()); if (!_fresh) { _fresh = Promise.resolve(); if (z.refresh_token && !z.token) await refresh(); }
+    const r = await fetch(z.base.replace(/\/$/, '') + '/books/v3/organizations', { headers: H() }); const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error('Zoho ' + r.status + ' ' + (j.message || '')); return (j.organizations || []).map((o) => ({ id: String(o.organization_id), name: o.name, country: o.country_code, currency: o.currency_code }));
   }
   /* GST state code (first two digits of a GSTIN) → the two-letter code Zoho's place_of_supply / place_of_contact take */
   const STATE_ABBR = { '01': 'JK', '02': 'HP', '03': 'PB', '04': 'CH', '05': 'UK', '06': 'HR', '07': 'DL', '08': 'RJ', '09': 'UP', '10': 'BR', '11': 'SK', '12': 'AR', '13': 'NL', '14': 'MN', '15': 'MZ', '16': 'TR', '17': 'ML', '18': 'AS', '19': 'WB', '20': 'JH', '21': 'OD', '22': 'CG', '23': 'MP', '24': 'GJ', '26': 'DN', '27': 'MH', '29': 'KA', '30': 'GA', '31': 'LD', '32': 'KL', '33': 'TN', '34': 'PY', '35': 'AN', '36': 'TS', '37': 'AP', '38': 'LA' };
@@ -39,7 +70,7 @@ module.exports = function zohoAdapter(cfg) {
     try { const j = await call('GET', '/books/v3/contacts?search_text=' + encodeURIComponent(name)); return (j.contacts || []).find((c) => String(c.contact_name).toLowerCase() === String(name).toLowerCase()) || null; } catch (_) { return null; }
   }
   return {
-    name: 'zoho',
+    name: 'zoho', exchangeCode, organisations,
     /** the one contact every walk-in order books under (Zoho needs a customer_id on every invoice) */
     async ensure() {
       const name = z.customer_name || 'Walk-in';

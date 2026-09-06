@@ -63,7 +63,29 @@ const cfgFile = path.join(here, 'connector.json');
       else if (hb && hb.approved === true) console.log('Approved for this PC (' + (hb.reason || '') + ').'); }
     catch (e) { console.log('FAILED — ' + e.message); console.log('  In Tally: F1 (Help) › Settings › Connectivity › Client/Server: TallyPrime acts as Both, Enable ODBC/XML, port 9000. Keep the company open.'); const go = await ask('Save the settings anyway and try later? (y/n)', 'y'); if (!/^y/i.test(go)) { rl.close(); process.exit(1); } }
   } else if (adapter === 'zoho') {
-    out.zoho = Object.assign({}, cfg.zoho || {}, { base: await ask('Zoho API base', (cfg.zoho && cfg.zoho.base) || 'https://www.zohoapis.in'), org: await ask('Organisation id', (cfg.zoho && cfg.zoho.org) || ''), token: await ask('Access token', (cfg.zoho && cfg.zoho.token) || ''), customer_name: await ask('Customer name for storefront orders', (cfg.zoho && cfg.zoho.customer_name) || 'Walk-in') });
+    /* ⭐ NO PASTED HOUR-LONG TOKEN (2026-09-06): the Self Client's id + secret and a one-time grant code; the kit exchanges the code for a
+       refresh token and renews the access token itself from then on. Then it lists the organisations the token can see and you pick one. */
+    const zc = cfg.zoho || {};
+    const region = (await ask('Zoho region (in / com / eu / com.au / jp)', (zc.base && (zc.base.match(/zohoapis\.([a-z.]+)/) || [])[1]) || 'in')).replace(/^\./, '');
+    console.log('  Zoho API console (https://api-console.zoho.' + region + ') › Add Client › Self Client › copy the Client ID and Client Secret;');
+    console.log('  Generate Code tab › scope ZohoBooks.fullaccess.all › duration 10 minutes › Create › copy the code. Paste the three here within 10 minutes.');
+    const zo = Object.assign({}, zc, { base: 'https://www.zohoapis.' + region, client_id: await ask('Client ID', zc.client_id || ''), client_secret: await ask('Client Secret', zc.client_secret || '') });
+    let zad = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { zoho: zo, _configFile: cfgFile }));
+    if (!zo.refresh_token || /^y/i.test(await ask('A refresh token is already saved. Get a new one? (y/n)', 'n'))) {
+      const code = await ask('Grant code (from Generate Code)');
+      process.stdout.write('Exchanging the code with Zoho … ');
+      try { const t = await zad.exchangeCode(code); zo.refresh_token = t.refresh_token; zo.token = t.access_token; zo.token_at = Date.now(); console.log('ok — refresh token kept; the connector renews the access token itself'); }
+      catch (e) { console.log('FAILED — ' + e.message); rl.close(); process.exit(1); }
+    }
+    process.stdout.write('Reading your organisations … ');
+    let orgs = []; try { zad = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { zoho: zo, _configFile: cfgFile })); orgs = await zad.organisations(); console.log(orgs.length + ' found'); } catch (e) { console.log('FAILED — ' + e.message); }
+    orgs.forEach((o, i) => console.log('  ' + (i + 1) + '. ' + o.name + ' (' + o.id + ', ' + (o.country || '') + ' ' + (o.currency || '') + ')'));
+    let org = zo.org || (orgs.length === 1 ? orgs[0].id : '');
+    if (orgs.length > 1 || !org) { const pick = await ask(orgs.length ? 'Which organisation (number or id)' : 'Organisation id', org || (orgs[0] ? '1' : '')); org = (orgs[Number(pick) - 1] && orgs[Number(pick) - 1].id) || pick; }
+    out.zoho = Object.assign({}, zo, { org, customer_name: await ask('Customer name for storefront orders', zc.customer_name || 'Walk-in') });
+    process.stdout.write('Checking Zoho Books … ');
+    try { const t = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { _configFile: cfgFile })); const items = await t.readProducts(); console.log('ok — ' + items.length + ' item(s) readable'); }
+    catch (e) { console.log('FAILED — ' + e.message); }
   } else if (adapter === 'gofrugal') {
     out.gofrugal = Object.assign({}, cfg.gofrugal || {}, { url: await ask('GoFrugal WebReporter URL', (cfg.gofrugal && cfg.gofrugal.url) || 'http://localhost:8482'), token: await ask('GoFrugal API key (X-Auth-Token)', (cfg.gofrugal && cfg.gofrugal.token) || ''), locationId: (await ask('Location id (blank = all)', (cfg.gofrugal && cfg.gofrugal.locationId) || '')) || null });
   } else {
