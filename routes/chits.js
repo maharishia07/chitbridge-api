@@ -932,6 +932,21 @@ router.post('/send',
           });
         } catch (e) { console.log('customer auto-add skipped:', e.message); }
       }
+      /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
+         RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
+         (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
+      if (!is_draft && orderLike) for (const receiver of receiverDetails) {
+        if (String(receiver.entity_id) !== String(sellerId) || String(sellerId) === String(sender_id)) continue;
+        try {
+          await withEntity(sellerId, (db) => db.query(
+            `INSERT INTO customer_list
+               (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+             VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
+             ON CONFLICT (owner_entity_id, customer_identity_id)
+             DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
+            [sellerId, sender_id]));
+        } catch (e) { console.log('seller customer auto-add skipped:', e.message); }
+      }
 
       // ── Best-effort auto-assign on receipt (D1) — AFTER commit; never fails the guaranteed chit ──
       // Only the actionable 'to' copy is auto-assigned; CC/For stay informational. Each receiver entity
