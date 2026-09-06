@@ -428,7 +428,7 @@ router.post('/send',
         /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
         if (bj.customer || bj.via || toSelf || orderLike) {
           const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
-          const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity });
+          const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
           if (r && r.items) line_items = r.items;
         }
       } catch (_) { /* no offers, no change */ }

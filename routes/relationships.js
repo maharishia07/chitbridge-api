@@ -8,6 +8,7 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const catalogueView  = require('../lib/catalogue-view');    // the SAME catalogue read the public storefront uses
 const catalogueBuild = require('../lib/catalogue-build');
+const customerGroups = require('../lib/customer-groups');   // the one segment expression + the viewer's groups
 const orderInput     = require('../lib/order-input');
 
 // actors act in their parent entity's context
@@ -268,7 +269,10 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     const view = await catalogueView.buildPublicView({ entity: supplier, asOwner: (String(sid) === String(ctx(req))) /* an entity reading its OWN catalogue sees it whole — Record a sale, Our own stock (2026-09-05) */, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'),
       // The reader, so a NETWORK-tier catalogue resolves for a fellow member. A supplier link alone still sees
       // exactly public — membership is decided by the network tree, not by this list.
-      viewer: req.identity && req.identity.bridge_id });
+      viewer: req.identity && req.identity.bridge_id,
+      /* ⭐ AND WHO THEY ARE TO THIS SELLER (2026-09-06): customer-only offers reach a reader the SELLER's customer list names — the seller's
+         own record of a trade or a placement, so the bilateral precondition above holds; a supplier link by itself still sees exactly public. */
+      viewer_id: ctx(req) });
     if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], groups: [], finishes: [] });
     /* ⚠️ THE WHOLE VIEW, NOT A HAND-PICKED SUBSET (Athi, 2026-09-05: "still offer not appearing?"). This list named nine
        fields and left out `offers` and `categories`, so a buyer's Suppliers screen never received the seller's live offers
@@ -291,10 +295,7 @@ router.get('/customers', auth, async (req, res) => {
               cl.txn_count, cl.last_txn_at,
               i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
               i.email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
-              COALESCE(cl.segment_override,
-                CASE WHEN cl.last_txn_at < NOW() - INTERVAL '90 days' THEN 'inactive'
-                     WHEN cl.txn_count >= 3 THEN 'regular'
-                     ELSE 'new' END) AS segment
+              ${customerGroups.SEGMENT_SQL} AS segment
        FROM customer_list cl
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1

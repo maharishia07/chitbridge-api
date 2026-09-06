@@ -186,7 +186,7 @@ function validateProposal(raw, oi, sellerBand, label) {
  */
 /* ⭐ ONE FUNCTION FOR EVERY PATH (2026-09-05): the body moved to lib/offers-live.js so the send path (Compose · Record a sale · a
    captured WhatsApp message) applies the same live offers the storefront order does. This name stays for its callers here. */
-async function applyLiveOffers(entity, items, total) { return require('../lib/offers-live').applyLiveOffers(entity, items, total, { withEntity }); }
+async function applyLiveOffers(entity, items, total, viewer) { return require('../lib/offers-live').applyLiveOffers(entity, items, total, { withEntity, viewer: viewer || null }); }
 
 async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
@@ -852,7 +852,7 @@ router.post('/:bridge_id/order/confirm',
         }
       } else {
         try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi));
-              ({ items: line_items, total, applied: offersApplied } = await applyLiveOffers(entity, line_items, total)); }
+              ({ items: line_items, total, applied: offersApplied } = await applyLiveOffers(entity, line_items, total, c && c.identity_id)); }   /* the signed-in shopper's standing with the shop */
         catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }
       }
       // ── T2.1 · AN OFFER MUST NOT CARRY AN ORDER'S MONEY ──────────────────────────────────────────────────────

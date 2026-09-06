@@ -189,6 +189,7 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
   'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
   'exposure.js',           // what a customer may see of an ITEM (tax · offers · stock · synonyms · hsn · description · media), enforced in the one projection
   'offers-live.js',        // the seller's live offers applied to a set of lines — the one function the storefront order AND the send path call
+  'customer-groups.js',    // what the SELLER's customer list says about a viewer (segment · one customer) — the groups a customer-only offer may name
   'stores.js',             // store lookup helpers
   'transcribe.js',         // audio → text; an outside service behind one function
   'whatsapp-media.js',     // provider media fetch
