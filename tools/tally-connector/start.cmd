@@ -6,6 +6,12 @@ rem                             registers a Windows task so the watcher restarts
 rem   later runs             -> just watches for orders
 setlocal
 cd /d "%~dp0"
+if not exist "%~dp0setup.js" (
+  echo This file is not beside the rest of the kit - Windows ran it from inside the zip.
+  echo Extract the zip first: right-click the zip, Extract All, open the chitbridge-connector folder, then double-click start.cmd there.
+  pause
+  exit /b 1
+)
 where node >nul 2>nul
 if errorlevel 1 call :getnode
 if errorlevel 1 exit /b 1

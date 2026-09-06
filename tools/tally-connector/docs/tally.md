@@ -44,6 +44,7 @@ Once: `node index.js install --config connector.json` — a Windows scheduled ta
 ## If something does not work — where to look
 | You see | It means | Do |
 |---|---|---|
+| `Cannot find module … setup.js` / `MODULE_NOT_FOUND`, or start.cmd says it is not beside the kit | start.cmd was run from INSIDE the zip (Windows shows a zip as a folder) | right-click the zip › Extract All › open the chitbridge-connector folder › double-click start.cmd there |
 | `Node.js is not installed` from start.cmd | no Node on this PC | nodejs.org › LTS › install › run start.cmd again |
 | `Checking the key … FAILED` | the key was not pasted whole, or its scope is not connector | mint a new key (scope connector), paste it in one piece |
 | `Checking Tally … FAILED` | Tally's port is off, or the company is not open | Tally: F1 › Settings › Connectivity › acts as Both, ODBC on, port 9000; open the company; the browser test at http://localhost:9000 |
