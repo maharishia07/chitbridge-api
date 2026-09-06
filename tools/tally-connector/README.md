@@ -28,10 +28,12 @@ Add `--dry` to print the Tally voucher XML instead of posting it. Add `--adapter
 `receipts.jsonl` beside the config: one line per transfer — product hash, order chit id, outcome. A failed transfer is
 retried on the next run; an order is never pushed twice. Delete a line to force a resend.
 
-## Tally: verify on first live run
-`adapters/tally.js` is written from the Tally XML contract and proven against `fake-tally.js`, not yet against a live
-Tally. The first live run will surface a field name or a sign convention; correct it in that one file. Start with
-`--dry`, import one voucher, check it in Tally, then remove `--dry`.
+## Tally: what is LIVE, and what to verify on a new machine
+`adapters/tally.js` ran against TallyPrime on 2026-09-05 (Educational edition, two companies on one laptop): Sales vouchers with
+GST lines, Receipt vouchers on Mark paid, and Purchase vouchers on the buyer's company (role `buyer`). Two Tally TYPEs freeze
+TallyPrime until Esc — `TaxUnit` and `GSTRegistration` — and are never sent (docs/tally.md §⚠️). On a NEW machine start with
+`--dry`, import one voucher, check it in Tally, then remove `--dry`; a field name or sign convention that differs is corrected
+in that one file.
 
 ## Proof on one machine
 `node prove.js` — starts a fake Tally, mints a key with your session token (`CB_TOKEN`), syncs three items to a
