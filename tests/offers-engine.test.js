@@ -182,6 +182,14 @@ it('a minimum order size on any offer: 10% off from 5 units — 4 units get noth
   assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 100, excluded: [] }, [o], { now: new Date(), money }).length, 1);   /* the row may advertise the condition */
 });
 
+it('a minimum per PRODUCT (applies_to.min_qty_by_item): grapes need 3, oil needs 1 — 2 grapes get nothing, 1 oil gets the offer; the badge says "3+" on grapes', () => {
+  const o = { id: 'mp', label: 'Bulk 10%', kind: 'percent_off', percent: 10, scope: 'line', applies_to: { min_qty_by_item: { a: 3, b: 1 } } };
+  const r = ev([L('a', 100, 2), L('b', 100, 1)], [o]); assert.strictEqual(r.adjustments.length, 1); assert.strictEqual(r.adjustments[0].target, 'b');
+  assert.strictEqual(ev([L('a', 100, 3)], [o]).total, 270);
+  const fa = eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 100, excluded: [] }, [o], { now: new Date(), money }); assert.strictEqual(fa[0].promise, '10% off 3+');
+  const fb = eng.forLine({ item_id: 'b', sku: 'B', categories: [], unitPrice: 100, excluded: [] }, [o], { now: new Date(), money }); assert.strictEqual(fb[0].promise, '10% off');
+});
+
 console.log('— what the outlets read —');
 it('perLine: line-scope amounts summed per line, every offer id listed, basket-scope excluded', () => {
   const lines = [L('a', 200, 1), L('b', 100, 1)];
