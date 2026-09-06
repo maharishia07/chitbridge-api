@@ -81,6 +81,18 @@ router.get('/suppliers', auth, async (req, res) => {
     /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
     const { factsOf } = require('../lib/public-facts');
     const rows = r.rows.map((x) => { const facts = factsOf(x); const o = Object.assign({}, x); delete o.policy_flags; delete o.gstn; o.facts = facts; return o; });
+    /* ⭐ WHAT EACH SUPPLIER GIVES ME, ON THE LIST (Athi, 2026-09-06: "the customer knows without even clicking — special discount for you").
+       Per supplier: their live offers scoped to a group I am in or to me by name (lib/customer-groups), by the supplier's own names and the
+       engine's promise. Read in parallel; a supplier whose read fails simply shows no tag. A stranger gets [] everywhere. */
+    try {
+      const cg = require('../lib/customer-groups'); const cv = require('../lib/catalogue-view'); const eng = require('../lib/offers-engine').CBOffers;
+      await Promise.all(rows.map(async (o) => {
+        try {
+          const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: o.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: o.supplier_entity_id, withEntity, all: true })]);
+          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => String(n) }) : null; } catch (_) {} return { label: x.label, promise: p || null, scope: x.scope || 'line' }; });
+        } catch (_) { o.for_you = []; }
+      }));
+    } catch (_) {}
     res.json({ suppliers: rows, count: rows.length });
   } catch (err) {
     console.error('Get suppliers error:', err.message);
