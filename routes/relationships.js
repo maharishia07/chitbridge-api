@@ -312,6 +312,38 @@ router.get('/customers', auth, async (req, res) => {
   }
 });
 
+/**
+ * ⭐ ADD A CUSTOMER BY HAND (Athi, 2026-09-06: "Chola Auto Care should be coming as a customer — can we add a + icon to include a customer?").
+ * The list filled itself only from trades (storefront order, a bill, since today a Suppliers-menu order). A seller who knows their customer
+ * before the first order — to give them an "Only for" offer — adds them here: resolved the way a supplier is (User ID · bridge id · email),
+ * never yourself, 'manual', no transactions yet (segment reads "new" until the count says otherwise).
+ */
+router.post('/customers',
+  [ body('handle').trim().notEmpty().withMessage('User ID, bridge ID or email required') ],
+  validate, auth,
+  async (req, res) => {
+    try {
+      const owner = ctx(req), handle = req.body.handle.trim();
+      const who = await query(
+        `SELECT identity_id, display_name, user_id, bridge_id FROM identities
+          WHERE bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)
+          LIMIT 1`, [handle]);
+      if (who.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
+      const c = who.rows[0];
+      if (c.identity_id === owner) return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
+      const r = await withEntity(owner, (db) => db.query(
+        `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+         VALUES ($1, $2, 'entity', 'manual', 0, NULL)
+         ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING
+         RETURNING customer_list_id`, [owner, c.identity_id]));
+      if (r.rows.length === 0) return res.status(409).json({ error: 'Exists', message: 'Already in your customer list' });
+      res.json({ message: 'Customer added', customer: { customer_list_id: r.rows[0].customer_list_id, customer_identity_id: c.identity_id, display_name: c.display_name, user_id: c.user_id, bridge_id: c.bridge_id, segment: 'new', added_via: 'manual' } });
+    } catch (err) {
+      console.error('Add customer error:', err.message);
+      res.status(500).json({ error: 'Add customer failed', message: safeErr(err) });
+    }
+  });
+
 // Manual segment override (optional)
 router.patch('/customers/:id',
   [ body('segment_override').isIn(['high_value','regular','new','inactive']) ],
