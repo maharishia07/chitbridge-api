@@ -50,7 +50,10 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   if (cmd !== 'help') {
     let facts = {}; try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); facts = { company: p.trade_name || null, gstin: p.gstin || null }; } } catch (_) {}
     cb.tally = facts;
+    const readFacts = async () => { try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); if (p && (p.trade_name || p.gstin)) facts = { company: p.trade_name || null, gstin: p.gstin || null }; } } catch (_) {} cb.tally = facts; };
     const gate = async () => {
+      /* Tally closed when we started → no company, no GSTIN, no automatic approval; ask again each time we wait (found 2026-09-06 on the two live kits) */
+      if (!facts.company && !facts.gstin) await readFacts();
       const hb = await cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd, tally: facts });
       if (!hb || hb.approved !== false) return true;
       if (/mismatch/.test(hb.reason || '')) { log('STOP — ' + hb.reason + '. This PC\'s Tally company does not belong to this ChitBridge account; nothing will be synced.'); process.exit(3); }
