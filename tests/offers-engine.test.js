@@ -155,6 +155,15 @@ it('never below zero: two ₹80 offs on ₹100 give 100 → 20 → 0 (the second
   assert.strictEqual(p.total, 16); assert.strictEqual(p.line_net.a, 16);
 });
 
+it('a quantity break and a buy-X-get-Y on one product: the break re-prices first, the free unit is worth the re-priced unit', () => {
+  const brk = { id: 'tb', label: 'Break', kind: 'tier_price', tiers: [{ qty: 3, percent: 10 }] };
+  const bxgy = { id: 'bg', label: 'B2G1', kind: 'buy_x_get_y', buy: 2, get: 1 };
+  const r = ev([L('a', 200, 3)], [brk, bxgy]);
+  assert.strictEqual(sum(r, (a) => a.kind === 'tier_price'), -60);    /* 3 × 200 → 3 × 180 */
+  assert.strictEqual(sum(r, (a) => a.kind === 'buy_x_get_y'), -180);  /* the free unit at the re-priced ₹180, not at ₹200 */
+  assert.strictEqual(r.total, 360);
+});
+
 console.log('— who, when, where: the gates —');
 it('customer-only offers FAIL CLOSED: no groups in the context → not applied; the group → applied; the customer by id → applied', () => {
   const o = { id: 'g', label: 'Regulars', kind: 'percent_off', percent: 10, scope: 'line', customer_group: 'regular', customer_name: 'Regulars' };
