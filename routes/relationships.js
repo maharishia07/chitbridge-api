@@ -89,7 +89,7 @@ router.get('/suppliers', auth, async (req, res) => {
       await Promise.all(rows.map(async (o) => {
         try {
           const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: o.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: o.supplier_entity_id, withEntity, all: true })]);
-          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => String(n) }) : null; } catch (_) {} return { label: x.label, promise: p || null, scope: x.scope || 'line' }; });
+          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => '₹' + Number(n).toFixed(2), customer_groups: groups }) : null; } catch (_) {} return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
         } catch (_) { o.for_you = []; }
       }));
     } catch (_) {}
