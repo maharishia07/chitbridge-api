@@ -174,6 +174,14 @@ it('targeting: a category, an item list, a sku list — a union; price bounds �
   assert.ok(/no line qualifies/.test(skippedWhy(ev([L('a', 100, 1, { categories: ['veg'] })], [cat]), 'Fruit 10%')));
 });
 
+it('a minimum order size on any offer: 10% off from 5 units — 4 units get nothing (skipped: no line qualifies), 5 get it; the badge says "10% off 5+"', () => {
+  const o = { id: 'mq', label: 'Bulk 10%', kind: 'percent_off', percent: 10, scope: 'line', applies_to: { min_qty: 5 } };
+  const r4 = ev([L('a', 100, 4)], [o]); assert.strictEqual(r4.adjustments.length, 0); assert.ok(/no line qualifies/.test(skippedWhy(r4, 'Bulk 10%')));
+  assert.strictEqual(ev([L('a', 100, 5)], [o]).total, 450);
+  assert.strictEqual(eng.promise(o, { now: new Date(), money }), '10% off 5+');
+  assert.strictEqual(eng.forLine({ item_id: 'a', sku: 'A', categories: [], unitPrice: 100, excluded: [] }, [o], { now: new Date(), money }).length, 1);   /* the row may advertise the condition */
+});
+
 console.log('— what the outlets read —');
 it('perLine: line-scope amounts summed per line, every offer id listed, basket-scope excluded', () => {
   const lines = [L('a', 200, 1), L('b', 100, 1)];
