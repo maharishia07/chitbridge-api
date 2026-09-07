@@ -198,6 +198,9 @@ const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceabl
 ];
 const ENGINE_OTHER = [
   'offers-engine.js',
+  /* GENERATED, never edited by hand: scripts/vendor-tax.cjs writes it from tax.js + tax-slab.js so a TILL can price a bill with the
+     internet unplugged. Same engine, second home — tests/tax-vendor.test.js fails the day the two differ (2026-09-07). */
+  'tax-engine.browser.js',
   'pricing-engine.js',    // ENGINE: the pricing structure a product cites → the unit price at a quantity (vendored from app/pricing.js)   // = web app/offers.js, vendored (cp) so a shop ORDER is priced by the SAME engine as the row; web owns the source    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
   /**
    * ⭐⭐ THESE EIGHT ARE WHAT A CHIT *MEANS*, so they are engine and therefore LOCKED. They were held out of

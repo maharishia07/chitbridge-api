@@ -249,6 +249,30 @@ router.post('/send',
         if (_ent.rows[0]) { sender_bridge_id = _ent.rows[0].bridge_id; sender_display_name = _ent.rows[0].display_name; }
       }
       // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
+      /**
+       * ⭐⭐ THE SAME BILL TWICE IS THE SAME CHIT (the till, 2026-09-07). A counter queues its bills and replays them when the line
+       * comes back; a replay that arrived twice would bill the customer twice and put two vouchers in the books. 'client_ref' is the
+       * till's own bill number — asked for FIRST, before anything is created, and answered with the chit that already exists.
+       * ⚠️ Scoped to this entity: a bill number is unique to the shop that issued it, not to the platform.
+       */
+      const client_ref = (typeof req.body.client_ref === 'string' && req.body.client_ref.trim()) ? req.body.client_ref.trim().slice(0, 64) : null;
+      if (client_ref) {
+        try {
+          const seen = await withEntity(sender_id, (db) => db.query(
+            `SELECT chit_id FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1`,
+            [sender_id, client_ref]));
+          if (seen.rows[0]) return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
+        } catch (_) { /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
+      }
+      /**
+       * ⚠️ A TILL KEY MAY ONLY BILL ITSELF. The key lives on a shop PC where anyone can pick it up; a counter sale is the shop's own
+       * record and never addresses another business. The scope opens the send route; this closes it to one shape.
+       */
+      if (req.api_key && Array.isArray(req.api_key.scopes) && req.api_key.scopes.indexOf('till') >= 0 && !req.api_key.scopes.includes('connector')) {
+        const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
+        const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
+        if (outward.length) return res.status(403).json({ error: 'Forbidden', message: 'A till may only record its own sales.' });
+      }
       const purpose = req.body.purpose || 'order';
       const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
       /* ⭐ STAMP IDENTITY AND ORDER AT THE DOOR. Every line gets a `line_id` that survives editing and a `seq`
@@ -258,6 +282,8 @@ router.post('/send',
       let line_items = mint.lines(req.body.line_items || []);   // `let`: rated below, once the sender is known
       const business_json = req.body.business_json
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
+      /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
+      if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;
       const is_draft = !!req.body.is_draft;
       // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
       // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.

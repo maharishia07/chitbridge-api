@@ -15,7 +15,9 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
-const OUT = path.join(API, '..', 'chitbridge-web', 'public', 'app', 'tax-engine.js');
+/* two homes, one generator: the app loads it from the web bundle, and /api/till/engine/tax serves the copy that ships with THIS repo
+   (Railway deploys the API alone, so a path into the web repo would be a file that does not exist in production). */
+const OUTS = [ path.join(API, '..', 'chitbridge-web', 'public', 'app', 'tax-engine.js'), path.join(API, 'lib', 'tax-engine.browser.js') ];
 
 /** strip the module wrapper a browser cannot use: 'use strict' (the IIFE supplies it) and the module.exports line. */
 /** the names a file exports, read from its own module.exports — so the wrapper below returns exactly what the server does. */
@@ -76,9 +78,10 @@ function generate() {
 
 const text = generate();
 if (process.argv.includes('--check')) {
-  const have = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8').replace(/\r\n/g, '\n') : '';
-  if (have !== text) { console.log('STALE: public/app/tax-engine.js differs from lib/tax.js + lib/tax-slab.js — run node scripts/vendor-tax.cjs'); process.exit(1); }
-  console.log('tax-engine.js is current'); process.exit(0);
+  for (const OUT of OUTS) {
+    const have = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8').replace(/\r\n/g, '\n') : '';
+    if (have !== text) { console.log('STALE: ' + OUT + ' differs from lib/tax.js + lib/tax-slab.js — run node scripts/vendor-tax.cjs'); process.exit(1); }
+  }
+  console.log('both tax-engine copies are current'); process.exit(0);
 }
-fs.writeFileSync(OUT, text);
-console.log('wrote ' + OUT + ' (' + text.length + ' bytes)');
+for (const OUT of OUTS) { fs.writeFileSync(OUT, text); console.log('wrote ' + OUT + ' (' + text.length + ' bytes)'); }

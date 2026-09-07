@@ -21,7 +21,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { query } = require('../db');
 
-const SCOPES = ['offers', 'pricing', 'tax', 'invoice', 'connector', 'services'];   // services = every service; connector = products up · orders down · the bell
+const SCOPES = ['offers', 'pricing', 'tax', 'invoice', 'connector', 'services', 'till'];   // services = every service; connector = products up · orders down · the bell
 const sessionOnly = (req, res, next) => { if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'A key cannot manage keys — sign in.' }); next(); };
 
 async function listOf(entity_id) {
