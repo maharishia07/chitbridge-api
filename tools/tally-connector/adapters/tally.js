@@ -159,7 +159,11 @@ module.exports = function tallyAdapter(cfg) {
         try {
           const vq = `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBVchG</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}<SVFROMDATE>${ymd(new Date(Date.now() - 400 * 86400000))}</SVFROMDATE><SVTODATE>${ymd(new Date(Date.now() + 400 * 86400000))}</SVTODATE></STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="CBVchG" ISMODIFY="No"><TYPE>Voucher</TYPE><FETCH>CMPGSTIN, CMPGSTSTATE, CMPGSTREGISTRATIONTYPE</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
           const vx = dataOf(await post(vq));
-          const v = tags('VOUCHER', vx).find((x) => unesc(tag('CMPGSTIN', x)).trim());
+          /* ⚠️ THE LAST VOUCHER, NOT THE FIRST (2026-09-07). The GSTIN read here is the one the company was registered under WHEN THAT
+             VOUCHER WAS WRITTEN, so the oldest voucher answers with the oldest registration — a placeholder typed in on day one would
+             keep winning after the real GSTIN was set, and the handshake would go on calling it a mismatch. */
+          const withG = tags('VOUCHER', vx).filter((x) => unesc(tag('CMPGSTIN', x)).trim());
+          const v = withG.length ? withG[withG.length - 1] : null;
           if (v) {
             out.gstin = unesc(tag('CMPGSTIN', v)).trim();
             const rt = unesc(tag('CMPGSTREGISTRATIONTYPE', v)); if (rt && !out.reg_type) out.reg_type = /composition/i.test(rt) ? 'composition' : 'regular';
