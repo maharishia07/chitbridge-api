@@ -123,6 +123,14 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
     const ac = new AbortController(); process.on('SIGINT', () => { log('stopping'); ac.abort(); });
     /* ⭐ THE PRODUCT LIST IS MAINTAINED IN THEIR SYSTEM, NOT OURS (Athi, 2026-09-05). While watching, re-read it every N minutes:
        only rows whose hash changed are sent, so a quiet shelf costs one read of the source and nothing else. */
+    /* ⭐ THE PROFILE, WITHOUT ANYONE TYPING A COMMAND (2026-09-07). It was a manual command only, so "what your books say about you"
+       stayed empty for every connector nobody ran it for. Once at start, then daily — a business name and a GSTIN do not change hourly,
+       and syncProfile only ever fills gaps: a higher rung is never overwritten. */
+    if (typeof adapter.readProfile === 'function') {
+      const pTick = async () => { try { await core.syncProfile({ cb, adapter, receipts, log }); } catch (e) { log('profile: ' + e.message); } };
+      await pTick();
+      const pt = setInterval(pTick, 24 * 60 * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(pt));
+    }
     const every = Number(flag('sync-minutes', cfg.syncMinutes || 0)) || 0;
     if (every > 0) { const tick = async () => { try { await core.syncProducts({ cb, adapter, receipts, log }); } catch (e) { log('sync: ' + e.message); } }; await tick(); const t = setInterval(tick, every * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('products re-read every ' + every + ' min'); }
     /* ⭐ TALLY WAS DOWN, NOW IT IS BACK (Athi, 2026-09-05: "even if Tally is not available and when it is back, automatically
