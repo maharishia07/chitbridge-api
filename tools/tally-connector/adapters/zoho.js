@@ -57,14 +57,32 @@ module.exports = function zohoAdapter(cfg) {
   /* GST state code (first two digits of a GSTIN) → the two-letter code Zoho's place_of_supply / place_of_contact take */
   const STATE_ABBR = { '01': 'JK', '02': 'HP', '03': 'PB', '04': 'CH', '05': 'UK', '06': 'HR', '07': 'DL', '08': 'RJ', '09': 'UP', '10': 'BR', '11': 'SK', '12': 'AR', '13': 'NL', '14': 'MN', '15': 'MZ', '16': 'TR', '17': 'ML', '18': 'AS', '19': 'WB', '20': 'JH', '21': 'OD', '22': 'CG', '23': 'MP', '24': 'GJ', '26': 'DN', '27': 'MH', '29': 'KA', '30': 'GA', '31': 'LD', '32': 'KL', '33': 'TN', '34': 'PY', '35': 'AN', '36': 'TS', '37': 'AP', '38': 'LA' };
   const abbr = (code) => STATE_ABBR[String(code || '').padStart(2, '0')] || null;
-  let _taxes = null, _walkin = null;
-  /** the org's GST tax groups (GST5 · GST12 …), read once — a line names its tax by id, Zoho splits CGST/SGST vs IGST from the place of supply */
-  async function taxIdFor(rate) {
+  let _taxes = null, _walkin = null, _home;
+  /** the organisation's own state, read off its GSTIN — a supply that leaves it is IGST, one that stays is CGST + SGST */
+  async function homeState() {
+    if (_home !== undefined) return _home;
+    try { const o = (await call('GET', '/books/v3/organizations/' + encodeURIComponent(z.org))).organization || {};
+      const g = (o.tax_settings && (o.tax_settings.tax_reg_no || o.tax_settings.gst_no)) || o.tax_reg_no || o.gst_no || '';
+      _home = abbr(String(g).slice(0, 2)) || null; } catch (_) { _home = null; }
+    return _home;
+  }
+  /** ⭐ the org's tax list, read once: GST5 · GST12 … are tax GROUPS (CGST + SGST, same state); IGST5 · IGST12 … are single taxes for
+      an interstate supply. A line names ONE of them by id — asking by rate alone picks the wrong one half the time (2026-09-07). */
+  async function taxIdFor(rate, interstate) {
     if (rate == null || !(Number(rate) >= 0)) return null;
-    if (!_taxes) { try { _taxes = ((await call('GET', '/books/v3/settings/taxes')).taxes || []); } catch (_) { _taxes = []; } }
-    const want = Number(rate);
-    const hit = _taxes.find((t) => Number(t.tax_percentage) === want && /group|tax/.test(String(t.tax_type || 'tax'))) || _taxes.find((t) => Number(t.tax_percentage) === want);
-    return hit ? hit.tax_id : null;
+    if (!_taxes) {
+      try { const j = await call('GET', '/books/v3/settings/taxes');
+        _taxes = (j.taxes || []).concat(j.tax_groups || []).map((t) => ({
+          id: t.tax_id || t.tax_group_id, name: String(t.tax_name || t.tax_group_name || ''),
+          pct: Number(t.tax_percentage != null ? t.tax_percentage : t.tax_group_percentage),
+          group: String(t.tax_type || '') === 'tax_group' || !!t.tax_group_id,
+          igst: String(t.tax_specific_type || '').toLowerCase() === 'igst' || /^igst/i.test(String(t.tax_name || '')) }));
+      } catch (_) { _taxes = []; }
+    }
+    const same = _taxes.filter((t) => t.pct === Number(rate));
+    const hit = interstate ? (same.find((t) => t.igst) || same.find((t) => !t.group))
+                           : (same.find((t) => t.group && !t.igst) || same.find((t) => !t.igst));
+    return (hit || same[0] || {}).id || null;
   }
   async function findContact(name) {
     try { const j = await call('GET', '/books/v3/contacts?search_text=' + encodeURIComponent(name)); return (j.contacts || []).find((c) => String(c.contact_name).toLowerCase() === String(name).toLowerCase()) || null; } catch (_) { return null; }
@@ -115,6 +133,10 @@ module.exports = function zohoAdapter(cfg) {
       /* B2B: the buyer's own contact (GSTIN, place of contact) and the place of supply from the chit's invoice; a walk-in
          books under the one Walk-in contact. The tax per line is the org's GST group for that rate — Zoho splits it. */
       const b2b = order.b2b || null;
+      /* interstate is not guessed: the chit's own invoice already split the tax, and the two GSTINs say the rest */
+      const pos = b2b ? (abbr(b2b.place_of_supply) || String(b2b.place_of_supply || '').toUpperCase()) : null;
+      const home = b2b ? await homeState() : null;
+      const interstate = !!(b2b && (Number((b2b.taxes || {}).igst) > 0 || (pos && home && pos !== home)));
       let customer_id = null;
       if (b2b) { const p = await this.ensureParty(b2b.buyer); customer_id = p.customer_id || null; }
       if (!customer_id) { if (!_walkin) await this.ensure(); customer_id = _walkin; }
@@ -124,12 +146,12 @@ module.exports = function zohoAdapter(cfg) {
         const amount = l.total != null ? Math.round(Number(l.total) * 100) / 100 : gross;
         const disc = gross > 0 && amount < gross ? (Math.round((1 - amount / gross) * 10000) / 100) + '%' : undefined;   /* an offer = a discount on the line, the amount stays the chit's */
         const rate = l.gst_rate != null ? l.gst_rate : (b2b && (b2b.items.find((x) => x.name === l.name) || {}).rate);
-        const tax_id = b2b ? await taxIdFor(rate) : null;
+        const tax_id = b2b ? await taxIdFor(rate, interstate) : null;
         lines.push({ name: l.name, description: l.code ? 'code ' + l.code : undefined, quantity: l.qty, rate: listed, unit: l.unit || undefined, discount: disc, ...(l.hsn ? { hsn_or_sac: l.hsn } : {}), ...(tax_id ? { tax_id } : {}) });
       }
       const body = { customer_id: customer_id || undefined, ...(customer_id ? {} : { customer_name: z.customer_name || order.buyer }), reference_number: 'CB-' + String(order.chit_id).slice(0, 8), date: (order.at || new Date().toISOString()).slice(0, 10),
         notes: 'ChitBridge order ' + order.chit_id + ' from ' + order.buyer + ((order.lines || []).some((l) => l.offer && l.offer.label) ? ' · offers: ' + [...new Set(order.lines.filter((l) => l.offer && l.offer.label).map((l) => l.offer.label))].join(', ') : ''),
-        ...(b2b ? { gst_treatment: 'business_gst', gst_no: b2b.buyer.gstin, place_of_supply: abbr(b2b.place_of_supply) || undefined } : { gst_treatment: 'consumer' }),
+        ...(b2b ? { gst_treatment: 'business_gst', gst_no: b2b.buyer.gstin, place_of_supply: pos || undefined } : { gst_treatment: 'consumer' }),
         line_items: lines };
       if (dry) { log('[dry] Zoho invoice for ' + order.chit_id + ':\n' + JSON.stringify(body, null, 2)); return { ref: 'dry-run' }; }
       const j = await call('POST', '/books/v3/invoices', body);
