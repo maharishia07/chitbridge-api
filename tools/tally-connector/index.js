@@ -64,18 +64,28 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
     typeof adapter.pushReceipt === 'function' ? 'receipt' : null,
     typeof adapter.ensureParty === 'function' ? 'party' : null,
   ].filter(Boolean);
+  cb.streams = canCarry;   /* the watch loop's own heartbeat carries it too (core.js beat) */
   const receipts = new core.Receipts(cfg.receipts);
   /* ⭐ THE HANDSHAKE, KEPT: every run reports this PC and the Tally company; a kit not yet approved for this PC waits (watch: a minute
      at a time, so approving in the browser makes it go live with nobody at the store PC) or stops (any other command); a GSTIN that
      differs from the account's stops it for good — wrong store, or wrong account. Server side: routes/integrations.js heartbeat. */
   if (cmd !== 'help') {
-    let facts = {}; try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); facts = { company: p.trade_name || null, gstin: p.gstin || null }; } } catch (_) {}
+    /* ⭐ whether the OTHER system answered, kept beside the facts it answered with (2026-09-07) */
+    let source = { ok: null, at: new Date().toISOString(), why: null };
+    const noted = (ok, why) => { source = { ok: ok, at: new Date().toISOString(), why: why ? String(why).slice(0, 160) : null }; cb.source = source; };
+    let facts = {};
+    try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); facts = { company: p.trade_name || null, gstin: p.gstin || null }; noted(true, null); } }
+    catch (e) { noted(false, e && e.message); }
     cb.tally = facts;
-    const readFacts = async () => { try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); if (p && (p.trade_name || p.gstin)) facts = { company: p.trade_name || null, gstin: p.gstin || null }; } } catch (_) {} cb.tally = facts; };
+    const readFacts = async () => {
+      try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); if (p && (p.trade_name || p.gstin)) facts = { company: p.trade_name || null, gstin: p.gstin || null }; noted(true, null); } }
+      catch (e) { noted(false, e && e.message); }
+      cb.tally = facts;
+    };
     const gate = async () => {
       /* Tally closed when we started → no company, no GSTIN, no automatic approval; ask again each time we wait (found 2026-09-06 on the two live kits) */
       if (!facts.company && !facts.gstin) await readFacts();
-      const hb = await cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd, tally: facts, streams: canCarry });
+      const hb = await cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd, tally: facts, streams: canCarry, source: source });
       if (hb && hb.policy) cb.policy = hb.policy;   /* orders go to the books at received · accepted · completed · manual */
       /* ⭐ and which of those streams are mine to carry — the rest belong to another connector on this account (2026-09-07) */
       if (hb && Array.isArray(hb.owns)) { const before = (cb.owns || []).join(','); cb.owns = hb.owns; cb.stream_owner = hb.stream_owner || {};
@@ -86,6 +96,9 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
       return false;
     };
     while (!(await gate())) { if (cmd !== 'watch') process.exit(4); await new Promise((r) => setTimeout(r, 60000)); }
+    /* ⭐ and once it is running, each later beat carries a FRESH answer — Tally closing at 8pm shows on the screen, not only in a
+       failed voucher an hour later (2026-09-07). */
+    if (cmd === 'watch' && typeof adapter.readProfile === 'function') setInterval(readFacts, 5 * 60 * 1000).unref();
   }
   if (cmd === 'sync-products') { const r = await core.syncProducts({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }

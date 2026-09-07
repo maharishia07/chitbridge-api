@@ -315,7 +315,19 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
      service jobs as Sales vouchers into a company that has no such stock items). The seller side runs for seller/both. */
   const sells = !/^buyer$/.test(String(role || 'seller'));
   if (sells) await catchUp({ cb, adapter, receipts, log });
-  const beat = async () => { const hb = await cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching', tally: cb.tally || {} }); if (hb && hb.policy) { if (cb.policy && cb.policy.books_at !== hb.policy.books_at) log('policy: orders go to the books at "' + hb.policy.books_at + '"'); cb.policy = hb.policy; } return hb; };
+  /* ⭐ EVERY beat carries what the first one did (2026-09-07): whether the other system answered, and which streams this kit can carry —
+     so a source that dies at 8pm shows on the screen, and a stream handed over in Settings is picked up here with nobody at the PC. */
+  const beat = async () => {
+    const hb = await cb.heartbeat({ name: (cb.name || adapter.name + ' connector'), adapter: adapter.name, counters: counts(receipts), note: 'watching',
+                                    tally: cb.tally || {}, streams: cb.streams || undefined, source: cb.source || undefined });
+    if (hb && hb.policy) { if (cb.policy && cb.policy.books_at !== hb.policy.books_at) log('policy: orders go to the books at "' + hb.policy.books_at + '"'); cb.policy = hb.policy; }
+    if (hb && Array.isArray(hb.owns)) {
+      const before = (cb.owns || []).join(',');
+      cb.owns = hb.owns; cb.stream_owner = hb.stream_owner || {};
+      if (before !== cb.owns.join(',')) { cb._said = {}; log('carrying: ' + (cb.owns.join(' · ') || 'nothing — every stream belongs to another connector')); }
+    }
+    return hb;
+  };
   await beat(); const hb = setInterval(beat, 5 * 60 * 1000); if (signal) signal.addEventListener('abort', () => clearInterval(hb));
   let backoff = 3000;
   while (!(signal && signal.aborted)) {

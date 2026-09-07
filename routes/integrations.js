@@ -90,7 +90,7 @@ function health(last_seen) { if (!last_seen) return 'offline'; const age = Date.
 const KIT_ROWS = `SELECT identity_id, display_name, site, last_seen, connector_type, connector_config, status, created_at
                     FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND status = 'active'`;
 function rowOut(a) { const c = a.connector_config || {}; return { id: c.kit_id || a.identity_id, actor_id: a.identity_id, name: a.display_name, adapter: c.adapter || (a.connector_type === 'erp' ? 'erp' : a.connector_type), host: a.site || '', version: c.version || '',
-  key_jti: c.key_jti || null, last_seen: a.last_seen, health: health(a.last_seen), counters: c.counters || {}, note: c.note || '', kit: !!c.kit, enrol: c.enrol || null }; }
+  key_jti: c.key_jti || null, last_seen: a.last_seen, health: health(a.last_seen), source: c.source || null, counters: c.counters || {}, note: c.note || '', kit: !!c.kit, enrol: c.enrol || null }; }
 
 router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res) => {
   try {
@@ -125,8 +125,13 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
                 approved_by: ownerHere ? prior.approved_by : null, approved_at: ownerHere ? prior.approved_at : null, approved_host: ownerHere ? prior.approved_host : null };
       if (rec) await keysMod.setEnrol(entity_id, jti, enrol);
     }
+    /* ⭐ did the OTHER system answer this run? A connector checks in whether or not Tally is open, so "live" was never the same
+       question as "reachable" (Athi, 2026-09-07: "does the system automatically know when Tally is up and running?"). */
+    const src = (b.source && typeof b.source === 'object') ? { ok: b.source.ok === true ? true : (b.source.ok === false ? false : null),
+                  at: String(b.source.at || new Date().toISOString()).slice(0, 40), why: b.source.why ? String(b.source.why).slice(0, 160) : null } : null;
     const patchCfg = { kit: true, kit_id, adapter: String(b.adapter || '').slice(0, 40), version: String(b.version || '').slice(0, 20), key_jti: (req.api_key && req.api_key.jti) || null,
                        counters: (b.counters && typeof b.counters === 'object') ? b.counters : {}, note: String(b.note || '').slice(0, 200), enrol };
+    if (src) patchCfg.source = src;
     const have = await query(`SELECT identity_id FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND connector_config->>'kit_id' = $2`, [entity_id, kit_id]);
     let actor_id = have.rows[0] && have.rows[0].identity_id, created = false;
     if (!actor_id) {
