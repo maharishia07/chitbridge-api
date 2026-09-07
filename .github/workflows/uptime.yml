@@ -1,0 +1,52 @@
+# uptime.yml — SOMEBODY IS WATCHING (Athi, 2026-09-07: "nobody is watching — if the API dies at 9pm, the shop finds out").
+#
+# Runs OUTSIDE our own platform, which is the whole point: a check that lives on the thing it is checking tells you nothing when that
+# thing is down. GitHub runs it on a schedule; if the job fails, GitHub emails the repository owner. No third-party monitor to sign up
+# for, no secret to store, nothing to pay.
+#
+# It asks the three questions in order, because they fail differently:
+#   1 · is the server answering at all            → /health
+#   2 · can it reach the database                 → a public read that touches Postgres
+#   3 · is it still where we put it               → the region, so a silent move back to the US shows up as a failure, not as slowness
+#
+# ⚠️ A scheduled workflow is best-effort — GitHub may run it late under load, and it pauses after 60 days of no repository activity.
+# It is a watchdog, not an SLA. Anything stricter belongs on a paid monitor, and this file names what to look for when we buy one.
+name: uptime
+
+on:
+  schedule:
+    - cron: '7 * * * *'         # hourly, and here is the arithmetic: GitHub bills a private repo per RUN rounded up to a minute,
+    #                             so every 10 minutes would be ~4,300 minutes a month against a free allowance of 2,000. Hourly costs
+    #                             ~720 and leaves room for the nightly backup. A 5-minute check is worth having — buy it from a real
+    #                             monitor (UptimeRobot free tier) rather than paying GitHub for it.
+  workflow_dispatch:            # and by hand, when we want to know right now
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: The server answers
+        run: |
+          set -euo pipefail
+          body=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 https://chitbridge-api-production.up.railway.app/health)
+          echo "$body"
+          echo "$body" | grep -q '"status":"OK"'
+
+      - name: It can reach the database
+        run: |
+          set -euo pipefail
+          # a public storefront read — no key, and it cannot answer without Postgres
+          code=$(curl -sS -o /tmp/cat.json -w '%{http_code}' --max-time 25 --retry 2 --retry-delay 5 \
+                 https://chitbridge-api-production.up.railway.app/api/catalogue/tallytest)
+          echo "HTTP $code"
+          test "$code" = "200"
+          head -c 300 /tmp/cat.json
+
+      - name: It is still in the region we put it in
+        run: |
+          set -euo pipefail
+          region=$(curl -sS --max-time 20 https://chitbridge-api-production.up.railway.app/health | sed -n 's/.*"region":"\([^"]*\)".*/\1/p')
+          echo "region=$region"
+          # moved to Singapore on 2026-09-07 to sit beside the database in Mumbai; a silent move back would cost 3x on every call
+          case "$region" in asia-southeast1*|southeast-asia) echo ok ;; *) echo "unexpected region: $region"; exit 1 ;; esac
