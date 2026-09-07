@@ -58,6 +58,12 @@
   .search{padding:var(--pad) 12px;border-bottom:1px solid var(--line);background:var(--card)}
   .search input{width:100%;font-size:1.25em;padding:12px 14px;border:2px solid var(--line);border-radius:var(--radius);background:var(--card)}
   .search input:focus{outline:none;border-color:var(--blue)}
+  /* the dozen this shop sells all day — big targets, no reading, gone the moment somebody types */
+  .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card)}
+  .quick button{padding:14px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
+  .quick button b{display:block;font-size:.95em;overflow-wrap:anywhere}
+  .quick button span{color:var(--dim);font-size:.8em}
+  .quick:empty{display:none}
   .hits{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
   .hit{display:flex;gap:10px;align-items:baseline;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover,.hit.sel{background:var(--ok-tint)}
@@ -127,6 +133,7 @@
     <div class="search">
       <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="paintHits()" onkeydown="searchKey(event)">
     </div>
+    <div class="quick" id="quick"></div>
     <div class="hits" id="hits"></div>
     <div class="keys" id="keys">
       <span><b>F2</b> search</span><span><b>↓↑ Enter</b> add</span><span><b>F9</b> save &amp; print</span>
@@ -428,6 +435,7 @@ async function load(){
   document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.key ? 'Not paired yet' : 'This shop');
   document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
   paintStatus(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
+  loadQuick().catch(function(){});
 }
 /* ⚠️ THE BUTTON MAY BE PRESSED BEFORE THE PAGE HAS FINISHED WAKING (caught by [TILL-01]): HOST is chosen asynchronously, and ↻ on
    the first frame called into nothing. Anything that needs the host asks for it. */
@@ -477,8 +485,41 @@ function scanned(){
   if (n >= 0) { SEL = n; add(n); return true; }
   return false;
 }
+/**
+ * ⭐ LEARNED, NOT CONFIGURED. How often each item appears on this till's recent bills decides the grid; a shop that starts selling
+ * mangoes in April gets mangoes in April without anybody setting anything. Until there is history, the catalogue's own order stands.
+ */
+var QUICK = [];
+async function loadQuick(){
+  var counts = {};
+  try {
+    var rows = (HOST && HOST.bills) ? (await HOST.bills()) : [];
+    rows.forEach(function(b){ (b.lines||[]).forEach(function(l){ if (l.item_id) counts[l.item_id] = (counts[l.item_id]||0) + 1; }); });
+  } catch (_) {}
+  var items = (S && S.items) || [];
+  var ranked = items.slice().sort(function(a,b){ return (counts[b.item_id]||0) - (counts[a.item_id]||0); });
+  QUICK = ranked.slice(0, 12);
+  paintQuick();
+}
+function paintQuick(){
+  var el = document.getElementById('quick'); if (!el) return;
+  var typing = (document.getElementById('q').value || '').trim().length > 0;
+  el.innerHTML = (typing || !QUICK.length) ? '' : QUICK.map(function(i, n){
+    return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + esc(i.item_id) + '\')"><b>' + esc(i.name) + '</b><span>₹' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span></button>';
+  }).join('');
+}
+function quickAdd(id){
+  var i = ((S && S.items) || []).filter(function(x){ return x.item_id === id; })[0];
+  if (!i) return;
+  var have = CART.filter(function(c){ return c.item_id === i.item_id; })[0];
+  if (have) have.qty = r2(have.qty + 1);
+  else CART.push({ item_id:i.item_id, name:i.name, unit:i.unit||'piece', price:Number(i.price)||0, qty:1, hsn:i.hsn||null,
+                   item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
+  price(); focusSearch();
+}
 function paintHits(){
   if (scanned()) return;
+  paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
   document.getElementById('hits').innerHTML = list.length ? list.map(function(i,n){
     return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
@@ -599,7 +640,7 @@ async function finish(){
   showSlip(r.bill, m);
   CART = []; document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
   price(); document.getElementById('lastnote').textContent = 'last bill ' + r.bill.no;
-  load();
+  load(); loadQuick();
 }
 
 function slipHTML(bill, m){
