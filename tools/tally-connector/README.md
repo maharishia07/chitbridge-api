@@ -27,6 +27,25 @@ node index.js watch  --config connector.json                  # catch-up, then h
 Add `--dry` to print the Tally voucher XML instead of posting it. Add `--adapter csv` to use files instead of Tally
 (`products.csv` in; `orders/<chit>.csv` out) — the shape any system that speaks files can attach through today.
 
+## More than one system on one account
+
+A business may run several connectors — a POS for stock, the books for vouchers, a CRM for parties. Each of the seven **streams**
+(products · stock · profile · order · purchase · receipt · party) belongs to exactly ONE connector, or the same order becomes a
+voucher in two ledgers and nobody can say which is the record.
+
+Nobody is asked a question about it: every run reports which streams the adapter can carry, and the first connector to carry a
+stream claims it. A later connector is told the stream is taken, says so once in its window, and carries the rest. The owner
+changes it in **ChitBridge › Settings › Integrations › Who owns what** — which is what a migration does on its last day; the
+connector picks the change up on its next heartbeat, with nobody at the PC.
+
+Reconciliation lives beside it, under **In the books**: every order of the last 30 days as booked · refused (with the other
+system's reason) · on the way · overdue, counted per system. Overdue means the trigger released it more than
+`books_overdue_hours` ago (12 by default) and nothing has answered — the check for "did anything fail to post overnight".
+
+⚠️ One PC can run as many kits as it likes, but each needs its OWN folder: `install` names its scheduled task after the folder and
+the config path, and each kit writes its own log. (Before 2026-09-07 the task was named after the config file — and since every kit
+ships `connector.json`, installing a second kit silently replaced the first one's task.)
+
 ## Receipts
 `receipts.jsonl` beside the config: one line per transfer — product hash, order chit id, outcome. A failed transfer is
 retried on the next run; an order is never pushed twice. Delete a line to force a resend.
