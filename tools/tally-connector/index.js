@@ -28,14 +28,24 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
      Adopt the operating system: a Task Scheduler task starts the watcher every 5 minutes; Task Scheduler's default (do not start a new
      instance) means it only ever starts when the watcher is NOT running — a crash, a reboot, a closed window all heal within 5 minutes. */
   if (cmd === 'install' || cmd === 'uninstall') {
-    const taskName = 'ChitBridge connector ' + path.basename(cfgFile, '.json');
+    const base = path.basename(cfgFile, '.json');
+    /* ⚠️ one name per CONFIG FILE, not per file NAME: every kit ships connector.json, and a shared name made the second
+       install replace the first (2026-09-07 — the Tally task took over the Zoho watcher's). */
+    const stamp = require('crypto').createHash('sha1').update(cfgFile.toLowerCase()).digest('hex').slice(0, 6);
+    const taskName = 'ChitBridge connector ' + path.basename(path.dirname(cfgFile)) + ' - ' + base + ' ' + stamp;
+    const legacyName = 'ChitBridge connector ' + base;
+    const logFile = base === 'connector' ? 'watch.log' : 'watch-' + base.replace(/^connector-/, '') + '.log';
     if (process.platform !== 'win32') { console.log('install registers a Windows scheduled task. On Linux/macOS run the watcher under systemd or launchd — see docs/'); return; }
     const sp = require('child_process').spawnSync;
-    if (cmd === 'uninstall') { const r = sp('schtasks', ['/Delete', '/F', '/TN', taskName], { encoding: 'utf8' }); console.log(r.status === 0 ? 'Removed "' + taskName + '"' : (r.stderr || r.stdout)); return; }
-    const tr = 'cmd /c cd /d "' + __dirname + '" && node index.js watch --config "' + cfgFile + '" >> watch.log 2>&1';
+    if (cmd === 'uninstall') {
+      const gone = [taskName, legacyName].filter((n) => sp('schtasks', ['/Delete', '/F', '/TN', n], { encoding: 'utf8' }).status === 0);
+      console.log(gone.length ? 'Removed ' + gone.map((n) => '"' + n + '"').join(' and ') : 'No scheduled task for this connector');
+      return;
+    }
+    const tr = 'cmd /c cd /d "' + __dirname + '" && node index.js watch --config "' + cfgFile + '" >> ' + logFile + ' 2>&1';
     const r = sp('schtasks', ['/Create', '/F', '/SC', 'MINUTE', '/MO', '5', '/TN', taskName, '/TR', tr], { encoding: 'utf8' });
     console.log(r.status === 0
-      ? 'Registered "' + taskName + '": Task Scheduler starts the watcher every 5 minutes whenever it is not running (crash, reboot, closed window). Log: watch.log. Remove: node index.js uninstall'
+      ? 'Registered "' + taskName + '": Task Scheduler starts the watcher every 5 minutes whenever it is not running (crash, reboot, closed window). Log: ' + logFile + '. Remove: node index.js uninstall'
       : 'Could not register the task: ' + (r.stderr || r.stdout || r.error));
     return;
   }
@@ -43,6 +53,17 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   const adapterName = flag('adapter', cfg.adapter || 'tally');
   const adapter = require('./adapters/' + adapterName)(cfg);
   const cb = new core.CB({ api: cfg.api, key: cfg.key, log }); cb.name = cfg.name || (adapterName + ' connector');
+  /* ⭐ what this kit CAN carry — the adapter's own methods, narrowed by the role it was set up for (2026-09-07) */
+  const roleNow = String(flag('role', cfg.role || 'seller'));
+  const canCarry = [
+    typeof adapter.readProducts === 'function' ? 'products' : null,
+    typeof adapter.readStock === 'function' ? 'stock' : null,
+    typeof adapter.readProfile === 'function' ? 'profile' : null,
+    (typeof adapter.pushOrder === 'function' && /seller|both/.test(roleNow)) ? 'order' : null,
+    (typeof adapter.pushPurchase === 'function' && /buyer|both/.test(roleNow)) ? 'purchase' : null,
+    typeof adapter.pushReceipt === 'function' ? 'receipt' : null,
+    typeof adapter.ensureParty === 'function' ? 'party' : null,
+  ].filter(Boolean);
   const receipts = new core.Receipts(cfg.receipts);
   /* ⭐ THE HANDSHAKE, KEPT: every run reports this PC and the Tally company; a kit not yet approved for this PC waits (watch: a minute
      at a time, so approving in the browser makes it go live with nobody at the store PC) or stops (any other command); a GSTIN that
@@ -54,8 +75,11 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
     const gate = async () => {
       /* Tally closed when we started → no company, no GSTIN, no automatic approval; ask again each time we wait (found 2026-09-06 on the two live kits) */
       if (!facts.company && !facts.gstin) await readFacts();
-      const hb = await cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd, tally: facts });
+      const hb = await cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd, tally: facts, streams: canCarry });
       if (hb && hb.policy) cb.policy = hb.policy;   /* orders go to the books at received · accepted · completed · manual */
+      /* ⭐ and which of those streams are mine to carry — the rest belong to another connector on this account (2026-09-07) */
+      if (hb && Array.isArray(hb.owns)) { const before = (cb.owns || []).join(','); cb.owns = hb.owns; cb.stream_owner = hb.stream_owner || {};
+        if (before !== cb.owns.join(',')) log('carrying: ' + (cb.owns.join(' · ') || 'nothing — every stream belongs to another connector')); }
       if (!hb || hb.approved !== false) return true;
       if (/mismatch/.test(hb.reason || '')) { log('STOP — ' + hb.reason + '. This PC\'s Tally company does not belong to this ChitBridge account; nothing will be synced.'); process.exit(3); }
       log('waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC (' + require('os').hostname() + (facts.company ? ' · ' + facts.company : '') + ')');

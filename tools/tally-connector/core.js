@@ -25,6 +25,20 @@ const crypto = require('crypto');
 /* one unit, three names — the same table the API and the app hold (lib/units.js / app/units.js); a unit we cannot map is kept as spelt */
 const UNITS = (() => { try { return require('../../lib/units'); } catch (_) { return null; } })();
 function unitOf(u) { const k = UNITS && UNITS.unitOf(u); return k || String(u || 'unit').trim().toLowerCase(); }
+/**
+ * ⭐⭐ ONE OWNER PER STREAM (Athi, 2026-09-07: "quantity gets posted in ERP, sales record in Tally and possibly Zoho CRM — will it not
+ * confuse the purpose?"). `cb.owns` is what the heartbeat answered: the streams THIS connector owns. Absent (an older API, or a
+ * connector that reported none) means the old behaviour — carry everything. A stream someone else owns is skipped once, out loud.
+ */
+function ownsStream(cb, stream, log) {
+  if (!cb || !Array.isArray(cb.owns)) return true;
+  if (cb.owns.indexOf(stream) >= 0) return true;
+  cb._said = cb._said || {};
+  if (!cb._said[stream]) { cb._said[stream] = true;
+    const who = (cb.stream_owner && cb.stream_owner[stream]) || 'another connector';
+    (log || (() => {}))(stream + ': not mine — ' + who + ' owns it (ChitBridge › Settings › Integrations › Who owns what)'); }
+  return false;
+}
 function hashOf(o) { return crypto.createHash('sha256').update(JSON.stringify(o)).digest('hex').slice(0, 16); }
 
 class Receipts {
@@ -60,6 +74,7 @@ class CB {
 
 /** ── PRODUCTS UP: the outside system's items become (or update) ChitBridge products, matched by code ── */
 async function syncProducts({ cb, adapter, receipts, log }) {
+  if (!ownsStream(cb, 'products', log)) return { read: 0, added: 0, updated: 0, unchanged: 0, failed: 0, skipped: 'not the owner' };
   const theirs = await adapter.readProducts();
   const mine = await cb.products();
   const list = Array.isArray(mine) ? mine : (mine.items || mine.products || []);
@@ -94,6 +109,7 @@ async function syncProducts({ cb, adapter, receipts, log }) {
 
 /** ── STOCK WITH A STAMP: the source's closing stock, written in one call with the moment it was read ── */
 async function syncStock({ cb, adapter, receipts, log, codes }) {
+  if (!ownsStream(cb, 'stock', log)) return { read: 0, written: 0, skipped: 'not the owner' };
   if (typeof adapter.readStock !== 'function') { log('stock: the ' + adapter.name + ' adapter has no readStock'); return { read: 0, written: 0 }; }
   const at = new Date().toISOString();
   let rows = await adapter.readStock();
@@ -109,6 +125,7 @@ async function syncStock({ cb, adapter, receipts, log, codes }) {
 
 /** ── THE PROFILE FROM THEIR SYSTEM: name · GSTIN · state · address … copied with source + as_of; the API checks and ranks ── */
 async function syncProfile({ cb, adapter, receipts, log }) {
+  if (!ownsStream(cb, 'profile', log)) return null;
   if (typeof adapter.readProfile !== 'function') { log('profile: the ' + adapter.name + ' adapter has no readProfile'); return null; }
   const p = await adapter.readProfile(); if (!p || !Object.keys(p).length) { log('profile: nothing read'); return null; }
   const r = await cb.profile(p, adapter.name);
@@ -139,6 +156,7 @@ function orderOf(c) {
 /** the payment the seller recorded on their copy (business_json.payment) — level 1 by hand, level 2 by a gateway */
 function paymentOf(c) { const h = c.header || c.chit || c; const bj = (h && h.business_json) || c.business_json || {}; return bj.payment || null; }
 async function pushReceipt({ cb, adapter, receipts, log, chit_id }) {
+  if (!ownsStream(cb, 'receipt', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('receipt', chit_id);
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
   const c = await cb.chit(chit_id); const pay = paymentOf(c); const order = orderOf(c);
@@ -172,6 +190,7 @@ function booksGate(c, policy) {
   return { go: false, why: 'waits for "Send to books" on the Task' };
 }
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
+  if (!ownsStream(cb, 'order', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('order', chit_id);
   if (last && last.outcome === 'ok') { log('order ' + chit_id.slice(0, 8) + ' already pushed'); return { chit_id, outcome: 'duplicate' }; }
   if (last && last.outcome === 'skipped') return { chit_id, outcome: 'duplicate' };   /* decided once (not an order); the 5-minute catch-up must not re-record it */
@@ -239,6 +258,7 @@ function purchaseOf(c, inv) {
            itc_claim: Math.round(((taxes.cgst + taxes.sgst + taxes.igst + taxes.cess)) * 100) / 100, place_of_supply: (I._cb && I._cb.place_of_supply) || null, buyer_state: (I.BuyerDtls && I.BuyerDtls.State) || null, frozen: !!(inv && inv.frozen) };
 }
 async function pushPurchase({ cb, adapter, receipts, log, chit_id }) {
+  if (!ownsStream(cb, 'purchase', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('purchase', chit_id);
   if (last && (last.outcome === 'ok' || last.outcome === 'skipped')) return { chit_id, outcome: 'duplicate' };
   if (!adapter.pushPurchase) { receipts.add({ kind: 'purchase', ref: chit_id, hash: '-', outcome: 'skipped', why: adapter.name + ' has no pushPurchase' }); return { chit_id, outcome: 'skipped' }; }
@@ -334,4 +354,4 @@ function loadConfig(file) {
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { booksGate, pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { booksGate, ownsStream, pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };

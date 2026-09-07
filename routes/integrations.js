@@ -143,8 +143,30 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
                      actor_type = 'connector', max_tasks = 0 WHERE identity_id = $1`, [actor_id, name, host || null, JSON.stringify(patchCfg)]);
     }
     /* ⭐ the trigger the kit obeys (Athi, 2026-09-06: "there must be some trigger to be allowed to go to Tally") — Settings › Governance › Orders go to the books */
-    let books_at = 'accepted'; try { const pf = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]); const v = pf.rows[0] && pf.rows[0].policy_flags && pf.rows[0].policy_flags.books_at; if (/^(received|accepted|completed|manual)$/.test(String(v || ''))) books_at = String(v); } catch (_) {}
-    res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString(), approved: enrol ? enrol.approved : true, reason: enrol ? enrol.reason : null, policy: { books_at } });
+    let books_at = 'accepted', overdue_hours = 12; let owner = {};
+    try { const pf = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]); const f = (pf.rows[0] && pf.rows[0].policy_flags) || {};
+      if (/^(received|accepted|completed|manual)$/.test(String(f.books_at || ''))) books_at = String(f.books_at);
+      if (Number(f.books_overdue_hours) > 0) overdue_hours = Number(f.books_overdue_hours);
+      if (f.stream_owner && typeof f.stream_owner === 'object') owner = f.stream_owner; } catch (_) {}
+    /**
+     * ⭐⭐ THE CLAIM (2026-09-07). A connector says which streams it can carry; an unowned stream becomes its, an owned one stays where
+     * it is, and the answer tells it what it may do. First come, because the common account has ONE system and must never be asked a
+     * question about ownership; Settings is where a second system takes a stream over.
+     * ⚠️ ONLY AN APPROVED CONNECTOR CLAIMS — otherwise a kit that is still waiting for the owner's click could take a stream from the
+     * connector that is actually running.
+     */
+    const STREAMS = ['products', 'stock', 'profile', 'order', 'purchase', 'receipt', 'party'];
+    let owns = [];
+    const mine = Array.isArray(b.streams) ? b.streams.map((x) => String(x)).filter((x) => STREAMS.includes(x)) : [];
+    if (mine.length && (!enrol || enrol.approved)) {
+      const claims = {}; let changed = false;
+      for (const st of mine) { if (!owner[st]) { claims[st] = kit_id; changed = true; } }
+      if (changed) { owner = Object.assign({}, owner, claims);
+        try { await require('../lib/policy').set(entity_id, { stream_owner: owner }); } catch (e) { console.log('stream claim:', e && e.message); } }
+      owns = mine.filter((st) => owner[st] === kit_id);
+    }
+    res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString(), approved: enrol ? enrol.approved : true, reason: enrol ? enrol.reason : null,
+               policy: { books_at, books_overdue_hours: overdue_hours }, owns: mine.length ? owns : null, stream_owner: owner });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 /** the owner approves a PC (session only): the key behind that connector row may now do its work; a later heartbeat from the same host stays approved */
@@ -179,6 +201,12 @@ router.post('/books', auth, auth.requireScope('connector'), async (req, res) => 
       `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('books', COALESCE(business_json->'books', '{}'::jsonb) || jsonb_build_object($1::text, $2::jsonb))
         WHERE chit_id = $3 AND entity_id = $4 RETURNING chit_id`, [kind, JSON.stringify(rec), b.chit_id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    /* ⭐ every answer is kept, not just the last one (2026-09-07): books[kind] is what the Task shows, books_log is what reconciliation
+       reads when two systems answered for one order — a duplicate then SHOWS instead of hiding behind the newer row. */
+    try { await require('../db').withEntity(entity_id, (db) => db.query(
+      `UPDATE chit_header SET business_json = COALESCE(business_json,'{}'::jsonb) || jsonb_build_object('books_log',
+         (COALESCE(business_json->'books_log','[]'::jsonb) || jsonb_build_array($1::jsonb)))
+        WHERE chit_id = $2 AND entity_id = $3`, [JSON.stringify(Object.assign({ kind }, rec)), b.chit_id, entity_id])); } catch (_) {}
     try { require('../lib/events').emit([entity_id], { kind: 'chit', id: b.chit_id, note: 'books' }); } catch (_) {}
     res.json({ ok: true, kind, books: rec });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
@@ -187,6 +215,106 @@ router.get('/status', auth, async (req, res) => {
   try { const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]); res.json({ connectors: r.rows.map(rowOut) }); }
   catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
+const SQL_RECONCILE = `SELECT ch.chit_id, ch.direction, ch.purpose, ch.auto_subject, ch.manual_subject, ch.created_at, ch.all_recipients,
+              ch.business_json->'books' AS books, (ch.business_json ? 'books_request') AS asked,
+              cs.current_status, cs.updated_at AS status_at
+         FROM chit_header ch
+         JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction
+        WHERE ch.entity_id = $1 AND ch.purpose IN ('order','offer') AND cs.deleted_at IS NULL
+          AND ch.created_at > NOW() - ($2 || ' days')::interval
+        ORDER BY ch.created_at DESC LIMIT 500`;
+/**
+ * ⭐⭐ WHO OWNS WHICH STREAM — read it, and hand one over (2026-09-07).
+ * GET  /api/integrations/streams  → the map, and the connectors that could carry each.
+ * PUT  /api/integrations/streams  { stream: kit_id | null } → give a stream to a connector, or leave it unowned.
+ * The claim itself is automatic (heartbeat); this is for the day a migration ends and Tally takes the books over from the POS.
+ */
+const STREAM_LIST = [
+  { id: 'products', label: 'Products', dir: 'in',  what: 'the item list this account sells from' },
+  { id: 'stock',    label: 'Stock',    dir: 'in',  what: 'counted quantities, stamped with when they were read' },
+  { id: 'profile',  label: 'Profile',  dir: 'in',  what: 'the business name, address and GSTIN as the books hold them' },
+  { id: 'order',    label: 'Sales voucher',    dir: 'out', what: 'an order you received becomes a sales invoice' },
+  { id: 'purchase', label: 'Purchase voucher', dir: 'out', what: 'an order you placed becomes a purchase bill' },
+  { id: 'receipt',  label: 'Receipt',  dir: 'out', what: 'a payment you marked becomes a receipt against the invoice' },
+  { id: 'party',    label: 'Parties',  dir: 'out', what: 'a counterparty becomes a customer or supplier record' },
+];
+async function connectorsOf(entity_id) {
+  const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [entity_id]);
+  return r.rows.map(rowOut);
+}
+router.get('/streams', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const flags = await require('../lib/policy').get(entity_id);
+    res.json({ streams: STREAM_LIST, owner: flags.stream_owner || {}, connectors: await connectorsOf(entity_id) });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+router.put('/streams', auth, async (req, res) => {
+  try {
+    if (!req.identity || req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'a connector cannot reassign its own streams' });
+    const entity_id = auth.entityOf(req); const b = req.body || {};
+    const policy = require('../lib/policy'); const flags = await policy.get(entity_id);
+    const next = Object.assign({}, flags.stream_owner || {});
+    let touched = 0;
+    for (const st of STREAM_LIST.map((x) => x.id)) {
+      if (!(st in b)) continue;
+      const v = b[st]; touched++;
+      if (v === null || v === '' || v === false) delete next[st]; else next[st] = String(v).slice(0, 120);
+    }
+    if (!touched) return res.status(400).json({ error: 'validation', message: 'name at least one stream' });
+    const after = await policy.set(entity_id, { stream_owner: next });
+    res.json({ ok: true, owner: after.stream_owner || {} });
+  } catch (e) { res.status(e.status || 500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * ⭐⭐ RECONCILIATION — did what left this account actually land in the books? (2026-09-07)
+ * GET /api/integrations/reconcile?days=30 → one row per order, its state, and the counts.
+ *   booked   the books answered with a reference        refused  the books refused, with the reason (retried every 5 min)
+ *   waiting  the trigger has not released it yet        due      released, no answer yet
+ *   overdue  due for longer than books_overdue_hours — the answer to "is it posted before the next day?"
+ * ⚠️ THIS RECONCILES DISPATCH, NOT BALANCES. It proves every order reached the other system once; comparing our sales total against
+ * theirs for a period needs a read back per system (only Tally has one today) and is deliberately not claimed here.
+ */
+router.get('/reconcile', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
+    const flags = await require('../lib/policy').get(entity_id);
+    const at = String(flags.books_at || 'accepted'), hrs = Number(flags.books_overdue_hours) || 12;
+    const { withEntity } = require('../db');
+    const rows = await withEntity(entity_id, (db) => db.query(
+      SQL_RECONCILE, [entity_id, String(days)]));
+    const released = (r) => {
+      const st = String(r.current_status || '');
+      if (r.asked) return r.status_at || r.created_at;
+      if (at === 'received') return r.created_at;
+      if (at === 'accepted') return /^(accepted|in_progress|partial|completed)$/.test(st) ? (r.status_at || r.created_at) : null;
+      if (at === 'completed') return st === 'completed' ? (r.status_at || r.created_at) : null;
+      return null;   /* manual: only "Send to books" releases it */
+    };
+    const now = Date.now();
+    const out = rows.rows.map((r) => {
+      const kind = r.direction === 'sent' ? 'purchase' : 'order';
+      const b = (r.books && r.books[kind]) || null;
+      const rel = released(r);
+      const cancelled = /^(cancelled|rejected)$/.test(String(r.current_status || ''));
+      let state = 'waiting';
+      if (b && b.outcome === 'ok') state = 'booked';
+      else if (b && b.outcome === 'failed') state = 'refused';
+      else if (cancelled) state = 'skipped';
+      else if (rel) state = (now - new Date(rel).getTime() > hrs * 3600 * 1000) ? 'overdue' : 'due';
+      return { chit_id: r.chit_id, side: r.direction === 'sent' ? 'purchase' : 'sales', kind,
+               subject: r.manual_subject || r.auto_subject || null, party: (Array.isArray(r.all_recipients) ? r.all_recipients[0] : null) || null,
+               status: r.current_status, created_at: r.created_at, released_at: rel, state,
+               system: b ? b.system : null, ref: b ? b.ref : null, why: b ? b.why : null, at: b ? b.at : null, host: b ? b.host : null };
+    });
+    const counts = out.reduce((a, r) => { a[r.state] = (a[r.state] || 0) + 1; a.total++; return a; }, { total: 0 });
+    const by_system = out.filter((r) => r.state === 'booked').reduce((a, r) => { const k = r.system || 'books'; a[k] = (a[k] || 0) + 1; return a; }, {});
+    res.json({ days, books_at: at, overdue_hours: hrs, counts, by_system, rows: out });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 /* ── ON DEMAND (Athi: "does it read on demand, for example availability?"): the storefront asks, the bell carries the
       ask to the connector that holds it, the connector reads the source and writes the stamped figures; the storefront
       re-reads them a few seconds later. Public, per handle, rate-limited by the service limiter. ── */
