@@ -78,5 +78,24 @@ t('every number flag defaults within its own min/max', () => {
   });
 });
 
+/**
+ * ⚠️ A MAP FLAG WHITELISTS ITS KEYS, NOT ITS VALUES (found live 2026-09-07). `stream_owner` holds kit ids shaped
+ * "<connector name>@<host>" — Athi's reads "tallytest · TallyPrime EDU (Athi's laptop)@Maharishi". The first version accepted only
+ * [a-zA-Z0-9_ .:@+-], so that id was dropped on every write: choosing that connector for a stream stored nothing and the row came
+ * back "nobody", and the connector's own claim would have spun for ever — claim, dropped, unowned, claim again.
+ */
+t('★ a map flag keeps a real kit id — middle dot, apostrophe, brackets and all', () => {
+  const id = "tallytest · TallyPrime EDU (Athi's laptop)@Maharishi";
+  const out = policy.coerce('stream_owner', { order: id, products: 'Zoho Books connector@Maharishi' });
+  assert.strictEqual(out.order, id, 'an id we minted ourselves must survive our own validation');
+  assert.strictEqual(out.products, 'Zoho Books connector@Maharishi');
+});
+
+t('a map flag refuses a key it does not declare, and strips control characters from a value', () => {
+  const out = policy.coerce('stream_owner', { order: 'a\u0007b', nonsense: 'x' });
+  assert.strictEqual(out.order, 'ab');
+  assert.ok(!('nonsense' in out), 'the KEYS are the whitelist');
+});
+
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
