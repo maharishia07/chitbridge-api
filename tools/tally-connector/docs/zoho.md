@@ -4,6 +4,13 @@
 
 **What you need.** Any PC with Node.js 18 or newer, a Zoho Books organisation, and an OAuth access token for it.
 
+**Nothing has to be open.** Zoho Books is a hosted service, so — unlike Tally, which the connector reaches on a local port and which must
+be running with the company open — nobody needs Zoho open, signed in, or even installed. The connector holds a refresh token and talks to
+Zoho over the internet. What must be running is the CONNECTOR: a Windows task starts it every five minutes whenever it is not running, so
+the PC needs power and internet, not attention. While that PC is off, orders wait; the first run after it wakes books every one it missed
+(once, never twice). Because nothing is local to the store, a Zoho connector may equally run on any other PC you keep on — approve that PC
+once, and remember a key is approved for one PC at a time.
+
 ## 0. The whole installation, in order
 1. **Zoho API console** (https://api-console.zoho.in for India; .com / .eu / .com.au / .jp elsewhere) › **Add Client** › **Self Client** › Create. Copy the **Client ID** and **Client Secret**.
 2. Same page › **Generate Code** tab › scope `ZohoBooks.fullaccess.all` › duration **10 minutes** › a description › Create › copy the **code**. It works once, within ten minutes — do step 4 right after.
