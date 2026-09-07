@@ -29,13 +29,13 @@ Add `--dry` to print the Tally voucher XML instead of posting it. Add `--adapter
 
 ## The counter (till.js)
 
-A shop with no other system can bill on ChitBridge itself:  serves a counter at http://127.0.0.1:7071 from the same
-folder and the same key. It holds a copy of the shop — items, prices, offers, tax slabs, customers — so it keeps billing when the
-internet does not, and each sale becomes an ordinary chit as soon as the line is back. The same page runs on a phone or tablet with
-no installation at all: open , paste a key with scope , and the browser will offer to install it.
+A shop with no other system can bill on ChitBridge itself: `node till.js` serves a counter at http://127.0.0.1:7071 from the
+same folder and the same key. It holds a copy of the shop — items, prices, offers, tax slabs, customers — so it keeps billing when
+the internet does not, and each sale becomes an ordinary chit as soon as the line is back. The same page runs on a phone or tablet
+with no installation at all: open `/till.html`, paste a key with scope `till`, and the browser will offer to install it.
 
-Bill numbers are local and continuous within the financial year (), and every bill carries its number to ChitBridge,
-so a replay after a dropped line can never bill a customer twice. Full instructions: .
+Bill numbers are local and continuous within the financial year (`C1/26-27/0041`), and every bill carries its number to
+ChitBridge, so a replay after a dropped line can never bill a customer twice. Full instructions: `docs/till.md`.
 
 ## More than one system on one account
 
