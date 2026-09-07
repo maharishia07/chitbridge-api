@@ -80,12 +80,23 @@ const cfgFile = path.join(here, 'connector.json');
     process.stdout.write('Reading your organisations … ');
     let orgs = []; try { zad = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { zoho: zo, _configFile: cfgFile })); orgs = await zad.organisations(); console.log(orgs.length + ' found'); } catch (e) { console.log('FAILED — ' + e.message); }
     orgs.forEach((o, i) => console.log('  ' + (i + 1) + '. ' + o.name + ' (' + o.id + ', ' + (o.country || '') + ' ' + (o.currency || '') + ')'));
-    let org = zo.org || (orgs.length === 1 ? orgs[0].id : '');
-    if (orgs.length > 1 || !org) { const pick = await ask(orgs.length ? 'Which organisation (number or id)' : 'Organisation id', org || (orgs[0] ? '1' : '')); org = (orgs[Number(pick) - 1] && orgs[Number(pick) - 1].id) || pick; }
+    /* ⭐ A PLACEHOLDER IS NOT AN ORGANISATION ID (2026-09-07, the first live Zoho run). The kit used to ship org "YOUR ORGANISATION ID";
+       being truthy it was kept, the picker never ran, and every Zoho call answered "Invalid value passed for organization_id". Only an id
+       Zoho itself just listed is kept; one organisation means no question. */
+    const listed = (id) => orgs.some((o) => o.id === String(id || ''));
+    let org = listed(zo.org) ? String(zo.org) : (orgs.length === 1 ? orgs[0].id : '');
+    if (!org) { const pick = await ask(orgs.length ? 'Which organisation (number or id)' : 'Organisation id', orgs[0] ? '1' : ''); org = (orgs[Number(pick) - 1] && orgs[Number(pick) - 1].id) || String(pick || '').trim(); }
     out.zoho = Object.assign({}, zo, { org, customer_name: await ask('Customer name for storefront orders', zc.customer_name || 'Walk-in') });
     process.stdout.write('Checking Zoho Books … ');
     try { const t = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { _configFile: cfgFile })); const items = await t.readProducts(); console.log('ok — ' + items.length + ' item(s) readable'); }
-    catch (e) { console.log('FAILED — ' + e.message); }
+    catch (e) {
+      /* a failure here means nothing will sync — say what it means and stop, rather than saving settings that cannot work (2026-09-07) */
+      console.log('FAILED — ' + e.message);
+      if (/organization_id/i.test(e.message)) console.log('  The organisation id is wrong. Run setup again and choose the organisation from the list it prints.');
+      else console.log('  Check the region (' + region + ') and that the Self Client had scope ZohoBooks.fullaccess.all.');
+      const go = await ask('Save the settings anyway and try later? (y/n)', 'n');
+      if (!/^y/i.test(go)) { rl.close(); process.exit(1); }
+    }
   } else if (adapter === 'gofrugal') {
     out.gofrugal = Object.assign({}, cfg.gofrugal || {}, { url: await ask('GoFrugal WebReporter URL', (cfg.gofrugal && cfg.gofrugal.url) || 'http://localhost:8482'), token: await ask('GoFrugal API key (X-Auth-Token)', (cfg.gofrugal && cfg.gofrugal.token) || ''), locationId: (await ask('Location id (blank = all)', (cfg.gofrugal && cfg.gofrugal.locationId) || '')) || null });
   } else {

@@ -22,6 +22,7 @@ If you would rather not use setup: `connector.json` › `zoho`: `base` (`https:/
 | `Zoho OAuth: invalid_client` | Client ID / Secret mistyped, or the console region differs from the API region | copy both again from the same console; region in setup must match (in / com / eu) |
 | `Zoho gave no refresh token` | the code was generated without the Books scope | scope `ZohoBooks.fullaccess.all` |
 | `Zoho 401` while running | the refresh token was revoked in Zoho | run start.cmd again and answer y to "get a new one" |
+| `Zoho 400 Invalid value passed for organization_id` | the organisation was never chosen (kits downloaded before 2026-09-07 shipped a placeholder id) | run start.cmd again and pick the organisation from the list it prints, or put the number beside its name into `connector.json` › `zoho.org` |
 | `Zoho 429` | the daily / per-minute API cap | nothing — retried at the next tick; raise `syncMinutes` / `stockMinutes` on the Free plan |
 
 ## 4. First run

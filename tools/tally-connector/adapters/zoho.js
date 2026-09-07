@@ -107,7 +107,7 @@ module.exports = function zohoAdapter(cfg) {
     /** the organisation: name · address · GSTIN · PAN · phone · email · currency */
     async readProfile() {
       const j = await call('GET', '/books/v3/organizations/' + encodeURIComponent(z.org)); const o = j.organization || {}; const a = o.address || {};
-      const out = { legal_name: o.name, trade_name: o.name, address: [a.street_address1, a.street_address2].filter(Boolean).join(', '), city: a.city, state: a.state, pincode: a.zip, country: a.country === 'India' ? 'IN' : a.country, phone: o.phone, email: o.email, currency: o.currency_code, gstin: o.gst_no || (o.tax_settings && o.tax_settings.gst_no), pan: o.pan_no };
+      const out = { legal_name: o.name, trade_name: o.name, address: [a.street_address1, a.street_address2].filter(Boolean).join(', '), city: a.city, state: a.state, pincode: a.zip, country: a.country === 'India' ? 'IN' : a.country, phone: o.phone, email: o.email, currency: o.currency_code, gstin: (o.tax_settings && (o.tax_settings.tax_reg_no || o.tax_settings.gst_no)) || o.tax_reg_no || o.gst_no   /* ⭐ Zoho India: tax_settings.tax_reg_no (2026-09-07, read off a live organisation) */, pan: o.pan_no };
       for (const k of Object.keys(out)) if (!out[k]) delete out[k];
       return out;
     },
