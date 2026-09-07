@@ -26,6 +26,12 @@ const path = require('path');
 const API = path.join(__dirname, '..');
 const WEB = path.join(API, '..', 'chitbridge-web');
 const CORE = path.join(WEB, 'public', 'app', 'core.js');
+/**
+ * ⚠️ EVERY BROWSER CLIENT, NOT JUST THE FIRST ONE. The counter (till.html) is a second client of this API and signs with X-Api-Key;
+ * on its first live run it failed with the same bare "Failed to fetch" described above, because nothing had told the server about that
+ * header. Anything we ship that runs in a browser and calls the API belongs in this list.
+ */
+const CLIENTS = [CORE, path.join(WEB, 'public', 'till.html')];
 
 let pass = 0;
 const fails = [];
@@ -43,7 +49,7 @@ if (!fs.existsSync(CORE)) {
   process.exit(0);
 }
 
-const core = fs.readFileSync(CORE, 'utf8');
+const core = CLIENTS.filter((f) => fs.existsSync(f)).map((f) => fs.readFileSync(f, 'utf8')).join('\n');
 
 /**
  * Every literal header key in a fetch headers object. Deliberately broad — a false positive costs one line in
@@ -55,14 +61,14 @@ for (const h of core.matchAll(/["']([A-Za-z][A-Za-z0-9-]{2,})["']\s*:\s*(?!\s*\{
   if (/^(x-|authorization$|idempotency)/.test(k)) sent.add(k);
 }
 
-console.log('\n── every header core.js sends is allowed by server.js ──');
+console.log('\n── every header our browser clients send is allowed by server.js ──');
 console.log('  client sends: ' + [...sent].sort().join(', '));
 console.log('  server allows: ' + [...allowed].sort().join(', '));
 
 for (const h of sent) {
   if (SAFELISTED.has(h)) { pass++; continue; }
   if (allowed.has(h)) { pass++; continue; }
-  fails.push(`core.js sends "${h}" and server.js does not allow it — every request will fail preflight, ` +
+  fails.push(`a browser client sends "${h}" and server.js does not allow it — every request will fail preflight, ` +
     'and the app will report "You\'re offline" on a working connection');
 }
 

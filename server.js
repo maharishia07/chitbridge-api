@@ -77,7 +77,9 @@ const corsOptions = {
    * ⭐ The lesson is the coupling, not the typo: a header added on the client is a change to the SERVER's
    * contract. `tests/cors-headers.test.cjs` now fails when the two lists disagree.
    */
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
+  /* ⭐ X-Api-Key (2026-09-07): the counter page runs in a browser on the web origin and signs its calls with a till key, not a
+     session. The very failure this comment block describes happened again on [TILL-01]'s first run — a bare 'Failed to fetch'. */
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
   credentials: true,
 };
 app.use(cors(corsOptions));
