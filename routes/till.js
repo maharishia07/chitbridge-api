@@ -76,6 +76,21 @@ router.get('/snapshot', auth, async (req, res) => {
       customers = c.rows.map((x) => ({ name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] }));
     } catch (_) { /* the column set differs before b205 — the till still bills */ }
 
+    /**
+     * ⭐ THE PEOPLE WHO MAY STAND AT A COUNTER (2026-09-07). The shop's own co-assists — never the connectors, which are actors too
+     * and would otherwise offer "Zoho Books connector" as a cashier. Name and id only: the till records WHO billed, it does not
+     * authenticate anybody, and nothing about a person's contact details belongs on a device at a counter.
+     */
+    let staff = [];
+    try {
+      const st = await query(
+        `SELECT identity_id, display_name, hat FROM identities
+          WHERE parent_entity_id = $1 AND identity_type = 'actor' AND status = 'active'
+            AND (actor_type IS NULL OR actor_type <> 'connector') AND connector_type IS NULL
+          ORDER BY display_name LIMIT 200`, [entity_id]);
+      staff = st.rows.map((a) => ({ id: a.identity_id, name: a.display_name, hat: a.hat || null }));
+    } catch (_) { /* a shop with no co-assists bills as the shop itself */ }
+
     const items = ((itemRows && itemRows.rows) || []).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
@@ -98,13 +113,52 @@ router.get('/snapshot', auth, async (req, res) => {
         reg_type: String(flags.gst_registration || 'regular'),
         currency: profile.currency || 'INR',
       },
-      items, offers,
+      items, offers, staff,
       slabs: (shelf && shelf.slabs) || [], categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
       customers,
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off' },
     };
-    body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop });
+    body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
     res.json(body);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * ⭐⭐ EARLIER BILLS (2026-09-08). A device holds today; ChitBridge holds the history, because a till can be lost or replaced and a
+ * shop's record must outlive it. This returns THIS shop's counter sales only — a chit that carries a bill number — newest first, with
+ * their lines, so an old slip can be printed again from any till.
+ *   GET /api/till/bills?days=30&by=<actor_id>&limit=100
+ * ⚠️ It reads nothing else. A till key cannot open the inbox, a supplier's chit or anybody's messages, and this route keeps that true:
+ * the WHERE clause is the shop, the purpose, and the presence of a bill number.
+ */
+router.get('/bills', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '100', 10) || 100, 1), 500);
+    const by = (typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by)) ? req.query.by : null;
+    const { withEntity } = require('../db');
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT chit_id, created_at, business_json, line_items, summary_json
+         FROM chit_header
+        WHERE entity_id = $1 AND direction = 'sent' AND purpose IN ('order','offer')
+          AND business_json ? 'bill_no'
+          AND created_at > NOW() - ($2 || ' days')::interval
+        ORDER BY created_at DESC LIMIT $3`, [entity_id, String(days), limit]));
+    const rows = r.rows.map((x) => {
+      const b = x.business_json || {}, t = b.till || {}, m = (x.summary_json || {}).money || {};
+      return { chit_id: x.chit_id, no: b.bill_no || null, at: b.billed_at || x.created_at,
+               customer: (b.customer && b.customer.name) || 'Walk-in',
+               by: t.by || null, till: { id: t.id || null, name: t.name || null },
+               total: m.total != null ? m.total : (m.net != null ? m.net : (x.summary_json || {}).total_value),
+               saved: m.savings != null ? m.savings : null, taxable: m.net != null ? m.net : null, tax: m.tax != null ? m.tax : null,
+               kind: b.slip || 'cash',
+               payments: (b.payment && b.payment.parts) || [],
+               lines: (Array.isArray(x.line_items) ? x.line_items : []).map((l) => ({
+                 name: l.particulars || l.name, qty: l.quantity, unit: l.unit, price: l.price, net: l.total,
+                 save: (l.offer && l.offer.off) || 0, off: !!l.offer, off_label: (l.offer && l.offer.label) || '', gst_rate: l.gst_rate, hsn: l.hsn })) };
+    }).filter((x) => x.no && (!by || (x.by && x.by.id === by)));
+    res.json({ days, count: rows.length, bills: rows });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

@@ -89,6 +89,10 @@
   .go button.pri{background:var(--ok);border-color:var(--ok);color:#fff}
   .go button:disabled{opacity:.45;cursor:not-allowed}
   .foot{padding:6px 12px;border-top:1px solid var(--line);color:var(--dim);font-size:.82em;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  /* the keys, once, along the bottom — a strip rather than a menu: nothing to open, nothing to read twice */
+  .keys{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;border-top:1px solid var(--line);color:var(--dim);font-size:.78em;background:var(--card)}
+  .keys b{color:var(--ink);font-weight:700}
+  @media (max-width:860px){ .keys{display:none} }   /* a phone has no function keys; the buttons carry the same actions */
 
   dialog{border:none;border-radius:14px;padding:0;max-width:560px;width:94vw;background:var(--card);color:var(--ink)}
   dialog::backdrop{background:rgba(0,0,0,.45)}
@@ -109,6 +113,7 @@
     <header>
       <span class="shop" id="shopname">…</span>
       <span class="pill" id="tillpill">till</span>
+      <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is at the counter (F7 to hand over)">…</button>
       <span class="pill" id="netpill">…</span>
       <span class="pill" id="agepill"></span>
       <span style="flex:1"></span>
@@ -123,6 +128,10 @@
       <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="paintHits()" onkeydown="searchKey(event)">
     </div>
     <div class="hits" id="hits"></div>
+    <div class="keys" id="keys">
+      <span><b>F2</b> search</span><span><b>↓↑ Enter</b> add</span><span><b>F9</b> save &amp; print</span>
+      <span><b>F8</b> bills</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
+    </div>
   </section>
 
   <section class="right">
@@ -155,8 +164,32 @@
   </div>
 </div></dialog>
 
+<dialog id="whodlg"><div class="dlg">
+  <h3>Who is at the counter?</h3>
+  <div id="whobody"></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()">Close</button></div>
+  <div style="color:var(--dim);font-size:.8em;margin-top:10px">The name is recorded on every bill from now until somebody takes over. It says who was standing here — it is not a sign-in, and it does not change what this till may do.</div>
+</div></dialog>
+
+<dialog id="shiftdlg"><div class="dlg">
+  <h3 id="shifttitle">Hand over</h3>
+  <div id="shiftbody"></div>
+  <div class="dlgbtns">
+    <button onclick="document.getElementById('shiftdlg').close()">Not yet</button>
+    <button class="pri" id="shiftgo" onclick="shiftClose()">Count and hand over</button>
+  </div>
+</div></dialog>
+
 <dialog id="billsdlg"><div class="dlg">
   <h3 id="billstitle">Today</h3>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="pill" id="tab_today" data-testid="till-tab-today" onclick="billsTab('today')">Today · on this device</button>
+    <button class="pill" id="tab_earlier" data-testid="till-tab-earlier" onclick="billsTab('earlier')">Earlier · from ChitBridge</button>
+    <span style="flex:1"></span>
+    <select class="pill" id="bills_days" onchange="billsTab('earlier')" style="display:none">
+      <option value="7">last 7 days</option><option value="30" selected>last 30 days</option><option value="90">last 90 days</option>
+    </select>
+  </div>
   <div id="billsbody" style="max-height:56vh;overflow:auto"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('billsdlg').close()">Close</button></div>
 </div></dialog>
@@ -187,6 +220,7 @@ var S = null, STATE = { online:false, queued:0, today:{count:0,total:0}, till:{ 
 var CART = [], PICKED = 'Cash', LAST = null, HOST = null, SEL = 0;
 
 var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
+var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
 var money = function(n){ return r2(n).toFixed(2); };
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
 var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
@@ -244,6 +278,8 @@ var AgentHost = {
   mode:'agent',
   state: function(){ return fetch('/api/state').then(function(r){ return r.json(); }); },
   bills: function(){ return fetch('/api/bills').then(function(r){ return r.json(); }).then(function(j){ return (j && j.bills) || []; }); },
+  history: function(days){ return fetch('/api/history?days=' + (days||30)).then(function(r){ return r.json(); }); },
+  shift: function(sh){ return fetch('/api/shift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sh)}).then(function(r){ return r.json(); }); },
   refresh: function(){ return fetch('/api/refresh',{method:'POST'}).then(function(r){ return r.json(); }); },
   bill: function(b){ return fetch('/api/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }); },
 };
@@ -281,6 +317,28 @@ var CloudHost = {
     var day = new Date().toISOString().slice(0,10);
     return all.filter(function(b){ return String(b.at||'').slice(0,10) === day; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
+  async history(days){
+    if (!this.key || !navigator.onLine) return { bills: [], offline: true };
+    try {
+      var r = await fetch(this.api + '/api/till/bills?days=' + (days||30) + '&limit=200', { headers:{ 'X-Api-Key': this.key } });
+      if (!r.ok) return { bills: [], offline: true, why: 'HTTP ' + r.status };
+      return await r.json();
+    } catch (e) { return { bills: [], offline: true, why: e.message }; }
+  },
+  /** a shift is a chit of its own: who, when, what was taken, what was counted, and the difference */
+  async shift(sh){
+    var body = {
+      recipients: [{ self:true, name:'self' }], purpose:'general',
+      subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0,10),
+      manual_subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0,10),
+      client_ref: 'SHIFT/' + sh.till + '/' + sh.from,
+      business_json: { shift: sh, till: { id: sh.till, name: ls.get('cb_till_name','Counter 1'), by: sh.by } },
+      line_items: [],
+    };
+    await DB.put('queue', Object.assign({ no: body.client_ref, at: sh.to, shiftBody: body }, {}));
+    this.drain();
+    return { ok:true };
+  },
   async bill(b){
     var no = await nextNumber();
     var bill = Object.assign({ no: no, at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
@@ -299,8 +357,9 @@ var CloudHost = {
       for (var i = 0; i < rows.length; i++) {
         var bill = rows[i];
         try {
+          var payload = bill.shiftBody ? bill.shiftBody : chitOf(bill);
           var r = await fetch(this.api + '/api/chits/send', { method:'POST',
-            headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(chitOf(bill)) });
+            headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
           if (r.ok) await DB.del('queue', bill.no);
           else if (r.status === 403 || r.status === 401) break;      /* a key problem is not fixed by trying harder */
         } catch (_) { break; }                                        /* the line went; the queue keeps everything */
@@ -329,7 +388,7 @@ function chitOf(bill){
     client_ref: bill.no,
     business_json: {
       customer: (bill.customer && bill.customer.name) ? bill.customer : { name:'Walk-in' },
-      till: { id: bill.till, name: ls.get('cb_till_name','Counter 1'), host: 'browser' },
+      till: { id: bill.till, name: ls.get('cb_till_name','Counter 1'), host: 'browser', by: bill.by || null },
       bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
       payment: { mode: (bill.payments||[]).map(function(p){ return p.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[] },
       slip: bill.kind || 'cash',
@@ -530,6 +589,7 @@ async function finish(){
     payments: [{ how:PICKED, amount:paid }], paid: paid, change: r2(tendered - m.net),
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
+    by: WHO ? { id: WHO.id, name: WHO.name } : null,
     kind: (S && S.shop && S.shop.reg_type) === 'regular' ? 'tax' : ((S && S.shop && S.shop.reg_type) === 'composition' ? 'supply' : 'cash'),
   };
   var r = null;
@@ -554,7 +614,7 @@ function slipHTML(bill, m){
     + (bill.kind !== 'cash' && shop.gstin ? '<div style="text-align:center">GSTIN ' + esc(shop.gstin) + '</div>' : '')
     + solid + '<div style="text-align:center;font-weight:700">' + title + '</div>' + dash
     + t('No ' + esc(bill.no), esc(new Date(bill.at).toLocaleString()))
-    + t(esc((STATE.till && STATE.till.name) || ''), esc((bill.customer && bill.customer.name) || 'Walk-in')) + dash
+    + t(esc((STATE.till && STATE.till.name) || '') + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in')) + dash
     + (bill.lines||[]).map(function(l){
         return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + money(l.net) + '</span></div>'
              + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price) + (l.off ? '  (−' + money(l.save) + ')' : '')
@@ -585,7 +645,17 @@ function printSlip(){
 
 /* ═══ 5 · this till: pairing, and the look ═══════════════════════════════════════════════════════════════════ */
 /** today's bills — a customer comes back with a slip, and it must be findable and printable again (2026-09-07) */
-async function openBills(){
+function billsTab(which){
+  BILLS_TAB = which;
+  document.getElementById('tab_today').className = 'pill' + (which === 'today' ? ' on' : '');
+  document.getElementById('tab_earlier').className = 'pill' + (which === 'earlier' ? ' on' : '');
+  document.getElementById('bills_days').style.display = which === 'earlier' ? '' : 'none';
+  openBills(true);
+}
+var BILLS_TAB = 'today';
+async function openBills(keepOpen){
+  if (!keepOpen) BILLS_TAB = 'today';
+  if (BILLS_TAB === 'earlier') return paintEarlier();
   var rows = [];
   try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) { rows = []; }
   var d = STATE.today || { count:0, total:0, by:{} };
@@ -596,12 +666,50 @@ async function openBills(){
     + (rows.length ? rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-bill-' + esc(b.no) + '">'
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(new Date(b.at).toTimeString().slice(0,5)) + ' · '
-          + esc((b.customer && b.customer.name) || 'Walk-in') + ' · ' + ((b.lines||[]).length) + ' item(s)</div></span>'
+          + esc((b.customer && b.customer.name) || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + ' · ' + ((b.lines||[]).length) + ' item(s)</div></span>'
           + '<span style="font-variant-numeric:tabular-nums">₹' + money(b.total) + '</span>'
           + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button></div>';
       }).join('')
       : '<div style="color:var(--dim)">No bills yet today.</div>');
-  document.getElementById('billsdlg').showModal();
+  if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
+  try { document.getElementById('tab_today').className = 'pill on'; document.getElementById('tab_earlier').className = 'pill'; } catch (_) {}
+}
+/** ⭐ EARLIER — asked for, not held: a device is not an archive, and this says so plainly when the line is down */
+async function paintEarlier(){
+  var days = Number((document.getElementById('bills_days') || {}).value) || 30;
+  document.getElementById('billstitle').textContent = 'Earlier bills';
+  document.getElementById('billsbody').innerHTML = '<div style="color:var(--dim);padding:10px">reading…</div>';
+  var r = { bills: [] };
+  try { r = (HOST && HOST.history) ? (await HOST.history(days)) : { bills: [], offline: true }; } catch (_) { r = { bills: [], offline: true }; }
+  var rows = (r && r.bills) || [];
+  var mine = WHO ? rows.filter(function(b){ return b.by && b.by.id === WHO.id; }) : rows;
+  var body = '';
+  if (r.offline) body = '<div style="color:var(--warn);padding:10px">The line is down, so earlier bills cannot be read. Today\'s are on this device and are still here.</div>';
+  else if (!rows.length) body = '<div style="color:var(--dim);padding:10px">No counter bills in the last ' + days + ' days.</div>';
+  else {
+    var total = rows.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0);
+    body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + rows.length + ' bills · ₹' + money(total)
+      + (WHO ? ' · ' + esc(WHO.name) + ': ' + mine.length + ' bill(s) ₹' + money(mine.reduce(function(a,b){ return r2(a+(b.total||0)); },0)) : '') + '</div>'
+      + rows.map(function(b){
+        return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-old-' + esc(b.no) + '">'
+          + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(String(b.at).slice(0,10)) + ' ' + esc(String(b.at).slice(11,16)) + ' · '
+          + esc(b.customer || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>'
+          + '<span style="font-variant-numeric:tabular-nums">₹' + money(b.total) + '</span>'
+          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')">print</button></div>';
+      }).join('');
+  }
+  document.getElementById('billsbody').innerHTML = body;
+  EARLIER = rows;
+  if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
+}
+var EARLIER = [];
+/** an old slip, printed again from what ChitBridge kept — the same layout, so a customer sees the same bill */
+function reprintOld(no){
+  var b = EARLIER.filter(function(x){ return x.no === no; })[0];
+  if (!b) return;
+  document.getElementById('billsdlg').close();
+  LAST = b;
+  showSlip(b, { gross: r2((b.total||0) + (b.saved||0)) });
 }
 async function reprint(no){
   var rows = (HOST && HOST.bills) ? (await HOST.bills()) : [];
@@ -614,6 +722,90 @@ async function reprint(no){
 /** the rest of ChitBridge is a different job — one door, never a panel (Athi, 2026-09-07) */
 function cbHome(){ var api = (HOST && HOST.mode === 'cloud' && CloudHost.api) ? CloudHost.api : '';
   return (location.origin.indexOf('till') >= 0 || location.port === '7071') ? 'https://chitbridge-web.vercel.app/app.html' : (location.origin + '/app.html'); }
+/** ⭐ THE SHIFT (2026-09-07). Not a login: the key is what authorises this till. This says who is standing at it, on every bill. */
+function whoLoad(){
+  try { var raw = ls.get('cb_till_who', ''); WHO = raw ? JSON.parse(raw) : null; } catch (_) { WHO = null; }
+  paintWho();
+}
+function paintWho(){
+  var p = document.getElementById('whopill'); if (!p) return;
+  p.textContent = WHO && WHO.name ? ('👤 ' + WHO.name) : '👤 who?';
+  p.className = 'pill' + (WHO && WHO.name ? '' : ' off');
+}
+function openWho(){
+  var list = (S && S.staff) || [];
+  document.getElementById('whobody').innerHTML = (list.length
+    ? list.map(function(a){
+        return '<button class="pill" style="display:block;width:100%;text-align:left;padding:12px;margin:6px 0;font-size:1em" data-testid="till-who-' + esc(a.id) + '" onclick="setWho(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">' + esc(a.name) + (a.hat ? ' <span class="u">· ' + esc(a.hat) + '</span>' : '') + '</button>';
+      }).join('')
+    : '<div style="color:var(--dim)">This shop has no co-assists yet — add people in ChitBridge › Co-assists and they appear here. Until then bills are recorded as the shop itself.</div>')
+    + (WHO ? '<button class="pill" style="display:block;width:100%;padding:12px;margin:10px 0 0;font-size:1em" data-testid="till-handover" onclick="handOver()">Hand over — end ' + esc(WHO.name) + '\'s shift</button>' : '');
+  document.getElementById('whodlg').showModal();
+}
+function setWho(id, name){
+  /* ⭐ THE FLOAT. What is in the drawer before a rupee is taken — without it, "expected" at the end means nothing. Skipping is
+     allowed (a shop with no float, or a busy moment): it counts as zero and the close says so. */
+  var float0 = prompt('Cash in the drawer now (the float). Leave blank if none.', '');
+  WHO = { id: id, name: name, since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
+  ls.set('cb_till_who', JSON.stringify(WHO));
+  paintWho(); document.getElementById('whodlg').close(); focusSearch();
+}
+/**
+ * ⭐⭐ HANDING OVER IS A BLIND COUNT. The person is asked what is in the drawer BEFORE being shown what should be — a figure you can
+ * see first is a figure you can match, and then the count proves nothing. Only CASH is counted; UPI and card are shown beside it
+ * because they are the day's picture, not what this person is answerable for.
+ */
+var SHIFT = null;
+async function handOver(){
+  var rows = [];
+  try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) {}
+  var mine = rows.filter(function(b){ return b.by && WHO && b.by.id === WHO.id; });
+  var by = {};
+  mine.forEach(function(b){ (b.payments||[]).forEach(function(p){ by[p.how] = r2((by[p.how]||0) + (p.amount||0)); }); });
+  var cash = r2((by.Cash || 0) + (WHO && WHO.float ? WHO.float : 0));
+  SHIFT = { by: { id: WHO.id, name: WHO.name }, from: WHO.since, to: new Date().toISOString(),
+            bills: mine.length, total: mine.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0),
+            float: (WHO && WHO.float) || 0, modes: by, expected_cash: cash, till: ls.get('cb_till_id','C1') };
+  document.getElementById('whodlg').close();
+  document.getElementById('shifttitle').textContent = 'Hand over — ' + WHO.name;
+  document.getElementById('shiftbody').innerHTML =
+      '<div style="font-size:.9em;color:var(--dim)">' + esc(new Date(SHIFT.from).toTimeString().slice(0,5)) + ' to ' + esc(new Date(SHIFT.to).toTimeString().slice(0,5))
+    + ' · ' + SHIFT.bills + ' bill(s)</div>'
+    + '<label>Count the cash in the drawer and type the total</label>'
+    + '<input id="shift_counted" type="number" min="0" step="1" inputmode="decimal" placeholder="₹" autofocus>'
+    + '<div style="color:var(--dim);font-size:.8em;margin-top:8px">Count first — the expected figure is shown after, so the count means something. Cash only: UPI and card are not in the drawer.</div>';
+  document.getElementById('shiftdlg').showModal();
+  setTimeout(function(){ var i = document.getElementById('shift_counted'); if (i) i.focus(); }, 50);
+}
+/** the count, the difference, the record — then the counter is free for the next person */
+async function shiftClose(){
+  if (!SHIFT) return;
+  var counted = Number((document.getElementById('shift_counted') || {}).value);
+  if (!(counted >= 0) || (document.getElementById('shift_counted') || {}).value === '') { alert('Type what is in the drawer first.'); return; }
+  SHIFT.counted_cash = r2(counted);
+  SHIFT.difference = r2(SHIFT.counted_cash - SHIFT.expected_cash);
+  var word = SHIFT.difference === 0 ? 'exact' : (SHIFT.difference > 0 ? 'over by ₹' + money(SHIFT.difference) : 'short by ₹' + money(-SHIFT.difference));
+  var modes = Object.keys(SHIFT.modes).map(function(k){ return k + ' ₹' + money(SHIFT.modes[k]); }).join(' · ') || 'nothing taken';
+  document.getElementById('shiftbody').innerHTML =
+      '<div style="font-size:1.1em"><b>' + esc(SHIFT.by.name) + '</b> · ' + SHIFT.bills + ' bill(s) · ₹' + money(SHIFT.total) + '</div>'
+    + '<div style="margin-top:8px">' + esc(modes) + '</div>'
+    + '<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'
+    + '<div style="display:flex;justify-content:space-between"><span>Float at the start</span><span>₹' + money(SHIFT.float) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between"><span>Cash taken</span><span>₹' + money(SHIFT.modes.Cash || 0) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-weight:700"><span>Expected in the drawer</span><span>₹' + money(SHIFT.expected_cash) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between"><span>Counted</span><span>₹' + money(SHIFT.counted_cash) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-weight:800;color:' + (SHIFT.difference === 0 ? 'var(--ok)' : 'var(--warn)') + '"><span>Difference</span><span>' + esc(word) + '</span></div></div>'
+    + '<div style="color:var(--dim);font-size:.8em;margin-top:10px">This is recorded against ' + esc(SHIFT.by.name) + ' and sent to ChitBridge, so it outlives this device.</div>';
+  document.getElementById('shiftgo').textContent = 'Done — free the counter';
+  document.getElementById('shiftgo').setAttribute('onclick', 'shiftDone()');
+  /* the record leaves the device: a shift is a business fact, not a note on a laptop */
+  try { if (HOST && HOST.shift) await HOST.shift(SHIFT); } catch (_) {}
+}
+function shiftDone(){
+  SHIFT = null; WHO = null; ls.set('cb_till_who', '');
+  var b = document.getElementById('shiftgo'); if (b) { b.textContent = 'Count and hand over'; b.setAttribute('onclick', 'shiftClose()'); }
+  document.getElementById('shiftdlg').close(); paintWho(); load(); openWho();
+}
 function applyLook(){
   document.documentElement.setAttribute('data-theme', ls.get('cb_till_theme','light'));
   document.documentElement.style.setProperty('--fs', ls.get('cb_till_fs','16px'));
@@ -652,6 +844,7 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F9'){ finish(); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
   if (e.key === 'F8'){ openBills(); e.preventDefault(); }
+  if (e.key === 'F7'){ openWho(); e.preventDefault(); }
   if (e.key === 'Escape' && !document.getElementById('slipdlg').open && !document.getElementById('setdlg').open) clearBill();
 });
 window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
@@ -663,6 +856,7 @@ window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); 
 function installApp(){ if (!_install) return; _install.prompt(); _install = null; var b = document.getElementById('installbtn'); if (b) b.style.display = 'none'; }
 
 applyLook();
+whoLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
 load();
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);

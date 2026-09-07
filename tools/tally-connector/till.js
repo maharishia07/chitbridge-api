@@ -128,6 +128,18 @@ async function drain() {
 
 /** the bill, as the chit every other part of ChitBridge already understands */
 function chitOf(bill) {
+  /* a shift travels as its own chit — the same queue, a different shape */
+  if (bill.shift) {
+    const sh = bill.shift;
+    return {
+      recipients: [{ self: true, name: 'self' }], purpose: 'general',
+      subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0, 10),
+      manual_subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0, 10),
+      client_ref: bill.no,
+      business_json: { shift: sh, till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname(), by: sh.by } },
+      line_items: [],
+    };
+  }
   return {
     recipients: [{ self: true, name: 'self' }],
     purpose: 'order',
@@ -136,7 +148,7 @@ function chitOf(bill) {
     client_ref: bill.no,
     business_json: {
       customer: bill.customer && bill.customer.name ? bill.customer : { name: 'Walk-in' },
-      till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
+      till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname(), by: bill.by || null },
       bill_no: bill.no, billed_at: bill.at,
       catalogue_version: bill.catalogue_version || null,
       payment: { mode: (bill.payments || []).map((p) => p.how).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments || [] },
@@ -180,6 +192,24 @@ const server = http.createServer(async (req, res) => {
                               engines: { offers: fs.existsSync(F.engine('offers')), tax: fs.existsSync(F.engine('tax')) } });
 
     if (req.method === 'POST' && url.pathname === '/api/refresh') { const ok = await refresh(); return json(res, 200, { ok: ok, online: online, at: snapshot && snapshot.at }); }
+
+    /* ⭐ EARLIER BILLS come from ChitBridge; the page asks its host, never the internet directly (2026-09-08) */
+    if (req.method === 'GET' && url.pathname === '/api/history') {
+      try { const days = Math.min(Number(url.searchParams.get('days')) || 30, 365);
+        const r = await cb.call('GET', '/api/till/bills?days=' + days + '&limit=200');
+        return json(res, 200, r || { bills: [] });
+      } catch (e) { return json(res, 200, { bills: [], offline: true, why: e.message }); }
+    }
+
+    /* ⭐ A SHIFT IS A RECORD, NOT A NOTE ON A LAPTOP (2026-09-08): who took the counter, what was taken, what was counted */
+    if (req.method === 'POST' && url.pathname === '/api/shift') {
+      let body = ''; for await (const c of req) body += c;
+      const sh = JSON.parse(body || '{}');
+      appendLine(path.join(DIR, 'shifts.jsonl'), sh);
+      appendLine(F.queue, { no: 'SHIFT/' + (sh.till || tillCfg.id) + '/' + sh.from, at: sh.to, shift: sh });
+      drain().catch(() => {});
+      return json(res, 200, { ok: true });
+    }
 
     if (req.method === 'GET' && url.pathname === '/api/bills')
       return json(res, 200, { day: today(), bills: readLines(F.bills(today())).slice(-50).reverse(), totals: todayTotals() });
