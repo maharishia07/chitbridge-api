@@ -339,7 +339,9 @@ async function load(){
   document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
   paintStatus(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
 }
-async function refresh(){ var r = await HOST.refresh(); if (r && r.need === 'key') return openSettings(); await load(); }
+/* ⚠️ THE BUTTON MAY BE PRESSED BEFORE THE PAGE HAS FINISHED WAKING (caught by [TILL-01]): HOST is chosen asynchronously, and ↻ on
+   the first frame called into nothing. Anything that needs the host asks for it. */
+async function refresh(){ if (!HOST) HOST = await pickHost(); var r = await HOST.refresh(); if (r && r.need === 'key') return openSettings(); await load(); }
 
 function paintStatus(){
   var net = document.getElementById('netpill');
