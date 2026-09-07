@@ -26,6 +26,8 @@ const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const crypto = require('crypto');
 
+/** the figure out of a price, whether the catalogue stored a number or { amount, currency } (lib/pricing-engine reads it the same way) */
+function amountOf(p) { const v = (p && typeof p === 'object') ? p.amount : p; const n = Number(v); return Number.isFinite(n) ? n : null; }
 /** a short, stable stamp for "which copy of the catalogue was this bill priced from" */
 function versionOf(payload) {
   return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex').slice(0, 12);
@@ -77,7 +79,9 @@ router.get('/snapshot', auth, async (req, res) => {
     const items = ((itemRows && itemRows.rows) || []).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
-               price: d.price != null ? Number(d.price) : null, mrp: d.mrp != null ? Number(d.mrp) : null,
+               /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
+                  and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
+               price: amountOf(d.price), mrp: amountOf(d.mrp),
                hsn: d.hsn || d.hs_code || d.hsn_code || null, tax_slab: d.tax_slab || null, category: d.category || null,
                barcode: d.barcode || d.ean || null, avail: d.avail || null };
     }).filter((x) => x.name);
