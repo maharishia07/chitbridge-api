@@ -32,9 +32,12 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
     /* ⚠️ one name per CONFIG FILE, not per file NAME: every kit ships connector.json, and a shared name made the second
        install replace the first (2026-09-07 — the Tally task took over the Zoho watcher's). */
     const stamp = require('crypto').createHash('sha1').update(cfgFile.toLowerCase()).digest('hex').slice(0, 6);
-    const taskName = 'ChitBridge connector ' + path.basename(path.dirname(cfgFile)) + ' - ' + base + ' ' + stamp;
+    /* ⭐ the counter is registered the same way, under its own name and log — "install --till" (2026-09-07) */
+    const isTill = !!flag('till', false);
+    const what = isTill ? 'till.js' : 'index.js watch';
+    const taskName = 'ChitBridge ' + (isTill ? 'counter ' : 'connector ') + path.basename(path.dirname(cfgFile)) + ' - ' + base + ' ' + stamp;
     const legacyName = 'ChitBridge connector ' + base;
-    const logFile = base === 'connector' ? 'watch.log' : 'watch-' + base.replace(/^connector-/, '') + '.log';
+    const logFile = isTill ? 'till.log' : (base === 'connector' ? 'watch.log' : 'watch-' + base.replace(/^connector-/, '') + '.log');
     if (process.platform !== 'win32') { console.log('install registers a Windows scheduled task. On Linux/macOS run the watcher under systemd or launchd — see docs/'); return; }
     const sp = require('child_process').spawnSync;
     if (cmd === 'uninstall') {
@@ -47,11 +50,11 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
     const vbs = path.join(__dirname, 'run-hidden.vbs');
     const silent = fs.existsSync(wscript) && fs.existsSync(vbs);
     const tr = silent
-      ? '"' + wscript + '" "' + vbs + '" "' + cfgFile + '" "' + logFile + '"'
-      : 'cmd /c cd /d "' + __dirname + '" && node index.js watch --config "' + cfgFile + '" >> ' + logFile + ' 2>&1';
+      ? '"' + wscript + '" "' + vbs + '" "' + cfgFile + '" "' + logFile + '" "' + what + '"'
+      : 'cmd /c cd /d "' + __dirname + '" && node ' + what + ' --config "' + cfgFile + '" >> ' + logFile + ' 2>&1';
     const r = sp('schtasks', ['/Create', '/F', '/SC', 'MINUTE', '/MO', '5', '/TN', taskName, '/TR', tr], { encoding: 'utf8' });
     console.log(r.status === 0
-      ? 'Registered "' + taskName + '": Task Scheduler starts the watcher every 5 minutes whenever it is not running (crash, reboot, closed window)'
+      ? 'Registered "' + taskName + '": Task Scheduler starts the ' + (isTill ? 'counter' : 'watcher') + ' every 5 minutes whenever it is not running (crash, reboot, closed window)'
         + (silent ? ', with no window' : ' — a console window will flash each time (wscript.exe not found)') + '. Log: ' + logFile + '. Remove: node index.js uninstall'
       : 'Could not register the task: ' + (r.stderr || r.stdout || r.error));
     return;
