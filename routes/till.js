@@ -46,9 +46,18 @@ router.get('/snapshot', auth, async (req, res) => {
       profile = (p.rows[0] && p.rows[0].profile_json) || {};
     } catch (_) { /* an entity with no profile still bills */ }
 
-    /* the shelf: items with their prices, and the slabs/categories the rate resolver needs on the till */
-    const shelf = await taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
-      getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true }).catch(() => null);
+    /**
+     * ⚠️ THE ITEMS ARE NOT THE TAX SHELF. readShelf() answers null for a seller with no GSTIN — the one place that decides "no GSTIN,
+     * no GST" for the cart, the send and the invoice alike — and most shops we are building this counter for have none. So the shelf
+     * is asked only for slabs, categories and the face; the items come from the catalogue, whoever the shop is.
+     */
+    const [shelf, itemRows] = await Promise.all([
+      taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
+        getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(() => null),
+      withEntity(entity_id, (db) => db.query(
+        'SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 5000',
+        [entity_id])).catch(() => ({ rows: [] })),
+    ]);
 
     /* the live offers this shop is running — the same rows the storefront and the chit read */
     let offers = [];
@@ -65,7 +74,7 @@ router.get('/snapshot', auth, async (req, res) => {
       customers = c.rows.map((x) => ({ name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] }));
     } catch (_) { /* the column set differs before b205 — the till still bills */ }
 
-    const items = ((shelf && shelf.items) || []).map((it) => {
+    const items = ((itemRows && itemRows.rows) || []).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
                price: d.price != null ? Number(d.price) : null, mrp: d.mrp != null ? Number(d.mrp) : null,
