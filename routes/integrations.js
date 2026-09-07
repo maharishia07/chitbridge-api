@@ -241,7 +241,7 @@ router.get('/status', auth, async (req, res) => {
   catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 const SQL_RECONCILE = `SELECT ch.chit_id, ch.direction, ch.purpose, ch.auto_subject, ch.manual_subject, ch.created_at, ch.all_recipients,
-              ch.business_json->'books' AS books, (ch.business_json ? 'books_request') AS asked,
+              ch.business_json->'books' AS books, (ch.business_json ? 'books_request') AS asked, ch.business_json->'books_skip' AS skip,
               cs.current_status, cs.updated_at AS status_at
          FROM chit_header ch
          JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction
@@ -301,6 +301,29 @@ router.put('/streams', auth, async (req, res) => {
  * ⚠️ THIS RECONCILES DISPATCH, NOT BALANCES. It proves every order reached the other system once; comparing our sales total against
  * theirs for a period needs a read back per system (only Tally has one today) and is deliberately not claimed here.
  */
+/**
+ * ⭐ NOT FOR THE BOOKS (2026-09-07). Some orders are simply not meant to become a voucher — a test, a duplicate, something settled
+ * outside. The flag is on the chit, so the connector obeys it (core.booksGate) and stops retrying, and reconciliation stops asking for
+ * a person. Reversible: sending false lifts it. Recorded with who and when — a row that vanishes with no trace is worse than a row.
+ */
+router.post('/books/skip', auth, async (req, res) => {
+  try {
+    if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'a connector cannot decide this — sign in' });
+    const entity_id = auth.entityOf(req); const b = req.body || {};
+    if (!b.chit_id || !/^[0-9a-f-]{36}$/.test(String(b.chit_id))) return res.status(400).json({ error: 'validation', message: 'chit_id required' });
+    const on = b.on !== false;
+    const rec = on ? { at: new Date().toISOString(), by: req.identity.identity_id, why: String(b.why || '').slice(0, 200) || null } : null;
+    const r = await require('../db').withEntity(entity_id, (db) => db.query(
+      on ? `UPDATE chit_header SET business_json = COALESCE(business_json,'{}'::jsonb) || jsonb_build_object('books_skip', $1::jsonb)
+              WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`
+         : `UPDATE chit_header SET business_json = (COALESCE(business_json,'{}'::jsonb) - 'books_skip')
+              WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
+      [JSON.stringify(rec), b.chit_id, entity_id]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true, skipped: on });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 /** a readable counterparty from all_recipients: the first entry that is not the sender, by whatever name it carries */
 function nameOfParty(list){
   const rows = Array.isArray(list) ? list : [];
@@ -326,6 +349,10 @@ router.get('/reconcile', auth, async (req, res) => {
       if (at === 'completed') return st === 'completed' ? (r.status_at || r.created_at) : null;
       return null;   /* manual: only "Send to books" releases it */
     };
+    /* ⭐ when did a connector first arrive? Nothing released before that could have been booked, so it is not late (2026-09-07). */
+    let since = null;
+    try { const c = await query("SELECT MIN(created_at) AS t FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL", [entity_id]);
+      since = c.rows[0] && c.rows[0].t ? new Date(c.rows[0].t).getTime() : null; } catch (_) {}
     const now = Date.now();
     const out = rows.rows.map((r) => {
       const kind = r.direction === 'sent' ? 'purchase' : 'order';
@@ -334,10 +361,12 @@ router.get('/reconcile', auth, async (req, res) => {
       const cancelled = /^(cancelled|rejected)$/.test(String(r.current_status || ''));
       let state = 'waiting';
       if (b && b.outcome === 'ok') state = 'booked';
+      else if (r.skip) state = 'set_aside';                       /* somebody said this one is not for the books */
       else if (b && b.outcome === 'failed') state = 'refused';
       else if (cancelled) state = 'skipped';
+      else if (rel && since != null && new Date(rel).getTime() < since) state = 'before_connector';   /* nothing was listening yet */
       else if (rel) state = (now - new Date(rel).getTime() > hrs * 3600 * 1000) ? 'overdue' : 'due';
-      return { chit_id: r.chit_id, side: r.direction === 'sent' ? 'purchase' : 'sales', kind,
+      return { chit_id: r.chit_id, side: r.direction === 'sent' ? 'purchase' : 'sales', kind, set_aside: r.skip || null,
                subject: r.manual_subject || r.auto_subject || null, /* the counterparty by NAME — all_recipients holds objects, and printing one gave the screen "[object Object]" (2026-09-07) */
                               party: nameOfParty(r.all_recipients),
                status: r.current_status, created_at: r.created_at, released_at: rel, state,
@@ -345,7 +374,7 @@ router.get('/reconcile', auth, async (req, res) => {
     });
     const counts = out.reduce((a, r) => { a[r.state] = (a[r.state] || 0) + 1; a.total++; return a; }, { total: 0 });
     const by_system = out.filter((r) => r.state === 'booked').reduce((a, r) => { const k = r.system || 'books'; a[k] = (a[k] || 0) + 1; return a; }, {});
-    res.json({ days, books_at: at, overdue_hours: hrs, counts, by_system, rows: out });
+    res.json({ days, books_at: at, overdue_hours: hrs, connector_since: since ? new Date(since).toISOString() : null, counts, by_system, rows: out });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

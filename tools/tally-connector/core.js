@@ -181,6 +181,8 @@ async function tellBooks(cb, kind, chit_id, rec) { try { await cb.call('POST', '
 function booksGate(c, policy) {
   const h = c.header || c.chit || c; const st = String(h.current_status || h.status || c.state || '');
   const bj = h.business_json || c.business_json || {}; const asked = !!(bj && bj.books_request);
+  /* ⭐ "Not for the books" — the owner set this order aside; the connector stops asking (2026-09-07) */
+  if (bj && bj.books_skip) return { go: false, why: 'set aside — not for the books' };
   if (/^(cancelled|rejected)$/.test(st)) return { go: false, why: 'cancelled' };
   if (asked) return { go: true, why: 'sent to books by hand' };
   const at = String((policy && policy.books_at) || 'accepted');
