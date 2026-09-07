@@ -82,6 +82,8 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
   credentials: true,
 };
+/* ⭐ MEASURE BEFORE CHANGING (Athi, 2026-09-07: "look at each of the API for round trips and enhance"). Off unless CB_TRIPS=1. */
+app.use(require('./lib/trips').middleware());
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 

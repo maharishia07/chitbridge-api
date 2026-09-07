@@ -57,7 +57,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   // `customer` field is not a product column — is a rule, and it lives in csv-preflight/the schema, not here.
   'starter-fields.js',
 ];
-const INFRA_LIBS = [      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
+const INFRA_LIBS = [
+  'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
   'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
   /**

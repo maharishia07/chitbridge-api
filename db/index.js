@@ -159,6 +159,7 @@ function rlsGuardCheck(text) {
 
 const query = async (text, params) => {
   if (!pool) await ensurePool();          // cold start: wait for the pool instead of failing the request
+  try { require('../lib/trips').tick('query'); } catch (_) {}   /* counts only when CB_TRIPS=1 — lib/trips.js */
   rlsGuardCheck(text);
   const start = Date.now();
   try {
@@ -187,6 +188,8 @@ const query = async (text, params) => {
 // `query`, or they won't be in the transaction). Returns whatever fn returns.
 const withTransaction = async (fn) => {
   if (!pool) await ensurePool();
+  /* a transaction is four trips of its own — BEGIN, the set_config, the work, COMMIT — which is the whole reason this is counted */
+  try { require('../lib/trips').tick('tx'); } catch (_) {}
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
