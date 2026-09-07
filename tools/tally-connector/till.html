@@ -203,9 +203,11 @@ var DB = (function(){
     });
     return p;
   }
+  /* ⚠️ RESOLVE WITH THE REQUEST'S RESULT, NEVER THE REQUEST. A missing key gives result === undefined, and handing back the IDBRequest
+     instead made the caller store a request object — "IDBRequest object could not be cloned", and no bill at all ([TILL-01]). */
   function tx(store, mode, fn){ return open().then(function(db){ return new Promise(function(res, rej){
-    var t = db.transaction(store, mode), s = t.objectStore(store); var out = fn(s);
-    t.oncomplete = function(){ res(out && out.result !== undefined ? out.result : out); }; t.onerror = function(){ rej(t.error); }; }); }); }
+    var t = db.transaction(store, mode), s = t.objectStore(store); var rq = fn(s);
+    t.oncomplete = function(){ res(rq && ('result' in rq) ? rq.result : undefined); }; t.onerror = function(){ rej(t.error); }; }); }); }
   return {
     get: function(k){ return tx('kv','readonly',function(s){ return s.get(k); }); },
     set: function(k,v){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); },
@@ -397,8 +399,12 @@ function add(n){
                    item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
   document.getElementById('q').value = ''; SEL = 0; paintHits(); price(); focusSearch();
 }
-function setQty(k,v){ var c = CART[k]; if (!c) return; c.qty = Math.max(0, Number(v)||0); if (!c.qty) CART.splice(k,1); price(); }
-function drop(k){ CART.splice(k,1); price(); }
+/* ⚠️ NEVER REPAINT FROM INSIDE THE EVENT THAT CAUSED IT. Rebuilding the bill while the browser is still finishing the blur behind a
+   quantity change throws "the node to be removed is no longer a child of this node" — and the bill silently stops updating. */
+var _paintSoon = null;
+function repaint(){ clearTimeout(_paintSoon); _paintSoon = setTimeout(price, 0); }
+function setQty(k,v){ var c = CART[k]; if (!c) return; c.qty = Math.max(0, Number(v)||0); if (!c.qty) CART.splice(k,1); repaint(); }
+function drop(k){ CART.splice(k,1); repaint(); }
 function clearBill(){ CART = []; document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
 function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus(); q.select(); } }
 
@@ -484,8 +490,9 @@ async function finish(){
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
     kind: (S && S.shop && S.shop.reg_type) === 'regular' ? 'tax' : ((S && S.shop && S.shop.reg_type) === 'composition' ? 'supply' : 'cash'),
   };
-  var r = await HOST.bill(body);
-  if (!r || !r.ok){ alert((r && r.error) || 'The bill could not be saved.'); return; }
+  var r = null;
+  try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
+  if (!r || !r.ok){ alert('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
   LAST = r.bill; if (r.today) STATE.today = r.today;
   showSlip(r.bill, m);
   CART = []; document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
