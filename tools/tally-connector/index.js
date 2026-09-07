@@ -107,6 +107,8 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
        failed voucher an hour later (2026-09-07). */
     if (cmd === 'watch' && typeof adapter.readProfile === 'function') setInterval(readFacts, 5 * 60 * 1000).unref();
   }
+  /* ⭐ THE COUNTER (2026-09-07): the same folder, the same key, a screen at http://127.0.0.1:7071 — see till.js */
+  if (cmd === 'till') { require('./till.js'); return; }
   if (cmd === 'sync-products') { const r = await core.syncProducts({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
   if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }
   if (cmd === 'sync-profile') { const r = await core.syncProfile({ cb, adapter, receipts, log }); console.log(JSON.stringify(r && { written: r.written, kept: r.kept, filled: r.filled, total: r.total, issues: r.issues })); return; }

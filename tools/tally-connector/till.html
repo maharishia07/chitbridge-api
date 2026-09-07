@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Counter</title>
+<link rel="manifest" href="/till.webmanifest">
+<meta name="theme-color" content="#1c7a4a">
+<!--
+  till.html — THE COUNTER (TILL-SPEC-2026-09-07).  ⚠️ ONE FILE, TWO HOSTS — and one master copy.
+  Master: chitbridge-api/tools/tally-connector/till.html · copied to chitbridge-web/public/till.html by scripts/vendor-till.cjs.
+
+  Athi, 2026-09-07: *"the desktop version automatically works with IndexedDB and syncs with the cloud on a regular basis, it works on
+  every other system, the screen size doesn't matter, and all the look and feel can be controlled locally."*
+
+  ── THE TWO HOSTS ─────────────────────────────────────────────────────────────────────────────────────────────
+   · WITH THE LITTLE PROGRAM (a shop PC running till.js): files on disk, a printer, and the same page served from 127.0.0.1.
+   · ON ITS OWN (any browser, any device, any screen): the page IS the till — it holds the shop and the bills in IndexedDB, queues
+     what it cannot send, and syncs when the line returns. Installable from the browser; works with the aeroplane mode on.
+  The page decides which by asking the local program once. Everything below is written against ONE interface (HOST), so neither host
+  is a special case and there is no second codebase to keep in step.
+
+  ── WHAT IT NEVER DOES ────────────────────────────────────────────────────────────────────────────────────────
+   · It never blocks a sale: no snapshot, no engine, no network, no printer — the bill still records and catches up.
+   · It never invents money: prices, offers and tax come from the engines the server runs, cached here, never reimplemented.
+   · It never sends a bill twice: the bill number rides as client_ref and the server answers a repeat with the first chit.
+-->
+<style>
+  /* ⭐ LOOK AND FEEL IS LOCAL (Athi, 2026-09-07). Every choice below is a token, set from the settings panel and kept in this
+     browser — a counter in a dark shop, an older person who wants bigger type, a 10-inch tablet: none of that is a server concern. */
+  :root{
+    --ink:#141210; --dim:#6b625a; --line:#ddd6cc; --paper:#fdfbf7; --card:#ffffff;
+    --ok:#1c7a4a; --ok-tint:#e8f5ee; --warn:#a8410f; --warn-tint:#fdeee6; --blue:#1b4f8a;
+    --fs:16px; --pad:10px; --radius:12px;
+  }
+  :root[data-theme="dark"]{
+    --ink:#f2ede6; --dim:#a89f95; --line:#3a352f; --paper:#17150f; --card:#211e18;
+    --ok:#4cc38a; --ok-tint:#173226; --warn:#f2a37a; --warn-tint:#3a2318; --blue:#7cb0e8;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font:var(--fs)/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-text-size-adjust:100%}
+  button,input,select{font:inherit;color:inherit}
+
+  .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr);height:100vh;height:100dvh}
+  /* a phone, a 10-inch tablet and a shop monitor are the same page; the bill comes FIRST on a small screen */
+  @media (max-width:860px){ .wrap{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;min-height:100dvh}
+    .left{order:2;border-right:none;border-top:1px solid var(--line)} .right{order:1} .hits{max-height:46vh} }
+
+  header{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap}
+  .shop{font-weight:700}
+  .pill{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim);white-space:nowrap;background:transparent;cursor:default}
+  button.pill{cursor:pointer}
+  .pill.on{color:var(--ok);border-color:var(--ok);background:var(--ok-tint)}
+  .pill.off{color:var(--warn);border-color:var(--warn);background:var(--warn-tint)}
+
+  .left{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+  .search{padding:var(--pad) 12px;border-bottom:1px solid var(--line);background:var(--card)}
+  .search input{width:100%;font-size:1.25em;padding:12px 14px;border:2px solid var(--line);border-radius:var(--radius);background:var(--card)}
+  .search input:focus{outline:none;border-color:var(--blue)}
+  .hits{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+  .hit{display:flex;gap:10px;align-items:baseline;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .hit:hover,.hit.sel{background:var(--ok-tint)}
+  .hit .n{flex:1;font-weight:600}
+  .hit .p{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .u{color:var(--dim);font-size:.8em}
+
+  .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
+  .cust{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .cust input{flex:1;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);min-width:0}
+  .cart{overflow:auto;flex:1;min-height:120px}
+  .row{display:grid;grid-template-columns:1fr 84px 92px 32px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .row .nm{font-weight:600;overflow-wrap:anywhere}
+  .row input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;background:var(--paper)}
+  .row .amt{text-align:right;font-variant-numeric:tabular-nums}
+  .row .x{border:none;background:none;color:var(--warn);font-size:1.2em;cursor:pointer}
+  .save{color:var(--ok)}
+
+  .totals{border-top:2px solid var(--ink);padding:8px 12px}
+  .t{display:flex;justify-content:space-between;padding:1px 0}
+  .t.big{font-size:1.7em;font-weight:800;padding-top:4px}
+  .pay{display:flex;gap:8px;padding:8px 12px;flex-wrap:wrap}
+  .pay button{flex:1 1 90px;padding:12px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer}
+  .pay button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
+  .take{display:flex;gap:8px;padding:0 12px 8px;align-items:center}
+  .take input{flex:1;font-size:1.2em;padding:10px 12px;border:2px solid var(--line);border-radius:var(--radius);text-align:right;background:var(--paper);min-width:0}
+  .go{display:flex;gap:8px;padding:0 12px 10px}
+  .go button{flex:1;padding:16px;font-size:1.1em;font-weight:700;border-radius:var(--radius);border:1px solid var(--line);background:var(--paper);cursor:pointer}
+  .go button.pri{background:var(--ok);border-color:var(--ok);color:#fff}
+  .go button:disabled{opacity:.45;cursor:not-allowed}
+  .foot{padding:6px 12px;border-top:1px solid var(--line);color:var(--dim);font-size:.82em;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+
+  dialog{border:none;border-radius:14px;padding:0;max-width:560px;width:94vw;background:var(--card);color:var(--ink)}
+  dialog::backdrop{background:rgba(0,0,0,.45)}
+  .dlg{padding:16px}
+  .dlg h3{margin:0 0 10px}
+  .dlg label{display:block;margin:10px 0 4px;color:var(--dim);font-size:.85em}
+  .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
+  .dlgbtns{display:flex;gap:8px;margin-top:14px}
+  .dlgbtns button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);cursor:pointer}
+  .dlgbtns button.pri{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
+  .slipbox{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:#000}
+  @media print{ .wrap,header{display:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="left">
+    <header>
+      <span class="shop" id="shopname">…</span>
+      <span class="pill" id="tillpill">till</span>
+      <span class="pill" id="netpill">…</span>
+      <span class="pill" id="agepill"></span>
+      <span style="flex:1"></span>
+      <span class="pill" id="daypill"></span>
+      <button class="pill" onclick="refresh()" title="read the shop again (F4)">↻</button>
+      <button class="pill" onclick="openSettings()" title="look, feel and this till">⚙</button>
+    </header>
+    <div class="search">
+      <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="paintHits()" onkeydown="searchKey(event)">
+    </div>
+    <div class="hits" id="hits"></div>
+  </section>
+
+  <section class="right">
+    <div class="cust">
+      <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist">
+      <datalist id="custlist"></datalist>
+      <input id="cphone" placeholder="Phone" autocomplete="off" inputmode="tel" style="max-width:150px">
+    </div>
+    <div class="cart" id="cart"></div>
+    <div class="totals" id="totals"></div>
+    <div class="pay" id="pay"></div>
+    <div class="take">
+      <input id="tendered" type="number" min="0" step="1" inputmode="decimal" placeholder="Amount taken" oninput="paintTotals()">
+      <span id="change" style="min-width:120px;text-align:right;font-weight:700"></span>
+    </div>
+    <div class="go">
+      <button onclick="clearBill()">Clear · Esc</button>
+      <button class="pri" id="save" onclick="finish()">Save &amp; print · F9</button>
+    </div>
+    <div class="foot"><span id="queuenote"></span><span id="lastnote"></span></div>
+  </section>
+</div>
+
+<dialog id="slipdlg"><div class="dlg">
+  <h3 id="sliptitle">Bill</h3>
+  <div class="slipbox" id="slipbox"></div>
+  <div class="dlgbtns">
+    <button onclick="document.getElementById('slipdlg').close()">Close</button>
+    <button class="pri" onclick="printSlip()">Print</button>
+  </div>
+</div></dialog>
+
+<dialog id="setdlg"><div class="dlg">
+  <h3>This till</h3>
+  <div id="pairbox"></div>
+  <label>Counter name — it becomes the bill number's prefix</label>
+  <input id="set_till" placeholder="C1">
+  <label>Text size</label>
+  <select id="set_fs"><option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select>
+  <label>Look</label>
+  <select id="set_theme"><option value="light">Light</option><option value="dark">Dark</option></select>
+  <div class="dlgbtns">
+    <button onclick="document.getElementById('setdlg').close()">Close</button>
+    <button class="pri" onclick="saveSettings()">Save</button>
+  </div>
+  <div id="setnote" style="color:var(--dim);font-size:.8em;margin-top:10px"></div>
+</div></dialog>
+
+<script src="/engine/offers.js" onerror="engineMissed('offers')"></script>
+<script src="/engine/tax.js" onerror="engineMissed('tax')"></script>
+<script>
+/* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
+var MISSING = [];
+function engineMissed(n){ MISSING.push(n); }
+var S = null, STATE = { online:false, queued:0, today:{count:0,total:0}, till:{ id:'C1', name:'Counter 1' } };
+var CART = [], PICKED = 'Cash', LAST = null, HOST = null, SEL = 0;
+
+var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
+var money = function(n){ return r2(n).toFixed(2); };
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
+           set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
+
+/* ═══ 1 · the two hosts, behind one door ═════════════════════════════════════════════════════════════════════
+   Everything above and below talks to HOST. `agent` is the little program on a shop PC (files, a printer, a
+   scheduled restart); `cloud` is this page on its own, holding the shop and the bills in IndexedDB. Neither is a
+   special case anywhere else in this file. */
+
+/* ── IndexedDB, the smallest wrapper that does the job ── */
+var DB = (function(){
+  var p = null;
+  function open(){
+    if (p) return p;
+    p = new Promise(function(res, rej){
+      var rq = indexedDB.open('cb-till', 1);
+      rq.onupgradeneeded = function(){ var db = rq.result;
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+        if (!db.objectStoreNames.contains('bills')) db.createObjectStore('bills', { keyPath:'no' });
+        if (!db.objectStoreNames.contains('queue')) db.createObjectStore('queue', { keyPath:'no' }); };
+      rq.onsuccess = function(){ res(rq.result); }; rq.onerror = function(){ rej(rq.error); };
+    });
+    return p;
+  }
+  function tx(store, mode, fn){ return open().then(function(db){ return new Promise(function(res, rej){
+    var t = db.transaction(store, mode), s = t.objectStore(store); var out = fn(s);
+    t.oncomplete = function(){ res(out && out.result !== undefined ? out.result : out); }; t.onerror = function(){ rej(t.error); }; }); }); }
+  return {
+    get: function(k){ return tx('kv','readonly',function(s){ return s.get(k); }); },
+    set: function(k,v){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); },
+    put: function(store,row){ return tx(store,'readwrite',function(s){ return s.put(row); }); },
+    del: function(store,key){ return tx(store,'readwrite',function(s){ return s.delete(key); }); },
+    all: function(store){ return tx(store,'readonly',function(s){ return s.getAll(); }); },
+  };
+})();
+
+var AgentHost = {
+  mode:'agent',
+  state: function(){ return fetch('/api/state').then(function(r){ return r.json(); }); },
+  refresh: function(){ return fetch('/api/refresh',{method:'POST'}).then(function(r){ return r.json(); }); },
+  bill: function(b){ return fetch('/api/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }); },
+};
+
+/**
+ * ⭐ THE PAGE AS THE TILL. Same rules as the program: the number first, then the bill on disk, then the queue — so a crash costs a gap
+ * in the numbering, never a duplicate — and the queue drains whenever the line is up.
+ */
+var CloudHost = {
+  mode:'cloud',
+  key: null, api: null,
+  async state(){
+    var snap = await DB.get('snapshot');
+    var bills = (await DB.all('bills')) || [], queue = (await DB.all('queue')) || [];
+    var day = new Date().toISOString().slice(0,10);
+    var mine = bills.filter(function(b){ return String(b.at||'').slice(0,10) === day; });
+    var by = {}; var total = 0;
+    mine.forEach(function(b){ total = r2(total + (b.total||0)); (b.payments||[]).forEach(function(p){ by[p.how] = r2((by[p.how]||0) + (p.amount||0)); }); });
+    return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
+             today: { count: mine.length, total: total, by: by },
+             till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
+             engines: { offers: !!window.CBOffers, tax: !!window.CBTax } };
+  },
+  async refresh(){
+    if (!this.key) return { ok:false, need:'key' };
+    var r = await fetch(this.api + '/api/till/snapshot', { headers:{ 'X-Api-Key': this.key } });
+    if (!r.ok) return { ok:false, status:r.status };
+    var snap = await r.json();
+    await DB.set('snapshot', snap);
+    this.drain();
+    return { ok:true, at: snap.at };
+  },
+  async bill(b){
+    var no = await nextNumber();
+    var bill = Object.assign({ no: no, at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
+                               catalogue_version: S && S.version }, b);
+    await DB.put('bills', bill);
+    await DB.put('queue', bill);
+    this.drain();
+    var st = await this.state();
+    return { ok:true, bill: bill, today: st.today };
+  },
+  async drain(){
+    if (!this.key || !navigator.onLine || this._busy) return;
+    this._busy = true;
+    try {
+      var rows = (await DB.all('queue')) || [];
+      for (var i = 0; i < rows.length; i++) {
+        var bill = rows[i];
+        try {
+          var r = await fetch(this.api + '/api/chits/send', { method:'POST',
+            headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(chitOf(bill)) });
+          if (r.ok) await DB.del('queue', bill.no);
+          else if (r.status === 403 || r.status === 401) break;      /* a key problem is not fixed by trying harder */
+        } catch (_) { break; }                                        /* the line went; the queue keeps everything */
+      }
+    } finally { this._busy = false; }
+  },
+};
+
+/** the number: C1/26-27/0041 — continuous within the financial year, prefixed by the counter, decided locally */
+function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; return String(a).slice(2)+'-'+String(a+1).slice(2); }
+async function nextNumber(){
+  var fy = fyOf(new Date());
+  var s = (await DB.get('series')) || { prefix: ls.get('cb_till_id','C1'), fy: fy, next: 1 };
+  if (s.fy !== fy) { s.fy = fy; s.next = 1; }
+  s.prefix = ls.get('cb_till_id','C1') || s.prefix;
+  var n = s.next; s.next = n + 1;
+  await DB.set('series', s);
+  return s.prefix + '/' + fy + '/' + String(n).padStart(4,'0');
+}
+
+/** the bill, as the chit the rest of ChitBridge already understands (the same shape the program sends) */
+function chitOf(bill){
+  return {
+    recipients: [{ self:true, name:'self' }],
+    purpose:'order', subject:'Counter sale ' + bill.no, manual_subject:'Counter sale ' + bill.no,
+    client_ref: bill.no,
+    business_json: {
+      customer: (bill.customer && bill.customer.name) ? bill.customer : { name:'Walk-in' },
+      till: { id: bill.till, name: ls.get('cb_till_name','Counter 1'), host: 'browser' },
+      bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
+      payment: { mode: (bill.payments||[]).map(function(p){ return p.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[] },
+      slip: bill.kind || 'cash',
+    },
+    line_items: (bill.lines||[]).map(function(l){
+      var o = { particulars:l.name, quantity:l.qty, unit:l.unit||'piece', price:l.price, total:l.net };
+      if (l.item_id) o.item_id = l.item_id;
+      if (l.hsn) o.hsn = l.hsn;
+      if (l.gst_rate != null) o.gst_rate = l.gst_rate;
+      if (l.off) o.offer = { off: l.save, label: l.off_label || 'Offer' };
+      return o;
+    }),
+  };
+}
+
+/* ═══ 2 · starting up ════════════════════════════════════════════════════════════════════════════════════════ */
+async function pickHost(){
+  try {
+    var r = await fetch('/api/state', { cache:'no-store' });
+    if (r.ok) { var st = await r.json(); if (st && ('queued' in st)) return AgentHost; }
+  } catch (_) {}
+  CloudHost.api = ls.get('cb_till_api', (location.origin.indexOf('localhost') >= 0 ? 'https://chitbridge-api-production.up.railway.app' : (window.CB_API || 'https://chitbridge-api-production.up.railway.app')));
+  CloudHost.key = ls.get('cb_till_key', null);
+  /* a key may be handed over once in the address: .../till.html#key=… — it is stored and the address is cleaned */
+  if (location.hash.indexOf('key=') >= 0) {
+    var k = decodeURIComponent(location.hash.split('key=')[1].split('&')[0]);
+    if (k) { ls.set('cb_till_key', k); CloudHost.key = k; history.replaceState(null, '', location.pathname + location.search); }
+  }
+  return CloudHost;
+}
+
+async function load(){
+  if (!HOST) HOST = await pickHost();
+  var st = await HOST.state().catch(function(){ return STATE; });
+  STATE = st || STATE; S = (st && st.snapshot) || S;
+  applyLook();
+  document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.key ? 'Not paired yet' : 'This shop');
+  document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
+  paintStatus(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
+}
+async function refresh(){ var r = await HOST.refresh(); if (r && r.need === 'key') return openSettings(); await load(); }
+
+function paintStatus(){
+  var net = document.getElementById('netpill');
+  var offline = !STATE.online;
+  net.textContent = offline ? (HOST && HOST.mode === 'cloud' && !CloudHost.key ? 'no key yet' : 'offline — billing continues') : 'online';
+  net.className = 'pill ' + (offline ? 'off' : 'on');
+  var age = document.getElementById('agepill');
+  if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
+    age.textContent = 'prices as at ' + new Date(S.at).toTimeString().slice(0,5) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
+    age.className = 'pill' + (mins > 240 ? ' off' : ''); }
+  else { age.textContent = 'no prices yet'; age.className = 'pill off'; }
+  var d = STATE.today || {};
+  document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ₹' + money(d.total||0);
+  var note = STATE.queued ? (STATE.queued + ' bill(s) waiting to reach ChitBridge') : 'everything has reached ChitBridge';
+  if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
+  document.getElementById('queuenote').textContent = note;
+}
+function paintCustomers(){
+  var list = (S && S.customers) || [];
+  document.getElementById('custlist').innerHTML = list.slice(0, 500).map(function(c){ return '<option value="' + esc(c.name) + '">'; }).join('');
+}
+
+/* ═══ 3 · finding, adding, pricing ═══════════════════════════════════════════════════════════════════════════ */
+function hits(){
+  var q = (document.getElementById('q').value || '').trim().toLowerCase();
+  var items = (S && S.items) || [];
+  if (!q) return items.slice(0, 60);
+  return items.filter(function(i){
+    return String(i.name||'').toLowerCase().indexOf(q) >= 0
+        || String(i.code||'').toLowerCase().indexOf(q) >= 0
+        || String(i.barcode||'').toLowerCase() === q;
+  }).slice(0, 60);
+}
+function paintHits(){
+  var list = hits(); if (SEL >= list.length) SEL = 0;
+  document.getElementById('hits').innerHTML = list.length ? list.map(function(i,n){
+    return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
+      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.hsn ? ' · HSN ' + esc(i.hsn) : '') + '</div></span>'
+      + '<span class="p">₹' + money(i.price) + '<div class="u">per ' + esc(i.unit||'piece') + '</div></span></div>';
+  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>';
+}
+function searchKey(e){
+  var list = hits();
+  if (e.key === 'ArrowDown'){ SEL = Math.min(SEL+1, list.length-1); paintHits(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp'){ SEL = Math.max(SEL-1, 0); paintHits(); e.preventDefault(); }
+  else if (e.key === 'Enter'){ if (list.length) add(SEL); e.preventDefault(); }
+}
+function add(n){
+  var i = hits()[n]; if (!i) return;
+  var have = CART.filter(function(c){ return c.item_id === i.item_id; })[0];
+  if (have) have.qty = r2(have.qty + 1);
+  else CART.push({ item_id:i.item_id, name:i.name, unit:i.unit||'piece', price:Number(i.price)||0, qty:1, hsn:i.hsn||null,
+                   item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
+  document.getElementById('q').value = ''; SEL = 0; paintHits(); price(); focusSearch();
+}
+function setQty(k,v){ var c = CART[k]; if (!c) return; c.qty = Math.max(0, Number(v)||0); if (!c.qty) CART.splice(k,1); price(); }
+function drop(k){ CART.splice(k,1); price(); }
+function clearBill(){ CART = []; document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
+function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus(); q.select(); } }
+
+/**
+ * ⭐ THE SAME PRICE THE CHIT WILL CARRY. Offers come from CBOffers and the rate from CBTax.slab — the engines the server runs, cached
+ * here. If either is missing the bill still adds up, with no offer and no split, and the screen says so rather than inventing one.
+ */
+function price(){
+  var lines = CART.map(function(c){ return { key:c.item_id, item_id:c.item_id, name:c.name, qty:c.qty, unitPrice:c.price, unit:c.unit }; });
+  var ev = null;
+  try { if (window.CBOffers && S && (S.offers||[]).length)
+    ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:(S.shop&&S.shop.currency)||'INR', now:new Date().toISOString() } }); } catch(_){ ev = null; }
+  CART.forEach(function(c){
+    var gross = r2(c.price * c.qty), net = gross, label = '';
+    if (ev && ev.line_net && ev.line_net[c.item_id] != null) net = r2(ev.line_net[c.item_id]);
+    if (net < gross && ev && ev.adjustments){
+      var mine = ev.adjustments.filter(function(a){ return a.target === c.item_id; });
+      label = (mine[0] && (mine[0].label || mine[0].why)) || 'Offer';
+    }
+    c.gross = gross; c.net = net; c.save = r2(gross - net); c.off = c.save > 0; c.off_label = label;
+    if (window.CBTax && S){
+      try { var r = CBTax.slab.resolve({ item_data:c.item_data||{}, face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
+        c.gst_rate = (r && r.rate != null) ? r.rate : null; } catch(_){ c.gst_rate = null; }
+    }
+  });
+  paintCart(); paintTotals();
+}
+function paintCart(){
+  document.getElementById('cart').innerHTML = CART.length ? CART.map(function(c,k){
+    return '<div class="row" data-testid="till-line-' + k + '">'
+      + '<span><span class="nm">' + esc(c.name) + '</span><div class="u">₹' + money(c.price) + ' / ' + esc(c.unit)
+        + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '')
+        + (c.off ? ' · <span class="save">' + esc(c.off_label||'Offer') + ' −₹' + money(c.save) + '</span>' : '') + '</div></span>'
+      + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
+      + '<span class="amt" data-testid="till-amt-' + k + '">' + money(c.net) + '</span>'
+      + '<button class="x" onclick="drop(' + k + ')" title="remove">×</button></div>';
+  }).join('') : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>';
+}
+/** the shelf price already includes GST — the slip shows the split, it does not add to what the customer was told */
+function billMoney(){
+  var gross = 0, save = 0, net = 0;
+  CART.forEach(function(c){ gross = r2(gross + (c.gross||0)); save = r2(save + (c.save||0)); net = r2(net + (c.net||0)); });
+  var taxed = !!(S && S.shop && S.shop.reg_type === 'regular');
+  var base = net, tax = 0, byRate = {};
+  if (taxed){
+    base = 0;
+    CART.forEach(function(c){
+      var rate = Number(c.gst_rate)||0, b = r2((c.net||0) * 100 / (100 + rate)), t = r2((c.net||0) - b);
+      base = r2(base + b); tax = r2(tax + t);
+      if (rate){ byRate[rate] = byRate[rate] || { base:0, tax:0 }; byRate[rate].base = r2(byRate[rate].base + b); byRate[rate].tax = r2(byRate[rate].tax + t); }
+    });
+  }
+  return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed };
+}
+function paintTotals(){
+  var m = billMoney();
+  var tendered = Number(document.getElementById('tendered').value) || 0;
+  var change = r2(tendered - m.net);
+  document.getElementById('change').textContent = tendered ? (change >= 0 ? 'change ₹' + money(change) : 'short ₹' + money(-change)) : '';
+  document.getElementById('totals').innerHTML =
+      (m.save > 0 ? '<div class="t"><span>Items</span><span>' + money(m.gross) + '</span></div><div class="t save"><span>Saved</span><span>−' + money(m.save) + '</span></div>' : '')
+    + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div><div class="t"><span>GST</span><span>' + money(m.tax) + '</span></div>' : '')
+    + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">₹' + money(m.net) + '</span></div>';
+  var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
+}
+function paintPays(){
+  document.getElementById('pay').innerHTML = ['Cash','UPI','Card'].map(function(h){
+    return '<button class="' + (PICKED===h?'on':'') + '" data-testid="till-pay-' + h.toLowerCase() + '" onclick="PICKED=\'' + h + '\';paintPays()">' + h + '</button>';
+  }).join('');
+}
+
+/* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
+async function finish(){
+  if (!CART.length) return;
+  var m = billMoney();
+  var tendered = Number(document.getElementById('tendered').value) || m.net;
+  var paid = Math.min(tendered, m.net);
+  var body = {
+    lines: CART.map(function(c){ return { item_id:c.item_id, name:c.name, unit:c.unit, price:c.price, qty:c.qty,
+                                          gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label, hsn:c.hsn, gst_rate:c.gst_rate }; }),
+    payments: [{ how:PICKED, amount:paid }], paid: paid, change: r2(tendered - m.net),
+    total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
+    customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
+    kind: (S && S.shop && S.shop.reg_type) === 'regular' ? 'tax' : ((S && S.shop && S.shop.reg_type) === 'composition' ? 'supply' : 'cash'),
+  };
+  var r = await HOST.bill(body);
+  if (!r || !r.ok){ alert((r && r.error) || 'The bill could not be saved.'); return; }
+  LAST = r.bill; if (r.today) STATE.today = r.today;
+  showSlip(r.bill, m);
+  CART = []; document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
+  price(); document.getElementById('lastnote').textContent = 'last bill ' + r.bill.no;
+  load();
+}
+
+function slipHTML(bill, m){
+  var shop = (S && S.shop) || {};
+  var title = bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
+  var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
+  return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
+    + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name||'') + '</div>'
+    + (shop.address ? '<div style="text-align:center">' + esc(shop.address) + '</div>' : '')
+    + (shop.phone ? '<div style="text-align:center">Ph ' + esc(shop.phone) + '</div>' : '')
+    + (bill.kind !== 'cash' && shop.gstin ? '<div style="text-align:center">GSTIN ' + esc(shop.gstin) + '</div>' : '')
+    + solid + '<div style="text-align:center;font-weight:700">' + title + '</div>' + dash
+    + t('No ' + esc(bill.no), esc(new Date(bill.at).toLocaleString()))
+    + t(esc((STATE.till && STATE.till.name) || ''), esc((bill.customer && bill.customer.name) || 'Walk-in')) + dash
+    + (bill.lines||[]).map(function(l){
+        return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + money(l.net) + '</span></div>'
+             + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price) + (l.off ? '  (−' + money(l.save) + ')' : '')
+             + (bill.kind === 'tax' && l.gst_rate ? '  GST ' + l.gst_rate + '%' : '') + '</div>';
+      }).join('') + dash
+    + (bill.saved > 0 ? t('Items', money((m&&m.gross)||bill.total)) + t('You saved', '−' + money(bill.saved)) : '')
+    + (bill.kind === 'tax' ? t('Taxable', money(bill.taxable)) + t('GST', money(bill.tax)) : '')
+    + solid + t('TOTAL', money(bill.total), true) + solid
+    + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
+    + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
+    + (bill.kind === 'supply' ? '<div style="text-align:center">Composition taxable person.<br>Not eligible to collect tax on supplies.</div>' : '')
+    + '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>'
+    + '<div style="height:10mm"></div></div>';
+}
+function showSlip(bill, m){
+  document.getElementById('sliptitle').textContent = 'Bill ' + bill.no + ' · ₹' + money(bill.total);
+  document.getElementById('slipbox').innerHTML = slipHTML(bill, m);
+  document.getElementById('slipdlg').showModal();
+}
+function printSlip(){
+  var w = window.open('', 'slip', 'width=420,height=640');
+  if (!w) { window.print(); return; }                   /* a blocked pop-up must not lose the slip */
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(LAST?LAST.no:'bill') + '</title>'
+    + '<style>@page{size:72mm auto;margin:0}body{margin:0;padding:2mm}</style></head><body>'
+    + document.getElementById('slipbox').innerHTML + '</body></html>');
+  w.document.close(); w.focus(); w.print(); setTimeout(function(){ try{ w.close(); }catch(_){} }, 400);
+}
+
+/* ═══ 5 · this till: pairing, and the look ═══════════════════════════════════════════════════════════════════ */
+function applyLook(){
+  document.documentElement.setAttribute('data-theme', ls.get('cb_till_theme','light'));
+  document.documentElement.style.setProperty('--fs', ls.get('cb_till_fs','16px'));
+}
+function openSettings(){
+  document.getElementById('set_till').value = ls.get('cb_till_id','C1');
+  document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
+  document.getElementById('set_theme').value = ls.get('cb_till_theme','light');
+  var pair = document.getElementById('pairbox');
+  if (HOST && HOST.mode === 'cloud') {
+    pair.innerHTML = '<label>Till key — ChitBridge › Settings › Integrations › Keys, scope "till"</label>'
+      + '<input id="set_key" placeholder="paste the key once" value="' + esc(CloudHost.key ? '••••••••' + String(CloudHost.key).slice(-6) : '') + '">'
+      + '<label>ChitBridge address</label><input id="set_api" value="' + esc(CloudHost.api||'') + '">';
+  } else {
+    pair.innerHTML = '<div style="color:var(--dim);font-size:.85em">This till runs beside the little program on this PC, so the key lives in connector.json and there is nothing to paste.</div>';
+  }
+  document.getElementById('setnote').textContent = 'Everything here is kept on this device only.';
+  document.getElementById('setdlg').showModal();
+}
+async function saveSettings(){
+  ls.set('cb_till_id', (document.getElementById('set_till').value||'C1').trim().slice(0,6) || 'C1');
+  ls.set('cb_till_fs', document.getElementById('set_fs').value);
+  ls.set('cb_till_theme', document.getElementById('set_theme').value);
+  var k = document.getElementById('set_key');
+  if (k && k.value && k.value.indexOf('•') < 0) { ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); }
+  var a = document.getElementById('set_api');
+  if (a && a.value) { ls.set('cb_till_api', a.value.trim()); CloudHost.api = a.value.trim(); }
+  document.getElementById('setdlg').close();
+  applyLook();
+  if (HOST && HOST.mode === 'cloud' && CloudHost.key) await refresh(); else await load();
+}
+
+/* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', function(e){
+  if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
+  if (e.key === 'F9'){ finish(); e.preventDefault(); }
+  if (e.key === 'F4'){ refresh(); e.preventDefault(); }
+  if (e.key === 'Escape' && !document.getElementById('slipdlg').open && !document.getElementById('setdlg').open) clearBill();
+});
+window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
+window.addEventListener('offline', function(){ load(); });
+
+applyLook();
+load();
+setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
+setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
+  navigator.serviceWorker.register('/till-sw.js').catch(function(){});
+</script>
+</body>
+</html>
