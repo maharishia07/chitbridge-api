@@ -65,7 +65,7 @@ const CATALOGUE = [
 ];
 
 function kitFiles(adapter) {
-  const names = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
+  const names = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'run-hidden.vbs', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
   const out = [];
   for (const n of names) { const p = path.join(KIT, n); if (fs.existsSync(p)) out.push({ name: 'chitbridge-connector/' + n, data: fs.readFileSync(p) }); }
   return out;
@@ -301,6 +301,14 @@ router.put('/streams', auth, async (req, res) => {
  * ⚠️ THIS RECONCILES DISPATCH, NOT BALANCES. It proves every order reached the other system once; comparing our sales total against
  * theirs for a period needs a read back per system (only Tally has one today) and is deliberately not claimed here.
  */
+/** a readable counterparty from all_recipients: the first entry that is not the sender, by whatever name it carries */
+function nameOfParty(list){
+  const rows = Array.isArray(list) ? list : [];
+  const pick = rows.filter((x) => x && typeof x === 'object' && String(x.role || '').toLowerCase() !== 'sender')[0] || rows[0] || null;
+  if (!pick) return null;
+  if (typeof pick === 'string') return pick;
+  return pick.display_name || pick.name || pick.user_id || pick.handle || null;
+}
 router.get('/reconcile', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -330,7 +338,8 @@ router.get('/reconcile', auth, async (req, res) => {
       else if (cancelled) state = 'skipped';
       else if (rel) state = (now - new Date(rel).getTime() > hrs * 3600 * 1000) ? 'overdue' : 'due';
       return { chit_id: r.chit_id, side: r.direction === 'sent' ? 'purchase' : 'sales', kind,
-               subject: r.manual_subject || r.auto_subject || null, party: (Array.isArray(r.all_recipients) ? r.all_recipients[0] : null) || null,
+               subject: r.manual_subject || r.auto_subject || null, /* the counterparty by NAME — all_recipients holds objects, and printing one gave the screen "[object Object]" (2026-09-07) */
+                              party: nameOfParty(r.all_recipients),
                status: r.current_status, created_at: r.created_at, released_at: rel, state,
                system: b ? b.system : null, ref: b ? b.ref : null, why: b ? b.why : null, at: b ? b.at : null, host: b ? b.host : null };
     });

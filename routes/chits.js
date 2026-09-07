@@ -443,6 +443,41 @@ router.post('/send',
           if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
         }
       } catch (_) { /* no offers, no change */ }
+      /**
+       * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
+       * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
+       * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total.
+       *   · gross and savings are free — the offers engine has just run and the line keeps its listed price beside its total.
+       *   · tax is `taxLines.invoiceFor`, a PURE function over the lines that `decorate` has already rated, plus one row per party.
+       *     ONE query for both identities (his "why do you need another query?"), never one per line.
+       * ⚠️ PROVISIONAL, AND IT SAYS SO. The invoice freezes at completed (G3); this is a display summary carrying the same
+       * caveat as the invoice tab, not a second source of truth. A tax we cannot compute is `null`, never 0 — a column showing
+       * "—" is honest, a column showing zero tax is a lie.
+       */
+      let moneyBlock = null;
+      try {
+        const r2m = (n) => Math.round((Number(n) || 0) * 100) / 100;
+        const li = Array.isArray(line_items) ? line_items : [];
+        const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
+        const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
+        const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
+        const gross = r2m(li.reduce((a, l) => a + listOf(l) * qtyOf(l), 0));
+        const net = r2m(li.reduce((a, l) => a + netOf(l), 0));
+        let tax = null, total = null;
+        const buyerId = orderLike ? String(sender_id) : (toIds.length === 1 ? toIds[0] : null);
+        if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
+          const ids = [String(sellerId), String(buyerId)];
+          const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
+          const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
+          const sRow = rowOf(sellerId), bRow = rowOf(buyerId);
+          if (sRow && bRow) {
+            const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: new Date().toISOString() });
+            const h = taxLines.heads(inv.invoice);
+            if (h && Number.isFinite(h.tax)) { tax = r2m(h.tax); total = r2m(h.total || (net + tax)); }
+          }
+        }
+        moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
+      } catch (_) { /* a chit never fails to send because its money summary could not be built */ }
       const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
       /**
        * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
@@ -682,6 +717,7 @@ router.post('/send',
       const summary_json = mint.summary({
         line_item_count: summary.line_item_count,
         total_value: summary.total_value,
+        money: moneyBlock,
         offers: offersApplied,
         currency_code,
         priority_external: ext_priority,

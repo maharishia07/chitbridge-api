@@ -42,10 +42,17 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
       console.log(gone.length ? 'Removed ' + gone.map((n) => '"' + n + '"').join(' and ') : 'No scheduled task for this connector');
       return;
     }
-    const tr = 'cmd /c cd /d "' + __dirname + '" && node index.js watch --config "' + cfgFile + '" >> ' + logFile + ' 2>&1';
+    /* ⭐ NO WINDOW (2026-09-07). wscript runs the command with window style 0; cmd flashes a console every five minutes. */
+    const wscript = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'wscript.exe');
+    const vbs = path.join(__dirname, 'run-hidden.vbs');
+    const silent = fs.existsSync(wscript) && fs.existsSync(vbs);
+    const tr = silent
+      ? '"' + wscript + '" "' + vbs + '" "' + cfgFile + '" "' + logFile + '"'
+      : 'cmd /c cd /d "' + __dirname + '" && node index.js watch --config "' + cfgFile + '" >> ' + logFile + ' 2>&1';
     const r = sp('schtasks', ['/Create', '/F', '/SC', 'MINUTE', '/MO', '5', '/TN', taskName, '/TR', tr], { encoding: 'utf8' });
     console.log(r.status === 0
-      ? 'Registered "' + taskName + '": Task Scheduler starts the watcher every 5 minutes whenever it is not running (crash, reboot, closed window). Log: ' + logFile + '. Remove: node index.js uninstall'
+      ? 'Registered "' + taskName + '": Task Scheduler starts the watcher every 5 minutes whenever it is not running (crash, reboot, closed window)'
+        + (silent ? ', with no window' : ' — a console window will flash each time (wscript.exe not found)') + '. Log: ' + logFile + '. Remove: node index.js uninstall'
       : 'Could not register the task: ' + (r.stderr || r.stdout || r.error));
     return;
   }
