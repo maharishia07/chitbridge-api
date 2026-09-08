@@ -51,6 +51,20 @@ it('⚠️ the list IS the boundary: nothing outside it can be named', () => {
   assert.ok(integrations.KIT_NAMES.every((n) => n.indexOf('..') < 0), 'a kit name may not climb out of the folder');
 });
 
+it('⚠️ the counter is downloaded with a TILL key, not a connector one — it could not read its own shop otherwise', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8');
+  const i = src.indexOf('const scopes = ');
+  assert.ok(i > 0, 'the kit download no longer chooses a scope by kit');
+  const line = src.slice(i, src.indexOf('\n', i));
+  assert.ok(line.indexOf("'till'") > 0 && line.indexOf("c.id === 'till'") > 0, 'the counter kit must mint a till key: ' + line);
+  /* and the till scope must actually open the four calls the counter program makes */
+  const auth = fs.readFileSync(path.join(API, 'middleware', 'auth.js'), 'utf8');
+  /* the scope table is written as regexes, so read it with the escaping taken out */
+  const till = auth.slice(auth.indexOf('  till:'), auth.indexOf('  connector:')).split('\\').join('');
+  for (const call of ['/api/till/(snapshot|bills|engine', '/api/chits/send', '/api/integrations/kit'])
+    assert.ok(till.indexOf(call) > 0, 'a till key cannot reach ' + call);
+});
+
 say('— fetching only what differs —');
 
 /** a server that answers with exactly these files */

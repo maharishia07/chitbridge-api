@@ -145,7 +145,11 @@ router.get('/download/:id', authIfOffered, async (req, res) => {
      (Tally port, company, ledgers) before it ever watches. An anonymous download, or the 20-key limit, falls back to the placeholder. */
   let key = 'PASTE THE KEY FROM SETTINGS › INTEGRATIONS (scope: connector)', minted = null;
   if (req.identity && !req.api_key) {
-    try { minted = await require('./keys').mint(auth.entityOf(req), req.identity, { name: 'kit ' + c.id + ' · ' + new Date().toISOString().slice(0, 10), scopes: ['connector', 'services'] }); key = minted.key; }
+    /* ⚠️ THE COUNTER'S KEY IS A TILL KEY. Its four calls (snapshot · engine · chits/send · bills) are behind the 'till' scope, and a
+       till key may address nobody but itself — which is the whole point of it. A kit minted with the connector scopes could not read
+       the shop it was downloaded for (found 2026-09-08). */
+    const scopes = c.id === 'till' ? ['till'] : ['connector', 'services'];
+    try { minted = await require('./keys').mint(auth.entityOf(req), req.identity, { name: 'kit ' + c.id + ' · ' + new Date().toISOString().slice(0, 10), scopes: scopes }); key = minted.key; }
     catch (e) { console.log('kit download: key not minted —', e && e.message); }
   }
   const cfg = { api: base, key, configured: false, adapter, name: c.name,
