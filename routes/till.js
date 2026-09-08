@@ -164,12 +164,14 @@ router.get('/bills', auth, async (req, res) => {
     const by = (typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by)) ? req.query.by : null;
     const { withEntity } = require('../db');
     const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT chit_id, created_at, business_json, line_items, summary_json
-         FROM chit_header
-        WHERE entity_id = $1 AND direction = 'sent' AND purpose IN ('order','offer')
-          AND business_json ? 'bill_no'
-          AND created_at > NOW() - ($2 || ' days')::interval
-        ORDER BY created_at DESC LIMIT $3`, [entity_id, String(days), limit]));
+      /* ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08) */
+      `SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json
+         FROM chit_header h
+         LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
+        WHERE h.entity_id = $1 AND h.direction = 'sent' AND h.purpose IN ('order','offer')
+          AND h.business_json ? 'bill_no'
+          AND h.created_at > NOW() - ($2 || ' days')::interval
+        ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit]));
     const rows = r.rows.map((x) => {
       const b = x.business_json || {}, t = b.till || {}, m = (x.summary_json || {}).money || {};
       return { chit_id: x.chit_id, no: b.bill_no || null, at: b.billed_at || x.created_at,
@@ -216,8 +218,10 @@ router.get('/tasks', auth, async (req, res) => {
     const out = await withEntity(entity_id, async (db) => {
       const ids = heads.map((h) => h.chit_id);
       const li = await db.query(
-        'SELECT chit_id, line_items, business_json FROM chit_header WHERE entity_id = $1 AND chit_id = ANY($2::uuid[])',
-        [entity_id, ids]);
+        `SELECT h.chit_id, d.line_items, h.business_json
+           FROM chit_header h
+           LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
+          WHERE h.entity_id = $1 AND h.chit_id = ANY($2::uuid[])`, [entity_id, ids]);
       const byId = new Map(li.rows.map((r) => [String(r.chit_id), r]));
       const tasks = [];
       for (const h of heads) {
@@ -276,15 +280,20 @@ router.get('/match', auth, async (req, res) => {
     const { withEntity } = require('../db');
     const out = await withEntity(entity_id, async (db) => {
       const ids = heads.map((h) => h.chit_id);
-      const det = await db.query('SELECT chit_id, line_items, business_json FROM chit_header WHERE entity_id = $1 AND chit_id = ANY($2::uuid[])', [entity_id, ids]);
+      const det = await db.query(
+        `SELECT h.chit_id, d.line_items, h.business_json
+           FROM chit_header h
+           LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
+          WHERE h.entity_id = $1 AND h.chit_id = ANY($2::uuid[])`, [entity_id, ids]);
       const byId = new Map(det.rows.map((r) => [String(r.chit_id), r]));
 
       /* the receipts our own counter wrote against these orders — that is where the supplier's bill figure was captured */
       const rec = await db.query(
-        `SELECT chit_id, created_at, business_json, line_items
-           FROM chit_header
-          WHERE entity_id = $1 AND direction = 'sent' AND purpose = 'receipt'
-            AND created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
+        `SELECT h.chit_id, h.created_at, h.business_json, d.line_items
+           FROM chit_header h
+           LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
+          WHERE h.entity_id = $1 AND h.direction = 'sent' AND h.purpose = 'receipt'
+            AND h.created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
       const receiptsFor = new Map();
       for (const r of rec.rows) {
         const bj = r.business_json || {};
@@ -301,10 +310,11 @@ router.get('/match', auth, async (req, res) => {
 
       /* an invoice they SENT us, if they are on ChitBridge at all */
       const inv = await db.query(
-        `SELECT chit_id, created_at, sender_entity_id, summary_json, line_items, business_json
-           FROM chit_header
-          WHERE entity_id = $1 AND direction = 'received' AND purpose = 'invoice'
-            AND created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
+        `SELECT h.chit_id, h.created_at, h.sender_entity_id, h.summary_json, d.line_items, h.business_json
+           FROM chit_header h
+           LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
+          WHERE h.entity_id = $1 AND h.direction = 'received' AND h.purpose = 'invoice'
+            AND h.created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
 
       const orders = [];
       for (const h of heads) {
