@@ -1133,6 +1133,20 @@ async function loadTasks(kind){
 }
 function taskById(kind, id){ return (TASKS[kind] || []).filter(function(t){ return t.chit_id === id; })[0] || null; }
 
+/**
+ * ⭐ WHICH LINE OF THE TASK IS THIS PRODUCT? The id when the order carries one, otherwise the name — because an order typed by hand,
+ * or one that arrived from the customer's own system, has a name and nothing else. The name is compared through CBSearch's own rule,
+ * so spacing, case and punctuation cannot make two spellings of one product look like two products.
+ */
+function lineFor(lines, item){
+  var byId = (lines || []).filter(function(l){ return l.item_id && item.item_id && l.item_id === item.item_id; })[0];
+  if (byId) return byId;
+  var norm = function(t){ return window.CBSearch ? CBSearch.normalise(t).replace(/\s+/g, ' ').trim() : String(t || '').toLowerCase().trim(); };
+  var want = norm(item.name);
+  if (!want) return null;
+  return (lines || []).filter(function(l){ return norm(l.name) === want; })[0] || null;
+}
+
 /* ── RECEIVE ─────────────────────────────────────────────────────────────────────────────────────────────────── */
 /**
  * ⭐ WHAT WAS ORDERED IS THE TASK; WHAT WE COUNTED IS THE ANSWER. Choosing an order fills the left column and leaves the counted
@@ -1155,8 +1169,8 @@ function rcvPickTask(id){
 }
 /** an item off the shelf, added to what arrived — it may or may not be on the order */
 function rcvAdd(i, qty){
-  var have = RCV.lines.filter(function(l){ return l.item_id && l.item_id === i.item_id; })[0];
-  if (have) { have.counted = r2((Number(have.counted) || 0) + qty); }
+  var have = lineFor(RCV.lines, i);
+  if (have) { have.counted = r2((Number(have.counted) || 0) + qty); if (!have.item_id) have.item_id = i.item_id || null; }
   else RCV.lines.push({ line_id:null, item_id:i.item_id, name:i.name, unit:i.unit || 'piece', ordered:null,
                         counted:qty, rate:(Number(i.price) || 0), reason:'', lot:null, added:true });
   paintReceive();
@@ -1308,7 +1322,8 @@ function dspPickTask(id){
 /** a scan lands on the line it belongs to — or is refused, loudly */
 function dspScan(i, qty){
   if (!DSP.task) { alert('Choose the order you are packing first.'); return; }
-  var l = DSP.lines.filter(function(x){ return x.item_id && x.item_id === i.item_id; })[0];
+  var l = lineFor(DSP.lines, i);
+  if (l && !l.item_id) l.item_id = i.item_id || null;      /* learned for the rest of this pick */
   if (!l) { alert(i.name + ' is not on this order.\n\nPacking it would arrive as a surprise the customer never asked for. Check the order, or start the right one.'); return; }
   var room = r2(l.ordered - l.picked);
   if (room <= 0) { alert(l.name + ' is already complete on this order — ' + l.ordered + ' ' + l.unit + '.'); return; }
