@@ -910,18 +910,48 @@ function price(){
         c.gst_rate = (r && r.rate != null) ? r.rate : null; } catch(_){ c.gst_rate = null; }
     }
   });
-  paintCart(); paintTotals();
+  /* ⭐ THE SET OF LINES DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
+     A line added or removed → the container, because the rows themselves are different rows now. */
+  var rows = document.querySelectorAll('#cart .row').length;
+  var inPlace = (rows === CART.length && CART.length > 0);
+  if (inPlace) { for (var n = 0; n < CART.length && inPlace; n++) inPlace = paintCartRow(n); }
+  if (!inPlace) paintCart();
+  paintTotals();
+}
+/** the words under a line: its price, its rate, and the offer that came off it */
+function cartLineNote(c){
+  return '₹' + money(c.price) + ' / ' + esc(c.unit)
+    + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '')
+    + (c.off ? ' · <span class="save">' + esc(c.off_label||'Offer') + ' −₹' + money(c.save) + '</span>' : '');
+}
+function cartRowHTML(c, k){
+  return '<div class="row" data-testid="till-line-' + k + '">'
+    + '<span><span class="nm">' + esc(c.name) + '</span><div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
+    + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
+    + '<span class="amt" data-testid="till-amt-' + k + '">' + money(c.net) + '</span>'
+    + '<button class="x" onclick="drop(' + k + ')" title="remove">×</button></div>';
+}
+/**
+ * ⭐⭐ THE ROW, NOT THE BILL (2026-09-08). Changing a quantity used to rebuild every line on the bill — which is not merely work, it
+ * DESTROYS STATE: the caret jumps out of the box the person is still typing in, and on a phone the keyboard closes.
+ * ⚠️ Only what CHANGED is written: the amount and the words under the name. The input the operator is holding is never touched, so
+ * "2" on its way to "25" survives the repricing that happens between the two keystrokes.
+ * ⚠️ It answers false when the row is not on screen — the caller then paints the whole cart, which is the right thing after an add
+ * or a remove, where the SET of rows changed and no amount of per-row cleverness would be honest.
+ */
+function paintCartRow(k){
+  var c = CART[k]; if (!c) return false;
+  var amt = document.querySelector('[data-testid="till-amt-' + k + '"]');
+  var note = document.querySelector('[data-testid="till-note-' + k + '"]');
+  if (!amt || !note) return false;
+  amt.textContent = money(c.net);
+  note.innerHTML = cartLineNote(c);
+  return true;
 }
 function paintCart(){
-  document.getElementById('cart').innerHTML = CART.length ? CART.map(function(c,k){
-    return '<div class="row" data-testid="till-line-' + k + '">'
-      + '<span><span class="nm">' + esc(c.name) + '</span><div class="u">₹' + money(c.price) + ' / ' + esc(c.unit)
-        + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '')
-        + (c.off ? ' · <span class="save">' + esc(c.off_label||'Offer') + ' −₹' + money(c.save) + '</span>' : '') + '</div></span>'
-      + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
-      + '<span class="amt" data-testid="till-amt-' + k + '">' + money(c.net) + '</span>'
-      + '<button class="x" onclick="drop(' + k + ')" title="remove">×</button></div>';
-  }).join('') : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>';
+  document.getElementById('cart').innerHTML = CART.length
+    ? CART.map(function(c,k){ return cartRowHTML(c,k); }).join('')
+    : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>';
 }
 /** the shelf price already includes GST — the slip shows the split, it does not add to what the customer was told */
 function billMoney(){
