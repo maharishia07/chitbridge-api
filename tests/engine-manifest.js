@@ -202,6 +202,10 @@ const ENGINE_OTHER = [
   /* GENERATED, never edited by hand: scripts/vendor-tax.cjs writes it from tax.js + tax-slab.js so a TILL can price a bill with the
      internet unplugged. Same engine, second home — tests/tax-vendor.test.js fails the day the two differ (2026-09-07). */
   'tax-engine.browser.js',
+  /* GENERATED, never edited by hand: scripts/vendor-till.cjs copies chitbridge-web/public/app/search.js so the COUNTER and the
+     app's Catalogue answer a shopkeeper's own words ("ac co" → Aachi Coriander) identically. Served to the till at
+     /api/till/engine/search; tests/search-engine.test.js fails the day the copies differ (2026-09-08). */
+  'search-engine.js',
   'pricing-engine.js',    // ENGINE: the pricing structure a product cites → the unit price at a quantity (vendored from app/pricing.js)   // = web app/offers.js, vendored (cp) so a shop ORDER is priced by the SAME engine as the row; web owns the source    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
   /**
    * ⭐⭐ THESE EIGHT ARE WHAT A CHIT *MEANS*, so they are engine and therefore LOCKED. They were held out of

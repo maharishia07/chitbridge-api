@@ -188,11 +188,11 @@ router.get('/bills', auth, async (req, res) => {
 });
 
 /**
- * ⭐ THE ENGINES, SERVED (2026-09-07). A till has to price with the line down, so it keeps its own copy of the two engines — and it
+ * ⭐ THE ENGINES, SERVED (2026-09-07). A till has to price with the line down, so it keeps its own copy of the three engines — and it
  * gets them from here rather than from a second host, so there is one place that answers "which version is the counter running".
  * Cached by the till at install and refreshed with the snapshot; both files are the SAME code the server and the app run.
  */
-const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js' };
+const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js' };
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
   if (!rel) return res.status(404).json({ error: 'Not found' });

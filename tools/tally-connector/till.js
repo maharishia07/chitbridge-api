@@ -103,7 +103,7 @@ async function refresh() {
     }
     /* the engines, cached beside the snapshot — the till prices with the same code the server does.
        ⚠️ CB.call parses JSON and hands back { raw } when the body is not JSON, which is exactly what a .js file is. */
-    for (const [name, file] of [['offers', F.engine('offers')], ['tax', F.engine('tax')]]) {
+    for (const [name, file] of [['offers', F.engine('offers')], ['tax', F.engine('tax')], ['search', F.engine('search')]]) {
       try { const r = await cb.call('GET', '/api/till/engine/' + name); const js = (r && typeof r.raw === 'string') ? r.raw : '';
         if (js.length > 500) fs.writeFileSync(file, js); }
       catch (_) { /* keep the copy we have — an engine we already hold is what makes the counter work offline */ }
@@ -190,7 +190,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html'))
       return send(res, 200, 'text/html; charset=utf-8', fs.readFileSync(PAGE, 'utf8'));
 
-    if (req.method === 'GET' && /^\/engine\/(offers|tax)\.js$/.test(url.pathname)) {
+    if (req.method === 'GET' && /^\/engine\/(offers|tax|search)\.js$/.test(url.pathname)) {
       const n = url.pathname.split('/')[2].replace('.js', '');
       if (!fs.existsSync(F.engine(n))) return send(res, 503, 'text/plain', '// the engine has not been fetched yet — press Refresh while online');
       return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(F.engine(n), 'utf8'));
@@ -199,7 +199,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/state')
       return json(res, 200, { snapshot: snapshot, online: online, queued: readLines(F.queue).length, today: todayTotals(),
                               till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
-                              engines: { offers: fs.existsSync(F.engine('offers')), tax: fs.existsSync(F.engine('tax')) } });
+                              engines: { offers: fs.existsSync(F.engine('offers')), tax: fs.existsSync(F.engine('tax')), search: fs.existsSync(F.engine('search')) } });
 
     if (req.method === 'POST' && url.pathname === '/api/refresh') { const ok = await refresh(); return json(res, 200, { ok: ok, online: online, at: snapshot && snapshot.at }); }
 

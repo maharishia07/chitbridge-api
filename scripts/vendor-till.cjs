@@ -3,7 +3,7 @@
  *
  * The page is served both by the little program on a shop PC (tools/tally-connector/till.js) and by the web, where a phone or a
  * tablet can open it directly. Two copies of a screen is how two screens drift, so there is ONE master — the kit's till.html — and
- * this script writes the web's copy, its two engine files, its manifest and its service worker.
+ * this script writes the web's copy, its three engine files, its manifest and its service worker.
  *
  * Run:  node scripts/vendor-till.cjs          (write)
  *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale — what tests/till-vendor.test.js uses)
@@ -39,7 +39,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/engine/offers.js', '/engine/tax.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -57,6 +57,11 @@ const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
   [path.join(WEB, 'app', 'offers.js'), path.join(WEB, 'engine', 'offers.js'), 'copy'],
   [path.join(WEB, 'app', 'tax-engine.js'), path.join(WEB, 'engine', 'tax.js'), 'copy'],
+  /* ⭐ ONE SEARCH FOR BOTH SCREENS (Athi, 2026-09-08: "make it one shared file for both"). The counter and the app's Catalogue have to
+     answer "ac co" the same way, so the master lives with the app and is copied here for the web and into the API, which serves the
+     till's own cached copy. Two searches would be two definitions of what a shop's words mean. */
+  [path.join(WEB, 'app', 'search.js'), path.join(WEB, 'engine', 'search.js'), 'copy'],
+  [path.join(WEB, 'app', 'search.js'), path.join(API, 'lib', 'search-engine.js'), 'copy'],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],
   [null, path.join(WEB, 'till-icon.svg'), ICON],
