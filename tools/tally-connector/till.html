@@ -555,7 +555,9 @@ function hits(){
   /* a scanned barcode is exact and beats everything */
   for (var b = 0; b < items.length; b++) if (String(items[b].barcode || '').toLowerCase() === raw) return [items[b]];
 
-  var toks = raw.split(/\s+/).filter(Boolean);
+  /* ⚠️ NORMALISED LIKE THE TEXT IT SEARCHES: the haystack turns every break into a space, so a typed "BULK-000001" must become two
+       words too — otherwise a hyphenated code, an HSN with a dot or a name with a slash matches nothing and says nothing. */
+    var toks = raw.replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
   var starts = [], loose = [], letters = [];
   for (var k = 0; k < items.length && starts.length < 60; k++) {
     var it = items[k], hay = searchText(it), ok = true;
