@@ -203,15 +203,32 @@ router.get('/bills', auth, async (req, res) => {
  */
 const deliverline = require('../lib/deliverline');
 const select = require('../lib/select');            /* ⭐ the shared selector: one definition of "my chits", counterparty included */
+
+/**
+ * ⭐⭐ WHICH WAY DOES AN ORDER FACE? (2026-09-08)
+ *
+ * An order we SEND is a purchase; an order we RECEIVE is a sale. That held until the ordinary Indian case turned up: a supplier who
+ * is not on ChitBridge cannot be a recipient of a chit, so a shop's own purchase order has to be recorded as a SELF chit — and a
+ * self chit lands as direction 'received', exactly like a customer's order to us. Direction stopped being enough to tell them apart.
+ *
+ * ⚠️ SO IT IS DECLARED, NOT INFERRED. `business_json.side` says 'buy' or 'sell', written by whoever creates the order. A chit that
+ * does not say keeps the old meaning, which is what every chit written before today meant.
+ */
+function sideOf(head, bj) {
+  const said = (bj && typeof bj.side === 'string') ? bj.side.toLowerCase() : null;
+  if (said === 'buy' || said === 'sell') return said;
+  return head.direction === 'sent' ? 'buy' : 'sell';
+}
 router.get('/tasks', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
-    const direction = kind === 'receive' ? 'sent' : 'received';
+    const want = kind === 'receive' ? 'buy' : 'sell';
     const limit = Math.min(Math.max(parseInt(req.query.limit || '40', 10) || 40, 1), 100);
     const since = new Date(Date.now() - 120 * 24 * 3600 * 1000).toISOString();
 
-    const heads = (await select.rows(entity_id, { direction, purpose: 'order', since, limit: 200 })).slice(0, limit);
+    /* ⚠️ BOTH DIRECTIONS, and sideOf decides — a purchase order for an off-platform supplier arrives as 'received' and is still a purchase */
+    const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
     if (!heads.length) return res.json({ kind, count: 0, tasks: [] });
 
     const { withEntity } = require('../db');
@@ -228,6 +245,8 @@ router.get('/tasks', auth, async (req, res) => {
         const det = byId.get(String(h.chit_id)) || {};
         const bj = det.business_json || {};
         if (bj.bill_no) continue;                     /* a counter sale is a record, not a task */
+        if (sideOf(h, bj) !== want) continue;         /* the other way round belongs to the other screen */
+        if (tasks.length >= limit) break;
         const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
         const lines = (Array.isArray(det.line_items) ? det.line_items : []).map((l) => {
           const p = (prog && prog.get) ? prog.get(l.line_id) : null;
@@ -243,7 +262,7 @@ router.get('/tasks', auth, async (req, res) => {
         if (lines.every((l) => l.remaining <= 0)) continue;      /* nothing owed: not a task */
         tasks.push({ chit_id: h.chit_id, at: h.created_at,
                      subject: h.manual_subject || h.auto_subject || '',
-                     party: h.counterparty_name || '', party_id: h.counterparty_id || null,
+                     party: h.counterparty_name || (bj.party && bj.party.name) || '', party_id: h.counterparty_id || null,
                      ref: bj.order_no || bj.ref || null, lines });
       }
       return tasks;
@@ -274,7 +293,8 @@ router.get('/match', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '90', 10) || 90, 1), 365);
     const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
-    const heads = await select.rows(entity_id, { direction: 'sent', purpose: 'order', since, limit: 200 });
+    /* both directions: a purchase order for an off-platform supplier is a SELF chit and lands as 'received' */
+    const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
     if (!heads.length) return res.json({ days, count: 0, orders: [] });
 
     const { withEntity } = require('../db');
@@ -321,6 +341,7 @@ router.get('/match', auth, async (req, res) => {
         const d = byId.get(String(h.chit_id)) || {};
         const bj = d.business_json || {};
         if (bj.bill_no) continue;                       /* a counter sale is not a purchase order */
+        if (sideOf(h, bj) !== 'buy') continue;          /* the match is about what we BUY */
         const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
         const receipts = receiptsFor.get(String(h.chit_id)) || [];
         /* their invoice: a chit from this counterparty, else the figure keyed off their paper bill at the door */
@@ -367,7 +388,7 @@ router.get('/match', auth, async (req, res) => {
 
         orders.push({ chit_id: h.chit_id, at: h.created_at,
                       subject: h.manual_subject || h.auto_subject || '',
-                      party: h.counterparty_name || '', party_id: h.counterparty_id || null,
+                      party: h.counterparty_name || (bj.party && bj.party.name) || '', party_id: h.counterparty_id || null,
                       lines, differences, verdict,
                       ordered_total, received_total, invoiced_total,
                       invoiced_from: theirChit ? 'their invoice' : (keyed.length ? 'their bill, keyed at the door' : null),
