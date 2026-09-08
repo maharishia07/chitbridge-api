@@ -276,7 +276,7 @@ function chitOfDoc(d) {
       particulars: l.name, quantity: receipt ? l.counted : l.picked, unit: l.unit,
       price: receipt ? (l.rate == null ? null : l.rate) : null,
       total: receipt ? (l.value == null ? null : l.value) : null,
-      item_data: { item_id: l.item_id || null, lot: l.lot || null, ordered: l.ordered,
+      item_data: { item_id: l.item_id || null, line_id: l.line_id || null, lot: l.lot || null, ordered: l.ordered,
                    difference: receipt ? l.difference : (l.short ? -l.short : 0), reason: l.reason || null,
                    landed: receipt ? l.landed : null, unit_cost: receipt ? l.unit_cost : null,
                    carton: receipt ? null : l.carton },

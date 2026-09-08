@@ -312,7 +312,7 @@ router.get('/match', auth, async (req, res) => {
         `SELECT h.chit_id, h.created_at, h.business_json, d.line_items
            FROM chit_header h
            LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
-          WHERE h.entity_id = $1 AND h.direction = 'sent' AND h.purpose = 'receipt'
+          WHERE h.entity_id = $1 AND h.purpose = 'receipt'   /* ⚠️ no direction: our own receipt is a SELF chit, which lands as 'received' */
             AND h.created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
       const receiptsFor = new Map();
       for (const r of rec.rows) {
