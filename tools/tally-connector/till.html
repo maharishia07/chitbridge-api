@@ -490,15 +490,64 @@ function paintCustomers(){
 }
 
 /* ═══ 3 · finding, adding, pricing ═══════════════════════════════════════════════════════════════════════════ */
+/**
+ * ⭐⭐ WORD-START SEARCH. "ac co" finds "Aachi Coriander powder": every word typed must begin a word in the product. Order is free, so
+ * "co ac" finds it too. A plain substring ("riander", half a code) still matches — ranked below, never refused.
+ * The searchable text is built once per item, at the moment the shop is read; a keystroke is then an indexOf per word.
+ */
+function searchText(i){
+  if (i._s) return i._s;
+  var t = [i.name, i.code, i.sku, i.category, i.brand, i.variant, i.unit].filter(Boolean).join(' ').toLowerCase();
+  var out = ' ';
+  for (var n = 0; n < t.length; n++) {
+    var c = t.charCodeAt(n);
+    out += ((c >= 97 && c <= 122) || (c >= 48 && c <= 57)) ? t[n] : ' ';   /* every break becomes a space, so " tok" means "a word starts here" */
+  }
+  i._s = out + ' ';
+  return i._s;
+}
 function hits(){
-  var q = (document.getElementById('q').value || '').trim().toLowerCase();
+  var raw = (document.getElementById('q').value || '').trim().toLowerCase();
   var items = (S && S.items) || [];
-  if (!q) return items.slice(0, 60);
-  return items.filter(function(i){
-    return String(i.name||'').toLowerCase().indexOf(q) >= 0
-        || String(i.code||'').toLowerCase().indexOf(q) >= 0
-        || String(i.barcode||'').toLowerCase() === q;
-  }).slice(0, 60);
+  if (!raw) return items.slice(0, 60);
+
+  /* a scanned barcode is exact and beats everything */
+  for (var b = 0; b < items.length; b++) if (String(items[b].barcode || '').toLowerCase() === raw) return [items[b]];
+
+  var toks = raw.split(/\s+/).filter(Boolean);
+  var starts = [], loose = [], letters = [];
+  for (var k = 0; k < items.length && starts.length < 60; k++) {
+    var it = items[k], hay = searchText(it), ok = true;
+    for (var t = 0; t < toks.length; t++) { if (hay.indexOf(' ' + toks[t]) < 0) { ok = false; break; } }
+    if (ok) { starts.push(it); continue; }
+    if (loose.length < 60 && toks.length === 1 && hay.indexOf(toks[0]) >= 0) { loose.push(it); continue; }
+    /* the letters you actually typed, in order, inside one word each — "ac co" for Aachi Coriander */
+    if (letters.length < 60 && everyTokenInAWord(hay, toks)) letters.push(it);
+  }
+  /* the closest match first: a product whose NAME begins with what was typed is what the hand was reaching for */
+  var first = toks[0];
+  starts.sort(function(a, c){
+    var an = String(a.name || '').toLowerCase(), cn = String(c.name || '').toLowerCase();
+    var ap = an.indexOf(first) === 0 ? 0 : 1, cp = cn.indexOf(first) === 0 ? 0 : 1;
+    if (ap !== cp) return ap - cp;
+    return an.length - cn.length;
+  });
+  return starts.concat(loose, letters).slice(0, 60);
+}
+/** does each typed word appear as a subsequence of SOME single word here? "ac" ⊂ "aachi" · "crd" ⊂ "curd" */
+function everyTokenInAWord(hay, toks){
+  var words = hay.split(' ');
+  for (var t = 0; t < toks.length; t++) {
+    var tok = toks[t], found = false;
+    for (var w = 0; w < words.length && !found; w++) {
+      var word = words[w]; if (word.length < tok.length) continue;
+      var n = 0;
+      for (var c = 0; c < word.length && n < tok.length; c++) if (word[c] === tok[n]) n++;
+      if (n === tok.length) found = true;
+    }
+    if (!found) return false;
+  }
+  return true;
 }
 /** ⭐ A SCANNER IS NOT A TYPIST. An exact barcode or code match adds the item and clears the box, which is what the scanner's own
     Enter would otherwise have to do — and it is what makes a scan feel instant rather than like a search. */
