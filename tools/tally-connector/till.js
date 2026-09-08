@@ -38,7 +38,7 @@ const http = require('http');
 (function applyStagedUpdate() {
   if (process.env.CB_TILL_UPDATED) return;
   const here = __dirname;
-  const names = ['till.js', 'core.js'].filter((n) => fs.existsSync(path.join(here, n + '.new')));
+  const names = ['till.js', 'core.js', 'printer.js'].filter((n) => fs.existsSync(path.join(here, n + '.new')));
   if (!names.length) return;
   const vm = require('vm');
   for (const n of names) {
@@ -60,6 +60,7 @@ const http = require('http');
 })();
 
 const core = require('./core');
+const printer = require('./printer');   /* the slip, on paper — raw ESC/POS through the Windows spooler */
 
 const argv = process.argv.slice(2);
 const flag = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? (argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true) : d; };
@@ -158,7 +159,7 @@ async function refresh() {
     }
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html'], staged: ['till.js', 'core.js'] });
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html'], staged: ['till.js', 'core.js', 'printer.js'] });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
@@ -342,10 +343,48 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, doc: doc });
     }
 
+    /**
+     * ⭐⭐ THE PRINTER (2026-09-08). Three things the browser cannot do: say what printers this PC has, send a bill straight to one
+     * without a dialog, and cut the paper afterwards.
+     * ⚠️ A USB thermal printer with no driver installed does not appear in the list, however well the cable is plugged in — so the
+     * screen can tell the shopkeeper which of the two problems they actually have.
+     */
+    if (req.method === 'GET' && url.pathname === '/api/printers')
+      return printer.list((_e, out) => json(res, 200, Object.assign({ chosen: tillCfg.printer || null, mm: tillCfg.paper_mm || 80, drawer: !!tillCfg.drawer }, out)));
+
+    if (req.method === 'POST' && url.pathname === '/api/printer') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      /* the choice belongs to THIS PC, so it lives in this PC's connector.json and nowhere else */
+      tillCfg.printer = b.printer || null;
+      tillCfg.paper_mm = Number(b.mm) === 58 ? 58 : 80;
+      tillCfg.drawer = !!b.drawer;
+      try { const cfgNow = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); cfgNow.till = Object.assign({}, cfgNow.till || {}, { printer: tillCfg.printer, paper_mm: tillCfg.paper_mm, drawer: tillCfg.drawer }); writeJSON(cfgFile, cfgNow); } catch (e) { log('could not save the printer choice: ' + e.message); }
+      log(tillCfg.printer ? ('slips print to ' + tillCfg.printer + ' (' + tillCfg.paper_mm + ' mm)') : 'slips no longer print by themselves');
+      return json(res, 200, { ok: true, chosen: tillCfg.printer, mm: tillCfg.paper_mm, drawer: tillCfg.drawer });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/print') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      const opts = { printer: b.printer || tillCfg.printer, mm: tillCfg.paper_mm || 80, drawer: b.drawer != null ? !!b.drawer : !!tillCfg.drawer };
+      if (b.test) {
+        if (!opts.printer) return json(res, 200, { ok: false, why: 'choose a printer first' });
+        return printer.sendRaw(opts.printer, printer.testPage((snapshot && snapshot.shop) || null, opts),
+          (e) => json(res, 200, e ? { ok: false, why: e.message } : { ok: true }));
+      }
+      if (!b.doc) return json(res, 400, { error: 'nothing to print' });
+      return printer.print(b.doc, (snapshot && snapshot.shop) || null, opts, (_e, out) => {
+        if (out && !out.ok) log('the slip did not print: ' + out.why);      /* said out loud, and the sale stands */
+        json(res, 200, out);
+      });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/state')
       return json(res, 200, { snapshot: snapshot, online: online, queued: readLines(F.queue).length, today: todayTotals(),
                               till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
                               engines: { offers: fs.existsSync(F.engine('offers')), tax: fs.existsSync(F.engine('tax')), search: fs.existsSync(F.engine('search')) },
+                              printer: { chosen: tillCfg.printer || null, mm: tillCfg.paper_mm || 80, drawer: !!tillCfg.drawer },
                               update: UPDATE });
 
     if (req.method === 'POST' && url.pathname === '/api/refresh') { const ok = await refresh(); return json(res, 200, { ok: ok, online: online, at: snapshot && snapshot.at }); }

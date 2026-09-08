@@ -81,7 +81,7 @@ const CATALOGUE = [
  * ⭐ ONE LIST OF WHAT A KIT IS. The zip is built from it, the update manifest is hashed from it, and a request for a file is checked
  * against it — so a kit can never be sent a file the zip would not have contained, and the three can never drift apart.
  */
-const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
+const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'printer.js', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
 function kitFiles(adapter) {
   const names = KIT_NAMES;
   const out = [];

@@ -284,6 +284,7 @@
   <div id="pairbox"></div>
   <label>Counter name — it becomes the bill number's prefix</label>
   <input id="set_till" placeholder="C1">
+  <div id="printbox"></div>
   <label>Text size</label>
   <select id="set_fs"><option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select>
   <label>Look</label>
@@ -369,6 +370,9 @@ var AgentHost = {
   refresh: function(){ return fetch('/api/refresh',{method:'POST'}).then(function(r){ return r.json(); }); },
   bill: function(b){ return fetch('/api/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }); },
   tasks: function(kind){ return fetch('/api/tasks?kind=' + encodeURIComponent(kind)).then(function(r){ return r.json(); }).catch(function(){ return { tasks: [], offline: true }; }); },
+  printers: function(){ return fetch('/api/printers').then(function(r){ return r.json(); }).catch(function(){ return { printers: [] }; }); },
+  setPrinter: function(p){ return fetch('/api/printer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(function(r){ return r.json(); }); },
+  print: function(b){ return fetch('/api/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
   doc: function(d){ return fetch('/api/doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){ return r.json(); }); },
 };
 
@@ -985,6 +989,7 @@ async function finish(){
   if (!r || !r.ok){ alert('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
   LAST = r.bill; if (r.today) STATE.today = r.today;
   showSlip(r.bill, m);
+  autoPrint(r.bill);
   CART = []; PARTS = []; paintParts();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
   price(); document.getElementById('lastnote').textContent = 'last bill ' + r.bill.no;
@@ -1283,6 +1288,7 @@ async function rcvConfirm(){
   try { r = await HOST.doc(doc); } catch (e) { r = { ok:false, error: e && e.message }; }
   if (!r || !r.ok){ alert('The receipt could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
   showDoc('Receipt ' + (r.doc && r.doc.no ? r.doc.no : ''), receiveSlipHTML(r.doc || doc));
+  autoPrint(r.doc || doc);
   RCV = rcvBlank(); rcvClear(); loadTasks('receive'); load();
 }
 
@@ -1364,6 +1370,7 @@ async function dspConfirm(){
   try { r = await HOST.doc(doc); } catch (e) { r = { ok:false, error: e && e.message }; }
   if (!r || !r.ok){ alert('The despatch could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
   showDoc('Despatch ' + (r.doc && r.doc.no ? r.doc.no : ''), despatchSlipHTML(r.doc || doc));
+  autoPrint(r.doc || doc);
   DSP = dspBlank(); dspClear(); loadTasks('despatch'); load();
 }
 
@@ -1446,6 +1453,20 @@ function showSlip(bill, m){
   document.getElementById('sliptitle').textContent = 'Bill ' + bill.no + ' · ₹' + money(bill.total);
   document.getElementById('slipbox').innerHTML = slipHTML(bill, m);
   document.getElementById('slipdlg').showModal();
+}
+/**
+ * ⭐ IT PRINTS ITSELF, OR IT SAYS NOTHING (2026-09-08). On the shop PC with a printer chosen, the paper is already coming out before
+ * anyone reaches for a button; anywhere else this does nothing at all and the Print button on the dialog stays the way.
+ * ⚠️ IT NEVER BLOCKS A SALE (rule 4). A jammed, unplugged or unchosen printer is a small line under the bill, never an alert and
+ * never a thing to dismiss — the sale is already recorded and already queued.
+ */
+function autoPrint(doc){
+  if (!doc || !HOST || HOST.mode !== 'agent' || !HOST.print) return;
+  HOST.print({ doc: doc }).then(function(r){
+    if (r && r.ok) return;
+    var n = document.getElementById('lastnote');
+    if (n && r && r.why && r.why !== 'no printer chosen yet') n.textContent = 'not printed — ' + r.why;
+  }).catch(function(){});
 }
 function printSlip(){
   var w = window.open('', 'slip', 'width=420,height=640');
@@ -1623,6 +1644,40 @@ function applyLook(){
   document.documentElement.setAttribute('data-theme', ls.get('cb_till_theme','light'));
   document.documentElement.style.setProperty('--fs', ls.get('cb_till_fs','16px'));
 }
+/**
+ * ⭐ THE PRINTER PANE, AND WHY IT IS SOMETIMES ABSENT. Only the program on a shop PC can send a bill straight to a printer; a browser
+ * can only open the print dialog. Showing a printer chooser in a browser would be a promise we cannot keep, so this pane appears on
+ * the desktop counter and explains itself on any other.
+ * ⚠️ A USB THERMAL PRINTER WITH NO DRIVER IS NOT IN THE LIST, however well the cable is plugged in — so when the list is empty this
+ * says which of the two problems it is, in the words a shopkeeper can act on.
+ */
+var PRINTERS = null;
+async function paintPrinters(){
+  var box = document.getElementById('printbox'); if (!box) return;
+  if (!HOST || HOST.mode !== 'agent'){
+    box.innerHTML = '<label>Printing</label><div style="color:var(--dim);font-size:.85em">This counter is running in a browser, so a bill goes through the usual print dialog — pick the till printer there once and it is remembered. '
+      + 'To have slips print by themselves, with the paper cut, put the counter on the shop PC (ChitBridge › Counter › Download).</div>';
+    return;
+  }
+  var r = PRINTERS || (PRINTERS = await HOST.printers());
+  var list = (r && r.printers) || [];
+  box.innerHTML = '<label>Printer — slips print here by themselves</label>'
+    + (list.length
+      ? '<select id="set_printer">' + '<option value="">Ask me each time (print dialog)</option>'
+        + list.map(function(p){ return '<option value="' + esc(p.name) + '"' + (r.chosen === p.name ? ' selected' : '') + '>' + esc(p.name) + (p.thermal ? ' — till printer' : '') + '</option>'; }).join('')
+        + '</select>'
+        + '<label>Paper</label><select id="set_paper"><option value="80"' + (r.mm !== 58 ? ' selected' : '') + '>80 mm (42 characters)</option><option value="58"' + (r.mm === 58 ? ' selected' : '') + '>58 mm (32 characters)</option></select>'
+        + '<label><input type="checkbox" id="set_drawer"' + (r.drawer ? ' checked' : '') + '> Open the cash drawer on a cash sale</label>'
+        + '<button class="pill" data-testid="till-testprint" onclick="testPrint()" style="margin-top:8px">Print a test slip</button>'
+      : '<div style="color:var(--warn);font-size:.85em">Windows cannot see any printer on this PC yet. A USB till printer needs its driver installed once — plugging in the cable is not enough. '
+        + 'Install the maker\'s driver (for an Epson TM printer: their Advanced Printer Driver), then press ⚙ again and it will be in this list.</div>');
+}
+async function testPrint(){
+  var sel = document.getElementById('set_printer');
+  var r = await HOST.print({ test: true, printer: sel ? sel.value : null });
+  var n = document.getElementById('setnote');
+  if (n) n.textContent = (r && r.ok) ? 'A test slip went to the printer.' : ('It did not print: ' + ((r && r.why) || 'no reason given'));
+}
 function openSettings(){
   document.getElementById('set_till').value = ls.get('cb_till_id','C1');
   document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
@@ -1636,9 +1691,18 @@ function openSettings(){
     pair.innerHTML = '<div style="color:var(--dim);font-size:.85em">This till runs beside the little program on this PC, so the key lives in connector.json and there is nothing to paste.</div>';
   }
   document.getElementById('setnote').textContent = 'Everything here is kept on this device only.';
+  paintPrinters();
   document.getElementById('setdlg').showModal();
 }
 async function saveSettings(){
+  /* the printer belongs to THIS PC, so it is saved where that PC keeps its own settings, not in the shop's */
+  var sel = document.getElementById('set_printer');
+  if (sel && HOST && HOST.mode === 'agent' && HOST.setPrinter){
+    try { await HOST.setPrinter({ printer: sel.value || null,
+                                  mm: Number((document.getElementById('set_paper') || {}).value) || 80,
+                                  drawer: !!(document.getElementById('set_drawer') || {}).checked });
+          PRINTERS = null; } catch (_) {}
+  }
   ls.set('cb_till_id', (document.getElementById('set_till').value||'C1').trim().slice(0,6) || 'C1');
   ls.set('cb_till_fs', document.getElementById('set_fs').value);
   ls.set('cb_till_theme', document.getElementById('set_theme').value);
