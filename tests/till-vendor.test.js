@@ -69,7 +69,7 @@ it('an offer comes off the total and is shown as a saving, never as a lower pric
 
 it('a registered shop splits the tax OUT of the shelf price — the customer pays what the shelf said', () => {
   P.CART = [{ price: 118, qty: 1, gross: 118, net: 118, save: 0, gst_rate: 18 }];
-  P.S = { shop: { reg_type: 'regular' } };
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } };   /* ⚠️ registered MEANS a GSTIN */
   const m = P.billMoney();
   assert.strictEqual(m.net, 118, 'the total is the shelf price');
   assert.strictEqual(m.base, 100); assert.strictEqual(m.tax, 18);
@@ -81,7 +81,7 @@ it('mixed rates and a zero-rated line, to the paisa', () => {
     { price: 200, qty: 2, gross: 400, net: 400, save: 0, gst_rate: 0 },
     { price: 30, qty: 3, gross: 90, net: 81, save: 9, gst_rate: 18 },
   ];
-  P.S = { shop: { reg_type: 'regular' } };
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } };   /* ⚠️ registered MEANS a GSTIN */
   const m = P.billMoney();
   assert.strictEqual(m.net, 731);
   assert.strictEqual(Math.round((m.base + m.tax) * 100) / 100, 731, 'taxable plus tax is the total, always');
@@ -450,6 +450,38 @@ it('⚠️ a count of zero only speaks when somebody keeps counts', () => {
                             { item_id: 'i2', name: 'Filter', unit: 'piece' }], policy: {} };
   assert.strictEqual(P.dspStock({ item_id: 'i1', name: 'Oil' }).off, true, 'a real zero is an answer');
   assert.strictEqual(P.dspStock({ item_id: 'i2', name: 'Filter' }).off, false, 'no count at all says nothing, and must not hide a line');
+});
+
+/* ── does this shop charge GST at all? (2026-09-08) ──────────────────────────────────────────────────────────── */
+
+it('⚠️⚠️ NO GSTIN, NO GST — a shop without one prints a CASH MEMO, whatever the setting says', () => {
+  P.S = { shop: { name: 'Corner Shop', reg_type: 'regular' } };      /* the flag defaults to 'regular' for every account */
+  const t = P.shopTax();
+  assert.strictEqual(t.charges, false, 'it charged GST for a shop that has no GSTIN');
+  assert.strictEqual(t.kind, 'cash', 'and it would have headed the slip TAX INVOICE');
+  P.CART = [{ price: 118, qty: 1, gross: 118, net: 118, save: 0, gst_rate: 18 }];
+  const m = P.billMoney();
+  assert.strictEqual(m.tax, 0, 'no GST is charged');
+  assert.strictEqual(m.base, 118, 'and nothing is split out of the price');
+});
+
+it('a registered shop WITH a GSTIN charges, and its slip is a tax invoice', () => {
+  P.S = { shop: { name: 'Sri Murugan Stores', reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } };
+  const t = P.shopTax();
+  assert.strictEqual(t.charges, true);
+  assert.strictEqual(t.kind, 'tax');
+});
+
+it('a composition dealer has a GSTIN and still charges nothing — a BILL OF SUPPLY', () => {
+  P.S = { shop: { reg_type: 'composition', gstin: '33ABCDE1234F1Z5' } };
+  const t = P.shopTax();
+  assert.strictEqual(t.charges, false, 'a composition dealer may not collect tax on supplies');
+  assert.strictEqual(t.kind, 'supply');
+});
+
+it('⚠️ a rate is never shown on a bill that carries no tax', () => {
+  P.S = { shop: { reg_type: 'regular' }, slabs: [], categories: [], face: {} };   /* no GSTIN */
+  assert.strictEqual(P.rateOf({ name: 'Masala', tax_slab: 'gst-5' }), null, 'a GST chip on a cash memo is a claim we cannot make');
 });
 
 console.log(pass + ' checks');

@@ -78,6 +78,23 @@ router.get('/snapshot', auth, async (req, res) => {
       )).catch(() => ({ rows: [] })),
     ]);
 
+    /**
+     * ⭐ WHAT THIS SHOP DECLARED ABOUT ITS OWN PRODUCTS (2026-09-08). A pharmacy declares composition, a paint shop a shade, a
+     * hardware shop a size — the declared columns are the one place that is already true, so the counter reads them rather than
+     * inventing a field list of its own.
+     * ⚠️ THREE, SHORT. A counter row is read at a glance, and a snapshot is carried on a device: every field costs bytes on ten
+     * thousand items, so the first three declared columns travel and each value is trimmed.
+     */
+    let declared = [];
+    try {
+      const sc = await query(
+        `SELECT sf.field_key, sf.field_name
+           FROM entity_schemas es JOIN schema_fields sf ON sf.schema_id = es.schema_id
+          WHERE es.entity_id = $1 AND es.status = 'active' AND es.is_default = true
+          ORDER BY sf.display_order LIMIT 3`, [entity_id]);
+      declared = sc.rows.map((x) => ({ k: x.field_key, n: x.field_name || x.field_key }));
+    } catch (_) { declared = []; }   /* a shop that declared nothing shows nothing — the ordinary case */
+
     /* the live offers this shop is running — the same rows the storefront and the chit read */
     let offers = [];
     try {
@@ -139,7 +156,12 @@ router.get('/snapshot', auth, async (req, res) => {
                 */
                synonym_text: Array.isArray(d.synonyms) ? (d.synonyms.map((x) => String(x || '')).filter(Boolean).join(' ') || null) : null,
                /* and flattened, because the counter's own search reads fields — so typing what the SUPPLIER calls it finds it */
-               alias_text: Array.isArray(d.aliases) ? (d.aliases.slice(0, 20).map((a) => a.text).filter(Boolean).join(' ') || null) : null };
+               alias_text: Array.isArray(d.aliases) ? (d.aliases.slice(0, 20).map((a) => a.text).filter(Boolean).join(' ') || null) : null,
+               brand: d.brand || null, variant: d.variant || d.grade || null,
+               /* the shop's own declared facts — a pharmacy's composition, a paint shop's shade. Trimmed: a row is read at a glance. */
+               facts: declared.map((f) => { const v = d[f.k];
+                          return (v == null || typeof v === 'object' || String(v) === '') ? null : { n: f.n, v: String(v).slice(0, 40) };
+                        }).filter(Boolean) };
     }).filter((x) => x.name);
 
     const body = {

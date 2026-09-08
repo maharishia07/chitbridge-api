@@ -128,6 +128,8 @@
   .hit .mid{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:0}
   .hit .p{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;font-weight:700;font-size:1.05em}
   .hit .p .u{font-weight:400}
+  .facts{color:var(--dim);font-size:.78em;margin-top:2px;line-height:1.45}
+  .facts b{color:var(--ink);font-weight:600}
   .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
   @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) 96px} .hit .mid{grid-column:1;justify-content:flex-start} }
   .u{color:var(--dim);font-size:.8em}
@@ -321,6 +323,8 @@
   <label>Counter name — it becomes the bill number's prefix</label>
   <input id="set_till" placeholder="C1">
   <div id="printbox"></div>
+  <label>Row detail — a pharmacy wants the composition on the row; a kirana does not</label>
+  <select id="set_rows"><option value="compact">Compact — name, offer, price</option><option value="full">Full — brand, MRP and what you declared</option></select>
   <label>Text size</label>
   <select id="set_fs"><option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select>
   <label>Look</label>
@@ -690,6 +694,13 @@ function paintStatus(){
   var d = STATE.today || {};
   document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ₹' + money(d.total||0);
   var note = STATE.queued ? (STATE.queued + ' bill(s) waiting to reach ChitBridge') : 'everything has reached ChitBridge';
+  /* ⚠️ THE ABSENCE OF TAX IS ALSO AN ANSWER, and it should not look like a fault. A shop that charges no GST is told why, once,
+     rather than left wondering where the tax column went. */
+  var tx0 = shopTax();
+  if (S && !tx0.charges) note = (tx0.reg === 'composition' ? 'Composition dealer — no GST on a bill, and the slip says so.'
+      : (!tx0.gstin ? 'No GSTIN on this shop, so no GST is charged or shown (Settings → Profile).'
+                    : 'This shop is registered as ' + esc(tx0.reg) + ', so no GST is charged.'))
+    + (STATE.queued ? '  ·  ' + STATE.queued + ' bill(s) waiting' : '');
   if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
   document.getElementById('queuenote').textContent = note;
   paintUpdate();
@@ -739,8 +750,24 @@ function offerNames(i){ return offersFor(i).map(function(o){ return o.label || o
  * beside its offers and thrown away with them, because a slab that changed overnight must not linger on a shelf.
  * ⚠️ Silent for an unregistered shop: there is no GST to show, and a rate chip on a cash memo would be a claim we cannot make.
  */
+/**
+ * ⭐ ONE LINE OF FACTS, AND ONLY WHEN ASKED FOR. Athi, 2026-09-08: the app's catalogue row shows more and reads better — *"most of
+ * the information is there with less option"* — and a pharmacy needs the composition where the eye already is. So the counter shows
+ * what the SHOP declared, not what we imagine a trade needs.
+ * ⚠️ OFF BY DEFAULT, AND SWITCHABLE PER DEVICE (⚙ → Row detail). A kirana selling rice does not want a second line under every row,
+ * and a shop counter is read across a metre of air: more words is not always more help.
+ */
+function rowFacts(i){
+  if (ls.get('cb_till_rows', 'compact') !== 'full') return '';
+  var bits = [];
+  if (i.brand) bits.push(esc(i.brand));
+  if (i.variant) bits.push(esc(i.variant));
+  if (i.mrp != null && Number(i.mrp) > 0) bits.push('MRP ₹' + money(i.mrp));
+  (i.facts || []).forEach(function(f){ bits.push('<b>' + esc(f.n) + '</b> ' + esc(f.v)); });
+  return bits.length ? '<div class="facts">' + bits.join(' · ') + '</div>' : '';
+}
 function rateOf(i){
-  if (!S || !window.CBTax || (S.shop && S.shop.reg_type) !== 'regular') return null;
+  if (!S || !window.CBTax || !shopTax().charges) return null;
   if (i._rate !== undefined) return i._rate;
   var r = null;
   try { var out = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
@@ -884,7 +911,8 @@ function paintHits(){
     : '';
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
-      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span>'
+      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
+        + rowFacts(i) + '</span>'
       /* the middle column: what is ON this product — the offers it carries, and the rate it will be taxed at */
       + '<span class="mid">'
         + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('')
@@ -1008,10 +1036,12 @@ function price(){
       label = (mine[0] && (mine[0].label || mine[0].why)) || 'Offer';
     }
     c.gross = gross; c.net = net; c.save = r2(gross - net); c.off = c.save > 0; c.off_label = label;
-    if (window.CBTax && S){
+    /* ⚠️ A RATE ON A CASH MEMO IS A CLAIM WE CANNOT MAKE. The engine still answers, but a shop that charges no GST shows none —
+       otherwise the line said "GST 18%" under a total that contained no tax at all. */
+    if (window.CBTax && S && shopTax().charges){
       try { var r = CBTax.slab.resolve({ item_data:c.item_data||{}, face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
         c.gst_rate = (r && r.rate != null) ? r.rate : null; } catch(_){ c.gst_rate = null; }
-    }
+    } else c.gst_rate = null;
   });
   /* ⭐ THE SET OF LINES DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
      A line added or removed → the container, because the rows themselves are different rows now. */
@@ -1056,11 +1086,26 @@ function paintCart(){
     ? CART.map(function(c,k){ return cartRowHTML(c,k); }).join('')
     : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>';
 }
+/**
+ * ⭐⭐ DOES THIS SHOP CHARGE GST AT ALL? Asked here, once, and read by the row, the line, the totals, the slip and the chit.
+ *
+ * ⚠️ IT TAKES A GSTIN, NOT JUST A SETTING. `gst_registration` defaults to 'regular' for every account, so reading it alone meant a
+ * shop with no GSTIN printed a slip headed TAX INVOICE with GST 0.00 — a compliance-shaped lie on paper a customer keeps. The
+ * platform's own rule is written into lib/tax-shelf and it is the one this follows: **no GSTIN, no GST**.
+ * ⚠️ A COMPOSITION dealer has a GSTIN and still charges nothing: their slip is a BILL OF SUPPLY, which the kind below says.
+ */
+function shopTax(){
+  var sh = (S && S.shop) || {};
+  var reg = String(sh.reg_type || 'regular');
+  var hasGstin = !!String(sh.gstin || '').trim();
+  return { charges: (reg === 'regular' && hasGstin), reg: reg, gstin: hasGstin,
+           kind: (reg === 'regular' && hasGstin) ? 'tax' : (reg === 'composition' && hasGstin ? 'supply' : 'cash') };
+}
 /** the shelf price already includes GST — the slip shows the split, it does not add to what the customer was told */
 function billMoney(){
   var gross = 0, save = 0, net = 0;
   CART.forEach(function(c){ gross = r2(gross + (c.gross||0)); save = r2(save + (c.save||0)); net = r2(net + (c.net||0)); });
-  var taxed = !!(S && S.shop && S.shop.reg_type === 'regular');
+  var taxed = shopTax().charges;
   var base = net, tax = 0, byRate = {};
   if (taxed){
     base = 0;
@@ -1132,7 +1177,7 @@ async function finish(){
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
     by: WHO ? { id: WHO.id, name: WHO.name } : null,
-    kind: (S && S.shop && S.shop.reg_type) === 'regular' ? 'tax' : ((S && S.shop && S.shop.reg_type) === 'composition' ? 'supply' : 'cash'),
+    kind: shopTax().kind,
   };
   var r = null;
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
@@ -2055,6 +2100,7 @@ async function testPrint(){
 function openSettings(){
   document.getElementById('set_till').value = ls.get('cb_till_id','C1');
   document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
+  document.getElementById('set_rows').value = ls.get('cb_till_rows','compact');
   document.getElementById('set_theme').value = ls.get('cb_till_theme','light');
   var pair = document.getElementById('pairbox');
   if (HOST && HOST.mode === 'cloud') {
@@ -2082,6 +2128,7 @@ async function saveSettings(){
   ls.set('cb_till_theme', document.getElementById('set_theme').value);
   var k = document.getElementById('set_key');
   if (k && k.value && k.value.indexOf('•') < 0) { ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); }
+  var rowsSel = document.getElementById('set_rows'); if (rowsSel) ls.set('cb_till_rows', rowsSel.value);
   var a = document.getElementById('set_api');
   if (a && a.value) { ls.set('cb_till_api', a.value.trim()); CloudHost.api = a.value.trim(); }
   document.getElementById('setdlg').close();
