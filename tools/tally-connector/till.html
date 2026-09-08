@@ -80,6 +80,10 @@
   .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   /* the consignment's own facts — shown only when this trade asks for them */
+  /* what is not going: still on the screen, still on the paper, out of the way of the work */
+  .notgoing{padding:8px 12px;border-top:1px solid var(--line);background:var(--paper);color:var(--dim);font-size:.85em}
+  .notgoing b{color:var(--ink)}
+  .notgoing>div{display:flex;align-items:center;gap:7px;padding:3px 0;flex-wrap:wrap}
   .lotrow{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 8px 12px;border-bottom:1px solid var(--line)}
   .lotrow label{display:flex;flex-direction:column;font-size:.72em;color:var(--dim);gap:2px}
   .lotrow label.need{color:var(--warn);font-weight:700}
@@ -732,12 +736,48 @@ function searchText(i){ return window.CBSearch ? CBSearch.textOf(i) : ' ' + Stri
  * ⚠️ A bare "x" only counts as a multiplier when a space follows it, so a product called "2x4 nail" is still searched for rather than
  * read as two of a "4 nail".
  */
+/**
+ * ⭐⭐ A QUANTITY IN A UNIT, ANYWHERE IN THE PHRASE (2026-09-08). Athi: *"thakkali 500 gm?"* — how a customer actually asks, and how
+ * a person at a counter types when they are repeating it back. The unit matters as much as the number: a shop prices tomato per KG,
+ * so 500 gm has to become 0.5 or the bill is a thousand times wrong.
+ * ⚠️ THE UNIT NAMES ARE THE PLATFORM'S (lib/units.js keeps that vocabulary); only the arithmetic is here, and only for the two
+ * families where a conversion is unambiguous — weight and volume. A "box" is not a fixed number of anything, and guessing would put
+ * an invented quantity on a bill.
+ */
+var QTY_UNITS = { g:['w',1], gm:['w',1], gms:['w',1], gram:['w',1], grams:['w',1], kg:['w',1000], kgs:['w',1000], kilo:['w',1000], kilos:['w',1000],
+                  ml:['v',1], l:['v',1000], lt:['v',1000], ltr:['v',1000], litre:['v',1000], litres:['v',1000], liter:['v',1000] };
+/** what one of the product's own units is worth, in the smallest unit of its family — or null when it is not a measured thing */
+function unitBase(u){ var k = QTY_UNITS[String(u || '').toLowerCase().trim()]; return k || null; }
+/**
+ * ⭐ 500 gm of something sold by the kg is 0.5. Same family only: asking for 500 gm of something sold by the PIECE is not a
+ * conversion anybody can do, so the number is taken at face value and the screen says which unit it used.
+ */
+function qtyInUnit(qty, from, to){
+  var a = unitBase(from), b = unitBase(to);
+  if (!a || !b || a[0] !== b[0]) return { qty: qty, converted: false };
+  return { qty: r2(qty * a[1] / b[1]), converted: true };
+}
 function typed(){
   var raw = String((document.getElementById('q') || {}).value || '');
+  /* the old shorthand first: "3*rice", "0.75 x tomato" — a bare multiplier, no unit */
   var m = /^\s*(\d+(?:\.\d+)?)\s*\*\s*([\s\S]*)$/.exec(raw) || /^\s*(\d+(?:\.\d+)?)\s*[xX]\s+([\s\S]*)$/.exec(raw);
-  if (!m) return { qty: 1, text: raw.trim() };
-  var q = Number(m[1]);
-  return { qty: (q > 0 ? q : 1), text: String(m[2]).trim() };
+  if (m) { var q0 = Number(m[1]); return { qty: (q0 > 0 ? q0 : 1), unit: null, text: String(m[2]).trim() }; }
+  /**
+   * then a quantity WITH a unit, at either end: "thakkali 500 gm", "2 kg thakkali", "500g tomato".
+   * ⚠️ Only when a UNIT is present. A bare number is part of the name far more often than it is a quantity — "500" belongs to
+   * "Aavin milk 500 ml", and reading it as five hundred packets would be a spectacular way to be wrong.
+   */
+  var names = Object.keys(QTY_UNITS).join('|');
+  var re = new RegExp('(^|\\s)(\\d+(?:[./]\\d+)?)\\s*(' + names + ')(?=\\s|$)', 'i');
+  var hit = re.exec(raw);
+  if (hit) {
+    var num = hit[2], val;
+    if (num.indexOf('/') > 0) { var parts = num.split('/'); val = Number(parts[0]) / Number(parts[1]); }
+    else val = Number(num);
+    var rest = (raw.slice(0, hit.index) + ' ' + raw.slice(hit.index + hit[0].length)).replace(/\s+/g, ' ').trim();
+    if (val > 0 && rest) return { qty: val, unit: String(hit[3]).toLowerCase(), text: rest };
+  }
+  return { qty: 1, unit: null, text: raw.trim() };
 }
 function hits(){
   var raw = typed().text;
@@ -795,7 +835,10 @@ function paintHits(){
   paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
   var t = typed();
-  var head = (t.qty !== 1) ? '<div class="qtyhint" data-testid="till-qty-ahead">Adding <b>' + t.qty + '</b> of whatever you choose</div>' : '';
+  var head = (t.qty !== 1 || t.unit)
+    ? '<div class="qtyhint" data-testid="till-qty-ahead">Adding <b>' + t.qty + (t.unit ? ' ' + esc(t.unit) : '') + '</b> of whatever you choose'
+      + (t.unit ? ' <span class="u">— converted to the unit it is sold in</span>' : '') + '</div>'
+    : '';
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
       + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
@@ -830,10 +873,23 @@ function searchKey(e){
 }
 function add(n){
   var i = hits()[n]; if (!i) return;
-  var q = typed().qty;
+  var t = typed(), q = t.qty;
+  if (t.unit) {
+    var c = qtyInUnit(t.qty, t.unit, i.unit);
+    if (c.converted) q = c.qty;
+    else {
+      /**
+       * ⚠️⚠️ A PACK SIZE IN A NAME IS NOT AN ORDER. "Aavin milk 500 ml" is one packet, not five hundred — and the words 500 ml sit
+       * inside the product's own name, where every dairy and every spice packet keeps them. So a unit the product is not sold in
+       * means ONE, and the screen says how to ask for more rather than putting a guessed number on a bill.
+       */
+      q = 1;
+      toastLine(i.name + ' is sold by the ' + (i.unit || 'piece') + ' — added one. Type 3* in front of the name for three.');
+    }
+  }
   /* ⭐ ONE SEARCH BOX, THREE MEANINGS — and each mode decides what "add" is. Selling puts it on the bill, receiving counts it in,
      despatch checks it against the order and may refuse it outright. */
-  if (MODE === 'receive') rcvAdd(i, q, MODE === 'receive' ? lotFromScan(document.getElementById('q').value) : null);
+  if (MODE === 'receive') rcvAdd(i, q, lotFromScan(document.getElementById('q').value));
   else if (MODE === 'despatch') dspScan(i, q);
   else { addItem(i, q); price(); }
   document.getElementById('q').value = ''; SEL = 0; paintHits(); focusSearch();
@@ -1509,6 +1565,36 @@ function dspScan(i, qty){
   l.picked = r2(l.picked + qty); l.carton = DSP.carton;
   paintDespatch();
 }
+/**
+ * ⭐ WHAT THE SHELF SAYS ABOUT THIS LINE. The snapshot only carries what a customer may actually be given, so a product that has been
+ * retired or marked unavailable is simply NOT THERE — which is itself the answer: it cannot be picked today.
+ * ⚠️ A COUNT OF ZERO IS ONLY AN ANSWER WHEN SOMEBODY KEEPS COUNTS. Most shops do not, and `qty_zero_hides` is off by default for
+ * exactly that reason — so a missing count says nothing at all here, and this reports "unknown" rather than "none".
+ */
+function dspStock(l){
+  var items = (S && S.items) || [];
+  var norm = function(t){ return window.CBSearch ? CBSearch.normalise(t).replace(/\s+/g, ' ').trim() : String(t || '').toLowerCase().trim(); };
+  var want = norm(l.name);
+  var item = items.filter(function(x){ return (l.item_id && x.item_id === l.item_id) || norm(x.name) === want; })[0];
+  if (!item) return { off: true, why: 'not on the shelf today' };
+  var a = item.avail;
+  if (a && a.qty != null && Number(a.qty) <= 0) return { off: true, why: 'out of stock' };
+  return { off: false, qty: (a && a.qty != null) ? Number(a.qty) : null };
+}
+/**
+ * ⭐⭐ OUT OF THE WAY, NOT OUT OF THE RECORD. The line leaves the working list and sits underneath with its reason; it still reaches
+ * the packing slip and the order as a shortfall, because a customer who ordered six and is sent none must be told, today, on paper.
+ * ⚠️ Anything already picked is put back to zero first — sending two of something you have just said is not going would be a lie
+ * with a carton around it.
+ */
+function dspNotGoing(n, why){
+  var l = DSP.lines[n]; if (!l) return;
+  var reason = why || prompt('Why is ' + l.name + ' not going?\n\nno stock · damaged · customer will collect later', 'no stock');
+  if (reason === null || !String(reason).trim()) return;
+  l.dropped = true; l.reason = String(reason).trim(); l.picked = 0;
+  paintDespatch();
+}
+function dspBackOn(n){ var l = DSP.lines[n]; if (!l) return; l.dropped = false; l.reason = ''; paintDespatch(); }
 function dspSet(n, what, v){ var l = DSP.lines[n]; if (!l) return;
   if (what === 'reason') l.reason = v; else if (what === 'picked') l.picked = Math.min(l.ordered, Math.max(0, Number(v) || 0));
   clearTimeout(_dspSoon); _dspSoon = setTimeout(paintDespatch, 0); }
@@ -1517,27 +1603,45 @@ function dspCarton(){ if (MODE !== 'despatch') return; DSP.carton++; DSP.weight 
 function dspClear(){ DSP = dspBlank(); var t = document.getElementById('dsp_task'); if (t) t.value = ''; ['dsp_ref','dsp_weight'].forEach(function(id){ var e = document.getElementById(id); if (e) e.value = ''; }); paintDespatch(); }
 function paintDespatch(){
   var box = document.getElementById('dsp_lines'); if (!box) return;
-  box.innerHTML = DSP.lines.length ? DSP.lines.map(function(l, n){
+  var live = [], gone = [];
+  DSP.lines.forEach(function(l, n){ (l.dropped ? gone : live).push({ l: l, n: n }); });
+  var rowOf = function(e){
+    var l = e.l, n = e.n;
     var pct = l.ordered > 0 ? Math.min(100, Math.round(l.picked * 100 / l.ordered)) : 0;
     var short = r2(l.ordered - l.picked), done = short <= 0;
+    var st = dspStock(l);
     return '<div class="ln' + (done ? ' done' : '') + '" data-testid="dsp-line-' + n + '">'
       + '<span><span class="nm">' + esc(l.name) + '</span><div class="u">ordered ' + l.ordered + ' ' + esc(l.unit)
-        + ' · <b>' + pct + '%</b>' + (done ? ' ✓' : ' · ' + short + ' to go') + '</div></span>'
+        + ' · <b>' + pct + '%</b>' + (done ? ' ✓' : ' · ' + short + ' to go')
+        + (st.off ? ' · <b style="color:var(--warn)">' + esc(st.why) + '</b>' : '') + '</div></span>'
       + '<input type="number" min="0" step="0.001" inputmode="decimal" value="' + l.picked + '" data-testid="dsp-picked-' + n + '" onchange="dspSet(' + n + ',\'picked\',this.value)">'
       + '<span class="u">carton ' + l.carton + '</span>'
       + (!done && l.picked > 0
           ? '<select data-testid="dsp-reason-' + n + '" onchange="dspSet(' + n + ',\'reason\',this.value)">'
             + ['','no stock','damaged','customer will collect later'].map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'short — why?') + '</option>'; }).join('') + '</select>'
           : '<span></span>')
-      + '<span></span></div>';
-  }).join('') : '<div style="padding:20px;color:var(--dim)">Choose an order above, then scan what you pack.</div>';
-  var done = DSP.lines.filter(function(l){ return l.picked >= l.ordered; }).length;
+      /* ⭐ ONE TAP WHEN THE SHELF HAS ALREADY ANSWERED: an out-of-stock line does not need to be asked why. */
+      + '<button class="x" title="not going" data-testid="dsp-drop-' + n + '" onclick="dspNotGoing(' + n + (st.off ? ',\'' + esc(st.why === 'out of stock' ? 'no stock' : st.why) + '\'' : '') + ')">✕</button></div>';
+  };
+  box.innerHTML = (live.length ? live.map(rowOf).join('')
+      : (DSP.lines.length ? '<div style="padding:14px;color:var(--dim)">Everything on this order is marked not going.</div>'
+                          : '<div style="padding:20px;color:var(--dim)">Choose an order above, then scan what you pack.</div>'))
+    /* ⚠️ NOT DELETED — MOVED. What a customer ordered and is not getting stays visible, keeps its reason, and goes on the slip. */
+    + (gone.length ? '<div class="notgoing" data-testid="dsp-notgoing"><div class="u">Not going on this despatch</div>'
+        + gone.map(function(e){ return '<div><b>' + esc(e.l.name) + '</b> ' + e.l.ordered + ' ' + esc(e.l.unit)
+            + ' <span class="u">' + esc(e.l.reason || 'no reason given') + '</span> '
+            + '<button class="pill" data-testid="dsp-backon-' + e.n + '" onclick="dspBackOn(' + e.n + ')">put back</button></div>'; }).join('')
+        + '</div>' : '');
+  var done = DSP.lines.filter(function(l){ return !l.dropped && l.picked >= l.ordered; }).length;
   var el = document.getElementById('dsp_sum');
+  var going = DSP.lines.filter(function(l){ return !l.dropped; }).length;
+  var dropped = DSP.lines.length - going;
   if (el) el.innerHTML = DSP.lines.length
-    ? '<b>' + done + '</b> of <b>' + DSP.lines.length + '</b> line(s) complete · carton <b>' + DSP.carton + '</b>'
+    ? '<b>' + done + '</b> of <b>' + going + '</b> line(s) complete' + (dropped ? ' · <b>' + dropped + '</b> not going' : '') + ' · carton <b>' + DSP.carton + '</b>'
       + (DSP.weight ? ' · <b>' + DSP.weight + ' kg</b>' : '')
     : 'Nothing being packed.';
-  var b = document.getElementById('dsp_save'); if (b) b.disabled = !DSP.lines.filter(function(l){ return l.picked > 0; }).length;
+  /* a despatch of nothing but shortfalls is still a despatch note worth sending — it tells the customer today */
+  var b = document.getElementById('dsp_save'); if (b) b.disabled = !DSP.lines.filter(function(l){ return l.picked > 0 || l.dropped; }).length;
 }
 /**
  * ⭐ THE PACKING SLIP IS THE OTHER SIDE'S RECEIVING TASK. What leaves here is a claim recorded against the order in BOTH copies
@@ -1545,9 +1649,9 @@ function paintDespatch(){
  * claim. Divergence is surfaced, never resolved by us.
  */
 async function dspConfirm(){
-  var picked = DSP.lines.filter(function(l){ return l.picked > 0; });
+  var picked = DSP.lines.filter(function(l){ return l.picked > 0 || l.dropped; });
   if (!picked.length) return;
-  var shortNoReason = DSP.lines.filter(function(l){ return l.picked > 0 && l.picked < l.ordered && !l.reason; });
+  var shortNoReason = DSP.lines.filter(function(l){ return !l.dropped && l.picked > 0 && l.picked < l.ordered && !l.reason; });
   if (shortNoReason.length) { alert('Say why ' + shortNoReason[0].name + ' is short. The customer should hear it today, not at delivery.'); return; }
   var doc = {
     kind: 'despatch', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
@@ -1556,7 +1660,9 @@ async function dspConfirm(){
     ref: (DSP.ref || '').trim() || null, cartons: DSP.carton, weight: DSP.weight,
     lines: picked.map(function(l){
       return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, lot:l.lot,
-               ordered:l.ordered, picked:l.picked, short:r2(l.ordered - l.picked), reason:l.reason || null, carton:l.carton };
+               ordered:l.ordered, picked:l.picked, short:r2(l.ordered - l.picked), reason:l.reason || null,
+               /* ⚠️ SAID PLAINLY ON THE RECORD: none of this is going, and this is why */
+               not_going: !!l.dropped, carton:l.carton };
     }),
   };
   var r = null;

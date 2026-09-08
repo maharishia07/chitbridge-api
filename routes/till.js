@@ -132,6 +132,12 @@ router.get('/snapshot', auth, async (req, res) => {
                   converts to our pieces. Capped: an alias list is a memory aid, not a place to accumulate. */
                aliases: Array.isArray(d.aliases) ? d.aliases.slice(0, 20).map((a) => ({ by: a.by || null, text: a.text,
                           unit: a.unit || null, factor: a.factor == null ? null : Number(a.factor) })) : null,
+               /**
+                * ⭐⭐ THE SHOP'S OWN WORDS — thakkali, vengayam, milagai. `synonyms` is a field lib/itemmatch.js has read since August
+                * for WhatsApp orders and consolidation, so the same word resolved in a message and failed at the counter. One
+                * authority, read by both now.
+                */
+               synonym_text: Array.isArray(d.synonyms) ? (d.synonyms.map((x) => String(x || '')).filter(Boolean).join(' ') || null) : null,
                /* and flattened, because the counter's own search reads fields — so typing what the SUPPLIER calls it finds it */
                alias_text: Array.isArray(d.aliases) ? (d.aliases.slice(0, 20).map((a) => a.text).filter(Boolean).join(' ') || null) : null };
     }).filter((x) => x.name);

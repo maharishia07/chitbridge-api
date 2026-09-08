@@ -119,6 +119,56 @@ it('the expensive half runs once per product, not once per keystroke', () => {
   assert.strictEqual(built, 200, 'four keystrokes over 200 products built the text ' + built + ' times');
 });
 
+console.log('— a shopkeeper who cannot spell, and a customer who speaks Tamil —');
+
+const KIRANA = [
+  { name: 'Aachi Masala powder 100 g', code: 'A1' },
+  { name: 'Aachi Chilli powder 250 g', code: 'A2' },
+  { name: 'Sakthi Masala 200 g', code: 'S1' },
+  { name: 'Tomato', code: 'T1', unit: 'kg', synonym_text: 'thakkali tomatto' },
+  { name: 'Onion', code: 'O1', unit: 'kg', synonym_text: 'vengayam' },
+  { name: 'Orange grade 1', code: 'G1' },
+  { name: 'Orange grade 2', code: 'G2' },
+  { name: 'Rice 25 kg', code: 'R1' },
+  { name: 'Nice biscuit', code: 'N1' },
+];
+const top = (q) => { const r = CBSearch.search(KIRANA, q); return r.length ? r[0].name : '(nothing)'; };
+
+it('⭐⭐ a doubled letter is forgiven — "achi massala" is Aachi Masala', () => {
+  assert.strictEqual(top('achi massala'), 'Aachi Masala powder 100 g');
+  assert.strictEqual(top('sakthi masalla'), 'Sakthi Masala 200 g');
+  assert.strictEqual(top('chilly powder'), 'Aachi Chilli powder 250 g');
+});
+
+it('⭐⭐ the SHOP\'S OWN WORDS reach the product — "thakkali" is Tomato', () => {
+  assert.strictEqual(top('thakkali'), 'Tomato');
+  assert.strictEqual(top('vengayam'), 'Onion');
+  assert.strictEqual(top('tomatto'), 'Tomato', 'a misspelling somebody already wrote down as a synonym');
+});
+
+it('⚠️⚠️ FUZZ NEVER MERGES TWO REAL THINGS — grade 1 is not grade 2', () => {
+  const one = CBSearch.search(KIRANA, 'orange grade 1');
+  assert.strictEqual(one[0].name, 'Orange grade 1');
+  assert.strictEqual(one[0].code, 'G1');
+  const two = CBSearch.search(KIRANA, 'orange grade 2');
+  assert.strictEqual(two[0].name, 'Orange grade 2', 'one digit apart, and they must never swap');
+});
+
+it('⚠️ a short word is compared exactly — "rice" is not "nice"', () => {
+  assert.strictEqual(top('rice'), 'Rice 25 kg');
+  assert.strictEqual(top('nice'), 'Nice biscuit');
+});
+
+it('⚠️ a number is never fuzzed: "100 g" is not "200 g"', () => {
+  const r = CBSearch.search(KIRANA, 'masala 200');
+  assert.strictEqual(r[0].name, 'Sakthi Masala 200 g');
+});
+
+it('an exact match still ranks above a forgiven one', () => {
+  const r = CBSearch.search(KIRANA, 'masala').map((x) => x.name);
+  assert.ok(r[0].indexOf('Masala') > 0, 'a spelling mistake outranked the real thing: ' + r.join(' | '));
+});
+
 console.log('— one file, two screens —');
 
 it('⭐ the counter and the app load the SAME search: three copies, byte for byte', () => {

@@ -376,4 +376,80 @@ it('the consignment travels on the chit line, where the batch belongs', () => {
   assert.strictEqual(chit.line_items[0].item_data.lot.expiry, '2028-03-31');
 });
 
+/* ── a quantity in a unit, out of a spoken phrase (2026-09-08) ───────────────────────────────────────────────── */
+
+it('⭐⭐ "thakkali 500 gm" is half a kilo of tomato, not five hundred of anything', () => {
+  const t = typing('thakkali 500 gm');
+  assert.strictEqual(t.qty, 500);
+  assert.strictEqual(t.unit, 'gm');
+  assert.strictEqual(t.text, 'thakkali', 'the quantity has to leave the words we search with');
+  const c = P.qtyInUnit(500, 'gm', 'kg');
+  assert.strictEqual(c.qty, 0.5);
+  assert.strictEqual(c.converted, true);
+});
+
+it('the quantity may come first or last, and a half is a half', () => {
+  assert.strictEqual(typing('2 kg thakkali').qty, 2);
+  assert.strictEqual(typing('2 kg thakkali').text, 'thakkali');
+  assert.strictEqual(typing('500g tomato').qty, 500);
+  assert.strictEqual(typing('1/2 kg onion').qty, 0.5);
+});
+
+it('⚠️⚠️ A PACK SIZE IN A NAME IS NOT A QUANTITY — 500 ml of something sold by the piece is ONE packet', () => {
+  const c = P.qtyInUnit(500, 'ml', 'piece');
+  assert.strictEqual(c.converted, false, 'millilitres cannot be converted into packets, and guessing would put 500 on a bill');
+  assert.strictEqual(P.qtyInUnit(500, 'ml', 'l').qty, 0.5, 'the same words DO convert when the shop sells by the litre');
+});
+
+it('a bare number is left alone — it belongs to the name far more often than to the order', () => {
+  const t = typing('tomato 2');
+  assert.strictEqual(t.qty, 1);
+  assert.strictEqual(t.text, 'tomato 2');
+});
+
+it('the old shorthand still works beside it', () => {
+  assert.strictEqual(typing('3*rice').qty, 3);
+  assert.strictEqual(typing('0.75 x tomato').qty, 0.75);
+});
+
+/* ── a line that is not going (Athi: "if it is not going to be there, why does it stay?") ─────────────────────── */
+
+it('⭐⭐ a line marked not going leaves the work, keeps its reason, and still reaches the paper', () => {
+  P.S = { shop: {}, items: [], policy: {} };
+  P.DSP = { task: { chit_id: 'c1', party: 'Chola' }, ref: '', weight: null, carton: 1,
+    lines: [{ line_id: 'L1', item_id: 'i1', name: 'Brake pad set', unit: 'set', ordered: 12, picked: 12, reason: '', carton: 1 },
+            { line_id: 'L2', item_id: 'i2', name: 'Clutch plate', unit: 'piece', ordered: 4, picked: 2, reason: '', carton: 1 }] };
+  P.dspNotGoing(1, 'no stock');
+  assert.strictEqual(P.DSP.lines[1].dropped, true);
+  assert.strictEqual(P.DSP.lines[1].reason, 'no stock');
+  assert.strictEqual(P.DSP.lines[1].picked, 0, '⚠️ anything already picked goes back — sending two of what is "not going" is a lie');
+  /* and it is still on the record */
+  const doc = P.chitOfDoc({ kind: 'despatch', no: 'DC/C1/26-27/0005', at: '2026-09-08T06:00:00Z', till: 'C1',
+    against: { chit_id: 'c1', party: 'Chola' }, cartons: 1,
+    lines: [{ name: 'Clutch plate', unit: 'piece', ordered: 4, picked: 0, short: 4, reason: 'no stock', not_going: true, carton: 1, line_id: 'L2' }] });
+  assert.strictEqual(doc.business_json.differences[0].by, -4, 'the customer is told what is not coming');
+  assert.strictEqual(doc.business_json.differences[0].reason, 'no stock');
+});
+
+it('putting it back on is one tap, and clears the reason with it', () => {
+  P.dspBackOn(1);
+  assert.strictEqual(P.DSP.lines[1].dropped, false);
+  assert.strictEqual(P.DSP.lines[1].reason, '');
+});
+
+it('⭐ the shelf answers for itself: a product that is not in the snapshot cannot be picked today', () => {
+  P.S = { shop: {}, items: [{ item_id: 'i1', name: 'Brake pad set', unit: 'set' }], policy: {} };
+  assert.strictEqual(P.dspStock({ item_id: 'i1', name: 'Brake pad set' }).off, false);
+  const gone = P.dspStock({ item_id: 'i9', name: 'Windscreen wiper' });
+  assert.strictEqual(gone.off, true);
+  assert.ok(gone.why.indexOf('shelf') > 0, gone.why);
+});
+
+it('⚠️ a count of zero only speaks when somebody keeps counts', () => {
+  P.S = { shop: {}, items: [{ item_id: 'i1', name: 'Oil', unit: 'can', avail: { qty: 0 } },
+                            { item_id: 'i2', name: 'Filter', unit: 'piece' }], policy: {} };
+  assert.strictEqual(P.dspStock({ item_id: 'i1', name: 'Oil' }).off, true, 'a real zero is an answer');
+  assert.strictEqual(P.dspStock({ item_id: 'i2', name: 'Filter' }).off, false, 'no count at all says nothing, and must not hide a line');
+});
+
 console.log(pass + ' checks');
