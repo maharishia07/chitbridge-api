@@ -84,6 +84,25 @@ const corsOptions = {
 };
 /* ⭐ MEASURE BEFORE CHANGING (Athi, 2026-09-07: "look at each of the API for round trips and enhance"). Off unless CB_TRIPS=1. */
 app.use(require('./lib/trips').middleware());
+/**
+ * ⭐⭐ NOTHING WAS COMPRESSED, EVER (found 2026-09-08, when a 10,000-product shop hung on a second PC). Every answer this API has
+ * given — a catalogue, a snapshot, a chit list — went over the wire as raw JSON, and JSON is the most compressible thing there is:
+ * ten times smaller is ordinary. On a shop's line that is the difference between a screen and a wait.
+ *
+ * ⚠️ NEVER THE EVENT STREAM. Compression buffers, and a buffered Server-Sent Event is an event that arrives when the connection
+ * closes — which would silently kill the mailbox bell rather than slow it. text/event-stream is excluded by name, and anything a
+ * caller marks `no-transform` is left exactly as it is.
+ */
+const compression = require('compression');
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    const type = String(res.getHeader('Content-Type') || '');
+    if (type.indexOf('text/event-stream') >= 0) return false;
+    if (String(res.getHeader('Cache-Control') || '').indexOf('no-transform') >= 0) return false;
+    return compression.filter(req, res);
+  },
+}));
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 

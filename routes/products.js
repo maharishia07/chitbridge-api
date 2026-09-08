@@ -418,32 +418,63 @@ router.get('/', auth, async (req, res) => {
        parked — all on the same client. Three withEntity calls here were twelve round trips (Athi, 2026-09-05:
        "product loading in catalogue taking very long"). */
     let pendingRows = [];
-    const listSql = q
-      ? { text: `SELECT * FROM catalogue_items WHERE entity_id=$1 AND is_active=true AND item_data::text ILIKE $2 ORDER BY created_at DESC`, params: [entity_id, `%${q}%`] }
-      : { text: `SELECT * FROM catalogue_items WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, params: [entity_id] };
+    /**
+     * ⭐⭐ A PAGE, NOT THE WHOLE SHELF (2026-09-08). Athi: *"just the data, max 50 or 100 rows in one iteration."*
+     * ⚠️ THE DEFAULT IS A CAP, NOT A PAGE SIZE. Every caller that has ever used this endpoint expects "the catalogue"; capping at
+     * 2,000 leaves all of them working exactly as before — a shop with 300 products notices nothing — while a shop with ten
+     * thousand stops shipping megabytes it will not draw. A client that wants pages asks for them.
+     * ⚠️ AND THE TOTAL IS ALWAYS THE TRUE ONE. `truncated` says plainly that there is more, so a screen can say so rather than
+     * quietly showing a tenth of a catalogue as if it were all of it.
+     */
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '2000', 10) || 2000, 1), 2000);
+    const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);
+    /**
+     * ⚠️ THE STATUS FILTER MOVED INTO SQL, and it had to: filtering a PAGE in JS would hand back three rows out of a hundred and
+     * call it a page. The CASE below is statusOf() written in SQL — absent, blank and unknown all mean 'available', which is the
+     * whole reason the JS version existed. The counts underneath still go through statusOf itself, so there is one authority.
+     */
+    const KNOWN = itemstatus.STATUSES.map((x) => `'${x}'`).join(',');
+    const STATUS_SQL = `CASE WHEN lower(trim(coalesce(item_data->>'status',''))) IN (${KNOWN}) THEN lower(trim(item_data->>'status')) ELSE 'available' END`;
+    const wantRaw = String(req.query.status || '').toLowerCase().trim();
+    let statusWhere = '', statusParams = [];
+    if (wantRaw === 'not-available') statusWhere = ` AND ${STATUS_SQL} <> 'available'`;
+    else if (itemstatus.STATUSES.includes(wantRaw)) { statusWhere = ` AND ${STATUS_SQL} = $${q ? 3 : 2}`; statusParams = [wantRaw]; }
+    else if (wantRaw) return res.status(400).json({ error: 'Bad status',
+      message: 'status must be one of: ' + itemstatus.STATUSES.join(', ') + ', not-available' });
+
+    const base = q
+      ? { where: `entity_id=$1 AND is_active=true AND item_data::text ILIKE $2`, params: [entity_id, `%${q}%`] }
+      : { where: `entity_id=$1 AND is_active=true`, params: [entity_id] };
+    const listParams = base.params.concat(statusParams);
+    const listSql = { text: `SELECT * FROM catalogue_items WHERE ${base.where}${statusWhere} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+                      params: listParams };
+    /* the tally is over EVERY row, and costs almost nothing: one short string per product, never leaving the server */
+    const tallySql = { text: `SELECT item_data->>'status' AS st FROM catalogue_items WHERE ${base.where}`, params: base.params };
     /* ⭐⭐ ONE NETWORK ROUND TRIP (db.readBatch): the due-probe, the list and the parked rows go as one message.
        Only when a parked change is DUE does this take the write path (applyDue inside a transaction) — rare, and
        then the list is read again after it lands. Athi, 2026-09-05: "reduce the round trip to O(1) if possible". */
     const sched = await schedule.enabled();
     const actor = req.identity && req.identity.identity_id;
-    let r = null;
+    let r = null, tally = null;
     try {
-      const stmts = [listSql];
+      const stmts = [listSql, tallySql];
       if (sched) {
         stmts.push({ text: `SELECT count(*)::int AS n FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL AND effective_at <= NOW()`, params: [entity_id] });
         stmts.push({ text: `SELECT schedule_id, item_id, effective_at, patch, created_at FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL ORDER BY effective_at`, params: [entity_id] });
       }
       const res = await readBatch(entity_id, actor, stmts);
-      const due = sched ? Number(res[1].rows[0].n) : 0;
-      if (!due) { r = res[0]; pendingRows = sched ? res[2].rows : []; }
+      const due = sched ? Number(res[2].rows[0].n) : 0;
+      if (!due) { r = res[0]; tally = res[1]; pendingRows = sched ? res[3].rows : []; }
     } catch (_) { r = null; }
     if (!r) {
-      r = await withEntity(entity_id, async (db) => {
+      const both = await withEntity(entity_id, async (db) => {
         await schedule.applyDue(entity_id, db);
         const out = await db.query(listSql.text, listSql.params);
+        const t = await db.query(tallySql.text, tallySql.params);
         if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (_) { pendingRows = []; } }
-        return out;
+        return { out, t };
       });
+      r = both.out; tally = both.t;
     }
 
     /**
@@ -456,7 +487,6 @@ router.get('/', auth, async (req, res) => {
      * catalogue screen that quietly omits retired items is how someone re-creates a product they already retired.
      * ?status=available narrows it; ?status=not-available groups the three that cannot be ordered.
      */
-    const want = String(req.query.status || '').toLowerCase().trim();
     let items = r.rows;
     /* PARKED CHANGES RIDE ON THE ROW (`scheduled: [...]`, usually empty) — gathered here, ONE query for the list, so the
        product page shows them without a read of its own (screen-reads budget: prodDetailHTML stays at 2). */
@@ -467,21 +497,20 @@ router.get('/', auth, async (req, res) => {
         if (byItem.size) items = items.map((it) => byItem.has(String(it.item_id)) ? Object.assign({}, it, { scheduled: byItem.get(String(it.item_id)) }) : it);
       }
     } catch (_) { /* the list never fails for a parked change */ }
-    if (want) {
-      const keep = want === 'not-available' ? (s) => s !== 'available'
-        : itemstatus.STATUSES.includes(want) ? (s) => s === want
-        : null;
-      if (!keep) return res.status(400).json({ error: 'Bad status',
-        message: 'status must be one of: ' + itemstatus.STATUSES.join(', ') + ', not-available' });
-      items = r.rows.filter((x) => keep(itemstatus.statusOf(x.item_data)));
-    }
-    /* The tally is over EVERY row, not the filtered set — it is what the tabs count, so it must not change
-       depending on which tab is open. */
+    /* The tally is over EVERY row, not the page and not the filtered set — it is what the tabs count, so it must not change
+       depending on which tab is open or how far somebody has scrolled. statusOf() decides, as it always has. */
     const counts = {};
     itemstatus.STATUSES.forEach((s) => { counts[s] = 0; });
-    r.rows.forEach((x) => { counts[itemstatus.statusOf(x.item_data)]++; });
+    const tallyRows = (tally && tally.rows) || [];
+    tallyRows.forEach((x) => { counts[itemstatus.statusOf({ status: x.st })]++; });
+    const total = wantRaw
+      ? (wantRaw === 'not-available' ? tallyRows.length - counts.available : (counts[wantRaw] || 0))
+      : tallyRows.length;
 
-    res.json({ items, count: items.length, total: r.rows.length, status_counts: counts });
+    res.json({ items, count: items.length, total, offset, limit,
+               /* ⚠️ SAID OUT LOUD. A screen that shows a tenth of a catalogue without knowing it is a screen that lies quietly. */
+               truncated: (offset + items.length) < total,
+               status_counts: counts });
   } catch (e) { res.status(500).json({ error: 'List failed', message: safeErr(e) }); }
 });
 
