@@ -109,4 +109,76 @@ it('a discounted line travels with its offer, so the server does not apply one a
   assert.strictEqual(chit.line_items[0].offer.label, 'Diwali');
 });
 
+/* ── the quantity typed in front of the name (2026-09-08) ───────────────────────────────────────────────────── */
+function typing(text) { P.document.getElementById = () => ({ value: text }); return P.typed(); }
+
+it('"3*rice" is three of what you choose, and the search is for "rice"', () => {
+  const t = typing('3*rice');
+  assert.strictEqual(t.qty, 3); assert.strictEqual(t.text, 'rice');
+});
+
+it('a weight off the scale reaches the bill: "0.75 x tomato"', () => {
+  const t = typing('0.75 x tomato');
+  assert.strictEqual(t.qty, 0.75); assert.strictEqual(t.text, 'tomato');
+});
+
+it('⚠️ a product called "2x4 nail" is still searched for, not read as two of a "4 nail"', () => {
+  const t = typing('2x4 nail');
+  assert.strictEqual(t.qty, 1); assert.strictEqual(t.text, '2x4 nail');
+});
+
+it('an ordinary word is an ordinary search', () => {
+  const t = typing('  rice  ');
+  assert.strictEqual(t.qty, 1); assert.strictEqual(t.text, 'rice');
+});
+
+/* ── the day-close sheet ────────────────────────────────────────────────────────────────────────────────────── */
+const DAY = [
+  { no: 'C1/26-27/0001', at: '2026-09-08T04:00:00Z', kind: 'tax', total: 236, taxable: 200, tax: 36, saved: 0,
+    payments: [{ how: 'Cash', amount: 236 }], by: { id: 'a1', name: 'Kavitha' },
+    lines: [{ name: 'Oil 1 L', qty: 2, unit: 'litre', price: 118, net: 236, gst_rate: 18 }] },
+  { no: 'C1/26-27/0002', at: '2026-09-08T05:00:00Z', kind: 'tax', total: 105, taxable: 100, tax: 5, saved: 9,
+    payments: [{ how: 'UPI', amount: 105 }], by: { id: 'a2', name: 'Murugan' },
+    lines: [{ name: 'Rice 5 kg', qty: 1, unit: 'bag', price: 105, net: 105, gst_rate: 5 }] },
+];
+
+it('a day close says from which bill to which, and what was taken', () => {
+  P.WHO = { id: 'a1', name: 'Kavitha', float: 500 };
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.bills, 2);
+  assert.strictEqual(d.first, 'C1/26-27/0001');
+  assert.strictEqual(d.last, 'C1/26-27/0002');
+  assert.strictEqual(d.total, 341);
+  assert.strictEqual(d.saved, 9);
+  assert.strictEqual(d.gross, 350, 'what the shelf said, before what the shop gave away');
+});
+
+it('the tax is split BY RATE — the figure a return has to be reconciled against', () => {
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.rate[18].base, 200); assert.strictEqual(d.rate[18].tax, 36);
+  assert.strictEqual(d.rate[5].base, 100); assert.strictEqual(d.rate[5].tax, 5);
+  assert.strictEqual(d.tax, 41);
+});
+
+it('⭐ only cash is expected in the drawer, and the float is part of it', () => {
+  P.WHO = { id: 'a1', name: 'Kavitha', float: 500 };
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.modes.Cash, 236);
+  assert.strictEqual(d.modes.UPI, 105);
+  assert.strictEqual(d.expected_cash, 736, 'UPI is not in the drawer');
+});
+
+it('who billed is on the sheet, per person', () => {
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.people.Kavitha.bills, 1);
+  assert.strictEqual(d.people.Murugan.total, 105);
+});
+
+it('a day with nothing on it still closes, and says nothing was taken', () => {
+  P.WHO = null;
+  const d = P.dayCloseSheet([]);
+  assert.strictEqual(d.bills, 0); assert.strictEqual(d.total, 0); assert.strictEqual(d.expected_cash, 0);
+  assert.ok(P.dayCloseHTML(d).indexOf('nothing taken') > 0, 'an empty day must say so on the paper');
+});
+
 console.log(pass + ' checks');

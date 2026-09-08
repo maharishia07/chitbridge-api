@@ -63,6 +63,7 @@
   .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch}
   .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
+  .qtyhint{padding:6px 12px;background:var(--ok-tint);color:var(--ok);font-size:.85em;border-bottom:1px solid var(--line)}
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card)}
   .quick button{padding:14px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
@@ -149,7 +150,7 @@
     <div class="hits" id="hits"></div>
     <div class="keys" id="keys">
       <span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span><span><b>Enter</b> add</span><span><b>F9</b> save &amp; print</span>
-      <span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
+      <span><b>3*</b> quantity</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
     </div>
   </section>
 
@@ -214,7 +215,7 @@
     </select>
   </div>
   <div id="billsbody" style="max-height:56vh;overflow:auto"></div>
-  <div class="dlgbtns"><button onclick="document.getElementById('billsdlg').close()">Close</button></div>
+  <div class="dlgbtns"><button data-testid="till-dayclose" onclick="dayClose()">Day close sheet</button><button onclick="document.getElementById('billsdlg').close()">Close</button></div>
 </div></dialog>
 
 <dialog id="setdlg"><div class="dlg">
@@ -541,8 +542,21 @@ function paintChips(){
  * ⚠️ If the engine failed to load the box must still find things, so there is a plain fallback — never an empty shelf mid-sale.
  */
 function searchText(i){ return window.CBSearch ? CBSearch.textOf(i) : ' ' + String(i.name || '').toLowerCase() + ' '; }
+/**
+ * ⭐ THE QUANTITY GOES IN FRONT OF THE NAME — "3*rice", "0.75 x tomato" (2026-09-08). It is how a counter has always entered three of
+ * something, and it is how a weight read off the scale reaches the bill without going back to the quantity box afterwards.
+ * ⚠️ A bare "x" only counts as a multiplier when a space follows it, so a product called "2x4 nail" is still searched for rather than
+ * read as two of a "4 nail".
+ */
+function typed(){
+  var raw = String((document.getElementById('q') || {}).value || '');
+  var m = /^\s*(\d+(?:\.\d+)?)\s*\*\s*([\s\S]*)$/.exec(raw) || /^\s*(\d+(?:\.\d+)?)\s*[xX]\s+([\s\S]*)$/.exec(raw);
+  if (!m) return { qty: 1, text: raw.trim() };
+  var q = Number(m[1]);
+  return { qty: (q > 0 ? q : 1), text: String(m[2]).trim() };
+}
 function hits(){
-  var raw = (document.getElementById('q').value || '').trim();
+  var raw = typed().text;
   var items = (S && S.items) || [];
   /* the chips narrow the shelf BEFORE the search runs — on a ten-thousand item shop that is also what makes it quick */
   if (FILTER.cat) items = items.filter(function(i){ return i.category === FILTER.cat; });
@@ -554,7 +568,7 @@ function hits(){
 /** ⭐ A SCANNER IS NOT A TYPIST. An exact barcode or code match adds the item and clears the box, which is what the scanner's own
     Enter would otherwise have to do — and it is what makes a scan feel instant rather than like a search. */
 function scanned(){
-  var q = (document.getElementById('q').value || '').trim().toLowerCase();
+  var q = typed().text.toLowerCase();
   if (q.length < 4) return false;
   var items = (S && S.items) || [];
   var exact = items.filter(function(i){ return String(i.barcode||'').toLowerCase() === q || String(i.code||'').toLowerCase() === q; });
@@ -589,22 +603,21 @@ function paintQuick(){
 function quickAdd(id){
   var i = ((S && S.items) || []).filter(function(x){ return x.item_id === id; })[0];
   if (!i) return;
-  var have = CART.filter(function(c){ return c.item_id === i.item_id; })[0];
-  if (have) have.qty = r2(have.qty + 1);
-  else CART.push({ item_id:i.item_id, name:i.name, unit:i.unit||'piece', price:Number(i.price)||0, qty:1, hsn:i.hsn||null,
-                   item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
+  addItem(i, typed().qty);
   price(); focusSearch();
 }
 function paintHits(){
   if (scanned()) return;
   paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
-  document.getElementById('hits').innerHTML = list.length ? list.map(function(i,n){
+  var t = typed();
+  var head = (t.qty !== 1) ? '<div class="qtyhint" data-testid="till-qty-ahead">Adding <b>' + t.qty + '</b> of whatever you choose</div>' : '';
+  document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
       + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
         + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span> '; }).join('') + '</span>'
       + '<span class="p">₹' + money(i.price) + '<div class="u">per ' + esc(i.unit||'piece') + '</div></span></div>';
-  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>';
+  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
   keepSelInView();
 }
 /** ⭐ THE ROW YOU ARE ON MUST BE THE ROW YOU CAN SEE. Without this the arrows worked and looked broken (2026-09-08). */
@@ -633,11 +646,16 @@ function searchKey(e){
 }
 function add(n){
   var i = hits()[n]; if (!i) return;
-  var have = CART.filter(function(c){ return c.item_id === i.item_id; })[0];
-  if (have) have.qty = r2(have.qty + 1);
-  else CART.push({ item_id:i.item_id, name:i.name, unit:i.unit||'piece', price:Number(i.price)||0, qty:1, hsn:i.hsn||null,
-                   item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
+  addItem(i, typed().qty);
   document.getElementById('q').value = ''; SEL = 0; paintHits(); price(); focusSearch();
+}
+/** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */
+function addItem(i, qty){
+  var n = Number(qty); if (!(n > 0)) n = 1;
+  var have = CART.filter(function(c){ return c.item_id === i.item_id; })[0];
+  if (have) have.qty = r2(have.qty + n);
+  else CART.push({ item_id:i.item_id, name:i.name, unit:i.unit||'piece', price:Number(i.price)||0, qty:n, hsn:i.hsn||null,
+                   item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
 }
 /* ⚠️ NEVER REPAINT FROM INSIDE THE EVENT THAT CAUSED IT. Rebuilding the bill while the browser is still finishing the blur behind a
    quantity change throws "the node to be removed is no longer a child of this node" — and the bill silently stops updating. */
@@ -805,6 +823,86 @@ async function finish(){
   load(); loadQuick();
 }
 
+/**
+ * ⭐⭐ THE DAY CLOSE (2026-09-08). The header figure says what came in; this says what HAPPENED — from which bill number to which,
+ * what the shop gave away, the tax split by rate that a return will have to be reconciled against, who billed, how it was paid, and
+ * therefore what should be in the drawer. Printed on the same 72 mm paper as a slip, because that is the printer a shop has.
+ * ⚠️ It counts the bills THIS COUNTER took today, and says so on the sheet. A shop with two counters closes each of them; adding
+ * them up is ChitBridge's job, not a device's, and a sheet that quietly implied otherwise would be worse than no sheet at all.
+ */
+function dayCloseSheet(rows){
+  var d = { bills:(rows||[]).length, first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
+            rate:{}, modes:{}, people:{}, items:{}, taxed:false };
+  (rows||[]).slice().sort(function(a,b){ return String(a.at).localeCompare(String(b.at)); }).forEach(function(b){
+    if (!d.first) d.first = b.no;
+    d.last = b.no;
+    d.total = r2(d.total + (b.total||0)); d.saved = r2(d.saved + (b.saved||0));
+    d.gross = r2(d.gross + (b.total||0) + (b.saved||0));
+    d.taxable = r2(d.taxable + (b.taxable||0)); d.tax = r2(d.tax + (b.tax||0));
+    if (b.kind === 'tax') d.taxed = true;
+    (b.payments||[]).forEach(function(p){ d.modes[p.how] = r2((d.modes[p.how]||0) + (p.amount||0)); });
+    var who = (b.by && b.by.name) || 'the shop';
+    d.people[who] = d.people[who] || { bills:0, total:0 };
+    d.people[who].bills++; d.people[who].total = r2(d.people[who].total + (b.total||0));
+    (b.lines||[]).forEach(function(l){
+      var k = l.name || l.item_id;
+      d.items[k] = d.items[k] || { qty:0, net:0, unit:l.unit||'' };
+      d.items[k].qty = r2(d.items[k].qty + (Number(l.qty)||0));
+      d.items[k].net = r2(d.items[k].net + (Number(l.net)||0));
+      var rt = Number(l.gst_rate)||0;
+      if (rt){
+        var base = r2((Number(l.net)||0) * 100 / (100 + rt));
+        d.rate[rt] = d.rate[rt] || { base:0, tax:0 };
+        d.rate[rt].base = r2(d.rate[rt].base + base);
+        d.rate[rt].tax = r2(d.rate[rt].tax + r2((Number(l.net)||0) - base));
+      }
+    });
+  });
+  d.cash = r2(d.modes.Cash || 0);
+  d.float = (WHO && WHO.float) || 0;
+  d.expected_cash = r2(d.cash + d.float);
+  return d;
+}
+function dayCloseHTML(d){
+  var shop = (S && S.shop) || {};
+  var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
+  var top = Object.keys(d.items).sort(function(a,b){ return d.items[b].net - d.items[a].net; }).slice(0, 10);
+  return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
+    + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name||'') + '</div>'
+    + solid + '<div style="text-align:center;font-weight:700">DAY CLOSE</div>' + dash
+    + t(esc(new Date().toLocaleDateString()), esc((STATE.till && STATE.till.name) || ''))
+    + t('Printed', esc(new Date().toTimeString().slice(0,5))) + dash
+    + t('Bills', String(d.bills))
+    + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
+    + (d.saved > 0 ? t('Items', money(d.gross)) + t('Given away', '-' + money(d.saved)) : '')
+    + solid + t('TAKEN', money(d.total), true) + solid
+    + (d.taxed ? dash + '<div style="font-weight:700">Tax</div>'
+        + Object.keys(d.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
+            return t('GST ' + r + '% on ' + money(d.rate[r].base), money(d.rate[r].tax)); }).join('')
+        + t('Taxable', money(d.taxable)) + t('GST total', money(d.tax)) : '')
+    + dash + '<div style="font-weight:700">How it was paid</div>'
+    + (Object.keys(d.modes).length ? Object.keys(d.modes).map(function(k){ return t(esc(k), money(d.modes[k])); }).join('') : '<div>nothing taken</div>')
+    + dash + '<div style="font-weight:700">In the drawer</div>'
+    + t('Float at the start', money(d.float)) + t('Cash taken', money(d.cash))
+    + t('Should be there', money(d.expected_cash), true)
+    + '<div style="font-size:.85em">Count it and hand over (F7) to record the difference.</div>'
+    + dash + '<div style="font-weight:700">Who billed</div>'
+    + Object.keys(d.people).map(function(k){ return t(esc(k), d.people[k].bills + ' bill(s) · ' + money(d.people[k].total)); }).join('')
+    + (top.length ? dash + '<div style="font-weight:700">Most sold</div>'
+        + top.map(function(k){ return t(esc(k) + ' <span style="font-size:.85em">' + d.items[k].qty + ' ' + esc(d.items[k].unit) + '</span>', money(d.items[k].net)); }).join('') : '')
+    + dash + '<div style="text-align:center;font-size:.85em">This counter, today. A shop with more than one counter closes each of them.</div>'
+    + '<div style="text-align:center">Billed on ChitBridge</div><div style="height:10mm"></div></div>';
+}
+async function dayClose(){
+  var rows = [];
+  try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) { rows = []; }
+  var d = dayCloseSheet(rows);
+  try { document.getElementById('billsdlg').close(); } catch (_) {}
+  document.getElementById('sliptitle').textContent = 'Day close · ' + d.bills + ' bill(s) · ₹' + money(d.total);
+  document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
+  document.getElementById('slipdlg').showModal();
+}
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
   var title = bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
@@ -1049,6 +1147,7 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F8'){ openBills(); e.preventDefault(); }
   if (e.key === 'F7'){ openWho(); e.preventDefault(); }
   if (e.key === 'F6'){ parkBill(); e.preventDefault(); }
+  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }
   if (e.key === 'Escape' && !document.getElementById('slipdlg').open && !document.getElementById('setdlg').open) clearBill();
 });
 window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
