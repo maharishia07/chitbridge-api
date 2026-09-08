@@ -62,6 +62,56 @@ them up.
 The **⚙** button holds everything that belongs to this device: the counter's name (it becomes the bill number's prefix), the text
 size, and light or dark. None of it leaves the device.
 
+## Three jobs, one screen
+
+The menu at the top left says which job the counter is doing. Each has its own rules, and they never mix.
+
+| | |
+|---|---|
+| **🧾 Sell** | the counter — bill a customer, take the money, print the slip |
+| **📥 Receive** | goods coming in — count what the lorry actually brought |
+| **📦 Despatch** | goods going out — pack an order, scanning every item |
+
+The search box works the same way in all three; what it *does* changes. In Sell it puts an item on the bill, in Receive it counts an
+item in, in Despatch it checks the item against the order.
+
+## Receiving goods
+
+Press **📥 Receive**.
+
+1. **Choose the order** at the top, if you placed one. The lines appear with what is still owed. If there was no order — a lorry with
+   just a challan — leave it on *"No order — goods at the door"* and simply scan what arrived.
+2. **Who it came from**, and **their bill number** if they brought one. Those four boxes (who, bill no, date, total) are all we ask.
+3. **Count.** Scan or type each item; `3*` and `0.75 x` work here too. Type the count in the box beside each line.
+4. **A difference needs a reason.** Short by two bags? The screen asks why — damaged, not sent, rejected at the door. Two extra?
+   That is accepted too, and marked. **What you counted is what the receipt says.** We never change your count to match their bill.
+5. **Freight and costs — F5.** Lorry, loading, duty, anything else. They are spread across the lines by value, so each item's *real*
+   cost includes its share of the freight. That is what your margin should be worked out on.
+6. **F9** confirms. A receipt is recorded and printed, and if it was against an order, what arrived is recorded on that order too —
+   in both your copy and the supplier's.
+
+If their bill total is typed in, the screen says plainly whether it agrees with what you counted, and by how much if it does not.
+
+## Sending goods out
+
+Press **📦 Despatch**.
+
+1. **Choose the order** you are packing. Every line shows what is owed.
+2. **Scan each item as it goes in the carton.** The count fills up; a full line turns green.
+   - Scan something that is not on the order → refused, with the reason.
+   - Scan more than was ordered → refused at the ordered quantity.
+3. **Next carton — F8** starts a second box. Type the weight of each if you have a scale; it goes on the slip.
+4. **Short?** Say why — no stock, damaged, collecting later. The customer hears it today rather than at delivery.
+5. **F9** packs and despatches: a packing slip prints, and the order is updated in your copy and the customer's.
+
+If the customer is on ChitBridge, that despatch note becomes **their** receiving screen, already filled in with what you say you sent.
+Their count at the door is the second, independent record — and if the two disagree, both are kept and neither is quietly corrected.
+
+## What is deliberately NOT here
+
+Bin locations, pick routes, stock counting, a warehouse system. We record what the shop **witnesses** — what came in, what went out,
+what was sold. Whatever you count on a Sunday belongs in Tally, and we connect to it.
+
 ## How an update reaches this counter
 
 The counter checks with ChitBridge every fifteen minutes, and it keeps itself current — you never download the kit again.
