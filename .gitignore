@@ -34,3 +34,6 @@ tools/tally-connector/orders/
 tools/tally-connector/connector-*.json
 tools/tally-connector/receipts-*.jsonl
 tools/tally-connector/*.log
+
+# generated scale data — rebuild with tools/seed/generate.cjs, never worth 3 MB in history
+tools/seed/tallytest-10k.json

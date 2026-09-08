@@ -39,7 +39,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -75,6 +75,9 @@ const wrapForBrowser = (file, global) => {
 
 const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
+  /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
+     snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
+  [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],
   [path.join(WEB, 'app', 'offers.js'), path.join(WEB, 'engine', 'offers.js'), 'copy'],
   [path.join(WEB, 'app', 'tax-engine.js'), path.join(WEB, 'engine', 'tax.js'), 'copy'],
   /* ⭐ ONE SEARCH FOR BOTH SCREENS (Athi, 2026-09-08: "make it one shared file for both"). The counter and the app's Catalogue have to

@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shop screen</title>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  promo.html — THE SHOP'S OWN SCREEN. Athi, 2026-09-08:
+
+    "now we know the offer engine and the offer combination, fresh stock and so on. how we can bring it to instagram,
+     facebook, whatsapp status, in the tv in the shop… it is not a shopping cart, it is the advertisement of the product,
+     dynamically based on the offer and other criteria"
+
+  ⭐⭐⭐ THE WHOLE POINT: NOTHING HERE IS AUTHORED. A shopkeeper does not design a poster. The shop already knows what is worth
+  shouting about — what carries an offer, what is priced well below MRP, what came in fresh, what people buy at this hour — and
+  the offer engine already turns an offer into a sentence ("Buy 2 get 1", "10% off from 5"). This page is the part that was
+  missing: it READS those answers and draws them. Change a price in ChitBridge and the screen in the shop changes by itself.
+
+  ⚠️ ONE RENDERER, FIVE SHAPES. The TV, the Instagram square, the portrait post, the Story and the Facebook card are the SAME
+  drawing at different aspect ratios — not five layouts that drift apart the first time one gains a badge. Everything is drawn on
+  a canvas so what plays on the television and what downloads as a PNG are produced by the same code, pixel for pixel.
+
+  ⚠️ IT READS THE SAME SNAPSHOT AS THE COUNTER. Same key, same /api/till/snapshot, same CBOffers engine, same "no GSTIN, no GST"
+  rule. There is no second copy of the shop and no second opinion about what an offer says. On a shop PC it keeps working with the
+  line down, because the last snapshot is kept — a screen that goes blank when the internet hiccups is worse than no screen.
+
+  Open it the way the counter is opened:  /promo.html#key=…&shop=…
+  ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  :root{
+    --ink:#0E1117; --dim:#7A8796; --line:#242C38; --card:#151A22; --paper:#FFF8EE;
+    --hot:#E23A1F; --fresh:#1F7A4C; --gold:#C77B0E; --cool:#1B5E8C; --plum:#6B2D5B;
+    --fs:15px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ink);color:var(--paper);
+       font:var(--fs)/1.5 "Segoe UI","Nirmala UI",system-ui,-apple-system,sans-serif;
+       display:flex;flex-direction:column;overflow:hidden}
+
+  /* ── the bar. It disappears entirely in show mode: a television with a toolbar on it is a computer, not a sign. ── */
+  header{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);
+         background:var(--card);flex-wrap:wrap;flex:0 0 auto}
+  .brand{font-weight:800;letter-spacing:.2px;margin-inline-end:4px}
+  .brand small{display:block;font-weight:400;color:var(--dim);font-size:11px;letter-spacing:.3px}
+  button,select{font:inherit;color:var(--paper);background:transparent;border:1px solid var(--line);
+                border-radius:999px;padding:6px 13px;cursor:pointer;white-space:nowrap}
+  button:hover,select:hover{border-color:var(--dim)}
+  button.on{background:var(--hot);border-color:var(--hot);color:#fff;font-weight:700}
+  button.ghost{border-color:transparent;color:var(--dim)}
+  button:disabled{opacity:.4;cursor:default}
+  select{padding:6px 10px;border-radius:8px;background:var(--card)}
+  .sp{flex:1}
+  .note{color:var(--dim);font-size:12px}
+
+  /* ── the stage ── */
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:22px;min-height:0;position:relative}
+  #stage{position:relative;max-width:100%;max-height:100%;box-shadow:0 24px 70px rgba(0,0,0,.55);border-radius:6px;overflow:hidden}
+  canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+  /* the crossfade: a second canvas holding the frame we are leaving */
+  #prev{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .55s ease;pointer-events:none}
+  #prev.show{opacity:1}
+
+  /* ── the side panel: why these, where it goes, and the caption already written ── */
+  #side{width:330px;flex:0 0 auto;display:flex;flex-direction:column;gap:14px;margin-inline-start:22px;
+        max-height:100%;overflow-y:auto}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--dim);
+            display:flex;align-items:center;gap:8px}
+  .panel p{margin:0;line-height:1.55}
+  .muted{color:#C9D2DD;font-size:14px}
+  button.tiny{font-size:11px;padding:2px 9px;margin-inline-start:auto;text-transform:none;letter-spacing:0}
+  #cap{width:100%;background:#0E1117;color:var(--paper);border:1px solid var(--line);border-radius:8px;
+       padding:10px;font:13px/1.5 inherit;resize:vertical}
+  @media (max-width:1100px){ #side{display:none} }
+
+  /* ── show mode: the page becomes the sign ── */
+  body.show header,body.show #side{display:none}
+  body.show main{padding:0;background:#000}
+  body.show #stage{max-width:100vw;max-height:100vh;border-radius:0;box-shadow:none}
+  body.show canvas{max-width:100vw;max-height:100vh}
+  #hint{position:fixed;inset-block-end:16px;inset-inline-start:50%;transform:translateX(-50%);
+        background:rgba(0,0,0,.66);border:1px solid var(--line);border-radius:999px;padding:7px 15px;
+        font-size:12px;color:#fff;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
+  #hint.show{opacity:1}
+
+  .rail{display:flex;gap:6px;align-items:center;overflow-x:auto;max-width:100%;padding-bottom:2px}
+  .rail button{font-size:12px;padding:5px 11px}
+  @media (max-width:760px){ .brand small{display:none} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Shop screen<small id="shopname">not paired yet</small></div>
+
+  <select id="camp" title="Which campaign is running"></select>
+  <div class="rail" id="chan"></div>
+
+  <button id="play" class="on" title="Space">⏸ Pause</button>
+  <button id="prevb" class="ghost" title="←">‹</button>
+  <button id="nextb" class="ghost" title="→">›</button>
+
+  <span class="sp"></span>
+  <span class="note" id="count"></span>
+  <button id="share" title="Send it where it goes">↗ Share</button>
+  <button id="dl" title="Save this one as a PNG">⤓ Save</button>
+  <button id="dlall" title="Save the next ten">⤓ Save 10</button>
+  <button id="full" title="F">⛶ Full screen</button>
+  <button id="refresh" class="ghost" title="Read the shop again">↻</button>
+</header>
+
+<main>
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <canvas id="prev"></canvas>
+  </div>
+
+  <!-- ⭐ WHAT THIS CAMPAIGN IS, AND WHAT TO DO WITH IT. A shopkeeper should never have to guess why a picture appeared. -->
+  <aside id="side">
+    <div class="panel">
+      <h3>Why these</h3>
+      <p id="why" class="muted"></p>
+    </div>
+    <div class="panel">
+      <h3>Where it goes</h3>
+      <p id="how" class="muted"></p>
+    </div>
+    <div class="panel" id="capwrap">
+      <h3>Caption <button id="copycap" class="tiny">copy</button></h3>
+      <textarea id="cap" rows="9" spellcheck="false"></textarea>
+    </div>
+  </aside>
+</main>
+<div id="hint"></div>
+
+<script src="/engine/offers.js"></script>
+<script src="/engine/tax.js"></script>
+<script>
+/* ═══ 0 · the shop, read exactly as the counter reads it ══════════════════════════════════════════════════════ */
+var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
+           set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
+
+var API = ls.get('cb_till_api', 'https://chitbridge-api-production.up.railway.app');
+var KEY = ls.get('cb_till_key', null);
+var S = null, SLIDES = [], AT = 0, TIMER = null, PLAYING = true, ONLY = 'all';
+
+(function takeAddress(){
+  if (location.hash.indexOf('key=') < 0) return;
+  var hv = function(n){ var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : ''; };
+  var k = hv('key'); if (k) { ls.set('cb_till_key', k); KEY = k; }
+  var sh = hv('shop'); if (sh) ls.set('cb_till_shop', sh);
+  history.replaceState(null, '', location.pathname + location.search);
+})();
+
+/**
+ * ⚠️ THE LAST SHOP IT SAW IS KEPT, AND IT IS KEPT UNDER THE KEY. A screen in a shop must not go blank because the line hiccuped
+ * — yesterday's prices on the wall are far better than a black rectangle over the door. Scoped by key for the same reason the
+ * counter's copy is: one browser, many shops.
+ */
+function cacheName(){
+  var k = KEY || '';
+  var h = 5381; for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
+  return 'cb_promo_snap_' + h.toString(36);
+}
+async function readShop(){
+  try {
+    if (!KEY) throw new Error('no key');
+    var r = await fetch(API + '/api/till/snapshot', { headers:{ 'X-Api-Key': KEY }, cache:'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    S = await r.json();
+    try { ls.set(cacheName(), JSON.stringify(S)); } catch (_) { /* a big shop may not fit; the screen still runs */ }
+  } catch (e) {
+    var kept = ls.get(cacheName(), null);
+    if (kept) { try { S = JSON.parse(kept); } catch (_) { S = null; } }
+  }
+  document.getElementById('shopname').textContent = S ? ((S.shop && S.shop.name) || 'this shop') : 'could not read the shop';
+}
+
+/* ═══ 1 · WHAT IS WORTH SHOWING — the rules, in one place ═════════════════════════════════════════════════════
+ * Nobody chooses the products. These do, from what the shop already knows. Each rule answers a different question a
+ * passer-by has, which is why there is more than one:
+ *   offer      what is cheaper than usual, in the offer engine's own words
+ *   drop       what is well under MRP — the saving stated in rupees, because "18% off" is arithmetic and "save ₹40" is not
+ *   fresh      what came in today, for the trades where that is the whole pitch
+ *   combo      what goes together, priced as a basket
+ *   spotlight  how much choice there is in one category — the thing a small shop never gets credit for
+ *   hour       what people actually buy at THIS hour (milk and coffee at seven, snacks at five)
+ *   shop       who you are, where, and how to pay
+ * ⚠️ AN UNAVAILABLE PRODUCT IS NEVER ADVERTISED. Putting something on the television that is not on the shelf is the one
+ * mistake that costs a shop a customer twice — once for the walk, once for the trust.
+ */
+var MOOD = { fresh:'#1F7A4C', hot:'#E23A1F', gold:'#C77B0E', cool:'#1B5E8C', plum:'#6B2D5B' };
+var GLYPH = { 'Vegetables':'🥬','Fruit':'🍎','Rice & grains':'🌾','Pulses':'🫘','Staples':'🧂','Edible oil':'🫒',
+  'Dairy':'🧈','Milk & curd':'🥛','Spices':'🌶️','Beverages':'☕','Cold drinks':'🥤','Snacks':'🍿','Biscuits':'🍪',
+  'Personal care':'🧴','Cleaning':'🧽','Home':'🕯️' };
+var FRESH_CATS = ['Vegetables','Fruit','Milk & curd'];
+/**
+ * ⭐ THE THING ITSELF, WHERE WE KNOW IT. The category emblem put an apple on "Banana yelakki", which on a shop television is the
+ * kind of small wrongness a customer notices and a shopkeeper cannot fix. Matched on the name first — including the words people
+ * actually use — and the category only when nothing is recognised.
+ * ⚠️ Deliberately short. This is a courtesy, not a taxonomy: every line here has to be worth someone maintaining.
+ */
+var ITEM_GLYPH = [
+  [/banana|vazhai/i,'🍌'], [/tomato|thakkali/i,'🍅'], [/onion|vengayam/i,'🧅'], [/potato|urulai/i,'🥔'],
+  [/carrot/i,'🥕'], [/chilli|milagai/i,'🌶️'], [/apple/i,'🍎'], [/orange/i,'🍊'], [/grape|thiratchai/i,'🍇'],
+  [/mango|mambazham/i,'🥭'], [/watermelon|tharbusani/i,'🍉'], [/lemon|elumichai/i,'🍋'], [/coconut|thengai/i,'🥥'],
+  [/garlic|poondu/i,'🧄'], [/rice|arisi/i,'🍚'], [/atta|wheat|godhumai/i,'🌾'], [/oil|ennai/i,'🫒'],
+  [/milk|paal/i,'🥛'], [/curd|thayir/i,'🥣'], [/ghee|nei|butter|vennai/i,'🧈'], [/tea|chai/i,'🍵'],
+  [/coffee|kaapi/i,'☕'], [/sugar|sarkkarai/i,'🍬'], [/salt|uppu/i,'🧂'], [/biscuit|cookie|rusk/i,'🍪'],
+  [/soap|sabun/i,'🧼'], [/paste|brush/i,'🪥'], [/candle|mezhugu/i,'🕯️'], [/match|theepetti/i,'🔥'],
+  [/egg|muttai/i,'🥚'], [/bread/i,'🍞'], [/dal|paruppu|gram|payaru/i,'🫘'],
+];
+function glyphFor(name, cat){
+  var n = String(name || '');
+  for (var i = 0; i < ITEM_GLYPH.length; i++) if (ITEM_GLYPH[i][0].test(n)) return ITEM_GLYPH[i][1];
+  return GLYPH[cat];
+}
+/* what a shop actually sells at each hour — the same dayparting the counter's quick keys use */
+var HOURS = [
+  { from:5,  to:11, label:'This morning', cats:['Milk & curd','Beverages','Rice & grains','Dairy'] },
+  { from:11, to:16, label:'For today’s cooking', cats:['Vegetables','Pulses','Spices','Edible oil'] },
+  { from:16, to:20, label:'This evening', cats:['Snacks','Biscuits','Cold drinks','Beverages'] },
+  { from:20, to:24, label:'Before you close', cats:['Staples','Cleaning','Personal care','Home'] },
+  { from:0,  to:5,  label:'Open now', cats:['Staples','Milk & curd','Home'] },
+];
+function hourBand(){ var h = new Date().getHours();
+  for (var i = 0; i < HOURS.length; i++) if (h >= HOURS[i].from && h < HOURS[i].to) return HOURS[i];
+  return HOURS[0]; }
+
+function money(n){ var v = Number(n) || 0;
+  return '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+function live(){ return ((S && S.items) || []).filter(function(i){ return i.avail !== 'unavailable' && Number(i.price) > 0; }); }
+
+/* the offer engine's own sentence for a product — never a second opinion about what an offer says */
+function offersOf(i){
+  if (!window.CBOffers || !S) return [];
+  try {
+    return CBOffers.forLine({ key:i.item_id, item_id:i.item_id, sku:i.code, category:i.category, qty:1, unitPrice:Number(i.price)||0 },
+      (S.offers || []), { currency:(S.shop && S.shop.currency) || 'INR', now:new Date().toISOString() }) || [];
+  } catch (_) { return []; }
+}
+function offerWords(o){
+  try { var p = CBOffers.promise(o, { currency:(S.shop && S.shop.currency)||'INR', now:new Date(), money:money }); if (p) return p; } catch (_) {}
+  return o.label || o.name || 'Offer';
+}
+
+/* a day-stable shuffle: the same shop shows the same order all day, and a different one tomorrow */
+function seeded(list, salt){
+  var d = new Date(), seed = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate() + (salt || 0);
+  var a = list.slice();
+  for (var i = a.length - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    var j = seed % (i + 1); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+
+function build(){
+  var out = [], items = live();
+  if (!items.length) return out;
+
+  /* ── offers, in the engine's words ── */
+  var withOffer = [];
+  for (var i = 0; i < items.length && withOffer.length < 40; i++) {
+    var got = offersOf(items[i]);
+    if (got.length) withOffer.push({ item: items[i], offer: got[0] });
+  }
+  seeded(withOffer, 1).slice(0, 10).forEach(function(x){
+    out.push({ kind:'offer', mood:MOOD.hot, eyebrow:'On offer today', item:x.item, badge:offerWords(x.offer) });
+  });
+
+  /* ── price against MRP: only when the saving is real, and said in rupees ── */
+  var drops = items.filter(function(i){ var m = Number(i.mrp) || 0, p = Number(i.price) || 0;
+    return m > 0 && p > 0 && (m - p) / m >= 0.08; });
+  seeded(drops, 2).slice(0, 8).forEach(function(i){
+    out.push({ kind:'drop', mood:MOOD.gold, eyebrow:'Our price', item:i, save:(Number(i.mrp) - Number(i.price)) });
+  });
+
+  /* ── fresh: three at a time, because produce is bought as a handful, not one thing ── */
+  var fresh = items.filter(function(i){ return FRESH_CATS.indexOf(i.category) >= 0; });
+  if (fresh.length >= 3) {
+    var f = seeded(fresh, 3);
+    for (var n = 0; n + 3 <= Math.min(f.length, 12); n += 3)
+      out.push({ kind:'fresh', mood:MOOD.fresh, eyebrow:'Fresh in today', items:f.slice(n, n + 3) });
+  }
+
+  /* ── what goes together, priced as a basket ── */
+  var COMBOS = [['Rice & grains','Pulses','Edible oil'], ['Spices','Pulses','Staples'],
+                ['Milk & curd','Beverages','Biscuits'], ['Cleaning','Personal care','Home']];
+  COMBOS.forEach(function(cats, n){
+    var picked = [];
+    cats.forEach(function(c){ var pool = items.filter(function(i){ return i.category === c; });
+      if (pool.length) picked.push(seeded(pool, 4 + n)[0]); });
+    if (picked.length === cats.length)
+      out.push({ kind:'combo', mood:MOOD.plum, eyebrow:'Goes together', items:picked,
+                 total: picked.reduce(function(a, b){ return a + (Number(b.price) || 0); }, 0) });
+  });
+
+  /* ── how much choice there is here ── */
+  var byCat = {}; items.forEach(function(i){ (byCat[i.category] = byCat[i.category] || []).push(i); });
+  seeded(Object.keys(byCat).filter(function(c){ return byCat[c].length >= 6; }), 5).slice(0, 6).forEach(function(c){
+    out.push({ kind:'spotlight', mood:MOOD.cool, eyebrow:'In this shop', cat:c, n:byCat[c].length,
+               items: seeded(byCat[c], 6).slice(0, 6) });
+  });
+
+  /* ── this hour ── */
+  var band = hourBand();
+  var now = items.filter(function(i){ return band.cats.indexOf(i.category) >= 0; });
+  if (now.length >= 3)
+    out.push({ kind:'hour', mood:MOOD.hot, eyebrow:band.label, items:seeded(now, 7).slice(0, 4) });
+
+  /* ── and who you are ── */
+  out.push({ kind:'shop', mood:MOOD.cool, eyebrow:'Come in' });
+
+  /**
+   * ⚠️⚠️ A SCREEN MUST NEVER BE ONE SLIDE. Every rule above needs something the shop may not have filled in yet — an offer nobody
+   * authored, an MRP nobody typed, a category nobody chose. A brand-new shop with twenty products and none of that scored exactly
+   * one slide (the shop card) and would have sat on a television showing the same rectangle all day. [PROMO-01] caught it, and
+   * the lesson is the one that matters for a first run: a shopkeeper who sees it do nothing never turns it on again.
+   *
+   * So the floor is the plainest true thing there is — this is what we sell, this is what it costs. It needs nothing but a name
+   * and a price, which every product has, and it is topped up only until there is enough to watch.
+   */
+  var FLOOR = 8;
+  if (out.length < FLOOR) {
+    var spare = seeded(items, 9);
+    for (var s = 0; s < spare.length && out.length < FLOOR; s++)
+      out.push({ kind:'plain', mood:[MOOD.cool, MOOD.gold, MOOD.fresh, MOOD.plum][s % 4],
+                 eyebrow:'On the shelf', item:spare[s] });
+  }
+
+  return seeded(out, 8);
+}
+
+/* ═══ 2 · THE RENDERER ════════════════════════════════════════════════════════════════════════════════════════
+ * One drawing, five shapes. Everything is measured in `u` — a thousandth of the SHORT side — so a poster laid out
+ * once holds together on a 1920×1080 television and on a 1080×1920 Story without a second layout.
+ * ⚠️ The only thing the shape changes is how much room there is; it never changes what is said.
+ */
+var FORMATS = {
+  tv:     { w:1920, h:1080, label:'TV · the screen in the shop' },
+  story:  { w:1080, h:1920, label:'Story · WhatsApp status' },
+  square: { w:1080, h:1080, label:'Instagram · square' },
+  post:   { w:1080, h:1350, label:'Instagram · portrait' },
+  fb:     { w:1200, h:630,  label:'Facebook' },
+};
+var FMT = ls.get('cb_promo_fmt', 'tv'); if (!FORMATS[FMT]) FMT = 'tv';
+
+var C = document.getElementById('c'), X = C.getContext('2d');
+var P = document.getElementById('prev'), PX = P.getContext('2d');
+
+function face(weight, size, display){
+  return weight + ' ' + Math.round(size) + 'px ' + (display
+    ? '"Segoe UI Black","Arial Black","Nirmala UI",system-ui,sans-serif'
+    : '"Segoe UI","Nirmala UI",system-ui,-apple-system,sans-serif');
+}
+function rrect(g, x, y, w, h, r){
+  g.beginPath();
+  g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+/** wrapped text; returns the height it used. `lines` caps it and the last line gets an ellipsis. */
+function para(g, str, x, y, o){
+  g.font = o.font; g.fillStyle = o.color; g.textBaseline = 'top';
+  var words = String(str == null ? '' : str).split(/\s+/).filter(Boolean), rows = [], cur = '';
+  for (var i = 0; i < words.length; i++) {
+    var t = cur ? cur + ' ' + words[i] : words[i];
+    if (g.measureText(t).width > o.maxW && cur) { rows.push(cur); cur = words[i]; } else cur = t;
+  }
+  if (cur) rows.push(cur);
+  var cap = o.lines || rows.length;
+  if (rows.length > cap) { rows = rows.slice(0, cap);
+    var last = rows[cap - 1];
+    while (last.length > 1 && g.measureText(last + '…').width > o.maxW) last = last.slice(0, -1);
+    rows[cap - 1] = last + '…'; }
+  var lh = o.lh || (o.size * 1.14);
+  for (var r = 0; r < rows.length; r++) {
+    var w = g.measureText(rows[r]).width;
+    var px = o.align === 'center' ? x - w / 2 : (o.align === 'end' ? x - w : x);
+    g.fillText(rows[r], px, y + r * lh);
+  }
+  return rows.length * lh;
+}
+function pill(g, text, x, y, u, bg, fg){
+  g.font = face(800, 26 * u);
+  var w = g.measureText(text).width, padX = 18 * u, h = 46 * u;
+  g.fillStyle = bg; rrect(g, x, y, w + padX * 2, h, h / 2); g.fill();
+  g.fillStyle = fg; g.textBaseline = 'middle';
+  g.fillText(text, x + padX, y + h / 2 + 1 * u);
+  g.textBaseline = 'top';
+  return w + padX * 2;
+}
+
+/* mixing a colour toward black or white — a mood needs a deep end and a bright end, not one flat value */
+function mix(hex, toward, t){
+  var h = hex.replace('#',''), r = parseInt(h.slice(0,2),16), gg = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  var w = toward === 'w' ? 255 : 0;
+  return 'rgb(' + Math.round(r + (w - r) * t) + ',' + Math.round(gg + (gg * 0 + w - gg) * t) + ',' + Math.round(b + (w - b) * t) + ')';
+}
+
+/**
+ * ⭐⭐ THE GROUND. First attempt laid the mood colour as a radial over near-black and it came out MUD — a gold slide read as wet
+ * cardboard, which is the opposite of appetising for a shop selling food. The fix is not a better gradient: it is to stop blending
+ * the colour into the dark at all.
+ *
+ * So the frame is two territories with a hard edge — a near-black field the words live on, and a saturated BLADE of the mood
+ * colour carrying the category. The colour stays the colour it was chosen to be, the type keeps a constant dark background to sit
+ * on (so contrast never depends on where a gradient happened to land), and the shape gives the poster somewhere to end.
+ * ⚠️ The blade takes the right on a television and the bottom on a Story — the same composition turned through ninety degrees,
+ * because a 9:16 frame has no right-hand side to spare.
+ */
+function ground(g, W, H, u, slide){
+  var mood = slide.mood || MOOD.hot, wide = W / H > 1.4;
+  g.fillStyle = '#0B0E13'; g.fillRect(0, 0, W, H);
+
+  var bx, by, bw, bh;
+  if (wide) { bw = W * 0.40; bx = W - bw; by = 0; bh = H; }
+  else      { bh = H * 0.34; by = H - bh; bx = 0; bw = W; }
+
+  var gr = wide ? g.createLinearGradient(bx, 0, bx + bw, H) : g.createLinearGradient(0, by, W, by + bh);
+  gr.addColorStop(0, mix(mood, 'w', 0.10));
+  gr.addColorStop(1, mix(mood, 'b', 0.38));
+  g.fillStyle = gr; g.fillRect(bx, by, bw, bh);
+
+  /* the category, on a medallion so a colour emoji has something of its own to sit on */
+  var pick = slide.item || (slide.items && slide.items[0]) || null;
+  var cat = slide.cat || (pick && pick.category);
+  var em = slide.cat ? GLYPH[cat] : glyphFor(pick && pick.name, cat);
+  if (em) {
+    var cx = bx + bw / 2, cy = by + bh / 2, R = Math.min(bw, bh) * 0.34;
+    g.save();
+    g.globalAlpha = 0.13; g.fillStyle = '#FFFFFF';
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = 0.95;
+    g.font = face(400, R * 1.15);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(em, cx, cy + R * 0.06);
+    g.restore();
+    g.textAlign = 'left'; g.textBaseline = 'top';
+  }
+  /* a hairline of the mood along the top — the one bit of chrome, and it names the mood */
+  g.fillStyle = mood; g.fillRect(0, 0, W, 9 * u);
+}
+
+/** the footer every slide carries: who is saying this, and how to reach them */
+function x0(pad){ return pad; }
+function footer(g, W, H, u, pad, field){
+  var sh = (S && S.shop) || {};
+  var y = H - pad - 54 * u, right = (field || W) - pad;
+  g.fillStyle = 'rgba(255,248,238,.18)'; g.fillRect(pad, y - 24 * u, right - pad, 2 * u);
+  g.font = face(800, 30 * u); g.fillStyle = '#FFF8EE'; g.textBaseline = 'top';
+  g.fillText(sh.name || 'This shop', pad, y);
+  var line = [sh.phone, sh.address].filter(Boolean).join('  ·  ');
+  if (line) { g.font = face(400, 25 * u); g.fillStyle = 'rgba(255,248,238,.72)';
+    var w = g.measureText(line).width, nameW = measure(g, sh.name || '', 800, 30 * u);
+    /* under the name when there is no room beside it — a phone number overlapping a shop name is worse than a second line */
+    if (w + nameW + 40 * u > right - pad) g.fillText(line, x0(pad), y + 40 * u);
+    else g.fillText(line, Math.max(pad, right - w), y + 4 * u); }
+}
+
+/**
+ * ⭐⭐ THE BLOCK IS CENTRED, AND THAT NEEDS MEASURING FIRST. The first cut stacked everything from the top, and a television showed
+ * a poster in its top-left corner with the bottom half empty — it read as a page that had failed to finish loading. Canvas has no
+ * layout engine, so the content is drawn TWICE: once invisibly to learn how tall it is, then again offset onto the optical centre.
+ * ONE body of code both times, so the measurement can never disagree with the drawing.
+ */
+function draw(g, W, H, slide){
+  var u = Math.min(W, H) / 1000;                 /* one unit = a thousandth of the short side */
+  var pad = 68 * u, wide = W / H > 1.4;
+  /**
+   * ⚠️ THE WORDS HAVE THEIR OWN ZONE, AND THAT IS WHAT THEY CENTRE IN. Centring against the whole canvas looked right on a
+   * television and wrong on a Story: the blade takes the bottom third there, so "the middle of the frame" is not the middle of
+   * the space the type actually has, and the poster floated with an empty top and a footer sitting on the blade.
+   */
+  var zoneW = wide ? W * 0.60 : W;
+  var zoneH = wide ? H : H * 0.66;
+  var col = zoneW - pad * (wide ? 1.6 : 2);
+  g.clearRect(0, 0, W, H);
+  ground(g, W, H, u, slide);
+
+  g.save(); g.globalAlpha = 0;                                      /* measure, invisibly */
+  var tall = content(g, W, H, u, slide, pad, pad, col, wide) - pad;
+  g.restore();
+
+  var room = zoneH - pad * 2 - 110 * u;                             /* the footer keeps the foot of the zone */
+  /* a shade above true centre, which is where an eye expects a headline to sit */
+  content(g, W, H, u, slide, pad, pad + Math.max(0, (room - tall) / 2) * 0.82, col, wide);
+
+  footer(g, W, zoneH, u, pad, zoneW);
+}
+
+function content(g, W, H, u, slide, x, y0, col, wide){
+  var y = y0;
+
+  /* the eyebrow — small, spaced, quiet */
+  g.font = face(700, 26 * u); g.fillStyle = 'rgba(255,248,238,.78)';
+  var eb = String(slide.eyebrow || '').toUpperCase().split('').join(' ');
+  g.textBaseline = 'top'; g.fillText(eb, x, y);
+  y += 52 * u;
+
+  if (slide.kind === 'plain') {
+    var pi = slide.item;
+    y += para(g, pi.name, x, y, { font:face(900, (wide ? 96 : 84) * u, true), color:'#FFF8EE',
+                                  maxW:col, size:(wide ? 96 : 84) * u, lines:3, lh:(wide ? 100 : 88) * u }) + 34 * u;
+    g.font = face(900, 118 * u, true); g.fillStyle = '#FFF8EE';
+    g.fillText(money(pi.price), x, y);
+    var pwp = measure(g, money(pi.price), 900, 118 * u, true);
+    g.font = face(500, 32 * u); g.fillStyle = 'rgba(255,248,238,.72)';
+    g.fillText('per ' + (pi.unit || 'piece'), x + pwp + 18 * u, y + 68 * u);
+  }
+
+  if (slide.kind === 'offer' || slide.kind === 'drop') {
+    var it = slide.item;
+    y += para(g, it.name, x, y, { font:face(900, (wide ? 96 : 84) * u, true), color:'#FFF8EE',
+                                  maxW:col, size:(wide ? 96 : 84) * u, lines:3, lh:(wide ? 100 : 88) * u }) + 26 * u;
+
+    if (slide.kind === 'offer') {
+      y += 6 * u;
+      pill(g, slide.badge, x, y, u, '#FFF8EE', slide.mood);
+      y += 78 * u;
+      g.font = face(900, 108 * u, true); g.fillStyle = '#FFF8EE';
+      g.fillText(money(it.price), x, y);
+      var priceW = measure(g, money(it.price), 900, 108 * u, true);
+      g.font = face(500, 30 * u); g.fillStyle = 'rgba(255,248,238,.72)';
+      g.fillText('per ' + (it.unit || 'piece'), x + priceW + 16 * u, y + 62 * u);
+    } else {
+      g.font = face(900, 128 * u, true); g.fillStyle = '#FFF8EE';
+      g.fillText(money(it.price), x, y);
+      var pw = measure(g, money(it.price), 900, 128 * u, true);
+      /* MRP, struck through — the comparison is the message */
+      g.font = face(500, 40 * u); g.fillStyle = 'rgba(255,248,238,.62)';
+      var mrpTxt = 'MRP ' + money(it.mrp);
+      g.fillText(mrpTxt, x + pw + 26 * u, y + 60 * u);
+      var mw = g.measureText(mrpTxt).width;
+      g.fillStyle = 'rgba(255,248,238,.62)';
+      /* ⚠️ textBaseline is 'top', so y IS the top of the glyphs and actualBoundingBoxAscent measures the wrong way — it put the
+         line above the digits. The optical middle of a lining numeral sits about 36% down from the top of its em. */
+      g.fillRect(x + pw + 26 * u, y + 60 * u + 40 * u * 0.36, mw, 3 * u);
+      y += 150 * u;
+      pill(g, 'You save ' + money(slide.save), x, y, u, '#FFF8EE', slide.mood);
+    }
+  }
+
+  if (slide.kind === 'fresh' || slide.kind === 'hour' || slide.kind === 'combo') {
+    var head = slide.kind === 'combo' ? 'Take all three' : (slide.kind === 'hour' ? 'Ready now' : 'Straight in this morning');
+    y += para(g, head, x, y, { font:face(900, (wide ? 84 : 72) * u, true), color:'#FFF8EE',
+                               maxW:col, size:(wide ? 84 : 72) * u, lines:2, lh:(wide ? 88 : 76) * u }) + 34 * u;
+    var rows = slide.items || [];
+    for (var n = 0; n < rows.length; n++) {
+      var r = rows[n], rh = 96 * u;
+      g.fillStyle = 'rgba(255,248,238,.09)'; rrect(g, x, y, col, rh, 14 * u); g.fill();
+      g.font = face(700, 34 * u); g.fillStyle = '#FFF8EE';
+      var nm = r.name, maxNm = col - 220 * u;
+      while (g.measureText(nm).width > maxNm && nm.length > 4) nm = nm.slice(0, -2);
+      if (nm !== r.name) nm += '…';
+      g.fillText(nm, x + 26 * u, y + 22 * u);
+      g.font = face(400, 23 * u); g.fillStyle = 'rgba(255,248,238,.6)';
+      g.fillText('per ' + (r.unit || 'piece'), x + 26 * u, y + 60 * u);
+      g.font = face(900, 40 * u, true); g.fillStyle = '#FFF8EE';
+      var pt = money(r.price), pwn = g.measureText(pt).width;
+      g.fillText(pt, x + col - 26 * u - pwn, y + 28 * u);
+      y += rh + 14 * u;
+    }
+    if (slide.kind === 'combo') {
+      y += 14 * u;
+      pill(g, 'All three  ' + money(slide.total), x, y, u, '#FFF8EE', slide.mood);
+    }
+  }
+
+  if (slide.kind === 'spotlight') {
+    y += para(g, slide.n + ' kinds of ' + String(slide.cat).toLowerCase(), x, y,
+      { font:face(900, (wide ? 92 : 78) * u, true), color:'#FFF8EE', maxW:col, size:(wide ? 92 : 78) * u, lines:3, lh:(wide ? 96 : 82) * u }) + 30 * u;
+    g.font = face(500, 32 * u); g.fillStyle = 'rgba(255,248,238,.85)';
+    for (var q = 0; q < slide.items.length; q++) {
+      var t = '·  ' + slide.items[q].name, tt = t;
+      while (g.measureText(tt).width > col && tt.length > 6) tt = tt.slice(0, -2);
+      if (tt !== t) tt += '…';
+      g.fillText(tt, x, y); y += 44 * u;
+    }
+  }
+
+  if (slide.kind === 'shop') {
+    var sh2 = (S && S.shop) || {};
+    y += para(g, sh2.name || 'This shop', x, y,
+      { font:face(900, (wide ? 104 : 88) * u, true), color:'#FFF8EE', maxW:col, size:(wide ? 104 : 88) * u, lines:3, lh:(wide ? 108 : 92) * u }) + 30 * u;
+    var lines = [sh2.address, sh2.phone, live().length + ' things on the shelf'].filter(Boolean);
+    g.font = face(500, 34 * u); g.fillStyle = 'rgba(255,248,238,.85)';
+    for (var L = 0; L < lines.length; L++) { g.fillText(lines[L], x, y); y += 50 * u; }
+  }
+
+  return y;
+}
+/* measuring with a font that is not the one currently set — used where the caller needs a width before it draws */
+function measure(g, str, weight, size, display){
+  var was = g.font; g.font = face(weight, size, display);
+  var w = g.measureText(str).width; g.font = was; return w;
+}
+
+/* ═══ 3 · CAMPAIGNS — the same thing said in every place it belongs ═══════════════════════════════════════════
+ * Athi: *"create an excellent campaign layer, so the same can be run in the TV of the shop and pushed to other places."*
+ *
+ * ⭐⭐ A CAMPAIGN IS A RULE, NOT A FOLDER OF PICTURES. It says WHICH of the shop's own answers to show, WHEN they are worth
+ * showing, and WHAT to say alongside them. Nothing in a campaign names a product: name a product and it is stale the day it runs
+ * out. "Whatever carries an offer, between six and eleven" never goes stale, and it writes itself every morning.
+ *
+ * ⚠️ AND THE CAMPAIGN IS THE SAME EVERYWHERE. The television, the WhatsApp status, the Instagram square and the Facebook card are
+ * ONE campaign in five shapes — the same rule, the same words, the same prices. That is the point of the layer: a shop that has to
+ * remember to update four places updates none of them.
+ *
+ * ⚠️ WHAT "PUSHED" HONESTLY MEANS. Instagram and WhatsApp do not let a web page post on a shop's behalf — not without a business
+ * account, an app review and a token the shop would have to keep. So the push is the real one a shopkeeper can actually do: the
+ * right shape, the caption already written, and the phone's own share sheet one tap away. We do not pretend to post for them.
+ */
+var CAMPAIGNS = [
+  { id:'offers', name:'Today’s offers', hours:[0, 24],
+    why:'Whatever the offer engine says is cheaper today — it changes when the offers change, by itself.',
+    kinds:['offer','drop','plain'] },
+  { id:'morning', name:'Morning', hours:[5, 11],
+    why:'Milk, curd, coffee, idli rice — what a shop sells before eleven, and nothing else.',
+    kinds:['hour','fresh'] },
+  { id:'fresh', name:'Fresh today', hours:[6, 20],
+    why:'Vegetables, fruit and milk that are on the shelf right now. Never shows what ran out.',
+    kinds:['fresh','spotlight'] },
+  { id:'evening', name:'Evening', hours:[16, 21],
+    why:'Snacks, biscuits and cold drinks, for the hour people actually buy them.',
+    kinds:['hour','combo'] },
+  { id:'basket', name:'Full basket', hours:[0, 24],
+    why:'Things that go together, priced as a basket — rice with dal and oil.',
+    kinds:['combo','spotlight'] },
+  { id:'shop', name:'Who we are', hours:[0, 24],
+    why:'The name, the address, the phone, and how much choice there is. For a new customer.',
+    kinds:['shop','spotlight'] },
+  { id:'all', name:'Everything', hours:[0, 24],
+    why:'Every kind, in the day’s own order. What the television runs when nobody has chosen.',
+    kinds:null },
+];
+/** the campaign whose window fits this hour most tightly — a two-hour rule beats an all-day one */
+function dueNow(){
+  var h = new Date().getHours(), best = null;
+  CAMPAIGNS.forEach(function(c){
+    if (c.id === 'all') return;
+    if (h < c.hours[0] || h >= c.hours[1]) return;
+    var span = c.hours[1] - c.hours[0];
+    if (!best || span < (best.hours[1] - best.hours[0])) best = c;
+  });
+  return best || CAMPAIGNS[CAMPAIGNS.length - 1];
+}
+var CAMP = ls.get('cb_promo_camp', 'auto');
+function campaign(){ return CAMP === 'auto' ? dueNow() : (CAMPAIGNS.filter(function(c){ return c.id === CAMP; })[0] || dueNow()); }
+
+/**
+ * ⭐ WHERE IT GOES, AND WHAT THAT PLACE NEEDS. Each channel is a shape plus a habit: a television is 16:9 and never downloaded, a
+ * status is 9:16 and posted from a phone. Choosing one sets the shape — there is nothing else to get right.
+ */
+var CHANNELS = {
+  tv:        { fmt:'tv',     label:'📺 Shop TV',        how:'Plays on the screen. Press F for full screen and leave it.' },
+  status:    { fmt:'story',  label:'💬 WhatsApp status', how:'Save it, then post it as your status.' },
+  instagram: { fmt:'square', label:'📷 Instagram',       how:'Save it, then post. The caption is written below.' },
+  story:     { fmt:'story',  label:'✨ Instagram story',  how:'Save it, then post to your story.' },
+  facebook:  { fmt:'fb',     label:'👍 Facebook',        how:'Save it, then post to your page.' },
+};
+var CHAN = ls.get('cb_promo_chan', 'tv');
+
+/**
+ * ⭐ THE CAPTION WRITES ITSELF, from the same facts on the picture. A shopkeeper posting at six in the evening should not have to
+ * compose a sentence — and a caption that disagrees with the picture is worse than none.
+ */
+function caption(s){
+  var sh = (S && S.shop) || {}, who = sh.name || 'our shop';
+  var tail = '\n\n' + who + (sh.phone ? '  ·  ' + sh.phone : '') + (sh.address ? '\n' + sh.address : '');
+  var tags = '\n\n#' + String(who).replace(/[^A-Za-z0-9]+/g, '') + ' #kirana #localshop';
+  if (s.kind === 'offer')  return s.item.name + ' — ' + s.badge + '.\nNow ' + money(s.item.price) + ' per ' + (s.item.unit || 'piece') + '.' + tail + tags;
+  if (s.kind === 'drop')   return s.item.name + ' at ' + money(s.item.price) + ' — MRP ' + money(s.item.mrp) + '. You save ' + money(s.save) + '.' + tail + tags;
+  if (s.kind === 'fresh')  return 'Fresh in today: ' + s.items.map(function(i){ return i.name + ' ' + money(i.price); }).join('  ·  ') + tail + tags;
+  if (s.kind === 'hour')   return s.eyebrow + ': ' + s.items.map(function(i){ return i.name; }).join(', ') + '. On the shelf now.' + tail + tags;
+  if (s.kind === 'combo')  return 'Goes together — ' + s.items.map(function(i){ return i.name; }).join(' + ') + '. All three ' + money(s.total) + '.' + tail + tags;
+  if (s.kind === 'spotlight') return s.n + ' kinds of ' + String(s.cat).toLowerCase() + ' on the shelf.' + tail + tags;
+  if (s.kind === 'plain')  return s.item.name + ' — ' + money(s.item.price) + ' per ' + (s.item.unit || 'piece') + '. On the shelf now.' + tail + tags;
+  return who + ' — ' + live().length + ' things on the shelf.' + tail + tags;
+}
+
+/* ═══ 4 · the show ═══════════════════════════════════════════════════════════════════════════════════════════ */
+function shown(){
+  var c = campaign();
+  if (ONLY !== 'all') return SLIDES.filter(function(s){ return s.kind === ONLY; });
+  if (!c.kinds) return SLIDES;
+  var got = SLIDES.filter(function(s){ return c.kinds.indexOf(s.kind) >= 0; });
+  /* ⚠️ A CAMPAIGN THAT MATCHES NOTHING SHOWS EVERYTHING, rather than a black screen. A shop with no offers authored yet still has
+     a shelf worth showing, and an empty television teaches the shopkeeper that this thing does not work. */
+  return got.length ? got : SLIDES;
+}
+
+function paint(fade){
+  var list = shown();
+  if (!list.length) { X.fillStyle = '#0E1117'; X.fillRect(0, 0, C.width, C.height); return; }
+  AT = ((AT % list.length) + list.length) % list.length;
+  var f = FORMATS[FMT];
+  if (fade) { P.width = C.width; P.height = C.height; PX.drawImage(C, 0, 0); P.classList.add('show');
+              setTimeout(function(){ P.classList.remove('show'); }, 30); }
+  C.width = f.w; C.height = f.h;
+  draw(X, f.w, f.h, list[AT]);
+  document.getElementById('count').textContent = (AT + 1) + ' of ' + list.length;
+}
+function step(n){ AT += n; paint(true); restart(); }
+function restart(){ clearInterval(TIMER); if (PLAYING) TIMER = setInterval(function(){ AT++; paint(true); }, 7000); }
+
+function setPlaying(on){
+  PLAYING = on;
+  var b = document.getElementById('play');
+  b.textContent = on ? '⏸ Pause' : '▶ Play'; b.className = on ? 'on' : '';
+  restart();
+}
+
+/* ── saving a picture. A shop posts to WhatsApp from the same PC the counter runs on. ── */
+function save(){
+  var f = FORMATS[FMT], list = shown(); if (!list.length) return;
+  var name = (((S && S.shop && S.shop.name) || 'shop').replace(/[^A-Za-z0-9]+/g, '-').toLowerCase())
+    + '-' + list[AT].kind + '-' + FMT + '.png';
+  C.toBlob(function(b){
+    var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  }, 'image/png');
+  say('Saved ' + name);
+}
+async function saveMany(){
+  var list = shown(); if (!list.length) return;
+  var was = AT, n = Math.min(10, list.length);
+  setPlaying(false);
+  for (var i = 0; i < n; i++) { AT = was + i; paint(false); await new Promise(function(r){ setTimeout(r, 220); }); save(); }
+  AT = was; paint(false);
+  say('Saved ' + n + ' pictures');
+}
+var hintT = null;
+function say(t){ var h = document.getElementById('hint'); h.textContent = t; h.classList.add('show');
+  clearTimeout(hintT); hintT = setTimeout(function(){ h.classList.remove('show'); }, 2600); }
+
+/* ═══ 4 · the bar ════════════════════════════════════════════════════════════════════════════════════════════ */
+var KINDLABEL = { all:'Everything', offer:'Offers', drop:'Price', fresh:'Fresh', combo:'Together',
+                  spotlight:'Choice', hour:'This hour', shop:'The shop', plain:'On the shelf' };
+function paintBar(){
+  /* WHICH CAMPAIGN — "Now" follows the clock, which is what a shop leaves it on */
+  var cs = document.getElementById('camp');
+  var due = dueNow();
+  cs.innerHTML = '<option value="auto"' + (CAMP === 'auto' ? ' selected' : '') + '>Now · ' + due.name + ' (follows the clock)</option>'
+    + CAMPAIGNS.map(function(c){
+        var when = (c.hours[0] === 0 && c.hours[1] === 24) ? 'all day' : (c.hours[0] + ':00–' + c.hours[1] + ':00');
+        return '<option value="' + c.id + '"' + (CAMP === c.id ? ' selected' : '') + '>' + c.name + ' · ' + when + '</option>'; }).join('');
+
+  /* WHERE IT GOES — the channel picks the shape, so there is nothing else to get right */
+  document.getElementById('chan').innerHTML = Object.keys(CHANNELS).map(function(k){
+    return '<button data-c="' + k + '" class="' + (k === CHAN ? 'on' : '') + '">' + CHANNELS[k].label + '</button>'; }).join('');
+  [].forEach.call(document.querySelectorAll('#chan button'), function(b){
+    b.onclick = function(){ CHAN = b.getAttribute('data-c'); ls.set('cb_promo_chan', CHAN);
+      FMT = CHANNELS[CHAN].fmt; ls.set('cb_promo_fmt', FMT); paintBar(); paint(true); }; });
+
+  var c = campaign();
+  document.getElementById('why').textContent = c.why;
+  document.getElementById('how').textContent = CHANNELS[CHAN].how;
+  var list = shown();
+  document.getElementById('cap').value = list.length ? caption(list[((AT % list.length) + list.length) % list.length]) : '';
+  /* the television has no caption to read and no one to copy it */
+  document.getElementById('capwrap').style.display = (CHAN === 'tv') ? 'none' : '';
+}
+
+document.getElementById('camp').onchange = function(){ CAMP = this.value; ls.set('cb_promo_camp', CAMP); AT = 0; paintBar(); paint(true); restart(); };
+document.getElementById('copycap').onclick = function(){
+  var t = document.getElementById('cap'); t.select();
+  try { navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
+  say('Caption copied');
+};
+/**
+ * ⭐ SHARE WHERE THE PHONE CAN. On a phone this opens the real share sheet — WhatsApp, Instagram, everything installed — with the
+ * picture AND the caption already in it. On a desktop the browser usually cannot, so it saves the file instead and says so,
+ * rather than failing quietly or pretending it posted.
+ */
+document.getElementById('share').onclick = function(){
+  var list = shown(); if (!list.length) return;
+  C.toBlob(async function(b){
+    var file = new File([b], 'shop.png', { type:'image/png' });
+    var data = { files:[file], text: caption(list[AT]) };
+    if (navigator.canShare && navigator.canShare(data) && navigator.share) {
+      try { await navigator.share(data); say('Shared'); return; } catch (_) { /* they closed the sheet */ return; }
+    }
+    save(); say('This browser cannot share — saved the picture instead');
+  }, 'image/png');
+};
+document.getElementById('play').onclick = function(){ setPlaying(!PLAYING); };
+document.getElementById('nextb').onclick = function(){ step(1); };
+document.getElementById('prevb').onclick = function(){ step(-1); };
+document.getElementById('dl').onclick = save;
+document.getElementById('dlall').onclick = saveMany;
+document.getElementById('refresh').onclick = async function(){ await readShop(); SLIDES = build(); paintBar(); paint(true); say('Read the shop again'); };
+document.getElementById('full').onclick = function(){
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(function(){ document.body.classList.toggle('show'); });
+};
+document.addEventListener('fullscreenchange', function(){
+  document.body.classList.toggle('show', !!document.fullscreenElement);
+  setTimeout(function(){ paint(false); }, 60);
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === ' ') { setPlaying(!PLAYING); e.preventDefault(); }
+  if (e.key === 'ArrowRight') step(1);
+  if (e.key === 'ArrowLeft') step(-1);
+  if (e.key === 'f' || e.key === 'F') document.getElementById('full').click();
+  if (e.key === 'd' || e.key === 'D') save();
+  if (e.key === 'Escape' && document.body.classList.contains('show')) document.body.classList.remove('show');
+});
+/* a mouse that has not moved for a while on a shop television should not leave a cursor on the sign */
+var idle = null;
+document.addEventListener('mousemove', function(){
+  document.body.style.cursor = ''; clearTimeout(idle);
+  idle = setTimeout(function(){ if (document.body.classList.contains('show')) document.body.style.cursor = 'none'; }, 2600);
+});
+
+(async function start(){
+  await readShop();
+  SLIDES = build();
+  paintBar();
+  paint(false);
+  setPlaying(true);
+  if (!SLIDES.length) say(KEY ? 'Nothing to show yet — add products in ChitBridge' : 'Not paired — open this from ChitBridge → Counter');
+  /* the shop changes during the day: new prices, an offer that starts at noon, a product that ran out */
+  setInterval(async function(){ await readShop(); SLIDES = build(); paintBar(); }, 15 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
