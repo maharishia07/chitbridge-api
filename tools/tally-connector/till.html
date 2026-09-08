@@ -393,25 +393,45 @@ var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null
    scheduled restart); `cloud` is this page on its own, holding the shop and the bills in IndexedDB. Neither is a
    special case anywhere else in this file. */
 
+/**
+ * ⭐⭐ THE LOCAL COPY BELONGS TO A SHOP, NOT TO A DEVICE (2026-09-08). Athi: *"this is not an acceptable defect — if we just get the
+ * data and if we assemble the data, do we still get the issue here?"* We do, and this is why: the copy was assembled into a
+ * container named after the DEVICE. Point the same browser at a second shop and three things went wrong at once —
+ *   · refresh() took the OLD shop's `at` as its delta cursor, asked the NEW shop what had changed since then, and merged the
+ *     answer into the old shop's item list. Two shops' stock on one shelf ([TILL-04] caught exactly this).
+ *   · refresh() then calls drain() — so shop A's unsent bills would have been posted under shop B's key.
+ *   · today's count and the bill list carried across, so the day totals mixed two shops.
+ * ⚠️ Fetching fresh data does not fix any of that: the data was never wrong, the container was. So the store is named after the
+ * KEY that opens it, which is what identifies the shop here. Switching back to a shop finds its own queue and its own bills intact
+ * rather than destroyed — a queued sale is money, and wiping on switch would have thrown it away.
+ */
+function tillStore(){
+  var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? String(CloudHost.key) : '';
+  if (!k) return 'cb-till';                       /* the desktop kit keeps its copy on the agent side, not in here */
+  var h = 5381;                                    /* djb2 — a name, not a secret: the key itself never goes near a store name */
+  for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
+  return 'cb-till-' + h.toString(36);
+}
+
 /* ── IndexedDB, the smallest wrapper that does the job ── */
 /**
  * ⚠️ THE WORST DEVICE IN THE SHOP, NOT THE BEST. A private window, a locked-down browser or a full disk can refuse IndexedDB
  * outright — and a till that answers "cannot save" to a customer holding money is worse than useless. If the database will not open,
  * everything below falls back to localStorage: smaller and slower, but a day of bills fits, and nothing blocks a sale.
  */
-var MEM = { on:false, key:function(s,k){ return 'cb-till-' + s + '-' + k; },
+var MEM = { on:false, key:function(s,k){ return tillStore() + '-' + s + '-' + k; },
   put:function(store,row,key){ try{ localStorage.setItem(this.key(store, key || row.no), JSON.stringify(row)); }catch(_){ } },
   get:function(store,key){ try{ var v = localStorage.getItem(this.key(store,key)); return v ? JSON.parse(v) : undefined; }catch(_){ return undefined; } },
   del:function(store,key){ try{ localStorage.removeItem(this.key(store,key)); }catch(_){ } },
   all:function(store){ var out=[]; try{ for (var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
-    if (k && k.indexOf('cb-till-'+store+'-')===0){ try{ out.push(JSON.parse(localStorage.getItem(k))); }catch(_){ } } } }catch(_){ } return out; } };
+    if (k && k.indexOf(tillStore()+'-'+store+'-')===0){ try{ out.push(JSON.parse(localStorage.getItem(k))); }catch(_){ } } } }catch(_){ } return out; } };
 
 var DB = (function(){
   var p = null;
   function open(){
     if (p) return p;
     p = new Promise(function(res, rej){
-      var rq = indexedDB.open('cb-till', 1);
+      var rq = indexedDB.open(tillStore(), 1);
       rq.onupgradeneeded = function(){ var db = rq.result;
         if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
         if (!db.objectStoreNames.contains('bills')) db.createObjectStore('bills', { keyPath:'no' });
@@ -428,6 +448,8 @@ var DB = (function(){
   /* every call falls back to localStorage if IndexedDB refuses — the till keeps billing on a device that will not give us a database */
   var fall = function(what, fn, alt){ return fn().catch(function(){ MEM.on = true; return alt(); }); };
   return {
+    /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database */
+    reopen: function(){ p = null; },
     get: function(k){ return fall('get', function(){ return tx('kv','readonly',function(s){ return s.get(k); }); }, function(){ return MEM.get('kv',k); }); },
     set: function(k,v){ return fall('set', function(){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); }, function(){ return MEM.put('kv',v,k); }); },
     put: function(store,row){ return fall('put', function(){ return tx(store,'readwrite',function(s){ return s.put(row); }); }, function(){ return MEM.put(store,row); }); },
@@ -705,7 +727,8 @@ async function pickHost(){
   /* a key may be handed over once in the address: .../till.html#key=… — it is stored and the address is cleaned */
   if (location.hash.indexOf('key=') >= 0) {
     var k = decodeURIComponent(location.hash.split('key=')[1].split('&')[0]);
-    if (k) { ls.set('cb_till_key', k); CloudHost.key = k; history.replaceState(null, '', location.pathname + location.search); }
+    if (k) { ls.set('cb_till_key', k); CloudHost.key = k; DB.reopen();   /* a new key = a different shop = a different copy */
+             history.replaceState(null, '', location.pathname + location.search); }
   }
   return CloudHost;
 }
@@ -2461,7 +2484,10 @@ async function saveSettings(){
   ls.set('cb_till_fs', document.getElementById('set_fs').value);
   ls.set('cb_till_theme', document.getElementById('set_theme').value);
   var k = document.getElementById('set_key');
-  if (k && k.value && k.value.indexOf('•') < 0) { ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); }
+  if (k && k.value && k.value.indexOf('•') < 0 && k.value.trim() !== CloudHost.key) {
+    ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); DB.reopen();
+    S = null;                                     /* what is on screen belongs to the shop we just left */
+  }
   var rowsSel = document.getElementById('set_rows'); if (rowsSel) ls.set('cb_till_rows', rowsSel.value);
   var langSel = document.getElementById('set_lang'); if (langSel) ls.set('cb_till_lang', langSel.value);
   var spSel = document.getElementById('set_speech'); if (spSel) ls.set('cb_till_speech', spSel.value);
