@@ -438,6 +438,34 @@ var MEM = { on:false, key:function(s,k){ return tillStore() + '-' + s + '-' + k;
   all:function(store){ var out=[]; try{ for (var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
     if (k && k.indexOf(tillStore()+'-'+store+'-')===0){ try{ out.push(JSON.parse(localStorage.getItem(k))); }catch(_){ } } } }catch(_){ } return out; } };
 
+/**
+ * ⭐⭐⭐ ASK THE BROWSER TO ACTUALLY KEEP IT (2026-09-08). Athi: *"I guess IndexedDB is stored in the browser, no permanent memory —
+ * what if the PC crashed? and restart wiped off the memory?"*
+ *
+ * Half of that worry is unfounded and half of it is exactly right, and the difference matters:
+ *   · IndexedDB is ON DISK, not in RAM. A crash, a power cut or a reboot does NOT lose it — the bills are still there when the
+ *     machine comes back, and the queue drains as soon as the line returns.
+ *   · BUT by default an origin's storage is "best-effort": the browser is allowed to EVICT it when the disk runs low, and a
+ *     "clear browsing data" wipes it outright. For a filing cabinet of a day's takings, best-effort is not good enough.
+ * navigator.storage.persist() asks for the other mode — persistent — which the browser will not evict on its own. Chrome grants
+ * it silently to an installed app or a site the person uses often; a refusal is not an error, it is a fact the shop should be
+ * told, so health() reports it rather than this failing quietly.
+ * ⚠️ NOT A BACKUP. Persistent storage survives a crash and a reboot; it does not survive a dead disk or a reinstalled Windows.
+ * What makes a bill safe is reaching ChitBridge, which is what the queue exists to do — this only stops the browser throwing the
+ * queue away while it is still waiting.
+ */
+var KEPT = { asked:false, granted:null, why:'' };
+(function(){
+  try {
+    if (!navigator.storage || !navigator.storage.persist) { KEPT.why = 'this browser cannot promise to keep local data'; return; }
+    navigator.storage.persisted().then(function(already){
+      if (already) { KEPT.asked = true; KEPT.granted = true; return; }
+      return navigator.storage.persist().then(function(ok){ KEPT.asked = true; KEPT.granted = !!ok;
+        if (!ok) KEPT.why = 'the browser would not promise to keep this counter data'; });
+    }).catch(function(){ KEPT.why = 'the browser did not answer'; });
+  } catch (_) { KEPT.why = 'the browser did not answer'; }
+})();
+
 var DB = (function(){
   var p = null;
   function open(){
@@ -738,17 +766,45 @@ async function pickHost(){
   CloudHost.key = ls.get('cb_till_key', null);
   /* a key may be handed over once in the address: .../till.html#key=… — it is stored and the address is cleaned */
   if (location.hash.indexOf('key=') >= 0) {
-    var k = decodeURIComponent(location.hash.split('key=')[1].split('&')[0]);
+    var hv = function(n){ var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : ''; };
+    var k = hv('key');
+    /**
+     * ⭐⭐ WHO THIS COUNTER WAS OPENED FOR. ChitBridge puts the signed-in shop in the address beside the key, so the counter has
+     * something to CHECK the server's answer against. Without it a counter could only ever believe whatever a stored key returned.
+     */
+    var wantShop = hv('shop'), wantName = hv('as');
+    if (wantShop) { ls.set('cb_till_shop', wantShop); ls.set('cb_till_shopname', wantName || ''); }
     if (k) { ls.set('cb_till_key', k); CloudHost.key = k; DB.reopen();   /* a new key = a different shop = a different copy */
              history.replaceState(null, '', location.pathname + location.search); }
   }
   return CloudHost;
 }
 
+/**
+ * ⭐⭐⭐ THE COUNTER PROVES WHOSE IT IS, BEFORE IT BILLS ANYTHING (2026-09-08). Athi: *"is there any way we can protect opening a
+ * different shop in the same browser?"*
+ *
+ * Three independent facts have to agree, and any one of them alone was not enough:
+ *   1 the key held on this device        — opaque, says nothing about whose it is
+ *   2 the shop ChitBridge opened it for  — carried in the address (#shop=…)
+ *   3 the shop the SERVER answered with  — snapshot.entity_id, which no client can fake
+ * If 2 and 3 disagree, this counter is holding another shop's copy and MUST NOT take money against it. It stops and says so in
+ * words, with the way out — rather than quietly billing, which is what happened before and only showed up in the books.
+ * ⚠️ Silent when the counter was opened cold (a bookmark, a shortcut, the desktop kit): nothing declared an expectation, so there
+ * is nothing to contradict. A wrong answer is a fault; no answer is just a cold start.
+ */
+function wrongShop(){
+  if (!S || !S.entity_id) return null;                       /* an older server does not say; nothing to check against */
+  var want = ls.get('cb_till_shop', '');
+  if (!want || want === S.entity_id) return null;
+  return { want: want, wantName: ls.get('cb_till_shopname', '') || 'another shop', got: (S.shop && S.shop.name) || 'this one' };
+}
 async function load(){
   if (!HOST) HOST = await pickHost();
   var st = await HOST.state().catch(function(){ return STATE; });
   STATE = st || STATE; S = (st && st.snapshot) || S;
+  var bad = wrongShop();
+  if (bad) return stopWrongShop(bad);
   applyLook();
   document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.key ? 'Not paired yet' : 'This shop');
   document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
@@ -859,6 +915,24 @@ function rateOf(i){
     r = (out && out.rate != null) ? out.rate : null; } catch (_) { r = null; }
   i._rate = r;
   return r;
+}
+/**
+ * ⚠️ A FULL STOP, NOT A WARNING STRIP. A counter that is holding the wrong shop's prices cannot be allowed to keep taking money
+ * while a banner sits at the top — somebody would bill through it. Nothing is deleted: the other shop's copy, its bills and its
+ * unsent queue live in their own store and are waiting where they were left.
+ */
+function stopWrongShop(bad){
+  var box = document.getElementById('hits');
+  document.getElementById('shopname').textContent = bad.got;
+  if (box) box.innerHTML = '<div style="padding:24px;max-width:640px">'
+    + '<div style="font-weight:800;font-size:1.25em;margin-bottom:10px">This counter is not set up for ' + esc(bad.wantName) + '</div>'
+    + '<div style="color:var(--dim);line-height:1.6;margin-bottom:14px">You opened it from <b>' + esc(bad.wantName) + '</b>, but the key on this device belongs to <b>' + esc(bad.got) + '</b>.'
+    + ' Nothing has been billed, and nothing has been lost — ' + esc(bad.got) + ' keeps its own bills and stock, and they stay with ' + esc(bad.got) + '.</div>'
+    + '<div style="color:var(--dim);line-height:1.6"><b>What to do:</b> go back to ChitBridge, open <b>' + esc(bad.wantName) + '</b>, and press <b>Counter</b> there. It will hand this page the right key.</div>'
+    + '</div>';
+  var q = document.getElementById('q'); if (q) { q.disabled = true; q.placeholder = 'Billing is stopped until the shop matches'; }
+  var pill = document.getElementById('healthpill'); if (pill) { pill.textContent = '⛔ wrong shop'; pill.className = 'pill off'; }
+  paintStatus();
 }
 function setFilter(what, val){
   if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; }
@@ -1403,6 +1477,19 @@ function health(){
           'Open each in ChitBridge → Catalogue and set its tax slab.', noRate.slice(0, 5).map(function(i){ return i.name; }));
     }
   }
+  /**
+   * ⚠️ CAN THIS BROWSER BE TRUSTED TO HOLD A DAY OF BILLS? Only worth saying when something is actually waiting — a counter with
+   * an empty queue has nothing to lose, and a warning nobody needs is a warning nobody reads.
+   */
+  if (KEPT.granted === false && (STATE.queued || 0) > 0)
+    add('bad', 'This browser has not promised to keep your bills',
+      (STATE.queued || 0) + ' bill(s) are waiting here to reach ChitBridge, and this browser is allowed to clear its own storage if the disk runs low. A reboot is fine — losing them needs a disk clear-out or "clear browsing data".',
+      'Press ↻ while online to send them now. On a shop PC use the desktop counter, which keeps its bills in a file instead.');
+  else if (KEPT.granted === false)
+    add('note', 'This browser keeps counter data on a best-effort basis',
+      'Bills survive a crash and a reboot — they are on disk, not in memory. But the browser may clear them if the disk runs very low, and "clear browsing data" removes them.',
+      'Nothing to do while bills are reaching ChitBridge. On a shop PC the desktop counter is the sturdier home.');
+
   /* ⚠️ THE ASSUMPTION THAT WAS NEVER ASKED: are shelf prices quoted with the tax in them, or without? */
   add('note', ((S.policy && S.policy.price_includes_tax) === 'no')
       ? 'Shelf prices are quoted WITHOUT tax' : 'Shelf prices already include tax',

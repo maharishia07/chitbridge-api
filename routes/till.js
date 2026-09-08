@@ -167,6 +167,13 @@ router.get('/snapshot', auth, async (req, res) => {
 
     const body = {
       at: new Date().toISOString(),
+      /**
+       * ⭐⭐ WHICH SHOP IS THIS, ANSWERED BY THE SERVER (2026-09-08). Athi: *"can we check is there any other user id sits in the
+       * session layer, so we can open it correctly?"* A counter could not check, because nothing it held said whose shop it was —
+       * the key is opaque and the name is only a name. Now the snapshot says, and the counter compares that against the shop it was
+       * opened FOR. A mismatch is caught before a single line is billed, rather than found in the books afterwards.
+       */
+      entity_id,
       shop: {
         name: profile.trade_name || row.display_name || 'This shop',
         legal_name: profile.legal_name || null,
