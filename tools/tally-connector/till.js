@@ -75,6 +75,7 @@ const F = {
   series: path.join(DIR, 'series.json'),
   queue: path.join(DIR, 'queue.jsonl'),
   bills: (day) => path.join(DIR, 'bills-' + day + '.jsonl'),
+  docs: (day) => path.join(DIR, 'docs-' + day + '.jsonl'),      /* receipts and despatch notes — the other two doors of a shop */
   engine: (n) => path.join(DIR, 'engine-' + n + '.js'),
 };
 for (const d of [DIR]) if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
@@ -102,6 +103,18 @@ function fyOf(d) {
   const y = d.getFullYear(), apr = d.getMonth() >= 3;      /* the Indian financial year starts on 1 April */
   const a = apr ? y : y - 1;
   return String(a).slice(2) + '-' + String(a + 1).slice(2);
+}
+function nextNumberOf(kind){
+  /* ⚠️ ONE SERIES PER KIND. A goods receipt in the middle of the sales run puts a hole in the very thing a gapless series proves. */
+  const tag = (kind === 'GRN' || kind === 'DC') ? kind : '';
+  const file = tag ? path.join(DIR, 'series-' + tag + '.json') : F.series;
+  const fy = fyOf(new Date());
+  const s = readJSON(file, { prefix: tillCfg.id, fy, next: 1 });
+  if (s.fy !== fy) { s.fy = fy; s.next = 1; }
+  s.prefix = tillCfg.id || s.prefix;
+  const n = s.next; s.next = n + 1;
+  writeJSON(file, s);
+  return (tag ? tag + '/' : '') + s.prefix + '/' + fy + '/' + String(n).padStart(4, '0');
 }
 function nextNumber() {
   const fy = fyOf(new Date());
@@ -166,6 +179,24 @@ async function drain() {
     const left = [];
     for (const bill of rows) {
       try {
+        /**
+         * ⭐ THREE KINDS RIDE ONE QUEUE (2026-09-08): a bill, a receipt or despatch note, and the MOVEMENT rows that belong to an
+         * order. Each row says which it is — nothing here guesses, because a wrong guess would post a goods receipt as a sale.
+         * ⚠️ A movement goes to b144's deliver-lines, which writes into EVERY party's copy. That is the shared half of the claim;
+         * the chit above is our own record of it. Either half may wait for the line without the other.
+         */
+        if (bill.doc) {
+          const r0 = await cb.call('POST', '/api/chits/send', chitOfDoc(bill.doc));
+          log((bill.doc.kind === 'receipt' ? 'receipt ' : 'despatch ') + bill.no + ' → ' + (r0 && r0.duplicate ? 'already recorded' : 'recorded'));
+          const moves = movesOfDoc(bill.doc);
+          if (moves) {
+            try { await cb.call('POST', '/api/chits/' + moves.chit_id + '/deliver-lines', { rows: moves.rows });
+                  log('  and ' + moves.rows.length + ' line(s) recorded against the order'); }
+            catch (e2) { log('  the order could not be updated yet (' + e2.message + ') — the document is safe, this retries'); throw e2; }
+          }
+          online = true;
+          continue;
+        }
         const r = await cb.call('POST', '/api/chits/send', chitOf(bill));
         const id = r && (r.chit_id || (r.chit && r.chit.chit_id));
         log('bill ' + bill.no + ' → ' + (r && r.duplicate ? 'already recorded' : 'recorded') + (id ? ' (' + String(id).slice(0, 8) + ')' : ''));
@@ -215,6 +246,52 @@ function chitOf(bill) {
   };
 }
 
+/**
+ * ⭐ THE SAME TWO SHAPES THE PAGE BUILDS. A receipt and a despatch note are OUR OWN chits (a till key may address nobody else), with
+ * the other party named inside business_json; what actually moved travels on the ORDER, through deliver-lines, into both copies.
+ * ⚠️ client_ref is the document number, so a replay after a dropped line returns the first chit instead of recording the lorry twice.
+ */
+function chitOfDoc(d) {
+  const receipt = d.kind === 'receipt';
+  const who = receipt ? ((d.vendor && d.vendor.name) || 'Not named') : ((d.against && d.against.party) || 'Customer');
+  const subject = (receipt ? 'Goods received from ' : 'Despatched to ') + who + ' — ' + d.no;
+  return {
+    recipients: [{ self: true, name: 'self' }],
+    purpose: receipt ? 'receipt' : 'delivery_note',
+    subject, manual_subject: subject,
+    client_ref: d.no,
+    business_json: {
+      doc: d.kind, doc_no: d.no, doc_at: d.at,
+      till: { id: d.till, name: tillCfg.name, by: d.by || null },
+      party: { name: who },
+      against: d.against || null,
+      their_bill: d.their_bill || null,
+      costs: d.costs || null, goods: d.goods, extras: d.extras, landed_total: d.landed_total,
+      ref: d.ref || null, cartons: d.cartons || null, weight: d.weight || null,
+      differences: (d.lines || []).filter((l) => (receipt ? l.difference : l.short > 0))
+                                  .map((l) => ({ name: l.name, by: receipt ? l.difference : -l.short, reason: l.reason || null })),
+    },
+    line_items: (d.lines || []).map((l) => ({
+      particulars: l.name, quantity: receipt ? l.counted : l.picked, unit: l.unit,
+      price: receipt ? (l.rate == null ? null : l.rate) : null,
+      total: receipt ? (l.value == null ? null : l.value) : null,
+      item_data: { item_id: l.item_id || null, lot: l.lot || null, ordered: l.ordered,
+                   difference: receipt ? l.difference : (l.short ? -l.short : 0), reason: l.reason || null,
+                   landed: receipt ? l.landed : null, unit_cost: receipt ? l.unit_cost : null,
+                   carton: receipt ? null : l.carton },
+    })),
+  };
+}
+/** what moved, against the order it was agreed on. Null when there was no order — a receipt at the door is still a receipt. */
+function movesOfDoc(d) {
+  if (!d.against || !d.against.chit_id) return null;
+  const rows = (d.lines || [])
+    .filter((l) => l.line_id && ((d.kind === 'receipt' ? l.counted : l.picked) > 0))
+    .map((l) => ({ line_id: l.line_id, quantity: (d.kind === 'receipt' ? l.counted : l.picked), unit: l.unit,
+                   reference: d.no, note: l.reason || null }));
+  return rows.length ? { chit_id: d.against.chit_id, rows } : null;
+}
+
 /* ── the screen ────────────────────────────────────────────────────────────────────────────────────────────── */
 const PAGE = path.join(__dirname, 'till.html');
 const send = (res, code, type, body) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body); };
@@ -238,6 +315,31 @@ const server = http.createServer(async (req, res) => {
       const n = url.pathname.split('/')[2].replace('.js', '');
       if (!fs.existsSync(F.engine(n))) return send(res, 503, 'text/plain', '// the engine has not been fetched yet — press Refresh while online');
       return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(F.engine(n), 'utf8'));
+    }
+
+    /* ⭐ the open orders, straight through — a device holds no copy, because an order changes while you are working it */
+    if (req.method === 'GET' && url.pathname === '/api/tasks') {
+      const kind = url.searchParams.get('kind') === 'receive' ? 'receive' : 'despatch';
+      try { return json(res, 200, await cb.call('GET', '/api/till/tasks?kind=' + kind)); }
+      catch (e) { return json(res, 200, { tasks: [], offline: true, why: e.message }); }
+    }
+
+    /**
+     * ⭐⭐ A RECEIPT OR A DESPATCH NOTE (2026-09-08). The number first, then the file, then the queue — the same order as a bill, so
+     * a crash costs a gap and never a duplicate. The movement rows, when the document was against an order, are queued SEPARATELY:
+     * they go to b144's deliver-lines, which writes into every party's copy, and either half may wait for the line without the other.
+     */
+    if (req.method === 'POST' && url.pathname === '/api/doc') {
+      let raw = ''; for await (const c of req) raw += c;
+      const d = JSON.parse(raw || '{}');
+      if (!d || !Array.isArray(d.lines) || !d.lines.length) return json(res, 400, { error: 'a document needs at least one line' });
+      const kind = d.kind === 'despatch' ? 'despatch' : 'receipt';
+      const doc = Object.assign({ no: nextNumberOf(kind === 'receipt' ? 'GRN' : 'DC'), at: new Date().toISOString(),
+                                  till: tillCfg.id, catalogue_version: snapshot && snapshot.version }, d, { kind });
+      appendLine(F.docs(today()), doc);
+      appendLine(F.queue, { no: doc.no, at: doc.at, doc: doc });
+      drain().catch(() => {});
+      return json(res, 200, { ok: true, doc: doc });
     }
 
     if (req.method === 'GET' && url.pathname === '/api/state')

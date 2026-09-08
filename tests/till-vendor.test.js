@@ -181,4 +181,126 @@ it('a day with nothing on it still closes, and says nothing was taken', () => {
   assert.ok(P.dayCloseHTML(d).indexOf('nothing taken') > 0, 'an empty day must say so on the paper');
 });
 
+/* ── RECEIVE: landed cost, and the difference that must be named (2026-09-08) ────────────────────────────────── */
+
+it('⭐⭐ freight is spread by value, and the parts add back to the whole', () => {
+  const share = P.apportion([40000, 8000, 2000], 2000);
+  assert.deepStrictEqual(share, [1600, 320, 80]);
+  assert.strictEqual(share.reduce((a, b) => a + b, 0), 2000);
+});
+
+it('⚠️ a division that does not come out evenly still sums to the paisa — the remainder goes to the largest line', () => {
+  const share = P.apportion([100, 100, 100], 100);
+  const sum = Math.round(share.reduce((a, b) => a + b, 0) * 100) / 100;
+  assert.strictEqual(sum, 100, 'three thirds of ₹100 lost ' + (100 - sum));
+});
+
+it('no freight is no apportionment, and a receipt of free samples does not divide by zero', () => {
+  assert.deepStrictEqual(P.apportion([100, 50], 0), [0, 0]);
+  assert.deepStrictEqual(P.apportion([0, 0], 500), [0, 0]);
+});
+
+it('the landed cost of a line is its own value plus its share, per unit', () => {
+  P.RCV = { task: null, vendor: '', bill_no: '', bill_date: '', bill_total: null,
+            costs: { freight: 2000, loading: 0, duty: 0, other: 0 },
+            lines: [{ name: 'Rice', unit: 'bag', counted: 40, rate: 1000, ordered: 40, reason: '' },
+                    { name: 'Oil', unit: 'btl', counted: 100, rate: 80, ordered: 100, reason: '' }] };
+  const landed = P.rcvLanded();
+  assert.strictEqual(P.rcvGoods(), 48000);
+  assert.strictEqual(landed[0].share + landed[1].share, 2000);
+  assert.strictEqual(landed[0].cost, 41666.67);
+  assert.strictEqual(Math.round(landed[0].unit_cost * 100) / 100, 1041.67, 'a bag of rice cost more than its invoice line');
+});
+
+it('⭐ what we counted is never the supplier\'s figure — short and excess are both kept, and named', () => {
+  P.RCV = { costs: { freight: 0, loading: 0, duty: 0, other: 0 },
+            lines: [{ name: 'Rice', ordered: 40, counted: 38, rate: 1000, unit: 'bag', reason: 'damaged' },
+                    { name: 'Oil', ordered: 100, counted: 104, rate: 80, unit: 'btl', reason: 'extra sent' }] };
+  assert.strictEqual(P.rcvDiff(P.RCV.lines[0]), -2, 'short by two');
+  assert.strictEqual(P.rcvDiff(P.RCV.lines[1]), 4, 'four more than ordered, and accepted');
+  assert.strictEqual(P.rcvGoods(), 46320, 'the value follows what was COUNTED, not what was ordered');
+});
+
+it('a receipt with no order at all is still a receipt', () => {
+  P.RCV = { costs: { freight: 0, loading: 0, duty: 0, other: 0 },
+            lines: [{ name: 'Toor dal', ordered: null, counted: 25, rate: 126, unit: 'kg', reason: '' }] };
+  assert.strictEqual(P.rcvDiff(P.RCV.lines[0]), 0, 'nothing was ordered, so nothing differs');
+  assert.strictEqual(P.rcvGoods(), 3150);
+});
+
+/* ── the two documents, as chits ─────────────────────────────────────────────────────────────────────────────── */
+
+it('a receipt becomes OUR OWN chit, numbered in its own series, with the vendor inside', () => {
+  const chit = P.chitOfDoc({ kind: 'receipt', no: 'GRN/C1/26-27/0007', at: '2026-09-08T05:00:00Z', till: 'C1',
+    vendor: { name: 'Anand Traders' }, their_bill: { no: '4471', date: '2026-09-08', total: 46000 },
+    against: null, costs: { freight: 2000 }, goods: 46320, extras: 2000, landed_total: 48320,
+    lines: [{ name: 'Rice', unit: 'bag', ordered: 40, counted: 38, difference: -2, reason: 'damaged', rate: 1000, value: 38000, landed: 39640, unit_cost: 1043.16, item_id: 'i1', line_id: 'L1' }] });
+  assert.strictEqual(chit.purpose, 'receipt');
+  assert.strictEqual(chit.recipients[0].self, true, 'a till key may address nobody but itself');
+  assert.strictEqual(chit.client_ref, 'GRN/C1/26-27/0007', 'a replay must not record the lorry twice');
+  assert.strictEqual(chit.business_json.party.name, 'Anand Traders');
+  assert.strictEqual(chit.business_json.their_bill.no, '4471');
+  assert.strictEqual(chit.business_json.differences[0].by, -2);
+  assert.strictEqual(chit.line_items[0].quantity, 38, 'the chit carries what was counted');
+  assert.strictEqual(chit.line_items[0].item_data.lot, null, '⚠️ the lot seam travels from day one, empty');
+});
+
+it('a despatch note carries the carton and the shortfall, and no price', () => {
+  const chit = P.chitOfDoc({ kind: 'despatch', no: 'DC/C1/26-27/0004', at: '2026-09-08T06:00:00Z', till: 'C1',
+    against: { chit_id: 'c-1', party: 'Chola Auto Care' }, ref: 'TN01 AB 1234', cartons: 2, weight: 14.2,
+    lines: [{ name: 'Brake pad set', unit: 'set', ordered: 12, picked: 12, short: 0, reason: null, carton: 1, line_id: 'L1', item_id: 'i9' },
+            { name: 'Clutch plate', unit: 'piece', ordered: 4, picked: 2, short: 2, reason: 'no stock', carton: 2, line_id: 'L2', item_id: 'i8' }] });
+  assert.strictEqual(chit.purpose, 'delivery_note');
+  assert.strictEqual(chit.business_json.party.name, 'Chola Auto Care');
+  assert.strictEqual(chit.business_json.cartons, 2);
+  assert.strictEqual(chit.business_json.differences[0].by, -2, 'the shortfall is on the document, the same day');
+  assert.strictEqual(chit.line_items[1].price, null, 'a packing slip is not a bill');
+  assert.strictEqual(chit.line_items[1].item_data.carton, 2);
+});
+
+it('⭐ what MOVED goes onto the order, in both copies — and only when there was an order', () => {
+  const doc = { kind: 'receipt', no: 'GRN/C1/26-27/0007', against: { chit_id: 'c-7' },
+    lines: [{ line_id: 'L1', counted: 38, unit: 'bag', reason: 'damaged' }, { line_id: 'L2', counted: 0, unit: 'btl' }] };
+  const moves = P.movesOfDoc(doc);
+  assert.strictEqual(moves.chit_id, 'c-7');
+  assert.strictEqual(moves.rows.length, 1, 'a line where nothing arrived is not a movement');
+  assert.strictEqual(moves.rows[0].quantity, 38);
+  assert.strictEqual(moves.rows[0].reference, 'GRN/C1/26-27/0007');
+  assert.strictEqual(P.movesOfDoc(Object.assign({}, doc, { against: null })), null, 'no order, nothing to record against');
+});
+
+/* ── DESPATCH: the rules that make a scan worth trusting ─────────────────────────────────────────────────────── */
+
+it('⭐⭐ a scan cannot pick more than was ordered', () => {
+  P.MODE = 'despatch';
+  P.DSP = { task: { chit_id: 'c-1', party: 'Chola' }, ref: '', weight: null, carton: 1,
+            lines: [{ line_id: 'L1', item_id: 'i9', name: 'Brake pad set', unit: 'set', ordered: 12, picked: 11, reason: '', carton: 1 }] };
+  let said = '';
+  P.alert = (m) => { said = m; };
+  P.dspScan({ item_id: 'i9', name: 'Brake pad set' }, 5);
+  assert.strictEqual(P.DSP.lines[0].picked, 12, 'it filled the line and refused the rest');
+  assert.ok(said.indexOf('dispute') > 0, 'it must say why, in words a picker understands: ' + said);
+});
+
+it('⚠️ something that is not on the order is refused, not added', () => {
+  P.MODE = 'despatch';
+  P.DSP = { task: { chit_id: 'c-1' }, carton: 1,
+            lines: [{ line_id: 'L1', item_id: 'i9', name: 'Brake pad', unit: 'set', ordered: 12, picked: 0, reason: '', carton: 1 }] };
+  let said = '';
+  P.alert = (m) => { said = m; };
+  P.dspScan({ item_id: 'i-other', name: 'Engine oil' }, 1);
+  assert.strictEqual(P.DSP.lines.length, 1, 'it grew a line for something nobody ordered');
+  assert.strictEqual(P.DSP.lines[0].picked, 0);
+  assert.ok(said.indexOf('not on this order') > 0, said);
+});
+
+it('packing with no order chosen asks for one rather than guessing', () => {
+  P.MODE = 'despatch';
+  P.DSP = { task: null, lines: [], carton: 1 };
+  let said = '';
+  P.alert = (m) => { said = m; };
+  P.dspScan({ item_id: 'i9', name: 'Brake pad' }, 1);
+  assert.ok(said.indexOf('order') > 0, said);
+});
+
 console.log(pass + ' checks');

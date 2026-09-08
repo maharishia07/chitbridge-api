@@ -188,6 +188,67 @@ router.get('/bills', auth, async (req, res) => {
 });
 
 /**
+ * ⭐⭐ WHAT IS STILL OWED, EITHER WAY (2026-09-08 — purchase and despatch in the till format).
+ *
+ *   GET /api/till/tasks?kind=receive    the orders WE SENT that are not fully received  → the goods-in screen
+ *   GET /api/till/tasks?kind=despatch   the orders WE RECEIVED that are not fully sent  → the picking screen
+ *
+ * One call, the same posture as the snapshot: the shop's own world, small enough to hold on a device and work from with the line
+ * down. Each line carries what was ordered and what has already moved, so the screen can show REMAINING without arithmetic of its own.
+ * ⚠️ Progress comes from lib/deliverline (b144) — events, never a stored total — so a part delivery recorded from anywhere, by
+ * either party, is already reflected here. Nothing about "how much is left" is computed twice.
+ * ⚠️ A chit whose lines are all complete is not a task. The screen must never show work that is done.
+ */
+const deliverline = require('../lib/deliverline');
+const select = require('../lib/select');            /* ⭐ the shared selector: one definition of "my chits", counterparty included */
+router.get('/tasks', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
+    const direction = kind === 'receive' ? 'sent' : 'received';
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '40', 10) || 40, 1), 100);
+    const since = new Date(Date.now() - 120 * 24 * 3600 * 1000).toISOString();
+
+    const heads = (await select.rows(entity_id, { direction, purpose: 'order', since, limit: 200 })).slice(0, limit);
+    if (!heads.length) return res.json({ kind, count: 0, tasks: [] });
+
+    const { withEntity } = require('../db');
+    const out = await withEntity(entity_id, async (db) => {
+      const ids = heads.map((h) => h.chit_id);
+      const li = await db.query(
+        'SELECT chit_id, line_items, business_json FROM chit_header WHERE entity_id = $1 AND chit_id = ANY($2::uuid[])',
+        [entity_id, ids]);
+      const byId = new Map(li.rows.map((r) => [String(r.chit_id), r]));
+      const tasks = [];
+      for (const h of heads) {
+        const det = byId.get(String(h.chit_id)) || {};
+        const bj = det.business_json || {};
+        if (bj.bill_no) continue;                     /* a counter sale is a record, not a task */
+        const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
+        const lines = (Array.isArray(det.line_items) ? det.line_items : []).map((l) => {
+          const p = (prog && prog.get) ? prog.get(l.line_id) : null;
+          const ordered = Number(l.quantity) || 0;
+          const moved = (p && p.delivered != null) ? Number(p.delivered) : 0;
+          return { line_id: l.line_id || null,
+                   item_id: (l.item_data && l.item_data.item_id) || l.item_id || null,
+                   name: l.particulars || l.name || '', unit: l.unit || 'piece',
+                   rate: l.price == null ? null : Number(l.price),
+                   ordered, moved, remaining: Math.max(0, Math.round((ordered - moved) * 1000) / 1000) };
+        });
+        if (!lines.length) continue;
+        if (lines.every((l) => l.remaining <= 0)) continue;      /* nothing owed: not a task */
+        tasks.push({ chit_id: h.chit_id, at: h.created_at,
+                     subject: h.manual_subject || h.auto_subject || '',
+                     party: h.counterparty_name || '', party_id: h.counterparty_id || null,
+                     ref: bj.order_no || bj.ref || null, lines });
+      }
+      return tasks;
+    });
+    res.json({ kind, count: out.length, tasks: out });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
  * ⭐ THE ENGINES, SERVED (2026-09-07). A till has to price with the line down, so it keeps its own copy of the three engines — and it
  * gets them from here rather than from a second host, so there is one place that answers "which version is the counter running".
  * Cached by the till at install and refreshed with the snapshot; both files are the SAME code the server and the app run.

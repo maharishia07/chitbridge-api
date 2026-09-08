@@ -61,7 +61,7 @@ it('⚠️ the counter is downloaded with a TILL key, not a connector one — it
   const auth = fs.readFileSync(path.join(API, 'middleware', 'auth.js'), 'utf8');
   /* the scope table is written as regexes, so read it with the escaping taken out */
   const till = auth.slice(auth.indexOf('  till:'), auth.indexOf('  connector:')).split('\\').join('');
-  for (const call of ['/api/till/(snapshot|bills|engine', '/api/chits/send', '/api/integrations/kit'])
+  for (const call of ['snapshot', 'bills', 'tasks', 'engine', '/api/chits/send', '/api/integrations/kit', 'deliver-lines'])
     assert.ok(till.indexOf(call) > 0, 'a till key cannot reach ' + call);
 });
 

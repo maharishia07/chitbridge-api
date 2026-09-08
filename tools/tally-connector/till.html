@@ -60,6 +60,22 @@
   .search input:focus{outline:none;border-color:var(--blue)}
   /* the dozen this shop sells all day — big targets, no reading, gone the moment somebody types */
   /* everything · on offer · the departments — one row, scrolls sideways on a phone rather than stacking */
+  /* ⭐ THE MENU. Three jobs, named, one of them lit — never a dropdown: a person at a counter must see which rules are in force. */
+  .modes{display:inline-flex;gap:2px;background:var(--line);border-radius:9px;padding:2px}
+  .modes button{border:0;background:transparent;color:var(--dim);padding:4px 10px;border-radius:7px;cursor:pointer;font-size:.85em;font-weight:700}
+  .modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+  .doc{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .doc input,.doc select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:.9em;min-width:0}
+  .doc .wide{grid-column:1 / -1}
+  .lines{flex:1;overflow:auto}
+  .lines .ln{display:grid;grid-template-columns:1fr 74px 74px 90px 30px;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .lines .ln.done{background:var(--ok-tint)}
+  .lines .ln input{width:100%;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);text-align:right}
+  .lines .ln .nm{font-weight:600}
+  .lines .ln .u{color:var(--dim);font-size:.78em}
+  .lines .ln select{width:100%;padding:5px;border:1px solid var(--warn);border-radius:7px;background:var(--paper);color:var(--warn);font-size:.78em}
+  .bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);font-size:.85em;color:var(--dim);flex-wrap:wrap}
+  .bar b{color:var(--ink)}
   .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch}
   .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
@@ -132,6 +148,11 @@
   <section class="left">
     <header>
       <span class="shop" id="shopname">…</span>
+      <span class="modes" id="modes">
+        <button data-testid="till-mode-sell" onclick="setMode('sell')">🧾 Sell</button>
+        <button data-testid="till-mode-receive" onclick="setMode('receive')">📥 Receive</button>
+        <button data-testid="till-mode-despatch" onclick="setMode('despatch')">📦 Despatch</button>
+      </span>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is at the counter (F7 to hand over)">…</button>
       <span class="pill" id="netpill">…</span>
@@ -157,6 +178,7 @@
   </section>
 
   <section class="right">
+   <div id="pane_sell" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="cust">
       <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist">
       <datalist id="custlist"></datalist>
@@ -177,6 +199,43 @@
       <button class="pri" id="save" onclick="finish()">Save &amp; print · F9</button>
     </div>
     <div class="parked" id="parked"></div>
+   </div>
+
+   <!-- ⭐ RECEIVE — what actually came through the door. The bill they brought is FOUR fields; the lines are what we counted. -->
+   <div id="pane_receive" style="display:none;flex-direction:column;flex:1;min-height:0">
+    <div class="doc">
+      <select id="rcv_task" onchange="rcvPickTask(this.value)" class="wide" data-testid="rcv-task"><option value="">No order — goods at the door</option></select>
+      <input id="rcv_vendor" placeholder="Who it came from" autocomplete="off" data-testid="rcv-vendor" oninput="RCV.vendor=this.value">
+      <input id="rcv_billno" placeholder="Their bill / challan no" autocomplete="off" data-testid="rcv-billno" oninput="RCV.bill_no=this.value">
+      <input id="rcv_billdate" type="date" data-testid="rcv-billdate" oninput="RCV.bill_date=this.value">
+      <input id="rcv_billtotal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Their bill total ₹" data-testid="rcv-billtotal" oninput="RCV.bill_total=this.value===''?null:Number(this.value); paintReceive()">
+    </div>
+    <div class="lines" id="rcv_lines"></div>
+    <div class="bar" id="rcv_costs"></div>
+    <div class="bar" id="rcv_sum"></div>
+    <div class="go">
+      <button onclick="rcvClear()">Clear · Esc</button>
+      <button data-testid="rcv-costs-open" onclick="rcvCosts()">Freight &amp; costs · F5</button>
+      <button class="pri" id="rcv_save" data-testid="rcv-confirm" onclick="rcvConfirm()">Confirm receipt · F9</button>
+    </div>
+   </div>
+
+   <!-- ⭐ DESPATCH — the task on the left, what has been collated on the right; every unit scanned, never typed from memory. -->
+   <div id="pane_despatch" style="display:none;flex-direction:column;flex:1;min-height:0">
+    <div class="doc">
+      <select id="dsp_task" onchange="dspPickTask(this.value)" class="wide" data-testid="dsp-task"><option value="">Choose the order to send</option></select>
+      <input id="dsp_ref" placeholder="LR / AWB / vehicle (optional)" autocomplete="off" data-testid="dsp-ref" oninput="DSP.ref=this.value">
+      <input id="dsp_weight" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Weight of this carton (kg)" data-testid="dsp-weight" oninput="DSP.weight=this.value===''?null:Number(this.value)">
+    </div>
+    <div class="lines" id="dsp_lines"></div>
+    <div class="bar" id="dsp_sum"></div>
+    <div class="go">
+      <button onclick="dspClear()">Clear · Esc</button>
+      <button data-testid="dsp-carton" onclick="dspCarton()">Next carton · F8</button>
+      <button class="pri" id="dsp_save" data-testid="dsp-confirm" onclick="dspConfirm()">Pack &amp; despatch · F9</button>
+    </div>
+   </div>
+
     <div class="foot"><span id="queuenote"></span><span id="updnote" class="upd"></span><span id="lastnote"></span></div>
   </section>
 </div>
@@ -309,6 +368,8 @@ var AgentHost = {
   shift: function(sh){ return fetch('/api/shift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sh)}).then(function(r){ return r.json(); }); },
   refresh: function(){ return fetch('/api/refresh',{method:'POST'}).then(function(r){ return r.json(); }); },
   bill: function(b){ return fetch('/api/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }); },
+  tasks: function(kind){ return fetch('/api/tasks?kind=' + encodeURIComponent(kind)).then(function(r){ return r.json(); }).catch(function(){ return { tasks: [], offline: true }; }); },
+  doc: function(d){ return fetch('/api/doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){ return r.json(); }); },
 };
 
 /**
@@ -383,6 +444,31 @@ var CloudHost = {
     this.drain();
     return { ok:true };
   },
+  /** the open orders, straight from ChitBridge — a device holds no copy of them, because an order changes while you are packing it */
+  async tasks(kind){
+    if (!this.key || !navigator.onLine) return { tasks: [], offline: true };
+    try {
+      var r = await fetch(this.api + '/api/till/tasks?kind=' + encodeURIComponent(kind), { headers: { 'X-Api-Key': this.key } });
+      if (!r.ok) return { tasks: [], offline: true, why: 'HTTP ' + r.status };
+      return await r.json();
+    } catch (e) { return { tasks: [], offline: true, why: e.message }; }
+  },
+  /**
+   * ⭐ A RECEIPT OR A DESPATCH NOTE, THROUGH THE BILL'S OWN QUEUE. Same numbering (GRN/C1/26-27/0007), same disk-first order, same
+   * once-only guarantee through client_ref.
+   * ⚠️ It also queues the MOVEMENT rows separately, because they go to a different place — b144's deliver-lines, which writes into
+   * every party's copy. The chit is our record; the movement is the shared claim. One can succeed while the other waits.
+   */
+  async doc(d){
+    var no = await nextNumber((d.kind === 'receipt') ? 'GRN' : 'DC');
+    var doc = Object.assign({}, d, { no: no, at: d.at || new Date().toISOString(), catalogue_version: S && S.version });
+    await DB.put('bills', Object.assign({}, doc, { doc: true }));
+    await DB.put('queue', { no: no, at: doc.at, chitBody: chitOfDoc(doc) });
+    var moves = movesOfDoc(doc);
+    if (moves) await DB.put('queue', { no: no + '/moved', at: doc.at, deliver: moves });
+    this.drain();
+    return { ok: true, doc: doc };
+  },
   async bill(b){
     var no = await nextNumber();
     var bill = Object.assign({ no: no, at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
@@ -401,8 +487,12 @@ var CloudHost = {
       for (var i = 0; i < rows.length; i++) {
         var bill = rows[i];
         try {
-          var payload = bill.shiftBody ? bill.shiftBody : chitOf(bill);
-          var r = await fetch(this.api + '/api/chits/send', { method:'POST',
+          /* three kinds ride this queue now: a bill, a shift, and a receipt or despatch note — plus the movement rows that belong
+             to an order, which go somewhere else entirely. Each row says which it is; nothing here guesses. */
+          var url = this.api + '/api/chits/send', payload;
+          if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: bill.deliver.rows }; }
+          else payload = bill.shiftBody ? bill.shiftBody : (bill.chitBody ? bill.chitBody : chitOf(bill));
+          var r = await fetch(url, { method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
           if (r.ok) await DB.del('queue', bill.no);
           else if (r.status === 403 || r.status === 401) break;      /* a key problem is not fixed by trying harder */
@@ -412,18 +502,75 @@ var CloudHost = {
   },
 };
 
+/**
+ * ⭐ A RECEIPT AND A DESPATCH NOTE GET SERIES OF THEIR OWN (2026-09-08) — GRN/C1/26-27/0007, DC/C1/26-27/0004. They must never share
+ * the bill's series: a gapless sales series is a legal expectation, and a goods receipt sitting in the middle of it breaks the thing
+ * the numbering exists to prove.
+ */
 /** the number: C1/26-27/0041 — continuous within the financial year, prefixed by the counter, decided locally */
 function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; return String(a).slice(2)+'-'+String(a+1).slice(2); }
-async function nextNumber(){
+async function nextNumber(kind){
   var fy = fyOf(new Date());
-  var s = (await DB.get('series')) || { prefix: ls.get('cb_till_id','C1'), fy: fy, next: 1 };
+  /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. A sale is C1/26-27/0041; a goods receipt is GRN/C1/26-27/0007; a despatch note is
+     DC/C1/26-27/0004. Sharing a run would put a hole in the sales series, which is the one thing the numbering exists to prove. */
+  var tag = (kind === 'GRN' || kind === 'DC') ? kind : '';
+  var box = tag ? ('series-' + tag) : 'series';
+  var s = (await DB.get(box)) || { prefix: ls.get('cb_till_id','C1'), fy: fy, next: 1 };
   if (s.fy !== fy) { s.fy = fy; s.next = 1; }
   s.prefix = ls.get('cb_till_id','C1') || s.prefix;
   var n = s.next; s.next = n + 1;
-  await DB.set('series', s);
-  return s.prefix + '/' + fy + '/' + String(n).padStart(4,'0');
+  await DB.set(box, s);
+  return (tag ? tag + '/' : '') + s.prefix + '/' + fy + '/' + String(n).padStart(4,'0');
 }
 
+/**
+ * ⭐⭐ A RECEIPT AND A DESPATCH NOTE, AS CHITS. Both are OUR OWN record — a till key may address nobody but itself, and that
+ * guarantee is not worth trading for the convenience of naming the other party on the chit. The party is named INSIDE
+ * business_json, and the shared half — what actually moved — travels on the order itself through deliver-lines.
+ * ⚠️ client_ref is the document number, so a replay after a dropped line returns the first chit instead of recording the lorry twice.
+ */
+function chitOfDoc(d){
+  var receipt = d.kind === 'receipt';
+  var who = receipt ? ((d.vendor && d.vendor.name) || 'Not named') : ((d.against && d.against.party) || 'Customer');
+  var subject = (receipt ? 'Goods received from ' : 'Despatched to ') + who + ' — ' + d.no;
+  return {
+    recipients: [{ self: true, name: 'self' }],
+    purpose: receipt ? 'receipt' : 'delivery_note',
+    subject: subject, manual_subject: subject,
+    client_ref: d.no,
+    business_json: {
+      doc: d.kind, doc_no: d.no, doc_at: d.at,
+      till: { id: d.till, name: ls.get('cb_till_name','Counter 1'), by: d.by || null },
+      party: { name: who },
+      against: d.against || null,
+      their_bill: d.their_bill || null,
+      costs: d.costs || null, goods: d.goods, extras: d.extras, landed_total: d.landed_total,
+      ref: d.ref || null, cartons: d.cartons || null, weight: d.weight || null,
+      differences: (d.lines || []).filter(function(l){ return receipt ? l.difference : l.short > 0; })
+                                  .map(function(l){ return { name:l.name, by: receipt ? l.difference : -l.short, reason:l.reason || null }; }),
+    },
+    line_items: (d.lines || []).map(function(l){
+      var qty = receipt ? l.counted : l.picked;
+      return { particulars: l.name, quantity: qty, unit: l.unit,
+               price: receipt ? (l.rate == null ? null : l.rate) : null,
+               total: receipt ? (l.value == null ? null : l.value) : null,
+               item_data: { item_id: l.item_id || null, lot: l.lot || null,
+                            ordered: l.ordered, difference: receipt ? l.difference : (l.short ? -l.short : 0),
+                            reason: l.reason || null, landed: receipt ? l.landed : null, unit_cost: receipt ? l.unit_cost : null,
+                            carton: receipt ? null : l.carton } };
+    }),
+  };
+}
+/** the shared half: what moved, recorded against the ORDER, in every party's copy (b144). Null when there was no order. */
+function movesOfDoc(d){
+  if (!d.against || !d.against.chit_id) return null;
+  var rows = (d.lines || []).filter(function(l){ return l.line_id && ((d.kind === 'receipt' ? l.counted : l.picked) > 0); })
+    .map(function(l){
+      return { line_id: l.line_id, quantity: (d.kind === 'receipt' ? l.counted : l.picked), unit: l.unit,
+               reference: d.no, note: l.reason || null };
+    });
+  return rows.length ? { chit_id: d.against.chit_id, rows: rows } : null;
+}
 /** the bill, as the chit the rest of ChitBridge already understands (the same shape the program sends) */
 function chitOf(bill){
   return {
@@ -662,8 +809,13 @@ function searchKey(e){
 }
 function add(n){
   var i = hits()[n]; if (!i) return;
-  addItem(i, typed().qty);
-  document.getElementById('q').value = ''; SEL = 0; paintHits(); price(); focusSearch();
+  var q = typed().qty;
+  /* ⭐ ONE SEARCH BOX, THREE MEANINGS — and each mode decides what "add" is. Selling puts it on the bill, receiving counts it in,
+     despatch checks it against the order and may refuse it outright. */
+  if (MODE === 'receive') rcvAdd(i, q);
+  else if (MODE === 'despatch') dspScan(i, q);
+  else { addItem(i, q); price(); }
+  document.getElementById('q').value = ''; SEL = 0; paintHits(); focusSearch();
 }
 /** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */
 function addItem(i, qty){
@@ -919,6 +1071,350 @@ async function dayClose(){
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
   document.getElementById('slipdlg').showModal();
 }
+/* ═══ 3b · RECEIVE and DESPATCH ══════════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐⭐ ONE PAGE, THREE MODES, AND NO SHARED RULES (Athi, 2026-09-08: *"it is like a menu — move to till, or switch to receive the
+ * product, or despatch a product. Clean separation of rules."*)
+ *
+ * What the three DO share: the shop's copy, the search, the queue, and the four rules at the top of till.js. What they must never
+ * share is behaviour — selling adds one when you press Enter, receiving counts what a lorry brought, and despatch refuses to let you
+ * pick more than was ordered. A single "line" screen that tried to be all three would be wrong in two of them.
+ */
+var MODE = 'sell';
+var TASKS = { receive: [], despatch: [] };
+var RCV = null, DSP = null;
+function rcvBlank(){ return { task:null, vendor:'', bill_no:'', bill_date:'', bill_total:null, lines:[], costs:{ freight:0, loading:0, duty:0, other:0 } }; }
+function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[] }; }
+RCV = rcvBlank(); DSP = dspBlank();
+
+function setMode(m){
+  MODE = (m === 'receive' || m === 'despatch') ? m : 'sell';
+  ls.set('cb_till_mode', MODE);
+  ['sell','receive','despatch'].forEach(function(k){
+    var el = document.getElementById('pane_' + k); if (el) el.style.display = (k === MODE) ? 'flex' : 'none';
+    var b = document.querySelector('[data-testid="till-mode-' + k + '"]'); if (b) b.className = (k === MODE) ? 'on' : '';
+  });
+  var q = document.getElementById('q');
+  if (q) q.placeholder = MODE === 'sell' ? 'Item name, code or barcode…   ↓↑ to choose, Enter to add'
+        : (MODE === 'receive' ? 'What arrived? Name, code or barcode — 3* for three' : 'Scan what you are packing');
+  document.getElementById('chips').style.display = MODE === 'sell' ? '' : 'none';
+  document.getElementById('quick').style.display = MODE === 'sell' ? '' : 'none';
+  paintKeys(); paintHits();
+  if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
+  if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
+  focusSearch();
+}
+function paintKeys(){
+  var el = document.getElementById('keys'); if (!el) return;
+  var common = '<span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span><span><b>Enter</b> add</span><span><b>3*</b> quantity</span>';
+  el.innerHTML = common + (MODE === 'sell'
+    ? '<span><b>F9</b> save &amp; print</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span>'
+    : (MODE === 'receive'
+      ? '<span><b>F5</b> freight &amp; costs</span><span><b>F9</b> confirm receipt</span>'
+      : '<span><b>F8</b> next carton</span><span><b>F9</b> pack &amp; despatch</span>'))
+    + '<span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>';
+}
+
+/** the open orders this mode works against — the shop's own, one call, and silence when the line is down */
+async function loadTasks(kind){
+  try { var r = (HOST && HOST.tasks) ? await HOST.tasks(kind) : null; TASKS[kind] = (r && r.tasks) || []; }
+  catch (_) { TASKS[kind] = TASKS[kind] || []; }
+  var el = document.getElementById(kind === 'receive' ? 'rcv_task' : 'dsp_task'); if (!el) return;
+  var head = kind === 'receive' ? '<option value="">No order — goods at the door</option>' : '<option value="">Choose the order to send</option>';
+  el.innerHTML = head + TASKS[kind].map(function(t){
+    return '<option value="' + esc(t.chit_id) + '">' + esc(t.party || t.subject || 'order') + ' · ' + esc(String(t.at).slice(0,10))
+         + ' · ' + t.lines.length + ' line(s)</option>';
+  }).join('');
+}
+function taskById(kind, id){ return (TASKS[kind] || []).filter(function(t){ return t.chit_id === id; })[0] || null; }
+
+/* ── RECEIVE ─────────────────────────────────────────────────────────────────────────────────────────────────── */
+/**
+ * ⭐ WHAT WAS ORDERED IS THE TASK; WHAT WE COUNTED IS THE ANSWER. Choosing an order fills the left column and leaves the counted
+ * column empty — never pre-filled with the ordered quantity, because a screen that pre-agrees with the supplier is a screen that
+ * records nothing. Somebody has to count.
+ */
+function rcvPickTask(id){
+  var t = id ? taskById('receive', id) : null;
+  RCV = rcvBlank();
+  RCV.task = t;
+  if (t){
+    RCV.vendor = t.party || '';
+    var v = document.getElementById('rcv_vendor'); if (v) v.value = RCV.vendor;
+    RCV.lines = t.lines.map(function(l){
+      return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, ordered:l.remaining, counted:null,
+               rate:l.rate, reason:'', lot:null };   /* ⚠️ lot: the seam the batch layer will fill — see the spec, §0 */
+    });
+  }
+  paintReceive();
+}
+/** an item off the shelf, added to what arrived — it may or may not be on the order */
+function rcvAdd(i, qty){
+  var have = RCV.lines.filter(function(l){ return l.item_id && l.item_id === i.item_id; })[0];
+  if (have) { have.counted = r2((Number(have.counted) || 0) + qty); }
+  else RCV.lines.push({ line_id:null, item_id:i.item_id, name:i.name, unit:i.unit || 'piece', ordered:null,
+                        counted:qty, rate:(Number(i.price) || 0), reason:'', lot:null, added:true });
+  paintReceive();
+}
+function rcvSet(n, what, v){
+  var l = RCV.lines[n]; if (!l) return;
+  if (what === 'counted') l.counted = (v === '' ? null : Math.max(0, Number(v) || 0));
+  else if (what === 'rate') l.rate = (v === '' ? null : Math.max(0, Number(v) || 0));
+  else if (what === 'reason') l.reason = v;
+  rcvRepaintSoon();
+}
+function rcvDrop(n){ RCV.lines.splice(n, 1); paintReceive(); }
+var _rcvSoon = null;
+function rcvRepaintSoon(){ clearTimeout(_rcvSoon); _rcvSoon = setTimeout(paintReceive, 0); }   /* never repaint inside the change */
+function rcvClear(){ RCV = rcvBlank(); ['rcv_vendor','rcv_billno','rcv_billdate','rcv_billtotal'].forEach(function(id){ var e = document.getElementById(id); if (e) e.value = ''; }); var t = document.getElementById('rcv_task'); if (t) t.value = ''; paintReceive(); }
+
+/** the difference, named — Athi: "excess and reduced qty, accept, show the proof and raise dispute" */
+var REASONS = ['', 'not sent', 'damaged', 'rejected at the door', 'short weight', 'extra sent', 'free / sample'];
+function rcvDiff(l){
+  if (l.ordered == null || l.counted == null) return 0;
+  return r2(l.counted - l.ordered);
+}
+function paintReceive(){
+  var box = document.getElementById('rcv_lines'); if (!box) return;
+  box.innerHTML = RCV.lines.length ? RCV.lines.map(function(l, n){
+    var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
+    var head = l.ordered == null ? 'added at the door' : ('ordered ' + l.ordered + ' ' + esc(l.unit));
+    return '<div class="ln' + (done ? ' done' : '') + '" data-testid="rcv-line-' + n + '">'
+      + '<span><span class="nm">' + esc(l.name) + '</span><div class="u">' + esc(head)
+        + (d ? ' · <b style="color:var(--warn)">' + (d > 0 ? 'excess ' + d : 'short ' + (-d)) + '</b>' : (done ? ' · ✓' : '')) + '</div></span>'
+      + '<input type="number" min="0" step="0.001" inputmode="decimal" placeholder="count" value="' + (l.counted == null ? '' : l.counted) + '" data-testid="rcv-count-' + n + '" onchange="rcvSet(' + n + ',\'counted\',this.value)">'
+      + '<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="rate" value="' + (l.rate == null ? '' : l.rate) + '" data-testid="rcv-rate-' + n + '" onchange="rcvSet(' + n + ',\'rate\',this.value)">'
+      + (d ? '<select data-testid="rcv-reason-' + n + '" onchange="rcvSet(' + n + ',\'reason\',this.value)">'
+             + REASONS.map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'why?') + '</option>'; }).join('') + '</select>'
+             : '<span class="amt" data-testid="rcv-value-' + n + '">' + money(rcvLineValue(l)) + '</span>')
+      + '<button class="x" onclick="rcvDrop(' + n + ')" title="remove">×</button></div>';
+  }).join('') : '<div style="padding:20px;color:var(--dim)">Nothing counted yet. Choose the order above, or just scan what arrived.</div>';
+  paintRcvCosts(); paintRcvSum();
+  var b = document.getElementById('rcv_save'); if (b) b.disabled = !RCV.lines.filter(function(l){ return l.counted > 0; }).length;
+}
+function rcvLineValue(l){ return r2((Number(l.counted) || 0) * (Number(l.rate) || 0)); }
+function rcvGoods(){ var t = 0; RCV.lines.forEach(function(l){ t = r2(t + rcvLineValue(l)); }); return t; }
+function rcvExtras(){ var c = RCV.costs; return r2((Number(c.freight)||0) + (Number(c.loading)||0) + (Number(c.duty)||0) + (Number(c.other)||0)); }
+
+/**
+ * ⭐⭐ LANDED COST, APPORTIONED BY VALUE (the spec, §12). ₹2,000 of freight belongs to the goods — the expensive lines carry more of
+ * it, which is what a CA expects and what Tally does.
+ * ⚠️ THE PARTS MUST SUM BACK TO THE WHOLE, TO THE PAISA. Three lines and ₹100 of freight divides into thirds that do not add up;
+ * the remainder goes to the largest line, which is what every accounting package does. Without this the books are out by a paisa
+ * and nobody can say where it went.
+ */
+function apportion(values, amount){
+  var total = 0; values.forEach(function(v){ total = r2(total + (Number(v) || 0)); });
+  var amt = Number(amount) || 0;
+  if (!(amt > 0)) return values.map(function(){ return 0; });
+  if (!(total > 0)) return values.map(function(){ return 0; });
+  var out = values.map(function(v){ return r2(amt * (Number(v) || 0) / total); });
+  var sum = 0; out.forEach(function(x){ sum = r2(sum + x); });
+  var drift = r2(amt - sum);
+  if (drift !== 0){
+    var big = 0; values.forEach(function(v, i){ if ((Number(v) || 0) > (Number(values[big]) || 0)) big = i; });
+    out[big] = r2(out[big] + drift);
+  }
+  return out;
+}
+function rcvLanded(){
+  var vals = RCV.lines.map(rcvLineValue);
+  var share = apportion(vals, rcvExtras());
+  return RCV.lines.map(function(l, n){
+    var qty = Number(l.counted) || 0;
+    var cost = r2(rcvLineValue(l) + share[n]);
+    return { share: share[n], cost: cost, unit_cost: qty > 0 ? Math.round((cost / qty) * 10000) / 10000 : null };
+  });
+}
+function rcvCosts(){
+  if (MODE !== 'receive') return;
+  var c = RCV.costs;
+  var ask = function(k, label){ var v = prompt(label + ' (₹) — leave blank for none', c[k] || ''); if (v !== null) c[k] = Math.max(0, Number(v) || 0); };
+  ask('freight', 'Freight / lorry');
+  ask('loading', 'Loading and labour');
+  ask('duty', 'Duty or cess');
+  ask('other', 'Anything else');
+  paintReceive();
+}
+function paintRcvCosts(){
+  var el = document.getElementById('rcv_costs'); if (!el) return;
+  var c = RCV.costs, extra = rcvExtras();
+  el.innerHTML = extra > 0
+    ? 'Freight <b>₹' + money(c.freight) + '</b> · loading <b>₹' + money(c.loading) + '</b> · duty <b>₹' + money(c.duty) + '</b> · other <b>₹' + money(c.other) + '</b> — spread across the lines by value'
+    : 'No freight or other costs added. <b>F5</b> to add them — they become part of what each item actually cost you.';
+}
+function paintRcvSum(){
+  var el = document.getElementById('rcv_sum'); if (!el) return;
+  var goods = rcvGoods(), extra = rcvExtras(), landed = r2(goods + extra);
+  var theirs = RCV.bill_total;
+  var gap = (theirs == null) ? null : r2(goods - theirs);
+  el.innerHTML = 'Counted <b>₹' + money(goods) + '</b>' + (extra > 0 ? ' + costs <b>₹' + money(extra) + '</b> = landed <b>₹' + money(landed) + '</b>' : '')
+    + (gap === null ? '' : (gap === 0
+        ? ' · <b style="color:var(--ok)">their bill agrees</b>'
+        : ' · <b style="color:var(--warn)" data-testid="rcv-gap">their bill says ₹' + money(theirs) + ' — ' + (gap > 0 ? 'we counted ₹' + money(gap) + ' more' : 'we counted ₹' + money(-gap) + ' less') + '</b>'));
+}
+
+/**
+ * ⭐ THE RECEIPT IS OUR OWN WITNESS. It records what WE counted, with a reason for every difference, and it never adopts the
+ * supplier's figure — the gap is the point of the document (the spec, §11.1).
+ * ⚠️ It goes onto the rail as a chit of our own (a till key may address nobody else, and that guarantee is not worth trading for a
+ * convenience). When the receipt was against an order, the movements ALSO go onto that order through b144, into both parties' copies.
+ */
+async function rcvConfirm(){
+  var lines = RCV.lines.filter(function(l){ return (Number(l.counted) || 0) > 0 || rcvDiff(l) !== 0; });
+  if (!lines.length) return;
+  var missing = lines.filter(function(l){ return rcvDiff(l) !== 0 && !l.reason; });
+  if (missing.length) { alert('Say why ' + missing[0].name + ' differs from the order. A difference without a reason cannot be settled later.'); return; }
+  var landed = rcvLanded();
+  var doc = {
+    kind: 'receipt', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
+    by: WHO ? { id: WHO.id, name: WHO.name } : null,
+    vendor: { name: (RCV.vendor || '').trim() || 'Not named' },
+    their_bill: { no: (RCV.bill_no || '').trim() || null, date: RCV.bill_date || null, total: RCV.bill_total },
+    against: RCV.task ? { chit_id: RCV.task.chit_id, party: RCV.task.party, subject: RCV.task.subject } : null,
+    costs: RCV.costs, goods: rcvGoods(), extras: rcvExtras(), landed_total: r2(rcvGoods() + rcvExtras()),
+    lines: RCV.lines.map(function(l, n){
+      return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, lot:l.lot,
+               ordered:l.ordered, counted:l.counted, difference:rcvDiff(l), reason:l.reason || null,
+               rate:l.rate, value:rcvLineValue(l), cost_share:landed[n].share, landed:landed[n].cost, unit_cost:landed[n].unit_cost };
+    }),
+  };
+  var r = null;
+  try { r = await HOST.doc(doc); } catch (e) { r = { ok:false, error: e && e.message }; }
+  if (!r || !r.ok){ alert('The receipt could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
+  showDoc('Receipt ' + (r.doc && r.doc.no ? r.doc.no : ''), receiveSlipHTML(r.doc || doc));
+  RCV = rcvBlank(); rcvClear(); loadTasks('receive'); load();
+}
+
+/* ── DESPATCH ────────────────────────────────────────────────────────────────────────────────────────────────── */
+/**
+ * ⭐ EVERY UNIT IS SCANNED, NEVER TYPED FROM MEMORY. The single biggest error-killer in packing: the picker does not tell the screen
+ * what they picked, the scan does. Which is why picking something that is NOT on this order is refused rather than added.
+ */
+function dspPickTask(id){
+  var t = id ? taskById('despatch', id) : null;
+  DSP = dspBlank(); DSP.task = t;
+  if (t) DSP.lines = t.lines.map(function(l){
+    return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, ordered:l.remaining, picked:0, reason:'', lot:null, carton:1 };
+  });
+  paintDespatch();
+}
+/** a scan lands on the line it belongs to — or is refused, loudly */
+function dspScan(i, qty){
+  if (!DSP.task) { alert('Choose the order you are packing first.'); return; }
+  var l = DSP.lines.filter(function(x){ return x.item_id && x.item_id === i.item_id; })[0];
+  if (!l) { alert(i.name + ' is not on this order.\n\nPacking it would arrive as a surprise the customer never asked for. Check the order, or start the right one.'); return; }
+  var room = r2(l.ordered - l.picked);
+  if (room <= 0) { alert(l.name + ' is already complete on this order — ' + l.ordered + ' ' + l.unit + '.'); return; }
+  if (qty > room) { alert('Only ' + room + ' ' + l.unit + ' of ' + l.name + ' is still owed. Sending more than was ordered is a dispute waiting to happen.'); qty = room; }
+  l.picked = r2(l.picked + qty); l.carton = DSP.carton;
+  paintDespatch();
+}
+function dspSet(n, what, v){ var l = DSP.lines[n]; if (!l) return;
+  if (what === 'reason') l.reason = v; else if (what === 'picked') l.picked = Math.min(l.ordered, Math.max(0, Number(v) || 0));
+  clearTimeout(_dspSoon); _dspSoon = setTimeout(paintDespatch, 0); }
+var _dspSoon = null;
+function dspCarton(){ if (MODE !== 'despatch') return; DSP.carton++; DSP.weight = null; var w = document.getElementById('dsp_weight'); if (w) w.value = ''; paintDespatch(); }
+function dspClear(){ DSP = dspBlank(); var t = document.getElementById('dsp_task'); if (t) t.value = ''; ['dsp_ref','dsp_weight'].forEach(function(id){ var e = document.getElementById(id); if (e) e.value = ''; }); paintDespatch(); }
+function paintDespatch(){
+  var box = document.getElementById('dsp_lines'); if (!box) return;
+  box.innerHTML = DSP.lines.length ? DSP.lines.map(function(l, n){
+    var pct = l.ordered > 0 ? Math.min(100, Math.round(l.picked * 100 / l.ordered)) : 0;
+    var short = r2(l.ordered - l.picked), done = short <= 0;
+    return '<div class="ln' + (done ? ' done' : '') + '" data-testid="dsp-line-' + n + '">'
+      + '<span><span class="nm">' + esc(l.name) + '</span><div class="u">ordered ' + l.ordered + ' ' + esc(l.unit)
+        + ' · <b>' + pct + '%</b>' + (done ? ' ✓' : ' · ' + short + ' to go') + '</div></span>'
+      + '<input type="number" min="0" step="0.001" inputmode="decimal" value="' + l.picked + '" data-testid="dsp-picked-' + n + '" onchange="dspSet(' + n + ',\'picked\',this.value)">'
+      + '<span class="u">carton ' + l.carton + '</span>'
+      + (!done && l.picked > 0
+          ? '<select data-testid="dsp-reason-' + n + '" onchange="dspSet(' + n + ',\'reason\',this.value)">'
+            + ['','no stock','damaged','customer will collect later'].map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'short — why?') + '</option>'; }).join('') + '</select>'
+          : '<span></span>')
+      + '<span></span></div>';
+  }).join('') : '<div style="padding:20px;color:var(--dim)">Choose an order above, then scan what you pack.</div>';
+  var done = DSP.lines.filter(function(l){ return l.picked >= l.ordered; }).length;
+  var el = document.getElementById('dsp_sum');
+  if (el) el.innerHTML = DSP.lines.length
+    ? '<b>' + done + '</b> of <b>' + DSP.lines.length + '</b> line(s) complete · carton <b>' + DSP.carton + '</b>'
+      + (DSP.weight ? ' · <b>' + DSP.weight + ' kg</b>' : '')
+    : 'Nothing being packed.';
+  var b = document.getElementById('dsp_save'); if (b) b.disabled = !DSP.lines.filter(function(l){ return l.picked > 0; }).length;
+}
+/**
+ * ⭐ THE PACKING SLIP IS THE OTHER SIDE'S RECEIVING TASK. What leaves here is a claim recorded against the order in BOTH copies
+ * (b144), so the buyer's own goods-in screen opens pre-filled with what we say we sent — and their count is the second, independent
+ * claim. Divergence is surfaced, never resolved by us.
+ */
+async function dspConfirm(){
+  var picked = DSP.lines.filter(function(l){ return l.picked > 0; });
+  if (!picked.length) return;
+  var shortNoReason = DSP.lines.filter(function(l){ return l.picked > 0 && l.picked < l.ordered && !l.reason; });
+  if (shortNoReason.length) { alert('Say why ' + shortNoReason[0].name + ' is short. The customer should hear it today, not at delivery.'); return; }
+  var doc = {
+    kind: 'despatch', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
+    by: WHO ? { id: WHO.id, name: WHO.name } : null,
+    against: DSP.task ? { chit_id: DSP.task.chit_id, party: DSP.task.party, subject: DSP.task.subject } : null,
+    ref: (DSP.ref || '').trim() || null, cartons: DSP.carton, weight: DSP.weight,
+    lines: picked.map(function(l){
+      return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, lot:l.lot,
+               ordered:l.ordered, picked:l.picked, short:r2(l.ordered - l.picked), reason:l.reason || null, carton:l.carton };
+    }),
+  };
+  var r = null;
+  try { r = await HOST.doc(doc); } catch (e) { r = { ok:false, error: e && e.message }; }
+  if (!r || !r.ok){ alert('The despatch could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
+  showDoc('Despatch ' + (r.doc && r.doc.no ? r.doc.no : ''), despatchSlipHTML(r.doc || doc));
+  DSP = dspBlank(); dspClear(); loadTasks('despatch'); load();
+}
+
+/* ── the paper both modes print, on the counter's own 72 mm roll ─────────────────────────────────────────────── */
+function docRow(a, b, big){ return '<div style="display:flex;justify-content:space-between' + (big ? ';font-weight:700;font-size:1.15em' : '') + '"><span>' + a + '</span><span>' + b + '</span></div>'; }
+function docPaper(title, body){
+  var shop = (S && S.shop) || {};
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
+  return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
+    + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name || '') + '</div>'
+    + solid + '<div style="text-align:center;font-weight:700">' + esc(title) + '</div>' + dash + body
+    + '<div style="text-align:center">Recorded on ChitBridge</div><div style="height:10mm"></div></div>';
+}
+function receiveSlipHTML(d){
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>';
+  return docPaper('GOODS RECEIVED', ''
+    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString()))
+    + docRow('From', esc(d.vendor && d.vendor.name))
+    + (d.their_bill && d.their_bill.no ? docRow('Their bill', esc(d.their_bill.no)) : '')
+    + (d.by ? docRow('Received by', esc(d.by.name)) : '') + dash
+    + (d.lines || []).map(function(l){
+        return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + money(l.value) + '</span></div>'
+          + '<div style="font-size:.9em">' + l.counted + ' ' + esc(l.unit) + (l.rate ? ' × ' + money(l.rate) : '')
+          + (l.difference ? '  ⚠ ' + (l.difference > 0 ? 'excess ' + l.difference : 'short ' + (-l.difference)) + (l.reason ? ' · ' + esc(l.reason) : '') : '') + '</div>';
+      }).join('') + dash
+    + docRow('Goods', money(d.goods))
+    + (d.extras > 0 ? docRow('Freight and costs', money(d.extras)) : '')
+    + docRow('LANDED', money(d.landed_total), true)
+    + (d.their_bill && d.their_bill.total != null ? dash + docRow('Their bill says', money(d.their_bill.total)) : '')
+    + dash + '<div style="text-align:center;font-size:.85em">What we counted. Differences above are ours to settle with the supplier.</div>');
+}
+function despatchSlipHTML(d){
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>';
+  return docPaper('PACKING SLIP', ''
+    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString()))
+    + docRow('To', esc((d.against && d.against.party) || ''))
+    + (d.ref ? docRow('LR / vehicle', esc(d.ref)) : '')
+    + docRow('Cartons', String(d.cartons || 1) + (d.weight ? ' · ' + d.weight + ' kg' : ''))
+    + (d.by ? docRow('Packed by', esc(d.by.name)) : '') + dash
+    + (d.lines || []).map(function(l){
+        return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + l.picked + ' ' + esc(l.unit) + '</span></div>'
+          + (l.short > 0 ? '<div style="font-size:.9em">⚠ short ' + l.short + (l.reason ? ' · ' + esc(l.reason) : '') + '</div>' : '');
+      }).join('') + dash
+    + '<div style="text-align:center;font-size:.85em">Check this against the goods before signing.</div>');
+}
+function showDoc(title, html){
+  document.getElementById('sliptitle').textContent = title;
+  document.getElementById('slipbox').innerHTML = html;
+  document.getElementById('slipdlg').showModal();
+}
+
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
   var title = bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
@@ -1158,13 +1654,16 @@ async function saveSettings(){
 /* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('keydown', function(e){
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
-  if (e.key === 'F9'){ finish(); e.preventDefault(); }
+  if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
-  if (e.key === 'F8'){ openBills(); e.preventDefault(); }
+  if (e.key === 'F8' && MODE === 'sell'){ openBills(); e.preventDefault(); }
   if (e.key === 'F7'){ openWho(); e.preventDefault(); }
-  if (e.key === 'F6'){ parkBill(); e.preventDefault(); }
-  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }
-  if (e.key === 'Escape' && !document.getElementById('slipdlg').open && !document.getElementById('setdlg').open) clearBill();
+  if (e.key === 'F6' && MODE === 'sell'){ parkBill(); e.preventDefault(); }
+  if (e.key === 'F10' && MODE === 'sell'){ dayClose(); e.preventDefault(); }
+  if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }
+  if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
+  if (e.key === 'Escape' && !document.getElementById('slipdlg').open && !document.getElementById('setdlg').open)
+    (MODE === 'receive' ? rcvClear() : (MODE === 'despatch' ? dspClear() : clearBill()));
 });
 window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
 window.addEventListener('offline', function(){ load(); });
@@ -1179,6 +1678,7 @@ whoLoad();
 parkedLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
 load();
+setMode(ls.get('cb_till_mode', 'sell'));
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
