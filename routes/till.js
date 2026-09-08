@@ -24,6 +24,7 @@ const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const regional = require('../lib/regional');
 const policy = require('../lib/policy');
+const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
 const crypto = require('crypto');
 
 /** the figure out of a price, whether the catalogue stored a number or { amount, currency } (lib/pricing-engine reads it the same way) */
@@ -104,9 +105,16 @@ router.get('/snapshot', auth, async (req, res) => {
     } catch (_) { /* a shop with no co-assists bills as the shop itself */ }
 
     const all = (itemRows && itemRows.rows) || [];
-    /* on a delta, a row that is no longer active is a REMOVAL, not an item */
-    const removed = since ? all.filter((r) => r.is_active === false).map((r) => r.item_id) : [];
-    const items = all.filter((r) => r.is_active !== false).map((it) => {
+    /**
+     * ⚠️ SELLABLE, NOT MERELY ALIVE. `is_active` says the row exists; itemstatus.isOfferable says a customer may take one — retired,
+     * unavailable and redundant are all alive and all unsellable. Filtering on the wrong one put retired stock on the counter
+     * ([TILL-02], 2026-09-08).
+     * On a delta, anything that changed and is NO LONGER offerable travels as a REMOVAL: an absence cannot be expressed by a list of
+     * present rows, and a till that never hears about it goes on selling something the shop has withdrawn.
+     */
+    const sellable = (r) => r.is_active !== false && itemstatus.isOfferable(r.item_data || {});
+    const removed = since ? all.filter((r) => !sellable(r)).map((r) => r.item_id) : [];
+    const items = all.filter(sellable).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
                /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
