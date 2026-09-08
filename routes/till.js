@@ -249,6 +249,129 @@ router.get('/tasks', auth, async (req, res) => {
 });
 
 /**
+ * ⭐⭐⭐ THE THREE-WAY MATCH (2026-09-08 — the spec's phase 5, and the sentence the product is sold on).
+ *
+ *   GET /api/till/match?days=90   every purchase order with what was ORDERED, what was RECEIVED and what was INVOICED, side by side
+ *
+ * PO ↔ GRN ↔ invoice is the oldest control in purchasing, and an ERP can only run it when ONE company holds all three documents.
+ * Here the order is a chit we sent, the receipt is what our own door wrote, and the invoice is either a chit they sent or the figure
+ * their paper bill carried — so the match happens ACROSS PARTIES, which is the thing no ERP can do.
+ *
+ * ⚠️ IT NEVER RESOLVES A DIFFERENCE, IT NAMES ONE. CB takes no side: what was ordered, what was counted and what was charged are three
+ * claims, and the screen shows all three with the reason the person at the door gave. Deciding between them is a dispute, which is a
+ * conversation between two parties — not an arithmetic the server can do on their behalf.
+ * ⚠️ THIS IS AN OWNER'S SCREEN, NOT A COUNTER'S. It lives in this file because it reads the same documents, but it is deliberately
+ * OUTSIDE the till scope: a counter device may record what it witnesses and must never read what the shop pays its suppliers.
+ * ⚠️ RECEIVED comes from lib/deliverline (events, never a stored total), so a part delivery, a correction, or the counterparty's own
+ * claim are all already in it.
+ */
+router.get('/match', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const days = Math.min(Math.max(parseInt(req.query.days || '90', 10) || 90, 1), 365);
+    const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
+    const heads = await select.rows(entity_id, { direction: 'sent', purpose: 'order', since, limit: 200 });
+    if (!heads.length) return res.json({ days, count: 0, orders: [] });
+
+    const { withEntity } = require('../db');
+    const out = await withEntity(entity_id, async (db) => {
+      const ids = heads.map((h) => h.chit_id);
+      const det = await db.query('SELECT chit_id, line_items, business_json FROM chit_header WHERE entity_id = $1 AND chit_id = ANY($2::uuid[])', [entity_id, ids]);
+      const byId = new Map(det.rows.map((r) => [String(r.chit_id), r]));
+
+      /* the receipts our own counter wrote against these orders — that is where the supplier's bill figure was captured */
+      const rec = await db.query(
+        `SELECT chit_id, created_at, business_json, line_items
+           FROM chit_header
+          WHERE entity_id = $1 AND direction = 'sent' AND purpose = 'receipt'
+            AND created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
+      const receiptsFor = new Map();
+      for (const r of rec.rows) {
+        const bj = r.business_json || {};
+        const on = bj.against && bj.against.chit_id;
+        const key = on ? String(on) : null;
+        if (!key) continue;
+        if (!receiptsFor.has(key)) receiptsFor.set(key, []);
+        receiptsFor.get(key).push({ chit_id: r.chit_id, no: bj.doc_no || null, at: bj.doc_at || r.created_at,
+                                    their_bill: bj.their_bill || null, goods: bj.goods == null ? null : Number(bj.goods),
+                                    extras: bj.extras == null ? null : Number(bj.extras),
+                                    landed: bj.landed_total == null ? null : Number(bj.landed_total),
+                                    lines: Array.isArray(r.line_items) ? r.line_items : [] });
+      }
+
+      /* an invoice they SENT us, if they are on ChitBridge at all */
+      const inv = await db.query(
+        `SELECT chit_id, created_at, sender_entity_id, summary_json, line_items, business_json
+           FROM chit_header
+          WHERE entity_id = $1 AND direction = 'received' AND purpose = 'invoice'
+            AND created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
+
+      const orders = [];
+      for (const h of heads) {
+        const d = byId.get(String(h.chit_id)) || {};
+        const bj = d.business_json || {};
+        if (bj.bill_no) continue;                       /* a counter sale is not a purchase order */
+        const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
+        const receipts = receiptsFor.get(String(h.chit_id)) || [];
+        /* their invoice: a chit from this counterparty, else the figure keyed off their paper bill at the door */
+        const theirChit = inv.rows.find((x) => h.counterparty_id && String(x.sender_entity_id) === String(h.counterparty_id)) || null;
+        const keyed = receipts.map((r) => (r.their_bill && r.their_bill.total != null) ? Number(r.their_bill.total) : null).filter((x) => x != null);
+        const invoiced_total = theirChit ? Number((theirChit.summary_json || {}).total_value || 0)
+                             : (keyed.length ? keyed.reduce((x, y) => x + y, 0) : null);
+
+        const lines = (Array.isArray(d.line_items) ? d.line_items : []).map((l) => {
+          const p = (prog && prog.get) ? prog.get(l.line_id) : null;
+          const ordered = Number(l.quantity) || 0;
+          const received = (p && p.delivered != null) ? Number(p.delivered) : 0;
+          /* the reason the person at the door gave, carried on the receipt's own line */
+          let why = null;
+          for (const r of receipts) for (const rl of r.lines) {
+            const idm = rl.item_data || {};
+            if (idm.line_id === l.line_id || rl.particulars === (l.particulars || l.name)) { if (idm.reason) why = idm.reason; }
+          }
+          const diff = Math.round((received - ordered) * 1000) / 1000;
+          return { line_id: l.line_id, name: l.particulars || l.name || '', unit: l.unit || 'piece',
+                   rate: l.price == null ? null : Number(l.price),
+                   ordered, received, difference: diff, reason: why,
+                   state: diff === 0 ? (received > 0 ? 'agreed' : 'awaited') : (diff < 0 ? 'short' : 'excess') };
+        });
+        if (!lines.length) continue;
+
+        const value = (n) => Math.round(n * 100) / 100;
+        const ordered_total = value(lines.reduce((t, l) => t + (l.ordered * (l.rate || 0)), 0));
+        const received_total = value(lines.reduce((t, l) => t + (l.received * (l.rate || 0)), 0));
+        const differences = lines.filter((l) => l.difference !== 0).length;
+        const nothingYet = lines.every((l) => l.received === 0);
+        /**
+         * ⭐ THE VERDICT IS ABOUT WHAT IS KNOWN, not about who is right.
+         *   awaited   nothing has arrived yet
+         *   open      some has, some has not
+         *   agreed    everything arrived as ordered, and the money agrees
+         *   differs   something does not agree, and the line says what
+         */
+        const money_gap = (invoiced_total == null) ? null : value(received_total - invoiced_total);
+        const verdict = nothingYet ? 'awaited'
+                      : (differences ? 'differs'
+                      : (lines.some((l) => l.received < l.ordered) ? 'open'
+                      : ((money_gap != null && money_gap !== 0) ? 'differs' : 'agreed')));
+
+        orders.push({ chit_id: h.chit_id, at: h.created_at,
+                      subject: h.manual_subject || h.auto_subject || '',
+                      party: h.counterparty_name || '', party_id: h.counterparty_id || null,
+                      lines, differences, verdict,
+                      ordered_total, received_total, invoiced_total,
+                      invoiced_from: theirChit ? 'their invoice' : (keyed.length ? 'their bill, keyed at the door' : null),
+                      money_gap,
+                      receipts: receipts.map((r) => ({ chit_id: r.chit_id, no: r.no, at: r.at, landed: r.landed,
+                                                       their_bill_no: (r.their_bill && r.their_bill.no) || null })) });
+      }
+      return orders;
+    });
+    res.json({ days, count: out.length, orders: out });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
  * ⭐ THE ENGINES, SERVED (2026-09-07). A till has to price with the line down, so it keeps its own copy of the three engines — and it
  * gets them from here rather than from a second host, so there is one place that answers "which version is the counter running".
  * Cached by the till at install and refreshed with the snapshot; both files are the SAME code the server and the app run.
