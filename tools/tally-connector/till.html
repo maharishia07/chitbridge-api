@@ -28,6 +28,13 @@
 <style>
   /* ⭐ LOOK AND FEEL IS LOCAL (Athi, 2026-09-07). Every choice below is a token, set from the settings panel and kept in this
      browser — a counter in a dark shop, an older person who wants bigger type, a 10-inch tablet: none of that is a server concern. */
+  /**
+   * ⭐ THE SAME COLOURS AS THE REST OF CHITBRIDGE (Athi, 2026-09-08: "the colour combination can we bring?"). The counter is not a
+   * separate product and should not look like one — the greens, the warning ochre and the paper are the app's own tokens.
+   * ⚠️ THE COUNTER KEEPS ITS OWN CONTRAST. It is read at arm's length, under a shop's tube light, often by someone who has been
+   * standing for nine hours — so the ink is darker and the type larger than a laptop screen needs. Matching a palette is not the
+   * same as matching a rendering.
+   */
   :root{
     --ink:#141210; --dim:#6b625a; --line:#ddd6cc; --paper:#fdfbf7; --card:#ffffff;
     --ok:#1c7a4a; --ok-tint:#e8f5ee; --warn:#a8410f; --warn-tint:#fdeee6; --blue:#1b4f8a;
@@ -42,9 +49,16 @@
   body{margin:0;background:var(--paper);color:var(--ink);font:var(--fs)/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-text-size-adjust:100%}
   button,input,select{font:inherit;color:inherit}
 
-  .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr);height:100vh;height:100dvh}
+  /* ⭐ THE SPLIT IS THE SHOP'S, NOT OURS (2026-09-08). A wholesaler wants the bill wide; a kirana wants the search wide; a 24-inch
+     monitor and a 10-inch tablet want different things again. The handle drags, double-click restores the balance, and the choice
+     is kept per DEVICE — it is a fact about that counter's screen, not about the business. */
+  .wrap{display:grid;grid-template-columns:minmax(0,var(--split,1.1fr)) 6px minmax(300px,.9fr);height:100vh;height:100dvh}
+  .grip{cursor:col-resize;background:var(--line);position:relative}
+  .grip::after{content:'';position:absolute;inset-block:0;inset-inline-start:-4px;width:14px}   /* a wider target than it looks */
+  .grip:hover,.grip.on{background:var(--ok)}
+  @media (max-width:860px){ .grip{display:none} }
   /* a phone, a 10-inch tablet and a shop monitor are the same page; the bill comes FIRST on a small screen */
-  @media (max-width:860px){ .wrap{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;min-height:100dvh}
+  @media (max-width:860px){ .wrap{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}
     .left{order:2;border-right:none;border-top:1px solid var(--line)} .right{order:1} .hits{max-height:46vh} }
 
   header{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap}
@@ -98,12 +112,24 @@
   .quick button span{color:var(--dim);font-size:.8em}
   .quick:empty{display:none}
   .hits{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
-  .hit{display:flex;gap:10px;align-items:baseline;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  /**
+   * ⭐⭐ THE APP'S OWN ROW, AT THE COUNTER (Athi, 2026-09-08: "the three or four column split, offer and tax in the middle, price on
+   * the right hand side"). Three columns that always sit in the same place, so the eye learns where to look ONCE:
+   *   what it is  ·  what is on it (the offer, the rate)  ·  what it costs
+   * ⚠️ The price column is fixed-width and tabular, so the rupees line up down the list — a column of money that jitters is a column
+   * nobody can scan. On a narrow screen the middle column drops below the name rather than squeezing the price.
+   */
+  .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) 118px;gap:10px;align-items:center;
+       padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
   /* the marked row carries a bar as well as a tint: on a long list a colour alone is easy to lose */
   .hit.sel{background:var(--ok-tint);box-shadow:inset 4px 0 0 var(--ok)}
-  .hit .n{flex:1;font-weight:600}
-  .hit .p{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .hit .n{font-weight:600;min-width:0}
+  .hit .mid{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:0}
+  .hit .p{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;font-weight:700;font-size:1.05em}
+  .hit .p .u{font-weight:400}
+  .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
+  @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) 96px} .hit .mid{grid-column:1;justify-content:flex-start} }
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
@@ -186,6 +212,7 @@
     </div>
   </section>
 
+  <div class="grip" id="grip" title="drag to widen · double-click to reset"></div>
   <section class="right">
    <div id="pane_sell" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="cust">
@@ -698,7 +725,7 @@ function paintCustomers(){
 var FILTER = { offer:false, cat:null }, OFFER_STAMP = null;
 function offersFor(i){
   if (!S || !window.CBOffers) return [];
-  if (OFFER_STAMP !== (S.version || S.at)) { OFFER_STAMP = (S.version || S.at); (S.items || []).forEach(function(x){ x._off = null; }); }
+  if (OFFER_STAMP !== (S.version || S.at)) { OFFER_STAMP = (S.version || S.at); (S.items || []).forEach(function(x){ x._off = null; x._rate = undefined; }); }
   if (i._off) return i._off;
   var line = { key:i.item_id, item_id:i.item_id, sku:i.code, category:i.category, qty:1, unitPrice:Number(i.price) || 0 };
   var got = [];
@@ -707,6 +734,21 @@ function offersFor(i){
   return got;
 }
 function offerNames(i){ return offersFor(i).map(function(o){ return o.label || o.name || 'Offer'; }); }
+/**
+ * ⭐ THE RATE ON THE ROW, from the same engine that will put it on the bill (CBTax.slab) — never a second opinion. Cached on the item
+ * beside its offers and thrown away with them, because a slab that changed overnight must not linger on a shelf.
+ * ⚠️ Silent for an unregistered shop: there is no GST to show, and a rate chip on a cash memo would be a claim we cannot make.
+ */
+function rateOf(i){
+  if (!S || !window.CBTax || (S.shop && S.shop.reg_type) !== 'regular') return null;
+  if (i._rate !== undefined) return i._rate;
+  var r = null;
+  try { var out = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
+          face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
+    r = (out && out.rate != null) ? out.rate : null; } catch (_) { r = null; }
+  i._rate = r;
+  return r;
+}
 function setFilter(what, val){
   if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; }
   else if (what === 'cat') { FILTER.cat = (FILTER.cat === val) ? null : val; }
@@ -834,6 +876,7 @@ function paintHits(){
   if (scanned()) return;
   paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
+  list.forEach(function(i){ i.tax_rate = rateOf(i); });      /* only for the rows about to be drawn — never the whole shelf */
   var t = typed();
   var head = (t.qty !== 1 || t.unit)
     ? '<div class="qtyhint" data-testid="till-qty-ahead">Adding <b>' + t.qty + (t.unit ? ' ' + esc(t.unit) : '') + '</b> of whatever you choose'
@@ -841,8 +884,12 @@ function paintHits(){
     : '';
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
-      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
-        + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span> '; }).join('') + '</span>'
+      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span>'
+      /* the middle column: what is ON this product — the offers it carries, and the rate it will be taxed at */
+      + '<span class="mid">'
+        + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('')
+        + (i.tax_rate != null ? '<span class="rate">GST ' + esc(i.tax_rate) + '%</span>' : '')
+      + '</span>'
       + '<span class="p">₹' + money(i.price) + '<div class="u">per ' + esc(i.unit||'piece') + '</div></span></div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
   keepSelInView();
@@ -1940,6 +1987,33 @@ function shiftDone(){
   var b = document.getElementById('shiftgo'); if (b) { b.textContent = 'Count and hand over'; b.setAttribute('onclick', 'shiftClose()'); }
   document.getElementById('shiftdlg').close(); paintWho(); load(); openWho();
 }
+/**
+ * ⭐ DRAG, DOUBLE-CLICK, REMEMBER (2026-09-08). Kept per device in localStorage — a counter's screen is a fact about that machine,
+ * and syncing it would mean a tablet's split arriving on a 24-inch monitor.
+ * ⚠️ Bounded to a quarter and three-quarters: a pane dragged to nothing is a pane nobody can drag back.
+ */
+function gripInit(){
+  var g = document.getElementById('grip'), wrap = document.querySelector('.wrap');
+  if (!g || !wrap) return;
+  var apply = function(fr){ wrap.style.setProperty('--split', fr + 'fr'); };
+  var saved = Number(ls.get('cb_till_split', '')); if (saved > 0) apply(saved);
+  var drag = function(e){
+    var x = (e.touches ? e.touches[0].clientX : e.clientX);
+    var w = wrap.getBoundingClientRect().width;
+    var left = Math.max(w * 0.25, Math.min(w * 0.75, x));
+    var fr = Math.round((left / Math.max(1, w - left)) * 100) / 100;
+    apply(fr); ls.set('cb_till_split', String(fr));
+  };
+  var stop = function(){ g.classList.remove('on'); document.body.style.userSelect = '';
+    window.removeEventListener('mousemove', drag); window.removeEventListener('touchmove', drag);
+    window.removeEventListener('mouseup', stop); window.removeEventListener('touchend', stop); };
+  var start = function(e){ e.preventDefault(); g.classList.add('on'); document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', drag); window.addEventListener('touchmove', drag, { passive:true });
+    window.addEventListener('mouseup', stop); window.addEventListener('touchend', stop); };
+  g.addEventListener('mousedown', start);
+  g.addEventListener('touchstart', start, { passive:false });
+  g.addEventListener('dblclick', function(){ apply(1.1); ls.set('cb_till_split', ''); });
+}
 function applyLook(){
   document.documentElement.setAttribute('data-theme', ls.get('cb_till_theme','light'));
   document.documentElement.style.setProperty('--fs', ls.get('cb_till_fs','16px'));
@@ -2042,6 +2116,7 @@ whoLoad();
 parkedLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
 load();
+gripInit();
 setMode(ls.get('cb_till_mode', 'sell'));
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
