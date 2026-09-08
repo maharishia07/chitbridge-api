@@ -84,12 +84,22 @@ let online = false;
 
 async function refresh() {
   try {
-    const snap = await cb.call('GET', '/api/till/snapshot');
+    /* ⭐ only what changed since we last looked (2026-09-08) — a 10,000-item shop must not travel every fifteen minutes */
+    const since = (snapshot && snapshot.at) ? '?since=' + encodeURIComponent(snapshot.at) : '';
+    const snap = await cb.call('GET', '/api/till/snapshot' + since);
     if (snap && snap.shop) {
+      if (snap.delta && snapshot && Array.isArray(snapshot.items)) {
+        const byId = new Map(snapshot.items.map((i) => [i.item_id, i]));
+        for (const id of (snap.removed || [])) byId.delete(id);      /* off the shelf, off the counter */
+        for (const i of (snap.items || [])) byId.set(i.item_id, i);
+        const touched = (snap.items || []).length + (snap.removed || []).length;
+        snap.items = [...byId.values()];
+        if (touched) log('the shop changed: ' + (snap.items || []).length + ' items now (' + touched + ' touched)');
+      }
       const changed = !snapshot || snapshot.version !== snap.version;
       snapshot = snap; writeJSON(F.snapshot, snap);
       online = true;
-      if (changed) log('the shop was re-read: ' + (snap.items || []).length + ' items, ' + (snap.offers || []).length + ' offer(s), version ' + snap.version);
+      if (changed && !snap.delta) log('the shop was re-read: ' + (snap.items || []).length + ' items, ' + (snap.offers || []).length + ' offer(s), version ' + snap.version);
     }
     /* the engines, cached beside the snapshot — the till prices with the same code the server does.
        ⚠️ CB.call parses JSON and hands back { raw } when the body is not JSON, which is exactly what a .js file is. */

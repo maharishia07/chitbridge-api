@@ -36,6 +36,9 @@ function versionOf(payload) {
 router.get('/snapshot', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
+    /* the moment the till last read the shop — anything touched after it is what it does not have */
+    const sinceRaw = typeof req.query.since === 'string' ? req.query.since.trim() : '';
+    const since = (sinceRaw && !Number.isNaN(Date.parse(sinceRaw))) ? new Date(sinceRaw).toISOString() : null;
 
     /* the shop, as its own books know it — the slip's header, and what decides tax invoice vs cash memo */
     const me = await query(
@@ -56,9 +59,18 @@ router.get('/snapshot', auth, async (req, res) => {
     const [shelf, itemRows] = await Promise.all([
       taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
         getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(() => null),
-      withEntity(entity_id, (db) => db.query(
-        'SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 5000',
-        [entity_id])).catch(() => ({ rows: [] })),
+      /**
+       * ⭐ A DELTA WHEN THE TILL SAYS WHEN IT LAST LOOKED (2026-09-08). A shop with 10,000 items should not send them all every fifteen
+       * minutes to say nothing changed. With ?since= we return only rows touched after that moment — and, separately, the ids of rows
+       * that went inactive, because a product taken off the shelf must LEAVE the counter, and an absence is not something a delta of
+       * present rows can express.
+       * ⚠️ The stamp we hand back is the SERVER's clock (body.at), never the till's — two clocks a few seconds apart would silently
+       * skip a row that changed in between.
+       */
+      withEntity(entity_id, (db) => (since
+        ? db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at DESC LIMIT 5000', [entity_id, since])
+        : db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 5000', [entity_id])
+      )).catch(() => ({ rows: [] })),
     ]);
 
     /* the live offers this shop is running — the same rows the storefront and the chit read */
@@ -91,7 +103,10 @@ router.get('/snapshot', auth, async (req, res) => {
       staff = st.rows.map((a) => ({ id: a.identity_id, name: a.display_name, hat: a.hat || null }));
     } catch (_) { /* a shop with no co-assists bills as the shop itself */ }
 
-    const items = ((itemRows && itemRows.rows) || []).map((it) => {
+    const all = (itemRows && itemRows.rows) || [];
+    /* on a delta, a row that is no longer active is a REMOVAL, not an item */
+    const removed = since ? all.filter((r) => r.is_active === false).map((r) => r.item_id) : [];
+    const items = all.filter((r) => r.is_active !== false).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
                /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
@@ -113,7 +128,7 @@ router.get('/snapshot', auth, async (req, res) => {
         reg_type: String(flags.gst_registration || 'regular'),
         currency: profile.currency || 'INR',
       },
-      items, offers, staff,
+      items, removed, delta: !!since, since: since || null, offers, staff,
       slabs: (shelf && shelf.slabs) || [], categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
       customers,
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off' },

@@ -310,11 +310,28 @@ var CloudHost = {
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
              engines: { offers: !!window.CBOffers, tax: !!window.CBTax } };
   },
+  /**
+   * ⭐ ASK ONLY FOR WHAT CHANGED (2026-09-08). The first run takes the whole shop; after that the till says when it last looked and
+   * gets back only the items touched since, plus the ids of any that left the shelf. A ten-thousand-item catalogue then costs one
+   * small answer every fifteen minutes instead of megabytes.
+   * ⚠️ The MERGE happens here, on the copy we already hold — and a removal is applied before an add, so a row that was deleted and
+   * re-created in the same window ends up present rather than missing.
+   */
   async refresh(){
     if (!this.key) return { ok:false, need:'key' };
-    var r = await fetch(this.api + '/api/till/snapshot', { headers:{ 'X-Api-Key': this.key } });
+    var have = await DB.get('snapshot');
+    var since = (have && have.at) ? ('?since=' + encodeURIComponent(have.at)) : '';
+    var r = await fetch(this.api + '/api/till/snapshot' + since, { headers:{ 'X-Api-Key': this.key } });
     if (!r.ok) return { ok:false, status:r.status };
     var snap = await r.json();
+    if (snap.delta && have && Array.isArray(have.items)) {
+      var byId = {};
+      have.items.forEach(function(i){ byId[i.item_id] = i; });
+      (snap.removed || []).forEach(function(id){ delete byId[id]; });
+      (snap.items || []).forEach(function(i){ byId[i.item_id] = i; });
+      snap.items = Object.keys(byId).map(function(k){ return byId[k]; });
+      snap.merged = { changed: (snap.items || []).length, removed: (snap.removed || []).length };
+    }
     await DB.set('snapshot', snap);
     this.drain();
     return { ok:true, at: snap.at };
