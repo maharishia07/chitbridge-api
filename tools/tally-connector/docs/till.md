@@ -112,6 +112,21 @@ Their count at the door is the second, independent record — and if the two dis
 Bin locations, pick routes, stock counting, a warehouse system. We record what the shop **witnesses** — what came in, what went out,
 what was sold. Whatever you count on a Sunday belongs in Tally, and we connect to it.
 
+## If you sell medicine, food or anything with a batch
+
+Set your trade once in ChitBridge (Profile → sectors). The counter then asks for what that trade needs, per line, when goods come in:
+
+- **Medicine** — the batch and the expiry (MRP and the manufacturing date if you want them).
+- **Food** — the batch, and the best-before if it is printed.
+- **Electronics** — the serial number of each unit.
+- **Anything else** — nothing at all. A general shop never sees these boxes.
+
+**You will rarely type any of it.** Scan the barcode on the pack: a GS1 code carries the batch and the expiry, and the boxes fill
+themselves. If the barcode will not read, type it as printed — `(10)AC2431(17)280331` — and it is read the same way.
+
+**Stock that has already expired cannot be taken in.** That is a refusal, not a warning: the date is on the pack, and accepting it is
+your licence rather than a preference. A missing batch or expiry is simply asked for — the answer is in your hand.
+
 ## The printer
 
 A USB till printer needs its **driver installed once**. Plugging in the cable is not enough — until the driver is there, Windows has
