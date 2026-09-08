@@ -66,7 +66,9 @@
   .quick:empty{display:none}
   .hits{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
   .hit{display:flex;gap:10px;align-items:baseline;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
-  .hit:hover,.hit.sel{background:var(--ok-tint)}
+  .hit:hover{background:var(--ok-tint)}
+  /* the marked row carries a bar as well as a tint: on a long list a colour alone is easy to lose */
+  .hit.sel{background:var(--ok-tint);box-shadow:inset 4px 0 0 var(--ok)}
   .hit .n{flex:1;font-weight:600}
   .hit .p{font-variant-numeric:tabular-nums;white-space:nowrap}
   .u{color:var(--dim);font-size:.8em}
@@ -140,7 +142,7 @@
     <div class="quick" id="quick"></div>
     <div class="hits" id="hits"></div>
     <div class="keys" id="keys">
-      <span><b>F2</b> search</span><span><b>↓↑ Enter</b> add</span><span><b>F9</b> save &amp; print</span>
+      <span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span><span><b>Enter</b> add</span><span><b>F9</b> save &amp; print</span>
       <span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
     </div>
   </section>
@@ -551,11 +553,30 @@ function paintHits(){
       + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.hsn ? ' · HSN ' + esc(i.hsn) : '') + '</div></span>'
       + '<span class="p">₹' + money(i.price) + '<div class="u">per ' + esc(i.unit||'piece') + '</div></span></div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>';
+  keepSelInView();
 }
+/** ⭐ THE ROW YOU ARE ON MUST BE THE ROW YOU CAN SEE. Without this the arrows worked and looked broken (2026-09-08). */
+function keepSelInView(){
+  try {
+    var el = document.querySelector('.hit.sel'); if (!el) return;
+    var box = document.getElementById('hits'); if (!box) return;
+    var r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+    if (r.top < b.top) box.scrollTop -= (b.top - r.top) + 4;
+    else if (r.bottom > b.bottom) box.scrollTop += (r.bottom - b.bottom) + 4;
+  } catch (_) {}
+}
+/**
+ * The keys a person expects on a list of sixty: one row, one screenful, and the ends. Enter takes what is marked — and what is marked
+ * is always what is on screen, because paintHits scrolls to it.
+ */
 function searchKey(e){
-  var list = hits();
+  var list = hits(), page = 8;
   if (e.key === 'ArrowDown'){ SEL = Math.min(SEL+1, list.length-1); paintHits(); e.preventDefault(); }
   else if (e.key === 'ArrowUp'){ SEL = Math.max(SEL-1, 0); paintHits(); e.preventDefault(); }
+  else if (e.key === 'PageDown'){ SEL = Math.min(SEL+page, list.length-1); paintHits(); e.preventDefault(); }
+  else if (e.key === 'PageUp'){ SEL = Math.max(SEL-page, 0); paintHits(); e.preventDefault(); }
+  else if (e.key === 'Home'){ SEL = 0; paintHits(); e.preventDefault(); }
+  else if (e.key === 'End'){ SEL = Math.max(list.length-1, 0); paintHits(); e.preventDefault(); }
   else if (e.key === 'Enter'){ if (list.length) add(SEL); e.preventDefault(); }
 }
 function add(n){
