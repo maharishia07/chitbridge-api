@@ -3,7 +3,7 @@
  *
  * The page is served both by the little program on a shop PC (tools/tally-connector/till.js) and by the web, where a phone or a
  * tablet can open it directly. Two copies of a screen is how two screens drift, so there is ONE master — the kit's till.html — and
- * this script writes the web's copy, its five engine files, its manifest and its service worker.
+ * this script writes the web's copy, its six engine files, its manifest and its service worker.
  *
  * Run:  node scripts/vendor-till.cjs          (write)
  *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale — what tests/till-vendor.test.js uses)
@@ -39,7 +39,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -87,6 +87,11 @@ const COPIES = () => [
   /* ⭐ and the trade's own rules — what a consignment must carry, and how much difference it absorbs. ONE definition, because the
      counter decides at the door and the match decides afterwards, and those two must never disagree. */
   [null, path.join(WEB, 'engine', 'lots.js'), wrapForBrowser('lotfields.js', 'CBLots')],
+  /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
+     follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
+     would be a second opinion about a number, which lib/numerals exists to prevent. */
+  [null, path.join(WEB, 'engine', 'nums.js'), wrapForBrowser('numerals.js', 'CBNums')],
+  [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],

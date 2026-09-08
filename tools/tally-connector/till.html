@@ -69,7 +69,12 @@
   .pill.off{color:var(--warn);border-color:var(--warn);background:var(--warn-tint)}
 
   .left{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
-  .search{padding:var(--pad) 12px;border-bottom:1px solid var(--line);background:var(--card)}
+  .search{padding:var(--pad) 12px;border-bottom:1px solid var(--line);background:var(--card);display:flex;gap:8px;align-items:center}
+  /* ⭐ the microphone sits BESIDE the box, never inside it — a control on top of the text is a control that hides what was typed */
+  .mic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:1.2em;cursor:pointer}
+  .mic.on{border-color:var(--ok);background:var(--ok-tint);animation:hear 1s ease-in-out infinite}
+  @keyframes hear{50%{transform:scale(1.08)}}
+  @media (prefers-reduced-motion:reduce){ .mic.on{animation:none} }
   .search input{width:100%;font-size:1.25em;padding:12px 14px;border:2px solid var(--line);border-radius:var(--radius);background:var(--card)}
   .search input:focus{outline:none;border-color:var(--blue)}
   /* the dozen this shop sells all day — big targets, no reading, gone the moment somebody types */
@@ -102,6 +107,15 @@
   .lotrow label{display:flex;flex-direction:column;font-size:.72em;color:var(--dim);gap:2px}
   .lotrow label.need{color:var(--warn);font-weight:700}
   .lotrow input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font-size:1.15em;min-width:110px}
+  /* the hour's suggestion, and the two small controls that make it the shop's own */
+  .qwhy{grid-column:1/-1;color:var(--dim);font-size:.75em;text-transform:uppercase;letter-spacing:.4px;padding:0 2px 2px}
+  .quick button{position:relative}
+  .quick .qx,.quick .qpin{position:absolute;top:2px;font-style:normal;font-size:.8em;opacity:.35;padding:2px 5px;border-radius:6px}
+  .quick .qx{inset-inline-end:2px}
+  .quick .qpin{inset-inline-start:2px}
+  .quick .qpin.on{opacity:1}
+  .quick button:hover .qx,.quick button:hover .qpin{opacity:.8}
+  .quick .qx:hover{background:var(--warn-tint);color:var(--warn);opacity:1}
   .qtyhint{padding:6px 12px;background:var(--ok-tint);color:var(--ok);font-size:.85em;border-bottom:1px solid var(--line)}
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
   /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
@@ -197,12 +211,14 @@
       <span style="flex:1"></span>
       <span class="pill" id="daypill"></span>
       <button class="pill" data-testid="till-bills" onclick="openBills()" title="today's bills — print one again (F8)">🧾 bills</button>
+      <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="what would go wrong today">✓</button>
       <button class="pill" onclick="refresh()" title="read the shop again (F4)">↻</button>
       <button class="pill" onclick="openSettings()" title="look, feel and this till">⚙</button>
       <button class="pill" id="installbtn" style="display:none" onclick="installApp()" title="install this counter as an app">⤓ install</button>
       <a class="pill" id="cblink" href="#" target="_blank" rel="noopener" title="the rest of ChitBridge — orders, suppliers, the books">ChitBridge ↗</a>
     </header>
     <div class="search">
+      <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
       <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="paintHits()" onkeydown="searchKey(event)">
     </div>
     <div class="chips" id="chips"></div>
@@ -221,6 +237,7 @@
       <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist">
       <datalist id="custlist"></datalist>
       <input id="cphone" placeholder="Phone" autocomplete="off" inputmode="tel" style="max-width:150px">
+      <button class="pill" id="micphone" data-testid="till-mic-phone" onclick="listen('cphone')" title="speak the number">🎤</button>
     </div>
     <div class="cart" id="cart"></div>
     <div class="totals" id="totals"></div>
@@ -323,6 +340,12 @@
   <label>Counter name — it becomes the bill number's prefix</label>
   <input id="set_till" placeholder="C1">
   <div id="printbox"></div>
+  <label>Quick keys</label>
+  <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show every hidden key again</button>
+  <div style="color:var(--dim);font-size:.78em;margin:4px 0 8px">The twelve are learned from this counter's own bills — what sells around this time of day. ✕ drops one, 📌 keeps one there all day.</div>
+  <label>Speaking — which language the microphone listens for</label>
+  <select id="set_lang"><option value="en-IN">English (India)</option><option value="ta-IN">தமிழ் · Tamil</option><option value="hi-IN">हिन्दी · Hindi</option><option value="en-GB">English (UK)</option></select>
+  <div style="color:var(--dim);font-size:.78em;margin:-4px 0 8px">The browser does the listening, and it sends what is said to its own speech service over the internet. It is off until you press 🎤. Billing itself never needs it.</div>
   <label>Row detail — a pharmacy wants the composition on the row; a kirana does not</label>
   <select id="set_rows"><option value="compact">Compact — name, offer, price</option><option value="full">Full — brand, MRP and what you declared</option></select>
   <label>Text size</label>
@@ -341,6 +364,7 @@
 <script src="/engine/search.js" onerror="engineMissed('search')"></script>
 <script src="/engine/gs1.js" onerror="engineMissed('gs1')"></script>
 <script src="/engine/lots.js" onerror="engineMissed('lots')"></script>
+<script src="/engine/nums.js" onerror="engineMissed('nums')"></script>
 <script>
 /* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
 var MISSING = [];
@@ -436,7 +460,7 @@ var CloudHost = {
     return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
              today: { count: mine.length, total: total, by: by },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
-             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots } };
+             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums } };
   },
   /**
    * ⭐ ASK ONLY FOR WHAT CHANGED (2026-09-08). The first run takes the whole shop; after that the till says when it last looked and
@@ -704,6 +728,12 @@ function paintStatus(){
   if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
   document.getElementById('queuenote').textContent = note;
   paintUpdate();
+  /* ⭐ ONE DOT, AND IT IS NOT A NAG. Green when there is nothing to say; it only asks for attention when something would actually
+     go wrong, and it never interrupts a sale to do it. */
+  var hp = document.getElementById('healthpill');
+  if (hp) { var w = healthWorst();
+    hp.textContent = w === 'bad' ? '⛔ check' : (w === 'warn' ? '⚠️ check' : '✓');
+    hp.className = 'pill' + (w === 'bad' ? ' off' : (w === 'warn' ? '' : ' on')); }
 }
 /**
  * ⭐ WHAT HAPPENED · WHAT IT MEANS · WHAT TO DO. The little program on this PC keeps the kit current on its own; all this does is say
@@ -826,8 +856,27 @@ function qtyInUnit(qty, from, to){
   if (!a || !b || a[0] !== b[0]) return { qty: qty, converted: false };
   return { qty: r2(qty * a[1] / b[1]), converted: true };
 }
+/**
+ * ⭐ "TWO KILO THAKKALI" IS 2 (2026-09-08). A person speaking says the number; a recogniser writes it as a word as often as a digit,
+ * and in a shop here it may be Tamil — "rendu kilo". lib/numerals is the platform's closed-class table and already decides this for
+ * WhatsApp orders, so the counter asks IT rather than growing a second opinion about a number.
+ * ⚠️ ONLY A LEADING OR TRAILING WORD. "one" inside a product name ("One plus cable") is part of the name, not a quantity.
+ */
+function digitsForWords(raw){
+  if (!window.CBNums || !raw) return raw;
+  var toks = String(raw).trim().split(/\s+/);
+  if (toks.length < 2) return raw;
+  var swap = function(i){
+    try {
+      var got = CBNums.numeralsIn(toks[i]);
+      if (got && got.length === 1 && got[0].value != null && !/^[0-9]/.test(toks[i])) toks[i] = String(got[0].value);
+    } catch (_) {}
+  };
+  swap(0); swap(toks.length - 1);
+  return toks.join(' ');
+}
 function typed(){
-  var raw = String((document.getElementById('q') || {}).value || '');
+  var raw = digitsForWords(String((document.getElementById('q') || {}).value || ''));
   /* the old shorthand first: "3*rice", "0.75 x tomato" — a bare multiplier, no unit */
   var m = /^\s*(\d+(?:\.\d+)?)\s*\*\s*([\s\S]*)$/.exec(raw) || /^\s*(\d+(?:\.\d+)?)\s*[xX]\s+([\s\S]*)$/.exec(raw);
   if (m) { var q0 = Number(m[1]); return { qty: (q0 > 0 ? q0 : 1), unit: null, text: String(m[2]).trim() }; }
@@ -875,22 +924,86 @@ function scanned(){
  * mangoes in April gets mangoes in April without anybody setting anything. Until there is history, the catalogue's own order stands.
  */
 var QUICK = [];
+/**
+ * ⭐⭐ WHAT SELLS AT THIS HOUR, not what sells in general. Athi: *"in the morning, breakfast items… at noon it would be completely
+ * different."* The trade calls it DAYPARTING and every restaurant POS does it with a menu somebody sits down and configures. A kirana
+ * has nobody to do that — and does not need one, because the shop's own bills already carry the hour they were rung up at.
+ *
+ * The score, deliberately simple enough to explain at a counter:
+ *   3 points  sold within ninety minutes of this time of day, on any recent day
+ *   1 point   sold at all, recently
+ * So the morning grid fills with what mornings buy, and an item that sells all day keeps its place all day.
+ * ⚠️ EARLIER DAYS COME FROM ChitBridge and today's from the device, so the grid is right at 7am on a Monday — when today's bills are
+ * an empty list and the only useful evidence is what the last three Mondays looked like at this hour.
+ * ⚠️ AND IT IS ONLY EVER A SUGGESTION. Anything the shop hid stays hidden; anything it pinned stays first. A grid that argued with
+ * the person using it would be worse than no grid.
+ */
+var QUICK_WHY = '';
+function quickHidden(){ try { return JSON.parse(ls.get('cb_till_qhide','[]')) || []; } catch (_) { return []; } }
+function quickPinned(){ try { return JSON.parse(ls.get('cb_till_qpin','[]')) || []; } catch (_) { return []; } }
+function quickHide(id){
+  var h = quickHidden(); if (h.indexOf(id) < 0) h.push(id);
+  ls.set('cb_till_qhide', JSON.stringify(h.slice(0, 200)));
+  loadQuick();
+}
+function quickPin(id){
+  var p = quickPinned(), at = p.indexOf(id);
+  if (at >= 0) p.splice(at, 1); else p.unshift(id);
+  ls.set('cb_till_qpin', JSON.stringify(p.slice(0, 12)));
+  loadQuick();
+}
+function quickReset(){ ls.set('cb_till_qhide', '[]'); ls.set('cb_till_qpin', '[]'); loadQuick(); }
+/** the words for the hour, as a shopkeeper would say them */
+function partOfDay(h){
+  return h < 11 ? 'this morning' : (h < 15 ? 'around midday' : (h < 19 ? 'this afternoon' : 'this evening'));
+}
 async function loadQuick(){
-  var counts = {};
-  try {
-    var rows = (HOST && HOST.bills) ? (await HOST.bills()) : [];
-    rows.forEach(function(b){ (b.lines||[]).forEach(function(l){ if (l.item_id) counts[l.item_id] = (counts[l.item_id]||0) + 1; }); });
-  } catch (_) {}
-  var items = (S && S.items) || [];
-  var ranked = items.slice().sort(function(a,b){ return (counts[b.item_id]||0) - (counts[a.item_id]||0); });
+  var now = new Date(), hour = now.getHours();
+  var near = {}, ever = {}, seenHours = false;
+  var take = function(rows){
+    (rows || []).forEach(function(b){
+      var at = b.at ? new Date(b.at) : null;
+      var gap = at ? Math.abs(((at.getHours() * 60 + at.getMinutes()) - (hour * 60 + now.getMinutes()))) : null;
+      if (gap != null && gap > 720) gap = 1440 - gap;                 /* the clock is a circle: 23:30 is close to 00:30 */
+      (b.lines || []).forEach(function(l){
+        if (!l.item_id) return;
+        ever[l.item_id] = (ever[l.item_id] || 0) + 1;
+        if (gap != null && gap <= 90) { near[l.item_id] = (near[l.item_id] || 0) + 1; seenHours = true; }
+      });
+    });
+  };
+  try { take((HOST && HOST.bills) ? (await HOST.bills()) : []); } catch (_) {}
+  /* ⚠️ TODAY ALONE CANNOT ANSWER "what sells at this hour" — at opening time there are no bills yet. The last thirty days can. */
+  /* ⚠️ ASK, ALWAYS. HOST.history answers { bills: [], offline: true } when the line is down — guarding on navigator.onLine
+     skipped the evidence on every device that reports itself offline while being perfectly able to fetch. */
+  try { if (HOST && HOST.history) { var h = await HOST.history(30); take((h && h.bills) || []); } } catch (_) {}
+
+  var hidden = quickHidden(), pinned = quickPinned();
+  var items = ((S && S.items) || []).filter(function(i){ return hidden.indexOf(i.item_id) < 0; });
+  var score = function(i){ return (near[i.item_id] || 0) * 3 + (ever[i.item_id] || 0); };
+  var ranked = items.slice().sort(function(a, b){
+    var pa = pinned.indexOf(a.item_id), pb = pinned.indexOf(b.item_id);
+    if (pa >= 0 || pb >= 0) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);   /* pinned first, in the order they were pinned */
+    return score(b) - score(a);
+  });
   QUICK = ranked.slice(0, 12);
+  QUICK_WHY = seenHours ? ('what sells ' + partOfDay(hour)) : (Object.keys(ever).length ? 'what sells here' : '');
   paintQuick();
 }
 function paintQuick(){
   var el = document.getElementById('quick'); if (!el) return;
   var typing = (document.getElementById('q').value || '').trim().length > 0;
-  el.innerHTML = (typing || !QUICK.length) ? '' : QUICK.map(function(i, n){
-    return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + esc(i.item_id) + '\')"><b>' + esc(i.name) + '</b><span>₹' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span></button>';
+  if (typing || !QUICK.length) { el.innerHTML = ''; return; }
+  var pinned = quickPinned();
+  /* ⭐ THE GRID SAYS WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
+  el.innerHTML = (QUICK_WHY ? '<div class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</div>' : '')
+    + QUICK.map(function(i, n){
+    var pin = pinned.indexOf(i.item_id) >= 0;
+    return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + esc(i.item_id) + '\')"><b>' + esc(i.name) + '</b>'
+      + '<span>₹' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
+      + '<i class="qx" title="not on this counter" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickHide(\'' + esc(i.item_id) + '\')">✕</i>'
+      + '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + esc(i.item_id) + '\')">📌</i>'
+      + '</button>';
   }).join('');
 }
 function quickAdd(id){
@@ -1017,6 +1130,47 @@ function paintParked(){
       + ' <span onclick="event.stopPropagation();dropParked(' + n + ')" title="throw it away">×</span></button>';
   }).join('');
 }
+/**
+ * ⭐⭐ SPEAKING TO THE COUNTER. The browser's own recogniser: nothing to install, and it is already the thing a shopkeeper's phone
+ * uses everywhere else.
+ * ⚠️⚠️ THE AUDIO LEAVES THE DEVICE. In Chrome, Web Speech sends what is said to Google's service — so this needs the internet, it is
+ * OFF until somebody presses the button, and the settings pane says so in words before anyone speaks a customer's phone number into
+ * it. Deciding that quietly on a shopkeeper's behalf is not ours to do.
+ * ⚠️ A PHONE NUMBER IS DIGITS. Whatever comes back for that field is stripped to digits — "nine eight four double zero" is not a name.
+ */
+function speechOK(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+var _rec = null;
+function listen(into){
+  if (!speechOK()) { alert('This browser cannot listen. Chrome on a phone, a tablet or Windows can.'); return; }
+  if (!navigator.onLine) { alert('Speaking needs the internet — the browser sends what is said to its own speech service. Type it for now; billing itself works offline.'); return; }
+  var box = document.getElementById(into); if (!box) return;
+  var btn = document.getElementById(into === 'cphone' ? 'micphone' : 'mic');
+  if (_rec) { try { _rec.stop(); } catch (_) {} _rec = null; if (btn) btn.classList.remove('on'); return; }
+  var R = window.SpeechRecognition || window.webkitSpeechRecognition;
+  _rec = new R();
+  _rec.lang = ls.get('cb_till_lang', 'en-IN');
+  _rec.interimResults = true;
+  _rec.maxAlternatives = 1;
+  if (btn) btn.classList.add('on');
+  _rec.onresult = function(e){
+    var text = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) text += e.results[i][0].transcript;
+    text = text.trim();
+    if (!text) return;
+    if (into === 'cphone') box.value = text.replace(/[^0-9]/g, '').slice(0, 15);
+    else { box.value = text; paintHits(); }
+    var last = e.results[e.results.length - 1];
+    if (last && last.isFinal && into !== 'cphone') { /* a finished phrase behaves exactly like a typed one */ paintHits(); }
+  };
+  _rec.onerror = function(ev){
+    if (btn) btn.classList.remove('on'); _rec = null;
+    var why = (ev && ev.error) === 'not-allowed' ? 'The browser was not given permission to use the microphone.'
+      : (ev && ev.error) === 'no-speech' ? 'Nothing was heard.' : 'The listening stopped (' + ((ev && ev.error) || 'unknown') + ').';
+    toastLine(why);
+  };
+  _rec.onend = function(){ if (btn) btn.classList.remove('on'); _rec = null; focusSearch(); };
+  try { _rec.start(); } catch (_) { if (btn) btn.classList.remove('on'); _rec = null; }
+}
 function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus(); q.select(); } }
 
 /**
@@ -1101,21 +1255,118 @@ function shopTax(){
   return { charges: (reg === 'regular' && hasGstin), reg: reg, gstin: hasGstin,
            kind: (reg === 'regular' && hasGstin) ? 'tax' : (reg === 'composition' && hasGstin ? 'supply' : 'cash') };
 }
+/**
+ * ⭐⭐⭐ WHAT WOULD GO WRONG TODAY (2026-09-08). Athi: *"if the tax is not there, the system should alert — couldn't find the tax
+ * component, as it is fatal. It may be a technical problem or a typing issue."*
+ *
+ * Every fault here is SILENT: nothing crashes, no message appears, and a shop bills all day at the wrong money or hands out the
+ * wrong document. So the counter asks the questions itself, on the shop's own copy, and answers in the words a shopkeeper would use
+ * — what is wrong · what it means · what to do.
+ * ⚠️ IT NEVER BLOCKS A SALE. A dot in the header and a panel behind it. A counter that refused to sell because a slab was missing
+ * would have turned a data problem into a lost customer, which is a worse outcome than the fault it was protecting against.
+ */
+function health(){
+  var out = [], items = (S && S.items) || [], tx = shopTax();
+  var add = function(level, what, means, todo, eg){ out.push({ level:level, what:what, means:means, todo:todo, eg:eg || [] }); };
+
+  if (!S) { add('warn', 'No copy of the shop yet', 'The counter has never read your catalogue, so it cannot price anything.',
+    'Press ↻ once while the internet is on.'); return out; }
+
+  /* ── the tax component, which is the one he asked for ── */
+  if (tx.reg === 'regular' && !tx.gstin)
+    add('bad', 'Set as regular, but there is no GSTIN',
+      'A registered shop must show its GSTIN on a tax invoice. Without one the counter prints a CASH MEMO and charges no GST — which is right, but it is probably not what you meant.',
+      'Add the GSTIN in ChitBridge → Profile, or set the registration to unregistered.');
+  if (tx.charges) {
+    if (!(S.slabs || []).length)
+      add('bad', 'No tax slabs reached this counter',
+        'You charge GST, but no rate came down with the shop — so every line would be billed with no tax at all.',
+        'Check ChitBridge → Catalogue setup → Tax, then press ↻ here.');
+    else {
+      var noRate = items.filter(function(i){ return rateOf(i) == null; });
+      if (noRate.length)
+        add('bad', noRate.length + ' of ' + items.length + ' products have no tax rate',
+          'Those lines would go onto a tax invoice with no GST on them. It is usually a slab that was never set on the product, or one whose name was typed differently.',
+          'Open each in ChitBridge → Catalogue and set its tax slab.', noRate.slice(0, 5).map(function(i){ return i.name; }));
+    }
+  }
+  /* ⚠️ THE ASSUMPTION THAT WAS NEVER ASKED: are shelf prices quoted with the tax in them, or without? */
+  add('note', ((S.policy && S.policy.price_includes_tax) === 'no')
+      ? 'Shelf prices are quoted WITHOUT tax' : 'Shelf prices already include tax',
+    ((S.policy && S.policy.price_includes_tax) === 'no')
+      ? 'The counter will ADD GST on top of the price you set. A customer pays more than the shelf says.'
+      : 'The counter splits the GST OUT of the price you set. A customer pays exactly what the shelf says.',
+    'Change it in ChitBridge → Settings if that is the wrong way round.');
+
+  /* ── the other silent faults ── */
+  var noPrice = items.filter(function(i){ return !(Number(i.price) > 0); });
+  if (noPrice.length)
+    add('bad', noPrice.length + ' product(s) have no price',
+      'They can be found and added to a bill, and they would add nothing to the total.',
+      'Set a price in ChitBridge → Catalogue.', noPrice.slice(0, 5).map(function(i){ return i.name; }));
+
+  if (!items.length)
+    add('bad', 'Nothing on the shelf', 'There is nothing to sell from this counter.', 'Add products in ChitBridge → Catalogue, then press ↻.');
+
+  if (S.at) {
+    var mins = Math.round((Date.now() - new Date(S.at).getTime()) / 60000);
+    if (mins > 240) add('warn', 'The prices are ' + Math.round(mins / 60) + ' hours old',
+      'Anything changed in ChitBridge since then is not here — you would bill at yesterday\'s price.',
+      'Press ↻ while the internet is on.');
+  }
+  if (STATE && STATE.queued > 3)
+    add('warn', STATE.queued + ' bills are waiting to reach ChitBridge',
+      'They are safe on this device and go by themselves, once each. A queue this long usually means the line has been down a while.',
+      'Nothing, unless it stays this way after the internet is back.');
+
+  var pack = (typeof lotPack === 'function') ? lotPack() : null;
+  if (pack && pack.required && pack.required.length)
+    add('note', 'This trade records ' + pack.required.join(' and ') + ' on goods received',
+      pack.why || 'Goods coming in must carry them.', 'Nothing — it is asked for at the door.');
+
+  return out;
+}
+function healthWorst(){ var h = health(); return h.some(function(x){ return x.level === 'bad'; }) ? 'bad'
+  : (h.some(function(x){ return x.level === 'warn'; }) ? 'warn' : 'ok'); }
+function openHealth(){
+  var h = health();
+  var icon = { bad:'⛔', warn:'⚠️', note:'ℹ️' };
+  document.getElementById('sliptitle').textContent = 'Check this counter';
+  document.getElementById('slipbox').innerHTML = '<div style="font-family:inherit;width:auto;color:var(--ink)">'
+    + (h.length ? h.map(function(x){
+        return '<div style="border-inline-start:4px solid ' + (x.level === 'bad' ? 'var(--warn)' : (x.level === 'warn' ? 'var(--blue)' : 'var(--line)'))
+          + ';padding:8px 12px;margin-bottom:10px">'
+          + '<div style="font-weight:800">' + icon[x.level] + ' ' + esc(x.what) + '</div>'
+          + '<div style="margin:4px 0">' + esc(x.means) + '</div>'
+          + '<div style="color:var(--dim)"><b>What to do:</b> ' + esc(x.todo) + '</div>'
+          + (x.eg.length ? '<div style="color:var(--dim);font-size:.85em;margin-top:4px">' + esc(x.eg.join(' · ')) + (x.eg.length >= 5 ? ' …' : '') + '</div>' : '')
+          + '</div>';
+      }).join('') : '<div style="padding:12px">Nothing to report. The shop, the prices and the tax all reached this counter.</div>')
+    + '</div>';
+  document.getElementById('slipdlg').showModal();
+}
 /** the shelf price already includes GST — the slip shows the split, it does not add to what the customer was told */
 function billMoney(){
   var gross = 0, save = 0, net = 0;
   CART.forEach(function(c){ gross = r2(gross + (c.gross||0)); save = r2(save + (c.save||0)); net = r2(net + (c.net||0)); });
   var taxed = shopTax().charges;
+  /* ⚠️ WHICH WAY THE PRICE IS QUOTED. Inclusive (the Indian retail norm, and the default) splits the tax OUT of the shelf price;
+     exclusive ADDS it on top. Getting this backwards is wrong by exactly the tax on every bill, in silence. */
+  var inclusive = !(S && S.policy && S.policy.price_includes_tax === 'no');
   var base = net, tax = 0, byRate = {};
   if (taxed){
     base = 0;
     CART.forEach(function(c){
-      var rate = Number(c.gst_rate)||0, b = r2((c.net||0) * 100 / (100 + rate)), t = r2((c.net||0) - b);
+      var rate = Number(c.gst_rate)||0;
+      var b = inclusive ? r2((c.net||0) * 100 / (100 + rate)) : r2(c.net||0);
+      var t = inclusive ? r2((c.net||0) - b) : r2(b * rate / 100);
       base = r2(base + b); tax = r2(tax + t);
       if (rate){ byRate[rate] = byRate[rate] || { base:0, tax:0 }; byRate[rate].base = r2(byRate[rate].base + b); byRate[rate].tax = r2(byRate[rate].tax + t); }
     });
   }
-  return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed };
+  /* ⚠️ EXCLUSIVE PRICING CHANGES WHAT THE CUSTOMER PAYS, not just how it is reported: the tax is added to the total. */
+  if (taxed && !inclusive) net = r2(base + tax);
+  return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed, inclusive:inclusive };
 }
 function paintTotals(){
   var m = billMoney();
@@ -2101,6 +2352,9 @@ function openSettings(){
   document.getElementById('set_till').value = ls.get('cb_till_id','C1');
   document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
   document.getElementById('set_rows').value = ls.get('cb_till_rows','compact');
+  document.getElementById('set_lang').value = ls.get('cb_till_lang','en-IN');
+  var micb = document.getElementById('mic'); if (micb) micb.style.display = speechOK() ? '' : 'none';
+  var micp = document.getElementById('micphone'); if (micp) micp.style.display = speechOK() ? '' : 'none';
   document.getElementById('set_theme').value = ls.get('cb_till_theme','light');
   var pair = document.getElementById('pairbox');
   if (HOST && HOST.mode === 'cloud') {
@@ -2129,6 +2383,7 @@ async function saveSettings(){
   var k = document.getElementById('set_key');
   if (k && k.value && k.value.indexOf('•') < 0) { ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); }
   var rowsSel = document.getElementById('set_rows'); if (rowsSel) ls.set('cb_till_rows', rowsSel.value);
+  var langSel = document.getElementById('set_lang'); if (langSel) ls.set('cb_till_lang', langSel.value);
   var a = document.getElementById('set_api');
   if (a && a.value) { ls.set('cb_till_api', a.value.trim()); CloudHost.api = a.value.trim(); }
   document.getElementById('setdlg').close();
@@ -2164,6 +2419,8 @@ parkedLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
 load();
 gripInit();
+/* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
+['mic','micphone'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK()) b.style.display = 'none'; });
 setMode(ls.get('cb_till_mode', 'sell'));
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);

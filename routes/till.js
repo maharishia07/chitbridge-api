@@ -181,6 +181,7 @@ router.get('/snapshot', auth, async (req, res) => {
       customers,
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
                 /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
+                price_includes_tax: String(flags.price_includes_tax || 'yes'),
                 tolerance: { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp),
                              count_units: Number(flags.tol_count_units) || 0,
                              rate_bp: Number(flags.tol_rate_bp) || 0 } },
@@ -507,8 +508,15 @@ router.post('/alias', auth, async (req, res) => {
  * gets them from here rather than from a second host, so there is one place that answers "which version is the counter running".
  * Cached by the till at install and refreshed with the snapshot; both files are the SAME code the server and the app run.
  */
+/**
+ * ⚠️ EVERY ENGINE THE PAGE LOADS MUST BE HERE. The browser gets them from /engine/*.js on the web host; a shop PC gets them ONLY
+ * through this map, so an engine missing from it works in a browser and is silently absent on the desktop counter — the worst kind
+ * of difference, because it only shows up on the machine nobody is testing on. `lots` was missing exactly that way (2026-09-08).
+ */
 const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js',
-                  gs1: '../lib/gs1.browser.js' };   /* what a pack's barcode carries — batch, expiry, serial */
+                  gs1: '../lib/gs1.browser.js',        /* what a pack's barcode carries — batch, expiry, serial */
+                  lots: '../lib/lotfields.browser.js', /* what this trade must capture, and the difference it absorbs */
+                  nums: '../lib/numerals.browser.js' };/* "two kilo", "rendu kilo" — the closed class, in both */
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
   if (!rel) return res.status(404).json({ error: 'Not found' });

@@ -15,9 +15,16 @@ const { execFileSync } = require('child_process');
 const API = path.join(__dirname, '..');
 const PAGE = path.join(API, 'tools', 'tally-connector', 'till.html');
 let pass = 0;
-const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
+/**
+ * ⚠️ CHECKS RUN ONE AT A TIME, AND ARE AWAITED. The quick-key checks are async — they read a shop's history — and running them
+ * concurrently let one test's shop arrive in another's assertion (the first daypart check saw a product from three tests later).
+ * An async check that is not awaited also prints "ok" before it has checked anything, which is worse than failing.
+ */
+const JOBS = [];
+const it = (what, fn) => JOBS.push([what, fn]);
+const say = (line) => JOBS.push([null, () => console.log(line)]);
 
-console.log('— the counter —');
+say('— the counter —');
 
 it('every copy of the screen is current (the master is the kit\'s till.html)', () => {
   try { execFileSync(process.execPath, [path.join(API, 'scripts', 'vendor-till.cjs'), '--check'], { encoding: 'utf8' }); }
@@ -484,4 +491,152 @@ it('⚠️ a rate is never shown on a bill that carries no tax', () => {
   assert.strictEqual(P.rateOf({ name: 'Masala', tax_slab: 'gst-5' }), null, 'a GST chip on a cash memo is a claim we cannot make');
 });
 
-console.log(pass + ' checks');
+/* ── quick keys that know the hour (2026-09-08) ──────────────────────────────────────────────────────────────── */
+
+/** a bill rung up at a given hour, carrying one product */
+const rang = (hour, item_id) => ({ at: new Date(2026, 8, 1, hour, 0, 0).toISOString(), lines: [{ item_id }] });
+
+it('⭐⭐ the morning grid is what mornings buy', async () => {
+  P.S = { shop: {}, items: [{ item_id: 'idli', name: 'Idli batter', unit: 'kg', price: 60 },
+                            { item_id: 'rice', name: 'Ponni rice 25 kg', unit: 'bag', price: 1180 },
+                            { item_id: 'oil', name: 'Sunflower oil 1 L', unit: 'litre', price: 142 }] };
+  P.localStorage = { getItem: () => null, setItem: () => {} };
+  /* eight in the morning: idli batter sold at breakfast on the last three days, rice sold at noon */
+  const now = new Date(); now.setHours(8, 0, 0, 0);
+  P.Date = class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now.getTime(); } };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [
+    rang(8, 'idli'), rang(8, 'idli'), rang(8, 'idli'),
+    rang(13, 'rice'), rang(13, 'rice'), rang(13, 'rice'), rang(13, 'rice'), rang(13, 'rice'),
+    rang(17, 'oil')] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'idli',
+    'at 8am the breakfast item must come first even though rice sold more overall — got ' + P.QUICK.map((x) => x.item_id).join(','));
+  assert.ok(P.QUICK_WHY.indexOf('morning') > 0, 'the grid must say why it looks like this: ' + P.QUICK_WHY);
+});
+
+it('and the midday grid is what middays buy', async () => {
+  const now = new Date(); now.setHours(13, 0, 0, 0);
+  P.Date = class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now.getTime(); } };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'rice', 'at 1pm rice should lead — got ' + P.QUICK.map((x) => x.item_id).join(','));
+  assert.ok(P.QUICK_WHY.indexOf('midday') > 0, P.QUICK_WHY);
+});
+
+it('⚠️ the clock is a circle — 23:30 and 00:30 are an hour apart, not twenty-three', async () => {
+  P.S = { shop: {}, items: [{ item_id: 'late', name: 'Cigarettes', unit: 'piece', price: 20 },
+                            { item_id: 'day', name: 'Rice', unit: 'kg', price: 60 }] };
+  const now = new Date(); now.setHours(0, 15, 0, 0);
+  P.Date = class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now.getTime(); } };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [rang(23, 'late'), rang(23, 'late'), rang(12, 'day'), rang(12, 'day')] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'late', 'a quarter past midnight should still favour what sells at eleven at night');
+});
+
+it('a key dropped stays dropped, and comes back when the shop says so', async () => {
+  const store = {};
+  P.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } };
+  P.S = { shop: {}, items: [{ item_id: 'a', name: 'A', unit: 'piece', price: 1 }, { item_id: 'b', name: 'B', unit: 'piece', price: 2 }] };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK.length, 2);
+  P.quickHide('a');
+  await new Promise((r) => setTimeout(r, 30));
+  assert.ok(P.QUICK.every((x) => x.item_id !== 'a'), 'the hidden key came back');
+  P.quickReset();
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(P.QUICK.length, 2, 'reset must bring every key back');
+});
+
+it('⭐ a pinned key holds its place whatever the hour says', async () => {
+  const store = {};
+  P.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } };
+  P.S = { shop: {}, items: [{ item_id: 'a', name: 'A', unit: 'piece', price: 1 }, { item_id: 'b', name: 'B', unit: 'piece', price: 2 }] };
+  const now = new Date(); now.setHours(10, 0, 0, 0);
+  P.Date = class extends Date { constructor(...x) { super(...(x.length ? x : [now])); } static now() { return now.getTime(); } };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [rang(10, 'b'), rang(10, 'b')] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'b', 'without a pin the hour decides');
+  P.quickPin('a');
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(P.QUICK[0].item_id, 'a', 'a pin must beat the suggestion');
+});
+
+/* ── what would go wrong today (2026-09-08) ──────────────────────────────────────────────────────────────────── */
+
+const finds = (h, word) => h.filter((x) => (x.what + ' ' + x.means).toLowerCase().indexOf(word.toLowerCase()) >= 0);
+
+it('⭐⭐ THE ONE HE ASKED FOR: a shop that charges GST, with products that carry no rate', () => {
+  P.CBTax = { slab: require(path.join(API, 'lib', 'tax-slab.js')) };   /* the engine the browser loads as /engine/tax.js */
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' }, face: {}, policy: {},
+    slabs: [{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }], categories: [],
+    items: [{ item_id: 'a', name: 'Rice', price: 60, tax_slab: 'gst-5' },
+            { item_id: 'b', name: 'Oil', price: 142 },
+            { item_id: 'c', name: 'Soap', price: 30, tax_slab: 'gst-99' }] };
+  P.STATE = { queued: 0 };
+  const h = P.health();
+  const hit = finds(h, 'no tax rate')[0];
+  assert.ok(hit, 'the fault Athi called fatal went unreported: ' + h.map((x) => x.what).join(' | '));
+  assert.strictEqual(hit.level, 'bad');
+  assert.ok(hit.what.indexOf('2 of 3') === 0, 'it must say how many: ' + hit.what);
+  assert.ok(hit.eg.length >= 2, 'and name a few, so somebody can go and fix them');
+  assert.ok(hit.todo.indexOf('Catalogue') > 0, 'and say where to go');
+});
+
+it('a shop set to regular with NO GSTIN is told plainly', () => {
+  P.S = { shop: { reg_type: 'regular' }, policy: {}, slabs: [], categories: [], items: [{ item_id: 'a', name: 'Rice', price: 60 }] };
+  const h = P.health();
+  assert.ok(finds(h, 'no GSTIN').length, h.map((x) => x.what).join(' | '));
+});
+
+it('⭐⭐ AND THE ASSUMPTION NOBODY HAD ASKED ABOUT: are shelf prices quoted with tax in them?', () => {
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' }, policy: { price_includes_tax: 'yes' },
+    slabs: [{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }], categories: [], face: {},
+    items: [{ item_id: 'a', name: 'Rice', price: 60, tax_slab: 'gst-5' }] };
+  const inc = P.health();
+  assert.ok(finds(inc, 'include tax').length, 'the counter must SAY which way it is reading a price');
+  P.S.policy.price_includes_tax = 'no';
+  assert.ok(finds(P.health(), 'WITHOUT tax').length);
+});
+
+it('⚠️ and the split follows it — the same shelf price is two different bills', () => {
+  P.CART = [{ price: 105, qty: 1, gross: 105, net: 105, save: 0, gst_rate: 5 }];
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' }, policy: { price_includes_tax: 'yes' } };
+  const inc = P.billMoney();
+  assert.strictEqual(inc.net, 105, 'inclusive: the customer pays what the shelf said');
+  assert.strictEqual(inc.base, 100); assert.strictEqual(inc.tax, 5);
+  P.S.policy.price_includes_tax = 'no';
+  const exc = P.billMoney();
+  assert.strictEqual(exc.base, 105, 'exclusive: the shelf price IS the taxable value');
+  assert.strictEqual(exc.tax, 5.25);
+  assert.strictEqual(exc.net, 110.25, 'and the tax is added on top of it');
+});
+
+it('a price of nothing is a fault worth naming', () => {
+  P.S = { shop: { reg_type: 'unregistered' }, policy: {}, slabs: [], categories: [],
+    items: [{ item_id: 'a', name: 'Rice', price: 60 }, { item_id: 'b', name: 'Mystery', price: 0 }] };
+  assert.ok(finds(P.health(), 'no price').length);
+});
+
+it('⚠️ a shop with nothing wrong is told nothing is wrong', () => {
+  P.S = { shop: { reg_type: 'unregistered' }, policy: {}, slabs: [], categories: [], at: new Date().toISOString(),
+    items: [{ item_id: 'a', name: 'Rice', price: 60 }] };
+  P.STATE = { queued: 0 };
+  assert.strictEqual(P.healthWorst(), 'ok', 'a check that always finds something is a check nobody reads: '
+    + P.health().filter((x) => x.level !== 'note').map((x) => x.what).join(' | '));
+});
+
+it('⚠️⚠️ and it NEVER blocks a sale — every finding is a line and a dot, nothing more', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  const fn = html.slice(html.indexOf('function health(){'), html.indexOf('function healthWorst('));
+  assert.ok(fn.indexOf('alert(') < 0 && fn.indexOf('disabled') < 0,
+    'the health check must not interrupt or disable anything: a data problem must never become a lost customer');
+});
+
+(async () => {
+  for (const [what, fn] of JOBS) {
+    if (!what) { await fn(); continue; }
+    try { await fn(); pass++; console.log('  ok  ' + what); }
+    catch (e) { console.log('  FAIL ' + what + '\n      ' + (e && e.message)); process.exitCode = 1; }
+  }
+  console.log(pass + ' checks');
+})();

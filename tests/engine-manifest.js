@@ -215,6 +215,9 @@ const ENGINE_OTHER = [
   /* GENERATED beside it, for the counter: the tolerance rule must have ONE definition, because the door decides and the match
      decides afterwards and those two must never disagree (scripts/vendor-till.cjs). */
   'lotfields.browser.js',
+  /* GENERATED beside lib/numerals.js: the closed class — numerals in English and transliterated Tamil — so a counter that hears
+     "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
+  'numerals.browser.js',
   'pricing-engine.js',    // ENGINE: the pricing structure a product cites → the unit price at a quantity (vendored from app/pricing.js)   // = web app/offers.js, vendored (cp) so a shop ORDER is priced by the SAME engine as the row; web owns the source    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
   /**
    * ⭐⭐ THESE EIGHT ARE WHAT A CHIT *MEANS*, so they are engine and therefore LOCKED. They were held out of
