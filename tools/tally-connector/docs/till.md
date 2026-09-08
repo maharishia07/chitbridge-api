@@ -112,6 +112,34 @@ Their count at the door is the second, independent record — and if the two dis
 Bin locations, pick routes, stock counting, a warehouse system. We record what the shop **witnesses** — what came in, what went out,
 what was sold. Whatever you count on a Sunday belongs in Tally, and we connect to it.
 
+## The printer
+
+A USB till printer needs its **driver installed once**. Plugging in the cable is not enough — until the driver is there, Windows has
+the device but no printer to send anything to, and nothing on this PC can print to it.
+
+**Epson TM series** (TM-m30, TM-T82, TM-T88 and the rest): install Epson's **Advanced Printer Driver**, from
+`download.epson-biz.com` → Printer Driver → your model. Run the installer with the printer plugged in and switched on; it creates a
+printer called something like *EPSON TM-m30 Receipt*.
+
+Anything else: the maker's own Windows driver. A "Generic / Text Only" printer also works, but you lose the automatic cut.
+
+Then, in the counter: **⚙ → Printer**. Choose it, say whether the paper is 80 mm or 58 mm, tick the cash drawer if one is plugged
+into the printer, and press **Print a test slip**. If the test comes out, every bill from then on prints by itself — no dialog, no
+choosing, and the paper is cut for you.
+
+| What you see | What it means |
+|---|---|
+| The list is empty | Windows has no printer at all yet — install the driver above |
+| The printer is listed but nothing prints | Check the paper roll and the lid; then press *Print a test slip* again and read the line under it |
+| "not printed — …" under a bill | The bill is **saved and sent**; only the paper failed. Fix the printer and reprint from 🧾 bills |
+
+The counter never waits for a printer. A jammed or unplugged printer is a small line under the bill, never something to dismiss
+before the next customer.
+
+**In a browser** (a phone, a tablet, or the counter opened from ChitBridge) there is no way to print without the print dialog — that
+is a rule of browsers, not a choice of ours. Pick the till printer in that dialog once and it is remembered. To have slips print by
+themselves, put the counter on the shop PC.
+
 ## How an update reaches this counter
 
 The counter checks with ChitBridge every fifteen minutes, and it keeps itself current — you never download the kit again.
