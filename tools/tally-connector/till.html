@@ -387,6 +387,18 @@ var money = function(n){ return r2(n).toFixed(2); };
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
 var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
            set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
+/**
+ * ⭐⭐ WHICH OF THESE BELONG TO THE DEVICE, AND WHICH TO THE SHOP (2026-09-08). Athi, on finding a counter holding two shops at
+ * once: *"this is the worst failure I was worried about."* The audit that followed found four more of the same shape.
+ *
+ * The theme, the font size, the printer, the language, the split — those are this DEVICE's, and they should follow the device
+ * whatever shop is billing. But a parked customer's cart, who is standing at the counter, and which products were hidden or
+ * pinned on the quick keys are all facts about a SHOP, and they were kept under a plain device-wide name. Open a second shop in
+ * the same browser and its counter offered you the first shop's parked bill — a stranger's basket, with their phone number on it.
+ *
+ * ⚠️ The rule is one line long and it is worth stating out loud: **anything read out of the shop is stored under the shop.**
+ */
+function shopLs(k){ var st = tillStore(); return st === 'cb-till' ? k : (k + '@' + st.slice(8)); }
 
 /* ═══ 1 · the two hosts, behind one door ═════════════════════════════════════════════════════════════════════
    Everything above and below talks to HOST. `agent` is the little program on a shop PC (files, a printer, a
@@ -981,20 +993,20 @@ var QUICK = [];
  * the person using it would be worse than no grid.
  */
 var QUICK_WHY = '';
-function quickHidden(){ try { return JSON.parse(ls.get('cb_till_qhide','[]')) || []; } catch (_) { return []; } }
-function quickPinned(){ try { return JSON.parse(ls.get('cb_till_qpin','[]')) || []; } catch (_) { return []; } }
+function quickHidden(){ try { return JSON.parse(ls.get(shopLs('cb_till_qhide'),'[]')) || []; } catch (_) { return []; } }
+function quickPinned(){ try { return JSON.parse(ls.get(shopLs('cb_till_qpin'),'[]')) || []; } catch (_) { return []; } }
 function quickHide(id){
   var h = quickHidden(); if (h.indexOf(id) < 0) h.push(id);
-  ls.set('cb_till_qhide', JSON.stringify(h.slice(0, 200)));
+  ls.set(shopLs('cb_till_qhide'), JSON.stringify(h.slice(0, 200)));
   loadQuick();
 }
 function quickPin(id){
   var p = quickPinned(), at = p.indexOf(id);
   if (at >= 0) p.splice(at, 1); else p.unshift(id);
-  ls.set('cb_till_qpin', JSON.stringify(p.slice(0, 12)));
+  ls.set(shopLs('cb_till_qpin'), JSON.stringify(p.slice(0, 12)));
   loadQuick();
 }
-function quickReset(){ ls.set('cb_till_qhide', '[]'); ls.set('cb_till_qpin', '[]'); loadQuick(); }
+function quickReset(){ ls.set(shopLs('cb_till_qhide'), '[]'); ls.set(shopLs('cb_till_qpin'), '[]'); loadQuick(); }
 /** the words for the hour, as a shopkeeper would say them */
 function partOfDay(h){
   return h < 11 ? 'this morning' : (h < 15 ? 'around midday' : (h < 19 ? 'this afternoon' : 'this evening'));
@@ -1144,8 +1156,8 @@ function clearBill(){ CART = []; PARTS = []; paintParts(); document.getElementBy
  * refreshes must not cost the customer. They are NOT bills yet: no number is taken, nothing is queued, nothing has been sold.
  */
 var PARKED = [];
-function parkedLoad(){ try { PARKED = JSON.parse(ls.get('cb_till_parked', '[]')) || []; } catch (_) { PARKED = []; } paintParked(); }
-function parkedSave(){ ls.set('cb_till_parked', JSON.stringify(PARKED.slice(0, 20))); paintParked(); }
+function parkedLoad(){ try { PARKED = JSON.parse(ls.get(shopLs('cb_till_parked'), '[]')) || []; } catch (_) { PARKED = []; } paintParked(); }
+function parkedSave(){ ls.set(shopLs('cb_till_parked'), JSON.stringify(PARKED.slice(0, 20))); paintParked(); }
 function parkBill(){
   if (!CART.length) return;
   var who = (document.getElementById('cname').value || '').trim();
@@ -2302,7 +2314,7 @@ function cbHome(){ var api = (HOST && HOST.mode === 'cloud' && CloudHost.api) ? 
   return (location.origin.indexOf('till') >= 0 || location.port === '7071') ? 'https://chitbridge-web.vercel.app/app.html' : (location.origin + '/app.html'); }
 /** ⭐ THE SHIFT (2026-09-07). Not a login: the key is what authorises this till. This says who is standing at it, on every bill. */
 function whoLoad(){
-  try { var raw = ls.get('cb_till_who', ''); WHO = raw ? JSON.parse(raw) : null; } catch (_) { WHO = null; }
+  try { var raw = ls.get(shopLs('cb_till_who'), ''); WHO = raw ? JSON.parse(raw) : null; } catch (_) { WHO = null; }
   paintWho();
 }
 function paintWho(){
@@ -2325,7 +2337,7 @@ function setWho(id, name){
      allowed (a shop with no float, or a busy moment): it counts as zero and the close says so. */
   var float0 = prompt('Cash in the drawer now (the float). Leave blank if none.', '');
   WHO = { id: id, name: name, since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
-  ls.set('cb_till_who', JSON.stringify(WHO));
+  ls.set(shopLs('cb_till_who'), JSON.stringify(WHO));
   paintWho(); document.getElementById('whodlg').close(); focusSearch();
 }
 /**
@@ -2380,7 +2392,7 @@ async function shiftClose(){
   try { if (HOST && HOST.shift) await HOST.shift(SHIFT); } catch (_) {}
 }
 function shiftDone(){
-  SHIFT = null; WHO = null; ls.set('cb_till_who', '');
+  SHIFT = null; WHO = null; ls.set(shopLs('cb_till_who'), '');
   var b = document.getElementById('shiftgo'); if (b) { b.textContent = 'Count and hand over'; b.setAttribute('onclick', 'shiftClose()'); }
   document.getElementById('shiftdlg').close(); paintWho(); load(); openWho();
 }
