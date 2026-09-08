@@ -27,6 +27,38 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const http = require('http');
+/**
+ * ⭐⭐ A STAGED UPDATE IS APPLIED AT THE START, NEVER WHILE A SHOP IS BILLING (2026-09-08).
+ * The refresh downloads a newer till.js or core.js as <name>.new and stops there. This is the only place they are swapped in, before
+ * a single line of the program has run, and the process restarts itself so no half-old, half-new pair can ever be loaded together.
+ * ⚠️ A file that does not PARSE is never swapped in — a shop would be left with a counter that cannot start, which is worse than a
+ * counter that is a week old. The version being replaced is kept as <name>.bak.
+ * ⚠️ CB_TILL_UPDATED marks the child, so a swap can happen once per start and never loop.
+ */
+(function applyStagedUpdate() {
+  if (process.env.CB_TILL_UPDATED) return;
+  const here = __dirname;
+  const names = ['till.js', 'core.js'].filter((n) => fs.existsSync(path.join(here, n + '.new')));
+  if (!names.length) return;
+  const vm = require('vm');
+  for (const n of names) {
+    try { new vm.Script(fs.readFileSync(path.join(here, n + '.new'), 'utf8'), { filename: n }); }
+    catch (e) {
+      console.log('the newer ' + n + ' does not run (' + e.message + ') — the counter kept the version it has');
+      for (const x of names) { try { fs.unlinkSync(path.join(here, x + '.new')); } catch (_) {} }
+      return;
+    }
+  }
+  for (const n of names) {
+    try { fs.copyFileSync(path.join(here, n), path.join(here, n + '.bak')); } catch (_) {}
+    fs.renameSync(path.join(here, n + '.new'), path.join(here, n));
+  }
+  console.log('the counter program was updated (' + names.join(', ') + ') — starting the new one');
+  const r = require('child_process').spawnSync(process.execPath, [path.join(here, 'till.js')].concat(process.argv.slice(2)),
+    { stdio: 'inherit', env: Object.assign({}, process.env, { CB_TILL_UPDATED: '1' }) });
+  process.exit(typeof r.status === 'number' ? r.status : 0);
+})();
+
 const core = require('./core');
 
 const argv = process.argv.slice(2);
@@ -46,6 +78,9 @@ const F = {
   engine: (n) => path.join(DIR, 'engine-' + n + '.js'),
 };
 for (const d of [DIR]) if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+
+/* what the last refresh found about the kit itself — the page tells the person at the counter, in their words */
+const UPDATE = { version: null, page_at: null, program_ready: false };
 
 const cb = new core.CB({ api: cfg.api, key: cfg.key, log });
 cb.name = tillCfg.name || 'Till';
@@ -108,6 +143,15 @@ async function refresh() {
         if (js.length > 500) fs.writeFileSync(file, js); }
       catch (_) { /* keep the copy we have — an engine we already hold is what makes the counter work offline */ }
     }
+    /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
+    try {
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html'], staged: ['till.js', 'core.js'] });
+      if (up) {
+        UPDATE.version = up.version;
+        if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
+        if (up.staged.length) { UPDATE.program_ready = true; log('a newer counter program is ready — it starts being used the next time this PC starts the counter'); }
+      }
+    } catch (_) { /* an update is never worth a sale */ }
     return true;
   } catch (e) { online = false; log('offline (' + e.message + ') — billing continues from the copy on disk'); return false; }
 }
@@ -199,7 +243,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/state')
       return json(res, 200, { snapshot: snapshot, online: online, queued: readLines(F.queue).length, today: todayTotals(),
                               till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
-                              engines: { offers: fs.existsSync(F.engine('offers')), tax: fs.existsSync(F.engine('tax')), search: fs.existsSync(F.engine('search')) } });
+                              engines: { offers: fs.existsSync(F.engine('offers')), tax: fs.existsSync(F.engine('tax')), search: fs.existsSync(F.engine('search')) },
+                              update: UPDATE });
 
     if (req.method === 'POST' && url.pathname === '/api/refresh') { const ok = await refresh(); return json(res, 200, { ok: ok, online: online, at: snapshot && snapshot.at }); }
 

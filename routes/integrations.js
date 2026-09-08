@@ -77,12 +77,53 @@ const CATALOGUE = [
                 'Columns are matched by name — keep the sample\'s headers.'] },
 ];
 
+/**
+ * ⭐ ONE LIST OF WHAT A KIT IS. The zip is built from it, the update manifest is hashed from it, and a request for a file is checked
+ * against it — so a kit can never be sent a file the zip would not have contained, and the three can never drift apart.
+ */
+const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
 function kitFiles(adapter) {
-  const names = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
+  const names = KIT_NAMES;
   const out = [];
   for (const n of names) { const p = path.join(KIT, n); if (fs.existsSync(p)) out.push({ name: 'chitbridge-connector/' + n, data: fs.readFileSync(p) }); }
   return out;
 }
+
+/**
+ * ⭐⭐ THE UPDATE PATH (2026-09-08). A kit asks what it SHOULD be, compares it with what it HAS, and fetches only what differs.
+ *
+ *   GET /api/integrations/kit          → { version, at, files: [{ name, sha256, bytes }] }
+ *   GET /api/integrations/kit/<name>   → that one file, exactly as the zip would have carried it
+ *
+ * ⚠️ THE PROGRAM DECIDES WHAT TO DO WITH WHAT IT FETCHES, NEVER THIS ROUTE. The page (till.html) is only served, so a kit writes it
+ * at once; till.js and core.js are the running program, so a kit stages them and swaps at its next start, after checking they parse.
+ * That rule lives in the kit (core.kitUpdate) because only the kit knows what is safe to replace while a shop is billing.
+ * ⚠️ Nothing here is entity data: it is the same public kit every shop downloads. It is behind a key so that a kit that lost its
+ * approval stops updating too, not because the bytes are secret.
+ */
+const crypto = require('crypto');
+function kitManifest() {
+  const files = [];
+  for (const n of KIT_NAMES) {
+    const p = path.join(KIT, n);
+    if (!fs.existsSync(p)) continue;
+    const buf = fs.readFileSync(p);
+    files.push({ name: n, sha256: crypto.createHash('sha256').update(buf).digest('hex'), bytes: buf.length });
+  }
+  const version = crypto.createHash('sha256').update(files.map((f) => f.name + ':' + f.sha256).join('|')).digest('hex').slice(0, 12);
+  return { version, at: new Date().toISOString(), files };
+}
+router.get('/kit', auth, (req, res) => res.json(kitManifest()));
+router.get('/kit/*', auth, (req, res) => {
+  /* ⚠️ the whitelist IS the path check: a name not on the list is not a file, whatever it looks like */
+  const name = String(req.params[0] || '');
+  if (KIT_NAMES.indexOf(name) < 0) return res.status(404).json({ error: 'Not part of the kit' });
+  const p = path.join(KIT, name);
+  if (!fs.existsSync(p)) return res.status(404).json({ error: 'Not found' });
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.end(fs.readFileSync(p));
+});
 
 /** the instruction document of a connector, as markdown — shown on the Integrations screen and shipped in the kit */
 router.get('/docs/:id', (req, res) => {
@@ -444,3 +485,6 @@ router.openapi = { paths: {
 }, schemas: {} };
 module.exports = router;
 module.exports.CATALOGUE = CATALOGUE;
+/* the update path, reachable by tests/kit-update.test.js without a server: what a kit SHOULD be, and the list that bounds it */
+module.exports.kitManifest = kitManifest;
+module.exports.KIT_NAMES = KIT_NAMES;

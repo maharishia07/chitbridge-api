@@ -65,6 +65,8 @@
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   .qtyhint{padding:6px 12px;background:var(--ok-tint);color:var(--ok);font-size:.85em;border-bottom:1px solid var(--line)}
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
+  /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
+  .upd{color:var(--ok);font-weight:700}
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card)}
   .quick button{padding:14px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
   .quick button b{display:block;font-size:.95em;overflow-wrap:anywhere}
@@ -175,7 +177,7 @@
       <button class="pri" id="save" onclick="finish()">Save &amp; print · F9</button>
     </div>
     <div class="parked" id="parked"></div>
-    <div class="foot"><span id="queuenote"></span><span id="lastnote"></span></div>
+    <div class="foot"><span id="queuenote"></span><span id="updnote" class="upd"></span><span id="lastnote"></span></div>
   </section>
 </div>
 
@@ -491,6 +493,20 @@ function paintStatus(){
   var note = STATE.queued ? (STATE.queued + ' bill(s) waiting to reach ChitBridge') : 'everything has reached ChitBridge';
   if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
   document.getElementById('queuenote').textContent = note;
+  paintUpdate();
+}
+/**
+ * ⭐ WHAT HAPPENED · WHAT IT MEANS · WHAT TO DO. The little program on this PC keeps the kit current on its own; all this does is say
+ * so. A new SCREEN is on disk but this browser is still showing the old one — that is a reload, and it can wait for a gap in the queue.
+ * A new PROGRAM is staged — that is nothing for the person at the counter to do at all, so it says as much.
+ */
+var LOADED_AT = new Date().toISOString();
+function paintUpdate(){
+  var el = document.getElementById('updnote'); if (!el) return;
+  var up = (STATE && STATE.update) || {};
+  if (up.page_at && up.page_at > LOADED_AT) el.textContent = 'A newer counter screen is ready — press F5 between customers. Nothing on the bill is lost.';
+  else if (up.program_ready) el.textContent = 'A newer counter program is ready. It will be used the next time this PC starts the counter — nothing for you to do.';
+  else el.textContent = '';
 }
 function paintCustomers(){
   var list = (S && S.customers) || [];

@@ -62,6 +62,18 @@ them up.
 The **⚙** button holds everything that belongs to this device: the counter's name (it becomes the bill number's prefix), the text
 size, and light or dark. None of it leaves the device.
 
+## How an update reaches this counter
+
+The counter checks with ChitBridge every fifteen minutes, and it keeps itself current — you never download the kit again.
+
+- **A new screen** is written to this PC straight away. The footer then says *"A newer counter screen is ready — press F5 between
+  customers."* Press F5 when there is a gap. Nothing on the bill is lost.
+- **A new program** is downloaded but **not** used until the next time this PC starts the counter. The footer says so, and there is
+  nothing for you to do. If the new one would not start, it is refused and the counter goes on using the one it has — the version it
+  replaced is always kept beside it as `till.js.bak`.
+
+Nothing is ever written unless it arrives whole, and nothing is downloaded twice.
+
 ## What the bill number means
 
 `C1/26-27/0041` — counter C1, financial year 2026-27, the forty-first bill. The series is continuous within the year and belongs to

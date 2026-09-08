@@ -178,9 +178,11 @@ const KEY_ROUTES = {
   /* ⭐ THE TILL (2026-09-07): its snapshot, its bills, its heartbeat, the bell. It cannot read another chit, cannot touch products,
      cannot mint keys — and routes/chits.js refuses a till key that addresses anyone but itself. */
   till:      [['GET', /^\/api\/till\/(snapshot|bills|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
-              ['POST', /^\/api\/events\/ticket$/], ['*', /^\/api\/offers(\/|$)/]],
+              ['POST', /^\/api\/events\/ticket$/], ['*', /^\/api\/offers(\/|$)/],
+              /* ⭐ a kit keeps ITSELF current (2026-09-08): the same public files every shop downloads, read-only */
+              ['GET', /^\/api\/integrations\/kit(\/|$)/]],
   connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['POST', /^\/api\/products\/availability\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
-              ['GET', /^\/api\/chits\/(inbox|sent|pulse|[0-9a-f-]{36})$/] /* sent: the buyer's connector books its purchases */, ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */, ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/], ['POST', /^\/api\/integrations\/books$/] /* the kit's write-back: what it booked, onto my copy (2026-09-06) */, ['POST', /^\/api\/integrations\/profile$/], ['GET', /^\/api\/integrations\/profile-map$/]],
+              ['GET', /^\/api\/chits\/(inbox|sent|pulse|[0-9a-f-]{36})$/] /* sent: the buyer's connector books its purchases */, ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */, ['POST', /^\/api\/events\/ticket$/], ['GET', /^\/api\/events\/stats$/], ['POST', /^\/api\/integrations\/heartbeat$/], ['POST', /^\/api\/integrations\/books$/] /* the kit's write-back: what it booked, onto my copy (2026-09-06) */, ['POST', /^\/api\/integrations\/profile$/], ['GET', /^\/api\/integrations\/profile-map$/], ['GET', /^\/api\/integrations\/kit(\/|$)/]],
 };
 const _keyCache = new Map();   // jti → { ok: the key's listing record (or false), at }
 auth.forgetKey = (jti) => { _keyCache.delete(String(jti)); };   /* an approval must not wait a minute for the cache (routes/integrations.js) */

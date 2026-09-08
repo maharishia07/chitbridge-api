@@ -362,10 +362,58 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
 }
 
 function counts(receipts) { const c = { products_ok: 0, orders_ok: 0, stock_ok: 0, receipts_ok: 0, purchases_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') c.products_ok++; else if (r.kind === 'receipt') c.receipts_ok++; else if (r.kind === 'purchase') c.purchases_ok++; else if (r.kind === 'order') c.orders_ok++; else if (r.kind === 'stock') c.stock_ok++; } else if (r.outcome === 'failed') c.failed++; } return c; }
+/**
+ * ⭐⭐ A KIT KEEPS ITSELF CURRENT (2026-09-08). Athi: *"build the kit update path."*
+ *
+ * Until now a kit was frozen at the day it was downloaded — every fix meant somebody re-downloading a zip over the old folder, and
+ * the counter made it obvious: a new screen shipped and the shop PC went on serving the old one.
+ *
+ * It asks the server what the kit SHOULD be, compares the hashes with what is on this PC, and fetches only what differs.
+ *   live   — files nothing is running (the counter's page): written straight away.
+ *   staged — the running program itself: written as <name>.new for the next start, because replacing code under a shop that is
+ *            billing is exactly the kind of cleverness rule 4 forbids.
+ *
+ * ⚠️ NOTHING IS WRITTEN THAT DOES NOT MATCH THE HASH IT WAS PROMISED. A truncated download is a broken till on a shop counter.
+ * ⚠️ IT NEVER THROWS. The line being down, or a key that lost its approval, must look like "no update today", not like a crash.
+ */
+async function kitUpdate({ cb, dir, log, live, staged }) {
+  const say = log || (() => {});
+  const want = { live: live || [], staged: staged || [] };
+  const out = { version: null, updated: [], staged: [], checked: 0 };
+  let man = null;
+  try { man = await cb.call('GET', '/api/integrations/kit'); } catch (_) { return null; }
+  if (!man || !Array.isArray(man.files)) return null;
+  out.version = man.version || null;
+  const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
+  for (const f of man.files) {
+    const wanted = want.live.indexOf(f.name) >= 0 ? 'live' : (want.staged.indexOf(f.name) >= 0 ? 'staged' : null);
+    if (!wanted) continue;
+    out.checked++;
+    const here = path.join(dir, f.name);
+    const target = wanted === 'live' ? here : here + '.new';
+    try {
+      if (fs.existsSync(here) && sha(fs.readFileSync(here)) === f.sha256) {
+        if (fs.existsSync(target) && target !== here) fs.unlinkSync(target);   /* it caught up another way; nothing is pending */
+        continue;
+      }
+      if (fs.existsSync(target) && target !== here && sha(fs.readFileSync(target)) === f.sha256) { out.staged.push(f.name); continue; }
+      const got = await cb.call('GET', '/api/integrations/kit/' + f.name);
+      const body = (got && typeof got.raw === 'string') ? got.raw : null;      /* a .js file is not JSON; CB.call hands it back as raw */
+      if (body === null) { say('update: ' + f.name + ' came back in a shape I do not understand — kept what is here'); continue; }
+      const buf = Buffer.from(body, 'utf8');
+      if (sha(buf) !== f.sha256) { say('update: ' + f.name + ' did not arrive whole — kept what is here'); continue; }
+      const tmp = target + '.tmp';
+      fs.writeFileSync(tmp, buf); fs.renameSync(tmp, target);                  /* through a temp file: never half a file on disk */
+      (wanted === 'live' ? out.updated : out.staged).push(f.name);
+    } catch (e) { say('update: ' + f.name + ' — ' + e.message); }
+  }
+  return out;
+}
+
 function loadConfig(file) {
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!cfg.api || !cfg.key) throw new Error('config needs api and key (mint one under Settings › Integrations, scope connector)');
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { booksGate, ownsStream, pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { kitUpdate, booksGate, ownsStream, pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
