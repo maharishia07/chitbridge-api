@@ -8,7 +8,7 @@
  * Run: node tests/lotfields.test.js   · no DB, no browser, no network.
  */
 'use strict';
-const assert = require('assert'), path = require('path');
+const assert = require('assert'), path = require('path'), fs = require('fs');
 const lot = require(path.join(__dirname, '..', 'lib', 'lotfields.js'));
 const gs1 = require(path.join(__dirname, '..', 'lib', 'gs1.js'));
 
@@ -136,6 +136,57 @@ it('what it parses is what lotOf will store, unchanged', () => {
   assert.strictEqual(stored.expiry, '2028-03-31');
   assert.strictEqual(gs1.expiryState(stored, '2026-09-08'), 'fine');
   assert.strictEqual(gs1.expiryState({ batch: 'X', expiry: '2026-09-01' }, '2026-09-08'), 'expired');
+});
+
+console.log('— how much difference is not a dispute —');
+
+const TOL = { weight_bp: 50, count_units: 0 };      /* half a percent on weighed goods; nothing on packed */
+
+it('⭐ a lorry of rice short by two kilos in a tonne is absorbed', () => {
+  assert.strictEqual(lot.withinTolerance(-2, 1000, 'kg', TOL), true);
+  assert.strictEqual(lot.withinTolerance(2, 1000, 'kg', TOL), true, 'over is the same rule as short');
+});
+
+it('⚠️ short by six kilos in a tonne is NOT — 0.5% of 1000 is 5', () => {
+  assert.strictEqual(lot.withinTolerance(-6, 1000, 'kg', TOL), false);
+  assert.strictEqual(lot.withinTolerance(-5, 1000, 'kg', TOL), true, 'exactly at the limit is inside it');
+});
+
+it('⚠️⚠️ a PACKET is a packet — a percentage on counted goods is nonsense', () => {
+  assert.strictEqual(lot.withinTolerance(-1, 120, 'piece', TOL), false, 'one missing bottle is one missing bottle');
+  assert.strictEqual(lot.weighed('kg'), true);
+  assert.strictEqual(lot.weighed('litre'), true);
+  assert.strictEqual(lot.weighed('piece'), false);
+  assert.strictEqual(lot.weighed('bag'), false, 'a BAG is counted — what is in it is weighed, and that is a different line');
+});
+
+it('a shop that allows a unit or two of slack on counted goods gets it', () => {
+  assert.strictEqual(lot.withinTolerance(-2, 120, 'piece', { weight_bp: 50, count_units: 2 }), true);
+  assert.strictEqual(lot.withinTolerance(-3, 120, 'piece', { weight_bp: 50, count_units: 2 }), false);
+});
+
+it('no tolerance set means no absorbing — the safe default', () => {
+  assert.strictEqual(lot.withinTolerance(-1, 1000, 'kg', { weight_bp: 0, count_units: 0 }), false);
+  assert.strictEqual(lot.withinTolerance(-1, 1000, 'kg', null), false);
+  assert.strictEqual(lot.withinTolerance(0, 1000, 'kg', null), true, 'no difference is always fine');
+});
+
+it('⚠️ it is ABSORBED, not hidden — the words say what happened', () => {
+  const note = lot.toleranceNote(-2, 1000, 'kg', TOL);
+  assert.ok(note && note.indexOf('short 2') === 0 && note.indexOf('absorbs') > 0, note);
+  assert.strictEqual(lot.toleranceNote(-6, 1000, 'kg', TOL), null, 'a real difference gets no soothing words');
+  assert.strictEqual(lot.toleranceNote(0, 1000, 'kg', TOL), null);
+});
+
+it('the counter and the match read the SAME rule', () => {
+  /* the browser copy the counter loads is generated from this file — if they ever diverge, this is where it shows */
+  const path = require('path');
+  const gen = fs.readFileSync(path.join(__dirname, '..', 'lib', 'lotfields.browser.js'), 'utf8');
+  assert.ok(gen.indexOf('function withinTolerance') > 0, 'the counter has no tolerance rule');
+  assert.ok(gen.indexOf('window.CBLots') > 0, 'the page is never handed the rule');
+  const master = fs.readFileSync(path.join(__dirname, '..', 'lib', 'lotfields.js'), 'utf8').replace(/\r\n/g, '\n');
+  const inner = master.replace(/module\.exports\s*=/, 'var EXPORTS =');
+  assert.ok(gen.indexOf(inner) > 0, 'the counter is running a different copy — run node scripts/vendor-till.cjs');
 });
 
 console.log(pass + ' checks');

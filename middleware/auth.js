@@ -183,6 +183,9 @@ const KEY_ROUTES = {
                  claim against any open order of ITS OWN shop. It is the shop's own claim, it is visible, it is corrected by a
                  negative row rather than an edit, and divergence between the two parties is surfaced, never resolved. */
               ['POST', /^\/api\/chits\/[0-9a-f-]{36}\/deliver-lines$/],
+              /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
+                 nothing else — which is why it exists instead of letting a till key PATCH products. */
+              ['POST', /^\/api\/till\/alias$/],
               ['POST', /^\/api\/events\/ticket$/], ['*', /^\/api\/offers(\/|$)/],
               /* ⭐ a kit keeps ITSELF current (2026-09-08): the same public files every shop downloads, read-only */
               ['GET', /^\/api\/integrations\/kit(\/|$)/]],

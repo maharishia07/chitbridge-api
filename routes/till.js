@@ -127,7 +127,13 @@ router.get('/snapshot', auth, async (req, res) => {
                   and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
                price: amountOf(d.price), mrp: amountOf(d.mrp),
                hsn: d.hsn || d.hs_code || d.hsn_code || null, tax_slab: d.tax_slab || null, category: d.category || null,
-               barcode: d.barcode || d.ean || null, avail: d.avail || null };
+               barcode: d.barcode || d.ean || null, avail: d.avail || null,
+               /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton
+                  converts to our pieces. Capped: an alias list is a memory aid, not a place to accumulate. */
+               aliases: Array.isArray(d.aliases) ? d.aliases.slice(0, 20).map((a) => ({ by: a.by || null, text: a.text,
+                          unit: a.unit || null, factor: a.factor == null ? null : Number(a.factor) })) : null,
+               /* and flattened, because the counter's own search reads fields — so typing what the SUPPLIER calls it finds it */
+               alias_text: Array.isArray(d.aliases) ? (d.aliases.slice(0, 20).map((a) => a.text).filter(Boolean).join(' ') || null) : null };
     }).filter((x) => x.name);
 
     const body = {
@@ -145,7 +151,11 @@ router.get('/snapshot', auth, async (req, res) => {
       items, removed, delta: !!since, since: since || null, offers, staff,
       slabs: (shelf && shelf.slabs) || [], categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
       customers,
-      policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off' },
+      policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
+                /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
+                tolerance: { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp),
+                             count_units: Number(flags.tol_count_units) || 0,
+                             rate_bp: Number(flags.tol_rate_bp) || 0 } },
       /**
        * ⭐⭐ THE VERTICAL, AS A FIELD PACK (2026-09-08). Athi: *"we have already vertical in our governance, so it can nicely tide
        * upon."* The shop's own sector decides what goods-in asks about a CONSIGNMENT — batch and expiry for medicine, a serial for
@@ -306,6 +316,9 @@ router.get('/match', auth, async (req, res) => {
     const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
     /* both directions: a purchase order for an off-platform supplier is a SELF chit and lands as 'received' */
     const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
+    /* what this trade absorbs — the same numbers the counter was given in its snapshot */
+    const flags = await policy.get(entity_id).catch(() => ({}));
+    const tol = { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp), count_units: Number(flags.tol_count_units) || 0 };
     if (!heads.length) return res.json({ days, count: 0, orders: [] });
 
     const { withEntity } = require('../db');
@@ -372,17 +385,21 @@ router.get('/match', auth, async (req, res) => {
             if (idm.line_id === l.line_id || rl.particulars === (l.particulars || l.name)) { if (idm.reason) why = idm.reason; }
           }
           const diff = Math.round((received - ordered) * 1000) / 1000;
+          /* ⭐ THE SAME TOLERANCE THE DOOR APPLIED (lib/lotfields, one definition for both ends). A difference this trade absorbs is
+             not a difference to chase — and both figures still show, because tolerance decides what is worth a conversation, never
+             what is true. */
+          const absorbed = diff !== 0 && lotfields.withinTolerance(diff, ordered, l.unit, tol);
           return { line_id: l.line_id, name: l.particulars || l.name || '', unit: l.unit || 'piece',
                    rate: l.price == null ? null : Number(l.price),
-                   ordered, received, difference: diff, reason: why,
-                   state: diff === 0 ? (received > 0 ? 'agreed' : 'awaited') : (diff < 0 ? 'short' : 'excess') };
+                   ordered, received, difference: diff, reason: why, absorbed,
+                   state: diff === 0 ? (received > 0 ? 'agreed' : 'awaited') : (absorbed ? 'agreed' : (diff < 0 ? 'short' : 'excess')) };
         });
         if (!lines.length) continue;
 
         const value = (n) => Math.round(n * 100) / 100;
         const ordered_total = value(lines.reduce((t, l) => t + (l.ordered * (l.rate || 0)), 0));
         const received_total = value(lines.reduce((t, l) => t + (l.received * (l.rate || 0)), 0));
-        const differences = lines.filter((l) => l.difference !== 0).length;
+        const differences = lines.filter((l) => l.difference !== 0 && !l.absorbed).length;
         const nothingYet = lines.every((l) => l.received === 0);
         /**
          * ⭐ THE VERDICT IS ABOUT WHAT IS KNOWN, not about who is right.
@@ -410,6 +427,50 @@ router.get('/match', auth, async (req, res) => {
       return orders;
     });
     res.json({ days, count: out.length, orders: out });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * ⭐⭐ REMEMBER WHAT THE SUPPLIER CALLS IT (2026-09-08).
+ *
+ *   POST /api/till/alias   { item_id, by, text, unit?, factor? }
+ *
+ * Their line says "SUNFL OIL 1L RB"; ours says "Sunflower oil 1 L". Somebody pairs them ONCE at the door and the counter never asks
+ * again — which is the whole difference between the first delivery from a vendor and the fortieth. The pairing carries a CONVERSION
+ * too, because their carton is our twenty-four pieces, and pack size is where most "mismatches" actually come from.
+ *
+ * ⚠️ IT LIVES ON THE PRODUCT, not in a table of its own — "what this vendor calls it" is a fact about the product, and putting it in
+ * item_data means no migration and no second place to look. Merge-patched, so nothing else in item_data is touched.
+ * ⚠️ THE NARROWEST POSSIBLE WRITE. A till key cannot touch products; this endpoint can append an alias and do nothing else, which is
+ * why it exists rather than widening the scope to PATCH /api/products.
+ */
+router.post('/alias', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = req.body || {};
+    const item_id = String(b.item_id || '').trim();
+    const text = String(b.text || '').trim();
+    const by = String(b.by || '').trim();
+    if (!item_id || !text) return res.status(400).json({ error: 'an alias needs an item and the words the supplier uses' });
+    if (text.length > 120 || by.length > 120) return res.status(400).json({ error: 'too long' });
+    const unit = b.unit ? String(b.unit).trim().slice(0, 24) : null;
+    const factor = (b.factor == null || b.factor === '') ? null : Number(b.factor);
+    if (factor != null && (!Number.isFinite(factor) || factor <= 0 || factor > 100000)) return res.status(400).json({ error: 'a pack conversion is a positive number' });
+
+    const out = await withEntity(entity_id, async (db) => {
+      const r = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2', [entity_id, item_id]);
+      if (!r.rows.length) return null;
+      const d = r.rows[0].item_data || {};
+      const list = Array.isArray(d.aliases) ? d.aliases.slice(0, 50) : [];
+      const same = (a) => String(a.text || '').toLowerCase() === text.toLowerCase() && String(a.by || '').toLowerCase() === by.toLowerCase();
+      const kept = list.filter((a) => !same(a));                 /* saying it again replaces what was said before */
+      kept.push({ by: by || null, text, unit, factor, at: new Date().toISOString() });
+      await db.query('UPDATE catalogue_items SET item_data = item_data || $3::jsonb, updated_at = NOW() WHERE entity_id = $1 AND item_id = $2',
+        [entity_id, item_id, JSON.stringify({ aliases: kept })]);
+      return kept;
+    });
+    if (!out) return res.status(404).json({ error: 'no such product' });
+    res.json({ ok: true, aliases: out });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

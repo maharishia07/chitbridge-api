@@ -305,6 +305,7 @@
 <script src="/engine/tax.js" onerror="engineMissed('tax')"></script>
 <script src="/engine/search.js" onerror="engineMissed('search')"></script>
 <script src="/engine/gs1.js" onerror="engineMissed('gs1')"></script>
+<script src="/engine/lots.js" onerror="engineMissed('lots')"></script>
 <script>
 /* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
 var MISSING = [];
@@ -380,6 +381,7 @@ var AgentHost = {
   setPrinter: function(p){ return fetch('/api/printer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(function(r){ return r.json(); }); },
   print: function(b){ return fetch('/api/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
   doc: function(d){ return fetch('/api/doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){ return r.json(); }); },
+  alias: function(a){ return fetch('/api/alias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)}).then(function(r){ return r.json(); }); },
 };
 
 /**
@@ -399,7 +401,7 @@ var CloudHost = {
     return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
              today: { count: mine.length, total: total, by: by },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
-             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1 } };
+             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots } };
   },
   /**
    * ⭐ ASK ONLY FOR WHAT CHANGED (2026-09-08). The first run takes the whole shop; after that the till says when it last looked and
@@ -469,6 +471,15 @@ var CloudHost = {
    * ⚠️ It also queues the MOVEMENT rows separately, because they go to a different place — b144's deliver-lines, which writes into
    * every party's copy. The chit is our record; the movement is the shared claim. One can succeed while the other waits.
    */
+  /** remembering what a supplier calls a product needs the line — it is a fact about the shop, not about this device */
+  async alias(a){
+    if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet — the count is not affected' };
+    try {
+      var r = await fetch(this.api + '/api/till/alias', { method:'POST',
+        headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(a) });
+      return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
+    } catch (e) { return { ok:false, why:e.message }; }
+  },
   async doc(d){
     var no = await nextNumber((d.kind === 'receipt') ? 'GRN' : 'DC');
     var doc = Object.assign({}, d, { no: no, at: d.at || new Date().toISOString(), catalogue_version: S && S.version });
@@ -1160,6 +1171,59 @@ function lineFor(lines, item){
  * ⚠️ A batch belongs to the two hundred packets that arrived on Tuesday, not to the product. That is why it is on the LINE of a
  * receipt and travels on the movement, and why the counter never writes it onto the catalogue.
  */
+/**
+ * ⭐⭐ WHAT THE SUPPLIER CALLS IT. Their line says "SUNFL OIL 1L RB"; ours says "Sunflower oil 1 L". Somebody pairs them ONCE at the
+ * door and the counter never asks again — the difference between a vendor's first delivery and their fortieth.
+ * ⚠️ AND THEIR PACK IS NOT OUR PACK. 1 carton = 24 pieces, so the alias carries a conversion; without it a perfectly correct
+ * delivery reads as a 23-unit shortage, which is where most "mismatches" actually come from.
+ */
+function aliasesOf(i){ return (i && Array.isArray(i.aliases)) ? i.aliases : []; }
+function aliasFor(i, vendor){
+  var v = String(vendor || '').trim().toLowerCase();
+  var all = aliasesOf(i);
+  return all.filter(function(a){ return v && String(a.by || '').trim().toLowerCase() === v; })[0]
+      || all.filter(function(a){ return !a.by; })[0] || null;
+}
+/** an item whose alias text matches what the supplier's paper calls it */
+function itemByAlias(text, vendor){
+  if (!text || !S || !Array.isArray(S.items)) return null;
+  var norm = function(t){ return window.CBSearch ? CBSearch.normalise(t).replace(/\s+/g, ' ').trim() : String(t || '').toLowerCase().trim(); };
+  var want = norm(text); if (!want) return null;
+  var v = String(vendor || '').trim().toLowerCase();
+  var hit = null;
+  for (var n = 0; n < S.items.length && !hit; n++){
+    var al = aliasesOf(S.items[n]);
+    for (var k = 0; k < al.length; k++){
+      if (norm(al[k].text) !== want) continue;
+      if (v && al[k].by && String(al[k].by).trim().toLowerCase() !== v) continue;
+      hit = S.items[n]; break;
+    }
+  }
+  return hit;
+}
+/**
+ * ⭐ REMEMBERED ONCE. The counter offers this after a product is counted against a task line whose wording differs — the moment
+ * somebody has just proved they know the answer.
+ * ⚠️ It writes through the narrowest endpoint we have (POST /api/till/alias): a counter may append an alias and nothing else.
+ */
+async function rememberAlias(n){
+  var l = RCV.lines[n]; if (!l || !l.item_id) return;
+  var vendor = (RCV.vendor || '').trim();
+  var text = prompt('What does ' + (vendor || 'this supplier') + ' call "' + l.name + '" on their paperwork?', l.their_text || '');
+  if (text === null || !String(text).trim()) return;
+  var packs = prompt('How many ' + (l.unit || 'piece') + ' in one of THEIR packs? Leave blank if it is the same.', '');
+  var factor = (packs === null || String(packs).trim() === '') ? null : Number(packs);
+  var unit = null;
+  if (factor && factor > 0) unit = prompt('What do they call that pack? (carton, case, bag…)', 'carton') || 'pack';
+  try {
+    var r = await (HOST.alias ? HOST.alias({ item_id: l.item_id, by: vendor, text: String(text).trim(), unit: unit, factor: factor })
+                              : Promise.resolve({ ok: false, why: 'this host cannot save it' }));
+    if (r && r.ok) { l.their_text = String(text).trim(); toastLine('Remembered. Next time "' + l.their_text + '" finds this product by itself.'); refresh(); }
+    else alert('It could not be saved: ' + ((r && (r.why || r.error)) || 'unknown') + '. The count is not affected.');
+  } catch (e) { alert('It could not be saved: ' + e.message + '. The count is not affected.'); }
+}
+function toastLine(t){ var n = document.getElementById('lastnote'); if (n) n.textContent = t; }
+
 function lotPack(){ return (S && S.lot_fields) || { vertical:null, required:[], optional:[], fields:{} }; }
 function lotAsks(){ var p = lotPack(); return (p.required || []).concat(p.optional || []); }
 function lotLabel(k){ var f = (lotPack().fields || {})[k]; return (f && f.label) || k; }
@@ -1249,17 +1313,34 @@ function rcvDiff(l){
   if (l.ordered == null || l.counted == null) return 0;
   return r2(l.counted - l.ordered);
 }
+/**
+ * ⭐⭐ HOW MUCH DIFFERENCE IS NOT A DISPUTE. A lorry of rice does not arrive to the gram, and a counter that called every kilo a
+ * shortage would teach the shop to ignore the word. The trade sets it once; the rule itself lives in ONE file (lib/lotfields, loaded
+ * here as /engine/lots.js) because the counter decides at the door and the match decides afterwards — and those two must agree.
+ * ⚠️ ABSORBED, NEVER HIDDEN. Inside tolerance the screen stops ASKING for a reason; both figures stay exactly as they were.
+ */
+function tolerance(){ return (S && S.policy && S.policy.tolerance) || { weight_bp: 50, count_units: 0 }; }
+function rcvAbsorbed(l){
+  var d = rcvDiff(l);
+  if (!d) return false;
+  if (!window.CBLots) return false;                    /* no engine, no absorbing — a difference stays a difference */
+  return CBLots.withinTolerance(d, l.ordered, l.unit, tolerance());
+}
 function paintReceive(){
   var box = document.getElementById('rcv_lines'); if (!box) return;
   box.innerHTML = RCV.lines.length ? RCV.lines.map(function(l, n){
     var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
+    var ok = d ? rcvAbsorbed(l) : false;
     var head = l.ordered == null ? 'added at the door' : ('ordered ' + l.ordered + ' ' + esc(l.unit));
     return '<div class="ln' + (done ? ' done' : '') + '" data-testid="rcv-line-' + n + '">'
       + '<span><span class="nm">' + esc(l.name) + '</span><div class="u">' + esc(head)
-        + (d ? ' · <b style="color:var(--warn)">' + (d > 0 ? 'excess ' + d : 'short ' + (-d)) + '</b>' : (done ? ' · ✓' : '')) + '</div></span>'
+        + (d ? ' · <b style="color:' + (ok ? 'var(--ok)' : 'var(--warn)') + '">' + (d > 0 ? 'excess ' + d : 'short ' + (-d))
+               + (ok ? ' · within what this trade absorbs' : '') + '</b>' : (done ? ' · ✓' : '')) + '</div>'
+        + (l.item_id ? '<button class="pill" style="margin-top:4px;font-size:.72em;padding:2px 8px" data-testid="rcv-alias-' + n + '" onclick="rememberAlias(' + n + ')">what do they call it?</button>' : '')
+        + '</span>'
       + '<input type="number" min="0" step="0.001" inputmode="decimal" placeholder="count" value="' + (l.counted == null ? '' : l.counted) + '" data-testid="rcv-count-' + n + '" onchange="rcvSet(' + n + ',\'counted\',this.value)">'
       + '<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="rate" value="' + (l.rate == null ? '' : l.rate) + '" data-testid="rcv-rate-' + n + '" onchange="rcvSet(' + n + ',\'rate\',this.value)">'
-      + (d ? '<select data-testid="rcv-reason-' + n + '" onchange="rcvSet(' + n + ',\'reason\',this.value)">'
+      + (d && !ok ? '<select data-testid="rcv-reason-' + n + '" onchange="rcvSet(' + n + ',\'reason\',this.value)">'
              + REASONS.map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'why?') + '</option>'; }).join('') + '</select>'
              : '<span class="amt" data-testid="rcv-value-' + n + '">' + money(rcvLineValue(l)) + '</span>')
       + '<button class="x" onclick="rcvDrop(' + n + ')" title="remove">×</button></div>'
@@ -1339,7 +1420,7 @@ function paintRcvSum(){
 async function rcvConfirm(){
   var lines = RCV.lines.filter(function(l){ return (Number(l.counted) || 0) > 0 || rcvDiff(l) !== 0; });
   if (!lines.length) return;
-  var missing = lines.filter(function(l){ return rcvDiff(l) !== 0 && !l.reason; });
+  var missing = lines.filter(function(l){ return rcvDiff(l) !== 0 && !l.reason && !rcvAbsorbed(l); });
   if (missing.length) { alert('Say why ' + missing[0].name + ' differs from the order. A difference without a reason cannot be settled later.'); return; }
   /* ⚠️⚠️ THE VERTICAL'S OWN FLOOR. Expired stock is REFUSED — not warned about — because taking it in is the shop's licence, not a
      preference; a missing batch or expiry is ASKED for, because the answer is on the pack in somebody's hand. */
