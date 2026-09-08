@@ -303,4 +303,77 @@ it('packing with no order chosen asks for one rather than guessing', () => {
   assert.ok(said.indexOf('order') > 0, said);
 });
 
+/* ── the vertical: what a consignment must carry (2026-09-08) ────────────────────────────────────────────────── */
+
+const PHARMA = { vertical: 'pharma', required: ['batch', 'expiry'], optional: ['mrp'],
+  fields: { batch: { key: 'batch', label: 'Batch', type: 'text' }, expiry: { key: 'expiry', label: 'Expiry', type: 'date' },
+            mrp: { key: 'mrp', label: 'MRP', type: 'money' } },
+  why: 'Medicine is sold by batch and must not be sold past its expiry.' };
+
+it('⭐ general trade is asked for nothing at all — no boxes, no rules', () => {
+  P.S = { shop: {}, lot_fields: { vertical: null, required: [], optional: [], fields: {} } };
+  assert.strictEqual(P.lotAsks().length, 0);
+  assert.strictEqual(P.lotBoxes({ name: 'Rice' }, 0), '', 'a kirana grew a form');
+  assert.strictEqual(P.lotTrouble({ name: 'Rice', lot: null }).missing.length, 0);
+});
+
+it('a pharmacy is asked for a batch and an expiry, and the boxes carry their names', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  assert.strictEqual(P.lotAsks().join(','), 'batch,expiry,mrp');
+  const html = P.lotBoxes({ name: 'Crocin', lot: { batch: 'AC2431' } }, 0);
+  assert.ok(html.indexOf('Batch') > 0 && html.indexOf('Expiry') > 0, html.slice(0, 120));
+  assert.ok(html.indexOf('AC2431') > 0, 'what was already captured is shown back');
+  assert.ok(html.indexOf('class="need"') > 0, 'a required field must look required');
+});
+
+it('⚠️ a missing required field is named, and asked for', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  const t = P.lotTrouble({ name: 'Crocin', lot: { batch: 'AC2431' } });
+  assert.strictEqual(t.missing.join(','), 'Expiry');
+  assert.strictEqual(t.refuse, undefined);
+});
+
+it('⚠️⚠️ expired stock is REFUSED at the door, not warned about', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  const t = P.lotTrouble({ name: 'Crocin', lot: { batch: 'AC2431', expiry: '2020-01-01' } });
+  assert.ok(t.refuse && t.refuse.indexOf('cannot be taken in') > 0, 'it accepted expired medicine: ' + JSON.stringify(t));
+});
+
+it('a date still ahead is simply fine', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  const t = P.lotTrouble({ name: 'Crocin', lot: { batch: 'AC2431', expiry: '2099-01-01' } });
+  assert.strictEqual(t.missing.length, 0);
+  assert.strictEqual(t.refuse, undefined);
+});
+
+it('⭐⭐ the pack answers for itself: a GS1 scan fills the batch and the expiry', () => {
+  const GS = String.fromCharCode(29);
+  P.window.CBGS1 = require(require('path').join(API, 'lib', 'gs1.js'));
+  const lot = P.lotFromScan('10AC2431' + GS + '17280331');
+  assert.strictEqual(lot.batch, 'AC2431');
+  assert.strictEqual(lot.expiry, '2028-03-31');
+  assert.strictEqual(P.lotFromScan('rice'), null, 'an ordinary search must not become a batch');
+});
+
+it('a scanned consignment lands on the line it was counted into', () => {
+  P.S = { shop: {}, lot_fields: PHARMA, items: [] };
+  P.RCV = P.rcvBlank();
+  P.rcvAdd({ item_id: 'i1', name: 'Crocin 500', unit: 'strip', price: 30 }, 10, { batch: 'AC2431', expiry: '2028-03-31' });
+  assert.strictEqual(P.RCV.lines[0].counted, 10);
+  assert.strictEqual(P.RCV.lines[0].lot.batch, 'AC2431');
+  /* a second scan of the same product tops it up and keeps what the barcode said */
+  P.rcvAdd({ item_id: 'i1', name: 'Crocin 500', unit: 'strip', price: 30 }, 5, { batch: 'AC2431', expiry: '2028-03-31' });
+  assert.strictEqual(P.RCV.lines.length, 1);
+  assert.strictEqual(P.RCV.lines[0].counted, 15);
+});
+
+it('the consignment travels on the chit line, where the batch belongs', () => {
+  const chit = P.chitOfDoc({ kind: 'receipt', no: 'GRN/C1/26-27/0009', at: '2026-09-08T05:00:00Z', till: 'C1',
+    vendor: { name: 'Apex Pharma' }, their_bill: null, against: null, costs: {}, goods: 300, extras: 0, landed_total: 300,
+    lines: [{ name: 'Crocin 500', unit: 'strip', ordered: null, counted: 10, difference: 0, reason: null, rate: 30, value: 300,
+              landed: 300, unit_cost: 30, item_id: 'i1', line_id: null, lot: { batch: 'AC2431', expiry: '2028-03-31' } }] });
+  assert.strictEqual(chit.line_items[0].item_data.lot.batch, 'AC2431');
+  assert.strictEqual(chit.line_items[0].item_data.lot.expiry, '2028-03-31');
+});
+
 console.log(pass + ' checks');

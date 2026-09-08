@@ -3,7 +3,7 @@
  *
  * The page is served both by the little program on a shop PC (tools/tally-connector/till.js) and by the web, where a phone or a
  * tablet can open it directly. Two copies of a screen is how two screens drift, so there is ONE master — the kit's till.html — and
- * this script writes the web's copy, its three engine files, its manifest and its service worker.
+ * this script writes the web's copy, its four engine files, its manifest and its service worker.
  *
  * Run:  node scripts/vendor-till.cjs          (write)
  *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale — what tests/till-vendor.test.js uses)
@@ -39,7 +39,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -53,6 +53,21 @@ self.addEventListener('fetch', (e) => {
 });
 `;
 
+/**
+ * ⭐ GS1, WRAPPED FOR A BROWSER (2026-09-08). lib/gs1.js is the one place that knows what a barcode carries — a GTIN, a batch, an
+ * expiry — and a pharma counter needs that with the line down. It is written for node, so the browser copy is GENERATED: the file
+ * verbatim inside a function, with its exports handed to the page as CBGS1.
+ * ⚠️ NEVER a plain copy. Its top-level names (AI, FIXED, ISO_DATE) would collide with the page's own, and a duplicate lexical
+ * declaration in a classic script kills the entire page rather than one function.
+ */
+const gs1Browser = () => {
+  const src = norm(fs.readFileSync(path.join(API, 'lib', 'gs1.js'), 'utf8'));
+  const NL = String.fromCharCode(10);
+  return GEN + '(function(){' + NL
+    + src.replace(/module\.exports\s*=/, 'var CBGS1_EXPORTS =') + NL
+    + 'window.CBGS1 = CBGS1_EXPORTS;' + NL + '})();' + NL;
+};
+
 const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
   [path.join(WEB, 'app', 'offers.js'), path.join(WEB, 'engine', 'offers.js'), 'copy'],
@@ -62,6 +77,8 @@ const COPIES = () => [
      till's own cached copy. Two searches would be two definitions of what a shop's words mean. */
   [path.join(WEB, 'app', 'search.js'), path.join(WEB, 'engine', 'search.js'), 'copy'],
   [path.join(WEB, 'app', 'search.js'), path.join(API, 'lib', 'search-engine.js'), 'copy'],
+  [null, path.join(WEB, 'engine', 'gs1.js'), gs1Browser()],
+  [null, path.join(API, 'lib', 'gs1.browser.js'), gs1Browser()],   /* what /api/till/engine/gs1 serves to a shop PC */
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],
   [null, path.join(WEB, 'till-icon.svg'), ICON],

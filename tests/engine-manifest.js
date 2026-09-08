@@ -206,6 +206,12 @@ const ENGINE_OTHER = [
      app's Catalogue answer a shopkeeper's own words ("ac co" → Aachi Coriander) identically. Served to the till at
      /api/till/engine/search; tests/search-engine.test.js fails the day the copies differ (2026-09-08). */
   'search-engine.js',
+  /* GENERATED beside it: what /api/till/engine/gs1 serves a shop PC, so a pharma counter can read a batch and an expiry off a pack
+     with the line down (scripts/vendor-till.cjs wraps lib/gs1.js for a browser). */
+  'gs1.browser.js',
+  /* ENGINE: what a VERTICAL must capture about a consignment — batch, expiry, serial — resolved from the sector governance already
+     holds. It decides what goods-in refuses, which makes it a rule about obligations, not a helper. */
+  'lotfields.js',
   'pricing-engine.js',    // ENGINE: the pricing structure a product cites → the unit price at a quantity (vendored from app/pricing.js)   // = web app/offers.js, vendored (cp) so a shop ORDER is priced by the SAME engine as the row; web owns the source    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
   /**
    * ⭐⭐ THESE EIGHT ARE WHAT A CHIT *MEANS*, so they are engine and therefore LOCKED. They were held out of

@@ -25,6 +25,7 @@ const taxShelf = require('../lib/tax-shelf');
 const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
+const lotfields = require('../lib/lotfields');      /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
 /** the figure out of a price, whether the catalogue stored a number or { amount, currency } (lib/pricing-engine reads it the same way) */
@@ -46,10 +47,13 @@ router.get('/snapshot', auth, async (req, res) => {
       `SELECT display_name, gstn, country, policy_flags FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = me.rows[0] || {};
     const flags = await policy.get(entity_id).catch(() => ({}));
-    let profile = {};
+    let profile = {}, sectors = [];
     try {
-      const p = await query(`SELECT profile_json FROM entity_profile WHERE entity_id = $1`, [entity_id]);
+      /* ⭐ SECTORS ARE A COLUMN, not something inside profile_json — governance reads them for trade readiness, and the counter now
+         reads the same one to decide what goods-in must capture about a consignment (lib/lotfields). */
+      const p = await query(`SELECT profile_json, sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]);
       profile = (p.rows[0] && p.rows[0].profile_json) || {};
+      sectors = (p.rows[0] && p.rows[0].sectors) || profile.sectors || [];
     } catch (_) { /* an entity with no profile still bills */ }
 
     /**
@@ -142,6 +146,13 @@ router.get('/snapshot', auth, async (req, res) => {
       slabs: (shelf && shelf.slabs) || [], categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
       customers,
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off' },
+      /**
+       * ⭐⭐ THE VERTICAL, AS A FIELD PACK (2026-09-08). Athi: *"we have already vertical in our governance, so it can nicely tide
+       * upon."* The shop's own sector decides what goods-in asks about a CONSIGNMENT — batch and expiry for medicine, a serial for
+       * a warranty item, nothing at all for general trade. It travels with the snapshot, so a counter with the line down still
+       * knows what to ask and what to refuse.
+       */
+      lot_fields: lotfields.forEntity(sectors),
     };
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
     res.json(body);
@@ -407,7 +418,8 @@ router.get('/match', auth, async (req, res) => {
  * gets them from here rather than from a second host, so there is one place that answers "which version is the counter running".
  * Cached by the till at install and refreshed with the snapshot; both files are the SAME code the server and the app run.
  */
-const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js' };
+const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js',
+                  gs1: '../lib/gs1.browser.js' };   /* what a pack's barcode carries — batch, expiry, serial */
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
   if (!rel) return res.status(404).json({ error: 'Not found' });

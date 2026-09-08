@@ -79,6 +79,11 @@
   .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch}
   .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
+  /* the consignment's own facts — shown only when this trade asks for them */
+  .lotrow{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 8px 12px;border-bottom:1px solid var(--line)}
+  .lotrow label{display:flex;flex-direction:column;font-size:.72em;color:var(--dim);gap:2px}
+  .lotrow label.need{color:var(--warn);font-weight:700}
+  .lotrow input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font-size:1.15em;min-width:110px}
   .qtyhint{padding:6px 12px;background:var(--ok-tint);color:var(--ok);font-size:.85em;border-bottom:1px solid var(--line)}
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
   /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
@@ -299,6 +304,7 @@
 <script src="/engine/offers.js" onerror="engineMissed('offers')"></script>
 <script src="/engine/tax.js" onerror="engineMissed('tax')"></script>
 <script src="/engine/search.js" onerror="engineMissed('search')"></script>
+<script src="/engine/gs1.js" onerror="engineMissed('gs1')"></script>
 <script>
 /* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
 var MISSING = [];
@@ -393,7 +399,7 @@ var CloudHost = {
     return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
              today: { count: mine.length, total: total, by: by },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
-             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch } };
+             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1 } };
   },
   /**
    * ⭐ ASK ONLY FOR WHAT CHANGED (2026-09-08). The first run takes the whole shop; after that the till says when it last looked and
@@ -816,7 +822,7 @@ function add(n){
   var q = typed().qty;
   /* ⭐ ONE SEARCH BOX, THREE MEANINGS — and each mode decides what "add" is. Selling puts it on the bill, receiving counts it in,
      despatch checks it against the order and may refuse it outright. */
-  if (MODE === 'receive') rcvAdd(i, q);
+  if (MODE === 'receive') rcvAdd(i, q, MODE === 'receive' ? lotFromScan(document.getElementById('q').value) : null);
   else if (MODE === 'despatch') dspScan(i, q);
   else { addItem(i, q); price(); }
   document.getElementById('q').value = ''; SEL = 0; paintHits(); focusSearch();
@@ -1147,6 +1153,55 @@ function lineFor(lines, item){
   return (lines || []).filter(function(l){ return norm(l.name) === want; })[0] || null;
 }
 
+/**
+ * ⭐⭐ WHAT THIS TRADE MUST CAPTURE ABOUT A CONSIGNMENT. The shop's own sector — the one governance already reads for trade
+ * readiness — comes down in the snapshot as a field pack: batch and expiry for medicine, a serial for a warranty item, and NOTHING
+ * for general trade, which is most shops and must never be given a form.
+ * ⚠️ A batch belongs to the two hundred packets that arrived on Tuesday, not to the product. That is why it is on the LINE of a
+ * receipt and travels on the movement, and why the counter never writes it onto the catalogue.
+ */
+function lotPack(){ return (S && S.lot_fields) || { vertical:null, required:[], optional:[], fields:{} }; }
+function lotAsks(){ var p = lotPack(); return (p.required || []).concat(p.optional || []); }
+function lotLabel(k){ var f = (lotPack().fields || {})[k]; return (f && f.label) || k; }
+function lotType(k){ var f = (lotPack().fields || {})[k]; return (f && f.type === 'date') ? 'date' : (f && f.type === 'money' ? 'number' : 'text'); }
+function lotNeeded(k){ return (lotPack().required || []).indexOf(k) >= 0; }
+function lotSet(n, k, v){
+  var l = RCV.lines[n]; if (!l) return;
+  l.lot = l.lot || {};
+  if (v === '' || v == null) delete l.lot[k]; else l.lot[k] = (lotType(k) === 'number') ? Number(v) : String(v).trim();
+  if (!Object.keys(l.lot).length) l.lot = null;
+  rcvRepaintSoon();
+}
+/**
+ * ⭐ THE PACK ANSWERS FOR ITSELF. A GS1 barcode carries the batch (10), the expiry (17) and the serial (21); a scanner sends them as
+ * one string. So the search box, in RECEIVE, tries the barcode first — and if it was a GS1 code, the boxes fill themselves and
+ * nobody types a date at a goods-in door.
+ */
+function lotFromScan(raw){
+  if (!window.CBGS1 || !raw) return null;
+  try { return CBGS1.parseElementString(raw); } catch (_) { return null; }
+}
+/** what is still wrong with this line, in the words to show the person at the door */
+function lotTrouble(l){
+  var p = lotPack(), lot = l.lot || {}, miss = [];
+  (p.required || []).forEach(function(k){ if (lot[k] == null || String(lot[k]).trim() === '') miss.push(lotLabel(k)); });
+  /* ⚠️ NO ENGINE IN THIS PATH. Two dates compare themselves; asking CBGS1 meant that on a counter where the engine had not
+     arrived, expired stock was accepted in silence — the one thing this rule exists to prevent. */
+  var exp = lot.expiry || lot.best_before;
+  if (exp && /^\d{4}-\d{2}-\d{2}$/.test(exp) && new Date(exp + 'T00:00:00Z') < new Date(new Date().toISOString().slice(0,10) + 'T00:00:00Z'))
+    return { refuse: 'This has already expired (' + exp + '). It cannot be taken in.', missing: [] };
+  return { missing: miss };
+}
+function lotBoxes(l, n){
+  var asks = lotAsks(); if (!asks.length) return '';
+  return '<div class="lotrow" data-testid="rcv-lot-' + n + '">' + asks.map(function(k){
+    var v = (l.lot && l.lot[k] != null) ? l.lot[k] : '';
+    return '<label class="' + (lotNeeded(k) ? 'need' : '') + '">' + esc(lotLabel(k))
+      + '<input type="' + lotType(k) + '" value="' + esc(v) + '" data-testid="rcv-lot-' + n + '-' + esc(k) + '"'
+      + ' onchange="lotSet(' + n + ',\'' + esc(k) + '\',this.value)"></label>';
+  }).join('') + '</div>';
+}
+
 /* ── RECEIVE ─────────────────────────────────────────────────────────────────────────────────────────────────── */
 /**
  * ⭐ WHAT WAS ORDERED IS THE TASK; WHAT WE COUNTED IS THE ANSWER. Choosing an order fills the left column and leaves the counted
@@ -1168,11 +1223,12 @@ function rcvPickTask(id){
   paintReceive();
 }
 /** an item off the shelf, added to what arrived — it may or may not be on the order */
-function rcvAdd(i, qty){
+function rcvAdd(i, qty, lot){
   var have = lineFor(RCV.lines, i);
+  if (lot && have) { have.lot = Object.assign({}, have.lot || {}, lot); }
   if (have) { have.counted = r2((Number(have.counted) || 0) + qty); if (!have.item_id) have.item_id = i.item_id || null; }
   else RCV.lines.push({ line_id:null, item_id:i.item_id, name:i.name, unit:i.unit || 'piece', ordered:null,
-                        counted:qty, rate:(Number(i.price) || 0), reason:'', lot:null, added:true });
+                        counted:qty, rate:(Number(i.price) || 0), reason:'', lot:(lot || null), added:true });
   paintReceive();
 }
 function rcvSet(n, what, v){
@@ -1206,7 +1262,8 @@ function paintReceive(){
       + (d ? '<select data-testid="rcv-reason-' + n + '" onchange="rcvSet(' + n + ',\'reason\',this.value)">'
              + REASONS.map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'why?') + '</option>'; }).join('') + '</select>'
              : '<span class="amt" data-testid="rcv-value-' + n + '">' + money(rcvLineValue(l)) + '</span>')
-      + '<button class="x" onclick="rcvDrop(' + n + ')" title="remove">×</button></div>';
+      + '<button class="x" onclick="rcvDrop(' + n + ')" title="remove">×</button></div>'
+      + lotBoxes(l, n);
   }).join('') : '<div style="padding:20px;color:var(--dim)">Nothing counted yet. Choose the order above, or just scan what arrived.</div>';
   paintRcvCosts(); paintRcvSum();
   var b = document.getElementById('rcv_save'); if (b) b.disabled = !RCV.lines.filter(function(l){ return l.counted > 0; }).length;
@@ -1284,6 +1341,16 @@ async function rcvConfirm(){
   if (!lines.length) return;
   var missing = lines.filter(function(l){ return rcvDiff(l) !== 0 && !l.reason; });
   if (missing.length) { alert('Say why ' + missing[0].name + ' differs from the order. A difference without a reason cannot be settled later.'); return; }
+  /* ⚠️⚠️ THE VERTICAL'S OWN FLOOR. Expired stock is REFUSED — not warned about — because taking it in is the shop's licence, not a
+     preference; a missing batch or expiry is ASKED for, because the answer is on the pack in somebody's hand. */
+  for (var t = 0; t < lines.length; t++){
+    var trouble = lotTrouble(lines[t]);
+    if (trouble.refuse) { alert(lines[t].name + ': ' + trouble.refuse); return; }
+    if (trouble.missing && trouble.missing.length){
+      alert(lines[t].name + ' needs its ' + trouble.missing.join(' and ') + '. ' + (lotPack().why || 'This trade records it for every consignment.'));
+      return;
+    }
+  }
   var landed = rcvLanded();
   var doc = {
     kind: 'receipt', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
@@ -1409,7 +1476,8 @@ function receiveSlipHTML(d){
     + (d.lines || []).map(function(l){
         return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + money(l.value) + '</span></div>'
           + '<div style="font-size:.9em">' + l.counted + ' ' + esc(l.unit) + (l.rate ? ' × ' + money(l.rate) : '')
-          + (l.difference ? '  ⚠ ' + (l.difference > 0 ? 'excess ' + l.difference : 'short ' + (-l.difference)) + (l.reason ? ' · ' + esc(l.reason) : '') : '') + '</div>';
+          + (l.difference ? '  ⚠ ' + (l.difference > 0 ? 'excess ' + l.difference : 'short ' + (-l.difference)) + (l.reason ? ' · ' + esc(l.reason) : '') : '') + '</div>'
+          + (l.lot ? '<div style="font-size:.85em">' + Object.keys(l.lot).map(function(k){ return esc(lotLabel(k)) + ' ' + esc(l.lot[k]); }).join(' · ') + '</div>' : '');
       }).join('') + dash
     + docRow('Goods', money(d.goods))
     + (d.extras > 0 ? docRow('Freight and costs', money(d.extras)) : '')
