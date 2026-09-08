@@ -33,8 +33,31 @@ rather use a phone or a tablet.
 | **F9** | save and print |
 | **Esc** | clear the bill |
 | **F4** | read the shop again (new prices, new items) |
+| **F6** | park the bill — a customer walked off, the queue carries on |
+| **F7** | who is at the counter, and handing over |
+| **F8** | today's bills, and earlier ones |
+| **F10** | the day-close sheet |
 
 A barcode scanner types — scan into the search box and the item is added.
+
+### Three of something, or three-quarters of a kilo
+
+Type the quantity **in front of** the name:
+
+- `3*rice` — three of it, in one go.
+- `0.75 x tomato` — nought point seven five. This is how a weight you read off the scale gets onto the bill.
+
+A green line above the list tells you what is about to happen. A product genuinely called "2x4 nail" is still found — the x only
+counts as a multiplier when there is a space after it.
+
+### Closing the day
+
+**F10**, or the button in F8. It prints on the same paper as a bill and says: how many bills and from which number to which, what the
+offers gave away, the tax split by rate, how it was paid, who billed, the ten that sold most, and what should be in the drawer —
+the float you started with plus the cash taken. Count the drawer, then hand over (F7) to record the difference.
+
+It counts **this counter**, today, and says so at the bottom. A shop with two counters closes each of them; ChitBridge is what adds
+them up.
 
 The **⚙** button holds everything that belongs to this device: the counter's name (it becomes the bill number's prefix), the text
 size, and light or dark. None of it leaves the device.
