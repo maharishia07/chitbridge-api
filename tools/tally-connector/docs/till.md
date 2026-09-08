@@ -112,6 +112,26 @@ Their count at the door is the second, independent record — and if the two dis
 Bin locations, pick routes, stock counting, a warehouse system. We record what the shop **witnesses** — what came in, what went out,
 what was sold. Whatever you count on a Sunday belongs in Tally, and we connect to it.
 
+## When the supplier calls it something else
+
+Their delivery note says **SUNFL OIL 1L RB**; your shelf says **Sunflower oil 1 L**. Tell the counter once — on the received line,
+press **what do they call it?**, type their wording, and if their pack holds more than one of yours, say how many (1 carton = 24
+pieces).
+
+From then on: typing or scanning **their** code finds **your** product, and one of their cartons counts as twenty-four of yours.
+Without that conversion a perfectly correct delivery reads as a twenty-three unit shortage, which is where most arguments with a
+supplier actually start.
+
+## When a difference is not worth a phone call
+
+A lorry of rice does not arrive to the gram. Your trade sets, once, how much it absorbs — half a percent on weighed goods by
+default, and **nothing** on packed goods, because a packet is a packet.
+
+- Inside that, the line says *"short 2 kg — within what this trade absorbs"* in green, and asks you for no reason at all.
+- Outside it, the line turns orange and asks **why**, as before.
+
+Both numbers always stay: what was ordered and what you counted. Tolerance decides what is worth a conversation, never what is true.
+
 ## If you sell medicine, food or anything with a batch
 
 Set your trade once in ChitBridge (Profile → sectors). The counter then asks for what that trade needs, per line, when goods come in:
