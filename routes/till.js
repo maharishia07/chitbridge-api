@@ -25,7 +25,8 @@ const taxShelf = require('../lib/tax-shelf');
 const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
-const lotfields = require('../lib/lotfields');      /* ⭐ what THIS vertical must capture about a consignment */
+const lotfields = require('../lib/lotfields');
+const speech = require('../lib/speech');            /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */      /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
 /** the figure out of a price, whether the catalogue stored a number or { amount, currency } (lib/pricing-engine reads it the same way) */
@@ -182,6 +183,8 @@ router.get('/snapshot', auth, async (req, res) => {
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
                 /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
                 price_includes_tax: String(flags.price_includes_tax || 'yes'),
+                /* ⭐ CAN THIS SERVER TRANSCRIBE? The counter picks a recogniser without a round trip to find out. */
+                speech: speech.available() ? 'server' : 'browser',
                 tolerance: { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp),
                              count_units: Number(flags.tol_count_units) || 0,
                              rate_bp: Number(flags.tol_rate_bp) || 0 } },
@@ -501,6 +504,30 @@ router.post('/alias', auth, async (req, res) => {
     if (!out) return res.status(404).json({ error: 'no such product' });
     res.json({ ok: true, aliases: out });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * ⭐⭐ SPEAK, AND GET WORDS BACK (2026-09-08). Athi: *"build the seam with whisper behind it, I'll test the accuracy."*
+ *
+ *   POST /api/till/listen   { audio: <base64>, mime, format, lang, hint }  →  { ok, text, provider, ms }
+ *
+ * ⚠️ THE AUDIO IS NEVER STORED. It is decoded, transcribed and dropped — not to disk, not to a table, not to a log. A recording of a
+ * customer saying their phone number is not something to be holding, and the only way to be certain is not to hold it.
+ * ⚠️ IT NEVER FAILS LOUDLY. Every problem comes back as ok:false with a sentence, and the counter falls back to the browser's own
+ * recogniser — a microphone must never be the reason a sale stops.
+ * ⚠️ AND IT IS RATE-LIMITED BY SIZE, not by a counter: two megabytes is about a minute, and a counter says three seconds at a time.
+ */
+router.post('/listen', auth, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const raw = String(b.audio || '');
+    if (!raw) return res.json({ ok: false, why: 'nothing was recorded' });
+    let buf;
+    try { buf = Buffer.from(raw, 'base64'); } catch (_) { return res.json({ ok: false, why: 'that recording could not be read' }); }
+    if (buf.length > speech.MAX_BYTES) return res.json({ ok: false, why: 'that is too long — say it in one short phrase' });
+    const out = await speech.transcribe(buf, { mime: b.mime, format: b.format, lang: b.lang, hint: b.hint });
+    res.json(out);
+  } catch (e) { res.json({ ok: false, why: String(e && e.message) }); }
 });
 
 /**

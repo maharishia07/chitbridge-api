@@ -343,6 +343,13 @@
   <label>Quick keys</label>
   <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show every hidden key again</button>
   <div style="color:var(--dim);font-size:.78em;margin:4px 0 8px">The twelve are learned from this counter's own bills — what sells around this time of day. ✕ drops one, 📌 keeps one there all day.</div>
+  <label>Speaking — who listens</label>
+  <select id="set_speech">
+    <option value="auto">Automatic — the better ear available</option>
+    <option value="server">ChitBridge — better on Tamil and mixed speech; the audio goes to our speech service</option>
+    <option value="browser">This browser — instant and free; the audio goes to the browser's own service (Google, in Chrome)</option>
+    <option value="off">Off — no microphone</option>
+  </select>
   <label>Speaking — which language the microphone listens for</label>
   <select id="set_lang"><option value="en-IN">English (India)</option><option value="ta-IN">தமிழ் · Tamil</option><option value="hi-IN">हिन्दी · Hindi</option><option value="en-GB">English (UK)</option></select>
   <div style="color:var(--dim);font-size:.78em;margin:-4px 0 8px">The browser does the listening, and it sends what is said to its own speech service over the internet. It is off until you press 🎤. Billing itself never needs it.</div>
@@ -441,6 +448,7 @@ var AgentHost = {
   print: function(b){ return fetch('/api/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
   doc: function(d){ return fetch('/api/doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){ return r.json(); }); },
   alias: function(a){ return fetch('/api/alias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)}).then(function(r){ return r.json(); }); },
+  listen: function(b){ return fetch('/api/listen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
 };
 
 /**
@@ -536,6 +544,15 @@ var CloudHost = {
     try {
       var r = await fetch(this.api + '/api/till/alias', { method:'POST',
         headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(a) });
+      return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
+    } catch (e) { return { ok:false, why:e.message }; }
+  },
+  /** what was just said, as words — the audio goes up, nothing comes back but text, and nothing is kept anywhere */
+  async listen(b){
+    if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet' };
+    try {
+      var r = await fetch(this.api + '/api/till/listen', { method:'POST',
+        headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(b) });
       return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
   },
@@ -1139,12 +1156,71 @@ function paintParked(){
  * ⚠️ A PHONE NUMBER IS DIGITS. Whatever comes back for that field is stripped to digits — "nine eight four double zero" is not a name.
  */
 function speechOK(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function recordOK(){ return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
+/**
+ * ⭐⭐ WHO LISTENS. The shop's own choice first (⚙ → Speaking), then whatever is actually available.
+ *   'server'  the counter records a few seconds and ChitBridge transcribes them — better on Tamil, and on a sentence that switches
+ *             language halfway, which is how people here actually order.
+ *   'browser' Chrome's own recogniser — instant, free, and the audio goes to Google.
+ * ⚠️ EITHER WAY THE AUDIO LEAVES THE SHOP. The only honest difference is WHO hears it, and the settings pane says so plainly. The
+ * third answer — a model on the shop's own PC — is the one that would keep it in the building, and it is not built yet.
+ */
+function whoListens(){
+  var want = ls.get('cb_till_speech', 'auto');
+  if (want === 'off') return null;
+  var serverCan = !!(S && S.policy && S.policy.speech === 'server') && recordOK();
+  if (want === 'server') return serverCan ? 'server' : (speechOK() ? 'browser' : null);
+  if (want === 'browser') return speechOK() ? 'browser' : (serverCan ? 'server' : null);
+  return serverCan ? 'server' : (speechOK() ? 'browser' : null);      /* automatic: the better ear first */
+}
+/**
+ * ⭐ A FEW SECONDS, SENT UP, WORDS BACK. Recording stops on the second press, or by itself after twelve seconds — nobody says a
+ * product name for twelve seconds, and a microphone left open in a shop is a microphone recording the shop.
+ * ⚠️ THE PRODUCT NAMES GO WITH IT as a hint. A recogniser that has never heard "Aachi" writes "at chi"; given a handful of the
+ * shop's own words it writes Aachi. Twenty names, no prices, no customers — a hint, not the catalogue.
+ */
+var _mr = null, _chunks = [];
+function listenServer(into, btn){
+  var box = document.getElementById(into); if (!box) return;
+  if (_mr) { try { _mr.stop(); } catch (_) {} return; }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+    var mime = (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+    _mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    _chunks = [];
+    if (btn) btn.classList.add('on');
+    var stopAll = function(){ try { stream.getTracks().forEach(function(t){ t.stop(); }); } catch (_) {} };
+    _mr.ondataavailable = function(e){ if (e.data && e.data.size) _chunks.push(e.data); };
+    _mr.onstop = async function(){
+      if (btn) btn.classList.remove('on');
+      var blob = new Blob(_chunks, { type: (_mr && _mr.mimeType) || 'audio/webm' });
+      _mr = null; stopAll();
+      if (!blob.size) { toastLine('Nothing was recorded.'); return; }
+      toastLine('Listening…');
+      var b64 = await new Promise(function(res){ var r = new FileReader(); r.onloadend = function(){ res(String(r.result).split(',')[1] || ''); }; r.readAsDataURL(blob); });
+      var names = ((S && S.items) || []).slice(0, 20).map(function(i){ return i.name; }).join(', ');
+      var out = null;
+      try { out = await HOST.listen({ audio: b64, mime: blob.type, format: (blob.type.indexOf('mp4') >= 0 ? 'mp4' : 'webm'),
+                                      lang: ls.get('cb_till_lang','en-IN'), hint: names }); } catch (e) { out = { ok:false, why:e.message }; }
+      if (!out || !out.ok) {
+        toastLine('Could not make out what was said' + (out && out.why ? ' — ' + out.why : '') + '.');
+        return;
+      }
+      toastLine('Heard: "' + out.text + '"');
+      if (into === 'cphone') box.value = String(out.text).replace(/[^0-9]/g, '').slice(0, 15);
+      else { box.value = out.text; paintHits(); }
+    };
+    _mr.start();
+    setTimeout(function(){ if (_mr) { try { _mr.stop(); } catch (_) {} } }, 12000);
+  }).catch(function(){ toastLine('The browser was not given permission to use the microphone.'); if (btn) btn.classList.remove('on'); });
+}
 var _rec = null;
 function listen(into){
-  if (!speechOK()) { alert('This browser cannot listen. Chrome on a phone, a tablet or Windows can.'); return; }
-  if (!navigator.onLine) { alert('Speaking needs the internet — the browser sends what is said to its own speech service. Type it for now; billing itself works offline.'); return; }
+  var ear = whoListens();
+  if (!ear) { alert('This device cannot listen. Chrome on a phone, a tablet or Windows can — or turn speaking on in ⚙.'); return; }
+  if (!navigator.onLine) { alert('Speaking needs the internet — the audio has to reach a speech service. Type it for now; billing itself works offline.'); return; }
   var box = document.getElementById(into); if (!box) return;
   var btn = document.getElementById(into === 'cphone' ? 'micphone' : 'mic');
+  if (ear === 'server') return listenServer(into, btn);
   if (_rec) { try { _rec.stop(); } catch (_) {} _rec = null; if (btn) btn.classList.remove('on'); return; }
   var R = window.SpeechRecognition || window.webkitSpeechRecognition;
   _rec = new R();
@@ -2353,8 +2429,10 @@ function openSettings(){
   document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
   document.getElementById('set_rows').value = ls.get('cb_till_rows','compact');
   document.getElementById('set_lang').value = ls.get('cb_till_lang','en-IN');
-  var micb = document.getElementById('mic'); if (micb) micb.style.display = speechOK() ? '' : 'none';
-  var micp = document.getElementById('micphone'); if (micp) micp.style.display = speechOK() ? '' : 'none';
+  document.getElementById('set_speech').value = ls.get('cb_till_speech','auto');
+  var canHear = speechOK() || recordOK();
+  var micb = document.getElementById('mic'); if (micb) micb.style.display = canHear ? '' : 'none';
+  var micp = document.getElementById('micphone'); if (micp) micp.style.display = canHear ? '' : 'none';
   document.getElementById('set_theme').value = ls.get('cb_till_theme','light');
   var pair = document.getElementById('pairbox');
   if (HOST && HOST.mode === 'cloud') {
@@ -2384,6 +2462,7 @@ async function saveSettings(){
   if (k && k.value && k.value.indexOf('•') < 0) { ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); }
   var rowsSel = document.getElementById('set_rows'); if (rowsSel) ls.set('cb_till_rows', rowsSel.value);
   var langSel = document.getElementById('set_lang'); if (langSel) ls.set('cb_till_lang', langSel.value);
+  var spSel = document.getElementById('set_speech'); if (spSel) ls.set('cb_till_speech', spSel.value);
   var a = document.getElementById('set_api');
   if (a && a.value) { ls.set('cb_till_api', a.value.trim()); CloudHost.api = a.value.trim(); }
   document.getElementById('setdlg').close();
@@ -2420,7 +2499,7 @@ try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
 load();
 gripInit();
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
-['mic','micphone'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK()) b.style.display = 'none'; });
+['mic','micphone'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK() && !recordOK()) b.style.display = 'none'; });
 setMode(ls.get('cb_till_mode', 'sell'));
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);

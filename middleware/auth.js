@@ -186,6 +186,8 @@ const KEY_ROUTES = {
               /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
                  nothing else — which is why it exists instead of letting a till key PATCH products. */
               ['POST', /^\/api\/till\/alias$/],
+              /* ⭐ a counter may ask what was just said into its own microphone — audio in, text out, nothing kept */
+              ['POST', /^\/api\/till\/listen$/],
               ['POST', /^\/api\/events\/ticket$/], ['*', /^\/api\/offers(\/|$)/],
               /* ⭐ a kit keeps ITSELF current (2026-09-08): the same public files every shop downloads, read-only */
               ['GET', /^\/api\/integrations\/kit(\/|$)/]],
