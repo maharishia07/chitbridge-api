@@ -94,6 +94,10 @@
   .go button{flex:1;padding:16px;font-size:1.1em;font-weight:700;border-radius:var(--radius);border:1px solid var(--line);background:var(--paper);cursor:pointer}
   .go button.pri{background:var(--ok);border-color:var(--ok);color:#fff}
   .go button:disabled{opacity:.45;cursor:not-allowed}
+  /* bills set aside — one line, always visible while any are waiting, so nobody forgets a customer standing at the side */
+  .parked{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 8px}
+  .parked:empty{display:none}
+  .parked button{padding:8px 10px;border:1px dashed var(--warn);border-radius:10px;background:var(--warn-tint);color:var(--warn);cursor:pointer;font-size:.85em}
   .foot{padding:6px 12px;border-top:1px solid var(--line);color:var(--dim);font-size:.82em;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   /* the keys, once, along the bottom — a strip rather than a menu: nothing to open, nothing to read twice */
   .keys{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;border-top:1px solid var(--line);color:var(--dim);font-size:.78em;background:var(--card)}
@@ -137,7 +141,7 @@
     <div class="hits" id="hits"></div>
     <div class="keys" id="keys">
       <span><b>F2</b> search</span><span><b>↓↑ Enter</b> add</span><span><b>F9</b> save &amp; print</span>
-      <span><b>F8</b> bills</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
+      <span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
     </div>
   </section>
 
@@ -152,12 +156,16 @@
     <div class="pay" id="pay"></div>
     <div class="take">
       <input id="tendered" type="number" min="0" step="1" inputmode="decimal" placeholder="Amount taken" oninput="paintTotals()">
+      <button class="pill" data-testid="till-split" onclick="addPart()" title="take part of this bill in this way, and the rest another">+ part</button>
       <span id="change" style="min-width:120px;text-align:right;font-weight:700"></span>
     </div>
+    <div class="parked" id="parts"></div>
     <div class="go">
       <button onclick="clearBill()">Clear · Esc</button>
+      <button id="parkbtn" data-testid="till-park" onclick="parkBill()">Park · F6</button>
       <button class="pri" id="save" onclick="finish()">Save &amp; print · F9</button>
     </div>
+    <div class="parked" id="parked"></div>
     <div class="foot"><span id="queuenote"></span><span id="lastnote"></span></div>
   </section>
 </div>
@@ -564,7 +572,40 @@ var _paintSoon = null;
 function repaint(){ clearTimeout(_paintSoon); _paintSoon = setTimeout(price, 0); }
 function setQty(k,v){ var c = CART[k]; if (!c) return; c.qty = Math.max(0, Number(v)||0); if (!c.qty) CART.splice(k,1); repaint(); }
 function drop(k){ CART.splice(k,1); repaint(); }
-function clearBill(){ CART = []; document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
+function clearBill(){ CART = []; PARTS = []; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
+/**
+ * ⭐ PARKED BILLS live on the device and survive a reload — a customer who walked away must not cost the queue, and a browser that
+ * refreshes must not cost the customer. They are NOT bills yet: no number is taken, nothing is queued, nothing has been sold.
+ */
+var PARKED = [];
+function parkedLoad(){ try { PARKED = JSON.parse(ls.get('cb_till_parked', '[]')) || []; } catch (_) { PARKED = []; } paintParked(); }
+function parkedSave(){ ls.set('cb_till_parked', JSON.stringify(PARKED.slice(0, 20))); paintParked(); }
+function parkBill(){
+  if (!CART.length) return;
+  var who = (document.getElementById('cname').value || '').trim();
+  PARKED.push({ at: new Date().toISOString(), name: who || ('Bill ' + (PARKED.length + 1)),
+                phone: (document.getElementById('cphone').value || '').trim(), cart: JSON.parse(JSON.stringify(CART)) });
+  parkedSave();
+  CART = []; document.getElementById('cname').value = ''; document.getElementById('cphone').value = ''; document.getElementById('tendered').value = '';
+  price(); focusSearch();
+}
+function unpark(n){
+  var p = PARKED[n]; if (!p) return;
+  if (CART.length) { parkBill(); }                       /* never lose what is on the screen to bring one back */
+  CART = p.cart || [];
+  document.getElementById('cname').value = (p.name && p.name.indexOf('Bill ') !== 0) ? p.name : '';
+  document.getElementById('cphone').value = p.phone || '';
+  PARKED.splice(n, 1); parkedSave(); price(); focusSearch();
+}
+function dropParked(n){ PARKED.splice(n, 1); parkedSave(); }
+function paintParked(){
+  var el = document.getElementById('parked'); if (!el) return;
+  el.innerHTML = PARKED.map(function(p, n){
+    var total = (p.cart || []).reduce(function(a, c){ return r2(a + (c.net != null ? c.net : c.price * c.qty)); }, 0);
+    return '<button data-testid="till-parked-' + n + '" onclick="unpark(' + n + ')" title="bring this bill back">⏸ ' + esc(p.name) + ' · ₹' + money(total)
+      + ' <span onclick="event.stopPropagation();dropParked(' + n + ')" title="throw it away">×</span></button>';
+  }).join('');
+}
 function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus(); q.select(); } }
 
 /**
@@ -621,13 +662,38 @@ function billMoney(){
 function paintTotals(){
   var m = billMoney();
   var tendered = Number(document.getElementById('tendered').value) || 0;
-  var change = r2(tendered - m.net);
-  document.getElementById('change').textContent = tendered ? (change >= 0 ? 'change ₹' + money(change) : 'short ₹' + money(-change)) : '';
+  var taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
+  var due = r2(m.net - taken);
+  var change = r2(tendered - due);
+  document.getElementById('change').textContent = PARTS.length
+    ? (tendered ? (change >= 0 ? 'change ₹' + money(change) : 'still ₹' + money(-change)) : 'still ₹' + money(due))
+    : (tendered ? (change >= 0 ? 'change ₹' + money(change) : 'short ₹' + money(-change)) : '');
   document.getElementById('totals').innerHTML =
       (m.save > 0 ? '<div class="t"><span>Items</span><span>' + money(m.gross) + '</span></div><div class="t save"><span>Saved</span><span>−' + money(m.save) + '</span></div>' : '')
     + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div><div class="t"><span>GST</span><span>' + money(m.tax) + '</span></div>' : '')
     + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">₹' + money(m.net) + '</span></div>';
   var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
+}
+/**
+ * ⭐ A REAL SPLIT (2026-09-08). ₹500 in cash and the rest on UPI is the ordinary Indian counter; one mode per bill was a lie about what
+ * happened, and the books inherit that lie. "+ part" takes what is typed in the way that is selected and leaves the remainder due.
+ */
+var PARTS = [];
+function addPart(){
+  var amt = Number(document.getElementById('tendered').value);
+  var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
+  var left = r2(m.net - taken);
+  if (!(amt > 0)) { alert('Type the amount taken in ' + PICKED + ' first.'); return; }
+  PARTS.push({ how: PICKED, amount: r2(Math.min(amt, left > 0 ? left : amt)) });
+  document.getElementById('tendered').value = '';
+  paintParts(); paintTotals();
+}
+function dropPart(n){ PARTS.splice(n, 1); paintParts(); paintTotals(); }
+function paintParts(){
+  var el = document.getElementById('parts'); if (!el) return;
+  el.innerHTML = PARTS.map(function(p, n){
+    return '<button data-testid="till-part-' + n + '" onclick="dropPart(' + n + ')" title="remove this part">' + esc(p.how) + ' ₹' + money(p.amount) + ' ×</button>';
+  }).join('');
 }
 function paintPays(){
   document.getElementById('pay').innerHTML = ['Cash','UPI','Card'].map(function(h){
@@ -639,12 +705,17 @@ function paintPays(){
 async function finish(){
   if (!CART.length) return;
   var m = billMoney();
-  var tendered = Number(document.getElementById('tendered').value) || m.net;
-  var paid = Math.min(tendered, m.net);
+  var tendered = Number(document.getElementById('tendered').value) || 0;
+  /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
+  var parts = PARTS.slice();
+  if (!parts.length) parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];
+  else if (tendered > 0) { var taken0 = parts.reduce(function(a,p){ return r2(a + p.amount); }, 0);
+    if (taken0 < m.net) parts.push({ how: PICKED, amount: Math.min(tendered, r2(m.net - taken0)) }); }
+  var paid = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
   var body = {
     lines: CART.map(function(c){ return { item_id:c.item_id, name:c.name, unit:c.unit, price:c.price, qty:c.qty,
                                           gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label, hsn:c.hsn, gst_rate:c.gst_rate }; }),
-    payments: [{ how:PICKED, amount:paid }], paid: paid, change: r2(tendered - m.net),
+    payments: parts, paid: paid, change: r2(Math.max(0, (tendered || 0) - r2(m.net - (paid - (parts[parts.length-1] || {}).amount || 0)))),
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
     by: WHO ? { id: WHO.id, name: WHO.name } : null,
@@ -655,7 +726,8 @@ async function finish(){
   if (!r || !r.ok){ alert('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
   LAST = r.bill; if (r.today) STATE.today = r.today;
   showSlip(r.bill, m);
-  CART = []; document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
+  CART = []; PARTS = []; paintParts();
+  document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
   price(); document.getElementById('lastnote').textContent = 'last bill ' + r.bill.no;
   load(); loadQuick();
 }
@@ -903,6 +975,7 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
   if (e.key === 'F8'){ openBills(); e.preventDefault(); }
   if (e.key === 'F7'){ openWho(); e.preventDefault(); }
+  if (e.key === 'F6'){ parkBill(); e.preventDefault(); }
   if (e.key === 'Escape' && !document.getElementById('slipdlg').open && !document.getElementById('setdlg').open) clearBill();
 });
 window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
@@ -915,6 +988,7 @@ function installApp(){ if (!_install) return; _install.prompt(); _install = null
 
 applyLook();
 whoLoad();
+parkedLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
 load();
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
