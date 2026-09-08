@@ -178,7 +178,20 @@ router.get('/snapshot', auth, async (req, res) => {
         currency: profile.currency || 'INR',
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
-      slabs: (shelf && shelf.slabs) || [], categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
+      /**
+       * ⚠️⚠️ A MAP DOES NOT SURVIVE JSON, AND THAT IS WHY THE COUNTER HAD NO TAX (Athi, 2026-09-08: *"no, tax is not there"*).
+       *
+       * `taxShelf.readShelf()` returns `slabs` as a **Map** — every in-process caller (the chit send, catalogue-view) passes it
+       * straight to taxSlab.resolve, which accepts a Map, so it has always been right for them. This route does not pass it to a
+       * function; it puts it on the wire. `JSON.stringify(new Map())` is `{}` — so EVERY snapshot the till has ever taken carried
+       * `slabs: {}`, no rate resolved on any product, and no GST appeared anywhere. Nothing threw. Nothing logged. The counter just
+       * quietly billed without tax.
+       *
+       * ⚠️ The type was fine at every boundary except the one that serialises, which is exactly the kind of bug a type nobody
+       * checks produces: correct in four call sites and silently empty in the fifth.
+       */
+      slabs: (shelf && shelf.slabs instanceof Map) ? [...shelf.slabs.values()] : ((shelf && shelf.slabs) || []),
+      categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
       customers,
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
                 /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
