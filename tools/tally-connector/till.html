@@ -59,6 +59,11 @@
   .search input{width:100%;font-size:1.25em;padding:12px 14px;border:2px solid var(--line);border-radius:var(--radius);background:var(--card)}
   .search input:focus{outline:none;border-color:var(--blue)}
   /* the dozen this shop sells all day — big targets, no reading, gone the moment somebody types */
+  /* everything · on offer · the departments — one row, scrolls sideways on a phone rather than stacking */
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch}
+  .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
+  .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
+  .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card)}
   .quick button{padding:14px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
   .quick button b{display:block;font-size:.95em;overflow-wrap:anywhere}
@@ -139,6 +144,7 @@
     <div class="search">
       <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="paintHits()" onkeydown="searchKey(event)">
     </div>
+    <div class="chips" id="chips"></div>
     <div class="quick" id="quick"></div>
     <div class="hits" id="hits"></div>
     <div class="keys" id="keys">
@@ -461,7 +467,7 @@ async function load(){
   applyLook();
   document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.key ? 'Not paired yet' : 'This shop');
   document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
-  paintStatus(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
+  paintStatus(); paintChips(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
   loadQuick().catch(function(){});
 }
 /* ⚠️ THE BUTTON MAY BE PRESSED BEFORE THE PAGE HAS FINISHED WAKING (caught by [TILL-01]): HOST is chosen asynchronously, and ↻ on
@@ -495,6 +501,38 @@ function paintCustomers(){
  * "co ac" finds it too. A plain substring ("riander", half a code) still matches — ranked below, never refused.
  * The searchable text is built once per item, at the moment the shop is read; a keystroke is then an indexOf per word.
  */
+/**
+ * ⭐ WHICH OFFERS TOUCH THIS PRODUCT — asked of the ENGINE, never re-decided here (2026-09-08). The answer is cached on the item and
+ * thrown away whenever the shop is re-read, because an offer that ended overnight must not linger on a chip.
+ */
+var FILTER = { offer:false, cat:null }, OFFER_STAMP = null;
+function offersFor(i){
+  if (!S || !window.CBOffers) return [];
+  if (OFFER_STAMP !== (S.version || S.at)) { OFFER_STAMP = (S.version || S.at); (S.items || []).forEach(function(x){ x._off = null; }); }
+  if (i._off) return i._off;
+  var line = { key:i.item_id, item_id:i.item_id, sku:i.code, category:i.category, qty:1, unitPrice:Number(i.price) || 0 };
+  var got = [];
+  try { got = CBOffers.forLine(line, (S.offers || []), { currency:(S.shop && S.shop.currency) || 'INR', now:new Date().toISOString() }) || []; } catch (_) { got = []; }
+  i._off = got;
+  return got;
+}
+function offerNames(i){ return offersFor(i).map(function(o){ return o.label || o.name || 'Offer'; }); }
+function setFilter(what, val){
+  if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; }
+  else if (what === 'cat') { FILTER.cat = (FILTER.cat === val) ? null : val; }
+  else { FILTER = { offer:false, cat:null }; }
+  SEL = 0; paintChips(); paintHits();
+}
+function paintChips(){
+  var el = document.getElementById('chips'); if (!el || !S) return;
+  var cats = {};
+  (S.items || []).forEach(function(i){ if (i.category) cats[i.category] = (cats[i.category] || 0) + 1; });
+  var list = Object.keys(cats).sort(function(a,b){ return cats[b] - cats[a]; }).slice(0, 14);
+  var none = !FILTER.offer && !FILTER.cat;
+  el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything</button>'
+    + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer</button>'
+    + list.map(function(c){ return '<button class="' + (FILTER.cat === c ? 'on' : '') + '" data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '" onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">' + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'; }).join('');
+}
 function searchText(i){
   if (i._s) return i._s;
   var t = [i.name, i.code, i.sku, i.category, i.brand, i.variant, i.unit].filter(Boolean).join(' ').toLowerCase();
@@ -509,6 +547,9 @@ function searchText(i){
 function hits(){
   var raw = (document.getElementById('q').value || '').trim().toLowerCase();
   var items = (S && S.items) || [];
+  /* the chips narrow the shelf BEFORE the search runs — on a ten-thousand item shop that is also what makes it quick */
+  if (FILTER.cat) items = items.filter(function(i){ return i.category === FILTER.cat; });
+  if (FILTER.offer) items = items.filter(function(i){ return offersFor(i).length > 0; });
   if (!raw) return items.slice(0, 60);
 
   /* a scanned barcode is exact and beats everything */
@@ -599,7 +640,8 @@ function paintHits(){
   var list = hits(); if (SEL >= list.length) SEL = 0;
   document.getElementById('hits').innerHTML = list.length ? list.map(function(i,n){
     return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
-      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.hsn ? ' · HSN ' + esc(i.hsn) : '') + '</div></span>'
+      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
+        + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span> '; }).join('') + '</span>'
       + '<span class="p">₹' + money(i.price) + '<div class="u">per ' + esc(i.unit||'piece') + '</div></span></div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>';
   keepSelInView();
