@@ -93,3 +93,6 @@ router.delete('/:jti', auth, sessionOnly, async (req, res) => {
 
 router.openapi = { paths: { '/api/keys': { post: { summary: 'Mint an API key (session only)', tags: ['keys'], security: [{ bearer: [] }], requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string', enum: SCOPES } }, days: { type: 'integer' } } } } } }, responses: { 201: { description: 'the key, shown once' } } }, get: { summary: 'List keys (session only)', tags: ['keys'], security: [{ bearer: [] }], responses: { 200: { description: 'keys' } } } }, '/api/keys/{jti}': { delete: { summary: 'Revoke a key (session only)', tags: ['keys'], security: [{ bearer: [] }], parameters: [{ name: 'jti', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'revoked' } } } } }, schemas: {} };
 module.exports = router;
+/* ⚠️ ONE MINT, REACHED BY NAME. Pairing (routes/till.js) hands out a screen key, and it must be the SAME mint the keys screen
+   uses — expiry, listing on the entity, the jti bookkeeping. A second mint would be a second set of rules about what a key is. */
+module.exports.mint = mint;

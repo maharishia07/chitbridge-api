@@ -26,6 +26,7 @@ const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
+const keys = require('./keys');                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const speech = require('../lib/speech');            /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */      /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -167,6 +168,10 @@ router.get('/snapshot', auth, async (req, res) => {
                   and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
                price: amountOf(d.price), mrp: amountOf(d.mrp),
                hsn: d.hsn || d.hs_code || d.hsn_code || null, tax_slab: d.tax_slab || null, category: d.category || null,
+               /* ⭐ THE SHOP'S OWN PICTURE. Already a PUBLIC url (routes/products mediaUrl → /api/products/media/…), so the
+                  counter and the shop screen can draw it without a key and without a second round trip. Null for most rows and
+                  that is fine — the screen falls back to the category emblem rather than leaving a hole. */
+               image: d.image || null,
                barcode: d.barcode || d.ean || null, avail: d.avail || null,
                /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton
                   converts to our pieces. Capped: an alias list is a memory aid, not a place to accumulate. */
@@ -253,6 +258,95 @@ router.get('/snapshot', auth, async (req, res) => {
  * ⚠️ It reads nothing else. A till key cannot open the inbox, a supplier's chit or anybody's messages, and this route keeps that true:
  * the WHERE clause is the shop, the purpose, and the presence of a bill number.
  */
+/**
+ * ⭐⭐⭐ PAIRING — HOW A TELEVISION JOINS A SHOP WITHOUT TYPING A KEY.
+ *
+ * Athi, 2026-09-09: *"please add pairing so we can test 1 to many devices."* Typing
+ * the full address with a 64-character key on a TV remote, with a
+ * D-pad and an on-screen keyboard, is not a thing anyone will do twice.
+ *
+ * So: the shop asks for a CODE, the television types six characters, and the server hands it a screen key.
+ *
+ *   POST /api/till/pair        (session)  → { code, expires_at }   the shop generates one, per screen
+ *   POST /api/till/pair/claim  (no auth)  → { key, shop }          the screen exchanges it, ONCE
+ *
+ * ⚠️ SIX CHARACTERS IS ONLY SAFE BECAUSE OF THE OTHER THREE RULES, and they are not optional:
+ *   · TEN MINUTES  — a code is dead long before anyone could work through the space
+ *   · ONCE         — claimed is claimed; a replay gets nothing, so a code read off a screen by a passer-by is spent
+ *   · SLOWED       — wrong guesses are counted and the door shuts for a minute after a handful
+ * The alphabet drops O·0·I·1·L, which is 27 characters and about 387 million codes. Someone reading the six characters off the
+ * television during those ten minutes can pair a second screen — and a screen key can only read the price list, which is
+ * printed on the shelf edge anyway. That is the whole reason pairing hands out a SCREEN key and never a till key.
+ *
+ * ⚠️ THE CODES LIVE IN MEMORY, ON PURPOSE. A pending code is worthless ninety seconds after it is made, so a table, a
+ * migration and a cleanup job would all be carrying something that does not need to outlive a restart. A deploy in the middle
+ * of pairing loses the code — you press the button again. Said out loud rather than discovered.
+ */
+const PAIR = new Map();              /* code → { entity_id, name, expires } */
+const PAIR_MISSES = new Map();       /* ip → { n, until } */
+const PAIR_ALPHABET = 'ACDEFGHJKMNPQRTUVWXY2345678';
+const PAIR_TTL_MS = 10 * 60 * 1000;
+
+function pairSweep() {
+  const now = Date.now();
+  for (const [k, v] of PAIR) if (v.expires < now) PAIR.delete(k);
+  for (const [k, v] of PAIR_MISSES) if (v.until < now) PAIR_MISSES.delete(k);
+}
+function pairCode() {
+  const crypto = require('crypto');
+  for (;;) {
+    const b = crypto.randomBytes(6);
+    let c = '';
+    for (let i = 0; i < 6; i++) c += PAIR_ALPHABET[b[i] % PAIR_ALPHABET.length];
+    if (!PAIR.has(c)) return c;
+  }
+}
+
+/** the shop asks for a code — one per screen, so two televisions can be revoked apart */
+router.post('/pair', auth, async (req, res) => {
+  try {
+    pairSweep();
+    /* ⚠️ A KEY MAY NOT MINT A KEY. Pairing hands out authority, so it is gated to a signed-in person exactly as authoring a
+       definition is — otherwise a counter key on a shared PC could quietly furnish itself a family of screen keys. */
+    /* ⚠️ req.api_key is how middleware/auth marks a request that arrived with a key. I first guessed `via_key`, which nothing
+       sets — and a guard testing a field nobody sets is a guard that always passes. */
+    if (!req.identity || req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to pair a screen.' });
+    const entity_id = auth.entityOf(req);
+    const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
+    const code = pairCode();
+    const expires = Date.now() + PAIR_TTL_MS;
+    PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires });
+    res.json({ code, expires_at: new Date(expires).toISOString(), minutes: Math.round(PAIR_TTL_MS / 60000) });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/** the screen exchanges it — no key, because it does not have one yet; that is the entire point */
+router.post('/pair/claim', async (req, res) => {
+  try {
+    pairSweep();
+    const ip = String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || 'unknown').trim();
+    const miss = PAIR_MISSES.get(ip);
+    if (miss && miss.n >= 8 && miss.until > Date.now())
+      return res.status(429).json({ error: 'Too many', message: 'Too many wrong codes. Wait a minute and try again.' });
+
+    const code = String((req.body && req.body.code) || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const got = code && PAIR.get(code);
+    if (!got || got.expires < Date.now()) {
+      const m = PAIR_MISSES.get(ip) || { n: 0, until: 0 };
+      m.n += 1; m.until = Date.now() + 60000; PAIR_MISSES.set(ip, m);
+      return res.status(404).json({ error: 'No such code',
+        message: 'That code is wrong or has expired. Ask ChitBridge for a new one.' });
+    }
+    /* ⚠️ SPENT THE MOMENT IT IS READ, before the key is even minted — if minting fails the code is still gone, which is the
+       safe way round: a code that survives a failure is a code somebody can retry. */
+    PAIR.delete(code);
+    const minted = await keys.mint(got.entity_id, null,
+      { name: 'shop screen · paired ' + new Date().toISOString().slice(0, 10), scopes: ['screen'], days: 365 });
+    PAIR_MISSES.delete(ip);
+    res.json({ key: minted.key, shop: { entity_id: got.entity_id, name: got.name } });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 /**
  * ⭐⭐⭐ GET /api/till/verify — CAN THIS COUNTER PROVE IT IS RIGHT?
  *

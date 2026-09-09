@@ -86,6 +86,21 @@
         font-size:12px;color:#fff;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
   #hint.show{opacity:1}
 
+  /* ⚠️ SIZED FOR A ROOM, NOT A DESK — read from across a shop by someone holding a remote */
+  #pairwrap{position:fixed;inset:0;z-index:60;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  .pairbox{max-width:760px;width:100%;text-align:center}
+  .pairbox h2{font-size:clamp(28px,4vw,52px);margin:0 0 18px}
+  .pairbox ol{text-align:start;display:inline-block;color:#C9D2DD;font-size:clamp(15px,1.6vw,21px);line-height:1.8;margin:0 0 26px}
+  .pairbox b{color:var(--paper)}
+  #paircode{width:min(100%,520px);text-align:center;text-transform:uppercase;letter-spacing:.22em;
+            font:800 clamp(38px,7vw,86px)/1.1 "Segoe UI","Nirmala UI",system-ui,sans-serif;
+            background:#0B0E13;color:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px 10px}
+  #paircode:focus{outline:none;border-color:var(--hot)}
+  #pairgo{margin-top:20px;background:var(--hot);border-color:var(--hot);color:#fff;font-weight:800;
+          font-size:clamp(15px,1.8vw,22px);padding:12px 28px;border-radius:999px}
+  .pairsay{margin-top:16px;min-height:26px;color:#C9D2DD;font-size:clamp(14px,1.6vw,19px)}
+  .pairsay.bad{color:#FF9C86}
+
   .rail{display:flex;gap:6px;align-items:center;overflow-x:auto;max-width:100%;padding-bottom:2px}
   .rail button{font-size:12px;padding:5px 11px}
   @media (max-width:760px){ .brand small{display:none} }
@@ -113,6 +128,25 @@
 </header>
 
 <main>
+  <!--
+    ⭐⭐⭐ PAIRING, FROM THE TELEVISION'S SIDE. Athi, 2026-09-09: *"please add pairing so we can test 1 to many devices."*
+    A TV remote is a D-pad and an on-screen keyboard. Six characters is about the most anyone will type on one, and it is the
+    only thing this screen asks for — no key, no URL, no account. The shop makes a code in ChitBridge; this takes it.
+    ⚠️ Deliberately enormous type. It is read from across a shop, by someone holding a remote at arm's length.
+  -->
+  <div id="pairwrap" hidden>
+    <div class="pairbox">
+      <h2>Set up this screen</h2>
+      <ol>
+        <li>On ChitBridge, open <b>Counter → Put it on a screen in the shop → Pair a TV</b></li>
+        <li>Type the six characters it shows here</li>
+      </ol>
+      <input id="paircode" maxlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A2C4E6" data-testid="promo-pair-code">
+      <button id="pairgo" data-testid="promo-pair-go">Connect this screen</button>
+      <div id="pairsay" class="pairsay"></div>
+    </div>
+  </div>
+
   <div id="stage">
     <canvas id="c"></canvas>
     <canvas id="prev"></canvas>
@@ -248,6 +282,15 @@ function offerWords(o){
 }
 
 /* a day-stable shuffle: the same shop shows the same order all day, and a different one tomorrow */
+/**
+ * ⭐ A PICTURE EARNS ITS SLIDE. When a rule has forty products to choose from and three of them have photographs, the three
+ * should go first — a screen of typography is fine, a screen with the shop's own packets on it is better. It is a preference and
+ * never a filter: a shop with no photographs at all still gets a full run.
+ */
+function picFirst(list){
+  var withPic = list.filter(function(i){ return i && i.image; });
+  return withPic.length ? withPic.concat(list.filter(function(i){ return !(i && i.image); })) : list;
+}
 function seeded(list, salt){
   var d = new Date(), seed = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate() + (salt || 0);
   var a = list.slice();
@@ -266,6 +309,8 @@ function build(){
     var got = offersOf(items[i]);
     if (got.length) withOffer.push({ item: items[i], offer: got[0] });
   }
+  withOffer = picFirst(withOffer.map(function(x){ return x.item; })).map(function(it){
+    return withOffer.filter(function(x){ return x.item === it; })[0]; });
   seeded(withOffer, 1).slice(0, 10).forEach(function(x){
     out.push({ kind:'offer', mood:MOOD.hot, eyebrow:'On offer today', item:x.item, badge:offerWords(x.offer) });
   });
@@ -273,6 +318,7 @@ function build(){
   /* ── price against MRP: only when the saving is real, and said in rupees ── */
   var drops = items.filter(function(i){ var m = Number(i.mrp) || 0, p = Number(i.price) || 0;
     return m > 0 && p > 0 && (m - p) / m >= 0.08; });
+  drops = picFirst(drops);
   seeded(drops, 2).slice(0, 8).forEach(function(i){
     out.push({ kind:'drop', mood:MOOD.gold, eyebrow:'Our price', item:i, save:(Number(i.mrp) - Number(i.price)) });
   });
@@ -392,6 +438,34 @@ function pill(g, text, x, y, u, bg, fg){
   return w + padX * 2;
 }
 
+/**
+ * ⭐⭐ THE SHOP'S OWN PICTURE, WHERE IT HAS ONE. Athi, 2026-09-09: *"if we add our own image for a product, that image should
+ * come, correct?"* Yes — and the emblem stays as the fallback, because most rows in a ten-thousand product shop will never have
+ * a photograph and a hole where a picture should be looks like a fault.
+ *
+ * ⚠️ crossOrigin='anonymous' IS NOT DECORATION. The picture is served by the API, which is a different origin from this page.
+ * Draw a cross-origin image without it and the canvas becomes TAINTED — every later toBlob and toDataURL throws, which would
+ * silently break Save and Share on exactly the slides that look best. The API sends the CORS header, so asking for it works;
+ * a picture that fails to load simply falls back to the emblem, and the screen never stops.
+ *
+ * ⚠️ ONE ATTEMPT PER URL. A television runs this for twelve hours; retrying a broken image every seven seconds would be a
+ * thousand failed requests by closing time. A failure is remembered as a failure.
+ */
+var IMGS = {};                    /* url → HTMLImageElement | 'loading' | 'failed' */
+function pic(url){
+  if (!url) return null;
+  var got = IMGS[url];
+  if (got === 'failed' || got === 'loading') return null;
+  if (got) return got;
+  IMGS[url] = 'loading';
+  var im = new Image();
+  im.crossOrigin = 'anonymous';
+  im.onload = function(){ IMGS[url] = im; paint(false); };      /* it arrived — redraw this frame with it in */
+  im.onerror = function(){ IMGS[url] = 'failed'; };
+  im.src = url;
+  return null;
+}
+
 /* mixing a colour toward black or white — a mood needs a deep end and a bright end, not one flat value */
 function mix(hex, toward, t){
   var h = hex.replace('#',''), r = parseInt(h.slice(0,2),16), gg = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
@@ -423,21 +497,37 @@ function ground(g, W, H, u, slide){
   gr.addColorStop(1, mix(mood, 'b', 0.38));
   g.fillStyle = gr; g.fillRect(bx, by, bw, bh);
 
-  /* the category, on a medallion so a colour emoji has something of its own to sit on */
+  /* the medallion: the shop's own photograph if it has one, the category emblem if not */
   var pick = slide.item || (slide.items && slide.items[0]) || null;
   var cat = slide.cat || (pick && pick.category);
-  var em = slide.cat ? GLYPH[cat] : glyphFor(pick && pick.name, cat);
-  if (em) {
-    var cx = bx + bw / 2, cy = by + bh / 2, R = Math.min(bw, bh) * 0.34;
+  var cx = bx + bw / 2, cy = by + bh / 2, R = Math.min(bw, bh) * 0.34;
+  var shot = pick && pic(pick.image);
+  if (shot) {
+    /* ⚠️ COVER, NOT STRETCH. A shopkeeper photographs a packet on a counter in whatever shape the phone gave them; scaling that
+       to a circle would squash it. The short side fills the medallion and the overflow is clipped, the way any photograph is
+       cropped to a frame. */
     g.save();
-    g.globalAlpha = 0.13; g.fillStyle = '#FFFFFF';
-    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
-    g.globalAlpha = 0.95;
-    g.font = face(400, R * 1.15);
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(em, cx, cy + R * 0.06);
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.clip();
+    var iw = shot.naturalWidth || shot.width, ih = shot.naturalHeight || shot.height;
+    var k = Math.max((R * 2) / iw, (R * 2) / ih);
+    g.drawImage(shot, cx - (iw * k) / 2, cy - (ih * k) / 2, iw * k, ih * k);
     g.restore();
-    g.textAlign = 'left'; g.textBaseline = 'top';
+    /* a thin ring, so a photograph with a pale edge does not dissolve into the blade */
+    g.save(); g.globalAlpha = 0.35; g.strokeStyle = '#FFFFFF'; g.lineWidth = Math.max(2, R * 0.012);
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke(); g.restore();
+  } else {
+    var em = slide.cat ? GLYPH[cat] : glyphFor(pick && pick.name, cat);
+    if (em) {
+      g.save();
+      g.globalAlpha = 0.13; g.fillStyle = '#FFFFFF';
+      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+      g.globalAlpha = 0.95;
+      g.font = face(400, R * 1.15);
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(em, cx, cy + R * 0.06);
+      g.restore();
+      g.textAlign = 'left'; g.textBaseline = 'top';
+    }
   }
   /* a hairline of the mood along the top — the one bit of chrome, and it names the mood */
   g.fillStyle = mood; g.fillRect(0, 0, W, 9 * u);
@@ -814,7 +904,39 @@ document.addEventListener('mousemove', function(){
   idle = setTimeout(function(){ if (document.body.classList.contains('show')) document.body.style.cursor = 'none'; }, 2600);
 });
 
+/**
+ * ⭐ SIX CHARACTERS, AND THE SCREEN JOINS. The key never appears on the television: it is fetched, kept in this browser, and the
+ * page reloads into the ordinary shop screen. Everything it can then do is READ the shop — pairing hands out a screen key.
+ * ⚠️ Every answer is a sentence. A person standing on a chair with a remote cannot debug an error code.
+ */
+async function pairClaim(){
+  var box = document.getElementById('paircode'), say = document.getElementById('pairsay');
+  var code = String(box.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length < 6) { say.className = 'pairsay bad'; say.textContent = 'Type all six characters.'; return; }
+  say.className = 'pairsay'; say.textContent = 'Connecting…';
+  try {
+    var r = await fetch(API + '/api/till/pair/claim', { method:'POST',
+      headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ code: code }) });
+    var j = await r.json().catch(function(){ return {}; });
+    if (!r.ok || !j.key) { say.className = 'pairsay bad';
+      say.textContent = j.message || 'That code did not work. Ask ChitBridge for a new one.'; return; }
+    ls.set('cb_till_key', j.key);
+    if (j.shop && j.shop.entity_id) ls.set('cb_till_shop', j.shop.entity_id);
+    say.textContent = 'Connected to ' + ((j.shop && j.shop.name) || 'your shop') + '. Starting…';
+    setTimeout(function(){ location.reload(); }, 900);
+  } catch (e) { say.className = 'pairsay bad'; say.textContent = 'No internet on this screen yet.'; }
+}
+function pairShow(){
+  document.getElementById('pairwrap').hidden = false;
+  var b = document.getElementById('paircode'); if (b) b.focus();
+}
+document.getElementById('pairgo').onclick = pairClaim;
+document.getElementById('paircode').addEventListener('keydown', function(e){ if (e.key === 'Enter') pairClaim(); });
+
 (async function start(){
+  /* ⚠️ NOTHING ELSE HAPPENS UNTIL IT BELONGS TO A SHOP. An unpaired screen showing an empty stage looks broken; it should be
+     asking for its code instead. */
+  if (!KEY) { pairShow(); return; }
   await readShop();
   SLIDES = build();
   paintBar();
