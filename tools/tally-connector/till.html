@@ -119,6 +119,8 @@
   .quick button:hover .qx,.quick button:hover .qpin{opacity:.8}
   .quick .qx:hover{background:var(--warn-tint);color:var(--warn);opacity:1}
   .qtyhint{padding:6px 12px;background:var(--ok-tint);color:var(--ok);font-size:.85em;border-bottom:1px solid var(--line)}
+  /* ⚠️ a FACT, not a warning — it must never compete with the row a person is trying to read */
+  .shelfline{padding:5px 12px;color:var(--dim);font-size:.78em;border-bottom:1px solid var(--line);background:var(--paper)}
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
   /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
   .upd{color:var(--ok);font-weight:700}
@@ -1140,16 +1142,41 @@ function quickAdd(id){
   addItem(i, typed().qty);
   price(); focusSearch();
 }
+/**
+ * ⭐⭐ HOW MANY THINGS ARE ON THIS COUNTER (Athi, 2026-09-09: *"how do i know the total number of products in tallytest, where does
+ * it mentioned in the system?"*). It was mentioned nowhere here. The counter draws at most sixty rows and said nothing about the
+ * rest, so a shop of ten thousand and a shop of twelve looked identical — and after a catalogue load there was no way to tell from
+ * the counter whether it had arrived.
+ *
+ * ⚠️ THE COUNT IS ALSO THE STALENESS. "10,441 products, read at 21:59" answers two questions at once, and the second is the one
+ * that bites: a counter holding yesterday's shelf looks exactly like a counter holding today's.
+ * Same words as the app's own catalogue header, because a person who reads "showing 60 of 10,441" in one place should not have to
+ * learn a second phrasing in the other.
+ */
+function shelfLine(shown){
+  if (!S) return '';
+  var total = ((S && S.items) || []).length;
+  if (!total) return '';
+  var when = S.at ? new Date(S.at).toTimeString().slice(0, 5) : null;
+  var n = function(v){ return Number(v).toLocaleString('en-IN'); };
+  var txt;
+  if (FILTER.cat)        txt = n(shown) + ' in ' + esc(FILTER.cat) + ' — of ' + n(total) + ' on this counter';
+  else if (FILTER.offer) txt = n(shown) + ' carrying an offer — of ' + n(total) + ' on this counter';
+  else if (typed().text) txt = shown ? ('showing ' + n(shown) + ' of ' + n(total) + ' — keep typing to narrow it')
+                                     : ('nothing matches, of ' + n(total) + ' on this counter');
+  else                   txt = n(total) + ' products on this counter' + (when ? ', read at ' + when : '');
+  return '<div class="shelfline" data-testid="till-shelf-count">' + txt + '</div>';
+}
 function paintHits(){
   if (scanned()) return;
   paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
   list.forEach(function(i){ i.tax_rate = rateOf(i); });      /* only for the rows about to be drawn — never the whole shelf */
   var t = typed();
-  var head = (t.qty !== 1 || t.unit)
+  var head = shelfLine(list.length) + ((t.qty !== 1 || t.unit)
     ? '<div class="qtyhint" data-testid="till-qty-ahead">Adding <b>' + t.qty + (t.unit ? ' ' + esc(t.unit) : '') + '</b> of whatever you choose'
       + (t.unit ? ' <span class="u">— converted to the unit it is sold in</span>' : '') + '</div>'
-    : '';
+    : '');
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
       + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
@@ -1477,6 +1504,13 @@ function health(){
           'Open each in ChitBridge → Catalogue and set its tax slab.', noRate.slice(0, 5).map(function(i){ return i.name; }));
     }
   }
+  /* ⭐ what this counter is holding, and from when — the first thing to check when a catalogue change has not appeared */
+  if (items.length)
+    add('note', Number(items.length).toLocaleString('en-IN') + ' products on this counter',
+      'Read from ChitBridge' + (S.at ? ' at ' + new Date(S.at).toTimeString().slice(0, 5) + ' on ' + new Date(S.at).toDateString() : '')
+        + '. Anything added or repriced since then is not here yet.',
+      'Press the arrow button while the internet is on to read it again.');
+
   /**
    * ⚠️ CAN THIS BROWSER BE TRUSTED TO HOLD A DAY OF BILLS? Only worth saying when something is actually waiting — a counter with
    * an empty queue has nothing to lose, and a warning nobody needs is a warning nobody reads.
