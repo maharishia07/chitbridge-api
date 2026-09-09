@@ -193,44 +193,83 @@ it('⭐⭐ the counter lists what it can sell, and off-the-shelf is a view you a
  * ⭐ The list is for CHOOSING and the bill is for AMENDING: product and price on the left, quantity on the right-hand pane.
  * The only control allowed to swallow a tap in the selling list is the shelf dot, which opens the product panel.
  */
-it('⭐⭐ nothing in the selling list swallows the tap that adds the product', () => {
+it('⭐⭐ the left row is product details only — nothing in it can be tapped but the row', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  /* ⚠️ the end anchor must be searched FROM the start of the row, not from the start of the file — '}).join(' occurs
-     earlier in the page, which produced an empty slice and a guard that passed on nothing. */
+  /* ⚠️ the end anchor must be searched FROM the start of the row, and not on an inner .join either —
+     offerNames(...).map(...).join('') sits INSIDE the row. The row's own closing tag is the only honest end. */
   const at = page.indexOf("return '<div class=\"hit'");
-  /* ⚠️ and not on an inner .join either — offerNames(...).map(...).join('') sits INSIDE the row, so that anchor cut the
-     slice in half and the guard measured a fragment. The row's own closing tag is the only honest end. */
   const row = page.slice(at, page.indexOf("+ '</div>';", at));
-  const swallow = row.split('event.stopPropagation()').length - 1;
-  assert.strictEqual(swallow, 1,
-    'the selling row has ' + swallow + ' click-swallowing controls; only the shelf dot may be one — the rest of the row must add');
-  assert.ok(row.indexOf('qtyBox(') < 0, 'the quantity stepper is back in the product list — it belongs on the bill');
-  /* the one exception is the off-the-shelf view, where the row is not for selling at all */
-  assert.ok(row.indexOf('till-back-') > 0, '"Put it back" is the off-the-shelf view only action and must remain');
-  const flag = page.slice(page.indexOf('function flagBtn(i, n, off){'), page.indexOf('var CARD = null'));
-  assert.ok(flag.indexOf('event.stopPropagation()') > 0, 'the shelf dot would sell the item it is opening the panel for');
+  /**
+   * Athi, settling the design 2026-09-09: *"left side is only for selection … I don't want green etc in the left side, only
+   * the product details, same as what is being shown in the storefront."*
+   * ⚠️ A control in this row is not merely clutter: every one of them has to stopPropagation so it does not bill the item,
+   * and each is then a dead patch of row where tapping a product does nothing. That is the bug he reported.
+   */
+  assert.strictEqual(row.split('event.stopPropagation()').length - 1, 0,
+    'something in the selling row swallows the tap — the whole row must add the product');
+  for (const gone of ['qtyBox(', 'flagBtn(', 'picOf(', 'till-back-'])
+    assert.ok(row.indexOf(gone) < 0, gone + ' is back in the product row — the left side is for choosing only');
+  /* what it MUST still say: the storefront's own fields */
+  for (const [what, mark] of [['the name', 'esc(i.name)'], ['the unit', 'i.unit'], ['the code', 'i.code'],
+                              ['the category', 'i.category'], ['its offers', 'offerNames(i)'], ['the price', 'priceBlock(i)']])
+    assert.ok(row.indexOf(mark) > 0, 'the row no longer shows ' + what);
+});
+
+/**
+ * ⭐⭐ SELLING NEVER TOUCHES THE CATALOGUE. Athi: *"the product maintenance cannot be on the same menu, like sell — we keep
+ * another menu called maintenance … instead of price change in the menu, it will be maintenance."*
+ */
+it('⭐⭐ maintenance is its own operation, and selling has no way into the catalogue', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf("var OPS = ['sell','receive','despatch','stock','maintain'];") > 0,
+    'the operations are not sell/receive/despatch/stock/maintain');
+  assert.ok(page.indexOf("<option value=\"price\">") < 0, 'Price change is still its own menu entry');
+  assert.ok(page.indexOf('id="pane_maintain"') > 0, 'there is no maintenance pane for the four decisions to live in');
+  /* ⚠️ and the dead screen went with the mode — paintPrice wrote into an element that no longer exists */
+  for (const dead of ['function paintPrice(', 'function priceStart(', 'function priceSave(', "getElementById('pricelist')"])
+    assert.ok(page.indexOf(dead) < 0, dead + ' is left over from the Price-change mode and can never run');
+  /* the selling list shows only what can be sold; maintenance and stock-out see everything */
+  const hits = page.slice(page.indexOf('function hits(){'), page.indexOf('function hits(){') + 1400);
+  assert.ok(hits.indexOf("MODE === 'maintain'") > 0 && hits.indexOf("statusOf(i) !== 'unavailable'") > 0,
+    'the list does not change with the operation — selling must not offer what is off the shelf');
 });
 
 /**
  * ⭐⭐ FOUR DECISIONS, ONE PLACE. Athi, 2026-09-09: *"changing availability, product price, offer enable/disable, show on TV —
  * all can be kept in the same place."* Each calls the function that already did that job; none may grow a second write.
  */
-it('⭐⭐ the product panel holds the four small decisions and writes each through one path', () => {
+it('⭐⭐ the maintenance panel holds the four decisions and writes each through one path', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function cardNote'));
+  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function cardPrice('));
   for (const [what, mark] of [['availability', 'stockToggle(CARD)'], ['price', 'cardPrice()'],
                               ['offers', 'cardOffer('], ['the shop screen', 'cardScreen(']])
-    assert.ok(card.indexOf(mark) > 0, 'the product panel cannot set ' + what);
-  /* ⚠️ the price is written by priceWrite, shared with the Price-change mode — not a second copy of the same write */
-  assert.ok(page.indexOf('async function priceWrite(i, v){') > 0, 'the price write is not extracted, so the panel has its own');
-  const save = page.slice(page.indexOf('async function priceSave(){'), page.indexOf('async function priceWrite'));
-  assert.ok(save.indexOf('priceWrite(PRICING') > 0, 'the Price-change mode no longer goes through the shared write');
+    assert.ok(card.indexOf(mark) > 0, 'the maintenance panel cannot set ' + what);
+  assert.ok(page.indexOf('async function priceWrite(i, v){') > 0, 'there is no single price write');
+  assert.ok(page.slice(page.indexOf('function cardPrice(){'), page.indexOf('async function cardOffer')).indexOf('priceWrite(CARD') > 0,
+    'the panel does not go through the shared price write');
   /* and the wire refuses anything beyond those flags */
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   const route = src.slice(src.indexOf("router.post('/flags'"), src.indexOf("router.post('/price'"));
   assert.ok(route.indexOf('nothing to set') > 0, '/flags accepts a body that sets nothing');
   for (const field of ['name', 'category', 'tax_slab'])
     assert.ok(route.indexOf("'" + field + "'") < 0, '/flags can write ' + field + ' — a till key must not rename the catalogue');
+});
+
+/**
+ * ⭐⭐ THE QUANTITY IS AMENDED ON THE CART. Athi: *"reduce the qty in the cart by using + or − in the cart, or by a shortcut
+ * key."* Repeated adds raise it; the cart's own stepper and Ctrl+arrows change it after the fact.
+ */
+it('⭐⭐ the cart carries the stepper and a shortcut, and a repeated add raises the count', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const rowfn = page.slice(page.indexOf('function cartRowHTML(c, k){'), page.indexOf('function paintCartRow'));
+  assert.ok(rowfn.indexOf('till-minus-') > 0 && rowfn.indexOf('till-plus-') > 0, 'the cart line has no + and - buttons');
+  assert.ok(rowfn.indexOf('till-qty-') > 0, 'the cart line has no typeable quantity, so 24 would be 23 taps');
+  assert.ok(page.indexOf("if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))") > 0,
+    'there is no keyboard way to change a quantity');
+  /* the repeated add is what makes three of something ordinary — addItem merges by item_id */
+  const addItem = page.slice(page.indexOf('function addItem(i, qty){'), page.indexOf('function addItem(i, qty){') + 500);
+  assert.ok(addItem.indexOf('have.qty = r2(have.qty + n)') > 0,
+    'adding the same product again no longer increases the count on the bill');
 });
 
 console.log(pass + ' checks');

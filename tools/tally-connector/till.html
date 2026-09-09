@@ -92,6 +92,15 @@
   .doc .wide{grid-column:1 / -1}
   .lines{flex:1;overflow:auto}
   .lines .ln{display:grid;grid-template-columns:1fr 74px 74px 90px 30px;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+  /* ── the cart's own stepper: this IS the place a quantity is amended ── */
+  #cart .qty{display:flex;align-items:center;gap:3px}
+  #cart .qty button{width:34px;height:34px;flex:none;border:1px solid var(--line);border-radius:8px;background:var(--paper);
+                    color:var(--ink);font:inherit;font-size:1.15em;font-weight:700;line-height:1;padding:0;cursor:pointer}
+  #cart .qty button:hover{border-color:var(--ok);color:var(--ok)}
+  #cart .qty button:active{background:var(--ok-tint)}
+  #cart .qty input{width:46px;height:34px;text-align:center;font-variant-numeric:tabular-nums;
+                   -moz-appearance:textfield;appearance:textfield}
+  #cart .qty input::-webkit-outer-spin-button, #cart .qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .lines .ln.done{background:var(--ok-tint)}
   .lines .ln input{width:100%;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);text-align:right}
   .lines .ln .nm{font-weight:600}
@@ -155,16 +164,15 @@
    * ⚠️ The price column is fixed-width and tabular, so the rupees line up down the list — a column of money that jitters is a column
    * nobody can scan. On a narrow screen the middle column drops below the name rather than squeezing the price.
    */
-  .hit{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(92px,auto);gap:12px;align-items:center;
+  .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto);gap:12px;align-items:center;
        padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
   /* the marked row carries a bar as well as a tint: on a long list a colour alone is easy to lose */
   .hit.sel{background:var(--ok-tint);box-shadow:inset 4px 0 0 var(--ok)}
-  /* ⭐ THE PICTURE IS THE FASTEST MATCH. A packet is recognised before its name is read; where there is no photograph the tile
-     carries the initial over a colour derived from the CATEGORY, so a section of the shelf reads as one block of colour. */
-  .hit .pic{width:42px;height:42px;border-radius:9px;object-fit:cover;display:flex;align-items:center;justify-content:center;
-            font-weight:800;font-size:1.1em;color:#fff;flex:none;overflow:hidden}
   .hit .n{font-weight:600;min-width:0;line-height:1.3}
+  /* the unit belongs beside the name, quietly, exactly as the storefront sets it */
+  .hit .n .unit{color:var(--dim);font-size:.8em;font-weight:400}
+  .hit .offword{color:var(--warn)}
   .hit .n .meta{color:var(--dim);font-size:.78em;font-weight:400;margin-top:1px}
   .hit .mid{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;min-width:0}
   /* ⚠️ MONEY IS READ IN A COLUMN, so it is tabular and right-aligned; a column of rupees that jitters is one nobody can scan. */
@@ -179,25 +187,13 @@
   .hit.off{background:repeating-linear-gradient(135deg,transparent,transparent 7px,var(--tint) 7px,var(--tint) 14px)}
   .hit.off .n, .hit.off .p{opacity:.5}
   .hit.off .n>:first-child{text-decoration:line-through}
-  /* ⚠️ SECONDARY, AND IT LOOKS IT (Baymard). A 22 px dot with a tooltip — every row in the selling list is on the shelf,
-     so the only thing worth offering here is the ability to say one is not. */
-  .hit .flag{width:22px;height:22px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--paper);
-             cursor:pointer;font:inherit;line-height:1;display:inline-flex;align-items:center;justify-content:center;
-             opacity:.45;transition:opacity .12s}
-  .hit .flag .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
-  .hit:hover .flag, .hit.sel .flag{opacity:1}
-  .hit .flag:hover{border-color:var(--warn)}
-  .hit .flag:hover .dot{background:var(--warn)}
-  /* in the off-the-shelf view putting it back IS the job, so it stops being a dot and becomes the button */
-  .hit .back{height:38px;padding:0 14px;border:1px solid var(--ok);border-radius:9px;background:var(--ok-tint);
-             color:var(--ok);font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
-  .hit .back:hover{background:var(--ok);color:#fff}
+  /* ⚠️ NOTHING TAPPABLE LIVES IN THE ROW ANY MORE. Changing a product is done under Maintenance, not while selling. */
   /* ⚠️ THE QUANTITY LIVES ON THE BILL, NOT IN THE LIST. A stepper here made a dead strip that swallowed the tap meant to add
      the product — the list is for choosing, the bill is for amending. The cart row's own qty field is the one place it is set. */
   .facts{color:var(--dim);font-size:.78em;margin-top:2px;line-height:1.45}
   .facts b{color:var(--ink);font-weight:600}
   .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
-  @media (max-width:520px){ .hit{grid-template-columns:34px minmax(0,1fr) auto;gap:9px} .hit .pic{width:34px;height:34px} }
+  @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) auto;gap:9px} }
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
@@ -307,7 +303,7 @@
         <option value="receive">📥 Receive</option>
         <option value="despatch">📦 Despatch</option>
         <option value="stock">📉 Stock out</option>
-        <option value="price">🏷️ Price change</option>
+        <option value="maintain">🛠️ Maintenance</option>
       </select>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is at the counter (F7 to hand over)">…</button>
@@ -362,11 +358,11 @@
       <div class="lines" id="stocklist"></div>
       <div class="bar"><span id="stocknote">Nothing changed yet today.</span></div>
     </div>
-    <!-- ⭐ PRICE CHANGE — a supplier's new rate, called across the shop, and the very next bill must use it. -->
-    <div class="pane" id="pane_price" style="display:none">
+    <!-- ⭐⭐ MAINTENANCE — the four small decisions about ONE product, away from the till that is taking money. -->
+    <div class="pane" id="pane_maintain" style="display:none">
       <div class="doc"><div class="wide" style="color:var(--dim)">
-        Tap anything on the left, type the new price, press Enter. The next bill uses it, and so does your shop screen.</div></div>
-      <div class="lines" id="pricelist"></div>
+        Tap anything on the left. Everything is listed here, including what is off the shelf.</div></div>
+      <div class="lines" id="cardbox"></div>
       <div class="bar"><span id="pricenote">Nothing changed yet today.</span></div>
     </div>
    <div id="pane_sell" style="display:flex;flex-direction:column;flex:1;min-height:0">
@@ -435,12 +431,6 @@
     <div class="foot"><span id="queuenote"></span><span id="updnote" class="upd"></span><span id="lastnote"></span></div>
   </section>
 </div>
-
-<dialog id="carddlg"><div class="dlg">
-  <h3>This product</h3>
-  <div id="cardbox"></div>
-  <div class="dlgbtns"><button class="pri" data-testid="card-close" onclick="closeCard()">Done</button></div>
-</div></dialog>
 
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
@@ -1497,10 +1487,14 @@ function hits(){
   var raw = typed().text;
   var items = (S && S.items) || [];
   /* the chips narrow the shelf BEFORE the search runs — on a ten-thousand item shop that is also what makes it quick */
-  /* ⚠️⚠️ THE DEFAULT IS "WHAT I CAN SELL". Everything that is off the shelf is hidden until the chip asks for it — and the chip
-     then shows ONLY those, because "what is out of stock" is a stock-take, not a narrowing of the sales list. */
+  /**
+   * ⚠️⚠️ SELLING LISTS ONLY WHAT CAN BE SOLD. Athi: *"the list shows only the available product, that is it."*
+   * Maintenance and Stock out list everything, because the whole point of those screens is to reach a row that is off —
+   * and the "Off the shelf" chip narrows to just those, wherever it is offered.
+   */
+  var seeAll = (MODE === 'maintain' || MODE === 'stock');
   items = FILTER.off ? items.filter(function(i){ return statusOf(i) === 'unavailable'; })
-                     : items.filter(function(i){ return statusOf(i) !== 'unavailable'; });
+        : (seeAll ? items : items.filter(function(i){ return statusOf(i) !== 'unavailable'; }));
   if (FILTER.cat) items = items.filter(function(i){ return i.category === FILTER.cat; });
   if (FILTER.offer) items = items.filter(function(i){ return offersFor(i).length > 0; });
   if (window.CBSearch) return CBSearch.search(items, raw, { limit:60 });
@@ -1681,44 +1675,19 @@ function tileSwap(img){
  * both would put an out-of-stock item on the bill at the moment it was marked out of stock.
  */
 /**
- * ⭐⭐ ONE PLACE FOR THE SMALL DECISIONS. Athi, 2026-09-09: *"the catalogue management, minimal stuff — changing availability,
- * product price, offer enable/disable, show on TV — all can be kept in the same place, I guess."*
- *
- * He is right, and they were in four: the shelf dot on the row, the Price-change mode, the offer lab in the app, and the shop
- * screen's campaign rules. Four places for four decisions a shopkeeper makes about ONE product, usually in the same breath —
- * "we have run out of that, and put the price up, and take it off the telly".
- *
- * ⚠️ SO THE DOT STOPS BEING A SECOND PLACE and becomes the way in. A quick toggle on the row plus a panel holding the same
- * toggle is two places for one action, which is the thing being fixed. The Stock-out and Price-change MODES stay — they are
- * for doing one thing to MANY products, which is a different job and the panel would be a terrible way to do it.
- */
-function flagBtn(i, n, off){
-  /* in the off-the-shelf view the trailing button carries the only decision that matters there */
-  if (off) return '';
-  return '<button class="flag" data-testid="till-flag-' + n + '" onclick="event.stopPropagation();openCard(' + n + ')"'
-    + ' title="' + esc(i.name) + ' — stock, price, offers, the screen" aria-label="manage this product">'
-    + '<span class="dot"></span></button>';
-}
-function flagTap(n){ var i = hits()[n]; if (i) stockToggle(i); }
-/**
  * ⭐ THE PRODUCT PANEL — four decisions, no more. It is deliberately NOT a product editor: a name, a category or a tax slab
  * has consequences a till cannot see, and a counter key may not set them (routes/till.js says the same thing at the wire).
  * Everything here calls the function that already did the job, so there is one write per decision, not two.
  */
 var CARD = null;
-function openCard(n){
-  var i = hits()[n]; if (!i) return;
-  CARD = i; paintCard();
-  var d = document.getElementById('carddlg'); if (d && !d.open) d.showModal();
-}
-function closeCard(){ CARD = null; var d = document.getElementById('carddlg'); if (d && d.open) d.close(); }
 function cardSwitch(on, testid, onclick, words){
   return '<button class="sw' + (on ? ' on' : '') + '" data-testid="' + testid + '" onclick="' + onclick + '">'
     + '<span class="knob"></span></button><span class="swtxt">' + esc(words) + '</span>';
 }
 function paintCard(){
   var el = document.getElementById('cardbox'); if (!el) return;
-  var i = CARD; if (!i) { el.innerHTML = ''; return; }
+  var i = CARD;
+  if (!i) { el.innerHTML = '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'; return; }
   var off = statusOf(i) === 'unavailable';
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
   /* ⚠️ the offers listed are the ones that TOUCH this product — asked of the engine, never re-decided here. An excluded
@@ -1757,7 +1726,18 @@ function paintCard(){
     + cardSwitch(i.screen === true, 'card-screen', 'cardScreen(' + (i.screen === true ? 'false' : 'true') + ')',
         i.screen === true ? 'Picked for the screen' : 'Not picked — the screen chooses on its own')
     + '</div></div>'
-    + '<div class="cardnote" id="cardnote"></div>';
+    + '<div class="cardnote" id="cardnote"></div>'
+    /* ⭐ WHAT THIS COUNTER CHANGED TODAY. It was the one genuinely useful half of the old Price-change screen: a shopkeeper
+       who has just put three prices up wants to see the three, and "you charged me more than yesterday" gets an answer that
+       is not somebody's memory. */
+    + ((CHANGED.price.length || CHANGED.stock.length)
+        ? '<div class="cardrow" style="border:0"><label>Changed today</label><div class="swwrap col">'
+          + CHANGED.price.slice(0, 6).map(function(c){
+              return '<span class="swtxt">' + esc(c.name) + ' — was ₹' + money(c.was) + ', now ₹' + money(c.now) + '</span>'; }).join('')
+          + CHANGED.stock.slice(0, 6).map(function(c){
+              return '<span class="swtxt">' + esc(c.name) + ' — ' + (c.status === 'unavailable' ? 'off the shelf' : 'back on') + '</span>'; }).join('')
+          + '</div></div>'
+        : '');
 }
 function cardPrice(){
   var b = document.getElementById('cardprice');
@@ -1809,21 +1789,15 @@ function paintHits(){
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     var off = statusOf(i) === 'unavailable';
     return '<div class="hit' + (n===SEL?' sel':'') + (off?' off':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
-      + picOf(i)
       + '<span class="n">' + esc(i.name)
-        + '<div class="meta">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
+        + (i.unit ? ' <span class="unit">' + esc(i.unit) + '</span>' : '')
+        + '<div class="meta">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '')
+          + (off ? ' · <b class="offword">off the shelf</b>' : '') + '</div>'
         + rowFacts(i)
-        /* what is TRUE of this product, under the name where the eye already is — not floated off to a column of its own */
-        + '<span class="mid">'
-          + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('')
-          + flagBtn(i, n, off)
-        + '</span>'
+        + (offerNames(i).length ? '<span class="mid">'
+            + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('') + '</span>' : '')
       + '</span>'
-      + priceBlock(i)
-      /* ⚠️ nothing else may sit here in the selling list — the whole row must be one tap that adds. "Put it back" is the sole
-         exception, and only in the off-the-shelf view, where adding to a bill is not what the row is for. */
-      + (off ? '<button class="back" data-testid="till-back-' + n + '" onclick="event.stopPropagation();flagTap(' + n + ')">Put it back</button>'
-             : '') + '</div>';
+      + priceBlock(i) + '</div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
   keepSelInView();
 }
@@ -1905,33 +1879,7 @@ function stockBack(id){
 }
 
 /** the price pane: whatever was tapped, with a box for the new number */
-var PRICING = null;
-function priceStart(i){
-  PRICING = i;
-  paintPrice();
-  setTimeout(function(){ var b = document.getElementById('newprice'); if (b) { b.focus(); b.select(); } }, 30);
-}
-function paintPrice(){
-  var el = document.getElementById('pricelist'); if (!el) return;
-  el.innerHTML =
-    (PRICING
-      ? '<div class="doc" style="border:0"><div class="wide"><b style="font-size:1.15em">' + esc(PRICING.name) + '</b>'
-        + '<div class="u">' + esc(PRICING.code || '') + ' · now ₹' + money(PRICING.price) + ' per ' + esc(PRICING.unit || 'piece') + '</div></div>'
-        + '<label class="wide">New price<input id="newprice" data-testid="till-new-price" inputmode="decimal" '
-        + 'value="' + esc(String(PRICING.price)) + '" onkeydown="if(event.key===\'Enter\')priceSave()"></label>'
-        + '<button class="wide pill" data-testid="till-price-save" onclick="priceSave()">Save the new price</button></div>'
-      : '<div style="padding:16px;color:var(--dim)">Tap something on the left to change its price.</div>')
-    + (CHANGED.price.length ? '<div style="padding:8px 12px;color:var(--dim);font-size:.85em">Changed just now</div>'
-        + CHANGED.price.map(function(c){
-            return '<div class="ln" style="grid-template-columns:1fr auto"><span class="nm">' + esc(c.name)
-              + '<div class="u">was ₹' + money(c.was) + '</div></span><span>₹' + money(c.now) + '</span></div>'; }).join('')
-      : '');
-}
-/** the Price-change mode's own box; the panel has its own and calls priceWrite directly (one write, two ways in) */
-async function priceSave(){
-  var box = document.getElementById('newprice');
-  return priceWrite(PRICING, Number(String((box && box.value) || '').replace(/[^0-9.]/g, '')));
-}
+/** ⭐ ONE PRICE WRITE, called from the Maintenance panel. It keeps the old price, who changed it and when. */
 async function priceWrite(i, v){
   if (!i) return;
   if (!isFinite(v) || v < 0) { toastLine('Type a price.'); return; }
@@ -1939,9 +1887,8 @@ async function priceWrite(i, v){
   if (v === was) { toastLine('That is the same price.'); return; }
   i.price = v; i._off = null;                        /* the shelf shows the new price at once */
   CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
-  PRICING = null;
   try { await DB.set('snapshot', S); } catch (_) {}
-  paintHits(); paintPrice(); if (CARD && CARD.item_id === i.item_id) paintCard();
+  paintHits(); if (CARD && CARD.item_id === i.item_id) paintCard();
   var out = await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
   document.getElementById('pricenote').textContent = out && out.queued
     ? 'Saved here — it reaches ChitBridge when the internet is back.'
@@ -1953,7 +1900,7 @@ function add(n){
   var i = hits()[n]; if (!i) return;
   /* the same tap, read against what the shopkeeper said they are doing */
   if (MODE === 'stock') return stockToggle(i);
-  if (MODE === 'price') return priceStart(i);
+  if (MODE === 'maintain') { CARD = i; paintCard(); return; }
   var t = typed(), q = t.qty;
   if (t.unit) {
     var c = qtyInUnit(t.qty, t.unit, i.unit);
@@ -1991,6 +1938,23 @@ function addItem(i, qty){
 var _paintSoon = null;
 function repaint(){ clearTimeout(_paintSoon); _paintSoon = setTimeout(price, 0); }
 function setQty(k,v){ var c = CART[k]; if (!c) return; c.qty = Math.max(0, Number(v)||0); if (!c.qty) CART.splice(k,1); repaint(); }
+/**
+ * ⭐ ONE STEP ON A LINE — from the buttons, or from the keyboard without leaving the search box.
+ * ⚠️ Down to zero REMOVES the line rather than leaving a nought on the bill: a line of nothing is not a fact about the sale,
+ * and setQty already treats zero that way, so both routes agree.
+ */
+function bumpLine(k, d){ var c = CART[k]; if (!c) return; setQty(k, r2((Number(c.qty) || 0) + d)); }
+/**
+ * ⚠️ CTRL WITH THE ARROWS, and the arrows alone are left to the LIST. The search box holds focus all day — that is the whole
+ * design of the counter — so a plain + or − would simply be typed into it, and ↓↑ already choose a product. Ctrl+↑ and Ctrl+↓
+ * change the line most recently put on the bill, which at a counter is nearly always the one being talked about.
+ */
+function bumpLast(d){
+  if (!CART.length) return;
+  bumpLine(CART.length - 1, d);
+  var c = CART[CART.length - 1];
+  toastLine(c ? (c.name + ' × ' + c.qty) : 'removed from the bill');
+}
 function drop(k){ CART.splice(k,1); repaint(); }
 function clearBill(){ CART = []; PARTS = []; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
 /**
@@ -2207,7 +2171,11 @@ function cartLineNote(c){
 function cartRowHTML(c, k){
   return '<div class="row" data-testid="till-line-' + k + '">'
     + '<span><span class="nm">' + esc(c.name) + '</span><div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
-    + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
+    + '<span class="qty">'
+      + '<button data-testid="till-minus-' + k + '" onclick="bumpLine(' + k + ',-1)" title="one fewer" aria-label="one fewer" tabindex="-1">−</button>'
+      + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
+      + '<button data-testid="till-plus-' + k + '" onclick="bumpLine(' + k + ',1)" title="one more" aria-label="one more" tabindex="-1">+</button>'
+    + '</span>'
     + '<span class="amt" data-testid="till-amt-' + k + '">' + money(c.net) + '</span>'
     + '<button class="x" onclick="drop(' + k + ')" title="remove">×</button></div>';
 }
@@ -2682,13 +2650,13 @@ function rcvBlank(){ return { task:null, vendor:'', bill_no:'', bill_date:'', bi
 function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[] }; }
 RCV = rcvBlank(); DSP = dspBlank();
 
-var OPS = ['sell','receive','despatch','stock','price'];
+var OPS = ['sell','receive','despatch','stock','maintain'];
 var PLACEHOLDER = {
   sell:     'Item name, code or barcode…   ↓↑ to choose, Enter to add',
   receive:  'What arrived? Name, code or barcode — 3* for three',
   despatch: 'Scan what you are packing',
   stock:    'Which one has run out? Name, code or barcode',
-  price:    'Which price changed? Name, code or barcode',
+  maintain: 'Which product? Name, code or barcode — then change it on the right',
 };
 function setMode(m){
   MODE = OPS.indexOf(m) >= 0 ? m : 'sell';
@@ -2701,23 +2669,28 @@ function setMode(m){
   if (q) q.placeholder = PLACEHOLDER[MODE] || PLACEHOLDER.sell;
   /* ⚠️ the chips and the quick keys belong to SELLING. On the other operations they are a second thing to read while somebody
      waits, and the quick keys would put a hot item one careless tap from being marked out of stock. */
-  document.getElementById('chips').style.display = MODE === 'sell' ? '' : 'none';
+  /* ⚠️ the chips help you FIND a product, which maintenance needs as much as selling does — the quick keys do not,
+     because a hot-item tap while maintaining would change a price nobody asked to change. */
+  document.getElementById('chips').style.display = (MODE === 'sell' || MODE === 'maintain') ? '' : 'none';
   document.getElementById('quick').style.display = MODE === 'sell' ? '' : 'none';
   paintKeys(); paintHits();
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
   if (MODE === 'stock') paintStock();
-  if (MODE === 'price') paintPrice();
+  if (MODE === 'maintain') { CARD = null; paintCard(); }
   focusSearch();
 }
 function paintKeys(){
   var el = document.getElementById('keys'); if (!el) return;
-  var common = '<span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span><span><b>Enter</b> add</span><span><b>3*</b> quantity</span>';
+  var common = '<span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span><span><b>Enter</b> add</span><span><b>3*</b> quantity</span>'
+    + (MODE === 'sell' ? '<span><b>Ctrl ↑↓</b> change the last line</span>' : '');
   el.innerHTML = common + (MODE === 'sell'
     ? '<span><b>F9</b> save &amp; print</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span>'
-    : (MODE === 'receive'
+    : (MODE === 'maintain'
+      ? '<span>changing a product here changes it everywhere — the shop screen included</span>'
+      : (MODE === 'receive'
       ? '<span><b>F5</b> freight &amp; costs</span><span><b>F9</b> confirm receipt</span>'
-      : '<span><b>F8</b> next carton</span><span><b>F9</b> pack &amp; despatch</span>'))
+      : '<span><b>F8</b> next carton</span><span><b>F9</b> pack &amp; despatch</span>')))
     + '<span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>';
 }
 
@@ -3706,6 +3679,8 @@ document.addEventListener('keydown', function(e){
   /* ⚠️ BEFORE Escape reaches the basket: a person pressing Escape at an open menu means "shut this", never "throw the sale away" */
   if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(); e.preventDefault(); return; } }
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
+  /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
+  if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
   if (e.key === 'F8' && MODE === 'sell'){ openBills(); e.preventDefault(); }
