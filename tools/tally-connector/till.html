@@ -164,6 +164,10 @@
    * ⚠️ The price column is fixed-width and tabular, so the rupees line up down the list — a column of money that jitters is a column
    * nobody can scan. On a narrow screen the middle column drops below the name rather than squeezing the price.
    */
+  /* ⚠️ ONE EXTRA COLUMN, ONLY WHEN ASKED FOR — a shop that does not want pictures must not pay a column of indent for them */
+  .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto)}
+  .hit .pic{width:42px;height:42px;border-radius:9px;object-fit:cover;display:flex;align-items:center;justify-content:center;
+            font-weight:800;font-size:1.1em;color:#fff;flex:none;overflow:hidden}
   .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto);gap:12px;align-items:center;
        padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
@@ -193,7 +197,8 @@
   .facts{color:var(--dim);font-size:.78em;margin-top:2px;line-height:1.45}
   .facts b{color:var(--ink);font-weight:600}
   .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
-  @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) auto;gap:9px} }
+  @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) auto;gap:9px}
+    .hit.pics{grid-template-columns:34px minmax(0,1fr) auto} .hit .pic{width:34px;height:34px} }
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
@@ -302,7 +307,6 @@
         <option value="sell">🧾 Sell</option>
         <option value="receive">📥 Receive</option>
         <option value="despatch">📦 Despatch</option>
-        <option value="stock">📉 Stock out</option>
         <option value="maintain">🛠️ Maintenance</option>
       </select>
       <span class="pill" id="tillpill">till</span>
@@ -350,14 +354,6 @@
 
   <div class="grip" id="grip" title="drag to widen · double-click to reset"></div>
   <section class="right">
-    <!-- ⭐ STOCK OUT — you noticed an empty shelf while serving. One tap, and the next customer is not offered it. -->
-    <div class="pane" id="pane_stock" style="display:none">
-      <div class="doc"><div class="wide" style="color:var(--dim)">
-        Tap anything on the left to take it <b>off the shelf</b>. Tap it again to put it back.
-        Nothing is deleted — it stops being offered, here and on your shop screen.</div></div>
-      <div class="lines" id="stocklist"></div>
-      <div class="bar"><span id="stocknote">Nothing changed yet today.</span></div>
-    </div>
     <!-- ⭐⭐ MAINTENANCE — the four small decisions about ONE product, away from the till that is taking money. -->
     <div class="pane" id="pane_maintain" style="display:none">
       <div class="doc"><div class="wide" style="color:var(--dim)">
@@ -1276,6 +1272,11 @@ var FILTER = { offer:false, cat:null, off:false }, OFFER_STAMP = null;
  * visible."* One reading of it, used by the row, the toggle, the Stock-out list and the warning on the bill.
  * ⚠️ AN ABSENT STATUS MEANS AVAILABLE — every row that predates the field is a normal row (lib/itemstatus.js).
  */
+function thumbsOn(){ return ls.get(shopLs('cb_till_thumbs'), 'off') === 'on'; }
+function thumbsToggle(){
+  ls.set(shopLs('cb_till_thumbs'), thumbsOn() ? 'off' : 'on');
+  paintCard(); paintHits();
+}
 function statusOf(i){
   var v = String((i && i.status) || '').trim().toLowerCase();
   return v || 'available';
@@ -1492,7 +1493,7 @@ function hits(){
    * Maintenance and Stock out list everything, because the whole point of those screens is to reach a row that is off —
    * and the "Off the shelf" chip narrows to just those, wherever it is offered.
    */
-  var seeAll = (MODE === 'maintain' || MODE === 'stock');
+  var seeAll = (MODE === 'maintain');
   items = FILTER.off ? items.filter(function(i){ return statusOf(i) === 'unavailable'; })
         : (seeAll ? items : items.filter(function(i){ return statusOf(i) !== 'unavailable'; }));
   if (FILTER.cat) items = items.filter(function(i){ return i.category === FILTER.cat; });
@@ -1686,8 +1687,15 @@ function cardSwitch(on, testid, onclick, words){
 }
 function paintCard(){
   var el = document.getElementById('cardbox'); if (!el) return;
+  /* ⭐ THE ONE SETTING ON THIS SCREEN, and it is about the SCREEN, not about a product — so it shows whether or not
+     something is selected, which is also the only way it can be found before anything has been tapped. */
+  var display = '<div class="cardrow"><label>Thumbnails</label><div class="swwrap">'
+    + cardSwitch(thumbsOn(), 'card-thumbs', 'thumbsToggle()',
+        thumbsOn() ? 'Pictures show in the product list' : 'No pictures — names and codes only')
+    + '</div></div>';
   var i = CARD;
-  if (!i) { el.innerHTML = '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'; return; }
+  if (!i) { el.innerHTML = display
+    + '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'; return; }
   var off = statusOf(i) === 'unavailable';
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
   /* ⚠️ the offers listed are the ones that TOUCH this product — asked of the engine, never re-decided here. An excluded
@@ -1697,8 +1705,8 @@ function paintCard(){
     try { return CBOffers.forLine(lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:i.price, qty:1,
       item_data:{ category:i.category } }), [o], { currency:'INR', now:new Date().toISOString() }).length > 0; } catch (_) { return false; }
   });
-  el.innerHTML =
-      '<div class="cardhead">' + picOf(i) + '<span><b>' + esc(i.name) + '</b>'
+  el.innerHTML = display
+    + '<div class="cardhead">' + picOf(i) + '<span><b>' + esc(i.name) + '</b>'
     + '<div class="u">' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span></div>'
 
     + '<div class="cardrow"><label>On the shelf</label><div class="swwrap">'
@@ -1781,6 +1789,7 @@ function paintHits(){
   paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
   list.forEach(function(i){ i.tax_rate = rateOf(i); });      /* only for the rows about to be drawn — never the whole shelf */
+  var thumbs = thumbsOn();
   var t = typed();
   var head = shelfLine(list.length) + ((t.qty !== 1 || t.unit)
     ? '<div class="qtyhint" data-testid="till-qty-ahead">Adding <b>' + t.qty + (t.unit ? ' ' + esc(t.unit) : '') + '</b> of whatever you choose'
@@ -1788,7 +1797,9 @@ function paintHits(){
     : '');
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     var off = statusOf(i) === 'unavailable';
-    return '<div class="hit' + (n===SEL?' sel':'') + (off?' off':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
+    return '<div class="hit' + (n===SEL?' sel':'') + (off?' off':'') + (thumbs?' pics':'')
+      + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
+      + (thumbs ? picOf(i) : '')
       + '<span class="n">' + esc(i.name)
         + (i.unit ? ' <span class="unit">' + esc(i.unit) + '</span>' : '')
         + '<div class="meta">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '')
@@ -1850,32 +1861,11 @@ async function stockToggle(i){
   try { await DB.set('snapshot', S); } catch (_) {}
   /* ⚠️ THE CHIP CARRIES A COUNT, SO IT IS PART OF WHAT CHANGED. Marking something off left the chip reading "Off the shelf 0"
      while the row had already gone from the list — the one number on screen whose whole job is to say where it went. */
-  paintHits(); paintStock(); paintChips(); if (CARD && CARD.item_id === i.item_id) paintCard();
+  /* ⚠️ THE CHIP CARRIES A COUNT, so it is part of what changed — marking something off used to leave it reading 0 while the
+     row had already gone from the list, the one number whose whole job is to say where it went. */
+  paintHits(); paintChips(); if (CARD && CARD.item_id === i.item_id) paintCard();
   var out = await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
-  document.getElementById('stocknote').textContent = out && out.queued
-    ? 'Saved here — it reaches ChitBridge when the internet is back.'
-    : (out && out.ok ? (i.name + ' is now ' + (now === 'unavailable' ? 'off the shelf' : 'back on') + ' everywhere.')
-                     : 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.'));
-}
-
-function paintStock(){
-  var el = document.getElementById('stocklist'); if (!el) return;
-  var off = ((S && S.items) || []).filter(function(i){ return statusOf(i) === 'unavailable'; });
-  el.innerHTML =
-    (CHANGED.stock.length ? '<div class="qtyhint">Changed just now: '
-      + CHANGED.stock.slice(0, 6).map(function(c){ return esc(c.name) + ' → ' + (c.status === 'unavailable' ? 'off' : 'back on'); }).join(' · ')
-      + '</div>' : '')
-    + '<div style="padding:8px 12px;color:var(--dim);font-size:.85em">'
-      + (off.length ? off.length + ' thing(s) are off the shelf right now' : 'Everything is on the shelf.') + '</div>'
-    + off.slice(0, 200).map(function(i){
-        return '<div class="ln" data-testid="till-off-' + esc(i.item_id) + '" style="grid-template-columns:1fr auto">'
-          + '<span class="nm">' + esc(i.name) + '<div class="u">' + esc(i.code || '') + '</div></span>'
-          + '<button class="pill" onclick="stockBack(\'' + esc(i.item_id) + '\')">put back</button></div>';
-      }).join('');
-}
-function stockBack(id){
-  var i = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(id); })[0];
-  if (i) stockToggle(i);
+  cardNote(out, i.name + ' is now ' + (now === 'unavailable' ? 'off the shelf' : 'back on') + ' everywhere.');
 }
 
 /** the price pane: whatever was tapped, with a box for the new number */
@@ -1899,7 +1889,6 @@ async function priceWrite(i, v){
 function add(n){
   var i = hits()[n]; if (!i) return;
   /* the same tap, read against what the shopkeeper said they are doing */
-  if (MODE === 'stock') return stockToggle(i);
   if (MODE === 'maintain') { CARD = i; paintCard(); return; }
   var t = typed(), q = t.qty;
   if (t.unit) {
@@ -2191,9 +2180,13 @@ function paintCartRow(k){
   var c = CART[k]; if (!c) return false;
   var amt = document.querySelector('[data-testid="till-amt-' + k + '"]');
   var note = document.querySelector('[data-testid="till-note-' + k + '"]');
+  var qty = document.querySelector('[data-testid="till-qty-' + k + '"]');
   if (!amt || !note) return false;
   amt.textContent = money(c.net);
   note.innerHTML = cartLineNote(c);
+  /* ⚠️ THE COUNT IS PART OF WHAT CHANGED — but never the box the caret is sitting in, or "2" on its way to "25" would be
+     rewritten to 2 between the keystrokes. activeElement is the only honest test of "somebody is typing here". */
+  if (qty && document.activeElement !== qty && String(qty.value) !== String(c.qty)) qty.value = c.qty;
   return true;
 }
 function paintCart(){
@@ -2650,12 +2643,11 @@ function rcvBlank(){ return { task:null, vendor:'', bill_no:'', bill_date:'', bi
 function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[] }; }
 RCV = rcvBlank(); DSP = dspBlank();
 
-var OPS = ['sell','receive','despatch','stock','maintain'];
+var OPS = ['sell','receive','despatch','maintain'];
 var PLACEHOLDER = {
   sell:     'Item name, code or barcode…   ↓↑ to choose, Enter to add',
   receive:  'What arrived? Name, code or barcode — 3* for three',
   despatch: 'Scan what you are packing',
-  stock:    'Which one has run out? Name, code or barcode',
   maintain: 'Which product? Name, code or barcode — then change it on the right',
 };
 function setMode(m){
@@ -2676,7 +2668,6 @@ function setMode(m){
   paintKeys(); paintHits();
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
-  if (MODE === 'stock') paintStock();
   if (MODE === 'maintain') { CARD = null; paintCard(); }
   focusSearch();
 }

@@ -207,8 +207,20 @@ it('⭐⭐ the left row is product details only — nothing in it can be tapped 
    */
   assert.strictEqual(row.split('event.stopPropagation()').length - 1, 0,
     'something in the selling row swallows the tap — the whole row must add the product');
-  for (const gone of ['qtyBox(', 'flagBtn(', 'picOf(', 'till-back-'])
+  for (const gone of ['qtyBox(', 'flagBtn(', 'till-back-'])
     assert.ok(row.indexOf(gone) < 0, gone + ' is back in the product row — the left side is for choosing only');
+  /**
+   * ⭐ THE THUMBNAIL IS THE ONE THING IN THE ROW THAT IS A CHOICE. Athi: *"can we keep the image as a toggle in the
+   * maintenance screen? depends on the type of business they may need it."* A grocery recognises a packet before it reads
+   * the name; a pharmacy reading strip names loses a column of the name to a picture. So it is drawn only when asked for,
+   * and it is never a control — a picture that could be tapped would be the dead-strip bug again.
+   */
+  assert.ok(row.indexOf('thumbs ? picOf(i)') > 0, 'the thumbnail is unconditional — it must follow the shop own switch');
+  assert.ok(page.indexOf('function thumbsOn(){') > 0, 'there is no setting behind the thumbnail');
+  assert.ok(page.indexOf("shopLs('cb_till_thumbs')") > 0,
+    'the thumbnail choice is not namespaced per shop — two shops in one browser would share it');
+  assert.ok(page.slice(page.indexOf('function paintCard(){'), page.indexOf('function cardPrice(')).indexOf('thumbsToggle()') > 0,
+    'the switch is not on the Maintenance screen, which is where it was asked for');
   /* what it MUST still say: the storefront's own fields */
   for (const [what, mark] of [['the name', 'esc(i.name)'], ['the unit', 'i.unit'], ['the code', 'i.code'],
                               ['the category', 'i.category'], ['its offers', 'offerNames(i)'], ['the price', 'priceBlock(i)']])
@@ -221,16 +233,25 @@ it('⭐⭐ the left row is product details only — nothing in it can be tapped 
  */
 it('⭐⭐ maintenance is its own operation, and selling has no way into the catalogue', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  assert.ok(page.indexOf("var OPS = ['sell','receive','despatch','stock','maintain'];") > 0,
-    'the operations are not sell/receive/despatch/stock/maintain');
-  assert.ok(page.indexOf("<option value=\"price\">") < 0, 'Price change is still its own menu entry');
+  /**
+   * ⭐ AND STOCK OUT GOES TOO. Athi: *"remove the stock out mode, maintenance covers it."* It was a mode that did one thing
+   * to a product, and that thing is the first switch in the Maintenance panel. Two ways to mark something off the shelf is
+   * two places for one decision.
+   */
+  assert.ok(page.indexOf("var OPS = ['sell','receive','despatch','maintain'];") > 0,
+    'the operations are not sell/receive/despatch/maintain');
+  for (const gone of ['<option value="price">', '<option value="stock">', 'id="pane_stock"',
+                      'function paintStock(', 'function stockBack(', "getElementById('stocknote')"])
+    assert.ok(page.indexOf(gone) < 0, gone + ' survives a mode that no longer exists — it can never run');
+  /* ⚠️ but the WRITE stays: stockToggle is how availability changes, and the panel is now its only caller */
+  assert.ok(page.indexOf('async function stockToggle(i){') > 0, 'the availability write went with the mode');
   assert.ok(page.indexOf('id="pane_maintain"') > 0, 'there is no maintenance pane for the four decisions to live in');
   /* ⚠️ and the dead screen went with the mode — paintPrice wrote into an element that no longer exists */
   for (const dead of ['function paintPrice(', 'function priceStart(', 'function priceSave(', "getElementById('pricelist')"])
     assert.ok(page.indexOf(dead) < 0, dead + ' is left over from the Price-change mode and can never run');
   /* the selling list shows only what can be sold; maintenance and stock-out see everything */
   const hits = page.slice(page.indexOf('function hits(){'), page.indexOf('function hits(){') + 1400);
-  assert.ok(hits.indexOf("MODE === 'maintain'") > 0 && hits.indexOf("statusOf(i) !== 'unavailable'") > 0,
+  assert.ok(hits.indexOf("seeAll = (MODE === 'maintain')") > 0 && hits.indexOf("statusOf(i) !== 'unavailable'") > 0,
     'the list does not change with the operation — selling must not offer what is off the shelf');
 });
 
