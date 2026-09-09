@@ -22,14 +22,35 @@
 -- ============================================================================================================
 
 -- ── 1 · WHAT IS THERE NOW. Expect 0 rows the first time.
+-- ⚠️ the context first, or under RLS this reads nothing and looks like an empty shop.
+SELECT set_config('app.current_entity', 'c2837d52-47f2-47e2-9fcd-b98c68a49e45', false);
+
 SELECT d.name, d.sub_kind, d.status, v.rules
 FROM definition d
 LEFT JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
 WHERE d.entity_id = 'c2837d52-47f2-47e2-9fcd-b98c68a49e45' AND d.kind = 'offer'
 ORDER BY d.name;
 
--- ── 2 · CREATE THEM. Both rows per offer in ONE transaction: a definition whose version 1 failed to write is a
---        definition with no rules — it would list on the shelf and resolve to nothing.
+-- ── 2 · CREATE THEM.
+--
+-- ⭐⭐ RUN THIS **WITH RLS**, WITH THE ENTITY CONTEXT SET. Athi asked, and it matters here more than it did for b208.
+--
+-- `definition` and `definition_version` are ENABLE + **FORCE** ROW LEVEL SECURITY (b160), isolated on
+-- `app.current_entity`. FORCE means even the table owner is subject to the policy — only a BYPASSRLS role
+-- (Supabase's `postgres`, which is what the SQL Editor usually gives you) walks past it.
+--
+-- Setting the context is the SAFER way round, not the harder one:
+--   · with it set, the policy's WITH CHECK verifies every row lands in THIS entity. Get the id wrong and the insert
+--     is REFUSED — rather than quietly writing five offers into somebody else's shop, which is precisely the
+--     mix-up we spent today guarding the counter against.
+--   · it also makes the statement behave identically to how the application would run it (withEntity does exactly
+--     this), so a passing run here means the same thing in production.
+-- `false` (not `true`) as the third argument: the setting lasts for the whole session, not just this transaction,
+-- so the SELECT in step 3 can still see what you wrote.
+SELECT set_config('app.current_entity', 'c2837d52-47f2-47e2-9fcd-b98c68a49e45', false);
+
+-- Both rows per offer in ONE transaction: a definition whose version 1 failed to write is a definition with no
+-- rules — it would list on the shelf and resolve to nothing.
 BEGIN;
 
 WITH shop AS (SELECT 'c2837d52-47f2-47e2-9fcd-b98c68a49e45'::uuid AS id),
