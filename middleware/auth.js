@@ -190,7 +190,9 @@ const KEY_ROUTES = {
    * So: the catalogue, the offers, the prices, the engines to draw them with. No bills, no tasks, no sending, no heartbeat, no
    * alias writing. If somebody walks off with the television, they have a copy of the price list — which is on the shelf anyway.
    */
-  screen:    [['GET', /^\/api\/till\/(snapshot|verify|engine\/[a-z]+)$/]],
+  /* ⚠️ NOT verify — that route calls requireScope('till') of its own, so listing it here promised a door the door itself
+     refuses. A scope map that advertises what a route will not open is worse than not listing it. */
+  screen:    [['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/]],
   till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
               /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
                  two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery

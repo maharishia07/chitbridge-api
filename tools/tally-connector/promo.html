@@ -88,6 +88,14 @@
 
   /* ⚠️ SIZED FOR A ROOM, NOT A DESK — read from across a shop by someone holding a remote */
   #pairwrap{position:fixed;inset:0;z-index:60;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  /**
+   * ⚠️⚠️ AN AUTHOR display RULE BEATS THE hidden ATTRIBUTE. `hidden` is only display:none from the browser's OWN stylesheet, so
+   * the `display:flex` above outranks it and the element stays painted with .hidden reading true — which is exactly what
+   * happened: a screen that had paired successfully sat behind this overlay for ever, its sign running underneath, unreachable.
+   * [PROMO-02] caught it as "SLIDES > 0 but the panel is visible", a contradiction that could only mean this.
+   * Any element in this file styled with display MUST carry its own [hidden] rule.
+   */
+  #pairwrap[hidden]{display:none}
   .pairbox{max-width:760px;width:100%;text-align:center}
   .pairbox h2{font-size:clamp(28px,4vw,52px);margin:0 0 18px}
   .pairbox ol{text-align:start;display:inline-block;color:#C9D2DD;font-size:clamp(15px,1.6vw,21px);line-height:1.8;margin:0 0 26px}

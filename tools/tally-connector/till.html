@@ -125,6 +125,13 @@
         border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;min-width:270px;display:flex;flex-direction:column}
   .menu button,.menu a{display:block;text-align:start;border:0;background:transparent;color:var(--ink);cursor:pointer;
         padding:10px 12px;border-radius:9px;font:inherit;text-decoration:none}
+  /**
+   * ⚠️⚠️ THE SAME TRAP, FOUND IN promo.html AND THEN HERE. `hidden` is display:none from the BROWSER's stylesheet only, so the
+   * author rule display:flex above outranks it — this menu would have opened once and never shut, sitting over the search box
+   * swallowing barcodes, with .hidden reading true the whole time. Shipped an hour before it was caught next door.
+   * Any element in this file that sets display and is toggled by .hidden needs its own [hidden] rule.
+   */
+  .menu[hidden]{display:none}
   .menu button:hover,.menu a:hover{background:var(--paper)}
   .menu b{font-weight:700;margin-inline-start:6px}
   .menu i{display:block;font-style:normal;color:var(--dim);font-size:.82em;margin-inline-start:26px}
