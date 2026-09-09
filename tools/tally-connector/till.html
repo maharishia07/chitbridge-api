@@ -90,6 +90,14 @@
   .doc{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
   .doc input,.doc select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:.9em;min-width:0}
   .doc .wide{grid-column:1 / -1}
+  /**
+   * ⚠️⚠️ THERE WAS NO .pane RULE AT ALL. setMode sets display:flex on the chosen pane, and flex defaults to ROW — so the
+   * header, the scrolling list and the footer bar laid themselves out SIDE BY SIDE and overlapped. pane_receive and
+   * pane_despatch escaped it only because each carries flex-direction:column inline; the old Stock-out and Price-change
+   * panes never did, and were wrong the whole time nobody looked hard at them.
+   * Found by a probe that tried to press a switch and was told the footer bar was on top of it.
+   */
+  .pane{flex-direction:column;flex:1;min-height:0}
   .lines{flex:1;overflow:auto}
   .lines .ln{display:grid;grid-template-columns:1fr 74px 74px 90px 30px;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
   /* ── the cart's own stepper: this IS the place a quantity is amended ── */
