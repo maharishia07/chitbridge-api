@@ -298,7 +298,11 @@
   .cardrow>label{color:var(--dim);font-size:.85em;font-weight:700;padding-top:9px}
   .swwrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
   .swwrap.col{flex-direction:column;align-items:stretch;gap:6px}
-  .swline{display:flex;align-items:center;gap:8px}
+  /* the switch, its words, and under them what it does in money — the example belongs to the row, not to a footnote */
+  .swline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .eg{flex-basis:100%;margin:2px 0 0 60px;color:var(--dim);font-size:.82em;font-variant-numeric:tabular-nums}
+  .eg b{color:var(--ok);font-weight:800}
+  .swline.pending .eg b{color:var(--warn)}
   .swtxt{color:var(--dim);font-size:.85em;min-width:0}
   /* ⭐ a switch, not a checkbox — it is a STATE of the product, and it takes effect the moment it is moved.
      38px of height keeps the NN/g touch target the row's stepper already follows. */
@@ -1848,6 +1852,47 @@ function offerShown(i, o){
   if (PEND.offers && PEND.offers[st.id] !== undefined) return PEND.offers[st.id];
   return st.on;
 }
+/**
+ * ⭐ WHAT THIS OFFER DOES TO THIS PRODUCT, in money, at the quantity where it starts to bite.
+ * ⚠️ Cached per product per offer and thrown away with the shop, like the badge and the rate — evaluate() is cheap
+ * but this runs once per offer per repaint of the panel, and the panel repaints on every keystroke in the price box.
+ */
+var _egCache = {}, _egStamp = null;
+function offerExample(i, o){
+  if (!window.CBOffers || !i || !o) return '';
+  var stamp = (S && (S.version || S.at)) || '';
+  if (_egStamp !== stamp) { _egCache = {}; _egStamp = stamp; }
+  var key = String(i.item_id) + '|' + String(o.id) + '|' + String(i.price);
+  if (_egCache[key] !== undefined) return _egCache[key];
+  var out = '';
+  try {
+    var price = Number(i.price) || 0;
+    var q = CBOffers.sampleQty([o], price) || 1;
+    /* ⚠️ the offer AS IT WOULD BE with this product on it — every other rule carried across untouched */
+    var applies = Object.assign({}, o.applies_to || {});
+    applies.item_ids = (Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : []).concat([String(i.item_id)]);
+    var trial = Object.assign({}, o, { applies_to: applies });
+    var line = lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:price, qty:q,
+                        item_data:{ category:i.category } });
+    line.excluded = [];
+    var ev = CBOffers.evaluate({ lines:[line], offers:[trial],
+      ctx:{ currency:(S.shop && S.shop.currency) || 'INR', now:new Date().toISOString() } });
+    var gross = r2(price * q);
+    var net = (ev && ev.line_net && ev.line_net[line.key] != null) ? r2(ev.line_net[line.key]) : gross;
+    var save = r2(gross - net);
+    if (save > 0) {
+      out = q + ' × ₹' + money(price) + ' = ₹' + money(gross) + ' → <b>₹' + money(net) + '</b> · saves ₹' + money(save);
+    } else {
+      /* ⚠️ a scope the engine knows about, said in its own words rather than guessed at from the kind */
+      var scope = '';
+      try { scope = CBOffers.scopeLabel ? CBOffers.scopeLabel(o) : ''; } catch (_) { scope = ''; }
+      out = 'no change to this product on its own'
+        + (scope && scope.indexOf('order') >= 0 ? ' — it comes off ' + esc(scope) : '');
+    }
+  } catch (_) { out = ''; }
+  _egCache[key] = out;
+  return out;
+}
 function offerWords(st, shown){
   if (shown !== st.on) return shown ? 'will be turned on when you save' : 'will be turned off when you save';
   if (st.how === 'rule') return 'on — the offer covers ' + 'this kind of product';
@@ -1926,10 +1971,14 @@ function paintCard(){
     + '<div class="cardrow"><label>Offers</label><div class="swwrap col">'
     + (mine.length ? mine.map(function(o){
         var st = offerState(i, o), shown = offerShown(i, o);
+        var eg = offerExample(i, o);
         return '<div class="swline' + (shown !== st.on ? ' pending' : '') + '">'
           + cardSwitch(shown, 'card-offer-' + esc(st.id),
               "pendOffer('" + esc(st.id) + "'," + (shown ? 'false' : 'true') + ',' + (st.on ? 'true' : 'false') + ')',
-              (o.label || o.name || 'Offer') + ' — ' + offerWords(st, shown)) + '</div>';
+              (o.label || o.name || 'Offer') + ' — ' + offerWords(st, shown))
+          /* ⭐ THE WORKED EXAMPLE, from the same engine that will price the bill */
+          + (eg ? '<div class="eg" data-testid="card-eg-' + esc(st.id) + '">' + eg + '</div>' : '')
+          + '</div>';
       }).join('')
       : '<span class="swtxt">This shop has no live offers. Declare them in ChitBridge — they appear here to be turned on.</span>')
     + '</div></div>'
