@@ -205,7 +205,10 @@
   .cust{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
   .cust input{flex:1;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);min-width:0}
   .cart{overflow:auto;flex:1;min-height:120px}
-  .row{display:grid;grid-template-columns:1fr 84px 92px 32px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+  /* ⚠️ THE QUANTITY COLUMN HOLDS A STEPPER NOW, not a bare box — 84px was sized for the box alone, so the - [n] + group
+     (34+46+34) overflowed and the AMOUNT sat on top of the + button, which then could not be clicked at all. Found by a
+     probe that tried to press it; invisible to anything that only read the numbers. */
+  .row{display:grid;grid-template-columns:1fr 124px 92px 32px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
   .row .nm{font-weight:600;overflow-wrap:anywhere}
   .row input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;background:var(--paper)}
   .row .amt{text-align:right;font-variant-numeric:tabular-nums}
