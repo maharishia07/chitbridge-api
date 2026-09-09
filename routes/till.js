@@ -270,6 +270,16 @@ router.get('/snapshot', auth, async (req, res) => {
         gstin: gstin,
         state_code: String(gstin || '').slice(0, 2) || null,
         reg_type: String(flags.gst_registration || 'regular'),
+        /**
+         * ⭐⭐ THE WAYS THIS SHOP CAN BE PAID, decided by its COUNTRY and its declared payee addresses — not a
+         * upi_id field, which is the India-shaped thing the jurisdiction work already ruled against.
+         * ⚠️ It travels with the snapshot ON PURPOSE: a merchant-presented QR is made from a string with no network
+         * involved, and a till that could not take a UPI payment exactly when the line was down would fail at the
+         * worst possible moment.
+         * ⚠️ Card and wallet carry qr:null and always will — Apple Pay and the like ride a card rail through an
+         * acquirer, and there is nothing honest for us to generate.
+         */
+        pay: require('../lib/profile').payWays({ country: row.country, policy_flags: row.policy_flags }),
         currency: profile.currency || 'INR',
       },
       items, removed, delta: !!since, since: since || null, offers, staff,

@@ -271,6 +271,13 @@
   /* what will actually be written down — full width under the three buttons, because it is a sentence, not a chip */
   .paysays{flex-basis:100%;color:var(--dim);font-size:.85em;padding-top:2px}
   .paysays b{color:var(--ink);font-weight:800}
+  /* the ways that can show a code say so, so nobody hunts for one that does not exist */
+  .qrhint{font-size:.7em;font-weight:800;color:var(--ok);border:1px solid var(--ok);border-radius:4px;padding:0 3px}
+  /* ── the code the customer scans: big, quiet, and gone the moment the bill is done ── */
+  .qrwrap{flex-basis:100%;display:flex;gap:14px;align-items:center;padding:10px 0 2px}
+  .qrwrap img{width:148px;height:148px;image-rendering:pixelated;background:#fff;padding:6px;border-radius:8px;border:1px solid var(--line)}
+  .qrsay b{font-size:1.15em}
+  .qrsay .u{display:block;margin-top:2px}
   .pay button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   .take{display:flex;gap:8px;padding:0 12px 8px;align-items:center}
   .take input{flex:1;font-size:1.2em;padding:10px 12px;border:2px solid var(--line);border-radius:var(--radius);text-align:right;background:var(--paper);min-width:0}
@@ -637,6 +644,9 @@
   <div class="busybar" id="busybar"><i id="busyfill"></i></div>
   <div class="u" id="busysay"></div>
 </div></div>
+<!-- ⚠️ THE ONE THIRD-PARTY FILE HERE: qrcode-generator 1.4.4 (MIT). Served from our own origin, because a counter
+     with no internet still has to take a UPI payment — which is exactly when it cannot reach a CDN. -->
+<script src="/engine/qr.js" onerror="engineMissed('qr')"></script>
 <!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
 <script src="/engine/locale.js" onerror="engineMissed('locale')"></script>
 <!-- ⭐ PRICING FIRST. The engine's own order is: pricing structure → offers → tax, and it is loaded in that order. -->
@@ -657,6 +667,9 @@ var REJECTED = null;
 var CART = [], PICKED = 'Cash', LAST = null, HOST = null, SEL = 0;
 /** ⚠️ false until somebody chooses a way to pay or takes a part — see the day close, which counts the ones nobody did */
 var PAY_ASKED = false;
+/** ⚠️ the number a UPI reference quotes. Null until a bill is saved, so the code carries the shop's word instead —
+    a reference that pretended to be a bill number before one existed would not reconcile against anything. */
+var LASTNO = null;
 
 var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
 var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
@@ -3174,17 +3187,60 @@ function paintParts(){
 function paintPays(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var left = r2(m.net - taken);
-  document.getElementById('pay').innerHTML = ['Cash','UPI','Card'].map(function(h){
-    return '<button class="' + (PICKED===h?'on':'') + '" data-testid="till-pay-' + h.toLowerCase() + '" onclick="pickPay(\'' + h + '\')">' + h + '</button>';
+  /* ⚠️ FROM THE SHOP. The list used to be a literal, so a Gulf shop was offered UPI it cannot take and a shop with
+     no declared payee was offered a QR with no address in it. Cash and Card are always there; a scheme is not. */
+  var ways = (S && S.pay && S.pay.length) ? S.pay : [{ id:'cash', label:'Cash' }, { id:'card', label:'Card' }];
+  document.getElementById('pay').innerHTML = ways.map(function(w){
+    return '<button class="' + (PICKED===w.label?'on':'') + '" data-testid="till-pay-' + esc(w.id) + '"'
+      + ' onclick="pickPay(\'' + esc(w.label) + '\')">' + esc(w.label)
+      + (w.qr ? ' <span class="qrhint">QR</span>' : '') + '</button>';
   }).join('')
   /* ⭐ THE ANSWER THAT WILL BE WRITTEN DOWN, said before it is written. It is the default until somebody says
      otherwise, and a default nobody can see is the one that ends up wrong in the books. */
+  /* ⭐ THE CODE, only for the way that is CHOSEN and only while there is something to pay for */
+  + (function(){
+      var w = ways.filter(function(x){ return x.label === PICKED && x.qr; })[0];
+      if (!w || !CART.length || !(left > 0)) return '';
+      var link = payLink(w, left, LASTNO || 'bill');
+      var img = payQr(link);
+      return '<div class="qrwrap" data-testid="till-pay-qr">' + (img || '')
+        + '<div class="qrsay"><b>' + money(left) + '</b>'
+        + '<span class="u">Scan with any ' + esc(w.label) + ' app · pays ' + esc(w.payee) + '</span>'
+        + '<span class="u">' + (img ? 'The shop marks it paid here once the money arrives.'
+                                    : 'The code could not be drawn on this device — read the id out instead.') + '</span>'
+        + '</div></div>';
+    })()
   + (CART.length ? '<div class="paysays" data-testid="till-pay-says">'
       + (PARTS.length
           ? 'Taking ' + PARTS.map(function(p){ return money(p.amount) + ' in ' + esc(p.how); }).join(' + ')
             + (left > 0 ? ' · ' + money(left) + ' still due as <b>' + esc(PICKED) + '</b>' : '')
           : 'This bill will be recorded as <b>' + esc(PICKED) + '</b>')
       + '</div>' : '');
+}
+/**
+ * ⭐ THE PAYEE LINK, per scheme. upi-deeplink is NPCI's contract — the same shape the storefront already uses, so a
+ * customer scanning at the counter and one scanning online reach the same payee with the same reference.
+ */
+function payLink(way, amount, ref){
+  if (!way || !way.qr || !way.payee) return '';
+  if (way.qr === 'upi-deeplink') {
+    var name = (S && S.shop && (S.shop.name || S.shop.legal_name)) || '';
+    return 'upi://pay?pa=' + encodeURIComponent(way.payee)
+      + '&pn=' + encodeURIComponent(String(name).slice(0, 60))
+      + (amount ? '&am=' + encodeURIComponent(String(Math.round(Number(amount) * 100) / 100)) : '')
+      + '&cu=' + encodeURIComponent((S && S.shop && S.shop.currency) || 'INR')
+      + '&tn=' + encodeURIComponent('CB-' + String(ref || '').slice(0, 12));
+  }
+  /* ⚠️ an unknown scheme draws nothing rather than guessing at an encoding — a wrong QR takes money somewhere else */
+  return '';
+}
+/** ⭐ the code itself, from the one vendored encoder; nothing is drawn if it failed to load */
+function payQr(link){
+  if (!link || typeof qrcode !== 'function') return '';
+  try {
+    var q = qrcode(0, 'M'); q.addData(link); q.make();
+    return q.createImgTag(4, 8).replace('<img ', '<img data-testid="till-upi-qr" alt="Scan to pay" ');
+  } catch (_) { return ''; }
 }
 /** ⚠️ the choice repaints the LINE that states it, not the whole bill — and it is a statement, so it must be seen */
 function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); }
