@@ -3189,7 +3189,8 @@ function paintPays(){
   var left = r2(m.net - taken);
   /* ⚠️ FROM THE SHOP. The list used to be a literal, so a Gulf shop was offered UPI it cannot take and a shop with
      no declared payee was offered a QR with no address in it. Cash and Card are always there; a scheme is not. */
-  var ways = (S && S.pay && S.pay.length) ? S.pay : [{ id:'cash', label:'Cash' }, { id:'card', label:'Card' }];
+  var ways = (S && S.shop && S.shop.pay && S.shop.pay.length) ? S.shop.pay
+           : [{ id:'cash', label:'Cash' }, { id:'card', label:'Card' }];
   document.getElementById('pay').innerHTML = ways.map(function(w){
     return '<button class="' + (PICKED===w.label?'on':'') + '" data-testid="till-pay-' + esc(w.id) + '"'
       + ' onclick="pickPay(\'' + esc(w.label) + '\')">' + esc(w.label)

@@ -682,4 +682,30 @@ it('⭐⭐ the bill says which way it will be recorded, and the day close counts
     'the one-keystroke path is gone — the ordinary cash sale must stay one keystroke');
 });
 
+/**
+ * ⭐⭐ THE WAYS A SHOP CAN BE PAID, WRITTEN AND READ AT THE SAME ADDRESS. It was written to shop.pay and read from
+ * S.pay, so the counter quietly fell back to Cash+Card for EVERY shop — plausible, wrong, and invisible: the
+ * fallback is exactly what a shop with no declared payee should show, so nothing looked broken.
+ * ⚠️ This is the same failure shape as line_net keyed by index and as CARD holding a dead object: one side writes at
+ * an address the other side does not read. It is the cheapest bug to make and the hardest to see.
+ */
+it('⭐⭐ the payment ways are read from where the snapshot writes them', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* the wire puts it inside shop — it is a fact about the shop */
+  const shopBlock = src.slice(src.indexOf('shop: {'), src.indexOf('items, removed, delta'));
+  assert.ok(shopBlock.indexOf('pay: require(') > 0, 'the snapshot does not carry the payment ways inside shop');
+  /* and the counter must look there, not at the root */
+  const pp = page.slice(page.indexOf('function paintPays(){'), page.indexOf('function pickPay('));
+  assert.ok(pp.indexOf('S.shop.pay') > 0, 'the counter reads the payment ways from the wrong place');
+  assert.ok(pp.indexOf('S.pay') < 0 || pp.indexOf('S.shop.pay') > 0, 'the counter still reads S.pay');
+  /* ⚠️ cash and card must survive a shop that declared nothing — a till that cannot record a sale is worse */
+  assert.ok(pp.indexOf("{ id:'cash', label:'Cash' }") > 0, 'there is no fallback, so a bad snapshot would offer no way to pay');
+  /* the scheme table is the one place a country decides what is offered */
+  const prof = fs.readFileSync(path.join(API, 'lib', 'profile.js'), 'utf8');
+  assert.ok(prof.indexOf('function payWays(') > 0, 'payWays is gone');
+  assert.ok(prof.indexOf("countries: ['IN']") > 0, 'UPI is no longer scoped to India — it would be offered everywhere');
+  assert.ok(prof.indexOf('PAY_RECORD_ONLY') > 0, 'the record-only ways (card, wallet) are not named as such');
+});
+
 console.log(pass + ' checks');
