@@ -26,7 +26,8 @@ const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
-const keys = require('./keys');                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
+const keys = require('./keys');
+const { shopChanged } = require('../lib/shopchanged');   /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const speech = require('../lib/speech');            /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */      /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -258,6 +259,83 @@ router.get('/snapshot', auth, async (req, res) => {
  * ⚠️ It reads nothing else. A till key cannot open the inbox, a supplier's chit or anybody's messages, and this route keeps that true:
  * the WHERE clause is the shop, the purpose, and the presence of a bill number.
  */
+/**
+ * ⭐⭐⭐ TWO THINGS A SHOPKEEPER DOES ON THEIR FEET — POST /api/till/stock and POST /api/till/price.
+ *
+ * Athi, 2026-09-09: *"do the stock out and price change counters."* Both pass the backlog's test — name the moment when somebody
+ * is STANDING UP, or it does not deserve a counter:
+ *   · stock out    — you notice an empty shelf while serving, and the next customer must not be offered it
+ *   · price change — a supplier's new rate, called across the shop, and the very next bill must use it
+ * Neither is worth walking to a desk for, and both are wrong the moment they are delayed.
+ *
+ * ⚠️ TWO NARROW ROUTES, NOT A PRODUCT PATCH. The obvious shortcut is to let a till key PATCH /api/products/:id — which would hand
+ * every counter in the shop the power to rewrite any field of any product: rename it, re-slab it, change its HSN. A till is often
+ * on a shared PC in a public part of the shop. So a till key can change exactly two things, each by its own route, each recording
+ * who and when. Same reasoning as /api/till/alias, which was the narrowest write a counter already had.
+ *
+ * ⚠️ THE STAMP IS THE CATALOGUE'S OWN (itemstatus.stamp), so a status set at the counter is indistinguishable in shape from one
+ * set on the product page — one status model, not a counter dialect of it.
+ */
+router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const item_id = String((req.body && req.body.item_id) || '');
+    const status = String((req.body && req.body.status) || '').toLowerCase();
+    if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
+    /* ⚠️ available and unavailable ONLY. 'retired' and 'redundant' carry an argument — what replaced it, until when — and nobody
+       makes that call standing at a till with a customer waiting. The same two the bulk screen offers, for the same reason. */
+    if (['available', 'unavailable'].indexOf(status) < 0)
+      return res.status(400).json({ error: 'validation', message: "status must be 'available' or 'unavailable'" });
+    const rec = itemstatus.stamp({ status, until: (req.body && req.body.until) || undefined,
+                                   note: (req.body && req.body.note) || undefined },
+                                 { actor_name: (req.body && req.body.by) || 'the counter' });
+    const r = await withEntity(entity_id, (db) => db.query(
+      'UPDATE catalogue_items SET item_data = COALESCE(item_data, \'{}\'::jsonb) || $1::jsonb, updated_at = NOW()'
+      + ' WHERE entity_id = $2 AND item_id = $3 RETURNING item_id, item_data',
+      [JSON.stringify(rec), entity_id, item_id]));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    shopChanged(entity_id, 'stock ' + status);
+    const d = r.rows[0].item_data || {};
+    res.json({ ok: true, item_id, name: d.name || null, status });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const item_id = String((req.body && req.body.item_id) || '');
+    const price = Number(req.body && req.body.price);
+    if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
+    if (!Number.isFinite(price) || price < 0)
+      return res.status(400).json({ error: 'validation', message: 'price must be a number, zero or more' });
+    const currency = await regional.currencyFor(entity_id).catch(() => 'INR');
+    /**
+     * ⚠️ A PRICE IS MONEY, NOT A NUMBER — the catalogue stores { amount, currency }, and reading only the bare figure once gave a
+     * counter a shelf of zeroes ([TILL-01]). It is written in the shape it is read in.
+     * ⚠️ AND THE OLD ONE IS KEPT. price_was, when, and by whom — so a shopkeeper can see what moved today, and "you charged me
+     * more than yesterday" has an answer that is not somebody's memory.
+     */
+    const out = await withEntity(entity_id, async (db) => {
+      const cur = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2', [entity_id, item_id]);
+      if (!cur.rows.length) return null;
+      const d = cur.rows[0].item_data || {};
+      const was = (d.price && typeof d.price === 'object') ? d.price.amount : d.price;
+      const patch = { price: { amount: price, currency },
+                      price_was: (was == null ? null : Number(was)),
+                      price_changed_at: new Date().toISOString(),
+                      price_changed_by: String((req.body && req.body.by) || 'the counter').slice(0, 80) };
+      const u = await db.query(
+        'UPDATE catalogue_items SET item_data = COALESCE(item_data, \'{}\'::jsonb) || $1::jsonb, updated_at = NOW()'
+        + ' WHERE entity_id = $2 AND item_id = $3 RETURNING item_data',
+        [JSON.stringify(patch), entity_id, item_id]);
+      return { was, now: price, name: (u.rows[0].item_data || {}).name || null };
+    });
+    if (!out) return res.status(404).json({ error: 'Not found' });
+    shopChanged(entity_id, 'price changed');
+    res.json({ ok: true, item_id, name: out.name, was: out.was, now: out.now, currency });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 /**
  * ⭐⭐⭐ PAIRING — HOW A TELEVISION JOINS A SHOP WITHOUT TYPING A KEY.
  *

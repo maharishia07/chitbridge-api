@@ -953,6 +953,49 @@ document.getElementById('paircode').addEventListener('keydown', function(e){ if 
   if (!SLIDES.length) say(KEY ? 'Nothing to show yet — add products in ChitBridge' : 'Not paired — open this from ChitBridge → Counter');
   /* the shop changes during the day: new prices, an offer that starts at noon, a product that ran out */
   setInterval(async function(){ await readShop(); SLIDES = build(); paintBar(); }, 15 * 60 * 1000);
+  bellUp();
+})();
+
+/**
+ * ⭐⭐⭐ THE BELL, ON THE TELEVISION. Athi, 2026-09-09: *"when the offers are updated, how to push to TV and every other outlet?
+ * The push should happen and it should be visible right away."*
+ *
+ * Fifteen minutes was the old answer, and it is the wrong one: a shopkeeper who publishes an offer and then looks up at the
+ * screen in the shop is not going to wait a quarter of an hour to find out whether it worked. The same stream the mailbox bell
+ * uses (lib/events, SSE) carries one more kind — "the shop moved" — and the screen answers it by re-reading.
+ *
+ * ⚠️ THE EVENT CARRIES NOTHING. It says something changed; the screen READS through the ordinary snapshot. An event carrying the
+ * new offer would be a second source of truth about a price, and the day it disagreed with the snapshot the television would be
+ * advertising something the counter would not honour.
+ * ⚠️ THE SLIDE ON SCREEN IS NOT SNATCHED AWAY. It rebuilds the run and lets the current frame finish — a poster that vanishes
+ * mid-sentence in front of a customer looks like a fault, and nothing here is urgent to the second.
+ * ⚠️ The timer stays as the floor: a stream that dies quietly must not leave a shop advertising last week.
+ */
+var BELL = null, BELL_AT = 0;
+async function bellUp(){
+  try {
+    if (BELL || !KEY || !navigator.onLine) return;
+    if (Date.now() - BELL_AT < 20000) return;
+    BELL_AT = Date.now();
+    var r = await fetch(API + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': KEY } });
+    if (!r.ok) return;
+    var t = (await r.json()).ticket; if (!t) return;
+    BELL = new EventSource(API + '/api/events/stream?ticket=' + encodeURIComponent(t));
+    BELL.onmessage = async function(ev){
+      var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
+      if (d.kind !== 'shop') return;
+      await readShop();
+      SLIDES = build();
+      paintBar();
+      say('The shop changed — this screen is up to date');
+    };
+    BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };
+  } catch (_) { BELL = null; }
+}
+setInterval(bellUp, 30000);
+window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
+
+(function noop(){
 })();
 </script>
 </body>

@@ -389,6 +389,20 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/refresh') { const ok = await refresh(); return json(res, 200, { ok: ok, online: online, at: snapshot && snapshot.at }); }
 
+    /* ⭐ THE SMALL WRITES a counter makes on its feet — stock out, price change. Forwarded, so the page never cares which
+       host it is on; the agent already holds the key and already knows how to reach ChitBridge. */
+    if (req.method === 'POST' && url.pathname === '/api/op') {
+      let body = ''; for await (const c of req) body += c;
+      let o = {}; try { o = JSON.parse(body || '{}'); } catch (_) {}
+      /* ⚠️ AN EXPLICIT LIST, NOT A PATTERN. This is an allow-list for what a page may ask its own agent to POST upstream, and a
+         pattern is one careless edit away from letting through a path nobody meant. Two operations, named. */
+      var ALLOW = ['/api/till/stock', '/api/till/price'];
+      if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
+      try { const r = await cb.call('POST', o.path, o.body || {});
+        return json(res, 200, Object.assign({ ok:true }, r || {}));
+      } catch (e) { return json(res, 200, { ok:false, why: e.message }); }
+    }
+
     /* ⭐ THE SAME SECOND OPINION THE HOSTED COUNTER GETS. The page must not care which host it is on, so the agent forwards
        it rather than the page reaching past its host to the internet. */
     if (req.method === 'GET' && url.pathname === '/api/verify') {

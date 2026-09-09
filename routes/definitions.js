@@ -34,6 +34,7 @@ const { query, withEntity, withTransaction, readBatch } = require('../db');
 const { validate } = require('../middleware/validate');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
+const { shopChanged } = require('../lib/shopchanged');   /* ⭐ an offer is what a counter and a TV are SHOWING; they hear at once */
 /* The jurisdiction's tax slabs (region_layer, b201) — served beside the entity's own definitions, read-only. */
 const regional = require('../lib/regional');
 const taxGov = require('../lib/tax-governance');
@@ -184,6 +185,7 @@ router.post('/', auth,
            req.identity && req.identity.identity_id]);
         return row;
       });
+      shopChanged(entity_id, 'definition created');
       res.status(201).json({ message: 'Definition created', definition: out, version: 1 });
     } catch (e) {
       if (notMigrated(e)) return gone(res);
@@ -292,6 +294,7 @@ router.delete('/:id', auth, async (req, res) => {
         moved = g ? g.moved : null;
       }
       await db.query(`UPDATE definition SET status = 'retired', updated_at = now() WHERE definition_id = $1`, [req.params.id]);
+      shopChanged(entity_id, 'definition retired');
       return { status: 200, body: { message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true, moved } };
     });
     res.status(out.status).json(out.body);

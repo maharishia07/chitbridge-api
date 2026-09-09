@@ -82,6 +82,8 @@
   /* the dozen this shop sells all day — big targets, no reading, gone the moment somebody types */
   /* everything · on offer · the departments — one row, scrolls sideways on a phone rather than stacking */
   /* ⭐ THE MENU. Three jobs, named, one of them lit — never a dropdown: a person at a counter must see which rules are in force. */
+  .modesel{font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1px solid var(--line);
+           border-radius:9px;padding:5px 8px;cursor:pointer}
   .modes{display:inline-flex;gap:2px;background:var(--line);border-radius:9px;padding:2px}
   .modes button{border:0;background:transparent;color:var(--dim);padding:4px 10px;border-radius:7px;cursor:pointer;font-size:.85em;font-weight:700}
   .modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
@@ -219,11 +221,21 @@
   <section class="left">
     <header>
       <span class="shop" id="shopname">…</span>
-      <span class="modes" id="modes">
-        <button data-testid="till-mode-sell" onclick="setMode('sell')">🧾 Sell</button>
-        <button data-testid="till-mode-receive" onclick="setMode('receive')">📥 Receive</button>
-        <button data-testid="till-mode-despatch" onclick="setMode('despatch')">📦 Despatch</button>
-      </span>
+      <!--
+        ⭐⭐ ONE "WHAT AM I DOING" SELECTOR. Athi, 2026-09-09: *"sell, receive, despatch can be in a dropdown box, so whatever
+        focused operation can come over there?"* Three buttons became five operations, and buttons do not scale — a sixth would
+        have pushed the shop's own name off a tablet. A list also lets an operation carry a sentence saying when it is for, which
+        a 12-pixel button never could.
+        ⚠️ ONE JOB AT A TIME, still. This is not a menu of features; it is the question "what are you doing right now", and the
+        whole screen answers it — the search box, the right pane and the keyboard all change with it.
+      -->
+      <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
+        <option value="sell">🧾 Sell</option>
+        <option value="receive">📥 Receive</option>
+        <option value="despatch">📦 Despatch</option>
+        <option value="stock">📉 Stock out</option>
+        <option value="price">🏷️ Price change</option>
+      </select>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is at the counter (F7 to hand over)">…</button>
       <span class="pill" id="netpill">…</span>
@@ -247,6 +259,9 @@
         <button data-testid="till-screen" onclick="fromMenu(openScreen)">📺 <b>Shop screen</b><i>your offers as a sign for a TV</i></button>
         <button data-testid="till-refresh" onclick="fromMenu(refresh)">↻ <b>Read the shop again</b><i>new prices and products · F4</i></button>
         <button data-testid="till-settings" onclick="fromMenu(openSettings)">⚙ <b>Settings</b><i>look, printer, this till</i></button>
+        <!-- ⚠️ IN THE MENU, NOT BURIED IN SETTINGS. Athi went looking for it — *"where is the hard refresh in the counter?"* —
+             and could not find it, which is the only evidence that matters about where a control belongs. -->
+        <button data-testid="till-coldstart-menu" onclick="fromMenu(coldStart)">↺ <b>Clear and reload</b><i>throw this copy away and read the shop fresh</i></button>
         <button id="installbtn" style="display:none" onclick="fromMenu(installApp)">⤓ <b>Install as an app</b><i>opens without a browser</i></button>
         <a id="cblink" href="#" target="_blank" rel="noopener">↗ <b>ChitBridge</b><i>orders, suppliers, the books</i></a>
       </div>
@@ -266,6 +281,21 @@
 
   <div class="grip" id="grip" title="drag to widen · double-click to reset"></div>
   <section class="right">
+    <!-- ⭐ STOCK OUT — you noticed an empty shelf while serving. One tap, and the next customer is not offered it. -->
+    <div class="pane" id="pane_stock" style="display:none">
+      <div class="doc"><div class="wide" style="color:var(--dim)">
+        Tap anything on the left to take it <b>off the shelf</b>. Tap it again to put it back.
+        Nothing is deleted — it stops being offered, here and on your shop screen.</div></div>
+      <div class="lines" id="stocklist"></div>
+      <div class="bar"><span id="stocknote">Nothing changed yet today.</span></div>
+    </div>
+    <!-- ⭐ PRICE CHANGE — a supplier's new rate, called across the shop, and the very next bill must use it. -->
+    <div class="pane" id="pane_price" style="display:none">
+      <div class="doc"><div class="wide" style="color:var(--dim)">
+        Tap anything on the left, type the new price, press Enter. The next bill uses it, and so does your shop screen.</div></div>
+      <div class="lines" id="pricelist"></div>
+      <div class="bar"><span id="pricenote">Nothing changed yet today.</span></div>
+    </div>
    <div id="pane_sell" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="cust">
       <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist">
@@ -592,6 +622,9 @@ var AgentHost = {
   doc: function(d){ return fetch('/api/doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){ return r.json(); }); },
   alias: function(a){ return fetch('/api/alias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)}).then(function(r){ return r.json(); }); },
   verify: function(){ return fetch('/api/verify').then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
+  tillPost: function(path, body){ return fetch('/api/op', { method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ path: path, body: body }) }).then(function(r){ return r.json(); })
+      .catch(function(e){ return { ok:false, why:e.message }; }); },
   listen: function(b){ return fetch('/api/listen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
 };
 
@@ -751,6 +784,28 @@ var CloudHost = {
     } catch (e) { return { ok:false, why:e.message }; }
   },
   /** ask the shop whether this counter's copy is right — a second opinion, never a repair */
+  /**
+   * ⭐⭐ ONE POSTER FOR THE SMALL WRITES. Stock and price are the same shape as a bill: they must succeed on a counter with no
+   * internet, and reach ChitBridge later. So they ride the SAME queue the bills ride rather than growing a second one — one
+   * thing that drains, one thing that can be counted, one thing to prove.
+   * ⚠️ Queued rows are numbered so the queue can hold them beside bills without either colliding.
+   */
+  async tillPost(path, body){
+    if (!this.key) return { ok:false, why:'this counter is not paired' };
+    if (navigator.onLine) {
+      try {
+        var r = await fetch(this.api + path, { method:'POST',
+          headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(body) });
+        if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
+        /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
+        if (r.status >= 400 && r.status < 500) return { ok:false, why:'ChitBridge refused it (' + r.status + ')' };
+      } catch (_) { /* the line went mid-request; fall through and queue it */ }
+    }
+    await DB.put('queue', { no: 'OP/' + Date.now() + '/' + Math.random().toString(36).slice(2, 7),
+                            at: new Date().toISOString(), tillPost: { path: path, body: body } });
+    STATE.queued = ((await DB.all('queue')) || []).length; paintStatus();
+    return { ok:true, queued:true };
+  },
   async verify(){
     if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet' };
     try {
@@ -793,7 +848,8 @@ var CloudHost = {
           /* three kinds ride this queue now: a bill, a shift, and a receipt or despatch note — plus the movement rows that belong
              to an order, which go somewhere else entirely. Each row says which it is; nothing here guesses. */
           var url = this.api + '/api/chits/send', payload;
-          if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: bill.deliver.rows }; }
+          if (bill.tillPost) { url = this.api + bill.tillPost.path; payload = bill.tillPost.body; }
+          else if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: bill.deliver.rows }; }
           else payload = bill.shiftBody ? bill.shiftBody : (bill.chitBody ? bill.chitBody : chitOf(bill));
           var r = await fetch(url, { method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
@@ -958,6 +1014,7 @@ async function load(){
    * memoises that database for the whole session, and the counter spends the rest of the day reading and writing a store that
    * belongs to nobody. [TILL-06] caught it as a refusal that vanished on reload; the real cost would have been every bill.
    */
+  bellUp();
   if (OWNER === null && !HOST._ownerRead) {
     HOST._ownerRead = true;
     try { OWNER = (await DB.get('owner')) || null;
@@ -1398,8 +1455,103 @@ function searchKey(e){
   else if (e.key === 'End'){ SEL = Math.max(list.length-1, 0); paintHits(); e.preventDefault(); }
   else if (e.key === 'Enter'){ if (list.length) add(SEL); e.preventDefault(); }
 }
+/**
+ * ⭐⭐ THE TWO OPERATIONS A SHOPKEEPER DOES ON THEIR FEET. Athi, 2026-09-09: *"do the stock out and price change counters."*
+ *
+ * Both are one fact about one product, decided while walking, and both are WRONG THE MOMENT THEY ARE DELAYED — an item that has
+ * run out must stop being offered before the next customer asks for it, and a new rate must reach the very next bill. That is
+ * what earns them a place at the counter rather than on a form somewhere.
+ *
+ * ⚠️ THE LOCAL COPY IS UPDATED FIRST, then the server is told. The shelf must reflect what the shopkeeper just did while they are
+ * still looking at it; waiting for a round trip across the Pacific to redraw a row is how a counter comes to feel broken.
+ * ⚠️ AND IF THE LINE IS DOWN IT IS QUEUED, not refused — the same queue the bills ride. A shop whose internet is out still knows
+ * the rice has run out, and the counter must not go on selling it for the rest of the afternoon.
+ */
+var CHANGED = { stock: [], price: [] };     /* what this counter changed today, newest first — the record on the right */
+
+async function stockToggle(i){
+  if (!i) return;
+  var now = (i.avail === 'unavailable') ? 'available' : 'unavailable';
+  i.avail = now;                                     /* the shelf changes under the finger that tapped it */
+  i._off = null; i._rate = undefined;
+  CHANGED.stock = [{ name: i.name, status: now, at: new Date() }].concat(
+    CHANGED.stock.filter(function(x){ return x.name !== i.name; })).slice(0, 40);
+  try { await DB.set('snapshot', S); } catch (_) {}
+  paintHits(); paintStock();
+  var out = await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
+  document.getElementById('stocknote').textContent = out && out.queued
+    ? 'Saved here — it reaches ChitBridge when the internet is back.'
+    : (out && out.ok ? (i.name + ' is now ' + (now === 'unavailable' ? 'off the shelf' : 'back on') + ' everywhere.')
+                     : 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.'));
+}
+
+function paintStock(){
+  var el = document.getElementById('stocklist'); if (!el) return;
+  var off = ((S && S.items) || []).filter(function(i){ return i.avail === 'unavailable'; });
+  el.innerHTML =
+    (CHANGED.stock.length ? '<div class="qtyhint">Changed just now: '
+      + CHANGED.stock.slice(0, 6).map(function(c){ return esc(c.name) + ' → ' + (c.status === 'unavailable' ? 'off' : 'back on'); }).join(' · ')
+      + '</div>' : '')
+    + '<div style="padding:8px 12px;color:var(--dim);font-size:.85em">'
+      + (off.length ? off.length + ' thing(s) are off the shelf right now' : 'Everything is on the shelf.') + '</div>'
+    + off.slice(0, 200).map(function(i){
+        return '<div class="ln" data-testid="till-off-' + esc(i.item_id) + '" style="grid-template-columns:1fr auto">'
+          + '<span class="nm">' + esc(i.name) + '<div class="u">' + esc(i.code || '') + '</div></span>'
+          + '<button class="pill" onclick="stockBack(\'' + esc(i.item_id) + '\')">put back</button></div>';
+      }).join('');
+}
+function stockBack(id){
+  var i = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(id); })[0];
+  if (i) stockToggle(i);
+}
+
+/** the price pane: whatever was tapped, with a box for the new number */
+var PRICING = null;
+function priceStart(i){
+  PRICING = i;
+  paintPrice();
+  setTimeout(function(){ var b = document.getElementById('newprice'); if (b) { b.focus(); b.select(); } }, 30);
+}
+function paintPrice(){
+  var el = document.getElementById('pricelist'); if (!el) return;
+  el.innerHTML =
+    (PRICING
+      ? '<div class="doc" style="border:0"><div class="wide"><b style="font-size:1.15em">' + esc(PRICING.name) + '</b>'
+        + '<div class="u">' + esc(PRICING.code || '') + ' · now ₹' + money(PRICING.price) + ' per ' + esc(PRICING.unit || 'piece') + '</div></div>'
+        + '<label class="wide">New price<input id="newprice" data-testid="till-new-price" inputmode="decimal" '
+        + 'value="' + esc(String(PRICING.price)) + '" onkeydown="if(event.key===\'Enter\')priceSave()"></label>'
+        + '<button class="wide pill" data-testid="till-price-save" onclick="priceSave()">Save the new price</button></div>'
+      : '<div style="padding:16px;color:var(--dim)">Tap something on the left to change its price.</div>')
+    + (CHANGED.price.length ? '<div style="padding:8px 12px;color:var(--dim);font-size:.85em">Changed just now</div>'
+        + CHANGED.price.map(function(c){
+            return '<div class="ln" style="grid-template-columns:1fr auto"><span class="nm">' + esc(c.name)
+              + '<div class="u">was ₹' + money(c.was) + '</div></span><span>₹' + money(c.now) + '</span></div>'; }).join('')
+      : '');
+}
+async function priceSave(){
+  var i = PRICING; if (!i) return;
+  var box = document.getElementById('newprice');
+  var v = Number(String((box && box.value) || '').replace(/[^0-9.]/g, ''));
+  if (!isFinite(v) || v < 0) { toastLine('Type a price.'); return; }
+  var was = Number(i.price) || 0;
+  if (v === was) { toastLine('That is the same price.'); return; }
+  i.price = v; i._off = null;                        /* the shelf shows the new price at once */
+  CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
+  PRICING = null;
+  try { await DB.set('snapshot', S); } catch (_) {}
+  paintHits(); paintPrice();
+  var out = await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
+  document.getElementById('pricenote').textContent = out && out.queued
+    ? 'Saved here — it reaches ChitBridge when the internet is back.'
+    : (out && out.ok ? (i.name + ' is ₹' + money(v) + ' everywhere now.')
+                     : 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.'));
+}
+
 function add(n){
   var i = hits()[n]; if (!i) return;
+  /* the same tap, read against what the shopkeeper said they are doing */
+  if (MODE === 'stock') return stockToggle(i);
+  if (MODE === 'price') return priceStart(i);
   var t = typed(), q = t.qty;
   if (t.unit) {
     var c = qtyInUnit(t.qty, t.unit, i.unit);
@@ -2087,21 +2239,32 @@ function rcvBlank(){ return { task:null, vendor:'', bill_no:'', bill_date:'', bi
 function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[] }; }
 RCV = rcvBlank(); DSP = dspBlank();
 
+var OPS = ['sell','receive','despatch','stock','price'];
+var PLACEHOLDER = {
+  sell:     'Item name, code or barcode…   ↓↑ to choose, Enter to add',
+  receive:  'What arrived? Name, code or barcode — 3* for three',
+  despatch: 'Scan what you are packing',
+  stock:    'Which one has run out? Name, code or barcode',
+  price:    'Which price changed? Name, code or barcode',
+};
 function setMode(m){
-  MODE = (m === 'receive' || m === 'despatch') ? m : 'sell';
+  MODE = OPS.indexOf(m) >= 0 ? m : 'sell';
   ls.set('cb_till_mode', MODE);
-  ['sell','receive','despatch'].forEach(function(k){
+  OPS.forEach(function(k){
     var el = document.getElementById('pane_' + k); if (el) el.style.display = (k === MODE) ? 'flex' : 'none';
-    var b = document.querySelector('[data-testid="till-mode-' + k + '"]'); if (b) b.className = (k === MODE) ? 'on' : '';
   });
+  var sel = document.getElementById('modesel'); if (sel) sel.value = MODE;
   var q = document.getElementById('q');
-  if (q) q.placeholder = MODE === 'sell' ? 'Item name, code or barcode…   ↓↑ to choose, Enter to add'
-        : (MODE === 'receive' ? 'What arrived? Name, code or barcode — 3* for three' : 'Scan what you are packing');
+  if (q) q.placeholder = PLACEHOLDER[MODE] || PLACEHOLDER.sell;
+  /* ⚠️ the chips and the quick keys belong to SELLING. On the other operations they are a second thing to read while somebody
+     waits, and the quick keys would put a hot item one careless tap from being marked out of stock. */
   document.getElementById('chips').style.display = MODE === 'sell' ? '' : 'none';
   document.getElementById('quick').style.display = MODE === 'sell' ? '' : 'none';
   paintKeys(); paintHits();
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
+  if (MODE === 'stock') paintStock();
+  if (MODE === 'price') paintPrice();
   focusSearch();
 }
 function paintKeys(){
@@ -3052,6 +3215,44 @@ async function saveSettings(){
   applyLook();
   if (HOST && HOST.mode === 'cloud' && CloudHost.key) await refresh(); else await load();
 }
+
+/**
+ * ⭐⭐⭐ THE BELL. Athi, 2026-09-09: *"when the offers are updated, how to push to TV and every other outlet? The push should
+ * happen and it should be visible right away."*
+ *
+ * A counter and a screen each hold a LOCAL copy — that is what makes them fast and what keeps them working with the line down.
+ * The price of a copy is that it goes stale, and the only cure used to be a timer. A shopkeeper who changes a price and then
+ * stands in front of the counter waiting for it does not think "the cache will catch up"; they think it is broken.
+ *
+ * ⭐ ADOPTED, NOT INVENTED: lib/events.js already carries server push for the mailbox bell. This listens to the same stream for
+ * one more kind — "the shop moved" — and answers it by re-reading through the ordinary snapshot.
+ * ⚠️ THE EVENT CARRIES NO DATA. It says something changed; the counter goes and READS. An event carrying the new price would be
+ * a second source of truth about a price, and the day the two disagreed nobody could say which was right.
+ * ⚠️ EventSource cannot send a header, so a one-time ticket is fetched first and the stream carries no key at all.
+ * ⚠️ AND IT IS ONLY EVER AN OPTIMISATION. The fifteen-minute timer stays: a stream that silently dies must not leave a counter
+ * on yesterday's prices for ever.
+ */
+var BELL = null, BELL_AT = 0;
+async function bellUp(){
+  try {
+    if (BELL || !navigator.onLine) return;
+    if (!(HOST && HOST.mode === 'cloud' && CloudHost.key)) return;   /* the desktop kit refreshes on its own schedule */
+    if (Date.now() - BELL_AT < 20000) return;                        /* do not thrash a server that is refusing */
+    BELL_AT = Date.now();
+    var r = await fetch(CloudHost.api + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': CloudHost.key } });
+    if (!r.ok) return;
+    var t = (await r.json()).ticket; if (!t) return;
+    BELL = new EventSource(CloudHost.api + '/api/events/stream?ticket=' + encodeURIComponent(t));
+    BELL.onmessage = function(ev){
+      var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
+      /* ⚠️ only the kinds this screen actually holds a copy of; a chit arriving is the mailbox's business, not the counter's */
+      if (d.kind === 'shop') { refresh().then(function(){ toastLine('The shop changed — this counter is up to date.'); }); }
+    };
+    BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };   /* it reconnects on the next tick */
+  } catch (_) { BELL = null; }
+}
+setInterval(bellUp, 30000);
+window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
 
 /* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('keydown', function(e){

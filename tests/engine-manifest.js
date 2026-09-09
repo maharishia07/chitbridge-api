@@ -61,6 +61,10 @@ const INFRA_LIBS = [
   'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
   'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
+  /* INFRA by this file's own test: it holds no rule and decides nothing. It says "the shop moved" down the pipe
+     lib/events already owned, so a counter and a television stop waiting out a timer. Swap the transport and
+     ChitBridge is unchanged — which is what makes it plumbing rather than an engine. (2026-09-09) */
+  'shopchanged.js',
   /**
    * INFRA FOR NOW, AND THE "for now" IS THE POINT. Phase 0 of the register (b182) is an append-only note
    * table: six kinds, a body, and a closing row. It holds no rule and decides nothing, so it is replaceable

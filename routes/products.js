@@ -12,6 +12,7 @@ const availability = require('../lib/availability');   // a quantity is not an a
    item's LIFECYCLE — whether it is something you sell at all. A shelf can be empty without the product being
    retired, and a retired product can still have stock nobody may order. */
 const itemstatus = require('../lib/itemstatus');
+const { shopChanged } = require('../lib/shopchanged');   /* ⭐ every counter and screen holding a copy is told, at once */
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
@@ -197,6 +198,7 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
     try { require('../lib/meter').meter(entity_id, 'catalogue.item', {
       detail: r.rows[0] && r.rows[0].item_id, rid: req.id }).catch(() => {}); } catch (_) {}
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
+    shopChanged(entity_id, 'product added');
     res.json({ message: 'Product added', item: r.rows[0], declared: decl.declared, warnings: decl.warnings });
   } catch (e) { fail(res, e, 'Add failed'); }
 });
@@ -285,6 +287,7 @@ router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, asyn
       }
     } catch (_) {}
 
+    shopChanged(entity_id, 'products bulk');
     res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows,
       declared: decl.declared, warnings: decl.warnings });
   } catch (e) { fail(res, e, 'Bulk add failed'); }
@@ -944,6 +947,7 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
        WHERE item_id=$2 AND entity_id=$3 RETURNING *`,
       [JSON.stringify(item_data), req.params.id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    shopChanged(entity_id, 'product updated');
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) { fail(res, e, 'Update failed'); }
 });
@@ -1091,6 +1095,7 @@ router.delete('/:id', auth, async (req, res) => {
        WHERE item_id=$1 AND entity_id=$2 RETURNING item_id`,
       [req.params.id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    shopChanged(entity_id, 'product removed');
     res.json({ message: 'Product removed' });
   } catch (e) { res.status(500).json({ error: 'Delete failed', message: safeErr(e) }); }
 });
