@@ -634,6 +634,8 @@
   <div class="busybar" id="busybar"><i id="busyfill"></i></div>
   <div class="u" id="busysay"></div>
 </div></div>
+<!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
+<script src="/engine/locale.js" onerror="engineMissed('locale')"></script>
 <!-- ⭐ PRICING FIRST. The engine's own order is: pricing structure → offers → tax, and it is loaded in that order. -->
 <script src="/engine/pricing.js" onerror="engineMissed('pricing')"></script>
 <script src="/engine/offers.js" onerror="engineMissed('offers')"></script>
@@ -653,7 +655,23 @@ var CART = [], PICKED = 'Cash', LAST = null, HOST = null, SEL = 0;
 
 var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
 var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
-var money = function(n){ return r2(n).toFixed(2); };
+/**
+ * ⭐⭐ ONE MONEY FORMATTER, AND IT IS NOT OURS. CBLocale.money(amount, code) groups by the locale (India is 2-2-3,
+ * not 3-3-3), carries the shop's OWN currency rather than a hard-coded ₹, and strips the LRM/RLM marks an
+ * Arabic-region format inserts — which had already scrambled a price into "10 / ₹ 620.00KG" once.
+ * ⚠️ IT INCLUDES THE SYMBOL. The 55 places that used to write '' + money(x) now just write money(x).
+ * ⚠️ The fallback is the old behaviour, not a crash: a counter whose locale engine failed to load must still bill.
+ */
+function curSym(){
+  var cur = (typeof S !== 'undefined' && S && S.shop && S.shop.currency) || 'INR';
+  if (window.CBLocale && CBLocale.symbol) { try { return CBLocale.symbol(cur) || cur; } catch (_) {} }
+  return cur;
+}
+var money = function(n){
+  var cur = (typeof S !== 'undefined' && S && S.shop && S.shop.currency) || 'INR';
+  if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(n, cur); } catch (_) {} }
+  return r2(n).toFixed(2);
+};
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
 var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
            set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
@@ -1333,7 +1351,7 @@ function paintStatus(){
     age.className = 'pill' + (mins > 240 ? ' off' : ''); }
   else { age.textContent = 'no prices yet'; age.className = 'pill off'; }
   var d = STATE.today || {};
-  document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ₹' + money(d.total||0);
+  document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ' + money(d.total||0);
   var note = STATE.queued ? (STATE.queued + ' bill(s) waiting to reach ChitBridge') : 'everything has reached ChitBridge';
   /* ⚠️ THE ABSENCE OF TAX IS ALSO AN ANSWER, and it should not look like a fault. A shop that charges no GST is told why, once,
      rather than left wondering where the tax column went. */
@@ -1468,7 +1486,7 @@ function rowFacts(i){
   var bits = [];
   if (i.brand) bits.push(esc(i.brand));
   if (i.variant) bits.push(esc(i.variant));
-  if (i.mrp != null && Number(i.mrp) > 0) bits.push('MRP ₹' + money(i.mrp));
+  if (i.mrp != null && Number(i.mrp) > 0) bits.push('MRP ' + money(i.mrp));
   (i.facts || []).forEach(function(f){ bits.push('<b>' + esc(f.n) + '</b> ' + esc(f.v)); });
   return bits.length ? '<div class="facts">' + bits.join(' · ') + '</div>' : '';
 }
@@ -1738,7 +1756,7 @@ function paintQuick(){
     + QUICK.map(function(i, n){
     var pin = pinned.indexOf(i.item_id) >= 0;
     return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + esc(i.item_id) + '\')"><b>' + esc(i.name) + '</b>'
-      + '<span>₹' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
+      + '<span>' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
       + '<i class="qx" title="not on this counter" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickHide(\'' + esc(i.item_id) + '\')">✕</i>'
       + '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + esc(i.item_id) + '\')">📌</i>'
       + '</button>';
@@ -1900,7 +1918,7 @@ function offerExample(i, o){
     var net = (ev && ev.line_net && ev.line_net[line.key] != null) ? r2(ev.line_net[line.key]) : gross;
     var save = r2(gross - net);
     if (save > 0) {
-      out = q + ' × ₹' + money(price) + ' = ₹' + money(gross) + ' → <b>₹' + money(net) + '</b> · saves ₹' + money(save);
+      out = q + ' × ' + money(price) + ' = ' + money(gross) + ' → <b>' + money(net) + '</b> · saves ' + money(save);
     } else {
       /* ⚠️ a scope the engine knows about, said in its own words rather than guessed at from the kind */
       var scope = '';
@@ -2016,8 +2034,8 @@ function paintCard(){
     + '<div class="cardrow' + (PEND.price !== undefined ? ' pending' : '') + '"><label>Price</label><div class="swwrap">'
     + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(cardVal(i, 'price'))) + '"'
     + ' oninput="pendPrice(this.value)" onkeydown="if(event.key===\'Enter\')cardSave()">'
-    + '<span class="swtxt">per ' + esc(i.unit || 'piece') + (Number(i.mrp) > 0 ? ' · MRP ₹' + money(i.mrp) : '') + '</span>'
-    + (PEND.price !== undefined ? '<span class="was">was ₹' + money(i.price) + '</span>' : '')
+    + '<span class="swtxt">per ' + esc(i.unit || 'piece') + (Number(i.mrp) > 0 ? ' · MRP ' + money(i.mrp) : '') + '</span>'
+    + (PEND.price !== undefined ? '<span class="was">was ' + money(i.price) + '</span>' : '')
     + '</div></div>'
 
     /**
@@ -2032,13 +2050,13 @@ function paintCard(){
           + (i.pricing_def_name ? ' · ' + esc(i.pricing_def_name) : '') + '</span>'
         + (function(){
             var pr1 = pricedAt(i, 1);
-            var rows = ['<span class="swtxt">1 ' + esc(i.unit || 'piece') + ' → ₹' + money(pr1.amount)
+            var rows = ['<span class="swtxt">1 ' + esc(i.unit || 'piece') + ' → ' + money(pr1.amount)
                         + ' <span style="opacity:.75">(' + esc(pr1.why) + ')</span></span>'];
             (Array.isArray(i.pricing_tiers) ? i.pricing_tiers : []).forEach(function(t){
               var q = Number(t && t.qty) || 0; if (!q) return;
               var pr = pricedAt(i, q);
-              rows.push('<span class="swtxt">' + q + ' ' + esc(i.unit || 'piece') + ' → ₹' + money(pr.amount)
-                + ' each <span style="opacity:.75">· ₹' + money(r2(pr.amount * q)) + ' the lot</span></span>');
+              rows.push('<span class="swtxt">' + q + ' ' + esc(i.unit || 'piece') + ' → ' + money(pr.amount)
+                + ' each <span style="opacity:.75">· ' + money(r2(pr.amount * q)) + ' the lot</span></span>');
             });
             if (pr1.violation) rows.push('<span class="was">⚠️ ' + esc(pr1.violation) + '</span>');
             return rows.join('');
@@ -2088,7 +2106,7 @@ function paintCard(){
     + ((CHANGED.price.length || CHANGED.stock.length)
         ? '<div class="cardrow" style="border:0"><label>Changed today</label><div class="swwrap col">'
           + CHANGED.price.slice(0, 6).map(function(c){
-              return '<span class="swtxt">' + esc(c.name) + ' — was ₹' + money(c.was) + ', now ₹' + money(c.now) + '</span>'; }).join('')
+              return '<span class="swtxt">' + esc(c.name) + ' — was ' + money(c.was) + ', now ' + money(c.now) + '</span>'; }).join('')
           + CHANGED.stock.slice(0, 6).map(function(c){
               return '<span class="swtxt">' + esc(c.name) + ' — ' + (c.status === 'unavailable' ? 'off the shelf' : 'back on') + '</span>'; }).join('')
           + '</div></div>'
@@ -2132,7 +2150,7 @@ async function cardSave(){
   }
   if (PEND.price !== undefined) {
     var wasP = Number(i.price) || 0;
-    record(await priceWrite(i, PEND.price), 'price ₹' + money(wasP) + ' → ₹' + money(PEND.price));
+    record(await priceWrite(i, PEND.price), 'price ' + money(wasP) + ' → ' + money(PEND.price));
   }
   if (PEND.screen !== undefined) {
     record(await screenWrite(i, PEND.screen), PEND.screen ? 'put on the shop screen' : 'taken off the shop screen');
@@ -2268,8 +2286,8 @@ function priceBlock(i){
   var per = 'per ' + esc(i.unit || 'piece');
   if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% GST' : ' · rate not set');
   var mrp = Number(i.mrp) || 0;
-  var was = (mrp > pay) ? '<span class="was"><s>₹' + money(mrp) + '</s>save ₹' + money(r2(mrp - pay)) + '</span>' : '';
-  return '<span class="p"><span class="pay">₹' + money(pay) + '</span><span class="per">' + per + '</span>' + was + '</span>';
+  var was = (mrp > pay) ? '<span class="was"><s>' + money(mrp) + '</s>save ' + money(r2(mrp - pay)) + '</span>' : '';
+  return '<span class="p"><span class="pay">' + money(pay) + '</span><span class="per">' + per + '</span>' + was + '</span>';
 }
 function paintHits(){
   if (scanned()) return;
@@ -2482,7 +2500,7 @@ function paintParked(){
   var el = document.getElementById('parked'); if (!el) return;
   el.innerHTML = PARKED.map(function(p, n){
     var total = (p.cart || []).reduce(function(a, c){ return r2(a + (c.net != null ? c.net : c.price * c.qty)); }, 0);
-    return '<button data-testid="till-parked-' + n + '" onclick="unpark(' + n + ')" title="bring this bill back">⏸ ' + esc(p.name) + ' · ₹' + money(total)
+    return '<button data-testid="till-parked-' + n + '" onclick="unpark(' + n + ')" title="bring this bill back">⏸ ' + esc(p.name) + ' · ' + money(total)
       + ' <span onclick="event.stopPropagation();dropParked(' + n + ')" title="throw it away">×</span></button>';
   }).join('');
 }
@@ -2704,9 +2722,9 @@ function cartLineNote(c){
   var tierWords = (pr && pr.kind === 'tiered' && pr.tier)
     ? ' · <b>' + esc(pr.tier.qty) + '+ price</b>'
     : ((pr && pr.kind === 'fixed' && pr.amount !== pr.list) ? ' · <b>fixed price</b>' : '');
-  return '₹' + money(c.unitPrice != null ? c.unitPrice : c.price) + ' / ' + esc(c.unit) + tierWords
+  return '' + money(c.unitPrice != null ? c.unitPrice : c.price) + ' / ' + esc(c.unit) + tierWords
     + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '')
-    + (c.off ? ' · <span class="save">' + esc(c.off_label||'Offer') + ' −₹' + money(c.save) + '</span>' : '');
+    + (c.off ? ' · <span class="save">' + esc(c.off_label||'Offer') + ' −' + money(c.save) + '</span>' : '');
 }
 function cartRowHTML(c, k){
   return '<div class="row" data-testid="till-line-' + k + '">'
@@ -3105,8 +3123,8 @@ function paintTotals(){
   var due = r2(m.net - taken);
   var change = r2(tendered - due);
   document.getElementById('change').textContent = PARTS.length
-    ? (tendered ? (change >= 0 ? 'change ₹' + money(change) : 'still ₹' + money(-change)) : 'still ₹' + money(due))
-    : (tendered ? (change >= 0 ? 'change ₹' + money(change) : 'short ₹' + money(-change)) : '');
+    ? (tendered ? (change >= 0 ? 'change ' + money(change) : 'still ' + money(-change)) : 'still ' + money(due))
+    : (tendered ? (change >= 0 ? 'change ' + money(change) : 'short ' + money(-change)) : '');
   document.getElementById('totals').innerHTML =
       /* ⭐ the count sits with the money it belongs to, and is read in the same glance as the total */
       (CART.length ? '<div class="t count" data-testid="till-count"><span>On this bill</span><span>' + countWords() + '</span></div>' : '')
@@ -3121,7 +3139,7 @@ function paintTotals(){
             ? '<div class="t warnrow"><span>GST</span><span>' + money(m.tax) + '</span></div>'
               + '<div class="t warnrow"><span colspan="2">No state on the GSTIN, so CGST/SGST cannot be split</span><span></span></div>'
             : '<div class="t"><span>GST total</span><span>' + money(m.tax) + '</span></div>') : '')
-    + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">₹' + money(m.net) + '</span></div>';
+    + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">' + money(m.net) + '</span></div>';
   var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
 }
 /**
@@ -3142,7 +3160,7 @@ function dropPart(n){ PARTS.splice(n, 1); paintParts(); paintTotals(); }
 function paintParts(){
   var el = document.getElementById('parts'); if (!el) return;
   el.innerHTML = PARTS.map(function(p, n){
-    return '<button data-testid="till-part-' + n + '" onclick="dropPart(' + n + ')" title="remove this part">' + esc(p.how) + ' ₹' + money(p.amount) + ' ×</button>';
+    return '<button data-testid="till-part-' + n + '" onclick="dropPart(' + n + ')" title="remove this part">' + esc(p.how) + ' ' + money(p.amount) + ' ×</button>';
   }).join('');
 }
 function paintPays(){
@@ -3267,7 +3285,7 @@ async function dayClose(){
   try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) { rows = []; }
   var d = dayCloseSheet(rows);
   try { document.getElementById('billsdlg').close(); } catch (_) {}
-  document.getElementById('sliptitle').textContent = 'Day close · ' + d.bills + ' bill(s) · ₹' + money(d.total);
+  document.getElementById('sliptitle').textContent = 'Day close · ' + d.bills + ' bill(s) · ' + money(d.total);
   /* ⚠️ OFF AGAIN. The box is shared, so a slip opened after a health check would inherit the screen colours — and
      printSlip() copies this element's innerHTML into the print window, which would then print grey on charcoal. */
   document.getElementById('slipbox').classList.remove('screen');
@@ -3663,7 +3681,7 @@ async function rcvCosts(){
   /* ⚠️ RENAMED off "ask" — it now shadowed the primitive of that name, and a local var winning over the function it
      is trying to call is the quietest bug in this file's history (a duplicate name once froze a whole tab). */
   var askCost = async function(k, label){
-    var v = await ask(label + ' — leave it blank if there is none.', c[k] || '', label + ' (₹)', 'Freight and costs');
+    var v = await ask(label + ' — leave it blank if there is none.', c[k] || '', label + ' (' + curSym() + ')', 'Freight and costs');
     if (v !== null) c[k] = Math.max(0, Number(v) || 0);
   };
   await askCost('freight', 'Freight / lorry');
@@ -3676,7 +3694,7 @@ function paintRcvCosts(){
   var el = document.getElementById('rcv_costs'); if (!el) return;
   var c = RCV.costs, extra = rcvExtras();
   el.innerHTML = extra > 0
-    ? 'Freight <b>₹' + money(c.freight) + '</b> · loading <b>₹' + money(c.loading) + '</b> · duty <b>₹' + money(c.duty) + '</b> · other <b>₹' + money(c.other) + '</b> — spread across the lines by value'
+    ? 'Freight <b>' + money(c.freight) + '</b> · loading <b>' + money(c.loading) + '</b> · duty <b>' + money(c.duty) + '</b> · other <b>' + money(c.other) + '</b> — spread across the lines by value'
     : 'No freight or other costs added. <b>F5</b> to add them — they become part of what each item actually cost you.';
 }
 function paintRcvSum(){
@@ -3684,10 +3702,10 @@ function paintRcvSum(){
   var goods = rcvGoods(), extra = rcvExtras(), landed = r2(goods + extra);
   var theirs = RCV.bill_total;
   var gap = (theirs == null) ? null : r2(goods - theirs);
-  el.innerHTML = 'Counted <b>₹' + money(goods) + '</b>' + (extra > 0 ? ' + costs <b>₹' + money(extra) + '</b> = landed <b>₹' + money(landed) + '</b>' : '')
+  el.innerHTML = 'Counted <b>' + money(goods) + '</b>' + (extra > 0 ? ' + costs <b>' + money(extra) + '</b> = landed <b>' + money(landed) + '</b>' : '')
     + (gap === null ? '' : (gap === 0
         ? ' · <b style="color:var(--ok)">their bill agrees</b>'
-        : ' · <b style="color:var(--warn)" data-testid="rcv-gap">their bill says ₹' + money(theirs) + ' — ' + (gap > 0 ? 'we counted ₹' + money(gap) + ' more' : 'we counted ₹' + money(-gap) + ' less') + '</b>'));
+        : ' · <b style="color:var(--warn)" data-testid="rcv-gap">their bill says ' + money(theirs) + ' — ' + (gap > 0 ? 'we counted ' + money(gap) + ' more' : 'we counted ' + money(-gap) + ' less') + '</b>'));
 }
 
 /**
@@ -3955,7 +3973,7 @@ function slipHTML(bill, m){
     + '<div style="height:10mm"></div></div>';
 }
 function showSlip(bill, m){
-  document.getElementById('sliptitle').textContent = 'Bill ' + bill.no + ' · ₹' + money(bill.total);
+  document.getElementById('sliptitle').textContent = 'Bill ' + bill.no + ' · ' + money(bill.total);
   document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = slipHTML(bill, m);
   document.getElementById('slipdlg').showModal();
@@ -4012,8 +4030,8 @@ async function openBills(keepOpen){
   var nWait = rows.filter(function(b){ return waiting[b.no]; }).length;
 
   var d = STATE.today || { count:0, total:0, by:{} };
-  var by = Object.keys(d.by || {}).map(function(k){ return esc(k) + ' ₹' + money(d.by[k]); }).join(' · ');
-  document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ' bills · ₹' + money(d.total||0);
+  var by = Object.keys(d.by || {}).map(function(k){ return esc(k) + ' ' + money(d.by[k]); }).join(' · ');
+  document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ' bills · ' + money(d.total||0);
   document.getElementById('billsbody').innerHTML =
     '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + (by || 'nothing taken yet') + '</div>'
     + '<div data-testid="till-sync-report" style="display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;margin-bottom:8px;'
@@ -4031,7 +4049,7 @@ async function openBills(keepOpen){
               + (waiting[b.no] ? '⏳ waiting' : '✓ sent') + '</span>'
             + '<div class="u">' + esc(new Date(b.at).toTimeString().slice(0,5)) + ' · '
           + esc((b.customer && b.customer.name) || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + ' · ' + ((b.lines||[]).length) + ' item(s)</div></span>'
-          + '<span style="font-variant-numeric:tabular-nums">₹' + money(b.total) + '</span>'
+          + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
           + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button></div>';
       }).join('')
       : '<div style="color:var(--dim)">No bills yet today.</div>');
@@ -4133,13 +4151,13 @@ async function paintEarlier(){
   else if (!rows.length) body = '<div style="color:var(--dim);padding:10px">No counter bills in the last ' + days + ' days.</div>';
   else {
     var total = rows.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0);
-    body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + rows.length + ' bills · ₹' + money(total)
-      + (WHO ? ' · ' + esc(WHO.name) + ': ' + mine.length + ' bill(s) ₹' + money(mine.reduce(function(a,b){ return r2(a+(b.total||0)); },0)) : '') + '</div>'
+    body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + rows.length + ' bills · ' + money(total)
+      + (WHO ? ' · ' + esc(WHO.name) + ': ' + mine.length + ' bill(s) ' + money(mine.reduce(function(a,b){ return r2(a+(b.total||0)); },0)) : '') + '</div>'
       + rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-old-' + esc(b.no) + '">'
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(String(b.at).slice(0,10)) + ' ' + esc(String(b.at).slice(11,16)) + ' · '
           + esc(b.customer || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>'
-          + '<span style="font-variant-numeric:tabular-nums">₹' + money(b.total) + '</span>'
+          + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
           + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')">print</button></div>';
       }).join('');
   }
@@ -4206,7 +4224,7 @@ async function setWho(id, name){
      allowed (a shop with no float, or a busy moment): it counts as zero and the close says so. */
   /* ⭐ the question a shift starts with — asked in our own words, in our own box */
   var float0 = await ask('Starting ' + name + " at this counter.\n\nHow much cash is in the drawer right now? Leave it blank if there is none.",
-                         '', 'Cash in the drawer (₹)', 'Who is at this counter');
+                         '', 'Cash in the drawer (' + curSym() + ')', 'Who is at this counter');
   WHO = { id: id, name: name, since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
   ls.set(shopLs('cb_till_who'), JSON.stringify(WHO));
   paintWho(); document.getElementById('whodlg').close(); focusSearch();
@@ -4233,7 +4251,7 @@ async function handOver(){
       '<div style="font-size:.9em;color:var(--dim)">' + esc(new Date(SHIFT.from).toTimeString().slice(0,5)) + ' to ' + esc(new Date(SHIFT.to).toTimeString().slice(0,5))
     + ' · ' + SHIFT.bills + ' bill(s)</div>'
     + '<label>Count the cash in the drawer and type the total</label>'
-    + '<input id="shift_counted" type="number" min="0" step="1" inputmode="decimal" placeholder="₹" autofocus>'
+    + '<input id="shift_counted" type="number" min="0" step="1" inputmode="decimal" placeholder="' + esc(curSym()) + '" autofocus>'
     + '<div style="color:var(--dim);font-size:.8em;margin-top:8px">Count first — the expected figure is shown after, so the count means something. Cash only: UPI and card are not in the drawer.</div>';
   document.getElementById('shiftdlg').showModal();
   setTimeout(function(){ var i = document.getElementById('shift_counted'); if (i) i.focus(); }, 50);
@@ -4245,16 +4263,16 @@ async function shiftClose(){
   if (!(counted >= 0) || (document.getElementById('shift_counted') || {}).value === '') { say('Type what is in the drawer first.'); return; }
   SHIFT.counted_cash = r2(counted);
   SHIFT.difference = r2(SHIFT.counted_cash - SHIFT.expected_cash);
-  var word = SHIFT.difference === 0 ? 'exact' : (SHIFT.difference > 0 ? 'over by ₹' + money(SHIFT.difference) : 'short by ₹' + money(-SHIFT.difference));
-  var modes = Object.keys(SHIFT.modes).map(function(k){ return k + ' ₹' + money(SHIFT.modes[k]); }).join(' · ') || 'nothing taken';
+  var word = SHIFT.difference === 0 ? 'exact' : (SHIFT.difference > 0 ? 'over by ' + money(SHIFT.difference) : 'short by ' + money(-SHIFT.difference));
+  var modes = Object.keys(SHIFT.modes).map(function(k){ return k + ' ' + money(SHIFT.modes[k]); }).join(' · ') || 'nothing taken';
   document.getElementById('shiftbody').innerHTML =
-      '<div style="font-size:1.1em"><b>' + esc(SHIFT.by.name) + '</b> · ' + SHIFT.bills + ' bill(s) · ₹' + money(SHIFT.total) + '</div>'
+      '<div style="font-size:1.1em"><b>' + esc(SHIFT.by.name) + '</b> · ' + SHIFT.bills + ' bill(s) · ' + money(SHIFT.total) + '</div>'
     + '<div style="margin-top:8px">' + esc(modes) + '</div>'
     + '<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'
-    + '<div style="display:flex;justify-content:space-between"><span>Float at the start</span><span>₹' + money(SHIFT.float) + '</span></div>'
-    + '<div style="display:flex;justify-content:space-between"><span>Cash taken</span><span>₹' + money(SHIFT.modes.Cash || 0) + '</span></div>'
-    + '<div style="display:flex;justify-content:space-between;font-weight:700"><span>Expected in the drawer</span><span>₹' + money(SHIFT.expected_cash) + '</span></div>'
-    + '<div style="display:flex;justify-content:space-between"><span>Counted</span><span>₹' + money(SHIFT.counted_cash) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between"><span>Float at the start</span><span>' + money(SHIFT.float) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between"><span>Cash taken</span><span>' + money(SHIFT.modes.Cash || 0) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-weight:700"><span>Expected in the drawer</span><span>' + money(SHIFT.expected_cash) + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between"><span>Counted</span><span>' + money(SHIFT.counted_cash) + '</span></div>'
     + '<div style="display:flex;justify-content:space-between;font-weight:800;color:' + (SHIFT.difference === 0 ? 'var(--ok)' : 'var(--warn)') + '"><span>Difference</span><span>' + esc(word) + '</span></div></div>'
     + '<div style="color:var(--dim);font-size:.8em;margin-top:10px">This is recorded against ' + esc(SHIFT.by.name) + ' and sent to ChitBridge, so it outlives this device.</div>';
   document.getElementById('shiftgo').textContent = 'Done — free the counter';

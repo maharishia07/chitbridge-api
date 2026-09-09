@@ -610,4 +610,27 @@ it('⭐ the price reference is shown, described by the engine that applies it', 
   assert.ok(card.indexOf('pricing_kind ?') > 0, 'the structure block shows for products that cite nothing — noise on ten thousand rows');
 });
 
+/**
+ * ⭐⭐ MONEY IS NOT A NUMBER WITH A SYMBOL IN FRONT OF IT. Athi: *"we have to use all standards from CB, otherwise we
+ * will reinvent again and again."* The till formatted its own: toFixed(2) with a ₹ glued on by 55 callers. So
+ * 1,00,000 printed as 100000.00 (Indian grouping is 2-2-3, and no Intl was involved to know that), a shop trading in
+ * dirhams still had rupees hard-coded onto every receipt, and the LRM/RLM marks an Arabic-region format inserts —
+ * which once scrambled a price into "10 / ₹ 620.00KG" — were not stripped, though locale.js solves that once.
+ */
+it('⭐⭐ the till formats money through CBLocale, in the shop own currency', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('/engine/locale.js') > 0, 'the locale engine is not loaded by the counter');
+  assert.ok(page.indexOf('CBLocale.money(n, cur)') > 0, 'money() does not delegate to the one formatter');
+  assert.ok(page.indexOf('S.shop.currency') > 0, 'the currency is not taken from the shop');
+  /* ⚠️ no caller may glue a symbol on again — CBLocale.money returns the whole string */
+  const glued = page.split("₹' + money(").length - 1;
+  assert.strictEqual(glued, 0, glued + ' callers still hand-glue a rupee sign in front of money()');
+  /* and a label that asks for an amount must ask in the shop's own symbol */
+  assert.ok(page.indexOf('function curSym(){') > 0, 'there is no way to label a field with the shop currency');
+  assert.ok(page.indexOf("(₹)") < 0, 'a field label still asks for rupees whatever the shop trades in');
+  /* ⚠️ and it must still bill if the engine failed to load — a counter that cannot print a price cannot sell */
+  const fn = page.slice(page.indexOf('var money = function(n){'), page.indexOf('var money = function(n){') + 400);
+  assert.ok(fn.indexOf('r2(n).toFixed(2)') > 0, 'there is no fallback — a missing locale engine would stop the till');
+});
+
 console.log(pass + ' checks');
