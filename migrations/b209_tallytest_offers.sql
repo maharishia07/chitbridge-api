@@ -67,6 +67,17 @@ new_offers AS (
     ('10% off rice from 5 bags',             'percent_off',
      '{"percent":10,"scope":"line","applies_to":{"category":"Rice & grains","min_qty":5}}'::jsonb)
   ) AS t(name, sub_kind, rules)
+  /**
+   * ⚠️⚠️ RUNNING THIS TWICE MUST DO NOTHING. The first cut had no guard, so a second run would have created five DUPLICATE
+   * offers — two "10% off every spice", both live, both firing, stacking on each other. Athi very nearly ran it again while
+   * re-running the sequence, which is exactly how that happens: a script that is safe once and destructive twice is a trap
+   * left lying about, and the person who trips it is always the one who trusted it the first time.
+   * A migration that cannot be re-run safely is not finished.
+   */
+  WHERE NOT EXISTS (
+    SELECT 1 FROM definition d
+     WHERE d.entity_id = 'c2837d52-47f2-47e2-9fcd-b98c68a49e45'
+       AND d.kind = 'offer' AND d.name = t.name AND d.status <> 'retired')
 ),
 made AS (
   INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
@@ -78,7 +89,8 @@ INSERT INTO definition_version (definition_id, version, entity_id, rules, note, 
 SELECT made.definition_id, 1, made.entity_id, n.rules, 'seeded', NULL
 FROM made JOIN new_offers n ON n.name = made.name;
 
--- ⚠️ Expect "INSERT 0 5". Anything else -> ROLLBACK;
+-- ⚠️ Expect "INSERT 0 5" the FIRST time and "INSERT 0 0" on any re-run — both are correct.
+--    Any other number -> ROLLBACK;
 COMMIT;
 
 -- ── 3 · PROVE IT. Expect the five rows, all status = live, each with its rules.
