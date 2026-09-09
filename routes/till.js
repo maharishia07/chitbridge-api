@@ -212,6 +212,18 @@ router.get('/snapshot', auth, async (req, res) => {
                 * switch to be set from.
                 */
                offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [],
+               /**
+                * ⭐ THE PRICING STRUCTURE THE PRODUCT CITES, as its TRAVELLING COPY (lib/pricing-engine copyOf) —
+                * never the definition id alone. A counter that had to resolve a definition could not price with the
+                * line down, and a bill reprinted next year must say what it was priced by, not what that structure
+                * has since become.
+                */
+               pricing_kind: d.pricing_kind || null,
+               pricing_tiers: Array.isArray(d.pricing_tiers) ? d.pricing_tiers : null,
+               pricing_amount: d.pricing_amount == null ? null : Number(d.pricing_amount),
+               pricing_min: d.pricing_min == null ? null : Number(d.pricing_min),
+               pricing_max: d.pricing_max == null ? null : Number(d.pricing_max),
+               pricing_def_name: d.pricing_def_name || null,
                /* ⭐ picked by hand for the shop screen — the one thing promo.html cannot work out from the catalogue itself */
                screen: d.screen === true,
                /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton

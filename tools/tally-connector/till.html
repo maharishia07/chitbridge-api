@@ -215,6 +215,8 @@
   /* the unit belongs beside the name, quietly, exactly as the storefront sets it */
   .hit .n .unit{color:var(--dim);font-size:.8em;font-weight:400}
   .hit .offword{color:var(--warn)}
+  /* the price reference — quiet, because it explains the number rather than competing with it */
+  .priceref{color:var(--blue);font-size:.76em;font-weight:700;margin-top:1px}
   .hit .n .meta{color:var(--dim);font-size:.78em;font-weight:400;margin-top:1px}
   .hit .mid{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;min-width:0}
   /* ⚠️ MONEY IS READ IN A COLUMN, so it is tabular and right-aligned; a column of rupees that jitters is one nobody can scan. */
@@ -629,6 +631,8 @@
   <div class="busybar" id="busybar"><i id="busyfill"></i></div>
   <div class="u" id="busysay"></div>
 </div></div>
+<!-- ⭐ PRICING FIRST. The engine's own order is: pricing structure → offers → tax, and it is loaded in that order. -->
+<script src="/engine/pricing.js" onerror="engineMissed('pricing')"></script>
 <script src="/engine/offers.js" onerror="engineMissed('offers')"></script>
 <script src="/engine/tax.js" onerror="engineMissed('tax')"></script>
 <script src="/engine/search.js" onerror="engineMissed('search')"></script>
@@ -1968,6 +1972,31 @@ function paintCard(){
     + (PEND.price !== undefined ? '<span class="was">was ₹' + money(i.price) + '</span>' : '')
     + '</div></div>'
 
+    /**
+     * ⭐⭐ WHAT PRICES THIS PRODUCT, and what the counter would actually charge at each break. A tier is invisible
+     * until somebody buys ten, which is the worst moment to discover it — and the price typed above is the LIST
+     * price the structure works from, not necessarily what is charged.
+     * ⚠️ READ-ONLY. The structure is a definition; changing it changes every product that cites it, which is not a
+     * decision anybody makes standing at a till. The counter shows it and uses it.
+     */
+    + (i.pricing_kind ? '<div class="cardrow"><label>Priced by</label><div class="swwrap col">'
+        + '<span class="swtxt"><b>' + esc(pricingWords(i)) + '</b>'
+          + (i.pricing_def_name ? ' · ' + esc(i.pricing_def_name) : '') + '</span>'
+        + (function(){
+            var pr1 = pricedAt(i, 1);
+            var rows = ['<span class="swtxt">1 ' + esc(i.unit || 'piece') + ' → ₹' + money(pr1.amount)
+                        + ' <span style="opacity:.75">(' + esc(pr1.why) + ')</span></span>'];
+            (Array.isArray(i.pricing_tiers) ? i.pricing_tiers : []).forEach(function(t){
+              var q = Number(t && t.qty) || 0; if (!q) return;
+              var pr = pricedAt(i, q);
+              rows.push('<span class="swtxt">' + q + ' ' + esc(i.unit || 'piece') + ' → ₹' + money(pr.amount)
+                + ' each <span style="opacity:.75">· ₹' + money(r2(pr.amount * q)) + ' the lot</span></span>');
+            });
+            if (pr1.violation) rows.push('<span class="was">⚠️ ' + esc(pr1.violation) + '</span>');
+            return rows.join('');
+          })()
+        + '</div></div>' : '')
+
     + '<div class="cardrow"><label>Offers</label><div class="swwrap col">'
     + (mine.length ? mine.map(function(o){
         var st = offerState(i, o), shown = offerShown(i, o);
@@ -2217,6 +2246,9 @@ function paintHits(){
         + '<div class="meta">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '')
           + (off ? ' · <b class="offword">off the shelf</b>' : '') + '</div>'
         + rowFacts(i)
+        /* ⚠️ ONLY WHEN THERE IS ONE. Most products carry no structure, and a chip saying "list price" on ten
+           thousand rows is noise that teaches the eye to skip the row it does matter on. */
+        + (i.pricing_kind ? '<div class="priceref" data-testid="till-priceref-' + n + '">' + esc(pricingWords(i)) + '</div>' : '')
         + (offerNames(i).length ? '<span class="mid">'
             + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('') + '</span>' : '')
       + '</span>'
@@ -2533,10 +2565,37 @@ function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus()
  * ⭐ THE RULE THIS LEAVES BEHIND: the badge and the bill must be built from the SAME description of a line. offersFor() and
  * price() now both call lineOf(), so they cannot drift again.
  */
+/**
+ * ⭐ WHAT ONE UNIT COSTS AT THIS QUANTITY, from the same engine the product page, the cart, the storefront and the
+ * server's order path all use. It answers with its REASON, which is what the screen shows.
+ * ⚠️ The travelling copy is what it reads — pricing_kind, pricing_tiers, pricing_amount, pricing_min/max — so the
+ * counter prices correctly with the line down and a reprint next year says what it was priced BY.
+ */
+/** ⭐ the one-line description, from the engine — never a second phrasing of the same structure */
+function pricingWords(i){
+  if (!window.CBPricing || !i || !i.pricing_kind) return '';
+  try { return CBPricing.describe({ pricing_kind: i.pricing_kind, pricing_tiers: i.pricing_tiers,
+    pricing_amount: i.pricing_amount, pricing_min: i.pricing_min, pricing_max: i.pricing_max,
+    pricing_def_name: i.pricing_def_name, price: Number(i.price) || 0 }) || ''; } catch (_) { return ''; }
+}
+function pricedAt(i, qty){
+  var list = Number(i && i.price) || 0;
+  if (!window.CBPricing || !i) return { amount: list, kind: null, why: 'list price', tier: null, violation: null, list: list };
+  try {
+    return CBPricing.unitPrice({ pricing_kind: i.pricing_kind, pricing_tiers: i.pricing_tiers,
+      pricing_amount: i.pricing_amount, pricing_min: i.pricing_min, pricing_max: i.pricing_max,
+      pricing_def_name: i.pricing_def_name, price: list }, qty, list);
+  } catch (_) { return { amount: list, kind: null, why: 'list price', tier: null, violation: null, list: list }; }
+}
 function lineOf(c, n){
   var d = c.item_data || {};
+  /* ⚠️⚠️ THE PRICED UNIT, NOT THE LIST PRICE. This is the first step of the line and the counter used to skip it,
+     so a tiered product billed at the list price here while the storefront re-priced it — the same goods at two
+     prices depending which door the customer came through. */
+  var pr = pricedAt(c, Number(c.qty) || 0);
   return { key: (n == null ? c.item_id : String(n)), item_id: c.item_id, sku: c.code || d.code || null,
-           name: c.name, unit: c.unit, qty: Number(c.qty) || 0, unitPrice: Number(c.price) || 0,
+           name: c.name, unit: c.unit, qty: Number(c.qty) || 0, unitPrice: Number(pr.amount) || 0,
+           priced: pr,
            category: d.category || c.category || null,
            categories: (d.category || c.category) ? [String(d.category || c.category)] : [],
            /* a product the shop has taken OUT of an offer: item_data.offers_excluded, carried as the engine expects it */
@@ -2554,8 +2613,17 @@ function price(){
   var ev = null;
   try { if (window.CBOffers && S && (S.offers||[]).length)
     ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:(S.shop&&S.shop.currency)||'INR', now:new Date().toISOString() } }); } catch(_){ ev = null; }
-  CART.forEach(function(c){
-    var gross = r2(c.price * c.qty), net = gross, label = '';
+  CART.forEach(function(c, n){
+    /**
+     * ⚠️⚠️ GROSS IS THE PRICED UNIT × THE QUANTITY, never the list price × the quantity. lines[n] was built by
+     * lineOf(), which asked CBPricing what one unit costs AT THIS QUANTITY — a tier re-prices the line before an
+     * offer is considered at all, so taking the offer off the list price would be wrong in both directions.
+     * ⭐ The reason is kept on the line (c.priced) so the row can SAY why the number is what it is.
+     */
+    var pr = (lines[n] && lines[n].priced) || null;
+    var unit = pr ? (Number(pr.amount) || 0) : (Number(c.price) || 0);
+    c.priced = pr; c.unitPrice = unit;
+    var gross = r2(unit * c.qty), net = gross, label = '';
     if (ev && ev.line_net && ev.line_net[c.item_id] != null) net = r2(ev.line_net[c.item_id]);
     if (net < gross && ev && ev.adjustments){
       var mine = ev.adjustments.filter(function(a){ return a.target === c.item_id; });
@@ -2578,8 +2646,16 @@ function price(){
   paintTotals();
 }
 /** the words under a line: its price, its rate, and the offer that came off it */
+/**
+ * ⭐ THE WORDS UNDER A LINE — and now WHY the unit price is what it is. A tier that quietly changed the figure with
+ * nothing on screen to explain it would look like a bug to the person who set the tier up.
+ */
 function cartLineNote(c){
-  return '₹' + money(c.price) + ' / ' + esc(c.unit)
+  var pr = c.priced;
+  var tierWords = (pr && pr.kind === 'tiered' && pr.tier)
+    ? ' · <b>' + esc(pr.tier.qty) + '+ price</b>'
+    : ((pr && pr.kind === 'fixed' && pr.amount !== pr.list) ? ' · <b>fixed price</b>' : '');
+  return '₹' + money(c.unitPrice != null ? c.unitPrice : c.price) + ' / ' + esc(c.unit) + tierWords
     + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '')
     + (c.off ? ' · <span class="save">' + esc(c.off_label||'Offer') + ' −₹' + money(c.save) + '</span>' : '');
 }
@@ -3038,7 +3114,12 @@ async function finish(){
     if (taken0 < m.net) parts.push({ how: PICKED, amount: Math.min(tendered, r2(m.net - taken0)) }); }
   var paid = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
   var body = {
-    lines: CART.map(function(c){ return { item_id:c.item_id, name:c.name, unit:c.unit, price:c.price, qty:c.qty,
+    /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
+       decided it, so a reprint next year explains itself without the definition — the same reason a slab travels. */
+    lines: CART.map(function(c){ return { item_id:c.item_id, name:c.name, unit:c.unit,
+                                          price:(c.unitPrice != null ? c.unitPrice : c.price), list_price:c.price,
+                                          priced_by:(c.priced && c.priced.kind) || null,
+                                          priced_why:(c.priced && c.priced.why) || null, qty:c.qty,
                                           gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label, hsn:c.hsn, gst_rate:c.gst_rate }; }),
     payments: parts, paid: paid, change: r2(Math.max(0, (tendered || 0) - r2(m.net - (paid - (parts[parts.length-1] || {}).amount || 0)))),
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,

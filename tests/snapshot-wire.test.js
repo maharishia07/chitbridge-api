@@ -567,4 +567,44 @@ it('⭐⭐ turning an offer off knows whether to opt the product out or remove t
     'the panel lists only the offers that already reach the product — the potato can never be turned on');
 });
 
+/**
+ * ⭐⭐⭐ THE COUNTER PRICES THROUGH THE SAME ENGINE AS EVERY OTHER DOOR. lib/pricing-engine.js states the order in its
+ * own header: PRICING STRUCTURE -> OFFERS -> TAX, and "the same function answers on the product page, in the cart, on
+ * the storefront and on the server's order path." The till answered none of it: it read a bare price and multiplied,
+ * so a tiered product billed at list price at the counter while the storefront re-priced it — the same goods at two
+ * prices depending which door the customer came through.
+ * ⚠️ A tier RE-PRICES the line; it is not a discount. An offer comes off the tiered price, never off the list price.
+ */
+it('⭐⭐⭐ the till prices through CBPricing, before offers', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('/engine/pricing.js') > 0, 'the pricing engine is not loaded by the counter');
+  /* ⚠️ and BEFORE offers, because the order of evaluation is the whole point */
+  assert.ok(page.indexOf('/engine/pricing.js') < page.indexOf('/engine/offers.js'),
+    'pricing loads after offers — the order of evaluation is pricing, then offers, then tax');
+  assert.ok(page.indexOf('CBPricing.unitPrice(') > 0, 'nothing asks the engine what a unit costs at a quantity');
+  /* the cart's arithmetic must take the priced unit, not the list price */
+  const pr = page.slice(page.indexOf('function price(){'), page.indexOf('function cartLineNote'));
+  assert.ok(pr.indexOf('r2(unit * c.qty)') > 0, 'gross is still the list price times the quantity');
+  assert.ok(pr.indexOf('r2(c.price * c.qty)') < 0, 'the list price is still being multiplied somewhere');
+  /* the wire must carry the TRAVELLING COPY, or the counter cannot price with the line down */
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  for (const k of ['pricing_kind', 'pricing_tiers', 'pricing_amount', 'pricing_min', 'pricing_max', 'pricing_def_name'])
+    assert.ok(src.indexOf(k + ':') > 0, 'the snapshot does not send ' + k);
+  /* and the bill records what priced it, so a reprint explains itself without the definition */
+  assert.ok(page.indexOf('priced_by:') > 0 && page.indexOf('list_price:c.price') > 0,
+    'the bill records what it charged but not what decided it');
+});
+
+/** ⭐ AND IT SAYS SO ON SCREEN — a tier that changes the figure with nothing to explain it looks like a bug. */
+it('⭐ the price reference is shown, described by the engine that applies it', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('CBPricing.describe(') > 0,
+    'the counter phrases the structure itself instead of using the engine one-liner — two descriptions of one thing');
+  assert.ok(page.indexOf('till-priceref-') > 0, 'the shelf row never shows what prices the product');
+  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function pendPrice('));
+  assert.ok(card.indexOf('Priced by') > 0, 'the maintenance panel does not show the structure');
+  /* ⚠️ read-only there: a structure is a definition, and changing it changes every product that cites it */
+  assert.ok(card.indexOf('pricing_kind ?') > 0, 'the structure block shows for products that cite nothing — noise on ten thousand rows');
+});
+
 console.log(pass + ' checks');
