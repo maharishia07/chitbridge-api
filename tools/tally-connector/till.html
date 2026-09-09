@@ -966,7 +966,9 @@ function paintStatus(){
   if (S && !tx0.charges) note = (tx0.reg === 'composition' ? 'Composition dealer — no GST on a bill, and the slip says so.'
       : (!tx0.gstin ? 'No GSTIN on this shop, so no GST is charged or shown (Settings → Profile).'
                     : 'This shop is registered as ' + esc(tx0.reg) + ', so no GST is charged.'))
-    + (STATE.queued ? '  ·  ' + STATE.queued + ' bill(s) waiting' : '');
+    /* ⚠️ THE SAME WORDS WHEREVER IT APPEARS. An unregistered shop took a different branch and got the short form, "1 bill(s)
+       waiting" — waiting for what? A shopkeeper should not learn two phrasings for one fact because of how they are registered. */
+    + (STATE.queued ? '  ·  ' + STATE.queued + ' bill(s) waiting to reach ChitBridge' : '');
   if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
   /**
    * ⚠️⚠️ LAST, SO NOTHING CAN OVERWRITE IT. This was written first and then quietly clobbered by the no-GST line and the missing
