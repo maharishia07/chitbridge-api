@@ -1043,9 +1043,16 @@ async function pickHost(){
      * A guard that cries wolf is worse than no guard — the first person to see it wrong is the last person to believe it.
      * shopLs() namespaces it by the key, which is what actually identifies a counter.
      */
-    if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
+    /**
+     * ⚠️⚠️ THE KEY FIRST, THEN THE MARKER — AND THE ORDER IS THE WHOLE FIX. shopLs() namespaces by tillStore(), which is derived
+     * from CloudHost.key. Writing the marker one line EARLIER meant the key was still null, tillStore() answered with its
+     * unscoped fallback, and both counters wrote to the same shared name all over again — so [ISO-01] still saw counter A
+     * accuse itself of being the wrong shop, with the "fix" already in place.
+     * Namespacing something by a value you have not assigned yet is not namespacing. Two lines, in the right order.
+     */
     if (k) { ls.set('cb_till_key', k); CloudHost.key = k; DB.reopen();   /* a new key = a different shop = a different copy */
              history.replaceState(null, '', location.pathname + location.search); }
+    if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
   }
   return CloudHost;
 }
