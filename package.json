@@ -9,7 +9,8 @@
     "test": "node tests/run-tests.js",
     "test:jest": "jest",
     "test:integration": "node tests/run-tests.js",
-    "check:trips": "node tools/round-trips.cjs --check"
+    "check:trips": "node tools/round-trips.cjs --check",
+    "guards": "node scripts/guards.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",

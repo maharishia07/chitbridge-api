@@ -459,19 +459,24 @@ router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
     const want = Math.min(8, total);
     const offsets = [];
     for (let i = 0; i < want; i++) offsets.push(Math.floor((total - 1) * (want === 1 ? 0 : i / (want - 1))));
-    const sample = [];
-    for (const off of [...new Set(offsets)]) {
-      const r = await withEntity(entity_id, (db) => db.query(
-        `SELECT item_id, item_data FROM catalogue_items
-           WHERE entity_id = $1 AND is_active = true
-             AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
-                 NOT IN ('unavailable', 'redundant', 'retired')
-         ORDER BY item_id LIMIT 1 OFFSET $2`, [entity_id, off])).catch(() => ({ rows: [] }));
-      const row = r.rows[0]; if (!row) continue;
+    /**
+     * ⚠️ ONE QUERY, NOT EIGHT. The first cut ran a LIMIT 1 OFFSET n read per sample point, inside a loop — the textbook N+1, and
+     * tests/query-shape caught it as "routes/till.js: 1 (budget 0)". A check that a counter is healthy must not itself cost the
+     * server eight round trips across the Pacific every time somebody presses it.
+     * row_number() numbers the shelf once and "= ANY" picks the wanted places out of it, which is exactly what the loop meant.
+     */
+    const sampleRows = await withEntity(entity_id, (db) => db.query(
+      'WITH live AS (SELECT item_id, item_data, (row_number() OVER (ORDER BY item_id) - 1)::int AS n'
+      + '   FROM catalogue_items WHERE entity_id = $1 AND is_active = true'
+      + "     AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')"
+      + "         NOT IN ('unavailable', 'redundant', 'retired'))"
+      + ' SELECT item_id, item_data, n FROM live WHERE n = ANY($2::int[]) ORDER BY n',
+      [entity_id, [...new Set(offsets)]])).catch(() => ({ rows: [] }));
+    const sample = sampleRows.rows.map((row) => {
       const d = row.item_data || {};
-      sample.push({ at_offset: off, item_id: row.item_id, name: d.name || null,
-                    price: amountOf(d.price), tax_slab: d.tax_slab || null });
-    }
+      return { at_offset: row.n, item_id: row.item_id, name: d.name || null,
+               price: amountOf(d.price), tax_slab: d.tax_slab || null };
+    });
     res.json({ total, at: new Date().toISOString(),
                shop: { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null }, sample });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }

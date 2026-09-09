@@ -12,7 +12,18 @@
 const fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 const WEB = path.join(API, '..', 'chitbridge-web', 'public');
-const GEN = '/* GENERATED — DO NOT EDIT. Written by chitbridge-api/scripts/vendor-till.cjs. Edit the master and re-run. */\n';
+/**
+ * ⚠️ THE @stage IS PART OF THE HEADER, NOT AN AFTERTHOUGHT. tests/engine-boundary insists that anything no route calls declares
+ * a stage — "being uncalled is fine; being uncalled and unlabelled is not, that is how an experiment gets mistaken for a
+ * shipped feature." The browser copies ARE uncalled from the server: nothing in routes/ requires lotfields.browser.js, because
+ * the only thing that loads it is a page. So they were flagged, and rightly.
+ * They are `tested` because they are byte-for-byte the master, and the master is covered — that is what the parity test in
+ * till-vendor asserts. Stamping it HERE means a copy generated next month carries it too; stamping the files by hand would
+ * last exactly until the next vendor run.
+ */
+const GEN = '/* GENERATED — DO NOT EDIT. Written by chitbridge-api/scripts/vendor-till.cjs. Edit the master and re-run. */\n'
+  + '// @stage tested\n'
+  + '// @stage-note a byte-for-byte copy of the master, which is the thing the tests cover (scripts/vendor-till.cjs).\n';
 
 const MANIFEST = JSON.stringify({
   name: 'ChitBridge Counter', short_name: 'Counter', start_url: '/till.html', scope: '/', display: 'standalone',
