@@ -177,7 +177,7 @@ const KEY_ROUTES = {
   services:  [['*', /^\/api\/(offers|pricing|invoice)(\/|$)/], ['POST', /^\/api\/tax\/(rate|compute)$/]],
   /* ⭐ THE TILL (2026-09-07): its snapshot, its bills, its heartbeat, the bell. It cannot read another chit, cannot touch products,
      cannot mint keys — and routes/chits.js refuses a till key that addresses anyone but itself. */
-  till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
+  till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
               /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
                  two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery
                  claim against any open order of ITS OWN shop. It is the shop's own claim, it is visible, it is corrected by a

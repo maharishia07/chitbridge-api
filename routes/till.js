@@ -62,7 +62,7 @@ router.get('/snapshot', auth, async (req, res) => {
      * no GST" for the cart, the send and the invoice alike — and most shops we are building this counter for have none. So the shelf
      * is asked only for slabs, categories and the face; the items come from the catalogue, whoever the shop is.
      */
-    const [shelf, itemRows] = await Promise.all([
+    const [shelf, itemRows, liveCount] = await Promise.all([
       taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
         getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(() => null),
       /**
@@ -77,6 +77,28 @@ router.get('/snapshot', auth, async (req, res) => {
         ? db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at DESC LIMIT 20000', [entity_id, since])
         : db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 20000', [entity_id])
       )).catch(() => ({ rows: [] })),
+      /**
+       * ⚠️⚠️ A DELETE IS INVISIBLE TO A DELTA, AND THAT IS WHY THE COUNTER KEPT SHOWING STOCK THAT NO LONGER EXISTS.
+       *
+       * Athi emptied this shop's catalogue in SQL and loaded a new one; his counter went on listing the old rows. The delta asks
+       * for everything with `updated_at > since`, and a row that has been DELETED is not late — it is gone. It appears in no
+       * result set, so it lands in neither `items` nor `removed`, and the till's merge keeps it for ever. The `removed` list
+       * only ever caught rows that went INACTIVE, which is a different thing from rows that stopped existing.
+       *
+       * No delta protocol can express an absence it cannot see, so the counter is given the one number that reveals it: how many
+       * sellable products the shop has RIGHT NOW. If what the till holds after merging does not equal this, its copy is wrong for
+       * some reason we did not anticipate, and it takes the whole shop again. That heals a hard delete, a missed delta, a clock
+       * skew and a half-written cache — without any of them having to be predicted.
+       *
+       * ⚠️ The predicate must be exactly itemstatus.isOfferable: statusOf() falls back to 'available' for a missing, blank or
+       * unrecognised status, so the SQL excludes the three blocked statuses rather than requiring 'available'. Requiring it would
+       * under-count every product that never had the field, and the counter would then refresh itself in a loop for ever.
+       */
+      withEntity(entity_id, (db) => db.query(
+        `SELECT count(*)::int AS n FROM catalogue_items
+           WHERE entity_id = $1 AND is_active = true
+             AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
+                 NOT IN ('unavailable', 'redundant', 'retired')`, [entity_id])).catch(() => ({ rows: [{ n: null }] })),
     ]);
 
     /**
@@ -185,6 +207,8 @@ router.get('/snapshot', auth, async (req, res) => {
         currency: profile.currency || 'INR',
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
+      /* how many sellable products the shop has right now — the counter checks its merged copy against this (see the note above) */
+      total: (liveCount && liveCount.rows && liveCount.rows[0] && liveCount.rows[0].n != null) ? liveCount.rows[0].n : null,
       /**
        * ⚠️⚠️ A MAP DOES NOT SURVIVE JSON, AND THAT IS WHY THE COUNTER HAD NO TAX (Athi, 2026-09-08: *"no, tax is not there"*).
        *
@@ -229,6 +253,58 @@ router.get('/snapshot', auth, async (req, res) => {
  * ⚠️ It reads nothing else. A till key cannot open the inbox, a supplier's chit or anybody's messages, and this route keeps that true:
  * the WHERE clause is the shop, the purpose, and the presence of a bill number.
  */
+/**
+ * ⭐⭐⭐ GET /api/till/verify — CAN THIS COUNTER PROVE IT IS RIGHT?
+ *
+ * Athi, 2026-09-09: *"i am going crazy now — how to gain confidence it is reading the entire catalogue and also not mixing up, and
+ * counter works fine and rightly synced."*
+ *
+ * That is not a question prose can answer. Anyone can be TOLD the copy is good; what was missing is a way to CHECK it, on the spot,
+ * against the shop itself. So this is deliberately not the snapshot: it is a small, cheap, independent second opinion the counter
+ * compares its own copy against, field by field.
+ *
+ *   total   how many sellable products the shop has right now
+ *   at      the server's clock, so a stale copy is obvious
+ *   shop    the entity and its name — the counter checks it is even looking at the right business
+ *   sample  a handful of REAL rows, spread across the whole shelf rather than the first page, with the numbers that matter
+ *
+ * ⚠️ THE SAMPLE IS SPREAD ON PURPOSE. Taking the first eight rows would pass on a counter that only ever received page one — which
+ * is the exact failure being checked for. These are drawn across the whole catalogue by offset, so a copy that stops at 500 fails.
+ * ⚠️ It never repairs anything. A check that quietly fixes what it finds cannot be trusted to report honestly next time.
+ */
+router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
+    const cnt = await withEntity(entity_id, (db) => db.query(
+      `SELECT count(*)::int AS n FROM catalogue_items
+         WHERE entity_id = $1 AND is_active = true
+           AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
+               NOT IN ('unavailable', 'redundant', 'retired')`, [entity_id]));
+    const total = (cnt.rows[0] && cnt.rows[0].n) || 0;
+
+    /* eight rows spread across the shelf — first, last, and six evenly between */
+    const want = Math.min(8, total);
+    const offsets = [];
+    for (let i = 0; i < want; i++) offsets.push(Math.floor((total - 1) * (want === 1 ? 0 : i / (want - 1))));
+    const sample = [];
+    for (const off of [...new Set(offsets)]) {
+      const r = await withEntity(entity_id, (db) => db.query(
+        `SELECT item_id, item_data FROM catalogue_items
+           WHERE entity_id = $1 AND is_active = true
+             AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
+                 NOT IN ('unavailable', 'redundant', 'retired')
+         ORDER BY item_id LIMIT 1 OFFSET $2`, [entity_id, off])).catch(() => ({ rows: [] }));
+      const row = r.rows[0]; if (!row) continue;
+      const d = row.item_data || {};
+      sample.push({ at_offset: off, item_id: row.item_id, name: d.name || null,
+                    price: amountOf(d.price), tax_slab: d.tax_slab || null });
+    }
+    res.json({ total, at: new Date().toISOString(),
+               shop: { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null }, sample });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 router.get('/bills', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

@@ -389,6 +389,14 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/refresh') { const ok = await refresh(); return json(res, 200, { ok: ok, online: online, at: snapshot && snapshot.at }); }
 
+    /* ⭐ THE SAME SECOND OPINION THE HOSTED COUNTER GETS. The page must not care which host it is on, so the agent forwards
+       it rather than the page reaching past its host to the internet. */
+    if (req.method === 'GET' && url.pathname === '/api/verify') {
+      try { const r = await cb.call('GET', '/api/till/verify');
+        return json(res, 200, Object.assign({ ok: true }, r || {}));
+      } catch (e) { return json(res, 200, { ok: false, why: e.message }); }
+    }
+
     /* ⭐ EARLIER BILLS come from ChitBridge; the page asks its host, never the internet directly (2026-09-08) */
     if (req.method === 'GET' && url.pathname === '/api/history') {
       try { const days = Math.min(Number(url.searchParams.get('days')) || 30, 365);

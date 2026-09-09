@@ -514,6 +514,7 @@ var AgentHost = {
   print: function(b){ return fetch('/api/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
   doc: function(d){ return fetch('/api/doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){ return r.json(); }); },
   alias: function(a){ return fetch('/api/alias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)}).then(function(r){ return r.json(); }); },
+  verify: function(){ return fetch('/api/verify').then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
   listen: function(b){ return fetch('/api/listen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
 };
 
@@ -557,6 +558,19 @@ var CloudHost = {
       (snap.items || []).forEach(function(i){ byId[i.item_id] = i; });
       snap.items = Object.keys(byId).map(function(k){ return byId[k]; });
       snap.merged = { changed: (snap.items || []).length, removed: (snap.removed || []).length };
+      /**
+       * ⚠️⚠️ THE MERGE HAS TO ADD UP, OR THE WHOLE SHOP COMES DOWN AGAIN.
+       * A row DELETED in the database is in no delta: it is not late, it is gone, so it appears in neither the changes nor the
+       * removals and this merge would keep it for ever. Athi emptied a catalogue and reloaded it, and his counter went on
+       * offering ten thousand things that no longer existed — priced, taxed and ready to bill.
+       * The server now says how many sellable products the shop actually has. If our copy disagrees by even one, we do not try to
+       * work out why: we take the whole shop again. It costs one big read on a day somebody made a bulk change, and it is the only
+       * check that heals a cause nobody predicted.
+       */
+      if (snap.total != null && snap.items.length !== snap.total) {
+        var full = await fetch(this.api + '/api/till/snapshot', { headers:{ 'X-Api-Key': this.key } });
+        if (full.ok) { snap = await full.json(); snap.rebuilt = true; }
+      }
     }
     await DB.set('snapshot', snap);
     this.drain();
@@ -620,6 +634,14 @@ var CloudHost = {
       var r = await fetch(this.api + '/api/till/listen', { method:'POST',
         headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(b) });
       return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
+    } catch (e) { return { ok:false, why:e.message }; }
+  },
+  /** ask the shop whether this counter's copy is right — a second opinion, never a repair */
+  async verify(){
+    if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet' };
+    try {
+      var r = await fetch(this.api + '/api/till/verify', { headers:{ 'X-Api-Key': this.key } });
+      return r.ok ? Object.assign({ ok:true }, await r.json()) : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
   },
   async doc(d){
@@ -1560,12 +1582,103 @@ function health(){
 
   return out;
 }
+/**
+ * ⭐⭐⭐ PROVE IT, DO NOT PROMISE IT. Athi, 2026-09-09: *"i am going crazy now — how to gain confidence it is reading the entire
+ * catalogue and also not mixing up, and counter works fine and rightly synced."*
+ *
+ * Everything else in this file TELLS a shopkeeper the copy is good. This asks the shop, in front of them, and reports what came
+ * back — including when the answer is bad. Four questions, in the order a person actually worries about them:
+ *   1 am I even looking at the right shop?      the entity the key answers for, against the one we were opened for
+ *   2 do I have everything?                     our count against the shop's count, right now
+ *   3 is what I have RIGHT?                     eight real rows spread across the whole shelf, compared name and price
+ *   4 how old is it?                            the server's clock against the copy we hold
+ *
+ * ⚠️ THE SAMPLE IS SPREAD ACROSS THE SHELF ON PURPOSE. Checking the first eight rows would pass on a counter that only ever
+ * received page one, which is the exact fault being looked for.
+ * ⚠️ IT REPAIRS NOTHING. It offers the button, the person presses it. A check that quietly fixes what it finds cannot be trusted
+ * to report honestly the next time.
+ */
+async function verifyCounter(){
+  var box = document.getElementById('slipbox');
+  var line = function(icon, what, detail){
+    return '<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">'
+      + '<div style="flex:0 0 22px;font-size:1.1em">' + icon + '</div>'
+      + '<div><b>' + esc(what) + '</b><div style="color:var(--dim);font-size:.9em">' + esc(detail) + '</div></div></div>'; };
+
+  box.innerHTML = '<div style="padding:8px 0;color:var(--dim)">Asking ChitBridge…</div>';
+  var v = await HOST.verify();
+  if (!v || !v.ok) {
+    box.innerHTML = line('⛔', 'Could not ask ChitBridge', (v && v.why) || 'no answer')
+      + '<div style="padding:10px 0;color:var(--dim)">Nothing is wrong with your bills — this check simply needs the internet.</div>';
+    return;
+  }
+
+  var out = '', worst = 'ok';
+  var mine = ((S && S.items) || []).length;
+  var n = function(x){ return Number(x).toLocaleString('en-IN'); };
+
+  /* 1 · the right shop */
+  var want = ls.get('cb_till_shop', '');
+  if (want && v.shop && v.shop.entity_id && want !== v.shop.entity_id) {
+    out += line('⛔', 'This is not the shop you opened', 'The key answers for ' + (v.shop.name || 'another shop') + '.');
+    worst = 'bad';
+  } else {
+    out += line('✅', 'The right shop', (v.shop && v.shop.name) || 'the key answers for this shop');
+  }
+
+  /* 2 · everything */
+  if (mine === v.total) out += line('✅', 'Everything is here', n(mine) + ' products, and the shop has ' + n(v.total) + '.');
+  else {
+    out += line('⛔', 'This counter is missing things',
+      'It holds ' + n(mine) + ', the shop has ' + n(v.total) + '. Press ↻ to read the shop again.');
+    worst = 'bad';
+  }
+
+  /* 3 · right, not just present — spread across the shelf */
+  var checked = 0, wrong = [];
+  (v.sample || []).forEach(function(r){
+    var ours = ((S && S.items) || []).filter(function(i){ return i.item_id === r.item_id; })[0];
+    checked++;
+    if (!ours) { wrong.push(r.name + ' — not on this counter'); return; }
+    if (String(ours.name) !== String(r.name)) { wrong.push(r.name + ' — named differently here'); return; }
+    if (Number(ours.price) !== Number(r.price)) { wrong.push(r.name + ' — ' + money(ours.price) + ' here, ' + money(r.price) + ' at the shop'); return; }
+    if ((ours.tax_slab || null) !== (r.tax_slab || null)) { wrong.push(r.name + ' — a different tax slab'); }
+  });
+  if (!checked) out += line('ℹ️', 'Nothing to compare', 'The shop has no products yet.');
+  else if (!wrong.length) out += line('✅', 'What is here is right',
+    checked + ' products checked from across the whole shelf — name, price and tax slab all agree.');
+  else { out += line('⛔', wrong.length + ' of ' + checked + ' did not match', wrong.slice(0, 3).join(' · ')); worst = 'bad'; }
+
+  /* 4 · how old */
+  var age = (S && S.at) ? Math.round((new Date(v.at) - new Date(S.at)) / 60000) : null;
+  if (age == null) out += line('⚠️', 'No copy of the shop yet', 'Press ↻ once while the internet is on.');
+  else if (age > 240) { out += line('⚠️', 'These prices are ' + Math.round(age / 60) + ' hours old', 'Press ↻ to read the shop again.'); if (worst === 'ok') worst = 'warn'; }
+  else out += line('✅', 'Up to date', 'Read ' + (age < 1 ? 'just now' : age + ' minutes ago') + '.');
+
+  box.innerHTML = '<div style="font-family:inherit;width:auto;color:var(--ink)">'
+    + '<div style="font-weight:800;margin-bottom:6px">'
+    + (worst === 'ok' ? '✅ This counter agrees with ChitBridge' : (worst === 'bad' ? '⛔ This counter does NOT agree with ChitBridge' : '⚠️ Mostly right, with one thing to do'))
+    + '</div>' + out
+    + '<div style="padding:10px 0;color:var(--dim);font-size:.9em">Checked against the shop just now. Nothing was changed.</div></div>';
+}
 function healthWorst(){ var h = health(); return h.some(function(x){ return x.level === 'bad'; }) ? 'bad'
   : (h.some(function(x){ return x.level === 'warn'; }) ? 'warn' : 'ok'); }
 function openHealth(){
   var h = health();
   var icon = { bad:'⛔', warn:'⚠️', note:'ℹ️' };
   document.getElementById('sliptitle').textContent = 'Check this counter';
+  /* ⚠️ the button goes where the QUESTION is already being asked; a verification nobody can find proves nothing */
+  setTimeout(function(){
+    var f = document.querySelector('#slipdlg .row, #slipdlg form, #slipdlg');
+    if (!f || document.getElementById('verifybtn')) return;
+    var b = document.createElement('button');
+    b.id = 'verifybtn'; b.setAttribute('data-testid', 'till-verify');
+    b.textContent = '🔍 Check against ChitBridge';
+    b.style.cssText = 'margin:8px 0;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);cursor:pointer;font:inherit';
+    b.onclick = verifyCounter;
+    var box = document.getElementById('slipbox');
+    if (box && box.parentNode) box.parentNode.insertBefore(b, box);
+  }, 0);
   document.getElementById('slipbox').innerHTML = '<div style="font-family:inherit;width:auto;color:var(--ink)">'
     + (h.length ? h.map(function(x){
         return '<div style="border-inline-start:4px solid ' + (x.level === 'bad' ? 'var(--warn)' : (x.level === 'warn' ? 'var(--blue)' : 'var(--line)'))

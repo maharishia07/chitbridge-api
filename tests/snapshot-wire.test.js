@@ -60,4 +60,37 @@ it('a shop with no shelf at all still gets an array, never null', () => {
   assert.ok(src.indexOf("((shelf && shelf.slabs) || [])") > 0, 'the fallback must stay an array — the counter does .length on it');
 });
 
+it('⚠️⚠️ the snapshot says how many products the shop HAS — a delete is invisible to a delta', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(/^s*total:/m.test(src), 'the snapshot no longer carries a total; a hard delete becomes invisible again');
+  assert.ok(src.indexOf("NOT IN ('unavailable', 'redundant', 'retired')") > 0,
+    'the count must exclude exactly the blocked statuses');
+});
+
+it('⭐⭐ and that SQL agrees with isOfferable for every status a row can hold', () => {
+  const itemstatus = require(path.join(API, 'lib', 'itemstatus.js'));
+  /* what the SQL does, in JS: COALESCE(NULLIF(btrim(lower(status)),''),'available') NOT IN (blocked) */
+  const BLOCKED = ['unavailable', 'redundant', 'retired'];
+  const sqlSays = (raw) => {
+    const v = String(raw == null ? '' : raw).trim().toLowerCase();
+    return BLOCKED.indexOf(v === '' ? 'available' : v) < 0;
+  };
+  /* ⚠️ the unknown and the blank are the cases that matter: statusOf() falls back to 'available', so a row that never had the
+     field IS sellable. A count that required status='available' would under-count every such row, and the counter would then
+     decide its copy was wrong and re-read the whole shop on every single refresh, for ever. */
+  for (const raw of ['available', 'unavailable', 'redundant', 'retired', '', null, undefined, '  AVAILABLE  ', 'Retired', 'nonsense'])
+    assert.strictEqual(sqlSays(raw), itemstatus.isOfferable({ status: raw }),
+      'SQL and isOfferable disagree about status ' + JSON.stringify(raw));
+});
+
+it('⭐ the counter refuses a merge that does not add up', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('snap.items.length !== snap.total') > 0,
+    'the counter no longer checks its merged copy against the shop own count');
+  const at = page.indexOf('snap.items.length !== snap.total');
+  const after = page.slice(at, at + 400);
+  assert.ok(after.indexOf('/api/till/snapshot') > 0 && after.indexOf('rebuilt') > 0,
+    'on a mismatch it must take the WHOLE shop again, not patch around it');
+});
+
 console.log(pass + ' checks');
