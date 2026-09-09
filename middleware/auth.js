@@ -168,6 +168,16 @@ const auth = async (req, res, next) => {
 
 module.exports = auth;
 /**
+ * ⚠️ THE GUARD, ASKED DIRECTLY. tests/key-scopes.test.js declares what each key SHOULD reach and checks it here — without a
+ * network, and crucially without ever SENDING the request it is asserting must be refused. A security boundary written as data
+ * drifts unless something asserts it; twice this week a scope was wrong in a way nothing noticed.
+ */
+auth.allowsKey = function (scopes, method, url) {
+  return (scopes || []).some(function (sc) {
+    return (KEY_ROUTES[sc] || []).some(function (pair) {
+      return (pair[0] === '*' || pair[0] === method) && pair[1].test(url); }); });
+};
+/**
  * ⚠️ THE NAMES ARE EXPORTED SO NOBODY KEEPS A SECOND LIST. routes/keys.js had its own array of scope names, and a scope added
  * here but not there is mintable by nobody — the guard would enforce a permission no key could ever hold. One list, derived from
  * the map that does the enforcing.
