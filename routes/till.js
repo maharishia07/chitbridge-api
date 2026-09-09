@@ -489,7 +489,19 @@ router.get('/bills', auth, async (req, res) => {
       `SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json
          FROM chit_header h
          LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
-        WHERE h.entity_id = $1 AND h.direction = 'sent' AND h.purpose IN ('order','offer')
+       /**
+        * ⚠️⚠️ NO DIRECTION TEST — AND THAT IS THE WHOLE BUG. A counter bill is a chit the shop sends to ITSELF, and a SELF chit
+        * lands with direction 'received', not 'sent'. We knew that: it is why business_json.side exists and why sideOf() was
+        * written. This query was still asking for 'sent', so it matched nothing, and "Earlier bills" has been an empty list since
+        * the day it shipped — a screen that answers "you have no bills" to a shop that has been billing all week.
+        *
+        * ⚠️ It found nothing rather than erroring, which is why nobody noticed. [ISO-01] only caught it because it asked the
+        * SERVER where the money went instead of believing the counter's own copy.
+        *
+        * The identity of a bill is the entity, the purpose, and the fact that it carries a bill_no. Direction is a fact about
+        * who the counterparty was, and for a shop billing itself it is not the question being asked.
+        */
+        WHERE h.entity_id = $1 AND h.purpose IN ('order','offer')
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
         ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit]));

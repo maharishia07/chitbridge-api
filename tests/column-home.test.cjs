@@ -63,4 +63,22 @@ it('the counter\'s own three reads join it, rather than hoping', () => {
   assert.ok(joins >= 4, 'expected the bills, tasks and match reads to join chit_detail; found ' + joins);
 });
 
+
+
+/**
+ * ⚠️⚠️ A BILL TO YOURSELF IS STILL A BILL (2026-09-09). /api/till/bills filtered on direction = 'sent'. A counter bill is a chit
+ * the shop sends to ITSELF, and a SELF chit lands with direction 'received' — which we already knew, because it is why
+ * business_json.side and sideOf() exist. So the query matched nothing and "Earlier bills" answered "you have no bills" to a shop
+ * that had been billing all week. It found nothing rather than erroring, which is why it went unnoticed for a day.
+ * The identity of a bill is the entity, the purpose, and carrying a bill_no. Direction is a fact about the counterparty, and a
+ * shop billing itself is not asking that question.
+ */
+it('⚠️⚠️ the bills query does not filter on direction — a SELF chit is received, not sent', () => {
+  const src = fs.readFileSync(path.join(ROUTES, 'till.js'), 'utf8');
+  const q = src.slice(src.indexOf("router.get('/bills'"), src.indexOf("router.get('/bills'") + 2200);
+  assert.ok(q.indexOf('bill_no') > 0, 'the bills query no longer identifies a bill by its bill_no');
+  assert.ok(q.indexOf("direction = 'sent'") < 0,
+    "the bills query filters on direction = 'sent' again — a counter bill is sent to SELF and lands as 'received'");
+});
+
 console.log(pass + ' checks');
