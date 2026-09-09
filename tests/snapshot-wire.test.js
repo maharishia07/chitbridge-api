@@ -293,4 +293,43 @@ it('⭐⭐ the cart carries the stepper and a shortcut, and a repeated add raise
     'adding the same product again no longer increases the count on the bill');
 });
 
+/**
+ * ⭐⭐ HOW MANY THINGS ARE ON THE BILL. Athi: *"where do we showcase the total number of items in the cart?"* — nowhere, and
+ * the word "Items" was already taken by a MONEY figure (the total before offers), so somebody looking for a count found rupees.
+ */
+it('⭐⭐ the bill says how many products and how many items, on screen and on paper', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function cartCount(){') > 0, 'nothing counts what is on the bill');
+  assert.ok(page.indexOf('data-testid="till-count"') > 0, 'the count is not on the screen');
+  const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));
+  assert.ok(slip.indexOf("t('Products'") > 0 && slip.indexOf("t('Items'") > 0,
+    'the printed slip does not say how many — the line a customer checks against the bag');
+  /* ⚠️ and "Items" must never again label a rupee figure, on any of the three documents */
+  assert.ok(page.indexOf("t('Items', money(") < 0, '"Items" is labelling money again — it is a count word');
+  assert.ok(page.indexOf("<span>Items</span><span>' + money(") < 0, '"Items" labels money in the totals block');
+});
+
+/**
+ * ⭐⭐ A TAX INVOICE CARRIES THE HEADS. Athi: *"here we are not showcasing GST split."* One lumped "GST" line on a document
+ * headed TAX INVOICE is not a display shortcoming — the buyer cannot claim credit off it. Intra-state is CGST+SGST, rate-wise.
+ * ⚠️ The DECISION is the engine's (CBTax.supplyType), never re-derived here, and where the shop has no state code the engine
+ * answers 'unknown' and the bill says so rather than inventing a split a return would contradict.
+ */
+it('⭐⭐ the GST is split into its heads, by the engine that already decides that', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const bm = page.slice(page.indexOf('function billMoney(){'), page.indexOf('function paintTotals'));
+  assert.ok(bm.indexOf('CBTax.supplyType(') > 0, 'the counter decides intra vs inter itself instead of asking the engine');
+  assert.ok(bm.indexOf("heads.push({ name:'CGST'") > 0 && bm.indexOf("heads.push({ name:'SGST'") > 0
+    && bm.indexOf("heads.push({ name:'IGST'") > 0, 'the heads are not all built');
+  /* ⭐ the engine's rounding rule: CGST takes the rounded half, SGST the remainder, so the pair sums to the tax exactly */
+  assert.ok(bm.indexOf('r2(t - half)') > 0, 'SGST is not the remainder — the halves can fail to sum to the tax');
+  assert.ok(bm.indexOf("supply !== 'unknown'") > 0, 'a shop with no state code would be given an invented split');
+  /* it must reach both the screen and the paper, and be RECORDED on the bill so a reprint shows what was issued */
+  assert.ok(page.indexOf("'<div class=\"t head\">'") > 0 || page.indexOf('class="t head"') > 0, 'the screen shows no heads');
+  const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));
+  assert.ok(slip.indexOf('bill.heads') > 0, 'the printed slip still lumps the GST into one line');
+  assert.ok(page.indexOf('heads: m.heads, supply: m.supply,') > 0,
+    'the bill does not record its heads — a reprint would recompute them and could restate a filed return');
+});
+
 console.log(pass + ' checks');

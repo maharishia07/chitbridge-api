@@ -220,6 +220,11 @@
   .row .nm{font-weight:600;overflow-wrap:anywhere}
   .row input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;background:var(--paper)}
   .row .amt{text-align:right;font-variant-numeric:tabular-nums}
+  /* the count is a fact about the bill, not money — it does not sit in the tabular money column */
+  .t.count{color:var(--dim);font-size:.9em}
+  /* the heads are the detail under Taxable — indented so the eye reads them as its parts, not as more totals */
+  .t.head{color:var(--dim);font-size:.92em;padding-inline-start:12px}
+  .t.warnrow{color:var(--warn);font-size:.9em}
   .row .x{border:none;background:none;color:var(--warn);font-size:1.2em;cursor:pointer}
   .save{color:var(--ok)}
 
@@ -2482,7 +2487,38 @@ function billMoney(){
   }
   /* ⚠️ EXCLUSIVE PRICING CHANGES WHAT THE CUSTOMER PAYS, not just how it is reported: the tax is added to the total. */
   if (taxed && !inclusive) net = r2(base + tax);
-  return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed, inclusive:inclusive };
+  /**
+   * ⚠️ THE HEADS ARE PART OF THE MONEY, so they are worked out here beside it and never in a painter — the screen, the
+   * printed slip and the chit must all read the same figures from one place.
+   */
+  var sc = (S && S.shop && S.shop.state_code) ? String(S.shop.state_code) : '';
+  var supply = (window.CBTax && CBTax.supplyType) ? CBTax.supplyType(sc, sc) : 'unknown';
+  var heads = [];
+  if (taxed && supply !== 'unknown') {
+    Object.keys(byRate).sort(function(a, b){ return Number(a) - Number(b); }).forEach(function(rt){
+      var t = byRate[rt].tax, half = r2(t / 2);
+      if (supply === 'inter') heads.push({ name:'IGST', rate:Number(rt), amount:t, base:byRate[rt].base });
+      else {
+        /* ⭐ the engine's own rule: CGST takes the rounded half, SGST the remainder, so the pair always sums to the tax */
+        heads.push({ name:'CGST', rate:Number(rt) / 2, amount:half, base:byRate[rt].base });
+        heads.push({ name:'SGST', rate:Number(rt) / 2, amount:r2(t - half), base:byRate[rt].base });
+      }
+    });
+  }
+  return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed, inclusive:inclusive,
+           supply:supply, heads:heads };
+}
+function cartCount(){
+  var units = 0;
+  CART.forEach(function(c){ units = r2(units + (Number(c.qty) || 0)); });
+  return { products: CART.length, items: units };
+}
+/** ⚠️ trims a whole number to "9" and keeps "3.5" — money() would print 9.00, which reads as rupees, not a count */
+function countWords(){
+  var n = cartCount();
+  if (!n.products) return '';
+  var items = (Math.round(n.items * 100) / 100);
+  return n.products + ' product' + (n.products === 1 ? '' : 's') + ' · ' + items + ' item' + (items === 1 ? '' : 's');
 }
 function paintTotals(){
   var m = billMoney();
@@ -2494,8 +2530,19 @@ function paintTotals(){
     ? (tendered ? (change >= 0 ? 'change ₹' + money(change) : 'still ₹' + money(-change)) : 'still ₹' + money(due))
     : (tendered ? (change >= 0 ? 'change ₹' + money(change) : 'short ₹' + money(-change)) : '');
   document.getElementById('totals').innerHTML =
-      (m.save > 0 ? '<div class="t"><span>Items</span><span>' + money(m.gross) + '</span></div><div class="t save"><span>Saved</span><span>−' + money(m.save) + '</span></div>' : '')
-    + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div><div class="t"><span>GST</span><span>' + money(m.tax) + '</span></div>' : '')
+      /* ⭐ the count sits with the money it belongs to, and is read in the same glance as the total */
+      (CART.length ? '<div class="t count" data-testid="till-count"><span>On this bill</span><span>' + countWords() + '</span></div>' : '')
+      /* ⚠️ "Items" was this money's label and it is a COUNT word. The figure is the total before any offer came off it. */
+    + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div><div class="t save"><span>Saved</span><span>−' + money(m.save) + '</span></div>' : '')
+    + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>'
+        + m.heads.map(function(h){
+            return '<div class="t head"><span>' + h.name + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
+        /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
+           formatting choice — the buyer cannot claim the credit off it. */
+        + (m.supply === 'unknown'
+            ? '<div class="t warnrow"><span>GST</span><span>' + money(m.tax) + '</span></div>'
+              + '<div class="t warnrow"><span colspan="2">No state on the GSTIN, so CGST/SGST cannot be split</span><span></span></div>'
+            : '<div class="t"><span>GST total</span><span>' + money(m.tax) + '</span></div>') : '')
     + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">₹' + money(m.net) + '</span></div>';
   var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
 }
@@ -2542,6 +2589,9 @@ async function finish(){
                                           gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label, hsn:c.hsn, gst_rate:c.gst_rate }; }),
     payments: parts, paid: paid, change: r2(Math.max(0, (tendered || 0) - r2(m.net - (paid - (parts[parts.length-1] || {}).amount || 0)))),
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
+    /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
+       the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
+    heads: m.heads, supply: m.supply,
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
     by: WHO ? { id: WHO.id, name: WHO.name } : null,
     kind: shopTax().kind,
@@ -2610,7 +2660,7 @@ function dayCloseHTML(d){
     + t('Printed', esc(new Date().toTimeString().slice(0,5))) + dash
     + t('Bills', String(d.bills))
     + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
-    + (d.saved > 0 ? t('Items', money(d.gross)) + t('Given away', '-' + money(d.saved)) : '')
+    + (d.saved > 0 ? t('Before offers', money(d.gross)) + t('Given away', '-' + money(d.saved)) : '')
     + solid + t('TAKEN', money(d.total), true) + solid
     + (d.taxed ? dash + '<div style="font-weight:700">Tax</div>'
         + Object.keys(d.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
@@ -3213,8 +3263,18 @@ function slipHTML(bill, m){
              + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price) + (l.off ? '  (−' + money(l.save) + ')' : '')
              + (bill.kind === 'tax' && l.gst_rate ? '  GST ' + l.gst_rate + '%' : '') + '</div>';
       }).join('') + dash
-    + (bill.saved > 0 ? t('Items', money((m&&m.gross)||bill.total)) + t('You saved', '−' + money(bill.saved)) : '')
-    + (bill.kind === 'tax' ? t('Taxable', money(bill.taxable)) + t('GST', money(bill.tax)) : '')
+    /* ⭐ ON THE PAPER TOO. This is the line a customer runs their finger down when the bag does not look right, and the
+       one a shopkeeper reads back at the door. It is printed for every bill, offer or no offer. */
+    + t('Products', String((bill.lines||[]).length))
+    + t('Items', String(Math.round((bill.lines||[]).reduce(function(a,l){ return a + (Number(l.qty)||0); }, 0) * 100) / 100))
+    + (bill.saved > 0 ? t('Before offers', money((m&&m.gross)||bill.total)) + t('You saved', '−' + money(bill.saved)) : '')
+    + (bill.kind === 'tax'
+        ? t('Taxable', money(bill.taxable))
+          + ((bill.heads && bill.heads.length)
+              ? bill.heads.map(function(h){ return t(h.name + ' ' + h.rate + '%', money(h.amount)); }).join('')
+                + t('GST total', money(bill.tax))
+              : t('GST', money(bill.tax)))
+        : '')
     + solid + t('TOTAL', money(bill.total), true) + solid
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
