@@ -155,7 +155,7 @@
    * ⚠️ The price column is fixed-width and tabular, so the rupees line up down the list — a column of money that jitters is a column
    * nobody can scan. On a narrow screen the middle column drops below the name rather than squeezing the price.
    */
-  .hit{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(92px,auto) auto;gap:12px;align-items:center;
+  .hit{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(92px,auto);gap:12px;align-items:center;
        padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
   /* the marked row carries a bar as well as a tint: on a long list a colour alone is easy to lose */
@@ -192,37 +192,12 @@
   .hit .back{height:38px;padding:0 14px;border:1px solid var(--ok);border-radius:9px;background:var(--ok-tint);
              color:var(--ok);font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
   .hit .back:hover{background:var(--ok);color:#fff}
-  /**
-   * ⭐⭐ THE COUNT SITS AT THE RIGHT-HAND END. Athi, 2026-09-09: *"the quantity add, it has to be the right hand side like
-   * earlier — why are you changing that design? find the best design from the net and use it."* Fair: I had wedged it between
-   * the name and the money, which is neither what he asked for nor what anyone else does.
-   *
-   * ── ADOPTED, NOT INVENTED (Nielsen Norman Group, "Design Guidelines for Input Steppers"; eBay Playbook numeric stepper) ──
-   *   · HORIZONTAL, minus left of the value and plus right of it — vertical chevrons invite mis-taps on a touchscreen
-   *   · a touch target of at least 1 cm × 1 cm, which is ~38 px here. Mine were 26 px: too small for a finger at a counter
-   *   · "steppers become impractical for large changes" — so the value is a FIELD, not a label. Twenty-four packets is typed,
-   *     not tapped twenty-three times. NN/g calls this the hybrid, and it is the only honest answer for a till
-   *   · the default is the most frequent value, which at a counter is 1
-   *   · always visible, not revealed on hover — a control nobody can see is a control nobody uses, and it is the pattern every
-   *     grocery app has trained this shopkeeper's customers on
-   */
-  .hit .qty{display:flex;align-items:center;gap:4px;flex:none}
-  .hit .qty button{width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:var(--paper);
-                   color:var(--ink);font:inherit;font-size:1.15em;font-weight:700;cursor:pointer;line-height:1;padding:0}
-  .hit .qty button:hover{border-color:var(--ok);color:var(--ok)}
-  .hit .qty button:active{background:var(--ok-tint)}
-  .hit .qty .v{width:46px;height:38px;text-align:center;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;
-               border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);
-               -moz-appearance:textfield;appearance:textfield}
-  .hit .qty .v::-webkit-outer-spin-button, .hit .qty .v::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .hit .qty .v:focus{outline:2px solid var(--ok);outline-offset:1px}
+  /* ⚠️ THE QUANTITY LIVES ON THE BILL, NOT IN THE LIST. A stepper here made a dead strip that swallowed the tap meant to add
+     the product — the list is for choosing, the bill is for amending. The cart row's own qty field is the one place it is set. */
   .facts{color:var(--dim);font-size:.78em;margin-top:2px;line-height:1.45}
   .facts b{color:var(--ink);font-weight:600}
   .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
-  @media (max-width:520px){ .hit{grid-template-columns:34px minmax(0,1fr) auto;gap:9px} .hit .pic{width:34px;height:34px}
-    /* ⚠️ the tap targets are NOT shrunk on the small screen — that is the screen where a finger needs them most. The stepper
-       moves to its own line under the name instead, and the money keeps the column it had. */
-    .hit .qty{grid-column:2/-1;justify-content:flex-end;margin-top:4px} }
+  @media (max-width:520px){ .hit{grid-template-columns:34px minmax(0,1fr) auto;gap:9px} .hit .pic{width:34px;height:34px} }
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
@@ -261,6 +236,29 @@
   dialog{border:none;border-radius:14px;padding:0;max-width:560px;width:94vw;background:var(--card);color:var(--ink)}
   dialog::backdrop{background:rgba(0,0,0,.45)}
   .dlg{padding:16px}
+  /* ── the product panel: four decisions, laid out as label / control / plain words about what it means ── */
+  .cardhead{display:flex;gap:12px;align-items:center;padding:0 0 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .cardhead .pic{width:44px;height:44px;border-radius:9px;object-fit:cover;display:flex;align-items:center;
+                 justify-content:center;font-weight:800;color:#fff;flex:none;overflow:hidden}
+  .cardrow{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:start;padding:11px 0;
+           border-bottom:1px solid var(--line)}
+  .cardrow>label{color:var(--dim);font-size:.85em;font-weight:700;padding-top:9px}
+  .swwrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
+  .swwrap.col{flex-direction:column;align-items:stretch;gap:6px}
+  .swline{display:flex;align-items:center;gap:8px}
+  .swtxt{color:var(--dim);font-size:.85em;min-width:0}
+  /* ⭐ a switch, not a checkbox — it is a STATE of the product, and it takes effect the moment it is moved.
+     38px of height keeps the NN/g touch target the row's stepper already follows. */
+  .sw{width:52px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--tint);
+      position:relative;cursor:pointer;flex:none;padding:0;transition:background .15s,border-color .15s}
+  .sw .knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--paper);
+            box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
+  .sw.on{background:var(--ok);border-color:var(--ok)}
+  .sw.on .knob{left:25px}
+  .sw:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+  #cardprice{width:110px;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;
+             background:var(--paper);color:var(--ink);font:inherit;font-weight:700;font-variant-numeric:tabular-nums}
+  .cardnote{padding-top:10px;color:var(--dim);font-size:.85em;min-height:1.2em}
   .dlg h3{margin:0 0 10px}
   .dlg label{display:block;margin:10px 0 4px;color:var(--dim);font-size:.85em}
   .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
@@ -437,6 +435,12 @@
     <div class="foot"><span id="queuenote"></span><span id="updnote" class="upd"></span><span id="lastnote"></span></div>
   </section>
 </div>
+
+<dialog id="carddlg"><div class="dlg">
+  <h3>This product</h3>
+  <div id="cardbox"></div>
+  <div class="dlgbtns"><button class="pri" data-testid="card-close" onclick="closeCard()">Done</button></div>
+</div></dialog>
 
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
@@ -1676,43 +1680,113 @@ function tileSwap(img){
  * ⚠️ It stops the click reaching the row. The row means "sell one of these"; the switch means "we have run out". A tap that did
  * both would put an out-of-stock item on the bill at the moment it was marked out of stock.
  */
+/**
+ * ⭐⭐ ONE PLACE FOR THE SMALL DECISIONS. Athi, 2026-09-09: *"the catalogue management, minimal stuff — changing availability,
+ * product price, offer enable/disable, show on TV — all can be kept in the same place, I guess."*
+ *
+ * He is right, and they were in four: the shelf dot on the row, the Price-change mode, the offer lab in the app, and the shop
+ * screen's campaign rules. Four places for four decisions a shopkeeper makes about ONE product, usually in the same breath —
+ * "we have run out of that, and put the price up, and take it off the telly".
+ *
+ * ⚠️ SO THE DOT STOPS BEING A SECOND PLACE and becomes the way in. A quick toggle on the row plus a panel holding the same
+ * toggle is two places for one action, which is the thing being fixed. The Stock-out and Price-change MODES stay — they are
+ * for doing one thing to MANY products, which is a different job and the panel would be a terrible way to do it.
+ */
 function flagBtn(i, n, off){
-  /* ⚠️ in the off-the-shelf view the trailing button carries this job, so the row does not offer it twice */
+  /* in the off-the-shelf view the trailing button carries the only decision that matters there */
   if (off) return '';
-  return '<button class="flag" data-testid="till-flag-' + n + '" onclick="event.stopPropagation();flagTap(' + n + ')"'
-    + ' title="Mark ' + esc(i.name) + ' off the shelf" aria-label="mark off the shelf"><span class="dot"></span></button>';
+  return '<button class="flag" data-testid="till-flag-' + n + '" onclick="event.stopPropagation();openCard(' + n + ')"'
+    + ' title="' + esc(i.name) + ' — stock, price, offers, the screen" aria-label="manage this product">'
+    + '<span class="dot"></span></button>';
 }
 function flagTap(n){ var i = hits()[n]; if (i) stockToggle(i); }
 /**
- * ⭐ HOW MANY — OPTIONAL, AND NEVER IN THE WAY. Athi, 2026-09-09: *"add qty etc can be provided optional."* Typing "3*rice" still
- * works and is still faster; this is for the hand that is on a touchscreen and not on a keyboard.
- * ⚠️ It is remembered per product and cleared once that product is on the bill, so the next customer starts at one. A stepper
- * that silently kept "6" from the last sale would bill six of the next thing somebody tapped.
+ * ⭐ THE PRODUCT PANEL — four decisions, no more. It is deliberately NOT a product editor: a name, a category or a tax slab
+ * has consequences a till cannot see, and a counter key may not set them (routes/till.js says the same thing at the wire).
+ * Everything here calls the function that already did the job, so there is one write per decision, not two.
  */
-var ROWQ = {};
-function rowQty(i){ var q = Number(i && ROWQ[i.item_id]); return q > 0 ? q : 1; }
-function qtyBox(i, n){
-  /* ⚠️ EVERY PART OF IT STOPS THE CLICK. The row means "sell one of these"; this control means "how many". A tap that did both
-     would bill an item while the operator was still deciding the quantity. */
-  return '<span class="qty" data-testid="till-qty-box-' + n + '" onclick="event.stopPropagation()">'
-    + '<button onclick="event.stopPropagation();bump(' + n + ',-1)" title="one fewer" aria-label="one fewer" tabindex="-1">−</button>'
-    + '<input class="v" type="number" min="1" step="1" inputmode="numeric" value="' + rowQty(i) + '"'
-      + ' data-testid="till-rowqty-' + n + '" aria-label="how many"'
-      + ' onclick="event.stopPropagation();this.select()" onchange="setRowQty(' + n + ',this.value)">'
-    + '<button onclick="event.stopPropagation();bump(' + n + ',1)" title="one more" aria-label="one more" tabindex="-1">+</button></span>';
-}
-/** typed straight in — the half of the hybrid that makes twenty-four packets possible without twenty-three taps */
-function setRowQty(n, v){
+var CARD = null;
+function openCard(n){
   var i = hits()[n]; if (!i) return;
-  var q = Number(v);
-  ROWQ[i.item_id] = (q > 0) ? q : 1;
+  CARD = i; paintCard();
+  var d = document.getElementById('carddlg'); if (d && !d.open) d.showModal();
 }
-function bump(n, d){
-  var i = hits()[n]; if (!i) return;
-  ROWQ[i.item_id] = Math.max(1, rowQty(i) + d);
-  /* ⭐ the number changes, the list does not — repainting 60 rows to move one digit loses the row under the finger */
-  var v = document.querySelector('[data-testid="till-rowqty-' + n + '"]');
-  if (v) v.value = rowQty(i); else paintHits();
+function closeCard(){ CARD = null; var d = document.getElementById('carddlg'); if (d && d.open) d.close(); }
+function cardSwitch(on, testid, onclick, words){
+  return '<button class="sw' + (on ? ' on' : '') + '" data-testid="' + testid + '" onclick="' + onclick + '">'
+    + '<span class="knob"></span></button><span class="swtxt">' + esc(words) + '</span>';
+}
+function paintCard(){
+  var el = document.getElementById('cardbox'); if (!el) return;
+  var i = CARD; if (!i) { el.innerHTML = ''; return; }
+  var off = statusOf(i) === 'unavailable';
+  var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
+  /* ⚠️ the offers listed are the ones that TOUCH this product — asked of the engine, never re-decided here. An excluded
+     product still appears (it has to, or you could never put it back), marked as out. */
+  var mine = (S.offers || []).filter(function(o){
+    if (ex.indexOf(String(o.id)) >= 0) return true;
+    try { return CBOffers.forLine(lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:i.price, qty:1,
+      item_data:{ category:i.category } }), [o], { currency:'INR', now:new Date().toISOString() }).length > 0; } catch (_) { return false; }
+  });
+  el.innerHTML =
+      '<div class="cardhead">' + picOf(i) + '<span><b>' + esc(i.name) + '</b>'
+    + '<div class="u">' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span></div>'
+
+    + '<div class="cardrow"><label>On the shelf</label><div class="swwrap">'
+    + cardSwitch(!off, 'card-avail', 'stockToggle(CARD)', off ? 'Off the shelf — it is not listed for selling' : 'Listed and sellable')
+    + '</div></div>'
+
+    + '<div class="cardrow"><label>Price</label><div class="swwrap">'
+    + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(i.price)) + '"'
+    + ' onkeydown="if(event.key===\'Enter\')cardPrice()">'
+    + '<button class="pill" data-testid="card-price-save" onclick="cardPrice()">Save</button>'
+    + '<span class="swtxt">per ' + esc(i.unit || 'piece') + (Number(i.mrp) > 0 ? ' · MRP ₹' + money(i.mrp) : '') + '</span>'
+    + '</div></div>'
+
+    + '<div class="cardrow"><label>Offers</label><div class="swwrap col">'
+    + (mine.length ? mine.map(function(o){
+        var out = ex.indexOf(String(o.id)) >= 0;
+        return '<div class="swline">' + cardSwitch(!out, 'card-offer-' + esc(String(o.id)),
+          'cardOffer(\'' + esc(String(o.id)) + '\',' + (out ? 'false' : 'true') + ')',
+          (o.label || o.name || 'Offer') + (out ? ' — this product is out of it' : '')) + '</div>';
+      }).join('')
+      : '<span class="swtxt">No offer covers this product today.</span>')
+    + '</div></div>'
+
+    + '<div class="cardrow"><label>Shop screen</label><div class="swwrap">'
+    + cardSwitch(i.screen === true, 'card-screen', 'cardScreen(' + (i.screen === true ? 'false' : 'true') + ')',
+        i.screen === true ? 'Picked for the screen' : 'Not picked — the screen chooses on its own')
+    + '</div></div>'
+    + '<div class="cardnote" id="cardnote"></div>';
+}
+function cardPrice(){
+  var b = document.getElementById('cardprice');
+  priceWrite(CARD, Number(String((b && b.value) || '').replace(/[^0-9.]/g, '')));
+}
+async function cardOffer(offer_id, excluded){
+  var i = CARD; if (!i) return;
+  var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
+  i.offers_excluded = excluded ? ex.concat([String(offer_id)]).filter(function(v, n, a){ return a.indexOf(v) === n; })
+                               : ex.filter(function(v){ return v !== String(offer_id); });
+  i._off = null; OFFER_STAMP = null;                 /* the badge on the shelf is re-asked, not remembered */
+  try { await DB.set('snapshot', S); } catch (_) {}
+  paintCard(); paintHits();
+  var out = await HOST.tillPost('/api/till/flags', { item_id: i.item_id, offer_id: String(offer_id), excluded: !!excluded });
+  cardNote(out, i.name + ' is ' + (excluded ? 'out of' : 'back in') + ' that offer everywhere.');
+}
+async function cardScreen(on){
+  var i = CARD; if (!i) return;
+  i.screen = !!on;
+  try { await DB.set('snapshot', S); } catch (_) {}
+  paintCard();
+  var out = await HOST.tillPost('/api/till/flags', { item_id: i.item_id, screen: !!on });
+  cardNote(out, i.name + (on ? ' will show on the shop screen.' : ' is off the shop screen.'));
+}
+/** ⚠️ one wording for all four, and it never claims the cloud agreed when it has not */
+function cardNote(out, said){
+  var el = document.getElementById('cardnote'); if (!el) return;
+  el.textContent = out && out.queued ? 'Saved here — it reaches ChitBridge when the internet is back.'
+    : (out && out.ok ? said : 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.'));
 }
 function priceBlock(i){
   var pay = payPrice(i), r = i.tax_rate;
@@ -1746,8 +1820,10 @@ function paintHits(){
         + '</span>'
       + '</span>'
       + priceBlock(i)
+      /* ⚠️ nothing else may sit here in the selling list — the whole row must be one tap that adds. "Put it back" is the sole
+         exception, and only in the off-the-shelf view, where adding to a bill is not what the row is for. */
       + (off ? '<button class="back" data-testid="till-back-' + n + '" onclick="event.stopPropagation();flagTap(' + n + ')">Put it back</button>'
-             : qtyBox(i, n)) + '</div>';
+             : '') + '</div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
   keepSelInView();
 }
@@ -1800,7 +1876,7 @@ async function stockToggle(i){
   try { await DB.set('snapshot', S); } catch (_) {}
   /* ⚠️ THE CHIP CARRIES A COUNT, SO IT IS PART OF WHAT CHANGED. Marking something off left the chip reading "Off the shelf 0"
      while the row had already gone from the list — the one number on screen whose whole job is to say where it went. */
-  paintHits(); paintStock(); paintChips();
+  paintHits(); paintStock(); paintChips(); if (CARD && CARD.item_id === i.item_id) paintCard();
   var out = await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
   document.getElementById('stocknote').textContent = out && out.queued
     ? 'Saved here — it reaches ChitBridge when the internet is back.'
@@ -1851,10 +1927,13 @@ function paintPrice(){
               + '<div class="u">was ₹' + money(c.was) + '</div></span><span>₹' + money(c.now) + '</span></div>'; }).join('')
       : '');
 }
+/** the Price-change mode's own box; the panel has its own and calls priceWrite directly (one write, two ways in) */
 async function priceSave(){
-  var i = PRICING; if (!i) return;
   var box = document.getElementById('newprice');
-  var v = Number(String((box && box.value) || '').replace(/[^0-9.]/g, ''));
+  return priceWrite(PRICING, Number(String((box && box.value) || '').replace(/[^0-9.]/g, '')));
+}
+async function priceWrite(i, v){
+  if (!i) return;
   if (!isFinite(v) || v < 0) { toastLine('Type a price.'); return; }
   var was = Number(i.price) || 0;
   if (v === was) { toastLine('That is the same price.'); return; }
@@ -1862,7 +1941,7 @@ async function priceSave(){
   CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
   PRICING = null;
   try { await DB.set('snapshot', S); } catch (_) {}
-  paintHits(); paintPrice();
+  paintHits(); paintPrice(); if (CARD && CARD.item_id === i.item_id) paintCard();
   var out = await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
   document.getElementById('pricenote').textContent = out && out.queued
     ? 'Saved here — it reaches ChitBridge when the internet is back.'
@@ -1875,9 +1954,7 @@ function add(n){
   /* the same tap, read against what the shopkeeper said they are doing */
   if (MODE === 'stock') return stockToggle(i);
   if (MODE === 'price') return priceStart(i);
-  var t = typed();
-  /* ⚠️ WHAT WAS TYPED WINS. "3*" is a deliberate statement about this sale; the stepper is a standing preference for the row. */
-  var q = (t.qty !== 1) ? t.qty : rowQty(i);
+  var t = typed(), q = t.qty;
   if (t.unit) {
     var c = qtyInUnit(t.qty, t.unit, i.unit);
     if (c.converted) q = c.qty;
@@ -1899,7 +1976,6 @@ function add(n){
   if (MODE === 'receive') rcvAdd(i, q, lotFromScan(document.getElementById('q').value));
   else if (MODE === 'despatch') dspScan(i, q);
   else { addItem(i, q); price(); }
-  delete ROWQ[i.item_id];                            /* this sale is made; the next customer starts at one */
   document.getElementById('q').value = ''; SEL = 0; paintHits(); focusSearch();
 }
 /** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */

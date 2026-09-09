@@ -202,6 +202,15 @@ router.get('/snapshot', auth, async (req, res) => {
                 * The whole feature was writing to one field and reading another. Both now travel, each meaning its own thing.
                 */
                status: itemstatus.statusOf(d),
+               /**
+                * ⚠️ READ FOR A WEEK, NEVER SENT. lib/offers-engine.js matches an offer against l.excluded, and the counter's
+                * lineOf() dutifully passed item.offers_excluded — a field the snapshot did not carry, so it was always
+                * undefined and a shop's opt-out of an offer has never once been honoured at a till. Found while giving it a
+                * switch to be set from.
+                */
+               offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [],
+               /* ⭐ picked by hand for the shop screen — the one thing promo.html cannot work out from the catalogue itself */
+               screen: d.screen === true,
                /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton
                   converts to our pieces. Capped: an alias list is a memory aid, not a place to accumulate. */
                aliases: Array.isArray(d.aliases) ? d.aliases.slice(0, 20).map((a) => ({ by: a.by || null, text: a.text,
@@ -325,6 +334,62 @@ router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
     shopChanged(entity_id, 'stock ' + status);
     const d = r.rows[0].item_data || {};
     res.json({ ok: true, item_id, name: d.name || null, status });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * ⭐⭐ THE SMALL DECISIONS A SHOPKEEPER MAKES ABOUT ONE PRODUCT. Athi, 2026-09-09: *"the catalogue management, minimal stuff —
+ * changing availability, product price, offer enable/disable, show on TV — all can be kept in the same place."*
+ *
+ * Two of those four already had a route (/stock and /price). These are the other two, and they are deliberately as narrow:
+ *   { item_id, screen: true|false }              — put this product on the shop screen, or take it off
+ *   { item_id, offer_id, excluded: true|false }  — take this product OUT of one offer, or put it back in
+ *
+ * ⚠️ STILL NOT A PRODUCT PATCH. A key scoped to a till may set the handful of flags a person standing at a counter is
+ * entitled to decide. It may not rename a product, move its category or edit its tax — those are catalogue decisions with
+ * consequences a till cannot see, and the blast radius of a stolen counter key is exactly the list above.
+ * ⚠️ ONE ROUND TRIP. The exclusion list is rebuilt in SQL rather than read-then-written: the same jsonb both removes the id and
+ * re-adds it, so the operation is idempotent in both directions and cannot double an entry (Mumbai is a long way from sfo).
+ */
+router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = req.body || {};
+    const item_id = String(b.item_id || '');
+    if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
+
+    let sql, args;
+    if (b.offer_id != null) {
+      const offer_id = String(b.offer_id);
+      const excluded = b.excluded === true || b.excluded === 'true';
+      sql = "WITH kept AS ("
+          + "  SELECT COALESCE(jsonb_agg(x), '[]'::jsonb) AS ex"
+          + "  FROM catalogue_items ci"
+          + "  LEFT JOIN LATERAL jsonb_array_elements_text("
+          + "    CASE WHEN jsonb_typeof(ci.item_data->'offers_excluded') = 'array'"
+          + "         THEN ci.item_data->'offers_excluded' ELSE '[]'::jsonb END) x ON x <> $3"
+          + "  WHERE ci.entity_id = $1 AND ci.item_id = $2)"
+          + " UPDATE catalogue_items SET item_data = COALESCE(item_data, '{}'::jsonb)"
+          + "   || jsonb_build_object('offers_excluded',"
+          + "        CASE WHEN $4 THEN (SELECT ex FROM kept) || to_jsonb($3::text) ELSE (SELECT ex FROM kept) END),"
+          + "   updated_at = NOW()"
+          + " WHERE entity_id = $1 AND item_id = $2 RETURNING item_id, item_data";
+      args = [entity_id, item_id, offer_id, excluded];
+    } else if (b.screen !== undefined) {
+      sql = "UPDATE catalogue_items SET item_data = COALESCE(item_data, '{}'::jsonb) || jsonb_build_object('screen', $3::boolean),"
+          + " updated_at = NOW() WHERE entity_id = $1 AND item_id = $2 RETURNING item_id, item_data";
+      args = [entity_id, item_id, b.screen === true || b.screen === 'true'];
+    } else {
+      return res.status(400).json({ error: 'validation', message: 'nothing to set — pass screen, or offer_id with excluded' });
+    }
+
+    const r = await withEntity(entity_id, (db) => db.query(sql, args));
+    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    const d = r.rows[0].item_data || {};
+    /* ⭐ the shop screen and every open counter hear about it on the same bell a price change rides */
+    shopChanged(entity_id, b.offer_id != null ? 'offer opt-out' : 'screen pick');
+    res.json({ ok: true, item_id, name: d.name || null,
+               offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded : [], screen: d.screen === true });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

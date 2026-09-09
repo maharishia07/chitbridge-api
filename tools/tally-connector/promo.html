@@ -312,6 +312,24 @@ function build(){
   if (!items.length) return out;
 
   /* ── offers, in the engine's words ── */
+  /**
+   * ⭐⭐ WHAT THE SHOPKEEPER PICKED BY HAND, AND IT COMES FIRST. Athi, 2026-09-09 asked for "show on TV" to sit beside stock,
+   * price and offers as one of the small decisions made about a product — so the counter's product panel sets item.screen and
+   * this is where that lands.
+   * ⚠️ A HAND PICK OUTRANKS EVERY RULE, and shows in EVERY campaign (see below). The rest of this screen is clever — it works
+   * out what is on offer, what is fresh, what suits the hour — but a person who has walked to the counter and said "put THAT
+   * on the telly" knows something the rules do not, and a screen that quietly dropped their choice at 4pm because the Evening
+   * campaign took over would be a screen nobody trusts again.
+   * ⚠️ Off the shelf still wins: items[] is already what can be sold, so a pick that ran out stops showing by itself.
+   */
+  var picked = items.filter(function(i){ return i.screen === true; });
+  picFirst(picked).slice(0, 12).forEach(function(i){
+    var got = offersOf(i);
+    out.push({ kind:'picked', mood:MOOD.plum, eyebrow:'We recommend', item:i,
+               badge: got.length ? offerWords(got[0]) : null,
+               save: (Number(i.mrp) > Number(i.price)) ? (Number(i.mrp) - Number(i.price)) : 0 });
+  });
+
   var withOffer = [];
   for (var i = 0; i < items.length && withOffer.length < 40; i++) {
     var got = offersOf(items[i]);
@@ -608,12 +626,12 @@ function content(g, W, H, u, slide, x, y0, col, wide){
     g.fillText('per ' + (pi.unit || 'piece'), x + pwp + 18 * u, y + 68 * u);
   }
 
-  if (slide.kind === 'offer' || slide.kind === 'drop') {
+  if (slide.kind === 'offer' || slide.kind === 'drop' || slide.kind === 'picked') {
     var it = slide.item;
     y += para(g, it.name, x, y, { font:face(900, (wide ? 96 : 84) * u, true), color:'#FFF8EE',
                                   maxW:col, size:(wide ? 96 : 84) * u, lines:3, lh:(wide ? 100 : 88) * u }) + 26 * u;
 
-    if (slide.kind === 'offer') {
+    if (slide.kind === 'offer' || (slide.kind === 'picked' && slide.badge)) {
       y += 6 * u;
       pill(g, slide.badge, x, y, u, '#FFF8EE', slide.mood);
       y += 78 * u;
@@ -783,7 +801,8 @@ function shown(){
   var c = campaign();
   if (ONLY !== 'all') return SLIDES.filter(function(s){ return s.kind === ONLY; });
   if (!c.kinds) return SLIDES;
-  var got = SLIDES.filter(function(s){ return c.kinds.indexOf(s.kind) >= 0; });
+  /* ⚠️ 'picked' is never filtered out. A campaign chooses between the screen's OWN ideas; it does not overrule the shopkeeper. */
+  var got = SLIDES.filter(function(s){ return s.kind === 'picked' || c.kinds.indexOf(s.kind) >= 0; });
   /* ⚠️ A CAMPAIGN THAT MATCHES NOTHING SHOWS EVERYTHING, rather than a black screen. A shop with no offers authored yet still has
      a shelf worth showing, and an empty television teaches the shopkeeper that this thing does not work. */
   return got.length ? got : SLIDES;

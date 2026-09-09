@@ -185,19 +185,52 @@ it('⭐⭐ the counter lists what it can sell, and off-the-shelf is a view you a
 });
 
 /**
- * ⭐ THREE HIT AREAS, ONE PRIMARY (Baymard: "Mobile Product Lists Need Very Distinct Hit Areas"). Tapping the row sells; the
- * stepper and the shelf dot must not inherit that tap, or a quantity change puts an item on the bill.
+ * ⭐⭐ THE WHOLE ROW IS ONE TAP THAT ADDS. Athi, 2026-09-09: *"adding a tap was increasing the count, but it is not working
+ * now?"* — because I had put a quantity stepper at the right-hand end of the row and every part of it called
+ * stopPropagation(), correctly, to stop a count change billing the item. The result was a ~130 px dead strip down the right of
+ * every row where tapping a product did nothing. Every probe I had written added with the keyboard, so none of them touched it.
+ *
+ * ⭐ The list is for CHOOSING and the bill is for AMENDING: product and price on the left, quantity on the right-hand pane.
+ * The only control allowed to swallow a tap in the selling list is the shelf dot, which opens the product panel.
  */
-it('⭐ every secondary control on a row stops the click reaching the row', () => {
+it('⭐⭐ nothing in the selling list swallows the tap that adds the product', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  const box = page.slice(page.indexOf('function qtyBox(i, n){'), page.indexOf('function setRowQty'));
-  assert.strictEqual(box.split('event.stopPropagation()').length - 1, 4,
-    'the stepper has four tappable parts — the group, both buttons and the field — and all four must stop the click');
-  const flag = page.slice(page.indexOf('function flagBtn(i, n, off){'), page.indexOf('function flagTap'));
-  assert.ok(flag.indexOf('event.stopPropagation()') > 0, 'the shelf dot would sell the item it is marking out of stock');
-  /* NN/g: a stepper is impractical for large changes, so the value is typed as well as tapped */
-  assert.ok(box.indexOf('input class="v" type="number"') > 0,
-    'the count is a label, not a field — twenty-four packets would be twenty-three taps');
+  /* ⚠️ the end anchor must be searched FROM the start of the row, not from the start of the file — '}).join(' occurs
+     earlier in the page, which produced an empty slice and a guard that passed on nothing. */
+  const at = page.indexOf("return '<div class=\"hit'");
+  /* ⚠️ and not on an inner .join either — offerNames(...).map(...).join('') sits INSIDE the row, so that anchor cut the
+     slice in half and the guard measured a fragment. The row's own closing tag is the only honest end. */
+  const row = page.slice(at, page.indexOf("+ '</div>';", at));
+  const swallow = row.split('event.stopPropagation()').length - 1;
+  assert.strictEqual(swallow, 1,
+    'the selling row has ' + swallow + ' click-swallowing controls; only the shelf dot may be one — the rest of the row must add');
+  assert.ok(row.indexOf('qtyBox(') < 0, 'the quantity stepper is back in the product list — it belongs on the bill');
+  /* the one exception is the off-the-shelf view, where the row is not for selling at all */
+  assert.ok(row.indexOf('till-back-') > 0, '"Put it back" is the off-the-shelf view only action and must remain');
+  const flag = page.slice(page.indexOf('function flagBtn(i, n, off){'), page.indexOf('var CARD = null'));
+  assert.ok(flag.indexOf('event.stopPropagation()') > 0, 'the shelf dot would sell the item it is opening the panel for');
+});
+
+/**
+ * ⭐⭐ FOUR DECISIONS, ONE PLACE. Athi, 2026-09-09: *"changing availability, product price, offer enable/disable, show on TV —
+ * all can be kept in the same place."* Each calls the function that already did that job; none may grow a second write.
+ */
+it('⭐⭐ the product panel holds the four small decisions and writes each through one path', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function cardNote'));
+  for (const [what, mark] of [['availability', 'stockToggle(CARD)'], ['price', 'cardPrice()'],
+                              ['offers', 'cardOffer('], ['the shop screen', 'cardScreen(']])
+    assert.ok(card.indexOf(mark) > 0, 'the product panel cannot set ' + what);
+  /* ⚠️ the price is written by priceWrite, shared with the Price-change mode — not a second copy of the same write */
+  assert.ok(page.indexOf('async function priceWrite(i, v){') > 0, 'the price write is not extracted, so the panel has its own');
+  const save = page.slice(page.indexOf('async function priceSave(){'), page.indexOf('async function priceWrite'));
+  assert.ok(save.indexOf('priceWrite(PRICING') > 0, 'the Price-change mode no longer goes through the shared write');
+  /* and the wire refuses anything beyond those flags */
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const route = src.slice(src.indexOf("router.post('/flags'"), src.indexOf("router.post('/price'"));
+  assert.ok(route.indexOf('nothing to set') > 0, '/flags accepts a body that sets nothing');
+  for (const field of ['name', 'category', 'tax_slab'])
+    assert.ok(route.indexOf("'" + field + "'") < 0, '/flags can write ' + field + ' — a till key must not rename the catalogue');
 });
 
 console.log(pass + ' checks');
