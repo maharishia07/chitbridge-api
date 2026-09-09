@@ -341,6 +341,7 @@
 <dialog id="setdlg"><div class="dlg">
   <h3>This till</h3>
   <div id="pairbox"></div>
+  <div id="coldbox"></div>
   <label>Counter name — it becomes the bill number's prefix</label>
   <input id="set_till" placeholder="C1">
   <div id="printbox"></div>
@@ -751,7 +752,7 @@ var CloudHost = {
     if (!this.key || !navigator.onLine || this._busy) return;
     this._busy = true;
     try {
-      var rows = (await DB.all('queue')) || [];
+      var rows = (await DB.all('queue')) || [], sent = 0;
       for (var i = 0; i < rows.length; i++) {
         var bill = rows[i];
         /* ⚠️⚠️ THE LAST GATE, AND THE ONE THAT COSTS MONEY. DB.all has already dropped foreign rows, but this is where a bill
@@ -766,11 +767,20 @@ var CloudHost = {
           else payload = bill.shiftBody ? bill.shiftBody : (bill.chitBody ? bill.chitBody : chitOf(bill));
           var r = await fetch(url, { method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
-          if (r.ok) await DB.del('queue', bill.no);
+          if (r.ok) { await DB.del('queue', bill.no); sent++; }
           else if (r.status === 403 || r.status === 401) break;      /* a key problem is not fixed by trying harder */
         } catch (_) { break; }                                        /* the line went; the queue keeps everything */
       }
-    } finally { this._busy = false; }
+    } finally {
+      this._busy = false;
+      /**
+       * ⚠️⚠️ THE BAR MUST NOT LIE ABOUT MONEY. drain() sent the bills and never told the screen, so the counter went on saying
+       * "1 bill(s) waiting" over an empty queue — and to a shopkeeper that reads as a sale that has not reached ChitBridge. It
+       * only ever looked right because going back online happens to fire load() as well; called on its own, the number froze.
+       * Whatever else happened, the count is re-read from the queue and the bar repainted.
+       */
+      try { STATE.queued = ((await DB.all('queue')) || []).length; paintStatus(); } catch (_) {}
+    }
   },
 };
 
@@ -2626,14 +2636,38 @@ async function openBills(keepOpen){
   if (BILLS_TAB === 'earlier') return paintEarlier();
   var rows = [];
   try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) { rows = []; }
+  /**
+   * ⭐⭐⭐ EVERY BILL SAYS WHETHER IT HAS REACHED CHITBRIDGE. Athi, 2026-09-09: *"do we have a report of how many more to sync to
+   * cloud? every bill created should have a marker on sync / not sync, so the user also can see, or force."*
+   * A number in the corner saying "3 waiting" tells a shopkeeper that something is unsent but not WHICH — and the question they
+   * actually have at the end of a day is whether a particular sale is safe.
+   * ⚠️ "SENT" IS DERIVED, NEVER STORED. A bill is waiting if and only if it is still in the queue — the queue is what drain works
+   * from and what empties on success. A stored "sent" flag would be a second opinion about one fact, and the day the two disagree
+   * the counter would confidently show the wrong one.
+   */
+  var waiting = {};
+  try { ((await DB.all('queue')) || []).forEach(function(q){ if (q && q.no) waiting[q.no] = true; }); } catch (_) {}
+  var nWait = rows.filter(function(b){ return waiting[b.no]; }).length;
+
   var d = STATE.today || { count:0, total:0, by:{} };
   var by = Object.keys(d.by || {}).map(function(k){ return esc(k) + ' ₹' + money(d.by[k]); }).join(' · ');
   document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ' bills · ₹' + money(d.total||0);
   document.getElementById('billsbody').innerHTML =
     '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + (by || 'nothing taken yet') + '</div>'
+    + '<div data-testid="till-sync-report" style="display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;margin-bottom:8px;'
+      + (nWait ? 'background:var(--warn-tint);color:var(--warn)' : 'background:var(--ok-tint);color:var(--ok)') + '">'
+      + '<b style="flex:1">' + (nWait
+          ? (nWait + ' of ' + rows.length + ' bill(s) have not reached ChitBridge yet')
+          : (rows.length ? 'All ' + rows.length + ' bill(s) have reached ChitBridge' : 'Nothing to send')) + '</b>'
+      + (nWait ? '<button class="pill" data-testid="till-send-now" onclick="sendNow()">Send now</button>' : '')
+    + '</div>'
     + (rows.length ? rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-bill-' + esc(b.no) + '">'
-          + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(new Date(b.at).toTimeString().slice(0,5)) + ' · '
+          + '<span style="flex:1"><b>' + esc(b.no) + '</b>'
+            + '<span data-testid="till-bill-sync-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;'
+              + (waiting[b.no] ? 'color:var(--warn);border-color:var(--warn)' : 'color:var(--ok);border-color:var(--ok)') + '">'
+              + (waiting[b.no] ? '⏳ waiting' : '✓ sent') + '</span>'
+            + '<div class="u">' + esc(new Date(b.at).toTimeString().slice(0,5)) + ' · '
           + esc((b.customer && b.customer.name) || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + ' · ' + ((b.lines||[]).length) + ' item(s)</div></span>'
           + '<span style="font-variant-numeric:tabular-nums">₹' + money(b.total) + '</span>'
           + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button></div>';
@@ -2641,6 +2675,70 @@ async function openBills(keepOpen){
       : '<div style="color:var(--dim)">No bills yet today.</div>');
   if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
   try { document.getElementById('tab_today').className = 'pill on'; document.getElementById('tab_earlier').className = 'pill'; } catch (_) {}
+}
+/**
+ * ⭐⭐⭐ START FROM SCRATCH — but never before everything is safe. Athi, 2026-09-09: *"in the counter we need a mechanism of cold
+ * start or reboot kind of, which should clear the indexed db and then restart again — before that it has to sync up and nothing
+ * leaves. I am not sure any temp memory build-up can make the system slow. We need a mechanism of start from scratch."*
+ *
+ * A counter that has run for months accumulates: a catalogue merged delta upon delta, bills from days nobody will reopen, rows
+ * written by versions of this page that no longer exist. Sometimes the honest repair is not another patch — it is to throw the
+ * copy away and take the shop again, which is also the fastest way out of any state we did not foresee.
+ *
+ * ⚠️⚠️ THE ORDER IS THE WHOLE FEATURE, AND IT IS NOT NEGOTIABLE:
+ *   1 send everything that is waiting
+ *   2 CHECK the queue is actually empty — not "we tried", empty
+ *   3 only then delete
+ * If anything is still waiting the wipe does not happen and the person is told what is holding it. A cold start that loses a sale
+ * is not a repair, it is the worst bug this counter could have — the shopkeeper took the money and we threw away the record.
+ *
+ * ⚠️ It deletes only THIS shop's database. Another shop's counter on the same PC keeps its own bills and its own queue.
+ */
+async function coldStart(){
+  if (!confirm('Start this counter from scratch?\n\nEverything waiting is sent first, then the copy of your shop and today\'s bill list are cleared and read again from ChitBridge.\n\nNothing is sent anywhere else, and no sale is lost.')) return;
+
+  /* 1 · send everything */
+  if (navigator.onLine) { try { await HOST.drain(); } catch (_) {} }
+
+  /* 2 · and PROVE it went */
+  var left = 0;
+  try { left = ((await DB.all('queue')) || []).length; } catch (_) { left = -1; }
+  if (left !== 0) {
+    alert(left > 0
+      ? (left + ' bill(s) have not reached ChitBridge yet, so nothing was cleared.\n\nOpen 🧾 bills and press "Send now" while the internet is on, then try again.')
+      : 'Could not read what is waiting, so nothing was cleared. Try again in a moment.');
+    return;
+  }
+
+  /* 3 · now it is safe */
+  var name = tillStore();
+  try {
+    await new Promise(function(res){
+      var rq = indexedDB.deleteDatabase(name);
+      rq.onsuccess = res; rq.onerror = res; rq.onblocked = res;   /* blocked means another tab holds it; the reload clears that */
+    });
+  } catch (_) {}
+  /* the shop's own settings on this device go too — they are part of the copy, not of the machine */
+  try { [shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin')]
+          .forEach(function(k){ localStorage.removeItem(k); }); } catch (_) {}
+
+  /* ⚠️ the KEY and the device's own look and feel are deliberately kept — this is a fresh copy of the shop, not an unpairing */
+  location.reload();
+}
+/**
+ * ⭐ PUSH THEM NOW. The queue drains by itself, but "by itself" is not something a person closing a till can watch. Same drain,
+ * asked for on purpose, and it reports back either way — a button that appears to do nothing is worse than no button.
+ */
+async function sendNow(){
+  if (!navigator.onLine) { toastLine('Still no internet — the bills are safe here and will go as soon as it returns.'); return; }
+  var before = ((await DB.all('queue')) || []).length;
+  await HOST.drain();
+  var after = ((await DB.all('queue')) || []).length;
+  await load();
+  await openBills(true);
+  if (after === 0) toastLine(before === 1 ? 'The bill has reached ChitBridge.' : 'All ' + before + ' bills have reached ChitBridge.');
+  else if (after < before) toastLine((before - after) + ' of ' + before + ' sent. ' + after + ' still waiting — it keeps trying.');
+  else toastLine('Could not send them just now. They are safe here and will go by themselves.');
 }
 /** ⭐ EARLIER — asked for, not held: a device is not an archive, and this says so plainly when the line is down */
 async function paintEarlier(){
@@ -2858,6 +2956,12 @@ function openSettings(){
     pair.innerHTML = '<div style="color:var(--dim);font-size:.85em">This till runs beside the little program on this PC, so the key lives in connector.json and there is nothing to paste.</div>';
   }
   document.getElementById('setnote').textContent = 'Everything here is kept on this device only.';
+  /* ⚠️ in ⚙ rather than on the counter itself: it is a maintenance act, and it should take a deliberate walk to reach */
+  var cs = document.getElementById('coldbox');
+  if (cs) cs.innerHTML = '<label>Start from scratch</label>'
+    + '<div style="color:var(--dim);font-size:.85em;margin-bottom:6px">Sends anything waiting, then clears this counter'
+    + ' and reads your shop again. Use it if the counter feels slow or is showing something it should not.</div>'
+    + '<button class="pill" data-testid="till-coldstart" onclick="coldStart()">↺ Clear and read the shop again</button>';
   paintPrinters();
   document.getElementById('setdlg').showModal();
 }
