@@ -1846,6 +1846,15 @@ function keepSelInView(){
  * is always what is on screen, because paintHits scrolls to it.
  */
 function searchKey(e){
+  /**
+   * ⚠️⚠️ A MODIFIED KEY IS NOT THIS BOX'S KEY. Athi, 2026-09-09: *"ctrl arrow works on the left hand side list also when it
+   * tries to increase or decrease the count."* Both handlers ran: this one sits on the search box and fires first, moved the
+   * selection, and THEN the document handler changed the quantity. One press, two effects, and the row under the finger moved.
+   *
+   * Every branch below is an UNMODIFIED key. Ctrl and Cmd combinations belong to the document (Ctrl+arrow changes the last
+   * line) or to the browser (Ctrl+A, Ctrl+C), and neither should be reached through here.
+   */
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
   var list = hits(), page = 8;
   if (e.key === 'ArrowDown'){ SEL = Math.min(SEL+1, list.length-1); paintHits(); e.preventDefault(); }
   else if (e.key === 'ArrowUp'){ SEL = Math.max(SEL-1, 0); paintHits(); e.preventDefault(); }

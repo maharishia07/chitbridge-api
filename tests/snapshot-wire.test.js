@@ -332,4 +332,17 @@ it('⭐⭐ the GST is split into its heads, by the engine that already decides t
     'the bill does not record its heads — a reprint would recompute them and could restate a filed return');
 });
 
+/**
+ * ⭐ ONE PRESS, ONE EFFECT. The search box's own handler fires before the document's, so an unguarded Ctrl+arrow moved the
+ * selection in the list AND changed a quantity on the bill. Every branch of searchKey is an unmodified key.
+ */
+it('⭐ a modified key is not the search box key', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function searchKey(e){'), page.indexOf('function searchKey(e){') + 900);
+  assert.ok(fn.indexOf('if (e.ctrlKey || e.metaKey || e.altKey) return;') > 0,
+    'searchKey handles modified keys, so Ctrl+arrow moves the list as well as changing the quantity');
+  assert.ok(fn.indexOf('e.ctrlKey') < fn.indexOf("e.key === 'ArrowDown'"),
+    'the modifier guard must come before the arrow branches or it cannot stop them');
+});
+
 console.log(pass + ' checks');
