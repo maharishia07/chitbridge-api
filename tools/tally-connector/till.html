@@ -2820,6 +2820,23 @@ function health(){
   if (!S) { add('warn', 'No copy of the shop yet', 'The counter has never read your catalogue, so it cannot price anything.',
     'Press ↻ once while the internet is on.'); return out; }
 
+  /**
+   * ⭐ WHAT A CUSTOMER READS BEFORE THEY PRESS SEND. Only asked when the shop can actually be paid by a code.
+   * ⚠️ A NOTE, not a warning: for most shops the name is right, and turning a correct fact into an alarm is how a
+   * health check trains people to stop reading it.
+   */
+  (function(){
+    var ways = (S.shop && S.shop.pay) || [];
+    var scan = ways.filter(function(w){ return w.qr; })[0];
+    if (!scan) return;
+    var shown = (S.shop && (S.shop.name || S.shop.legal_name)) || '';
+    add('note', 'Paying you shows the name "' + shown + '"',
+      'When a customer scans the ' + scan.label + ' code, their app shows this name and the payee ' + scan.payee
+        + ' before they send. It is your trade name if you have set one, and your account name otherwise.',
+      'If that is not the name a customer would recognise, set the trade name in ChitBridge → Profile.',
+      [shown + ' · ' + scan.payee]);
+  })();
+
   /* ── the tax component, which is the one he asked for ── */
   if (tx.reg === 'regular' && !tx.gstin)
     add('bad', 'Set as regular, but there is no GSTIN',
