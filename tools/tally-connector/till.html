@@ -66,6 +66,11 @@
      entity id (e2eco-mts0e88b673) overflowed this flex row and pushed itself off the left edge — the one word a cashier needs. */
   .shop{font-weight:700;min-width:0;overflow-wrap:anywhere}
   .pill{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim);white-space:nowrap;background:transparent;cursor:default}
+  /* ⚠️ A LABEL IS QUIET; A BUTTON IS NOT. Everything below is one selector because the difference is what the element IS. */
+  button.pill{color:var(--ink);cursor:pointer;background:var(--paper)}
+  button.pill:hover{border-color:var(--ok);color:var(--ok)}
+  button.pill:active{background:var(--ok-tint)}
+  button.pill:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
   button.pill{cursor:pointer}
   .pill.on{color:var(--ok);border-color:var(--ok);background:var(--ok-tint)}
   .pill.off{color:var(--warn);border-color:var(--warn);background:var(--warn-tint)}
@@ -273,8 +278,11 @@
   .keys b{color:var(--ink);font-weight:700}
   @media (max-width:860px){ .keys{display:none} }   /* a phone has no function keys; the buttons carry the same actions */
 
-  dialog{border:none;border-radius:14px;padding:0;max-width:560px;width:94vw;background:var(--card);color:var(--ink)}
-  dialog::backdrop{background:rgba(0,0,0,.45)}
+  /* ⚠️ A CARD ON A CARD NEEDS AN EDGE. In the light theme --card is white on a near-white page and the dialog floated with
+     no boundary; in the dark theme it was a slightly lighter rectangle with nothing to say where it began. */
+  dialog{border:1px solid var(--line);border-radius:14px;padding:0;max-width:560px;width:94vw;
+         background:var(--card);color:var(--ink);box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
   .dlg{padding:16px}
   /* ── the product panel: four decisions, laid out as label / control / plain words about what it means ── */
   .cardhead{display:flex;gap:12px;align-items:center;padding:0 0 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
@@ -298,6 +306,13 @@
   .sw:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
   #cardprice{width:110px;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;
              background:var(--paper);color:var(--ink);font:inherit;font-weight:700;font-variant-numeric:tabular-nums}
+  #cardprice:focus{outline:2px solid var(--ok);outline-offset:1px}
+  /* the accent button: filled, so it reads as the action and not as another label */
+  .cardrow .pri{height:38px;padding:0 18px;border:1px solid var(--ok);border-radius:9px;background:var(--ok);color:#fff;
+                font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+  .cardrow .pri:hover{filter:brightness(1.08)}
+  .cardrow .pri:active{filter:brightness(.94)}
+  .cardrow .pri:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
   .cardnote{padding-top:10px;color:var(--dim);font-size:.85em;min-height:1.2em}
   /* ── the shop's particulars, as the counter holds them ── */
   .shopfacts{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--paper)}
@@ -307,11 +322,34 @@
   .shopfacts .f b{font-weight:700;word-break:break-word}
   .shopfacts .miss{color:var(--warn);font-weight:700}
   .shopfacts .src{color:var(--dim);font-size:.78em;margin-top:7px;border-top:1px solid var(--line);padding-top:6px}
-  .dlg h3{margin:0 0 10px}
+  /* the heading is a heading: it sits on its own line with a rule under it, not floating above a wall of text */
+  .dlg h3{margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:1.15em;letter-spacing:.01em}
   .dlg label{display:block;margin:10px 0 4px;color:var(--dim);font-size:.85em}
+  /**
+   * ⭐ THE CHOICE ROW. Picking a person, a printer or a counter is the same shape every time: a full-width target with the
+   * name in ink and whatever qualifies it underneath in the quiet colour. It replaces four different piles of inline style.
+   * ⚠️ 52px tall — a finger's worth. These are pressed on a tablet at a counter, not clicked with a mouse.
+   */
+  .choice{display:block;width:100%;text-align:start;min-height:52px;padding:11px 14px;margin:6px 0;
+          border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);
+          font:inherit;font-size:1em;font-weight:600;cursor:pointer}
+  .choice:hover{border-color:var(--ok);background:var(--ok-tint)}
+  .choice:active{filter:brightness(.97)}
+  .choice:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+  .choice .u{display:block;font-weight:400;margin-top:2px}
+  .choice.on{border-color:var(--ok);background:var(--ok-tint);box-shadow:inset 4px 0 0 var(--ok)}
+  /* ── who is here now: stated before the list that changes it ── */
+  .nowbox{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);margin-bottom:12px}
+  .nowbox b{font-size:1.05em}
+  .nowbox.none{border-color:var(--warn);background:var(--warn-tint)}
   .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
   .dlgbtns{display:flex;gap:8px;margin-top:14px}
-  .dlgbtns button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);cursor:pointer}
+  .dlgbtns{border-top:1px solid var(--line);padding-top:12px}
+  .dlgbtns button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);
+                  color:var(--ink);font-weight:600;cursor:pointer}
+  .dlgbtns button:hover{border-color:var(--ok);color:var(--ok)}
+  .dlgbtns button.pri:hover{background:var(--ok);color:#fff;filter:brightness(1.08)}
+  .dlgbtns button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
   .dlgbtns button.pri{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
   .slipbox{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:#000}
   /**
@@ -357,7 +395,7 @@
         <option value="maintain">🛠️ Maintenance</option>
       </select>
       <span class="pill" id="tillpill">till</span>
-      <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is at the counter (F7 to hand over)">…</button>
+      <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is signed in at this counter (F7 to hand over)">…</button>
       <span class="pill" id="netpill">…</span>
       <span class="pill" id="agepill"></span>
       <span style="flex:1"></span>
@@ -372,7 +410,7 @@
         ⚠️ THE HEALTH DOT NEVER MOVES INTO THE MENU. It is the one control that has to interrupt, and a thing that interrupts from
         inside a closed menu interrupts nobody.
       -->
-      <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="what would go wrong today">✓</button>
+      <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="Health check — what would go wrong today">✓</button>
       <button class="pill" id="menubtn" data-testid="till-menu" onclick="toggleMenu(event)" title="bills, the shop screen, settings">☰</button>
       <div id="tillmenu" class="menu" hidden>
         <button data-testid="till-bills" onclick="fromMenu(openBills)">🧾 <b>Today's bills</b><i>print one again · F8</i></button>
@@ -1769,7 +1807,9 @@ function paintCard(){
     + '<div class="cardrow"><label>Price</label><div class="swwrap">'
     + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(i.price)) + '"'
     + ' onkeydown="if(event.key===\'Enter\')cardPrice()">'
-    + '<button class="pill" data-testid="card-price-save" onclick="cardPrice()">Save</button>'
+    /* ⚠️ THE ONLY THING ON THIS PANEL THAT DOES NOT ACT ON ITS OWN. Every switch here writes the moment it is moved; the
+       price waits for this button, so it must LOOK like the one thing left to do. As a quiet pill it read as decoration. */
+    + '<button class="pri" data-testid="card-price-save" onclick="cardPrice()">Save</button>'
     + '<span class="swtxt">per ' + esc(i.unit || 'piece') + (Number(i.mrp) > 0 ? ' · MRP ₹' + money(i.mrp) : '') + '</span>'
     + '</div></div>'
 
@@ -1823,11 +1863,27 @@ async function cardScreen(on){
   var out = await HOST.tillPost('/api/till/flags', { item_id: i.item_id, screen: !!on });
   cardNote(out, i.name + (on ? ' will show on the shop screen.' : ' is off the shop screen.'));
 }
-/** ⚠️ one wording for all four, and it never claims the cloud agreed when it has not */
+/**
+ * ⚠️ ONE WORDING FOR ALL FOUR, and it never claims the cloud agreed when it has not.
+ * ⚠️⚠️ AND IT SAYS WHAT THE NUMBER MEANS. Athi, 2026-09-09, reading his own screen: *"the image shows 403 error, what is it,
+ * and what it means?"* — which is the whole answer. "ChitBridge refused it (403)" is a machine talking to itself. A person at
+ * a counter needs: what happened · what it means · what to do (the standing rule for every message on this screen).
+ */
+function refusalWords(out){
+  var code = out && (out.status || out.code);
+  if (code === 403) return 'This counter is not allowed to make that change. The change is saved here only —'
+    + ' ask for the counter key to be issued again from ChitBridge.';
+  if (code === 401) return 'This counter is no longer signed in to ChitBridge. The change is saved here only —'
+    + ' open the counter again from ChitBridge to get a fresh key.';
+  if (code === 404) return 'ChitBridge does not have this product any more. It may have been deleted there.'
+    + ' The change is saved here only.';
+  if (code >= 500) return 'ChitBridge could not be reached just now. The change is saved here and will be sent again.';
+  return 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.');
+}
 function cardNote(out, said){
   var el = document.getElementById('cardnote'); if (!el) return;
   el.textContent = out && out.queued ? 'Saved here — it reaches ChitBridge when the internet is back.'
-    : (out && out.ok ? said : 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.'));
+    : (out && out.ok ? said : refusalWords(out));
   /* ⭐ and the change is SHOWN, not only described — the words are read second, if at all */
   flashItem(CARD_ID);
 }
@@ -2527,7 +2583,7 @@ function healthWorst(){ var h = health(); return h.some(function(x){ return x.le
 function openHealth(){
   var h = health();
   var icon = { bad:'⛔', warn:'⚠️', note:'ℹ️' };
-  document.getElementById('sliptitle').textContent = 'Check this counter';
+  document.getElementById('sliptitle').textContent = 'Health check';
   /* ⚠️ the button goes where the QUESTION is already being asked; a verification nobody can find proves nothing */
   setTimeout(function(){
     var f = document.querySelector('#slipdlg .row, #slipdlg form, #slipdlg');
@@ -3626,17 +3682,31 @@ function whoLoad(){
 }
 function paintWho(){
   var p = document.getElementById('whopill'); if (!p) return;
-  p.textContent = WHO && WHO.name ? ('👤 ' + WHO.name) : '👤 who?';
+  /* ⚠️ "who?" is a question, not an answer. Athi: *"show who has signed in now."* When nobody has, the pill must SAY that —
+     bills are then recorded as the shop itself, which is a fact worth knowing before a day's takings are attributed. */
+  p.textContent = WHO && WHO.name ? ('👤 ' + WHO.name) : '👤 nobody signed in';
   p.className = 'pill' + (WHO && WHO.name ? '' : ' off');
 }
 function openWho(){
   var list = (S && S.staff) || [];
-  document.getElementById('whobody').innerHTML = (list.length
+  /* ⭐ who it is RIGHT NOW, said first — the list underneath is for changing it */
+  document.getElementById('whobody').innerHTML =
+    '<div class="nowbox' + (WHO && WHO.name ? '' : ' none') + '" data-testid="till-who-now">'
+    + (WHO && WHO.name
+        ? '<b>' + esc(WHO.name) + '</b> is signed in at this counter'
+          + (WHO.since ? '<div class="u">since ' + esc(new Date(WHO.since).toTimeString().slice(0, 5)) + '</div>' : '')
+        : '<b>Nobody is signed in.</b><div class="u">Bills are being recorded as the shop itself, and the day close cannot say who took the money.</div>')
+    + '</div>'
+    + (list.length ? '<label>Sign in as</label>' : '')
+    + (list.length
     ? list.map(function(a){
-        return '<button class="pill" style="display:block;width:100%;text-align:left;padding:12px;margin:6px 0;font-size:1em" data-testid="till-who-' + esc(a.id) + '" onclick="setWho(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">' + esc(a.name) + (a.hat ? ' <span class="u">· ' + esc(a.hat) + '</span>' : '') + '</button>';
+        var on = (WHO && String(WHO.id) === String(a.id));
+        return '<button class="choice' + (on ? ' on' : '') + '" data-testid="till-who-' + esc(a.id) + '"'
+          + ' onclick="setWho(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">'
+          + esc(a.name) + (a.hat ? '<span class="u">' + esc(a.hat) + '</span>' : '') + '</button>';
       }).join('')
     : '<div style="color:var(--dim)">This shop has no co-assists yet — add people in ChitBridge › Co-assists and they appear here. Until then bills are recorded as the shop itself.</div>')
-    + (WHO ? '<button class="pill" style="display:block;width:100%;padding:12px;margin:10px 0 0;font-size:1em" data-testid="till-handover" onclick="handOver()">Hand over — end ' + esc(WHO.name) + '\'s shift</button>' : '');
+    + (WHO ? '<button class="choice" style="margin-top:12px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
   document.getElementById('whodlg').showModal();
 }
 function setWho(id, name){

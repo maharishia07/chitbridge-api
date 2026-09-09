@@ -207,7 +207,14 @@ const KEY_ROUTES = {
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */
-              ['POST', /^\/api\/till\/(stock|price)$/],
+              /**
+                * ⚠️⚠️ EVERY NEW /api/till ROUTE MUST BE ADDED HERE TOO. requireScope('till') on the route is only half the
+                * lock — this table is the other half, and a route missing from it is refused with a bare 403 no matter what
+                * the route itself says. POST /api/till/flags shipped without this line, so "show on the shop screen" and the
+                * offer opt-out saved locally and were refused by the server every single time: "ChitBridge refused it (403)".
+                * The counter said so honestly and nobody could act on it, which is why the message now explains itself too.
+                */
+              ['POST', /^\/api\/till\/(stock|price|flags)$/],
               /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
                  two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery
                  claim against any open order of ITS OWN shop. It is the shop's own claim, it is visible, it is corrected by a

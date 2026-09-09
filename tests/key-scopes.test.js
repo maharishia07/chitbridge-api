@@ -123,4 +123,52 @@ it('⭐ and a scope nobody has heard of opens nothing', () => {
   assert.ok(!may([], 'GET', '/api/till/snapshot'), 'a key with NO scopes reached the snapshot');
 });
 
+/**
+ * ⭐⭐ THE LOCK HAS TWO HALVES AND BOTH MUST BE TURNED. requireScope('till') on the route is one; the KEY_ROUTES table in
+ * middleware/auth.js is the other. A route that carries the first and is missing from the second is refused with a bare 403
+ * however correct it looks — and the failure is silent to everything except a person at a counter.
+ *
+ * ⚠️ THAT IS NOT HYPOTHETICAL. POST /api/till/flags shipped with requireScope('till') and no entry here, so "show on the
+ * shop screen" and the offer opt-out saved locally and were refused by the server every single time. Athi found it by
+ * reading his own screen: *"the image shows 403 error, what is it, and what it means?"*
+ *
+ * This walks routes/till.js and insists every route it declares is actually reachable by the scope it asks for. It is a
+ * structural check, not a list — a new route added tomorrow is covered without anybody remembering to come here.
+ */
+it('⭐⭐ every route in routes/till.js is reachable by a till key, or is a named exception', () => {
+  const fs = require('fs'), path = require('path');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+
+  /**
+   * ⚠️ THE EXCEPTIONS ARE THE POINT. This router exists for the counter, so the DEFAULT is that a till key reaches every
+   * route in it. Anything that does not must be listed here with the reason, which forces the question to be answered on
+   * purpose rather than by forgetting a line in KEY_ROUTES.
+   */
+  const SHUT = {
+    'POST /api/till/pair': 'a key may not mint a key — pairing is gated on !req.api_key inside the route itself',
+    'POST /api/till/pair/claim': 'the device claiming a code has no key yet, so it carries no scope at all',
+    /* ⚠️ found BY this guard on the day it was written: built for the three-way match and wired to no caller. Left closed
+       on purpose — a key should not reach a route nothing calls. Open it in KEY_ROUTES when something actually asks. */
+    'GET /api/till/match': 'built, not yet called by anything — the key stays narrow until it is',
+  };
+
+  const re = /router\.(get|post)\(\s*'([^']+)'/g;
+  let m, seen = 0, shutSeen = 0;
+  while ((m = re.exec(src))) {
+    const method = m[1].toUpperCase();
+    /* mounted at /api/till; a :param stands in for any single segment */
+    const url = ('/api/till' + m[2]).replace(/:[A-Za-z_]+/g, 'x');
+    const label = method + ' /api/till' + m[2];
+    seen++;
+    if (SHUT[label]) { shutSeen++; continue; }
+    assert.ok(may(['till'], method, url),
+      label + ' cannot be reached by a till key. Add it to KEY_ROUTES in middleware/auth.js, or list it in SHUT above with'
+      + ' the reason it is closed. requireScope on the route is only half the lock — a route missing from that table is a'
+      + ' bare 403 however correct it looks, and the only place that shows is somebody at a counter.');
+  }
+  assert.ok(seen >= 12, 'only ' + seen + ' till routes were found — the parser has stopped matching, so this guard is blind');
+  assert.strictEqual(shutSeen, Object.keys(SHUT).length,
+    'a route listed as deliberately closed no longer exists — remove it from SHUT so the list stays honest');
+});
+
 console.log(pass + ' checks');
