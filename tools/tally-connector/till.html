@@ -61,7 +61,7 @@
   @media (max-width:860px){ .wrap{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}
     .left{order:2;border-right:none;border-top:1px solid var(--line)} .right{order:1} .hits{max-height:46vh} }
 
-  header{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap}
+  header{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap;position:relative}
   /* ⚠️ THE ONLY PROOF OF WHICH SHOP YOU ARE BILLING FOR, so it must never be the thing that gets clipped. A long unbroken
      entity id (e2eco-mts0e88b673) overflowed this flex row and pushed itself off the left edge — the one word a cashier needs. */
   .shop{font-weight:700;min-width:0;overflow-wrap:anywhere}
@@ -119,6 +119,15 @@
   .quick button:hover .qx,.quick button:hover .qpin{opacity:.8}
   .quick .qx:hover{background:var(--warn-tint);color:var(--warn);opacity:1}
   .qtyhint{padding:6px 12px;background:var(--ok-tint);color:var(--ok);font-size:.85em;border-bottom:1px solid var(--line)}
+  /* ⚠️ BIG ROWS, NOT A TIGHT DROPDOWN. This is opened with a finger on a tablet as often as with a mouse, and every row is a
+     whole sentence rather than an icon a person has to remember the meaning of. */
+  .menu{position:absolute;inset-inline-end:12px;top:52px;z-index:40;background:var(--card);border:1px solid var(--line);
+        border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;min-width:270px;display:flex;flex-direction:column}
+  .menu button,.menu a{display:block;text-align:start;border:0;background:transparent;color:var(--ink);cursor:pointer;
+        padding:10px 12px;border-radius:9px;font:inherit;text-decoration:none}
+  .menu button:hover,.menu a:hover{background:var(--paper)}
+  .menu b{font-weight:700;margin-inline-start:6px}
+  .menu i{display:block;font-style:normal;color:var(--dim);font-size:.82em;margin-inline-start:26px}
   /* ⚠️ a FACT, not a warning — it must never compete with the row a person is trying to read */
   .shelfline{padding:5px 12px;color:var(--dim);font-size:.78em;border-bottom:1px solid var(--line);background:var(--paper)}
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
@@ -214,13 +223,26 @@
       <span class="pill" id="agepill"></span>
       <span style="flex:1"></span>
       <span class="pill" id="daypill"></span>
-      <button class="pill" data-testid="till-bills" onclick="openBills()" title="today's bills — print one again (F8)">🧾 bills</button>
-      <button class="pill" data-testid="till-screen" onclick="openScreen()" title="your offers and fresh stock, as a sign for a screen in the shop">📺 screen</button>
+      <!--
+        ⭐⭐ WHAT STAYS ON THE BAR, AND WHY. Athi, 2026-09-09: *"counter header has many now, better we organise and make it kind
+        of menu, so we know which menu to look at."* Thirteen controls had accumulated, each one reasonable on the day it landed.
+        The rule that sorts them is not importance, it is FREQUENCY DURING A SALE:
+          · on the bar  — what a cashier reads or touches with a customer standing there: who is billing, whether the line is up,
+            how old the prices are, today's total, and the health dot, because a warning nobody can see is not a warning.
+          · behind ☰    — everything done between customers: the bill list, the shop screen, re-reading the shop, settings.
+        ⚠️ THE HEALTH DOT NEVER MOVES INTO THE MENU. It is the one control that has to interrupt, and a thing that interrupts from
+        inside a closed menu interrupts nobody.
+      -->
       <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="what would go wrong today">✓</button>
-      <button class="pill" onclick="refresh()" title="read the shop again (F4)">↻</button>
-      <button class="pill" onclick="openSettings()" title="look, feel and this till">⚙</button>
-      <button class="pill" id="installbtn" style="display:none" onclick="installApp()" title="install this counter as an app">⤓ install</button>
-      <a class="pill" id="cblink" href="#" target="_blank" rel="noopener" title="the rest of ChitBridge — orders, suppliers, the books">ChitBridge ↗</a>
+      <button class="pill" id="menubtn" data-testid="till-menu" onclick="toggleMenu(event)" title="bills, the shop screen, settings">☰</button>
+      <div id="tillmenu" class="menu" hidden>
+        <button data-testid="till-bills" onclick="fromMenu(openBills)">🧾 <b>Today's bills</b><i>print one again · F8</i></button>
+        <button data-testid="till-screen" onclick="fromMenu(openScreen)">📺 <b>Shop screen</b><i>your offers as a sign for a TV</i></button>
+        <button data-testid="till-refresh" onclick="fromMenu(refresh)">↻ <b>Read the shop again</b><i>new prices and products · F4</i></button>
+        <button data-testid="till-settings" onclick="fromMenu(openSettings)">⚙ <b>Settings</b><i>look, printer, this till</i></button>
+        <button id="installbtn" style="display:none" onclick="fromMenu(installApp)">⤓ <b>Install as an app</b><i>opens without a browser</i></button>
+        <a id="cblink" href="#" target="_blank" rel="noopener">↗ <b>ChitBridge</b><i>orders, suppliers, the books</i></a>
+      </div>
     </header>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
@@ -1075,6 +1097,22 @@ function stopWrongShop(bad){
   var pill = document.getElementById('healthpill'); if (pill) { pill.textContent = '⛔ wrong shop'; pill.className = 'pill off'; }
   paintStatus();
 }
+/**
+ * ⭐ THE MENU CLOSES ON ANYTHING. A menu left open over the search box is a menu that swallows the next barcode, and a scanner
+ * fires faster than anyone can reach for Escape — so it shuts on a click anywhere, on Escape, and on choosing anything in it.
+ */
+function toggleMenu(e){
+  var m = document.getElementById('tillmenu'); if (!m) return;
+  m.hidden = !m.hidden;
+  if (e) e.stopPropagation();
+  if (!m.hidden) focusSearch();          /* the box keeps the caret, so a scan still lands while the menu is open */
+}
+function closeMenu(){ var m = document.getElementById('tillmenu'); if (m) m.hidden = true; }
+function fromMenu(fn){ closeMenu(); try { fn(); } catch (_) {} }
+document.addEventListener('click', function(e){
+  var m = document.getElementById('tillmenu');
+  if (m && !m.hidden && !m.contains(e.target) && e.target.id !== 'menubtn') closeMenu();
+});
 function setFilter(what, val){
   if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; }
   else if (what === 'cat') { FILTER.cat = (FILTER.cat === val) ? null : val; }
@@ -3010,6 +3048,8 @@ async function saveSettings(){
 
 /* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('keydown', function(e){
+  /* ⚠️ BEFORE Escape reaches the basket: a person pressing Escape at an open menu means "shut this", never "throw the sale away" */
+  if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(); e.preventDefault(); return; } }
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }

@@ -40,7 +40,7 @@ const SHELF = [
             ['Pomegranate', ['mathulai', 'மாதுளை']], ['Watermelon', ['tharbusani']]],
     packs: [['', 1, 'kg'], ['500 g', 0.5, 'kg']] },
 
-  { cat: 'Rice & grains', slab: 'IN-GST-5', unit: 'bag', hsn: '1006', band: [55, 2400],
+  { cat: 'Rice & grains', slab: 'IN-GST-5', unit: 'bag', hsn: '1006', band: [42, 115],
     brands: ['Ponni', 'Anil', 'Manna', 'Double Horse', 'Aachi', 'Local', 'Sakthi', 'Udhayam'],
     items: [['Ponni raw rice', ['ponni arisi', 'பொன்னி அரிசி', 'rice']], ['Ponni boiled rice', ['puzhungal arisi', 'புழுங்கல் அரிசி']],
             ['Idli rice', ['idli arisi', 'இட்லி அரிசி']], ['Basmati rice', ['basmati']], ['Sona masoori rice', ['sona masoori']],
@@ -48,7 +48,7 @@ const SHELF = [
             ['Maida', ['maida', 'மைதா']], ['Ragi flour', ['kezhvaragu', 'கேழ்வரகு']], ['Corn flour', ['corn flour']]],
     packs: [['1 kg', 1, 'packet'], ['5 kg', 5, 'bag'], ['10 kg', 10, 'bag'], ['25 kg', 25, 'bag']] },
 
-  { cat: 'Pulses', slab: 'IN-GST-5', unit: 'packet', hsn: '0713', band: [45, 420],
+  { cat: 'Pulses', slab: 'IN-GST-5', unit: 'packet', hsn: '0713', band: [95, 260],
     brands: ['Anil', 'Manna', 'Aachi', 'Local', 'Tata', 'Udhayam'],
     items: [['Toor dal', ['thuvaram paruppu', 'துவரம் பருப்பு', 'tur dal']], ['Urad dal', ['ulundhu', 'உளுந்து']],
             ['Moong dal', ['pasi paruppu', 'பாசி பருப்பு']], ['Channa dal', ['kadalai paruppu', 'கடலை பருப்பு']],
@@ -56,33 +56,33 @@ const SHELF = [
             ['Black chana', ['karuppu kondakadalai']], ['Rajma', ['rajma'] ], ['Groundnut', ['verkadalai', 'வேர்க்கடலை']]],
     packs: [['500 g', 0.5, 'packet'], ['1 kg', 1, 'packet'], ['2 kg', 2, 'packet']] },
 
-  { cat: 'Staples', slab: 'IN-GST-5', unit: 'packet', hsn: '1701', band: [15, 180],
+  { cat: 'Staples', slab: 'IN-GST-5', unit: 'packet', hsn: '1701', band: [22, 95],
     brands: ['Tata', 'Local', 'Aachi', 'Madhu', 'Parry'],
     items: [['Sugar', ['sarkkarai', 'சர்க்கரை']], ['Jaggery', ['vellam', 'வெல்லம்']], ['Iodised salt', ['uppu', 'உப்பு']],
             ['Rock salt', ['kal uppu']], ['Vermicelli', ['semiya', 'சேமியா']], ['Poha', ['aval', 'அவல்']],
             ['Sago', ['javvarisi', 'ஜவ்வரிசி']]],
     packs: [['500 g', 0.5, 'packet'], ['1 kg', 1, 'packet']] },
 
-  { cat: 'Edible oil', slab: 'IN-GST-5', unit: 'litre', hsn: '1512', band: [90, 1300],
+  { cat: 'Edible oil', slab: 'IN-GST-5', unit: 'litre', hsn: '1512', band: [140, 420],
     brands: ['Idhayam', 'Fortune', 'Saffola', 'Gold Winner', 'Sunpure', 'Local'],
     items: [['Sunflower oil', ['sunflower ennai', 'சூரியகாந்தி எண்ணெய்']], ['Gingelly oil', ['nallennai', 'நல்லெண்ணெய்', 'sesame oil']],
             ['Groundnut oil', ['kadalai ennai', 'கடலை எண்ணெய்']], ['Coconut oil', ['thengai ennai', 'தேங்காய் எண்ணெய்']],
             ['Rice bran oil', ['rice bran']], ['Mustard oil', ['kadugu ennai']], ['Palm oil', ['palm oil']]],
     packs: [['500 ml', 0.5, 'litre'], ['1 L pouch', 1, 'litre'], ['5 L can', 5, 'litre']] },
 
-  { cat: 'Dairy', slab: 'IN-GST-12', unit: 'piece', hsn: '0405', band: [25, 720],
+  { cat: 'Dairy', slab: 'IN-GST-12', unit: 'piece', hsn: '0405', band: [300, 900],
     brands: ['Aavin', 'Nandini', 'Amul', 'Hatsun', 'Arokya', 'Local'],
     items: [['Ghee', ['nei', 'நெய்']], ['Butter', ['vennai', 'வெண்ணெய்']], ['Cheese slice', ['cheese']],
             ['Paneer', ['paneer']], ['Khoa', ['khoa']]],
     packs: [['100 g', 0.1, 'piece'], ['200 g', 0.2, 'piece'], ['500 ml', 0.5, 'piece'], ['1 L jar', 1, 'piece']] },
 
-  { cat: 'Milk & curd', slab: 'IN-GST-0', unit: 'litre', hsn: '0401', band: [18, 90],
+  { cat: 'Milk & curd', slab: 'IN-GST-0', unit: 'litre', hsn: '0401', band: [26, 70],
     brands: ['Aavin', 'Nandini', 'Hatsun', 'Arokya', 'Amul'],
     items: [['Milk toned', ['paal', 'பால்', 'milk']], ['Milk full cream', ['full cream paal']], ['Curd', ['thayir', 'தயிர்']],
             ['Buttermilk', ['moru', 'மோர்']], ['Lassi', ['lassi']]],
     packs: [['200 ml', 0.2, 'piece'], ['500 ml', 0.5, 'litre'], ['1 L', 1, 'litre']] },
 
-  { cat: 'Spices', slab: 'IN-GST-5', unit: 'packet', hsn: '0910', band: [18, 320],
+  { cat: 'Spices', slab: 'IN-GST-5', unit: 'packet', hsn: '0910', band: [200, 900],
     brands: ['Aachi', 'Sakthi', 'Everest', 'Catch', 'MTR', 'Priya', 'Local'],
     items: [['Sambar powder', ['sambar podi', 'சாம்பார் பொடி', 'aachi masala', 'achi massala']],
             ['Rasam powder', ['rasam podi', 'ரசம் பொடி']], ['Chilli powder', ['milagai thool', 'மிளகாய் தூள்']],
@@ -92,51 +92,55 @@ const SHELF = [
             ['Chicken masala', ['chicken masala']], ['Biryani masala', ['biryani masala']], ['Garam masala', ['garam masala']]],
     packs: [['50 g', 0.05, 'packet'], ['100 g', 0.1, 'packet'], ['200 g', 0.2, 'packet'], ['500 g', 0.5, 'packet']] },
 
-  { cat: 'Beverages', slab: 'IN-GST-5', unit: 'packet', hsn: '0902', band: [35, 620],
+  { cat: 'Beverages', slab: 'IN-GST-5', unit: 'packet', hsn: '0902', band: [300, 1200],
     brands: ['Tata', 'Red Label', 'Bru', 'Narasus', 'Leo', 'Local'],
     items: [['Tea dust', ['tea podi', 'டீ தூள்', 'chai']], ['Green tea', ['green tea']],
             ['Filter coffee', ['kaapi', 'காபி', 'coffee']], ['Instant coffee', ['instant coffee']],
             ['Health drink', ['health mix', 'sathu maavu']]],
     packs: [['100 g', 0.1, 'packet'], ['250 g', 0.25, 'packet'], ['500 g', 0.5, 'packet']] },
 
-  { cat: 'Cold drinks', slab: 'IN-GST-28', unit: 'piece', hsn: '2202', band: [12, 110],
+  { cat: 'Cold drinks', slab: 'IN-GST-28', unit: 'piece', hsn: '2202', band: [40, 95],
     brands: ['Bovonto', 'Kali Mark', 'Coca Cola', 'Pepsi', 'Sprite', 'Local'],
     items: [['Soft drink', ['cool drink', 'soda']], ['Soda', ['soda']], ['Energy drink', ['energy drink']]],
     packs: [['200 ml', 0.2, 'piece'], ['600 ml', 0.6, 'piece'], ['750 ml', 0.75, 'piece'], ['1.25 L', 1.25, 'piece'], ['2 L', 2, 'piece']] },
 
-  { cat: 'Snacks', slab: 'IN-GST-12', unit: 'packet', hsn: '2106', band: [10, 190],
+  { cat: 'Snacks', slab: 'IN-GST-12', unit: 'packet', hsn: '2106', band: [150, 500],
     brands: ['Haldiram', 'Aachi', 'Local', 'Grand Sweets', 'Bikano', 'A1'],
     items: [['Mixture', ['mixture', 'kaara boondhi']], ['Murukku', ['murukku', 'முறுக்கு']],
             ['Banana chips', ['vazhaikkai chips', 'வாழைக்காய் சிப்ஸ்']], ['Ribbon pakoda', ['ribbon pakoda']],
             ['Thattai', ['thattai', 'தட்டை']], ['Sev', ['sev']], ['Peanut candy', ['kadalai mittai']]],
     packs: [['100 g', 0.1, 'packet'], ['200 g', 0.2, 'packet'], ['400 g', 0.4, 'packet']] },
 
-  { cat: 'Biscuits', slab: 'IN-GST-18', unit: 'packet', hsn: '1905', band: [10, 220],
+  { cat: 'Biscuits', slab: 'IN-GST-18', unit: 'packet', hsn: '1905', band: [110, 350],
     brands: ['Britannia', 'Parle', 'Sunfeast', 'Unibic', 'Local'],
     items: [['Marie biscuit', ['biscuit', 'biskoth']], ['Glucose biscuit', ['glucose']], ['Cream biscuit', ['cream biscuit']],
             ['Rusk', ['rusk']], ['Cookies', ['cookies']]],
     packs: [['75 g', 0.075, 'packet'], ['150 g', 0.15, 'packet'], ['250 g', 0.25, 'packet'], ['family pack', 1, 'packet']] },
 
-  { cat: 'Personal care', slab: 'IN-GST-18', unit: 'piece', hsn: '3401', band: [3, 380],
+  { cat: 'Personal care', slab: 'IN-GST-18', unit: 'piece', hsn: '3401', band: [400, 1200],
     brands: ['Santoor', 'Lifebuoy', 'Colgate', 'Clinic Plus', 'Dabur', 'Patanjali', 'Medimix'],
     items: [['Bath soap', ['soap', 'sabun']], ['Toothpaste', ['paste', 'pal podi']], ['Tooth powder', ['pal podi']],
             ['Shampoo sachet', ['shampoo']], ['Shampoo bottle', ['shampoo']], ['Hair oil', ['thalai ennai', 'தலை எண்ணெய்']],
             ['Talcum powder', ['powder']], ['Face wash', ['face wash']]],
     packs: [['6 ml', 0.006, 'piece'], ['50 g', 0.05, 'piece'], ['100 g', 0.1, 'piece'], ['150 g', 0.15, 'piece'], ['200 ml', 0.2, 'piece']] },
 
-  { cat: 'Cleaning', slab: 'IN-GST-18', unit: 'piece', hsn: '3402', band: [12, 420],
+  { cat: 'Cleaning', slab: 'IN-GST-18', unit: 'piece', hsn: '3402', band: [80, 400],
     brands: ['Surf', 'Rin', 'Vim', 'Harpic', 'Lizol', 'Local', 'Ujala'],
     items: [['Detergent bar', ['soap bar', 'washing soap']], ['Detergent powder', ['washing powder']],
             ['Dishwash liquid', ['dishwash', 'vessel wash']], ['Dishwash bar', ['vim bar']],
             ['Floor cleaner', ['phenyl']], ['Toilet cleaner', ['toilet cleaner']], ['Bleach', ['bleach']]],
     packs: [['200 g', 0.2, 'piece'], ['500 g', 0.5, 'piece'], ['500 ml', 0.5, 'piece'], ['1 kg', 1, 'piece'], ['1 L', 1, 'litre']] },
 
-  { cat: 'Home', slab: 'IN-GST-12', unit: 'packet', hsn: '3406', band: [2, 260],
+  { cat: 'Home', slab: 'IN-GST-12', unit: 'packet', hsn: '3406', band: [20, 95],
     brands: ['Cycle', 'Mangaldeep', 'Local', 'Sri', 'Moksh'],
     items: [['Agarbatti', ['ஊதுபத்தி', 'incense', 'sambrani']], ['Camphor', ['pachai karpooram', 'கற்பூரம்']],
             ['Match box', ['theepetti', 'தீப்பெட்டி', 'matches']], ['Candle', ['candle', 'mezhuguvarthi']],
             ['Cotton wick', ['thiri', 'திரி']], ['Pooja oil', ['vilakku ennai', 'விளக்கு எண்ணெய்']]],
-    packs: [['small', 1, 'packet'], ['20 sticks', 1, 'packet'], ['pack of 6', 6, 'packet'], ['100 g', 0.1, 'packet']] },
+    /* ⚠️ HOME IS THE ONE HETEROGENEOUS SHELF: a match box and a litre of lamp oil are both "Home" and are not within an order of
+       magnitude of each other. One per-unit band cannot serve both, so the PACK carries the difference — a match box is a fifth
+       of a notional unit, a pack of six candles a little over one. Without this a match box priced at Rs 32.50, which is the
+       kind of number that makes a shopkeeper stop believing the whole screen. */
+    packs: [['small', 0.2, 'packet'], ['20 sticks', 0.5, 'packet'], ['pack of 6', 1.2, 'packet'], ['100 g', 0.4, 'packet']] },
 ];
 
 /* ── barcodes: real EAN-13, check digit and all, so a scanner has something honest to read ─────────────────── */
@@ -147,13 +151,24 @@ function ean13(n) {
   return body + String((10 - (sum % 10)) % 10);
 }
 
-/* a price that is plausible for the pack, not a random number: bigger pack, more money, but never linear */
+/**
+ * ⚠️⚠️ THE BAND IS A PRICE PER UNIT, AND THE PACK MULTIPLIES IT. Two wrong answers preceded this one, and the second was worse
+ * than the first because it looked plausible:
+ *   1st  base × mult^0.72 with no bound → a 25 kg bag of rice at Rs 30,214.
+ *   2nd  the same, clamped to the band's top → no absurd numbers, but 804 of 1,279 rice products priced IDENTICALLY at the
+ *        ceiling, 145 of 558 oils, 107 of 650 pulses. A whole category sharing one price is not scale data; it is one row
+ *        repeated, which is exactly what made the last 10,000 worthless.
+ * The mistake both times was treating the band as "what this category costs", which is not a thing a category has. Rice costs
+ * about Rs 90 A KILO; a 25 kg bag is 25 of those. So the band is per unit, the pack multiplies it linearly, and a small
+ * per-product jitter keeps two shops' worth of rows from landing on the same number. Nothing needs clamping, because nothing
+ * compounds.
+ */
 function priceFor(band, mult, salt) {
-  const base = band[0] + ((salt * 37) % Math.max(1, band[1] - band[0]));
-  const p = base * Math.pow(Math.max(mult, 0.05), 0.72);
-  /* ⚠️ CLAMPED TO THE CATEGORY'S OWN CEILING. Unclamped, a 25 kg rice bag came out at Rs 30,214 — the pack multiplier
-     compounding on top of an already-high band. A band is what this category costs AT ANY PACK SIZE, not per kilo. */
-  return Math.max(2, Math.round(Math.min(p, band[1]) * 2) / 2);   /* to the nearest 50 paise, like a shelf */
+  const perUnit = band[0] + ((salt * 37) % Math.max(1, band[1] - band[0]));
+  const jitter = 0.92 + ((salt * 13) % 17) / 100;          /* ±8%, so a shelf is not an arithmetic sequence */
+  const p = perUnit * Math.max(mult, 0.001) * jitter;
+  /* to the nearest 50 paise under Rs 100, the nearest rupee above it — the way prices are actually written on a shelf */
+  return p < 100 ? Math.max(2, Math.round(p * 2) / 2) : Math.round(p);
 }
 
 const out = [];
