@@ -525,8 +525,18 @@ var DB = (function(){
   return {
     /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database */
     reopen: function(){ p = null; },
-    get: function(k){ return fall('get', function(){ return tx('kv','readonly',function(s){ return s.get(k); }); }, function(){ return MEM.get('kv',k); }); },
-    set: function(k,v){ return fall('set', function(){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); }, function(){ return MEM.put('kv',v,k); }); },
+    /**
+     * ⚠️ THE SAME GUARD ON THE KEY-VALUE SIDE. Athi, 2026-09-09: *"by mixing up, we are making TWO entities' data wrong. So this has
+     * to be well guarded — while writing data in the first place, while reading the data, and when syncing, in all the places."*
+     * He is right that it is two businesses, not one: a mixed copy corrupts the shop that receives the rows AND the shop whose rows
+     * went missing. put/all cover the bills and the queue; these cover the snapshot itself and anything else kept by name.
+     * ⚠️ 'owner' and 'rejected' are ABOUT the guard, so they are never stamped by it — a rule that marks its own bookkeeping can
+     * never be read back before it is trusted.
+     */
+    get: function(k){ return fall('get', function(){ return tx('kv','readonly',function(s){ return s.get(k); }); }, function(){ return MEM.get('kv',k); })
+                        .then(function(v){ return (k === 'owner' || k === 'rejected' || ownOK(v)) ? v : undefined; }); },
+    set: function(k,v){ if (k !== 'owner' && k !== 'rejected') v = ownRow(v);
+                        return fall('set', function(){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); }, function(){ return MEM.put('kv',v,k); }); },
     put: function(store,row){ row = ownRow(row); return fall('put', function(){ return tx(store,'readwrite',function(s){ return s.put(row); }); }, function(){ return MEM.put(store,row); }); },
     del: function(store,key){ return fall('del', function(){ return tx(store,'readwrite',function(s){ return s.delete(key); }); }, function(){ return MEM.del(store,key); }); },
     /* ⚠️ a row belonging to another shop is never handed back — not to the bill list, not to the drain, not to the day totals */
