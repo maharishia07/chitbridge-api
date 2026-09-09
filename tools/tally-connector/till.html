@@ -155,7 +155,7 @@
    * ⚠️ The price column is fixed-width and tabular, so the rupees line up down the list — a column of money that jitters is a column
    * nobody can scan. On a narrow screen the middle column drops below the name rather than squeezing the price.
    */
-  .hit{display:grid;grid-template-columns:42px minmax(0,1fr) auto minmax(96px,auto);gap:12px;align-items:center;
+  .hit{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(92px,auto) auto;gap:12px;align-items:center;
        padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
   /* the marked row carries a bar as well as a tint: on a long list a colour alone is easy to lose */
@@ -179,26 +179,50 @@
   .hit.off{background:repeating-linear-gradient(135deg,transparent,transparent 7px,var(--tint) 7px,var(--tint) 14px)}
   .hit.off .n, .hit.off .p{opacity:.5}
   .hit.off .n>:first-child{text-decoration:line-through}
-  .hit .flag{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;
-             padding:2px 8px 2px 4px;background:var(--paper);color:var(--dim);font-size:.74em;font-weight:700;
-             cursor:pointer;white-space:nowrap;font-family:inherit}
-  .hit .flag:hover{border-color:var(--ok);color:var(--ink)}
-  .hit .flag .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
-  .hit.off .flag{opacity:1}
-  .hit.off .flag .dot{background:var(--warn)}
-  /* ⭐ THE COUNT IS OPTIONAL — it appears on the row you are ON, so it is never 60 steppers of noise, and typing 3* still works. */
-  .hit .qty{display:flex;align-items:center;gap:2px;visibility:hidden}
-  .hit.sel .qty, .hit:hover .qty{visibility:visible}
-  .hit .qty button{width:26px;height:26px;border:1px solid var(--line);border-radius:7px;background:var(--paper);
-                   color:var(--ink);font:inherit;font-weight:700;cursor:pointer;line-height:1;padding:0}
-  .hit .qty button:hover{border-color:var(--ok)}
-  .hit .qty .v{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+  /* ⚠️ SECONDARY, AND IT LOOKS IT (Baymard). A 22 px dot with a tooltip — every row in the selling list is on the shelf,
+     so the only thing worth offering here is the ability to say one is not. */
+  .hit .flag{width:22px;height:22px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--paper);
+             cursor:pointer;font:inherit;line-height:1;display:inline-flex;align-items:center;justify-content:center;
+             opacity:.45;transition:opacity .12s}
+  .hit .flag .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+  .hit:hover .flag, .hit.sel .flag{opacity:1}
+  .hit .flag:hover{border-color:var(--warn)}
+  .hit .flag:hover .dot{background:var(--warn)}
+  /* in the off-the-shelf view putting it back IS the job, so it stops being a dot and becomes the button */
+  .hit .back{height:38px;padding:0 14px;border:1px solid var(--ok);border-radius:9px;background:var(--ok-tint);
+             color:var(--ok);font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+  .hit .back:hover{background:var(--ok);color:#fff}
+  /**
+   * ⭐⭐ THE COUNT SITS AT THE RIGHT-HAND END. Athi, 2026-09-09: *"the quantity add, it has to be the right hand side like
+   * earlier — why are you changing that design? find the best design from the net and use it."* Fair: I had wedged it between
+   * the name and the money, which is neither what he asked for nor what anyone else does.
+   *
+   * ── ADOPTED, NOT INVENTED (Nielsen Norman Group, "Design Guidelines for Input Steppers"; eBay Playbook numeric stepper) ──
+   *   · HORIZONTAL, minus left of the value and plus right of it — vertical chevrons invite mis-taps on a touchscreen
+   *   · a touch target of at least 1 cm × 1 cm, which is ~38 px here. Mine were 26 px: too small for a finger at a counter
+   *   · "steppers become impractical for large changes" — so the value is a FIELD, not a label. Twenty-four packets is typed,
+   *     not tapped twenty-three times. NN/g calls this the hybrid, and it is the only honest answer for a till
+   *   · the default is the most frequent value, which at a counter is 1
+   *   · always visible, not revealed on hover — a control nobody can see is a control nobody uses, and it is the pattern every
+   *     grocery app has trained this shopkeeper's customers on
+   */
+  .hit .qty{display:flex;align-items:center;gap:4px;flex:none}
+  .hit .qty button{width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:var(--paper);
+                   color:var(--ink);font:inherit;font-size:1.15em;font-weight:700;cursor:pointer;line-height:1;padding:0}
+  .hit .qty button:hover{border-color:var(--ok);color:var(--ok)}
+  .hit .qty button:active{background:var(--ok-tint)}
+  .hit .qty .v{width:46px;height:38px;text-align:center;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;
+               border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);
+               -moz-appearance:textfield;appearance:textfield}
+  .hit .qty .v::-webkit-outer-spin-button, .hit .qty .v::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .hit .qty .v:focus{outline:2px solid var(--ok);outline-offset:1px}
   .facts{color:var(--dim);font-size:.78em;margin-top:2px;line-height:1.45}
   .facts b{color:var(--ink);font-weight:600}
   .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
-  @media (max-width:520px){ .hit{grid-template-columns:34px minmax(0,1fr) minmax(84px,auto);gap:9px} .hit .pic{width:34px;height:34px}
-    /* the stepper drops under the name rather than squeezing the money, which is the one column that must stay readable */
-    .hit .qty{grid-column:2;justify-content:flex-start} }
+  @media (max-width:520px){ .hit{grid-template-columns:34px minmax(0,1fr) auto;gap:9px} .hit .pic{width:34px;height:34px}
+    /* ⚠️ the tap targets are NOT shrunk on the small screen — that is the screen where a finger needs them most. The stepper
+       moves to its own line under the name instead, and the money keeps the column it had. */
+    .hit .qty{grid-column:2/-1;justify-content:flex-end;margin-top:4px} }
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
@@ -1231,7 +1255,18 @@ function paintCustomers(){
  * ⭐ WHICH OFFERS TOUCH THIS PRODUCT — asked of the ENGINE, never re-decided here (2026-09-08). The answer is cached on the item and
  * thrown away whenever the shop is re-read, because an offer that ended overnight must not linger on a chip.
  */
-var FILTER = { offer:false, cat:null }, OFFER_STAMP = null;
+/**
+ * ⭐⭐ THE LIST IS WHAT YOU CAN SELL. Athi, 2026-09-09: *"if the product is not on the shelf do not bring it here, show it in the
+ * filter from the menu — say 'show off the shelf product' or something. Here only the products which are available."*
+ *
+ * He is right and I had it backwards. I put out-of-stock rows in the main list struck through, reasoning that they must be
+ * reachable to be put back. But the counter's list is answering one question — *what can I sell this customer* — and every row
+ * that cannot be sold is an answer to a different one. At a counter, a struck-through row is a thing to read past, forty times
+ * an hour.
+ * ⚠️ THE SNAPSHOT STILL CARRIES THEM. That part was a real fix and it stands: an item that left the snapshot entirely could
+ * never be put back from the counter. It travels; it is simply not listed until asked for.
+ */
+var FILTER = { offer:false, cat:null, off:false }, OFFER_STAMP = null;
 /**
  * ⭐⭐ WHAT THE CUSTOMER ACTUALLY PAYS FOR ONE. Athi, 2026-09-09: *"the price being showcased in the counter app — it is supposed to
  * be the final price after discount and including tax? … the price here is confusing."*
@@ -1344,9 +1379,11 @@ document.addEventListener('click', function(e){
   if (m && !m.hidden && !m.contains(e.target) && e.target.id !== 'menubtn') closeMenu();
 });
 function setFilter(what, val){
-  if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; }
-  else if (what === 'cat') { FILTER.cat = (FILTER.cat === val) ? null : val; }
-  else { FILTER = { offer:false, cat:null }; }
+  if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; FILTER.off = false; }
+  else if (what === 'cat') { FILTER.cat = (FILTER.cat === val) ? null : val; FILTER.off = false; }
+  /* ⚠️ off-the-shelf is a WHOLE OTHER SHELF, not a narrowing of this one — it replaces the other filters rather than stacking */
+  else if (what === 'off') { FILTER = { offer:false, cat:null, off: !FILTER.off }; }
+  else { FILTER = { offer:false, cat:null, off:false }; }
   SEL = 0; paintChips(); paintHits();
 }
 function paintChips(){
@@ -1354,9 +1391,13 @@ function paintChips(){
   var cats = {};
   (S.items || []).forEach(function(i){ if (i.category) cats[i.category] = (cats[i.category] || 0) + 1; });
   var list = Object.keys(cats).sort(function(a,b){ return cats[b] - cats[a]; }).slice(0, 14);
-  var none = !FILTER.offer && !FILTER.cat;
+  var none = !FILTER.offer && !FILTER.cat && !FILTER.off;
+  /* ⚠️ THE COUNT IS SHOWN EVEN WHEN IT IS ZERO. A chip that appears only when something is out of stock is a chip nobody can
+     find when they want to check — and "0" is itself the answer to "is anything off today?" */
+  var offN = (S.items || []).filter(function(i){ return statusOf(i) === 'unavailable'; }).length;
   el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything</button>'
     + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer</button>'
+    + '<button class="' + (FILTER.off ? 'on' : '') + '" data-testid="till-chip-off" onclick="setFilter(\'off\')">Off the shelf <span class="u">' + offN + '</span></button>'
     + list.map(function(c){ return '<button class="' + (FILTER.cat === c ? 'on' : '') + '" data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '" onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">' + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'; }).join('');
 }
 /**
@@ -1452,6 +1493,10 @@ function hits(){
   var raw = typed().text;
   var items = (S && S.items) || [];
   /* the chips narrow the shelf BEFORE the search runs — on a ten-thousand item shop that is also what makes it quick */
+  /* ⚠️⚠️ THE DEFAULT IS "WHAT I CAN SELL". Everything that is off the shelf is hidden until the chip asks for it — and the chip
+     then shows ONLY those, because "what is out of stock" is a stock-take, not a narrowing of the sales list. */
+  items = FILTER.off ? items.filter(function(i){ return statusOf(i) === 'unavailable'; })
+                     : items.filter(function(i){ return statusOf(i) !== 'unavailable'; });
   if (FILTER.cat) items = items.filter(function(i){ return i.category === FILTER.cat; });
   if (FILTER.offer) items = items.filter(function(i){ return offersFor(i).length > 0; });
   if (window.CBSearch) return CBSearch.search(items, raw, { limit:60 });
@@ -1576,12 +1621,14 @@ function quickAdd(id){
  */
 function shelfLine(shown){
   if (!S) return '';
-  var total = ((S && S.items) || []).length;
+  var total = ((S && S.items) || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
   if (!total) return '';
   var when = S.at ? new Date(S.at).toTimeString().slice(0, 5) : null;
   var n = function(v){ return Number(v).toLocaleString('en-IN'); };
   var txt;
-  if (FILTER.cat)        txt = n(shown) + ' in ' + esc(FILTER.cat) + ' — of ' + n(total) + ' on this counter';
+  if (FILTER.off)        txt = shown ? (n(shown) + ' off the shelf right now — tap one to put it back')
+                                     : 'Nothing is off the shelf. Everything on this counter can be sold.';
+  else if (FILTER.cat)   txt = n(shown) + ' in ' + esc(FILTER.cat) + ' — of ' + n(total) + ' on this counter';
   else if (FILTER.offer) txt = n(shown) + ' carrying an offer — of ' + n(total) + ' on this counter';
   else if (typed().text) txt = shown ? ('showing ' + n(shown) + ' of ' + n(total) + ' — keep typing to narrow it')
                                      : ('nothing matches, of ' + n(total) + ' on this counter');
@@ -1630,9 +1677,10 @@ function tileSwap(img){
  * both would put an out-of-stock item on the bill at the moment it was marked out of stock.
  */
 function flagBtn(i, n, off){
+  /* ⚠️ in the off-the-shelf view the trailing button carries this job, so the row does not offer it twice */
+  if (off) return '';
   return '<button class="flag" data-testid="till-flag-' + n + '" onclick="event.stopPropagation();flagTap(' + n + ')"'
-    + ' title="' + (off ? 'Put it back on the shelf' : 'Mark it off the shelf') + '">'
-    + '<span class="dot"></span>' + (off ? 'Off the shelf' : 'On the shelf') + '</button>';
+    + ' title="Mark ' + esc(i.name) + ' off the shelf" aria-label="mark off the shelf"><span class="dot"></span></button>';
 }
 function flagTap(n){ var i = hits()[n]; if (i) stockToggle(i); }
 /**
@@ -1644,17 +1692,27 @@ function flagTap(n){ var i = hits()[n]; if (i) stockToggle(i); }
 var ROWQ = {};
 function rowQty(i){ var q = Number(i && ROWQ[i.item_id]); return q > 0 ? q : 1; }
 function qtyBox(i, n){
-  return '<span class="qty" data-testid="till-qty-box-' + n + '">'
-    + '<button onclick="event.stopPropagation();bump(' + n + ',-1)" title="one fewer" tabindex="-1">−</button>'
-    + '<span class="v" data-testid="till-rowqty-' + n + '">' + rowQty(i) + '</span>'
-    + '<button onclick="event.stopPropagation();bump(' + n + ',1)" title="one more" tabindex="-1">+</button></span>';
+  /* ⚠️ EVERY PART OF IT STOPS THE CLICK. The row means "sell one of these"; this control means "how many". A tap that did both
+     would bill an item while the operator was still deciding the quantity. */
+  return '<span class="qty" data-testid="till-qty-box-' + n + '" onclick="event.stopPropagation()">'
+    + '<button onclick="event.stopPropagation();bump(' + n + ',-1)" title="one fewer" aria-label="one fewer" tabindex="-1">−</button>'
+    + '<input class="v" type="number" min="1" step="1" inputmode="numeric" value="' + rowQty(i) + '"'
+      + ' data-testid="till-rowqty-' + n + '" aria-label="how many"'
+      + ' onclick="event.stopPropagation();this.select()" onchange="setRowQty(' + n + ',this.value)">'
+    + '<button onclick="event.stopPropagation();bump(' + n + ',1)" title="one more" aria-label="one more" tabindex="-1">+</button></span>';
+}
+/** typed straight in — the half of the hybrid that makes twenty-four packets possible without twenty-three taps */
+function setRowQty(n, v){
+  var i = hits()[n]; if (!i) return;
+  var q = Number(v);
+  ROWQ[i.item_id] = (q > 0) ? q : 1;
 }
 function bump(n, d){
   var i = hits()[n]; if (!i) return;
   ROWQ[i.item_id] = Math.max(1, rowQty(i) + d);
   /* ⭐ the number changes, the list does not — repainting 60 rows to move one digit loses the row under the finger */
   var v = document.querySelector('[data-testid="till-rowqty-' + n + '"]');
-  if (v) v.textContent = rowQty(i); else paintHits();
+  if (v) v.value = rowQty(i); else paintHits();
 }
 function priceBlock(i){
   var pay = payPrice(i), r = i.tax_rate;
@@ -1687,8 +1745,9 @@ function paintHits(){
           + flagBtn(i, n, off)
         + '</span>'
       + '</span>'
-      + qtyBox(i, n)
-      + priceBlock(i) + '</div>';
+      + priceBlock(i)
+      + (off ? '<button class="back" data-testid="till-back-' + n + '" onclick="event.stopPropagation();flagTap(' + n + ')">Put it back</button>'
+             : qtyBox(i, n)) + '</div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
   keepSelInView();
 }

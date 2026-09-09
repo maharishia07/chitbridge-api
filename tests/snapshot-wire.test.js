@@ -166,4 +166,38 @@ it('⭐⭐ a number-word in a product name does not make the product unfindable'
   assert.ok(fn.indexOf('unit: String(hit[3]).toLowerCase()') > 0, 'the unit branch must still read the converted text');
 });
 
+/**
+ * ⭐⭐ THE SELLING LIST SHOWS ONLY WHAT CAN BE SOLD. Athi, 2026-09-09: *"if the product is not on the shelf do not bring it here …
+ * here only the products which are available."* The rows still TRAVEL in the snapshot — an item that left it entirely could never
+ * be put back from the counter — but they are not listed until the "Off the shelf" chip asks for them.
+ */
+it('⭐⭐ the counter lists what it can sell, and off-the-shelf is a view you ask for', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function hits(){'), page.indexOf('function hits(){') + 1200);
+  assert.ok(fn.indexOf("statusOf(i) !== 'unavailable'") > 0,
+    'hits() does not exclude off-the-shelf rows — they would be listed among the sellable ones');
+  assert.ok(fn.indexOf('FILTER.off') > 0, 'there is no way to ask for the off-the-shelf rows');
+  assert.ok(page.indexOf('till-chip-off') > 0, 'the chip that asks for them is missing, so they are unreachable');
+  /* ⚠️ and the count beside the list must count the same set the list shows */
+  const shelf = page.slice(page.indexOf('function shelfLine('), page.indexOf('function paintHits'));
+  assert.ok(shelf.indexOf("statusOf(i) !== 'unavailable'") > 0,
+    'the shelf line counts every row including the unsellable ones, so it disagrees with the list under it');
+});
+
+/**
+ * ⭐ THREE HIT AREAS, ONE PRIMARY (Baymard: "Mobile Product Lists Need Very Distinct Hit Areas"). Tapping the row sells; the
+ * stepper and the shelf dot must not inherit that tap, or a quantity change puts an item on the bill.
+ */
+it('⭐ every secondary control on a row stops the click reaching the row', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const box = page.slice(page.indexOf('function qtyBox(i, n){'), page.indexOf('function setRowQty'));
+  assert.strictEqual(box.split('event.stopPropagation()').length - 1, 4,
+    'the stepper has four tappable parts — the group, both buttons and the field — and all four must stop the click');
+  const flag = page.slice(page.indexOf('function flagBtn(i, n, off){'), page.indexOf('function flagTap'));
+  assert.ok(flag.indexOf('event.stopPropagation()') > 0, 'the shelf dot would sell the item it is marking out of stock');
+  /* NN/g: a stepper is impractical for large changes, so the value is typed as well as tapped */
+  assert.ok(box.indexOf('input class="v" type="number"') > 0,
+    'the count is a label, not a field — twenty-four packets would be twenty-three taps');
+});
+
 console.log(pass + ' checks');
