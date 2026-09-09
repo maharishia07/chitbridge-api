@@ -267,7 +267,10 @@
   .t{display:flex;justify-content:space-between;padding:1px 0}
   .t.big{font-size:1.7em;font-weight:800;padding-top:4px}
   .pay{display:flex;gap:8px;padding:8px 12px;flex-wrap:wrap}
-  .pay button{flex:1 1 90px;padding:12px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer}
+  .pay button{flex:1 1 90px;padding:12px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);color:var(--ink);cursor:pointer}
+  /* what will actually be written down — full width under the three buttons, because it is a sentence, not a chip */
+  .paysays{flex-basis:100%;color:var(--dim);font-size:.85em;padding-top:2px}
+  .paysays b{color:var(--ink);font-weight:800}
   .pay button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   .take{display:flex;gap:8px;padding:0 12px 8px;align-items:center}
   .take input{flex:1;font-size:1.2em;padding:10px 12px;border:2px solid var(--line);border-radius:var(--radius);text-align:right;background:var(--paper);min-width:0}
@@ -652,6 +655,8 @@ var S = null, STATE = { online:false, queued:0, today:{count:0,total:0}, till:{ 
 /* set when a catalogue for a DIFFERENT shop was refused; kept on disk, because a refused sync is not a passing glitch */
 var REJECTED = null;
 var CART = [], PICKED = 'Cash', LAST = null, HOST = null, SEL = 0;
+/** ⚠️ false until somebody chooses a way to pay or takes a part — see the day close, which counts the ones nobody did */
+var PAY_ASKED = false;
 
 var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
 var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
@@ -2470,7 +2475,7 @@ function bumpLast(d){
   toastLine(c ? (c.name + ' × ' + c.qty) : 'removed from the bill');
 }
 function drop(k){ CART.splice(k,1); repaint(); }
-function clearBill(){ CART = []; PARTS = []; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
+function clearBill(){ CART = []; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
 /**
  * ⭐ PARKED BILLS live on the device and survive a reload — a customer who walked away must not cost the queue, and a browser that
  * refreshes must not cost the customer. They are NOT bills yet: no number is taken, nothing is queued, nothing has been sold.
@@ -3141,6 +3146,8 @@ function paintTotals(){
             : '<div class="t"><span>GST total</span><span>' + money(m.tax) + '</span></div>') : '')
     + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">' + money(m.net) + '</span></div>';
   var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
+  /* ⚠️ the sentence names an AMOUNT, so it changes when the total does — not only when a button is pressed */
+  paintPays();
 }
 /**
  * ⭐ A REAL SPLIT (2026-09-08). ₹500 in cash and the rest on UPI is the ordinary Indian counter; one mode per bill was a lie about what
@@ -3153,6 +3160,7 @@ function addPart(){
   var left = r2(m.net - taken);
   if (!(amt > 0)) { say('Type the amount taken in ' + PICKED + ' first.'); return; }
   PARTS.push({ how: PICKED, amount: r2(Math.min(amt, left > 0 ? left : amt)) });
+  PAY_ASKED = true;                                  /* taking a part IS saying how it was paid */
   document.getElementById('tendered').value = '';
   paintParts(); paintTotals();
 }
@@ -3164,10 +3172,22 @@ function paintParts(){
   }).join('');
 }
 function paintPays(){
+  var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
+  var left = r2(m.net - taken);
   document.getElementById('pay').innerHTML = ['Cash','UPI','Card'].map(function(h){
-    return '<button class="' + (PICKED===h?'on':'') + '" data-testid="till-pay-' + h.toLowerCase() + '" onclick="PICKED=\'' + h + '\';paintPays()">' + h + '</button>';
-  }).join('');
+    return '<button class="' + (PICKED===h?'on':'') + '" data-testid="till-pay-' + h.toLowerCase() + '" onclick="pickPay(\'' + h + '\')">' + h + '</button>';
+  }).join('')
+  /* ⭐ THE ANSWER THAT WILL BE WRITTEN DOWN, said before it is written. It is the default until somebody says
+     otherwise, and a default nobody can see is the one that ends up wrong in the books. */
+  + (CART.length ? '<div class="paysays" data-testid="till-pay-says">'
+      + (PARTS.length
+          ? 'Taking ' + PARTS.map(function(p){ return money(p.amount) + ' in ' + esc(p.how); }).join(' + ')
+            + (left > 0 ? ' · ' + money(left) + ' still due as <b>' + esc(PICKED) + '</b>' : '')
+          : 'This bill will be recorded as <b>' + esc(PICKED) + '</b>')
+      + '</div>' : '');
 }
+/** ⚠️ the choice repaints the LINE that states it, not the whole bill — and it is a statement, so it must be seen */
+function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); }
 
 /* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
 async function finish(){
@@ -3188,7 +3208,10 @@ async function finish(){
                                           priced_by:(c.priced && c.priced.kind) || null,
                                           priced_why:(c.priced && c.priced.why) || null, qty:c.qty,
                                           gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label, hsn:c.hsn, gst_rate:c.gst_rate }; }),
-    payments: parts, paid: paid, change: r2(Math.max(0, (tendered || 0) - r2(m.net - (paid - (parts[parts.length-1] || {}).amount || 0)))),
+    payments: parts, paid: paid,
+    /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
+       from the shape of a bill would be a guess dressed as a finding. */
+    payment_asked: PAY_ASKED, change: r2(Math.max(0, (tendered || 0) - r2(m.net - (paid - (parts[parts.length-1] || {}).amount || 0)))),
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
        the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
@@ -3227,6 +3250,8 @@ function dayCloseSheet(rows){
     d.taxable = r2(d.taxable + (b.taxable||0)); d.tax = r2(d.tax + (b.tax||0));
     if (b.kind === 'tax') d.taxed = true;
     (b.payments||[]).forEach(function(p){ d.modes[p.how] = r2((d.modes[p.how]||0) + (p.amount||0)); });
+    /* ⭐ the habit, as a number. A drawer that is short by exactly these bills is not a mystery, it is a routine. */
+    if (b.payment_asked === false) { d.unasked = (d.unasked || 0) + 1; d.unasked_total = r2((d.unasked_total || 0) + (b.total || 0)); }
     var who = (b.by && b.by.name) || 'the shop';
     d.people[who] = d.people[who] || { bills:0, total:0 };
     d.people[who].bills++; d.people[who].total = r2(d.people[who].total + (b.total||0));
@@ -3269,6 +3294,11 @@ function dayCloseHTML(d){
         + t('Taxable', money(d.taxable)) + t('GST total', money(d.tax)) : '')
     + dash + '<div style="font-weight:700">How it was paid</div>'
     + (Object.keys(d.modes).length ? Object.keys(d.modes).map(function(k){ return t(esc(k), money(d.modes[k])); }).join('') : '<div>nothing taken</div>')
+    + ((d.unasked || 0) > 0
+        ? dash + t('Not asked how paid', String(d.unasked) + ' bills · ' + money(d.unasked_total))
+          + '<div style="font-size:.9em">Recorded as ' + esc(String((STATE.pickedDefault) || 'Cash'))
+          + ' because nobody chose. If any of these were UPI or card, the drawer will be short by that much.</div>'
+        : '')
     + dash + '<div style="font-weight:700">In the drawer</div>'
     + t('Float at the start', money(d.float)) + t('Cash taken', money(d.cash))
     + t('Should be there', money(d.expected_cash), true)

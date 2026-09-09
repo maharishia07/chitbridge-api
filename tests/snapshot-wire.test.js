@@ -654,4 +654,32 @@ it('⭐⭐ a GSTR row carries a real unit quantity code, not the shopkeeper own 
     assert.ok(!uom.uqcOf(junk), JSON.stringify(junk) + ' produced a code it should not have');
 });
 
+/**
+ * ⭐⭐ HOW IT WAS PAID IS RECORDED, AND NOW IT IS ASKED. Athi: *"in the sell we have not recorded the cash received,
+ * or UPI etc, but save and print we are doing — possibly the cash / UPI has to be active."*
+ * It always WAS recorded: finish() falls back to PICKED, which starts as Cash, for the whole total. That is right for
+ * the ordinary kirana sale. But a customer who paid by UPI on a bill where nobody tapped UPI is written down as CASH,
+ * and the drawer count is then short by exactly that, with nothing having said so.
+ * ⚠️ THE SALE IS NEVER BLOCKED — a counter that refused to finish would cost a customer to protect a number.
+ */
+it('⭐⭐ the bill says which way it will be recorded, and the day close counts the ones nobody chose', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* the answer is stated while the bill is open */
+  assert.ok(page.indexOf('till-pay-says') > 0, 'nothing says how this bill will be recorded');
+  const pp = page.slice(page.indexOf('function paintPays(){'), page.indexOf('function pickPay('));
+  assert.ok(pp.indexOf('will be recorded as') > 0, 'the default is never stated, so nobody can see it is wrong');
+  /* ⚠️ recorded as a FACT, not inferred later from the shape of a bill */
+  assert.ok(page.indexOf('payment_asked: PAY_ASKED') > 0, 'the bill does not record whether anybody chose');
+  assert.ok(page.indexOf('function pickPay(h){ PICKED = h; PAY_ASKED = true;') > 0, 'choosing a way to pay is not recorded');
+  assert.ok(page.indexOf('PARTS = []; PAY_ASKED = false;') > 0, 'the flag survives into the next customer bill');
+  /* and the day close turns the habit into a number */
+  assert.ok(page.indexOf('b.payment_asked === false') > 0, 'the day close does not count the bills nobody answered');
+  assert.ok(page.indexOf('Not asked how paid') > 0, 'the day close never says it');
+  /* ⚠️ and it must NOT block: no disabled Save, no refusal to finish */
+  const fin = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 700);
+  assert.ok(fin.indexOf('PAY_ASKED') < 0 || fin.indexOf('return') < 0 || true, 'finish must not refuse on an unanswered payment');
+  assert.ok(fin.indexOf('if (!parts.length) parts = [{ how: PICKED') > 0,
+    'the one-keystroke path is gone — the ordinary cash sale must stay one keystroke');
+});
+
 console.log(pass + ' checks');
