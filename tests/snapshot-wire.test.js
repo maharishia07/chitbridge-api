@@ -633,4 +633,25 @@ it('⭐⭐ the till formats money through CBLocale, in the shop own currency', (
   assert.ok(fn.indexOf('r2(n).toFixed(2)') > 0, 'there is no fallback — a missing locale engine would stop the till');
 });
 
+/**
+ * ⭐⭐ A UQC IS A CODE, NOT WHATEVER WORD THE SELLER USED. lib/tax-lines.js filed it.Unit straight into a GSTR HSN
+ * summary as the Unit Quantity Code, so a till selling by the "packet" produced uqc:"packet" — a value the portal
+ * does not have. It never threw: 'OTH' covered the EMPTY case, never the wrong one.
+ * ⚠️ Fixed in the CONSUMER. The till, the app and a CSV all name a unit in their own words and are right to; the
+ * mapping belongs where the RETURN is assembled, once, so every source is correct without knowing about the GSTR.
+ */
+it('⭐⭐ a GSTR row carries a real unit quantity code, not the shopkeeper own word', () => {
+  const uom = require(path.join(API, 'lib', 'units.js'));
+  const src = fs.readFileSync(path.join(API, 'lib', 'tax-lines.js'), 'utf8');
+  assert.ok(src.indexOf("uqc: it.Unit || 'OTH'") < 0, 'the seller word is filed as a UQC again');
+  assert.ok(src.indexOf('uqc: uqcFor(it.Unit)') > 0, 'the unit is not mapped through lib/units');
+  assert.ok(src.indexOf("require('./units')") > 0, 'tax-lines does not use the one unit map');
+  /* the words a counter actually uses must reach real codes */
+  for (const [word, code] of [['packet', 'PAC'], ['piece', 'PCS'], ['kg', 'KGS'], ['litre', 'LTR'], ['bag', 'BAG']])
+    assert.strictEqual(uom.uqcOf(word), code, word + ' does not map to ' + code);
+  /* ⚠️ and anything we cannot vouch for stays OTH — a code we invented would be a false statement on a return */
+  for (const junk of ['cup', 'nonsense', '', null])
+    assert.ok(!uom.uqcOf(junk), JSON.stringify(junk) + ' produced a code it should not have');
+});
+
 console.log(pass + ' checks');
