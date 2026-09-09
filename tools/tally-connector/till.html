@@ -1035,7 +1035,15 @@ async function pickHost(){
      * something to CHECK the server's answer against. Without it a counter could only ever believe whatever a stored key returned.
      */
     var wantShop = hv('shop'), wantName = hv('as');
-    if (wantShop) { ls.set('cb_till_shop', wantShop); ls.set('cb_till_shopname', wantName || ''); }
+    /**
+     * ⚠️⚠️ UNDER THE SHOP'S OWN NAME, NOT THE DEVICE'S. This marker says "which shop was THIS counter opened for", and it lived in
+     * plain localStorage — which two tabs of one browser SHARE. [ISO-01] opened two shops side by side and the second one
+     * overwrote the first's marker, so counter A compared shop B's id against its own answer and accused ITSELF of being the
+     * wrong shop: a red ⛔ on a counter that was completely correct.
+     * A guard that cries wolf is worse than no guard — the first person to see it wrong is the last person to believe it.
+     * shopLs() namespaces it by the key, which is what actually identifies a counter.
+     */
+    if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
     if (k) { ls.set('cb_till_key', k); CloudHost.key = k; DB.reopen();   /* a new key = a different shop = a different copy */
              history.replaceState(null, '', location.pathname + location.search); }
   }
@@ -1057,9 +1065,9 @@ async function pickHost(){
  */
 function wrongShop(){
   if (!S || !S.entity_id) return null;                       /* an older server does not say; nothing to check against */
-  var want = ls.get('cb_till_shop', '');
+  var want = ls.get(shopLs('cb_till_shop'), '');
   if (!want || want === S.entity_id) return null;
-  return { want: want, wantName: ls.get('cb_till_shopname', '') || 'another shop', got: (S.shop && S.shop.name) || 'this one' };
+  return { want: want, wantName: ls.get(shopLs('cb_till_shopname'), '') || 'another shop', got: (S.shop && S.shop.name) || 'this one' };
 }
 async function load(){
   if (!HOST) HOST = await pickHost();
@@ -2031,7 +2039,7 @@ async function verifyCounter(){
   var n = function(x){ return Number(x).toLocaleString('en-IN'); };
 
   /* 1 · the right shop */
-  var want = ls.get('cb_till_shop', '');
+  var want = ls.get(shopLs('cb_till_shop'), '');
   if (want && v.shop && v.shop.entity_id && want !== v.shop.entity_id) {
     out += line('⛔', 'This is not the shop you opened', 'The key answers for ' + (v.shop.name || 'another shop') + '.');
     worst = 'bad';
@@ -2984,7 +2992,7 @@ async function openBills(keepOpen){
  */
 function openScreen(){
   var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? CloudHost.key : null;
-  var shop = ls.get('cb_till_shop', '');
+  var shop = ls.get(shopLs('cb_till_shop'), '');
   var addr = '/promo.html' + (k ? ('#key=' + encodeURIComponent(k) + (shop ? '&shop=' + encodeURIComponent(shop) : '')) : '');
   window.open(addr, '_blank', 'noopener');
 }
