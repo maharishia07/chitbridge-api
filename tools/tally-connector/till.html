@@ -351,7 +351,12 @@
   .dlgbtns button.pri:hover{background:var(--ok);color:#fff;filter:brightness(1.08)}
   .dlgbtns button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
   .dlgbtns button.pri{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
+  /* ⚠️ PAPER, ON PURPOSE — a receipt preview must look like the receipt, in either theme. Both colours are pinned
+     together: fixing only the background is what produced near-white ink on white. */
   .slipbox{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:#000}
+  /* ⭐ the same box carrying a SCREEN rather than a slip — health, the verification report — follows the theme */
+  .slipbox.screen{background:var(--card);color:var(--ink)}
+  .slipbox.screen b{color:var(--ink)}
   /**
    * ⭐⭐ A LONG READ MUST LOOK LIKE WORK, NOT LIKE A HANG. Athi, 2026-09-09: *"when we try to reload, no message is appearing —
    * an image of the progress would be good."* Ten thousand products is about five megabytes; on a shop line that is several
@@ -512,6 +517,18 @@
     <div class="foot"><span id="queuenote"></span><span id="updnote" class="upd"></span><span id="lastnote"></span></div>
   </section>
 </div>
+
+<!-- ⭐ ONE BOX FOR ALL THREE — the counter's own alert, confirm and prompt. -->
+<dialog id="askdlg"><div class="dlg">
+  <h3 id="asktitle">ChitBridge counter</h3>
+  <div id="askbody" data-testid="till-ask-body"></div>
+  <label id="asklabel" hidden>Your answer</label>
+  <input id="askinput" data-testid="till-ask-input" hidden>
+  <div class="dlgbtns">
+    <button id="askno" data-testid="till-ask-no" hidden>Cancel</button>
+    <button class="pri" id="askok" data-testid="till-ask-ok">OK</button>
+  </div>
+</div></dialog>
 
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
@@ -2203,8 +2220,8 @@ function listenServer(into, btn){
 var _rec = null;
 function listen(into){
   var ear = whoListens();
-  if (!ear) { alert('This device cannot listen. Chrome on a phone, a tablet or Windows can — or turn speaking on in ⚙.'); return; }
-  if (!navigator.onLine) { alert('Speaking needs the internet — the audio has to reach a speech service. Type it for now; billing itself works offline.'); return; }
+  if (!ear) { say('This device cannot listen. Chrome on a phone, a tablet or Windows can — or turn speaking on in ⚙.'); return; }
+  if (!navigator.onLine) { say('Speaking needs the internet — the audio has to reach a speech service. Type it for now; billing itself works offline.'); return; }
   var box = document.getElementById(into); if (!box) return;
   var btn = document.getElementById(into === 'cphone' ? 'micphone' : 'mic');
   if (ear === 'server') return listenServer(into, btn);
@@ -2596,6 +2613,7 @@ function openHealth(){
     var box = document.getElementById('slipbox');
     if (box && box.parentNode) box.parentNode.insertBefore(b, box);
   }, 0);
+  document.getElementById('slipbox').classList.add('screen');
   document.getElementById('slipbox').innerHTML = '<div style="font-family:inherit;width:auto;color:var(--ink)">'
     + (h.length ? h.map(function(x){
         return '<div style="border-inline-start:4px solid ' + (x.level === 'bad' ? 'var(--warn)' : (x.level === 'warn' ? 'var(--blue)' : 'var(--line)'))
@@ -2733,7 +2751,7 @@ function addPart(){
   var amt = Number(document.getElementById('tendered').value);
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var left = r2(m.net - taken);
-  if (!(amt > 0)) { alert('Type the amount taken in ' + PICKED + ' first.'); return; }
+  if (!(amt > 0)) { say('Type the amount taken in ' + PICKED + ' first.'); return; }
   PARTS.push({ how: PICKED, amount: r2(Math.min(amt, left > 0 ? left : amt)) });
   document.getElementById('tendered').value = '';
   paintParts(); paintTotals();
@@ -2776,7 +2794,7 @@ async function finish(){
   };
   var r = null;
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
-  if (!r || !r.ok){ alert('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
+  if (!r || !r.ok){ say('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
   LAST = r.bill; if (r.today) STATE.today = r.today;
   showSlip(r.bill, m);
   autoPrint(r.bill);
@@ -2863,6 +2881,9 @@ async function dayClose(){
   var d = dayCloseSheet(rows);
   try { document.getElementById('billsdlg').close(); } catch (_) {}
   document.getElementById('sliptitle').textContent = 'Day close · ' + d.bills + ' bill(s) · ₹' + money(d.total);
+  /* ⚠️ OFF AGAIN. The box is shared, so a slip opened after a health check would inherit the screen colours — and
+     printSlip() copies this element's innerHTML into the print window, which would then print grey on charcoal. */
+  document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
   document.getElementById('slipdlg').showModal();
 }
@@ -2999,18 +3020,89 @@ function itemByAlias(text, vendor){
 async function rememberAlias(n){
   var l = RCV.lines[n]; if (!l || !l.item_id) return;
   var vendor = (RCV.vendor || '').trim();
-  var text = prompt('What does ' + (vendor || 'this supplier') + ' call "' + l.name + '" on their paperwork?', l.their_text || '');
+  var text = await ask('What does ' + (vendor || 'this supplier') + ' call "' + l.name + '" on their paperwork?',
+                       l.their_text || '', 'Their name for it', 'Remember their word');
   if (text === null || !String(text).trim()) return;
-  var packs = prompt('How many ' + (l.unit || 'piece') + ' in one of THEIR packs? Leave blank if it is the same.', '');
+  var packs = await ask('How many ' + (l.unit || 'piece') + ' in one of THEIR packs?\n\nLeave it blank if their pack is the same as yours.',
+                        '', 'How many ' + (l.unit || 'piece') + ' per pack', 'Remember their word');
   var factor = (packs === null || String(packs).trim() === '') ? null : Number(packs);
   var unit = null;
-  if (factor && factor > 0) unit = prompt('What do they call that pack? (carton, case, bag…)', 'carton') || 'pack';
+  if (factor && factor > 0) unit = (await ask('What do they call that pack?\n\ncarton · case · bag · bundle',
+                                              'carton', 'Their word for the pack', 'Remember their word')) || 'pack';
   try {
     var r = await (HOST.alias ? HOST.alias({ item_id: l.item_id, by: vendor, text: String(text).trim(), unit: unit, factor: factor })
                               : Promise.resolve({ ok: false, why: 'this host cannot save it' }));
     if (r && r.ok) { l.their_text = String(text).trim(); toastLine('Remembered. Next time "' + l.their_text + '" finds this product by itself.'); refresh(); }
-    else alert('It could not be saved: ' + ((r && (r.why || r.error)) || 'unknown') + '. The count is not affected.');
-  } catch (e) { alert('It could not be saved: ' + e.message + '. The count is not affected.'); }
+    else say('It could not be saved: ' + ((r && (r.why || r.error)) || 'unknown') + '. The count is not affected.');
+  } catch (e) { say('It could not be saved: ' + e.message + '. The count is not affected.'); }
+}
+/**
+ * ⭐ THE COUNTER'S OWN alert / confirm / prompt. One dialog, three shapes, and the promise resolves on whichever way
+ * out is taken — including Escape, which a native dialog gives for free and a hand-rolled one usually forgets.
+ * ⚠️ IT NEVER STACKS. A second question while one is open would leave the first promise hanging for ever, so the
+ * open one is answered (as a cancel) before the new one is shown.
+ */
+var _askResolve = null;
+function _askClose(v){
+  var d = document.getElementById('askdlg');
+  var r = _askResolve; _askResolve = null;
+  if (d && d.open) d.close();
+  if (r) r(v);
+}
+function _askOpen(opts){
+  if (_askResolve) _askClose(opts.cancelValue);      /* never leave an earlier question unanswered */
+  var d = document.getElementById('askdlg');
+  /**
+   * ⚠️ NO DIALOG, NO CRASH. The despatch and receive logic in this file is run OUTSIDE a browser by
+   * tests/till-vendor.test.js against a stub document — and a refusal there ("that is not on this order") calls say().
+   * Blowing up on document.createElement would turn a refusal that works into a test that cannot run.
+   * ⚠️ It is also the honest runtime answer: if the markup is ever missing, a message must still be delivered
+   * somewhere rather than throwing inside the very path that was reporting a problem.
+   */
+  if (!d || typeof d.showModal !== 'function') {
+    try { if (typeof toastLine === 'function' && opts.message) toastLine(String(opts.message).split('\n')[0]); } catch (_) {}
+    return Promise.resolve(opts.cancelValue);
+  }
+  var body = document.getElementById('askbody');
+  var input = document.getElementById('askinput');
+  var lab = document.getElementById('asklabel');
+  var no = document.getElementById('askno');
+  var okb = document.getElementById('askok');
+  document.getElementById('asktitle').textContent = opts.title || 'ChitBridge counter';
+  /* ⚠️ the message is TEXT, not html — it carries product names a supplier chose, and one apostrophe is enough */
+  body.innerHTML = '';
+  String(opts.message || '').split('\n').forEach(function(line){
+    var p = document.createElement('div');
+    p.textContent = line;
+    p.style.cssText = 'margin:0 0 6px;line-height:1.5' + (line.trim() ? '' : ';height:6px');
+    body.appendChild(p);
+  });
+  input.hidden = !opts.field; lab.hidden = !opts.field;
+  no.hidden = !opts.twoWays;
+  no.textContent = opts.cancelWord || 'Cancel';
+  okb.textContent = opts.okWord || 'OK';
+  if (opts.field) { input.value = opts.value == null ? '' : String(opts.value); lab.textContent = opts.label || 'Your answer'; }
+  return new Promise(function(resolve){
+    _askResolve = resolve;
+    okb.onclick = function(){ _askClose(opts.field ? input.value : true); };
+    no.onclick = function(){ _askClose(opts.cancelValue); };
+    /* Escape and the backdrop both mean "no" — a dialog you cannot leave is worse than a browser one */
+    d.onclose = function(){ if (_askResolve) _askClose(opts.cancelValue); };
+    input.onkeydown = function(e){ if (e.key === 'Enter'){ e.preventDefault(); okb.click(); } };
+    d.showModal();
+    setTimeout(function(){ (opts.field ? input : okb).focus(); if (opts.field) input.select(); }, 30);
+  });
+}
+/** alert — fire and forget, exactly like the one it replaces, so a call site needs no other change */
+function say(message, title){ _askOpen({ message: message, title: title, cancelValue: true }); }
+/** confirm */
+function sure(message, okWord, title){
+  return _askOpen({ message: message, twoWays: true, okWord: okWord || 'Yes, do it', title: title, cancelValue: false });
+}
+/** prompt — resolves to the typed string, or null if it was cancelled */
+function ask(message, value, label, title){
+  return _askOpen({ message: message, field: true, value: value, label: label, twoWays: true,
+                    okWord: 'Save', title: title, cancelValue: null });
 }
 function toastLine(t){ var n = document.getElementById('lastnote'); if (n) n.textContent = t; }
 
@@ -3173,14 +3265,24 @@ function rcvLanded(){
     return { share: share[n], cost: cost, unit_cost: qty > 0 ? Math.round((cost / qty) * 10000) / 10000 : null };
   });
 }
-function rcvCosts(){
+/**
+ * ⚠️ FOUR QUESTIONS IN A ROW, SO THEY WAIT FOR EACH OTHER. A native prompt blocked the thread and the loop simply
+ * worked; ours returns a promise, so without the awaits all four boxes would be opened at once and only the last
+ * would survive — three answers silently discarded, and the freight quietly wrong on the landed cost of every line.
+ */
+async function rcvCosts(){
   if (MODE !== 'receive') return;
   var c = RCV.costs;
-  var ask = function(k, label){ var v = prompt(label + ' (₹) — leave blank for none', c[k] || ''); if (v !== null) c[k] = Math.max(0, Number(v) || 0); };
-  ask('freight', 'Freight / lorry');
-  ask('loading', 'Loading and labour');
-  ask('duty', 'Duty or cess');
-  ask('other', 'Anything else');
+  /* ⚠️ RENAMED off "ask" — it now shadowed the primitive of that name, and a local var winning over the function it
+     is trying to call is the quietest bug in this file's history (a duplicate name once froze a whole tab). */
+  var askCost = async function(k, label){
+    var v = await ask(label + ' — leave it blank if there is none.', c[k] || '', label + ' (₹)', 'Freight and costs');
+    if (v !== null) c[k] = Math.max(0, Number(v) || 0);
+  };
+  await askCost('freight', 'Freight / lorry');
+  await askCost('loading', 'Loading and labour');
+  await askCost('duty', 'Duty or cess');
+  await askCost('other', 'Anything else');
   paintReceive();
 }
 function paintRcvCosts(){
@@ -3211,14 +3313,14 @@ async function rcvConfirm(){
   var lines = RCV.lines.filter(function(l){ return (Number(l.counted) || 0) > 0 || rcvDiff(l) !== 0; });
   if (!lines.length) return;
   var missing = lines.filter(function(l){ return rcvDiff(l) !== 0 && !l.reason && !rcvAbsorbed(l); });
-  if (missing.length) { alert('Say why ' + missing[0].name + ' differs from the order. A difference without a reason cannot be settled later.'); return; }
+  if (missing.length) { say('Say why ' + missing[0].name + ' differs from the order. A difference without a reason cannot be settled later.'); return; }
   /* ⚠️⚠️ THE VERTICAL'S OWN FLOOR. Expired stock is REFUSED — not warned about — because taking it in is the shop's licence, not a
      preference; a missing batch or expiry is ASKED for, because the answer is on the pack in somebody's hand. */
   for (var t = 0; t < lines.length; t++){
     var trouble = lotTrouble(lines[t]);
-    if (trouble.refuse) { alert(lines[t].name + ': ' + trouble.refuse); return; }
+    if (trouble.refuse) { say(lines[t].name + ': ' + trouble.refuse); return; }
     if (trouble.missing && trouble.missing.length){
-      alert(lines[t].name + ' needs its ' + trouble.missing.join(' and ') + '. ' + (lotPack().why || 'This trade records it for every consignment.'));
+      say(lines[t].name + ' needs its ' + trouble.missing.join(' and ') + '. ' + (lotPack().why || 'This trade records it for every consignment.'));
       return;
     }
   }
@@ -3238,7 +3340,7 @@ async function rcvConfirm(){
   };
   var r = null;
   try { r = await HOST.doc(doc); } catch (e) { r = { ok:false, error: e && e.message }; }
-  if (!r || !r.ok){ alert('The receipt could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
+  if (!r || !r.ok){ say('The receipt could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
   showDoc('Receipt ' + (r.doc && r.doc.no ? r.doc.no : ''), receiveSlipHTML(r.doc || doc));
   autoPrint(r.doc || doc);
   RCV = rcvBlank(); rcvClear(); loadTasks('receive'); load();
@@ -3259,13 +3361,13 @@ function dspPickTask(id){
 }
 /** a scan lands on the line it belongs to — or is refused, loudly */
 function dspScan(i, qty){
-  if (!DSP.task) { alert('Choose the order you are packing first.'); return; }
+  if (!DSP.task) { say('Choose the order you are packing first.'); return; }
   var l = lineFor(DSP.lines, i);
   if (l && !l.item_id) l.item_id = i.item_id || null;      /* learned for the rest of this pick */
-  if (!l) { alert(i.name + ' is not on this order.\n\nPacking it would arrive as a surprise the customer never asked for. Check the order, or start the right one.'); return; }
+  if (!l) { say(i.name + ' is not on this order.\n\nPacking it would arrive as a surprise the customer never asked for. Check the order, or start the right one.'); return; }
   var room = r2(l.ordered - l.picked);
-  if (room <= 0) { alert(l.name + ' is already complete on this order — ' + l.ordered + ' ' + l.unit + '.'); return; }
-  if (qty > room) { alert('Only ' + room + ' ' + l.unit + ' of ' + l.name + ' is still owed. Sending more than was ordered is a dispute waiting to happen.'); qty = room; }
+  if (room <= 0) { say(l.name + ' is already complete on this order — ' + l.ordered + ' ' + l.unit + '.'); return; }
+  if (qty > room) { say('Only ' + room + ' ' + l.unit + ' of ' + l.name + ' is still owed. Sending more than was ordered is a dispute waiting to happen.'); qty = room; }
   l.picked = r2(l.picked + qty); l.carton = DSP.carton;
   paintDespatch();
 }
@@ -3291,9 +3393,10 @@ function dspStock(l){
  * ⚠️ Anything already picked is put back to zero first — sending two of something you have just said is not going would be a lie
  * with a carton around it.
  */
-function dspNotGoing(n, why){
+async function dspNotGoing(n, why){
   var l = DSP.lines[n]; if (!l) return;
-  var reason = why || prompt('Why is ' + l.name + ' not going?\n\nno stock · damaged · customer will collect later', 'no stock');
+  var reason = why || await ask('Why is ' + l.name + ' not going?\n\nno stock · damaged · customer will collect later',
+                                'no stock', 'The reason, in your own words', 'Not going today');
   if (reason === null || !String(reason).trim()) return;
   l.dropped = true; l.reason = String(reason).trim(); l.picked = 0;
   paintDespatch();
@@ -3356,7 +3459,7 @@ async function dspConfirm(){
   var picked = DSP.lines.filter(function(l){ return l.picked > 0 || l.dropped; });
   if (!picked.length) return;
   var shortNoReason = DSP.lines.filter(function(l){ return !l.dropped && l.picked > 0 && l.picked < l.ordered && !l.reason; });
-  if (shortNoReason.length) { alert('Say why ' + shortNoReason[0].name + ' is short. The customer should hear it today, not at delivery.'); return; }
+  if (shortNoReason.length) { say('Say why ' + shortNoReason[0].name + ' is short. The customer should hear it today, not at delivery.'); return; }
   var doc = {
     kind: 'despatch', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
     by: WHO ? { id: WHO.id, name: WHO.name } : null,
@@ -3371,7 +3474,7 @@ async function dspConfirm(){
   };
   var r = null;
   try { r = await HOST.doc(doc); } catch (e) { r = { ok:false, error: e && e.message }; }
-  if (!r || !r.ok){ alert('The despatch could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
+  if (!r || !r.ok){ say('The despatch could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
   showDoc('Despatch ' + (r.doc && r.doc.no ? r.doc.no : ''), despatchSlipHTML(r.doc || doc));
   autoPrint(r.doc || doc);
   DSP = dspBlank(); dspClear(); loadTasks('despatch'); load();
@@ -3422,6 +3525,7 @@ function despatchSlipHTML(d){
 }
 function showDoc(title, html){
   document.getElementById('sliptitle').textContent = title;
+  document.getElementById('slipbox').classList.add('screen');
   document.getElementById('slipbox').innerHTML = html;
   document.getElementById('slipdlg').showModal();
 }
@@ -3465,6 +3569,7 @@ function slipHTML(bill, m){
 }
 function showSlip(bill, m){
   document.getElementById('sliptitle').textContent = 'Bill ' + bill.no + ' · ₹' + money(bill.total);
+  document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = slipHTML(bill, m);
   document.getElementById('slipdlg').showModal();
 }
@@ -3578,7 +3683,7 @@ function openScreen(){
  * ⚠️ It deletes only THIS shop's database. Another shop's counter on the same PC keeps its own bills and its own queue.
  */
 async function coldStart(){
-  if (!confirm('Start this counter from scratch?\n\nEverything waiting is sent first, then the copy of your shop and today\'s bill list are cleared and read again from ChitBridge.\n\nNothing is sent anywhere else, and no sale is lost.')) return;
+  if (!await sure('Start this counter from scratch?\n\nEverything waiting is sent first, then the copy of your shop and today\'s bill list are cleared and read again from ChitBridge.\n\nNothing is sent anywhere else, and no sale is lost.')) return;
 
   busyShow('Starting this counter from scratch…');
   /* 1 · send everything */
@@ -3590,7 +3695,7 @@ async function coldStart(){
   try { left = ((await DB.all('queue')) || []).length; } catch (_) { left = -1; }
   if (left !== 0) {
     busyDone();
-    alert(left > 0
+    say(left > 0
       ? (left + ' bill(s) have not reached ChitBridge yet, so nothing was cleared.\n\nOpen 🧾 bills and press "Send now" while the internet is on, then try again.')
       : 'Could not read what is waiting, so nothing was cleared. Try again in a moment.');
     return;
@@ -3709,10 +3814,12 @@ function openWho(){
     + (WHO ? '<button class="choice" style="margin-top:12px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
   document.getElementById('whodlg').showModal();
 }
-function setWho(id, name){
+async function setWho(id, name){
   /* ⭐ THE FLOAT. What is in the drawer before a rupee is taken — without it, "expected" at the end means nothing. Skipping is
      allowed (a shop with no float, or a busy moment): it counts as zero and the close says so. */
-  var float0 = prompt('Cash in the drawer now (the float). Leave blank if none.', '');
+  /* ⭐ the question a shift starts with — asked in our own words, in our own box */
+  var float0 = await ask('Starting ' + name + " at this counter.\n\nHow much cash is in the drawer right now? Leave it blank if there is none.",
+                         '', 'Cash in the drawer (₹)', 'Who is at this counter');
   WHO = { id: id, name: name, since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
   ls.set(shopLs('cb_till_who'), JSON.stringify(WHO));
   paintWho(); document.getElementById('whodlg').close(); focusSearch();
@@ -3748,7 +3855,7 @@ async function handOver(){
 async function shiftClose(){
   if (!SHIFT) return;
   var counted = Number((document.getElementById('shift_counted') || {}).value);
-  if (!(counted >= 0) || (document.getElementById('shift_counted') || {}).value === '') { alert('Type what is in the drawer first.'); return; }
+  if (!(counted >= 0) || (document.getElementById('shift_counted') || {}).value === '') { say('Type what is in the drawer first.'); return; }
   SHIFT.counted_cash = r2(counted);
   SHIFT.difference = r2(SHIFT.counted_cash - SHIFT.expected_cash);
   var word = SHIFT.difference === 0 ? 'exact' : (SHIFT.difference > 0 ? 'over by ₹' + money(SHIFT.difference) : 'short by ₹' + money(-SHIFT.difference));

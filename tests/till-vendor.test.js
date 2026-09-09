@@ -283,7 +283,7 @@ it('⭐⭐ a scan cannot pick more than was ordered', () => {
   P.DSP = { task: { chit_id: 'c-1', party: 'Chola' }, ref: '', weight: null, carton: 1,
             lines: [{ line_id: 'L1', item_id: 'i9', name: 'Brake pad set', unit: 'set', ordered: 12, picked: 11, reason: '', carton: 1 }] };
   let said = '';
-  P.alert = (m) => { said = m; };
+  P.say = (m) => { said = m; };
   P.dspScan({ item_id: 'i9', name: 'Brake pad set' }, 5);
   assert.strictEqual(P.DSP.lines[0].picked, 12, 'it filled the line and refused the rest');
   assert.ok(said.indexOf('dispute') > 0, 'it must say why, in words a picker understands: ' + said);
@@ -294,7 +294,7 @@ it('⚠️ something that is not on the order is refused, not added', () => {
   P.DSP = { task: { chit_id: 'c-1' }, carton: 1,
             lines: [{ line_id: 'L1', item_id: 'i9', name: 'Brake pad', unit: 'set', ordered: 12, picked: 0, reason: '', carton: 1 }] };
   let said = '';
-  P.alert = (m) => { said = m; };
+  P.say = (m) => { said = m; };
   P.dspScan({ item_id: 'i-other', name: 'Engine oil' }, 1);
   assert.strictEqual(P.DSP.lines.length, 1, 'it grew a line for something nobody ordered');
   assert.strictEqual(P.DSP.lines[0].picked, 0);
@@ -305,7 +305,7 @@ it('packing with no order chosen asks for one rather than guessing', () => {
   P.MODE = 'despatch';
   P.DSP = { task: null, lines: [], carton: 1 };
   let said = '';
-  P.alert = (m) => { said = m; };
+  P.say = (m) => { said = m; };
   P.dspScan({ item_id: 'i9', name: 'Brake pad' }, 1);
   assert.ok(said.indexOf('order') > 0, said);
 });
@@ -628,7 +628,7 @@ it('⚠️ a shop with nothing wrong is told nothing is wrong', () => {
 it('⚠️⚠️ and it NEVER blocks a sale — every finding is a line and a dot, nothing more', () => {
   const html = fs.readFileSync(PAGE, 'utf8');
   const fn = html.slice(html.indexOf('function health(){'), html.indexOf('function healthWorst('));
-  assert.ok(fn.indexOf('alert(') < 0 && fn.indexOf('disabled') < 0,
+  assert.ok(fn.indexOf('alert(') < 0 && fn.indexOf('say(') < 0 && fn.indexOf('disabled') < 0,
     'the health check must not interrupt or disable anything: a data problem must never become a lost customer');
 });
 

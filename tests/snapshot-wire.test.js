@@ -458,4 +458,47 @@ it('⭐ the row that changed flashes, once the change is confirmed', () => {
     'the flash ignores prefers-reduced-motion — the tint must still show when the animation does not');
 });
 
+/**
+ * ⭐⭐ THE COUNTER SPEAKS IN ITS OWN VOICE. Athi: *"the toast message comes from the browser I guess — it has to be our
+ * message."* There were 26 of them. A native dialog is wrong here for four reasons and the look is the least of them:
+ * it ignores the theme; it prints "…vercel.app says" above our words; it cannot be read at a metre; and it FREEZES the
+ * page — no repaint, no bell, no queue drain — while offering Chrome's "prevent this page from creating more dialogs",
+ * which a shopkeeper will tick, after which the till silently stops asking anything at all.
+ */
+it('⭐⭐ no browser dialog is left in the counter', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  for (const bad of ['alert(', 'confirm(']) {
+    const n = page.split(bad).length - 1;
+    assert.strictEqual(n, 0, n + ' × ' + bad + ' is back — use say() / sure(), the counter own dialog');
+  }
+  /* ⚠️ the ONE legitimate prompt is the browser's PWA install offer, which is a different API entirely */
+  const prompts = page.split('prompt(').length - 1;
+  assert.strictEqual(prompts, 1, 'expected only _install.prompt() (the PWA install offer), found ' + prompts);
+  assert.ok(page.indexOf('_install.prompt()') > 0, 'the one allowed prompt is not the PWA install offer');
+  /* the three primitives that replaced them */
+  for (const fn of ['function say(message, title){', 'function sure(message, okWord, title){', 'function ask(message, value, label, title){'])
+    assert.ok(page.indexOf(fn) > 0, 'missing primitive: ' + fn);
+  /* ⚠️ and it must survive having no dialog at all — the despatch logic runs in node against a stub document */
+  const open = page.slice(page.indexOf('function _askOpen(opts){'), page.indexOf('/** alert'));
+  assert.ok(open.indexOf("typeof d.showModal !== 'function'") > 0,
+    'a message outside a browser would throw inside the very path that was reporting a problem');
+});
+
+/**
+ * ⭐ A CONTAINER THAT FIXES ITS OWN COLOURS MUST FIX BOTH. .slipbox is white paper with black ink on purpose — a
+ * receipt preview looks like the receipt in either theme. Two screens that are NOT receipts were written into it in
+ * theme tokens, so the dark theme put near-white text on white paper. Each half was right; only together were they wrong.
+ */
+it('⭐ the slip box is paper for a slip and themed for a screen, and never mixed', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('.slipbox.screen{background:var(--card);color:var(--ink)}') > 0,
+    'there is no themed variant, so anything not a receipt is unreadable in one theme or the other');
+  /* health and the verification report are screens; the two printed slips must take it off again */
+  const health = page.slice(page.indexOf('function openHealth(){'), page.indexOf('function openHealth(){') + 2600);
+  assert.ok(health.indexOf("classList.add('screen')") > 0, 'the health check writes theme colours onto white paper');
+  const slip = page.slice(page.indexOf('function showSlip(bill, m){'), page.indexOf('function showSlip(bill, m){') + 600);
+  assert.ok(slip.indexOf("classList.remove('screen')") > 0,
+    'a slip opened after a health check keeps the screen colours — and printSlip copies this element, so it would PRINT them');
+});
+
 console.log(pass + ' checks');
