@@ -912,6 +912,17 @@ function wrongShop(){
 }
 async function load(){
   if (!HOST) HOST = await pickHost();
+  /**
+   * ⚠️⚠️ NOT ONE LINE EARLIER THAN THIS. The owner and any refusal are read HERE, after pickHost, because pickHost is what learns
+   * the key — and the database is NAMED after the key. Read before it, tillStore() answers with the fallback name, DB.open()
+   * memoises that database for the whole session, and the counter spends the rest of the day reading and writing a store that
+   * belongs to nobody. [TILL-06] caught it as a refusal that vanished on reload; the real cost would have been every bill.
+   */
+  if (OWNER === null && !HOST._ownerRead) {
+    HOST._ownerRead = true;
+    try { OWNER = (await DB.get('owner')) || null;
+          REJECTED = (await DB.get('rejected')) || null; } catch (_) {}
+  }
   var st = await HOST.state().catch(function(){ return STATE; });
   STATE = st || STATE; S = (st && st.snapshot) || S;
   var bad = wrongShop();
@@ -2903,10 +2914,6 @@ applyLook();
 whoLoad();
 parkedLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
-/* ⚠️ the owner is needed before anything is read or written, and a refusal must still be on screen when somebody comes back */
-(async function ownerBoot(){
-  try { OWNER = (await DB.get('owner')) || null; REJECTED = (await DB.get('rejected')) || null; if (REJECTED) paintStatus(); } catch (_) {}
-})();
 load();
 gripInit();
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
