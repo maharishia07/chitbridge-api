@@ -215,6 +215,7 @@
       <span style="flex:1"></span>
       <span class="pill" id="daypill"></span>
       <button class="pill" data-testid="till-bills" onclick="openBills()" title="today's bills — print one again (F8)">🧾 bills</button>
+      <button class="pill" data-testid="till-screen" onclick="openScreen()" title="your offers and fresh stock, as a sign for a screen in the shop">📺 screen</button>
       <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="what would go wrong today">✓</button>
       <button class="pill" onclick="refresh()" title="read the shop again (F4)">↻</button>
       <button class="pill" onclick="openSettings()" title="look, feel and this till">⚙</button>
@@ -2677,6 +2678,19 @@ async function openBills(keepOpen){
       : '<div style="color:var(--dim)">No bills yet today.</div>');
   if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
   try { document.getElementById('tab_today').className = 'pill on'; document.getElementById('tab_earlier').className = 'pill'; } catch (_) {}
+}
+/**
+ * ⭐ THE SHOP'S SCREEN, FROM WHERE THE SHOPKEEPER IS STANDING. Athi, 2026-09-09: *"in the counter screen I couldn't see the 'put it
+ * on the screen' — where am I supposed to look?"* It was only in ChitBridge's Counter dialog, which is the one place he was not:
+ * the counter is where a shopkeeper spends the day, so it is where they look for anything to do with the shop.
+ * ⚠️ It carries the key it already holds, so nothing is minted and nothing has to be paired twice. On the desktop kit the key lives
+ * on the agent instead, and the page opens without one and pairs itself the same way the counter did.
+ */
+function openScreen(){
+  var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? CloudHost.key : null;
+  var shop = ls.get('cb_till_shop', '');
+  var addr = '/promo.html' + (k ? ('#key=' + encodeURIComponent(k) + (shop ? '&shop=' + encodeURIComponent(shop) : '')) : '');
+  window.open(addr, '_blank', 'noopener');
 }
 /**
  * ⭐⭐⭐ START FROM SCRATCH — but never before everything is safe. Athi, 2026-09-09: *"in the counter we need a mechanism of cold
