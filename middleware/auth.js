@@ -167,6 +167,12 @@ const auth = async (req, res, next) => {
 };
 
 module.exports = auth;
+/**
+ * ⚠️ THE NAMES ARE EXPORTED SO NOBODY KEEPS A SECOND LIST. routes/keys.js had its own array of scope names, and a scope added
+ * here but not there is mintable by nobody — the guard would enforce a permission no key could ever hold. One list, derived from
+ * the map that does the enforcing.
+ */
+Object.defineProperty(auth, 'SCOPE_NAMES', { get: function(){ return Object.keys(KEY_ROUTES); } });
 
 /** what each scope opens — method + path; a route not listed here is closed to keys whatever else they pass */
 const KEY_ROUTES = {
@@ -177,6 +183,14 @@ const KEY_ROUTES = {
   services:  [['*', /^\/api\/(offers|pricing|invoice)(\/|$)/], ['POST', /^\/api\/tax\/(rate|compute)$/]],
   /* ⭐ THE TILL (2026-09-07): its snapshot, its bills, its heartbeat, the bell. It cannot read another chit, cannot touch products,
      cannot mint keys — and routes/chits.js refuses a till key that addresses anyone but itself. */
+  /**
+   * ⭐⭐ A SIGN ON A WALL NEEDS TO READ, AND NOTHING ELSE. Athi, 2026-09-09, asking how the shop screen reaches a television —
+   * which surfaced that the button I had built hands the TV a TILL key, and a till key can POST /api/chits/send. A screen mounted
+   * where customers stand, often on a stick nobody locks, does not need the authority to record a sale.
+   * So: the catalogue, the offers, the prices, the engines to draw them with. No bills, no tasks, no sending, no heartbeat, no
+   * alias writing. If somebody walks off with the television, they have a copy of the price list — which is on the shelf anyway.
+   */
+  screen:    [['GET', /^\/api\/till\/(snapshot|verify|engine\/[a-z]+)$/]],
   till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
               /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
                  two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery

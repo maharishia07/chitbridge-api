@@ -21,7 +21,10 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { query } = require('../db');
 
-const SCOPES = ['offers', 'pricing', 'tax', 'invoice', 'connector', 'services', 'till'];   // services = every service; connector = products up · orders down · the bell
+/* ⚠️ ASKED, NOT REMEMBERED. This was its own array, so a scope added to the guard was mintable by nobody and a scope removed
+   from the guard stayed on offer here. The map that enforces them is the only place they are named.
+   services = every service · connector = products up, orders down, the bell · till = a counter · screen = a sign that only reads */
+const SCOPES = auth.SCOPE_NAMES;
 const sessionOnly = (req, res, next) => { if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'A key cannot manage keys — sign in.' }); next(); };
 
 async function listOf(entity_id) {
