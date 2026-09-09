@@ -155,19 +155,50 @@
    * ⚠️ The price column is fixed-width and tabular, so the rupees line up down the list — a column of money that jitters is a column
    * nobody can scan. On a narrow screen the middle column drops below the name rather than squeezing the price.
    */
-  .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) 118px;gap:10px;align-items:center;
-       padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .hit{display:grid;grid-template-columns:42px minmax(0,1fr) auto minmax(96px,auto);gap:12px;align-items:center;
+       padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
   /* the marked row carries a bar as well as a tint: on a long list a colour alone is easy to lose */
   .hit.sel{background:var(--ok-tint);box-shadow:inset 4px 0 0 var(--ok)}
-  .hit .n{font-weight:600;min-width:0}
-  .hit .mid{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:0}
-  .hit .p{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;font-weight:700;font-size:1.05em}
+  /* ⭐ THE PICTURE IS THE FASTEST MATCH. A packet is recognised before its name is read; where there is no photograph the tile
+     carries the initial over a colour derived from the CATEGORY, so a section of the shelf reads as one block of colour. */
+  .hit .pic{width:42px;height:42px;border-radius:9px;object-fit:cover;display:flex;align-items:center;justify-content:center;
+            font-weight:800;font-size:1.1em;color:#fff;flex:none;overflow:hidden}
+  .hit .n{font-weight:600;min-width:0;line-height:1.3}
+  .hit .n .meta{color:var(--dim);font-size:.78em;font-weight:400;margin-top:1px}
+  .hit .mid{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;min-width:0}
+  /* ⚠️ MONEY IS READ IN A COLUMN, so it is tabular and right-aligned; a column of rupees that jitters is one nobody can scan. */
+  .hit .p{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;line-height:1.25}
+  .hit .p .pay{font-weight:800;font-size:1.15em;display:block}
+  .hit .p .per{color:var(--dim);font-size:.74em;font-weight:400;display:block}
+  /* the saving is stated in money, beside the price it came off — a percentage makes the shopper do the arithmetic */
+  .hit .p .was{font-size:.74em;font-weight:400;display:block;color:var(--ok)}
+  .hit .p .was s{color:var(--dim);margin-inline-end:4px}
   .hit .p .u{font-weight:400}
+  /* ⭐ OFF THE SHELF IS A STATE OF THE WHOLE ROW, not a badge in a corner — the row itself goes quiet, and the name is struck. */
+  .hit.off{background:repeating-linear-gradient(135deg,transparent,transparent 7px,var(--tint) 7px,var(--tint) 14px)}
+  .hit.off .n, .hit.off .p{opacity:.5}
+  .hit.off .n>:first-child{text-decoration:line-through}
+  .hit .flag{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;
+             padding:2px 8px 2px 4px;background:var(--paper);color:var(--dim);font-size:.74em;font-weight:700;
+             cursor:pointer;white-space:nowrap;font-family:inherit}
+  .hit .flag:hover{border-color:var(--ok);color:var(--ink)}
+  .hit .flag .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+  .hit.off .flag{opacity:1}
+  .hit.off .flag .dot{background:var(--warn)}
+  /* ⭐ THE COUNT IS OPTIONAL — it appears on the row you are ON, so it is never 60 steppers of noise, and typing 3* still works. */
+  .hit .qty{display:flex;align-items:center;gap:2px;visibility:hidden}
+  .hit.sel .qty, .hit:hover .qty{visibility:visible}
+  .hit .qty button{width:26px;height:26px;border:1px solid var(--line);border-radius:7px;background:var(--paper);
+                   color:var(--ink);font:inherit;font-weight:700;cursor:pointer;line-height:1;padding:0}
+  .hit .qty button:hover{border-color:var(--ok)}
+  .hit .qty .v{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
   .facts{color:var(--dim);font-size:.78em;margin-top:2px;line-height:1.45}
   .facts b{color:var(--ink);font-weight:600}
   .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
-  @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) 96px} .hit .mid{grid-column:1;justify-content:flex-start} }
+  @media (max-width:520px){ .hit{grid-template-columns:34px minmax(0,1fr) minmax(84px,auto);gap:9px} .hit .pic{width:34px;height:34px}
+    /* the stepper drops under the name rather than squeezing the money, which is the one column that must stay readable */
+    .hit .qty{grid-column:2;justify-content:flex-start} }
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
@@ -1201,11 +1232,46 @@ function paintCustomers(){
  * thrown away whenever the shop is re-read, because an offer that ended overnight must not linger on a chip.
  */
 var FILTER = { offer:false, cat:null }, OFFER_STAMP = null;
+/**
+ * ⭐⭐ WHAT THE CUSTOMER ACTUALLY PAYS FOR ONE. Athi, 2026-09-09: *"the price being showcased in the counter app — it is supposed to
+ * be the final price after discount and including tax? … the price here is confusing."*
+ *
+ * It was showing the STORED price with no statement of what that number contains. Under inclusive pricing (the Indian retail norm
+ * and our default) that happens to be right; under exclusive pricing it is wrong by exactly the tax, on every row, in silence —
+ * the shopkeeper reads 100, the bill says 118, and the disagreement surfaces in front of the customer.
+ * ⚠️ THE SHELF PRICE IS UNCHANGED — this is display only. The bill still carries the stored price and billMoney() still decides
+ * what the tax does to the total; two different opinions about the money is exactly the fault being fixed.
+ */
+/**
+ * ⭐⭐ IS THIS THING ON THE SHELF. Athi, 2026-09-09: *"we have to set the availability flag showcased, and on or off can be made
+ * visible."* One reading of it, used by the row, the toggle, the Stock-out list and the warning on the bill.
+ * ⚠️ AN ABSENT STATUS MEANS AVAILABLE — every row that predates the field is a normal row (lib/itemstatus.js).
+ */
+function statusOf(i){
+  var v = String((i && i.status) || '').trim().toLowerCase();
+  return v || 'available';
+}
+/**
+ * ⚠️⚠️ AND IT IS NOT A REFUSAL. lib/itemstatus.js is explicit that "unavailable" STILL MATCHES — out of stock today is not "we
+ * have never heard of this" — and at a counter the shopkeeper is standing in front of the physical packet. So an item marked off
+ * the shelf is SHOWN, marked, and can still be sold; what it must never do is go onto a bill without saying so.
+ * ⚠️ This replaces a comment I wrote in routes/till.js claiming hits() already refused these. It did not — there was no
+ * availability test in hits() at all, and the snapshot had simply never sent an unavailable row for it to fail on.
+ */
+function taxIncluded(){ return !(S && S.policy && S.policy.price_includes_tax === 'no'); }
+function payPrice(i){
+  var p = Number(i.price) || 0;
+  var r = (i.tax_rate === undefined ? rateOf(i) : i.tax_rate);
+  return (!taxIncluded() && r) ? r2(p * (1 + Number(r) / 100)) : p;
+}
 function offersFor(i){
   if (!S || !window.CBOffers) return [];
   if (OFFER_STAMP !== (S.version || S.at)) { OFFER_STAMP = (S.version || S.at); (S.items || []).forEach(function(x){ x._off = null; x._rate = undefined; }); }
   if (i._off) return i._off;
-  var line = { key:i.item_id, item_id:i.item_id, sku:i.code, category:i.category, qty:1, unitPrice:Number(i.price) || 0 };
+  /* ⚠️ THE SAME DESCRIPTION THE BILL USES (lineOf). Built separately, these two drifted — the row promised an offer the cart
+     could not apply, because only one of them carried the category. */
+  var line = lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:i.price, qty:1,
+                      item_data:{ category:i.category, offers_excluded:i.offers_excluded } });
   var got = [];
   try { got = CBOffers.forLine(line, (S.offers || []), { currency:(S.shop && S.shop.currency) || 'INR', now:new Date().toISOString() }) || []; } catch (_) { got = []; }
   i._off = got;
@@ -1508,6 +1574,82 @@ function shelfLine(shown){
   else                   txt = n(total) + ' products on this counter' + (when ? ', read at ' + when : '');
   return '<div class="shelfline" data-testid="till-shelf-count">' + txt + '</div>';
 }
+/**
+ * ⭐ THE TILE. An image when the product has one (drawn only for the rows on screen, and lazily even then — a shelf of 10,441
+ * products must not fetch 10,441 pictures), otherwise the initial over a colour taken from the category name, so the eye can
+ * tell a row of biscuits from a row of soap before it has read either.
+ */
+function picOf(i){
+  if (i.image) return '<img class="pic" src="' + esc(i.image) + '" alt="' + esc(i.name || '') + '" loading="lazy" decoding="async"'
+    + ' onerror="tileSwap(this)" data-tile="' + esc((i.category || i.name || '?') + '\u0001' + (i.name || '?')) + '">';
+  return tileHTML(i);
+}
+function hueOf(txt){
+  var h = 0, t = String(txt || '?');
+  for (var n = 0; n < t.length; n++) h = ((h << 5) - h + t.charCodeAt(n)) | 0;
+  return Math.abs(h) % 360;
+}
+function tileHTML(i){
+  return '<span class="pic" style="background:hsl(' + hueOf(i.category || i.name) + ',42%,46%)">'
+    + esc(String(i.name || '?').trim().charAt(0).toUpperCase()) + '</span>';
+}
+/** ⚠️ a picture that fails to load must not leave a hole in the row — the tile takes its place, from the same one function */
+function tileSwap(img){
+  try {
+    var parts = String(img.getAttribute('data-tile') || '').split('\u0001');
+    var d = document.createElement('div');
+    d.innerHTML = tileHTML({ category: parts[0], name: parts[1] });
+    img.replaceWith(d.firstChild);
+  } catch (_) { img.remove(); }
+}
+/**
+ * ⭐⭐ THE PRICE, SAID IN FULL. Three facts, in the order a person asks them:
+ *   what does one cost · what is that per, and does it contain the tax · what was it before
+ * ⚠️ AN OFFER IS NOT FOLDED INTO THIS NUMBER, and it must not be. "Buy 2 get 1" has no per-unit price — the third is free only
+ * once two have been bought — so the promise is stated in words on the row and the money comes off in the cart, where the
+ * quantity is finally known. A row quietly showing 46.67 for a 70-rupee packet would be wrong at every quantity except three.
+ */
+/**
+ * ⭐⭐ THE SWITCH IS THE FLAG. One control that both STATES whether the thing is on the shelf and CHANGES it — a chip that only
+ * reported would have made the shopkeeper go and find the Stock-out screen to act on what the row had just told them.
+ * ⚠️ It stops the click reaching the row. The row means "sell one of these"; the switch means "we have run out". A tap that did
+ * both would put an out-of-stock item on the bill at the moment it was marked out of stock.
+ */
+function flagBtn(i, n, off){
+  return '<button class="flag" data-testid="till-flag-' + n + '" onclick="event.stopPropagation();flagTap(' + n + ')"'
+    + ' title="' + (off ? 'Put it back on the shelf' : 'Mark it off the shelf') + '">'
+    + '<span class="dot"></span>' + (off ? 'Off the shelf' : 'On the shelf') + '</button>';
+}
+function flagTap(n){ var i = hits()[n]; if (i) stockToggle(i); }
+/**
+ * ⭐ HOW MANY — OPTIONAL, AND NEVER IN THE WAY. Athi, 2026-09-09: *"add qty etc can be provided optional."* Typing "3*rice" still
+ * works and is still faster; this is for the hand that is on a touchscreen and not on a keyboard.
+ * ⚠️ It is remembered per product and cleared once that product is on the bill, so the next customer starts at one. A stepper
+ * that silently kept "6" from the last sale would bill six of the next thing somebody tapped.
+ */
+var ROWQ = {};
+function rowQty(i){ var q = Number(i && ROWQ[i.item_id]); return q > 0 ? q : 1; }
+function qtyBox(i, n){
+  return '<span class="qty" data-testid="till-qty-box-' + n + '">'
+    + '<button onclick="event.stopPropagation();bump(' + n + ',-1)" title="one fewer" tabindex="-1">−</button>'
+    + '<span class="v" data-testid="till-rowqty-' + n + '">' + rowQty(i) + '</span>'
+    + '<button onclick="event.stopPropagation();bump(' + n + ',1)" title="one more" tabindex="-1">+</button></span>';
+}
+function bump(n, d){
+  var i = hits()[n]; if (!i) return;
+  ROWQ[i.item_id] = Math.max(1, rowQty(i) + d);
+  /* ⭐ the number changes, the list does not — repainting 60 rows to move one digit loses the row under the finger */
+  var v = document.querySelector('[data-testid="till-rowqty-' + n + '"]');
+  if (v) v.textContent = rowQty(i); else paintHits();
+}
+function priceBlock(i){
+  var pay = payPrice(i), r = i.tax_rate;
+  var per = 'per ' + esc(i.unit || 'piece');
+  if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% GST' : ' · rate not set');
+  var mrp = Number(i.mrp) || 0;
+  var was = (mrp > pay) ? '<span class="was"><s>₹' + money(mrp) + '</s>save ₹' + money(r2(mrp - pay)) + '</span>' : '';
+  return '<span class="p"><span class="pay">₹' + money(pay) + '</span><span class="per">' + per + '</span>' + was + '</span>';
+}
 function paintHits(){
   if (scanned()) return;
   paintQuick();
@@ -1519,15 +1661,20 @@ function paintHits(){
       + (t.unit ? ' <span class="u">— converted to the unit it is sold in</span>' : '') + '</div>'
     : '');
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
-    return '<div class="hit' + (n===SEL?' sel':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
-      + '<span class="n">' + esc(i.name) + '<div class="u">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
-        + rowFacts(i) + '</span>'
-      /* the middle column: what is ON this product — the offers it carries, and the rate it will be taxed at */
-      + '<span class="mid">'
-        + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('')
-        + (i.tax_rate != null ? '<span class="rate">GST ' + esc(i.tax_rate) + '%</span>' : '')
+    var off = statusOf(i) === 'unavailable';
+    return '<div class="hit' + (n===SEL?' sel':'') + (off?' off':'') + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
+      + picOf(i)
+      + '<span class="n">' + esc(i.name)
+        + '<div class="meta">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '') + '</div>'
+        + rowFacts(i)
+        /* what is TRUE of this product, under the name where the eye already is — not floated off to a column of its own */
+        + '<span class="mid">'
+          + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('')
+          + flagBtn(i, n, off)
+        + '</span>'
       + '</span>'
-      + '<span class="p">₹' + money(i.price) + '<div class="u">per ' + esc(i.unit||'piece') + '</div></span></div>';
+      + qtyBox(i, n)
+      + priceBlock(i) + '</div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
   keepSelInView();
 }
@@ -1571,8 +1718,9 @@ var CHANGED = { stock: [], price: [] };     /* what this counter changed today, 
 
 async function stockToggle(i){
   if (!i) return;
-  var now = (i.avail === 'unavailable') ? 'available' : 'unavailable';
-  i.avail = now;                                     /* the shelf changes under the finger that tapped it */
+  /* ⚠️ i.status — the LIFECYCLE. i.avail is the quantity feed and comparing it to a string was always false (see routes/till.js). */
+  var now = (statusOf(i) === 'unavailable') ? 'available' : 'unavailable';
+  i.status = now;                                    /* the shelf changes under the finger that tapped it */
   i._off = null; i._rate = undefined;
   CHANGED.stock = [{ name: i.name, status: now, at: new Date() }].concat(
     CHANGED.stock.filter(function(x){ return x.name !== i.name; })).slice(0, 40);
@@ -1587,7 +1735,7 @@ async function stockToggle(i){
 
 function paintStock(){
   var el = document.getElementById('stocklist'); if (!el) return;
-  var off = ((S && S.items) || []).filter(function(i){ return i.avail === 'unavailable'; });
+  var off = ((S && S.items) || []).filter(function(i){ return statusOf(i) === 'unavailable'; });
   el.innerHTML =
     (CHANGED.stock.length ? '<div class="qtyhint">Changed just now: '
       + CHANGED.stock.slice(0, 6).map(function(c){ return esc(c.name) + ' → ' + (c.status === 'unavailable' ? 'off' : 'back on'); }).join(' · ')
@@ -1652,7 +1800,9 @@ function add(n){
   /* the same tap, read against what the shopkeeper said they are doing */
   if (MODE === 'stock') return stockToggle(i);
   if (MODE === 'price') return priceStart(i);
-  var t = typed(), q = t.qty;
+  var t = typed();
+  /* ⚠️ WHAT WAS TYPED WINS. "3*" is a deliberate statement about this sale; the stepper is a standing preference for the row. */
+  var q = (t.qty !== 1) ? t.qty : rowQty(i);
   if (t.unit) {
     var c = qtyInUnit(t.qty, t.unit, i.unit);
     if (c.converted) q = c.qty;
@@ -1668,9 +1818,13 @@ function add(n){
   }
   /* ⭐ ONE SEARCH BOX, THREE MEANINGS — and each mode decides what "add" is. Selling puts it on the bill, receiving counts it in,
      despatch checks it against the order and may refuse it outright. */
+  /* ⚠️ SOLD, BUT SAID OUT LOUD. itemstatus keeps "unavailable" sellable on purpose, and the shopkeeper holding the packet is the
+     better authority than yesterday's flag — so it goes on the bill and the counter says what it just did. */
+  if (statusOf(i) === 'unavailable') toastLine(i.name + ' is marked off the shelf — added anyway. Tap the dot on the row to put it back.');
   if (MODE === 'receive') rcvAdd(i, q, lotFromScan(document.getElementById('q').value));
   else if (MODE === 'despatch') dspScan(i, q);
   else { addItem(i, q); price(); }
+  delete ROWQ[i.item_id];                            /* this sale is made; the next customer starts at one */
   document.getElementById('q').value = ''; SEL = 0; paintHits(); focusSearch();
 }
 /** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */
@@ -1830,8 +1984,43 @@ function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus()
  * ⭐ THE SAME PRICE THE CHIT WILL CARRY. Offers come from CBOffers and the rate from CBTax.slab — the engines the server runs, cached
  * here. If either is missing the bill still adds up, with no offer and no split, and the screen says so rather than inventing one.
  */
+/**
+ * ⚠️⚠️ THE CART MUST DESCRIBE A LINE THE WAY THE ENGINE READS ONE. Athi, 2026-09-09: *"the offer mentioned is not honoured here.
+ * For example, buy 2 get one free — in the offer lab it nicely reduces the 3rd one's price, but here it is not happening."*
+ *
+ * He was exactly right, and the cause is one line. This built each line as { key, item_id, name, qty, unitPrice, unit } — no
+ * CATEGORY, no SKU, no EXCLUDED. The engine matches an offer's applies_to against "l.categories" (or "l.category"), "l.sku" and
+ * "l.excluded". With none of them present, an offer scoped to a category could never match ANY line, so:
+ *   · every one of the five offers seeded for this shop is category-scoped, and none of them reached a bill
+ *   · a SKU-scoped offer was equally invisible
+ *   · and a product the shop had opted OUT of an offer (item_data.offers_excluded) would have been given it anyway,
+ *     which is the same bug pointed the other way and costs money rather than saving it
+ *
+ * ⚠️ WHY IT LOOKED FINE. The shelf row's badge comes from offersFor(), which DOES pass the category — so the counter showed
+ * "Buy 2 get 1 free" on the row and then charged full price for three. The screen promised what the bill would not honour, which
+ * is the worst shape a pricing bug can take: it is invisible to us and obvious to the customer.
+ *
+ * ⭐ THE RULE THIS LEAVES BEHIND: the badge and the bill must be built from the SAME description of a line. offersFor() and
+ * price() now both call lineOf(), so they cannot drift again.
+ */
+function lineOf(c, n){
+  var d = c.item_data || {};
+  return { key: (n == null ? c.item_id : String(n)), item_id: c.item_id, sku: c.code || d.code || null,
+           name: c.name, unit: c.unit, qty: Number(c.qty) || 0, unitPrice: Number(c.price) || 0,
+           category: d.category || c.category || null,
+           categories: (d.category || c.category) ? [String(d.category || c.category)] : [],
+           /* a product the shop has taken OUT of an offer: item_data.offers_excluded, carried as the engine expects it */
+           excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [] };
+}
 function price(){
-  var lines = CART.map(function(c){ return { key:c.item_id, item_id:c.item_id, name:c.name, qty:c.qty, unitPrice:c.price, unit:c.unit }; });
+  /**
+   * ⚠️⚠️ THE KEY IS THE ANSWER'S ADDRESS. The engine returns line_net and every adjustment.target keyed by the line's OWN key
+   * (lib/offers-engine.js: adj(o, 'line', l.key, …)). Pass an index as the key and the reply comes back under "0" while this
+   * code looks it up under the item_id — so ev.line_net[c.item_id] is undefined, net stays gross, and EVERY offer silently
+   * fails to come off the bill. Caught while fixing the offer bug, in the fix for the offer bug.
+   * A cart holds one row per product (addItem merges by item_id), so item_id IS a unique key and lineOf's default is right.
+   */
+  var lines = CART.map(function(c){ return lineOf(c); });
   var ev = null;
   try { if (window.CBOffers && S && (S.offers||[]).length)
     ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:(S.shop&&S.shop.currency)||'INR', now:new Date().toISOString() } }); } catch(_){ ev = null; }
@@ -2156,7 +2345,7 @@ function billMoney(){
   var taxed = shopTax().charges;
   /* ⚠️ WHICH WAY THE PRICE IS QUOTED. Inclusive (the Indian retail norm, and the default) splits the tax OUT of the shelf price;
      exclusive ADDS it on top. Getting this backwards is wrong by exactly the tax on every bill, in silence. */
-  var inclusive = !(S && S.policy && S.policy.price_includes_tax === 'no');
+  var inclusive = taxIncluded();   /* ⭐ one answer, shared with the shelf row — they must never disagree */
   var base = net, tax = 0, byRate = {};
   if (taxed){
     base = 0;

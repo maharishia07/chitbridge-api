@@ -187,4 +187,35 @@ it('neither screen keeps a search of its own', () => {
   if (app.indexOf('CBSearch') > 0) assert.ok(app.indexOf('app/search.js') > 0, 'the app uses CBSearch but never loads it');
 });
 
+
+/**
+ * ⚠️⚠️ THE THING TYPED IN FULL MUST BE FIRST. Athi, 2026-09-09: "I selected one product and when I enter, the topmost product
+ * gets added." Typing "Probe biscuit B" ranked "Probe biscuit A" first — every token matched all three, because "b" is a prefix
+ * of "biscuit", so the letter meant to DISTINGUISH them matched every one.
+ * At a counter that is the wrong product on a bill, not a ranking nicety: the name is typed in full, Enter is pressed, and the
+ * till adds whatever happened to be first.
+ */
+it('⚠️⚠️ typing a name in full puts THAT product first', () => {
+  const shelf = [
+    { item_id: 'a', name: 'Probe biscuit A', code: 'PBA' },
+    { item_id: 'b', name: 'Probe biscuit B', code: 'PBB' },
+    { item_id: 'c', name: 'Probe biscuit C', code: 'PBC' },
+  ];
+  const first = (q) => (CBSearch.search(shelf, q, { limit: 10 })[0] || {}).name;
+  assert.strictEqual(first('Probe biscuit B'), 'Probe biscuit B', 'the full name did not rank first');
+  assert.strictEqual(first('biscuit B'), 'Probe biscuit B', 'a phrase inside the name did not rank first');
+  assert.strictEqual(first('PBB'), 'Probe biscuit B', 'an exact code did not rank first');
+  /* and the shared prefix still returns everything, in a stable order */
+  assert.strictEqual(CBSearch.search(shelf, 'Probe biscuit', { limit: 10 }).length, 3);
+});
+
+it('⭐ a longer name that matches the phrase still beats a shorter one that only matches tokens', () => {
+  const shelf = [
+    { item_id: '1', name: 'Rice', code: 'R' },
+    { item_id: '2', name: 'Ponni raw rice 25 kg', code: 'P25' },
+  ];
+  /* "raw rice" is a phrase in the long name and not in the short one — length must not win over meaning */
+  assert.strictEqual((CBSearch.search(shelf, 'raw rice', { limit: 5 })[0] || {}).name, 'Ponni raw rice 25 kg');
+});
+
 console.log(pass + ' checks passed');

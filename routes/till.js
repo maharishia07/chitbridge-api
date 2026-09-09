@@ -100,7 +100,7 @@ router.get('/snapshot', auth, async (req, res) => {
         `SELECT count(*)::int AS n FROM catalogue_items
            WHERE entity_id = $1 AND is_active = true
              AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
-                 NOT IN ('unavailable', 'redundant', 'retired')`, [entity_id])).catch(() => ({ rows: [{ n: null }] })),
+                 NOT IN ('redundant', 'retired')`, [entity_id])).catch(() => ({ rows: [{ n: null }] })),
     ]);
 
     /**
@@ -160,9 +160,23 @@ router.get('/snapshot', auth, async (req, res) => {
      * On a delta, anything that changed and is NO LONGER offerable travels as a REMOVAL: an absence cannot be expressed by a list of
      * present rows, and a till that never hears about it goes on selling something the shop has withdrawn.
      */
+    /**
+     * ⚠️⚠️ A COUNTER MUST SEE WHAT IT HAS TAKEN OFF THE SHELF. The snapshot sent only OFFERABLE rows, so the moment somebody
+     * marked something out of stock it vanished from the counter completely — and could never be put back from there. The
+     * Stock-out screen listed "what is off the shelf right now" from a list those rows had just left. Found while redesigning
+     * the row, not by a test: the feature was written and shipped the same afternoon.
+     *
+     * So the counter is sent what it can SELL plus what it has itself taken OFF, and nothing else — retired and redundant stay
+     * out, because those are lifecycle decisions nobody reverses at a till.
+     * ⚠️ "avail" already rides on every row, and hits() refuses to offer an unavailable one in Sell, Receive or Despatch. The
+     * snapshot's job is to say what is true; deciding what may be BILLED is the counter's, and it was already doing it.
+     */
     const sellable = (r) => r.is_active !== false && itemstatus.isOfferable(r.item_data || {});
-    const removed = since ? all.filter((r) => !sellable(r)).map((r) => r.item_id) : [];
-    const items = all.filter(sellable).map((it) => {
+    const onTheCounter = (r) => r.is_active !== false
+      && ['available', 'unavailable'].indexOf(itemstatus.statusOf(r.item_data || {})) >= 0;
+    /* a removal is now "no longer on the counter at all" — retired or redundant — not merely "not sellable today" */
+    const removed = since ? all.filter((r) => !onTheCounter(r)).map((r) => r.item_id) : [];
+    const items = all.filter(onTheCounter).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
                /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
@@ -174,6 +188,20 @@ router.get('/snapshot', auth, async (req, res) => {
                   that is fine — the screen falls back to the category emblem rather than leaving a hole. */
                image: d.image || null,
                barcode: d.barcode || d.ean || null, avail: d.avail || null,
+               /**
+                * ⚠️⚠️ "avail" IS NOT THE STATUS, AND THE COUNTER WAS READING IT AS ONE. lib/itemstatus.js says so in as many
+                * words: item_data.avail is a QUANTITY feed ({qty, source, as_of}) — how many are on the shelf — while the
+                * lifecycle (available · unavailable · retired · redundant) lives in item_data.status.
+                *
+                * The counter's Stock-out button compared i.avail against the string 'unavailable' and assigned the string back.
+                * Against an object that comparison is ALWAYS false, so:
+                *   · the button only ever toggled one way on the first press
+                *   · POST /api/till/stock correctly stamped item_data.status on the server — a field the snapshot never sent —
+                *     so the next re-read brought the row back looking available, and the shopkeeper's decision was gone
+                *   · the "off the shelf right now" list read the same wrong field, so it could never list anything
+                * The whole feature was writing to one field and reading another. Both now travel, each meaning its own thing.
+                */
+               status: itemstatus.statusOf(d),
                /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton
                   converts to our pieces. Capped: an alias list is a memory aid, not a place to accumulate. */
                aliases: Array.isArray(d.aliases) ? d.aliases.slice(0, 20).map((a) => ({ by: a.by || null, text: a.text,

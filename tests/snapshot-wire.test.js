@@ -99,4 +99,55 @@ it('⭐ the counter refuses a merge that does not add up', () => {
     'on a mismatch it must take the WHOLE shop again, not patch around it');
 });
 
+/**
+ * ⭐⭐ THE OFFER MUST REACH THE BILL. lib/offers-engine.js answers under the line's OWN key — line_net[l.key], and every
+ * adjustment.target is l.key — so a cart that builds lines under one key and reads the answer under another gets no discount at
+ * all, in silence. It happened: lineOf(c, n) passed the index while price() looked the answer up by item_id, and buy-2-get-1
+ * stopped coming off. The badge on the shelf row went on promising it, because that path never consults line_net.
+ */
+it('⭐⭐ the cart asks the offer engine under the same key it reads the answer back with', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function price(){'), page.indexOf('function cartLineNote'));
+  assert.ok(fn.indexOf('lineOf(c)') > 0, 'price() must build its lines with lineOf(c) — no index, so the key is the item_id');
+  assert.ok(fn.indexOf('lineOf(c, n)') < 0, 'price() passes an index as the key: line_net[c.item_id] will never resolve');
+  assert.ok(fn.indexOf('ev.line_net[c.item_id]') > 0, 'the net must still be read back by item_id');
+});
+
+/**
+ * ⭐⭐ ONE DESCRIPTION OF A LINE. The row badge and the bill drifted once — only one of them carried the category — so the counter
+ * promised an offer it then failed to apply. Both call lineOf(); neither may build its own.
+ */
+it('⭐⭐ the shelf badge and the bill are built from the same description of a line', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const off = page.slice(page.indexOf('function offersFor(i){'), page.indexOf('function offerNames'));
+  assert.ok(off.indexOf('lineOf(') > 0, 'offersFor() must describe its line with lineOf(), or the badge can promise what the bill refuses');
+  const src = page.slice(page.indexOf('function lineOf('), page.indexOf('function price(){'));
+  for (const field of ['categories', 'sku', 'excluded'])
+    assert.ok(src.indexOf(field) > 0, 'lineOf() drops ' + field + ' — an offer scoped by it can never match');
+});
+
+/**
+ * ⭐⭐ "avail" IS A QUANTITY, "status" IS A LIFECYCLE — lib/itemstatus.js says so in as many words, and the counter read the wrong
+ * one for a week: it compared item_data.avail (an object) against the string 'unavailable', which is always false, while the
+ * server stamped item_data.status. Marking something off the shelf therefore survived exactly until the next re-read.
+ */
+it('⭐⭐ the counter reads the lifecycle from status, never from the quantity feed', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf("i.avail === 'unavailable'") < 0,
+    'the counter is comparing the avail QUANTITY feed against a status string — always false');
+  assert.ok(page.indexOf('function statusOf(i){') > 0, 'the counter must have one reading of the flag');
+  /* ⚠️ dspStock is the legitimate reader of avail: it wants the COUNT. Its use must survive this rule. */
+  const dsp = page.slice(page.indexOf('function dspStock('), page.indexOf('function dspStock(') + 500);
+  assert.ok(dsp.indexOf('a.qty') > 0, 'dspStock must still read avail as the quantity feed it is');
+});
+
+it('⭐ and the snapshot sends that status, or the flag can never travel', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(src.indexOf('status: itemstatus.statusOf(d)') > 0,
+    'the snapshot does not carry the lifecycle status — the counter cannot show what it cannot see');
+  /* the row is on the counter at all only because the snapshot stopped filtering to sellable */
+  assert.ok(src.indexOf('onTheCounter') > 0 && src.indexOf('all.filter(onTheCounter)') > 0,
+    'an item marked off the shelf must stay on the counter, or it can never be put back from there');
+});
+
 console.log(pass + ' checks');
