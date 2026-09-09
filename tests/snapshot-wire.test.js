@@ -62,7 +62,13 @@ it('a shop with no shelf at all still gets an array, never null', () => {
 
 it('⚠️⚠️ the snapshot says how many products the shop HAS — a delete is invisible to a delta', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  assert.ok(/^s*total:/m.test(src), 'the snapshot no longer carries a total; a hard delete becomes invisible again');
+  /**
+   * ⚠️ NO REGEX HERE, ON PURPOSE. This assertion was written as /^s*total:/m — the backslash of \s was eaten on its way into
+   * the file, leaving a pattern that can never match, so the guard failed on correct code and would have been "fixed" by
+   * deleting it. A line filter says the same thing and cannot be damaged in transit.
+   */
+  const carries = src.split(/\r?\n/).some((l) => l.trim().indexOf('total:') === 0);
+  assert.ok(carries, 'the snapshot no longer carries a total; a hard delete becomes invisible again');
   assert.ok(src.indexOf("NOT IN ('unavailable', 'redundant', 'retired')") > 0,
     'the count must exclude exactly the blocked statuses');
 });
