@@ -279,6 +279,14 @@
   #cardprice{width:110px;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;
              background:var(--paper);color:var(--ink);font:inherit;font-weight:700;font-variant-numeric:tabular-nums}
   .cardnote{padding-top:10px;color:var(--dim);font-size:.85em;min-height:1.2em}
+  /* ── the shop's particulars, as the counter holds them ── */
+  .shopfacts{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--paper)}
+  .shopfacts h4{margin:0 0 6px;font-size:1em}
+  .shopfacts .f{display:grid;grid-template-columns:118px minmax(0,1fr);gap:8px;padding:2px 0;font-size:.88em}
+  .shopfacts .f span:first-child{color:var(--dim)}
+  .shopfacts .f b{font-weight:700;word-break:break-word}
+  .shopfacts .miss{color:var(--warn);font-weight:700}
+  .shopfacts .src{color:var(--dim);font-size:.78em;margin-top:7px;border-top:1px solid var(--line);padding-top:6px}
   .dlg h3{margin:0 0 10px}
   .dlg label{display:block;margin:10px 0 4px;color:var(--dim);font-size:.85em}
   .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
@@ -488,6 +496,7 @@
 
 <dialog id="setdlg"><div class="dlg">
   <h3>This till</h3>
+  <div id="shopbox" data-testid="till-shopbox"></div>
   <div id="pairbox"></div>
   <div id="coldbox"></div>
   <label>Counter name — it becomes the bill number's prefix</label>
@@ -2539,6 +2548,41 @@ function countWords(){
   var items = (Math.round(n.items * 100) / 100);
   return n.products + ' product' + (n.products === 1 ? '' : 's') + ' · ' + items + ' item' + (items === 1 ? '' : 's');
 }
+/**
+ * ⭐ WHAT THIS COUNTER KNOWS ABOUT THE SHOP. Every line here changes what gets printed on a bill, so each says what it is
+ * FOR rather than just what it is — a shopkeeper reading "33 · Tamil Nadu" should not have to know why it is there.
+ */
+function paintShop(){
+  var el = document.getElementById('shopbox'); if (!el) return;
+  if (!S || !S.shop) { el.innerHTML = '<div class="shopfacts">No copy of the shop yet — press ↻ once, while online.</div>'; return; }
+  var sh = S.shop, tx = shopTax();
+  var miss = function(v, why){ return v ? '<b>' + esc(String(v)) + '</b>' : '<b class="miss">not set</b> <span>' + esc(why) + '</span>'; };
+  var doc = tx.kind === 'tax' ? 'TAX INVOICE' : (tx.kind === 'supply' ? 'BILL OF SUPPLY' : 'a cash memo');
+  var split = !sh.state_code ? 'cannot be split without the state'
+    : ((window.CBTax && CBTax.supplyType(String(sh.state_code), String(sh.state_code)) === 'intra') ? 'CGST + SGST' : 'IGST');
+  /**
+   * ⚠️ ONLY WHAT DECIDES SOMETHING. Athi, 2026-09-09: *"we don't need all I guess — what is required only, we have to bring
+   * it here."* The first cut listed address, phone, legal name and currency. None of those is a DECISION: they are header
+   * text on a slip, and a shopkeeper does not come to a settings panel to read their own address back.
+   *
+   * What is left is the tax identity, and every row of it changes what gets printed:
+   *   GSTIN         — no GSTIN, no GST (lib/tax-shelf's rule), and its first two digits are the state
+   *   Registration  — regular charges tax; composition holds a GSTIN and charges none
+   *   Every bill is — the consequence of those two, in the words on the paper
+   *   Tax shown as  — CGST+SGST or IGST, or why it cannot be split
+   */
+  el.innerHTML = '<div class="shopfacts">'
+    + '<h4>' + esc(sh.name || 'This shop') + '</h4>'
+    + '<div class="f"><span>GSTIN</span>' + miss(sh.gstin, 'so no GST is charged') + '</div>'
+    + '<div class="f"><span>Registration</span><b>' + esc(sh.reg_type || 'regular') + '</b></div>'
+    + '<div class="f"><span>Every bill is</span><b>' + doc + '</b></div>'
+    + (tx.charges ? '<div class="f"><span>Tax shown as</span>'
+        + (sh.state_code ? '<b>' + esc(split) + '</b>'
+                         : '<b class="miss">cannot be split</b> <span>no state on the GSTIN</span>') + '</div>' : '')
+    + '<div class="src">Read from ChitBridge' + (S.at ? ' at ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '')
+    + ' and kept here, so bills stay headed correctly with the line down. Change it in ChitBridge.</div>'
+    + '</div>';
+}
 function paintTotals(){
   var m = billMoney();
   var tendered = Number(document.getElementById('tendered').value) || 0;
@@ -3688,6 +3732,8 @@ function openSettings(){
     + ' and reads your shop again. Use it if the counter feels slow or is showing something it should not.</div>'
     + '<button class="pill" data-testid="till-coldstart" onclick="coldStart()">↺ Clear and read the shop again</button>';
   paintPrinters();
+  /* ⚠️ painted on OPEN, not once at boot — the shop is re-read all day and a stale GSTIN here would be worse than none */
+  paintShop();
   document.getElementById('setdlg').showModal();
 }
 async function saveSettings(){

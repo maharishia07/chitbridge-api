@@ -176,6 +176,9 @@ router.get('/snapshot', auth, async (req, res) => {
       && ['available', 'unavailable'].indexOf(itemstatus.statusOf(r.item_data || {})) >= 0;
     /* a removal is now "no longer on the counter at all" — retired or redundant — not merely "not sellable today" */
     const removed = since ? all.filter((r) => !onTheCounter(r)).map((r) => r.item_id) : [];
+    /* ⭐ ONE GSTIN, READ ONCE — see the note where it is used. It may be on the identity row or in the profile; whichever it
+       is, the state code is its first two digits and must not be derived from the other field. */
+    const gstin = row.gstn || profile.gstin || null;
     const items = all.filter(onTheCounter).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
@@ -244,8 +247,16 @@ router.get('/snapshot', auth, async (req, res) => {
         legal_name: profile.legal_name || null,
         address: [profile.address, profile.city, profile.state, profile.pincode].filter(Boolean).join(', ') || null,
         phone: profile.phone || null,
-        gstin: row.gstn || profile.gstin || null,
-        state_code: String(row.gstn || '').slice(0, 2) || null,
+        /**
+         * ⚠️⚠️ ONE GSTIN, READ ONCE. These two lines disagreed: gstin fell back to the PROFILE, state_code did not. A shop
+         * whose GSTIN is recorded in the profile rather than on the identity row therefore came through as registered — so
+         * the counter charged GST — with no state code, so CBTax.supplyType answered 'unknown' and the tax could not be
+         * split into CGST and SGST. A TAX INVOICE with a lumped GST line, from a shop that had filled the field in.
+         * Athi hit exactly this the moment he added one: *"GSTN ref is there in the profile."*
+         * ⚠️ The state code IS the first two digits of the GSTIN — so it must come from whichever GSTIN was actually used.
+         */
+        gstin: gstin,
+        state_code: String(gstin || '').slice(0, 2) || null,
         reg_type: String(flags.gst_registration || 'regular'),
         currency: profile.currency || 'INR',
       },

@@ -345,4 +345,41 @@ it('⭐ a modified key is not the search box key', () => {
     'the modifier guard must come before the arrow branches or it cannot stop them');
 });
 
+/**
+ * ⭐⭐ ONE GSTIN, READ ONCE. The snapshot took `gstin` from the identity row OR the profile, but derived `state_code` from the
+ * identity row alone. A shop whose GSTIN lives in the PROFILE therefore came through registered — so the counter charged GST —
+ * with no state code, so CBTax.supplyType answered 'unknown' and the tax could not be split. A TAX INVOICE with a lumped GST
+ * line, from a shop that had filled the field in. Athi hit it the moment he added one: *"GSTN ref is there in the profile."*
+ */
+it('⭐⭐ the state code comes from the same GSTIN the shop is shown as having', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(src.indexOf('const gstin = row.gstn || profile.gstin || null;') > 0,
+    'the GSTIN is not read once into one place');
+  assert.ok(src.indexOf('state_code: String(gstin ||') > 0,
+    'the state code is derived from a different field than the GSTIN that is shown — a profile GSTIN would charge tax it cannot split');
+  assert.ok(src.indexOf("state_code: String(row.gstn ||") < 0, 'the old identity-row-only derivation is back');
+});
+
+/**
+ * ⭐ AND THE COUNTER SHOWS WHAT IT HOLDS. Athi: *"you should bring that information in the profile of the counter and keep
+ * it"* — then: *"we don't need all, what is required only."* Every row must be a DECISION about what gets printed, not
+ * header text a shopkeeper would never come here to read.
+ */
+it('⭐ the till shows the shop tax identity, and only what decides something', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function paintShop(){'), page.indexOf('function paintTotals'));
+  for (const need of ['GSTIN', 'Registration', 'Every bill is', 'Tax shown as'])
+    assert.ok(fn.indexOf(need) > 0, 'the till does not say ' + need);
+  for (const noise of ['Address', 'Phone', 'Currency', 'Legal name'])
+    assert.ok(fn.indexOf('<span>' + noise + '</span>') < 0, noise + ' is back — it decides nothing and is slip header text');
+  /* ⚠️ read-only: a GSTIN is changed in ChitBridge where it is checked, never typed at a till */
+  assert.ok(fn.indexOf('<input') < 0, 'the till lets somebody type a GSTIN — it is changed in ChitBridge, where it is checked');
+  /* ⚠️ painted when the dialog OPENS, not once at boot — the shop is re-read all day and a stale GSTIN here is worse than none */
+  /* ⚠️ slice to where the function actually ENDS. A fixed character window stopped short of the call and reported it
+     missing — a guard that fails on a function growing longer is a guard nobody will trust for long. */
+  const at = page.indexOf('function openSettings(){');
+  const open = page.slice(at, page.indexOf('async function saveSettings', at));
+  assert.ok(open.indexOf('paintShop();') > 0, 'the shop block is not repainted when the settings dialog opens');
+});
+
 console.log(pass + ' checks');
