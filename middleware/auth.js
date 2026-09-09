@@ -214,7 +214,9 @@ const KEY_ROUTES = {
                 * offer opt-out saved locally and were refused by the server every single time: "ChitBridge refused it (403)".
                 * The counter said so honestly and nobody could act on it, which is why the message now explains itself too.
                 */
-              ['POST', /^\/api\/till\/(stock|price|flags)$/],
+              /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
+                 product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
+              ['POST', /^\/api\/till\/(stock|price|flags|offer-item)$/],
               /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
                  two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery
                  claim against any open order of ITS OWN shop. It is the shop's own claim, it is visible, it is corrected by a

@@ -404,6 +404,81 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
+/**
+ * ⭐⭐ TURN A DECLARED OFFER ON OR OFF FOR ONE PRODUCT. Athi, 2026-09-09: *"no new offers can be created; an already
+ * existing offer can be made obsolete for the product … you already have multiple offers listed, which you want to
+ * turn on."* His example is the whole point: *"a lot of tomato is being sold but potato is not moving — turn on the
+ * potato tied with tomato and push potato as well."* That decision is made at the counter, looking at the shelf, and
+ * it is worth nothing an hour later in an office.
+ *
+ * ⚠️⚠️ THIS WRITES TO A GOVERNED OBJECT, which nothing else a till key can reach does. Three things keep it honest:
+ *
+ *  1. IT CAN ONLY MOVE ONE PRODUCT IN OR OUT OF ONE EXISTING LIVE OFFER. It cannot create an offer, retire one,
+ *     rename it, change its discount, its dates, its customer group or any other rule. The new rules object is
+ *     built from the old one with ONE key touched — applies_to.item_ids — so there is no shape in which a counter
+ *     key edits what an offer is worth. That is the boundary Athi drew himself: "only the declared offer".
+ *  2. IT APPENDS A VERSION, it does not edit one. definition_version is append-only BY GRANT (no UPDATE, no DELETE
+ *     for cb_app), so this is not a convention that can be forgotten — and the note records the counter and the
+ *     person, which is better provenance than the lab records for the same edit.
+ *  3. LIVE OFFERS ONLY. A draft or retired offer is not something a shopkeeper can be looking at on a shelf.
+ *
+ * ⚠️ THE ENGINE ALREADY UNDERSTANDS THIS and no engine code changes: lib/offers-engine.js treats item_ids, skus and
+ * categories as a UNION — "an offer ticked on a product reaches the product even when it sits elsewhere".
+ */
+router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = req.body || {};
+    const offer_id = String(b.offer_id || '');
+    const item_id = String(b.item_id || '');
+    const on = b.on === true || b.on === 'true';
+    if (!offer_id || !item_id) return res.status(400).json({ error: 'validation', message: 'offer_id and item_id required' });
+
+    const out = await withEntity(entity_id, async (db) => {
+      const cur = await db.query(
+        `SELECT d.definition_id, d.name, d.current_version, d.status, d.kind, v.rules
+           FROM definition d
+           LEFT JOIN definition_version v
+             ON v.definition_id = d.definition_id AND v.version = d.current_version
+          WHERE d.entity_id = $1 AND d.definition_id = $2`, [entity_id, offer_id]);
+      if (!cur.rows.length) return { missing: true };
+      const d = cur.rows[0];
+      /* ⚠️ an offer only — this route must never become a way to edit any other kind of definition */
+      if (d.kind !== 'offer') return { refused: 'that is not an offer' };
+      if (d.status !== 'live') return { refused: 'that offer is not live' };
+
+      const rules = (d.rules && typeof d.rules === 'object') ? d.rules : {};
+      const applies = (rules.applies_to && typeof rules.applies_to === 'object') ? rules.applies_to : {};
+      const had = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
+      const next = on ? (had.indexOf(item_id) >= 0 ? had : had.concat([item_id]))
+                      : had.filter((x) => x !== item_id);
+      /* nothing to record is not an error, and a version for it would be noise in the one history that must stay readable */
+      if (next.length === had.length && next.every((x, n) => x === had[n]))
+        return { ok: true, unchanged: true, name: d.name };
+
+      /* ⭐ ONE KEY TOUCHED. Everything else about the offer is carried across exactly as it was. */
+      const newRules = Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) });
+      const version = d.current_version + 1;
+      const who = (b.by ? String(b.by).slice(0, 60) : null);
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, note, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [offer_id, version, entity_id, newRules,
+         (on ? 'Product added at the counter' : 'Product removed at the counter') + (who ? ' by ' + who : ''),
+         req.identity && req.identity.identity_id]);
+      await db.query(
+        `UPDATE definition SET current_version = $2, updated_at = now() WHERE definition_id = $1`,
+        [offer_id, version]);
+      return { ok: true, name: d.name, version };
+    });
+
+    if (out.missing) return res.status(404).json({ error: 'Not found' });
+    if (out.refused) return res.status(400).json({ error: 'validation', message: out.refused });
+    shopChanged(entity_id, 'offer ' + (on ? 'added to' : 'removed from') + ' a product');
+    res.json(Object.assign({ ok: true, offer_id, item_id, on }, out));
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

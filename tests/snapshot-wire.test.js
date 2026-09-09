@@ -521,4 +521,50 @@ it('⭐ the slip box is paper for a slip and themed for a screen, and never mixe
     'a slip opened after a health check keeps the screen colours — and printSlip copies this element, so it would PRINT them');
 });
 
+/**
+ * ⭐⭐ A DECLARED OFFER CAN BE TURNED ON FOR ONE PRODUCT, AND NOTHING MORE. Athi: *"no new offers can be created; an
+ * already existing offer can be made obsolete for the product … a lot of tomato is being sold but potato is not
+ * moving — turn on the potato tied with tomato."*
+ * ⚠️ This is the only governed object a till key can write, so the boundary is asserted at the wire, not trusted.
+ */
+it('⭐⭐ the till may move one product in or out of one live offer, and may not touch the offer itself', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const r = src.slice(src.indexOf("router.post('/offer-item'"), src.indexOf("router.post('/price'"));
+  assert.ok(r.length > 500, 'the offer-item route is missing');
+  /* it appends a version — definition_version is append-only BY GRANT, so an UPDATE of it would simply be refused */
+  assert.ok(r.indexOf('INSERT INTO definition_version') > 0, 'the offer is edited rather than versioned');
+  assert.ok(r.indexOf('UPDATE definition_version') < 0, 'definition_version is append-only — it must never be updated');
+  /* ONE key of the rules is touched, everything else carried across */
+  assert.ok(r.indexOf("Object.assign({}, rules, { applies_to:") > 0, 'the whole rules object is rewritten rather than one key');
+  assert.ok(r.indexOf('item_ids: next') > 0, 'item_ids is not the field being set');
+  /* it refuses anything that is not one LIVE offer */
+  assert.ok(r.indexOf("d.kind !== 'offer'") > 0, 'this route could edit a definition that is not an offer');
+  assert.ok(r.indexOf("d.status !== 'live'") > 0, 'a draft or retired offer can be changed from a till');
+  /* ⚠️ and it must never gain the ability to reprice, rename or retire */
+  for (const forbidden of ['status =', 'name =', 'sub_kind', 'discount'])
+    assert.ok(r.indexOf(forbidden) < 0, 'the offer-item route can write ' + forbidden + ' — a till key must not');
+});
+
+/**
+ * ⭐⭐ THE SAME SWITCH, TWO DIFFERENT WRITES. An offer reaches a product by RULE or by TICK, and leaves it by opt-out
+ * or by untick. Choosing the wrong one either takes a whole category off an offer or leaves a contradicted tick behind,
+ * and neither shows up until a customer is at the counter.
+ */
+it('⭐⭐ turning an offer off knows whether to opt the product out or remove the tick', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function offerState(i, o){') > 0, 'nothing works out WHY an offer is on or off');
+  const st = page.slice(page.indexOf('function offerState(i, o){'), page.indexOf('function offerShown'));
+  assert.ok(st.indexOf('line.excluded = [];') > 0,
+    'coverage is tested with the opt-out still applied, so an opted-out product looks like one the rule never covered');
+  const save = page.slice(page.indexOf('async function cardSave(){'), page.indexOf('function cardDiscard(){'));
+  assert.ok(save.indexOf('st.ticked ? await offerItemWrite(i, id, false) : await offerWrite(i, id, true)') > 0,
+    'turning an offer OFF does not choose between removing the tick and opting the product out');
+  assert.ok(save.indexOf('st.excluded ? await offerWrite(i, id, false) : await offerItemWrite(i, id, true)') > 0,
+    'turning an offer ON does not choose between lifting the opt-out and ticking the product on');
+  /* every live offer must be listed, or you cannot turn on what you cannot see */
+  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function pendPrice('));
+  assert.ok(card.indexOf('var mine = (S.offers || []);') > 0,
+    'the panel lists only the offers that already reach the product — the potato can never be turned on');
+});
+
 console.log(pass + ' checks');

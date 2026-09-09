@@ -1816,10 +1816,44 @@ function cardVal(i, key){
   if (key === 'screen') return PEND.screen !== undefined ? PEND.screen : (i.screen === true);
   return undefined;
 }
-function cardOfferOut(i, id){
-  if (PEND.offers && PEND.offers[String(id)] !== undefined) return PEND.offers[String(id)];
+/**
+ * ⭐ WHY THIS OFFER IS ON OR OFF FOR THIS PRODUCT — asked of the ENGINE for the coverage, never re-decided here.
+ *   how 'rule'     the offer's own scope reaches it (its category or SKU)
+ *   how 'ticked'   somebody put this product on the offer by hand
+ *   how 'excluded' the rule reaches it but the shop has opted this product out
+ *   how 'none'     the offer has nothing to do with it
+ * ⚠️ Coverage is tested with the exclusion REMOVED, or an opted-out product would look like one the offer never
+ * covered — and then turning the switch back on would tick it onto the offer instead of simply lifting the opt-out.
+ */
+function offerState(i, o){
+  var id = String(o.id);
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
-  return ex.indexOf(String(id)) >= 0;
+  var excluded = ex.indexOf(id) >= 0;
+  var ticked = !!(o.applies_to && Array.isArray(o.applies_to.item_ids)
+                  && o.applies_to.item_ids.map(String).indexOf(String(i.item_id)) >= 0);
+  var covered = false;
+  try {
+    var line = lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:i.price, qty:1,
+                        item_data:{ category:i.category } });
+    line.excluded = [];                              /* ⚠️ ask what the RULE reaches, not what survives the opt-out */
+    covered = CBOffers.forLine(line, [o], { currency:'INR', now:new Date().toISOString() }).length > 0;
+  } catch (_) { covered = false; }
+  var on = covered && !excluded;
+  var how = excluded ? 'excluded' : (ticked ? 'ticked' : (covered ? 'rule' : 'none'));
+  return { id:id, on:on, how:how, ticked:ticked, excluded:excluded, covered:covered };
+}
+/** what the switch SHOWS: the staged answer if there is one, otherwise the real one */
+function offerShown(i, o){
+  var st = offerState(i, o);
+  if (PEND.offers && PEND.offers[st.id] !== undefined) return PEND.offers[st.id];
+  return st.on;
+}
+function offerWords(st, shown){
+  if (shown !== st.on) return shown ? 'will be turned on when you save' : 'will be turned off when you save';
+  if (st.how === 'rule') return 'on — the offer covers ' + 'this kind of product';
+  if (st.how === 'ticked') return 'on — put on this product by hand';
+  if (st.how === 'excluded') return 'off — this product was taken out of it';
+  return 'off — the offer does not reach this product';
 }
 /** ⚠️ a value set back to what the shop already holds is NOT a change — it is removed, so Save cannot report a no-op */
 function pendSet(key, value, actual){
@@ -1869,13 +1903,8 @@ function paintCard(){
   var off = cardVal(i, 'status') === 'unavailable';
   var actualOff = statusOf(i) === 'unavailable';
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
-  /* ⚠️ the offers listed are the ones that TOUCH this product — asked of the engine, never re-decided here. An excluded
-     product still appears (it has to, or you could never put it back), marked as out. */
-  var mine = (S.offers || []).filter(function(o){
-    if (ex.indexOf(String(o.id)) >= 0) return true;
-    try { return CBOffers.forLine(lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:i.price, qty:1,
-      item_data:{ category:i.category } }), [o], { currency:'INR', now:new Date().toISOString() }).length > 0; } catch (_) { return false; }
-  });
+  /* ⭐ EVERY live offer, not only the ones already reaching this product — you cannot turn on what you cannot see */
+  var mine = (S.offers || []);
   el.innerHTML = display
     + '<div class="cardhead">' + picOf(i) + '<span><b>' + esc(i.name) + '</b>'
     + '<div class="u">' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span></div>'
@@ -1896,13 +1925,13 @@ function paintCard(){
 
     + '<div class="cardrow"><label>Offers</label><div class="swwrap col">'
     + (mine.length ? mine.map(function(o){
-        var id = String(o.id), out = cardOfferOut(i, id), actual = ex.indexOf(id) >= 0;
-        return '<div class="swline' + (out !== actual ? ' pending' : '') + '">'
-          + cardSwitch(!out, 'card-offer-' + esc(id),
-              "pendOffer('" + esc(id) + "'," + (out ? 'false' : 'true') + ',' + (actual ? 'true' : 'false') + ')',
-              (o.label || o.name || 'Offer') + (out ? ' — this product is out of it' : '')) + '</div>';
+        var st = offerState(i, o), shown = offerShown(i, o);
+        return '<div class="swline' + (shown !== st.on ? ' pending' : '') + '">'
+          + cardSwitch(shown, 'card-offer-' + esc(st.id),
+              "pendOffer('" + esc(st.id) + "'," + (shown ? 'false' : 'true') + ',' + (st.on ? 'true' : 'false') + ')',
+              (o.label || o.name || 'Offer') + ' — ' + offerWords(st, shown)) + '</div>';
       }).join('')
-      : '<span class="swtxt">No offer covers this product today.</span>')
+      : '<span class="swtxt">This shop has no live offers. Declare them in ChitBridge — they appear here to be turned on.</span>')
     + '</div></div>'
 
     + '<div class="cardrow' + (PEND.screen !== undefined ? ' pending' : '') + '"><label>Shop screen</label><div class="swwrap">'
@@ -1984,9 +2013,27 @@ async function cardSave(){
   if (PEND.offers) {
     for (var id in PEND.offers) {
       var o = (S.offers || []).filter(function(x){ return String(x.id) === String(id); })[0];
-      var label = (o && (o.label || o.name)) || 'that offer';
-      record(await offerWrite(i, id, PEND.offers[id]),
-        PEND.offers[id] ? 'taken out of "' + label + '"' : 'put back into "' + label + '"');
+      if (!o) continue;
+      var label = (o.label || o.name) || 'that offer';
+      var st = offerState(i, o), want = PEND.offers[id];
+      if (want === st.on) continue;                  /* staged and then put back — nothing to write */
+      /**
+       * ⚠️⚠️ THE SAME SWITCH, TWO DIFFERENT WRITES, and choosing the wrong one is invisible until a customer is at
+       * the counter.
+       *   turning OFF something the RULE covers   → opt this PRODUCT out (offers_excluded). Editing the offer would
+       *                                             take the whole category off it.
+       *   turning OFF something TICKED on         → remove the tick from the OFFER. An opt-out would leave the tick
+       *                                             sitting there, contradicted, for the next person to puzzle over.
+       *   turning ON something opted out          → lift the opt-out, which is all that was ever holding it back.
+       *   turning ON something the rule misses    → tick this product onto the offer. This is the potato.
+       */
+      if (!want) {
+        record(st.ticked ? await offerItemWrite(i, id, false) : await offerWrite(i, id, true),
+               'taken out of "' + label + '"');
+      } else {
+        record(st.excluded ? await offerWrite(i, id, false) : await offerItemWrite(i, id, true),
+               'given "' + label + '"');
+      }
     }
   }
 
@@ -2015,6 +2062,25 @@ async function offerWrite(i, offer_id, excluded){
   i._off = null; OFFER_STAMP = null;                 /* the badge on the shelf is re-asked, not remembered */
   try { await DB.set('snapshot', S); } catch (_) {}
   return await HOST.tillPost('/api/till/flags', { item_id: i.item_id, offer_id: String(offer_id), excluded: !!excluded });
+}
+/**
+ * ⭐ TICK THIS PRODUCT ONTO A DECLARED OFFER, or take the tick off. It appends a VERSION of the offer — the table is
+ * append-only by grant — and the route refuses anything that is not one live offer and this one product.
+ * ⚠️ The local copy is updated too, so the shelf badge and the panel agree before the bell brings the shop back.
+ */
+async function offerItemWrite(i, offer_id, on){
+  if (!i) return null;
+  var o = (S.offers || []).filter(function(x){ return String(x.id) === String(offer_id); })[0];
+  if (o) {
+    o.applies_to = o.applies_to || {};
+    var had = Array.isArray(o.applies_to.item_ids) ? o.applies_to.item_ids.map(String) : [];
+    o.applies_to.item_ids = on ? (had.indexOf(String(i.item_id)) >= 0 ? had : had.concat([String(i.item_id)]))
+                               : had.filter(function(x){ return x !== String(i.item_id); });
+  }
+  i._off = null; OFFER_STAMP = null;                 /* the badge on the shelf is re-asked, not remembered */
+  try { await DB.set('snapshot', S); } catch (_) {}
+  return await HOST.tillPost('/api/till/offer-item',
+    { offer_id: String(offer_id), item_id: i.item_id, on: !!on, by: (WHO && WHO.name) || null });
 }
 async function screenWrite(i, on){
   if (!i) return null;
