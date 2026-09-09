@@ -241,10 +241,13 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
   assert.ok(page.indexOf("var OPS = ['sell','receive','despatch','maintain'];") > 0,
     'the operations are not sell/receive/despatch/maintain');
   for (const gone of ['<option value="price">', '<option value="stock">', 'id="pane_stock"',
-                      'function paintStock(', 'function stockBack(', "getElementById('stocknote')"])
+                      'function paintStock(', 'function stockBack(', "getElementById('stocknote')",
+                      /* ⚠️ the toggle-and-announce shape went with the staging — a writer that announces cannot sit
+                         inside a Save that announces once, for everything, at the end */
+                      'async function stockToggle('])
     assert.ok(page.indexOf(gone) < 0, gone + ' survives a mode that no longer exists — it can never run');
   /* ⚠️ but the WRITE stays: stockToggle is how availability changes, and the panel is now its only caller */
-  assert.ok(page.indexOf('async function stockToggle(i){') > 0, 'the availability write went with the mode');
+  assert.ok(page.indexOf('async function stockWrite(i, now){') > 0, 'the availability write went with the mode');
   assert.ok(page.indexOf('id="pane_maintain"') > 0, 'there is no maintenance pane for the four decisions to live in');
   /* ⚠️ and the dead screen went with the mode — paintPrice wrote into an element that no longer exists */
   for (const dead of ['function paintPrice(', 'function priceStart(', 'function priceSave(', "getElementById('pricelist')"])
@@ -261,13 +264,28 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
  */
 it('⭐⭐ the maintenance panel holds the four decisions and writes each through one path', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function cardPrice('));
-  for (const [what, mark] of [['availability', 'stockToggle(cardItem())'], ['price', 'cardPrice()'],
-                              ['offers', 'cardOffer('], ['the shop screen', 'cardScreen(']])
-    assert.ok(card.indexOf(mark) > 0, 'the maintenance panel cannot set ' + what);
+  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function pendPrice('));
+  /**
+   * ⭐⭐ EVERY CONTROL STAGES; ONE SAVE COMMITS. Athi: *"one save button for any change in the screen, and get the
+   * confirmation that THIS is changed, but not others."* Three switches that wrote instantly and one price that waited
+   * for a button was a screen nobody could predict — and a mis-tapped switch was already on the shop screen with no undo.
+   */
+  for (const [what, mark] of [['availability', "pendSet('status'"], ['price', 'pendPrice(this.value)'],
+                              ['offers', 'pendOffer('], ['the shop screen', "pendSet('screen'"]])
+    assert.ok(card.indexOf(mark) > 0, 'the maintenance panel cannot stage ' + what);
+  assert.ok(card.indexOf('cardSave()') > 0 && card.indexOf('card-save') > 0, 'there is no one Save for the panel');
+  assert.ok(card.indexOf('cardDiscard()') > 0, 'there is no way back — Discard is the undo this screen never had');
+  /* ⚠️ nothing may write straight from a control any more, or "nothing leaves until Save" is a lie on the screen */
+  for (const direct of ['stockWrite(', 'priceWrite(', 'screenWrite(', 'offerWrite('])
+    assert.ok(card.indexOf(direct) < 0, direct + ' is called from a control — it must only be called by cardSave');
+  /* each field keeps its own narrow route, so a partial failure can be reported per field */
+  const save = page.slice(page.indexOf('async function cardSave(){'), page.indexOf('function cardDiscard(){'));
+  for (const w of ['stockWrite(i', 'priceWrite(i', 'screenWrite(i', 'offerWrite(i'])
+    assert.ok(save.indexOf(w) > 0, 'cardSave does not commit through ' + w);
+  assert.ok(save.indexOf('failed.push') > 0 && save.indexOf('refusalWords(out)') > 0,
+    'a partial failure would be reported as one cheerful "saved"');
+  assert.ok(save.indexOf('i.name') > 0, 'the confirmation does not name the product, so it cannot be checked');
   assert.ok(page.indexOf('async function priceWrite(i, v){') > 0, 'there is no single price write');
-  assert.ok(page.slice(page.indexOf('function cardPrice(){'), page.indexOf('async function cardOffer')).indexOf('priceWrite(cardItem()') > 0,
-    'the panel does not go through the shared price write');
   /* and the wire refuses anything beyond those flags */
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   const route = src.slice(src.indexOf("router.post('/flags'"), src.indexOf("router.post('/price'"));
@@ -394,8 +412,10 @@ it('⭐⭐ the marked row is the row that was clicked, in every operation', () =
   assert.ok(fn.indexOf('SEL = listChanges ? 0 : n;') > 0,
     'add() still resets the mark to the top — the row you clicked stops being the row that is lit');
   assert.ok(fn.indexOf('SEL = 0; paintHits()') < 0, 'the unconditional reset is back');
-  assert.ok(fn.indexOf("MODE === 'maintain') { CARD_ID = i.item_id; SEL = n;") > 0,
+  assert.ok(fn.indexOf('CARD_ID = i.item_id; pendClear(); SEL = n;') > 0,
     'choosing a product to change does not move the mark to it');
+  /* ⚠️ and it must not throw away staged work without asking */
+  assert.ok(fn.indexOf('await pendLeave()') > 0, 'choosing another product silently discards unsaved changes');
   /* ⭐ and the product being changed is lit by IDENTITY, so a search that reorders the list cannot lose it */
   const row = page.slice(page.indexOf("return '<div class=\"hit'") - 200, page.indexOf("+ '</div>';", page.indexOf("return '<div class=\"hit'")));
   assert.ok(row.indexOf('String(CARD_ID) === String(i.item_id)') > 0, 'the edited product is marked by position, not by identity');
@@ -430,10 +450,10 @@ it('⭐⭐ nothing holds a product across a shop read — the panel resolves it 
   assert.ok(page.indexOf('function cardItem(){') > 0, 'the panel has no way to resolve its product against the current shop');
   assert.ok(page.indexOf('var CARD = null;') < 0, 'the panel caches the product object again — a shop read orphans it');
   /* every writer must go through the resolver, not a stored reference */
-  for (const fn of ['function cardPrice(){', 'async function cardOffer(', 'async function cardScreen(']) {
+  for (const fn of ['function pendPrice(v){', 'async function cardSave(){']) {
     const at = page.indexOf(fn);
-    const body = page.slice(at, at + 420);
-    assert.ok(body.indexOf('cardItem()') > 0, fn + ' writes to a cached object rather than the live one');
+    const body = page.slice(at, at + 300);
+    assert.ok(body.indexOf('cardItem()') > 0, fn + ' works on a cached object rather than the live one');
   }
   /* ⚠️ and load() really does replace them — this is why the rule exists, so the guard names it */
   assert.ok(page.indexOf('S = (st && st.snapshot) || S;') > 0,

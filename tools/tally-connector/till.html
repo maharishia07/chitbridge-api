@@ -202,8 +202,13 @@
   .cardrow.flash{animation:cbrowflash 1.25s ease-out 1;border-radius:8px}
   @keyframes cbrowflash { 0%{background:var(--ok-tint);} 45%{background:var(--ok-tint);} 100%{background:transparent;} }
   @media (prefers-reduced-motion:reduce){ .cardrow.flash{animation:none;background:var(--ok-tint)} }
-  .hit.editing::after{content:'being changed';position:absolute;inset-inline-end:10px;top:-9px;
-                      background:var(--ok);color:#fff;font-size:.66em;font-weight:700;padding:1px 7px;border-radius:999px}
+  /**
+   * ⚠️ THE TAG WAS LYING. Athi: *"when it is committed and active, it says being changed?"* It meant "this is the one
+   * open on the right", but a label is read for what it SAYS. Open is now just the ring; the tag appears only when
+   * there is something genuinely unsaved, and then it says so.
+   */
+  .hit.editing.unsaved::after{content:'not saved';position:absolute;inset-inline-end:10px;top:-9px;
+                      background:var(--warn);color:#fff;font-size:.66em;font-weight:700;padding:1px 7px;border-radius:999px}
   /* both at once is the ordinary case in Maintenance — the ring is already there, so only the tint is added */
   .hit.sel.editing{background:var(--ok-tint)}
   .hit .n{font-weight:600;min-width:0;line-height:1.3}
@@ -314,6 +319,18 @@
   .cardrow .pri:active{filter:brightness(.94)}
   .cardrow .pri:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
   .cardnote{padding-top:10px;color:var(--dim);font-size:.85em;min-height:1.2em}
+  /* ⭐ a row that differs from the shop carries a bar and its old value, so Save is never a leap of faith */
+  .cardrow.pending, .swline.pending{box-shadow:inset 3px 0 0 var(--warn);border-radius:6px}
+  .cardrow.pending>label{color:var(--warn)}
+  .was{color:var(--warn);font-size:.8em;font-weight:700;white-space:nowrap}
+  .cardsave{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 0 4px;border-top:1px solid var(--line);margin-top:6px}
+  .cardsave button{height:42px;padding:0 20px;border-radius:10px;font:inherit;font-weight:700;cursor:pointer;
+                   border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  .cardsave button.pri{border-color:var(--ok);background:var(--ok);color:#fff}
+  .cardsave button.pri:hover:not(:disabled){filter:brightness(1.08)}
+  /* ⚠️ a disabled Save must LOOK disabled, or it is just a button that does nothing when pressed */
+  .cardsave button:disabled{opacity:.45;cursor:not-allowed;background:var(--paper);color:var(--dim);border-color:var(--line)}
+  .cardsave button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
   /* ── the shop's particulars, as the counter holds them ── */
   .shopfacts{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--paper)}
   .shopfacts h4{margin:0 0 6px;font-size:1em}
@@ -1784,6 +1801,51 @@ function tileSwap(img){
  * Everything here calls the function that already did the job, so there is one write per decision, not two.
  */
 var CARD_ID = null;
+/**
+ * ⭐ WHAT HAS BEEN MOVED BUT NOT YET SAVED, for the product currently open. Cleared when it is saved, discarded, or
+ * a different product is chosen — never carried between products, because a pending price belongs to one of them.
+ * ⚠️ Keyed by field, and a field is only present when it DIFFERS from what the shop holds. That is what lets Save
+ * name the changes and say nothing about the rest.
+ */
+var PEND = {};
+function pendCount(){ return Object.keys(PEND).length + Object.keys(PEND.offers || {}).length - (PEND.offers ? 1 : 0); }
+/** the value to SHOW: what is pending if anything is, otherwise what the shop holds */
+function cardVal(i, key){
+  if (key === 'status') return PEND.status !== undefined ? PEND.status : statusOf(i);
+  if (key === 'price')  return PEND.price  !== undefined ? PEND.price  : Number(i.price) || 0;
+  if (key === 'screen') return PEND.screen !== undefined ? PEND.screen : (i.screen === true);
+  return undefined;
+}
+function cardOfferOut(i, id){
+  if (PEND.offers && PEND.offers[String(id)] !== undefined) return PEND.offers[String(id)];
+  var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
+  return ex.indexOf(String(id)) >= 0;
+}
+/** ⚠️ a value set back to what the shop already holds is NOT a change — it is removed, so Save cannot report a no-op */
+function pendSet(key, value, actual){
+  if (String(value) === String(actual)) delete PEND[key]; else PEND[key] = value;
+  paintCard(); paintHits();
+}
+function pendOffer(id, out, actual){
+  PEND.offers = PEND.offers || {};
+  if (out === actual) delete PEND.offers[String(id)]; else PEND.offers[String(id)] = out;
+  if (!Object.keys(PEND.offers).length) delete PEND.offers;
+  paintCard(); paintHits();
+}
+function pendClear(){ PEND = {}; }
+/**
+ * ⚠️ THE ONE PLACE THE PANEL CAN BE LEFT. Choosing another product or another operation with work pending would
+ * throw it away silently, which is the whole reason a Save button was asked for.
+ */
+async function pendLeave(){
+  if (!pendCount()) return true;
+  var i = cardItem();
+  var ok = await sure((i ? i.name : 'This product') + ' has ' + pendCount() + ' change'
+    + (pendCount() === 1 ? '' : 's') + ' you have not saved.\n\nLeave them behind?',
+    'Leave them', 'Not saved yet');
+  if (ok) pendClear();
+  return ok;
+}
 /** ⚠️ resolved from the CURRENT shop every time — never cached, because a shop read replaces every object in it */
 function cardItem(){
   if (!CARD_ID || !S) return null;
@@ -1804,7 +1866,8 @@ function paintCard(){
   var i = cardItem();
   if (!i) { el.innerHTML = display
     + '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'; return; }
-  var off = statusOf(i) === 'unavailable';
+  var off = cardVal(i, 'status') === 'unavailable';
+  var actualOff = statusOf(i) === 'unavailable';
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
   /* ⚠️ the offers listed are the ones that TOUCH this product — asked of the engine, never re-decided here. An excluded
      product still appears (it has to, or you could never put it back), marked as out. */
@@ -1817,33 +1880,51 @@ function paintCard(){
     + '<div class="cardhead">' + picOf(i) + '<span><b>' + esc(i.name) + '</b>'
     + '<div class="u">' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span></div>'
 
-    + '<div class="cardrow"><label>On the shelf</label><div class="swwrap">'
-    + cardSwitch(!off, 'card-avail', 'stockToggle(cardItem())', off ? 'Off the shelf — it is not listed for selling' : 'Listed and sellable')
+    /* ⚠️ EVERY CONTROL STAGES. Nothing below leaves this device until Save, and a row that differs from the shop is marked. */
+    + '<div class="cardrow' + (PEND.status !== undefined ? ' pending' : '') + '"><label>On the shelf</label><div class="swwrap">'
+    + cardSwitch(!off, 'card-avail', "pendSet('status','" + (off ? 'available' : 'unavailable') + "','" + statusOf(i) + "')",
+        off ? 'Off the shelf — it will not be listed for selling' : 'Listed and sellable')
+    + (PEND.status !== undefined ? '<span class="was">was ' + (actualOff ? 'off the shelf' : 'on the shelf') + '</span>' : '')
     + '</div></div>'
 
-    + '<div class="cardrow"><label>Price</label><div class="swwrap">'
-    + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(i.price)) + '"'
-    + ' onkeydown="if(event.key===\'Enter\')cardPrice()">'
-    /* ⚠️ THE ONLY THING ON THIS PANEL THAT DOES NOT ACT ON ITS OWN. Every switch here writes the moment it is moved; the
-       price waits for this button, so it must LOOK like the one thing left to do. As a quiet pill it read as decoration. */
-    + '<button class="pri" data-testid="card-price-save" onclick="cardPrice()">Save</button>'
+    + '<div class="cardrow' + (PEND.price !== undefined ? ' pending' : '') + '"><label>Price</label><div class="swwrap">'
+    + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(cardVal(i, 'price'))) + '"'
+    + ' oninput="pendPrice(this.value)" onkeydown="if(event.key===\'Enter\')cardSave()">'
     + '<span class="swtxt">per ' + esc(i.unit || 'piece') + (Number(i.mrp) > 0 ? ' · MRP ₹' + money(i.mrp) : '') + '</span>'
+    + (PEND.price !== undefined ? '<span class="was">was ₹' + money(i.price) + '</span>' : '')
     + '</div></div>'
 
     + '<div class="cardrow"><label>Offers</label><div class="swwrap col">'
     + (mine.length ? mine.map(function(o){
-        var out = ex.indexOf(String(o.id)) >= 0;
-        return '<div class="swline">' + cardSwitch(!out, 'card-offer-' + esc(String(o.id)),
-          'cardOffer(\'' + esc(String(o.id)) + '\',' + (out ? 'false' : 'true') + ')',
-          (o.label || o.name || 'Offer') + (out ? ' — this product is out of it' : '')) + '</div>';
+        var id = String(o.id), out = cardOfferOut(i, id), actual = ex.indexOf(id) >= 0;
+        return '<div class="swline' + (out !== actual ? ' pending' : '') + '">'
+          + cardSwitch(!out, 'card-offer-' + esc(id),
+              "pendOffer('" + esc(id) + "'," + (out ? 'false' : 'true') + ',' + (actual ? 'true' : 'false') + ')',
+              (o.label || o.name || 'Offer') + (out ? ' — this product is out of it' : '')) + '</div>';
       }).join('')
       : '<span class="swtxt">No offer covers this product today.</span>')
     + '</div></div>'
 
-    + '<div class="cardrow"><label>Shop screen</label><div class="swwrap">'
-    + cardSwitch(i.screen === true, 'card-screen', 'cardScreen(' + (i.screen === true ? 'false' : 'true') + ')',
-        i.screen === true ? 'Picked for the screen' : 'Not picked — the screen chooses on its own')
+    + '<div class="cardrow' + (PEND.screen !== undefined ? ' pending' : '') + '"><label>Shop screen</label><div class="swwrap">'
+    + cardSwitch(cardVal(i, 'screen'), 'card-screen',
+        "pendSet('screen'," + (cardVal(i, 'screen') ? 'false' : 'true') + ',' + (i.screen === true ? 'true' : 'false') + ')',
+        cardVal(i, 'screen') ? 'Picked for the screen' : 'Not picked — the screen chooses on its own')
     + '</div></div>'
+
+    /**
+     * ⭐⭐ ONE SAVE FOR THE WHOLE PANEL. Athi: *"one save button for any change in the screen, and get the confirmation
+     * that THIS is changed, but not others."*
+     * ⚠️ Dead until something is actually pending, and it says how many — a button that is always live teaches people to
+     * press it out of habit, and then "did that save?" has no answer but pressing it again.
+     */
+    + '<div class="cardsave">'
+      + '<button class="pri" id="cardsavebtn" data-testid="card-save"' + (pendCount() ? '' : ' disabled')
+        + ' onclick="cardSave()">' + (pendCount() ? 'Save ' + pendCount() + ' change' + (pendCount() === 1 ? '' : 's') : 'Nothing to save') + '</button>'
+      + (pendCount() ? '<button id="carddiscard" data-testid="card-discard" onclick="cardDiscard()">Discard</button>' : '')
+      + '<span class="swtxt">' + (pendCount()
+          ? 'Nothing has left this counter yet.'
+          : 'Change anything above — it is only saved when you press Save.') + '</span>'
+    + '</div>'
     + '<div class="cardnote" id="cardnote"></div>'
     /* ⭐ WHAT THIS COUNTER CHANGED TODAY. It was the one genuinely useful half of the old Price-change screen: a shopkeeper
        who has just put three prices up wants to see the three, and "you charged me more than yesterday" gets an answer that
@@ -1857,28 +1938,89 @@ function paintCard(){
           + '</div></div>'
         : '');
 }
-function cardPrice(){
-  var b = document.getElementById('cardprice');
-  priceWrite(cardItem(), Number(String((b && b.value) || '').replace(/[^0-9.]/g, '')));
-}
-async function cardOffer(offer_id, excluded){
+/** ⚠️ typed, not committed — the price stages like everything else on this panel now */
+function pendPrice(v){
   var i = cardItem(); if (!i) return;
+  var n = Number(String(v || '').replace(/[^0-9.]/g, ''));
+  var was = Number(i.price) || 0;
+  if (!isFinite(n) || n < 0 || n === was) delete PEND.price; else PEND.price = n;
+  /* ⚠️ NOT a full paintCard — that would rebuild the box the operator is typing in and lose the caret. Only the
+     things that depend on the pending state are touched. */
+  var btn = document.getElementById('cardsavebtn');
+  if (btn) {
+    btn.disabled = !pendCount();
+    btn.textContent = pendCount() ? 'Save ' + pendCount() + ' change' + (pendCount() === 1 ? '' : 's') : 'Nothing to save';
+  }
+  paintHits();
+}
+/**
+ * ⭐⭐ THE ONE SAVE. Each field goes through its OWN narrow route — the same three a counter key is allowed and no
+ * others — and each answer is kept, so a partial failure is reported per field instead of as one cheerful "saved".
+ * ⚠️ IT NAMES WHAT CHANGED AND NOTHING ELSE, which is what was asked for: three switches untouched are three
+ * sentences nobody has to read.
+ */
+async function cardSave(){
+  var i = cardItem(); if (!i || !pendCount()) return;
+  var btn = document.getElementById('cardsavebtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  var done = [], failed = [], queued = 0;
+  var record = function(out, words){
+    if (out && out.queued) { queued++; done.push(words); }
+    else if (out && out.ok) done.push(words);
+    else failed.push(words + ' — ' + refusalWords(out));
+  };
+
+  if (PEND.status !== undefined) {
+    record(await stockWrite(i, PEND.status),
+      PEND.status === 'unavailable' ? 'taken off the shelf' : 'put back on the shelf');
+  }
+  if (PEND.price !== undefined) {
+    var wasP = Number(i.price) || 0;
+    record(await priceWrite(i, PEND.price), 'price ₹' + money(wasP) + ' → ₹' + money(PEND.price));
+  }
+  if (PEND.screen !== undefined) {
+    record(await screenWrite(i, PEND.screen), PEND.screen ? 'put on the shop screen' : 'taken off the shop screen');
+  }
+  if (PEND.offers) {
+    for (var id in PEND.offers) {
+      var o = (S.offers || []).filter(function(x){ return String(x.id) === String(id); })[0];
+      var label = (o && (o.label || o.name)) || 'that offer';
+      record(await offerWrite(i, id, PEND.offers[id]),
+        PEND.offers[id] ? 'taken out of "' + label + '"' : 'put back into "' + label + '"');
+    }
+  }
+
+  pendClear();
+  paintCard(); paintHits(); paintChips();
+  var el = document.getElementById('cardnote');
+  if (el) {
+    /* ⚠️ THE PRODUCT IS NAMED. A confirmation that says "saved" is a confirmation you cannot check. */
+    el.textContent = (done.length ? i.name + ': ' + done.join(', ') + '.' : '')
+      + (queued ? ' Waiting for the internet — it reaches ChitBridge when the line is back.'
+                : (done.length ? ' Everywhere now.' : ''))
+      + (failed.length ? (done.length ? ' ' : '') + 'Not saved: ' + failed.join(' ') : '');
+  }
+  flashItem(CARD_ID);
+}
+function cardDiscard(){
+  pendClear(); paintCard(); paintHits();
+  var el = document.getElementById('cardnote');
+  if (el) el.textContent = 'Put back the way it was. Nothing had left this counter.';
+}
+async function offerWrite(i, offer_id, excluded){
+  if (!i) return null;
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
   i.offers_excluded = excluded ? ex.concat([String(offer_id)]).filter(function(v, n, a){ return a.indexOf(v) === n; })
                                : ex.filter(function(v){ return v !== String(offer_id); });
   i._off = null; OFFER_STAMP = null;                 /* the badge on the shelf is re-asked, not remembered */
   try { await DB.set('snapshot', S); } catch (_) {}
-  paintCard(); paintHits();
-  var out = await HOST.tillPost('/api/till/flags', { item_id: i.item_id, offer_id: String(offer_id), excluded: !!excluded });
-  cardNote(out, i.name + ' is ' + (excluded ? 'out of' : 'back in') + ' that offer everywhere.');
+  return await HOST.tillPost('/api/till/flags', { item_id: i.item_id, offer_id: String(offer_id), excluded: !!excluded });
 }
-async function cardScreen(on){
-  var i = cardItem(); if (!i) return;
+async function screenWrite(i, on){
+  if (!i) return null;
   i.screen = !!on;
   try { await DB.set('snapshot', S); } catch (_) {}
-  paintCard();
-  var out = await HOST.tillPost('/api/till/flags', { item_id: i.item_id, screen: !!on });
-  cardNote(out, i.name + (on ? ' will show on the shop screen.' : ' is off the shop screen.'));
+  return await HOST.tillPost('/api/till/flags', { item_id: i.item_id, screen: !!on });
 }
 /**
  * ⚠️ ONE WORDING FOR ALL FOUR, and it never claims the cloud agreed when it has not.
@@ -1950,7 +2092,9 @@ function paintHits(){
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     var off = statusOf(i) === 'unavailable';
     var editing = (MODE === 'maintain' && CARD_ID && String(CARD_ID) === String(i.item_id));
+    var unsaved = (editing && pendCount() > 0);
     return '<div class="hit' + (n===SEL?' sel':'') + (editing?' editing':'') + (off?' off':'') + (thumbs?' pics':'')
+      + (unsaved ? ' unsaved' : '')
       + '" data-testid="till-hit-' + n + '" data-item="' + esc(String(i.item_id)) + '" onclick="add(' + n + ')">'
       + (thumbs ? picOf(i) : '')
       + '<span class="n">' + esc(i.name)
@@ -2012,11 +2156,10 @@ function searchKey(e){
  */
 var CHANGED = { stock: [], price: [] };     /* what this counter changed today, newest first — the record on the right */
 
-async function stockToggle(i){
-  if (!i) return;
-  /* ⚠️ i.status — the LIFECYCLE. i.avail is the quantity feed and comparing it to a string was always false (see routes/till.js). */
-  var now = (statusOf(i) === 'unavailable') ? 'available' : 'unavailable';
-  i.status = now;                                    /* the shelf changes under the finger that tapped it */
+/** ⚠️ i.status is the LIFECYCLE — i.avail is a quantity feed, and comparing it to a string was always false. */
+async function stockWrite(i, now){
+  if (!i) return null;
+  i.status = now;                                    /* the shelf changes under the finger that saved it */
   i._off = null; i._rate = undefined;
   CHANGED.stock = [{ name: i.name, status: now, at: new Date() }].concat(
     CHANGED.stock.filter(function(x){ return x.name !== i.name; })).slice(0, 40);
@@ -2025,35 +2168,34 @@ async function stockToggle(i){
      while the row had already gone from the list — the one number on screen whose whole job is to say where it went. */
   /* ⚠️ THE CHIP CARRIES A COUNT, so it is part of what changed — marking something off used to leave it reading 0 while the
      row had already gone from the list, the one number whose whole job is to say where it went. */
-  paintHits(); paintChips(); if (String(CARD_ID) === String(i.item_id)) paintCard();
-  var out = await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
-  cardNote(out, i.name + ' is now ' + (now === 'unavailable' ? 'off the shelf' : 'back on') + ' everywhere.');
+  paintHits(); paintChips();
+  return await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
 }
 
 /** the price pane: whatever was tapped, with a box for the new number */
 /** ⭐ ONE PRICE WRITE, called from the Maintenance panel. It keeps the old price, who changed it and when. */
 async function priceWrite(i, v){
-  if (!i) return;
-  if (!isFinite(v) || v < 0) { toastLine('Type a price.'); return; }
+  if (!i) return null;
+  if (!isFinite(v) || v < 0) return { ok:false, why:'that is not a price' };
   var was = Number(i.price) || 0;
-  if (v === was) { toastLine('That is the same price.'); return; }
+  if (v === was) return { ok:true };                 /* nothing to do, and saying so is not an error */
   i.price = v; i._off = null;                        /* the shelf shows the new price at once */
   CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
   try { await DB.set('snapshot', S); } catch (_) {}
-  paintHits(); if (String(CARD_ID) === String(i.item_id)) paintCard();
-  var out = await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
-  document.getElementById('pricenote').textContent = out && out.queued
-    ? 'Saved here — it reaches ChitBridge when the internet is back.'
-    : (out && out.ok ? (i.name + ' is ₹' + money(v) + ' everywhere now.')
-                     : 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.'));
+  paintHits();
+  return await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
 }
 
-function add(n){
+async function add(n){
   var i = hits()[n]; if (!i) return;
   /* the same tap, read against what the shopkeeper said they are doing */
   /* ⚠️ AND THE MARK STAYS ON WHAT IS BEING CHANGED. Maintenance does not clear the box or move on — the product under
      the cursor IS the product in the panel, and they must not be allowed to drift apart again. */
-  if (MODE === 'maintain') { CARD_ID = i.item_id; SEL = n; paintCard(); paintHits(); return; }
+  if (MODE === 'maintain') {
+    /* ⚠️ ASK BEFORE ABANDONING. Choosing another product used to throw away everything staged, silently. */
+    if (String(CARD_ID) !== String(i.item_id) && !(await pendLeave())) return;
+    CARD_ID = i.item_id; pendClear(); SEL = n; paintCard(); paintHits(); return;
+  }
   var t = typed(), q = t.qty;
   if (t.unit) {
     var c = qtyInUnit(t.qty, t.unit, i.unit);
@@ -2928,7 +3070,7 @@ function setMode(m){
   paintKeys(); paintHits();
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
-  if (MODE === 'maintain') { CARD_ID = null; paintCard(); }
+  if (MODE === 'maintain') { CARD_ID = null; pendClear(); paintCard(); }
   focusSearch();
 }
 function paintKeys(){
