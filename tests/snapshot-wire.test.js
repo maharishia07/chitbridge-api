@@ -382,4 +382,40 @@ it('⭐ the till shows the shop tax identity, and only what decides something', 
   assert.ok(open.indexOf('paintShop();') > 0, 'the shop block is not repainted when the settings dialog opens');
 });
 
+/**
+ * ⭐⭐ THE MARK IS ON THE PRODUCT YOU TOUCHED. Athi: *"when I select a product the right hand side details appear, but when I try
+ * to amend, the left hand side product mark is gone — it is always on the first product listed. Same issue in Sell."*
+ * add(n) reset SEL to 0 instead of setting it, so the panel showed one product while the list lit another, and clicking a row
+ * to add it threw the mark to the top of the list.
+ */
+it('⭐⭐ the marked row is the row that was clicked, in every operation', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function add(n){'), page.indexOf('function addItem(i, qty){'));
+  assert.ok(fn.indexOf('SEL = listChanges ? 0 : n;') > 0,
+    'add() still resets the mark to the top — the row you clicked stops being the row that is lit');
+  assert.ok(fn.indexOf('SEL = 0; paintHits()') < 0, 'the unconditional reset is back');
+  assert.ok(fn.indexOf("MODE === 'maintain') { CARD = i; SEL = n;") > 0,
+    'choosing a product to change does not move the mark to it');
+  /* ⭐ and the product being changed is lit by IDENTITY, so a search that reorders the list cannot lose it */
+  const row = page.slice(page.indexOf("return '<div class=\"hit'") - 200, page.indexOf("+ '</div>';", page.indexOf("return '<div class=\"hit'")));
+  assert.ok(row.indexOf('CARD.item_id === i.item_id') > 0, 'the edited product is marked by position, not by identity');
+  assert.ok(row.indexOf("(editing?' editing':'')") > 0, 'nothing marks the product open in the panel');
+});
+
+/**
+ * ⭐ AND IT PROJECTS. Athi: *"a bit more than just showcasing in a green background — put a border around it or bring a
+ * 3-dimensional view so it projects from the others."*
+ * ⚠️ The ring is a box-shadow, never a border: a border adds 2px to the row and shoves every other row down as the cursor
+ * moves. And no scale transform — scaling a row blurs its text, which is the opposite of easier to read.
+ */
+it('⭐ the marked row is lifted off the list, and lifting it costs no layout', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const css = page.slice(page.indexOf('.hit.sel{'), page.indexOf('.hit .n{'));
+  assert.ok(css.indexOf('0 0 0 2px var(--ok)') > 0, 'the marked row has no ring');
+  assert.ok(css.indexOf('rgba(0,0,0,.20)') > 0, 'the marked row casts no shadow, so it does not project');
+  assert.ok(css.indexOf('z-index:2') > 0, 'without its own stacking context the shadow falls under the next row');
+  assert.ok(css.indexOf('border:') < 0, 'a real border would shift every row below it as the cursor moves — use the ring');
+  assert.ok(css.indexOf('scale(') < 0, 'scaling the row blurs its text');
+});
+
 console.log(pass + ' checks');
