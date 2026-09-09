@@ -939,8 +939,6 @@ function paintStatus(){
   var d = STATE.today || {};
   document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ₹' + money(d.total||0);
   var note = STATE.queued ? (STATE.queued + ' bill(s) waiting to reach ChitBridge') : 'everything has reached ChitBridge';
-  /* ⚠️ THE LOUDEST THING THIS BAR CAN SAY. Nothing else matters while another shop's catalogue is being pushed at this counter. */
-  if (REJECTED) note = 'REFUSED a catalogue from another shop — this counter still holds its own. Nothing was changed.';
   /* ⚠️ THE ABSENCE OF TAX IS ALSO AN ANSWER, and it should not look like a fault. A shop that charges no GST is told why, once,
      rather than left wondering where the tax column went. */
   var tx0 = shopTax();
@@ -949,6 +947,12 @@ function paintStatus(){
                     : 'This shop is registered as ' + esc(tx0.reg) + ', so no GST is charged.'))
     + (STATE.queued ? '  ·  ' + STATE.queued + ' bill(s) waiting' : '');
   if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
+  /**
+   * ⚠️⚠️ LAST, SO NOTHING CAN OVERWRITE IT. This was written first and then quietly clobbered by the no-GST line and the missing
+   * engine line — so on an unregistered shop, the one message that says another business's catalogue was pushed at this counter
+   * would never have been seen. A report that something else can silently replace is not a report.
+   */
+  if (REJECTED) note = 'REFUSED a catalogue from another shop — this counter still holds its own. Nothing was changed.';
   document.getElementById('queuenote').textContent = note;
   paintUpdate();
   /* ⭐ ONE DOT, AND IT IS NOT A NAG. Green when there is nothing to say; it only asks for attention when something would actually
