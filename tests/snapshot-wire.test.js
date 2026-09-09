@@ -262,11 +262,11 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
 it('⭐⭐ the maintenance panel holds the four decisions and writes each through one path', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function cardPrice('));
-  for (const [what, mark] of [['availability', 'stockToggle(CARD)'], ['price', 'cardPrice()'],
+  for (const [what, mark] of [['availability', 'stockToggle(cardItem())'], ['price', 'cardPrice()'],
                               ['offers', 'cardOffer('], ['the shop screen', 'cardScreen(']])
     assert.ok(card.indexOf(mark) > 0, 'the maintenance panel cannot set ' + what);
   assert.ok(page.indexOf('async function priceWrite(i, v){') > 0, 'there is no single price write');
-  assert.ok(page.slice(page.indexOf('function cardPrice(){'), page.indexOf('async function cardOffer')).indexOf('priceWrite(CARD') > 0,
+  assert.ok(page.slice(page.indexOf('function cardPrice(){'), page.indexOf('async function cardOffer')).indexOf('priceWrite(cardItem()') > 0,
     'the panel does not go through the shared price write');
   /* and the wire refuses anything beyond those flags */
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
@@ -394,11 +394,11 @@ it('⭐⭐ the marked row is the row that was clicked, in every operation', () =
   assert.ok(fn.indexOf('SEL = listChanges ? 0 : n;') > 0,
     'add() still resets the mark to the top — the row you clicked stops being the row that is lit');
   assert.ok(fn.indexOf('SEL = 0; paintHits()') < 0, 'the unconditional reset is back');
-  assert.ok(fn.indexOf("MODE === 'maintain') { CARD = i; SEL = n;") > 0,
+  assert.ok(fn.indexOf("MODE === 'maintain') { CARD_ID = i.item_id; SEL = n;") > 0,
     'choosing a product to change does not move the mark to it');
   /* ⭐ and the product being changed is lit by IDENTITY, so a search that reorders the list cannot lose it */
   const row = page.slice(page.indexOf("return '<div class=\"hit'") - 200, page.indexOf("+ '</div>';", page.indexOf("return '<div class=\"hit'")));
-  assert.ok(row.indexOf('CARD.item_id === i.item_id') > 0, 'the edited product is marked by position, not by identity');
+  assert.ok(row.indexOf('String(CARD_ID) === String(i.item_id)') > 0, 'the edited product is marked by position, not by identity');
   assert.ok(row.indexOf("(editing?' editing':'')") > 0, 'nothing marks the product open in the panel');
 });
 
@@ -416,6 +416,46 @@ it('⭐ the marked row is lifted off the list, and lifting it costs no layout', 
   assert.ok(css.indexOf('z-index:2') > 0, 'without its own stacking context the shadow falls under the next row');
   assert.ok(css.indexOf('border:') < 0, 'a real border would shift every row below it as the cursor moves — use the ring');
   assert.ok(css.indexOf('scale(') < 0, 'scaling the row blurs its text');
+});
+
+/**
+ * ⭐⭐ HOLD THE ID, NOT THE OBJECT. Athi: *"when I update, the list side is not reflecting … try changing again and again."*
+ * The first change worked and the second silently did not: a save fires shopChanged, the bell re-reads the shop, and load()
+ * does S = st.snapshot — a fresh parse out of IndexedDB, so EVERY item is a new object. The panel's cached reference became
+ * an orphan, the next write went to the orphan, and the panel and the list disagreed about the same product.
+ * ⚠️ An item_id survives a shop read. An object reference does not. Anything held across one must be addressed by identity.
+ */
+it('⭐⭐ nothing holds a product across a shop read — the panel resolves it by id', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function cardItem(){') > 0, 'the panel has no way to resolve its product against the current shop');
+  assert.ok(page.indexOf('var CARD = null;') < 0, 'the panel caches the product object again — a shop read orphans it');
+  /* every writer must go through the resolver, not a stored reference */
+  for (const fn of ['function cardPrice(){', 'async function cardOffer(', 'async function cardScreen(']) {
+    const at = page.indexOf(fn);
+    const body = page.slice(at, at + 420);
+    assert.ok(body.indexOf('cardItem()') > 0, fn + ' writes to a cached object rather than the live one');
+  }
+  /* ⚠️ and load() really does replace them — this is why the rule exists, so the guard names it */
+  assert.ok(page.indexOf('S = (st && st.snapshot) || S;') > 0,
+    'load() no longer replaces S from storage; re-check whether the id-not-object rule still has teeth');
+});
+
+/**
+ * ⭐ A SAVED CHANGE ANNOUNCES ITSELF. Athi: *"when we say save changes, changes has to be highlighted or animated."*
+ * Everything here writes immediately, so the only evidence is a number quietly becoming different — on a list of ten
+ * thousand rows, nobody sees that.
+ */
+it('⭐ the row that changed flashes, once the change is confirmed', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function flashItem(id){') > 0, 'nothing shows which row changed');
+  assert.ok(page.indexOf('@keyframes cbflash') > 0, 'the flash has no animation');
+  /* ⚠️ it fires from cardNote — the CONFIRMATION — never from the click, or it would say "saved" before anything was */
+  const note = page.slice(page.indexOf('function cardNote(out, said){'), page.indexOf('function flashItem'));
+  assert.ok(note.indexOf('flashItem(CARD_ID)') > 0, 'the flash does not fire on the confirmation');
+  /* ⚠️ addressed by product, because the list reorders under a search */
+  assert.ok(page.indexOf("data-item=\"' + esc(String(i.item_id))") > 0, 'rows carry no product id, so the flash cannot find one');
+  assert.ok(page.indexOf('prefers-reduced-motion:reduce') > 0,
+    'the flash ignores prefers-reduced-motion — the tint must still show when the animation does not');
 });
 
 console.log(pass + ' checks');

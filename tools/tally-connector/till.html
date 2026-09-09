@@ -184,6 +184,19 @@
   /* the product open in the Maintenance panel — lit by IDENTITY, so it survives a search that moves it */
   .hit.editing{position:relative;z-index:2;background:var(--ok-tint);border-radius:10px;
                box-shadow:0 0 0 2px var(--ok), 0 6px 18px rgba(0,0,0,.20)}
+  /* ⭐ THE FLASH. A background sweep only — no transform, so the row cannot nudge its neighbours while it plays. */
+  @keyframes cbflash { 0%{background:var(--ok);} 35%{background:var(--ok);} 100%{background:transparent;} }
+  .hit.flash{animation:cbflash 1.25s ease-out 1}
+  .hit.flash .n, .hit.flash .p{animation:cbflashtxt 1.25s ease-out 1}
+  @keyframes cbflashtxt { 0%{color:#fff;} 35%{color:#fff;} 100%{color:inherit;} }
+  @media (prefers-reduced-motion:reduce){
+    /* ⚠️ still SHOWN, just not animated — the person still has to be told which row it was */
+    .hit.flash{animation:none;background:var(--ok-tint);box-shadow:0 0 0 2px var(--ok)}
+    .hit.flash .n, .hit.flash .p{animation:none}
+  }
+  .cardrow.flash{animation:cbrowflash 1.25s ease-out 1;border-radius:8px}
+  @keyframes cbrowflash { 0%{background:var(--ok-tint);} 45%{background:var(--ok-tint);} 100%{background:transparent;} }
+  @media (prefers-reduced-motion:reduce){ .cardrow.flash{animation:none;background:var(--ok-tint)} }
   .hit.editing::after{content:'being changed';position:absolute;inset-inline-end:10px;top:-9px;
                       background:var(--ok);color:#fff;font-size:.66em;font-weight:700;padding:1px 7px;border-radius:999px}
   /* both at once is the ordinary case in Maintenance — the ring is already there, so only the tint is added */
@@ -1715,7 +1728,12 @@ function tileSwap(img){
  * has consequences a till cannot see, and a counter key may not set them (routes/till.js says the same thing at the wire).
  * Everything here calls the function that already did the job, so there is one write per decision, not two.
  */
-var CARD = null;
+var CARD_ID = null;
+/** ⚠️ resolved from the CURRENT shop every time — never cached, because a shop read replaces every object in it */
+function cardItem(){
+  if (!CARD_ID || !S) return null;
+  return ((S.items || []).filter(function(x){ return String(x.item_id) === String(CARD_ID); })[0]) || null;
+}
 function cardSwitch(on, testid, onclick, words){
   return '<button class="sw' + (on ? ' on' : '') + '" data-testid="' + testid + '" onclick="' + onclick + '">'
     + '<span class="knob"></span></button><span class="swtxt">' + esc(words) + '</span>';
@@ -1728,7 +1746,7 @@ function paintCard(){
     + cardSwitch(thumbsOn(), 'card-thumbs', 'thumbsToggle()',
         thumbsOn() ? 'Pictures show in the product list' : 'No pictures — names and codes only')
     + '</div></div>';
-  var i = CARD;
+  var i = cardItem();
   if (!i) { el.innerHTML = display
     + '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'; return; }
   var off = statusOf(i) === 'unavailable';
@@ -1745,7 +1763,7 @@ function paintCard(){
     + '<div class="u">' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span></div>'
 
     + '<div class="cardrow"><label>On the shelf</label><div class="swwrap">'
-    + cardSwitch(!off, 'card-avail', 'stockToggle(CARD)', off ? 'Off the shelf — it is not listed for selling' : 'Listed and sellable')
+    + cardSwitch(!off, 'card-avail', 'stockToggle(cardItem())', off ? 'Off the shelf — it is not listed for selling' : 'Listed and sellable')
     + '</div></div>'
 
     + '<div class="cardrow"><label>Price</label><div class="swwrap">'
@@ -1784,10 +1802,10 @@ function paintCard(){
 }
 function cardPrice(){
   var b = document.getElementById('cardprice');
-  priceWrite(CARD, Number(String((b && b.value) || '').replace(/[^0-9.]/g, '')));
+  priceWrite(cardItem(), Number(String((b && b.value) || '').replace(/[^0-9.]/g, '')));
 }
 async function cardOffer(offer_id, excluded){
-  var i = CARD; if (!i) return;
+  var i = cardItem(); if (!i) return;
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
   i.offers_excluded = excluded ? ex.concat([String(offer_id)]).filter(function(v, n, a){ return a.indexOf(v) === n; })
                                : ex.filter(function(v){ return v !== String(offer_id); });
@@ -1798,7 +1816,7 @@ async function cardOffer(offer_id, excluded){
   cardNote(out, i.name + ' is ' + (excluded ? 'out of' : 'back in') + ' that offer everywhere.');
 }
 async function cardScreen(on){
-  var i = CARD; if (!i) return;
+  var i = cardItem(); if (!i) return;
   i.screen = !!on;
   try { await DB.set('snapshot', S); } catch (_) {}
   paintCard();
@@ -1810,6 +1828,32 @@ function cardNote(out, said){
   var el = document.getElementById('cardnote'); if (!el) return;
   el.textContent = out && out.queued ? 'Saved here — it reaches ChitBridge when the internet is back.'
     : (out && out.ok ? said : 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.'));
+  /* ⭐ and the change is SHOWN, not only described — the words are read second, if at all */
+  flashItem(CARD_ID);
+}
+/**
+ * ⭐ FLASH WHAT CHANGED. The row in the list, and the row in the panel that carries the control, so the eye is told
+ * in both places it might be looking.
+ * ⚠️ The class is removed on the way in as well as by the timer: two changes inside a second must play twice, and an
+ * animation only restarts when the class is genuinely re-added (a reflow between the two makes the browser agree).
+ */
+var _flashT = null;
+function flashItem(id){
+  if (!id) return;
+  var rows = [...document.querySelectorAll('.hit')].filter(function(r){
+    return r.getAttribute('data-item') === String(id); });
+  var panel = [...document.querySelectorAll('#cardbox .cardrow')];
+  var all = rows.concat(panel.length ? [] : []);
+  all.forEach(function(el){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); });
+  clearTimeout(_flashT);
+  _flashT = setTimeout(function(){ all.forEach(function(el){ el.classList.remove('flash'); }); }, 1400);
+}
+/** ⭐ the one control that was just used, flashed where the finger is */
+function flashRow(el){
+  if (!el) return;
+  var row = el.closest ? el.closest('.cardrow') : null; if (!row) return;
+  row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
+  setTimeout(function(){ row.classList.remove('flash'); }, 1400);
 }
 function priceBlock(i){
   var pay = payPrice(i), r = i.tax_rate;
@@ -1832,9 +1876,9 @@ function paintHits(){
     : '');
   document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     var off = statusOf(i) === 'unavailable';
-    var editing = (MODE === 'maintain' && CARD && CARD.item_id === i.item_id);
+    var editing = (MODE === 'maintain' && CARD_ID && String(CARD_ID) === String(i.item_id));
     return '<div class="hit' + (n===SEL?' sel':'') + (editing?' editing':'') + (off?' off':'') + (thumbs?' pics':'')
-      + '" data-testid="till-hit-' + n + '" onclick="add(' + n + ')">'
+      + '" data-testid="till-hit-' + n + '" data-item="' + esc(String(i.item_id)) + '" onclick="add(' + n + ')">'
       + (thumbs ? picOf(i) : '')
       + '<span class="n">' + esc(i.name)
         + (i.unit ? ' <span class="unit">' + esc(i.unit) + '</span>' : '')
@@ -1908,7 +1952,7 @@ async function stockToggle(i){
      while the row had already gone from the list — the one number on screen whose whole job is to say where it went. */
   /* ⚠️ THE CHIP CARRIES A COUNT, so it is part of what changed — marking something off used to leave it reading 0 while the
      row had already gone from the list, the one number whose whole job is to say where it went. */
-  paintHits(); paintChips(); if (CARD && CARD.item_id === i.item_id) paintCard();
+  paintHits(); paintChips(); if (String(CARD_ID) === String(i.item_id)) paintCard();
   var out = await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
   cardNote(out, i.name + ' is now ' + (now === 'unavailable' ? 'off the shelf' : 'back on') + ' everywhere.');
 }
@@ -1923,7 +1967,7 @@ async function priceWrite(i, v){
   i.price = v; i._off = null;                        /* the shelf shows the new price at once */
   CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
   try { await DB.set('snapshot', S); } catch (_) {}
-  paintHits(); if (CARD && CARD.item_id === i.item_id) paintCard();
+  paintHits(); if (String(CARD_ID) === String(i.item_id)) paintCard();
   var out = await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
   document.getElementById('pricenote').textContent = out && out.queued
     ? 'Saved here — it reaches ChitBridge when the internet is back.'
@@ -1936,7 +1980,7 @@ function add(n){
   /* the same tap, read against what the shopkeeper said they are doing */
   /* ⚠️ AND THE MARK STAYS ON WHAT IS BEING CHANGED. Maintenance does not clear the box or move on — the product under
      the cursor IS the product in the panel, and they must not be allowed to drift apart again. */
-  if (MODE === 'maintain') { CARD = i; SEL = n; paintCard(); paintHits(); return; }
+  if (MODE === 'maintain') { CARD_ID = i.item_id; SEL = n; paintCard(); paintHits(); return; }
   var t = typed(), q = t.qty;
   if (t.unit) {
     var c = qtyInUnit(t.qty, t.unit, i.unit);
@@ -2807,7 +2851,7 @@ function setMode(m){
   paintKeys(); paintHits();
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
-  if (MODE === 'maintain') { CARD = null; paintCard(); }
+  if (MODE === 'maintain') { CARD_ID = null; paintCard(); }
   focusSearch();
 }
 function paintKeys(){
