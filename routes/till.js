@@ -472,15 +472,25 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
            CROSS JOIN LATERAL jsonb_array_elements(COALESCE(d.line_items, '[]'::jsonb)) AS l
           WHERE h.entity_id = $1 AND h.created_at > now() - interval '400 days')
        SELECT
-         (line->>'item_id') AS item_id,
-         (line->>'name')    AS name,
+         /**
+          * ⚠️⚠️ THE TWO LINE SHAPES ARE NOT THE SAME, and assuming one is why this found nothing on its first run.
+          * A BILL line puts item_id at the top: { particulars, quantity, unit, price, total, item_id }
+          * A GOODS-IN line nests it with the batch: { particulars, …, item_data: { item_id, lot: { batch, expiry } } }
+          * Both are correct — a goods-in carries per-consignment facts a sale has no use for — so the query reads
+          * either, rather than the chit writers being bent to match a report.
+          */
+         COALESCE(line->>'item_id', line#>>'{item_data,item_id}') AS item_id,
+         MAX(line->>'particulars') AS name,
          /* the earliest expiry recorded for this product at ANY door it came in through */
-         MIN(NULLIF(line#>>'{lot,expiry}', '')) FILTER (WHERE line#>>'{lot,expiry}' IS NOT NULL) AS expiry,
-         /* the last time it was SOLD — a till bill is a self chit, so direction is not the test; the kind is */
-         MAX(created_at) FILTER (WHERE business_json->>'kind' IN ('tax','supply','cash')) AS last_sold
+         MIN(NULLIF(line#>>'{item_data,lot,expiry}', '')) AS expiry,
+         /**
+          * the last time it was SOLD. A till bill is a SELF chit, so direction cannot be the test — business_json.slip
+          * is written only by a bill (cash · tax · supply) and business_json.doc only by a GRN or a delivery note.
+          */
+         MAX(created_at) FILTER (WHERE business_json ? 'slip') AS last_sold
        FROM lines
-       WHERE line->>'item_id' IS NOT NULL
-       GROUP BY 1, 2`, [entity_id]));
+       WHERE COALESCE(line->>'item_id', line#>>'{item_data,item_id}') IS NOT NULL
+       GROUP BY 1`, [entity_id]));
 
     const today = new Date();
     const dayOf = (d) => Math.floor((new Date(d) - today) / 86400000);
