@@ -20,7 +20,7 @@ const TIER_A = [
      onto one name (கிலோ → kg) and is forbidden from ever relating two DIFFERENT units (crate → kg), because that
      needs a factor and a factor is entity-specific. A rename is engine vocabulary; a conversion is a declaration.
      Zero dependencies, pure data + one fold — Tier A. */
-  'lib/units.js',            // unit aliases: one unit, many spellings; never converts
+  'lib/units.js',            // unit aliases: one unit, many spellings; never converts. Vendored to app/units.js; the connector maps by UN/ECE Rec 20 code.
 ];
 
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
@@ -189,7 +189,10 @@ const INFRA_LIBS = [
   'services.js',           // the governed capabilities as services: shared plumbing behind /api/offers · pricing · tax · invoice
   'zip-store.js',          // a STORE-method zip writer, no dependency — hands a person the connector kit
   'profile-map.js',        // what we look for about a store · where it comes from · how trusted (declared → copied → checked → verified)
-  'units.js',              // one unit, three names: ours · UN/ECE Rec 20 · GST UQC (vendored to app/units.js; the connector maps by code)
+  /* ⚠️ units.js WAS ALSO LISTED HERE, and was for weeks — the original guess from 2026-08-16, when it was still
+     built-but-unwired. It has been in TIER_A since it went live, with the reasoning written out there, and two
+     classifications for one file is how a rule quietly becomes plumbing. Removed 2026-09-09 after checking that
+     nothing reads it here: inventory.cjs tests TIER before INFRA, so the file already reported engine.tier. */
   'definition-check.js',   // the value a definition kind cannot do without (the form's sentences, refused by the API too)
   'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
   'exposure.js',           // what a customer may see of an ITEM (tax · offers · stock · synonyms · hsn · description · media), enforced in the one projection
