@@ -220,6 +220,9 @@
   .row .nm{font-weight:600;overflow-wrap:anywhere}
   .row input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;background:var(--paper)}
   .row .amt{text-align:right;font-variant-numeric:tabular-nums}
+  /* ⚠️ STICKY, because it answers "how many so far" and a long bill would scroll the answer away */
+  .carthead{position:sticky;top:0;z-index:1;padding:6px 12px;background:var(--card);border-bottom:1px solid var(--line);
+            color:var(--dim);font-size:.85em;font-weight:700}
   /* the count is a fact about the bill, not money — it does not sit in the tabular money column */
   .t.count{color:var(--dim);font-size:.9em}
   /* the heads are the detail under Taxable — indented so the eye reads them as its parts, not as more totals */
@@ -2203,12 +2206,19 @@ function paintCartRow(k){
   /* ⚠️ THE COUNT IS PART OF WHAT CHANGED — but never the box the caret is sitting in, or "2" on its way to "25" would be
      rewritten to 2 between the keystrokes. activeElement is the only honest test of "somebody is typing here". */
   if (qty && document.activeElement !== qty && String(qty.value) !== String(c.qty)) qty.value = c.qty;
+  paintCartHead();
   return true;
 }
 function paintCart(){
-  document.getElementById('cart').innerHTML = CART.length
-    ? CART.map(function(c,k){ return cartRowHTML(c,k); }).join('')
-    : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>';
+  document.getElementById('cart').innerHTML = (CART.length
+    ? '<div class="carthead" data-testid="till-cart-count">' + countWords() + '</div>'
+      + CART.map(function(c,k){ return cartRowHTML(c,k); }).join('')
+    : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>');
+}
+/** ⚠️ the heading carries a COUNT, so it changes on a quantity edit too — and paintCartRow is the in-place path */
+function paintCartHead(){
+  var el = document.querySelector('[data-testid="till-cart-count"]');
+  if (el) el.textContent = countWords();
 }
 /**
  * ⭐⭐ DOES THIS SHOP CHARGE GST AT ALL? Asked here, once, and read by the row, the line, the totals, the slip and the chit.
