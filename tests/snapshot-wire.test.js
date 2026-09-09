@@ -150,4 +150,20 @@ it('⭐ and the snapshot sends that status, or the flag can never travel', () =>
     'an item marked off the shelf must stay on the counter, or it can never be put back from there');
 });
 
+/**
+ * ⭐⭐ A PRODUCT NAME IS NOT AN ARITHMETIC EXPRESSION. lib/numerals.js reads 'a', 'an', 'oru' and 'ஒரு' as ONE — correct for
+ * "a kg of rice", ruinous for "Probe biscuit A", which became "Probe biscuit 1" and matched nothing at all. The search box may
+ * use the converted text only where it actually found a quantity.
+ */
+it('⭐⭐ a number-word in a product name does not make the product unfindable', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function typed(){'), page.indexOf('function hits(){'));
+  assert.ok(fn.indexOf('var orig =') > 0, 'typed() must keep what was actually typed, not only the numeral-converted copy');
+  assert.ok(fn.indexOf('text: orig.trim()') > 0,
+    'the fall-through returns the CONVERTED text: any name ending in a, an, oru or a number-word becomes unsearchable');
+  assert.ok(fn.indexOf('text: raw.trim()') < 0, 'the no-quantity branch must not hand the search a rewritten name');
+  /* the two branches that DID find a quantity are the only legitimate users of the conversion */
+  assert.ok(fn.indexOf('unit: String(hit[3]).toLowerCase()') > 0, 'the unit branch must still read the converted text');
+});
+
 console.log(pass + ' checks');

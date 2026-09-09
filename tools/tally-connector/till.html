@@ -1412,8 +1412,21 @@ function digitsForWords(raw){
   swap(0); swap(toks.length - 1);
   return toks.join(' ');
 }
+/**
+ * ⚠️⚠️ A NUMERAL READING THAT PRODUCED NO QUANTITY WAS NEVER A QUANTITY. digitsForWords() turns a number-word at either end of the
+ * box into a digit, so "two kg rice" can be understood — and lib/numerals.js counts 'a', 'an', 'oru' and 'ஒரு' as fillers meaning
+ * ONE. That is right for "a kg of rice" and catastrophic for a product NAME: "Probe biscuit A" became "Probe biscuit 1", matched
+ * nothing, and the counter reported "nothing matches" for a product sitting on its own shelf.
+ *
+ * Found by probing, and it is the third appearance of this family — 'oru' halved orders in the WhatsApp reader for the same reason.
+ * A flat numeral dictionary applied to text that is not only a quantity will always do this.
+ *
+ * ⭐ THE RULE: the converted text is used ONLY by the two branches that actually find a quantity in it. If neither does, the
+ * conversion changed nothing the operator asked for, so the search gets back exactly what they typed.
+ */
 function typed(){
-  var raw = digitsForWords(String((document.getElementById('q') || {}).value || ''));
+  var orig = String((document.getElementById('q') || {}).value || '');
+  var raw = digitsForWords(orig);
   /* the old shorthand first: "3*rice", "0.75 x tomato" — a bare multiplier, no unit */
   var m = /^\s*(\d+(?:\.\d+)?)\s*\*\s*([\s\S]*)$/.exec(raw) || /^\s*(\d+(?:\.\d+)?)\s*[xX]\s+([\s\S]*)$/.exec(raw);
   if (m) { var q0 = Number(m[1]); return { qty: (q0 > 0 ? q0 : 1), unit: null, text: String(m[2]).trim() }; }
@@ -1432,7 +1445,8 @@ function typed(){
     var rest = (raw.slice(0, hit.index) + ' ' + raw.slice(hit.index + hit[0].length)).replace(/\s+/g, ' ').trim();
     if (val > 0 && rest) return { qty: val, unit: String(hit[3]).toLowerCase(), text: rest };
   }
-  return { qty: 1, unit: null, text: raw.trim() };
+  /* ⚠️ orig, not raw — no unit and no multiplier were found, so any digit swapped in above belongs to the NAME */
+  return { qty: 1, unit: null, text: orig.trim() };
 }
 function hits(){
   var raw = typed().text;
