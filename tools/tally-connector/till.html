@@ -381,6 +381,8 @@
 var MISSING = [];
 function engineMissed(n){ MISSING.push(n); }
 var S = null, STATE = { online:false, queued:0, today:{count:0,total:0}, till:{ id:'C1', name:'Counter 1' } };
+/* set when a catalogue for a DIFFERENT shop was refused; kept on disk, because a refused sync is not a passing glitch */
+var REJECTED = null;
 var CART = [], PICKED = 'Cash', LAST = null, HOST = null, SEL = 0;
 
 var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
@@ -468,6 +470,37 @@ var KEPT = { asked:false, granted:null, why:'' };
   } catch (_) { KEPT.why = 'the browser did not answer'; }
 })();
 
+/**
+ * ⭐⭐⭐ THIS DATABASE BELONGS TO ONE SHOP, AND EVERY ROW IN IT SAYS SO.
+ *
+ * Athi, 2026-09-09: *"bring the entity id in indexed db also and make it unique, so if for some reason some other catalogue comes,
+ * let it straightaway reject it and report the issue"* — and then, correctly: *"the same case for other data items also, like chit,
+ * task and order… when you sync it with cloud, ensure the entity id is the same. That is the only way we can protect against any
+ * inadvertent mix-up."*
+ *
+ * He is right, and the right place for it is HERE rather than in each feature. A guard written once at the door covers the
+ * catalogue, the bills, the unsent queue and anything added later; a guard written per feature is five guards, four of which will
+ * be correct. So:
+ *   · the first snapshot to land writes the shop's id as this database's OWNER, and it is never changed
+ *   · every row written through DB.put is stamped with that owner, as it is written
+ *   · every row read back is checked, and one belonging to another shop is NOT returned — it is counted and reported
+ *   · nothing in the queue is SENT unless its stamp matches, because a bill posted under the wrong key is money in the wrong books
+ *
+ * ⚠️ IT REFUSES, IT DOES NOT SWITCH. A counter that quietly starts serving another shop's prices IS the failure being guarded
+ * against, so accepting the newcomer would be the bug. The copy on disk is left exactly as it was and the fault is shouted about.
+ * ⚠️ The store is already NAMED after the key, so a mismatch should be impossible. That is exactly why it is treated as a fault
+ * worth reporting rather than a case worth handling: if it ever fires, something we believe is wrong.
+ * ⚠️ Rows written before stamping existed carry no mark. They are trusted (they can only have come from this same database) and
+ * quietly stamped the next time they are written.
+ */
+var OWNER = null, FOREIGN = 0;
+function ownRow(r){ if (r && typeof r === 'object' && OWNER) r._shop = OWNER; return r; }
+function ownOK(r){
+  if (!OWNER || !r || typeof r !== 'object' || !r._shop) return true;   /* unstamped is legacy, not foreign */
+  if (String(r._shop) === String(OWNER)) return true;
+  FOREIGN++; return false;
+}
+
 var DB = (function(){
   var p = null;
   function open(){
@@ -494,9 +527,11 @@ var DB = (function(){
     reopen: function(){ p = null; },
     get: function(k){ return fall('get', function(){ return tx('kv','readonly',function(s){ return s.get(k); }); }, function(){ return MEM.get('kv',k); }); },
     set: function(k,v){ return fall('set', function(){ return tx('kv','readwrite',function(s){ return s.put(v,k); }); }, function(){ return MEM.put('kv',v,k); }); },
-    put: function(store,row){ return fall('put', function(){ return tx(store,'readwrite',function(s){ return s.put(row); }); }, function(){ return MEM.put(store,row); }); },
+    put: function(store,row){ row = ownRow(row); return fall('put', function(){ return tx(store,'readwrite',function(s){ return s.put(row); }); }, function(){ return MEM.put(store,row); }); },
     del: function(store,key){ return fall('del', function(){ return tx(store,'readwrite',function(s){ return s.delete(key); }); }, function(){ return MEM.del(store,key); }); },
-    all: function(store){ return fall('all', function(){ return tx(store,'readonly',function(s){ return s.getAll(); }); }, function(){ return MEM.all(store); }); },
+    /* ⚠️ a row belonging to another shop is never handed back — not to the bill list, not to the drain, not to the day totals */
+    all: function(store){ return fall('all', function(){ return tx(store,'readonly',function(s){ return s.getAll(); }); }, function(){ return MEM.all(store); })
+                            .then(function(rows){ return (rows || []).filter(ownOK); }); },
   };
 })();
 
@@ -546,11 +581,22 @@ var CloudHost = {
    */
   async refresh(){
     if (!this.key) return { ok:false, need:'key' };
+    if (!OWNER) OWNER = (await DB.get('owner')) || null;
     var have = await DB.get('snapshot');
     var since = (have && have.at) ? ('?since=' + encodeURIComponent(have.at)) : '';
     var r = await fetch(this.api + '/api/till/snapshot' + since, { headers:{ 'X-Api-Key': this.key } });
     if (!r.ok) return { ok:false, status:r.status };
     var snap = await r.json();
+
+    /* THE GATE. Nothing below runs for a shop that does not own this database. */
+    if (OWNER && snap.entity_id && String(OWNER) !== String(snap.entity_id)) {
+      REJECTED = { owner: OWNER, got: snap.entity_id, name: (snap.shop && snap.shop.name) || null, at: new Date().toISOString() };
+      try { await DB.set('rejected', REJECTED); } catch (_) {}
+      paintStatus();
+      return { ok:false, rejected:true, why:'this counter belongs to another shop' };
+    }
+    if (!OWNER && snap.entity_id) { OWNER = String(snap.entity_id); await DB.set('owner', OWNER); }
+    if (REJECTED) { REJECTED = null; try { await DB.del('kv', 'rejected'); } catch (_) {} }
     /**
      * ⚠️⚠️ TWO SHOPS CAN NEVER BE MERGED INTO ONE COPY. Athi, 2026-09-09: *"can we confirm that the entity id is the same in each
      * product row in the counter catalogue — for some reason it mixed it?"*
@@ -588,11 +634,9 @@ var CloudHost = {
         if (full.ok) { snap = await full.json(); snap.rebuilt = true; }
       }
     }
-    /* the stamp: one short fingerprint of the shop, on every row, applied on arrival */
-    if (snap.entity_id) {
-      var mark = String(snap.entity_id).slice(0, 8);
-      (snap.items || []).forEach(function(i){ i._shop = mark; });
-    }
+    /* ⚠️ THE WHOLE ENTITY ID, not a fingerprint. It never crosses the wire — it is written as the rows are stored — so there is
+       nothing to save by shortening the one value the audit is about, and a prefix can collide. */
+    if (snap.entity_id) (snap.items || []).forEach(function(i){ i._shop = String(snap.entity_id); });
     await DB.set('snapshot', snap);
     this.drain();
     return { ok:true, at: snap.at };
@@ -692,6 +736,10 @@ var CloudHost = {
       var rows = (await DB.all('queue')) || [];
       for (var i = 0; i < rows.length; i++) {
         var bill = rows[i];
+        /* ⚠️⚠️ THE LAST GATE, AND THE ONE THAT COSTS MONEY. DB.all has already dropped foreign rows, but this is where a bill
+           leaves the building under a key — so it is checked again here, against the key actually being used. A sale posted into
+           another business's books is not a display bug, it is a wrong entry in somebody's accounts. */
+        if (OWNER && bill && bill._shop && String(bill._shop) !== String(OWNER)) { FOREIGN++; continue; }
         try {
           /* three kinds ride this queue now: a bill, a shift, and a receipt or despatch note — plus the movement rows that belong
              to an order, which go somewhere else entirely. Each row says which it is; nothing here guesses. */
@@ -873,6 +921,8 @@ function paintStatus(){
   var d = STATE.today || {};
   document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ₹' + money(d.total||0);
   var note = STATE.queued ? (STATE.queued + ' bill(s) waiting to reach ChitBridge') : 'everything has reached ChitBridge';
+  /* ⚠️ THE LOUDEST THING THIS BAR CAN SAY. Nothing else matters while another shop's catalogue is being pushed at this counter. */
+  if (REJECTED) note = 'REFUSED a catalogue from another shop — this counter still holds its own. Nothing was changed.';
   /* ⚠️ THE ABSENCE OF TAX IS ALSO AN ANSWER, and it should not look like a fault. A shop that charges no GST is told why, once,
      rather than left wondering where the tax column went. */
   var tx0 = shopTax();
@@ -1547,6 +1597,17 @@ function health(){
           'Open each in ChitBridge → Catalogue and set its tax slab.', noRate.slice(0, 5).map(function(i){ return i.name; }));
     }
   }
+  if (REJECTED)
+    add('bad', 'A catalogue from another shop was refused',
+      'Something tried to load ' + (REJECTED.name ? ('"' + REJECTED.name + '"') : 'another business')
+        + ' into this counter. It was refused and nothing here was changed — this counter belongs to ' + String(REJECTED.owner).slice(0, 8)
+        + ' and was offered ' + String(REJECTED.got).slice(0, 8) + '.',
+      'Tell us about this. It should not be possible, so it means something is wrong that we have not found yet.');
+  if (FOREIGN)
+    add('bad', FOREIGN + ' saved row(s) belong to another shop',
+      'They are on this device but were not written by this shop, so they are not shown, not counted and never sent.',
+      'Tell us about this. It should not be possible.');
+
   /* ⭐ what this counter is holding, and from when — the first thing to check when a catalogue change has not appeared */
   if (items.length)
     add('note', Number(items.length).toLocaleString('en-IN') + ' products on this counter',
@@ -2820,6 +2881,10 @@ applyLook();
 whoLoad();
 parkedLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
+/* ⚠️ the owner is needed before anything is read or written, and a refusal must still be on screen when somebody comes back */
+(async function ownerBoot(){
+  try { OWNER = (await DB.get('owner')) || null; REJECTED = (await DB.get('rejected')) || null; if (REJECTED) paintStatus(); } catch (_) {}
+})();
 load();
 gripInit();
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
