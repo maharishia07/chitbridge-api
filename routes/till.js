@@ -500,15 +500,18 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
       let urgency = 0;
       if (r.expiry) {
         const left = dayOf(r.expiry);
+        /* ⚠️ "expires in 1 days" is the kind of thing that makes a shopkeeper stop trusting the rest of the sentence */
+        const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
         if (left <= days) {
-          why.push(left < 0 ? ('expired ' + Math.abs(left) + ' days ago')
-                 : (left === 0 ? 'expires today' : ('expires in ' + left + ' days')));
+          why.push(left < 0 ? ('expired ' + plural(Math.abs(left), 'day') + ' ago')
+                 : (left === 0 ? 'expires today'
+                 : (left === 1 ? 'expires tomorrow' : ('expires in ' + plural(left, 'day')))));
           urgency += (days - left) + (left < 0 ? 100 : 0);
         }
       }
       if (r.last_sold) {
         const since = Math.abs(dayOf(r.last_sold));
-        if (since >= quiet) { why.push('not sold for ' + since + ' days'); urgency += Math.min(since, 90) / 3; }
+        if (since >= quiet) { why.push('not sold for ' + since + ' day' + (since === 1 ? '' : 's')); urgency += Math.min(since, 90) / 3; }
       } else {
         why.push('never sold here'); urgency += 10;
       }

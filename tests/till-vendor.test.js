@@ -59,6 +59,10 @@ function load() {
   return sandbox;
 }
 const P = load();
+/** ⚠️ the sandbox's own clock, kept so a test that freezes it can hand it back — see unfreeze() */
+const realDate = P.Date || Date;   /* the sandbox has no OWN Date until a test assigns one, so fall back to this realm's */
+/** call at the end of any test that froze time; a stub that outlives its test silently changes every test after it */
+function unfreeze() { P.Date = realDate; }
 
 it('a bill with no offer and no tax adds up to what the customer pays', () => {
   P.CART = [{ price: 200, qty: 2, gross: 400, net: 400, save: 0 }, { price: 30, qty: 3, gross: 90, net: 90, save: 0 }];
@@ -512,6 +516,7 @@ it('⭐⭐ the morning grid is what mornings buy', async () => {
   assert.strictEqual(P.QUICK[0].item_id, 'idli',
     'at 8am the breakfast item must come first even though rice sold more overall — got ' + P.QUICK.map((x) => x.item_id).join(','));
   assert.ok(P.QUICK_WHY.indexOf('morning') > 0, 'the grid must say why it looks like this: ' + P.QUICK_WHY);
+  unfreeze();
 });
 
 it('and the midday grid is what middays buy', async () => {
@@ -520,6 +525,7 @@ it('and the midday grid is what middays buy', async () => {
   await P.loadQuick();
   assert.strictEqual(P.QUICK[0].item_id, 'rice', 'at 1pm rice should lead — got ' + P.QUICK.map((x) => x.item_id).join(','));
   assert.ok(P.QUICK_WHY.indexOf('midday') > 0, P.QUICK_WHY);
+  unfreeze();
 });
 
 it('⚠️ the clock is a circle — 23:30 and 00:30 are an hour apart, not twenty-three', async () => {
@@ -530,6 +536,7 @@ it('⚠️ the clock is a circle — 23:30 and 00:30 are an hour apart, not twen
   P.HOST = { bills: async () => [], history: async () => ({ bills: [rang(23, 'late'), rang(23, 'late'), rang(12, 'day'), rang(12, 'day')] }) };
   await P.loadQuick();
   assert.strictEqual(P.QUICK[0].item_id, 'late', 'a quarter past midnight should still favour what sells at eleven at night');
+  unfreeze();
 });
 
 it('a key dropped stays dropped, and comes back when the shop says so', async () => {
@@ -559,6 +566,7 @@ it('⭐ a pinned key holds its place whatever the hour says', async () => {
   P.quickPin('a');
   await new Promise((r) => setTimeout(r, 30));
   assert.strictEqual(P.QUICK[0].item_id, 'a', 'a pin must beat the suggestion');
+  unfreeze();
 });
 
 /* ── what would go wrong today (2026-09-08) ──────────────────────────────────────────────────────────────────── */
