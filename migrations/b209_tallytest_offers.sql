@@ -74,10 +74,13 @@ new_offers AS (
    * left lying about, and the person who trips it is always the one who trusted it the first time.
    * A migration that cannot be re-run safely is not finished.
    */
+  /* ⚠️ NO STATUS TEST HERE. My first guard skipped only offers that were live, but the constraint b160 declares is
+     UNIQUE (entity_id, kind, name) — it does not care about status. So after retiring "Flat 10%", a re-run would have
+     sailed past the guard and hit the constraint anyway. Match what the DATABASE forbids, not what you meant. */
   WHERE NOT EXISTS (
     SELECT 1 FROM definition d
      WHERE d.entity_id = 'c2837d52-47f2-47e2-9fcd-b98c68a49e45'
-       AND d.kind = 'offer' AND d.name = t.name AND d.status <> 'retired')
+       AND d.kind = 'offer' AND d.name = t.name)
 ),
 made AS (
   INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
@@ -90,6 +93,8 @@ SELECT made.definition_id, 1, made.entity_id, n.rules, 'seeded', NULL
 FROM made JOIN new_offers n ON n.name = made.name;
 
 -- ⚠️ Expect "INSERT 0 5" the FIRST time and "INSERT 0 0" on any re-run — both are correct.
+--    (Without the guard the DATABASE refuses it anyway: b160 declares UNIQUE (entity_id, kind, name). That is the
+--     real protection; this guard only turns a hard error into a quiet no-op.)
 --    Any other number -> ROLLBACK;
 COMMIT;
 
