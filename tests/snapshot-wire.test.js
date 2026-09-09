@@ -694,7 +694,8 @@ it('⭐⭐ the payment ways are read from where the snapshot writes them', () =>
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   /* the wire puts it inside shop — it is a fact about the shop */
   const shopBlock = src.slice(src.indexOf('shop: {'), src.indexOf('items, removed, delta'));
-  assert.ok(shopBlock.indexOf('pay: require(') > 0, 'the snapshot does not carry the payment ways inside shop');
+  assert.ok(shopBlock.indexOf('pay: cbProfile.payWays(') > 0 || shopBlock.indexOf('pay: require(') > 0,
+    'the snapshot does not carry the payment ways inside shop');
   /* and the counter must look there, not at the root */
   const pp = page.slice(page.indexOf('function paintPays(){'), page.indexOf('function pickPay('));
   assert.ok(pp.indexOf('S.shop.pay') > 0, 'the counter reads the payment ways from the wrong place');
@@ -706,6 +707,39 @@ it('⭐⭐ the payment ways are read from where the snapshot writes them', () =>
   assert.ok(prof.indexOf('function payWays(') > 0, 'payWays is gone');
   assert.ok(prof.indexOf("countries: ['IN']") > 0, 'UPI is no longer scoped to India — it would be offered everywhere');
   assert.ok(prof.indexOf('PAY_RECORD_ONLY') > 0, 'the record-only ways (card, wallet) are not named as such');
+});
+
+/**
+ * ⭐⭐ THE JURISDICTION, DERIVED ONCE. payWays decides what a shop may be paid by from its country, and the country
+ * was never on the wire — so it saw undefined and filtered nothing: UPI showed because a payee existed, not because
+ * the shop was in India. The derivation is NOT new: lib/profile-map.js already declares this field and its rule,
+ * "IN when a GSTIN exists".
+ * ⚠️ Unknown stays unknown. A shop whose country cannot be established is not assumed into one — a jurisdiction
+ * decides the tax scheme too, so guessing it is worse than not knowing it.
+ */
+it('⭐⭐ the shop country is derived once and used by everything that needs it', () => {
+  const prof = require(path.join(API, 'lib', 'profile.js'));
+  assert.strictEqual(prof.countryOf({ country: 'ae' }), 'AE', 'the column is not honoured, or not upper-cased');
+  assert.strictEqual(prof.countryOf({ gstin: '33AABCK1234F1Z6' }), 'IN', "profile-map's rule 'IN when a GSTIN exists' is not honoured");
+  assert.strictEqual(prof.countryOf({ profile: { country: 'SG' } }), 'SG', 'the profile is not consulted');
+  assert.strictEqual(prof.countryOf({}), null, 'an unknown country is being guessed at');
+  assert.strictEqual(prof.countryOf({ country: 'GB', gstin: '33AABCK1234F1Z6' }), 'GB', 'the column must beat the derivation');
+
+  /* and the ways to pay follow it */
+  const flags = { profile_provenance: { upi_id: { value: 'cbdemo@okhdfc' } } };   /* ⚠️ 2+ chars each side, or isUpiId rejects it */
+  const ways = (c) => prof.payWays({ country: c, policy_flags: flags }).map((w) => w.id).join(',');
+  assert.strictEqual(ways('IN'), 'cash,upi,card', 'an Indian shop with a UPI id is not offered it');
+  assert.strictEqual(ways('AE'), 'cash,card', 'a Gulf shop is offered UPI, which it cannot take');
+  assert.strictEqual(ways(null), 'cash,upi,card',
+    'an unknown country hides a declared payee — the declaration is itself evidence the shop can take it');
+
+  /* ⚠️ derived ONCE in the route: two answers about which country a shop is in would eventually mean one screen
+     offering a payment method another refuses */
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(src.indexOf('const cbCountry = cbProfile.countryOf(') > 0, 'the route does not derive the country');
+  assert.ok(src.indexOf('country: cbCountry,') > 0, 'the snapshot does not carry the country');
+  assert.ok(src.indexOf('payWays({ country: cbCountry') > 0, 'payWays is not given the same derived country');
+  assert.ok(src.indexOf('country: row.country }') < 0, 'payWays is still handed the raw column');
 });
 
 console.log(pass + ' checks');

@@ -179,6 +179,10 @@ router.get('/snapshot', auth, async (req, res) => {
     /* ⭐ ONE GSTIN, READ ONCE — see the note where it is used. It may be on the identity row or in the profile; whichever it
        is, the state code is its first two digits and must not be derived from the other field. */
     const gstin = row.gstn || profile.gstin || null;
+    /* ⚠️ ONE DERIVATION, read by the shop block AND by payWays — two answers about which country a shop is in would
+       eventually mean one screen offering a payment method another refuses. */
+    const cbProfile = require('../lib/profile');
+    const cbCountry = cbProfile.countryOf({ country: row.country, gstin, profile });
     const items = all.filter(onTheCounter).map((it) => {
       const d = it.item_data || {};
       return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
@@ -270,6 +274,8 @@ router.get('/snapshot', auth, async (req, res) => {
         gstin: gstin,
         state_code: String(gstin || '').slice(0, 2) || null,
         reg_type: String(flags.gst_registration || 'regular'),
+        /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
+        country: cbCountry,
         /**
          * ⭐⭐ THE WAYS THIS SHOP CAN BE PAID, decided by its COUNTRY and its declared payee addresses — not a
          * upi_id field, which is the India-shaped thing the jurisdiction work already ruled against.
@@ -279,7 +285,7 @@ router.get('/snapshot', auth, async (req, res) => {
          * ⚠️ Card and wallet carry qr:null and always will — Apple Pay and the like ride a card rail through an
          * acquirer, and there is nothing honest for us to generate.
          */
-        pay: require('../lib/profile').payWays({ country: row.country, policy_flags: row.policy_flags }),
+        pay: cbProfile.payWays({ country: cbCountry, policy_flags: row.policy_flags }),
         currency: profile.currency || 'INR',
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
