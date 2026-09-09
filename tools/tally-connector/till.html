@@ -523,8 +523,9 @@ var DB = (function(){
   /* every call falls back to localStorage if IndexedDB refuses — the till keeps billing on a device that will not give us a database */
   var fall = function(what, fn, alt){ return fn().catch(function(){ MEM.on = true; return alt(); }); };
   return {
-    /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database */
-    reopen: function(){ p = null; },
+    /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database, and the owner we
+        are holding belongs to the shop we just left */
+    reopen: function(){ p = null; OWNER = null; },
     /**
      * ⚠️ THE SAME GUARD ON THE KEY-VALUE SIDE. Athi, 2026-09-09: *"by mixing up, we are making TWO entities' data wrong. So this has
      * to be well guarded — while writing data in the first place, while reading the data, and when syncing, in all the places."*
@@ -591,7 +592,14 @@ var CloudHost = {
    */
   async refresh(){
     if (!this.key) return { ok:false, need:'key' };
-    if (!OWNER) OWNER = (await DB.get('owner')) || null;
+    /**
+     * ⚠️⚠️ READ THE OWNER FROM DISK EVERY TIME, never from the variable. Caching it was wrong in BOTH directions and [TILL-06]
+     * caught the first: a forged owner on disk was ignored because memory still held the old one, so a foreign catalogue would
+     * have been accepted. The second is worse and would have hit a real shop — DB.reopen() swaps to another shop's database when
+     * the key changes, and a stale OWNER in memory would then have REFUSED that shop its own catalogue for ever.
+     * The durable record is the authority. One extra IndexedDB read per refresh is nothing beside either failure.
+     */
+    OWNER = (await DB.get('owner')) || null;
     var have = await DB.get('snapshot');
     var since = (have && have.at) ? ('?since=' + encodeURIComponent(have.at)) : '';
     var r = await fetch(this.api + '/api/till/snapshot' + since, { headers:{ 'X-Api-Key': this.key } });
