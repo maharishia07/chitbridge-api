@@ -391,12 +391,27 @@ const server = http.createServer(async (req, res) => {
 
     /* ⭐ THE SMALL WRITES a counter makes on its feet — stock out, price change. Forwarded, so the page never cares which
        host it is on; the agent already holds the key and already knows how to reach ChitBridge. */
+    /**
+     * ⭐ THE SMALL READS. Forwarded the same way and allow-listed the same way, so a shop PC and a browser answer a
+     * question identically. ⚠️ Never queued: a read has nothing to replay, and a suggestion computed from last
+     * week's shelf is worse than no suggestion at all.
+     */
+    if (req.method === 'GET' && url.pathname === '/api/op') {
+      var want = url.searchParams.get('get') || '';
+      var READ = ['/api/till/worth-an-offer'];
+      var base = want.split('?')[0];
+      if (READ.indexOf(base) < 0) return json(res, 400, { ok:false, why:'not a question this counter may ask' });
+      try { const r = await cb.call('GET', want, null);
+        return json(res, 200, Object.assign({ ok:true }, r || {}));
+      } catch (e) { return json(res, 200, { ok:false, why: e.message }); }
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/op') {
       let body = ''; for await (const c of req) body += c;
       let o = {}; try { o = JSON.parse(body || '{}'); } catch (_) {}
       /* ⚠️ AN EXPLICIT LIST, NOT A PATTERN. This is an allow-list for what a page may ask its own agent to POST upstream, and a
          pattern is one careless edit away from letting through a path nobody meant. Two operations, named. */
-      var ALLOW = ['/api/till/stock', '/api/till/price'];
+      var ALLOW = ['/api/till/stock', '/api/till/price', '/api/till/flags', '/api/till/offer-item'];
       if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
       try { const r = await cb.call('POST', o.path, o.body || {});
         return json(res, 200, Object.assign({ ok:true }, r || {}));

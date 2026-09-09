@@ -203,7 +203,7 @@ const KEY_ROUTES = {
   /* ⚠️ NOT verify — that route calls requireScope('till') of its own, so listing it here promised a door the door itself
      refuses. A scope map that advertises what a route will not open is worse than not listing it. */
   screen:    [['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/], ['POST', /^\/api\/events\/ticket$/]],
-  till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
+  till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|worth-an-offer|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */

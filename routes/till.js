@@ -437,6 +437,81 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
  * ⚠️ THE ENGINE ALREADY UNDERSTANDS THIS and no engine code changes: lib/offers-engine.js treats item_ids, skus and
  * categories as a UNION — "an offer ticked on a product reaches the product even when it sits elsewhere".
  */
+/**
+ * ⭐⭐ WHAT IS WORTH AN OFFER TODAY. Athi, 2026-09-09: *"if the till knows expiry-nearing product, that can be made
+ * an offer … it depends on the type of business — if it is perishable, the offer has to be turned on quicker."* And
+ * before that: *"a lot of tomato is being sold, but potato is not moving much."*
+ *
+ * Two signals, both read from what the shop has ALREADY recorded — nothing new is asked of anybody:
+ *
+ *  1. SHELF LIFE. lib/lotfields is explicit that an expiry belongs to a BATCH, not a product: *"one product has many
+ *     batches, each with its own expiry, and confusing the two is the single most common way a small ERP paints
+ *     itself into a corner — it puts expiry on the product and then cannot answer which of these do I sell first."*
+ *     So this reads the RECEIVE chits, where the batch was recorded at the door, and reports the nearest expiry per
+ *     product. A product received three times has three batches and it is the earliest that decides.
+ *  2. NOT MOVING. Days since the product was last on a bill, from the shop's own sales. No stock ledger is needed
+ *     and none is claimed — "not sold for 9 days" is a fact; "14 kg unsold" would be a guess.
+ *
+ * ⚠️ IT REPORTS, IT NEVER ACTS. Turning an offer on is a merchandising decision with a discount attached, and the
+ * tap stays the shopkeeper's. Every row carries its REASON, because a suggestion nobody can argue with is one
+ * nobody will keep reading.
+ * ⚠️ AND IT NEVER INVENTS AN URGENCY. "Soon" is not one number — milk is hours, biscuits are weeks — so the caller
+ * passes the window and the counter takes it from the shop's own sector, the same place lotfields reads.
+ */
+router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const days = Math.max(1, Math.min(180, Number(req.query.days) || 14));
+    const quiet = Math.max(1, Math.min(365, Number(req.query.quiet) || 14));
+
+    const rows = await withEntity(entity_id, (db) => db.query(
+      `WITH lines AS (
+         SELECT h.chit_id, h.created_at, h.direction, h.business_json, l AS line
+           FROM chit_header h
+           JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
+           CROSS JOIN LATERAL jsonb_array_elements(COALESCE(d.line_items, '[]'::jsonb)) AS l
+          WHERE h.entity_id = $1 AND h.created_at > now() - interval '400 days')
+       SELECT
+         (line->>'item_id') AS item_id,
+         (line->>'name')    AS name,
+         /* the earliest expiry recorded for this product at ANY door it came in through */
+         MIN(NULLIF(line#>>'{lot,expiry}', '')) FILTER (WHERE line#>>'{lot,expiry}' IS NOT NULL) AS expiry,
+         /* the last time it was SOLD — a till bill is a self chit, so direction is not the test; the kind is */
+         MAX(created_at) FILTER (WHERE business_json->>'kind' IN ('tax','supply','cash')) AS last_sold
+       FROM lines
+       WHERE line->>'item_id' IS NOT NULL
+       GROUP BY 1, 2`, [entity_id]));
+
+    const today = new Date();
+    const dayOf = (d) => Math.floor((new Date(d) - today) / 86400000);
+    const out = [];
+    for (const r of rows.rows) {
+      const why = [];
+      let urgency = 0;
+      if (r.expiry) {
+        const left = dayOf(r.expiry);
+        if (left <= days) {
+          why.push(left < 0 ? ('expired ' + Math.abs(left) + ' days ago')
+                 : (left === 0 ? 'expires today' : ('expires in ' + left + ' days')));
+          urgency += (days - left) + (left < 0 ? 100 : 0);
+        }
+      }
+      if (r.last_sold) {
+        const since = Math.abs(dayOf(r.last_sold));
+        if (since >= quiet) { why.push('not sold for ' + since + ' days'); urgency += Math.min(since, 90) / 3; }
+      } else {
+        why.push('never sold here'); urgency += 10;
+      }
+      if (why.length) out.push({ item_id: r.item_id, name: r.name, expiry: r.expiry || null,
+                                 last_sold: r.last_sold || null, why, urgency: Math.round(urgency) });
+    }
+    out.sort((a, b) => b.urgency - a.urgency);
+    res.json({ ok: true, days, quiet, items: out.slice(0, 60),
+               /* ⚠️ said out loud: this is what the shop RECORDED, not a stock count nobody has taken */
+               basis: 'expiry recorded at goods-in, and the last time each product was on a bill' });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

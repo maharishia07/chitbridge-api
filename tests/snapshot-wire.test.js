@@ -288,7 +288,10 @@ it('⭐⭐ the maintenance panel holds the four decisions and writes each throug
   assert.ok(page.indexOf('async function priceWrite(i, v){') > 0, 'there is no single price write');
   /* and the wire refuses anything beyond those flags */
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const route = src.slice(src.indexOf("router.post('/flags'"), src.indexOf("router.post('/price'"));
+  /* ⚠️ slice to the NEXT route, not to a named one — two routes were added between /flags and /price and the guard
+     started reading them as part of /flags, which is how a guard quietly changes what it is guarding. */
+  const at = src.indexOf("router.post('/flags'");
+  const route = src.slice(at, src.indexOf(String.fromCharCode(10) + 'router.', at + 10));
   assert.ok(route.indexOf('nothing to set') > 0, '/flags accepts a body that sets nothing');
   for (const field of ['name', 'category', 'tax_slab'])
     assert.ok(route.indexOf("'" + field + "'") < 0, '/flags can write ' + field + ' — a till key must not rename the catalogue');

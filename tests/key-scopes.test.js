@@ -171,4 +171,51 @@ it('⭐⭐ every route in routes/till.js is reachable by a till key, or is a nam
     'a route listed as deliberately closed no longer exists — remove it from SHUT so the list stays honest');
 });
 
+/**
+ * ⭐⭐⭐ THE LOCK HAS THREE HALVES, AND THEY MUST ALL BE TURNED.
+ *   1. routes/till.js         requireScope('till') on the route
+ *   2. middleware/auth.js     KEY_ROUTES — what a key may reach at all
+ *   3. tools/.../till.js      the AGENT's own ALLOW list, because on a shop PC the page asks its agent to forward
+ *                             the call and the agent holds the key
+ *
+ * ⚠️ Miss (2) and every call is a bare 403 — that was POST /api/till/flags, which Athi found by reading the error on
+ * his own screen. Miss (3) and the SAME feature works in a browser and fails on a desktop counter with a completely
+ * different message ("not an operation this counter may send"), which reads like an unrelated fault. Three features
+ * shipped with (3) stale: the offer opt-out, the shop-screen pick, and turning a declared offer on.
+ *
+ * This is structural on purpose: it reads the agent's list and insists every till WRITE the counter page makes is in
+ * it. A route added tomorrow is covered without anybody remembering to come here.
+ */
+it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well as by the key', () => {
+  const fs2 = require('fs'), path2 = require('path');
+  const dir = path2.join(__dirname, '..', 'tools', 'tally-connector');
+  const agent = fs2.readFileSync(path2.join(dir, 'till.js'), 'utf8');
+  const page = fs2.readFileSync(path2.join(dir, 'till.html'), 'utf8');
+
+  /* what the PAGE actually posts upstream */
+  const wants = new Set();
+  const re = /tillPost\(\s*'(\/api\/till\/[a-z-]+)'/g;
+  let m; while ((m = re.exec(page))) wants.add(m[1]);
+  assert.ok(wants.size >= 4, 'only ' + wants.size + ' till writes were found in the page — the parser has stopped matching');
+
+  /* what the AGENT will forward */
+  const allowLine = agent.slice(agent.indexOf('var ALLOW = ['), agent.indexOf('var ALLOW = [') + 300);
+  for (const p of wants) {
+    assert.ok(allowLine.indexOf("'" + p + "'") > 0,
+      'the counter posts ' + p + ' but the agent ALLOW list does not carry it — it works in a browser and is refused'
+      + ' on a shop PC with "not an operation this counter may send"');
+    /* and the key must reach it too — the other half of the same lock */
+    assert.ok(may(['till'], 'POST', p), p + ' is not in KEY_ROUTES, so every call is a bare 403');
+  }
+
+  /* the reads are allow-listed the same way, and are never queued */
+  const reads = new Set();
+  const rre = /tillGet\(\s*'(\/api\/till\/[a-z-]+)/g;
+  while ((m = rre.exec(page))) reads.add(m[1]);
+  for (const p of reads) {
+    assert.ok(agent.indexOf("'" + p + "'") > 0, 'the counter reads ' + p + ' but the agent will not forward it');
+    assert.ok(may(['till'], 'GET', p), p + ' is not readable by a till key');
+  }
+});
+
 console.log(pass + ' checks');
