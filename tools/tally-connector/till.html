@@ -1798,7 +1798,9 @@ async function stockToggle(i){
   CHANGED.stock = [{ name: i.name, status: now, at: new Date() }].concat(
     CHANGED.stock.filter(function(x){ return x.name !== i.name; })).slice(0, 40);
   try { await DB.set('snapshot', S); } catch (_) {}
-  paintHits(); paintStock();
+  /* ⚠️ THE CHIP CARRIES A COUNT, SO IT IS PART OF WHAT CHANGED. Marking something off left the chip reading "Off the shelf 0"
+     while the row had already gone from the list — the one number on screen whose whole job is to say where it went. */
+  paintHits(); paintStock(); paintChips();
   var out = await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
   document.getElementById('stocknote').textContent = out && out.queued
     ? 'Saved here — it reaches ChitBridge when the internet is back.'
