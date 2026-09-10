@@ -75,6 +75,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  /* ADOPTION, and the name is exact: it decides what one shop may take into its own catalogue from another's
+     delivery. Pure policy over shapes — the vertical gate, the resale/own-use split, the seed for a form.
+     It decides no money and holds no state, and the day the chit shape changes this file changes alone. */
+  'adopt.js',
   // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
   // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
   'network-view.js',
