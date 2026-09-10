@@ -311,9 +311,9 @@ router.post('/send',
              Not an error: an empty answer that looks exactly like a shop that declared no trade. This is
              the quietest failure on the platform and it cost an hour here. */
           const sp = await withEntity(sender_id, (db) => db.query(
-            `SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [sender_id]));
+            `SELECT sectors FROM entity_profile WHERE entity_id = $1`, [sender_id]));
           const row = sp.rows[0] || {};
-          const sectors = row.sectors || (row.profile_json && row.profile_json.sectors) || [];
+          const sectors = row.sectors || [];
           if (sectors && sectors.length) {
             business_json.source = { name: sender_display_name || null, sectors,
                                      vertical: require('../lib/adopt').verticalOf(sectors) };

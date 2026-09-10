@@ -56,9 +56,9 @@ async function receiverOf(entity_id) {
   try {
     /* ⚠️ withEntity — this is the shop's OWN profile, and a bare query() would read nothing under RLS */
     const p = await withEntity(entity_id, (db) => db.query(
-      `SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [entity_id]));
+      `SELECT sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]));
     const row = p.rows[0] || {};
-    sectors = row.sectors || (row.profile_json && row.profile_json.sectors) || [];
+    sectors = row.sectors || [];
   } catch (_) {}
   const r = await withEntity(entity_id, (db) => db.query(
     `SELECT lower(btrim(item_data->>'name')) AS n FROM catalogue_items WHERE entity_id = $1`, [entity_id]));

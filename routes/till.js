@@ -53,12 +53,25 @@ router.get('/snapshot', auth, async (req, res) => {
     const flags = await policy.get(entity_id).catch(() => ({}));
     let profile = {}, sectors = [];
     try {
-      /* ⭐ SECTORS ARE A COLUMN, not something inside profile_json — governance reads them for trade readiness, and the counter now
-         reads the same one to decide what goods-in must capture about a consignment (lib/lotfields). */
-      const p = await query(`SELECT profile_json, sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]);
-      profile = (p.rows[0] && p.rows[0].profile_json) || {};
-      sectors = (p.rows[0] && p.rows[0].sectors) || profile.sectors || [];
-    } catch (_) { /* an entity with no profile still bills */ }
+      /**
+       * ⭐ SECTORS ARE A COLUMN, not something inside profile_json — and this line SAID SO while selecting
+       * profile_json anyway. There is no such column, so the query threw on every snapshot, the catch below
+       * swallowed it, and sectors was ALWAYS []. 
+       * ⚠️⚠️ WHICH MEANS lot_fields HAS NEVER WORKED. No counter has ever asked for a batch or an expiry,
+       * for any vertical, since the day it was written — a pharma shop received medicine and was asked
+       * nothing. Found 2026-09-10 in the Railway log, by an error nobody was reading.
+       * ⚠️ AND IT USED A BARE query() ON A TENANT TABLE. The platform prints [RLS-GUARD] for exactly that;
+       * withEntity is what every other read of this table uses.
+       */
+      const p = await withEntity(entity_id, (db) => db.query(
+        `SELECT trade_mode, markets, sectors, adopted FROM entity_profile WHERE entity_id = $1`, [entity_id]));
+      profile = p.rows[0] || {};
+      sectors = (p.rows[0] && p.rows[0].sectors) || [];
+    } catch (e) {
+      /* ⚠️ SAY IT. The silent catch here is what let the above hide for weeks — a shop with no profile is
+         the ordinary case and needs no noise, but a query that CANNOT run must leave a trace. */
+      try { require('../lib/logger').warn('till.sectors', { entity_id, why: String(e && e.message) }); } catch (_) {}
+    }
 
     /**
      * ⚠️ THE ITEMS ARE NOT THE TAX SHELF. readShelf() answers null for a seller with no GSTIN — the one place that decides "no GSTIN,
