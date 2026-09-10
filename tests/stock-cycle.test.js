@@ -23,7 +23,7 @@ const SHOP = '11111111-1111-1111-1111-111111111111';
 const RICE = '22222222-2222-2222-2222-222222222222';
 
 /* ── the stub: two tables and the handful of statements the store issues ── */
-let MOVES = [], BAL = [];
+let MOVES = [], BAL = [], CHITS = [];
 /* ⚠️ THE KEY GAINS THE LOT (b215). Untracked stock lives under '' — a real value, never NULL, because a NULL in
    a primary key does not compare equal to itself. */
 const key = (r) => [r.entity_id, r.item_id, r.location, r.lot || ''].join('|');
@@ -87,11 +87,23 @@ const withEntity = async (entity_id, fn) => fn({
       const k = args.join('|');
       return { rows: BAL.filter((b) => key(b) === k) };
     }
+    /* ⭐ the lookup alreadyGone() makes: has anything already gone out against this order's document number? */
+    if (/FROM stock_movement[\s\S]*ref = ANY/.test(sql)) {
+      const [entity_id, refs] = args;
+      return { rows: MOVES.filter((m) => m.entity_id === entity_id && m.reason === 'sale'
+                                      && (refs || []).indexOf(m.ref) >= 0).slice(0, 1) };
+    }
     if (/FROM stock_movement/.test(sql)) {
       const [entity_id, item_id, location] = args;
       return { rows: MOVES.filter((m) => m.entity_id === entity_id && m.item_id === item_id
                                       && m.location === location)
                           .sort((a, z) => String(a.at).localeCompare(String(z.at))) };
+    }
+    /* ⭐ the ORDER a despatch is raised against — alreadyGone() reads its document number from here to ask
+       whether the goods on it already left on a counter bill. */
+    if (/FROM chit_header/.test(sql)) {
+      const [, chit_id] = args;
+      return { rows: CHITS.filter((c) => c.chit_id === chit_id) };
     }
     if (/^\s*UPDATE stock_movement|^\s*DELETE FROM stock_movement/i.test(sql))
       throw new Error('stock_movement is append-only by GRANT');
@@ -383,6 +395,73 @@ await ita('⭐ an untracked product still goes through issue() as ONE ordinary m
   const r = await store.issue(SHOP, { item_id: SOAP, reason: 'sale', qty: 3, tracked: false, ref: 'B-SOAP', line_ref: '1', at: at(26) }, withEntity);
   assert.strictEqual(r.parts.length, 1, 'untracked stock is one pool and must not be split');
   assert.strictEqual((await store.balanceOf(SHOP, SOAP, withEntity)).qty, 7);
+});
+
+console.log('— despatch —');
+
+await ita('⭐⭐ a despatch note takes stock OUT, like a counter bill does', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const m = fromChit.movementsFor({ purpose: 'delivery_note',
+    business_json: { doc: 'despatch', doc_no: 'DSP-1' },
+    line_items: [{ particulars: 'Rice', quantity: 5, unit: 'kg', item_data: { item_id: RICE } }] });
+  assert.strictEqual(m.length, 1);
+  assert.strictEqual(m[0].reason, 'sale', 'goods leaving the building is stock going out');
+});
+
+await ita('⚠️ a despatch with NO order behind it still moves stock', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const m = fromChit.movementsFor({ purpose: 'delivery_note',
+    business_json: { doc: 'despatch', doc_no: 'DSP-2' },
+    line_items: [{ particulars: 'Rice', quantity: 3, item_data: { item_id: RICE } }] });
+  assert.strictEqual(m.length, 1, 'goods leaving with no paperwork behind them is a real despatch, not an '
+    + 'incomplete one — refusing it would lose the movement entirely');
+  assert.strictEqual(m[0].against, null);
+});
+
+await ita('⭐⭐⭐ a despatch against goods that ALREADY left on a counter bill moves nothing', async () => {
+  /**
+   * ⚠️⚠️ THE REASON DESPATCH WAS LEFT UNWIRED FOR A DAY. For a shop that bills at the counter AND raises a
+   * despatch note for the same goods, posting on both takes the stock out TWICE — silently, into a log that
+   * cannot be edited afterwards.
+   * ⭐ No policy flag settles it: the DOCUMENTS do. A despatch carries the order it is against, and a counter
+   * bill stamps its own number on its movements, so one lookup answers "have these goods already gone?"
+   */
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const SOLD = '77777777-7777-7777-7777-777777777777';
+  const ORDER = 'aaaaaaaa-1111-2222-3333-444444444444';
+
+  /* the counter billed it first, stamping the bill number as the movement ref */
+  CHITS.push({ chit_id: ORDER, ref: 'C1/26-27/0099', bill: 'C1/26-27/0099' });
+  await store.post(SHOP, { item_id: SOLD, reason: 'purchase', qty: 20, rate: 10, ref: 'GRN-D', line_ref: '1', at: at(30) }, withEntity);
+  await store.post(SHOP, { item_id: SOLD, reason: 'sale', qty: 5, ref: 'C1/26-27/0099', line_ref: '1', at: at(31) }, withEntity);
+  const afterBill = (await store.balanceOf(SHOP, SOLD, withEntity)).qty;
+  assert.strictEqual(afterBill, 15);
+
+  /* now a despatch note is raised against that same order */
+  const r = await fromChit.postFor(SHOP, { purpose: 'delivery_note',
+    business_json: { doc: 'despatch', doc_no: 'DSP-3', against: { chit_id: ORDER } },
+    line_items: [{ particulars: 'Sold thing', quantity: 5, item_data: { item_id: SOLD } }] }, withEntity);
+
+  assert.strictEqual(r.moved, 0, 'the same goods left twice');
+  assert.ok(/already left/.test(r.why || ''), 'it must SAY why nothing moved: ' + r.why);
+  assert.strictEqual((await store.balanceOf(SHOP, SOLD, withEntity)).qty, 15, 'the balance moved on a despatch '
+    + 'whose goods had already gone');
+});
+
+await ita('⭐ but a despatch against an order that was NEVER billed does move stock', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const B2B = '88888888-8888-8888-8888-888888888888';
+  const ORDER2 = 'bbbbbbbb-1111-2222-3333-444444444444';
+  /* an ORDER is a promise — nothing has left, so no movement carries its number */
+  CHITS.push({ chit_id: ORDER2, ref: 'ORD-500', bill: null });
+  await store.post(SHOP, { item_id: B2B, reason: 'purchase', qty: 30, rate: 8, ref: 'GRN-E', line_ref: '1', at: at(32) }, withEntity);
+
+  const r = await fromChit.postFor(SHOP, { purpose: 'delivery_note',
+    business_json: { doc: 'despatch', doc_no: 'DSP-4', against: { chit_id: ORDER2 } },
+    line_items: [{ particulars: 'B2B thing', quantity: 12, item_data: { item_id: B2B } }] }, withEntity);
+
+  assert.strictEqual(r.moved, 1, 'a B2B despatch IS the handover and must move stock: ' + JSON.stringify(r));
+  assert.strictEqual((await store.balanceOf(SHOP, B2B, withEntity)).qty, 18);
 });
 
 console.log(pass + ' checks');
