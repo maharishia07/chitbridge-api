@@ -181,25 +181,18 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
      * rather than a design: the SAME act — adding a product with a new field — behaved differently depending on
      * which door it came through. One writer, so there is one behaviour. See lib/catalogue-columns.js.
      */
-    const decl = await catcols.ensureDeclared({
-      query, entity_id, schema_id, item_data: req.body.item_data,
-      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+    /**
+     * ⚠️ THE CHAIN MOVED TO lib/mint-product.js (2026-09-10), unchanged, because adopting a supplier's
+     * delivery became a THIRD door onto the same act. The comment above is the reason: one writer, so there
+     * is one behaviour — and it would have been hollow to write that and then let adoption INSERT its own.
+     */
+    const made = await require('../lib/mint-product').mintProduct({
+      query, withEntity, entity_id, schema_id, item_data: req.body.item_data, rid: req.id,
       validate: (data, rows) => validateAgainst(rows, data),
     });
-    if (decl.error) return res.status(400).json({ error: 'Invalid product', message: decl.error });
-    // STAMP: the price acquires the OWNING ENTITY's currency here and nowhere else. Validation runs first, on the
-    // raw shape, so the schema still sees the number a person typed.
-    const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
-    const r = await withEntity(entity_id, (db) => db.query(
-      `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
-       VALUES ($1,$2,$3) RETURNING *`,
-      [entity_id, decl.schema_id || schema_id, JSON.stringify(item_data)]));
-    /* ⭐ Metered after the write, best-effort, never blocking — see lib/meter.js. */
-    try { require('../lib/meter').meter(entity_id, 'catalogue.item', {
-      detail: r.rows[0] && r.rows[0].item_id, rid: req.id }).catch(() => {}); } catch (_) {}
+    if (made.error) return res.status(400).json({ error: 'Invalid product', message: made.error });
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
-    shopChanged(entity_id, 'product added');
-    res.json({ message: 'Product added', item: r.rows[0], declared: decl.declared, warnings: decl.warnings });
+    res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
   } catch (e) { fail(res, e, 'Add failed'); }
 });
 

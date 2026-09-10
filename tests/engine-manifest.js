@@ -79,6 +79,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      delivery. Pure policy over shapes — the vertical gate, the resale/own-use split, the seed for a form.
      It decides no money and holds no state, and the day the chit shape changes this file changes alone. */
   'adopt.js',
+  /* ADOPTION: the one chain by which a product enters a catalogue — declare the column, stamp the currency,
+     insert, meter, ring the bell. It decides nothing about WHETHER a product may be created (adopt.js and
+     the form do that); it is the act once the decision is made, extracted the day a third door appeared. */
+  'mint-product.js',
   // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
   // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
   'network-view.js',

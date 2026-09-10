@@ -55,6 +55,23 @@ it('⭐ something already stocked is not offered again, and says why', () => {
   assert.ok(/already stock/.test(r.why));
 });
 
+it('⭐⭐⭐ own-use accepts ANY material, whatever the vertical — the invoice is the whole story', () => {
+  /**
+   * Athi, 2026-09-10: *"so this category can accept any material now irrespective of the vertical and
+   * according to the invoice received."* Exactly — a grocery may buy a pharma-made disinfectant, an
+   * electrician's cable, anything at all, to USE. None of it is being sold, so none of the obligations that
+   * make the vertical gate exist apply: no licence, no expiry duty, no recall.
+   *
+   * ⚠️⚠️ THIS WORKS BECAUSE OF THE ORDER OF TWO CHECKS IN consider(), which is load-bearing and looks like an
+   * accident: own-use returns BEFORE the vertical gate is reached. Swap them in a tidy-up and a grocery could
+   * no longer buy hand sanitiser from a pharma supplier. Pinned here so the tidy-up goes red.
+   */
+  const sundryPharma = { name: 'MedCo Supplies', sectors: ['pharma'], supply_kind: 'own_use' };
+  const r = A.consider({ particulars: 'Hand sanitiser 5L', price: 900 }, sundryPharma, KIRANA, {});
+  assert.strictEqual(r.may, 'not_for_sale', 'a grocery must be able to BUY pharma goods it only uses');
+  assert.notStrictEqual(r.refused, 'vertical', 'the vertical gate must not fire on something never being sold');
+});
+
 console.log('— the vertical gate —');
 
 it('⭐⭐⭐ pharma goods at a grocery are REFUSED, not warned about', () => {
