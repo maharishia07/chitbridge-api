@@ -55,6 +55,12 @@ CREATE TABLE IF NOT EXISTS stock_movement (
   -- a write-down moves money without moving quantity (Ind AS 2: lower of cost and net realisable value)
   value_delta   numeric(18,2),
 
+  -- ⚠️⚠️ THE UNIT IT WAS COUNTED IN. Added while wiring goods-in: a shop buys in cases and sells in pieces,
+  -- and adding 5 (cases) to 60 (pieces) is silently wrong for ever. There is no per-product conversion factor
+  -- yet, so v1 does not convert — it REFUSES a movement whose unit differs from the one the balance is kept
+  -- in, and says both units. A refusal a person can read beats a number nobody can explain.
+  unit          text,
+
   reason        text NOT NULL,
   -- what caused it: the bill number, the GRN, the count sheet. The SAME client_ref the chit carries.
   ref           text,
@@ -94,6 +100,8 @@ CREATE TABLE IF NOT EXISTS stock_balance (
   -- ⚠️ KEPT WHEN QUANTITY REACHES ZERO. The average is then undefined, and the next sale before the next delivery
   -- still has to be valued at something; "what it last cost" is the only honest answer available.
   avg_cost      numeric(18,4) NOT NULL DEFAULT 0,
+  -- the unit this balance is counted in, taken from the FIRST movement and thereafter enforced
+  unit          text,
 
   -- ⭐ THE AGE OF THE NUMBER, which the shopkeeper reads as much as the number. A quantity with no timestamp is a
   -- claim nobody can weigh.
@@ -103,6 +111,18 @@ CREATE TABLE IF NOT EXISTS stock_balance (
 
   PRIMARY KEY (entity_id, item_id, location)
 );
+
+-- ── 3b · ⚠️⚠️ THE COLUMN A RE-RUN WOULD OTHERWISE MISS.
+--
+-- Athi ran this file at 2026-09-10 while `unit` was still being added to it. `CREATE TABLE IF NOT EXISTS` does
+-- exactly what it says: if the table is there it does NOTHING — it does not reconcile columns. So a second run of
+-- the file above would report success and change nothing, and the mismatch would only surface as a runtime error
+-- on the first movement that carried a unit.
+--
+-- ⭐ THIS IS WHY EVERY MIGRATION HERE HAS TO BE RE-RUNNABLE INTO A CHANGED SHAPE, not merely re-runnable. A file
+-- that is idempotent only against a database it has never touched is idempotent in the least useful direction.
+ALTER TABLE stock_movement ADD COLUMN IF NOT EXISTS unit text;
+ALTER TABLE stock_balance  ADD COLUMN IF NOT EXISTS unit text;
 
 -- ── 4 · ISOLATION AND PRIVILEGE.
 ALTER TABLE stock_movement ENABLE ROW LEVEL SECURITY;

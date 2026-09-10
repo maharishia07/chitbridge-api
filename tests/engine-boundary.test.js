@@ -56,15 +56,8 @@ const UNWIRED = [
   /* lib/rewards.js was here for about six hours on 2026-09-10, built-but-unwired while the ledger it needed was
      still a migration nobody had run. routes/till.js now requires it (award, encash, claim) and the counter runs
      the same file in the browser, so the test derives that it is live — the mechanism working as intended. */
-  /**
-   * ⚠️ BUILT 2026-09-10, WIRED TO NOTHING, AND SAYING SO. Athi settled the three design questions (weighted
-   * average · one location · the till does not show stock in v1), so the engine and the store are built and
-   * tested — but b214 has not been run and no route posts a movement yet.
-   * ⭐ THE ORDER IS DELIBERATE, the same as it was for rewards: get the arithmetic and the log shape right BEFORE
-   * anything starts writing, because stock_movement is append-only and a movement written under a wrong rule is
-   * permanent. Wiring a sale to it is the easy half and the irreversible one.
-   */
-  'lib/stock-store.js',
+  /* lib/stock-store.js was here for about an hour on 2026-09-10, built while b214 was unrun. routes/chits.js now
+     reaches it through lib/stock-from-chit.js on every send, so the test derives that it is live. */
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //

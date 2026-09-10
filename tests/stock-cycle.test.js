@@ -28,12 +28,12 @@ const key = (r) => [r.entity_id, r.item_id, r.location].join('|');
 const withEntity = async (entity_id, fn) => fn({
   query: async (sql, args) => {
     if (/^\s*INSERT INTO stock_movement/.test(sql)) {
-      const [entity_id, item_id, location, qty, rate, value_delta, reason, ref, line_ref, lot, note, at] = args;
+      const [entity_id, item_id, location, qty, rate, value_delta, unit, reason, ref, line_ref, lot, note, at] = args;
       /* the real unique index, reproduced — a replayed bill must not move stock twice */
       if (ref != null && MOVES.some((m) => m.entity_id === entity_id && m.ref === ref
             && m.line_ref === line_ref && m.reason === reason)) return { rows: [] };
       const row = { movement_id: 'mv-' + (MOVES.length + 1), entity_id, item_id, location,
-                    qty: Number(qty), rate, value_delta, reason, ref, line_ref, lot, note,
+                    qty: Number(qty), rate, value_delta, unit, reason, ref, line_ref, lot, note,
                     at: at || new Date(Date.now() + MOVES.length * 1000).toISOString() };
       MOVES.push(row);
       return { rows: [{ movement_id: row.movement_id, at: row.at }] };
@@ -42,10 +42,14 @@ const withEntity = async (entity_id, fn) => fn({
       const [entity_id, item_id, location] = args;
       const k = [entity_id, item_id, location].join('|');
       if (!BAL.some((b) => key(b) === k))
-        BAL.push({ entity_id, item_id, location, qty: 0, value: 0, avg_cost: 0, last_at: null, moves: 0 });
+        BAL.push({ entity_id, item_id, location, qty: 0, value: 0, avg_cost: 0, unit: null, last_at: null, moves: 0 });
       return { rows: [] };
     }
-    if (/^\s*SELECT qty, value, avg_cost FROM stock_balance/.test(sql)) {
+    /* ⚠️ MATCH THE INTENT, NOT THE COLUMN LIST. These branches were pinned to exact SELECT lists, so adding one
+       column to the real query made the stub silently return no rows and the code then read undefined. Same
+       lesson as the 300-character slice earlier: a check that measures the shape of a string is measuring the
+       wrong thing. FOR UPDATE is what actually distinguishes the lock from the plain read, so use that. */
+    if (/SELECT [\s\S]*FROM stock_balance[\s\S]*FOR UPDATE/.test(sql)) {
       const k = args.join('|');
       return { rows: BAL.filter((b) => key(b) === k) };
     }
@@ -59,13 +63,13 @@ const withEntity = async (entity_id, fn) => fn({
       return { rows: [] };
     }
     if (/^\s*UPDATE stock_balance/.test(sql)) {                                 /* post() */
-      const [entity_id, item_id, location, qty, value, avg_cost, at] = args;
+      const [entity_id, item_id, location, qty, value, avg_cost, at, unit] = args;
       const b = BAL.find((x) => key(x) === [entity_id, item_id, location].join('|'));
       Object.assign(b, { qty: Number(qty), value: Number(value), avg_cost: Number(avg_cost),
-                         last_at: at, moves: b.moves + 1 });
+                         unit: b.unit || unit || null, last_at: at, moves: b.moves + 1 });
       return { rows: [] };
     }
-    if (/^\s*SELECT qty, value, avg_cost, last_at, moves FROM stock_balance/.test(sql)) {
+    if (/SELECT [\s\S]*FROM stock_balance/.test(sql)) {
       const k = args.join('|');
       return { rows: BAL.filter((b) => key(b) === k) };
     }
@@ -208,6 +212,78 @@ await ita('⭐ and every movement ever posted is still there', async () => {
   assert.ok(MOVES.length >= 9, 'only ' + MOVES.length + ' movements — something removed history');
   assert.ok(MOVES.every((m) => m.qty !== 0 || m.reason === 'writedown'),
     'a movement of nothing records nothing and should never have been written');
+});
+
+
+console.log('— what a chit actually moves —');
+
+await ita('⭐⭐⭐ STOCK MOVES WHEN GOODS MOVE — an order is a promise, not a movement', () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const line = [{ item_id: RICE, quantity: 2, unit: 'kg' }];
+  const none = [
+    ['a draft',        { is_draft: true, purpose: 'order', business_json: { bill_no: 'X' }, line_items: line }],
+    ['an order',       { purpose: 'order', business_json: {}, line_items: line }],
+    ['a despatch note',{ purpose: 'delivery_note', business_json: { doc: 'despatch' }, line_items: line }],
+    ['no lines',       { purpose: 'order', business_json: { bill_no: 'X' }, line_items: [] }],
+  ];
+  for (const [what, chit] of none)
+    assert.deepStrictEqual(fromChit.movementsFor(chit), [], what + ' must not move stock');
+  /* ⚠️ THE DESPATCH ONE IS A DECISION, NOT AN OVERSIGHT: for a counter shop the bill IS the handover, so posting
+     on both would take the same goods out twice. Which document is authoritative is a question about the
+     business, and it needs Athi. */
+});
+
+await ita('⭐⭐ a counter bill takes stock OUT; goods-in puts it IN at the LANDED cost', () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const sale = fromChit.movementsFor({ purpose: 'order', business_json: { bill_no: 'C1/7', client_ref: 'C1/7' },
+    line_items: [{ item_id: RICE, quantity: 2, unit: 'kg' }] });
+  assert.strictEqual(sale.length, 1);
+  assert.strictEqual(sale[0].reason, 'sale');
+  assert.strictEqual(sale[0].ref, 'C1/7', 'the ref must be the document number, or a replay is not idempotent');
+
+  const grn = fromChit.movementsFor({ purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-9' },
+    line_items: [{ quantity: 10, unit: 'kg', price: 100, item_data: { item_id: RICE, unit_cost: 112.5 } }] });
+  assert.strictEqual(grn[0].reason, 'purchase');
+  /* ⭐ Ind AS 2: inventory cost includes freight and handling, so the LANDED figure wins over the supplier's bare
+     rate. Taking price here would understate every margin in the shop. */
+  assert.strictEqual(grn[0].rate, 112.5, 'the landed unit cost must beat the supplier rate');
+});
+
+await ita('⚠️ the item id is read from BOTH places the two builders put it', () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  assert.strictEqual(fromChit.itemIdOf({ item_id: 'a' }), 'a', 'the counter sale puts it at the top level');
+  assert.strictEqual(fromChit.itemIdOf({ item_data: { item_id: 'b' } }), 'b', 'goods-in puts it in item_data');
+  assert.strictEqual(fromChit.itemIdOf({ particulars: 'Delivery' }), null, 'a free-text line has no product');
+});
+
+await ita('⭐⭐ posting the same chit twice moves nothing the second time', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const chit = { purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-DUP' },
+    created_at: at(12), line_items: [{ quantity: 4, unit: 'kg', price: 50, item_data: { item_id: RICE, line_id: 'L1' } }] };
+  const first = await fromChit.postFor(SHOP, chit, withEntity);
+  const again = await fromChit.postFor(SHOP, chit, withEntity);
+  assert.strictEqual(first.moved, 1);
+  assert.strictEqual(again.moved, 0);
+  assert.strictEqual(again.duplicate, 1, 'a replayed goods receipt added stock a second time');
+});
+
+await ita('⚠️⚠️ a receipt with no cost price is REPORTED, not silently dropped', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const r = await fromChit.postFor(SHOP, { purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-NC' },
+    line_items: [{ quantity: 3, item_data: { item_id: RICE } }] }, withEntity);
+  assert.strictEqual(r.moved, 0);
+  assert.strictEqual(r.skipped.length, 1, 'an unvalued receipt must be named, or half the shop goes missing quietly');
+  assert.ok(/cost price/.test(r.skipped[0].why));
+});
+
+await ita('⭐⭐ and a unit that does not match the balance is REFUSED, never converted', async () => {
+  const CASES = '33333333-3333-3333-3333-333333333333';
+  await store.post(SHOP, { item_id: CASES, reason: 'purchase', qty: 5, rate: 100, unit: 'kg', ref: 'U-1', line_ref: '1', at: at(13) }, withEntity);
+  const bad = await store.post(SHOP, { item_id: CASES, reason: 'purchase', qty: 1, rate: 1200, unit: 'case', ref: 'U-2', line_ref: '1', at: at(14) }, withEntity);
+  assert.strictEqual(bad.ok, false, 'a case was added to a balance counted in kg');
+  assert.ok(/counted in kg/.test(bad.why) && /in case/.test(bad.why), 'the refusal must name BOTH units: ' + bad.why);
+  const b = await store.balanceOf(SHOP, CASES, withEntity);
+  assert.strictEqual(b.qty, 5, 'a refused movement must leave the balance alone');
 });
 
 console.log(pass + ' checks');

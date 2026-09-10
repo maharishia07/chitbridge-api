@@ -70,6 +70,11 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      the balance is kept and holds the one transaction that moves the log and the cache together. The interesting
      rule it owns is not a business rule at all — it is the row lock, and a lock is infrastructure. */
   'stock-store.js',
+  /* ADOPTION: it reads a CHIT and says which movements it implies. That is shape-reading plus one business
+     rule ("stock moves when goods move"), and the rule lives in its header rather than in an algorithm —
+     no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
+     which is the test for adoption rather than engine. */
+  'stock-from-chit.js',
   // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
   // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
   'network-view.js',

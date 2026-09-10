@@ -1066,6 +1066,43 @@ router.post('/send',
         } catch (_) {}
       }
 
+      /**
+       * ── ⭐⭐⭐ STOCK MOVES WHEN GOODS MOVE (2026-09-10) ─────────────────────────────────────────────────────
+       *
+       * Athi: *"wire goods-in and sales to post movements."* Goods received put stock IN at its landed cost; a
+       * counter bill takes it OUT. lib/stock-from-chit.js decides which chits qualify and returns [] for the
+       * great majority — an order is a promise, a draft is nothing, and a despatch note is deliberately not
+       * wired because for a counter shop it would take the same goods out twice.
+       *
+       * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
+       * is the hottest path in the product and a sale that has already happened must not fail because a stock
+       * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
+       * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
+       * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
+       * rebuild() can check against the log.
+       *
+       * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
+       */
+      if (!is_draft) {
+        try {
+          require('../lib/stock-from-chit')
+            .postFor(sender_id, { chit_id, purpose, is_draft, business_json, line_items, created_at: now },
+                     withEntity, { actor_id: req.identity && req.identity.identity_id })
+            .then((r) => {
+              if (!r || (!r.failed.length && !r.skipped.length)) return;
+              /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
+                 and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
+              try {
+                require('../lib/logger').warn('stock.from-chit', {
+                  chit_id, entity_id: sender_id, moved: r.moved, duplicate: r.duplicate,
+                  skipped: r.skipped.length, failed: r.failed,
+                });
+              } catch (_) {}
+            })
+            .catch(() => {});   /* postFor already never rejects; this is belt and braces on the hot path */
+        } catch (_) {}
+      }
+
       res.json({
         message: is_draft ? 'Draft saved' : 'Chit sent successfully',
         chit_id,
