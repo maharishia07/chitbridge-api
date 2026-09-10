@@ -27,6 +27,7 @@ const GUARDS = [
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'rewards.test.js',          // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js',     // the SEQUENCE: earn, come back, encash, expire, register — against the real store
+  'sql-runner.test.js',       // a tool that runs SQL at production: its WITH/WITHOUT RLS line must be true
   'search-engine.test.js',    // one search, three copies
   'lotfields.test.js',        // what a vertical must capture about a consignment
   'printer.test.js',          // the slip bytes
