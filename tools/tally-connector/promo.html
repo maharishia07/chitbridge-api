@@ -259,9 +259,22 @@ function drawBill(x, w, h, b){
     x.fillText(nm, pad, y);
     x.textAlign = 'right'; x.font = '700 ' + amtSize + 'px system-ui,sans-serif';
     x.fillText(String(l.amount), w - pad, y);
-    if (l.off) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+    /**
+     * ⭐⭐ EVERY SCHEME, WITH ITS AMOUNT — the same sentence the paper and the counter now show. Athi, 2026-09-10:
+     * *"check how Pantaloons invoice is — there every item below they showcase, it is no ambiguity."* The customer
+     * is reading THIS screen while the bill is being made; if it names an offer without its amount, they cannot
+     * check the total until the paper is already in their hand.
+     * ⚠️ ONE LINE, TRUNCATED LIKE THE NAME ABOVE IT. This is a canvas with a fixed row height — a second wrapped
+     * line would draw straight over the next item, which is worse than a shortened one.
+     */
+    var offWords = (l.offs && l.offs.length)
+      ? l.offs.map(function(o){ return o.label + ' −' + o.off; }).join(' · ')
+      : (l.off || '');
+    if (offWords) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
                  x.font = '700 ' + Math.round(h * 0.024) + 'px system-ui,sans-serif';
-                 x.fillText(l.off, pad, y + nameSize + 2); }
+                 var room = w - pad * 2;
+                 while (offWords.length > 4 && x.measureText(offWords + '…').width > room) offWords = offWords.slice(0, -1);
+                 x.fillText(offWords, pad, y + nameSize + 2); }
     y += rowH;
   });
 

@@ -205,8 +205,29 @@ it('⭐⭐ the left row is product details only — nothing in it can be tapped 
    * ⚠️ A control in this row is not merely clutter: every one of them has to stopPropagation so it does not bill the item,
    * and each is then a dead patch of row where tapping a product does nothing. That is the bug he reported.
    */
-  assert.strictEqual(row.split('event.stopPropagation()').length - 1, 0,
-    'something in the selling row swallows the tap — the whole row must add the product');
+  /**
+   * ── ⚠️⚠️ THE RULE CHANGED ON 2026-09-10, AND THE HAZARD DID NOT ──────────────────────────────────────────────
+   *
+   * This asserted ZERO stopPropagation, because the whole row was one tap that ADDED, and any control inside it
+   * left a dead strip where tapping a product did nothing.
+   *
+   * Athi, observation 5, finding 7: *"when I just wanted to go to other navigation, by just clicking the list it
+   * gets added to the cart — that is not my intention, so need to somehow make it deliberate."* So a row tap now
+   * CHOOSES (pick), and one + button ADDS — which means exactly one control must swallow the tap, or pressing +
+   * would select the row and bill it at the same time.
+   *
+   * ⭐ THE GUARD FOLLOWS THE DECISION, IT DOES NOT VETO IT — but it stays as tight as it can: ONE swallower, and
+   * it has to be the add button. A second one would be the 2026-09-09 dead strip again, in a screen where the
+   * evidence that anything is wrong is that a shopkeeper's tap silently did nothing.
+   */
+  const swallowers = row.split('event.stopPropagation()').length - 1;
+  assert.ok(swallowers <= 1,
+    'more than one control in the selling row swallows the tap (' + swallowers + ') — each one is a dead patch '
+    + 'where choosing a product does nothing, which is the bug of 2026-09-09');
+  if (swallowers === 1) {
+    assert.ok(/till-add-/.test(row) && /stopPropagation\(\);add\(/.test(row),
+      'the one control allowed to swallow a tap in the selling row is the + that bills the product');
+  }
   for (const gone of ['qtyBox(', 'flagBtn(', 'till-back-'])
     assert.ok(row.indexOf(gone) < 0, gone + ' is back in the product row — the left side is for choosing only');
   /**
@@ -921,6 +942,67 @@ it('⚠️ encashing is a TENDER, not a discount — the taxable value must not 
   for (const forbidden of ['CART[', 'c.net =', 'm.base', 'm.tax'])
     assert.ok(fn.indexOf(forbidden) < 0,
       'rwEncash touches ' + forbidden + ' — a redemption must never restate the taxable value of a bill');
+});
+
+/**
+ * ── ⭐⭐⭐ A SAVING IS NEVER SHOWN WITHOUT NAMING THE OFFER THAT MADE IT ────────────────────────────────────────
+ *
+ * Athi, 2026-09-10, observation 5: *"without listing the offer it is applied, then it is much worse"*, and then
+ * *"check how Pantaloons invoice is — there every item below they showcase, it is no ambiguity."*
+ *
+ * ⚠️⚠️ THE COST OF GETTING THIS WRONG IS NOT A WRONG NUMBER — it is a correct number nobody can defend. Every
+ * figure in his screenshots was right. What broke was his confidence: *"I am now totally out of confidence. If
+ * someone uses this product and if they lose money, I have to pay or I have to go to prison."* A till that
+ * discounts without saying why produces exactly that, and no arithmetic test would ever catch it.
+ *
+ * ⭐ SO THE RULE IS GUARDED WHERE IT IS EASIEST TO BREAK: the four places a saving reaches a person — the counter
+ * line, the printed bill, the customer's screen, and the stored record a reprint reads a year later.
+ */
+it('⭐⭐⭐ every place a saving is shown names the offer behind it', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
+
+  /* ⚠️ mine[0] NAMED THE FIRST OFFER OVER THE SUM OF ALL OF THEM — the exact bug. The line must walk them all. */
+  const note = till.slice(till.indexOf('function cartLineNote'), till.indexOf('function cartRowHTML'));
+  assert.ok(/\(c\.offs \|\| \[\]\)\.map/.test(note),
+    'the counter line no longer lists every offer — one label over the sum of several is what observation 5 reported');
+  assert.ok(/a\.why/.test(note),
+    "the engine's own sentence is dropped again — \"buy 2 get 1 (1 set, cheapest units taken)\" is what makes a "
+    + '₹0.00 line legible, and the label alone does not say it');
+  assert.ok(/save_unnamed/.test(note),
+    'a line can carry a share of a bill-wide offer; without this it drops in silence and looks invented');
+
+  /* the paper: every scheme under the item it came off, named, with its own amount */
+  const slip = till.slice(till.indexOf('function slipHTML'), till.indexOf('function rewardOnSlip'));
+  assert.ok(/l\.offers/.test(slip) && /o\.label/.test(slip),
+    'the printed bill shows a discount without naming the scheme — the ambiguity Pantaloons does not have');
+  assert.ok(/MRP/.test(slip),
+    'the printed line does not state MRP, so a customer cannot see what the price is a discount FROM');
+
+  /* the stored record — a reprint or a dispute next year cannot re-derive which offers applied */
+  assert.ok(/offers:\(c\.offs\|\|\[\]\)\.map|offers:\s*\(c\.offs\s*\|\|\s*\[\]\)\.map/.test(till.replace(/\s+/g, ' ').replace(/ /g, '')) ||
+            /offers:\(c\.offs\|\|\[\]\)/.test(till.replace(/\s/g, '')),
+    'the saved bill line no longer carries every offer — a stored line is evidence, and one label over a sum '
+    + 'cannot be checked once the offers have changed');
+
+  /* the customer's own screen, while the bill is being made */
+  assert.ok(/l\.offs/.test(promo),
+    "the customer screen names an offer without its amount, so the total cannot be checked until the paper is "
+    + 'already in their hand');
+});
+
+/**
+ * ⭐⭐ AND "save" MEANS EXACTLY ONE THING. The shelf row called the MRP gap a saving, so the shelf promised a
+ * saving the cart did not repeat — finding 1, and the root of the whole loss of confidence. The gap is a standing
+ * fact about the product; a saving is something an offer did to a bill today.
+ */
+it('⭐⭐ the shelf row states the MRP as a fact, and never calls the gap a saving', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const pb = till.slice(till.indexOf('function priceBlock'), till.indexOf('function paintHits'));
+  assert.ok(/MRP/.test(pb), 'the struck-through figure is unlabelled again — it reads as a price, not an MRP');
+  assert.ok(!/save/.test(pb.replace(/\/\*[\s\S]*?\*\//g, '')),
+    'the shelf row calls the MRP gap a "save" again — that word now belongs to offers alone, and sharing it is '
+    + 'what made a correct cart look broken');
 });
 
 console.log(pass + ' checks');

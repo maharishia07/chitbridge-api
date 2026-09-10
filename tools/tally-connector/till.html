@@ -183,9 +183,15 @@
   .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto)}
   .hit .pic{width:42px;height:42px;border-radius:9px;object-fit:cover;display:flex;align-items:center;justify-content:center;
             font-weight:800;font-size:1.1em;color:#fff;flex:none;overflow:hidden}
-  .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto);gap:12px;align-items:center;
+  /* ⚠️ A THIRD COLUMN for the + button (2026-09-10). A click on the row now only CHOOSES, so the mouse needs
+     its own way to bill — see pick(). The column is auto-width and empty in maintenance, where + has no meaning. */
+  .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto;gap:12px;align-items:center;
        padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
+  /* big enough for a counter hand, quiet enough not to shout down the price beside it */
+  .hit .addbtn{width:34px;height:34px;border:1px solid var(--line);background:var(--card);color:var(--ok);
+       border-radius:9px;font-size:1.3em;font-weight:800;line-height:1;cursor:pointer;flex:none}
+  .hit .addbtn:hover{background:var(--ok);color:#fff;border-color:var(--ok)}
   .hit.sel{position:relative;z-index:2;background:var(--card);border-radius:10px;
            box-shadow:0 0 0 2px var(--ok), 0 6px 18px rgba(0,0,0,.20), inset 4px 0 0 var(--ok)}
   /* the product open in the Maintenance panel — lit by IDENTITY, so it survives a search that moves it */
@@ -226,7 +232,9 @@
   .hit .p .pay{font-weight:800;font-size:1.15em;display:block}
   .hit .p .per{color:var(--dim);font-size:.74em;font-weight:400;display:block}
   /* the saving is stated in money, beside the price it came off — a percentage makes the shopper do the arithmetic */
-  .hit .p .was{font-size:.74em;font-weight:400;display:block;color:var(--ok)}
+  /* ⚠️ DIM, NOT GREEN. This is the MRP gap — a standing fact about the product, not a saving anyone made
+     today. Green is now reserved for one thing on this counter: an offer that took money off a bill. */
+  .hit .p .was{font-size:.74em;font-weight:400;display:block;color:var(--dim)}
   .hit .p .was s{color:var(--dim);margin-inline-end:4px}
   .hit .p .u{font-weight:400}
   /* ⭐ OFF THE SHELF IS A STATE OF THE WHOLE ROW, not a badge in a corner — the row itself goes quiet, and the name is struck. */
@@ -252,6 +260,9 @@
      probe that tried to press it; invisible to anything that only read the numbers. */
   .row{display:grid;grid-template-columns:1fr 124px 92px 32px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
   .row .nm{font-weight:600;overflow-wrap:anywhere}
+  /* ⭐ THE LINE IN ACTION — what Ctrl ↑↓ will change, and what the shelf on the left is pointing at. A bar on the
+     leading edge rather than a fill: the amounts must stay the easiest thing on this panel to read. */
+  .row.sel{background:var(--ok-tint);box-shadow:inset 3px 0 0 var(--ok)}
   .row input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;background:var(--paper)}
   .row .amt{text-align:right;font-variant-numeric:tabular-nums}
   /* ⚠️ STICKY, because it answers "how many so far" and a long bill would scroll the answer away */
@@ -264,6 +275,14 @@
   .t.warnrow{color:var(--warn);font-size:.9em}
   .row .x{border:none;background:none;color:var(--warn);font-size:1.2em;cursor:pointer}
   .save{color:var(--ok)}
+  /* the engine's own sentence under an offer name — quieter than the name, always present */
+  .save .why{color:var(--dim);font-weight:400}
+  /* one row per offer under the Saved figure, so the lump can be checked against the lines */
+  /* the sum under Saved: (₹9.00 buy 2 get 1 + ₹25.00 10% off) — the arithmetic, so it can be added up */
+  .t.sum{display:block;color:var(--ok);font-size:.85em;text-align:end;padding:0 0 2px}
+  /* the same sum as a footnote when it will not fit on one line, marked * beside the figure */
+  .t.note{display:block;color:var(--dim);font-size:.8em;padding-top:5px;line-height:1.5;
+       border-top:1px dashed var(--line);margin-top:5px}
 
   /* ── ⭐ POINTS: one line under the customer box, because it is a fact ABOUT this customer ── */
   .rw{display:none;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 12px;border-bottom:1px solid var(--line);
@@ -718,7 +737,10 @@ var CFD = (function(){
           shop: (S && S.shop && S.shop.name) || '',
           lines: CART.map(function(c){ return { name: c.name, qty: c.qty, unit: c.unit,
                                                 each: money(c.unitPrice != null ? c.unitPrice : c.price),
-                                                amount: money(c.net), off: c.off ? c.off_label : null }; }),
+                                                amount: money(c.net), off: c.off ? c.off_label : null,
+                                                /* ⭐ every scheme by name, so the customer's own screen says what the paper says */
+                                                offs: (c.offs||[]).map(function(a){ return { label:a.label||a.kind||'Offer', off:money(Math.abs(a.amount)) }; }),
+                                                mrp: c.mrp ? money(c.mrp) : null }; }),
           count: n, total: money(m.net), saved: m.save > 0 ? money(m.save) : null,
           taxed: m.taxed, heads: m.heads || [],
           pay: (way && left > 0) ? { label: way.label, link: payLink(way, left, LASTNO || 'bill'), due: money(left) } : null,
@@ -1316,7 +1338,13 @@ function chitOf(bill){
       if (l.item_id) o.item_id = l.item_id;
       if (l.hsn) o.hsn = l.hsn;
       if (l.gst_rate != null) o.gst_rate = l.gst_rate;
-      if (l.off) o.offer = { off: l.save, label: l.off_label || 'Offer' };
+      /* ⭐ THE CHIT CARRIES EVERY OFFER. `offer` stays exactly as it was so nothing downstream changes; `offers`
+         is the full list, because one label over the sum of several is a record that cannot be checked. */
+      if (l.off) {
+        o.offer = { off: l.save, label: l.off_label || 'Offer' };
+        if ((l.offers || []).length) o.offers = l.offers;
+        if (l.save_unnamed > 0.004) o.offer.share_of_bill_offer = l.save_unnamed;
+      }
       return o;
     }),
   };
@@ -2385,8 +2413,32 @@ function priceBlock(i){
   var pay = payPrice(i), r = i.tax_rate;
   var per = 'per ' + esc(i.unit || 'piece');
   if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% GST' : ' · rate not set');
+  /**
+   * ── ⚠️⚠️ THIS ROW USED TO SAY "save", AND IT WAS NOT AN OFFER ────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-10, observation 5, finding 1: *"look at the first 3 products from the list, all show save, but
+   * in the cart it is not appearing."* And then, four findings later, having worked it out himself: *"now
+   * understood, the MRP is 92.50, but the product is sold at 76.00 and there is an offer. Many of my previous
+   * questions would have answered. But still there were errors — so the information has to be showcased as
+   * MRP 92.50, not just 92.50."*
+   *
+   * ⭐⭐⭐ HE HAD FOUND A WORD DOING TWO JOBS. This figure is MRP minus the selling price — a standing fact about
+   * the product, true before any customer walks in. The cart's "save" is an OFFER coming off a bill. Both are
+   * honest; both were called "save"; so the shelf promised a saving the cart did not repeat, and the only
+   * conclusion available to a shopkeeper was that the arithmetic was broken somewhere.
+   *
+   * ⚠️⚠️ AND THAT CONCLUSION IS EXPENSIVE. His words: *"I am now totally out of confidence. If someone uses this
+   * product and if they lose money, I have to pay or I have to go to prison."* Nothing was miscalculating. A
+   * label was lying, which in a till is the same injury — a number you cannot explain is a number you cannot
+   * defend, and at a counter you have to defend it to the person standing in front of you.
+   *
+   * ⭐ SO: the struck figure is NAMED as the MRP, and the gap is stated as a fact ("₹7.50 under") rather than as
+   * a saving. The word "save", and the green it comes in, now appear at exactly one place in this application —
+   * a line where an offer took money off (cartLineNote). One word, one meaning.
+   */
   var mrp = Number(i.mrp) || 0;
-  var was = (mrp > pay) ? '<span class="was"><s>' + money(mrp) + '</s>save ' + money(r2(mrp - pay)) + '</span>' : '';
+  var was = (mrp > pay)
+    ? '<span class="was">MRP <s>' + money(mrp) + '</s>' + money(r2(mrp - pay)) + ' under</span>' : '';
   return '<span class="p"><span class="pay">' + money(pay) + '</span><span class="per">' + per + '</span>' + was + '</span>';
 }
 function paintHits(){
@@ -2406,7 +2458,7 @@ function paintHits(){
     var unsaved = (editing && pendCount() > 0);
     return '<div class="hit' + (n===SEL?' sel':'') + (editing?' editing':'') + (off?' off':'') + (thumbs?' pics':'')
       + (unsaved ? ' unsaved' : '')
-      + '" data-testid="till-hit-' + n + '" data-item="' + esc(String(i.item_id)) + '" onclick="add(' + n + ')">'
+      + '" data-testid="till-hit-' + n + '" data-item="' + esc(String(i.item_id)) + '" onclick="pick(' + n + ')">'
       + (thumbs ? picOf(i) : '')
       + '<span class="n">' + esc(i.name)
         + (i.unit ? ' <span class="unit">' + esc(i.unit) + '</span>' : '')
@@ -2419,7 +2471,14 @@ function paintHits(){
         + (offerNames(i).length ? '<span class="mid">'
             + offerNames(i).map(function(nm){ return '<span class="tag">' + esc(nm) + '</span>'; }).join('') + '</span>' : '')
       + '</span>'
-      + priceBlock(i) + '</div>';
+      + priceBlock(i)
+      /* ⭐ THE MOUSE NEEDS A WAY TO BILL. A click now only chooses, so without this the list would be reachable
+         by mouse and billable only by keyboard — which is not a counter, it is a puzzle.
+         ⚠️ stopPropagation, or the row's own pick() would fire straight after and the two would fight. */
+      + (MODE === 'sell'
+          ? '<button class="addbtn" data-testid="till-add-' + n + '" title="put this on the bill"'
+            + ' aria-label="put this on the bill" onclick="event.stopPropagation();add(' + n + ')">+</button>' : '')
+      + '</div>';
   }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
   keepSelInView();
 }
@@ -2429,9 +2488,54 @@ function keepSelInView(){
     var el = document.querySelector('.hit.sel'); if (!el) return;
     var box = document.getElementById('hits'); if (!box) return;
     var r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+    /**
+     * ⭐⭐ CENTRED WHEN THE CART POINTED AT IT. Athi, 2026-09-10: *"in the cart, when the product selected, the
+     * list also points to the product in the middle — so few rows on the top and below, in a selected way, so it
+     * is evident that this row is in action."*
+     *
+     * ⚠️ ONLY THEN. Centring on every arrow press would scroll the list under the eye on each keystroke, which
+     * is exactly what walking a list must not do — the minimal nudge below is right for ↓↑. The difference is
+     * that arrowing means "I am moving", while a cart tap means "SHOW me this one", and showing something means
+     * putting context around it rather than shoving it to whichever edge it came in from.
+     */
+    if (CENTRE_NEXT) {
+      CENTRE_NEXT = false;
+      box.scrollTop += (r.top - b.top) - (box.clientHeight / 2) + (el.offsetHeight / 2);
+      return;
+    }
     if (r.top < b.top) box.scrollTop -= (b.top - r.top) + 4;
     else if (r.bottom > b.bottom) box.scrollTop += (r.bottom - b.bottom) + 4;
   } catch (_) {}
+}
+var CENTRE_NEXT = false;
+
+/**
+ * ── ⭐⭐⭐ TAP A LINE ON THE BILL, SEE IT ON THE SHELF ─────────────────────────────────────────────────────────
+ *
+ * Athi, observation 5, finding 4: *"I have added few products to the cart, but when I select any product from the
+ * cart, the list should go to the product which has been selected so they can select or see what that product is.
+ * Currently not able to select the product from the cart."*
+ *
+ * ⚠️ And finding 6 is the same missing idea from the other end: *"as you couldn't select a product from the cart,
+ * Ctrl up or down arrow only works on the last product."* One selection answers both — the bill gets a line that
+ * is "in action", and the keys act on it.
+ *
+ * ⚠️ THE FILTER CAN HIDE IT. A bill built before someone typed a search, or under an "On offer" filter, holds
+ * products that are not in `hits()` at all. Clearing the search to reveal it would throw away what the operator
+ * typed; so the row is selected in the cart regardless, and the shelf follows only when it can. Silence beats
+ * rearranging the screen under someone's hands.
+ */
+var CARTSEL = -1;
+function pickLine(k){
+  var c = CART[k]; if (!c) return;
+  CARTSEL = (CARTSEL === k) ? -1 : k;          /* tapping the same line again lets go of it */
+  if (CARTSEL >= 0) {
+    var list = hits();
+    for (var n = 0; n < list.length; n++) {
+      if (String(list[n].item_id) === String(c.item_id)) { SEL = n; CENTRE_NEXT = true; paintHits(); break; }
+    }
+  }
+  paintCart();
 }
 /**
  * The keys a person expects on a list of sixty: one row, one screenful, and the ends. Enter takes what is marked — and what is marked
@@ -2539,6 +2643,28 @@ async function priceWrite(i, v){
   return await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
 }
 
+/**
+ * ── ⭐⭐⭐ A CLICK CHOOSES; ENTER OR + PUTS IT ON THE BILL ─────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-10, observation 5, finding 7: *"when I just wanted to go to other navigation, by just clicking
+ * the list it gets added to the cart — that is not my intention, so need to somehow make it deliberate to add the
+ * product to the cart."*
+ *
+ * ⚠️⚠️ THE WHOLE ROW WAS THE ADD BUTTON (`onclick="add(n)"`), so there was no way to touch a product without
+ * billing it — not to read its price, not to check its MRP, not to scroll past it on a touchscreen. At a counter
+ * the damage is quiet: an extra line appears on a bill somebody is about to hand over.
+ *
+ * ⭐ NOW IT MATCHES WHAT THE FOOTER HAS ALWAYS SAID — *"↓↑ choose, Enter add"*. A click is the mouse's version of
+ * ↓↑, and it does exactly what they do. Nothing new to learn, and the two ways in finally agree.
+ *
+ * ⚠️ MAINTENANCE IS UNCHANGED. There a click opens the product on the right, which is that mode's whole purpose
+ * and was never accidental — the same gesture means "choose this one" in both, which is the point.
+ */
+function pick(n){
+  if (MODE === 'maintain') return add(n);
+  var list = hits(); if (!list[n]) return;
+  SEL = n; paintHits();
+}
 async function add(n){
   var i = hits()[n]; if (!i) return;
   /* the same tap, read against what the shopkeeper said they are doing */
@@ -2585,7 +2711,11 @@ function addItem(i, qty){
   var n = Number(qty); if (!(n > 0)) n = 1;
   var have = CART.filter(function(c){ return c.item_id === i.item_id; })[0];
   if (have) have.qty = r2(have.qty + n);
+  /* ⚠️ mrp TRAVELS WITH THE LINE (2026-09-10). The printed bill has to show it beside the rate — an Indian retail
+     invoice states MRP per item, and without it a customer cannot see what the price is a discount FROM. It is
+     copied at the moment of billing rather than looked up later: a bill is what was true when it was made. */
   else CART.push({ item_id:i.item_id, name:i.name, unit:i.unit||'piece', price:Number(i.price)||0, qty:n, hsn:i.hsn||null,
+                   mrp:(Number(i.mrp) > 0 ? Number(i.mrp) : null),
                    item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
 }
 /* ⚠️ NEVER REPAINT FROM INSIDE THE EVENT THAT CAUSED IT. Rebuilding the bill while the browser is still finishing the blur behind a
@@ -2606,12 +2736,25 @@ function bumpLine(k, d){ var c = CART[k]; if (!c) return; setQty(k, r2((Number(c
  */
 function bumpLast(d){
   if (!CART.length) return;
-  bumpLine(CART.length - 1, d);
-  var c = CART[CART.length - 1];
+  /**
+   * ⭐⭐ THE LINE IN ACTION, falling back to the last one. Athi, observation 5, finding 6: *"if you implement the
+   * change to select a product from the cart, then the Ctrl up or down should work for that particular product."*
+   *
+   * ⚠️ THE FALLBACK IS THE OLD BEHAVIOUR, DELIBERATELY. With nothing selected, the line most recently billed is
+   * still the one being talked about at a counter — so the keys do not become useless until you have first
+   * remembered to tap something.
+   */
+  var k = (CARTSEL >= 0 && CARTSEL < CART.length) ? CARTSEL : CART.length - 1;
+  bumpLine(k, d);
+  var c = CART[k];
+  /* ⚠️ setQty can REMOVE the line at zero, and then the selection points at nothing — or worse, at whatever
+     line slid into that index. Let go of it rather than silently acting on a different product next press. */
+  if (!c && CARTSEL >= 0) CARTSEL = -1;
   toastLine(c ? (c.name + ' × ' + c.qty) : 'removed from the bill');
 }
-function drop(k){ CART.splice(k,1); repaint(); }
-function clearBill(){ CART = []; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
+/* ⚠️ the indexes below k all shift up, so a held selection would silently point at a different product */
+function drop(k){ CART.splice(k,1); if (CARTSEL === k) CARTSEL = -1; else if (CARTSEL > k) CARTSEL--; repaint(); }
+function clearBill(){ CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); focusSearch(); }
 /**
  * ⭐ PARKED BILLS live on the device and survive a reload — a customer who walked away must not cost the queue, and a browser that
  * refreshes must not cost the customer. They are NOT bills yet: no number is taken, nothing is queued, nothing has been sold.
@@ -2809,6 +2952,8 @@ function lineOf(c, n){
            /* a product the shop has taken OUT of an offer: item_data.offers_excluded, carried as the engine expects it */
            excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [] };
 }
+/** the last offer evaluation — read by the totals so "Saved" can be itemised from the same answer the lines used */
+var EV = null;
 function price(){
   /**
    * ⚠️⚠️ THE KEY IS THE ANSWER'S ADDRESS. The engine returns line_net and every adjustment.target keyed by the line's OWN key
@@ -2821,6 +2966,8 @@ function price(){
   var ev = null;
   try { if (window.CBOffers && S && (S.offers||[]).length)
     ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:(S.shop&&S.shop.currency)||'INR', now:new Date().toISOString() } }); } catch(_){ ev = null; }
+  /* ⭐ kept for the totals, so "Saved" can name what it is made of rather than being a lump nobody can check */
+  EV = ev;
   CART.forEach(function(c, n){
     /**
      * ⚠️⚠️ GROSS IS THE PRICED UNIT × THE QUANTITY, never the list price × the quantity. lines[n] was built by
@@ -2831,13 +2978,43 @@ function price(){
     var pr = (lines[n] && lines[n].priced) || null;
     var unit = pr ? (Number(pr.amount) || 0) : (Number(c.price) || 0);
     c.priced = pr; c.unitPrice = unit;
-    var gross = r2(unit * c.qty), net = gross, label = '';
+    var gross = r2(unit * c.qty), net = gross;
     if (ev && ev.line_net && ev.line_net[c.item_id] != null) net = r2(ev.line_net[c.item_id]);
-    if (net < gross && ev && ev.adjustments){
-      var mine = ev.adjustments.filter(function(a){ return a.target === c.item_id; });
-      label = (mine[0] && (mine[0].label || mine[0].why)) || 'Offer';
-    }
-    c.gross = gross; c.net = net; c.save = r2(gross - net); c.off = c.save > 0; c.off_label = label;
+    /**
+     * ── ⭐⭐⭐ EVERY OFFER ON THE LINE, AND WHAT EARNED IT ──────────────────────────────────────────────────────
+     *
+     * Athi, 2026-09-10, observation 5, finding 5: *"if you say this is because we have setup multiple offers and
+     * all are applied… then all the applicable offers must showcase in the list. Without listing the offer it is
+     * applied, then it is much worse."*
+     *
+     * ⚠️⚠️ HE IS DESCRIBING THREE SEPARATE SILENCES, and this line of code was all three:
+     *
+     *   `mine[0]`      ONLY THE FIRST offer was named, while `save` was the sum of ALL of them. Two offers on a
+     *                  line and the row said one name over a bigger number than that name could explain.
+     *   `.label`       the LABEL, never the engine's `why`. The engine says "1 × free — buy 2 get 1 (1 set,
+     *                  cheapest units taken)" — which is the entire explanation of the ₹0.00 line he could not
+     *                  account for — and the counter replaced it with "Buy 2 biscuits, get 1 free".
+     *   `a.target`     LINE-scope only. A bill-wide offer ("5% off over ₹500") is allocated into line_net by the
+     *                  engine's cart_shares, so the line's total dropped with NO offer named at all.
+     *
+     * ⭐⭐ AND THE THIRD ONE IS WHY THE COUNTER AND "Record a sale" DISAGREED. They did not: same engine, same
+     * rules, different baskets. At the counter the free biscuit was earned by three Cookies on another line —
+     * the engine takes the CHEAPEST units as the free ones, so the discount lands on a line that did not earn
+     * it. Correct, defensible, and completely unreadable without the sentence the engine already wrote.
+     *
+     * ⚠️ The whole cost of this was a label. Athi: *"I am now totally out of confidence."* Nothing was
+     * miscalculating — but a number a shopkeeper cannot explain is a number they cannot defend, and at a counter
+     * they have to defend it to the person standing in front of them.
+     */
+    c.offs = (ev && ev.adjustments)
+      ? ev.adjustments.filter(function(a){ return a.amount < 0 && String(a.target) === String(c.item_id); })
+      : [];
+    c.gross = gross; c.net = net; c.save = r2(gross - net); c.off = c.save > 0;
+    /* ⚠️ what the named offers account for, so the row can OWN UP to the remainder instead of implying the
+       named ones explain the whole figure. A share of a bill-wide offer is the usual remainder. */
+    var named = r2(c.offs.reduce(function(t, a){ return t + Math.abs(a.amount); }, 0));
+    c.save_unnamed = r2(c.save - named);
+    c.off_label = (c.offs[0] && (c.offs[0].label || c.offs[0].why)) || '';
     /* ⚠️ A RATE ON A CASH MEMO IS A CLAIM WE CANNOT MAKE. The engine still answers, but a shop that charges no GST shows none —
        otherwise the line said "GST 18%" under a total that contained no tax at all. */
     if (window.CBTax && S && shopTax().charges){
@@ -2863,13 +3040,33 @@ function cartLineNote(c){
   var tierWords = (pr && pr.kind === 'tiered' && pr.tier)
     ? ' · <b>' + esc(pr.tier.qty) + '+ price</b>'
     : ((pr && pr.kind === 'fixed' && pr.amount !== pr.list) ? ' · <b>fixed price</b>' : '');
+  /**
+   * ⭐⭐ EVERY OFFER, EACH WITH THE ENGINE'S OWN SENTENCE. One chip per offer, so the names and the numbers add
+   * up in front of the person reading them. `a.why` is what makes the ₹0.00 line legible: the engine already
+   * writes "1 × free — buy 2 get 1 (1 set, cheapest units taken)", which says both what happened and why it
+   * happened HERE rather than on the line that earned it.
+   * ⚠️ Each chip carries its OWN amount, never the line total — one name over the sum of several offers is the
+   * misreading this replaces.
+   */
+  var offs = (c.offs || []).map(function(a){
+    var nm = a.label || a.kind || 'Offer';
+    var why = (a.why && String(a.why) !== String(nm)) ? ' <span class="why">' + esc(a.why) + '</span>' : '';
+    return ' · <span class="save">' + esc(nm) + ' −' + money(Math.abs(a.amount)) + why + '</span>';
+  }).join('');
+  /* ⚠️ THE REMAINDER IS OWNED UP TO. A bill-wide offer is spread across the lines by the engine, so a line can
+     legitimately drop without any offer of its own — and saying nothing there is exactly what made a correct
+     number look invented. */
+  var rest = (c.save_unnamed > 0.004)
+    ? ' · <span class="save">' + money(c.save_unnamed) + ' ' + esc('share of a bill-wide offer') + '</span>' : '';
   return '' + money(c.unitPrice != null ? c.unitPrice : c.price) + ' / ' + esc(c.unit) + tierWords
     + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '')
-    + (c.off ? ' · <span class="save">' + esc(c.off_label||'Offer') + ' −' + money(c.save) + '</span>' : '');
+    + offs + rest;
 }
 function cartRowHTML(c, k){
-  return '<div class="row" data-testid="till-line-' + k + '">'
-    + '<span><span class="nm">' + esc(c.name) + '</span><div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
+  return '<div class="row' + (k === CARTSEL ? ' sel' : '') + '" data-testid="till-line-' + k + '">'
+    /* ⚠️ THE NAME IS THE HANDLE, not the whole row: the quantity box, ± and × are all inside it and must keep
+       doing their own jobs. Tapping the name is the one gesture that had no meaning here. */
+    + '<span onclick="pickLine(' + k + ')" style="cursor:pointer"><span class="nm">' + esc(c.name) + '</span><div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
     + '<span class="qty">'
       + '<button data-testid="till-minus-' + k + '" onclick="bumpLine(' + k + ',-1)" title="one fewer" aria-label="one fewer" tabindex="-1">−</button>'
       + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
@@ -3336,6 +3533,16 @@ function billMoney(){
       var rate = Number(c.gst_rate)||0;
       var b = inclusive ? r2((c.net||0) * 100 / (100 + rate)) : r2(c.net||0);
       var t = inclusive ? r2((c.net||0) - b) : r2(b * rate / 100);
+      /**
+       * ⭐⭐ THE LINE'S OWN TAXABLE VALUE AND TAX, KEPT ON THE LINE. Athi, 2026-09-10: *"so every line item will
+       * have its own breakdown — original cost, discount, tax and so on."*
+       *
+       * ⚠️ WORKED OUT HERE, WHERE THE BILL'S TOTAL IS WORKED OUT, and never again anywhere else. These figures
+       * must sum to the totals printed underneath them — and the only way to guarantee that is for both to come
+       * out of the same loop. Recomputing them in the printer would produce a bill whose lines do not add up to
+       * its own total, which is the single worst thing a tax document can do.
+       */
+      c.taxable = b; c.tax = t;
       base = r2(base + b); tax = r2(tax + t);
       if (rate){ byRate[rate] = byRate[rate] || { base:0, tax:0 }; byRate[rate].base = r2(byRate[rate].base + b); byRate[rate].tax = r2(byRate[rate].tax + t); }
     });
@@ -3410,8 +3617,57 @@ function paintShop(){
     + ' and kept here, so bills stay headed correctly with the line down. Change it in ChitBridge.</div>'
     + '</div>';
 }
+/**
+ * ── ⭐⭐⭐ "Saved" SHOWN AS A SUM, WITH EVERY PART NAMED ───────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-10: *"your computation is fine I guess — where you save (9.99 + 25.00 + …) so it gives an idea
+ * what are the savings. If you think it will be too many in the same line, make it * and give at the bottom so it
+ * is possible to see. Or say (10% saving nn.nn + xx.yy for buy2 offer + aa.bb for cart) — so it makes sense what
+ * the overall offer is."*
+ *
+ * ⭐⭐ AND THE ARITHMETIC IS THE POINT, not the list. He first called the bare figure a fabrication; a list of
+ * offers under it would have answered "which offers", but not "does this number follow from them". Written as a
+ * SUM, the reader adds it up themselves and the total stops being something they have to take on trust. That is
+ * the difference between a breakdown and a proof, and at a counter it has to be the second one.
+ *
+ * ⭐ ONE OFFER STILL GETS THE TREATMENT, even though 9.00 = 9.00 adds nothing. The NAME is the information: the
+ * ₹0.00 line he could not account for was a buy-2-get-1, and nothing on the bill said so.
+ *
+ * ⚠️ AND IT MUST NOT RUN OFF THE PANEL. Past three parts, or past a line's worth of text, the sum moves to a
+ * footnote marked * — his own suggestion, and the right one: a total that wraps onto three lines is harder to
+ * read than the lump it replaced, which would put us back where we started.
+ *
+ * ⚠️ Read from EV, the evaluation the LINES were priced from — never recomputed. Two calculations of one figure
+ * is how a bill ends up arguing with itself.
+ */
+function savedParts(){
+  if (!EV || !EV.adjustments) return [];
+  var by = {}, order = [];
+  EV.adjustments.forEach(function(a){
+    if (!(a.amount < 0)) return;
+    /* grouped by NAME: one offer can land on several lines, and a shopkeeper counts offers, not adjustments */
+    var nm = a.label || a.kind || 'Offer';
+    if (by[nm] === undefined) { by[nm] = 0; order.push(nm); }
+    by[nm] = r2(by[nm] + Math.abs(a.amount));
+  });
+  return order.map(function(nm){ return { name: nm, off: by[nm] }; });
+}
+var SAVED_FOOTNOTE = '';
+function savedBreakdown(){
+  SAVED_FOOTNOTE = '';
+  var parts = savedParts();
+  if (!parts.length) return '';
+  var sum = parts.map(function(p){ return money(p.off) + ' ' + p.name; }).join(' + ');
+  /* ⚠️ measured on the WORDS, not the count alone — three short offer names fit where two long ones do not */
+  if (parts.length <= 3 && sum.length <= 64) return '<div class="t sum">(' + esc(sum) + ')</div>';
+  SAVED_FOOTNOTE = sum;
+  return '';
+}
 function paintTotals(){
   var m = billMoney();
+  /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
+     concatenated cannot be told about a footnote that has not been worked out yet. */
+  var brk = savedBreakdown();
   var tendered = Number(document.getElementById('tendered').value) || 0;
   var taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var due = r2(m.net - taken);
@@ -3423,7 +3679,22 @@ function paintTotals(){
       /* ⭐ the count sits with the money it belongs to, and is read in the same glance as the total */
       (CART.length ? '<div class="t count" data-testid="till-count"><span>On this bill</span><span>' + countWords() + '</span></div>' : '')
       /* ⚠️ "Items" was this money's label and it is a COUNT word. The figure is the total before any offer came off it. */
-    + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div><div class="t save"><span>Saved</span><span>−' + money(m.save) + '</span></div>' : '')
+    /**
+     * ⭐⭐⭐ "Saved" NAMES ITSELF NOW. Athi, 2026-09-10: *"also, saving in the total gives the fabrication."*
+     *
+     * ⚠️⚠️ HE IS RIGHT, AND IT IS THE SAME INJURY AS THE SHELF ROW. A bare "Saved −₹9.00" above a total is a
+     * claim with nothing behind it: it cannot be checked against the lines, it cannot be checked against the
+     * shelf (which was calling the MRP gap "save" too), and a figure that reconciles with nothing on screen
+     * reads as invented — however correct it is. On a document a customer is handed, that is not a presentation
+     * problem; it is a claim the shopkeeper cannot stand behind.
+     *
+     * ⭐ So every offer that made up the figure is listed under it, by name and amount, summed from the SAME
+     * evaluation the lines were priced from — never recomputed, or the two could disagree and this whole block
+     * would be back to being unverifiable.
+     */
+    + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div>'
+        + '<div class="t save"><span>Saved' + (SAVED_FOOTNOTE ? ' *' : '') + '</span><span>−' + money(m.save) + '</span></div>'
+        + brk : '')
     + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>'
         + m.heads.map(function(h){
             return '<div class="t head"><span>' + h.name + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
@@ -3433,7 +3704,10 @@ function paintTotals(){
             ? '<div class="t warnrow"><span>GST</span><span>' + money(m.tax) + '</span></div>'
               + '<div class="t warnrow"><span colspan="2">No state on the GSTIN, so CGST/SGST cannot be split</span><span></span></div>'
             : '<div class="t"><span>GST total</span><span>' + money(m.tax) + '</span></div>') : '')
-    + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">' + money(m.net) + '</span></div>';
+    + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">' + money(m.net) + '</span></div>'
+    /* ⭐ THE FOOTNOTE, BELOW THE TOTAL — where a footnote belongs, and where it cannot push the figure a
+       shopkeeper is reading off the bottom of the panel. Only when the sum was too long to sit inline. */
+    + (SAVED_FOOTNOTE ? '<div class="t note" data-testid="till-saved-note">* ' + esc(SAVED_FOOTNOTE) + '</div>' : '');
   var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
   /* ⚠️ the sentence names an AMOUNT, so it changes when the total does — not only when a button is pressed */
   paintPays();
@@ -3545,7 +3819,22 @@ async function finish(){
                                           price:(c.unitPrice != null ? c.unitPrice : c.price), list_price:c.price,
                                           priced_by:(c.priced && c.priced.kind) || null,
                                           priced_why:(c.priced && c.priced.why) || null, qty:c.qty,
-                                          gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label, hsn:c.hsn, gst_rate:c.gst_rate }; }),
+                                          mrp:c.mrp || null,
+                                          /* ⭐ the line's own taxable value and tax, so a reprint prints the same
+                                             breakdown without recomputing it against today's slabs */
+                                          taxable:c.taxable != null ? c.taxable : null, tax:c.tax != null ? c.tax : null,
+                                          gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label,
+                                          /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over
+                                             a `save` that is the sum of all of them — tolerable on a screen you
+                                             can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a
+                                             reprint, a dispute and the books all read a year later, and by then
+                                             nobody can re-derive which offers applied. Kept beside off_label
+                                             rather than replacing it, so every existing reader keeps working. */
+                                          offers:(c.offs||[]).map(function(a){
+                                            return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
+                                                     off:r2(Math.abs(a.amount)), why:a.why||null }; }),
+                                          save_unnamed:c.save_unnamed || 0,
+                                          hsn:c.hsn, gst_rate:c.gst_rate }; }),
     payments: parts, paid: paid,
     /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
        from the shape of a bill would be a guess dressed as a finding. */
@@ -3557,6 +3846,9 @@ async function finish(){
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
        the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
     heads: m.heads, supply: m.supply,
+    /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
+       the heads are, so a reprint states what was issued rather than what today's slabs would say */
+    by_rate: m.byRate || {},
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
     by: WHO ? { id: WHO.id, name: WHO.name } : null,
     kind: shopTax().kind,
@@ -3746,7 +4038,7 @@ function paintKeys(){
     + (MODE === 'maintain'
         ? '<span><b>Enter</b> open it on the right</span>'
         : '<span><b>Enter</b> add</span><span><b>3*</b> quantity</span>'
-          + (MODE === 'sell' ? '<span><b>Ctrl ↑↓</b> change the last line</span>' : ''));
+          + (MODE === 'sell' ? '<span><b>Ctrl ↑↓</b> change the line in action</span>' : ''));
   el.innerHTML = common + (MODE === 'sell'
     ? '<span><b>F9</b> save &amp; print</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span>'
     : (MODE === 'maintain'
@@ -4451,23 +4743,76 @@ function slipHTML(bill, m){
     + solid + '<div style="text-align:center;font-weight:700">' + title + '</div>' + dash
     + t('No ' + esc(bill.no), esc(new Date(bill.at).toLocaleString()))
     + t(esc((STATE.till && STATE.till.name) || '') + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in')) + dash
+    /**
+     * ── ⭐⭐⭐ EVERY ITEM ACCOUNTS FOR ITSELF ON THE PAPER ──────────────────────────────────────────────────────
+     *
+     * Athi, 2026-09-10: *"check how Pantaloons invoice is and then do it accordingly — there, every item below
+     * they showcase, it is no ambiguity."*
+     *
+     * ⭐⭐ AND THAT IS THE INDIAN RETAIL BILL, which solved this long ago: each line states its MRP, its rate,
+     * the discount BY THE NAME OF THE SCHEME, and what is left. Nothing is deferred to a summary, so a customer
+     * checking one item never has to reconcile it against a total covering nine others.
+     *
+     * ⚠️⚠️ WHAT WAS HERE PRINTED "(−₹9.00)" — a bare parenthesis, no scheme name, no MRP. That is precisely the
+     * ambiguity: on the paper the customer takes home, a discount nobody can name is a discount nobody can
+     * question, and the shopkeeper standing behind it has nothing to point at.
+     *
+     * ⚠️ The offer rows come from what was STORED on the bill, not from a re-evaluation. A reprint next year must
+     * show what was charged then — offers change, and a slip that re-derived them would quietly rewrite history.
+     */
     + (bill.lines||[]).map(function(l){
+        var offs = (l.offers && l.offers.length)
+          ? l.offers
+          : (l.off ? [{ label: l.off_label || 'Offer', off: l.save }] : []);   /* bills saved before offers[] existed */
+        var sub = function(a, b){ return '<div style="display:flex;justify-content:space-between;font-size:.9em;'
+               + 'padding-inline-start:8px"><span>' + a + '</span><span>' + b + '</span></div>'; };
+        /**
+         * ⭐ ORIGINAL COST AND DISCOUNT AT THE LINE; TAX LAST. Athi, 2026-09-10: *"original cost and discount will
+         * be shown there itself and the tax shown last."* So the line carries what a customer checks item by item
+         * — what it cost, what came off, what is left — and the tax is summarised once, below the total.
+         *
+         * ⚠️ THE RATE STAYS ON THE LINE OF A TAX INVOICE, and only there. A rate-wise summary at the foot is what
+         * a B2C bill needs, but a registered buyer claims input credit off the LINE — so on a TAX INVOICE the per
+         * line rate is not clutter, it is the thing that makes the document usable. On a cash memo it is absent,
+         * because there is no tax to name.
+         */
         return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + money(l.net) + '</span></div>'
-             + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price) + (l.off ? '  (−' + money(l.save) + ')' : '')
-             + (bill.kind === 'tax' && l.gst_rate ? '  GST ' + l.gst_rate + '%' : '') + '</div>';
+             + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
+             + (Number(l.mrp) > 0 ? '  MRP ' + money(l.mrp) : '')
+             + (bill.kind === 'tax' && l.gst_rate ? '  GST ' + l.gst_rate + '%' : '') + '</div>'
+             /* ⚠️ only when something came off — on a line with no offer, "Gross ₹9.00" over "₹9.00" is a row
+                that says nothing twice, and rows that say nothing are how a bill becomes unreadable. */
+             + (offs.length || Number(l.save_unnamed) > 0.004 ? sub('Gross', money(l.gross)) : '')
+             /* one row per scheme, indented under the item it came off — named, and with its own amount */
+             + offs.map(function(o){ return sub(esc(o.label || 'Offer'), '−' + money(o.off)); }).join('')
+             /* ⚠️ a bill-wide offer's share, said plainly — otherwise this line's total is short by an amount
+                that appears nowhere on the line, which is the thing being fixed */
+             + (Number(l.save_unnamed) > 0.004
+                 ? '<div style="display:flex;justify-content:space-between;font-size:.9em;padding-inline-start:8px">'
+                   + '<span>share of bill offer</span><span>−' + money(l.save_unnamed) + '</span></div>' : '');
       }).join('') + dash
     /* ⭐ ON THE PAPER TOO. This is the line a customer runs their finger down when the bag does not look right, and the
        one a shopkeeper reads back at the door. It is printed for every bill, offer or no offer. */
     + t('Products', String((bill.lines||[]).length))
     + t('Items', String(Math.round((bill.lines||[]).reduce(function(a,l){ return a + (Number(l.qty)||0); }, 0) * 100) / 100))
     + (bill.saved > 0 ? t('Before offers', money((m&&m.gross)||bill.total)) + t('You saved', '−' + money(bill.saved)) : '')
-    + (bill.kind === 'tax'
-        ? t('Taxable', money(bill.taxable))
-          + ((bill.heads && bill.heads.length)
-              ? bill.heads.map(function(h){ return t(h.name + ' ' + h.rate + '%', money(h.amount)); }).join('')
-                + t('GST total', money(bill.tax))
-              : t('GST', money(bill.tax)))
-        : '')
+    /**
+     * ── ⭐⭐ THE TAX SUMMARY, RATE BY RATE — THE STANDARD LAYOUT, NOT ONE OF OURS ─────────────────────────────
+     *
+     * Athi, 2026-09-10: *"Tesco bill, or any other standard way of invoicing can be used as an example. Nothing
+     * to reinvent."* Right, and it is the same instinct as the rest of this platform — adopt the convention, do
+     * not author one. Every retail receipt in the world ends the same way: a small table of rate · taxable · tax,
+     * one row per rate, summing to the tax already shown in the total.
+     *
+     * ⭐ AND IT IS ALSO WHAT THE LAW WANTS. A GST bill has to let a buyer see the taxable value and the tax at
+     * each rate; a flat "GST ₹48.66" makes a bill that cannot be used to claim credit. So the format a customer
+     * recognises and the format a tax officer requires are the same format — which is usually the sign that a
+     * convention is worth adopting rather than improving.
+     *
+     * ⚠️ IT FALLS BACK, because bills saved before by_rate existed still get reprinted, and a reprint that
+     * dropped the tax block would be worse than one that shows it the old way.
+     */
+    + (bill.kind === 'tax' ? taxSummaryHTML(bill, t, dash) : '')
     + solid + t('TOTAL', money(bill.total), true) + solid
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
@@ -4483,6 +4828,43 @@ function slipHTML(bill, m){
     + (bill.kind === 'supply' ? '<div style="text-align:center">Composition taxable person.<br>Not eligible to collect tax on supplies.</div>' : '')
     + '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>'
     + '<div style="height:10mm"></div></div>';
+}
+/**
+ * ⭐ THE FOOT OF A TAX INVOICE: one row per rate, with the taxable value and the tax split the way this bill was
+ * issued. 72 mm of thermal paper, so it is a monospace grid rather than a table — four short columns fit, five
+ * do not, and a column that wraps is worse than one that is missing.
+ */
+function taxSummaryHTML(bill, t, dash){
+  var by = bill.by_rate || {};
+  var rates = Object.keys(by).sort(function(a, b){ return Number(a) - Number(b); });
+  /* ⚠️ an older bill, or one with no rate-wise detail — say the same thing in the simpler shape it was saved in */
+  if (!rates.length) {
+    return t('Taxable', money(bill.taxable))
+      + ((bill.heads && bill.heads.length)
+          ? bill.heads.map(function(h){ return t(h.name + ' ' + h.rate + '%', money(h.amount)); }).join('')
+            + t('GST total', money(bill.tax))
+          : t('GST', money(bill.tax)));
+  }
+  var inter = bill.supply === 'inter';
+  var cell = function(v, w, end){ return '<span style="display:inline-block;width:' + w
+    + ';text-align:' + (end ? 'right' : 'left') + '">' + v + '</span>'; };
+  var row = function(a, b, c, d, bold){
+    return '<div style="font-size:.88em' + (bold ? ';font-weight:700' : '') + '">'
+      + cell(a, '18%') + cell(b, '32%', true) + cell(c, '25%', true) + cell(d, '25%', true) + '</div>';
+  };
+  var tb = 0, t1 = 0, t2 = 0;
+  var body = rates.map(function(rt){
+    var b = by[rt].base, tx = by[rt].tax, half = r2(tx / 2);
+    tb = r2(tb + b);
+    if (inter) { t1 = r2(t1 + tx); return row(rt + '%', money(b), money(tx), ''); }
+    t1 = r2(t1 + half); t2 = r2(t2 + r2(tx - half));
+    return row(rt + '%', money(b), money(half), money(r2(tx - half)));
+  }).join('');
+  return dash
+    + '<div style="font-weight:700;font-size:.9em">' + (inter ? 'IGST SUMMARY' : 'GST SUMMARY') + '</div>'
+    + row('Rate', 'Taxable', inter ? 'IGST' : 'CGST', inter ? '' : 'SGST', true)
+    + body
+    + row('', money(tb), money(t1), inter ? '' : money(t2), true);
 }
 /** ⚠️ ONE PLACE the paper, the screen and the reprint all read, so a customer is never told two different numbers */
 function rewardOnSlip(bill, t, dash){
