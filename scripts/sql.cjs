@@ -103,23 +103,54 @@ function die(msg, code) { console.error('\n  ' + msg + '\n'); process.exit(code 
     `SELECT current_user, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user`)).rows[0] || {};
   const bypasses = !!(who.rolsuper || who.rolbypassrls);
 
-  let mode, rls;
+  /**
+   * ⚠️⚠️ THE CONNECTION GOES THROUGH A POOLER, AND THAT CHANGES HOW THE ENTITY MUST BE SET.
+   * Railway's DATABASE_URL points at `…pooler.supabase.com:6543` — PgBouncer in TRANSACTION pooling mode, where a
+   * server connection is handed back at the end of every transaction. Session state (`SET ROLE`, a `set_config`
+   * with is_local=false) is therefore NOT guaranteed to survive from one statement to the next: the next one may
+   * land on a different backend that never saw it.
+   * ⭐ It happened to work when this was first run — which is the worst possible outcome, because "worked once
+   * under a pooler" is how an intermittent RLS failure gets shipped. So the role and the entity are no longer set
+   * by separate round trips; they are prepended to the SAME simple-query string as the file, which PgBouncer
+   * cannot split. Deterministic by construction rather than lucky.
+   * ⚠️ db.js already reached this conclusion (its inlineLiteral batching sends BEGIN, the set_config and the work
+   * as one text, for the round-trip cost rather than the pooler) — same idiom, same reason it is safe.
+   */
+  const pooled = /pooler|pgbouncer|:6543/.test(url);
+  let mode, rls, prelude = '';
   if (ENTITY) {
+    /* ⚠️ VALIDATED, BECAUSE IT IS INLINED. It cannot be a bound parameter once it rides in the same text as the
+       file, so anything that is not a uuid is refused rather than escaped — the narrow rule, not the clever one. */
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ENTITY)) {
+      await c.end(); die('--entity must be a uuid; got "' + ENTITY + '"', 2);
+    }
+    /* the role has to be one this connection may assume — checked here, where the failure is still cheap */
+    const may = (await c.query(
+      `SELECT rolsuper, rolbypassrls, pg_has_role(current_user, 'cb_app', 'MEMBER') AS may
+         FROM pg_roles WHERE rolname = 'cb_app'`)).rows[0];
+    if (!may) { await c.end(); die('there is no cb_app role on this database.', 4); }
+    if (may.rolsuper || may.rolbypassrls) { await c.end();
+      die('cb_app bypasses RLS — then nothing on this platform is isolated. Stop and check the role.', 4); }
+    if (!may.may && who.current_user !== 'cb_app') { await c.end();
+      die('this connection (' + who.current_user + ') may not SET ROLE cb_app.', 4); }
     /* ⚠️ SET ROLE FIRST, THEN THE ENTITY. The other order sets a variable nothing is reading yet, and a variable
-       set for a role that bypasses RLS is decoration. */
-    try { await c.query('SET ROLE cb_app'); }
-    catch (e) { await c.end(); die('could not SET ROLE cb_app (' + e.message + ').\n'
-      + '  That role is what production connects as; without it this cannot run WITH RLS.', 4); }
-    const check = (await c.query(
-      `SELECT current_user, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user`)).rows[0] || {};
-    if (check.rolsuper || check.rolbypassrls) { await c.end();
-      die('cb_app itself bypasses RLS — then nothing on this platform is isolated. Stop and check the role.', 4); }
-    await c.query(`SELECT set_config('app.current_entity', $1, false)`, [ENTITY]);
+       set for a role that bypasses RLS is decoration. Both ride at the head of the batch below. */
+    prelude = "SET ROLE cb_app; SELECT set_config('app.current_entity', '" + ENTITY + "', false);\n";
     mode = 'cb_app · app.current_entity = ' + ENTITY;
     rls = 'WITH RLS';
   } else if (OWNER) {
-    mode = who.current_user + (bypasses ? ' (superuser / bypassrls)' : '');
-    rls = 'WITHOUT RLS';
+    /**
+     * ⚠️⚠️ --as-owner IS A REQUEST, NOT A FACT, and the first run against the real database proved it. The flag
+     * says "do not switch role"; whether that leaves you outside RLS depends entirely on who the connection string
+     * carries. Railway's DATABASE_URL is `cb_app` — NOSUPERUSER, NOBYPASSRLS — so `--as-owner` there still runs
+     * WITH RLS, and printing "WITHOUT RLS" because a flag was passed would be the exact lie this script exists to
+     * prevent. The line is derived from what the DATABASE said, never from what was typed.
+     */
+    mode = who.current_user + (bypasses ? ' (superuser / bypassrls)' : ' (NOSUPERUSER · NOBYPASSRLS)');
+    rls = bypasses ? 'WITHOUT RLS' : 'WITH RLS';
+    if (!bypasses) console.log('\n  ⚠ --as-owner was asked for, but ' + who.current_user + ' does not bypass RLS.\n'
+      + '    Policies still apply, and DDL on tables it does not own will be refused. This connection cannot do\n'
+      + '    structure — that stays a Supabase-editor job, which is the gate working rather than a fault.');
   }   /* no third case: the flags were settled before the connection was opened */
 
   console.log('');
@@ -127,7 +158,15 @@ function die(msg, code) { console.error('\n  ' + msg + '\n'); process.exit(code 
   console.log('  role      ' + mode);
   console.log('  ▸ ' + rls + (rls === 'WITHOUT RLS'
     ? '  — policies do not apply and WITH CHECK will not refuse a wrong entity_id.'
-    : '  — every row is checked against the entity above, exactly as the app is.'));
+    : ENTITY ? '  — every row is checked against the entity above, exactly as the app is.'
+    /**
+     * ⚠️⚠️ THE QUIETEST FAILURE ON THE PLATFORM, and it needs saying in the header rather than discovered in a
+     * result. RLS applies but `app.current_entity` is unset, so `NULLIF(current_setting(…), '')::uuid` is NULL
+     * and every policy is false: reads return ZERO ROWS and writes are refused. Not an error — an empty answer,
+     * which looks exactly like a shop with no data. Somebody will one day conclude a table is empty from this.
+     */
+             : '  — but NO entity is set, so every policy is false: reads return nothing and writes are refused.\n'
+             + '                 An empty result here means "you did not say which shop", NOT "there is no data".'));
 
   /* ⚠️ AN OUTLINE, AND SAID TO BE ONE. Postgres does the parsing; this only counts what a person would recognise,
      so nothing here decides what runs. A regex that pretended to be a parser is the bug this file avoids. */
@@ -140,17 +179,25 @@ function die(msg, code) { console.error('\n  ' + msg + '\n'); process.exit(code 
     /* ⚠️ AND IT SAYS WHAT IT CANNOT PROMISE. A file with its own COMMIT cannot be wrapped in a rollback, so there
        is no such thing as a dry run of it — pretending otherwise would be the most dangerous line in the file. */
     console.log('  ▸ LOOKED ONLY. Nothing ran. Add --write to execute.');
-    if (/^\s*COMMIT\s*;/im.test(sql))
+    if (/^\s*COMMIT\s*;/im.test(sql)) {
       console.log('    ⚠ this file COMMITs on its own, so --write is final: it cannot be rolled back afterwards.');
+      /* ⚠️ AND OVER A POOLER THAT IS TWO PROBLEMS, NOT ONE. Its own COMMIT ends the transaction the prelude set
+         the entity in, and PgBouncer may hand the rest of the file to a different backend that never saw it —
+         so the statements after the COMMIT could run with no entity at all and read nothing, silently. */
+      if (pooled && ENTITY)
+        console.log('    ⚠ over the transaction pooler, the entity may not survive that COMMIT. Split the file, or\n'
+                  + '      run this one in the Supabase editor where the session is yours for the whole run.');
+    }
     await c.end(); return;
   }
 
   console.log('  ▸ running…\n');
   try {
     /* ⭐ THE WHOLE FILE, ONE SIMPLE QUERY — the same thing the SQL editor sends, so a run here means the same
-       thing as a run there. Postgres returns one result per statement. */
-    const out = await c.query(sql);
-    const results = Array.isArray(out) ? out : [out];
+       thing as a run there. Postgres returns one result per statement, and the prelude (role + entity) rides at
+       the head of the SAME string so a pooler cannot separate it from the work it governs. */
+    const out = await c.query(prelude + sql);
+    const results = (Array.isArray(out) ? out : [out]).slice(prelude ? 2 : 0);   /* hide the prelude's own results */
     results.forEach((r, i) => {
       if (!r) return;
       const n = String(i + 1).padStart(2, ' ');
