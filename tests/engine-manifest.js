@@ -21,6 +21,14 @@ const TIER_A = [
      needs a factor and a factor is entity-specific. A rename is engine vocabulary; a conversion is a declaration.
      Zero dependencies, pure data + one fold — Tier A. */
   'lib/units.js',            // unit aliases: one unit, many spellings; never converts. Vendored to app/units.js; the connector maps by UN/ECE Rec 20 code.
+  /* ⚠️ THE THIRD OF THE SAME FAMILY (2026-09-10). Athi: *"can we convert the country, currency, ie the
+     localisation as a capability so it can be used in any product?"* — so where a party is, and what a shop there
+     can be PAID by, moved out of lib/profile.js. A module that opens a vault cannot be picked up by another
+     product; this one has no database, no network and no state, which is what makes it shippable.
+     Like its two siblings it NEVER CONVERTS: it says which country and which schemes, never what a currency is
+     worth. The governed facts per region stay in the region_layer table (lib/regional.js, Tier B), and formatting
+     stays with CBLocale — collapsing those in would cost this file its purity and with it its portability. */
+  'lib/jurisdiction.js',     // country → what a party may be paid by, as (scheme, value); pure, vendorable
 ];
 
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */

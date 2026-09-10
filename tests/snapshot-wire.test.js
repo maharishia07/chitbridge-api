@@ -703,10 +703,27 @@ it('⭐⭐ the payment ways are read from where the snapshot writes them', () =>
   /* ⚠️ cash and card must survive a shop that declared nothing — a till that cannot record a sale is worse */
   assert.ok(pp.indexOf("{ id:'cash', label:'Cash' }") > 0, 'there is no fallback, so a bad snapshot would offer no way to pay');
   /* the scheme table is the one place a country decides what is offered */
+  /**
+   * ⭐⭐ THE CAPABILITY OWNS IT, AND profile.js KEEPS NO COPY. Athi, 2026-09-10: *"can we convert the country,
+   * currency, ie the localisation as a capability so it can be used in any product?"* — so the country rules and
+   * the payment schemes live in lib/jurisdiction.js, which is PURE: no database, no network, vendorable.
+   * ⚠️ A module that opens a vault cannot be picked up by another product. That is why they moved.
+   */
+  const jur = fs.readFileSync(path.join(API, 'lib', 'jurisdiction.js'), 'utf8');
+  assert.ok(jur.indexOf("countries: ['IN']") > 0, 'UPI is no longer scoped to India — it would be offered everywhere');
+  assert.ok(jur.indexOf('PAY_RECORD_ONLY') > 0, 'the record-only ways (cash, card, wallet) are not named as such');
+  assert.ok(jur.indexOf('emvco') > 0, 'EMVCo is not declared, so the next country is a rewrite rather than a row');
+  /* ⚠️ PURE: the moment it needs a database it stops being usable in a product that has not got ours */
+  for (const forbidden of ["require('../db')", 'require("./db")', "require('./db')", 'await query(']) {
+    assert.ok(jur.indexOf(forbidden) < 0, 'lib/jurisdiction.js reaches for ' + forbidden + ' — it must stay pure');
+  }
+  /* and profile.js delegates rather than keeping a second opinion */
   const prof = fs.readFileSync(path.join(API, 'lib', 'profile.js'), 'utf8');
-  assert.ok(prof.indexOf('function payWays(') > 0, 'payWays is gone');
-  assert.ok(prof.indexOf("countries: ['IN']") > 0, 'UPI is no longer scoped to India — it would be offered everywhere');
-  assert.ok(prof.indexOf('PAY_RECORD_ONLY') > 0, 'the record-only ways (card, wallet) are not named as such');
+  assert.ok(prof.indexOf("require('./jurisdiction')") > 0, 'profile.js does not use the capability');
+  assert.ok(prof.indexOf('const PAY_SCHEMES = {') < 0, 'profile.js has its own copy of the payment schemes again');
+  assert.ok(prof.indexOf('function countryOf(') < 0, 'profile.js has its own copy of countryOf again');
+  /* the bridge that DOES belong there: where a shop's declared payees are kept */
+  assert.ok(prof.indexOf('function payeesOf(') > 0, 'nothing maps the stored profile to the capability inputs');
 });
 
 /**

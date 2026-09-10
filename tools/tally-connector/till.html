@@ -2447,6 +2447,8 @@ async function add(n){
   /* ⚠️ SOLD, BUT SAID OUT LOUD. itemstatus keeps "unavailable" sellable on purpose, and the shopkeeper holding the packet is the
      better authority than yesterday's flag — so it goes on the bill and the counter says what it just did. */
   if (statusOf(i) === 'unavailable') toastLine(i.name + ' is marked off the shelf — added anyway. Tap the dot on the row to put it back.');
+  /* ⚠️ said at the moment it happens, not only in a panel nobody has opened */
+  if (!(Number(i.price) > 0)) toastLine(i.name + ' has no price — it will add nothing to the bill. Set one in Maintenance.');
   if (MODE === 'receive') rcvAdd(i, q, lotFromScan(document.getElementById('q').value));
   else if (MODE === 'despatch') dspScan(i, q);
   else { addItem(i, q); price(); }
