@@ -1005,4 +1005,54 @@ it('⭐⭐ the shelf row states the MRP as a fact, and never calls the gap a sav
     + 'what made a correct cart look broken');
 });
 
+/**
+ * ── ⭐⭐⭐ EVERY REQUEST THAT LEAVES THE COUNTER HAS A DEADLINE ────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-10: *"offline and syncing back is not working. After I click the sync now button also, it is not
+ * working."* Four real bills on a shop PC, and the server log showed no POST at all — because none was attempted.
+ *
+ * ⚠️⚠️ NEITHER HOST HAD A SINGLE TIMEOUT. Both guard their drain with a flag cleared at the end of the loop, and
+ * neither `fetch` had a deadline — so one stalled socket left the await pending for ever, the flag set for ever,
+ * and the queue dead until a restart. Nothing threw. Nothing was logged. It was simply still waiting.
+ *
+ * ⭐ THE FAILURE HAS NO SYMPTOM OF ITS OWN, which is why it needs a guard rather than a test: a wedged queue
+ * looks exactly like a queue with nothing to send, and the only difference is money that has not reached the
+ * books. A deadline is the one thing that turns it back into an ordinary error the existing catch blocks handle.
+ */
+it('⭐⭐⭐ the counter never issues a request that can hang for ever', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const core = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'core.js'), 'utf8');
+
+  /* the browser counter: every call to the API goes through the deadline helper, never bare */
+  assert.ok(/function fetchBy\(/.test(till), 'the counter has lost its deadline helper');
+  const bare = (till.match(/await fetch\(\s*(this\.api|url,|CloudHost\.api)/g) || []);
+  assert.deepStrictEqual(bare, [],
+    'a counter request bypasses fetchBy and can hang for ever: ' + bare.join(', '));
+
+  /* the desktop agent: cb.call is the ONE http path for the connector, the counter and the queue */
+  const call = core.slice(core.indexOf('async call('), core.indexOf('products()'));
+  assert.ok(/AbortController/.test(call) && /signal/.test(call),
+    'cb.call has no deadline — one stalled socket wedges the agent queue until it is restarted');
+
+  /* and neither drain may leave its own busy flag set behind a failure */
+  const agent = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  assert.ok(/finally \{ draining = false; \}/.test(agent),
+    "the agent's draining flag is cleared after the loop again — a throw past it wedges the queue for good");
+});
+
+/**
+ * ⭐⭐ AND "SEND NOW" MUST EXIST ON BOTH HOSTS. It called HOST.drain() unguarded, and the DESKTOP host had no
+ * drain at all — so on a shop PC, the host where it matters most, the button threw a TypeError and did nothing.
+ * No toast, no error, nothing on screen. It had been dead for as long as it had existed.
+ */
+it('⭐⭐ both counter hosts can be told to send now', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const agent = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  const host = till.slice(till.indexOf('var AgentHost = {'), till.indexOf('var CloudHost = {'));
+  assert.ok(/drain:/.test(host), 'the desktop host has no drain — Send now throws there');
+  assert.ok(/\/api\/send/.test(agent), 'the agent exposes no way to be asked to send');
+  assert.ok(/typeof HOST\.drain !== 'function'/.test(till),
+    'sendNow assumes the host has a drain again — a missing capability must be said, not thrown');
+});
+
 console.log(pass + ' checks');

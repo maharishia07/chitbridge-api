@@ -49,8 +49,40 @@ class Receipts {
 
 class CB {
   constructor({ api, key, log }) { this.api = api.replace(/\/$/, ''); this.key = key; this.log = log || (() => {}); }
-  async call(method, p, body) {
-    const r = await fetch(this.api + p, { method, headers: { 'X-Api-Key': this.key, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  /**
+   * ── ⚠️⚠️ EVERY CALL HAS A DEADLINE (2026-09-10) ────────────────────────────────────────────────────────────
+   *
+   * This is the ONE http path for everything the connector and the desktop counter do — the catalogue refresh,
+   * the heartbeat, Tally both directions, and the queue of unsent bills. It had no timeout, and Node's fetch has
+   * no default one: a stalled socket leaves the await pending for ever.
+   *
+   * ⭐⭐ THAT IS HOW FOUR REAL BILLS GOT STUCK ON A SHOP PC. till.js guards its drain with a `draining` flag that
+   * is cleared after the loop. A hung call means the loop never finishes, so the flag is never cleared, so the
+   * agent never sends anything again — until somebody restarts it. Nothing is logged, because nothing failed;
+   * it is simply still waiting. Athi: *"offline and syncing back is not working. After I click the sync now
+   * button also, it is not working."*
+   *
+   * ⚠️ THE POINT IS FINITE, NOT FAST. Two minutes is long enough for a 10,000-item snapshot on a bad shop line
+   * and short enough that a dead connection is discovered rather than waited on for ever. A caller that knows
+   * better may pass its own.
+   *
+   * ⚠️ AN ABORT THROWS, like any other failure — so every existing catch keeps its bill queued exactly as it
+   * does for a refused connection. What changes is that the failure ARRIVES.
+   */
+  async call(method, p, body, ms) {
+    const ac = new AbortController();
+    const to = setTimeout(() => { try { ac.abort(); } catch (_) {} }, ms || 120000);
+    let r;
+    try {
+      r = await fetch(this.api + p, { method, signal: ac.signal, headers: { 'X-Api-Key': this.key, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+    } catch (e) {
+      /* ⚠️ SAY IT WAS A DEADLINE, not "fetch failed" — the two need different actions from whoever reads the log */
+      if (e && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
+        const err = new Error(method + ' ' + p + ' → no answer in ' + Math.round((ms || 120000) / 1000) + 's');
+        err.timeout = true; throw err;
+      }
+      throw e;
+    } finally { clearTimeout(to); }
     const text = await r.text(); let j = null; try { j = JSON.parse(text); } catch (_) { j = { raw: text }; }
     if (!r.ok) { const e = new Error(method + ' ' + p + ' → ' + r.status + ' ' + ((j && (j.message || j.error)) || text.slice(0, 120))); e.status = r.status; e.body = j; throw e; }
     return j;

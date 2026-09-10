@@ -192,10 +192,18 @@ it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well
   const agent = fs2.readFileSync(path2.join(dir, 'till.js'), 'utf8');
   const page = fs2.readFileSync(path2.join(dir, 'till.html'), 'utf8');
 
-  /* what the PAGE actually posts upstream */
+  /**
+   * what the PAGE actually posts upstream.
+   * ⚠️ TWO SHAPES SINCE 2026-09-10. Catalogue changes went through `cloudFirst({ path: '/api/till/...' })` when
+   * Athi's write-through rule landed — the cloud must agree before the counter changes — and this parser only
+   * knew `tillPost('...')`. It found two writes where there had been five and said so, which is exactly what a
+   * count floor is for: a guard that silently matches nothing is worse than no guard.
+   * ⭐ Both shapes are read, so a write cannot escape the lock by being wrapped in a helper.
+   */
   const wants = new Set();
-  const re = /tillPost\(\s*'(\/api\/till\/[a-z/-]+)'/g;
-  let m; while ((m = re.exec(page))) wants.add(m[1]);
+  [/tillPost\(\s*'(\/api\/till\/[a-z/-]+)'/g, /path:\s*'(\/api\/till\/[a-z/-]+)'/g].forEach((re) => {
+    let m; while ((m = re.exec(page))) wants.add(m[1]);
+  });
   assert.ok(wants.size >= 4, 'only ' + wants.size + ' till writes were found in the page — the parser has stopped matching');
 
   /* what the AGENT will forward */
@@ -217,7 +225,7 @@ it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well
   /* ⚠️ the sub-path matters: /api/till/reward/claim is a different door from /api/till/reward, and a pattern that
      stopped at the first segment would pass a route the agent has never been told about. */
   const rre = /tillGet\(\s*'(\/api\/till\/[a-z/-]+)/g;
-  while ((m = rre.exec(page))) reads.add(m[1]);
+  let rm; while ((rm = rre.exec(page))) reads.add(rm[1]);
   for (const p of reads) {
     assert.ok(agent.indexOf("'" + p + "'") > 0, 'the counter reads ' + p + ' but the agent will not forward it');
     assert.ok(may(['till'], 'GET', p), p + ' is not readable by a till key');

@@ -171,12 +171,28 @@ async function refresh() {
 }
 
 /* ── the queue: every bill leaves exactly once ─────────────────────────────────────────────────────────────── */
-let draining = false;
+/**
+ * ── ⚠️⚠️ THE FLAG THAT WEDGED THE QUEUE ────────────────────────────────────────────────────────────────────────
+ *
+ * `draining` was cleared after the loop, and `cb.call` had no deadline. A stalled connection left the await
+ * pending for ever, so the loop never ended, so the flag was never cleared — and this agent never sent another
+ * bill until it was restarted. Silently: nothing threw, nothing was logged, it was simply still waiting.
+ *
+ * ⭐ Two changes, and both are needed. The deadline in core.js means the ordinary stall now ends in a throw the
+ * catch below already handles. The `finally` and the watchdog mean that whatever a deadline cannot cover — a
+ * bug in here, an await that resolves never for some other reason — costs one cycle rather than the day's takings.
+ */
+let draining = false, drainAt = 0;
 async function drain() {
-  if (draining) return; draining = true;
+  if (draining) {
+    /* ⚠️ it cannot still be running: every call inside has a 2-minute deadline. A flag outliving that is stuck. */
+    if (drainAt && (Date.now() - drainAt) > 300000) { log('queue: the previous send never finished — starting again'); }
+    else return;
+  }
+  draining = true; drainAt = Date.now();
   try {
     const rows = readLines(F.queue);
-    if (!rows.length) { draining = false; return; }
+    if (!rows.length) return;
     const left = [];
     for (const bill of rows) {
       try {
@@ -231,7 +247,9 @@ async function drain() {
     }
     fs.writeFileSync(F.queue, left.map((b) => JSON.stringify(b)).join('\n') + (left.length ? '\n' : ''));
   } catch (e) { log('queue: ' + e.message); }
-  draining = false;
+  /* ⚠️ FINALLY, NOT AFTER. The old placement was reachable only if nothing above threw past its own catch —
+     which is exactly the condition that cannot be relied on when the thing that fails is the network. */
+  finally { draining = false; }
 }
 
 /** the bill, as the chit every other part of ChitBridge already understands */
@@ -410,6 +428,19 @@ const server = http.createServer(async (req, res) => {
                               update: UPDATE });
 
     if (req.method === 'POST' && url.pathname === '/api/refresh') { const ok = await refresh(); return json(res, 200, { ok: ok, online: online, at: snapshot && snapshot.at }); }
+
+    /**
+     * ⭐⭐ SEND NOW, ON THE SHOP PC. The page's "Send now" called HOST.drain() — which the browser host has and
+     * this one did not, so on the desktop counter the button threw and did nothing at all. The queue lives HERE
+     * on this host, in a file, and only this process can send it; the page can only ask.
+     * ⚠️ It reports the queue length after trying, so the page can say what happened instead of guessing.
+     */
+    if (req.method === 'POST' && url.pathname === '/api/send') {
+      const before = readLines(F.queue).length;
+      await drain();
+      const after = readLines(F.queue).length;
+      return json(res, 200, { ok: true, before: before, sent: before - after, queued: after, online: online });
+    }
 
     /* ⭐ THE SMALL WRITES a counter makes on its feet — stock out, price change. Forwarded, so the page never cares which
        host it is on; the agent already holds the key and already knows how to reach ChitBridge. */

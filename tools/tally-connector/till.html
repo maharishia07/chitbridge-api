@@ -947,6 +947,37 @@ var DB = (function(){
   };
 })();
 
+/**
+ * ── ⭐⭐⭐ EVERY REQUEST THIS COUNTER MAKES HAS A DEADLINE ─────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ THERE WAS NOT ONE IN THE WHOLE FILE, and on the offline-first surface of all things. A stalled connection
+ * — the shop wifi dropping mid-request, which is the NORMAL failure at a counter, not an exotic one — leaves a
+ * fetch pending indefinitely: no response, no error, nothing to catch. Everything awaiting it waits for ever.
+ *
+ * ⭐ For drain() that was the whole bug behind Athi's four stuck bills: its `_busy` flag is cleared in a
+ * `finally` that a hung fetch never reaches, so the queue wedged and "Send now" did nothing, silently, until the
+ * page was reloaded.
+ *
+ * ⚠️ 30 SECONDS, NOT THE APP'S 90. A counter is operated standing up with a customer waiting, and the platform's
+ * own measurement of an honest round trip is about 2 s (Railway sfo ↔ Supabase Mumbai). Thirty is already
+ * fifteen times that: long enough that a slow line still succeeds, short enough that a dead one is found while
+ * somebody is still standing there.
+ *
+ * ⚠️ AN ABORT IS NOT AN ERROR TO HIDE. It throws like any other failure, so the callers' existing catch blocks
+ * keep the bills queued exactly as they do for a refused connection — which is the correct outcome. What changes
+ * is that the failure ARRIVES, instead of never arriving.
+ */
+var DEADLINE = 30000;
+/* ⚠️ A BIG READ IS NOT A SLOW WRITE. A 10,000-item snapshot legitimately takes longer than a bill does, and a
+   deadline that strangled the catalogue refresh would be a new fault dressed as a fix. */
+var SLOW = 120000;
+function fetchBy(url, opts, ms){
+  var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var to = ac ? setTimeout(function(){ try { ac.abort(); } catch (_) {} }, ms || DEADLINE) : null;
+  var o = Object.assign({}, opts || {});
+  if (ac) o.signal = ac.signal;
+  return fetch(url, o).finally(function(){ if (to) clearTimeout(to); });
+}
 var AgentHost = {
   mode:'agent',
   state: function(){ return fetch('/api/state').then(function(r){ return r.json(); }); },
@@ -969,6 +1000,21 @@ var AgentHost = {
   tillGet: function(path){ return fetch('/api/op?get=' + encodeURIComponent(path)).then(function(r){ return r.json(); })
       .catch(function(e){ return { ok:false, why:e.message }; }); },
   listen: function(b){ return fetch('/api/listen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
+  /**
+   * ⭐⭐ THE DESKTOP COUNTER HAD NO drain AT ALL, and sendNow() calls HOST.drain() without checking. On a shop PC
+   * — the host this button matters most on — "Send now" threw a TypeError and did nothing, with no toast and no
+   * error anybody would see. It has been dead for as long as it has existed.
+   * ⚠️ The queue is the AGENT'S, in a file; this asks the agent to send it and reports what it says.
+   */
+  drain: function(){
+    var self = this;
+    return fetch('/api/send', { method:'POST' }).then(function(r){ return r.json(); })
+      .then(function(j){ self.last = { at: Date.now(), tried: (j && j.before) || 0, sent: (j && j.sent) || 0,
+        why: (j && j.queued) ? 'The counter program still has ' + j.queued + ' to send and keeps trying.' : null }; return j; })
+      .catch(function(e){ self.last = { at: Date.now(), tried: 0, sent: 0,
+        why: 'The counter program did not answer (' + e.message + '). Is it still running?' }; });
+  },
+  last: null,
 };
 
 /**
@@ -1009,7 +1055,7 @@ var CloudHost = {
     OWNER = (await DB.get('owner')) || null;
     var have = await DB.get('snapshot');
     var since = (have && have.at) ? ('?since=' + encodeURIComponent(have.at)) : '';
-    var r = await fetch(this.api + '/api/till/snapshot' + since, { headers:{ 'X-Api-Key': this.key } });
+    var r = await fetchBy(this.api + '/api/till/snapshot' + since, { headers:{ 'X-Api-Key': this.key } }, SLOW);
     if (!r.ok) return { ok:false, status:r.status };
     /**
      * ⭐⭐ COUNTED AS IT ARRIVES. Athi, 2026-09-09: *"when we try to reload, no message is appearing — an image of the progress
@@ -1081,7 +1127,7 @@ var CloudHost = {
        * check that heals a cause nobody predicted.
        */
       if (snap.total != null && snap.items.length !== snap.total) {
-        var full = await fetch(this.api + '/api/till/snapshot', { headers:{ 'X-Api-Key': this.key } });
+        var full = await fetchBy(this.api + '/api/till/snapshot', { headers:{ 'X-Api-Key': this.key } }, SLOW);
         if (full.ok) { snap = await full.json(); snap.rebuilt = true; }
       }
     }
@@ -1100,7 +1146,7 @@ var CloudHost = {
   async history(days){
     if (!this.key || !navigator.onLine) return { bills: [], offline: true };
     try {
-      var r = await fetch(this.api + '/api/till/bills?days=' + (days||30) + '&limit=200', { headers:{ 'X-Api-Key': this.key } });
+      var r = await fetchBy(this.api + '/api/till/bills?days=' + (days||30) + '&limit=200', { headers:{ 'X-Api-Key': this.key } }, SLOW);
       if (!r.ok) return { bills: [], offline: true, why: 'HTTP ' + r.status };
       return await r.json();
     } catch (e) { return { bills: [], offline: true, why: e.message }; }
@@ -1123,7 +1169,7 @@ var CloudHost = {
   async tasks(kind){
     if (!this.key || !navigator.onLine) return { tasks: [], offline: true };
     try {
-      var r = await fetch(this.api + '/api/till/tasks?kind=' + encodeURIComponent(kind), { headers: { 'X-Api-Key': this.key } });
+      var r = await fetchBy(this.api + '/api/till/tasks?kind=' + encodeURIComponent(kind), { headers: { 'X-Api-Key': this.key } });
       if (!r.ok) return { tasks: [], offline: true, why: 'HTTP ' + r.status };
       return await r.json();
     } catch (e) { return { tasks: [], offline: true, why: e.message }; }
@@ -1138,7 +1184,7 @@ var CloudHost = {
   async alias(a){
     if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet — the count is not affected' };
     try {
-      var r = await fetch(this.api + '/api/till/alias', { method:'POST',
+      var r = await fetchBy(this.api + '/api/till/alias', { method:'POST',
         headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(a) });
       return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
@@ -1147,7 +1193,7 @@ var CloudHost = {
   async listen(b){
     if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet' };
     try {
-      var r = await fetch(this.api + '/api/till/listen', { method:'POST',
+      var r = await fetchBy(this.api + '/api/till/listen', { method:'POST',
         headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(b) });
       return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
@@ -1163,22 +1209,34 @@ var CloudHost = {
   async tillGet(path){
     if (!this.key || !navigator.onLine) return { ok:false, why:'offline' };
     try {
-      var r = await fetch(this.api + path, { headers:{ 'X-Api-Key': this.key } });
+      var r = await fetchBy(this.api + path, { headers:{ 'X-Api-Key': this.key } });
       if (!r.ok) return { ok:false, why:'ChitBridge refused it (' + r.status + ')', status:r.status };
       return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
     } catch (e) { return { ok:false, why:e.message }; }
   },
-  async tillPost(path, body){
+  /**
+   * ⚠️ `opts.noQueue` MAKES A FAILURE A FAILURE. Without it this reports `{ok:true, queued:true}` when the line
+   * is down — which is right for something that already happened, and wrong for something about to. A catalogue
+   * change is an INTENTION: it must not be treated as done until ChitBridge has agreed (see cloudFirst).
+   */
+  async tillPost(path, body, opts){
+    var noQueue = !!(opts && opts.noQueue);
     if (!this.key) return { ok:false, why:'this counter is not paired' };
     if (navigator.onLine) {
       try {
-        var r = await fetch(this.api + path, { method:'POST',
+        var r = await fetchBy(this.api + path, { method:'POST',
           headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(body) });
         if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
         /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
-        if (r.status >= 400 && r.status < 500) return { ok:false, why:'ChitBridge refused it (' + r.status + ')' };
-      } catch (_) { /* the line went mid-request; fall through and queue it */ }
-    }
+        var said = ''; try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; } catch (_) {}
+        if (r.status >= 400 && r.status < 500)
+          return { ok:false, final:true, why: said || ('ChitBridge refused it (' + r.status + ')') };
+        if (noQueue) return { ok:false, why: said || ('ChitBridge answered ' + r.status) };
+      } catch (e) {
+        if (noQueue) return { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' };
+        /* the line went mid-request; fall through and queue it */
+      }
+    } else if (noQueue) return { ok:false, why:'there is no internet' };
     await DB.put('queue', { no: 'OP/' + Date.now() + '/' + Math.random().toString(36).slice(2, 7),
                             at: new Date().toISOString(), tillPost: { path: path, body: body } });
     await queueTally(); paintStatus();
@@ -1187,7 +1245,7 @@ var CloudHost = {
   async verify(){
     if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet' };
     try {
-      var r = await fetch(this.api + '/api/till/verify', { headers:{ 'X-Api-Key': this.key } });
+      var r = await fetchBy(this.api + '/api/till/verify', { headers:{ 'X-Api-Key': this.key } });
       return r.ok ? Object.assign({ ok:true }, await r.json()) : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
   },
@@ -1211,11 +1269,75 @@ var CloudHost = {
     var st = await this.state();
     return { ok:true, bill: bill, today: st.today };
   },
+  /**
+   * ── ⚠️⚠️ EVERY WAY THIS COULD FAIL USED TO BE SILENT ─────────────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-10, observation 5: *"offline and syncing back is not working. After I click the sync now button
+   * also, it is not working."* His screenshot: *"4 bills waiting to reach ChitBridge · Could not send them just
+   * now. They are safe here and will go by themselves."*
+   *
+   * ⭐⭐⭐ AND THAT SENTENCE WAS EVERYTHING THE COUNTER COULD TELL HIM, because drain() had four exits and not one
+   * of them recorded a reason:
+   *
+   *   no key             `return` — a counter that was never paired retries nothing, for ever, in silence
+   *   401 / 403          `break`  — a rotated key stops the queue dead and says nothing
+   *   any other non-ok   neither  — the bill is not deleted and not reported: retried every 20 s, for ever
+   *   any throw          `break`  — the line, the DNS, a parse error, all the same silence
+   *
+   * ⚠️ THE FILE ALREADY KNEW THIS WAS WRONG. sendNow's own comment reads *"a button that appears to do nothing is
+   * worse than no button"* — and then it called a function that could only ever appear to do nothing. Four
+   * bills of real money sat on one PC and the counter could not say why for any of them.
+   *
+   * ⭐ SO THE FIX IS NOT A NEW RETRY, IT IS A RECORD. `HOST.last` says what happened on the most recent attempt,
+   * and each stuck row carries the server's own words. The retry loop is deliberately unchanged: a bill is never
+   * parked or dropped on a rejection, because a rejection we do not understand may be transient and the row is
+   * somebody's money. What changes is that it is now VISIBLE while it retries.
+   */
+  last: null,
   async drain(){
-    if (!this.key || !navigator.onLine || this._busy) return;
+    /**
+     * ── ⚠️⚠️⚠️ THE ROOT CAUSE OF THE STUCK BILLS ────────────────────────────────────────────────────────────
+     *
+     * `_busy` is cleared in a `finally`. A fetch with no deadline can hang for ever on a stalled connection — no
+     * response, no error, no rejection — so the `finally` never runs, `_busy` stays true for the life of the
+     * page, and EVERY later drain returns here instantly. Including the one behind "Send now".
+     *
+     * ⭐ That is precisely what Athi saw: four bills waiting, the button doing nothing, and the server log showing
+     * no POST at all — because none was ever attempted. Not a rejection. A wedged flag.
+     *
+     * ⚠️⚠️ AND THE COUNTER HAD NO DEADLINES ANYWHERE. Not one AbortController in the file. The app's own api()
+     * learned this on 2026-09-04 — *"a request that never answers must fail, not freeze"* — after a hung PATCH
+     * left an overlay up for ever. The counter is the surface most likely to be on a bad line, and it was the
+     * one without the lesson.
+     *
+     * ⭐ Two fixes, and both are needed: every request now has a deadline (fetchBy), and the flag itself cannot
+     * outlive one. A deadline stops the ordinary case; the watchdog stops whatever a deadline cannot.
+     */
+    if (this._busy) {
+      if (this._busyAt && (Date.now() - this._busyAt) > DEADLINE + 15000) {
+        this._busy = false;                    /* it cannot still be running; a stuck flag must not be permanent */
+      } else return;
+    }
+    this._busyAt = Date.now();
+    if (!this.key) { this.last = { at: Date.now(), tried: 0, sent: 0,
+      why: 'This counter has no key yet — pair it from the shop, then the bills will go.' };
+      try { await queueTally(); paintStatus(); } catch (_) {} return; }
+    if (!navigator.onLine) { this.last = { at: Date.now(), tried: 0, sent: 0,
+      why: 'No internet. The bills are safe here and go as soon as it returns.' };
+      try { await queueTally(); paintStatus(); } catch (_) {} return; }
     this._busy = true;
+    /* ⚠️ hoisted, because the finally below reports them and DB.all can throw before the loop begins */
+    var why = null, tried = 0, sent = 0;
     try {
-      var rows = (await DB.all('queue')) || [], sent = 0;
+      var rows = (await DB.all('queue')) || [];
+      /**
+       * ⭐⭐ A CATALOGUE CHANGE GOES FIRST. Athi: *"when the net is up, it is the first thing to be done."* And it
+       * is not merely politeness — while it waits, this counter is selling at a price ChitBridge does not have,
+       * and every bill queued behind it was rung up at that price. Send the correction before the consequences.
+       * ⚠️ A STABLE SORT ON PRIORITY ONLY, so bills keep their own order among themselves. A queue that reordered
+       * sales would break the one thing the numbering exists to prove.
+       */
+      rows.sort(function(a, b){ return (Number(b && b.priority) || 0) - (Number(a && a.priority) || 0); });
       for (var i = 0; i < rows.length; i++) {
         var bill = rows[i];
         /* ⚠️⚠️ THE LAST GATE, AND THE ONE THAT COSTS MONEY. DB.all has already dropped foreign rows, but this is where a bill
@@ -1229,14 +1351,40 @@ var CloudHost = {
           if (bill.tillPost) { url = this.api + bill.tillPost.path; payload = bill.tillPost.body; }
           else if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: bill.deliver.rows }; }
           else payload = bill.shiftBody ? bill.shiftBody : (bill.chitBody ? bill.chitBody : chitOf(bill));
-          var r = await fetch(url, { method:'POST',
+          tried++;
+          var r = await fetchBy(url, { method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
           if (r.ok) { await DB.del('queue', bill.no); sent++; }
-          else if (r.status === 403 || r.status === 401) break;      /* a key problem is not fixed by trying harder */
-        } catch (_) { break; }                                        /* the line went; the queue keeps everything */
+          else if (r.status === 403 || r.status === 401) {
+            /* ⚠️ A KEY PROBLEM IS NOT FIXED BY TRYING HARDER, and it is also not fixed by saying nothing. This is
+               the one failure a shopkeeper can actually act on — and until now it was the most invisible. */
+            why = 'The shop refused this counter\'s key (' + r.status + '). It may have been changed or removed — '
+                + 'pair this counter again and the bills will go.';
+            break;
+          } else {
+            /**
+             * ⚠️ THE SERVER'S OWN WORDS, kept on the row. A 400 means this payload will never be accepted, and
+             * before today it was retried every 20 seconds for ever with nothing on screen. It is still retried —
+             * a 500 is transient and a bill is somebody's money, so nothing here parks or drops it — but the
+             * reason now travels with the bill and reaches the screen.
+             */
+            var said = '';
+            try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; } catch (_) {}
+            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status);
+            bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
+            try { await DB.put('queue', bill); } catch (_) {}
+            if (!why) why = 'Bill ' + bill.no + ': ' + bill._why;
+          }
+        } catch (e) {
+          /* the line went mid-request; the queue keeps everything. Say WHICH failure it was. */
+          why = 'The line dropped while sending' + (bill && bill.no ? ' bill ' + bill.no : '') + '.';
+          break;
+        }
       }
     } finally {
       this._busy = false;
+      /* ⭐ recorded whatever happened, including a clean run — "nothing to send" is an answer too */
+      this.last = { at: Date.now(), tried: tried, sent: sent, why: why };
       /**
        * ⚠️⚠️ THE BAR MUST NOT LIE ABOUT MONEY. drain() sent the bills and never told the screen, so the counter went on saying
        * "1 bill(s) waiting" over an empty queue — and to a shopkeeper that reads as a sale that has not reached ChitBridge. It
@@ -2341,25 +2489,36 @@ async function offerWrite(i, offer_id, excluded){
  * append-only by grant — and the route refuses anything that is not one live offer and this one product.
  * ⚠️ The local copy is updated too, so the shelf badge and the panel agree before the bell brings the shop back.
  */
+/* ⭐ AN OFFER IS THE ONE ATHI NAMED FIRST — *"if the offer updated in the counter should reflect in the cloud,
+   then only it can be active in the local counter"*. A counter honouring an offer the shop has not got is a
+   discount nobody authorised, given away at the till. */
 async function offerItemWrite(i, offer_id, on){
   if (!i) return null;
   var o = (S.offers || []).filter(function(x){ return String(x.id) === String(offer_id); })[0];
-  if (o) {
-    o.applies_to = o.applies_to || {};
-    var had = Array.isArray(o.applies_to.item_ids) ? o.applies_to.item_ids.map(String) : [];
-    o.applies_to.item_ids = on ? (had.indexOf(String(i.item_id)) >= 0 ? had : had.concat([String(i.item_id)]))
-                               : had.filter(function(x){ return x !== String(i.item_id); });
-  }
-  i._off = null; OFFER_STAMP = null;                 /* the badge on the shelf is re-asked, not remembered */
-  try { await DB.set('snapshot', S); } catch (_) {}
-  return await HOST.tillPost('/api/till/offer-item',
-    { offer_id: String(offer_id), item_id: i.item_id, on: !!on, by: (WHO && WHO.name) || null });
+  return await cloudFirst({
+    what: i.name + ' — ' + (on ? 'added to' : 'taken off') + ' the offer "' + ((o && o.label) || offer_id) + '"',
+    path: '/api/till/offer-item',
+    body: { offer_id: String(offer_id), item_id: i.item_id, on: !!on, by: (WHO && WHO.name) || null },
+    apply: async function(){
+      if (o) {
+        o.applies_to = o.applies_to || {};
+        var had = Array.isArray(o.applies_to.item_ids) ? o.applies_to.item_ids.map(String) : [];
+        o.applies_to.item_ids = on ? (had.indexOf(String(i.item_id)) >= 0 ? had : had.concat([String(i.item_id)]))
+                                   : had.filter(function(x){ return x !== String(i.item_id); });
+      }
+      i._off = null; OFFER_STAMP = null;             /* the badge on the shelf is re-asked, not remembered */
+      try { await DB.set('snapshot', S); } catch (_) {}
+      paintHits();
+    },
+  });
 }
 async function screenWrite(i, on){
   if (!i) return null;
-  i.screen = !!on;
-  try { await DB.set('snapshot', S); } catch (_) {}
-  return await HOST.tillPost('/api/till/flags', { item_id: i.item_id, screen: !!on });
+  return await cloudFirst({
+    what: i.name + ' — ' + (on ? 'shown on' : 'taken off') + ' the shop screen',
+    path: '/api/till/flags', body: { item_id: i.item_id, screen: !!on },
+    apply: async function(){ i.screen = !!on; try { await DB.set('snapshot', S); } catch (_) {} },
+  });
 }
 /**
  * ⚠️ ONE WORDING FOR ALL FOUR, and it never claims the cloud agreed when it has not.
@@ -2580,9 +2739,16 @@ var CHANGED = { stock: [], price: [] };     /* what this counter changed today, 
  * ⚠️ A BILL IS NAMED FIRST AND SEPARATELY, always. It is the only one that is money somebody has already handed over.
  */
 var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0 };
+/**
+ * ⭐ WHAT THIS COUNTER IS USING THAT THE SHOP HAS NOT GOT. Derived from the queue on every tally, never stored —
+ * a row waiting IS the out-of-sync state, so it cannot outlive the thing it describes.
+ */
+var OUT_OF_SYNC = [];
 async function queueTally(){
   var rows = [];
   try { rows = (await DB.all('queue')) || []; } catch (_) { rows = []; }
+  OUT_OF_SYNC = rows.filter(function(r){ return r && r.priority && r.says; })
+                    .map(function(r){ return r.says; });
   var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0 };
   rows.forEach(function(r){
     /* ⚠️ POINTS ARE NOT 'A CHANGE'. To a shopkeeper a change is a price or a shelf flag — something they did to the
@@ -2616,17 +2782,69 @@ function queueWords(){
 /** ⚠️ i.status is the LIFECYCLE — i.avail is a quantity feed, and comparing it to a string was always false. */
 async function stockWrite(i, now){
   if (!i) return null;
+  return await cloudFirst({
+    what: i.name + ' — ' + (now === 'unavailable' ? 'off the shelf' : 'back on the shelf'),
+    path: '/api/till/stock', body: { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null },
+    apply: async function(){ await stockApply(i, now); },
+  });
+}
+async function stockApply(i, now){
   i.status = now;                                    /* the shelf changes under the finger that saved it */
   i._off = null; i._rate = undefined;
   CHANGED.stock = [{ name: i.name, status: now, at: new Date() }].concat(
     CHANGED.stock.filter(function(x){ return x.name !== i.name; })).slice(0, 40);
   try { await DB.set('snapshot', S); } catch (_) {}
-  /* ⚠️ THE CHIP CARRIES A COUNT, SO IT IS PART OF WHAT CHANGED. Marking something off left the chip reading "Off the shelf 0"
-     while the row had already gone from the list — the one number on screen whose whole job is to say where it went. */
   /* ⚠️ THE CHIP CARRIES A COUNT, so it is part of what changed — marking something off used to leave it reading 0 while the
      row had already gone from the list, the one number whose whole job is to say where it went. */
   paintHits(); paintChips();
-  return await HOST.tillPost('/api/till/stock', { item_id: i.item_id, status: now, by: (WHO && WHO.name) || null });
+}
+
+/**
+ * ── ⭐⭐⭐ A CATALOGUE CHANGE REACHES CHITBRIDGE FIRST, OR IT IS NOT MADE HERE ──────────────────────────────────
+ *
+ * Athi, 2026-09-10: *"if the offer updated in the counter should reflect in the cloud, then only it can be active
+ * in the local counter, if not it will be out of sync. So any change to the catalogue should reflect in the cloud
+ * — ensure that it is done, and on getting the confirmation back, change the counter. Otherwise, ask the risk
+ * acceptance and set a flag that it is out of sync, and when the net is up it is the first thing to be done."*
+ *
+ * ⭐⭐⭐ AND THE DISTINCTION HE IS DRAWING IS THE WHOLE DESIGN. A BILL is a fact: the goods have gone, the money
+ * is in the drawer, and it must be queued and never blocked — refusing it would not undo the sale, only lose the
+ * record of it. A PRICE OR AN OFFER IS AN INTENTION: nothing has happened yet, and applying it locally before the
+ * shop's own system agrees creates two shops — one selling at ₹146 and one that still says ₹148.
+ *
+ * ⚠️⚠️ THE OLD CODE DID EXACTLY THAT, and it is his finding 09815 (*"the value have been updated in the till, but
+ * is not getting updated"*): `i.price = v` ran FIRST, unconditionally, and the answer from ChitBridge was returned
+ * to a caller that ignored it. Offline, refused, timed out — the counter changed anyway and said nothing.
+ *
+ * ⭐ THE RISK IS OFFERED, NOT TAKEN. When ChitBridge cannot be told, the shopkeeper is asked in plain words what
+ * the consequence is, and only they may accept it. If they do, the change is applied AND queued at the FRONT, so
+ * it is the first thing that goes when the line returns — his instruction exactly.
+ *
+ * ⚠️ A REFUSAL IS NOT A RISK TO ACCEPT. A 4xx means ChitBridge has considered this change and said no; there is
+ * nothing to retry and nothing to accept, so the change is simply not made and the reason is shown.
+ */
+async function cloudFirst(o){
+  var r = await HOST.tillPost(o.path, o.body, { noQueue: true });
+  if (r && r.ok && !r.queued) { await o.apply(); return { ok: true }; }
+
+  if (r && r.final) { say(o.what + '\n\nChitBridge refused it: ' + r.why + '\n\nNothing has been changed here.',
+                          'Not changed'); return { ok: false, why: r.why }; }
+
+  var why = (r && r.why) || 'ChitBridge could not be reached';
+  var yes = await sure(
+    o.what + '\n\nChitBridge has NOT been told — ' + why + '.\n\n'
+    + 'If you change it here anyway, this counter will use the new value while ChitBridge still has the old one, '
+    + 'and so will your storefront and any other counter. It is sent first, the moment the line is back.',
+    'Change it here anyway', 'ChitBridge has not been told');
+  if (!yes) return { ok: false, why: why, refused: true };
+
+  await o.apply();
+  /* ⭐ AT THE FRONT OF THE QUEUE. "When the net is up, it is the first thing to be done" — drain sorts on this. */
+  await DB.put('queue', { no: 'OP/' + Date.now() + '/' + Math.random().toString(36).slice(2, 7),
+                          at: new Date().toISOString(), priority: 1, says: o.what,
+                          tillPost: { path: o.path, body: o.body } });
+  await queueTally(); paintStatus();
+  return { ok: true, outOfSync: true };
 }
 
 /** the price pane: whatever was tapped, with a box for the new number */
@@ -2636,11 +2854,16 @@ async function priceWrite(i, v){
   if (!isFinite(v) || v < 0) return { ok:false, why:'that is not a price' };
   var was = Number(i.price) || 0;
   if (v === was) return { ok:true };                 /* nothing to do, and saying so is not an error */
-  i.price = v; i._off = null;                        /* the shelf shows the new price at once */
-  CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
-  try { await DB.set('snapshot', S); } catch (_) {}
-  paintHits();
-  return await HOST.tillPost('/api/till/price', { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null });
+  return await cloudFirst({
+    what: i.name + ' — price ' + money(was) + ' → ' + money(v),
+    path: '/api/till/price', body: { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null },
+    apply: async function(){
+      i.price = v; i._off = null;
+      CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
+      try { await DB.set('snapshot', S); } catch (_) {}
+      paintHits();
+    },
+  });
 }
 
 /**
@@ -3230,10 +3453,38 @@ function health(){
       'Anything changed in ChitBridge since then is not here — you would bill at yesterday\'s price.',
       'Press ↻ while the internet is on.');
   }
-  if (STATE && STATE.queued > 3)
-    add('warn', STATE.queued + ' bills are waiting to reach ChitBridge',
-      'They are safe on this device and go by themselves, once each. A queue this long usually means the line has been down a while.',
-      'Nothing, unless it stays this way after the internet is back.');
+  /**
+   * ⭐⭐ WHEN A QUEUE WILL NOT MOVE, SAY WHY IT WILL NOT MOVE. Athi, observation 5: four bills waiting, Sync now
+   * doing nothing, and this row telling him only that a long queue *"usually means the line has been down a
+   * while"* — a guess, offered in place of the reason drain() had and threw away.
+   * ⚠️ The reason is only shown when there IS one. A queue draining normally must not grow a warning.
+   */
+  /**
+   * ⭐⭐⭐ THIS COUNTER IS OUT OF STEP WITH THE SHOP. Athi: *"set a flag that it is out of sync."*
+   *
+   * ⚠️ DERIVED, NEVER STORED — the same rule the sync badge follows. A queued catalogue change IS the flag: while
+   * one is waiting, this counter is using a price or an offer that ChitBridge does not have, and so the storefront
+   * and every other counter disagree with this one. The moment it goes, the flag is gone, because the row is.
+   * ⭐ It is a `bad`, not a `warn`: a queued BILL is safe and merely late, but this is the shop's own catalogue
+   * saying two different things at once, and every sale rung up meanwhile inherits the difference.
+   */
+  if (OUT_OF_SYNC && OUT_OF_SYNC.length)
+    add('bad', 'This counter is out of step with ChitBridge',
+      OUT_OF_SYNC.length + ' change(s) made here have not reached the shop: ' + OUT_OF_SYNC.join(' · ')
+        + '. Until they do, this counter is using values the storefront and other counters do not have.',
+      'They go first, the moment the line is back. Press ↻ while online to send them now.');
+
+  if (STATE && STATE.queued > 3) {
+    var lastWhy = (HOST && HOST.last && HOST.last.why) || '';
+    if (lastWhy)
+      add('bad', STATE.queued + ' bills are waiting, and the last attempt failed',
+        lastWhy + ' They are safe on this device and it keeps trying.',
+        'If it says the key was refused, pair this counter again. Otherwise tell us what it says.');
+    else
+      add('warn', STATE.queued + ' bills are waiting to reach ChitBridge',
+        'They are safe on this device and go by themselves, once each. A queue this long usually means the line has been down a while.',
+        'Nothing, unless it stays this way after the internet is back.');
+  }
 
   var pack = (typeof lotPack === 'function') ? lotPack() : null;
   if (pack && pack.required && pack.required.length)
@@ -4933,8 +5184,10 @@ async function openBills(keepOpen){
    * from and what empties on success. A stored "sent" flag would be a second opinion about one fact, and the day the two disagree
    * the counter would confidently show the wrong one.
    */
-  var waiting = {};
-  try { ((await DB.all('queue')) || []).forEach(function(q){ if (q && q.no) waiting[q.no] = true; }); } catch (_) {}
+  var waiting = {}, stuckWhy = {};
+  /* ⭐ AND WHY IT IS STILL WAITING, when drain has been told. The row carries the shop's own words from the last
+     refusal (bill._why), so "waiting" stops being a state with no explanation attached to it. */
+  try { ((await DB.all('queue')) || []).forEach(function(q){ if (q && q.no) { waiting[q.no] = true; if (q._why) stuckWhy[q.no] = q._why; } }); } catch (_) {}
   var nWait = rows.filter(function(b){ return waiting[b.no]; }).length;
 
   var d = STATE.today || { count:0, total:0, by:{} };
@@ -4955,6 +5208,9 @@ async function openBills(keepOpen){
             + '<span data-testid="till-bill-sync-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;'
               + (waiting[b.no] ? 'color:var(--warn);border-color:var(--warn)' : 'color:var(--ok);border-color:var(--ok)') + '">'
               + (waiting[b.no] ? '⏳ waiting' : '✓ sent') + '</span>'
+            /* ⚠️ the refusal, on the bill it belongs to — a reason in a toast is gone by the time anyone acts on it */
+            + (stuckWhy[b.no] ? '<div class="u" style="color:var(--warn)" data-testid="till-bill-why-' + esc(b.no) + '">'
+                + esc(stuckWhy[b.no]) + '</div>' : '')
             + '<div class="u">' + esc(new Date(b.at).toTimeString().slice(0,5)) + ' · '
           + esc((b.customer && b.customer.name) || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + ' · ' + ((b.lines||[]).length) + ' item(s)</div></span>'
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
@@ -5036,14 +5292,36 @@ async function coldStart(){
  */
 async function sendNow(){
   if (!navigator.onLine) { toastLine('Still no internet — the bills are safe here and will go as soon as it returns.'); return; }
+  /* ⚠️ NEVER ASSUME THE HOST HAS ONE. It threw on the desktop counter for as long as this button has existed —
+     an unhandled rejection, no toast, nothing on screen. A missing capability must be said, not thrown. */
+  if (!HOST || typeof HOST.drain !== 'function') {
+    toastLine('This counter cannot send from here — the counter program does that by itself.'); return;
+  }
   var before = ((await DB.all('queue')) || []).length;
-  await HOST.drain();
+  /* ⚠️ on the agent host the queue is the AGENT'S file, not this page's IndexedDB, so read the count it reports */
+  var r = await HOST.drain();
+  if (HOST.mode === 'agent') {
+    await load(); await openBills(true);
+    var q = (r && r.queued != null) ? r.queued : null;
+    if (q === 0) toastLine('Everything has reached ChitBridge.');
+    else if (r && r.sent > 0) toastLine(r.sent + ' sent. ' + q + ' still waiting — it keeps trying.');
+    else toastLine(((HOST.last && HOST.last.why) ? HOST.last.why + ' ' : '') + 'The bills are safe on this PC.');
+    return;
+  }
   var after = ((await DB.all('queue')) || []).length;
   await load();
   await openBills(true);
   if (after === 0) toastLine(before === 1 ? 'The bill has reached ChitBridge.' : 'All ' + before + ' bills have reached ChitBridge.');
   else if (after < before) toastLine((before - after) + ' of ' + before + ' sent. ' + after + ' still waiting — it keeps trying.');
-  else toastLine('Could not send them just now. They are safe here and will go by themselves.');
+  /**
+   * ⭐⭐ SAY WHY. This branch used to read "Could not send them just now" and stop — which is a shrug, not an
+   * answer, and it was the whole of what a shopkeeper with four stuck bills could learn. drain() now records the
+   * reason on HOST.last, so the one case where the person needs information is the one that gives it.
+   * ⚠️ The fallback keeps the old words for the case drain really has nothing to say (an empty queue, a race) —
+   * the sentence was never wrong, it was just the only thing on offer.
+   */
+  else toastLine(((HOST.last && HOST.last.why) ? HOST.last.why + ' ' : '')
+    + 'The bills are safe here and it keeps trying.');
 }
 /** ⭐ EARLIER — asked for, not held: a device is not an archive, and this says so plainly when the line is down */
 async function paintEarlier(){
@@ -5338,7 +5616,7 @@ async function bellUp(){
     if (!(HOST && HOST.mode === 'cloud' && CloudHost.key)) return;   /* the desktop kit refreshes on its own schedule */
     if (Date.now() - BELL_AT < 20000) return;                        /* do not thrash a server that is refusing */
     BELL_AT = Date.now();
-    var r = await fetch(CloudHost.api + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': CloudHost.key } });
+    var r = await fetchBy(CloudHost.api + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': CloudHost.key } });
     if (!r.ok) return;
     var t = (await r.json()).ticket; if (!t) return;
     BELL = new EventSource(CloudHost.api + '/api/events/stream?ticket=' + encodeURIComponent(t));
