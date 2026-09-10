@@ -35,6 +35,12 @@ const TIER_A = [
      not a module), invents no worth (a guessed conversion is a number a shop would be held to), and formats no
      money (it takes ctx.money, the shape the offers engine already uses). */
   'lib/rewards.js',          // what a reward point is worth, said in words; pure, holds nothing
+  /* ⚠️ TIER A AND IT MATTERS THAT IT IS. inventory.js decides what a movement does to a balance — the weighted
+     average, the sign a reason implies, what happens when quantity reaches zero or goes below it. That is
+     arithmetic about an obligation (what the shop holds and what it cost), so it must behave identically on a
+     counter that is offline and on the server that re-applies the same movement. No database, no clock it does
+     not receive, no locale: the moment it needs any of those it stops being answerable in two places at once. */
+  'lib/inventory.js',        // perpetual stock, weighted average (Ind AS 2); pure, holds nothing
 ];
 
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
@@ -60,6 +66,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap
      the store for another database and nothing about a customer's balance changes; swap the engine and it does. */
   'reward-store.js',
+  /* ADOPTION, same split again: inventory.js decides what a movement DOES to a balance; stock-store.js knows where
+     the balance is kept and holds the one transaction that moves the log and the cache together. The interesting
+     rule it owns is not a business rule at all — it is the row lock, and a lock is infrastructure. */
+  'stock-store.js',
   // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
   // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
   'network-view.js',
