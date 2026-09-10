@@ -821,4 +821,34 @@ it('⭐⭐⭐ goods-in records the tax paid, per line and per consignment', () =
     'the input tax stays in the local doc and never reaches the chit — invisible to lib/tax-lines');
 });
 
+/**
+ * ⚠️⚠️ A QUERY THAT NAMES A COLUMN THE TABLE HAS NOT GOT. The counter's customer list asked customer_list for five
+ * things and only ONE existed — display_name, phone, entity_id and updated_at are not columns of that table. It
+ * threw on every snapshot, a catch swallowed it, and the list was ALWAYS empty: 'the till looks up a repeat
+ * customer' had never once looked one up.
+ * ⚠️ The catch is why it survived. Its comment claimed to be handling a known schema difference, so the silence
+ * read as handled rather than broken — a catch that explains a failure it never checked for converts a bug into a
+ * documented condition.
+ */
+it('⚠️⚠️ the customer list asks for columns that exist, on the table that has them', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
+  /* the name and the number live on identities; customer_list is the JOIN and carries the relationship */
+  assert.ok(q.indexOf('JOIN identities') > 0, 'the name and phone are read from customer_list, which has neither');
+  assert.ok(q.indexOf('c.owner_entity_id = $1') > 0, 'it filters on entity_id — customer_list has owner_entity_id');
+  assert.ok(q.indexOf('FROM customer_list c') > 0, 'the join is gone');
+  /* ⚠️ and the failure is no longer silent */
+  assert.ok(q.indexOf('catch (_)') < 0, 'the error is swallowed without a trace again');
+  assert.ok(q.indexOf('logger') > 0, 'a swallowed failure must leave something behind');
+
+  /* the columns it names must be ones the baseline or a migration actually creates */
+  const base = fs.readFileSync(path.join(API, 'migrations', '000_baseline.sql'), 'utf8');
+  const cols = base.slice(base.indexOf('CREATE TABLE customer_list'), base.indexOf('CREATE TABLE customer_list') + 700);
+  for (const real of ['owner_entity_id', 'customer_identity_id', 'last_txn_at'])
+    assert.ok(cols.indexOf(real) > 0, 'customer_list no longer has ' + real + ' — this query needs rechecking');
+  for (const notThere of ['display_name', 'phone'])
+    assert.ok(cols.indexOf(notThere) < 0,
+      'customer_list now HAS ' + notThere + ' — the join may be unnecessary, but check before simplifying');
+});
+
 console.log(pass + ' checks');

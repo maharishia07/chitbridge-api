@@ -130,10 +130,28 @@ router.get('/snapshot', auth, async (req, res) => {
     /* the counter's customer list — a name and a phone, nothing more; the till looks up a repeat customer, it does not hold history */
     let customers = [];
     try {
+      /**
+       * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
+       * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
+       * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
+       */
       const c = await withEntity(entity_id, (db) => db.query(
-        `SELECT display_name, phone, groups FROM customer_list WHERE entity_id = $1 ORDER BY updated_at DESC NULLS LAST LIMIT 2000`, [entity_id]));
-      customers = c.rows.map((x) => ({ name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] }));
-    } catch (_) { /* the column set differs before b205 — the till still bills */ }
+        `SELECT i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at
+           FROM customer_list c
+           JOIN identities i ON i.identity_id = c.customer_identity_id
+          WHERE c.owner_entity_id = $1
+          ORDER BY c.last_txn_at DESC NULLS LAST
+          LIMIT 2000`, [entity_id]));
+      customers = c.rows.map((x) => ({ name: x.display_name, phone: x.phone || null,
+                                       groups: Array.isArray(x.groups) ? x.groups : [] }));
+    } catch (e) {
+      /**
+       * ⚠️ SAY WHAT WENT WRONG. The old catch claimed to be handling a known schema difference and was in fact
+       * hiding a query that could never run. A swallowed error that explains itself wrongly is how a broken
+       * feature becomes a documented one — so this one leaves a trace and the till still bills.
+       */
+      try { require('../lib/logger').warn('till.customers', { entity_id, why: String(e && e.message) }); } catch (_) {}
+    }
 
     /**
      * ⭐ THE PEOPLE WHO MAY STAND AT A COUNTER (2026-09-07). The shop's own co-assists — never the connectors, which are actors too
