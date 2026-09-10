@@ -16,9 +16,42 @@ const ctx = (req) => auth.entityOf(req);
 
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
 
-// Add a supplier by bridge_id — with optional owner-side fields (your naming / preferred / notes)
+/**
+ * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
+ *
+ * Athi, 2026-09-10: *"still a non-CB person can be a supplier, we can set the flag again — he is not part of CB?"*
+ *
+ * Two ways in, and the row remembers which:
+ *   `supplier_bridge_id`  a ChitBridge business — User ID, bridge id or email. Their catalogue is callable, an
+ *                         order can be sent, a delivery chit can arrive and be adopted.
+ *   `name`                the hardware shop on the corner with a paper bill. Nothing to call, nothing to adopt —
+ *                         purchases from them are RECORDED. Most of a small shop's suppliers are these.
+ *
+ * ⭐⭐⭐ AND A LOCAL SUPPLIER STILL GETS A REAL ID. Athi: *"still we need the user id, so we can attach item and so
+ * on against that id. We create id internally, so the existing mechanism will not break."* Exactly right, and it
+ * is why this route mints an identity instead of writing a NULL. `supplier_list.supplier_entity_id` carries a
+ * foreign key; adoption, availability, purchases and spend all address a supplier BY ID. A null would have needed
+ * a branch in every one of them — and every branch is a place the next query forgets to look.
+ *
+ * ⭐ AND HE IS AN ORDINARY ENTITY. Athi: *"follow the existing path — for all practical purposes he is a bridge
+ * user. Only thing is he is not a recipient."* Same table, same identity_type, same bridge id, same joins. What
+ * marks him is his HANDLE: `~acmetraders.corner-hardware`, where `~` means minted-not-registered (lib/handle.js).
+ * The handle embeds the owner, so the unique index on lower(user_id) already gives one Corner Hardware per shop —
+ * while two different shops may each have their own, which they must.
+ *
+ * ⚠️ "NOT A RECIPIENT" IS ENFORCED WHERE IT MATTERS, not here: the bridge path below refuses a `~` handle, so one
+ * shop cannot add another shop's private supplier; the recipient resolver and the business search refuse them too.
+ *
+ * ⭐ `supply_kind` (b216) is INDEPENDENT of that. resale = goods you sell on; own_use = what the business consumes.
+ * The two flags cross freely — a ChitBridge supplier can be your packaging supplier, and the corner shop can sell
+ * you stock. The screen shows them as two tabs; adoption reads only supply_kind (lib/adopt.js).
+ *
+ * ⚠️ STILL UNILATERAL. Nobody is asked or notified, which is why the read tier stays at public storefront.
+ */
 router.post('/suppliers',
-  [ body('supplier_bridge_id').trim().notEmpty().withMessage('Supplier bridge ID required'),
+  [ body('supplier_bridge_id').optional({ nullable: true }).trim(),
+    body('name').optional({ nullable: true }).trim().isLength({ max: 120 }),
+    body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
     body('category').optional().trim().isLength({ max: 50 }),
     body('nickname').optional().trim().isLength({ max: 80 }),
     body('notes').optional().trim().isLength({ max: 2000 }),
@@ -27,11 +60,43 @@ router.post('/suppliers',
   async (req, res) => {
     try {
       const owner     = ctx(req);
-      const bridge    = req.body.supplier_bridge_id.trim();
+      const bridge    = String(req.body.supplier_bridge_id || '').trim();
+      const localName = sanitise(String(req.body.name || '').trim()) || null;
+      const kind      = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
       const category  = sanitise(req.body.category || '') || null;
       const nickname  = sanitise(req.body.nickname || '') || null;
       const notes     = sanitise(req.body.notes || '') || null;
       const preferred = req.body.preferred === true || req.body.preferred === 'true';
+
+      if (!bridge && !localName)
+        return res.status(400).json({ error: 'Invalid',
+          message: 'Give a User ID or email for a ChitBridge business, or a name for a local supplier' });
+
+      /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
+         user_id — it is an ordinary entity row — so without this a competitor who guessed the handle could add
+         acmetraders' private supplier to their own list. Who supplies you is a competitive fact, and the guess is
+         not hard: the handle is the shop's own name plus their supplier's. */
+      if (require('../lib/handle').isMinted(bridge))
+        return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
+
+      /* ── OFF THE RAIL: a name, and an id minted for it. ─────────────────────────────────────────────────── */
+      if (!bridge) {
+        const local = await require('../lib/local-identity').mint(owner, localName, { query });
+        if (local.error) return res.status(local.status).json(local.error);
+        const dupL = await query(
+          `SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, local.identity_id]);
+        if (dupL.rows.length > 0)
+          return res.status(409).json({ error: 'Exists', message: localName + ' is already in your supplier list' });
+        await query(
+          `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind,
+                                      category, nickname, notes, preferred, added_via)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'local')`,
+          [owner, local.identity_id, kind, category, nickname, notes, preferred]);
+        return res.json({ message: 'Supplier added',
+          supplier: { supplier_entity_id: local.identity_id, bridge_id: local.bridge_id,
+                      display_name: local.display_name, on_rail: false,
+                      supply_kind: kind, category, nickname, notes, preferred } });
+      }
 
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
       // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
@@ -51,12 +116,13 @@ router.post('/suppliers',
         return res.status(409).json({ error: 'Exists', message: 'Already in your supplier list' });
 
       await query(
-        `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, category, nickname, notes, preferred, added_via)
-         VALUES ($1, $2, $3, $4, $5, $6, 'manual')`,
-        [owner, sup.rows[0].identity_id, category, nickname, notes, preferred]);
+        `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, category, nickname, notes, preferred, added_via)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
+        [owner, sup.rows[0].identity_id, kind, category, nickname, notes, preferred]);
 
       res.json({ message: 'Supplier added',
-        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, category, nickname, notes, preferred } });
+        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, on_rail: true,
+                    supply_kind: kind, category, nickname, notes, preferred } });
     } catch (err) {
       console.error('Add supplier error:', err.message);
       res.status(500).json({ error: 'Add supplier failed', message: safeErr(err) });
@@ -68,7 +134,12 @@ router.get('/suppliers', auth, async (req, res) => {
   try {
     const owner = ctx(req);
     const r = await query(
+      /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
+         (lib/handle.js). The row is an ordinary entity in every other respect, so the join and every downstream
+         lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
       `SELECT sl.supplier_list_id, sl.category, sl.nickname, sl.preferred, sl.notes, sl.created_at,
+              COALESCE(sl.supply_kind, 'resale') AS supply_kind,
+              (COALESCE(i.user_id, '') NOT LIKE '~%') AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
               i.gstn, i.country, i.policy_flags,
               EXISTS (SELECT 1 FROM entity_schemas es
@@ -87,6 +158,10 @@ router.get('/suppliers', auth, async (req, res) => {
     try {
       const cg = require('../lib/customer-groups'); const cv = require('../lib/catalogue-view'); const eng = require('../lib/offers-engine').CBOffers;
       await Promise.all(rows.map(async (o) => {
+        /* ⚠️ A LOCAL SUPPLIER HAS NO OFFERS AND NEVER WILL — they are not on the platform. Asking anyway costs two
+           reads per row and can only ever answer []; a shop whose suppliers are mostly local is exactly the shop
+           that would feel it. Skipping is cheaper AND more honest than an empty answer that looks computed. */
+        if (o.on_rail === false) { o.for_you = []; return; }
         try {
           const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: o.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: o.supplier_entity_id, withEntity, all: true })]);
           o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => '₹' + Number(n).toFixed(2), customer_groups: groups }) : null; } catch (_) {} return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
@@ -106,6 +181,8 @@ router.patch('/suppliers/:id',
   [ body('nickname').optional({ nullable: true }).trim().isLength({ max: 80 }),
     body('category').optional({ nullable: true }).trim().isLength({ max: 50 }),
     body('notes').optional({ nullable: true }).trim().isLength({ max: 2000 }),
+    body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
+    body('display_name').optional({ nullable: true }).trim().isLength({ max: 120 }),
     body('preferred').optional().isBoolean() ],
   validate, auth,
   async (req, res) => {
@@ -116,7 +193,47 @@ router.patch('/suppliers/:id',
       if ('category'  in req.body) { sets.push(`category = $${n++}`);  vals.push(sanitise(req.body.category || '') || null); }
       if ('notes'     in req.body) { sets.push(`notes = $${n++}`);     vals.push(sanitise(req.body.notes || '') || null); }
       if ('preferred' in req.body) { sets.push(`preferred = $${n++}`); vals.push(req.body.preferred === true || req.body.preferred === 'true'); }
-      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide nickname, category, notes, or preferred' });
+      /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
+         sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
+         and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
+         what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
+         supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
+      if ('supply_kind' in req.body) { sets.push(`supply_kind = $${n++}`); vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale'); }
+
+      /**
+       * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
+       * keep it as per the shop name. So internal id never gets mixed up."*
+       *
+       * ⭐ That is CB's three-names rule holding at a new kind of row, and it is why the id had to be a number
+       * rather than a slug of the name: the HANDLE is generated and set once, the DISPLAY NAME is theirs and free
+       * to change. Correcting "Corner Hardwre" to "Corner Hardware & Sons" moves nothing — not the id, not a
+       * purchase, not a rupee of spend. A name-shaped handle would have frozen the typo into the identifier.
+       *
+       * ⚠️ ONLY FOR A PARTY THIS SHOP MINTED. Renaming a real ChitBridge business in their own row is not this
+       * shop's to do — for those, `nickname` is the owner-side label and always has been.
+       * ⚠️ A duplicate name is REFUSED by the b218 index rather than merged: two suppliers with one name is the
+       * mix-up he is guarding against, and a silent merge would move history between two real records.
+       */
+      if ('display_name' in req.body && String(req.body.display_name || '').trim()) {
+        const who = await query(
+          `SELECT i.identity_id, i.user_id FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
+            WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`, [req.params.id, owner]);
+        const row = who.rows[0];
+        if (!row) return res.status(404).json({ error: 'Not found' });
+        if (!require('../lib/handle').isMinted(row.user_id))
+          return res.status(403).json({ error: 'Not yours',
+            message: 'That is their own business name. Use "your name for them" instead.' });
+        const nm = sanitise(String(req.body.display_name).trim().replace(/\s+/g, ' ')).slice(0, 120);
+        try {
+          await query(`UPDATE identities SET display_name = $1 WHERE identity_id = $2`, [nm, row.identity_id]);
+        } catch (e) {
+          if (e && e.code === '23505') return res.status(409).json({ error: 'Exists',
+            message: 'You already have a supplier called ' + nm + '.' });
+          throw e;
+        }
+        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm });
+      }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide nickname, category, notes, supply_kind, or preferred' });
       vals.push(req.params.id, owner);
       const r = await query(
         `UPDATE supplier_list SET ${sets.join(', ')}
@@ -129,7 +246,14 @@ router.patch('/suppliers/:id',
     }
   });
 
-// Remove from my list (does not affect the supplier)
+/**
+ * Remove from my list (does not affect the supplier).
+ *
+ * ⚠️ A LOCAL SUPPLIER'S IDENTITY IS DELIBERATELY LEFT BEHIND. Purchases, supply items and spend all point at that
+ * id; deleting it would either break those references or silently orphan a year of history. Leaving it costs one
+ * unreferenced row and buys something useful: re-adding the same name finds the same id again (local-identity.mint
+ * looks before it mints), so the history reconnects instead of starting over.
+ */
 router.delete('/suppliers/:id', auth, async (req, res) => {
   try {
     const owner = ctx(req);
@@ -193,6 +317,10 @@ router.get('/suppliers/availability', auth, async (req, res) => {
          JOIN identities i ON i.identity_id = sl.supplier_entity_id
         WHERE sl.owner_entity_id = $1
           AND COALESCE(i.sealed, false) = false
+          /* ⚠️ NOT LOCAL SUPPLIERS (b218). "Who stocks this?" is answered by reading catalogues, and a local
+             supplier has none — including them would spend a read per row to learn nothing and then report "no",
+             which reads as "they don't stock it" rather than "we cannot ask them". Silence is the truer answer. */
+          AND COALESCE(i.identity_type, 'entity') <> 'local'
         ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]);
 
     const viewer = req.identity && req.identity.bridge_id;
@@ -394,6 +522,10 @@ router.post('/customers',
   async (req, res) => {
     try {
       const owner = ctx(req), handle = req.body.handle.trim();
+      /* ⚠️ Same fence as the supplier add: a `~` handle is a party some OTHER business minted, and it resolves by
+         user_id like any entity. Answer as if it does not exist rather than confirming the guess. */
+      if (require('../lib/handle').isMinted(handle))
+        return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
       const who = await query(
         `SELECT identity_id, display_name, user_id, bridge_id FROM identities
           WHERE bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)

@@ -86,6 +86,11 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   /* ADOPTION: the list of things a shop buys to USE, and the purchases against it. Its one real rule —
      stocked or expensed — is a materiality judgement the SHOP makes, so this only carries the answer. */
   'supply-store.js',
+  /* ADOPTION: it mints an id for a party who is not on ChitBridge, so every join that addresses a supplier by id
+     keeps working. Nothing in it is a business rule — it is one INSERT plus the find-first that keeps a repeat
+     purchase on the same row. The one decision it does encode ('local', never 'entity') is a privacy fence around
+     THIS platform's search, which is the definition of adoption rather than engine. */
+  'local-identity.js',
   // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
   // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
   'network-view.js',

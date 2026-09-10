@@ -352,6 +352,15 @@ router.get('/search', auth, async (req, res) => {
        WHERE (LOWER(user_id) LIKE LOWER($1) OR LOWER(display_name) LIKE LOWER($1) OR LOWER(bridge_id) LIKE LOWER($1))
        AND identity_type = 'entity' AND status = 'active'
        AND COALESCE(sealed, false) = false
+       /**
+        * ⚠️⚠️ AND NEVER A MINTED PARTY — a supplier or customer some business created by hand, whose handle starts
+        * with a tilde (lib/handle.js). They are ordinary active entities by design, so nothing else here excludes
+        * them, and two different things would go wrong at once: they cannot be traded with (nobody can sign in to
+        * receive), and WHO SUPPLIES YOU is one of the few genuinely competitive facts a small business holds.
+        * Without this line every local supplier a shop wrote down would be discoverable — and addable — by every
+        * competitor on the platform, with nothing on any screen to suggest it.
+        */
+       AND COALESCE(user_id, '') NOT LIKE '~%'
        AND identity_id != $2
        /**
         * An exact handle beats a fuzzy name — someone who typed the identifier knew what they wanted.

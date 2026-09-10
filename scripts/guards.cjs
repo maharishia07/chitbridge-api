@@ -34,6 +34,7 @@ const GUARDS = [
      lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */
   'engine-boundary.test.js',  // every lib declared engine or not; anything unreachable carries an @stage
   'adopt.test.js',            // what one shop may take into its catalogue from another's delivery
+  'local-supplier.test.js',   // ~<user id>.sup-nnnn — one row per shop, never a recipient, never in the search
   'search-engine.test.js',    // one search, three copies
   'lotfields.test.js',        // what a vertical must capture about a consignment
   'printer.test.js',          // the slip bytes

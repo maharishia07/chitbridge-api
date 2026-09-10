@@ -404,11 +404,26 @@ router.post('/send',
           hasSelf = true;
           continue;
         }
+        /**
+         * ⚠️⚠️ A MINTED PARTY IS NOT A RECIPIENT. Athi, 2026-09-10: *"he is not a recipient, so you can't bring
+         * him to the rail or something."* `~acmetraders.sup-0001` is an ordinary active entity in every other
+         * respect — which was the whole design — so all four lookups below would resolve it happily, and the chit
+         * would then sit as sent for ever because nobody can sign in to open it. The sender would be waiting on an
+         * answer that cannot come.
+         * ⭐ One test on whatever was typed, before any lookup runs. The id path is fenced separately below,
+         * because a screen holding a supplier row would pass the uuid rather than the handle.
+         */
+        const typedAny = String(r.user_id || r.bridge || r.bridge_id || r.display_name || r.name || '').trim();
+        if (require('../lib/handle').isMinted(typedAny)) {
+          return res.status(404).json({ error: 'Not found',
+            message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` });
+        }
         let rec;
         if (r.entity_id) {
           rec = await query(
             `SELECT identity_id, bridge_id, display_name FROM identities
-             WHERE identity_id = $1 AND status = 'active'`,
+             WHERE identity_id = $1 AND status = 'active'
+             AND COALESCE(user_id, '') NOT LIKE '~%'`,
             [r.entity_id]
           );
         } else if (r.bridge || r.bridge_id) {
@@ -425,7 +440,11 @@ router.post('/send',
           if (!rec.rows.length) rec = await query(
             `SELECT identity_id, bridge_id, display_name FROM identities
              WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
-             AND identity_type = 'entity'`,
+             AND identity_type = 'entity'
+             /* ⚠️ never a minted party. Their display names are ordinary shop names — "Corner Hardware" — so
+                without this a name typed by ANY business could resolve to another one's private supplier record.
+                The typed-handle test above cannot catch this one: what was typed is a name, not a handle. */
+             AND COALESCE(user_id, '') NOT LIKE '~%'`,
             [typed]
           );
         }
