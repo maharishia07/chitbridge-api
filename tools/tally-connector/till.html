@@ -1344,7 +1344,13 @@ var CloudHost = {
         /* ⚠️⚠️ THE LAST GATE, AND THE ONE THAT COSTS MONEY. DB.all has already dropped foreign rows, but this is where a bill
            leaves the building under a key — so it is checked again here, against the key actually being used. A sale posted into
            another business's books is not a display bug, it is a wrong entry in somebody's accounts. */
-        if (OWNER && bill && bill._shop && String(bill._shop) !== String(OWNER)) { FOREIGN++; continue; }
+        if (OWNER && bill && bill._shop && String(bill._shop) !== String(OWNER)) {
+          FOREIGN++;
+          /* ⚠️ SILENT UNTIL NOW. A row stamped for another shop is skipped for a very good reason, and the queue
+             then never empties with nothing anywhere saying which rows are being passed over or why. */
+          if (!why) why = 'Some queued rows were written by a different shop on this device and are not sent.';
+          continue;
+        }
         try {
           /* three kinds ride this queue now: a bill, a shift, and a receipt or despatch note — plus the movement rows that belong
              to an order, which go somewhere else entirely. Each row says which it is; nothing here guesses. */
@@ -1384,7 +1390,14 @@ var CloudHost = {
       }
     } finally {
       this._busy = false;
-      /* ⭐ recorded whatever happened, including a clean run — "nothing to send" is an answer too */
+      /**
+       * ⭐ recorded whatever happened, including a clean run — "nothing to send" is an answer too.
+       * ⚠️⚠️ AND THE WORST CASE IS "ROWS EXISTED AND NOT ONE WAS TRIED". That is the shape of every wedge this
+       * file has had, and it left no trace: no request, no error, no reason. If it happens again it now says so
+       * in those words, which is the difference between a bug somebody can report and one they cannot.
+       */
+      if (!why && tried === 0 && (STATE && STATE.queued > 0))
+        why = 'Nothing was even attempted — tell us this, it is not normal.';
       this.last = { at: Date.now(), tried: tried, sent: sent, why: why };
       /**
        * ⚠️⚠️ THE BAR MUST NOT LIE ABOUT MONEY. drain() sent the bills and never told the screen, so the counter went on saying
@@ -2886,8 +2899,18 @@ function queueWords(){
   n(QUEUED.points, 'customer' + String.fromCharCode(39) + 's points', 'customers' + String.fromCharCode(39) + ' points');
   n(QUEUED.other, 'other', 'others');
   /* ⚠️ a count with no breakdown can still be said honestly — better a vaguer true sentence than a broken one */
-  if (!bits.length) return STATE.queued + ' waiting to reach ChitBridge';
-  return bits.join(' · ') + ' waiting to reach ChitBridge';
+  /**
+   * ⭐⭐ AND WHY THEY ARE STILL WAITING, ON THE LINE THAT COUNTS THEM. Athi, 2026-09-10, after the drain fix went
+   * out: *"restarted the counter, still not moving."* The reason WAS being recorded by then — but only inside the
+   * checks panel and the bills dialog, neither of which is where a shopkeeper looks when they notice a number
+   * that will not go down. A diagnosis nobody finds is the same as no diagnosis.
+   * ⚠️ Trimmed: this line sits in a status bar, and the full sentence lives in the checks panel.
+   */
+  var stuck = (typeof HOST !== 'undefined' && HOST && HOST.last && HOST.last.why) ? HOST.last.why : '';
+  if (stuck.length > 90) stuck = stuck.slice(0, 88) + '…';
+  var tail = ' waiting to reach ChitBridge' + (stuck ? ' — ' + stuck : '');
+  if (!bits.length) return STATE.queued + tail;
+  return bits.join(' · ') + tail;
 }
 
 /** ⚠️ i.status is the LIFECYCLE — i.avail is a quantity feed, and comparing it to a string was always false. */
