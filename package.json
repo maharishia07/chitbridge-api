@@ -10,7 +10,9 @@
     "test:jest": "jest",
     "test:integration": "node tests/run-tests.js",
     "check:trips": "node tools/round-trips.cjs --check",
-    "guards": "node scripts/guards.cjs"
+    "guards": "node scripts/guards.cjs",
+    "sql": "node scripts/sql.cjs",
+    "db:role": "node scripts/check-db-role.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",
