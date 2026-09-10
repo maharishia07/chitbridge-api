@@ -88,9 +88,17 @@ router.post('/suppliers',
         if (dupL.rows.length > 0)
           return res.status(409).json({ error: 'Exists', message: localName + ' is already in your supplier list' });
         await query(
+          /**
+           * ⚠️ added_via = 'manual', NOT 'local'. `added_via` has a CHECK constraint (manual/transaction/import)
+           * and 'local' failed it — a 500 that reached the screen as "Something went wrong", caught by [SUP-02]
+           * on its first run.
+           * ⭐ AND 'manual' IS ALSO THE RIGHT ANSWER, not just the permitted one. The column records HOW the row
+           * arrived — a person typed it — which is true of both kinds. WHETHER they are on the rail is the
+           * handle's job, and putting it here as well would be the same fact in two places, free to disagree.
+           */
           `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind,
                                       category, nickname, notes, preferred, added_via)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'local')`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
           [owner, local.identity_id, kind, category, nickname, notes, preferred]);
         return res.json({ message: 'Supplier added',
           supplier: { supplier_entity_id: local.identity_id, bridge_id: local.bridge_id,

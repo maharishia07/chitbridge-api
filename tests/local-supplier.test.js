@@ -297,6 +297,33 @@ it('⭐⭐⭐ nothing mints a chit except sendChit', () => {
     'declared as minting its own chit, but no longer does — remove it from DECLARED');
 });
 
+console.log('— what the columns will actually accept —');
+
+it('⚠️⚠️ every added_via the route writes is one the CHECK constraint permits', () => {
+  /**
+   * ⭐ THE BUG THIS IS HERE FOR, found by [SUP-02] on its first run: the insert used added_via = 'local', which
+   * reads perfectly and is not in the constraint (manual/transaction/import). Postgres raised 23514, the route
+   * turned it into a 500, and the screen said "Something went wrong — please try again", which is true and
+   * useless. Nothing in unit tests could catch it because the value only meets its constraint in the database.
+   *
+   * ⭐⭐ 'manual' is also the RIGHT answer rather than merely the permitted one: added_via records HOW the row
+   * arrived — a person typed it — which is true of both kinds. WHETHER they are on the rail is the handle's job.
+   * The same fact in two columns is two facts waiting to disagree.
+   */
+  const allowed = (fs.readFileSync(path.join(__dirname, '..', 'migrations', '000_baseline_part2.sql'), 'utf8')
+    .match(/supplier_list_added_via_check[\s\S]{0,400}?\)\);/) || [''])[0]
+    .match(/'([a-z_]+)'::character varying/g) || [];
+  const permitted = allowed.map((s) => s.split("'")[1]);
+  assert.ok(permitted.length, 'the supplier_list added_via constraint moved — this guard is now blind');
+
+  const route = src('routes/relationships.js');
+  const written = (route.match(/added_via\s*\)[\s\S]{0,400}?VALUES[\s\S]{0,200}?'([a-z_]+)'\)/g) || [])
+    .map((s) => (s.match(/'([a-z_]+)'\)$/) || [])[1]).filter(Boolean);
+  assert.ok(written.length >= 2, 'expected both supplier inserts to name an added_via, found ' + written.length);
+  written.forEach((v) => assert.ok(permitted.indexOf(v) >= 0,
+    "added_via '" + v + "' is not permitted by the constraint (" + permitted.join(', ') + ') — this is a 500'));
+});
+
 console.log('— the migration —');
 
 it('⚠️ b218 folds the name exactly the way the code does, or one of them is inert', () => {
