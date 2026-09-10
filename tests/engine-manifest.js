@@ -29,6 +29,12 @@ const TIER_A = [
      worth. The governed facts per region stay in the region_layer table (lib/regional.js, Tier B), and formatting
      stays with CBLocale — collapsing those in would cost this file its purity and with it its portability. */
   'lib/jurisdiction.js',     // country → what a party may be paid by, as (scheme, value); pure, vendorable
+  /* ⚠️ THE FOURTH, AND IT NEVER CONVERTS EITHER (2026-09-10). Athi: *"how anyone knows the value of the rewards
+     and its interpretation."* rewards.js turns a BALANCE plus a declared programme into a sentence — worth this
+     much off, or that item, or 180 more for the next one. It holds no balance (a liability belongs in a ledger,
+     not a module), invents no worth (a guessed conversion is a number a shop would be held to), and formats no
+     money (it takes ctx.money, the shape the offers engine already uses). */
+  'lib/rewards.js',          // what a reward point is worth, said in words; pure, holds nothing
 ];
 
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
