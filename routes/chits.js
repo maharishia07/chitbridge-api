@@ -306,7 +306,12 @@ router.post('/send',
       if (business_json && typeof business_json === 'object'
           && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source) {
         try {
-          const sp = await query(`SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [sender_id]);
+          /* ⚠️⚠️ withEntity, NOT query. entity_profile is RLS-isolated, and a bare query() runs with no
+             app.current_entity set — under which every policy is false and the read returns ZERO ROWS.
+             Not an error: an empty answer that looks exactly like a shop that declared no trade. This is
+             the quietest failure on the platform and it cost an hour here. */
+          const sp = await withEntity(sender_id, (db) => db.query(
+            `SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [sender_id]));
           const row = sp.rows[0] || {};
           const sectors = row.sectors || (row.profile_json && row.profile_json.sectors) || [];
           if (sectors && sectors.length) {

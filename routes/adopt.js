@@ -39,22 +39,24 @@ const fail = (res, e, what) => res.status(500).json({ error: what, message: Stri
 async function senderOf(chit) {
   const bj = chit.business_json || {};
   if (bj.source && bj.source.sectors) return { name: bj.source.name || bj.party && bj.party.name, sectors: bj.source.sectors };
-  const from = chit.sender_entity_id;
-  const out = { name: (bj.party && bj.party.name) || chit.sender_name || null, sectors: [] };
-  if (!from) return out;
-  try {
-    const p = await query(`SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [from]);
-    const row = p.rows[0] || {};
-    out.sectors = row.sectors || (row.profile_json && row.profile_json.sectors) || [];
-  } catch (_) { /* a profile we cannot read is a trade we cannot judge — see the engine's undeclared case */ }
-  return out;
+  /**
+   * ⚠️⚠️ THERE IS NO FALLBACK LOOKUP, and there must not be. A receiver CANNOT read a supplier's
+   * entity_profile — it is RLS-isolated and that is correct; nobody should be able to read another
+   * business's profile just because they were sent something. The first cut tried anyway, got zero rows
+   * (an empty answer, not an error) and silently judged every delivery as coming from a trade-less shop.
+   * ⭐ So the stamp above is the ONLY source. If it is absent the goods require nothing, which is exactly
+   * what a sender who declared no trade means.
+   */
+  return { name: (bj.party && bj.party.name) || chit.sender_name || null, sectors: [] };
 }
 
 /** what the receiving shop is, and what it already stocks — the two things the engine needs about "me" */
 async function receiverOf(entity_id) {
   let sectors = [];
   try {
-    const p = await query(`SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [entity_id]);
+    /* ⚠️ withEntity — this is the shop's OWN profile, and a bare query() would read nothing under RLS */
+    const p = await withEntity(entity_id, (db) => db.query(
+      `SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [entity_id]));
     const row = p.rows[0] || {};
     sectors = row.sectors || (row.profile_json && row.profile_json.sectors) || [];
   } catch (_) {}
