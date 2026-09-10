@@ -1119,7 +1119,7 @@ var CloudHost = {
     }
     await DB.put('queue', { no: 'OP/' + Date.now() + '/' + Math.random().toString(36).slice(2, 7),
                             at: new Date().toISOString(), tillPost: { path: path, body: body } });
-    STATE.queued = ((await DB.all('queue')) || []).length; paintStatus();
+    await queueTally(); paintStatus();
     return { ok:true, queued:true };
   },
   async verify(){
@@ -1181,7 +1181,7 @@ var CloudHost = {
        * only ever looked right because going back online happens to fire load() as well; called on its own, the number froze.
        * Whatever else happened, the count is re-read from the queue and the bar repainted.
        */
-      try { STATE.queued = ((await DB.all('queue')) || []).length; paintStatus(); } catch (_) {}
+      try { await queueTally(); paintStatus(); } catch (_) {}
     }
   },
 };
@@ -1353,6 +1353,8 @@ async function load(){
   }
   var st = await HOST.state().catch(function(){ return STATE; });
   STATE = st || STATE; S = (st && st.snapshot) || S;
+  /* ⚠️ the stored count is a memory; the queue is the fact. Re-count on every load, never trust the number back. */
+  try { await queueTally(); } catch (_) {}
   var bad = wrongShop();
   if (bad) return stopWrongShop(bad);
   applyLook();
@@ -1407,7 +1409,7 @@ function paintStatus(){
   else { age.textContent = 'no prices yet'; age.className = 'pill off'; }
   var d = STATE.today || {};
   document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ' + money(d.total||0);
-  var note = STATE.queued ? (STATE.queued + ' bill(s) waiting to reach ChitBridge') : 'everything has reached ChitBridge';
+  var note = queueWords();
   /* ⚠️ THE ABSENCE OF TAX IS ALSO AN ANSWER, and it should not look like a fault. A shop that charges no GST is told why, once,
      rather than left wondering where the tax column went. */
   var tx0 = shopTax();
@@ -1416,7 +1418,7 @@ function paintStatus(){
                     : 'This shop is registered as ' + esc(tx0.reg) + ', so no GST is charged.'))
     /* ⚠️ THE SAME WORDS WHEREVER IT APPEARS. An unregistered shop took a different branch and got the short form, "1 bill(s)
        waiting" — waiting for what? A shopkeeper should not learn two phrasings for one fact because of how they are registered. */
-    + (STATE.queued ? '  ·  ' + STATE.queued + ' bill(s) waiting to reach ChitBridge' : '');
+    + (STATE.queued ? '  ·  ' + queueWords() : '');
   if (MISSING.length) note = 'the ' + MISSING.join(' and ') + ' engine is not here yet — press ↻ while online';
   /**
    * ⚠️⚠️ LAST, SO NOTHING CAN OVERWRITE IT. This was written first and then quietly clobbered by the no-GST line and the missing
@@ -2424,6 +2426,40 @@ function searchKey(e){
  * the rice has run out, and the counter must not go on selling it for the rest of the afternoon.
  */
 var CHANGED = { stock: [], price: [] };     /* what this counter changed today, newest first — the record on the right */
+
+/**
+ * ⭐ WHAT IS IN THE QUEUE, IN WORDS. Read from the SHAPE each writer already puts there — a row that had to carry a
+ * label would be a second thing to keep true, and the first thing to drift.
+ * ⚠️ A BILL IS NAMED FIRST AND SEPARATELY, always. It is the only one that is money somebody has already handed over.
+ */
+var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0 };
+async function queueTally(){
+  var rows = [];
+  try { rows = (await DB.all('queue')) || []; } catch (_) { rows = []; }
+  var t = { bills: 0, docs: 0, changes: 0, other: 0 };
+  rows.forEach(function(r){
+    if (r && r.tillPost) t.changes++;                 /* a price, a stock flag, an offer turned on */
+    else if (r && r.chitBody) t.docs++;               /* goods-in or a despatch note */
+    else if (r && (r.shiftBody || r.deliver)) t.other++;
+    else t.bills++;                                   /* a bill is the row with no wrapper — and the one that is money */
+  });
+  QUEUED = t;
+  STATE.queued = rows.length;
+  return t;
+}
+/** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
+function queueWords(){
+  if (!STATE.queued) return 'everything has reached ChitBridge';
+  var bits = [];
+  var n = function(c, one, many){ if (c) bits.push(c + ' ' + (c === 1 ? one : many)); };
+  n(QUEUED.bills, 'bill', 'bills');
+  n(QUEUED.docs, 'document', 'documents');
+  n(QUEUED.changes, 'change', 'changes');
+  n(QUEUED.other, 'other', 'others');
+  /* ⚠️ a count with no breakdown can still be said honestly — better a vaguer true sentence than a broken one */
+  if (!bits.length) return STATE.queued + ' waiting to reach ChitBridge';
+  return bits.join(' · ') + ' waiting to reach ChitBridge';
+}
 
 /** ⚠️ i.status is the LIFECYCLE — i.avail is a quantity feed, and comparing it to a string was always false. */
 async function stockWrite(i, now){
