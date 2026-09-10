@@ -284,6 +284,37 @@ router.post('/send',
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
       /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
       if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;
+
+      /**
+       * ── ⭐⭐⭐ THE SENDER'S TRADE TRAVELS WITH THE GOODS (2026-09-10) ──────────────────────────────────────
+       *
+       * Found by [ADOPT-01] going red on a batch number that was plainly on the delivery. The adopt route was
+       * LOOKING UP the sender's sector — and could not read it, because entity_profile is isolated per entity.
+       * That is not a bug in RLS; it is RLS working. A receiver has no business reading a supplier's profile.
+       *
+       * ⭐ So the requirement rides on the chit instead, which is the correct shape anyway and is what
+       * "source-governed distribution" has meant all along: a batch number is a fact about the MEDICINE, not
+       * about who is holding it, so a pharma supplier's despatch must carry "these need a batch and an expiry"
+       * with it. The receiver's own sector cannot make an expiry optional, and now it cannot fail to know.
+       *
+       * ⚠️ ONLY FOR GOODS. An ordinary message or an invoice does not need the sender's trade attached, and
+       * stamping every chit with it would be telling counterparties something they did not ask for on documents
+       * where it means nothing.
+       * ⚠️ AND IT IS WHAT THE SENDER HAS DECLARED PUBLICLY ABOUT THEIR TRADE — the sector already shown on their
+       * passport — never the profile itself, and never the vault.
+       */
+      if (business_json && typeof business_json === 'object'
+          && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source) {
+        try {
+          const sp = await query(`SELECT sectors, profile_json FROM entity_profile WHERE entity_id = $1`, [sender_id]);
+          const row = sp.rows[0] || {};
+          const sectors = row.sectors || (row.profile_json && row.profile_json.sectors) || [];
+          if (sectors && sectors.length) {
+            business_json.source = { name: sender_display_name || null, sectors,
+                                     vertical: require('../lib/adopt').verticalOf(sectors) };
+          }
+        } catch (_) { /* a shop that has declared no trade sends goods that require nothing — the ordinary case */ }
+      }
       const is_draft = !!req.body.is_draft;
       // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
       // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
