@@ -2666,7 +2666,7 @@ function paintHits(){
     var unsaved = (editing && pendCount() > 0);
     return '<div class="hit' + (n===SEL?' sel':'') + (editing?' editing':'') + (off?' off':'') + (thumbs?' pics':'')
       + (unsaved ? ' unsaved' : '')
-      + '" data-testid="till-hit-' + n + '" data-item="' + esc(String(i.item_id)) + '" onclick="pick(' + n + ')">'
+      + '" data-testid="till-hit-' + n + '" data-item="' + esc(String(i.item_id)) + '" onclick="pick(' + n + ')" ondblclick="add(' + n + ')">'
       + (thumbs ? picOf(i) : '')
       + '<span class="n">' + esc(i.name)
         + (i.unit ? ' <span class="unit">' + esc(i.unit) + '</span>' : '')
@@ -2990,6 +2990,11 @@ async function priceWrite(i, v){
  *
  * ⭐ NOW IT MATCHES WHAT THE FOOTER HAS ALWAYS SAID — *"↓↑ choose, Enter add"*. A click is the mouse's version of
  * ↓↑, and it does exactly what they do. Nothing new to learn, and the two ways in finally agree.
+ *
+ * ⭐⭐ AND A DOUBLE CLICK ADDS (Athi, 2026-09-10: *"can we add the product with double click instead of single
+ * click?"*). It is the better gesture for a counter than reaching for the + : the hand never leaves the row, it
+ * is still deliberate — nobody double-clicks by accident while scrolling — and it is what a double click has
+ * meant on every list since file managers. The + stays for touch, where a double tap is not a gesture.
  *
  * ⚠️ MAINTENANCE IS UNCHANGED. There a click opens the product on the right, which is that mode's whole purpose
  * and was never accidental — the same gesture means "choose this one" in both, which is the point.
@@ -4413,7 +4418,7 @@ function paintKeys(){
   var common = '<span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span>'
     + (MODE === 'maintain'
         ? '<span><b>Enter</b> open it on the right</span>'
-        : '<span><b>Enter</b> add</span><span><b>3*</b> quantity</span>'
+        : '<span><b>Enter</b> or <b>double-click</b> add</span><span><b>3*</b> quantity</span>'
           + (MODE === 'sell' ? '<span><b>Ctrl ↑↓</b> change the line in action</span>' : ''));
   el.innerHTML = common + (MODE === 'sell'
     ? '<span><b>F9</b> save &amp; print</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span>'
