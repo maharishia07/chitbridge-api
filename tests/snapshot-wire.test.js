@@ -759,4 +759,33 @@ it('⭐⭐ the shop country is derived once and used by everything that needs it
   assert.ok(src.indexOf('country: row.country }') < 0, 'payWays is still handed the raw column');
 });
 
+/**
+ * ⭐⭐ THE SHOP SCREEN BECOMES THE CUSTOMER'S DURING A SALE. Athi: *"assume two screens are there, the price has to
+ * showcase to the customer as well?"* — a MODE of the screen that already pairs, not a third page to keep alive.
+ * ⚠️ BroadcastChannel: same origin, same machine. A second monitor on the till PC is the case that must survive the
+ * internet going down, and it is exactly the case a server hop would break.
+ */
+it('⭐⭐ the counter tells the customer screen, and tells it only what a customer may see', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
+  assert.ok(page.indexOf("new BroadcastChannel('cb-counter')") > 0, 'the counter says nothing to a second screen');
+  assert.ok(promo.indexOf("new BroadcastChannel('cb-counter')") > 0, 'the screen is not listening');
+  /* ⚠️ sent whenever the bill changes — a screen fed events would be wrong until the next sale if it missed one */
+  const totAt = page.indexOf('function paintTotals(){');
+  const tot = page.slice(totAt, page.indexOf('function addPart(', totAt));
+  assert.ok(tot.indexOf('CFD.send()') > 0, 'the screen is not told when the total changes');
+  /* ⚠️ ONLY what a customer may see */
+  const send = page.slice(page.indexOf('var CFD = (function(){'), page.indexOf('/* the bill changes in exactly one place */') + 1);
+  for (const forbidden of ['cname', 'cphone', 'WHO', 'margin', 'cost'])
+    assert.ok(send.indexOf(forbidden) < 0, 'the customer screen is sent ' + forbidden + ' — it may not see that');
+  /* ⚠️ the screen RENDERS, it never computes: every figure arrives already formatted */
+  const draw = promo.slice(promo.indexOf('function drawBill('), promo.indexOf('function drawBill(') + 3000);
+  for (const arith of ['billMoney(', 'r2(', '* c.qty', 'reduce('])
+    assert.ok(draw.indexOf(arith) < 0, 'the customer screen computes with ' + arith + ' — it could disagree with the till');
+  /* and it lets go on its own — a screen left showing a finished bill shows it to the next customer */
+  assert.ok(promo.indexOf('BILL = null; paint(true); restart();') > 0, 'the screen never returns to the slides');
+  assert.ok(promo.indexOf('Date.now() - BILL_AT > 120000') > 0,
+    'a counter that closed without saying so would freeze this screen for the rest of the day');
+});
+
 console.log(pass + ' checks');

@@ -670,6 +670,43 @@ var PAY_ASKED = false;
 /** ⚠️ the number a UPI reference quotes. Null until a bill is saved, so the code carries the shop's word instead —
     a reference that pretended to be a bill number before one existed would not reconcile against anything. */
 var LASTNO = null;
+/**
+ * ⭐ WHAT THE CUSTOMER'S SCREEN IS TOLD. One message, sent whenever the bill changes — never a stream of events the
+ * other side has to reassemble, because a screen that missed one event would be wrong until the next sale.
+ * ⚠️ It carries only what a customer may see: what they are buying, what it costs, and a code to pay with. No
+ * customer name, no phone, no who-is-at-the-counter, no margin.
+ */
+var CFD = (function(){
+  var ch = null;
+  try { ch = new BroadcastChannel('cb-counter'); } catch (_) { ch = null; }
+  return {
+    send: function(){
+      if (!ch) return;
+      try {
+        var m = billMoney(), n = cartCount();
+        var way = ((S && S.shop && S.shop.pay) || []).filter(function(w){ return w.label === PICKED && w.qr; })[0];
+        var taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
+        var left = r2(m.net - taken);
+        ch.postMessage({
+          at: Date.now(),
+          shop: (S && S.shop && S.shop.name) || '',
+          lines: CART.map(function(c){ return { name: c.name, qty: c.qty, unit: c.unit,
+                                                each: money(c.unitPrice != null ? c.unitPrice : c.price),
+                                                amount: money(c.net), off: c.off ? c.off_label : null }; }),
+          count: n, total: money(m.net), saved: m.save > 0 ? money(m.save) : null,
+          taxed: m.taxed, heads: m.heads || [],
+          pay: (way && left > 0) ? { label: way.label, link: payLink(way, left, LASTNO || 'bill'), due: money(left) } : null,
+          done: false,
+        });
+      } catch (_) {}
+    },
+    /** ⚠️ said once, at the end — the screen holds it for a moment and then goes back to the slides on its own */
+    done: function(no, total){
+      if (!ch) return;
+      try { ch.postMessage({ at: Date.now(), done: true, no: no || null, total: total || null }); } catch (_) {}
+    },
+  };
+})();
 
 var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
 var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
@@ -3180,6 +3217,8 @@ function paintTotals(){
   var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
   /* ⚠️ the sentence names an AMOUNT, so it changes when the total does — not only when a button is pressed */
   paintPays();
+  /* ⭐ and the customer's screen is told the same thing at the same moment */
+  CFD.send();
 }
 /**
  * ⭐ A REAL SPLIT (2026-09-08). ₹500 in cash and the rest on UPI is the ordinary Indian counter; one mode per bill was a lie about what
@@ -3299,7 +3338,9 @@ async function finish(){
   var r = null;
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
   if (!r || !r.ok){ say('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
-  LAST = r.bill; if (r.today) STATE.today = r.today;
+  LAST = r.bill; LASTNO = r.bill && r.bill.no; if (r.today) STATE.today = r.today;
+  /* ⭐ the customer's screen says thank you and then goes back to the slides on its own */
+  CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
   showSlip(r.bill, m);
   autoPrint(r.bill);
   CART = []; PARTS = []; paintParts();

@@ -188,6 +188,92 @@ var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null
 var API = ls.get('cb_till_api', 'https://chitbridge-api-production.up.railway.app');
 var KEY = ls.get('cb_till_key', null);
 var S = null, SLIDES = [], AT = 0, TIMER = null, PLAYING = true, ONLY = 'all';
+/**
+ * ⭐ THE BILL BEING RUNG UP NEXT DOOR. Null when there is none, and this screen is then what it always was.
+ * ⚠️ BroadcastChannel is SAME-ORIGIN, SAME-MACHINE — a second monitor on the till PC, which is the case that has to
+ * survive the internet going down. A paired TV on another device needs a server hop; same message, other transport.
+ */
+var BILL = null, BILL_AT = 0;
+(function(){
+  var ch; try { ch = new BroadcastChannel('cb-counter'); } catch (_) { return; }
+  ch.onmessage = function(e){
+    var m = e && e.data; if (!m) return;
+    if (m.done) {
+      BILL = { thanks: true, no: m.no, total: m.total }; BILL_AT = Date.now();
+      paint(false);
+      /* ⚠️ held, then let go — the next customer must not read the last one's bill */
+      setTimeout(function(){ if (BILL && BILL.thanks) { BILL = null; paint(true); restart(); } }, 6000);
+      return;
+    }
+    BILL = (m.lines && m.lines.length) ? m : null;
+    BILL_AT = Date.now();
+    /* while a bill is open the slides stop — nothing rotates under a customer trying to read a total */
+    if (BILL) clearInterval(TIMER); else restart();
+    paint(false);
+  };
+  /* ⚠️ a counter that closed without saying so must not freeze this screen for the rest of the day */
+  setInterval(function(){ if (BILL && !BILL.thanks && Date.now() - BILL_AT > 120000) { BILL = null; paint(true); restart(); } }, 10000);
+})();
+/**
+ * ⭐ THE CUSTOMER'S OWN VIEW. Big enough to read across a shop, and only what they are entitled to: what they are
+ * buying, what it costs, what they saved, and a code to pay with.
+ */
+function drawBill(x, w, h, b){
+  var pad = Math.round(w * 0.05), y = pad;
+  x.fillStyle = '#0E1117'; x.fillRect(0, 0, w, h);
+  x.textBaseline = 'top'; x.textAlign = 'left';
+  x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(h * 0.030) + 'px system-ui,sans-serif';
+  x.fillText(String(b.shop || '').toUpperCase(), pad, y); y += Math.round(h * 0.055);
+
+  if (b.thanks) {
+    x.fillStyle = '#4cc38a'; x.font = '800 ' + Math.round(h * 0.13) + 'px system-ui,sans-serif';
+    x.fillText('Thank you', pad, Math.round(h * 0.34));
+    x.fillStyle = '#F2EDE6'; x.font = '700 ' + Math.round(h * 0.07) + 'px system-ui,sans-serif';
+    x.fillText(String(b.total || ''), pad, Math.round(h * 0.50));
+    if (b.no) { x.fillStyle = '#8B93A7'; x.font = '500 ' + Math.round(h * 0.032) + 'px system-ui,sans-serif';
+                x.fillText('Bill ' + b.no, pad, Math.round(h * 0.60)); }
+    return;
+  }
+
+  /* ⚠️ the LAST lines, not the first — a customer watches the thing they just handed over, and a long bill scrolls
+     off the top of a fixed screen otherwise. */
+  var rowH = Math.round(h * 0.062);
+  var room = Math.max(1, Math.floor((h * 0.60) / rowH));
+  var lines = b.lines.slice(-room);
+  var nameSize = Math.round(h * 0.036), amtSize = Math.round(h * 0.040);
+  lines.forEach(function(l){
+    x.fillStyle = '#F2EDE6'; x.font = '600 ' + nameSize + 'px system-ui,sans-serif';
+    x.textAlign = 'left';
+    var nm = l.qty + ' × ' + l.name;
+    if (x.measureText(nm).width > w - pad * 2 - Math.round(w * 0.24)) {
+      while (nm.length > 4 && x.measureText(nm + '…').width > w - pad * 2 - Math.round(w * 0.24)) nm = nm.slice(0, -1);
+      nm += '…';
+    }
+    x.fillText(nm, pad, y);
+    x.textAlign = 'right'; x.font = '700 ' + amtSize + 'px system-ui,sans-serif';
+    x.fillText(String(l.amount), w - pad, y);
+    if (l.off) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+                 x.font = '700 ' + Math.round(h * 0.024) + 'px system-ui,sans-serif';
+                 x.fillText(l.off, pad, y + nameSize + 2); }
+    y += rowH;
+  });
+
+  var by = Math.round(h * 0.74);
+  x.strokeStyle = '#2A3142'; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(pad, by - Math.round(h * 0.03)); x.lineTo(w - pad, by - Math.round(h * 0.03)); x.stroke();
+  x.textAlign = 'left'; x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(h * 0.032) + 'px system-ui,sans-serif';
+  x.fillText(b.count || '', pad, by);
+  x.textAlign = 'right'; x.fillStyle = '#F2EDE6'; x.font = '800 ' + Math.round(h * 0.085) + 'px system-ui,sans-serif';
+  x.fillText(String(b.total), w - pad, by - Math.round(h * 0.018));
+  if (b.saved) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+                 x.font = '700 ' + Math.round(h * 0.034) + 'px system-ui,sans-serif';
+                 x.fillText('You saved ' + b.saved, pad, by + Math.round(h * 0.045)); }
+  if (b.pay && b.pay.link) {
+    x.textAlign = 'right'; x.fillStyle = '#8B93A7';
+    x.font = '600 ' + Math.round(h * 0.028) + 'px system-ui,sans-serif';
+    x.fillText('Scan to pay ' + b.pay.due + ' by ' + b.pay.label, w - pad, by + Math.round(h * 0.055));
+  }
+}
 
 (function takeAddress(){
   if (location.hash.indexOf('key=') < 0) return;
@@ -809,6 +895,13 @@ function shown(){
 }
 
 function paint(fade){
+  if (BILL) {
+    var fb = FORMATS[FMT];
+    C.width = fb.w; C.height = fb.h;
+    drawBill(X, fb.w, fb.h, BILL);
+    document.getElementById('count').textContent = BILL.thanks ? 'thank you' : 'at the counter';
+    return;
+  }
   var list = shown();
   if (!list.length) { X.fillStyle = '#0E1117'; X.fillRect(0, 0, C.width, C.height); return; }
   AT = ((AT % list.length) + list.length) % list.length;
