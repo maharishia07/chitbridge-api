@@ -3236,6 +3236,7 @@ function addPart(){
   paintParts(); paintTotals();
 }
 function dropPart(n){ PARTS.splice(n, 1); paintParts(); paintTotals(); }
+/* paintTotals already sends; addPart and dropPart both go through it, so the amount due on the screen follows */
 function paintParts(){
   var el = document.getElementById('parts'); if (!el) return;
   el.innerHTML = PARTS.map(function(p, n){
@@ -3302,7 +3303,7 @@ function payQr(link){
   } catch (_) { return ''; }
 }
 /** ⚠️ the choice repaints the LINE that states it, not the whole bill — and it is a statement, so it must be seen */
-function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); }
+function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); }
 
 /* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
 async function finish(){
