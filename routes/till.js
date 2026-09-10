@@ -1298,7 +1298,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   gs1: '../lib/gs1.browser.js',        /* what a pack's barcode carries — batch, expiry, serial */
                   lots: '../lib/lotfields.browser.js', /* what this trade must capture, and the difference it absorbs */
                   nums: '../lib/numerals.browser.js', /* "two kilo", "rendu kilo" — the closed class, in both */
-                  rewards: '../lib/rewards.browser.js' };/* points a customer holds — computed at the counter, written by the server */
+                  rewards: '../lib/rewards.js' };     /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
   if (!rel) return res.status(404).json({ error: 'Not found' });

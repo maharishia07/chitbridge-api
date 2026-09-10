@@ -640,6 +640,53 @@ it('⚠️⚠️ and it NEVER blocks a sale — every finding is a line and a do
     'the health check must not interrupt or disable anything: a data problem must never become a lost customer');
 });
 
+/**
+ * ── ⭐⭐⭐ EVERY VENDORED ENGINE IS *RUN*, NOT READ ─────────────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ WRITTEN BECAUSE THE PARITY TESTS ABOVE PASSED WHILE THE COUNTER THREW ON EVERY LOAD (2026-09-10).
+ * scripts/vendor-till.cjs wraps a lib file for the browser by rewriting `module.exports =` into `var EXPORTS =`
+ * and then reading EXPORTS from the OUTER scope. That is correct for gs1/lotfields/numerals, whose export is at
+ * the top level. rewards.js is a UMD — its export sits inside its own closure, so `var EXPORTS` was scoped in
+ * there and the outer read was a ReferenceError on line 516 of the file every counter downloads.
+ *
+ * ⭐ AND IT WAS INVISIBLE, which is the part worth keeping. The UMD had already set window.CBRewards itself, so
+ * every function on the page worked; only the console knew. The text-parity test compared BYTES and the bytes
+ * were fine — text was never the question. The question is "does the file the shop downloads still hand the page
+ * a working engine", and the only way to answer it is to execute the thing.
+ *
+ * ⚠️ SO THIS IS DELIBERATELY NOT A PATTERN MATCH. It runs each engine in a sandbox with a bare window, asserts
+ * the global appears and is an object, and asserts NOTHING WAS THROWN on the way. A new engine added tomorrow is
+ * covered without anybody remembering to come back here.
+ */
+JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over its global', () => {
+  const dir = path.join(API, '..', 'chitbridge-web', 'public', 'engine');
+  /* qr.js is the one third-party file and defines `qrcode` as a bare global, not on window — named, not skipped */
+  const GLOBALS = { 'offers.js': 'CBOffers', 'tax.js': 'CBTax', 'search.js': 'CBSearch', 'gs1.js': 'CBGS1',
+                    'lots.js': 'CBLots', 'nums.js': 'CBNums', 'pricing.js': 'CBPricing', 'locale.js': 'CBLocale',
+                    'rewards.js': 'CBRewards', 'qr.js': null };
+  const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
+  assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
+  for (const name of files) {
+    assert.ok(Object.prototype.hasOwnProperty.call(GLOBALS, name),
+      name + ' is vendored to the till but this test does not know which global it defines. Add it — an engine '
+      + 'nobody executes is how a ReferenceError reaches a shop.');
+    const sandbox = { console: { log(){}, warn(){}, error(){} } };
+    sandbox.window = sandbox; sandbox.self = sandbox; sandbox.globalThis = sandbox;
+    vm.createContext(sandbox);
+    try {
+      vm.runInContext(fs.readFileSync(path.join(dir, name), 'utf8'), sandbox, { filename: name, timeout: 5000 });
+    } catch (e) {
+      assert.fail(name + ' throws when a browser loads it: ' + (e && e.message)
+        + '  — the page may still work if the file set its own global before throwing, which is exactly how this '
+        + 'went unnoticed. Check how scripts/vendor-till.cjs is treating it.');
+    }
+    const want = GLOBALS[name];
+    if (!want) continue;                    /* qr.js: executing without throwing is the whole assertion */
+    assert.ok(sandbox[want] && typeof sandbox[want] === 'object',
+      name + ' loaded but did not hand the page ' + want + ' — the counter would silently lose that engine');
+  }
+}]);
+
 (async () => {
   for (const [what, fn] of JOBS) {
     if (!what) { await fn(); continue; }

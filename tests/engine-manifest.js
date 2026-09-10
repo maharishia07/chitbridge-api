@@ -243,11 +243,6 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/numerals.js: the closed class — numerals in English and transliterated Tamil — so a counter that hears
      "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
   'numerals.browser.js',
-  /* GENERATED beside lib/rewards.js: the counter has to tell a customer what they just earned while they are still
-     standing there, so the arithmetic runs offline in the browser; the server runs the SAME file again when the
-     bill syncs, and its answer is the one written, because only the server can see the balance. Two implementations
-     would promise one number and pay another (scripts/vendor-till.cjs). */
-  'rewards.browser.js',
   /* ENGINE: what somebody SAID, as text — a seam with a provider behind it (lib/speech.js). It decides nothing about money, but it
      is the one place a second AI vendor enters the platform, which makes it a boundary rather than a helper. */
   'speech.js',

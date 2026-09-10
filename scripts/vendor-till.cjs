@@ -123,9 +123,17 @@ const COPIES = () => [
    * bill syncs and its answer is the one written, because only the server can see the balance — but the two must
    * be the same function or a customer is promised one number and given another, which is the one failure a
    * loyalty scheme cannot survive.
+   *
+   * ⚠️⚠️ COPIED, NOT WRAPPED, AND THE DIFFERENCE THREW AN EXCEPTION ON EVERY COUNTER LOAD FOR TWENTY MINUTES.
+   * wrapForBrowser rewrites `module.exports =` into `var EXPORTS =` and then reads EXPORTS from the OUTER scope.
+   * That works for gs1/lotfields/numerals, whose export sits at the top level of the file. rewards.js is a UMD —
+   * its export is inside its own closure, so `var EXPORTS` was scoped in there and the outer read was a
+   * ReferenceError. It LOOKED fine because the UMD had already set window.CBRewards itself, so every function
+   * worked and only the console knew.
+   * ⭐ A file that already handles a browser needs no wrapper. The lesson is the general one: the parity test
+   * compared TEXT, and text was never the question — tests/till-vendor now EXECUTES each engine (see that file).
    */
-  [null, path.join(WEB, 'engine', 'rewards.js'), wrapForBrowser('rewards.js', 'CBRewards')],
-  [null, path.join(API, 'lib', 'rewards.browser.js'), wrapForBrowser('rewards.js', 'CBRewards')],
+  [path.join(API, 'lib', 'rewards.js'), path.join(WEB, 'engine', 'rewards.js'), 'copy'],
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],

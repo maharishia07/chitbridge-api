@@ -889,15 +889,26 @@ it('⚠️ a customer carries the ID points hang from, not just a name', () => {
     'the id must reach the counter — a balance addressed by name would eventually be paid to the wrong Kumar');
 });
 
-it('⭐⭐⭐ the counter and the server compute points with the SAME file', () => {
+it('⭐⭐⭐ the counter and the server compute points with the SAME file, byte for byte', () => {
   const fs2 = require('fs'), path2 = require('path');
-  const master = fs2.readFileSync(path2.join(__dirname, '..', 'lib', 'rewards.js'), 'utf8');
-  const vendored = fs2.readFileSync(path2.join(__dirname, '..', 'lib', 'rewards.browser.js'), 'utf8');
-  /* ⚠️ the vendored copy is the master WRAPPED, so it is not byte-equal — but every line of the master must be in
-     it. Two implementations would promise a customer one number at the counter and pay another at the shop. */
-  const body = master.replace(/module\.exports\s*=/, 'var EXPORTS =').replace(/\r\n/g, '\n');
-  assert.ok(vendored.replace(/\r\n/g, '\n').indexOf(body) > 0,
-    'lib/rewards.browser.js has drifted from lib/rewards.js — re-run scripts/vendor-till.cjs');
+  const norm = (s) => s.replace(/\r\n/g, '\n');
+  const master = norm(fs2.readFileSync(path2.join(__dirname, '..', 'lib', 'rewards.js'), 'utf8'));
+  const vendored = norm(fs2.readFileSync(
+    path2.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'engine', 'rewards.js'), 'utf8'));
+  /**
+   * ⚠️ IT IS A PLAIN COPY, and that is the fix for a real fault. rewards.js is a UMD that sets its own global, so
+   * wrapping it for the browser scoped the export inside its closure and threw a ReferenceError on every counter
+   * load — invisible, because the UMD had already assigned window.CBRewards before the wrapper failed.
+   * ⭐ Byte-equal is now a MEANINGFUL assertion where it was not before: there is no transformation left to hide
+   * behind. And tests/till-vendor.test.js runs the file, which is the check that would have caught it.
+   */
+  assert.strictEqual(vendored, master,
+    'the counter engine has drifted from lib/rewards.js — re-run scripts/vendor-till.cjs. It must be a plain copy: '
+    + 'wrapping a UMD scopes its export inside its own closure.');
+  /* ⚠️ and the shop PC is served the master itself, so there is no third file that could drift */
+  const routes = fs2.readFileSync(path2.join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  assert.ok(/rewards:\s*'\.\.\/lib\/rewards\.js'/.test(routes),
+    '/api/till/engine/rewards must serve lib/rewards.js itself, not a generated copy');
 });
 
 it('⚠️ encashing is a TENDER, not a discount — the taxable value must not move', () => {
