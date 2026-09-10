@@ -262,6 +262,11 @@ app.use('/api/service', require('./routes/service'));
 app.use('/api/definitions', require('./routes/definitions'));
 /* TAX — the invoice a copy is stamped with, the month's ledger, the GSTR shapes. Reads only; we do not file. */
 app.use('/api/tax', require('./routes/tax'));
+/* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
+   reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */
+app.use('/api/supplies', require('./routes/supplies'));
+/* ⭐ taking a supplier's delivery into your OWN catalogue — offers, never auto-accepts (lib/adopt.js) */
+app.use('/api/adopt', require('./routes/adopt'));
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));

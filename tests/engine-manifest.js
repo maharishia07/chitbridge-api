@@ -83,6 +83,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      insert, meter, ring the bell. It decides nothing about WHETHER a product may be created (adopt.js and
      the form do that); it is the act once the decision is made, extracted the day a third door appeared. */
   'mint-product.js',
+  /* ADOPTION: the list of things a shop buys to USE, and the purchases against it. Its one real rule —
+     stocked or expensed — is a materiality judgement the SHOP makes, so this only carries the answer. */
+  'supply-store.js',
   // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
   // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
   'network-view.js',

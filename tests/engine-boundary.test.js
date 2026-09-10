@@ -58,12 +58,9 @@ const UNWIRED = [
      the same file in the browser, so the test derives that it is live — the mechanism working as intended. */
   /* lib/stock-store.js was here for about an hour on 2026-09-10, built while b214 was unrun. routes/chits.js now
      reaches it through lib/stock-from-chit.js on every send, so the test derives that it is live. */
-  /* ⚠️ BUILT 2026-09-10, no route reaches it yet. Athi settled the rules (offer not auto-accept · the receiver
-     mints its own SKU · a vertical mismatch is REFUSED with an explicit override · the supplier declares
-     resale vs own-use) and they are encoded and tested. What is missing is the screen and the route that
-     mints the adopted product — deliberately after the rules, because a catalogue row created under a wrong
-     rule is a product on somebody's storefront. */
-  'lib/adopt.js',
+  /* lib/adopt.js was here for about two hours on 2026-09-10, while the rules existed and no route acted on
+     them. routes/adopt.js now does — the order was deliberate, because a catalogue row created under a
+     wrong rule is a product on somebody's storefront. */
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //
