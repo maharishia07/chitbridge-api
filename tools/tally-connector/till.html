@@ -497,11 +497,12 @@
     </header>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
-      <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="paintHits()" onkeydown="searchKey(event)">
+      <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="showAgain();paintHits()" onkeydown="searchKey(event)">
     </div>
     <div class="chips" id="chips"></div>
     <div class="quick" id="quick"></div>
-    <div class="hits" id="hits"></div>
+    <!-- ⭐ the list asks for its own next page as it nears the bottom (showMore) — see hits() -->
+    <div class="hits" id="hits" onscroll="hitsScrolled(this)"></div>
     <div class="keys" id="keys">
       <span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span><span><b>Enter</b> add</span><span><b>F9</b> save &amp; print</span>
       <span><b>3*</b> quantity</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
@@ -1816,7 +1817,8 @@ function setFilter(what, val){
   /* ⚠️ off-the-shelf is a WHOLE OTHER SHELF, not a narrowing of this one — it replaces the other filters rather than stacking */
   else if (what === 'off') { FILTER = { offer:false, cat:null, off: !FILTER.off }; }
   else { FILTER = { offer:false, cat:null, off:false }; }
-  SEL = 0; paintChips(); paintHits();
+  /* ⚠️ a new question, so a new first page — otherwise a two-letter search inherits the depth of the last one */
+  SEL = 0; showAgain(); paintChips(); paintHits();
 }
 function paintChips(){
   var el = document.getElementById('chips'); if (!el || !S) return;
@@ -1935,9 +1937,56 @@ function hits(){
         : (seeAll ? items : items.filter(function(i){ return statusOf(i) !== 'unavailable'; }));
   if (FILTER.cat) items = items.filter(function(i){ return i.category === FILTER.cat; });
   if (FILTER.offer) items = items.filter(function(i){ return offersFor(i).length > 0; });
-  if (window.CBSearch) return CBSearch.search(items, raw, { limit:60 });
-  var q = raw.toLowerCase();
-  return items.filter(function(i){ return !q || String(i.name || '').toLowerCase().indexOf(q) >= 0; }).slice(0, 60);
+  /**
+   * ── ⭐⭐⭐ THE LIST GROWS AS IT IS SCROLLED ─────────────────────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-10: *"lazy loading is not happening in the list — only the first selected product is moving up
+   * and down, but it has to load the next set of products until the last."*
+   *
+   * ⚠️⚠️ IT WAS A HARD SIXTY. `limit: 60` and `.slice(0, 60)` — so a counter reading "10,436 products" could
+   * reach sixty of them by scrolling, and the other ten thousand existed only if you typed the right letters.
+   * Nothing said so: the list simply ended, which is indistinguishable from a shop with sixty items.
+   *
+   * ⭐ SIXTY IS STILL THE FIRST PAGE, and that part was right — a till must draw instantly and a shopkeeper reads
+   * the top of a list, not the middle of one. What changes is that reaching the bottom asks for the next sixty,
+   * so the end of the list is the end of the SHOP rather than the end of the page.
+   *
+   * ⚠️ SHOWN RESETS ON EVERY NEW QUERY OR CHIP (setFilter, the search box), or a search would inherit the depth
+   * of the last one and redraw thousands of rows for a two-letter query.
+   */
+  var found;
+  if (window.CBSearch) found = CBSearch.search(items, raw, { limit: SHOWN + 1 });
+  else {
+    var q = raw.toLowerCase();
+    found = items.filter(function(i){ return !q || String(i.name || '').toLowerCase().indexOf(q) >= 0; }).slice(0, SHOWN + 1);
+  }
+  /* ⚠️ one more than we show, so the list knows whether there IS a next page without counting the whole shop */
+  HAS_MORE = found.length > SHOWN;
+  return HAS_MORE ? found.slice(0, SHOWN) : found;
+}
+var PAGE_ROWS = 60, SHOWN = PAGE_ROWS, HAS_MORE = false;
+/** ⭐ back to the first page — called wherever the QUESTION changes, never when the answer merely repaints */
+function showAgain(){ SHOWN = PAGE_ROWS; HAS_MORE = false; }
+/**
+ * ⭐ ASK FOR THE NEXT PAGE. Called from the list's own scroll, and from the keys that walk past the last row —
+ * a shopkeeper holding PgDn must not stop at an invisible fence.
+ * ⚠️ It repaints only when something was actually added, so a scroll at the true end of the shop costs nothing.
+ */
+function showMore(){
+  if (!HAS_MORE) return false;
+  SHOWN += PAGE_ROWS; paintHits(); return true;
+}
+/**
+ * ⭐ ONE SCREEN AHEAD, so the next rows are already there by the time the eye reaches them and the list never
+ * appears to stop.
+ * ⚠️ paintHits() REPLACES the rows, which resets scrollTop — so the position is put back afterwards. Without
+ * that, growing the list would throw the reader back to the top, which is a worse fault than the one being fixed.
+ */
+function hitsScrolled(box){
+  if (!box || !HAS_MORE) return;
+  if (box.scrollTop + box.clientHeight < box.scrollHeight - box.clientHeight) return;
+  var at = box.scrollTop;
+  if (showMore()) { var el = document.getElementById('hits'); if (el) el.scrollTop = at; }
 }
 /** ⭐ A SCANNER IS NOT A TYPIST. An exact barcode or code match adds the item and clears the box, which is what the scanner's own
     Enter would otherwise have to do — and it is what makes a scan feel instant rather than like a search. */
@@ -2688,13 +2737,48 @@ var CARTSEL = -1;
 function pickLine(k){
   var c = CART[k]; if (!c) return;
   CARTSEL = (CARTSEL === k) ? -1 : k;          /* tapping the same line again lets go of it */
-  if (CARTSEL >= 0) {
-    var list = hits();
-    for (var n = 0; n < list.length; n++) {
-      if (String(list[n].item_id) === String(c.item_id)) { SEL = n; CENTRE_NEXT = true; paintHits(); break; }
-    }
-  }
+  if (CARTSEL >= 0) findOnShelf(c);
   paintCart();
+}
+/**
+ * ── ⭐⭐ SHOW ME THIS ONE, WHEREVER IT IS ─────────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-10: *"if you select any of the Rusk rows, the product gets selected in the list; if you select
+ * the other two, the selection is not going to that product."*
+ *
+ * ⚠️⚠️ AND THE REASON IS ON HIS OWN SCREENSHOT: the "On offer" chip was lit. The Rusks carry a line offer so they
+ * were in the list; the face wash and the cotton wick only carry a share of a bill-wide offer, so they were not —
+ * and pickLine searched the FILTERED list and found nothing.
+ *
+ * ⭐ MY FIRST VERSION LEFT IT AT THAT ON PURPOSE, reasoning that silence beats rearranging the screen under
+ * somebody's hands. That was the wrong call and he found it in one sitting: asking to see a product and being
+ * shown nothing is not restraint, it is a dead control. Tapping a line MEANS "show me this one" — so the filter
+ * that hides it is the thing that should give way, and the screen says so rather than changing quietly.
+ *
+ * ⚠️ THE SEARCH BOX IS NOT CLEARED. What was typed is the operator's own work in progress and it is not ours to
+ * throw away; only the chips are dropped, which is enough in every case a chip is what hid the row.
+ */
+function findOnShelf(c){
+  var list = hits(), n;
+  for (n = 0; n < list.length; n++)
+    if (String(list[n].item_id) === String(c.item_id)) { SEL = n; CENTRE_NEXT = true; paintHits(); return true; }
+
+  /* not in the narrowed shelf — widen it, say so, and look again */
+  if (FILTER.cat || FILTER.offer || FILTER.off) {
+    FILTER = { cat: null, offer: false, off: false };
+    showAgain(); paintChips();
+    list = hits();
+    for (n = 0; n < list.length; n++)
+      if (String(list[n].item_id) === String(c.item_id)) {
+        SEL = n; CENTRE_NEXT = true; paintHits();
+        toastLine('Showing everything, so ' + c.name + ' could be found.');
+        return true;
+      }
+  }
+  /* ⚠️ still not there: it is behind what was TYPED, and that stays. Say which, or the tap looks broken. */
+  toastLine(c.name + ' is not in this list — clear the search box to see it.');
+  paintHits();
+  return false;
 }
 /**
  * The keys a person expects on a list of sixty: one row, one screenful, and the ends. Enter takes what is marked — and what is marked
@@ -2711,9 +2795,36 @@ function searchKey(e){
    */
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   var list = hits(), page = 8;
-  if (e.key === 'ArrowDown'){ SEL = Math.min(SEL+1, list.length-1); paintHits(); e.preventDefault(); }
+  /**
+   * ── ⭐⭐ TAB GOES TO THE LIST, NOT TO THE CATEGORIES ────────────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-10: *"when the product is searched and tab, it goes to the category, not to the product. It is
+   * technically correct, but the till person's interest is to select one of the products from the list… my aim is
+   * you tab and come to list."*
+   *
+   * ⚠️ HE IS RIGHT THAT IT WAS 'CORRECT' AND WRONG. The chips sit before the list in the markup, so Tab found
+   * them first — and once focus was on a chip the arrows walked CATEGORIES while the operator believed they were
+   * walking products. The keys did not stop working; they started answering a different question.
+   *
+   * ⭐ THE BOX KEEPS THE FOCUS, and that is deliberate rather than a shortcut. Every key the list needs is
+   * already handled here, and a counter types constantly — moving focus into a list would mean the next barcode
+   * went nowhere. So Tab MARKS the list instead: the caret stays where typing works, and the row in hand is the
+   * row the eye is on. Shift+Tab hands the categories back, so nothing has become unreachable.
+   */
+  if (e.key === 'Tab' && !e.shiftKey && list.length) {
+    if (SEL < 0 || SEL >= list.length) SEL = 0;
+    CENTRE_NEXT = true; paintHits();
+    toastLine('On the list — ↓↑ to choose, Enter to add. Shift+Tab for the categories.');
+    e.preventDefault(); return;
+  }
+  if (e.key === 'ArrowDown'){
+    /* ⭐ walking off the end asks for the next page rather than stopping at an invisible fence */
+    if (SEL >= list.length - 1 && showMore()) list = hits();
+    SEL = Math.min(SEL+1, list.length-1); paintHits(); e.preventDefault(); }
   else if (e.key === 'ArrowUp'){ SEL = Math.max(SEL-1, 0); paintHits(); e.preventDefault(); }
-  else if (e.key === 'PageDown'){ SEL = Math.min(SEL+page, list.length-1); paintHits(); e.preventDefault(); }
+  else if (e.key === 'PageDown'){
+    if (SEL >= list.length - page && showMore()) list = hits();
+    SEL = Math.min(SEL+page, list.length-1); paintHits(); e.preventDefault(); }
   else if (e.key === 'PageUp'){ SEL = Math.max(SEL-page, 0); paintHits(); e.preventDefault(); }
   else if (e.key === 'Home'){ SEL = 0; paintHits(); e.preventDefault(); }
   else if (e.key === 'End'){ SEL = Math.max(list.length-1, 0); paintHits(); e.preventDefault(); }
@@ -3273,8 +3384,22 @@ function cartLineNote(c){
    */
   var offs = (c.offs || []).map(function(a){
     var nm = a.label || a.kind || 'Offer';
-    var why = (a.why && String(a.why) !== String(nm)) ? ' <span class="why">' + esc(a.why) + '</span>' : '';
-    return ' · <span class="save">' + esc(nm) + ' −' + money(Math.abs(a.amount)) + why + '</span>';
+    /**
+     * ⚠️⚠️ THE LABEL ALREADY SAYS THE TERMS. Athi, 2026-09-10: *"Rusk family offer message — why it seems
+     * duplicated or something wrong."* It read "Buy 2 biscuits, get 1 free −148.00 · 1 × free — buy 2 get 1
+     * (1 set of this product)": the scheme's own name, then the scheme's own name again inside the sentence.
+     *
+     * ⭐ SO SAY ONLY WHAT THE LABEL DOES NOT. From the engine's `detail` — the numbers, not the prose — the line
+     * adds the two facts a shopkeeper cannot read off the label: how many units were free, and that the set was
+     * earned by THIS product. `why` stays the fallback for kinds that carry no detail, and for older bills.
+     */
+    var d = a.detail, extra = '';
+    if (d && d.free) {
+      extra = d.free + (d.percent === 100 ? ' free' : ' at ' + d.percent + '% off')
+            + (d.sets ? ', ' + d.sets + ' set' + (d.sets === 1 ? '' : 's') + ' of this product' : '');
+    } else if (a.why && String(a.why) !== String(nm)) extra = a.why;
+    return ' · <span class="save">' + esc(nm) + ' −' + money(Math.abs(a.amount))
+      + (extra ? ' <span class="why">(' + esc(extra) + ')</span>' : '') + '</span>';
   }).join('');
   /* ⚠️ THE REMAINDER IS OWNED UP TO. A bill-wide offer is spread across the lines by the engine, so a line can
      legitimately drop without any offer of its own — and saying nothing there is exactly what made a correct

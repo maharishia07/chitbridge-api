@@ -380,11 +380,17 @@ it('⭐⭐ the GST is split into its heads, by the engine that already decides t
  */
 it('⭐ a modified key is not the search box key', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  const fn = page.slice(page.indexOf('function searchKey(e){'), page.indexOf('function searchKey(e){') + 900);
-  assert.ok(fn.indexOf('if (e.ctrlKey || e.metaKey || e.altKey) return;') > 0,
-    'searchKey handles modified keys, so Ctrl+arrow moves the list as well as changing the quantity');
-  assert.ok(fn.indexOf('e.ctrlKey') < fn.indexOf("e.key === 'ArrowDown'"),
-    'the modifier guard must come before the arrow branches or it cannot stop them');
+  /* ⚠️ THE WINDOW WAS 900 CHARACTERS AND THE FUNCTION OUTGREW IT (2026-09-10, when Tab-to-the-list was added).
+     A fixed slice that no longer reaches the branch it is judging does not fail loudly — indexOf returns −1, and
+     "guard < −1" is simply false, so the test reported a broken ordering that was never broken. Read to the end
+     of the function, and insist both anchors were actually found before comparing their positions. */
+  const from = page.indexOf('function searchKey(e){');
+  const fn = page.slice(from, page.indexOf('\n}', from));
+  const guard = fn.indexOf('if (e.ctrlKey || e.metaKey || e.altKey) return;');
+  const arrow = fn.indexOf("e.key === 'ArrowDown'");
+  assert.ok(guard > 0, 'searchKey handles modified keys, so Ctrl+arrow moves the list as well as changing the quantity');
+  assert.ok(arrow > 0, 'the arrow branch is no longer in searchKey — this guard is measuring nothing');
+  assert.ok(guard < arrow, 'the modifier guard must come before the arrow branches or it cannot stop them');
 });
 
 /**
