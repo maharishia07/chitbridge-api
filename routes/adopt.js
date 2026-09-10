@@ -60,9 +60,24 @@ async function receiverOf(entity_id) {
     const row = p.rows[0] || {};
     sectors = row.sectors || [];
   } catch (_) {}
+  /**
+   * ⚠️⚠️ MATCH ON WHAT THE SUPPLIER CALLS IT, NOT ONLY ON WHAT THE SHOP CALLS IT — and [ADOPT-02] found this
+   * the first time a person walked the screen. The shop adopted "Paracetamol 500mg strip" as "Paracetamol
+   * 500", and the next delivery of the very same line was offered again as NEW. Accept it twice and the
+   * catalogue holds two products for one thing, which no report afterwards can unpick.
+   * ⭐ The platform already had the idea: item_data.aliases is "the words this supplier uses", written by
+   * the counter when it matches a delivery line by hand (POST /api/till/alias). Adoption writes one too, so
+   * the two paths teach the same catalogue the same thing.
+   */
   const r = await withEntity(entity_id, (db) => db.query(
-    `SELECT lower(btrim(item_data->>'name')) AS n FROM catalogue_items WHERE entity_id = $1`, [entity_id]));
-  const have = new Set(r.rows.map((x) => x.n).filter(Boolean));
+    `SELECT item_data->>'name' AS name, item_data->'aliases' AS aliases
+       FROM catalogue_items WHERE entity_id = $1`, [entity_id]));
+  const have = new Set();
+  const add = (v) => { const k = String(v || '').trim().toLowerCase(); if (k) have.add(k); };
+  for (const row of r.rows) {
+    add(row.name);
+    (Array.isArray(row.aliases) ? row.aliases : []).forEach((a) => add(a && a.text));
+  }
   return { sectors, has_item: (n) => have.has(String(n || '').trim().toLowerCase()) };
 }
 
@@ -167,6 +182,12 @@ router.post('/:chit_id', auth, async (req, res) => {
         batch_tracked: w.batch_tracked == null ? say.seed.batch_tracked : !!w.batch_tracked,
         adopted_from: say.seed.from,
         adopted_at: new Date().toISOString(),
+        /* ⭐ THE SUPPLIER'S OWN WORDING, kept so the next delivery of this line is recognised rather than
+           offered again. Same shape the counter writes when it matches a line by hand. */
+        aliases: [{ by: (say.seed.from && say.seed.from.name) || null,
+                    text: String(line.particulars || '').slice(0, 120),
+                    unit: (line && line.unit) || null, factor: null,
+                    at: new Date().toISOString() }],
         /* ⚠️ AN OVERRIDE LEAVES A TRACE ON THE PRODUCT ITSELF, not only in a log. Somebody looking at a pharma
            line in a grocery's catalogue in a year should be able to see that a person decided that. */
         adopted_override: say.overridden ? say.vertical : undefined,
