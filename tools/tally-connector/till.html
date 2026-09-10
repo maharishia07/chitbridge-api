@@ -3061,12 +3061,38 @@ async function add(n){
   if (MODE === 'receive') rcvAdd(i, q, lotFromScan(document.getElementById('q').value));
   else if (MODE === 'despatch') dspScan(i, q);
   else { addItem(i, q); price(); }
-  /* ⚠️ the list only changes if there WAS something typed — clearing an empty box changes nothing, so the mark stays put */
+  /**
+   * ── ⭐⭐ WHAT WAS JUST ADDED STAYS IN HAND ────────────────────────────────────────────────────────────────
+   *
+   * Athi, observation 5, finding 3: *"when I select first few products, the selected product stays and I am able
+   * to add more count by clicking. But if I search and found a product, once added it goes to the first product
+   * from the list."*
+   *
+   * ⚠️ CLEARING THE BOX IS RIGHT and stays — the next scan must land in an empty box, and every counter works
+   * that way. What was wrong is what it cost: the list reverts to the whole shop, the mark lands on row 0, and
+   * the thing just added is nowhere near the finger that added it. A second one then means searching again.
+   *
+   * ⭐ TWO MARKS, because there are two ways to ask for another. The BILL LINE becomes the line in action, so
+   * Ctrl+↑↓ adds another immediately and the row says so — that mechanism already exists and this is exactly what
+   * it is for. And the LIST mark follows the product when it is still on the page, so a second click also works.
+   * ⚠️ It does NOT hunt through ten thousand rows to find it: a search that walked the whole shop after every
+   * single add would cost more than it saves, and row 0 is a fair answer when the product is genuinely far away.
+   */
   var box = document.getElementById('q');
   var listChanges = String(box.value || '').trim().length > 0;
   box.value = '';
-  SEL = listChanges ? 0 : n;
-  paintHits(); focusSearch();
+  if (MODE === 'sell') {
+    for (var ci = 0; ci < CART.length; ci++)
+      if (String(CART[ci].item_id) === String(i.item_id)) { CARTSEL = ci; break; }
+  }
+  SEL = n;
+  if (listChanges) {
+    SEL = 0;
+    var after = hits();
+    for (var si = 0; si < after.length; si++)
+      if (String(after[si].item_id) === String(i.item_id)) { SEL = si; CENTRE_NEXT = true; break; }
+  }
+  paintHits(); paintCart(); focusSearch();
 }
 /** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */
 function addItem(i, qty){

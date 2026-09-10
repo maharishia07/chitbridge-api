@@ -10,8 +10,19 @@ const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway
 // Now it logs in by EMAIL, which is stable across reseeds, and the ids are the current ones. A harness pinned to
 // display names is pinned to the one thing a business is most likely to change.
 const ALPHA = 'alpha@test-cb.com', BETA = 'beta@test-cb.com';
-const BETA_ID = '7ce1b945-96a6-490a-ae98-0bb88c524445';   // Beta Fresh
-const ALPHA_ID = '1f3a4e07-10f8-44ec-bae8-f5f1876d68e6';  // Alpha Paints
+/**
+ * ⚠️⚠️ THE IDS ARE DERIVED FROM THE LOGIN, NOT WRITTEN DOWN — AND THIS IS THE SECOND TIME.
+ *
+ * They were two constants, and by 2026-09-10 the Beta entity behind one of them no longer existed: every run
+ * failed at step one with 'Recipient ... not found in the platform', which reads exactly like a broken send path
+ * and is not one. The harness was testing a cast that had been deleted.
+ *
+ * ⭐ The header above already records this happening once with DISPLAY NAMES, and the fix then was to log in by
+ * email because email is stable across reseeds. The ids were left hardcoded and quietly became the same fault.
+ * The token already carries the identity — eid() below has read it out for other purposes all along — so there
+ * was never a reason to keep a copy that can rot.
+ */
+let BETA_ID = null, ALPHA_ID = null;
 let PASS = 0, FAIL = 0; const ISSUES = [];
 function check(name, ok, detail) {
   if (ok) { PASS++; console.log('  ✓ ' + name + (detail ? '  ' + detail : '')); }
@@ -31,6 +42,7 @@ async function login(name) {
   const ver = await api('POST', '/api/entities/verify', { body: { email: reg.json.email, otp } });
   return { token: ver.json && ver.json.token, email: reg.json.email };
 }
+const idOf = (t) => { try { return JSON.parse(Buffer.from(String(t).split('.')[1], 'base64').toString()).identity_id || null; } catch (_) { return null; } };
 const has = (obj, id) => JSON.stringify(obj || '').includes(id);
 
 /**
@@ -61,6 +73,10 @@ async function holdsCopy(token, chit_id) {
   const A = await login(ALPHA), B = await login(BETA);
   check('Alpha login', !!A.token, A.err); check('Beta login', !!B.token, B.err);
   if (!A.token || !B.token) return done();
+  /* ⭐ who they actually ARE today, taken from the tokens they just got */
+  ALPHA_ID = idOf(A.token); BETA_ID = idOf(B.token);
+  check('the cast resolves to real entities', !!ALPHA_ID && !!BETA_ID,
+        'a token carried no identity_id — the login shape changed');
   // throwaway third entity for true non-participant isolation
   const G = await login('gamma-reg@test.com');
   const gammaOk = !!G.token; console.log('  (third entity for isolation: ' + (gammaOk ? 'ready' : 'unavailable — ' + G.err) + ')');
