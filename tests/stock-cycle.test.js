@@ -24,31 +24,45 @@ const RICE = '22222222-2222-2222-2222-222222222222';
 
 /* ── the stub: two tables and the handful of statements the store issues ── */
 let MOVES = [], BAL = [];
-const key = (r) => [r.entity_id, r.item_id, r.location].join('|');
+/* ⚠️ THE KEY GAINS THE LOT (b215). Untracked stock lives under '' — a real value, never NULL, because a NULL in
+   a primary key does not compare equal to itself. */
+const key = (r) => [r.entity_id, r.item_id, r.location, r.lot || ''].join('|');
 const withEntity = async (entity_id, fn) => fn({
   query: async (sql, args) => {
     if (/^\s*INSERT INTO stock_movement/.test(sql)) {
-      const [entity_id, item_id, location, qty, rate, value_delta, unit, reason, ref, line_ref, lot, note, at] = args;
+      const [entity_id, item_id, location, qty, rate, value_delta, unit, reason, ref, line_ref, lot, note, at, by, expires_at] = args;
       /* the real unique index, reproduced — a replayed bill must not move stock twice */
+      /* the real unique index now includes COALESCE(lot,'') — one sale line can split across two batches */
       if (ref != null && MOVES.some((m) => m.entity_id === entity_id && m.ref === ref
-            && m.line_ref === line_ref && m.reason === reason)) return { rows: [] };
+            && m.line_ref === line_ref && m.reason === reason && (m.lot || '') === (lot || ''))) return { rows: [] };
       const row = { movement_id: 'mv-' + (MOVES.length + 1), entity_id, item_id, location,
-                    qty: Number(qty), rate, value_delta, unit, reason, ref, line_ref, lot, note,
+                    qty: Number(qty), rate, value_delta, unit, reason, ref, line_ref, lot, note, expires_at,
                     at: at || new Date(Date.now() + MOVES.length * 1000).toISOString() };
       MOVES.push(row);
       return { rows: [{ movement_id: row.movement_id, at: row.at }] };
     }
     if (/^\s*INSERT INTO stock_balance/.test(sql)) {
-      const [entity_id, item_id, location] = args;
-      const k = [entity_id, item_id, location].join('|');
+      const [entity_id, item_id, location, lot, expires_at] = args;
+      const k = [entity_id, item_id, location, lot || ''].join('|');
       if (!BAL.some((b) => key(b) === k))
-        BAL.push({ entity_id, item_id, location, qty: 0, value: 0, avg_cost: 0, unit: null, last_at: null, moves: 0 });
+        BAL.push({ entity_id, item_id, location, lot: lot || '', expires_at: expires_at || null,
+                   qty: 0, value: 0, avg_cost: 0, unit: null, last_at: null, moves: 0 });
       return { rows: [] };
     }
     /* ⚠️ MATCH THE INTENT, NOT THE COLUMN LIST. These branches were pinned to exact SELECT lists, so adding one
        column to the real query made the stub silently return no rows and the code then read undefined. Same
        lesson as the 300-character slice earlier: a check that measures the shape of a string is measuring the
        wrong thing. FOR UPDATE is what actually distinguishes the lock from the plain read, so use that. */
+    /* ⚠️ THE FEFO READ IS ITS OWN SHAPE: every batch of one product that still holds stock, oldest expiry first.
+       It takes three arguments where the others take four, so a key-join match silently returned nothing and
+       issue() fell through to its shortfall path — which looked exactly like "there was no stock". */
+    if (/FROM stock_balance[\s\S]*qty > 0[\s\S]*ORDER BY expires_at/.test(sql)) {
+      const [entity_id, item_id, location] = args;
+      return { rows: BAL
+        .filter((b) => b.entity_id === entity_id && b.item_id === item_id && b.location === location && b.qty > 0)
+        .sort((a, z) => String(a.expires_at || '9999-12-31').localeCompare(String(z.expires_at || '9999-12-31'))
+                        || String(a.lot).localeCompare(String(z.lot))) };
+    }
     if (/SELECT [\s\S]*FROM stock_balance[\s\S]*FOR UPDATE/.test(sql)) {
       const k = args.join('|');
       return { rows: BAL.filter((b) => key(b) === k) };
@@ -57,14 +71,14 @@ const withEntity = async (entity_id, fn) => fn({
        repair path assign a movement COUNT into last_at and then increment moves anyway. The stub was wrong, not
        the code, but it cost a red test to find: a fake that is sloppier than the real schema tests nothing. */
     if (/^\s*UPDATE stock_balance/.test(sql) && /moves = \$7/.test(sql)) {      /* rebuild --repair */
-      const [entity_id, item_id, location, qty, value, avg_cost, moves] = args;
-      const b = BAL.find((x) => key(x) === [entity_id, item_id, location].join('|'));
+      const [entity_id, item_id, location, qty, value, avg_cost, moves, lot] = args;
+      const b = BAL.find((x) => key(x) === [entity_id, item_id, location, lot || ''].join('|'));
       Object.assign(b, { qty: Number(qty), value: Number(value), avg_cost: Number(avg_cost), moves: Number(moves) });
       return { rows: [] };
     }
     if (/^\s*UPDATE stock_balance/.test(sql)) {                                 /* post() */
-      const [entity_id, item_id, location, qty, value, avg_cost, at, unit] = args;
-      const b = BAL.find((x) => key(x) === [entity_id, item_id, location].join('|'));
+      const [entity_id, item_id, location, qty, value, avg_cost, at, unit, expires_at, lot] = args;
+      const b = BAL.find((x) => key(x) === [entity_id, item_id, location, lot || ''].join('|'));
       Object.assign(b, { qty: Number(qty), value: Number(value), avg_cost: Number(avg_cost),
                          unit: b.unit || unit || null, last_at: at, moves: b.moves + 1 });
       return { rows: [] };
@@ -284,6 +298,91 @@ await ita('⭐⭐ and a unit that does not match the balance is REFUSED, never c
   assert.ok(/counted in kg/.test(bad.why) && /in case/.test(bad.why), 'the refusal must name BOTH units: ' + bad.why);
   const b = await store.balanceOf(SHOP, CASES, withEntity);
   assert.strictEqual(b.qty, 5, 'a refused movement must leave the balance alone');
+});
+
+
+console.log('— per batch, resolved from the vertical —');
+
+await ita('⭐⭐⭐ the vertical decides, and the product may overrule it — in both directions', () => {
+  const L = require(path.join(__dirname, '..', 'lib', 'lotfields.js'));
+  assert.strictEqual(L.tracksBatch({ sectors: ['Pharmaceuticals'] }).tracked, true, 'pharma must track batches');
+  assert.strictEqual(L.tracksBatch({ sectors: ['kirana'] }).tracked, true, 'FMCG requires a batch');
+  assert.strictEqual(L.tracksBatch({ sectors: ['apparel'] }).tracked, false, 'garments need no batch');
+  /* ⚠️ A SHOP WITH NO SECTOR TRACKS NOTHING. Guessing would put a batch box in front of someone selling vegetables. */
+  assert.strictEqual(L.tracksBatch({ sectors: [] }).tracked, false);
+  /* both overrides have a real shop behind them */
+  assert.strictEqual(L.tracksBatch({ sectors: ['fmcg'], item: { item_data: { batch_tracked: false } } }).tracked, false,
+    'loose rice out of one sack must be allowed to opt out');
+  assert.strictEqual(L.tracksBatch({ sectors: [], item: { item_data: { batch_tracked: true } } }).tracked, true,
+    'one shelf of medicines in a general store must be allowed to opt in');
+});
+
+await ita('⚠️⚠️ a lot key is normalised, because a recall that misses stock on a space is the worst bug here', () => {
+  const L = require(path.join(__dirname, '..', 'lib', 'lotfields.js'));
+  assert.strictEqual(L.lotKey(' a-4471 '), 'A-4471');
+  assert.strictEqual(L.lotKey(null), '', 'untracked stock is the empty string, never null');
+});
+
+await ita('⚠️ tracked stock cannot be RECEIVED without a batch number', async () => {
+  const MED = '44444444-4444-4444-4444-444444444444';
+  const r = await store.post(SHOP, { item_id: MED, reason: 'purchase', qty: 10, rate: 5, tracked: true,
+                                     ref: 'GRN-NOBATCH', line_ref: '1', at: at(20) }, withEntity);
+  assert.strictEqual(r.ok, false, 'a nameless pool alongside the named ones is the one a recall cannot clear');
+  assert.ok(/batch number/.test(r.why), r.why);
+});
+
+console.log('— FEFO —');
+
+const MED = '55555555-5555-5555-5555-555555555555';
+
+await ita('⭐ two batches, and the one expiring SOONER goes first even though it arrived LATER', async () => {
+  /* the long-dated batch arrives first… */
+  await store.post(SHOP, { item_id: MED, reason: 'purchase', qty: 10, rate: 5, tracked: true,
+    lot: 'B-LONG', expires_at: '2027-12-31', ref: 'GRN-L', line_ref: '1', at: at(21) }, withEntity);
+  /* …then a short-dated one, which is exactly the case where FIFO would be wrong */
+  await store.post(SHOP, { item_id: MED, reason: 'purchase', qty: 4, rate: 5, tracked: true,
+    lot: 'B-SHORT', expires_at: '2026-10-01', ref: 'GRN-S', line_ref: '1', at: at(22) }, withEntity);
+  const lots = await store.lotsOf(SHOP, MED, withEntity);
+  assert.strictEqual(lots[0].lot, 'B-SHORT', 'FEFO orders by expiry, not by arrival: ' + JSON.stringify(lots.map((l) => l.lot)));
+});
+
+await ita('⭐⭐⭐ one sale line splits across batches when the first cannot cover it', async () => {
+  const r = await store.issue(SHOP, { item_id: MED, reason: 'sale', qty: 6, tracked: true,
+    ref: 'B-FEFO', line_ref: '1', at: at(23) }, withEntity);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.parts.length, 2, 'six units over a batch holding four must touch two batches');
+  assert.strictEqual(r.parts[0].lot, 'B-SHORT');
+  assert.strictEqual(r.parts[0].qty, 4, 'the short-dated batch is emptied first');
+  assert.strictEqual(r.parts[1].lot, 'B-LONG');
+  assert.strictEqual(r.parts[1].qty, 2);
+  assert.strictEqual((await store.balanceOf(SHOP, MED, withEntity, null, 'B-SHORT')).qty, 0);
+  assert.strictEqual((await store.balanceOf(SHOP, MED, withEntity, null, 'B-LONG')).qty, 8);
+});
+
+await ita('⭐⭐ and replaying that split bill moves nothing — both halves are idempotent', async () => {
+  const again = await store.issue(SHOP, { item_id: MED, reason: 'sale', qty: 6, tracked: true,
+    ref: 'B-FEFO', line_ref: '1', at: at(23) }, withEntity);
+  assert.strictEqual(again.moved, 0, 'a replayed split sale moved stock a second time');
+  assert.strictEqual((await store.balanceOf(SHOP, MED, withEntity, null, 'B-LONG')).qty, 8);
+  /* ⚠️ THIS IS WHY b215 PUT THE LOT IN THE UNIQUE INDEX. Without it the two halves share a line_ref, the second
+     would be refused as a duplicate on the FIRST run, and the sale would be short by two units in silence. */
+});
+
+await ita('⚠️⚠️ selling more than every batch holds is ALLOWED, and the shortfall is reported', async () => {
+  const r = await store.issue(SHOP, { item_id: MED, reason: 'sale', qty: 20, tracked: true,
+    ref: 'B-OVER', line_ref: '1', at: at(24) }, withEntity);
+  assert.strictEqual(r.ok, true, 'an offline counter cannot know the shelf, so a sale is never blocked');
+  assert.strictEqual(r.short, 12, '8 on hand, 20 sold — the shop is 12 short and needs to count');
+  const lots = await store.lotsOf(SHOP, MED, withEntity);
+  assert.strictEqual(lots.length, 0, 'nothing is left holding positive stock');
+});
+
+await ita('⭐ an untracked product still goes through issue() as ONE ordinary movement', async () => {
+  const SOAP = '66666666-6666-6666-6666-666666666666';
+  await store.post(SHOP, { item_id: SOAP, reason: 'purchase', qty: 10, rate: 20, ref: 'GRN-SOAP', line_ref: '1', at: at(25) }, withEntity);
+  const r = await store.issue(SHOP, { item_id: SOAP, reason: 'sale', qty: 3, tracked: false, ref: 'B-SOAP', line_ref: '1', at: at(26) }, withEntity);
+  assert.strictEqual(r.parts.length, 1, 'untracked stock is one pool and must not be split');
+  assert.strictEqual((await store.balanceOf(SHOP, SOAP, withEntity)).qty, 7);
 });
 
 console.log(pass + ' checks');
