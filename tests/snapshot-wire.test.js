@@ -838,12 +838,15 @@ it('⚠️⚠️ the customer list asks for columns that exist, on the table tha
   assert.ok(q.indexOf('c.owner_entity_id = $1') > 0, 'it filters on entity_id — customer_list has owner_entity_id');
   assert.ok(q.indexOf('FROM customer_list c') > 0, 'the join is gone');
   /* ⚠️ and the failure is no longer silent */
-  assert.ok(q.indexOf('catch (_)') < 0, 'the error is swallowed without a trace again');
-  assert.ok(q.indexOf('logger') > 0, 'a swallowed failure must leave something behind');
+  /* ⚠️ the OUTER catch must bind the error and log it. An inner catch(_) around the LOGGER is correct and stays —
+     writing a log line must never be the thing that stops a shop billing. */
+  assert.ok(q.indexOf('} catch (e) {') > 0, 'the outer catch does not bind the error, so it cannot report it');
+  assert.ok(q.indexOf("logger').warn('till.customers'") > 0, 'a swallowed failure must leave something behind');
 
   /* the columns it names must be ones the baseline or a migration actually creates */
   const base = fs.readFileSync(path.join(API, 'migrations', '000_baseline.sql'), 'utf8');
-  const cols = base.slice(base.indexOf('CREATE TABLE customer_list'), base.indexOf('CREATE TABLE customer_list') + 700);
+  const tableAt = base.indexOf('CREATE TABLE customer_list');
+  const cols = base.slice(tableAt, base.indexOf(');', tableAt));
   for (const real of ['owner_entity_id', 'customer_identity_id', 'last_txn_at'])
     assert.ok(cols.indexOf(real) > 0, 'customer_list no longer has ' + real + ' — this query needs rechecking');
   for (const notThere of ['display_name', 'phone'])
