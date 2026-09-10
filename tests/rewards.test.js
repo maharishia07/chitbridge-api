@@ -20,7 +20,7 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
 
 console.log('— what a point is worth —');
 
-const PROG = { name: 'Shop rewards', earn: { per: 100, points: 1 },
+const PROG = { name: 'Shop rewards', earn: { kind: 'per_amount', per: 100, points: 1 },
   redeem: [ { kind: 'money', points: 1, amount: 1 },
             { kind: 'item',  points: 500, name: '1 kg sugar' },
             { kind: 'thing', points: 20000, name: 'a weekend in Ooty for two' } ] };
@@ -37,7 +37,7 @@ it('⭐⭐ and it says how far the NEXT thing is — the half that makes a balan
 });
 
 it('⚠️ a programme that declared no conversion says SO, and is never given a value', () => {
-  const vague = { name: 'Points', earn: { per: 100, points: 1 }, redeem: [] };
+  const vague = { name: 'Points', earn: { kind: 'per_amount', per: 100, points: 1 }, redeem: [] };
   assert.ok(R.worthOf(vague, 450).says.indexOf('has not said what they are worth') > 0);
   assert.strictEqual(R.pointValue(vague), null, 'a worth was invented for a programme that declared none');
   assert.strictEqual(R.liability(vague, 450), null, 'null, not 0 — 0 would imply the shop owes nothing');
@@ -64,10 +64,42 @@ it('⚠️ nothing is earned from a programme that has not said how', () => {
   assert.strictEqual(R.earnedOn(PROG, -500), 0, 'a refund must never mint points');
 });
 
+console.log('— the mechanism is ours, the rule is the shop own —');
+
+/**
+ * ⭐⭐⭐ Athi, correcting the design: *"we don't need to specify the value conversion. We build the reward mechanism
+ * and allow the business to decide … we can invent new."* So earning is a REGISTRY of kinds, the same shape
+ * lib/offers-engine.js already uses, and adding a mechanism is a ROW rather than an edit to any caller.
+ */
+it('⭐⭐⭐ a business picks HOW points are earned, and each kind describes itself', () => {
+  const basket = { net: 2450, gross: 2600, count: 7 };
+  const on = (earn) => R.earnedOn({ name: 'p', earn }, basket);
+  assert.strictEqual(on({ kind: 'per_amount', per: 100, points: 1 }), 24, 'n points per amount spent');
+  assert.strictEqual(on({ kind: 'value_as_points', rate: 1 }), 2450, 'the sale value IS the points — Athi own example');
+  assert.strictEqual(on({ kind: 'per_visit', points: 50 }), 50, 'rewarding the visit, not the spend');
+  assert.strictEqual(on({ kind: 'per_item', points: 2 }), 14, 'rewarding volume, not value');
+  /* every kind must be able to state itself — a rule nobody can read is a rule nobody trusts */
+  for (const k of R.earnKinds) {
+    const rule = { kind: k, per: 100, points: 1, rate: 1 };
+    assert.ok(R.describeEarn({ earn: rule }, {}).length > 8, k + ' cannot say what it does');
+  }
+});
+
+it('⚠️⚠️ an unknown or incomplete rule earns NOTHING and names the problem', () => {
+  const basket = { net: 5000, count: 3 };
+  assert.strictEqual(R.earnedOn({ earn: { kind: 'per_moon', points: 5 } }, basket), 0);
+  assert.ok(R.describeEarn({ earn: { kind: 'per_moon' } }, {}).indexOf('no such earning rule') >= 0);
+  /* ⚠️ a missing parameter is REFUSED, never defaulted — a guessed default mints points nobody agreed to give */
+  assert.strictEqual(R.earnedOn({ earn: { kind: 'per_amount', points: 1 } }, basket), 0);
+  assert.ok(R.describeEarn({ earn: { kind: 'per_amount', points: 1 } }, {}).indexOf('needs per') >= 0,
+    'it must say WHICH parameter is missing');
+  assert.strictEqual(R.earnCheck({ kind: 'per_amount', per: 100, points: 1 }).ok, true);
+});
+
 console.log('— the ledger —');
 
 it('⭐⭐ a balance is the FOLD of what happened, never a stored number', () => {
-  const led = [R.earn(PROG, 2450, 'C1/0001'), R.earn(PROG, 12000, 'C1/0002')];
+  const led = [R.earn(PROG, 2450, 'C1/0001'), R.earn(PROG, 12000, 'C1/0002')];   /* 24 + 120 */
   const b = R.balanceOf(led);
   assert.strictEqual(b.points, 144);
   assert.strictEqual(b.earned, 144);
