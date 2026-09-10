@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/qr.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -117,6 +117,15 @@ const COPIES = () => [
      follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
      would be a second opinion about a number, which lib/numerals exists to prevent. */
   [null, path.join(WEB, 'engine', 'nums.js'), wrapForBrowser('numerals.js', 'CBNums')],
+  /**
+   * ⭐⭐ NINTH ENGINE — REWARDS. The counter has to tell a customer what they just earned WHILE THEY ARE STANDING
+   * THERE, which means the arithmetic has to run with the line down. The server runs the same file again when the
+   * bill syncs and its answer is the one written, because only the server can see the balance — but the two must
+   * be the same function or a customer is promised one number and given another, which is the one failure a
+   * loyalty scheme cannot survive.
+   */
+  [null, path.join(WEB, 'engine', 'rewards.js'), wrapForBrowser('rewards.js', 'CBRewards')],
+  [null, path.join(API, 'lib', 'rewards.browser.js'), wrapForBrowser('rewards.js', 'CBRewards')],
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],

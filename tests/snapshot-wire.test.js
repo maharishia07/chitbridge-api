@@ -854,4 +854,62 @@ it('⚠️⚠️ the customer list asks for columns that exist, on the table tha
       'customer_list now HAS ' + notThere + ' — the join may be unnecessary, but check before simplifying');
 });
 
+console.log('— rewards —');
+
+it('⭐⭐ the programme is on the wire, so a counter with the line down still knows the rule', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  const store = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'reward-store.js'), 'utf8');
+  assert.ok(/\n\s+reward,/.test(src), 'the snapshot no longer carries reward — the counter cannot award offline');
+  assert.ok(store.indexOf("d.kind = 'reward' AND d.status = 'live'") > 0,
+    'the programme must be read as a live definition, the same way an offer is');
+  assert.ok(store.indexOf('LIMIT 1') > 0, 'two live programmes would mean two balances at one shop');
+});
+
+it('⭐⭐⭐ ONE reader of a balance — the counter and the shop must never quote different numbers', () => {
+  const fs2 = require('fs'), path2 = require('path');
+  const dir = path2.join(__dirname, '..');
+  /* ⚠️ THE ASSERTION IS ABOUT DUPLICATION, so it counts the files that carry the query rather than trusting that
+     nobody copied it. reward_ledger is SELECTed in exactly one place; everything else calls that. */
+  const carriers = [];
+  for (const rel of ['routes/till.js', 'routes/relationships.js', 'lib/reward-store.js']) {
+    const p = path2.join(dir, rel);
+    if (!fs2.existsSync(p)) continue;
+    if (/FROM reward_ledger/.test(fs2.readFileSync(p, 'utf8'))) carriers.push(rel);
+  }
+  assert.deepStrictEqual(carriers, ['lib/reward-store.js'],
+    'reward_ledger is read in more than one file (' + carriers.join(', ') + ') — two readers of one balance '
+    + 'eventually disagree about what a customer is owed, which is the one thing a loyalty scheme cannot survive');
+});
+
+it('⚠️ a customer carries the ID points hang from, not just a name', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
+  assert.ok(q.indexOf('i.identity_id') > 0, 'the query must select identity_id');
+  assert.ok(q.indexOf('identity_id: x.identity_id') > 0,
+    'the id must reach the counter — a balance addressed by name would eventually be paid to the wrong Kumar');
+});
+
+it('⭐⭐⭐ the counter and the server compute points with the SAME file', () => {
+  const fs2 = require('fs'), path2 = require('path');
+  const master = fs2.readFileSync(path2.join(__dirname, '..', 'lib', 'rewards.js'), 'utf8');
+  const vendored = fs2.readFileSync(path2.join(__dirname, '..', 'lib', 'rewards.browser.js'), 'utf8');
+  /* ⚠️ the vendored copy is the master WRAPPED, so it is not byte-equal — but every line of the master must be in
+     it. Two implementations would promise a customer one number at the counter and pay another at the shop. */
+  const body = master.replace(/module\.exports\s*=/, 'var EXPORTS =').replace(/\r\n/g, '\n');
+  assert.ok(vendored.replace(/\r\n/g, '\n').indexOf(body) > 0,
+    'lib/rewards.browser.js has drifted from lib/rewards.js — re-run scripts/vendor-till.cjs');
+});
+
+it('⚠️ encashing is a TENDER, not a discount — the taxable value must not move', () => {
+  const page = require('fs').readFileSync(
+    require('path').join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function rwEncash()'), page.indexOf('function billMoney()'));
+  assert.ok(fn.indexOf('PARTS.push') > 0, 'encashing must add a payment part');
+  /* ⚠️ THE REAL ASSERTION: it must not touch a line, a total or the tax. Points came from a sale that was already
+     taxed; letting them reduce today's taxable value takes the tax off twice, and the SHOP answers for that. */
+  for (const forbidden of ['CART[', 'c.net =', 'm.base', 'm.tax'])
+    assert.ok(fn.indexOf(forbidden) < 0,
+      'rwEncash touches ' + forbidden + ' — a redemption must never restate the taxable value of a bill');
+});
+
 console.log(pass + ' checks');

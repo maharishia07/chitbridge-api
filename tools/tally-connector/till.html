@@ -265,6 +265,15 @@
   .row .x{border:none;background:none;color:var(--warn);font-size:1.2em;cursor:pointer}
   .save{color:var(--ok)}
 
+  /* ── ⭐ POINTS: one line under the customer box, because it is a fact ABOUT this customer ── */
+  .rw{display:none;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 12px;border-bottom:1px solid var(--line);
+      background:var(--ok-tint);color:var(--ink);font-size:.85em}
+  .rw.on{display:flex}
+  .rw b{font-weight:800}
+  .rw .u{color:var(--dim)}
+  .rw button{padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);
+             font-weight:700;cursor:pointer;font-size:.95em}
+  .rw button.on{background:var(--ok);color:#fff;border-color:var(--ok)}
   .totals{border-top:2px solid var(--ink);padding:8px 12px}
   .t{display:flex;justify-content:space-between;padding:1px 0}
   .t.big{font-size:1.7em;font-weight:800;padding-top:4px}
@@ -491,15 +500,18 @@
     </div>
    <div id="pane_sell" style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="cust">
-      <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist">
+      <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist" oninput="rwTyped()">
       <!-- ⭐ A NAME IS HARDER TO TYPE THAN A NUMBER, NOT EASIER. Athi, 2026-09-09: *"customer name can listen."* The phone box had
            a microphone and the name box did not, which is backwards: a phone is ten digits on a keypad, while "Kalaiselvi" typed
            with one hand at a counter is slow and usually wrong. Same seam, same chooser — nothing new to configure. -->
       <button class="pill" id="micname" data-testid="till-mic-name" onclick="listen('cname')" title="speak the name">🎤</button>
       <datalist id="custlist"></datalist>
-      <input id="cphone" placeholder="Phone" autocomplete="off" inputmode="tel" style="max-width:150px">
+      <input id="cphone" placeholder="Phone" autocomplete="off" inputmode="tel" style="max-width:150px" oninput="rwTyped()">
       <button class="pill" id="micphone" data-testid="till-mic-phone" onclick="listen('cphone')" title="speak the number">🎤</button>
     </div>
+    <!-- ⭐⭐ what this customer holds, and what this bill will add. Empty and invisible for a shop with no programme,
+         which is most shops — nothing on the counter is spent on a feature nobody switched on. -->
+    <div class="rw" id="rw" data-testid="till-rw"></div>
     <div class="cart" id="cart"></div>
     <div class="totals" id="totals"></div>
     <div class="pay" id="pay"></div>
@@ -668,6 +680,9 @@
 <script src="/engine/gs1.js" onerror="engineMissed('gs1')"></script>
 <script src="/engine/lots.js" onerror="engineMissed('lots')"></script>
 <script src="/engine/nums.js" onerror="engineMissed('nums')"></script>
+<!-- ⭐ REWARDS. The counter has to say what a customer just earned while they are still standing there, so the
+     arithmetic runs here with the line down; the server runs the same file again and its answer is written. -->
+<script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
 <script>
 /* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
 var MISSING = [];
@@ -707,6 +722,20 @@ var CFD = (function(){
           count: n, total: money(m.net), saved: m.save > 0 ? money(m.save) : null,
           taxed: m.taxed, heads: m.heads || [],
           pay: (way && left > 0) ? { label: way.label, link: payLink(way, left, LASTNO || 'bill'), due: money(left) } : null,
+          /**
+           * ⭐⭐ WHAT THIS BILL EARNS, ON THE CUSTOMER'S OWN SCREEN. Athi: *"how anyone knows the value of the
+           * rewards and its interpretation."* The interpretation is the point — a bare number means nothing, so
+           * what travels is a sentence and a money value, not a count.
+           * ⚠️ NO NAME, NO NUMBER, NO BALANCE HISTORY. The screen faces the shop, and the person in the queue
+           * behind can read it. What this bill adds is about the bill; who holds the points is not.
+           */
+          rw: (function(){
+            var p = rwProg(); if (!p) return null;
+            var will = rwEarns(), spent = RW.spend || 0;
+            if (!will && !spent) return null;
+            return { name: p.name || 'Points', earned: will || 0, spent: spent,
+                     worth: spent ? money(rwWorth(spent)) : null };
+          })(),
           done: false,
         });
       } catch (_) {}
@@ -937,7 +966,7 @@ var CloudHost = {
     return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
              today: { count: mine.length, total: total, by: by },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
-             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums } };
+             engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums, rewards: !!window.CBRewards } };
   },
   /**
    * ⭐ ASK ONLY FOR WHAT CHANGED (2026-09-08). The first run takes the whole shop; after that the till says when it last looked and
@@ -2450,9 +2479,13 @@ var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0 };
 async function queueTally(){
   var rows = [];
   try { rows = (await DB.all('queue')) || []; } catch (_) { rows = []; }
-  var t = { bills: 0, docs: 0, changes: 0, other: 0 };
+  var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0 };
   rows.forEach(function(r){
-    if (r && r.tillPost) t.changes++;                 /* a price, a stock flag, an offer turned on */
+    /* ⚠️ POINTS ARE NOT 'A CHANGE'. To a shopkeeper a change is a price or a shelf flag — something they did to the
+       shop. A reward waiting is a promise made to a person who has already walked out, and the two do not deserve
+       the same word on the status line. */
+    if (r && r.tillPost && String(r.tillPost.path).indexOf('/api/till/reward') === 0) t.points++;
+    else if (r && r.tillPost) t.changes++;            /* a price, a stock flag, an offer turned on */
     else if (r && r.chitBody) t.docs++;               /* goods-in or a despatch note */
     else if (r && (r.shiftBody || r.deliver)) t.other++;
     else t.bills++;                                   /* a bill is the row with no wrapper — and the one that is money */
@@ -2469,6 +2502,7 @@ function queueWords(){
   n(QUEUED.bills, 'bill', 'bills');
   n(QUEUED.docs, 'document', 'documents');
   n(QUEUED.changes, 'change', 'changes');
+  n(QUEUED.points, 'customer' + String.fromCharCode(39) + 's points', 'customers' + String.fromCharCode(39) + ' points');
   n(QUEUED.other, 'other', 'others');
   /* ⚠️ a count with no breakdown can still be said honestly — better a vaguer true sentence than a broken one */
   if (!bits.length) return STATE.queued + ' waiting to reach ChitBridge';
@@ -3152,6 +3186,142 @@ function openHealth(){
   document.getElementById('slipdlg').showModal();
 }
 /** the shelf price already includes GST — the slip shows the split, it does not add to what the customer was told */
+/* ═══ REWARDS AT THE COUNTER ══════════════════════════════════════════════════════════════════════════════════
+ *
+ * Athi, 2026-09-10: *"exactly like offer — instead of discount you add reward, so it can be encashed during next
+ * visit, so a repeated customer can be invented."* And: *"reward points added, and reward points encashed"* on the
+ * bill itself.
+ *
+ * ⭐⭐⭐ ENCASHING IS A TENDER, NOT A DISCOUNT — and that is the one design decision here worth arguing about.
+ * The obvious build is to take the money off the bill like an offer does. It is wrong, for a reason that only
+ * shows up months later at a GST return: a discount RESTATES THE TAXABLE VALUE. Points came from an earlier sale
+ * that was already taxed, so letting them reduce today's taxable value takes the tax off twice — and the shop,
+ * not the engine, answers for that.
+ * So points pay for part of the bill instead, exactly as ₹500 in cash and the rest on UPI already does. The total,
+ * the tax split and the slip are untouched; a tender called "Points" covers some of it.
+ * ⚠️ AND THIS IS REUSE, NOT A PARALLEL PATH. It rides PARTS — the split-tender mechanism the counter already has —
+ * so the day close counts it, the chit carries it in payment.parts, and the books see a real tender rather than a
+ * discount that has to be explained.
+ */
+var RW = { holder:null, points:0, worth:0, spend:0, says:null, seq:0 };
+
+/** the shop's programme, or nothing — most shops run none, and then this whole feature is invisible */
+function rwProg(){ return (S && S.reward) || null; }
+
+/**
+ * ⚠️ WHO IS AT THE COUNTER, as a (scheme, value) pair, decided by the ENGINE and not here. A typed name is matched
+ * against the shop's own list to find the id; only if that fails does the phone number hold the points. A name is
+ * never a holder — two customers called Kumar would share a balance.
+ */
+function rwHolder(){
+  if (!window.CBRewards) return null;
+  var name = (document.getElementById('cname').value || '').trim();
+  var phone = (document.getElementById('cphone').value || '').trim();
+  var known = name ? ((S && S.customers || []).filter(function(c){
+    return String(c.name || '').toLowerCase() === name.toLowerCase(); })[0]) : null;
+  return CBRewards.holderOf({ identity_id: known && known.identity_id, phone: phone });
+}
+
+/** what THIS cart would earn, computed here so the customer hears it before they pay */
+function rwEarns(){
+  var p = rwProg(); if (!p || !window.CBRewards) return 0;
+  /* ⚠️ walk_in_earns is the shop's declaration, and the server enforces it too — this only stops the counter
+     promising something the server will then decline to write. */
+  var h = RW.holder;
+  if (!h || (h.scheme === 'phone' && p.walk_in_earns === false)) return 0;
+  var m = billMoney();
+  return CBRewards.earnedOn(p, { net:m.net, gross:m.gross, count:CART.length,
+    lines: CART.map(function(c){ return { item_id:c.item_id, qty:c.qty, net:c.net, category:c.category }; }) });
+}
+
+/** ⚠️ what a spend is worth in money, through the ENGINE — the till must not carry its own rate */
+function rwWorth(points){
+  var p = rwProg(); if (!p || !window.CBRewards) return 0;
+  return CBRewards.liability(p, points);
+}
+
+/**
+ * ⭐ THE LOOKUP. A balance lives on the server, so this needs the line — and a counter that is offline simply does
+ * not offer encashment, which is honest: it cannot know what is left. Earning still works offline, because earning
+ * is computed from the bill in front of us and reconciled when the queue drains.
+ */
+async function rwLook(){
+  var p = rwProg();
+  var h = rwHolder();
+  RW.holder = h; RW.spend = 0; RW.points = 0; RW.worth = 0; RW.says = null;
+  paintRw();
+  if (!p || !h) return;
+  var seq = ++RW.seq;                       /* ⚠️ a slow answer for a customer who has already left must not land */
+  var r = await HOST.tillGet('/api/till/reward?scheme=' + encodeURIComponent(h.scheme)
+                             + '&value=' + encodeURIComponent(h.value));
+  if (seq !== RW.seq) return;
+  if (r && r.ok) { RW.points = Number(r.points) || 0; RW.worth = Number(r.worth) || 0; RW.expiring = Number(r.expiring) || 0; }
+  else RW.says = (r && r.why === 'offline') ? 'the line is down, so the balance cannot be read' : null;
+  paintRw();
+}
+/* ⚠️ ON CHANGE, NOT ON EVERY KEYSTROKE. A lookup per character would be a request per letter of somebody's name. */
+var RW_T = null;
+function rwTyped(){ clearTimeout(RW_T); RW_T = setTimeout(rwLook, 450); }
+
+function paintRw(){
+  var el = document.getElementById('rw'); if (!el) return;
+  var p = rwProg();
+  if (!p) { el.className = 'rw'; el.innerHTML = ''; return; }
+  el.className = 'rw on';
+  var will = rwEarns();
+  var minSpend = Number(p.min_balance_to_spend) || 0;
+  var m = billMoney();
+  /* ⚠️ NEVER MORE THAN THE BILL. Encashing 900 points against a ₹4 bill would hand back change in cash. */
+  var canSpend = Math.min(RW.points, rwPointsFor(m.net));
+  var parts = [];
+  parts.push('<b>' + esc(p.name || 'Points') + '</b>');
+  parts.push('<span class="u">' + esc(window.CBRewards ? CBRewards.describeEarn(p, { money: money }) : '') + '</span>');
+  if (!RW.holder) {
+    /* ⭐ SAID, NOT SILENT. Athi: walk-ins skip earning — so the counter tells the cashier why, in one line, and a
+       phone number is all it takes to fix it. Silence here would look like the feature was broken. */
+    parts.push('<span class="u">· a name or a phone number to hold them</span>');
+  } else {
+    if (RW.holder.scheme === 'phone' && p.walk_in_earns === false)
+      parts.push('<span class="u">· held against ' + esc(RW.holder.value) + ' — this shop does not earn on walk-ins</span>');
+    else if (will > 0) parts.push('<span data-testid="till-rw-earn">· this bill adds <b>' + will + '</b></span>');
+    if (RW.points > 0) {
+      parts.push('<span data-testid="till-rw-balance">· has <b>' + RW.points + '</b> ('
+                 + money(RW.worth) + ')</span>');
+      if (RW.expiring) parts.push('<span class="u">· ' + RW.expiring + ' just expired</span>');
+      if (RW.points < minSpend) parts.push('<span class="u">· ' + minSpend + ' needed to encash</span>');
+      else if (canSpend > 0) parts.push('<button data-testid="till-rw-encash" class="' + (RW.spend ? 'on' : '')
+        + '" onclick="rwEncash()">' + (RW.spend ? 'Encashed ' + RW.spend : 'Encash ' + canSpend + ' → ' + money(rwWorth(canSpend))) + '</button>');
+    }
+    if (RW.says) parts.push('<span class="u">· ' + esc(RW.says) + '</span>');
+  }
+  el.innerHTML = parts.join(' ');
+}
+
+/** ⚠️ how many points it takes to cover an amount — asked of the programme, never of a constant here */
+function rwPointsFor(amount){
+  var p = rwProg(); if (!p || !window.CBRewards) return 0;
+  var r = (p.redeem || []).filter(function(x){ return x.kind === 'money'; })[0];
+  if (!r || !(Number(r.amount) > 0) || !(Number(r.points) > 0)) return 0;
+  return Math.floor((Number(amount) || 0) / Number(r.amount) * Number(r.points));
+}
+
+/**
+ * ⭐ ENCASH — as a payment part, for the reason at the top of this block. It is one press: the counter works out
+ * the most that can sensibly come off, rather than asking a cashier to do arithmetic with a customer waiting.
+ */
+function rwEncash(){
+  if (RW.spend) return;                            /* pressing twice must not take twice */
+  var m = billMoney(), taken = PARTS.reduce(function(a,x){ return r2(a + x.amount); }, 0);
+  var left = r2(m.net - taken);
+  var pts = Math.min(RW.points, rwPointsFor(left));
+  var amt = rwWorth(pts);
+  if (!(pts > 0) || !(amt > 0)) { say('There is nothing that can be encashed against this bill.'); return; }
+  RW.spend = pts;
+  PARTS.push({ how:'Points', amount: amt });
+  PAY_ASKED = true;
+  paintParts(); paintTotals(); paintRw();
+}
+
 function billMoney(){
   var gross = 0, save = 0, net = 0;
   CART.forEach(function(c){ gross = r2(gross + (c.gross||0)); save = r2(save + (c.save||0)); net = r2(net + (c.net||0)); });
@@ -3267,6 +3437,8 @@ function paintTotals(){
   var b = document.getElementById('save'); if (b) b.disabled = !CART.length;
   /* ⚠️ the sentence names an AMOUNT, so it changes when the total does — not only when a button is pressed */
   paintPays();
+  /* ⭐ and what this bill earns depends on what is on it, so the points line follows the total too */
+  paintRw();
   /* ⭐ and the customer's screen is told the same thing at the same moment */
   CFD.send();
 }
@@ -3377,6 +3549,9 @@ async function finish(){
     payments: parts, paid: paid,
     /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
        from the shape of a bill would be a guess dressed as a finding. */
+    /* ⚠️ THE POINTS RIDE THE BILL. The counter may be offline; the reward post goes through the SAME queue and the
+       server's unique index makes a replay a no-op — so a bill that syncs twice does not award twice. */
+    reward: RW.holder ? { holder: RW.holder, spend: RW.spend || 0 } : null,
     payment_asked: PAY_ASKED, change: r2(Math.max(0, (tendered || 0) - r2(m.net - (paid - (parts[parts.length-1] || {}).amount || 0)))),
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
@@ -3390,11 +3565,33 @@ async function finish(){
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
   if (!r || !r.ok){ say('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
   LAST = r.bill; LASTNO = r.bill && r.bill.no; if (r.today) STATE.today = r.today;
+  /**
+   * ⭐⭐ THE POINTS, AFTER THE BILL EXISTS AND NOT BEFORE. The bill number is the ref that makes a replay harmless,
+   * so there is nothing to record until there is a number.
+   * ⚠️ AND IT NEVER BLOCKS THE SALE. If this fails the customer has still paid and the goods have still gone; the
+   * bill stands, the points are reported as not yet recorded, and the queue carries the post when the line returns.
+   */
+  var rwSaid = null;
+  if (RW.holder && rwProg()) {
+    var rr = await HOST.tillPost('/api/till/reward', {
+      ref: r.bill.no, holder: RW.holder, net: m.net, gross: m.gross, count: CART.length,
+      lines: CART.map(function(c){ return { item_id:c.item_id, qty:c.qty, net:c.net, category:c.category }; }),
+      spend: RW.spend || 0 });
+    /* ⚠️ QUEUED IS CHECKED FIRST, and the order is the whole point: a queued post answers ok:true with no figures
+       in it, so testing ok first would have printed 'earned 0' on a slip for a customer who earned 40. */
+    if (rr && rr.queued) rwSaid = { queued: true, added: rwEarns(), spent: RW.spend || 0 };
+    else if (rr && rr.ok) rwSaid = { added: rr.added || 0, spent: rr.spent || 0, points: rr.points || 0,
+                                     worth: rr.worth || 0, overspent: rr.overspent || 0 };
+    else rwSaid = { failed: (rr && rr.why) || 'not recorded yet', added: rwEarns(), spent: RW.spend || 0 };
+  }
+  if (r.bill) r.bill.reward = rwSaid;
   /* ⭐ the customer's screen says thank you and then goes back to the slides on its own */
   CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
   showSlip(r.bill, m);
   autoPrint(r.bill);
   CART = []; PARTS = []; paintParts();
+  /* ⚠️ the balance on screen belonged to the customer who just left */
+  RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
   price(); document.getElementById('lastnote').textContent = 'last bill ' + r.bill.no;
   load(); loadQuick();
@@ -4274,9 +4471,32 @@ function slipHTML(bill, m){
     + solid + t('TOTAL', money(bill.total), true) + solid
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
+    /**
+     * ⭐⭐ POINTS ON THE PAPER. Athi, 2026-09-10: *"reward point can be showcased in the bill — reward points added,
+     * and reward point encashed."* It is printed BELOW the total and below the tender, because that is what it is:
+     * something that happened alongside the money, not part of it.
+     * ⚠️ IT PRINTS WHAT IS TRUE, INCLUDING WHEN NOTHING WAS RECORDED. A slip that showed points the server never
+     * wrote would be a promise the shop cannot honour on the next visit — so an unqueued failure says so on the
+     * paper, in the customer's hands, where somebody can still do something about it.
+     */
+    + rewardOnSlip(bill, t, dash)
     + (bill.kind === 'supply' ? '<div style="text-align:center">Composition taxable person.<br>Not eligible to collect tax on supplies.</div>' : '')
     + '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>'
     + '<div style="height:10mm"></div></div>';
+}
+/** ⚠️ ONE PLACE the paper, the screen and the reprint all read, so a customer is never told two different numbers */
+function rewardOnSlip(bill, t, dash){
+  var rw = bill && bill.reward; if (!rw) return '';
+  var name = (rwProg() && rwProg().name) || 'Points';
+  var out = '';
+  if (rw.spent > 0) out += t(name + ' encashed', '−' + rw.spent);
+  if (rw.added > 0) out += t(name + ' earned',  '+' + rw.added);
+  if (!out) return '';
+  if (rw.points != null && !rw.failed && !rw.queued) out += t(name + ' balance', String(rw.points));
+  /* ⚠️ SAY WHEN IT IS ONLY PROMISED. Both of these are honest and neither is an error the customer caused. */
+  if (rw.queued) out += '<div style="font-size:.9em">Recorded on this counter — reaches the shop when the line is back.</div>';
+  if (rw.failed) out += '<div style="font-size:.9em">Not yet recorded at the shop (' + esc(String(rw.failed)) + ').</div>';
+  return out + dash;
 }
 function showSlip(bill, m){
   document.getElementById('sliptitle').textContent = 'Bill ' + bill.no + ' · ' + money(bill.total);

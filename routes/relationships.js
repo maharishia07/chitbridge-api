@@ -332,6 +332,57 @@ router.get('/customers', auth, async (req, res) => {
 });
 
 /**
+ * ⭐⭐ WHAT THIS CUSTOMER HOLDS, AND WHAT IT MEANS.
+ *
+ * Athi, 2026-09-10: *"can we showcase rewards accumulated in customer and supplier screen? Otherwise how anyone
+ * knows the value of the rewards and its interpretation."*
+ *
+ * ⭐ THE INTERPRETATION IS THE POINT, and it is why this returns sentences and a money value rather than a number.
+ * "412 points" tells a shopkeeper nothing — it does not say what the shop owes, what the customer can do with it,
+ * or whether it is about to disappear. So the answer carries: what the shop owes (the liability, at the declared
+ * rate), what it converts into in the shop's own words, and how it was earned.
+ *
+ * ⚠️ THE LIABILITY IS THE SHOPKEEPER'S NUMBER, and it is a real one — points outstanding are money the shop has
+ * promised and not yet paid. A screen that showed only the count would be hiding a debt from the person carrying it.
+ */
+router.get('/customers/:id/rewards', auth, async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const rewards = require('../lib/rewards');
+    const store = require('../lib/reward-store');
+    const holder = { scheme: 'identity', value: String(req.params.id || '') };
+    if (!holder.value) return res.status(400).json({ error: 'validation', message: 'a customer id is required' });
+    const b = await store.balance(owner, holder, withEntity);
+    if (!b.programme) return res.json({ programme: null, points: 0,
+      /* ⚠️ NOT AN ERROR AND NOT AN EMPTY BOX. Most shops run no programme; the pane says so plainly. */
+      says: 'This shop does not run a points programme.' });
+    /**
+     * ⭐⭐ worthOf IS THE INTERPRETATION, and it already existed — it says what the balance is worth in money, what
+     * it is already enough for, and what the NEXT reward is and how far off. I nearly wrote a second function for
+     * this. Athi's standing rule is to reuse what CB already has rather than invent again, and this is exactly the
+     * case it is aimed at: the answer was in the engine, one call away, better than what I would have written.
+     * ⚠️ NO ctx.money HERE — a pure module has no currency, so the caller formats. The pane does it in the browser
+     * where the shop's own locale is, and this returns the bare figure beside the sentence.
+     */
+    const w = rewards.worthOf(b.programme, b.points, {});
+    res.json({
+      programme: b.programme.name, points: b.points, worth: b.worth, negative: b.negative,
+      earns: rewards.describeEarn(b.programme, {}),
+      says: w.says, reach: w.reach, next: w.next, money_known: w.moneyKnown,
+      expires_months: b.programme.expires_months || null,
+      /* the last movements, so "where did those come from" has an answer on the same screen */
+      recent: b.entries.slice(0, 12),
+      expired_now: b.expired.reduce((a, e) => a + Math.abs(e.points), 0),
+    });
+  } catch (err) {
+    /* ⚠️ BEFORE THE MIGRATION IS RUN the table does not exist, and a CRM pane must not break because of it */
+    if (err && err.code === '42P01') return res.json({ programme: null, points: 0, says: 'Rewards are not switched on yet.' });
+    console.error('Get customer rewards error:', err.message);
+    res.status(500).json({ error: 'Get rewards failed', message: safeErr(err) });
+  }
+});
+
+/**
  * ⭐ ADD A CUSTOMER BY HAND (Athi, 2026-09-06: "Chola Auto Care should be coming as a customer — can we add a + icon to include a customer?").
  * The list filled itself only from trades (storefront order, a bill, since today a Suppliers-menu order). A seller who knows their customer
  * before the first order — to give them an "Only for" offer — adds them here: resolved the way a supplier is (User ID · bridge id · email),

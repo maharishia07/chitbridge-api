@@ -28,6 +28,7 @@ const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW
 const lotfields = require('../lib/lotfields');
 const keys = require('./keys');
 const { shopChanged } = require('../lib/shopchanged');   /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
+const rewards = require('../lib/rewards');       /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
 const speech = require('../lib/speech');            /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */      /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -127,6 +128,23 @@ router.get('/snapshot', auth, async (req, res) => {
       offers = Array.isArray(live) ? live : (live && live.offers) || [];
     } catch (_) { /* a shop with no offers bills fine */ }
 
+    /**
+     * ⭐⭐ THE REWARD PROGRAMME — a definition of kind 'reward', read exactly like an offer, because it IS the same
+     * kind of thing: a rule the shop declared that must still be quotable months later against a bill it priced.
+     * ⚠️ ONE LIVE PROGRAMME. Two would mean a bill earning twice and a customer holding two balances at one shop,
+     * and there is no sensible way to say which one a redemption came out of. If a shop wants to change the rate
+     * it retires the old programme and declares a new one — the ledger then carries both, each row naming the
+     * definition that awarded it.
+     */
+    let reward = null;
+    try {
+      /* ⚠️ the SAME reader the award path uses (lib/reward-store.js). The counter must not be told one programme
+         while the server awards under another — that is a customer promised one rate and paid at a different one. */
+      reward = await require('../lib/reward-store').programme(entity_id, withEntity);
+    } catch (e) {
+      try { require('../lib/logger').warn('till.reward', { entity_id, why: String(e && e.message) }); } catch (_) {}
+    }
+
     /* the counter's customer list — a name and a phone, nothing more; the till looks up a repeat customer, it does not hold history */
     let customers = [];
     try {
@@ -136,13 +154,15 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
        */
       const c = await withEntity(entity_id, (db) => db.query(
-        `SELECT i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at
+        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at
            FROM customer_list c
            JOIN identities i ON i.identity_id = c.customer_identity_id
           WHERE c.owner_entity_id = $1
           ORDER BY c.last_txn_at DESC NULLS LAST
           LIMIT 2000`, [entity_id]));
-      customers = c.rows.map((x) => ({ name: x.display_name, phone: x.phone || null,
+      /* ⚠️ THE ID TRAVELS because points hang from it. A name is not a holder — two customers can be called
+         Kumar, and a reward balance addressed by name would eventually be paid to the wrong one. */
+      customers = c.rows.map((x) => ({ identity_id: x.identity_id, name: x.display_name, phone: x.phone || null,
                                        groups: Array.isArray(x.groups) ? x.groups : [] }));
     } catch (e) {
       /**
@@ -324,6 +344,7 @@ router.get('/snapshot', auth, async (req, res) => {
       slabs: (shelf && shelf.slabs instanceof Map) ? [...shelf.slabs.values()] : ((shelf && shelf.slabs) || []),
       categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
       customers,
+      reward,                       /* ⚠️ null is the ordinary case — most shops run no programme, and the counter shows nothing */
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
                 /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
                 price_includes_tax: String(flags.price_includes_tax || 'yes'),
@@ -646,6 +667,141 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
     if (!out) return res.status(404).json({ error: 'Not found' });
     shopChanged(entity_id, 'price changed');
     res.json({ ok: true, item_id, name: out.name, was: out.was, now: out.now, currency });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/* ═══ REWARDS ═════════════════════════════════════════════════════════════════════════════════════════════════
+ *
+ * Athi, 2026-09-10: *"exactly like offer — instead of discount you add reward, so it can be encashed during next
+ * visit, so a repeated customer can be invented."*
+ *
+ * ⭐⭐ WHY THE ARITHMETIC IS DONE TWICE, AND WHICH ANSWER WINS.
+ * The counter computes points at the till, because it bills offline and has to TELL the customer what they just
+ * earned while they are still standing there. The server computes them again here, from the bill it received,
+ * and the SERVER'S answer is the one written. Not from mistrust of the till — from the fact that only the server
+ * can see the balance, and only the balance can say whether a redemption is affordable. A till that has been
+ * offline for two days does not know what the customer spent yesterday at the other counter.
+ *
+ * ⚠️ EXCEPT FOR A SPEND, WHICH IS TAKEN AS STATED — because it already came off the bill total. If the server
+ * disagreed and refused it, the customer would have paid a reduced price AND kept the points. So an unaffordable
+ * spend is still WRITTEN, and reported back as 'overspent' so the shop finds out. A ledger that refuses to record
+ * what actually happened at the counter is worse than one that records something regrettable.
+ */
+
+/**
+ * ⚠️ THE QUERIES LIVE IN lib/reward-store.js, NOT HERE. They were written here first and copied nowhere; the moment
+ * the shop's own Customers pane needed the same balance, keeping them would have made two readers of one number.
+ * The engine (lib/rewards.js) decides what a point is worth; the store decides where one is kept; this file only
+ * decides what a counter may do.
+ */
+const store = require('../lib/reward-store');
+const ledgerOf = (entity_id, holder, limit) => store.entriesOf(entity_id, holder, withEntity, limit);
+const progOf = (entity_id) => store.programme(entity_id, withEntity);
+const holderFrom = store.holderFrom;
+const ledgerWrite = (entity_id, holder, e, definition_id) => store.append(entity_id, holder, e, definition_id, withEntity);
+
+/**
+ * GET /api/till/reward?scheme=phone&value=9840012345  → what this customer holds, and what it is worth
+ * ⚠️ EXPIRY IS APPLIED ON THE WAY OUT, not by a nightly job. A sweep would have to run somewhere, be monitored,
+ * and would still leave a window in which a customer is shown points the next bill refuses. Folding it here means
+ * the number a customer is quoted is the number the till can spend, always — and the entries it produces are
+ * written the next time that balance is touched, so the ledger catches up on use rather than on a timer.
+ */
+router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const holder = holderFrom({ scheme: req.query.scheme, value: req.query.value });
+    if (!holder) return res.status(400).json({ error: 'validation', message: 'scheme (identity|phone) and value required' });
+    const prog = await progOf(entity_id);
+    if (!prog) return res.json({ ok: true, holder, programme: null, points: 0, entries: [] });
+    const entries = await ledgerOf(entity_id, holder);
+    const gone = rewards.expired(prog, entries);
+    const bal = rewards.balanceOf(entries.concat(gone));
+    res.json({ ok: true, holder,
+               programme: { name: prog.name, earns: rewards.describeEarn(prog, {}),
+                            expires_months: prog.expires_months || null },
+               points: bal.points, negative: bal.negative,
+               worth: rewards.liability(prog, bal.points),
+               expiring: gone.length ? gone.reduce((a, e) => a + Math.abs(e.points), 0) : 0,
+               entries: entries.slice(0, 50) });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * POST /api/till/reward  { ref, holder:{scheme,value}, net, count, lines, spend }
+ *   ref    the bill number — the SAME client_ref the chit carries, which is what makes a replay harmless
+ *   net    what the customer actually paid, so the server can compute the earning itself
+ *   spend  points encashed on this bill, already deducted from that total at the counter
+ */
+router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = req.body || {};
+    const ref = String(b.ref || '').trim().slice(0, 64);
+    if (!ref) return res.status(400).json({ error: 'validation', message: 'ref (the bill number) required' });
+    const holder = holderFrom(b.holder || b.customer);
+    /* ⚠️ NOT AN ERROR. A walk-in who gave no number is the commonest bill in the shop; it earns nothing and the
+       counter says so in one line. Returning 400 here would put a red box on an ordinary sale. */
+    if (!holder) return res.json({ ok: true, holder: null, added: 0, spent: 0, points: 0,
+                                   why: 'no customer to hold the points' });
+
+    const prog = await progOf(entity_id);
+    if (!prog) return res.json({ ok: true, holder, added: 0, spent: 0, points: 0, why: 'this shop runs no programme' });
+
+    /* ⚠️ WALK-INS SKIP EARNING WHERE THE SHOP SAYS SO (Athi's rule, declared per shop as walk_in_earns) — but a
+       walk-in may still SPEND what an earlier visit earned, or the points would be a promise the shop never keeps. */
+    const walkIn = holder.scheme === 'phone';
+    const mayEarn = !walkIn || prog.walk_in_earns !== false;
+
+    const basket = { net: Number(b.net) || 0, gross: Number(b.gross) || 0, count: Number(b.count) || 0,
+                     lines: Array.isArray(b.lines) ? b.lines : [] };
+    const added = mayEarn ? rewards.earnedOn(prog, basket) : 0;
+    const spend = Math.max(0, Math.trunc(Number(b.spend) || 0));
+
+    const before = await ledgerOf(entity_id, holder);
+    const gone = rewards.expired(prog, before);
+    const bal = rewards.balanceOf(before.concat(gone));
+
+    const rows = gone.slice();
+    if (spend > 0) rows.push(rewards.entry({ points: -spend, why: 'spent', ref: ref, note: 'encashed on this bill' }));
+    if (added > 0) rows.push(rewards.entry({ points: added, why: 'earned', ref: ref, note: 'bill ' + ref }));
+    for (const e of rows.filter(Boolean)) await ledgerWrite(entity_id, holder, e, prog.definition_id);
+
+    const after = bal.points - spend + added;
+    res.json({ ok: true, holder: holder, programme: prog.name, added: added, spent: spend,
+               points: after, worth: rewards.liability(prog, after),
+               /* ⚠️ SAID, NOT HIDDEN: the spend was honoured because it had already come off the bill */
+               overspent: spend > bal.points ? spend - bal.points : 0,
+               says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {}) });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * ⭐⭐ POST /api/till/reward/claim  { from:{scheme:'phone',value}, to:{scheme:'identity',value}, ref }
+ * The walk-in who comes back and registers. Two entries, netting to zero, that move a phone-held balance onto an
+ * account — never an UPDATE, both because the ledger is append-only by GRANT and because rewriting the old rows
+ * would erase the fact that a walk-in earned them.
+ * ⚠️ SOMEBODY AT THE COUNTER HAS TO ASK FOR IT. A phone number is not proof of identity, and an automatic merge
+ * on a matching number would hand one person's balance to another who typed the same digits.
+ */
+router.post('/reward/claim', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = req.body || {};
+    const from = holderFrom(b.from), to = holderFrom(b.to);
+    if (!from || !to) return res.status(400).json({ error: 'validation', message: 'from and to holders required' });
+    const prog = await progOf(entity_id);
+    if (!prog) return res.status(400).json({ error: 'validation', message: 'this shop runs no programme' });
+    const entries = await ledgerOf(entity_id, from);
+    const gone = rewards.expired(prog, entries);
+    const bal = rewards.balanceOf(entries.concat(gone));
+    const ref = String(b.ref || ('claim-' + Date.now())).slice(0, 64);
+    const c = rewards.claim(bal, from, to, ref);
+    if (!c.ok) return res.status(400).json({ error: 'validation', message: c.why });
+    for (const e of gone) await ledgerWrite(entity_id, from, e, prog.definition_id);
+    /* ⚠️ each half of a claim lands under ITS OWN holder — the entry carries it, the loop must not assume one */
+    for (const e of c.entries) await ledgerWrite(entity_id, e.holder || from, e, prog.definition_id);
+    res.json({ ok: true, moved: c.points, from: from, to: to });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
@@ -1141,7 +1297,8 @@ router.post('/listen', auth, async (req, res) => {
 const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js',
                   gs1: '../lib/gs1.browser.js',        /* what a pack's barcode carries — batch, expiry, serial */
                   lots: '../lib/lotfields.browser.js', /* what this trade must capture, and the difference it absorbs */
-                  nums: '../lib/numerals.browser.js' };/* "two kilo", "rendu kilo" — the closed class, in both */
+                  nums: '../lib/numerals.browser.js', /* "two kilo", "rendu kilo" — the closed class, in both */
+                  rewards: '../lib/rewards.browser.js' };/* points a customer holds — computed at the counter, written by the server */
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
   if (!rel) return res.status(404).json({ error: 'Not found' });

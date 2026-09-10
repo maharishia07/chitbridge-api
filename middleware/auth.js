@@ -203,7 +203,7 @@ const KEY_ROUTES = {
   /* ⚠️ NOT verify — that route calls requireScope('till') of its own, so listing it here promised a door the door itself
      refuses. A scope map that advertises what a route will not open is worse than not listing it. */
   screen:    [['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/], ['POST', /^\/api\/events\/ticket$/]],
-  till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|worth-an-offer|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
+  till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|worth-an-offer|reward|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */
@@ -217,6 +217,12 @@ const KEY_ROUTES = {
               /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
                  product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
               ['POST', /^\/api\/till\/(stock|price|flags|offer-item)$/],
+              /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
+                 definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
+                 authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".
+                 ⚠️ reward/claim moves a walk-in's phone-held balance onto an account. It nets to zero, it is append-only, and
+                 it happens because a person at the counter asked for it — a phone number is not proof of identity. */
+              ['POST', /^\/api\/till\/reward(\/claim)?$/],
               /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
                  two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery
                  claim against any open order of ITS OWN shop. It is the shop's own claim, it is visible, it is corrected by a

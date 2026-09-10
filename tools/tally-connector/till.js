@@ -201,6 +201,28 @@ async function drain() {
         const r = await cb.call('POST', '/api/chits/send', chitOf(bill));
         const id = r && (r.chit_id || (r.chit && r.chit.chit_id));
         log('bill ' + bill.no + ' → ' + (r && r.duplicate ? 'already recorded' : 'recorded') + (id ? ' (' + String(id).slice(0, 8) + ')' : ''));
+        /**
+         * ⭐⭐ THE POINTS RIDE THE SAME QUEUE AS THE BILL THEY CAME FROM (2026-09-10). A counter that was offline
+         * when it sold has already told the customer what they earned; this is what makes that true afterwards.
+         * ⚠️ ONE QUEUE, NOT TWO — the bill and its points cannot end up on different sides of an outage, and the
+         * server's unique index on (entity, ref, why, holder) means posting again after a successful counter post
+         * is a no-op rather than a second award.
+         * ⚠️ AND IT NEVER HOLDS THE BILL BACK. The sale is recorded above; if the points post fails, that is a line
+         * in the log, not a bill sent round again — sending it again would be safe but pointless, and the shop
+         * would learn nothing from a queue that never empties.
+         */
+        if (bill.reward && bill.reward.holder) {
+          try {
+            const rw = await cb.call('POST', '/api/till/reward', {
+              ref: bill.no, holder: bill.reward.holder, spend: bill.reward.spend || 0,
+              net: bill.total, gross: (bill.total || 0) + (bill.saved || 0),
+              count: (bill.lines || []).length,
+              lines: (bill.lines || []).map((l) => ({ item_id: l.item_id, qty: l.qty, net: l.net, category: l.category })),
+            });
+            if (rw && (rw.added || rw.spent)) log('  points ' + (rw.added ? '+' + rw.added : '') + (rw.spent ? ' −' + rw.spent : '')
+              + ' → ' + rw.points + ' held');
+          } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
+        }
         online = true;
       } catch (e) {
         online = false;
@@ -398,7 +420,7 @@ const server = http.createServer(async (req, res) => {
      */
     if (req.method === 'GET' && url.pathname === '/api/op') {
       var want = url.searchParams.get('get') || '';
-      var READ = ['/api/till/worth-an-offer'];
+      var READ = ['/api/till/worth-an-offer', '/api/till/reward'];
       var base = want.split('?')[0];
       if (READ.indexOf(base) < 0) return json(res, 400, { ok:false, why:'not a question this counter may ask' });
       try { const r = await cb.call('GET', want, null);
@@ -411,7 +433,9 @@ const server = http.createServer(async (req, res) => {
       let o = {}; try { o = JSON.parse(body || '{}'); } catch (_) {}
       /* ⚠️ AN EXPLICIT LIST, NOT A PATTERN. This is an allow-list for what a page may ask its own agent to POST upstream, and a
          pattern is one careless edit away from letting through a path nobody meant. Two operations, named. */
-      var ALLOW = ['/api/till/stock', '/api/till/price', '/api/till/flags', '/api/till/offer-item'];
+      var ALLOW = ['/api/till/stock', '/api/till/price', '/api/till/flags', '/api/till/offer-item',
+                   /* ⭐ points earned and encashed on a bill, and the claim that moves a walk-in's balance onto an account */
+                   '/api/till/reward', '/api/till/reward/claim'];
       if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
       try { const r = await cb.call('POST', o.path, o.body || {});
         return json(res, 200, Object.assign({ ok:true }, r || {}));

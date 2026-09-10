@@ -194,12 +194,16 @@ it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well
 
   /* what the PAGE actually posts upstream */
   const wants = new Set();
-  const re = /tillPost\(\s*'(\/api\/till\/[a-z-]+)'/g;
+  const re = /tillPost\(\s*'(\/api\/till\/[a-z/-]+)'/g;
   let m; while ((m = re.exec(page))) wants.add(m[1]);
   assert.ok(wants.size >= 4, 'only ' + wants.size + ' till writes were found in the page — the parser has stopped matching');
 
   /* what the AGENT will forward */
-  const allowLine = agent.slice(agent.indexOf('var ALLOW = ['), agent.indexOf('var ALLOW = [') + 300);
+  const allowFrom = agent.indexOf('var ALLOW = [');
+  assert.ok(allowFrom > 0, 'the agent no longer declares var ALLOW — this guard is measuring nothing');
+  const allowEnd = agent.indexOf('];', allowFrom);
+  assert.ok(allowEnd > allowFrom, 'the agent ALLOW list is not closed with ]; — the guard cannot see where it ends');
+  const allowLine = agent.slice(allowFrom, allowEnd + 2);
   for (const p of wants) {
     assert.ok(allowLine.indexOf("'" + p + "'") > 0,
       'the counter posts ' + p + ' but the agent ALLOW list does not carry it — it works in a browser and is refused'
@@ -210,7 +214,9 @@ it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well
 
   /* the reads are allow-listed the same way, and are never queued */
   const reads = new Set();
-  const rre = /tillGet\(\s*'(\/api\/till\/[a-z-]+)/g;
+  /* ⚠️ the sub-path matters: /api/till/reward/claim is a different door from /api/till/reward, and a pattern that
+     stopped at the first segment would pass a route the agent has never been told about. */
+  const rre = /tillGet\(\s*'(\/api\/till\/[a-z/-]+)/g;
   while ((m = rre.exec(page))) reads.add(m[1]);
   for (const p of reads) {
     assert.ok(agent.indexOf("'" + p + "'") > 0, 'the counter reads ' + p + ' but the agent will not forward it');

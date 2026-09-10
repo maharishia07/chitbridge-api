@@ -232,6 +232,13 @@ function drawBill(x, w, h, b){
     x.fillText(String(b.total || ''), pad, Math.round(h * 0.50));
     if (b.no) { x.fillStyle = '#8B93A7'; x.font = '500 ' + Math.round(h * 0.032) + 'px system-ui,sans-serif';
                 x.fillText('Bill ' + b.no, pad, Math.round(h * 0.60)); }
+    /* ⭐⭐ THE REASON TO COME BACK, said last. Athi: *"so a repeated customer can be invented."* This is the moment
+       that sentence is aimed at — the bill is paid, the bag is in their hand, and what is on the screen is what
+       they still have here. */
+    if (b.rw && b.rw.earned > 0) {
+      x.fillStyle = '#4cc38a'; x.font = '700 ' + Math.round(h * 0.042) + 'px system-ui,sans-serif';
+      x.fillText('+' + b.rw.earned + ' ' + b.rw.name.toLowerCase(), pad, Math.round(h * 0.68));
+    }
     return;
   }
 
@@ -268,6 +275,16 @@ function drawBill(x, w, h, b){
   if (b.saved) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
                  x.font = '700 ' + Math.round(h * 0.034) + 'px system-ui,sans-serif';
                  x.fillText('You saved ' + b.saved, pad, by + Math.round(h * 0.045)); }
+  /* ⭐ what this bill adds, and what came off it in points — the interpretation, never a bare count */
+  if (b.rw) {
+    x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+    x.font = '700 ' + Math.round(h * 0.030) + 'px system-ui,sans-serif';
+    var rwSay = [];
+    if (b.rw.spent > 0) rwSay.push(b.rw.spent + ' ' + b.rw.name.toLowerCase() + ' = ' + b.rw.worth + ' off');
+    if (b.rw.earned > 0) rwSay.push('+' + b.rw.earned + ' ' + b.rw.name.toLowerCase() + ' on this bill');
+    /* ⚠️ BELOW the saved line, and only if there is room for both — a screen read across a shop is one thing per line */
+    if (rwSay.length) x.fillText(rwSay.join(' · '), pad, by + Math.round(h * (b.saved ? 0.088 : 0.045)));
+  }
   if (b.pay && b.pay.link) {
     x.textAlign = 'right'; x.fillStyle = '#8B93A7';
     x.font = '600 ' + Math.round(h * 0.028) + 'px system-ui,sans-serif';

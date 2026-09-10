@@ -53,14 +53,9 @@ const { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OT
 const UNWIRED = [
   /* units.js was here from 2026-08-16 to 2026-08-17 while it was built-but-unwired. consolidate.js now requires
      it, so it is live and this test derives that — exactly the mechanism working as intended. */
-  /**
-   * ⚠️ BUILT 2026-09-10, CALLED BY NOTHING, AND SAYING SO. Athi asked how anyone knows what a reward point is worth;
-   * rewards.js answers that and only that. What is missing is the ledger — an append-only record of what each
-   * customer earned and spent — which is a migration and touches money, so it waits for him.
-   * ⭐ The order is deliberate: a points balance is a LIABILITY, and a shop should agree what a point converts into
-   * BEFORE anything starts accruing. Building the ledger first would have created a debt with no stated value.
-   */
-  'lib/rewards.js',
+  /* lib/rewards.js was here for about six hours on 2026-09-10, built-but-unwired while the ledger it needed was
+     still a migration nobody had run. routes/till.js now requires it (award, encash, claim) and the counter runs
+     the same file in the browser, so the test derives that it is live — the mechanism working as intended. */
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //

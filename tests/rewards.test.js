@@ -231,4 +231,90 @@ it('⭐ and the schema.org shape is emitted for a feed', () => {
   assert.strictEqual(R.schemaOrg(null), null, 'a programme with no name must not be published');
 });
 
+console.log('— who holds the points —');
+
+it('⭐ a registered customer holds them against their id', () => {
+  assert.deepStrictEqual(R.holderOf({ identity_id: 'cust-9' }), { scheme: 'identity', value: 'cust-9' });
+  assert.deepStrictEqual(R.holderOf({ customer_identity_id: 'cust-9' }), { scheme: 'identity', value: 'cust-9' });
+});
+
+it('⭐ a walk-in holds them against the phone number they gave', () => {
+  assert.deepStrictEqual(R.holderOf({ phone: '98400 12345' }), { scheme: 'phone', value: '9840012345' });
+  assert.deepStrictEqual(R.holderOf({ phone: '+91 98400 12345' }), { scheme: 'phone', value: '+919840012345' },
+    'the country code is part of the number and must survive');
+});
+
+it('⚠️ a walk-in who gave nothing holds nothing — earning is skipped, not accrued to nobody', () => {
+  assert.strictEqual(R.holderOf({ name: 'Walk-in' }), null);
+  assert.strictEqual(R.holderOf(null), null);
+  assert.strictEqual(R.holderOf({ phone: '984' }), null, 'a three-digit number is a typo, not a customer');
+});
+
+it('⚠️ the id wins over the phone — one person must not hold two balances', () => {
+  assert.deepStrictEqual(R.holderOf({ identity_id: 'cust-9', phone: '9840012345' }),
+    { scheme: 'identity', value: 'cust-9' });
+});
+
+it('⭐ and a holder has one key, so a row and a lookup cannot disagree', () => {
+  assert.strictEqual(R.holderKey({ scheme: 'phone', value: '9840012345' }), 'phone:9840012345');
+  assert.strictEqual(R.holderKey(null), null);
+});
+
+console.log('— when points run out —');
+
+it('⭐ expiry is declared, and a shop that says nothing expires nothing', () => {
+  const led = [R.entry({ points: 100, why: 'earned', at: '2025-01-01T00:00:00.000Z' })];
+  assert.strictEqual(R.expired({ earn: PROG.earn }, led).length, 0,
+    'a balance was expired by a shop that never declared an expiry');
+  assert.strictEqual(R.expiresAt({ earn: PROG.earn }, '2025-01-01T00:00:00.000Z'), null);
+});
+
+it('⭐ twelve months from the day they were earned', () => {
+  assert.strictEqual(String(R.expiresAt({ expires_months: 12 }, '2025-01-15T00:00:00.000Z')).slice(0, 10),
+    '2026-01-15');
+});
+
+it('⭐⭐ expiry is a LEDGER ENTRY, not a filter — the customer can see what went', () => {
+  const old = '2024-01-01T00:00:00.000Z';
+  const led = [R.entry({ points: 100, why: 'earned', at: old }),
+               R.entry({ points: 40,  why: 'earned', at: new Date().toISOString() })];
+  const gone = R.expired({ expires_months: 12 }, led);
+  assert.strictEqual(gone.length, 1, 'only the old earning has expired');
+  assert.strictEqual(gone[0].points, -100);
+  assert.strictEqual(gone[0].why, 'expired');
+  assert.strictEqual(R.balanceOf(led.concat(gone)).points, 40);
+});
+
+it('⚠️ only earnings expire — a spend must never be expired back into existence', () => {
+  const old = '2024-01-01T00:00:00.000Z';
+  const led = [R.entry({ points: 100, why: 'earned', at: old }),
+               R.entry({ points: -30, why: 'spent',  at: old })];
+  const gone = R.expired({ expires_months: 12 }, led);
+  assert.strictEqual(gone.length, 1);
+  assert.ok(gone.every((e) => e.points < 0), 'expiry wrote a positive entry');
+});
+
+console.log('— the walk-in who registers —');
+
+it('⭐⭐ a phone balance is claimed onto the account as two entries that net to zero', () => {
+  const from = { scheme: 'phone', value: '9840012345' }, to = { scheme: 'identity', value: 'cust-9' };
+  const c = R.claim({ points: 340 }, from, to, 'CLAIM-1');
+  assert.strictEqual(c.ok, true);
+  assert.strictEqual(c.entries.length, 2);
+  assert.strictEqual(c.entries.reduce((a, e) => a + e.points, 0), 0, 'a claim minted or destroyed points');
+  assert.deepStrictEqual(c.entries[0].holder, from);
+  assert.deepStrictEqual(c.entries[1].holder, to);
+  assert.strictEqual(c.entries[1].points, 340);
+  assert.ok(c.entries.every((e) => e.ref === 'CLAIM-1'), 'the two halves must carry the same ref');
+});
+
+it('⚠️ and it is refused where it would move somebody elses balance or invent one', () => {
+  const ph = { scheme: 'phone', value: '9840012345' }, id = { scheme: 'identity', value: 'cust-9' };
+  assert.strictEqual(R.claim({ points: 340 }, id, ph, 'x').ok, false, 'claimed onto a phone number');
+  assert.strictEqual(R.claim({ points: 0 }, ph, id, 'x').ok, false, 'claimed an empty balance');
+  assert.strictEqual(R.claim({ points: 340 }, ph, ph, 'x').ok, false, 'claimed onto itself');
+  assert.strictEqual(R.claim({ points: 340 }, null, id, 'x').entries.length, 0,
+    'a refused claim must return no entries at all');
+});
+
 console.log(pass + ' checks');
