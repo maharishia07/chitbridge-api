@@ -96,6 +96,40 @@ it('⚠️⚠️ an unknown or incomplete rule earns NOTHING and names the probl
   assert.strictEqual(R.earnCheck({ kind: 'per_amount', per: 100, points: 1 }).ok, true);
 });
 
+/**
+ * ⭐⭐⭐ Athi: *"it should be exactly like offer — for some item, instead of discount you add reward, so the reward
+ * can be encashed during next visit, so a repeated customer can be invented."* Same trigger, same product scope,
+ * different economics: a discount is spent today; points are a promise the customer must come back to collect.
+ */
+it('⭐⭐⭐ a reward can be given on chosen products, instead of a discount', () => {
+  const basket = { net: 1200, count: 5, lines: [
+    { item_id: 'a', sku: 'SH-1', qty: 2, categories: ['Personal care'] },
+    { item_id: 'b', sku: 'RC-1', qty: 3, categories: ['Rice & grains'] } ] };
+  const on = (earn, ctx) => R.earnedOn({ name: 'p', earn }, basket, ctx);
+  assert.strictEqual(on({ kind: 'on_items', points: 200, applies_to: { category: 'Personal care' } }), 400,
+    'two units at 200 points each');
+  assert.strictEqual(on({ kind: 'on_items', points: 200, per: 'line', applies_to: { category: 'Personal care' } }), 200,
+    'per line, not per unit');
+  assert.strictEqual(on({ kind: 'on_items', points: 50, applies_to: { skus: ['RC-1'] } }), 150, 'scoped by sku');
+  assert.strictEqual(on({ kind: 'on_items', points: 99, applies_to: { category: 'Cleaning' } }), 0,
+    'nothing in the basket qualifies, so nothing is earned');
+  /* it states itself in the shop's own words */
+  assert.ok(R.describeEarn({ earn: { kind: 'on_items', points: 200, applies_to: { category: 'Personal care' } } }, {})
+    .indexOf('200 points on Personal care') === 0);
+});
+
+it('⚠️⚠️ the OFFERS ENGINE is the matcher when the caller offers one', () => {
+  const basket = { net: 100, count: 1, lines: [{ item_id: 'a', qty: 1, categories: ['Personal care'] }] };
+  const earn = { kind: 'on_items', points: 200, applies_to: { category: 'Personal care' } };
+  assert.strictEqual(R.earnedOn({ earn }, basket), 200, 'the fallback matcher should find it');
+  /* ⚠️ a line that does not say HOW MANY earns nothing rather than being assumed to be one — points are minted
+     from a quantity, and assuming one on a malformed line is minting a liability out of a missing field. */
+  assert.strictEqual(R.earnedOn({ earn }, { net: 100, lines: [{ item_id: 'a', categories: ['Personal care'] }] }), 0,
+    'a line with no quantity minted points');
+  assert.strictEqual(R.earnedOn({ earn }, basket, { matches: () => false }), 0,
+    'ctx.matches must win — two matchers would eventually disagree, and a shelf would promise what a bill refused');
+});
+
 console.log('— the ledger —');
 
 it('⭐⭐ a balance is the FOLD of what happened, never a stored number', () => {
@@ -144,6 +178,42 @@ it('⚠️⚠️ a ledger that does not add up SAYS SO rather than clamping to z
 it('⭐ a correction is an ENTRY, not an edit — the reasons allow for it', () => {
   for (const why of ['earned', 'spent', 'adjusted', 'expired', 'reversed'])
     assert.ok(R.entry({ points: 1, why }), why + ' is not an allowed reason, so it could only be recorded by deleting');
+});
+
+console.log('— what the bill says —');
+
+/**
+ * ⭐⭐ Athi: *"reward point can be showcased in the bill, similarly when we adjust next time the reward conversion
+ * should be showcased as well — say reward points added, and reward point encashed."*
+ * ⚠️ THE TWO ARE NOT THE SAME KIND OF THING. Added is a promise and changes no total; encashed is money off today
+ * and MUST be inside it. A bill that presented them alike would not foot — and that is the error a customer finds
+ * first, at the counter, holding the paper.
+ */
+it('⭐⭐ points EARNED are a note; points ENCASHED are money', () => {
+  const money = (n) => 'Rs' + Math.abs(n).toFixed(2);
+  const b = R.billSays(PROG, { added: 24, spent: 100, balance: 548 }, { money });
+  const byWhere = (w) => b.lines.filter((l) => l.where === w);
+  assert.strictEqual(byWhere('money').length, 1, 'the encashment must be one money line');
+  assert.strictEqual(byWhere('money')[0].amount, -100, '100 points at Re 1 each is 100 off');
+  assert.strictEqual(b.money, 100);
+  const note = byWhere('note')[0];
+  assert.strictEqual(note.amount, null, 'earned points must carry NO amount — a figure invites a subtraction');
+  assert.ok(note.label.indexOf('earned: 24') > 0);
+});
+
+it('⭐ and it says where they now stand, which is the reason to come back', () => {
+  const b = R.billSays(PROG, { added: 24, balance: 450 }, {});
+  const last = b.lines[b.lines.length - 1];
+  assert.ok(last.label.indexOf('Your points') === 0);
+  assert.ok(last.label.indexOf('50 more for 1 kg sugar') > 0, 'the next reward is the whole argument for a reward');
+});
+
+it('⚠️ a bill with nothing to say about rewards says nothing', () => {
+  assert.strictEqual(R.billSays(PROG, {}, {}).lines.length, 0, 'an empty reward block was printed on every bill');
+  /* ⚠️ and points cannot be encashed for money the programme never priced */
+  const noRate = { name: 'x', redeem: [{ kind: 'item', points: 500, name: 'sugar' }] };
+  assert.strictEqual(R.billSays(noRate, { spent: 500 }, {}).money, 0,
+    'points were turned into money by a programme that declared no money rate');
 });
 
 console.log('— what the shop owes —');
