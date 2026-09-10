@@ -438,9 +438,25 @@ it('⭐ the till shows the shop tax identity, and only what decides something', 
  */
 it('⭐⭐ the marked row is the row that was clicked, in every operation', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /**
+   * ── ⭐ THE RULE GOT STRONGER ON 2026-09-10, so this asserts the INTENT and not the old line ────────────────
+   *
+   * It used to demand the literal `SEL = listChanges ? 0 : n;` — which was right when written and became wrong
+   * the moment the same complaint came back from the other direction. Athi, observation 5, finding 3: *"if I
+   * search and found a product, once added it goes to the first product from the list."* Same injury as the
+   * comment above, arrived at by searching rather than by amending.
+   *
+   * ⚠️ A GUARD PINNED TO A LINE OF CODE BLOCKS ITS OWN FIX. This one would have failed the improvement while the
+   * behaviour it exists to protect got better — so it now checks what must be TRUE: the row you touched stays
+   * marked, and when the list reverts the counter LOOKS FOR the product rather than parking on row 0.
+   */
   const fn = page.slice(page.indexOf('function add(n){'), page.indexOf('function addItem(i, qty){'));
-  assert.ok(fn.indexOf('SEL = listChanges ? 0 : n;') > 0,
-    'add() still resets the mark to the top — the row you clicked stops being the row that is lit');
+  assert.ok(/SEL = n;/.test(fn),
+    'add() no longer marks the row that was touched — the mark jumps to the top of the list');
+  assert.ok(/item_id\) === String\(i\.item_id\)/.test(fn),
+    'add() parks on row 0 when the box clears instead of following the product that was just added');
+  assert.ok(/CARTSEL = ci/.test(fn),
+    'the bill line just added is not put in hand, so Ctrl+↑↓ cannot add another without searching again');
   assert.ok(fn.indexOf('SEL = 0; paintHits()') < 0, 'the unconditional reset is back');
   assert.ok(fn.indexOf('CARD_ID = i.item_id; pendClear(); SEL = n;') > 0,
     'choosing a product to change does not move the mark to it');
