@@ -788,4 +788,37 @@ it('⭐⭐ the counter tells the customer screen, and tells it only what a custo
     'a counter that closed without saying so would freeze this screen for the rest of the day');
 });
 
+/**
+ * ⭐⭐⭐ THE TAX A SHOP PAID ON WHAT IT BOUGHT. Athi: *"do the input tax on goods-in."* lib/tax-lines computes
+ * { output, itc, net } — collected minus paid — and the input side was EMPTY: goods-in recorded a rate, a value,
+ * freight and a landed cost, and no tax at all. So there was nothing to claim input credit against, and ITC is
+ * money: ₹10,000 of stock at 18% is ₹1,800 to set against what the shop collects.
+ */
+it('⭐⭐⭐ goods-in records the tax paid, per line and per consignment', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function rcvLineTax(l){') > 0, 'a receive line works out no tax');
+  assert.ok(page.indexOf('function rcvTax(){') > 0, 'the consignment works out no tax');
+  /* the rate is DEFAULTED from the same engine the sell side asks — never a second opinion about a slab */
+  const def = page.slice(page.indexOf('function rcvDefaultRate(i){'), page.indexOf('function rcvLineTax('));
+  assert.ok(def.indexOf('CBTax.slab.resolve(') > 0, 'the default rate is not asked of the tax engine');
+  /* inclusive vs exclusive is a fact about THEIR invoice, asked once, and it travels */
+  assert.ok(page.indexOf('tax_inclusive:false') > 0, 'a purchase invoice defaults to tax-inclusive — it should not');
+  assert.ok(page.indexOf('inclusive: !!RCV.tax_inclusive') > 0,
+    'which way the supplier quoted is not recorded — months later the taxable value is unrecoverable');
+  /* the split is the ENGINE's decision, and unknown must stay unknown */
+  const rt = page.slice(page.indexOf('function rcvTax(){'), page.indexOf('function rcvTax(){') + 1600);
+  assert.ok(rt.indexOf('CBTax.supplyType(') > 0, 'the counter decides intra vs inter itself');
+  assert.ok(rt.indexOf("supply !== 'unknown'") > 0,
+    'a purchase with no supplier state would be filed under a head it may not belong to');
+  assert.ok(rt.indexOf('r2(t - half)') > 0, 'SGST is not the remainder — the halves can fail to sum to the tax');
+  /* ⚠️ tax is NOT part of the cost: folding it in would overstate every margin by the tax rate */
+  const conf = page.slice(page.indexOf('costs: RCV.costs, goods: rcvGoods()'), page.indexOf('costs: RCV.costs, goods: rcvGoods()') + 900);
+  assert.ok(conf.indexOf('input_tax:') > 0, 'the consignment does not record its input tax');
+  assert.ok(conf.indexOf('landed_total: r2(rcvGoods() + rcvExtras())') > 0,
+    'the landed total has changed — tax must never be added into what the stock cost');
+  /* and it must cross onto the CHIT, or a return can never see it */
+  assert.ok(page.indexOf('input_tax: d.input_tax || null') > 0,
+    'the input tax stays in the local doc and never reaches the chit — invisible to lib/tax-lines');
+});
+
 console.log(pass + ' checks');

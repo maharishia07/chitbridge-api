@@ -115,6 +115,8 @@
                    -moz-appearance:textfield;appearance:textfield}
   #cart .qty input::-webkit-outer-spin-button, #cart .qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .lines .ln.done{background:var(--ok-tint)}
+  /* the tax box is narrower than the money boxes — it is a percentage, and it must not crowd the rate */
+  .lines .ln input.gstin{width:64px;text-align:center}
   .lines .ln input{width:100%;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);text-align:right}
   .lines .ln .nm{font-weight:600}
   .lines .ln .u{color:var(--dim);font-size:.78em}
@@ -522,7 +524,16 @@
       <input id="rcv_vendor" placeholder="Who it came from" autocomplete="off" data-testid="rcv-vendor" oninput="RCV.vendor=this.value">
       <input id="rcv_billno" placeholder="Their bill / challan no" autocomplete="off" data-testid="rcv-billno" oninput="RCV.bill_no=this.value">
       <input id="rcv_billdate" type="date" data-testid="rcv-billdate" oninput="RCV.bill_date=this.value">
-      <input id="rcv_billtotal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Their bill total ₹" data-testid="rcv-billtotal" oninput="RCV.bill_total=this.value===''?null:Number(this.value); paintReceive()">
+      <input id="rcv_billtotal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Their bill total" data-testid="rcv-billtotal" oninput="RCV.bill_total=this.value===''?null:Number(this.value); paintReceive()">
+      <!-- ⚠️ TWO FACTS ABOUT THEIR INVOICE, not about any line, so they are asked once per consignment. Getting the
+           first backwards is wrong by exactly the tax on every line; the second decides which head the credit sits
+           under, and it is left blank rather than guessed. -->
+      <select id="rcv_incl" class="wide" data-testid="rcv-incl" onchange="RCV.tax_inclusive=(this.value==='in'); paintReceive()">
+        <option value="ex">Their rates are before GST (usual)</option>
+        <option value="in">Their rates already include GST</option>
+      </select>
+      <input id="rcv_vstate" placeholder="Their state code (33, 29…) — for CGST/SGST vs IGST" autocomplete="off"
+             data-testid="rcv-vstate" oninput="RCV.vendor_state=this.value.trim(); paintReceive()">
     </div>
     <div class="lines" id="rcv_lines"></div>
     <div class="bar" id="rcv_costs"></div>
@@ -1229,6 +1240,9 @@ function chitOfDoc(d){
       against: d.against || null,
       their_bill: d.their_bill || null,
       costs: d.costs || null, goods: d.goods, extras: d.extras, landed_total: d.landed_total,
+      /* ⚠️ ON THE CHIT, not only in the local doc — lib/tax-lines reads chits, and a number that never crosses is
+         a number that never existed as far as a return is concerned. */
+      input_tax: d.input_tax || null,
       ref: d.ref || null, cartons: d.cartons || null, weight: d.weight || null,
       differences: (d.lines || []).filter(function(l){ return receipt ? l.difference : l.short > 0; })
                                   .map(function(l){ return { name:l.name, by: receipt ? l.difference : -l.short, reason:l.reason || null }; }),
@@ -3488,7 +3502,16 @@ async function dayClose(){
 var MODE = 'sell';
 var TASKS = { receive: [], despatch: [] };
 var RCV = null, DSP = null;
-function rcvBlank(){ return { task:null, vendor:'', bill_no:'', bill_date:'', bill_total:null, lines:[], costs:{ freight:0, loading:0, duty:0, other:0 } }; }
+/**
+ * ⚠️ TWO FACTS BELONG TO THE INVOICE, NOT TO A LINE, so they are asked once per consignment:
+ *   tax_inclusive — whether the supplier's rates already contain the GST. A purchase invoice normally shows a
+ *     taxable value with tax added, so exclusive is the default. Getting it backwards is wrong by exactly the tax
+ *     on every line, in silence.
+ *   vendor_state — theirs against ours is what makes a purchase intra-state or inter-state, and therefore whether
+ *     the credit sits under CGST+SGST or under IGST. We often do not know it, and unknown is recorded as unknown.
+ */
+function rcvBlank(){ return { task:null, vendor:'', vendor_state:'', bill_no:'', bill_date:'', bill_total:null,
+                              tax_inclusive:false, lines:[], costs:{ freight:0, loading:0, duty:0, other:0 } }; }
 function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[] }; }
 RCV = rcvBlank(); DSP = dspBlank();
 
@@ -3763,13 +3786,17 @@ function rcvAdd(i, qty, lot){
   if (lot && have) { have.lot = Object.assign({}, have.lot || {}, lot); }
   if (have) { have.counted = r2((Number(have.counted) || 0) + qty); if (!have.item_id) have.item_id = i.item_id || null; }
   else RCV.lines.push({ line_id:null, item_id:i.item_id, name:i.name, unit:i.unit || 'piece', ordered:null,
-                        counted:qty, rate:(Number(i.price) || 0), reason:'', lot:(lot || null), added:true });
+                        counted:qty, rate:(Number(i.price) || 0), reason:'', lot:(lot || null), added:true,
+                        /* ⭐ what this product attracts, from the shop's own slabs — a default, not a decision */
+                        gst_rate: rcvDefaultRate(i) });
   paintReceive();
 }
 function rcvSet(n, what, v){
   var l = RCV.lines[n]; if (!l) return;
   if (what === 'counted') l.counted = (v === '' ? null : Math.max(0, Number(v) || 0));
   else if (what === 'rate') l.rate = (v === '' ? null : Math.max(0, Number(v) || 0));
+  /* ⚠️ the supplier's stated rate wins over ours: the credit is claimed against THEIR paper, not our opinion */
+  else if (what === 'gst') l.gst_rate = (v === '' ? null : Math.max(0, Math.min(100, Number(v) || 0)));
   else if (what === 'reason') l.reason = v;
   rcvRepaintSoon();
 }
@@ -3811,6 +3838,14 @@ function paintReceive(){
         + '</span>'
       + '<input type="number" min="0" step="0.001" inputmode="decimal" placeholder="count" value="' + (l.counted == null ? '' : l.counted) + '" data-testid="rcv-count-' + n + '" onchange="rcvSet(' + n + ',\'counted\',this.value)">'
       + '<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="rate" value="' + (l.rate == null ? '' : l.rate) + '" data-testid="rcv-rate-' + n + '" onchange="rcvSet(' + n + ',\'rate\',this.value)">'
+      /* ⭐ THE TAX ON THIS LINE. Filled from the product's own slab, so the ordinary case needs no typing — and
+         editable, because the rate on the supplier's invoice is THEIR statement and it is the paper the credit is
+         claimed against. Hidden entirely for a shop that charges no GST: it would have nothing to claim. */
+      + (shopTax().charges
+          ? '<input class="gstin" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="GST%"'
+            + ' value="' + (l.gst_rate == null ? '' : l.gst_rate) + '" title="the GST rate on their invoice"'
+            + ' data-testid="rcv-gst-' + n + '" onchange="rcvSet(' + n + ',\'gst\',this.value)">'
+          : '')
       + (d && !ok ? '<select data-testid="rcv-reason-' + n + '" onchange="rcvSet(' + n + ',\'reason\',this.value)">'
              + REASONS.map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'why?') + '</option>'; }).join('') + '</select>'
              : '<span class="amt" data-testid="rcv-value-' + n + '">' + money(rcvLineValue(l)) + '</span>')
@@ -3821,6 +3856,60 @@ function paintReceive(){
   var b = document.getElementById('rcv_save'); if (b) b.disabled = !RCV.lines.filter(function(l){ return l.counted > 0; }).length;
 }
 function rcvLineValue(l){ return r2((Number(l.counted) || 0) * (Number(l.rate) || 0)); }
+/** ⭐ the rate this product attracts, asked of the SAME engine the sell side asks — never a second opinion */
+function rcvDefaultRate(i){
+  if (!i || !window.CBTax || !S || !shopTax().charges) return null;
+  try {
+    var r = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
+      face:S.face || {}, slabs:S.slabs || [], categories:S.categories || [] });
+    return (r && r.rate != null) ? r.rate : null;
+  } catch (_) { return null; }
+}
+/**
+ * ⭐⭐ WHAT THIS LINE COST AND WHAT TAX RODE ON IT.
+ * ⚠️ WHICH WAY THE SUPPLIER QUOTED IS A FACT ABOUT THEIR INVOICE, not a setting of ours — a purchase invoice
+ * normally shows a taxable value with GST added, so exclusive is the default, and it is asked once per consignment
+ * rather than once per line. Getting it backwards is wrong by exactly the tax on every line, silently.
+ */
+function rcvLineTax(l){
+  var value = rcvLineValue(l);
+  var rate = Number(l && l.gst_rate) || 0;
+  if (!rate || !shopTax().charges) return { taxable: value, tax: 0, rate: 0 };
+  if (RCV.tax_inclusive) {
+    var base = r2(value * 100 / (100 + rate));
+    return { taxable: base, tax: r2(value - base), rate: rate };
+  }
+  return { taxable: value, tax: r2(value * rate / 100), rate: rate };
+}
+/**
+ * ⭐ THE TAX ON THE WHOLE CONSIGNMENT, split into the heads the return needs.
+ * ⚠️ INTRA OR INTER IS THE SUPPLIER'S STATE AGAINST OURS, and we often do not know theirs — a counter is not the
+ * place to guess it. Unknown means the tax is recorded WITHOUT a split, and said so, rather than filed under a head
+ * it may not belong to. A wrong head is harder to unpick than a missing one.
+ */
+function rcvTax(){
+  var taxable = 0, tax = 0, byRate = {};
+  (RCV.lines || []).forEach(function(l){
+    var t = rcvLineTax(l);
+    taxable = r2(taxable + t.taxable); tax = r2(tax + t.tax);
+    if (t.rate) { byRate[t.rate] = byRate[t.rate] || { taxable: 0, tax: 0 };
+                  byRate[t.rate].taxable = r2(byRate[t.rate].taxable + t.taxable);
+                  byRate[t.rate].tax = r2(byRate[t.rate].tax + t.tax); }
+  });
+  var ours = (S && S.shop && S.shop.state_code) ? String(S.shop.state_code) : '';
+  var theirs = String(RCV.vendor_state || '').trim();
+  var supply = (window.CBTax && CBTax.supplyType && ours && theirs) ? CBTax.supplyType(ours, theirs) : 'unknown';
+  var heads = [];
+  if (supply !== 'unknown') {
+    Object.keys(byRate).sort(function(a, b){ return Number(a) - Number(b); }).forEach(function(rt){
+      var t = byRate[rt].tax, half = r2(t / 2);
+      if (supply === 'inter') heads.push({ name:'IGST', rate:Number(rt), amount:t });
+      else { heads.push({ name:'CGST', rate:Number(rt) / 2, amount:half });
+             heads.push({ name:'SGST', rate:Number(rt) / 2, amount:r2(t - half) }); }
+    });
+  }
+  return { taxable: taxable, tax: tax, byRate: byRate, supply: supply, heads: heads };
+}
 function rcvGoods(){ var t = 0; RCV.lines.forEach(function(l){ t = r2(t + rcvLineValue(l)); }); return t; }
 function rcvExtras(){ var c = RCV.costs; return r2((Number(c.freight)||0) + (Number(c.loading)||0) + (Number(c.duty)||0) + (Number(c.other)||0)); }
 
@@ -3886,10 +3975,24 @@ function paintRcvSum(){
   var goods = rcvGoods(), extra = rcvExtras(), landed = r2(goods + extra);
   var theirs = RCV.bill_total;
   var gap = (theirs == null) ? null : r2(goods - theirs);
+  /**
+   * ⭐⭐ THE TAX PAID IS SHOWN SEPARATELY FROM THE GOODS, always. It is not part of what the stock cost — it is
+   * money the shop can set against what it collects — and adding it into the landed cost would overstate every
+   * margin in the shop by the tax rate.
+   */
+  var tx = rcvTax();
+  var taxLine = '';
+  if (shopTax().charges && tx.tax > 0) {
+    taxLine = '<div style="margin-top:4px">GST paid <b data-testid="rcv-tax">' + money(tx.tax) + '</b>'
+      + (tx.heads.length ? ' · ' + tx.heads.map(function(h){ return h.name + ' ' + h.rate + '% ' + money(h.amount); }).join(' + ')
+                         : ' · <b style="color:var(--warn)">not split — the supplier\'s state is not known</b>')
+      + ' <span class="u">· to set against what you collect, not part of the cost</span></div>';
+  }
   el.innerHTML = 'Counted <b>' + money(goods) + '</b>' + (extra > 0 ? ' + costs <b>' + money(extra) + '</b> = landed <b>' + money(landed) + '</b>' : '')
     + (gap === null ? '' : (gap === 0
         ? ' · <b style="color:var(--ok)">their bill agrees</b>'
-        : ' · <b style="color:var(--warn)" data-testid="rcv-gap">their bill says ' + money(theirs) + ' — ' + (gap > 0 ? 'we counted ' + money(gap) + ' more' : 'we counted ' + money(-gap) + ' less') + '</b>'));
+        : ' · <b style="color:var(--warn)" data-testid="rcv-gap">their bill says ' + money(theirs) + ' — ' + (gap > 0 ? 'we counted ' + money(gap) + ' more' : 'we counted ' + money(-gap) + ' less') + '</b>'))
+    + taxLine;
 }
 
 /**
@@ -3921,10 +4024,29 @@ async function rcvConfirm(){
     their_bill: { no: (RCV.bill_no || '').trim() || null, date: RCV.bill_date || null, total: RCV.bill_total },
     against: RCV.task ? { chit_id: RCV.task.chit_id, party: RCV.task.party, subject: RCV.task.subject } : null,
     costs: RCV.costs, goods: rcvGoods(), extras: rcvExtras(), landed_total: r2(rcvGoods() + rcvExtras()),
+    /**
+     * ⭐ THE INPUT TAX ON THIS CONSIGNMENT, recorded with its heads where they can be known.
+     * ⚠️ supply is 'unknown' when the supplier's state was not given, and the heads are then EMPTY rather than
+     * guessed. A credit filed under the wrong head is harder to unpick than one that was never split.
+     * ⚠️ tax_inclusive travels too: months later, "was ₹1,180 the goods or the goods plus tax" is unanswerable
+     * without it, and that one bit changes the taxable value on every line.
+     */
+    input_tax: (function(){ var t = rcvTax();
+      return { taxable: t.taxable, tax: t.tax, supply: t.supply, heads: t.heads,
+               inclusive: !!RCV.tax_inclusive, vendor_state: RCV.vendor_state || null }; })(),
     lines: RCV.lines.map(function(l, n){
+      /**
+       * ⭐⭐ THE TAX PAID RIDES THE LINE. lib/tax-lines computes { output, itc, net } — what was collected minus
+       * what was paid — and the input side had nothing to read. taxable and tax are recorded as they were on the
+       * supplier's paper, because that paper is what a credit is claimed against.
+       * ⚠️ SEPARATE FROM landed. Tax is not part of what the stock cost: it is money set against what the shop
+       * collects, and folding it into the cost would overstate every margin in the shop by the tax rate.
+       */
+      var tx = rcvLineTax(l);
       return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, lot:l.lot,
                ordered:l.ordered, counted:l.counted, difference:rcvDiff(l), reason:l.reason || null,
-               rate:l.rate, value:rcvLineValue(l), cost_share:landed[n].share, landed:landed[n].cost, unit_cost:landed[n].unit_cost };
+               rate:l.rate, value:rcvLineValue(l), cost_share:landed[n].share, landed:landed[n].cost, unit_cost:landed[n].unit_cost,
+               gst_rate:(l.gst_rate == null ? null : Number(l.gst_rate)), taxable:tx.taxable, tax:tx.tax };
     }),
   };
   var r = null;
