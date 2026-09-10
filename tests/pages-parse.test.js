@@ -55,6 +55,59 @@ for (const [name, file] of PAGES) {
   });
 }
 
+/**
+ * ⭐⭐⭐ EVERY onclick NAMES A FUNCTION THAT EXISTS.
+ *
+ * ⚠️⚠️ WHY THIS EXISTS, and it is the same shape as the reason above. Removing a block from cap-supplies.js I
+ * spliced out a line range and took `supBuy` with it — so "Record a purchase" became a button that called
+ * nothing. `node -c` passed. The file parsed. The 354-check guard suite was green. Every one of those measures
+ * whether the code is well-formed, and a missing function is perfectly well-formed: the call only fails when a
+ * person presses the button. It shipped, and [SUP-01] pressed it.
+ *
+ * ⭐ Parsing proves a page LOADS; this proves its controls are WIRED. Cheap, static, and it covers the one gap
+ * between "the file is valid" and "the screen does something".
+ *
+ * ⚠️ IT IS DELIBERATELY NARROW: bare `name(` at the start of an onclick, resolved against every function declared
+ * anywhere in the shipped bundle plus the browser's own globals. Anything it cannot resolve confidently — a
+ * method call, a property, an expression — is skipped rather than guessed at, because a guard that cries wolf
+ * gets muted and then it protects nothing.
+ */
+it('⭐⭐⭐ every onclick in a capability calls a function that exists', () => {
+  const appDir = path.join(WEB, 'app');
+  if (!fs.existsSync(appDir)) return;
+  const files = fs.readdirSync(appDir).filter((f) => f.endsWith('.js'))
+    .map((f) => path.join(appDir, f)).concat([path.join(WEB, 'app.html')]);
+
+  /* every function this bundle defines, however it is declared */
+  const defined = new Set(['api', 'toast', 'modal', 'closeModal', 'esc', 'tx', 'txf', 'alert', 'confirm', 'open',
+                           'setTimeout', 'clearTimeout', 'event', 'window', 'document', 'history', 'location',
+                           'Number', 'String', 'Boolean', 'Array', 'Object', 'JSON', 'parseInt', 'parseFloat']);
+  const src = {};
+  files.forEach((f) => {
+    const s = fs.readFileSync(f, 'utf8'); src[f] = s;
+    let m; const decl = /(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+    while ((m = decl.exec(s))) defined.add(m[1]);
+    const assign = /(?:^|\n)\s*(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function|\()/g;
+    while ((m = assign.exec(s))) defined.add(m[1]);
+    const win = /window\.([A-Za-z_$][\w$]*)\s*=/g;
+    while ((m = win.exec(s))) defined.add(m[1]);
+  });
+
+  const KEYWORD = new Set(['if','for','while','switch','return','typeof','delete','void','catch','function','new']);
+  const missing = [];
+  files.forEach((f) => {
+    let m; const call = /on(?:click|change|input|submit)\s*=\s*(["'])\s*([A-Za-z_$][\w$]*)\s*\(/g;
+    while ((m = call.exec(src[f]))) {
+      const fn = m[2];
+      /* ⚠️ `onclick="if(...)"` is a statement, not a call — a keyword here is the guard misreading, not a bug */
+      if (KEYWORD.has(fn)) continue;
+      if (!defined.has(fn) && missing.indexOf(fn) < 0) missing.push(path.basename(f) + ' → ' + fn + '()');
+    }
+  });
+  assert.deepStrictEqual(missing, [],
+    'these controls call functions that do not exist anywhere in the bundle:\n       ' + missing.join('\n       '));
+});
+
 it('⚠️ the vendored copies still say what their masters say', () => {
   /* ⚠️ LINE ENDINGS ARE NOT CONTENT. The master is checked out CRLF on Windows and the vendor step writes LF, so a byte
      comparison fails on every run and would teach us to ignore this test — which is worse than not having it. */
