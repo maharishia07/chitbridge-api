@@ -63,13 +63,69 @@ it('threshold with a reward item: held → its line is discounted; not held → 
   const r = ev([L('a', 200, 3), L('sugar', 60, 1)], [o]); assert.strictEqual(sum(r), -60); assert.strictEqual(r.adjustments[0].target, 'sugar');
   const r2 = ev([L('a', 200, 3)], [o]); assert.strictEqual(r2.adjustments.length, 0); assert.strictEqual(eng.claims(r2).length, 1); assert.strictEqual(eng.claims(r2)[0].item_id, 'sugar');
 });
-it('buy 2 get 1: 3 units → the cheapest unit free; 5 units → still one set; max_sets caps', () => {
+/**
+ * ── ⚠️⚠️ THIS CASE ASSERTED THE OPPOSITE UNTIL 2026-09-10 ─────────────────────────────────────────────────────
+ *
+ * It read *"3 units → the CHEAPEST unit free"* and ended with a mixed basket proving the free unit was taken from
+ * whichever line was cheapest — two units of a ₹100 product earned a free ₹40 one. That is mix-and-match, and it
+ * is a legitimate offer; it was not the one the shop had written down.
+ *
+ * Athi found it by asking why a line holding one packet showed ₹0.00, and settled it: *"we cannot offer for
+ * different product."* Buying two of a thing earns a free one OF THAT THING. He chose it knowing it costs the
+ * shop MORE on his own basket — ₹31 off where mix-and-match gave ₹9.
+ *
+ * ⭐ AND THE CATEGORY READING IS BACKLOGGED, NOT REJECTED: *"in cloth line it works as per category, so possibly
+ * we need to have a different naming convention to state that."* When that kind exists it gets its own case here;
+ * until then this kind means the narrow thing, because the narrow thing cannot surprise a shopkeeper.
+ */
+it('buy 2 get 1 is earned PER PRODUCT: 3 of a thing free one of that thing, never a cheaper neighbour', () => {
   const o = { id: 'b', label: 'B2G1', kind: 'buy_x_get_y', buy: 2, get: 1 };
+  /* ⭐ Athi's own sentence for what this offer means: "2 packets is ₹18, but you get 3 packs instead of 2" */
+  assert.strictEqual(sum(ev([L('a', 100, 2)], [o])), 0, 'two units earn nothing — the set is buy 2 PLUS the free one');
   assert.strictEqual(sum(ev([L('a', 100, 3)], [o])), -100);
   assert.strictEqual(sum(ev([L('a', 100, 5)], [o])), -100);
   assert.strictEqual(sum(ev([L('a', 100, 6)], [o])), -200);
+  /* ⚠️ max_sets stays a BILL-WIDE budget: read per line it would silently multiply by the number of products */
   assert.strictEqual(sum(ev([L('a', 100, 6)], [Object.assign({ max_sets: 1 }, o)])), -100);
-  const mixed = ev([L('a', 100, 2), L('b', 40, 1)], [o]); assert.strictEqual(mixed.adjustments[0].target, 'b');   /* the cheapest unit is the free one */
+  assert.strictEqual(sum(ev([L('a', 100, 3), L('b', 100, 3)], [Object.assign({ max_sets: 1 }, o)])), -100,
+    'max_sets must cap the BILL, not each line');
+
+  /* ⚠️⚠️ THE CASE THAT USED TO ASSERT THE OPPOSITE. Two of a ₹100 product and one ₹40 product: neither line has
+     three units, so NOTHING is free. The old engine pooled them and gave the ₹40 one away. */
+  const mixed = ev([L('a', 100, 2), L('b', 40, 1)], [o]);
+  assert.strictEqual(mixed.adjustments.length, 0,
+    'units from different products were pooled again — a line that earned nothing was given away');
+
+  /* and the shape of Athi's actual bill: 3 Cookies earn a Cookie; the lone biscuit earns nothing */
+  const real = ev([L('cookies', 31, 3), L('cream', 9, 1)], [o]);
+  assert.strictEqual(real.adjustments.length, 1);
+  assert.strictEqual(real.adjustments[0].target, 'cookies');
+  assert.strictEqual(real.line_net.cream, 9, 'the lone biscuit earned nothing and must still cost ₹9');
+});
+
+/**
+ * ⭐⭐⭐ A SCOPE THE ENGINE CANNOT READ MUST NOT MEAN "EVERYTHING".
+ *
+ * ⚠️ Found by mistyping a test: `applies_to: { categories: [...] }` where eligibleFor reads `category`. No list
+ * was recognised, so the "must be in at least one list" test never ran, and a BISCUITS offer applied to the whole
+ * basket — ₹40 off a bill that owed ₹9. Silent, in the shop's disfavour, and it grows with the basket.
+ * ⚠️ Athi chose refuse over "also accept the plural": a misspelling must be LOUD, or the next unrecognised key
+ * fails open just as quietly.
+ */
+it('⭐⭐⭐ an unreadable applies_to is refused, not treated as the whole basket', () => {
+  const o = { id: 'b', label: 'B2G1', kind: 'buy_x_get_y', buy: 2, get: 1, applies_to: { categories: ['Biscuits'] } };
+  const r = ev([L('a', 100, 3)], [o]);
+  assert.strictEqual(r.adjustments.length, 0, 'an offer whose scope we cannot read was applied anyway');
+  assert.ok(/scope not understood/.test((r.skipped[0] || {}).why || ''),
+    'it must SAY the scope was not understood, and name the key — silence here is how it stayed hidden');
+  assert.ok(/categories/.test((r.skipped[0] || {}).why || ''), 'the message must name the offending key');
+
+  /* ⚠️ AND AN ABSENT OR EMPTY applies_to STILL MEANS EVERY LINE — a real, intended scope, not a mistake */
+  assert.strictEqual(sum(ev([L('a', 100, 3)], [{ id: 'c', label: 'All', kind: 'buy_x_get_y', buy: 2, get: 1 }])), -100);
+  assert.strictEqual(sum(ev([L('a', 100, 3)], [{ id: 'd', label: 'All', kind: 'buy_x_get_y', buy: 2, get: 1, applies_to: {} }])), -100);
+  /* a scope carrying ONLY price bounds is readable and must keep working */
+  assert.strictEqual(sum(ev([L('a', 100, 3)], [{ id: 'e', label: 'Dear', kind: 'buy_x_get_y', buy: 2, get: 1,
+    applies_to: { min_unit_price: 50 } }])), -100);
 });
 it('buy X get a DIFFERENT item: held → discounted; not held → a claim; the basket is never mutated', () => {
   const o = { id: 'b', label: 'Rice→Oil', kind: 'buy_x_get_y', buy: 3, get: 1, get_item_id: 'oil', get_item_name: 'Oil', applies_to: { item_ids: ['rice'] } };
