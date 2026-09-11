@@ -784,7 +784,10 @@ router.get('/coverage', auth, async (req, res) => {
  *
  * Athi, 2026-09-11: *"is there any report available… standard report template?"*
  *
- * ⭐ ADOPTED: **ISO/IEC/IEEE 29119-3**, clause 6 — the Test Completion Report. It is the current standard and it
+ * ⭐ ADOPTED: the **Test Completion Report** of **ISO/IEC/IEEE 29119-3**. It is the current standard and it
+ * ⚠️ NO CLAUSE NUMBER IS CITED HERE, and an earlier version of this comment cited one. Naming the DOCUMENT TYPE
+ * is something I can stand behind; a clause number is a detail that would be quoted onward by somebody who
+ * trusted it, and a wrong one is worse than none.
  * SUPERSEDED IEEE 829, which is the one most people still name and which was withdrawn in 2013. Using the
  * withdrawn one would have looked more familiar to more readers and been wrong.
  *
@@ -863,7 +866,25 @@ router.get('/report', auth, async (req, res) => {
     const tested = n.total - n.untested;
 
     res.json({
-      standard: 'ISO/IEC/IEEE 29119-3:2021 · Test Completion Report',
+      standard: 'ISO/IEC/IEEE 29119-3 · Test Completion Report',
+      /**
+       * ⭐⭐ Athi, 2026-09-11: *"we name it as per standard, reference the standard where possible?"*
+       *
+       * So every view says which of the standard's DOCUMENT TYPES it corresponds to. That is what makes the
+       * thing auditable by somebody who has never seen our screens: they do not have to learn our words, they
+       * look ours up in theirs.
+       * ⚠️ Only where it genuinely corresponds. The Summary is OURS — 29119-3 has a Test Status Report, which
+       * is written DURING execution against a plan, and we have no plan; claiming the name would be a claim
+       * about a document we do not produce.
+       */
+      names: {
+        case: 'Test Case Specification (ISO/IEC/IEEE 29119-3)',
+        run: 'Test Execution Log (ISO/IEC/IEEE 29119-3)',
+        incident: 'Incident Report (ISO/IEC/IEEE 29119-3)',
+        report: 'Test Completion Report (ISO/IEC/IEEE 29119-3)',
+        results: 'JUnit XML — the de-facto interchange every CI writes',
+        feature: 'Gherkin .feature — the clause and its scenarios in one text',
+      },
       /* ⚠️ named so a reader can check it, and because IEEE 829 is the one most people expect */
       supersedes: 'IEEE 829 (withdrawn 2013)',
       generated_at: new Date().toISOString(),
