@@ -506,6 +506,8 @@ router.post('/results/junit', auth, async (req, res) => {
 
     const run_kind = RUN_KINDS.indexOf(req.body.run_kind) >= 0 ? req.body.run_kind : 't1';
     const layer = LAYERS.indexOf(req.body.layer) >= 0 ? req.body.layer : 'web';
+    /* ⚠ opt-in: see the note beside `key` below */
+    const keyFromName = (req.body && req.body.key_from) === 'name';
 
     /* ⚠️ A REGEX, NOT AN XML PARSER, AND THAT IS A DELIBERATE LIMIT. JUnit XML is flat — testcase elements with a
        name, and a child element when something went wrong. Pulling in a parser to read four attributes would add
@@ -518,12 +520,28 @@ router.post('/results/junit', auth, async (req, res) => {
     for (const c of cases) {
       const head = c[1] || c[3] || '', body = c[2] || '';
       const name = attr(head, 'name');
-      const key = (name.match(/\[([A-Z]{2,6}-\d{1,3})\]/) || [])[1];
+      /**
+       * ⭐⭐ TWO WAYS TO NAME A CASE, AND BOTH ARE LEGITIMATE.
+       *
+       * A SPEC carries a key in brackets — `[CTR-05] a single click chooses` — because it is written against a
+       * case somebody authored. A GUARD FILE has no such case and never will: `chitbridge-api/tests/handle.test.js`
+       * is its own identity, and the file path is the only name that survives its assertions being rewritten.
+       * A synthetic `GRD-001` would shift the moment a file was added beside it.
+       *
+       * ⚠ `key_from: 'name'` IS OPT-IN, deliberately. The default still REPORTS anything it cannot place rather
+       * than inventing a key for it — a board that silently accepts every test title as a case would fill with
+       * hundreds of one-off rows and the history would mean nothing.
+       */
+      const key = keyFromName
+        ? name.trim().slice(0, 120)
+        : (name.match(/\[([A-Z]{2,6}-\d{1,3})\]/) || [])[1];
       const failed = /<failure|<error/.test(body);
       const skipped = /<skipped/.test(body);
       if (!key) { unmatched.push(name); continue; }
       const why = (body.match(/message="([^"]*)"/) || [])[1] || '';
       results.push({ case_key: key, run_kind, layer,
+        /* ⭐ a path-named case groups by its REPO, which is the only grouping a file path carries */
+        module_key: keyFromName ? String(key).split('/')[0].slice(0, 40) : undefined,
         status: failed ? 'fail' : (skipped ? 'skipped' : 'pass'),
         note: failed ? why.slice(0, 500) : null, evidence: name.slice(0, 200) });
     }
