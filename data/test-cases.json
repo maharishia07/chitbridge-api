@@ -1,5 +1,5 @@
 {
- "version": "2.0",
+ "version": "2.1",
  "date": "11 September 2026",
  "build": "371 guard checks · 20 files · 43 offer scenarios · regression 39/0 · 10 engines on the till · migrations b213–b218 run and verified live",
  "modules": [
@@ -82,6 +82,11 @@
    "key": "LAB",
    "name": "Offer lab — on your real catalogue",
    "count": 4
+  },
+  {
+   "key": "MENU",
+   "name": "The menus nothing was checking",
+   "count": 8
   }
  ],
  "cases": [
@@ -2876,6 +2881,238 @@
    ],
    "note": "Athi: \"we cannot offer for different product, but in cloth line it works as per category, so possibly we need a different naming convention\"; then \"cheapest free for mix and match.\"",
    "layer": "engine"
+  },
+  {
+   "case_key": "MENU-01",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "Folders — a place to organise chits, and it says what it is",
+   "priority": "Medium",
+   "pre": "Signed in to the app.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Folders from the rail.",
+     "The screen opens. It does not hang, and it does not open blank with no explanation."
+    ],
+    [
+     "Read whatever it says at the top.",
+     "Something tells you what this screen is for."
+    ],
+    [
+     "If you have no folders, read the empty state.",
+     "It says there are none and offers to make one — not a bare empty box."
+    ],
+    [
+     "Make a folder, then reload the page.",
+     "It is still there."
+    ]
+   ],
+   "note": "⚠️ FOLDERS DECLARES NO PURPOSE. Every other nav item carries a one-line PURPOSE in the app saying what it is for; folders, archive, drafts, trash and messages carry none. So there is no sentence to test the screen against, and this case can only ask the floor-level questions. ⭐ The missing sentence is the real finding here — a screen nobody has described is a screen nobody can say is wrong.",
+   "layer": null
+  },
+  {
+   "case_key": "MENU-02",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "Archive and Trash are different places, and neither loses anything",
+   "priority": "Medium",
+   "pre": "At least one chit you can afford to move.",
+   "data": "Any closed chit.",
+   "steps": [
+    [
+     "Open Archive.",
+     "It opens and says what it holds."
+    ],
+    [
+     "Open Trash.",
+     "It opens and says what it holds — and it is clearly NOT the same thing as Archive."
+    ],
+    [
+     "Archive a chit, then look in Archive.",
+     "It is there."
+    ],
+    [
+     "Check the Task or Order list it came from.",
+     "It is no longer in the way, and nothing says it was deleted."
+    ]
+   ],
+   "note": "⚠️ Archive and Trash both declare no purpose, and they are the pair most likely to be confused: one is \"put away\", the other is \"thrown away\". A person who mixes them up loses a record, and nothing on either screen currently explains the difference.",
+   "layer": null
+  },
+  {
+   "case_key": "MENU-03",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "Drafts holds unsent work and does not lose it",
+   "priority": "High",
+   "pre": "Signed in.",
+   "data": "—",
+   "steps": [
+    [
+     "Start composing a chit and fill in a line, but do NOT send.",
+     "Work in progress."
+    ],
+    [
+     "Navigate away, then open Drafts.",
+     "The unsent chit is listed."
+    ],
+    [
+     "Open it.",
+     "What you typed is still there."
+    ],
+    [
+     "Reload the whole page and open Drafts again.",
+     "Still there."
+    ]
+   ],
+   "note": "⭐ This is the one on this list with real money behind it: a draft that vanishes is somebody's work gone, and they will not report it as a bug — they will retype it and trust the product a little less. ⚠️ Drafts also declares no purpose.",
+   "layer": null
+  },
+  {
+   "case_key": "MENU-04",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "Messages — internal and external threads stay apart",
+   "priority": "High",
+   "pre": "A chit with at least one message on it.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Messages from the rail.",
+     "Threads are listed."
+    ],
+    [
+     "Open one.",
+     "It says which chit it belongs to."
+    ],
+    [
+     "Look at any internal note.",
+     "It is clearly marked as internal — not mixed in with what the other party can read."
+    ],
+    [
+     "Check that nothing internal appears as if it had been sent to the other party.",
+     "Nothing does."
+    ]
+   ],
+   "note": "⚠️⚠️ THE INTERNAL/EXTERNAL LINE IS THE ONE THING THIS SCREEN MUST NEVER GET WRONG. An internal note shown to a counterparty is not a display bug, it is a disclosure. It is also the only permission the access model actually enforces today (lib/access.js canMessage), which makes it worth a case.",
+   "layer": null
+  },
+  {
+   "case_key": "MENU-05",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "Co-assists — the screen does what it says it does",
+   "priority": "Medium",
+   "pre": "Signed in as the business (not as a co-assist).",
+   "data": "—",
+   "steps": [
+    [
+     "Open Co-assists.",
+     "It opens."
+    ],
+    [
+     "Read the description at the top.",
+     "\"Manage who acts for you — people now; connectors, devices, processes, agents next.\""
+    ],
+    [
+     "Check it is about PEOPLE and not about company structure.",
+     "For structure it points you to Network."
+    ],
+    [
+     "Create a co-assist with a 4-character key, then try a 13-character one.",
+     "The short one is accepted; the long one is refused with a reason."
+    ]
+   ],
+   "note": "⭐ The declared purpose is the test here — the screen promises people-not-structure, and drifting into structure is exactly the kind of thing nobody notices. The key length was capped at 12 on 2026-09-11 because a co-assist signs in as key@business and that half had no maximum at all.",
+   "layer": null
+  },
+  {
+   "case_key": "MENU-06",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "Insight (MIS) — numbers, and it says where they came from",
+   "priority": "Medium",
+   "pre": "Some chits in the system.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Insight.",
+     "Figures are shown."
+    ],
+    [
+     "Read any headline figure.",
+     "It is labelled — you can tell what it counts."
+    ],
+    [
+     "Find the trend.",
+     "Either a real trend, or a line saying there is not enough history yet."
+    ],
+    [
+     "Check nothing shows a made-up shape when there is only one period of data.",
+     "It says so instead."
+    ]
+   ],
+   "note": "⭐ \"Not enough history yet for a trend — one bucket of data\" is already in the code and is the right behaviour: a flat line drawn from one point is an invented shape. This case exists so that stays true.",
+   "layer": null
+  },
+  {
+   "case_key": "MENU-07",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "My work — a co-assist sees only their own",
+   "priority": "High",
+   "pre": "At least one co-assist, with lines assigned to them.",
+   "data": "—",
+   "steps": [
+    [
+     "As the business, open My work.",
+     "Lines assigned across chits are listed."
+    ],
+    [
+     "Group by person.",
+     "The grouping changes."
+    ],
+    [
+     "Sign in AS the co-assist and open My work.",
+     "They see only their own lines — not everyone's."
+    ]
+   ],
+   "note": "⚠️ The purpose says it plainly: \"A co-assist sees only their own.\" That is a scoping promise, and a scoping promise nobody tests is the kind that quietly stops being true.",
+   "layer": null
+  },
+  {
+   "case_key": "MENU-08",
+   "module_key": "MENU",
+   "module_name": "The menus nothing was checking",
+   "intro": "Every one of these screens ships and none had a single case. Each asks the same three things: does it open, does it say what it is for, and is it honest when it is empty. ⚠️ Five of them have no declared purpose anywhere in the product, which is noted on the case rather than guessed at.",
+   "title": "Trade readiness — it gathers, it does not claim",
+   "priority": "Medium",
+   "pre": "Signed in.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Readiness.",
+     "It opens and lists what your standards require."
+    ],
+    [
+     "Look at something not yet gathered.",
+     "It says what is missing — it does not show it as satisfied."
+    ],
+    [
+     "Look at anything marked verified.",
+     "It says HOW it was verified, not just that it was."
+    ]
+   ],
+   "note": "⭐⭐ \"Buyers see them as verified confidence\" is the purpose, which makes this the screen where an overstatement costs the most — a clearance shown as verified when it was only uploaded is a claim made to somebody else's buyer. See [[project-attestation-layer]]: VERIFIED, not self-asserted.",
+   "layer": null
   }
  ]
 }
