@@ -229,6 +229,757 @@
    "infrastructure": 58
   }
  },
+ "contents": {
+  "engine": [
+   {
+    "tier": "pure",
+    "name": "order-input",
+    "purpose": "WHAT A CATALOGUE RECEIVES, declared as a schema (SPEC-negotiation-position, revised).",
+    "note": "355 lines",
+    "stage": null
+   },
+   {
+    "tier": "pure",
+    "name": "form-handshake",
+    "purpose": "Ran end to end in scripts/prototype-form16-to-itr2.js against a real PDF (12 of 17 fields, with provenance). 17 assertions. NOT in a route: the browser re-implements extraction in ",
+    "note": "136 lines",
+    "stage": "proven"
+   },
+   {
+    "tier": "pure",
+    "name": "money",
+    "purpose": "an amount is never a bare number.",
+    "note": "346 lines",
+    "stage": null
+   },
+   {
+    "tier": "pure",
+    "name": "points",
+    "purpose": "a reward point is NOT money, and this file exists so the two can never be confused.",
+    "note": "140 lines",
+    "stage": null
+   },
+   {
+    "tier": "pure",
+    "name": "docnumber",
+    "purpose": "The numbering RULES, per jurisdiction. Built 2026-09-11; the counter adopts it in the same change.",
+    "note": "162 lines",
+    "stage": "held"
+   },
+   {
+    "tier": "pure",
+    "name": "units",
+    "purpose": "ONE UNIT, THREE NAMES: ours (kg · litre · bag …), the UN/ECE Recommendation 20 code the world uses",
+    "note": "105 lines",
+    "stage": null
+   },
+   {
+    "tier": "pure",
+    "name": "jurisdiction",
+    "purpose": "WHERE A PARTY IS, AND WHAT THAT DECIDES. Pure: no database, no network, no state.",
+    "note": "142 lines",
+    "stage": null
+   },
+   {
+    "tier": "pure",
+    "name": "rewards",
+    "purpose": "Built 2026-09-10 and called by NOTHING — tests/rewards.test.js, 15 checks. The interpretation and the",
+    "note": "511 lines",
+    "stage": "tested"
+   },
+   {
+    "tier": "pure",
+    "name": "inventory",
+    "purpose": "WHAT A MOVEMENT DOES TO A BALANCE",
+    "note": "245 lines",
+    "stage": null
+   },
+   {
+    "tier": "bound",
+    "name": "regional",
+    "purpose": "REGIONAL SCATTER (6a): \"spin the globe\". Resolve a container's presentation + governance for a",
+    "note": "95 lines",
+    "stage": null
+   },
+   {
+    "tier": "bound",
+    "name": "reporting",
+    "purpose": "Built for the network MIS + Beckn work that is queued. 17 assertions. No caller yet, by design — the Beckn phase is where it lands.",
+    "note": "132 lines",
+    "stage": "tested"
+   }
+  ],
+  "middleware": [
+   {
+    "name": "auth",
+    "purpose": "JWT validation middleware",
+    "note": "302 lines",
+    "stage": null
+   },
+   {
+    "name": "customer-auth",
+    "purpose": "the STOREFRONT CUSTOMER's authenticated surface.",
+    "note": "50 lines",
+    "stage": null
+   },
+   {
+    "name": "hat-gate",
+    "purpose": "make the co-assist HAT actually govern writes, by default, everywhere.",
+    "note": "166 lines",
+    "stage": null
+   },
+   {
+    "name": "idempotency",
+    "purpose": "server-side idempotency for the offline OUTBOX (Phase 2). A mutation carrying an",
+    "note": "96 lines",
+    "stage": null
+   },
+   {
+    "name": "validate",
+    "purpose": "Input validation helpers",
+    "note": "29 lines",
+    "stage": null
+   }
+  ],
+  "api": [
+   {
+    "name": "chits",
+    "purpose": "Chit send, inbox, detail, status update",
+    "note": "717 function points",
+    "stage": null
+   },
+   {
+    "name": "products",
+    "purpose": "B3.7a Catalogue items (products) CRUD + search",
+    "note": "154 function points",
+    "stage": null
+   },
+   {
+    "name": "folders",
+    "purpose": "FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per",
+    "note": "138 function points",
+    "stage": null
+   },
+   {
+    "name": "governance",
+    "purpose": "GOV-01 protected entity / constitution / governed inheritance.",
+    "note": "137 function points",
+    "stage": null
+   },
+   {
+    "name": "till",
+    "purpose": "WHAT A COUNTER NEEDS, IN ONE CALL (TILL-SPEC-2026-09-07).",
+    "note": "118 function points",
+    "stage": null
+   },
+   {
+    "name": "actors",
+    "purpose": "B3 Actor model API",
+    "note": "112 function points",
+    "stage": null
+   },
+   {
+    "name": "assist",
+    "purpose": "POST /api/assist — tier-1 assistant LLM proxy (STUB).",
+    "note": "109 function points",
+    "stage": null
+   },
+   {
+    "name": "catalogue",
+    "purpose": "B3.7 Public catalogue + end-customer order (no business login)",
+    "note": "107 function points",
+    "stage": null
+   },
+   {
+    "name": "relationships",
+    "purpose": "B3.6 Supplier List + Customer List + Promotions",
+    "note": "106 function points",
+    "stage": null
+   },
+   {
+    "name": "connectors",
+    "purpose": "L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1),",
+    "note": "84 function points",
+    "stage": null
+   },
+   {
+    "name": "entities",
+    "purpose": "Entity registration, login, search",
+    "note": "76 function points",
+    "stage": null
+   },
+   {
+    "name": "integrations",
+    "purpose": null,
+    "note": "75 function points",
+    "stage": null
+   },
+   {
+    "name": "capture",
+    "purpose": "the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm",
+    "note": "69 function points",
+    "stage": null
+   },
+   {
+    "name": "testing",
+    "purpose": null,
+    "note": "68 function points",
+    "stage": null
+   },
+   {
+    "name": "channels",
+    "purpose": "Settings → Channels. Which inbound number / address belongs to this entity, and whether the",
+    "note": "67 function points",
+    "stage": null
+   },
+   {
+    "name": "definitions",
+    "purpose": "an entity's own named things: \"Carton of 6\", \"Diwali 10%\", a category list.",
+    "note": "57 function points",
+    "stage": null
+   },
+   {
+    "name": "forms",
+    "purpose": "the AUTHORITY-FORMS engine surface. Define → resolve (fill + provenance) → issue (freeze) → sign.",
+    "note": "48 function points",
+    "stage": null
+   },
+   {
+    "name": "network-design",
+    "purpose": "NETWORK DESIGN persistence: the design-first Network builder's draft, stored",
+    "note": "48 function points",
+    "stage": null
+   },
+   {
+    "name": "schemas",
+    "purpose": "Schema engine basic",
+    "note": "44 function points",
+    "stage": null
+   },
+   {
+    "name": "tax",
+    "purpose": "the invoice for a chit, the month's ledger, the GSTR shapes. Read-only; nothing here files.",
+    "note": "36 function points",
+    "stage": null
+   },
+   {
+    "name": "kyb",
+    "purpose": "the \"Know your business\" value panel. Sections 1-3 are computed from owned data → FREE (SELECTs over",
+    "note": "35 function points",
+    "stage": null
+   },
+   {
+    "name": "service",
+    "purpose": "a chit AS A SERVICE REQUEST. The clock, and the pause that gets argued about.",
+    "note": "27 function points",
+    "stage": null
+   },
+   {
+    "name": "supplies",
+    "purpose": "WHAT A SHOP BUYS TO USE",
+    "note": "25 function points",
+    "stage": null
+   },
+   {
+    "name": "connections",
+    "purpose": "Connection handshake",
+    "note": "21 function points",
+    "stage": null
+   },
+   {
+    "name": "offers",
+    "purpose": null,
+    "note": "18 function points",
+    "stage": null
+   },
+   {
+    "name": "notifications",
+    "purpose": "derived notification feed (no notifications table).",
+    "note": "17 function points",
+    "stage": null
+   },
+   {
+    "name": "simulator",
+    "purpose": "public showcase API for the /tour page (SimulatorPage).",
+    "note": "17 function points",
+    "stage": null
+   },
+   {
+    "name": "attachments",
+    "purpose": null,
+    "note": "14 function points",
+    "stage": null
+   },
+   {
+    "name": "invoice",
+    "purpose": null,
+    "note": "14 function points",
+    "stage": null
+   },
+   {
+    "name": "identity-docs",
+    "purpose": "a person's own identity record: phone, email, and government IDs.",
+    "note": "13 function points",
+    "stage": null
+   },
+   {
+    "name": "catalogue-face",
+    "purpose": "CATALOGUE FACE persistence: the catalogue setup config (purpose · method · units ·",
+    "note": "10 function points",
+    "stage": null
+   },
+   {
+    "name": "events",
+    "purpose": null,
+    "note": "8 function points",
+    "stage": null
+   },
+   {
+    "name": "keys",
+    "purpose": null,
+    "note": "8 function points",
+    "stage": null
+   },
+   {
+    "name": "adopt",
+    "purpose": "TAKING A SUPPLIER'S DELIVERY INTO YOUR OWN CATALOGUE",
+    "note": "7 function points",
+    "stage": null
+   },
+   {
+    "name": "pricing",
+    "purpose": null,
+    "note": "7 function points",
+    "stage": null
+   },
+   {
+    "name": "openapi",
+    "purpose": null,
+    "note": "2 function points",
+    "stage": null
+   }
+  ],
+  "web": [
+   {
+    "name": "cap-admin",
+    "purpose": "the \"admin\" capability (progressively loaded on demand).",
+    "note": "5383 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-adopt",
+    "purpose": "TAKING A SUPPLIER'S DELIVERY INTO YOUR OWN CATALOGUE.",
+    "note": "192 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-categories",
+    "purpose": "CATEGORIES, the shelf you shape (lazy; ensureCap('categories')).",
+    "note": "955 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-catsetup",
+    "purpose": "CATALOGUE SETUP: how the catalogue is SHAPED (lazy; ensureCap('catsetup')).",
+    "note": "1738 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-chit2",
+    "purpose": "DESIGN 2: the chit as LINE-LEVEL work (lazy; ensureCap('chit2')).",
+    "note": "1399 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-connector",
+    "purpose": "IoT / ERP connector MANAGEMENT (lazy; loaded via ensureCap('connector') on INVOCATION).",
+    "note": "282 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-definitions",
+    "purpose": "DEFINITIONS · the shelf a catalogue takes things off.  (lazy capability)",
+    "note": "1878 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-dispute",
+    "purpose": "the DISPUTE capability (the USP), lazy-loaded via ensureCap('dispute').",
+    "note": "308 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-folders",
+    "purpose": "FOLDERS capability (lazy; loaded via ensureCap('folders')).",
+    "note": "708 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-iddocs",
+    "purpose": "a person's identity record, as ONE module used in every place it appears.",
+    "note": "219 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-intake",
+    "purpose": "THE INTAKE INBOX. Lazy via ensureCap('intake').",
+    "note": "386 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-legend",
+    "purpose": "the 🔑 LEGEND capability: a live map of \"what we serve\".",
+    "note": "820 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-match",
+    "purpose": "THE THREE-WAY MATCH (lazy; ensureCap('match')).",
+    "note": "191 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-messages",
+    "purpose": "REPLIES: every external conversation that still wants you, across every chit. Lazy.",
+    "note": "351 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-network",
+    "purpose": "DESIGN-FIRST network builder. Lazy via ensureCap('network').",
+    "note": "2978 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-readiness",
+    "purpose": "TRADE capability (lazy; ensureCap('readiness')). Two tabs:",
+    "note": "550 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-register",
+    "purpose": "THE REGISTER. Lazy (ensureCap('register')).",
+    "note": "1159 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-service",
+    "purpose": "a chit AS A SERVICE REQUEST. Lazy-loaded (ensureCap('service')).",
+    "note": "222 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-standards",
+    "purpose": "THE REGISTER OF STANDARDS, and the argument for following them.",
+    "note": "391 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-supplies",
+    "purpose": "SUPPLIES: what the shop buys to USE, never to sell.",
+    "note": "275 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-testing",
+    "purpose": "THE TEST PANEL, ON TOP OF THE APP",
+    "note": "957 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-traceability",
+    "purpose": "TRACEABILITY capability (lazy via ensureCap('traceability')).",
+    "note": "207 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-workforce",
+    "purpose": "the CO-ASSIST (workforce) capability: FUNCTIONALITY only.",
+    "note": "663 lines",
+    "stage": null
+   },
+   {
+    "name": "cap-worklist",
+    "purpose": "MY WORK, across every chit. Lazy (ensureCap('worklist')).",
+    "note": "1602 lines",
+    "stage": null
+   }
+  ],
+  "database": [
+   {
+    "name": "sim01_simulator",
+    "purpose": "sim01_simulator.sql — DB-backed content for the public /tour showcase page (SimulatorPage).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "purge_test_entities_ROUTINE",
+    "purpose": "purge_test_entities — ONE script, routine maintenance. Athi, 2026-09-04: \"give me a single sql script to execute,",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "purge_test_entities_1_LIST",
+    "purpose": "purge_test_entities · step 1 of 3 — LIST what would go. Read-only. ONE result set.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "net03_full_schema",
+    "purpose": "===== 0. helpers =====",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "net02_chit",
+    "purpose": "create table if not exists cb_chit (",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "net01_network",
+    "purpose": "NET-01: network establishment & delinking",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b57_connector_actor",
+    "purpose": "migration_b57_connector_actor.sql — L3.1: connector as a first-class ACTOR + its endpoints (connections).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b56_dispute_schema",
+    "purpose": "migration_b56_dispute_schema.sql — ensure the per-party dispute schema the code needs actually EXISTS.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b55_connector_blueprint_and_capabilities",
+    "purpose": "migration_b55_connector_blueprint_and_capabilities.sql",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b54_disable_rls_carveout",
+    "purpose": "migration_b54_disable_rls_carveout.sql — B1 RLS: enforce RLS ONLY on the 6 Direct tables; carve-out/stage-2 OFF.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b53_assist_residency_qa",
+    "purpose": "migration_b53_assist_residency_qa.sql — seed a curated assistant Q&A about DATA RESIDENCY.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b52_rls_parity_read",
+    "purpose": "migration_b52_rls_parity_read.sql — B1 RLS · STEP D2 (crossing pass): the dispute parity cross-read.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b51_rls_delivery_functions_extra",
+    "purpose": "migration_b51_rls_delivery_functions_extra.sql — B1 RLS · STEP D2 (crossing pass): two more delivery-agent fns.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b50_rls_delivery_functions",
+    "purpose": "migration_b50_rls_delivery_functions.sql — B1 RLS · STEP D2: the SECURITY DEFINER \"delivery agent\" layer.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b49_rls_policies",
+    "purpose": "migration_b49_rls_policies.sql — B1 RLS · STEP E: ENABLE + FORCE RLS + per-table policy on the Direct group.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b48_cb_app_role",
+    "purpose": "migration_b48_cb_app_role.sql — B1 RLS · STEP A: a dedicated NOSUPERUSER NOBYPASSRLS app role (`cb_app`).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b47_mint_path",
+    "purpose": "migration_b47_mint_path.sql — UNIFY THE MINT PATH (reviewer #3): one create_from_blueprint(), a blueprint",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b46_helpdesk_blueprint",
+    "purpose": "migration_b46_helpdesk_blueprint.sql — templatize the helpdesk into a reusable BLUEPRINT.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b45_gov01help_rename",
+    "purpose": "migration_b45_gov01help_rename.sql — name the Help source entity GOV-01-Help so it is operated the HARD WAY:",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b44_assist_projection",
+    "purpose": "migration_b44_assist_projection.sql — projection sync: Help CATALOGUE (source of truth) -> assist_qa (serving).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b43_help_entity",
+    "purpose": "migration_b43_help_entity.sql — provision the PROTECTED Help entity + its Q&A schema + lift the 52 into its catalogue.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "migration_b42_assist_qa",
+    "purpose": "migration_b42_assist_qa.sql — assistant Q&A library, DB-backed (single source of truth).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b99_ai_usage",
+    "purpose": "b99: METERING LEDGER + PREPAID WALLET (general — AI is just the first meter).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b98_gst_registration",
+    "purpose": "b98: a GSTIN clearance so the LIVE source-check shows in the UI. GSTIN is verifiable at source (GST registry via",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b97_pharma_auto",
+    "purpose": "b97: two more sectors — PHARMA and AUTOMOBILE — to widen the \"generic, not chemical-only\" showcase. Same engine as",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b96_entity_profile",
+    "purpose": "b96: per-entity TRADE PROFILE — makes Trade-ready INDIVIDUAL-specific. The entity declares its trade mode, markets,",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b95_more_sectors",
+    "purpose": "b95: prove the tool is GENERIC, not chemical-only. Seed FOOD, TEXTILES and ELECTRONICS sectors — each with its own",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b93_commerce_standards",
+    "purpose": "b93: seed the COMMERCE standards as SEALED SOURCE-ENTITIES — Incoterms 2020, UCP 600, FRM. This is the DDL move Athi",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b92_verification",
+    "purpose": "b92: the VERIFICATION stamp on a gathered clearance — the trust ladder (declared→documented→attested→verified).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b91_trade_lanes",
+    "purpose": "b91: TRADE LANES — destination-resolved readiness, GENERIC (derive, don't enumerate). Requirements are COMPUTED from",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b90_compliance",
+    "purpose": "b90: MAKE COMPLIANCE REAL — a standard's document CATALOGUE (the vector) + a per-entity GATHERED-evidence store.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b89_source_entities",
+    "purpose": "b89: standards become SOURCE-ENTITIES (stable identity + mutable name) — mirrors b78 (catalogue source owned by an",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b88_boilerplate",
+    "purpose": "b88: THE BOILERPLATE-DECLARES-ITS-SOURCES keystone (DDL layer of the entity lifecycle).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b87_exim_standard",
+    "purpose": "b87: seed a SECOND canonical standard facet — EXIM (foreign-trade) policy — to prove the boilerplate assimilates",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b86_sealed_guard",
+    "purpose": "b86: enforce identities.sealed at the DB — the backstop behind the app guards (P0-1).",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b85_standard_source",
+    "purpose": "b85: canonical SHARED standard source — the second source CLASS.",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b84_india_languages",
+    "purpose": "b84: India-local language regions for spin-the-globe — Tamil (TN) and Hindi (HI). Both INR/litre (India), just the",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b83_more_regions",
+    "purpose": "b83: more region flavours for spin-the-globe (China/Japan/Spain/France/Germany). Additive INSERT into region_layer",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b82_erp_handoff",
+    "purpose": "b82: ERP handoff (6b) — receipt-only, process-then-forget. When an order is placed, CB records a RECEIPT of handing",
+    "note": null,
+    "stage": null
+   },
+   {
+    "name": "b81_regional_scatter",
+    "purpose": "b81: regional scatter (6a). Resolve a product's presentation + governance per customer REGION.",
+    "note": null,
+    "stage": null
+   }
+  ],
+  "connector": [
+   {
+    "name": "beckn-map",
+    "purpose": "The Beckn <-> chit mapping as a readable TABLE plus a small applier. 22 assertions. Deliberately UNWIRED: alignment you can review and reject, with no new surface area to confuse t",
+    "note": "270 lines",
+    "stage": "tested"
+   },
+   {
+    "name": "boilerplate",
+    "purpose": "the DDL keystone: a BOILERPLATE is the sealed mould that DECLARES which sources it inherits",
+    "note": "60 lines",
+    "stage": null
+   },
+   {
+    "name": "whatsapp-media",
+    "purpose": "fetch the BYTES of a photo a customer sent, so a co-assist can read it.",
+    "note": "59 lines",
+    "stage": null
+   },
+   {
+    "name": "whatsapp-out",
+    "purpose": "NOTIFY BACK. A chit's status change reaches the customer on the channel they wrote in on.",
+    "note": "172 lines",
+    "stage": null
+   },
+   {
+    "name": "whatsapp-templates",
+    "purpose": "the ONLY thing that may be sent outside Meta's 24-hour window.",
+    "note": "84 lines",
+    "stage": null
+   }
+  ]
+ },
  "cases": [
   {
    "case_key": "SELL-01",
@@ -10744,7 +11495,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · static · 527 lines. Run: node chitbridge-api/tests/test-board.test.js",
+   "note": "test.unit · static · 549 lines. Run: node chitbridge-api/tests/test-board.test.js",
    "layer": "engine",
    "test_type": "static",
    "group": "test.unit",
