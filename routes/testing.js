@@ -98,80 +98,142 @@ router.get('/cases', auth, async (req, res) => {
  * board has it — with every past result still pointing at the version it was tested against.
  */
 /**
- * ⭐ THE ONE IMPORTER. A second caller arrived the moment the app grew a button (POST /cases/seed), and Athi's
- * standing rule is to extract the helper THEN, not later. It matters more than tidiness here: a case loaded by
- * the button and a case loaded from a file must be the SAME row, or the board would hold two kinds of case that
- * only look alike.
+ * ⭐⭐ THE ONE IMPORTER — and it does the whole document in FIVE round trips, not three hundred.
+ *
+ * Athi, 2026-09-11: *"can you compress and load, it takes time?"*
+ *
+ * ⚠⚠ THE FIRST VERSION LOOPED, and the loop was the cost. 110 cases × (one SELECT, one INSERT, one INSERT)
+ * is over three hundred sequential round trips, and this API sits in San Francisco while the database sits in
+ * Mumbai — so each one pays a Pacific crossing. The arithmetic was always right and the wait was a minute and a
+ * half. [[project-roundtrip-cost]] is the standing measurement; this is the same fault it describes.
+ *
+ * ⭐ SET-BASED INSTEAD: read every existing case in ONE query, decide in memory, then write the new ones, the
+ * new versions and the pointer updates as one statement each via unnest(). The decision logic is unchanged —
+ * only the number of times we ask.
+ *
+ * ⭐ A second caller arrived the moment the app grew a button (POST /cases/seed), which is why this is a helper
+ * at all: a case loaded by the button and a case loaded from a file must be the SAME row, or the board holds two
+ * kinds of case that only look alike.
  */
 async function importCases(entity_id, who, rows) {
-  {
-    const out = { added: 0, updated: 0, unchanged: 0, cases: [] };
-    await withEntity(entity_id, async (db) => {
-      for (const c of rows) {
-        const key = String(c.case_key || c.id || '').trim();
-        if (!key) continue;
-        const mod = String(c.module_key || key.split('-')[0] || '').trim() || null;
-        /* everything that is not identity goes in rules — the version is what makes an edit safe */
-        const rules = {
-          title: c.title || '', priority: c.priority || 'Medium', pre: c.pre || '', data: c.data || '',
-          steps: Array.isArray(c.steps) ? c.steps : [], note: c.note || '',
-          layer: LAYERS.indexOf(c.layer) >= 0 ? c.layer : null,
-          module_name: c.module_name || '', intro: c.intro || '',
-          /**
-           * ⭐⭐⭐ THE CITATION — which clause of which spec this case proves.
-           *
-           * Athi, 2026-09-11: *"so the spec and the test cases can match… if it is not the intended behaviour,
-           * then capture, update the spec and build and test again."*
-           *
-           * ⭐ THE VERSION IS THE WHOLE MECHANISM. A case cites a clause AT A VERSION. Edit the clause and it
-           * gains a new version, so every case still citing the old one is, by construction, exactly the set that
-           * has to be looked at again — no hashing, no sweep, no flag anybody has to remember to set. It is the
-           * same reason a result carries the case version, one level up.
-           */
-          cites: c.cites || null,
-        };
+  const out = { added: 0, updated: 0, unchanged: 0, cases: [] };
 
-        const cur = await db.query(
-          `SELECT d.definition_id, d.current_version, v.rules
-             FROM definition d
-             JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
-            WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2`, [entity_id, key]);
-
-        if (!cur.rows[0]) {
-          const ins = await db.query(
-            `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
-             VALUES ($1,'testcase',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
-            [entity_id, mod, key, rules.title || null, who.id]);
-          const id = ins.rows[0].definition_id;
-          await db.query(
-            /* ⚠ entity_id IS NOT OPTIONAL HERE — definition_version carries its own and RLS checks it. */
-            `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-             VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
-          out.added++; out.cases.push({ case_key: key, definition_id: id, version: 1 });
-          continue;
-        }
-
-        /* ⚠️ NO VERSION FOR AN IDENTICAL RE-IMPORT. The loader is meant to be run often; a new version on every
-           run would bury the edits that matter under a hundred that changed nothing, and would make "which
-           version did this pass on?" a question with a useless answer. */
-        const id = cur.rows[0].definition_id;
-        if (JSON.stringify(cur.rows[0].rules || {}) === JSON.stringify(rules)) {
-          out.unchanged++; out.cases.push({ case_key: key, definition_id: id, version: cur.rows[0].current_version });
-          continue;
-        }
-        const next = Number(cur.rows[0].current_version) + 1;
-        await db.query(
-          `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-           VALUES ($1,$2,$3,$4,$5)`,
-          [id, next, entity_id, JSON.stringify(rules), who.id]);
-        await db.query(
-          `UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`,
-          [id, next, mod, rules.title || null]);
-        out.updated++; out.cases.push({ case_key: key, definition_id: id, version: next });
-      }
+  /* ── 1 · normalise, and drop anything with no key. One pass, no database. ── */
+  const want = [];
+  const seen = {};
+  for (const c of rows || []) {
+    const key = String(c.case_key || c.id || '').trim();
+    if (!key || seen[key]) continue;      /* ⚠ a repeated key in one payload would write itself twice */
+    seen[key] = 1;
+    want.push({
+      key: key,
+      mod: String(c.module_key || key.split('-')[0] || '').trim() || null,
+      /* everything that is not identity goes in rules — the version is what makes an edit safe */
+      rules: {
+        title: c.title || '', priority: c.priority || 'Medium', pre: c.pre || '', data: c.data || '',
+        steps: Array.isArray(c.steps) ? c.steps : [], note: c.note || '',
+        layer: LAYERS.indexOf(c.layer) >= 0 ? c.layer : null,
+        module_name: c.module_name || '', intro: c.intro || '',
+        /**
+         * ⭐⭐⭐ THE CITATION — which clause of which spec this case proves.
+         *
+         * Athi: *"so the spec and the test cases can match… if it is not the intended behaviour, then capture,
+         * update the spec and build and test again."*
+         *
+         * ⭐ THE VERSION IS THE WHOLE MECHANISM. A case cites a clause AT A VERSION, so editing the clause makes
+         * every case still citing the old one exactly the set that has to be looked at again — no hashing, no
+         * sweep, no flag anybody has to remember to set. Same reason a result carries the case version, one
+         * level up.
+         */
+        cites: c.cites || null,
+      },
     });
-    return out;
   }
+  if (!want.length) return out;
+
+  await withEntity(entity_id, async (db) => {
+    /* ── 2 · ONE read for the lot. `= ANY($2)` rather than 110 lookups. ── */
+    const have = await db.query(
+      `SELECT d.definition_id, d.name, d.current_version, v.rules
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = ANY($2::text[])`,
+      [entity_id, want.map((w) => w.key)]);
+    const by = {};
+    have.rows.forEach((r) => { by[r.name] = r; });
+
+    /* ── 3 · decide, in memory ── */
+    const toCreate = [], toVersion = [];
+    want.forEach((w) => {
+      const cur = by[w.key];
+      const json = JSON.stringify(w.rules);
+      if (!cur) { toCreate.push(Object.assign({ json: json }, w)); return; }
+      /* ⚠️ NO VERSION FOR AN IDENTICAL RE-IMPORT. The button is meant to be pressed often; a version per press
+         would bury the edits that matter under a hundred that changed nothing, and would make "which version did
+         this pass on?" a question with a useless answer. */
+      if (JSON.stringify(cur.rules || {}) === json) {
+        out.unchanged++;
+        out.cases.push({ case_key: w.key, definition_id: cur.definition_id, version: cur.current_version });
+        return;
+      }
+      toVersion.push(Object.assign({ json: json, id: cur.definition_id, next: Number(cur.current_version) + 1 }, w));
+    });
+
+    /* ── 4 · the new cases: one INSERT, then one INSERT for their version 1 ── */
+    if (toCreate.length) {
+      const ins = await db.query(
+        `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+         SELECT $1, 'testcase', t.mod, t.name, t.note, 'live', 1, $5
+           FROM unnest($2::text[], $3::text[], $4::text[]) AS t(mod, name, note)
+         ON CONFLICT DO NOTHING
+         RETURNING definition_id, name`,
+        [entity_id, toCreate.map((t) => t.mod), toCreate.map((t) => t.key),
+         toCreate.map((t) => t.rules.title || null), who.id]);
+
+      /* ⚠ ON CONFLICT DO NOTHING means a row somebody else created in the meantime is simply not returned. It is
+         not an error and must not be counted as added — the next press will see it as unchanged. */
+      const madeBy = {};
+      ins.rows.forEach((r) => { madeBy[r.name] = r.definition_id; });
+      const made = toCreate.filter((t) => madeBy[t.key]);
+
+      if (made.length) {
+        await db.query(
+          /* ⚠ entity_id IS NOT OPTIONAL HERE — definition_version carries its own and RLS checks it. Leaving it
+             out is what produced "row level security violates" on the very first load. */
+          `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+           SELECT t.id::uuid, 1, $1, t.rules::jsonb, $4
+             FROM unnest($2::text[], $3::text[]) AS t(id, rules)`,
+          [entity_id, made.map((t) => madeBy[t.key]), made.map((t) => t.json), who.id]);
+        made.forEach((t) => {
+          out.added++;
+          out.cases.push({ case_key: t.key, definition_id: madeBy[t.key], version: 1 });
+        });
+      }
+    }
+
+    /* ── 5 · the edited ones: one INSERT for the new versions, one UPDATE to move the pointers ── */
+    if (toVersion.length) {
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+         SELECT t.id::uuid, t.v::int, $1, t.rules::jsonb, $5
+           FROM unnest($2::text[], $3::int[], $4::text[]) AS t(id, v, rules)`,
+        [entity_id, toVersion.map((t) => t.id), toVersion.map((t) => t.next),
+         toVersion.map((t) => t.json), who.id]);
+      await db.query(
+        `UPDATE definition d
+            SET current_version = t.v::int, sub_kind = t.mod, note = t.note
+           FROM unnest($1::text[], $2::int[], $3::text[], $4::text[]) AS t(id, v, mod, note)
+          WHERE d.definition_id = t.id::uuid AND d.entity_id = $5`,
+        [toVersion.map((t) => t.id), toVersion.map((t) => t.next), toVersion.map((t) => t.mod),
+         toVersion.map((t) => t.rules.title || null), entity_id]);
+      toVersion.forEach((t) => {
+        out.updated++;
+        out.cases.push({ case_key: t.key, definition_id: t.id, version: t.next });
+      });
+    }
+  });
+
+  return out;
 }
 
 router.post('/cases/import', auth, async (req, res) => {
@@ -310,25 +372,48 @@ async function recordResults(entity_id, who, b) {
           WHERE entity_id = $1 AND kind = 'testcase' AND name = ANY($2::text[])`, [entity_id, keys]);
       const by = {}; known.rows.forEach((x) => { by[x.name] = x; });
 
-      const rows = [];
-      for (const r of list) {
+      /**
+       * ⚠⚠ ONE INSERT FOR THE WHOLE RUN, not one per result.
+       *
+       * A person taps one case at a time and would never notice. A JUnit report does not: the suite posts every
+       * test at once, and a loop here is one Pacific crossing per test — the same fault that made loading the
+       * cases take a minute and a half. [[project-roundtrip-cost]]
+       *
+       * ⚠ ON CONFLICT DO NOTHING still applies per row, so a replayed suite is still a quiet no-op, and the
+       * rows that were skipped are simply not returned — which is what `skipped` counts.
+       */
+      const norm = list.map((r) => {
         const key = String(r.case_key).trim();
         const d = by[key] || null;
-        const ins = await db.query(
-          `INSERT INTO test_result
-             (entity_id, definition_id, case_version, case_key, module_key, status, run_kind, layer,
-              tested_by, tester_name, run_id, run_label, note, evidence, build)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-           ON CONFLICT DO NOTHING
-           RETURNING result_id, case_key, status, at`,
-          [entity_id, d ? d.definition_id : null, d ? d.current_version : null, key,
-           r.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
-           r.status, r.run_kind, r.layer || null,
-           who.id, r.tester_name || who.name, run_id, run_label,
-           r.note || null, r.evidence || null, build]);
-        if (ins.rows[0]) rows.push(ins.rows[0]);
-      }
-      return rows;
+        return {
+          key: key,
+          definition_id: d ? d.definition_id : null,
+          case_version: d ? d.current_version : null,
+          module_key: r.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
+          status: r.status, run_kind: r.run_kind, layer: r.layer || null,
+          tester_name: r.tester_name || who.name,
+          note: r.note || null, evidence: r.evidence || null,
+        };
+      });
+
+      const ins = await db.query(
+        `INSERT INTO test_result
+           (entity_id, definition_id, case_version, case_key, module_key, status, run_kind, layer,
+            tested_by, tester_name, run_id, run_label, note, evidence, build)
+         SELECT $1, t.did::uuid, t.cver::int, t.key, t.mod, t.status, t.kind, t.layer,
+                $12, t.tester, $13::uuid, $14, t.note, t.evidence, $15
+           FROM unnest($2::text[], $3::int[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[],
+                       $9::text[], $10::text[], $11::text[])
+             AS t(did, cver, key, mod, status, kind, layer, tester, note, evidence)
+         ON CONFLICT DO NOTHING
+         RETURNING result_id, case_key, status, at`,
+        [entity_id,
+         norm.map((r) => r.definition_id), norm.map((r) => r.case_version), norm.map((r) => r.key),
+         norm.map((r) => r.module_key), norm.map((r) => r.status), norm.map((r) => r.run_kind),
+         norm.map((r) => r.layer), norm.map((r) => r.tester_name), norm.map((r) => r.note),
+         norm.map((r) => r.evidence),
+         who.id, run_id, run_label, build]);
+      return ins.rows;
     });
 
     return { status: 200, body: { run_id, run_label, recorded: saved.length,

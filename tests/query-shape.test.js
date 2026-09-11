@@ -67,6 +67,19 @@ const BUDGET = {
      race is a NORMAL outcome, so it re-reads and tries the next number, at most five times. Batching it would
      mean trusting the read, which is the one thing that cannot be trusted here. */
   'lib/local-identity.js': 1,
+  /**
+   * ⭐⭐ THREE, AND THE NUMBER CAME DOWN RATHER THAN THE BUDGET GOING UP. It was SEVEN. Athi, 2026-09-11:
+   * *"can you compress and load, it takes time?"* — loading 110 cases looped a SELECT and two INSERTs per
+   * case, over three hundred sequential round trips between San Francisco and Mumbai, and took a minute and a
+   * half. importCases() and recordResults() are now set-based (one read, then unnest() for the writes), which
+   * is the fix this budget exists to push people towards.
+   *
+   * ⚠ WHAT REMAINS IS PER-FEATURE, NOT PER-CASE, and is inherent rather than lazy: importing a .feature file
+   * must upsert each Feature's SPEC CLAUSE and learn the version it lands at BEFORE the scenarios under it can
+   * cite that version. Batching the clauses would mean giving up the citation, which is the whole point of the
+   * file. Sixteen features, and a deliberate manual act — not a hot path.
+   */
+  'routes/testing.js': 3,
   'routes/chits.js': 9,
   'routes/governance.js': 1,
   'routes/network-design.js': 3,
