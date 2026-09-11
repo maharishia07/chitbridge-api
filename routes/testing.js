@@ -97,12 +97,14 @@ router.get('/cases', auth, async (req, res) => {
  * makes "we can always append the use case" cheap: write the case where it is reviewed, run the loader, and the
  * board has it — with every past result still pointing at the version it was tested against.
  */
-router.post('/cases/import', auth, async (req, res) => {
-  try {
-    const entity_id = auth.entityOf(req);
-    const rows = Array.isArray(req.body && req.body.cases) ? req.body.cases : [];
-    if (!rows.length) return res.status(400).json({ error: 'Nothing to import', message: 'Send { cases: [...] }.' });
-
+/**
+ * ⭐ THE ONE IMPORTER. A second caller arrived the moment the app grew a button (POST /cases/seed), and Athi's
+ * standing rule is to extract the helper THEN, not later. It matters more than tidiness here: a case loaded by
+ * the button and a case loaded from a file must be the SAME row, or the board would hold two kinds of case that
+ * only look alike.
+ */
+async function importCases(entity_id, who, rows) {
+  {
     const out = { added: 0, updated: 0, unchanged: 0, cases: [] };
     await withEntity(entity_id, async (db) => {
       for (const c of rows) {
@@ -127,11 +129,11 @@ router.post('/cases/import', auth, async (req, res) => {
           const ins = await db.query(
             `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
              VALUES ($1,'testcase',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
-            [entity_id, mod, key, rules.title || null, testerOf(req).id]);
+            [entity_id, mod, key, rules.title || null, who.id]);
           const id = ins.rows[0].definition_id;
           await db.query(
             `INSERT INTO definition_version (definition_id, version, rules, created_by)
-             VALUES ($1,1,$2,$3)`, [id, JSON.stringify(rules), testerOf(req).id]);
+             VALUES ($1,1,$2,$3)`, [id, JSON.stringify(rules), who.id]);
           out.added++; out.cases.push({ case_key: key, definition_id: id, version: 1 });
           continue;
         }
@@ -147,16 +149,57 @@ router.post('/cases/import', auth, async (req, res) => {
         const next = Number(cur.rows[0].current_version) + 1;
         await db.query(
           `INSERT INTO definition_version (definition_id, version, rules, created_by) VALUES ($1,$2,$3,$4)`,
-          [id, next, JSON.stringify(rules), testerOf(req).id]);
+          [id, next, JSON.stringify(rules), who.id]);
         await db.query(
           `UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`,
           [id, next, mod, rules.title || null]);
         out.updated++; out.cases.push({ case_key: key, definition_id: id, version: next });
       }
     });
-    res.json(out);
+    return out;
+  }
+}
+
+router.post('/cases/import', auth, async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body && req.body.cases) ? req.body.cases : [];
+    if (!rows.length) return res.status(400).json({ error: 'Nothing to import', message: 'Send { cases: [...] }.' });
+    res.json(await importCases(auth.entityOf(req), testerOf(req), rows));
   } catch (err) {
     res.status(500).json({ error: 'Import failed', message: String(err.message || err) });
+  }
+});
+
+/**
+ * ⭐⭐⭐ POST /api/testing/cases/seed — THE BUTTON. Load the documented cases onto THIS shop's board.
+ *
+ * Athi, 2026-09-11: *"where do I run the node? Which I am not aware how to run it… can we say load the test cases
+ * in the icon, will it load?"*
+ *
+ * ⭐⭐ THE FIRST VERSION WAS WRONG AND THIS IS THE CORRECTION. Loading the cases needed a terminal, a copied token
+ * and a command — three things that have nothing to do with testing a shop, asked of the person who most needs the
+ * board to be effortless. The document now ships WITH the API as data/test-cases.json, so the app can offer a
+ * button and mean it. Same importer, same rows, no terminal.
+ *
+ * ⚠ IT IS AN UPSERT, SO PRESSING IT TWICE IS SAFE. A second press re-reads the document: unchanged cases stay on
+ * their version, edited ones gain a new one, and every result already recorded keeps pointing at the version it
+ * was actually given. There is no "already loaded" state to get wrong.
+ */
+router.post('/cases/seed', auth, async (req, res) => {
+  try {
+    const file = require('path').join(__dirname, '..', 'data', 'test-cases.json');
+    /* ⚠ A MISSING FILE MUST SAY SO PLAINLY. It means the API shipped without the document — a deploy problem, not
+       something the person pressing the button can act on, and they must not be left staring at an empty board
+       wondering whether they did it wrong. */
+    if (!require('fs').existsSync(file)) {
+      return res.status(500).json({ error: 'The documented cases are not on this server',
+        message: 'This API was deployed without data/test-cases.json. Run build-test-cases.cjs and deploy again.' });
+    }
+    const doc = JSON.parse(require('fs').readFileSync(file, 'utf8'));
+    const out = await importCases(auth.entityOf(req), testerOf(req), doc.cases || []);
+    res.json(Object.assign({ version: doc.version, date: doc.date }, out));
+  } catch (err) {
+    res.status(500).json({ error: 'Could not load the documented cases', message: String(err.message || err) });
   }
 });
 

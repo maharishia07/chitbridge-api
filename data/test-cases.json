@@ -1,0 +1,2881 @@
+{
+ "version": "2.0",
+ "date": "11 September 2026",
+ "build": "371 guard checks · 20 files · 43 offer scenarios · regression 39/0 · 10 engines on the till · migrations b213–b218 run and verified live",
+ "modules": [
+  {
+   "key": "SELL",
+   "name": "Selling",
+   "count": 10
+  },
+  {
+   "key": "PAY",
+   "name": "Getting paid",
+   "count": 5
+  },
+  {
+   "key": "OFF",
+   "name": "Offline and syncing back",
+   "count": 7
+  },
+  {
+   "key": "MNT",
+   "name": "Maintenance",
+   "count": 10
+  },
+  {
+   "key": "CFD",
+   "name": "The customer display",
+   "count": 5
+  },
+  {
+   "key": "RCV",
+   "name": "Goods in",
+   "count": 8
+  },
+  {
+   "key": "UI",
+   "name": "Everything that speaks",
+   "count": 4
+  },
+  {
+   "key": "REW",
+   "name": "Points (rewards)",
+   "count": 12
+  },
+  {
+   "key": "STK",
+   "name": "Stock and batches",
+   "count": 9
+  },
+  {
+   "key": "SUP",
+   "name": "Supplies — things the shop uses",
+   "count": 7
+  },
+  {
+   "key": "ADO",
+   "name": "Adopting a delivery into your catalogue",
+   "count": 8
+  },
+  {
+   "key": "CTR",
+   "name": "Counter — what the screen says about money",
+   "count": 10
+  },
+  {
+   "key": "SLIP",
+   "name": "The printed bill and the customer screen",
+   "count": 3
+  },
+  {
+   "key": "SYNC",
+   "name": "Bills reaching ChitBridge, and changes going the other way",
+   "count": 3
+  },
+  {
+   "key": "SPR",
+   "name": "Suppliers — two tabs, and one who is not on ChitBridge",
+   "count": 5
+  },
+  {
+   "key": "LAB",
+   "name": "Offer lab — on your real catalogue",
+   "count": 4
+  }
+ ],
+ "cases": [
+  {
+   "case_key": "SELL-01",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "Repeated tap raises the quantity",
+   "priority": "High",
+   "pre": "Counter paired; at least one product on the shelf.",
+   "data": "Any product with a price.",
+   "steps": [
+    [
+     "Open the Sell screen.",
+     "The shelf list is shown on the left, the cart on the right."
+    ],
+    [
+     "Tap a product once.",
+     "One line appears in the cart, quantity 1."
+    ],
+    [
+     "Tap the SAME product again.",
+     "Still ONE line. The quantity box now reads 2."
+    ],
+    [
+     "Tap it a third time.",
+     "Quantity box reads 3, and the line total is 3 × the unit price."
+    ]
+   ],
+   "note": "The first fault reported. The quantity was always right underneath; the box never repainted, so it read 1 beside ₹150 of a ₹50 item.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-02",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "Enter adds the product that was typed",
+   "priority": "High",
+   "pre": "Sell screen open.",
+   "data": "The full name of a product that is NOT first in the list.",
+   "steps": [
+    [
+     "Type the product name in full in the search box.",
+     "The list narrows; the typed product is highlighted."
+    ],
+    [
+     "Press Enter.",
+     "THAT product is added — not the first row of the list."
+    ]
+   ],
+   "note": "Reported as \"Enter adds the wrong product\".",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-03",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "Search finds a name ending in a letter or a number-word",
+   "priority": "Medium",
+   "pre": "Sell screen open; a product named like \"Nandhini milk 500 ml\" exists.",
+   "data": "na m 500",
+   "steps": [
+    [
+     "Type: na m 500",
+     "Nandhini milk 500 ml appears in the results."
+    ],
+    [
+     "Search a product whose name ends in a single letter (e.g. \"Probe biscuit A\").",
+     "It is found."
+    ]
+   ],
+   "note": "\"a\", \"an\" and \"oru\" mean ONE to the numeral reader, so \"Probe biscuit A\" became \"Probe biscuit 1\" and matched nothing.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-04",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "An offer on the shelf comes off the bill",
+   "priority": "High",
+   "pre": "A live offer exists that covers a category (e.g. buy 2 get 1 on Biscuits).",
+   "data": "Three units of a product in that category.",
+   "steps": [
+    [
+     "Find a product showing an offer badge on its shelf row.",
+     "The badge names the offer."
+    ],
+    [
+     "Add three of it to the cart.",
+     "The cart line shows the discount."
+    ],
+    [
+     "Read the totals.",
+     "\"Saved\" shows the discount and TOTAL is reduced by it."
+    ]
+   ],
+   "note": "The cart described a line without its category, so a category offer could never match — while the shelf badge did. The shelf promised what the bill refused.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-05",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "The shelf row states the price fully",
+   "priority": "Medium",
+   "pre": "Sell screen open.",
+   "data": "Any product.",
+   "steps": [
+    [
+     "Read one shelf row.",
+     "It shows: what one costs · per what unit · whether tax is included · the MRP struck through with the saving, when there is one."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-06",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "A tiered price changes at the break",
+   "priority": "High",
+   "pre": "A product with a tiered pricing structure exists (e.g. 10+ at a lower rate).",
+   "data": "Buy 1, then buy the tier quantity.",
+   "steps": [
+    [
+     "Add ONE of the tiered product.",
+     "The line uses the list price."
+    ],
+    [
+     "Raise the quantity to the tier break (e.g. 10).",
+     "The unit price CHANGES, and the line says \"10+ price\"."
+    ]
+   ],
+   "note": "The biggest fault found overnight: the counter skipped pricing entirely, so a tiered product billed at list price at the till while the storefront re-priced it. Same goods, two prices, depending which door the customer came through.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-07",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "Quantity can be changed from the cart",
+   "priority": "Medium",
+   "pre": "At least one line in the cart.",
+   "data": "—",
+   "steps": [
+    [
+     "Press − on a cart line.",
+     "The quantity falls by one."
+    ],
+    [
+     "Press + on the same line.",
+     "It rises by one."
+    ],
+    [
+     "Press Ctrl + Up arrow.",
+     "The LAST line rises by one AND the product list does not scroll or move."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-08",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "The count and the tax split are shown",
+   "priority": "High",
+   "pre": "A GST-registered shop; three products in the cart totalling five items.",
+   "data": "3 products / 5 items.",
+   "steps": [
+    [
+     "Read the cart heading.",
+     "It reads \"3 products · 5 items\"."
+    ],
+    [
+     "Read the totals block.",
+     "Taxable, then CGST and SGST on separate lines, then GST total."
+    ],
+    [
+     "Add CGST + SGST by hand and compare with GST total.",
+     "They are exactly equal (e.g. 3.34 + 3.33 = 6.67)."
+    ]
+   ],
+   "note": "CGST takes the rounded half and SGST the remainder — the tax engine's own rule.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-09",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "Money is grouped the Indian way",
+   "priority": "Low",
+   "pre": "A bill or figure over ₹99,999.",
+   "data": "100000",
+   "steps": [
+    [
+     "Look at any figure over ₹99,999.",
+     "It reads ₹1,00,000.00 — 2-2-3 grouping, not 100000.00 or ₹100,000.00."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "SELL-10",
+   "module_key": "SELL",
+   "module_name": "Selling",
+   "intro": "The four faults reported first, and the two found while fixing them.",
+   "title": "A product with no price says so",
+   "priority": "Medium",
+   "pre": "A product exists with no price set.",
+   "data": "That product.",
+   "steps": [
+    [
+     "Add it to the cart.",
+     "It goes on the bill."
+    ],
+    [
+     "Read the line.",
+     "The counter says \"has no price — it will add nothing\"."
+    ]
+   ],
+   "note": "A priceless product is a FREE product. The health check reported it, but only to someone who opened the health check.",
+   "layer": "web"
+  },
+  {
+   "case_key": "PAY-01",
+   "module_key": "PAY",
+   "module_name": "Getting paid",
+   "intro": "How a bill is settled, and what gets recorded about it.",
+   "title": "The payment method is stated before it is recorded",
+   "priority": "High",
+   "pre": "At least one line in the cart.",
+   "data": "—",
+   "steps": [
+    [
+     "Read the line under the Cash / UPI / Card buttons.",
+     "\"This bill will be recorded as Cash.\""
+    ],
+    [
+     "Tap Card.",
+     "The sentence changes to say Card."
+    ]
+   ],
+   "note": "It always recorded Cash by default. If the customer paid by UPI and nobody tapped it, the drawer count is short by exactly that, and nothing said so.",
+   "layer": "web"
+  },
+  {
+   "case_key": "PAY-02",
+   "module_key": "PAY",
+   "module_name": "Getting paid",
+   "intro": "How a bill is settled, and what gets recorded about it.",
+   "title": "UPI shows a QR for the amount due",
+   "priority": "High",
+   "pre": "Shop has a UPI payee declared in Settings; a bill open with an amount due.",
+   "data": "—",
+   "steps": [
+    [
+     "Tap UPI.",
+     "A QR code appears."
+    ],
+    [
+     "Read beside the QR.",
+     "It shows the amount, the payee id, and \"The shop marks it paid here once the money arrives.\""
+    ],
+    [
+     "Scan it with any UPI app (do NOT pay).",
+     "The app shows the shop name and the correct amount."
+    ]
+   ],
+   "note": "Nothing confirms the payment. The money moves bank to bank — a counter claiming to have SEEN it would be lying about what it cannot observe.",
+   "layer": "web"
+  },
+  {
+   "case_key": "PAY-03",
+   "module_key": "PAY",
+   "module_name": "Getting paid",
+   "intro": "How a bill is settled, and what gets recorded about it.",
+   "title": "The payee name a customer will see is checkable",
+   "priority": "Medium",
+   "pre": "Shop has a UPI payee declared.",
+   "data": "—",
+   "steps": [
+    [
+     "Open ☰ → Health check.",
+     "The panel opens."
+    ],
+    [
+     "Find the line about the payee name.",
+     "It reads \"Paying you shows the name <your shop name>\"."
+    ]
+   ],
+   "note": "That name appears in the customer's app before they press send. If it were a machine handle, that is how they decide not to.",
+   "layer": "web"
+  },
+  {
+   "case_key": "PAY-04",
+   "module_key": "PAY",
+   "module_name": "Getting paid",
+   "intro": "How a bill is settled, and what gets recorded about it.",
+   "title": "A bill can be split across two methods",
+   "priority": "High",
+   "pre": "A bill with a total over ₹500.",
+   "data": "Take ₹500 in cash, the rest by UPI.",
+   "steps": [
+    [
+     "Type 500 in the amount box with Cash selected.",
+     "The box holds 500."
+    ],
+    [
+     "Tap \"+ part\".",
+     "A part appears: \"Cash ₹500.00 ×\"."
+    ],
+    [
+     "Tap UPI.",
+     "The line reads \"Taking ₹500.00 in Cash · ₹X still due as UPI\"."
+    ],
+    [
+     "Save the bill.",
+     "Both parts are recorded on the slip."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "PAY-05",
+   "module_key": "PAY",
+   "module_name": "Getting paid",
+   "intro": "How a bill is settled, and what gets recorded about it.",
+   "title": "Bills nobody chose a method for are counted",
+   "priority": "Medium",
+   "pre": "Finish two or three bills WITHOUT tapping any payment button.",
+   "data": "—",
+   "steps": [
+    [
+     "Press F10 (day close).",
+     "The day-close sheet is shown."
+    ],
+    [
+     "Find the \"Not asked how paid\" line.",
+     "It names the number of bills and the total, and says they were recorded as Cash because nobody chose."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "OFF-01",
+   "module_key": "OFF",
+   "module_name": "Offline and syncing back",
+   "intro": "Turn off wi-fi on the counter machine. Do NOT close the page.",
+   "title": "The counter says it is offline",
+   "priority": "High",
+   "pre": "Counter open and working.",
+   "data": "—",
+   "steps": [
+    [
+     "Turn the network off.",
+     "Within a few seconds the header pill reads \"offline — billing continues\"."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "OFF-02",
+   "module_key": "OFF",
+   "module_name": "Offline and syncing back",
+   "intro": "Turn off wi-fi on the counter machine. Do NOT close the page.",
+   "title": "A bill can be taken with no line",
+   "priority": "High",
+   "pre": "OFF-01 done — the counter is offline.",
+   "data": "Any two products.",
+   "steps": [
+    [
+     "Ring up a bill and save it.",
+     "It saves, a bill number is issued, and the slip appears."
+    ],
+    [
+     "Read the footer.",
+     "It reads \"1 bill waiting to reach ChitBridge\"."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "OFF-03",
+   "module_key": "OFF",
+   "module_name": "Offline and syncing back",
+   "intro": "Turn off wi-fi on the counter machine. Do NOT close the page.",
+   "title": "A price change offline is queued and counted separately",
+   "priority": "High",
+   "pre": "Still offline, with one bill already waiting.",
+   "data": "Change one price and turn one offer on.",
+   "steps": [
+    [
+     "Open Maintenance, change a price, press Save.",
+     "\"Saved here — it reaches ChitBridge when the internet is back.\""
+    ],
+    [
+     "Read the footer.",
+     "It reads \"1 bill · 2 changes waiting\" — NOT \"3 bills waiting\"."
+    ]
+   ],
+   "note": "It used to say \"3 bill(s) waiting\", so you would go looking for three bills that do not exist, and the one that is real money would look like two that are not.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "OFF-04",
+   "module_key": "OFF",
+   "module_name": "Offline and syncing back",
+   "intro": "Turn off wi-fi on the counter machine. Do NOT close the page.",
+   "title": "The bill list shows what has not been sent",
+   "priority": "Medium",
+   "pre": "Still offline, with at least one bill waiting.",
+   "data": "—",
+   "steps": [
+    [
+     "Press F8 (bill list).",
+     "The list opens."
+    ],
+    [
+     "Read each row.",
+     "Each shows \"waiting\" or \"sent\", and a \"Send now\" button."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "OFF-05",
+   "module_key": "OFF",
+   "module_name": "Offline and syncing back",
+   "intro": "Turn off wi-fi on the counter machine. Do NOT close the page.",
+   "title": "The queue drains by itself when the line returns",
+   "priority": "High",
+   "pre": "Offline with at least one bill and one change waiting.",
+   "data": "—",
+   "steps": [
+    [
+     "Turn the network back on. Do nothing else.",
+     "Within a minute the footer returns to \"everything has reached ChitBridge\"."
+    ],
+    [
+     "Open ChitBridge in a browser and find the product.",
+     "The price you changed offline is now on the shop."
+    ],
+    [
+     "Find the bill in Task.",
+     "It is there as an ordinary chit."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "OFF-06",
+   "module_key": "OFF",
+   "module_name": "Offline and syncing back",
+   "intro": "Turn off wi-fi on the counter machine. Do NOT close the page.",
+   "title": "A suggestion is NOT computed from stale data",
+   "priority": "Low",
+   "pre": "Offline.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Maintenance and look at \"Worth an offer\".",
+     "It shows nothing at all — and that is correct."
+    ]
+   ],
+   "note": "A read is never queued. A suggestion computed from last week's shelf is worse than no suggestion.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "OFF-07",
+   "module_key": "OFF",
+   "module_name": "Offline and syncing back",
+   "intro": "Turn off wi-fi on the counter machine. Do NOT close the page.",
+   "title": "The shop cannot be re-read while work is unsent",
+   "priority": "High",
+   "pre": "Offline with something waiting.",
+   "data": "—",
+   "steps": [
+    [
+     "Open ☰ → \"Clear and read the shop again\".",
+     "It REFUSES, and says what is still waiting."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "MNT-01",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "The panel and the marked row are the same product",
+   "priority": "High",
+   "pre": "Maintenance open.",
+   "data": "Any product.",
+   "steps": [
+    [
+     "Tap a product in the list.",
+     "The row lifts with a ring and shadow."
+    ],
+    [
+     "Read the panel heading.",
+     "It names the SAME product as the marked row."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-02",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "Unsaved changes are visible before saving",
+   "priority": "High",
+   "pre": "A product selected in Maintenance.",
+   "data": "Move two switches and change the price.",
+   "steps": [
+    [
+     "Move a switch.",
+     "That row shows a bar and its OLD value."
+    ],
+    [
+     "Move a second switch and change the price.",
+     "The product row is tagged \"not saved\"."
+    ],
+    [
+     "Read the Save button.",
+     "It reads \"Save 3 changes\"."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-03",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "Discard puts everything back",
+   "priority": "High",
+   "pre": "MNT-02 done, nothing saved.",
+   "data": "—",
+   "steps": [
+    [
+     "Press Discard.",
+     "Every value returns, and it says \"Put back the way it was. Nothing had left this counter.\""
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-04",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "Leaving with unsaved changes asks first",
+   "priority": "Medium",
+   "pre": "A change made and not saved.",
+   "data": "—",
+   "steps": [
+    [
+     "Tap a DIFFERENT product.",
+     "It asks before moving."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-05",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "The same product can be changed repeatedly",
+   "priority": "High",
+   "pre": "Maintenance open, online.",
+   "data": "Three different prices in a row.",
+   "steps": [
+    [
+     "Change the price and Save.",
+     "The left list shows the new price."
+    ],
+    [
+     "Change it again and Save.",
+     "The list shows the second price."
+    ],
+    [
+     "Change it a third time and Save.",
+     "The list shows the third price. No error, no stale value."
+    ]
+   ],
+   "note": "Reported as \"try changing again and again\". Each save rang the bell, the shop was re-read, every product became a new object — so the panel was writing to an orphan the list no longer held.",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-06",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "The offer row explains itself in money",
+   "priority": "Medium",
+   "pre": "A product selected; at least one live offer exists.",
+   "data": "—",
+   "steps": [
+    [
+     "Read the Offers row.",
+     "Every live offer is listed with why each is on or off."
+    ],
+    [
+     "Read an offer that is ON.",
+     "It shows the arithmetic, e.g. \"3 × ₹222.00 = ₹666.00 → ₹444.00 · saves ₹222.00\"."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-07",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "An offer can be turned on for one product",
+   "priority": "High",
+   "pre": "A product NOT currently covered by an offer.",
+   "data": "A live offer that does not reach this product.",
+   "steps": [
+    [
+     "Turn that offer ON for this product. Save.",
+     "The change is saved."
+    ],
+    [
+     "Go to Sell and add three of the product.",
+     "The offer comes off the bill."
+    ]
+   ],
+   "note": "This is the \"lot of tomato is selling, potato is not\" case — tying a declared offer to another product.",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-08",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "A product off the shelf leaves the selling list",
+   "priority": "High",
+   "pre": "Any available product.",
+   "data": "—",
+   "steps": [
+    [
+     "Set the product to unavailable. Save.",
+     "Saved."
+    ],
+    [
+     "Go to Sell and search for it.",
+     "It is NOT in the list."
+    ],
+    [
+     "Open the \"Off the shelf\" chip.",
+     "It is there, with \"Put it back\"."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-09",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "A pricing structure is explained at each break",
+   "priority": "Low",
+   "pre": "A product with a pricing structure.",
+   "data": "—",
+   "steps": [
+    [
+     "Read \"Priced by\".",
+     "It names the structure and what it charges at each break, e.g. \"10 kg → ₹65.00 each · ₹650.00 the lot\"."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "MNT-10",
+   "module_key": "MNT",
+   "module_name": "Maintenance",
+   "intro": "Replaces \"Price change\". Stock-out is gone — this covers it.",
+   "title": "Thumbnails can be switched per shop",
+   "priority": "Low",
+   "pre": "Maintenance open.",
+   "data": "—",
+   "steps": [
+    [
+     "Turn the Thumbnails switch ON.",
+     "The product list draws pictures."
+    ],
+    [
+     "Turn it OFF.",
+     "The column is given back to the name."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "CFD-01",
+   "module_key": "CFD",
+   "module_name": "The customer display",
+   "intro": "Needs a second monitor on the same PC, or a second browser window on the same machine.",
+   "title": "The customer screen follows the bill",
+   "priority": "High",
+   "pre": "Shop screen open on the second monitor (☰ → shop screen).",
+   "data": "Two products.",
+   "steps": [
+    [
+     "Ring up two products at the counter.",
+     "The advertising slides STOP and the bill appears."
+    ],
+    [
+     "Read the customer screen.",
+     "Each line is shown, with the total large."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "CFD-02",
+   "module_key": "CFD",
+   "module_name": "The customer display",
+   "intro": "Needs a second monitor on the same PC, or a second browser window on the same machine.",
+   "title": "The QR reaches the customer screen",
+   "priority": "High",
+   "pre": "CFD-01 done; shop has a UPI payee.",
+   "data": "—",
+   "steps": [
+    [
+     "Add another line at the counter.",
+     "The customer screen updates."
+    ],
+    [
+     "Tap UPI at the counter.",
+     "The customer screen offers the code to scan, with the amount due."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "CFD-03",
+   "module_key": "CFD",
+   "module_name": "The customer display",
+   "intro": "Needs a second monitor on the same PC, or a second browser window on the same machine.",
+   "title": "No customer detail ever reaches the screen",
+   "priority": "High",
+   "pre": "A bill open on both screens.",
+   "data": "A customer name and a phone number.",
+   "steps": [
+    [
+     "Type a customer name at the counter.",
+     "It does NOT appear on the customer screen."
+    ],
+    [
+     "Type a phone number.",
+     "It does NOT appear on the customer screen."
+    ]
+   ],
+   "note": "The queue behind can read that screen.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CFD-04",
+   "module_key": "CFD",
+   "module_name": "The customer display",
+   "intro": "Needs a second monitor on the same PC, or a second browser window on the same machine.",
+   "title": "The screen lets go of a finished bill",
+   "priority": "Medium",
+   "pre": "A bill open on the customer screen.",
+   "data": "—",
+   "steps": [
+    [
+     "Save the bill.",
+     "\"Thank you\" is shown with the total."
+    ],
+    [
+     "Wait about six seconds.",
+     "It returns to the slides on its own."
+    ]
+   ],
+   "note": "A screen left showing a finished bill shows it to the next customer.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CFD-05",
+   "module_key": "CFD",
+   "module_name": "The customer display",
+   "intro": "Needs a second monitor on the same PC, or a second browser window on the same machine.",
+   "title": "The customer screen survives the network going",
+   "priority": "Medium",
+   "pre": "A bill open on the customer screen.",
+   "data": "—",
+   "steps": [
+    [
+     "Turn the network off.",
+     "The customer screen keeps updating as the counter changes."
+    ]
+   ],
+   "note": "It is a same-machine channel, not a server hop — chosen because that is the case where the line is least likely to be there.",
+   "layer": "web"
+  },
+  {
+   "case_key": "RCV-01",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "Goods are received with a batch and an expiry",
+   "priority": "High",
+   "pre": "Goods-in screen open.",
+   "data": "Any product; batch B-001; expiry a future date.",
+   "steps": [
+    [
+     "Enter a product, a counted quantity, a batch and an expiry.",
+     "The fields accept them."
+    ],
+    [
+     "Save.",
+     "It records and a GRN number appears."
+    ]
+   ],
+   "note": "",
+   "layer": "transport"
+  },
+  {
+   "case_key": "RCV-02",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "All four extra costs are captured",
+   "priority": "High",
+   "pre": "A goods receipt with at least two lines.",
+   "data": "Freight 500 · loading 100 · duty 50 · other 25.",
+   "steps": [
+    [
+     "Press F5.",
+     "It asks for freight."
+    ],
+    [
+     "Enter 500 and continue.",
+     "It asks for loading — one question at a time."
+    ],
+    [
+     "Enter the remaining three.",
+     "All four are kept."
+    ],
+    [
+     "Read the landed cost per line.",
+     "The costs are spread across the lines BY VALUE."
+    ]
+   ],
+   "note": "The four boxes would have opened at once and three answers been silently discarded — the freight quietly wrong on the landed cost of every line.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "RCV-03",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "The GST rate is filled from the product",
+   "priority": "High",
+   "pre": "A GST-registered shop receiving a product that cites a tax slab.",
+   "data": "—",
+   "steps": [
+    [
+     "Add a line for that product.",
+     "The GST% box is ALREADY filled from the product's own slab."
+    ],
+    [
+     "Change it by hand.",
+     "It accepts the change."
+    ]
+   ],
+   "note": "Goods-in recorded no tax at all, so there was nothing to claim input credit against — and ITC is money.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "RCV-04",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "The tax splits by the supplier's state",
+   "priority": "High",
+   "pre": "RCV-03 done; the shop's own state is known.",
+   "data": "State 33 (Tamil Nadu), then 29 (Karnataka).",
+   "steps": [
+    [
+     "Set the supplier state to your OWN state.",
+     "The summary shows CGST + SGST, half each."
+    ],
+    [
+     "Change it to a different state.",
+     "The summary shows IGST instead."
+    ]
+   ],
+   "note": "",
+   "layer": "transport"
+  },
+  {
+   "case_key": "RCV-05",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "An unknown supplier state is said, not guessed",
+   "priority": "Medium",
+   "pre": "A goods receipt with tax.",
+   "data": "Leave the supplier state blank.",
+   "steps": [
+    [
+     "Leave the state blank and read the summary.",
+     "The tax is still recorded, and it says \"not split — the supplier's state is not known\"."
+    ]
+   ],
+   "note": "A credit filed under the wrong head is harder to unpick than one that was never split.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "RCV-06",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "Inclusive and exclusive rates are handled",
+   "priority": "High",
+   "pre": "A goods receipt of ₹1,000 at 18%.",
+   "data": "—",
+   "steps": [
+    [
+     "With \"their rates already include GST\" OFF, read the figures.",
+     "Taxable ₹1,000.00 and tax ₹180.00."
+    ],
+    [
+     "Switch it ON.",
+     "Taxable ₹847.46 and tax ₹152.54."
+    ]
+   ],
+   "note": "Getting this backwards is wrong by exactly the tax on every line, silently — and it travels with the record, because months later \"was ₹1,180 the goods or the goods plus tax\" has no other answer.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "RCV-07",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "Tax is NOT part of the landed cost",
+   "priority": "High",
+   "pre": "A goods receipt with tax and extra costs.",
+   "data": "—",
+   "steps": [
+    [
+     "Read the \"Counted … + costs … = landed …\" line.",
+     "The landed figure does NOT include the GST."
+    ],
+    [
+     "Read the GST figure.",
+     "It is on its own line, marked as set against what you collect."
+    ]
+   ],
+   "note": "Folding tax into cost would overstate every margin in the shop by the tax rate. This is also Ind AS 2.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "DSP-01",
+   "module_key": "RCV",
+   "module_name": "Goods in",
+   "intro": "This got none of the attention Sell got. Test it expecting to find things.",
+   "title": "Despatch refuses what was not ordered",
+   "priority": "Medium",
+   "pre": "An open order to despatch against.",
+   "data": "A product NOT on that order.",
+   "steps": [
+    [
+     "Scan or add a product that is not on the order.",
+     "It is REFUSED, with the reason."
+    ]
+   ],
+   "note": "",
+   "layer": "transport"
+  },
+  {
+   "case_key": "UI-01",
+   "module_key": "UI",
+   "module_name": "Everything that speaks",
+   "intro": "Dialogs, themes, printing and settings.",
+   "title": "No browser dialogs anywhere",
+   "priority": "High",
+   "pre": "Counter open.",
+   "data": "—",
+   "steps": [
+    [
+     "Change the person at the counter (the 👤 pill).",
+     "OUR own box asks for the drawer float."
+    ],
+    [
+     "Look at the top of the box.",
+     "There is no \"vercel.app says\" heading anywhere."
+    ]
+   ],
+   "note": "26 browser dialogs were removed. They freeze the page and offer Chrome's \"prevent this page from creating more dialogs\" — ticked once, and the till stops asking anything.",
+   "layer": "web"
+  },
+  {
+   "case_key": "UI-02",
+   "module_key": "UI",
+   "module_name": "Everything that speaks",
+   "intro": "Dialogs, themes, printing and settings.",
+   "title": "Every panel is readable in the dark theme",
+   "priority": "Medium",
+   "pre": "Counter open.",
+   "data": "—",
+   "steps": [
+    [
+     "Switch to the dark theme.",
+     "The counter turns dark."
+    ],
+    [
+     "Open Health check, Who, and the bill list in turn.",
+     "All text is readable in each — no white on white."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "UI-03",
+   "module_key": "UI",
+   "module_name": "Everything that speaks",
+   "intro": "Dialogs, themes, printing and settings.",
+   "title": "A printed slip carries the counts and the tax split",
+   "priority": "High",
+   "pre": "A printer chosen (shop PC) or the print dialog available.",
+   "data": "A bill with three products and five items.",
+   "steps": [
+    [
+     "Save a bill and print it.",
+     "Paper comes out (or the print preview opens)."
+    ],
+    [
+     "Read the slip.",
+     "It shows Products, Items, and the CGST/SGST split."
+    ]
+   ],
+   "note": "Printing changed twice on 10 September and no printer has seen the current slip.",
+   "layer": "web"
+  },
+  {
+   "case_key": "UI-04",
+   "module_key": "UI",
+   "module_name": "Everything that speaks",
+   "intro": "Dialogs, themes, printing and settings.",
+   "title": "Settings states how the shop bills",
+   "priority": "Low",
+   "pre": "—",
+   "data": "—",
+   "steps": [
+    [
+     "Open ⚙ Settings.",
+     "It shows GSTIN, registration type, what every bill is headed, and how tax is shown."
+    ]
+   ],
+   "note": "",
+   "layer": "web"
+  },
+  {
+   "case_key": "REW-01",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "The counter states how points are earned",
+   "priority": "High",
+   "pre": "Shop runs a live reward programme; counter refreshed.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Sell and look under the customer boxes.",
+     "A green strip appears."
+    ],
+    [
+     "Read it.",
+     "It names the programme and the rule, e.g. \"Shop points · 1 point for every ₹100.00 spent\"."
+    ],
+    [
+     "Read the end of the strip with no customer named.",
+     "\"a name or a phone number to hold them\"."
+    ]
+   ],
+   "note": "A walk-in who gives nothing earns nothing — and being TOLD why is the difference between a rule and a broken feature.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-02",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "A bill with no customer is completely ordinary",
+   "priority": "Medium",
+   "pre": "REW-01 done.",
+   "data": "₹640, no customer named.",
+   "steps": [
+    [
+     "Ring up ₹640 with no name and no phone. Save.",
+     "The bill saves normally."
+    ],
+    [
+     "Read the slip.",
+     "There is NOTHING about points on it."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-03",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "Points held against a phone number",
+   "priority": "High",
+   "pre": "REW-01 done.",
+   "data": "Phone 9840012345.",
+   "steps": [
+    [
+     "Type a 10-digit phone number in the Phone box.",
+     "After a moment the strip updates."
+    ],
+    [
+     "Read the strip.",
+     "It says the points are held against that number, and whether this shop earns on walk-ins."
+    ]
+   ],
+   "note": "A balance held against a phone number can be claimed by anyone who knows the number — the same trust the shop already places in whoever stands at the drawer, but it should be said.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-04",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "A named customer is quoted the earning before paying",
+   "priority": "High",
+   "pre": "A customer on the shop's customer list.",
+   "data": "That customer's name; a bill of ₹640.",
+   "steps": [
+    [
+     "Type the customer name (it suggests as you type).",
+     "The name is accepted."
+    ],
+    [
+     "Ring up ₹640.",
+     "The strip reads \"· this bill adds 6\"."
+    ],
+    [
+     "Check the figure.",
+     "It is 6, not 6.4 — whole points only."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-05",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "The slip prints the points below the money",
+   "priority": "High",
+   "pre": "REW-04 done, bill not yet saved.",
+   "data": "—",
+   "steps": [
+    [
+     "Save the bill.",
+     "The slip is shown."
+    ],
+    [
+     "Read the slip from the top.",
+     "TOTAL, then the tender (Cash), THEN the points."
+    ],
+    [
+     "Read the points block.",
+     "\"Shop points earned +6\" and \"Shop points balance 6\"."
+    ]
+   ],
+   "note": "Points happened alongside the bill; they are not part of what was charged.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-06",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "The customer screen shows what they earned",
+   "priority": "Medium",
+   "pre": "Shop screen open on a second monitor; REW-04 in progress.",
+   "data": "—",
+   "steps": [
+    [
+     "While the bill is open, watch the customer screen.",
+     "It shows \"+6 shop points on this bill\"."
+    ],
+    [
+     "Save the bill.",
+     "Under \"Thank you\" it shows \"+6 shop points\"."
+    ],
+    [
+     "Check for personal detail.",
+     "No name and no phone number appear at any point."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-07",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "Encashing is offered only above the minimum",
+   "priority": "High",
+   "pre": "A customer with fewer than 100 points.",
+   "data": "Bill the same customer until the balance passes 100 (₹10,000 total).",
+   "steps": [
+    [
+     "Name a customer with a balance BELOW the minimum.",
+     "The strip says \"100 needed to encash\"."
+    ],
+    [
+     "Bill them past 100 points, then name them on a new bill.",
+     "The strip now shows a button: \"Encash 100 → ₹1.00\"."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-08",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "Encashing does NOT change the total or the tax",
+   "priority": "High",
+   "pre": "REW-07 done; a customer with 100+ points; a bill of ₹500 open.",
+   "data": "—",
+   "steps": [
+    [
+     "Write down the TOTAL, the taxable value and the GST.",
+     "Three figures noted."
+    ],
+    [
+     "Press Encash.",
+     "A payment part appears: \"Points ₹1.00\"."
+    ],
+    [
+     "Read the totals again.",
+     "TOTAL is UNCHANGED. Taxable is UNCHANGED. GST is UNCHANGED."
+    ],
+    [
+     "Read the amount still due.",
+     "It has fallen by ₹1.00."
+    ]
+   ],
+   "note": "The one design decision worth arguing about. A discount would restate the taxable value, and those points came from an earlier sale already taxed — so the tax would come off twice and the SHOP answers for it at the return. Points pay for part of the bill instead, like cash and UPI already do.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-09",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "The slip shows encashed and earned separately",
+   "priority": "High",
+   "pre": "REW-08 done, bill not yet saved.",
+   "data": "—",
+   "steps": [
+    [
+     "Save the bill.",
+     "The slip is shown."
+    ],
+    [
+     "Read the tender block.",
+     "Points ₹1.00 and Cash ₹499.00 both appear."
+    ],
+    [
+     "Read the points block.",
+     "\"encashed −100\", \"earned +5\", and the new balance."
+    ],
+    [
+     "Press F10 and read the day close.",
+     "\"Points\" appears as a tender alongside Cash and UPI."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-10",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "Points ride the queue when offline",
+   "priority": "High",
+   "pre": "A named customer; network ON to start.",
+   "data": "₹1,200.",
+   "steps": [
+    [
+     "Turn the network off.",
+     "The header says offline."
+    ],
+    [
+     "Name a customer, ring up ₹1,200, save.",
+     "The slip says \"+12\"."
+    ],
+    [
+     "Read under that line on the slip.",
+     "\"Recorded on this counter — reaches the shop when the line is back.\""
+    ],
+    [
+     "Read the footer.",
+     "It counts \"1 bill · 1 customer's points waiting\"."
+    ],
+    [
+     "Turn the network back on and wait.",
+     "Both go. The footer returns to \"everything has reached ChitBridge\"."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-11",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "The shop can see what it owes a customer",
+   "priority": "High",
+   "pre": "In ChitBridge (not the counter), signed in as the shop.",
+   "data": "The customer billed above.",
+   "steps": [
+    [
+     "Open Customers and select that customer.",
+     "The detail pane opens."
+    ],
+    [
+     "Find the Points block.",
+     "It shows the balance and what the shop OWES on it."
+    ],
+    [
+     "Read the sentence.",
+     "e.g. \"222 points · worth ₹2.22 off\"."
+    ],
+    [
+     "Read the rest of the block.",
+     "How they are earned, when they expire, and the last movements with bill numbers."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "REW-12",
+   "module_key": "REW",
+   "module_name": "Points (rewards)",
+   "intro": "Migration b213 is run and verified. [TILL-07] covers the arithmetic automatically; these test the SCREENS, which no person has worked yet.",
+   "title": "The earning mechanisms are published",
+   "priority": "Low",
+   "pre": "Signed in to ChitBridge.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Settings → Definitions.",
+     "The definitions screen opens."
+    ],
+    [
+     "Find \"Reward earning kinds\".",
+     "Five kinds are listed with the parameters each needs."
+    ],
+    [
+     "Read them.",
+     "Points per amount spent · the bill value itself becomes points · per visit · per item · points on chosen products."
+    ]
+   ],
+   "note": "",
+   "layer": "engine"
+  },
+  {
+   "case_key": "STK-01",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "Receiving goods moves the balance",
+   "priority": "High",
+   "pre": "Migrations b214 and b215 are run. Note your shop uuid.",
+   "data": "Any product; counted quantity 10; a cost price.",
+   "steps": [
+    [
+     "Receive 10 of a product on the counter with a cost price. Save.",
+     "The GRN number appears."
+    ],
+    [
+     "Query: SELECT qty, value, avg_cost FROM stock_balance",
+     "One row — qty 10, value = 10 x the cost."
+    ],
+    [
+     "Query: SELECT reason, qty FROM stock_movement",
+     "One movement, reason \"purchase\", qty +10."
+    ]
+   ],
+   "note": "The movement and the balance are written in the SAME transaction, so one can never exist without the other.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-02",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "A replayed delivery moves stock ONCE",
+   "priority": "High",
+   "pre": "STK-01 done.",
+   "data": "The same GRN number again.",
+   "steps": [
+    [
+     "Send the same goods receipt again, or let the counter replay its queue.",
+     "It is accepted."
+    ],
+    [
+     "Query stock_balance again.",
+     "qty is STILL 10 — not 20."
+    ],
+    [
+     "Query: SELECT count(*) FROM stock_movement",
+     "Still one movement."
+    ]
+   ],
+   "note": "Replaying is what the counter queue does for a living, so this is normal operation and not an error.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-03",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "Selling takes stock out and does NOT move the average",
+   "priority": "High",
+   "pre": "A product with no stock yet.",
+   "data": "Receive 10 at cost 100, then 10 at cost 120, then sell 5.",
+   "steps": [
+    [
+     "Receive 10 at cost 100.",
+     "avg_cost reads 100."
+    ],
+    [
+     "Receive 10 more at cost 120.",
+     "avg_cost reads 110 — the blend."
+    ],
+    [
+     "Sell 5 at the counter.",
+     "qty falls to 15."
+    ],
+    [
+     "Query avg_cost again.",
+     "Still 110. Issuing stock does not change what the rest of it cost."
+    ]
+   ],
+   "note": "Weighted average, per Ind AS 2. LIFO is prohibited in India, so the method has two values and not three.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-04",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "Selling more than is held is allowed, and flagged",
+   "priority": "High",
+   "pre": "A product with a known quantity on hand.",
+   "data": "Sell more than the balance holds.",
+   "steps": [
+    [
+     "Sell more of it than the shop has.",
+     "The sale goes through — it is NOT blocked."
+    ],
+    [
+     "Query stock_balance.",
+     "qty is negative."
+    ]
+   ],
+   "note": "An offline counter cannot know what is on the shelf, so a stock figure must never block a sale. Negative stock is a question — go and count — rather than corruption.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-05",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "The balance can be rebuilt from the log",
+   "priority": "Medium",
+   "pre": "Several movements recorded for one product.",
+   "data": "—",
+   "steps": [
+    [
+     "Note the current qty and value.",
+     "Two figures written down."
+    ],
+    [
+     "Add up the movements by hand: SELECT sum(qty) FROM stock_movement WHERE item_id = ...",
+     "The sum equals the balance qty."
+    ]
+   ],
+   "note": "The balance is a cache and the log is the truth. If they ever disagree the log wins — a claim only worth making because it can be checked.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-06",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "A batch-tracked shop keeps stock per batch",
+   "priority": "High",
+   "pre": "Shop sector set to Pharmaceuticals or FMCG in the trade profile.",
+   "data": "Two batches of one product with different expiry dates.",
+   "steps": [
+    [
+     "Receive batch B-LONG, 10 units, with a far expiry.",
+     "Recorded."
+    ],
+    [
+     "Receive batch B-SHORT, 4 units, expiring SOONER than B-LONG.",
+     "Recorded."
+    ],
+    [
+     "Query: SELECT lot, qty, expires_at FROM stock_balance ORDER BY expires_at",
+     "TWO rows, B-SHORT first."
+    ]
+   ],
+   "note": "A batch is an attribute of the two hundred packets that arrived on Tuesday, not of the product.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-07",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "FEFO — the batch expiring soonest goes first",
+   "priority": "High",
+   "pre": "STK-06 done: B-SHORT holds 4 and B-LONG holds 10.",
+   "data": "Sell 6 units.",
+   "steps": [
+    [
+     "Sell 6 of that product at the counter.",
+     "The sale completes normally."
+    ],
+    [
+     "Query stock_balance for it.",
+     "B-SHORT is 0 and B-LONG is 8."
+    ],
+    [
+     "Query: SELECT lot, qty FROM stock_movement WHERE ref = (the bill number)",
+     "TWO movements — 4 from B-SHORT and 2 from B-LONG."
+    ]
+   ],
+   "note": "First EXPIRED out, not first IN out. They differ exactly when it matters: a short-dated delivery would otherwise sit going out of date while the older stock sold.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-08",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "Tracked stock cannot be received without a batch",
+   "priority": "Medium",
+   "pre": "A batch-tracked shop.",
+   "data": "A receipt with the batch left blank.",
+   "steps": [
+    [
+     "Try to receive tracked stock with no batch number.",
+     "It is REFUSED."
+    ]
+   ],
+   "note": "A nameless pool alongside the named ones is the pool a recall cannot clear.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "STK-09",
+   "module_key": "STK",
+   "module_name": "Stock and batches",
+   "intro": "Built 10 September. The till shows no stock in v1 (a deliberate choice), so most of these are verified with a query rather than by eye. Run each from the chitbridge-api folder: railway run --service chitbridge-api -- node scripts/sql.cjs -e \"<SQL>\" --entity <shop-uuid> --write",
+   "title": "A unit that does not match is refused, never converted",
+   "priority": "Medium",
+   "pre": "A product whose balance is held in kg.",
+   "data": "Receive the same product with the unit set to \"case\".",
+   "steps": [
+    [
+     "Receive it in cases.",
+     "REFUSED, and the message names BOTH units."
+    ],
+    [
+     "Query stock_balance.",
+     "Unchanged — a refused movement leaves the balance alone."
+    ]
+   ],
+   "note": "There is no per-product conversion factor yet, and a wrong factor is worse than none. Adding 5 to 60 because both are numbers is silently wrong for ever.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SUP-01",
+   "module_key": "SUP",
+   "module_name": "Supplies — things the shop uses",
+   "intro": "Business → Supplies in the rail. Deliberately thin: a small shop is served here, and anything deeper belongs in the ERP. Migration b217 must be run.",
+   "title": "The screen opens and says what it is for",
+   "priority": "High",
+   "pre": "Signed in; b217 run.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Business → Supplies in the rail.",
+     "The screen opens with \"Add a supply\" and \"Record a purchase\"."
+    ],
+    [
+     "Read the text under the buttons.",
+     "It says these never appear on your storefront, and points to Catalogue for what you SELL."
+    ]
+   ],
+   "note": "Without that sentence the screen reads like a second catalogue, and the first person to misread it puts something sellable in it.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SUP-02",
+   "module_key": "SUP",
+   "module_name": "Supplies — things the shop uses",
+   "intro": "Business → Supplies in the rail. Deliberately thin: a small shop is served here, and anything deeper belongs in the ERP. Migration b217 must be run.",
+   "title": "A supply added by hand defaults to expensed",
+   "priority": "High",
+   "pre": "Supplies screen open.",
+   "data": "Floor cleaner 5L, unit \"can\".",
+   "steps": [
+    [
+     "Press \"Add a supply\".",
+     "A box opens asking what it is."
+    ],
+    [
+     "Type the name and unit. Leave \"count how many are left\" UNTICKED. Press Add.",
+     "It appears in the list."
+    ],
+    [
+     "Read the tag on the row.",
+     "It reads \"expensed\", not \"counted\"."
+    ]
+   ],
+   "note": "Most sundries cost more to track than they are worth. That is materiality, and the default is the cheaper answer.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SUP-03",
+   "module_key": "SUP",
+   "module_name": "Supplies — things the shop uses",
+   "intro": "Business → Supplies in the rail. Deliberately thin: a small shop is served here, and anything deeper belongs in the ERP. Migration b217 must be run.",
+   "title": "A supply can be counted instead",
+   "priority": "Medium",
+   "pre": "Supplies screen open.",
+   "data": "Carry covers, unit \"piece\".",
+   "steps": [
+    [
+     "Add it with \"count how many are left\" TICKED.",
+     "It appears in the list."
+    ],
+    [
+     "Read the tag.",
+     "It reads \"counted\"."
+    ],
+    [
+     "Look at the row.",
+     "It offers a \"Used some\" button."
+    ]
+   ],
+   "note": "",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SUP-04",
+   "module_key": "SUP",
+   "module_name": "Supplies — things the shop uses",
+   "intro": "Business → Supplies in the rail. Deliberately thin: a small shop is served here, and anything deeper belongs in the ERP. Migration b217 must be run.",
+   "title": "A purchase needs a reference",
+   "priority": "Medium",
+   "pre": "Supplies screen open.",
+   "data": "One line, bill number left blank.",
+   "steps": [
+    [
+     "Press \"Record a purchase\", fill one line, leave the bill number blank, press Record.",
+     "REFUSED."
+    ],
+    [
+     "Read the message.",
+     "It says what to put — the bill number, or the date and the shop."
+    ]
+   ],
+   "note": "Without a reference the same cash bill typed twice would double the spend.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SUP-05",
+   "module_key": "SUP",
+   "module_name": "Supplies — things the shop uses",
+   "intro": "Business → Supplies in the rail. Deliberately thin: a small shop is served here, and anything deeper belongs in the ERP. Migration b217 must be run.",
+   "title": "A cash purchase from outside ChitBridge is recorded",
+   "priority": "High",
+   "pre": "SUP-02 and SUP-03 done.",
+   "data": "From \"Corner Hardware\": 2 cans at 400, and 2000 covers at 0.90.",
+   "steps": [
+    [
+     "Fill both lines, give a bill number, press Record.",
+     "It saves."
+    ],
+    [
+     "Read the message.",
+     "It says how many lines were counted and how many expensed."
+    ],
+    [
+     "Read the list.",
+     "Each row now shows what it last cost and who from."
+    ]
+   ],
+   "note": "\"Who from\" is free text on purpose — the hardware shop on the corner will never be a ChitBridge entity, and requiring one would make this useless for the case it exists for.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SUP-06",
+   "module_key": "SUP",
+   "module_name": "Supplies — things the shop uses",
+   "intro": "Business → Supplies in the rail. Deliberately thin: a small shop is served here, and anything deeper belongs in the ERP. Migration b217 must be run.",
+   "title": "Only a counted supply can be marked used",
+   "priority": "Medium",
+   "pre": "SUP-05 done.",
+   "data": "50 covers.",
+   "steps": [
+    [
+     "Look at the expensed row.",
+     "It offers NO \"Used some\" button."
+    ],
+    [
+     "Press \"Used some\" on the counted row, enter 50, press Record.",
+     "It saves and the screen returns."
+    ]
+   ],
+   "note": "An expensed supply was already spent on arrival, so there is no balance to issue from. Offering the button and refusing afterwards would invite somebody to do something impossible.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SUP-07",
+   "module_key": "SUP",
+   "module_name": "Supplies — things the shop uses",
+   "intro": "Business → Supplies in the rail. Deliberately thin: a small shop is served here, and anything deeper belongs in the ERP. Migration b217 must be run.",
+   "title": "Nothing from Supplies reaches the catalogue",
+   "priority": "High",
+   "pre": "SUP-05 done.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Catalogue.",
+     "The product list is shown."
+    ],
+    [
+     "Search for the supplies you added.",
+     "NEITHER appears."
+    ],
+    [
+     "Open your storefront.",
+     "Neither appears there either."
+    ]
+   ],
+   "note": "This is the whole reason supplies are a separate table rather than a flag — a flag means every storefront query needs the filter, and one missed WHERE puts floor cleaner on a shop front.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-01",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "A delivery offers its new products",
+   "priority": "High",
+   "pre": "A goods receipt received from a supplier in the SAME trade as yours.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the delivery, then the Order tab.",
+     "The lines are shown."
+    ],
+    [
+     "Find \"Add new products to my catalogue\".",
+     "The button is there."
+    ],
+    [
+     "Press it.",
+     "A panel opens listing what is new, what you already stock, and what is refused."
+    ]
+   ],
+   "note": "",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-02",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "The cost travels; the selling price never does",
+   "priority": "High",
+   "pre": "ADO-01 done, panel open.",
+   "data": "—",
+   "steps": [
+    [
+     "Read a new line in the panel.",
+     "It shows the supplier cost."
+    ],
+    [
+     "Look at the \"Sell at\" box.",
+     "It is EMPTY."
+    ],
+    [
+     "Look at the SKU box.",
+     "Empty, with a suggested SKU offered below it."
+    ],
+    [
+     "Tap the suggested SKU.",
+     "It fills the SKU box."
+    ]
+   ],
+   "note": "A shop that sold at cost because a form pre-filled it would have been failed by this screen. And the supplier SKU is never adopted — the product becomes the shop’s own record.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-03",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "A different trade is REFUSED, not warned",
+   "priority": "High",
+   "pre": "A goods receipt from a supplier in a DIFFERENT trade — e.g. pharma goods arriving at a grocery.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the adopt panel.",
+     "The line is shown in a warning box."
+    ],
+    [
+     "Read the reason.",
+     "It names what stocking them would OBLIGE — a batch, an expiry, and a recall you can be asked to act on — not \"vertical mismatch\"."
+    ],
+    [
+     "Look for a way through.",
+     "There is a tick: \"Yes, I stock these too\"."
+    ]
+   ],
+   "note": "A shop that starts stocking medicines takes on a licence and a recall duty. None of that should begin because somebody tapped Accept on a delivery.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-04",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "Accept cannot be pressed until a person has done the work",
+   "priority": "High",
+   "pre": "ADO-03 done, panel open.",
+   "data": "—",
+   "steps": [
+    [
+     "Read the Accept button before touching anything.",
+     "DISABLED, reading \"Nothing ready yet\"."
+    ],
+    [
+     "Tick the override only.",
+     "Still disabled — an override alone is not enough."
+    ],
+    [
+     "Type your own name and your own SKU on that row.",
+     "Accept becomes enabled."
+    ],
+    [
+     "Read the count on the button.",
+     "It counts only the row you completed, not every row in the panel."
+    ]
+   ],
+   "note": "Athi: \"should not be so easy — just a button should not accept the product.\"",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-05",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "Accepted products are the shop’s own",
+   "priority": "High",
+   "pre": "ADO-04 done.",
+   "data": "—",
+   "steps": [
+    [
+     "Press Accept.",
+     "The panel closes and says how many were added."
+    ],
+    [
+     "Open Catalogue and find the product.",
+     "It is there under YOUR name and YOUR SKU, at YOUR price."
+    ],
+    [
+     "Open it and read its fields.",
+     "The batch and expiry from the delivery are on it, and it is set to keep stock per batch."
+    ],
+    [
+     "Look for the override trace.",
+     "The product records that a person overrode the trade gate."
+    ]
+   ],
+   "note": "An override that leaves no trace is indistinguishable from having no gate at all.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-06",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "The same line is not offered twice",
+   "priority": "High",
+   "pre": "ADO-05 done.",
+   "data": "—",
+   "steps": [
+    [
+     "Press \"Add new products to my catalogue\" again on the same delivery.",
+     "The panel opens."
+    ],
+    [
+     "Look for the product you adopted.",
+     "It is NOT offered again — even though you named it something different from the supplier’s wording."
+    ]
+   ],
+   "note": "Adoption records what the SUPPLIER calls it as an alias. Without that, the next delivery of the same line is offered as new, and accepting twice leaves two products for one thing.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-07",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "A sundry supplier never reaches the catalogue",
+   "priority": "Medium",
+   "pre": "A supplier marked as own-use in your supplier list (b216).",
+   "data": "—",
+   "steps": [
+    [
+     "Open a delivery from that supplier and press the adopt button.",
+     "The panel opens."
+    ],
+    [
+     "Read the lines.",
+     "They are listed as being for the shop to use, with no form to accept them."
+    ]
+   ],
+   "note": "The supplier is designated once, not every line. Your stationery supplier is never selling you things to resell.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "ADO-08",
+   "module_key": "ADO",
+   "module_name": "Adopting a delivery into your catalogue",
+   "intro": "Open a goods receipt from a supplier, then the Order tab. Needs a supplier on ChitBridge who has declared a trade in their profile.",
+   "title": "An adopted product sells at the counter",
+   "priority": "High",
+   "pre": "ADO-05 done.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the counter and do ☰ → \"Clear and read the shop again\".",
+     "The shop reloads."
+    ],
+    [
+     "Search for the adopted product.",
+     "It appears on the shelf at your price."
+    ],
+    [
+     "Sell one.",
+     "It bills normally."
+    ],
+    [
+     "Query stock_balance for it.",
+     "The quantity has come down, from the batch it was received in."
+    ]
+   ],
+   "note": "The whole chain in one case: a supplier’s delivery becomes your product, reaches your counter, and selling it draws down the right batch.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "CTR-01",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "The shelf names the MRP and never calls the gap a \"save\"",
+   "priority": "High",
+   "pre": "Counter open on Sell. At least one product whose MRP is higher than its selling price.",
+   "data": "e.g. Clinic Plus Shampoo 100 g — MRP 99.00, price 91.50.",
+   "steps": [
+    [
+     "Look at the product row on the left list.",
+     "It reads \"MRP ₹99.00\" and \"₹7.50 under\" — in grey."
+    ],
+    [
+     "Check the word \"save\" does not appear anywhere on the left list.",
+     "No row on the shelf uses the word \"save\"."
+    ],
+    [
+     "Add that product to the bill.",
+     "The cart line shows NO saving, because no offer applied to it."
+    ]
+   ],
+   "note": "His finding 1: \"all show save, but in the cart it is not appearing.\" The shelf was calling the MRP gap a saving while the cart used the same word for an offer. One word, two meanings — so the shelf promised something the cart did not repeat, and the only available conclusion was broken arithmetic.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-02",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "Every offer on a line is named, with its own amount",
+   "priority": "High",
+   "pre": "A live offer that applies to a product on the shelf.",
+   "data": "Any product carrying an offer.",
+   "steps": [
+    [
+     "Add enough of the product for the offer to fire.",
+     "The cart line shows the offer BY NAME."
+    ],
+    [
+     "Read the amount beside the offer name.",
+     "Each offer shows its OWN amount, not a combined figure."
+    ],
+    [
+     "If two offers apply to one line, check both are listed.",
+     "Both names appear, each with its own amount."
+    ],
+    [
+     "Read the words in brackets after the amount.",
+     "They say something the name does not — e.g. \"1 free, 1 set of this product\"."
+    ],
+    [
+     "Check the brackets do NOT repeat the offer's own terms.",
+     "It must not say \"buy 2 get 1\" again after naming \"Buy 2 biscuits, get 1 free\"."
+    ]
+   ],
+   "note": "Findings 5 and the duplication he queried later. Only the FIRST offer used to be named, over a figure that was the sum of all of them.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-03",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "A line discounted by a WHOLE-BILL offer says so",
+   "priority": "High",
+   "pre": "An offer scoped to the whole order (e.g. \"5% off the whole bill over ₹500\").",
+   "data": "A basket large enough to trigger it.",
+   "steps": [
+    [
+     "Build a bill that crosses the threshold.",
+     "The total drops."
+    ],
+    [
+     "Read each cart line.",
+     "A line that dropped says \"…share of a bill-wide offer\" with the amount."
+    ],
+    [
+     "Check no line shows a reduction with nothing named.",
+     "Every reduction on every line is accounted for by name."
+    ]
+   ],
+   "note": "A bill-wide offer is spread across the lines by the engine, so a line could legitimately drop with no offer of its own named — which is exactly what made a correct number look invented.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-04",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "\"Saved\" on the bill is shown as a sum of its parts",
+   "priority": "High",
+   "pre": "A bill with at least one offer applied.",
+   "data": "Ideally TWO different offers, to see the sum.",
+   "steps": [
+    [
+     "Look at the totals block.",
+     "\"Before offers\" and \"Saved\" are both shown."
+    ],
+    [
+     "Read the line under \"Saved\".",
+     "It reads as a sum in brackets, e.g. \"(₹9.00 Buy 2 get 1 + ₹25.78 5% off the whole bill)\"."
+    ],
+    [
+     "Add the parts up yourself.",
+     "They equal the \"Saved\" figure exactly."
+    ],
+    [
+     "Build a bill with three or more offers.",
+     "If the sum is too long for one line it moves below the TOTAL, marked with a *."
+    ]
+   ],
+   "note": "He called the bare figure \"the fibrication\" — a number that reconciles with nothing on screen reads as invented, however correct it is.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-05",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "A single click chooses; a double click adds",
+   "priority": "High",
+   "pre": "Counter open on Sell.",
+   "data": "Any product.",
+   "steps": [
+    [
+     "Click once on a product row.",
+     "The row is marked. NOTHING is added to the bill."
+    ],
+    [
+     "Check the bill total.",
+     "Unchanged."
+    ],
+    [
+     "Double-click the same row.",
+     "One line is added."
+    ],
+    [
+     "Click the + button at the right of a row.",
+     "That product is added."
+    ],
+    [
+     "Select a row with ↓↑ and press Enter.",
+     "That product is added."
+    ]
+   ],
+   "note": "His finding 7: \"by just clicking the list it gets added to the cart, that is not my intention.\" The + stays for touch, where a double tap is not a gesture.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-06",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "Tab goes to the product list, not to the categories",
+   "priority": "Medium",
+   "pre": "Counter open on Sell.",
+   "data": "Any search term that matches a few products.",
+   "steps": [
+    [
+     "Type a few letters in the search box.",
+     "The list narrows."
+    ],
+    [
+     "Press Tab.",
+     "A message says you are on the list. The marked row is centred."
+    ],
+    [
+     "Press ↓ and ↑.",
+     "The mark moves between PRODUCTS, not between category chips."
+    ],
+    [
+     "Press Enter.",
+     "The marked product is added."
+    ]
+   ],
+   "note": "The chips sit before the list in the page, so Tab found them first — and the arrows then walked categories while the operator believed they were walking products.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-07",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "The product list keeps loading past the first 60",
+   "priority": "High",
+   "pre": "A counter holding more than 60 products (the header says how many).",
+   "data": "No search typed, no category chosen.",
+   "steps": [
+    [
+     "Read the count above the list.",
+     "It states the number of products on this counter."
+    ],
+    [
+     "Scroll the list to the bottom.",
+     "More rows load. The list does not stop at 60."
+    ],
+    [
+     "Keep scrolling to the end.",
+     "The list ends only when the shop does."
+    ],
+    [
+     "Now type a two-letter search.",
+     "The list starts again from the first page — it does not stay deep."
+    ]
+   ],
+   "note": "Finding 2. It was a hard 60 on a counter whose own header read \"10,436 products\" — the rest existed only if you typed the right letters, and nothing said so.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-08",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "Tapping a bill line points the shelf at that product",
+   "priority": "High",
+   "pre": "A bill with three or more different products on it.",
+   "data": "Include one product that is NOT on offer.",
+   "steps": [
+    [
+     "Tap the NAME of a line in the bill.",
+     "That line is marked, and the shelf scrolls that product into the middle of the list."
+    ],
+    [
+     "Check rows are visible above and below it.",
+     "It is centred, not shoved to an edge."
+    ],
+    [
+     "Press Ctrl+↑.",
+     "The quantity of THAT line rises — not the last line on the bill."
+    ],
+    [
+     "Press Ctrl+↓.",
+     "The same line falls."
+    ],
+    [
+     "Now switch on the \"On offer\" chip, then tap a line for a product with no offer.",
+     "The counter clears the filter and says \"Showing everything, so … could be found.\""
+    ],
+    [
+     "Type something in the search box, then tap a line not matching it.",
+     "It says the product is not in this list and to clear the search. What you typed is NOT cleared."
+    ]
+   ],
+   "note": "Findings 4 and 6. The second half is his follow-up: only the Rusk rows worked, because the \"On offer\" chip was lit and the other two products were not in the filtered list at all.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-09",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "What was just added stays in hand",
+   "priority": "Medium",
+   "pre": "Counter open on Sell.",
+   "data": "A product findable by typing.",
+   "steps": [
+    [
+     "Search for a product and add it.",
+     "The search box clears; the list returns to the whole shop."
+    ],
+    [
+     "Look at the bill.",
+     "The line just added is marked as the line in action."
+    ],
+    [
+     "Press Ctrl+↑.",
+     "Another one is added to THAT line, with no need to search again."
+    ],
+    [
+     "Type \"3*\" then the product name, and press Enter.",
+     "Three are added in one go."
+    ]
+   ],
+   "note": "His finding 3. Clearing the box is right — the next scan must land in an empty box — but the mark used to jump to the first product in the shop, so a second one meant searching again.",
+   "layer": "web"
+  },
+  {
+   "case_key": "CTR-10",
+   "module_key": "CTR",
+   "module_name": "Counter — what the screen says about money",
+   "intro": "Observation 5. Every number in the four screenshots was right; the words were not. These check the words. If a figure looks wrong here, write down BOTH numbers — the one shown and the one expected.",
+   "title": "⚠️ CHANGED RULE — \"Buy 2 get 1\" is earned PER PRODUCT",
+   "priority": "High",
+   "pre": "A \"buy 2 get 1 free\" offer scoped to a CATEGORY (e.g. all biscuits).",
+   "data": "Two different products in that category, at different prices.",
+   "steps": [
+    [
+     "Add 3 of the SAME product.",
+     "One is free. The line shows the offer and \"1 free, 1 set of this product\"."
+    ],
+    [
+     "Clear the bill. Add 2 of one product and 1 of a cheaper one in the same category.",
+     "NOTHING is free. Neither line has three units."
+    ],
+    [
+     "Add a third of the first product.",
+     "Now one of THAT product is free — not the cheaper one."
+    ]
+   ],
+   "note": "⚠️ THIS IS A DELIBERATE CHANGE, 2026-09-10. It used to pool the category and give away the CHEAPEST unit, which is why a line holding one packet showed ₹0.00. Athi: \"we cannot offer for different product.\" It costs the shop MORE on a mixed basket, and that is the intended behaviour. The mix-and-match version is a separate offer kind — see LAB-04.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SLIP-01",
+   "module_key": "SLIP",
+   "module_name": "The printed bill and the customer screen",
+   "intro": "A bill is evidence. These check that a customer can account for every figure on it without asking.",
+   "title": "Every item accounts for itself on the paper",
+   "priority": "High",
+   "pre": "A completed bill including at least one discounted line. Registered shop (TAX INVOICE).",
+   "data": "One line with an offer, one without.",
+   "steps": [
+    [
+     "Save the bill and look at the slip.",
+     "Each item shows its name and what is owed for it."
+    ],
+    [
+     "Read the line under an item.",
+     "Quantity × rate, then \"MRP\" and its figure, then the GST rate."
+    ],
+    [
+     "Read under a DISCOUNTED item.",
+     "\"Gross\" and the full amount, then each offer BY NAME with its amount."
+    ],
+    [
+     "Check an item with no offer.",
+     "No \"Gross\" row — it would say the same number twice."
+    ],
+    [
+     "Read the foot of the bill.",
+     "A GST SUMMARY table: Rate · Taxable · CGST · SGST, one row per rate, with a total row."
+    ],
+    [
+     "Add the summary's Taxable column up.",
+     "It equals the \"Taxable\" figure above the total."
+    ]
+   ],
+   "note": "Athi: \"check how Pantaloons invoice is — there every item below they showcase, it is no ambiguity\", and \"Tesco bill, or any other standard way of invoicing can be used — nothing to reinvent.\"",
+   "layer": "web"
+  },
+  {
+   "case_key": "SLIP-02",
+   "module_key": "SLIP",
+   "module_name": "The printed bill and the customer screen",
+   "intro": "A bill is evidence. These check that a customer can account for every figure on it without asking.",
+   "title": "The customer screen names the scheme and the amount",
+   "priority": "Medium",
+   "pre": "The shop screen (promo.html) open on a second display, counter billing.",
+   "data": "A product with an offer.",
+   "steps": [
+    [
+     "Add a discounted product at the counter.",
+     "The customer screen shows the line."
+    ],
+    [
+     "Read the green text under the item.",
+     "It names the offer AND what came off, e.g. \"Buy 2 get 1 free −₹9.00\"."
+    ]
+   ],
+   "note": "It named the offer without its amount, so a customer could not check the total until the paper was already in their hand.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SLIP-03",
+   "module_key": "SLIP",
+   "module_name": "The printed bill and the customer screen",
+   "intro": "A bill is evidence. These check that a customer can account for every figure on it without asking.",
+   "title": "A non-rupee shop shows its OWN currency everywhere",
+   "priority": "High",
+   "pre": "⚠️ Needs a shop whose currency is not INR. Set it in Settings before testing.",
+   "data": "Any priced product.",
+   "steps": [
+    [
+     "Open the counter for that shop.",
+     "Shelf prices show the shop's currency symbol, not ₹."
+    ],
+    [
+     "Build a bill and read the totals.",
+     "The same currency throughout."
+    ],
+    [
+     "Open the shop screen (promo.html).",
+     "It shows the same currency — NOT rupees."
+    ],
+    [
+     "Print or preview the slip.",
+     "Same currency on every figure."
+    ],
+    [
+     "If the currency has no decimals (e.g. JPY), check a price.",
+     "No decimal point at all."
+    ],
+    [
+     "If it has three (e.g. KWD, BHD, OMR), check a price.",
+     "Three decimal places."
+    ]
+   ],
+   "note": "His finding 8. The counter was already right; the SHOP SCREEN hard-coded ₹ and en-IN — so a Dubai shop showed dirham prices with a rupee sign, on the one screen a customer reads with nobody beside them to correct it. ⚠️ Indian-style grouping (2-2-3) on a non-rupee figure is CORRECT, not a bug: a shop groups money its own way whatever currency it quotes.",
+   "layer": "web"
+  },
+  {
+   "case_key": "SYNC-01",
+   "module_key": "SYNC",
+   "module_name": "Bills reaching ChitBridge, and changes going the other way",
+   "intro": "⚠️ The most important module here. A bill that does not arrive is money that is not in the books, and until 2026-09-10 the counter could not say why.",
+   "title": "A stuck queue says WHY it is stuck",
+   "priority": "High",
+   "pre": "Counter with bills waiting (take one offline, bill, come back).",
+   "data": "Any bill.",
+   "steps": [
+    [
+     "Go offline (turn off wifi) and complete a bill.",
+     "The bill saves. The status line shows it waiting."
+    ],
+    [
+     "Read the waiting line.",
+     "It says how many are waiting AND, if an attempt failed, why."
+    ],
+    [
+     "Come back online and press \"Send now\" (F8 → Send now).",
+     "They send, and it says so."
+    ],
+    [
+     "If they do NOT send, read the message.",
+     "It names a reason — a refused key, no internet, a refusal from the shop, or \"nothing was even attempted\"."
+    ],
+    [
+     "Open the checks list (the ⚠ check chip).",
+     "The same reason appears there in full."
+    ],
+    [
+     "Open F8 bills.",
+     "Each waiting bill shows its own reason, if it has one."
+    ]
+   ],
+   "note": "⚠️ \"Nothing was even attempted — tell us this, it is not normal\" is a real message. If you see it, that is the bug we could not reproduce; please report it with the bill number.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "SYNC-02",
+   "module_key": "SYNC",
+   "module_name": "Bills reaching ChitBridge, and changes going the other way",
+   "intro": "⚠️ The most important module here. A bill that does not arrive is money that is not in the books, and until 2026-09-10 the counter could not say why.",
+   "title": "A price change reaches ChitBridge BEFORE it changes here",
+   "priority": "High",
+   "pre": "Counter online, Maintenance mode.",
+   "data": "Any product.",
+   "steps": [
+    [
+     "Change a price and save.",
+     "The new price shows on the counter."
+    ],
+    [
+     "Open the app's Catalogue on another device or tab.",
+     "The SAME new price is there."
+    ],
+    [
+     "Now go offline. Change the price again.",
+     "A question appears: ChitBridge has not been told, change it here anyway?"
+    ],
+    [
+     "Read the question.",
+     "It states the consequence — this counter will use the new value while ChitBridge has the old one."
+    ],
+    [
+     "Press Cancel.",
+     "NOTHING changes on the counter."
+    ],
+    [
+     "Repeat and accept.",
+     "The price changes here, and the checks list says \"This counter is out of step with ChitBridge\"."
+    ],
+    [
+     "Come back online.",
+     "The change is sent FIRST, before any queued bills. The out-of-step warning clears."
+    ]
+   ],
+   "note": "His finding: \"I have changed the price in the local copy, but it is not getting reflected in the global catalogue — product 09815, 148 to 146.\" The old code changed the counter first and ignored the answer. A BILL is a fact and is queued; a PRICE is an intention and must not take effect until the shop agrees, or there are two catalogues.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "SYNC-03",
+   "module_key": "SYNC",
+   "module_name": "Bills reaching ChitBridge, and changes going the other way",
+   "intro": "⚠️ The most important module here. A bill that does not arrive is money that is not in the books, and until 2026-09-10 the counter could not say why.",
+   "title": "The same rule covers offers, shelf status and the shop screen flag",
+   "priority": "Medium",
+   "pre": "Counter offline, Maintenance mode.",
+   "data": "A product carrying an offer.",
+   "steps": [
+    [
+     "Tick a product onto an offer while offline.",
+     "The same risk question appears."
+    ],
+    [
+     "Accept it.",
+     "The tick applies here and the counter says it is out of step."
+    ],
+    [
+     "Mark a product off the shelf while offline.",
+     "The same question."
+    ],
+    [
+     "Turn the shop-screen flag on or off while offline.",
+     "The same question."
+    ]
+   ],
+   "note": "Athi: \"any change to the catalogue should reflect in the cloud.\" An offer is the one he named first — a counter honouring an offer the shop has not got is a discount nobody authorised.",
+   "layer": "transport"
+  },
+  {
+   "case_key": "SPR-01",
+   "module_key": "SPR",
+   "module_name": "Suppliers — two tabs, and one who is not on ChitBridge",
+   "intro": "In the app, not the counter. ⚠️ The Supplies menu is GONE — it is now the 🧴 Other tab inside Suppliers, so the SUP cases in this document are still valid, you just reach them differently.",
+   "title": "Two tabs, and Trade is the one it opens on",
+   "priority": "High",
+   "pre": "Signed in to the app.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Suppliers.",
+     "Two tabs: 🏭 Trade and 🧴 Other, with counts."
+    ],
+    [
+     "Check which is active.",
+     "Trade."
+    ],
+    [
+     "Check the rail (left menu).",
+     "There is NO \"Supplies\" item any more."
+    ],
+    [
+     "Open the Other tab with nothing selected.",
+     "The right pane shows the supplies list — what the shop buys to use."
+    ]
+   ],
+   "note": "Athi: \"you have created something called supplies, which may not be essential — we have already the supplier menu.\" The flag decides what a delivery from them DOES: Trade goods are offered to your catalogue, Other goods go to supplies and never are.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SPR-02",
+   "module_key": "SPR",
+   "module_name": "Suppliers — two tabs, and one who is not on ChitBridge",
+   "intro": "In the app, not the counter. ⚠️ The Supplies menu is GONE — it is now the 🧴 Other tab inside Suppliers, so the SUP cases in this document are still valid, you just reach them differently.",
+   "title": "A supplier who is not on ChitBridge can be written down",
+   "priority": "High",
+   "pre": "Suppliers screen, Trade tab.",
+   "data": "A name with a space in it, e.g. \"Corner Hardware\".",
+   "steps": [
+    [
+     "Type the name in the Add box and press Add.",
+     "It asks to add them as a LOCAL supplier."
+    ],
+    [
+     "Read the question.",
+     "It says they are not on ChitBridge — no catalogue, no order — and you record purchases by hand."
+    ],
+    [
+     "Accept.",
+     "The row appears in the list."
+    ],
+    [
+     "Look at the row.",
+     "It says \"not on ChitBridge\", NOT \"no catalogue\"."
+    ],
+    [
+     "Click the row.",
+     "The pane offers \"Record a delivery\" (Trade) — never an order."
+    ],
+    [
+     "Read the ID on that pane.",
+     "It reads ~<your user id>.sup-0001 — your own numbering."
+    ],
+    [
+     "Add a second local supplier.",
+     "It gets sup-0002."
+    ]
+   ],
+   "note": "Athi: \"still a non-CB person can be a supplier\"; then \"we still need the user id so we can attach item and so on against that id\"; then \"entity user id-sup-nnnn, so he is specific to the user.\"",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SPR-03",
+   "module_key": "SPR",
+   "module_name": "Suppliers — two tabs, and one who is not on ChitBridge",
+   "intro": "In the app, not the counter. ⚠️ The Supplies menu is GONE — it is now the 🧴 Other tab inside Suppliers, so the SUP cases in this document are still valid, you just reach them differently.",
+   "title": "Their name is yours to correct; the ID never changes",
+   "priority": "Medium",
+   "pre": "A local supplier exists.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the supplier's record (the ⓘ button) and press Edit.",
+     "A \"Their name\" box is offered."
+    ],
+    [
+     "Change the name and save.",
+     "The list shows the new name."
+    ],
+    [
+     "Re-open the record.",
+     "The ID is unchanged."
+    ],
+    [
+     "Now edit a supplier who IS on ChitBridge.",
+     "No \"Their name\" box — only \"your label for them\"."
+    ]
+   ],
+   "note": "Athi: \"user id we generate, but the shop name they can keep as per the shop name, so internal id never gets mixed up.\"",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SPR-04",
+   "module_key": "SPR",
+   "module_name": "Suppliers — two tabs, and one who is not on ChitBridge",
+   "intro": "In the app, not the counter. ⚠️ The Supplies menu is GONE — it is now the 🧴 Other tab inside Suppliers, so the SUP cases in this document are still valid, you just reach them differently.",
+   "title": "Moving a supplier between tabs moves what their delivery does",
+   "priority": "Medium",
+   "pre": "A supplier in the Trade tab.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the record, press Edit.",
+     "A \"What you buy from them\" choice: Things we sell / Things we use."
+    ],
+    [
+     "Choose the other one.",
+     "It saves at once, the screen follows to that tab, and the supplier is there."
+    ],
+    [
+     "Check the counts on both tabs.",
+     "They have changed accordingly."
+    ]
+   ],
+   "note": "Athi: \"while adding or may be later through edit set a flag.\" It is not a label — it decides whether goods from them are offered to your catalogue.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "SPR-05",
+   "module_key": "SPR",
+   "module_name": "Suppliers — two tabs, and one who is not on ChitBridge",
+   "intro": "In the app, not the counter. ⚠️ The Supplies menu is GONE — it is now the 🧴 Other tab inside Suppliers, so the SUP cases in this document are still valid, you just reach them differently.",
+   "title": "A local supplier cannot be sent anything, and nobody else can see them",
+   "priority": "High",
+   "pre": "A local supplier exists.",
+   "data": "Their ID (~yourid.sup-nnnn) and their name.",
+   "steps": [
+    [
+     "Compose a chit and type their ID as the recipient.",
+     "Refused — it says they cannot receive chits."
+    ],
+    [
+     "Try again with their NAME.",
+     "Refused."
+    ],
+    [
+     "Sign in as a DIFFERENT business and search for that name in Add supplier.",
+     "They do not appear. You cannot add another shop's local supplier."
+    ]
+   ],
+   "note": "Athi: \"he is not a recipient, so you can't bring him to the rail.\" ⚠️ The search exclusion is privacy: who supplies you is one of the few genuinely competitive facts a small business holds.",
+   "layer": "capability"
+  },
+  {
+   "case_key": "LAB-01",
+   "module_key": "LAB",
+   "module_name": "Offer lab — on your real catalogue",
+   "intro": "The lab used to open on five invented products, so an offer proved there proved nothing about yours.",
+   "title": "It opens on your own catalogue",
+   "priority": "High",
+   "pre": "Signed in to the app in the same browser. A catalogue with priced products.",
+   "data": "—",
+   "steps": [
+    [
+     "Open /offer-lab.html.",
+     "The chip at the top names YOUR shop and the number of products and categories."
+    ],
+    [
+     "Look at the product list.",
+     "Your own products — not Grapes, Sunflower oil, Rice."
+    ],
+    [
+     "Check a price.",
+     "It matches the catalogue, in your shop's currency."
+    ]
+   ],
+   "note": "⚠️ \"Use my catalogue\" existed as a button and had NEVER worked on a real shop: it read the price as a plain number when a catalogue price is a stamped value, so every product was filtered out and it said \"no priced products yet\" — indistinguishable from an empty catalogue.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "LAB-02",
+   "module_key": "LAB",
+   "module_name": "Offer lab — on your real catalogue",
+   "intro": "The lab used to open on five invented products, so an offer proved there proved nothing about yours.",
+   "title": "An offer can be attached to a CATEGORY",
+   "priority": "High",
+   "pre": "Lab open on a catalogue with at least two categories.",
+   "data": "A category holding more than one product.",
+   "steps": [
+    [
+     "Open the Category picker at the top.",
+     "It lists your real categories with a count each."
+    ],
+    [
+     "Choose one and switch on a % off offer.",
+     "Every product in that category is discounted."
+    ],
+    [
+     "Check a product OUTSIDE that category.",
+     "Untouched."
+    ]
+   ],
+   "note": "Typed category names are not offered on purpose — a misspelt category silently matches nothing, and a list cannot be misspelt.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "LAB-03",
+   "module_key": "LAB",
+   "module_name": "Offer lab — on your real catalogue",
+   "intro": "The lab used to open on five invented products, so an offer proved there proved nothing about yours.",
+   "title": "One or two products can be held out of a category offer",
+   "priority": "High",
+   "pre": "A category offer switched on (LAB-02).",
+   "data": "One product in that category that should keep its own price.",
+   "steps": [
+    [
+     "Find the extra tick on that product's row.",
+     "A second, warn-coloured box appears once a category is scoped."
+    ],
+    [
+     "Tick it.",
+     "That product goes back to its full price."
+    ],
+    [
+     "Check the others in the category.",
+     "Still discounted."
+    ],
+    [
+     "Give the held-out product its own offer.",
+     "Only its own offer applies to it."
+    ]
+   ],
+   "note": "Athi: \"if it is attached to a category it applies to all products; one or two products we should be able to override with different offers.\" ⚠️ It is two deliberate acts — tick out, then give it its own. Without the tick the two offers STACK, which is real money: ₹675 vs ₹750 on a ₹1,000 item.",
+   "layer": "engine"
+  },
+  {
+   "case_key": "LAB-04",
+   "module_key": "LAB",
+   "module_name": "Offer lab — on your real catalogue",
+   "intro": "The lab used to open on five invented products, so an offer proved there proved nothing about yours.",
+   "title": "Mix and match — any two in a category, cheapest free",
+   "priority": "Medium",
+   "pre": "Ability to create an offer (Definitions → Offer).",
+   "data": "Three products in one category at different prices.",
+   "steps": [
+    [
+     "Create an offer of kind \"Mix and match\".",
+     "The form asks Buy any / Get / Reward discount."
+    ],
+    [
+     "Set buy 2, get 1, scoped to the category.",
+     "Saved."
+    ],
+    [
+     "Put one of each of the three products in a basket.",
+     "The CHEAPEST one is free."
+    ],
+    [
+     "Read the line.",
+     "It says \"the cheapest qualifying unit\"."
+    ],
+    [
+     "Compare with the plain \"Buy X get Y\" kind on the same basket.",
+     "That one gives nothing — see CTR-10."
+    ]
+   ],
+   "note": "Athi: \"we cannot offer for different product, but in cloth line it works as per category, so possibly we need a different naming convention\"; then \"cheapest free for mix and match.\"",
+   "layer": "engine"
+  }
+ ]
+}
