@@ -665,7 +665,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'lots.js': 'CBLots', 'nums.js': 'CBNums', 'pricing.js': 'CBPricing', 'locale.js': 'CBLocale',
                     /* ⭐ the NINTH engine (2026-09-11): an amount is never a bare number, and the browser did not
                        have this module — so the rule was written out five times instead. */
-                    'money.js': 'CBMoney',
+                    'money.js': 'CBMoney', 'docnumber.js': 'CBDoc',
                     'rewards.js': 'CBRewards', 'qr.js': null };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');

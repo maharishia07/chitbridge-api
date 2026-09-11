@@ -692,6 +692,9 @@
 <script src="/engine/qr.js" onerror="engineMissed('qr')"></script>
 <!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
 <script src="/engine/money.js" onerror="engineMissed('money')"></script>
+<!-- ⭐ what a document number may look like, per country. It is HERE and not only on the server because the
+     counter numbers its own bills offline — the moment a number is issued is the moment there may be no server. -->
+<script src="/engine/docnumber.js" onerror="engineMissed('docnumber')"></script>
 <script src="/engine/locale.js" onerror="engineMissed('locale')"></script>
 <!-- ⭐ PRICING FIRST. The engine's own order is: pricing structure → offers → tax, and it is loaded in that order. -->
 <script src="/engine/pricing.js" onerror="engineMissed('pricing')"></script>
@@ -1418,18 +1421,54 @@ var CloudHost = {
  */
 /** the number: C1/26-27/0041 — continuous within the financial year, prefixed by the counter, decided locally */
 function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; return String(a).slice(2)+'-'+String(a+1).slice(2); }
+/** the shop's jurisdiction — the pivot every numbering rule hangs from. Defaults to India, which is where
+ *  this counter has actually been built and tested. */
+function docCountry(){ return (S && S.shop && S.shop.country) || 'IN'; }
+function tillId(){ return ls.get('cb_till_id','C1'); }
+
+/**
+ * ⭐⭐⭐ THE NUMBER, FROM THE RULE — not from three constants that happened to be India's.
+ *
+ * Athi, 2026-09-11: *"first set a country and see how that can be globalised."* The 16-character cap, the
+ * April–March year and the annual reset are all India GST rules. CBDoc holds them per country, and an
+ * unstudied country gets a number legal by the only rule everyone agrees on rather than India's.
+ *
+ * ⚠️⚠️ THE SERIES BOX KEYS AND THE SEQUENCE ARE UNTOUCHED. A counter that has been billing keeps its record,
+ * its prefix and its next number — a series that changes shape mid-year destroys the one property numbering
+ * exists to prove. The only thing that may change is the TAG, and only for a series that has issued nothing.
+ */
 async function nextNumber(kind){
-  var fy = fyOf(new Date());
-  /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. A sale is C1/26-27/0041; a goods receipt is GRN/C1/26-27/0007; a despatch note is
-     DC/C1/26-27/0004. Sharing a run would put a hole in the sales series, which is the one thing the numbering exists to prove. */
+  var country = docCountry();
+  var D = window.CBDoc;
+  var now = new Date();
+  var r = D ? D.rules(country) : null;
+  var period = r ? (r.resets === 'year' ? r.yearLabel(now) : '-') : fyOf(now);
+
+  /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. Sharing a run would put a hole in the sales series, which is
+     the one thing the numbering exists to prove. The box keys are unchanged from the first version. */
   var tag = (kind === 'GRN' || kind === 'DC') ? kind : '';
   var box = tag ? ('series-' + tag) : 'series';
-  var s = (await DB.get(box)) || { prefix: ls.get('cb_till_id','C1'), fy: fy, next: 1 };
-  if (s.fy !== fy) { s.fy = fy; s.next = 1; }
-  s.prefix = ls.get('cb_till_id','C1') || s.prefix;
-  var n = s.next; s.next = n + 1;
+  var had = await DB.get(box);
+
+  /**
+   * ⭐ THE TAG STYLE IS DECIDED ONCE, ON THE FIRST NUMBER, AND KEPT. `GRN/C1/26-27/0007` is seventeen
+   * characters — over India's limit on the DEFAULT till id — so a new series uses the one-letter tag. But a
+   * series that has already issued numbers keeps the long one, because changing it mid-year is exactly the
+   * discontinuity we are trying to prevent. It rolls to the short form by itself at the next year-end.
+   */
+  var s = had || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short' };
+  if (had && !had.tagStyle) s.tagStyle = 'long';          // a record written before this change
+  if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; }
+  s.prefix = tillId() || s.prefix;
+  var seq = s.next; s.next = seq + 1;
   await DB.set(box, s);
-  return (tag ? tag + '/' : '') + s.prefix + '/' + fy + '/' + String(n).padStart(4,'0');
+
+  if (!D) return (tag ? tag + '/' : '') + s.prefix + '/' + period + '/' + String(seq).padStart(4,'0');
+  var body = D.compose({ country: country, prefix: s.prefix, kind: 'sale', at: now, seq: seq });
+  if (!tag) return body;
+  if (s.tagStyle === 'long') return tag + '/' + body;
+  return D.compose({ country: country, prefix: s.prefix, at: now, seq: seq,
+                     kind: kind === 'GRN' ? 'receipt' : 'despatch' });
 }
 
 /**
@@ -3542,6 +3581,34 @@ function health(){
 
   if (!S) { add('warn', 'No copy of the shop yet', 'The counter has never read your catalogue, so it cannot price anything.',
     'Press ↻ once while the internet is on.'); return out; }
+
+  /**
+   * ⭐⭐⭐ SAY WHEN THE NUMBERING RULES FOR THIS COUNTRY HAVE NOT BEEN CHECKED.
+   *
+   * Athi, 2026-09-11: *"first set a country and see how that can be globalised."* CBDoc holds the rules per
+   * jurisdiction and carries `verified` — India is the one this counter has been built and tested against.
+   *
+   * ⚠⚠ A SILENT FALLBACK WOULD BE THE PLATFORM CLAIMING SOMETHING NOBODY CHECKED. The numbers a shop in an
+   * unstudied country gets are legal by the only rule every jurisdiction agrees on — unique and sequential —
+   * and that is all we can honestly say. Whether the series must restart each year, how long the number may be
+   * and which characters are allowed have NOT been confirmed there, and the shopkeeper is the only person who
+   * can take that to their accountant.
+   *
+   * ⚠ A NOTE, NOT A WARNING. Nothing is broken and the counter bills perfectly well; an alarm here would be
+   * the health check crying wolf, which is how people stop reading it.
+   */
+  (function(){
+    if (!window.CBDoc) return;
+    var c = (S.shop && S.shop.country) || 'IN';
+    var r = window.CBDoc.rules(c);
+    if (r.verified) return;
+    add('note', 'Bill numbering for ' + c + ' has not been checked',
+      'Your bills are numbered uniquely and in sequence, which every country we know of requires. But whether '
+      + 'the series must restart each year, how long a number may be and which characters are allowed have not '
+      + 'been confirmed for ' + c + ' \u2014 only for India.',
+      'Show a bill to your accountant once, and tell us if the shape has to change.',
+      [window.CBDoc.compose({ country: c, prefix: ls.get('cb_till_id','C1'), at: new Date(), seq: 41 })]);
+  })();
 
   /**
    * ⭐ WHAT A CUSTOMER READS BEFORE THEY PRESS SEND. Only asked when the shop can actually be paid by a code.
@@ -5755,7 +5822,17 @@ async function saveSettings(){
                                   drawer: !!(document.getElementById('set_drawer') || {}).checked });
           PRINTERS = null; } catch (_) {}
   }
-  ls.set('cb_till_id', (document.getElementById('set_till').value||'C1').trim().slice(0,6) || 'C1');
+  /**
+   * ⚠️⚠️ THIS FIELD ACCEPTED SIX CHARACTERS, which puts even a plain sale at seventeen — over India's limit,
+   * with nothing anywhere saying so. The cap is now DERIVED from the country's rule, so a shop somewhere that
+   * caps nothing is not restricted for India's reasons.
+   */
+  var _cap = (window.CBDoc ? window.CBDoc.maxPrefix(docCountry(), 'receipt') : 2);
+  var _want = (document.getElementById('set_till').value||'C1').trim().toUpperCase();
+  if (_want.length > _cap) {
+    toast('A counter id is at most ' + _cap + ' character(s) here, or the bill number goes over the limit. Using ' + _want.slice(0,_cap) + '.');
+  }
+  ls.set('cb_till_id', _want.slice(0, _cap) || 'C1');
   ls.set('cb_till_fs', document.getElementById('set_fs').value);
   ls.set('cb_till_theme', document.getElementById('set_theme').value);
   var k = document.getElementById('set_key');

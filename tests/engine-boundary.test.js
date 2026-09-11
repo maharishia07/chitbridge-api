@@ -66,10 +66,16 @@ const UNWIRED = [
      money.js REFUSING a points-shaped value and a reward-ish code ('PTS' passes /^[A-Z]{3}$/ today). Wiring the
      display before that guard exists would put the safe-looking half in service while the hole stays open. */
   'lib/points.js',
-  /* ⚠ lib/docnumber.js — built 2026-09-11 in the same change that fixes the counter series, and unwired for
-     exactly as long as it takes to vendor it and have till.html call it. It is listed here rather than left
-     unlabelled because the gap between "the rules exist" and "the rules are what the counter uses" is the
-     whole risk: a rule file nobody calls reads as a solved problem. */
+  /**
+   * ⚠ lib/docnumber.js — WIRED IN THE BROWSER, UNWIRED ON THE SERVER, and the distinction is the point of this
+   * list. The counter calls it on every bill (vendored as /engine/docnumber.js), which is where it has to run:
+   * a number is issued at the moment there may be no server. But NO ROUTE requires it.
+   *
+   * ⭐ THAT IS A REAL GAP, RECORDED RATHER THAN HIDDEN: the server now holds the rule for what a document number
+   * may look like, and still accepts any `client_ref` a counter sends without checking it against that rule. A
+   * counter running older code, or one whose till id was set before the cap existed, can still post a number
+   * that is too long — and the server would take it. Validating at the door is the next step.
+   */
   'lib/docnumber.js',
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.

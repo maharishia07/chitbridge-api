@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -124,6 +124,21 @@ const COPIES = () => [
    * any duplicate code, call it perfectly.'
    */
   [null, path.join(WEB, 'engine', 'money.js'), wrapForBrowser('money.js', 'CBMoney')],
+  /**
+   * ⭐⭐⭐ ELEVENTH ENGINE — WHAT A DOCUMENT NUMBER MAY LOOK LIKE, and it is vendored for the one reason that
+   * matters: THE COUNTER NUMBERS ITS OWN BILLS, OFFLINE. The rule cannot live only on the server, because the
+   * moment a bill is numbered is the moment there may be no server.
+   *
+   * Athi, 2026-09-11: *"first set a country and see how that can be globalised."* The 16-character cap, the
+   * April–March year and the annual reset are ALL India GST rules, and all three were about to be written into
+   * till.html where nothing would have announced them — so a Dubai shop would have had its numbers restart every
+   * April and been unable to tell.
+   *
+   * ⚠️ Every rule set carries `verified`, and the counter shows that: an unstudied country gets a number that is
+   * legal by the only rule everyone agrees on, and the checks list says the rules for that country have not been
+   * confirmed. The alternative — a confident green tick — would be the platform claiming something nobody checked.
+   */
+  [null, path.join(WEB, 'engine', 'docnumber.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
   [null, path.join(WEB, 'engine', 'lots.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
      follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
