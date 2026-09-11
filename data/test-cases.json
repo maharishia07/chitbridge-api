@@ -119,6 +119,116 @@
    "count": 3
   }
  ],
+ "engine": {
+  "pure": [
+   {
+    "file": "lib/order-input.js",
+    "tier": "A",
+    "name": "order-input",
+    "says": "WHAT A CATALOGUE RECEIVES, declared as a schema (SPEC-negotiation-position, revised).",
+    "stage": null,
+    "lines": 355,
+    "missing": false
+   },
+   {
+    "file": "lib/form-handshake.js",
+    "tier": "A",
+    "name": "form-handshake",
+    "says": "Ran end to end in scripts/prototype-form16-to-itr2.js against a real PDF (12 of 17 fields, with provenance). 17 assertions. NOT in a route: the browser re-implements extraction in shop.html,",
+    "stage": "proven",
+    "lines": 136,
+    "missing": false
+   },
+   {
+    "file": "lib/money.js",
+    "tier": "A",
+    "name": "money",
+    "says": "an amount is never a bare number.",
+    "stage": null,
+    "lines": 346,
+    "missing": false
+   },
+   {
+    "file": "lib/points.js",
+    "tier": "A",
+    "name": "points",
+    "says": "a reward point is NOT money, and this file exists so the two can never be confused.",
+    "stage": null,
+    "lines": 140,
+    "missing": false
+   },
+   {
+    "file": "lib/docnumber.js",
+    "tier": "A",
+    "name": "docnumber",
+    "says": "The numbering RULES, per jurisdiction. Built 2026-09-11; the counter adopts it in the same change.",
+    "stage": "held",
+    "lines": 162,
+    "missing": false
+   },
+   {
+    "file": "lib/units.js",
+    "tier": "A",
+    "name": "units",
+    "says": "ONE UNIT, THREE NAMES: ours (kg · litre · bag …), the UN/ECE Recommendation 20 code the world uses",
+    "stage": null,
+    "lines": 105,
+    "missing": false
+   },
+   {
+    "file": "lib/jurisdiction.js",
+    "tier": "A",
+    "name": "jurisdiction",
+    "says": "WHERE A PARTY IS, AND WHAT THAT DECIDES. Pure: no database, no network, no state.",
+    "stage": null,
+    "lines": 142,
+    "missing": false
+   },
+   {
+    "file": "lib/rewards.js",
+    "tier": "A",
+    "name": "rewards",
+    "says": "Built 2026-09-10 and called by NOTHING — tests/rewards.test.js, 15 checks. The interpretation and the",
+    "stage": "tested",
+    "lines": 511,
+    "missing": false
+   },
+   {
+    "file": "lib/inventory.js",
+    "tier": "A",
+    "name": "inventory",
+    "says": "WHAT A MOVEMENT DOES TO A BALANCE",
+    "stage": null,
+    "lines": 245,
+    "missing": false
+   }
+  ],
+  "bound": [
+   {
+    "file": "lib/regional.js",
+    "tier": "B",
+    "name": "regional",
+    "says": "REGIONAL SCATTER (6a): \"spin the globe\". Resolve a container's presentation + governance for a",
+    "stage": null,
+    "lines": 95,
+    "missing": false
+   },
+   {
+    "file": "lib/reporting.js",
+    "tier": "B",
+    "name": "reporting",
+    "says": "Built for the network MIS + Beckn work that is queued. 17 assertions. No caller yet, by design — the Beckn phase is where it lands.",
+    "stage": "tested",
+    "lines": 132,
+    "missing": false
+   }
+  ],
+  "other": {
+   "engine_adjacent": 31,
+   "adoption": 27,
+   "infrastructure": 58
+  }
+ },
  "cases": [
   {
    "case_key": "SELL-01",
@@ -10634,7 +10744,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · static · 495 lines. Run: node chitbridge-api/tests/test-board.test.js",
+   "note": "test.unit · static · 527 lines. Run: node chitbridge-api/tests/test-board.test.js",
    "layer": "engine",
    "test_type": "static",
    "group": "test.unit",
