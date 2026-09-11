@@ -87,6 +87,11 @@
    "key": "MENU",
    "name": "The menus nothing was checking",
    "count": 8
+  },
+  {
+   "key": "RULE",
+   "name": "The standards we declared — kept, or not",
+   "count": 9
   }
  ],
  "cases": [
@@ -3112,6 +3117,292 @@
     ]
    ],
    "note": "⭐⭐ \"Buyers see them as verified confidence\" is the purpose, which makes this the screen where an overstatement costs the most — a clearance shown as verified when it was only uploaded is a claim made to somebody else's buyer. See [[project-attestation-layer]]: VERIFIED, not self-asserted.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-01",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "Append-only — a history can be added to and never shortened",
+   "priority": "High",
+   "pre": "The test lab open (🧪 Test lab), with at least one case loaded.",
+   "data": "Any case.",
+   "steps": [
+    [
+     "Mark a case Pass.",
+     "It shows as passed."
+    ],
+    [
+     "Mark the SAME case Fail, with a note.",
+     "It shows as failed — the latest word wins."
+    ],
+    [
+     "Press History on that case.",
+     "⭐ BOTH results are listed, oldest at the bottom. The Pass was not replaced."
+    ],
+    [
+     "Mark it Pass again and re-read the history.",
+     "Three entries. Nothing was ever overwritten."
+    ]
+   ],
+   "note": "⭐⭐ This is what append-only MEANS to a person: \"it failed on Thursday and passed on Friday\" is a sentence that survives. ⚠️ The mechanism — cb_app may INSERT and SELECT and nothing else — is a database grant no screen can show you, and is proved by tests/test-board.test.js. This case proves the consequence: that a flaky thing is visible as pass·fail·pass rather than collapsing into whatever was tapped last.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-02",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "Idempotency — the same bill twice is still one bill",
+   "priority": "High",
+   "pre": "The counter, paired, with the internet ON.",
+   "data": "Any product.",
+   "steps": [
+    [
+     "Turn the wifi OFF and complete a bill. Note its number.",
+     "The bill saves and waits to be sent."
+    ],
+    [
+     "Turn the wifi ON and press Send now (F8 → Send now).",
+     "It sends."
+    ],
+    [
+     "Press Send now again, twice.",
+     "Nothing is sent a second time — the queue is empty."
+    ],
+    [
+     "Open the app and find that bill number in Order.",
+     "⭐ ONE chit, not two or three."
+    ],
+    [
+     "Read the total on the chit against the slip.",
+     "The same. The customer was not charged twice."
+    ]
+   ],
+   "note": "⚠️⚠️ A replay is ROUTINE, not an error — the counter bills offline and replays its queue whenever the line returns, so the same bill number arrives more than once as a matter of course. The bill number rides as `client_ref` and the server answers a repeat with the chit that already exists. ⭐ Two vouchers in the books for one sale is the thing this prevents.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-03",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "Jurisdiction — the country decides the rules, not the code",
+   "priority": "High",
+   "pre": "⚠️ NEEDS A SHOP THAT IS NOT IN INDIA. Set the country in Settings, or register a second shop.",
+   "data": "Compare against a shop in India.",
+   "steps": [
+    [
+     "Open the counter for the non-India shop and make a bill.",
+     "It bills normally."
+    ],
+    [
+     "Read the bill number.",
+     "⭐ It carries NO Indian financial year — no \"26-27\" anywhere in it."
+    ],
+    [
+     "Open ☰ → the checks list.",
+     "A note says the numbering rules for that country have not been checked."
+    ],
+    [
+     "Read the note.",
+     "It says the numbers are unique and sequential, and that the length, characters and annual reset have NOT been confirmed for that country — only for India."
+    ],
+    [
+     "Compare with an Indian shop's bill.",
+     "That one DOES carry 26-27 and resets in April."
+    ]
+   ],
+   "note": "⭐⭐ The 16-character cap, the April–March year and the annual reset are all India GST rules, and all three were about to be written into the counter where nothing would announce them. A Dubai shop whose numbers restarted every April could not have told — it would just see numbers. ⚠️ The note in the checks list is the honesty: we say what we have NOT checked rather than showing a green tick.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-04",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "gettext — a missing translation reads as English, never as a key",
+   "priority": "High",
+   "pre": "Signed in. A language pack other than English available (Arabic, Tamil, Hindi or French).",
+   "data": "—",
+   "steps": [
+    [
+     "Switch the language from the avatar menu.",
+     "The labels change."
+    ],
+    [
+     "Read every menu item and button on the screen.",
+     "⭐ Anything not translated shows in plain ENGLISH."
+    ],
+    [
+     "Look for anything that reads like a code — \"nav.catsetup\", \"btn.save\", \"till.print\".",
+     "There is none. Not one label on any screen."
+    ],
+    [
+     "Open two or three more screens and look again.",
+     "Still none."
+    ]
+   ],
+   "note": "⭐ gettext's rule, adopted rather than invented: the English string IS the key, so `tx('Save & print')` returns the English when no pack carries it. ⚠️ A key-based layer degrades to \"till.save_print\" on screen, which is worse than the English it replaced — and it is always the reader who least expected it who sees it.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-05",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "ISO 4217 — a price carries its own currency, everywhere",
+   "priority": "High",
+   "pre": "⚠️ NEEDS A NON-RUPEE SHOP. Set the currency in Settings.",
+   "data": "A priced product.",
+   "steps": [
+    [
+     "Open the counter for that shop.",
+     "Shelf prices show that shop's symbol — not ₹."
+    ],
+    [
+     "Build a bill and read the totals.",
+     "Same currency throughout."
+    ],
+    [
+     "Open the shop screen (promo.html) on a second display.",
+     "Same currency. NOT rupees."
+    ],
+    [
+     "Print or preview the slip.",
+     "Same currency on every figure."
+    ],
+    [
+     "If the currency has no decimals (JPY), check a price.",
+     "No decimal point at all."
+    ],
+    [
+     "If it has three (KWD, BHD, OMR), check a price.",
+     "Three decimal places."
+    ]
+   ],
+   "note": "⚠️⚠️ THE SCREENS HAVE ONLY EVER BEEN PROVEN IN RUPEES. The renderer is proven per currency by a guard; no spec drives a non-INR shop end to end, and the money-language legend card says so in its own gap list. ⭐ This case is that gap. The shop screen once hard-coded ₹ and en-IN — so a Dubai shop showed dirham prices with a rupee sign, on the one screen a customer reads with nobody beside them to correct it.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-06",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "ECMA-402 — the READER groups the number, the currency sets the decimals",
+   "priority": "Medium",
+   "pre": "⚠️ Best seen on an Indian shop quoting a foreign currency.",
+   "data": "A price over ten lakh — 1234567.50.",
+   "steps": [
+    [
+     "Look at a large rupee figure on any screen.",
+     "⭐ Indian grouping: 12,34,567.50 — two-two-three, not 1,234,567.50."
+    ],
+    [
+     "Now look at a large figure in a FOREIGN currency on the same shop.",
+     "⭐ STILL Indian grouping, with the foreign symbol. That is correct, not a bug."
+    ],
+    [
+     "Check the number of decimals on each.",
+     "That follows the CURRENCY — two for most, none for JPY, three for KWD."
+    ]
+   ],
+   "note": "⭐⭐ Two different things decide two different parts of one number, and mixing them up is the commonest formatting bug there is. A shop shows money in ITS OWN grouping whatever currency it quotes — an Indian shop quoting dollars writes $12,34,567.50 and that is right. ⚠️ Asserted by a guard too, precisely so that nobody \"fixes\" the grouping to match the currency and breaks every Indian bill.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-07",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "RFC 4647 — a region is offered the languages it actually uses",
+   "priority": "Medium",
+   "pre": "Signed in.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the language picker in the avatar menu.",
+     "A short list — at most three, plus English."
+    ],
+    [
+     "Check they are languages your region actually uses.",
+     "They are. You are not offered a language nobody near you reads."
+    ],
+    [
+     "Read the line under the picker.",
+     "It says labels are translated and longer sentences may still read in English."
+    ]
+   ],
+   "note": "⭐ Region BOUNDS language — at most three per region. A picker listing forty languages is a picker nobody scrolls, and offering a shop a language its region does not use is noise pretending to be choice.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-08",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "JUnit XML — an automated run lands on the same board as a person's tap",
+   "priority": "Medium",
+   "pre": "Somebody has posted a run (node post-suite.cjs or post-results.cjs).",
+   "data": "—",
+   "steps": [
+    [
+     "Open the test lab board → Summary.",
+     "Sittings are listed."
+    ],
+    [
+     "Find the automated run.",
+     "It shows its kind (unit / t1) and its totals."
+    ],
+    [
+     "Open it.",
+     "⭐ Failures are listed FIRST — not after a hundred passes."
+    ],
+    [
+     "Open Reliability.",
+     "The automated results have a history alongside the manual ones — one board, not two."
+    ]
+   ],
+   "note": "⭐⭐ One case is often provable at two levels — the offer arithmetic by a unit test AND by a person at the counter. On two separate boards a green suite hides a red counter, so the board shows the WORSE of the two. ⚠️ A spec whose title carries no case key is REPORTED back, never dropped: a board that quietly ignores half a report claims coverage it does not have, which is worse than no board because it is believed.",
+   "layer": null
+  },
+  {
+   "case_key": "RULE-09",
+   "module_key": "RULE",
+   "module_name": "The standards we declared — kept, or not",
+   "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
+   "title": "ISO/IEC/IEEE 29119-3 — the report does not sign itself",
+   "priority": "High",
+   "pre": "The test lab board, with some results recorded.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the Report tab.",
+     "A Test Completion Report, naming the standard it follows."
+    ],
+    [
+     "Read the sections.",
+     "Ten of them, numbered."
+    ],
+    [
+     "Find the green \"Measured\" sections.",
+     "Overview, results by feature, incidents, blockers, reusable assets — built from the ledger."
+    ],
+    [
+     "Find the amber \"Needs a person\" sections.",
+     "⭐ Deviations, completion evaluation, residual risks, lessons, approval — each carrying a QUESTION, not an answer."
+    ],
+    [
+     "Read section 6, the completion evaluation.",
+     "It states how many cases have never been run, and how many cite a clause that has since changed."
+    ],
+    [
+     "Read section 10.",
+     "Signature lines. No name, no date, nothing claiming an approval."
+    ]
+   ],
+   "note": "⚠️⚠️ HALF A COMPLETION REPORT IS JUDGEMENT and no database holds any of it. A generator that fills those headings with plausible prose produces a document that LOOKS signed off and is not — read by people who were not in the room and cannot tell invented text from evidence. ⭐ 29119-3 is the CURRENT standard; IEEE 829 is the name most people reach for and was withdrawn in 2013.",
    "layer": null
   }
  ]
