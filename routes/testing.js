@@ -563,6 +563,38 @@ router.get('/runs', auth, async (req, res) => {
  * is REPORTED BACK as unmatched rather than dropped: silently ignoring half a report is how a board comes to
  * claim coverage it does not have.
  */
+/**
+ * ⭐ The case's measured area, folded onto the six values the column permits.
+ *
+ * ⚠️ TWO VOCABULARIES THAT DO NOT LINE UP, AND SAYING SO IS THE HONEST PART. `areas` (api · middleware ·
+ * engine · web · database · connector) was measured from source; `layer` (engine · transport · web ·
+ * capability · db · connector) is older and is fixed by a CHECK constraint. api→transport and
+ * middleware→capability are the closest honest pairings, not exact ones. The RIGHT fix is one vocabulary,
+ * which is a migration and a decision; this stops the column being a constant in the meantime.
+ */
+const AREA_TO_LAYER = { api: 'transport', middleware: 'capability', engine: 'engine',
+                        web: 'web', database: 'db', connector: 'connector' };
+let _caseAreas = null;
+function layerOfCase(key) {
+  try {
+    if (!_caseAreas) {
+      const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
+      _caseAreas = {};
+      JSON.parse(require('fs').readFileSync(f, 'utf8')).cases.forEach((c) => {
+        if ((c.areas || []).length) _caseAreas[c.case_key] = c.areas;
+      });
+    }
+    const ar = _caseAreas[key];
+    if (!ar || !ar.length) return null;
+    /* ⚠️ one value per row, and it must be the WIDEST thing the test reaches — a file that drives a browser and
+       also reads a lib is a web test; calling it an engine test would understate what its failure implicates. */
+    for (const a of ['web', 'connector', 'database', 'api', 'middleware', 'engine']) {
+      if (ar.indexOf(a) >= 0) return AREA_TO_LAYER[a];
+    }
+    return null;
+  } catch (_) { return null; }
+}
+
 router.post('/results/junit', auth, async (req, res) => {
   try {
     const xml = String((req.body && req.body.xml) || '');
@@ -618,7 +650,21 @@ router.post('/results/junit', auth, async (req, res) => {
       const skipped = /<skipped/.test(body);
       if (!key) { unmatched.push(name); continue; }
       const why = (body.match(/message="([^"]*)"/) || [])[1] || '';
-      results.push({ case_key: key, run_kind, layer,
+      /**
+       * ── ⚠️⚠️ THE LAYER IS THE CASE'S, NOT THE POSTER'S GUESS ──────────────────────────────────────────────
+       *
+       * Athi, 2026-09-11, on the Reliability tab: *"everything shows as engine — what does this tab refer to?"*
+       *
+       * It did, because the caller sends ONE layer for a whole report and post-suite.cjs defaults it to
+       * "engine" — written when the only thing posting was a suite of pure functions. 235 of the files in that
+       * report drive a browser. ⭐ A column carrying one value on every row is worse than an empty one: it
+       * still reads as information.
+       *
+       * ⚠️ The case already knows, by measurement rather than by assumption — classify-tests.cjs reads what each
+       * file requires, opens and calls. So the posted layer is now the case's own area where we have it, and
+       * the caller's value only where we do not.
+       */
+      results.push({ case_key: key, run_kind, layer: layerOfCase(key) || layer,
         /**
          * ⭐ A PATH-NAMED CASE GROUPS BY ITS DIRECTORY, WHICH IS THE CATEGORY THE PATH ALREADY CARRIES.
          *
