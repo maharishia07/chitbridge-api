@@ -303,4 +303,27 @@ it('⚠️ the focus pins and warns; it never blocks', () => {
     'the panel now refuses to leave the focus — that is a panel somebody closes');
 });
 
+it('⚠️⚠️ the panel body is a SCROLL container, not a flex column', () => {
+  /**
+   * Athi, 2026-09-11, within a minute of opening it: *"looks like scrolling is missing, I couldn't roll
+   * inside the panel."*
+   *
+   * ⚠️ THE BODY WAS BOTH, AND THAT IS EXACTLY WHY NOTHING SCROLLED. A flex parent SIZES its child to fit, so a
+   * list of a hundred cases was laid out at the height of the box and never overflowed — leaving overflow:auto
+   * with nothing to scroll. The markup looked right and every property was individually reasonable.
+   *
+   * ⚠️ It arrived when the header moved into its own element: the body inherited the flex column the PANEL
+   * had been. A guard, because the fix is one word and the symptom is total.
+   */
+  const at = panel.indexOf('id="cbtestbody"');
+  assert.ok(at > 0, 'the panel body is no longer declared where this guard looks');
+  /* ⚠️ the style spans concatenated string literals, so read a WINDOW and strip the joins — a regex would only
+     match the way the line happens to be wrapped today */
+  const style = panel.slice(at, at + 320);
+  assert.ok(/overflow-y:auto|overflow:auto/.test(style), 'the panel body does not scroll at all');
+  assert.ok(!/display:flex/.test(style),
+    'the panel body is a flex container AND the scroll container — a flex parent sizes its child to fit, so '
+    + 'the list can never overflow and nothing will scroll');
+});
+
 console.log('\n  ' + pass + ' checks\n');
