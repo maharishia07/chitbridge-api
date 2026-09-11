@@ -1,3 +1,22 @@
+/**
+ * routes/attachments.js — PUT A FILE ON A CHIT, AND GIVE EVERY PARTICIPANT THEIR OWN COPY OF IT.
+ *
+ * Two doors, and the second is the whole point:
+ *   POST /api/attachments      { chit_id, message_id?, line_index?, name, mime, data_base64 }  ≤ 6 MB
+ *   GET  /api/attachments/:id  the bytes, but only to an entity that holds a copy
+ *
+ * ⭐ PER-ENTITY COPIES (b66). The upload does not create A row, it creates ONE ROW PER PARTICIPANT, each owned
+ * by that entity. That is the CB core principle applied to files: nothing OWNED is ever shared, it is
+ * replicated, so a counterparty deleting or retaining their copy cannot touch yours.
+ *
+ * ⚠ THE ONE EXCEPTION IS AN INTERNAL MESSAGE, which stays single and belongs to the author entity alone — an
+ * internal note is not addressed to the other party, so fanning its attachment out to them would leak it.
+ *
+ * ⚠ The bytes live in object storage (lib/storage.js), never in the row; this route carries no key and makes
+ * no bucket decision of its own.
+ *
+ * @stage tested
+ */
 const express = require('express');
 const router = express.Router();
 const { query, withEntity } = require('../db');
