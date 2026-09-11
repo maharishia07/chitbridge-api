@@ -92,6 +92,16 @@
    "key": "RULE",
    "name": "The standards we declared — kept, or not",
    "count": 9
+  },
+  {
+   "key": "KEY",
+   "name": "Keyboard — how the counter is really driven",
+   "count": 12
+  },
+  {
+   "key": "ENG",
+   "name": "Engines — the answers that reach the screen",
+   "count": 3
   }
  ],
  "cases": [
@@ -3290,25 +3300,33 @@
    "module_key": "RULE",
    "module_name": "The standards we declared — kept, or not",
    "intro": "Nine rules the product says it follows. Each case checks the PROMISE a person can see, not the mechanism underneath — a guard proves the grant and the header; only a person can tell whether the thing the rule exists to prevent actually failed to happen.",
-   "title": "ECMA-402 — the READER groups the number, the currency sets the decimals",
-   "priority": "Medium",
-   "pre": "⚠️ Best seen on an Indian shop quoting a foreign currency.",
+   "title": "ECMA-402 — the CURRENCY groups the amount, not the reader",
+   "priority": "High",
+   "pre": "Any shop. Best seen on an Indian shop that also quotes a foreign currency.",
    "data": "A price over ten lakh — 1234567.50.",
    "steps": [
     [
-     "Look at a large rupee figure on any screen.",
-     "⭐ Indian grouping: 12,34,567.50 — two-two-three, not 1,234,567.50."
+     "Look at a large RUPEE figure on any screen.",
+     "₹12,34,567.50 — lakh grouping, which is how rupees are written."
     ],
     [
-     "Now look at a large figure in a FOREIGN currency on the same shop.",
-     "⭐ STILL Indian grouping, with the foreign symbol. That is correct, not a bug."
+     "Now look at the same size figure in DOLLARS.",
+     "⭐ $1,234,567.50 — three-three-three. NOT $12,34,567.50."
     ],
     [
-     "Check the number of decimals on each.",
-     "That follows the CURRENCY — two for most, none for JPY, three for KWD."
+     "Check a euro or a dirham figure.",
+     "Also three-three-three."
+    ],
+    [
+     "Check the DECIMALS on each.",
+     "Those follow the currency too — two for most, none for JPY, three for KWD."
+    ],
+    [
+     "Switch the interface language, then look again.",
+     "⚠ The figures are UNCHANGED. Labels and dates follow the reader; the amount does not."
     ]
    ],
-   "note": "⭐⭐ Two different things decide two different parts of one number, and mixing them up is the commonest formatting bug there is. A shop shows money in ITS OWN grouping whatever currency it quotes — an Indian shop quoting dollars writes $12,34,567.50 and that is right. ⚠️ Asserted by a guard too, precisely so that nobody \"fixes\" the grouping to match the currency and breaks every Indian bill.",
+   "note": "⚠⚠ THIS CASE ASSERTED THE OPPOSITE UNTIL 2026-09-11 AND WAS WRONG. Athi: *\"an Indian shop quoting $ cannot use the Indian standard — everyone understands currency standard globally, but not the Indian standard\"*, and *\"Indian standard is for Indian rupees only\"*. ⭐ The distinction the old rule collapsed is that AN AMOUNT OF MONEY IS CONTENT, NOT PRESENTATION: a chit travels to a counterparty whose locale we cannot know, and the figure is the thing being sent. ₹12,34,567.50 is how rupees are written to anybody anywhere; $12,34,567.50 is how dollars are written to nobody at all. ⚠ PKR, BDT, LKR and NPR are conventionally lakh-grouped too and are NOT in the table, because that is not verified — a guessed convention on somebody's invoice is worse than the plain one.",
    "layer": null
   },
   {
@@ -3403,6 +3421,456 @@
     ]
    ],
    "note": "⚠️⚠️ HALF A COMPLETION REPORT IS JUDGEMENT and no database holds any of it. A generator that fills those headings with plausible prose produces a document that LOOKS signed off and is not — read by people who were not in the room and cannot tell invented text from evidence. ⭐ 29119-3 is the CURRENT standard; IEEE 829 is the name most people reach for and was withdrawn in 2013.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-01",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "The product list is walked with the arrows, and the marked row is the one that acts",
+   "priority": "High",
+   "pre": "Counter on Sell, with more than a screenful of products.",
+   "data": "—",
+   "steps": [
+    [
+     "Press Tab.",
+     "The mark moves to the product list. A message says so."
+    ],
+    [
+     "Press ↓ three times.",
+     "The mark moves down three PRODUCTS — not three category chips."
+    ],
+    [
+     "Press ↑ once.",
+     "It moves back up one."
+    ],
+    [
+     "Press Enter.",
+     "The MARKED product is added — not the first in the list."
+    ]
+   ],
+   "note": "⚠️ The category chips sit before the list in the page, so Tab found them first and the arrows then walked categories while the operator believed they were walking products. Fixed 2026-09-10; this case is what keeps it fixed.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-02",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "Page keys move a screenful; Home and End reach the ends",
+   "priority": "Medium",
+   "pre": "Counter on Sell, list focused (press Tab first), more than two screenfuls of products.",
+   "data": "—",
+   "steps": [
+    [
+     "Press PageDown.",
+     "The mark jumps roughly a screenful down, and the list scrolls to follow it."
+    ],
+    [
+     "Press PageUp.",
+     "Back up by the same amount."
+    ],
+    [
+     "Press End.",
+     "The mark goes to the LAST product in the list."
+    ],
+    [
+     "Press Home.",
+     "Back to the first."
+    ],
+    [
+     "At the very top, press PageUp again.",
+     "It stays at the first row — it does not wrap to the bottom or go blank."
+    ]
+   ],
+   "note": "⚠️ The edges are the half that breaks: a page key that runs past the end of the list either wraps (so the operator loses their place) or lands on nothing (so the next Enter adds nothing, silently). Both read as \"it did not work\" and neither is reported precisely.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-03",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "Ctrl+↑ and Ctrl+↓ change the quantity of the line in action",
+   "priority": "High",
+   "pre": "Counter on Sell, at least two different products on the bill.",
+   "data": "—",
+   "steps": [
+    [
+     "Tap the NAME of the FIRST line on the bill.",
+     "That line is marked as the line in action."
+    ],
+    [
+     "Press Ctrl+↑.",
+     "The quantity of THAT line rises — not the last line added."
+    ],
+    [
+     "Press Ctrl+↓ twice.",
+     "It falls by two."
+    ],
+    [
+     "Press Ctrl+↓ until the quantity would reach zero.",
+     "The line is removed, or it stops at one — whichever it does, it does not go negative."
+    ]
+   ],
+   "note": "⭐ Athi, 2026-09-10: *\"in the cart, when the product selected, the list also points to the product in the middle.\"* The mark and the arrows have to agree about which line is in action, or a quantity change lands on the wrong product and the customer is charged for it.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-04",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "F2 gets you back to the search box from anywhere",
+   "priority": "High",
+   "pre": "Counter on Sell.",
+   "data": "—",
+   "steps": [
+    [
+     "Add a product so the search box has cleared.",
+     "The box is empty."
+    ],
+    [
+     "Click somewhere else entirely — the bill, a total.",
+     "Focus is away from the search box."
+    ],
+    [
+     "Press F2.",
+     "The cursor is in the search box, ready to type or scan."
+    ],
+    [
+     "Type or scan immediately.",
+     "The characters land in the box — nothing is lost."
+    ]
+   ],
+   "note": "⭐ This is the key a scanner depends on. A barcode scanner types very fast into whatever has focus; if focus is anywhere but the search box, the code lands in the wrong field or nowhere at all, and the operator sees a product that did not scan rather than a focus problem.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-05",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "F4 re-reads the shop without losing the bill in progress",
+   "priority": "High",
+   "pre": "Counter on Sell, with two or three lines on an UNFINISHED bill.",
+   "data": "—",
+   "steps": [
+    [
+     "Note what is on the bill.",
+     "Two or three lines."
+    ],
+    [
+     "Press F4.",
+     "The counter re-reads the shop — prices and products refresh."
+    ],
+    [
+     "Look at the bill.",
+     "⭐ STILL THERE. Every line, every quantity, unchanged."
+    ]
+   ],
+   "note": "⚠️⚠️ A refresh that clears a half-built bill is the single most expensive small bug a counter can have: the customer is standing there and the operator has to start again from memory. The whole point of the key is to pick up a price change mid-queue, which is worthless if it costs the bill.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-06",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "F6 parks a bill and you can get it back",
+   "priority": "High",
+   "pre": "Counter on Sell, a bill with lines on it. ⚠️ SELL MODE ONLY.",
+   "data": "—",
+   "steps": [
+    [
+     "Build a bill with two lines.",
+     "On screen."
+    ],
+    [
+     "Press F6.",
+     "The bill is parked. The screen clears for the next customer."
+    ],
+    [
+     "Serve another customer and finish their bill.",
+     "Normal."
+    ],
+    [
+     "Bring the parked bill back.",
+     "Both lines are there, with their quantities."
+    ],
+    [
+     "Now press F6 in RECEIVE mode.",
+     "Nothing happens — parking is a sell-mode idea."
+    ]
+   ],
+   "note": "⭐ Parking is what a queue needs: the customer who forgot something steps aside and the queue keeps moving. ⚠️ A parked bill that cannot be brought back is worse than no parking at all, because the operator has already told the customer it is safe.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-07",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "F7 shows who is at the counter",
+   "priority": "Medium",
+   "pre": "Counter open.",
+   "data": "—",
+   "steps": [
+    [
+     "Press F7.",
+     "Who is on the counter is shown."
+    ],
+    [
+     "Press Escape.",
+     "It closes and the bill is untouched."
+    ]
+   ],
+   "note": "Small, and on the list because a key nobody has written down is a key nobody notices breaking.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-08",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "F8 shows the bills — and in despatch mode it does something else",
+   "priority": "Medium",
+   "pre": "Counter open. ⚠️ Do this in BOTH sell and despatch mode.",
+   "data": "—",
+   "steps": [
+    [
+     "In SELL mode, press F8.",
+     "The bills list opens — today's bills and anything waiting to be sent."
+    ],
+    [
+     "Read a waiting bill.",
+     "It shows its number and, if sending failed, the reason."
+    ],
+    [
+     "Close it, switch to DESPATCH mode, press F8.",
+     "The carton dialog — NOT the bills list."
+    ]
+   ],
+   "note": "⚠️ One key, two meanings, decided by mode. That is a legitimate design on a counter with three modes and limited keys — and it is exactly the kind of thing that gets \"simplified\" by somebody who only ever tested in sell mode.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-09",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "F9 finishes whatever you are doing, in every mode",
+   "priority": "High",
+   "pre": "Counter open. ⚠️ Do this in ALL THREE modes.",
+   "data": "—",
+   "steps": [
+    [
+     "In SELL mode with a bill on screen, press F9.",
+     "The bill is finished — payment, then the slip."
+    ],
+    [
+     "In RECEIVE mode with a goods receipt open, press F9.",
+     "The receipt is confirmed."
+    ],
+    [
+     "In DESPATCH mode with a despatch open, press F9.",
+     "The despatch is confirmed."
+    ],
+    [
+     "In SELL mode with an EMPTY bill, press F9.",
+     "Nothing is created — it does not make a bill for nothing."
+    ]
+   ],
+   "note": "⭐⭐ F9 is the commit key, and the same finger does all three jobs. ⚠️ The last step is the one that matters: a commit key that fires on an empty document puts a zero-value voucher in the books, and nobody notices until the series has a hole in it.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-10",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "F10 closes the day, and asks before it does",
+   "priority": "High",
+   "pre": "Counter on Sell, with some bills done today. ⚠️ SELL MODE ONLY.",
+   "data": "—",
+   "steps": [
+    [
+     "Press F10.",
+     "Day close begins — it asks about the cash drawer."
+    ],
+    [
+     "Read what it says.",
+     "It states what it counted and what it expected."
+    ],
+    [
+     "Cancel.",
+     "Nothing is closed. The day continues."
+    ]
+   ],
+   "note": "⚠️ The only irreversible key on the counter, and the one most likely to be hit by accident reaching for F9. It must ASK. A day closed by a mis-key is a day of reconciliation.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-11",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "Escape backs out one layer at a time and never loses the bill",
+   "priority": "High",
+   "pre": "Counter on Sell with a bill in progress.",
+   "data": "—",
+   "steps": [
+    [
+     "Open the ☰ menu, then press Escape.",
+     "The menu closes. The bill is untouched."
+    ],
+    [
+     "Open Settings, then press Escape.",
+     "Settings closes. The bill is untouched."
+    ],
+    [
+     "With nothing open, press Escape.",
+     "Nothing is lost. It does not clear the bill."
+    ]
+   ],
+   "note": "⚠️ Escape is pressed reflexively when something looks wrong, which means it is pressed most often at exactly the moment the operator can least afford to lose the bill.",
+   "layer": null
+  },
+  {
+   "case_key": "KEY-12",
+   "module_key": "KEY",
+   "module_name": "Keyboard — how the counter is really driven",
+   "intro": "Fourteen of twenty keys had nothing naming them anywhere. Each case says the mode it applies in, because several keys do different things in sell, receive and despatch — and a case that omits the mode gets marked Fail by somebody standing in the wrong one.",
+   "title": "In the app: ? shows the keys, / searches, c composes",
+   "priority": "Medium",
+   "pre": "Signed in to the app (not the counter).",
+   "data": "—",
+   "steps": [
+    [
+     "Press ?",
+     "An overlay lists the keyboard shortcuts."
+    ],
+    [
+     "Press Escape, then press /",
+     "The cursor lands in the search box on whatever screen you are on."
+    ],
+    [
+     "Press Escape, then press c",
+     "Compose opens."
+    ],
+    [
+     "Click into any text box and type \"c\".",
+     "⭐ The letter \"c\" appears. It does NOT open Compose."
+    ]
+   ],
+   "note": "⚠️⚠️ THE LAST STEP IS THE WHOLE CASE. A single-letter shortcut that fires while somebody is typing is not a shortcut, it is a trap — the name of a supplier with a \"c\" in it would open Compose mid-word. Single-letter keys must be inert inside an input, and that is invisible until it is not.",
+   "layer": null
+  },
+  {
+   "case_key": "ENG-01",
+   "module_key": "ENG",
+   "module_name": "Engines — the answers that reach the screen",
+   "intro": "Three engines with no case. ⚠️ One of them (numerals) has no guard either, which is the more serious half: these cases check that the right answer reached the screen, not that the arithmetic is right.",
+   "title": "Numerals — a spoken or typed quantity becomes the right number",
+   "priority": "High",
+   "pre": "The counter, on Sell. Quantity entry by typing (e.g. \"3*\" before a product) or by speech if enabled.",
+   "data": "A product priced per kilo.",
+   "steps": [
+    [
+     "Enter a quantity of 3 the ordinary way.",
+     "Three on the line."
+    ],
+    [
+     "Enter \"10\" as a quantity.",
+     "Ten — not one, not five."
+    ],
+    [
+     "If speech is enabled, say \"two kilo\".",
+     "Two. Not one."
+    ],
+    [
+     "If Tamil is enabled, try \"pathu\" (ten).",
+     "⭐ Ten. This is the exact word that once came back as 5."
+    ],
+    [
+     "Try \"oru\" (one) followed by another numeral — e.g. \"oru pathu\".",
+     "⚠️ It does NOT read as 1. \"oru\" is one ONLY when no other numeral follows it."
+    ]
+   ],
+   "note": "⚠️⚠️ NUMERALS ARE A CLOSED CLASS — about forty tokens per language, finite, and then done forever. That is why it is a table and not a prompt: asking a model to be reliable about the closed half is paying per call, forever, for something a table settles once. ⭐ AND lib/numerals.js CURRENTLY HAS NO UNIT TEST — a table one typo away from halving an order, with nothing checking it. That guard matters more than this case does.",
+   "layer": null
+  },
+  {
+   "case_key": "ENG-02",
+   "module_key": "ENG",
+   "module_name": "Engines — the answers that reach the screen",
+   "intro": "Three engines with no case. ⚠️ One of them (numerals) has no guard either, which is the more serious half: these cases check that the right answer reached the screen, not that the arithmetic is right.",
+   "title": "Lot fields — what a consignment must carry, asked once and kept",
+   "priority": "Medium",
+   "pre": "Counter in RECEIVE mode, recording a goods receipt for a product that tracks lots or batches.",
+   "data": "A product with a batch or expiry requirement.",
+   "steps": [
+    [
+     "Start a goods receipt for that product.",
+     "The lot fields are asked for — batch, expiry, whatever it declares."
+    ],
+    [
+     "Leave a required one blank and try to confirm.",
+     "It refuses and says which field."
+    ],
+    [
+     "Fill them in and confirm.",
+     "The receipt is recorded."
+    ],
+    [
+     "Find that receipt again.",
+     "⭐ The lot details are still on it — they were not asked for and then dropped."
+    ],
+    [
+     "Now do the same for a product that does NOT track lots.",
+     "No lot fields are asked for at all."
+    ]
+   ],
+   "note": "⭐ The arithmetic and the field rules are already covered by tests/lotfields.test.js — this is the human half: that the fields appear for the products that need them, refuse to be skipped, and survive onto the record. ⚠️ A field asked for and then discarded is worse than one never asked, because somebody typed it believing it mattered.",
+   "layer": null
+  },
+  {
+   "case_key": "ENG-03",
+   "module_key": "ENG",
+   "module_name": "Engines — the answers that reach the screen",
+   "intro": "Three engines with no case. ⚠️ One of them (numerals) has no guard either, which is the more serious half: these cases check that the right answer reached the screen, not that the arithmetic is right.",
+   "title": "The payment QR encodes this shop, this amount, this bill",
+   "priority": "High",
+   "pre": "⚠️ NEEDS A SHOP WITH A PAYEE ADDRESS CONFIGURED (e.g. a UPI id). Tally Test Shop has none — payWays() correctly offers only Cash and Card there, which is not a bug.",
+   "data": "A bill with a known total.",
+   "steps": [
+    [
+     "Build a bill with a memorable total.",
+     "On screen."
+    ],
+    [
+     "Choose the QR payment method.",
+     "A QR code is shown."
+    ],
+    [
+     "Scan it with a phone.",
+     "The payment app opens with the shop as payee."
+    ],
+    [
+     "Read the NAME the app shows.",
+     "It is the shop's name — the one the checks list warned you it would show."
+    ],
+    [
+     "Read the AMOUNT the app shows.",
+     "⭐ Exactly the bill total. Not the subtotal, not the pre-offer figure."
+    ],
+    [
+     "Cancel without paying, and check the bill.",
+     "Unchanged and unpaid — showing a code is not recording a payment."
+    ]
+   ],
+   "note": "⚠️ THE LIBRARY IS NOT OURS — qr.js is qrcode-generator (Kazuhiko Arase, MIT), and testing its internals would be testing somebody else's code. What is ours is WHAT WE ENCODE: the payee, the amount and the reference. ⭐ An amount that is a rupee out, or a stale payee, is money going to the wrong place or the wrong sum arriving — and the customer finds out, not the shop.",
    "layer": null
   }
  ]

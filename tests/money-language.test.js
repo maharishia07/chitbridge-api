@@ -55,17 +55,46 @@ it('⭐⭐⭐ each currency gets ITS OWN number of decimals', () => {
   });
 });
 
-it('⭐⭐ THE READER GROUPS, THE CURRENCY DOES NOT', () => {
+it('⭐⭐⭐ THE CURRENCY GROUPS THE AMOUNT — the reader groups everything else', () => {
   /**
-   * ⭐ A shop shows money in ITS OWN grouping whatever currency it is quoting — an Indian shop quoting dollars
-   * writes $12,34,567.50, and that is correct, not a bug. The currency chooses the symbol and the decimals; the
-   * locale chooses the separators. ECMA-402's own model, and the reason we do not hand-roll it.
-   * ⚠️ Asserted so that nobody "fixes" the grouping to match the currency and breaks every Indian bill.
+   * ⚠⚠ THIS ASSERTION WAS THE EXACT OPPOSITE UNTIL 2026-09-11, and it was wrong. Athi, twice:
+   *
+   *   *"An Indian shop quoting $ cannot use the Indian standard — it has to be the currency standard. Everyone
+   *    understands currency standard globally, but not the Indian standard."*
+   *   *"Currency has to follow currency standard; Indian standard is for Indian rupees only."*
+   *
+   * ⭐⭐ THE DISTINCTION THE OLD RULE COLLAPSED: AN AMOUNT OF MONEY IS CONTENT, NOT PRESENTATION. A chit travels
+   * to a counterparty whose locale we cannot know, and the figure is the thing being SENT. ₹12,34,567.50 is how
+   * rupees are written to anybody anywhere; $12,34,567.50 is how dollars are written to nobody at all.
+   *
+   * ⚠ The reader still decides the interface — language, dates, sort order, direction. This is about the shape
+   * of a NUMBER and nothing else.
    */
-  const inr = L.money(1234567.5, 'INR'), usd = L.money(1234567.5, 'USD');
-  const groupsOf = (s) => s.replace(/[^\d,.]/g, '').replace(/\.\d+$/, '');
-  assert.strictEqual(groupsOf(inr), groupsOf(usd),
-    'the grouping changed with the currency — it must come from the reader, not the money');
+  const inr = L.money(1234567.5, 'INR');
+  const usd = L.money(1234567.5, 'USD');
+  assert.ok(/12,34,567/.test(inr), 'the rupee is no longer written in lakhs: ' + inr);
+  assert.ok(/1,234,567/.test(usd), 'the dollar is not written in the international grouping: ' + usd);
+  assert.notStrictEqual(
+    inr.replace(/[^\d,.]/g, ''), usd.replace(/[^\d,.]/g, ''),
+    'the two currencies group the same way — the amount is following the reader again');
+});
+
+it('⚠️ a currency we have NOT checked gets the international grouping, never a guessed one', () => {
+  /**
+   * ⚠ PKR, BDT, LKR and NPR are conventionally lakh-grouped too — and that is NOT verified, so they are
+   * deliberately absent from the table and get three-three-three. A guessed convention that puts lakhs on
+   * somebody's invoice is worse than the plain one, and the same discipline lib/docnumber.js uses for numbering.
+   */
+  ['USD', 'AED', 'EUR', 'GBP', 'PKR', 'LKR', 'BDT'].forEach((c) => {
+    const s2 = L.money(1234567.5, c);
+    /* ⚠️ THE SHAPE, NOT THE DIGITS. PKR has ZERO decimals, so the amount rounds to 1,234,568 — my first
+       version matched the literal 1,234,567 and failed on a currency that was behaving perfectly. The claim
+       is about GROUPING; asserting the digits smuggled in a claim about decimals as well. */
+    assert.ok(/\d{1,3}(,\d{3})+/.test(s2) && !/\d,\d\d,\d{3}/.test(s2),
+      c + ' is not grouped three-three-three: ' + s2);
+  });
+  /* and the one that IS checked stays checked */
+  assert.ok(/12,34,567/.test(L.money(1234567.5, 'INR')));
 });
 
 it('⚠️ an unknown currency code still prints, rather than throwing mid-sale', () => {
