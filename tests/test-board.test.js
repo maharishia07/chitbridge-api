@@ -192,4 +192,61 @@ it('⭐⭐⭐ a case cites its clause AT A VERSION, and stale is derived from th
     'the stale path destroys evidence — it must only report');
 });
 
+console.log('— who tested it —');
+
+it('⭐⭐⭐ the IDENTITY comes from the token and cannot be sent in the body', () => {
+  /**
+   * Athi, 2026-09-11: *"do we know who is testing? The entity name we can pick it up? Anything else as a tester
+   * name, do we need it?"* — both, and they answer different questions.
+   *
+   * `tested_by` is the identity_id off the JWT: unforgeable, and the actual evidence of which login wrote the
+   * row. `tester_name` is a courtesy label for who was at the keyboard, which only differs — and only matters —
+   * when one login is shared, which is exactly the case he was describing.
+   *
+   * ⚠️ THE GUARD IS THAT THE FIRST NEVER COMES FROM THE SECOND. A caller who could post `tested_by` could
+   * attribute a result to somebody else, and a test board whose authorship can be typed in is not a record.
+  */
+  assert.ok(/function testerOf\(req\)[\s\S]{0,240}req\.identity/.test(route),
+    'testerOf no longer reads the identity off the request');
+  assert.ok(!/tested_by[^,)]*req\.body|r\.tested_by|body\.tested_by/.test(route),
+    'tested_by can be supplied by the caller — authorship would be forgeable');
+  /* the name may come from the row; the id may not */
+  assert.ok(/r\.tester_name \|\| who\.name/.test(route),
+    'the tester label no longer falls back to the login name when nobody typed one');
+});
+
+it('⚠️ the panel and the board both keep the tester name on the DEVICE, not on the entity', () => {
+  /* ⚠️ It is a property of who is sitting at this machine, not of the business. Storing it on the entity would
+     make one person's name appear against another person's testing on a different device. */
+  assert.ok(/cb_tester/.test(panel), 'the test panel no longer remembers who is testing');
+  assert.ok(/cb_tester/.test(board), 'the board no longer remembers who is testing');
+});
+
+console.log('— the panel has to be movable, or it covers the thing being tested —');
+
+it('⭐⭐ the panel asks makeMovable for minimise AND a body to fit', () => {
+  /**
+   * Athi: *"if we provide option like wider, taller, and movable, minimisable, then that would be great."*
+   * Every one of those already existed in makeMovable; the panel simply was not asking for them.
+   *
+   * ⚠️ `fit` is the one that is easy to leave out and looks broken without: dragging the corner taller grows the
+   * FRAME and not the list, so you get a band of empty card under the cases — a resize that appears to do
+   * nothing, which reads as a bug rather than a missing option.
+   */
+  assert.ok(/minimise: true/.test(panel), 'the panel cannot be minimised');
+  assert.ok(/fit: '#cbtestbody'/.test(panel), 'a taller panel would grow the frame and not the list');
+  /* ⚠️ minimise collapses every child except the one classed `mhd` — with a single child it would collapse to
+     an empty box, which is a close button with extra steps. */
+  assert.ok(/id=\\"cbtesthead\\" class=\\"mhd\\"/.test(panel) || /cbtesthead[^\n]*mhd/.test(panel),
+    'the panel header is not marked mhd, so minimising would hide it and leave nothing to restore from');
+});
+
+it('⚠️ a size preset writes makeMovable\'s OWN saved shape, not a second one', () => {
+  /* ⚠️ Two stores for one panel disagree the first time somebody picks a preset and then drags the corner, and
+     the panel jumps to the stale one on next open. */
+  assert.ok(/localStorage\.setItem\('cb_testpanel'/.test(panel),
+    'the size presets no longer persist through the same key makeMovable restores from');
+  assert.ok(/TEST_SIZES/.test(panel), 'the size presets are gone');
+});
+
 console.log('\n  ' + pass + ' checks\n');
