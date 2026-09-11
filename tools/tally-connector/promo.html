@@ -180,6 +180,9 @@
 
 <script src="/engine/offers.js"></script>
 <script src="/engine/tax.js"></script>
+<!-- ⭐ THE MONEY RENDERER. The screen showed rupees whatever the shop dealt in because it never loaded this —
+     the counter has had it since the locale work; the screen a CUSTOMER reads was the one left out. -->
+<script src="/engine/locale.js"></script>
 <script>
 /* ═══ 0 · the shop, read exactly as the counter reads it ══════════════════════════════════════════════════════ */
 var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
@@ -388,8 +391,25 @@ function hourBand(){ var h = new Date().getHours();
   for (var i = 0; i < HOURS.length; i++) if (h >= HOURS[i].from && h < HOURS[i].to) return HOURS[i];
   return HOURS[0]; }
 
-function money(n){ var v = Number(n) || 0;
-  return '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+/**
+ * ── ⚠️⚠️ THE SHOP SCREEN WAS PRINTING RUPEES WHATEVER THE SHOP DEALT IN ──────────────────────────────────────
+ *
+ * It hard-coded '₹' and en-IN, while the very next function already reads `S.shop.currency` to ask the offer
+ * engine. So a Dubai shop showed dirham prices with a rupee sign — on the one screen a customer reads with no
+ * shopkeeper beside it to correct it. And it never loaded the locale engine at all, which is how it went unseen.
+ *
+ * ⭐ CBLocale.money is the platform's single renderer: it carries the shop's own currency, groups by the reader's
+ * locale (India is 2-2-3, not 3-3-3), gives each currency its right number of decimals — JPY none, KWD three —
+ * and strips the LRM/RLM marks an Arabic format inserts, which had already scrambled a price once.
+ *
+ * ⚠️ THE FALLBACK KEEPS THE OLD SHAPE BUT NOT THE OLD SYMBOL. A screen whose locale engine failed to load must
+ * still show a number, and the currency CODE is the honest thing to put in front of it — a wrong symbol is a
+ * wrong price, while a code beside a number is merely plain.
+ */
+function money(n){
+  var v = Number(n) || 0, cur = (S && S.shop && S.shop.currency) || 'INR';
+  if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(v, cur); } catch (_) {} }
+  return cur + ' ' + v.toLocaleString(undefined, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
 function live(){ return ((S && S.items) || []).filter(function(i){ return i.avail !== 'unavailable' && Number(i.price) > 0; }); }
 
 /* the offer engine's own sentence for a product — never a second opinion about what an offer says */

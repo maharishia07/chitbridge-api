@@ -1077,4 +1077,63 @@ it('⭐⭐ both counter hosts can be told to send now', () => {
     'sendNow assumes the host has a drain again — a missing capability must be said, not thrown');
 });
 
+/**
+ * ── ⭐⭐⭐ NO SCREEN PRINTS A CURRENCY SYMBOL OF ITS OWN ───────────────────────────────────────────────────────
+ *
+ * Athi, observation 5, finding 8: *"the Indian format retained, need to check for other currency formats."*
+ *
+ * ⚠️⚠️ THE SHOP SCREEN WAS PRINTING RUPEES WHATEVER THE SHOP DEALT IN. promo.html hard-coded '₹' and en-IN in its
+ * own money(), two lines above code that already read `S.shop.currency` for the offer engine — and it never even
+ * loaded the locale engine. A Dubai shop showed dirham prices with a rupee sign, on the ONE screen a customer
+ * reads with no shopkeeper beside it to correct it.
+ *
+ * ⭐ A WRONG SYMBOL IS A WRONG PRICE, not a cosmetic slip — and it is the kind of thing that is invisible to
+ * everyone who tests in the currency it happens to be hard-coded to. Which is all of us.
+ *
+ * ⚠️ COMMENTS ARE FINE and there are dozens: they explain real bugs in real rupees. What must never appear is a
+ * symbol inside a string the screen emits. CBLocale.money() carries the shop's currency, the reader's grouping
+ * (India is 2-2-3), the right decimals per currency (JPY none, KWD three) and strips the Arabic bidi marks.
+ */
+it('⭐⭐⭐ no shipped screen prints a currency symbol of its own', () => {
+  /**
+   * ⚠️ '$' IS DELIBERATELY NOT IN THIS LIST. In JavaScript it is the end-of-string anchor, so scanning for it
+   * flags every regex in the file — this guard's first run reported two, both anchors. A check with a false
+   * positive rate gets muted, and a muted check protects nothing; the unambiguous symbols catch the same class
+   * of fault, because a screen that hard-codes one currency almost never hard-codes only the dollar.
+   */
+  const SIGNS = ['₹', '£', '€', '¥', '₨', '﷼'];
+  const pages = [
+    ['the counter', path.join(API, 'tools', 'tally-connector', 'till.html')],
+    ['the shop screen', path.join(API, 'tools', 'tally-connector', 'promo.html')],
+  ];
+  const bad = [];
+  pages.forEach(([name, file]) => {
+    if (!fs.existsSync(file)) return;
+    fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+      const t = line.trim();
+      if (/^(\*|\/\*|\/\/|<!--)/.test(t)) return;                 /* a comment may say ₹ all it likes */
+      SIGNS.forEach((sign) => {
+        if (line.indexOf(sign) < 0) return;
+        /* only a sign INSIDE a quoted string reaches a screen */
+        if (new RegExp("['\"`][^'\"`]*" + sign.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(line)) {
+          bad.push(name + ' line ' + (i + 1) + ': ' + t.slice(0, 90));
+        }
+      });
+    });
+  });
+  assert.deepStrictEqual(bad, [],
+    'a screen prints its own currency symbol — it will be wrong for every shop that does not use it:\n       '
+    + bad.join('\n       '));
+});
+
+/** ⭐ and the screen a CUSTOMER reads must actually have the renderer — it did not, which is how it went unnoticed */
+it('⭐⭐ the shop screen loads the money renderer and asks it for the shop currency', () => {
+  const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
+  assert.ok(/engine\/locale\.js/.test(promo),
+    'the shop screen does not load CBLocale, so every price falls back to a guess');
+  const fn = promo.slice(promo.indexOf('function money(n){'), promo.indexOf('function live()'));
+  assert.ok(/S\.shop\.currency/.test(fn), "the shop screen's money() does not read the shop's currency");
+  assert.ok(/CBLocale\.money/.test(fn), 'the shop screen formats money itself instead of through the one renderer');
+});
+
 console.log(pass + ' checks');
