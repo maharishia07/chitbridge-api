@@ -232,4 +232,34 @@ it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well
   }
 });
 
+it('⭐⭐ a TESTING key may say what happened, and may not decide what should happen', () => {
+  /**
+   * Athi, 2026-09-11: *"can we connect to some other system if required?"* The formats were already adopted ones
+   * — JUnit XML in, Gherkin both ways — but there was no SCOPE, so the only way in was a person's token. That
+   * means pasting a human credential into a build script, which is not an integration; it is a person standing
+   * in for one.
+   *
+   * ⚠️⚠️ AND THE LINE IS WHERE JUDGEMENT STARTS. A build server needs to know what to run and to report what
+   * happened. It must not be able to author a case, import a spec clause, or seed a board — those are acts of
+   * judgement, and a key on a CI box is a credential sitting in a file somebody can read.
+   */
+  [['GET', '/api/testing/cases'],
+   ['GET', '/api/testing/results'],
+   ['GET', '/api/testing/coverage'],
+   ['GET', '/api/testing/stale'],
+   ['GET', '/api/testing/cases/gherkin'],
+   ['POST', '/api/testing/results'],
+   ['POST', '/api/testing/results/junit']]
+    .forEach(([m, u]) => assert.ok(may(['testing'], m, u), 'a testing key cannot reach ' + m + ' ' + u));
+
+  [['POST', '/api/testing/cases/import'],
+   ['POST', '/api/testing/cases/seed'],
+   ['POST', '/api/testing/cases/gherkin'],
+   ['POST', '/api/chits/send'],
+   ['GET', '/api/products'],
+   ['POST', '/api/keys']]
+    .forEach(([m, u]) => assert.ok(!may(['testing'], m, u),
+      'a testing key can reach ' + m + ' ' + u + ' — a CI credential must not author or seed anything'));
+});
+
 console.log(pass + ' checks');

@@ -186,6 +186,22 @@ Object.defineProperty(auth, 'SCOPE_NAMES', { get: function(){ return Object.keys
 
 /** what each scope opens — method + path; a route not listed here is closed to keys whatever else they pass */
 const KEY_ROUTES = {
+  /**
+   * ⭐⭐ TESTING — so a CI server can post its own results without a person's login.
+   *
+   * Athi, 2026-09-11: *"can we connect to some other system if required?"* The formats were already the
+   * adopted ones (JUnit XML in, Gherkin both ways), but there was no SCOPE — so the only way in was a
+   * human's token, which means a person pasting a credential into a build script. That is not an
+   * integration; it is a person standing in for one.
+   *
+   * ⚠️ IT MAY WRITE RESULTS AND READ CASES, AND NOTHING ELSE. A build server needs to know what to run and
+   * to say what happened. It does not need to author a case, import a spec clause, or seed a board —
+   * those are acts of judgement, and a key on a CI box is a credential in a file somebody can read.
+   * ⚠ Deliberately NOT here: POST /cases/import, POST /cases/seed, POST /cases/gherkin.
+   */
+  testing:   [['GET', /^\/api\/testing\/(cases|results|runs|coverage|stale|vocabulary)(\?|$)/],
+              ['GET', /^\/api\/testing\/cases\/gherkin(\?|$)/],
+              ['POST', /^\/api\/testing\/results(\/junit)?$/]],
   offers:    [['*', /^\/api\/offers(\/|$)/]],
   pricing:   [['*', /^\/api\/pricing(\/|$)/]],
   tax:       [['POST', /^\/api\/tax\/(rate|compute)$/]],
