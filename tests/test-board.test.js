@@ -516,6 +516,28 @@ it('⚠️⚠️ every field the builder emits survives the import', () => {
     'the builder emits these and importCases never copies them, so they vanish at the door: ' + dropped.join(', '));
 });
 
+it('⚠️⚠️ no render function is defined and never called', () => {
+  /**
+   * ⭐⭐⭐ THIS SESSION FOUND THE SAME FAULT FOUR TIMES, and each one existed, looked finished, and did nothing:
+   *   · the spec panel — an overlay that appeared and changed nothing, Athi: "I guess it is a dead function"
+   *   · `seed()` — rendered ONLY inside the empty-board message, so the loader vanished once it had worked
+   *   · `matrixHTML()` — left defined after the pivot replaced it
+   *   · `hat-gate.js` — which I wrongly CALLED dead, because my grep did not cover middleware/
+   *
+   * ⚠️ JavaScript never mentions an uncalled function, so it survives every review that reads code rather than
+   * runs it. This is the cheapest possible check for the class: anything named *HTML() must be called.
+   */
+  const defined = [...board.matchAll(/function\s+(\w+HTML)\s*\(/g)].map((m) => m[1]);
+  assert.ok(defined.length > 3, 'found only ' + defined.length + ' render functions — the naming has changed');
+  const dead = defined.filter((fn) => {
+    /* a call is the name followed by "(" somewhere OTHER than its own declaration */
+    const uses = (board.match(new RegExp('\\b' + fn + '\\s*\\(', 'g')) || []).length;
+    return uses < 2;
+  });
+  assert.deepStrictEqual(dead, [],
+    'these build HTML and nothing calls them — they look like features and are not: ' + dead.join(', '));
+});
+
 it('⚠️ support files are on the board but are never called tests', () => {
   /* ⚠️ A fixture counted as coverage is the cheapest way to inflate a number nobody meant to inflate. */
   const sup = DOC.cases.filter((c) => c.test_type === 'support');
