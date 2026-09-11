@@ -4840,7 +4840,7 @@
   {
    "case_key": "chitbridge-api/scripts/_proof.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "_proof.js",
    "claim": null,
@@ -4863,7 +4863,7 @@
   {
    "case_key": "chitbridge-api/scripts/akums-demo.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "akums-demo.js",
    "claim": null,
@@ -4885,7 +4885,7 @@
   {
    "case_key": "chitbridge-api/scripts/catalogue-persist.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "proves Beta's catalogue PERSISTS by REFERENCE + commercials (b75 catalogue_adoption).",
    "claim": "proves Beta's catalogue PERSISTS by REFERENCE + commercials (b75 catalogue_adoption).",
@@ -4907,7 +4907,7 @@
   {
    "case_key": "chitbridge-api/scripts/check-db-role.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "check-db-role.js",
    "claim": null,
@@ -4927,7 +4927,7 @@
   {
    "case_key": "chitbridge-api/scripts/check-screw-message.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "did b136 fix the line that lost three facts?",
    "claim": "did b136 fix the line that lost three facts?",
@@ -4949,7 +4949,7 @@
   {
    "case_key": "chitbridge-api/scripts/cleanup-test-data.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "tidy up after the proof scripts.",
    "claim": "tidy up after the proof scripts.",
@@ -4971,7 +4971,7 @@
   {
    "case_key": "chitbridge-api/scripts/close-proof-lines.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "close-proof-lines.js",
    "claim": null,
@@ -4993,7 +4993,7 @@
   {
    "case_key": "chitbridge-api/scripts/conform-check.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "FIRST LIGHT of AI-as-an-actor (bottom-up `ai:conform-verdict@v1` slot).",
    "claim": "FIRST LIGHT of AI-as-an-actor (bottom-up `ai:conform-verdict@v1` slot).",
@@ -5015,7 +5015,7 @@
   {
    "case_key": "chitbridge-api/scripts/container-model.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "STONE 5: container = mutable pointer over immutable versions. Needs b80.",
    "claim": "STONE 5: container = mutable pointer over immutable versions. Needs b80.",
@@ -5037,7 +5037,7 @@
   {
    "case_key": "chitbridge-api/scripts/container-wiring.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "STONE 5 WIRING: catalogue items mirror to containers; the ORDER CHIT freezes the container",
    "claim": "STONE 5 WIRING: catalogue items mirror to containers; the ORDER CHIT freezes the container",
@@ -5059,7 +5059,7 @@
   {
    "case_key": "chitbridge-api/scripts/dedupe-catalogue.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "dedupe-catalogue.js",
    "claim": null,
@@ -5081,7 +5081,7 @@
   {
    "case_key": "chitbridge-api/scripts/demo-lifecycle.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can",
    "claim": "THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can",
@@ -5103,7 +5103,7 @@
   {
    "case_key": "chitbridge-api/scripts/dept-store-demo.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "Athi's departmental store, walked.",
    "claim": "Athi's departmental store, walked.",
@@ -5125,7 +5125,7 @@
   {
    "case_key": "chitbridge-api/scripts/dispute-reads.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "dispute-reads.js",
    "claim": null,
@@ -5147,7 +5147,7 @@
   {
    "case_key": "chitbridge-api/scripts/dispute-scope.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "dispute-scope.js",
    "claim": null,
@@ -5169,7 +5169,7 @@
   {
    "case_key": "chitbridge-api/scripts/erp-handoff.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "6b: on order, CB emits a RECEIPT-ONLY handoff of the order + its governance to the distributor's",
    "claim": "6b: on order, CB emits a RECEIPT-ONLY handoff of the order + its governance to the distributor's",
@@ -5191,7 +5191,7 @@
   {
    "case_key": "chitbridge-api/scripts/gold-demo.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "gold-demo.js",
    "claim": null,
@@ -5213,7 +5213,7 @@
   {
    "case_key": "chitbridge-api/scripts/journey-document-store.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "THE TRAVEL PATH, end to end, against the LIVE API.",
    "claim": "THE TRAVEL PATH, end to end, against the LIVE API.",
@@ -5235,7 +5235,7 @@
   {
    "case_key": "chitbridge-api/scripts/journey-supplier-hop.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "\"I'll call the document from Alpha Timbers; in the supplier of Alpha Timbers I can call",
    "claim": "\"I'll call the document from Alpha Timbers; in the supplier of Alpha Timbers I can call",
@@ -5257,7 +5257,7 @@
   {
    "case_key": "chitbridge-api/scripts/lifecycle-iot.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "lifecycle-iot.js",
    "claim": null,
@@ -5280,7 +5280,7 @@
   {
    "case_key": "chitbridge-api/scripts/make-test-media.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "deterministic test images, generated rather than downloaded.",
    "claim": "deterministic test images, generated rather than downloaded.",
@@ -5300,7 +5300,7 @@
   {
    "case_key": "chitbridge-api/scripts/match.test.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the rule condition matcher, tested purely.",
    "claim": "the rule condition matcher, tested purely.",
@@ -5324,7 +5324,7 @@
   {
    "case_key": "chitbridge-api/scripts/matrix.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "THE CONFORMANCE MATRIX. One store per catalogue type; every one driven end to end.",
    "claim": "THE CONFORMANCE MATRIX. One store per catalogue type; every one driven end to end.",
@@ -5346,7 +5346,7 @@
   {
    "case_key": "chitbridge-api/scripts/measure.test.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the shared measurement helpers, tested purely (no network, no DB).",
    "claim": "the shared measurement helpers, tested purely (no network, no DB).",
@@ -5371,7 +5371,7 @@
   {
    "case_key": "chitbridge-api/scripts/mint-shape.test.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "CHARACTERISATION. Proves lib/mint.js reproduces, byte for byte, what each of the four mint",
    "claim": "CHARACTERISATION. Proves lib/mint.js reproduces, byte for byte, what each of the four mint",
@@ -5395,7 +5395,7 @@
   {
    "case_key": "chitbridge-api/scripts/multi-source.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "STONE 3: one distributor carries TWO brands (Royale Play + Nippon) with a SAME-NAMED finish.",
    "claim": "STONE 3: one distributor carries TWO brands (Royale Play + Nippon) with a SAME-NAMED finish.",
@@ -5417,7 +5417,7 @@
   {
    "case_key": "chitbridge-api/scripts/penetration.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "STONE 4: consent location capture → the brand's AGGREGATE-ONLY penetration heatmap (no PII).",
    "claim": "STONE 4: consent location capture → the brand's AGGREGATE-ONLY penetration heatmap (no PII).",
@@ -5439,7 +5439,7 @@
   {
    "case_key": "chitbridge-api/scripts/powerplay-itr2.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "CAPABILITY PROBE: can the catalogue, as deployed today, carry a real form workflow?",
    "claim": "CAPABILITY PROBE: can the catalogue, as deployed today, carry a real form workflow?",
@@ -5464,7 +5464,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-adoption-freeze.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the whole arc, end to end:",
    "claim": "the whole arc, end to end:",
@@ -5486,7 +5486,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-amend-live.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b138 against the LIVE rail. Everything prove-amend.js could not reach.",
    "claim": "b138 against the LIVE rail. Everything prove-amend.js could not reach.",
@@ -5508,7 +5508,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-amend.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b138. Line-level corrections and THE LIVE SET.",
    "claim": "b138. Line-level corrections and THE LIVE SET.",
@@ -5532,7 +5532,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-assign-live.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b143 on the live rail. Division of labour, and the privacy that makes it safe.",
    "claim": "b143 on the live rail. Division of labour, and the privacy that makes it safe.",
@@ -5554,7 +5554,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-autoraise.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "a message becomes a chit with NOBODY PRESENT (b131).",
    "claim": "a message becomes a chit with NOBODY PRESENT (b131).",
@@ -5576,7 +5576,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-availability.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "prove-availability.js",
    "claim": null,
@@ -5598,7 +5598,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-b159-attachments.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b159 added `object_key`; prove attachments still work.",
    "claim": "b159 added `object_key`; prove attachments still work.",
@@ -5620,7 +5620,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-capture.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of the capture connector (inbound message → AI structure → confirm → chit).",
    "claim": "LIVE proof of the capture connector (inbound message → AI structure → confirm → chit).",
@@ -5642,7 +5642,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-channels.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "PROVE the channel map routes many numbers to many entities, and that a claim is not a",
    "claim": "PROVE the channel map routes many numbers to many entities, and that a claim is not a",
@@ -5664,7 +5664,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-chitline-live.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b142 on the live rail. A line is a row now.",
    "claim": "b142 on the live rail. A line is a row now.",
@@ -5686,7 +5686,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-commerce-standards.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93):",
    "claim": "LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93):",
@@ -5708,7 +5708,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-commerce.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end",
    "claim": "LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end",
@@ -5730,7 +5730,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-cost-live.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b145 on the live rail. Cost, margin, and WRITE-WITHOUT-READ.",
    "claim": "b145 on the live rail. Cost, margin, and WRITE-WITHOUT-READ.",
@@ -5752,7 +5752,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-definer-guards.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "DB-DIRECT proof of the three definer guards the reviewer flagged as untested:",
    "claim": "DB-DIRECT proof of the three definer guards the reviewer flagged as untested:",
@@ -5775,7 +5775,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-definitions.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the shelf, and the promise Athi made the design turn on:",
    "claim": "the shelf, and the promise Athi made the design turn on:",
@@ -5797,7 +5797,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-delivery-live.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b144 on the live rail. Partial delivery, shared, either side may record.",
    "claim": "b144 on the live rail. Partial delivery, shared, either side may record.",
@@ -5819,7 +5819,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-f5.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "OFFLINE proof that AI skills are DATA (F5 closed). node scripts/prove-f5.js",
    "claim": "OFFLINE proof that AI skills are DATA (F5 closed). node scripts/prove-f5.js",
@@ -5843,7 +5843,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-folders-scorecard.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "folder metrics, the counterparty scorecard and rule preview, against the LIVE API.",
    "claim": "folder metrics, the counterparty scorecard and rule preview, against the LIVE API.",
@@ -5865,7 +5865,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-forms.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of the authority-forms engine. node scripts/prove-forms.js",
    "claim": "LIVE proof of the authority-forms engine. node scripts/prove-forms.js",
@@ -5887,7 +5887,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-groupsum.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "🧮 the group-sum money path, proved without a database.",
    "claim": "🧮 the group-sum money path, proved without a database.",
@@ -5912,7 +5912,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-idempotency.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of the offline-outbox idempotency layer (Phase 2). node scripts/prove-idempotency.js",
    "claim": "LIVE proof of the offline-outbox idempotency layer (Phase 2). node scripts/prove-idempotency.js",
@@ -5934,7 +5934,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-itemmatch.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "THE matcher, and the bug that invented money.",
    "claim": "THE matcher, and the bug that invented money.",
@@ -5958,7 +5958,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-itemversion.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "b146, against a LIVE environment.",
    "claim": "b146, against a LIVE environment.",
@@ -5980,7 +5980,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-kyb.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of the \"Know your business\" panel. node scripts/prove-kyb.js",
    "claim": "LIVE proof of the \"Know your business\" panel. node scripts/prove-kyb.js",
@@ -6002,7 +6002,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-lanes.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of GENERIC, origin-aware, destination-resolved readiness (b91). Requirements are DERIVED",
    "claim": "LIVE proof of GENERIC, origin-aware, destination-resolved readiness (b91). Requirements are DERIVED",
@@ -6024,7 +6024,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-lifecycle.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE end-to-end proof of \"N sources assimilate into a boilerplate, and a standard actively",
    "claim": "LIVE end-to-end proof of \"N sources assimilate into a boilerplate, and a standard actively",
@@ -6046,7 +6046,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-line-events.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "ONE MECHANISM, BOTH DIRECTIONS (b152).",
    "claim": "ONE MECHANISM, BOTH DIRECTIONS (b152).",
@@ -6068,7 +6068,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-line-threads.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "THE BOUNDARY, ON A REAL TWO-PARTY CHIT.",
    "claim": "THE BOUNDARY, ON A REAL TWO-PARTY CHIT.",
@@ -6090,7 +6090,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-lot.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the INSTANCE, kept off the product.",
    "claim": "the INSTANCE, kept off the product.",
@@ -6116,7 +6116,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-message-to-chit.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "THE ONE THAT MATTERS: a WhatsApp message becomes a CHIT, with the right lines on it.",
    "claim": "THE ONE THAT MATTERS: a WhatsApp message becomes a CHIT, with the right lines on it.",
@@ -6138,7 +6138,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-network-cap.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "a network provisions a node, and the node cannot open itself.",
    "claim": "a network provisions a node, and the node cannot open itself.",
@@ -6163,7 +6163,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-network-mint.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the Build, walked end to end against a running API.",
    "claim": "the Build, walked end to end against a running API.",
@@ -6185,7 +6185,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-network-search.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the single-catalogue search (b122) must AGREE with the per-store search it replaces.",
    "claim": "the single-catalogue search (b122) must AGREE with the per-store search it replaces.",
@@ -6207,7 +6207,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-nothing-dropped.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "every fact the sender gives ends up SOMEWHERE on the chit.",
    "claim": "every fact the sender gives ends up SOMEWHERE on the chit.",
@@ -6229,7 +6229,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-numerals.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the closed class, proved against Athi's OWN corpus.",
    "claim": "the closed class, proved against Athi's OWN corpus.",
@@ -6253,7 +6253,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-one-roof.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the whole model, end to end, against the LIVE system.",
    "claim": "the whole model, end to end, against the LIVE system.",
@@ -6275,7 +6275,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-orderbind.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of ORDER-BINDING: a supplier's HELD clearances FOLD into the order chit (summary_json,",
    "claim": "LIVE proof of ORDER-BINDING: a supplier's HELD clearances FOLD into the order chit (summary_json,",
@@ -6297,7 +6297,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-outbound.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "PROVE the notify-back DECISION LOGIC against the live API and the real database (b126).",
    "claim": "PROVE the notify-back DECISION LOGIC against the live API and the real database (b126).",
@@ -6319,7 +6319,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-partial.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "PARTIAL DELIVERY, and the unit bug that made it lie.",
    "claim": "PARTIAL DELIVERY, and the unit bug that made it lie.",
@@ -6344,7 +6344,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-policy-flags.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the policy flags are REAL (b130), and trade_side actually governs pricing.",
    "claim": "the policy flags are REAL (b130), and trade_side actually governs pricing.",
@@ -6366,7 +6366,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-private-shop.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "make a shop private, open its storefront, and get NOTHING.",
    "claim": "make a shop private, open its storefront, and get NOTHING.",
@@ -6388,7 +6388,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-profile.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of the ENTITY TRADE PROFILE (individual-specific). A domestic-only trader holding only",
    "claim": "LIVE proof of the ENTITY TRADE PROFILE (individual-specific). A domestic-only trader holding only",
@@ -6410,7 +6410,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-readiness.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required",
    "claim": "LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required",
@@ -6432,7 +6432,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-reference.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real",
    "claim": "LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real",
@@ -6454,7 +6454,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-request-from-message.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "a WhatsApp message becomes a REQUEST addressed to the entity.",
    "claim": "a WhatsApp message becomes a REQUEST addressed to the entity.",
@@ -6476,7 +6476,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-retention.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "DRY-RUN proof of the retention planner (safe — deletes NOTHING). Self-heals until b105 is applied.",
    "claim": "DRY-RUN proof of the retention planner (safe — deletes NOTHING). Self-heals until b105 is applied.",
@@ -6500,7 +6500,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-sectors.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof the tool is GENERIC: switching the SECTOR (vertical) re-resolves sector-specific",
    "claim": "LIVE proof the tool is GENERIC: switching the SECTOR (vertical) re-resolves sector-specific",
@@ -6522,7 +6522,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-security-fixes.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE (API) proof of the reviewer security fixes: T1 · T4 · M1 · S1.",
    "claim": "LIVE (API) proof of the reviewer security fixes: T1 · T4 · M1 · S1.",
@@ -6544,7 +6544,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-sla.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the service clock, and the argument it exists to settle.",
    "claim": "the service clock, and the argument it exists to settle.",
@@ -6568,7 +6568,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-storefront-mint.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the FOURTH mint path: a public buyer's storefront order.",
    "claim": "the FOURTH mint path: a public buyer's storefront order.",
@@ -6590,7 +6590,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-storefront.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE end-to-end proof of THE LIFE OF A CHIT through the STOREFRONT path:",
    "claim": "LIVE end-to-end proof of THE LIFE OF A CHIT through the STOREFRONT path:",
@@ -6612,7 +6612,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-three-party-messaging.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "ONE ORDER, THREE PARTIES, THEIR ACTORS, ONE FULL CYCLE.",
    "claim": "ONE ORDER, THREE PARTIES, THEIR ACTORS, ONE FULL CYCLE.",
@@ -6634,7 +6634,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-usecases.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "GOODS · PURE SERVICE · BOTH, the whole cycle, against the live API.",
    "claim": "GOODS · PURE SERVICE · BOTH, the whole cycle, against the live API.",
@@ -6656,7 +6656,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-verify.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID",
    "claim": "LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID",
@@ -6678,7 +6678,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-vision.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "PROVE the multimodal branch against the LIVE API and a REAL model (b127).",
    "claim": "PROVE the multimodal branch against the LIVE API and a REAL model (b127).",
@@ -6700,7 +6700,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-whatsapp-live.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the REAL loop, on a REAL phone. The one thing no stub can do.",
    "claim": "the REAL loop, on a REAL phone. The one thing no stub can do.",
@@ -6722,7 +6722,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-wholesaler-e2e.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "W-1 … W-11 END TO END, against the live API.",
    "claim": "W-1 … W-11 END TO END, against the live API.",
@@ -6747,7 +6747,7 @@
   {
    "case_key": "chitbridge-api/scripts/prove-wholesaler.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the consolidation rules, W-3 through W-11 of the directive.",
    "claim": "the consolidation rules, W-3 through W-11 of the directive.",
@@ -6771,7 +6771,7 @@
   {
    "case_key": "chitbridge-api/scripts/regional-scatter.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "6a \"spin the globe\": one product resolves differently per customer region (auto-basics +",
    "claim": "6a \"spin the globe\": one product resolves differently per customer region (auto-basics +",
@@ -6793,7 +6793,7 @@
   {
    "case_key": "chitbridge-api/scripts/regression.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "regression.js",
    "claim": null,
@@ -6815,7 +6815,7 @@
   {
    "case_key": "chitbridge-api/scripts/reset-and-seed.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "ONE COMMAND: backup → wipe → migrate → seed → verify.",
    "claim": "ONE COMMAND: backup → wipe → migrate → seed → verify.",
@@ -6838,7 +6838,7 @@
   {
    "case_key": "chitbridge-api/scripts/retention-logic-test.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LOCAL proof of the retire_at FLOOR rule (no DB). The proof request calls out the",
    "claim": "LOCAL proof of the retire_at FLOOR rule (no DB). The proof request calls out the",
@@ -6862,7 +6862,7 @@
   {
    "case_key": "chitbridge-api/scripts/rls-context-test.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "rls-context-test.js",
    "claim": null,
@@ -6882,7 +6882,7 @@
   {
    "case_key": "chitbridge-api/scripts/sealed-guard.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "P0-1: a PROTECTED (sealed) entity must not leak through the directory or the storefront, and",
    "claim": "P0-1: a PROTECTED (sealed) entity must not leak through the directory or the storefront, and",
@@ -6904,7 +6904,7 @@
   {
    "case_key": "chitbridge-api/scripts/seed-2026-08-05.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the cast, rebuilt on a clean database so every price is BORN stamped.",
    "claim": "the cast, rebuilt on a clean database so every price is BORN stamped.",
@@ -6926,7 +6926,7 @@
   {
    "case_key": "chitbridge-api/scripts/seed-bulk-catalogue.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "put a real number of products in a store, so search can be measured rather than guessed.",
    "claim": "put a real number of products in a store, so search can be measured rather than guessed.",
@@ -6948,7 +6948,7 @@
   {
    "case_key": "chitbridge-api/scripts/seed-catalogue-veg.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "a real vegetable/provisions catalogue, in the languages people actually type.",
    "claim": "a real vegetable/provisions catalogue, in the languages people actually type.",
@@ -6970,7 +6970,7 @@
   {
    "case_key": "chitbridge-api/scripts/seed-folders-demo.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "fill folders with REAL chits so the metrics show genuinely different readings.",
    "claim": "fill folders with REAL chits so the metrics show genuinely different readings.",
@@ -6992,7 +6992,7 @@
   {
    "case_key": "chitbridge-api/scripts/seed-livewalk.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "ONE chit in Beta's TASK track carrying every state worth looking at.",
    "claim": "ONE chit in Beta's TASK track carrying every state worth looking at.",
@@ -7014,7 +7014,7 @@
   {
    "case_key": "chitbridge-api/scripts/seed-test-entities.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "rebuild a known, POPULATED cast after scripts/reset-2-wipe.sql.",
    "claim": "rebuild a known, POPULATED cast after scripts/reset-2-wipe.sql.",
@@ -7036,7 +7036,7 @@
   {
    "case_key": "chitbridge-api/scripts/source-entity.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "SOURCE-AS-ENTITY + experience blueprint (needs b78).",
    "claim": "SOURCE-AS-ENTITY + experience blueprint (needs b78).",
@@ -7058,7 +7058,7 @@
   {
    "case_key": "chitbridge-api/scripts/source-rules.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "STONE 2: the SOURCE's governance resolves + is ENFORCED at order time (not the host's).",
    "claim": "STONE 2: the SOURCE's governance resolves + is ENFORCED at order time (not the host's).",
@@ -7080,7 +7080,7 @@
   {
    "case_key": "chitbridge-api/scripts/storage-object.test.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "the parts of the object adapter that can be proven WITHOUT a bucket.",
    "claim": "the parts of the object adapter that can be proven WITHOUT a bucket.",
@@ -7105,7 +7105,7 @@
   {
    "case_key": "chitbridge-api/scripts/vault-crypto-test.js",
    "module_key": "chitbridge-api/scripts",
-   "module_name": "chitbridge-api · scripts",
+   "module_name": "API scripts and proofs",
    "intro": "",
    "title": "LOCAL unit proof of vault at-rest encryption (F1). No DB, no network.",
    "claim": "LOCAL unit proof of vault at-rest encryption (F1). No DB, no network.",
@@ -7129,7 +7129,7 @@
   {
    "case_key": "chitbridge-api/test/hat-gate.test.cjs",
    "module_key": "chitbridge-api/test",
-   "module_name": "chitbridge-api · test",
+   "module_name": "API guards",
    "intro": "",
    "title": "hat-gate.test.cjs",
    "claim": null,
@@ -7154,7 +7154,7 @@
   {
    "case_key": "chitbridge-api/tests/access-events.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "access-events.test.cjs",
    "claim": null,
@@ -7178,7 +7178,7 @@
   {
    "case_key": "chitbridge-api/tests/adopt.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "adopt.test.js",
    "claim": null,
@@ -7194,13 +7194,15 @@
    "areas": [
     "engine"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/adopt.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/ai-vision.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "ai-vision.test.js",
    "claim": null,
@@ -7225,7 +7227,7 @@
   {
    "case_key": "chitbridge-api/tests/auth-before-validate.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "auth-before-validate.test.cjs",
    "claim": null,
@@ -7247,7 +7249,7 @@
   {
    "case_key": "chitbridge-api/tests/auth-middleware.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "auth-middleware.test.js",
    "claim": null,
@@ -7265,14 +7267,15 @@
     "middleware"
    ],
    "subjects": [
-    "middleware/auth.js"
+    "middleware/auth.js",
+    "middleware/hat-gate.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/availability.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "a quantity is not an answer without a date.",
    "claim": "a quantity is not an answer without a date.",
@@ -7296,7 +7299,7 @@
   {
    "case_key": "chitbridge-api/tests/beckn-map.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the mapping, and the boundary it must not cross.",
    "claim": "the mapping, and the boundary it must not cross.",
@@ -7320,7 +7323,7 @@
   {
    "case_key": "chitbridge-api/tests/canon-depth.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "canon-depth.test.js",
    "claim": null,
@@ -7344,7 +7347,7 @@
   {
    "case_key": "chitbridge-api/tests/catalogue-columns.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the declaration and the store, bound.",
    "claim": "the declaration and the store, bound.",
@@ -7368,7 +7371,7 @@
   {
    "case_key": "chitbridge-api/tests/catalogue-read.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "one catalogue, many channels.",
    "claim": "one catalogue, many channels.",
@@ -7393,7 +7396,7 @@
   {
    "case_key": "chitbridge-api/tests/catalogue-visibility.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "catalogue-visibility.test.js",
    "claim": null,
@@ -7418,7 +7421,7 @@
   {
    "case_key": "chitbridge-api/tests/catalogue.spec.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "catalogue.spec.js",
    "claim": null,
@@ -7442,7 +7445,7 @@
   {
    "case_key": "chitbridge-api/tests/channels.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "channels.test.js",
    "claim": null,
@@ -7468,7 +7471,7 @@
   {
    "case_key": "chitbridge-api/tests/column-home.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "A COLUMN IS ONLY REAL ON THE TABLE IT LIVES ON (2026-09-08).",
    "claim": "A COLUMN IS ONLY REAL ON THE TABLE IT LIVES ON (2026-09-08).",
@@ -7491,7 +7494,7 @@
   {
    "case_key": "chitbridge-api/tests/column-parity.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the three surfaces must answer \"what are my columns\" identically.",
    "claim": "the three surfaces must answer \"what are my columns\" identically.",
@@ -7515,7 +7518,7 @@
   {
    "case_key": "chitbridge-api/tests/column-rules.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "flexible while empty, tightened once used, and the three that are never touchable.",
    "claim": "flexible while empty, tightened once used, and the three that are never touchable.",
@@ -7539,7 +7542,7 @@
   {
    "case_key": "chitbridge-api/tests/conf-cache.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "conf-cache.test.cjs",
    "claim": null,
@@ -7563,7 +7566,7 @@
   {
    "case_key": "chitbridge-api/tests/connector-kit.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "connector-kit.test.js",
    "claim": null,
@@ -7585,7 +7588,7 @@
   {
    "case_key": "chitbridge-api/tests/consolidate-units.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "consolidate-units.test.js",
    "claim": null,
@@ -7610,7 +7613,7 @@
   {
    "case_key": "chitbridge-api/tests/cors-headers.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "EVERY HEADER THE CLIENT SENDS IS ONE THE SERVER ALLOWS.",
    "claim": "EVERY HEADER THE CLIENT SENDS IS ONE THE SERVER ALLOWS.",
@@ -7632,7 +7635,7 @@
   {
    "case_key": "chitbridge-api/tests/csv-preflight.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the file is read BEFORE it becomes data.",
    "claim": "the file is read BEFORE it becomes data.",
@@ -7658,7 +7661,7 @@
   {
    "case_key": "chitbridge-api/tests/csv.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the round trip, and the three details everyone gets wrong.",
    "claim": "the round trip, and the three details everyone gets wrong.",
@@ -7682,7 +7685,7 @@
   {
    "case_key": "chitbridge-api/tests/currency-envelope.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "currency-envelope.test.cjs",
    "claim": null,
@@ -7708,7 +7711,7 @@
   {
    "case_key": "chitbridge-api/tests/current-actor.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "current-actor.test.cjs",
    "claim": null,
@@ -7732,7 +7735,7 @@
   {
    "case_key": "chitbridge-api/tests/db-coldstart.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "db-coldstart.test.js",
    "claim": null,
@@ -7754,7 +7757,7 @@
   {
    "case_key": "chitbridge-api/tests/defaults.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the catalogue declares it, a row overrides it, and we know which answered.",
    "claim": "the catalogue declares it, a row overrides it, and we know which answered.",
@@ -7779,7 +7782,7 @@
   {
    "case_key": "chitbridge-api/tests/dev-otp.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "dev-otp.test.js",
    "claim": null,
@@ -7801,7 +7804,7 @@
   {
    "case_key": "chitbridge-api/tests/docnumber-gate.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "docnumber-gate.test.js",
    "claim": null,
@@ -7826,7 +7829,7 @@
   {
    "case_key": "chitbridge-api/tests/docnumber.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "docnumber.test.js",
    "claim": null,
@@ -7850,7 +7853,7 @@
   {
    "case_key": "chitbridge-api/tests/engine-boundary.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the ENGINE CORE is a rule, not a habit.",
    "claim": "the ENGINE CORE is a rule, not a habit.",
@@ -7876,7 +7879,7 @@
   {
    "case_key": "chitbridge-api/tests/engine-manifest.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "engine-manifest.js",
    "claim": null,
@@ -7892,13 +7895,22 @@
    "areas": [
     "connector"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/access-events.js",
+    "lib/access.js",
+    "lib/adopt.js",
+    "lib/ai.js",
+    "lib/amend.js",
+    "lib/assign.js",
+    "lib/assist-kb.js",
+    "lib/autoraise.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/entity-cast-guard.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "entity-cast-guard.test.cjs",
    "claim": null,
@@ -7920,7 +7932,7 @@
   {
    "case_key": "chitbridge-api/tests/env-posture.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "NOBODY COMPARES NODE_ENV BY HAND.",
    "claim": "NOBODY COMPARES NODE_ENV BY HAND.",
@@ -7942,9 +7954,34 @@
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
+   "case_key": "chitbridge-api/tests/exports-exist.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "exports-exist.test.cjs",
+   "claim": null,
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 139 lines. Run: node chitbridge-api/tests/exports-exist.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/offers-engine.js",
+    "lib/x.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+  },
+  {
    "case_key": "chitbridge-api/tests/fixtures/walkthrough.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "a real price list, end to end, with nothing mocked but the database.",
    "claim": "a real price list, end to end, with nothing mocked but the database.",
@@ -7967,14 +8004,15 @@
     "lib/csv.js",
     "lib/defaults.js",
     "lib/order-input.js",
-    "lib/sheet.js"
+    "lib/sheet.js",
+    "lib/tax.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/form-handshake.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "form-handshake.test.js",
    "claim": null,
@@ -7999,7 +8037,7 @@
   {
    "case_key": "chitbridge-api/tests/gherkin.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "gherkin.test.js",
    "claim": null,
@@ -8023,7 +8061,7 @@
   {
    "case_key": "chitbridge-api/tests/governed-currency.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the network/B2B order path must denominate from the GOVERNANCE LAYER, never a literal.",
    "claim": "the network/B2B order path must denominate from the GOVERNANCE LAYER, never a literal.",
@@ -8049,7 +8087,7 @@
   {
    "case_key": "chitbridge-api/tests/groupsum-selection.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "groupsum-selection.test.js",
    "claim": null,
@@ -8069,7 +8107,7 @@
   {
    "case_key": "chitbridge-api/tests/gs1.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the check digit, and the judgement around it.",
    "claim": "the check digit, and the judgement around it.",
@@ -8093,7 +8131,7 @@
   {
    "case_key": "chitbridge-api/tests/handle.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "a name a person can say out loud.",
    "claim": "a name a person can say out loud.",
@@ -8118,7 +8156,7 @@
   {
    "case_key": "chitbridge-api/tests/iam-access.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the access rules from IAM-SPEC.md, driven through the REAL middleware.",
    "claim": "the access rules from IAM-SPEC.md, driven through the REAL middleware.",
@@ -8149,7 +8187,7 @@
   {
    "case_key": "chitbridge-api/tests/identity.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "which line is this, and which product does it belong to?",
    "claim": "which line is this, and which product does it belong to?",
@@ -8173,7 +8211,7 @@
   {
    "case_key": "chitbridge-api/tests/idoc-normalise.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "idoc-normalise.test.cjs",
    "claim": null,
@@ -8195,7 +8233,7 @@
   {
    "case_key": "chitbridge-api/tests/idoc-subject.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "idoc-subject.test.cjs",
    "claim": null,
@@ -8220,7 +8258,7 @@
   {
    "case_key": "chitbridge-api/tests/itemmatch-qualifier.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "itemmatch-qualifier.test.cjs",
    "claim": null,
@@ -8244,7 +8282,7 @@
   {
    "case_key": "chitbridge-api/tests/key-scopes.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "WHAT EVERY KEY CAN REACH, WRITTEN DOWN AND CHECKED (2026-09-09).",
    "claim": "WHAT EVERY KEY CAN REACH, WRITTEN DOWN AND CHECKED (2026-09-09).",
@@ -8263,13 +8301,15 @@
     "middleware",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "middleware/auth.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/kit-update.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "A KIT KEEPS ITSELF CURRENT (2026-09-08). Athi: *\"build the kit update path.\"*",
    "claim": "A KIT KEEPS ITSELF CURRENT (2026-09-08). Athi: *\"build the kit update path.\"*",
@@ -8288,13 +8328,15 @@
     "middleware",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "middleware/auth.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/line-complete.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "line-complete.test.cjs",
    "claim": null,
@@ -8318,7 +8360,7 @@
   {
    "case_key": "chitbridge-api/tests/local-supplier.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "local-supplier.test.js",
    "claim": null,
@@ -8336,13 +8378,16 @@
     "engine",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/handle.js",
+    "lib/local-identity.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/lotfields.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "WHAT A VERTICAL ASKS FOR, AND WHAT A BARCODE ALREADY KNOWS (2026-09-08).",
    "claim": "WHAT A VERTICAL ASKS FOR, AND WHAT A BARCODE ALREADY KNOWS (2026-09-08).",
@@ -8358,13 +8403,17 @@
    "areas": [
     "engine"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/gs1.js",
+    "lib/lotfields.browser.js",
+    "lib/lotfields.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/me-include.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "me-include.test.cjs",
    "claim": null,
@@ -8388,7 +8437,7 @@
   {
    "case_key": "chitbridge-api/tests/meters.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "meters.test.cjs",
    "claim": null,
@@ -8405,13 +8454,15 @@
     "api",
     "engine"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/meter.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/migration-lint.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "migration-lint.test.cjs",
    "claim": null,
@@ -8433,7 +8484,7 @@
   {
    "case_key": "chitbridge-api/tests/money-language.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "money-language.test.js",
    "claim": null,
@@ -8450,13 +8501,16 @@
     "engine",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js",
+    "lib/money.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/money.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the money type, and specifically the ways it must FAIL.",
    "claim": "the money type, and specifically the ways it must FAIL.",
@@ -8480,7 +8534,7 @@
   {
    "case_key": "chitbridge-api/tests/network-build.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "network-build.test.js",
    "claim": null,
@@ -8504,7 +8558,7 @@
   {
    "case_key": "chitbridge-api/tests/network-view.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "network-view.test.js",
    "claim": null,
@@ -8528,7 +8582,7 @@
   {
    "case_key": "chitbridge-api/tests/network.spec.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "network.spec.js",
    "claim": null,
@@ -8552,7 +8606,7 @@
   {
    "case_key": "chitbridge-api/tests/numerals.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "numerals.test.js",
    "claim": null,
@@ -8576,7 +8630,7 @@
   {
    "case_key": "chitbridge-api/tests/offerable.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "\"do we know what this is\" and \"may somebody take one now\" are DIFFERENT questions.",
    "claim": "\"do we know what this is\" and \"may somebody take one now\" are DIFFERENT questions.",
@@ -8602,7 +8656,7 @@
   {
    "case_key": "chitbridge-api/tests/offers-engine.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "offers-engine.test.js",
    "claim": null,
@@ -8620,6 +8674,7 @@
     "web"
    ],
    "subjects": [
+    "engine/offers.js",
     "lib/offers-engine.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
@@ -8627,7 +8682,7 @@
   {
    "case_key": "chitbridge-api/tests/order-input.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "order-input.test.js",
    "claim": null,
@@ -8651,7 +8706,7 @@
   {
    "case_key": "chitbridge-api/tests/pages-parse.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "EVERY INLINE SCRIPT IN EVERY SHIPPED PAGE MUST PARSE (2026-09-08).",
    "claim": "EVERY INLINE SCRIPT IN EVERY SHIPPED PAGE MUST PARSE (2026-09-08).",
@@ -8674,7 +8729,7 @@
   {
    "case_key": "chitbridge-api/tests/per-copy-design.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "per-copy-design.test.cjs",
    "claim": null,
@@ -8698,7 +8753,7 @@
   {
    "case_key": "chitbridge-api/tests/policy-defaults.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "WHAT AN ENTITY THAT NEVER OPENED SETTINGS ACTUALLY DOES.",
    "claim": "WHAT AN ENTITY THAT NEVER OPENED SETTINGS ACTUALLY DOES.",
@@ -8724,7 +8779,7 @@
   {
    "case_key": "chitbridge-api/tests/policy-set.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "policy-set.test.js",
    "claim": null,
@@ -8751,7 +8806,7 @@
   {
    "case_key": "chitbridge-api/tests/price-provenance.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "a price read from a market carries WHERE and WHEN, or it carries nothing.",
    "claim": "a price read from a market carries WHERE and WHEN, or it carries nothing.",
@@ -8775,7 +8830,7 @@
   {
    "case_key": "chitbridge-api/tests/printer.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "THE SLIP, AS BYTES (2026-09-08). Athi connected a thermal printer over USB.",
    "claim": "THE SLIP, AS BYTES (2026-09-08). Athi connected a thermal printer over USB.",
@@ -8797,7 +8852,7 @@
   {
    "case_key": "chitbridge-api/tests/products-bulk.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "products-bulk.test.cjs",
    "claim": null,
@@ -8821,7 +8876,7 @@
   {
    "case_key": "chitbridge-api/tests/proof-exit.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "A PROOF THAT REPORTS ITS OWN FAILURE MUST NOT TELL THE SHELL IT PASSED.",
    "claim": "A PROOF THAT REPORTS ITS OWN FAILURE MUST NOT TELL THE SHELL IT PASSED.",
@@ -8841,7 +8896,7 @@
   {
    "case_key": "chitbridge-api/tests/pulse.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "pulse.test.cjs",
    "claim": null,
@@ -8865,7 +8920,7 @@
   {
    "case_key": "chitbridge-api/tests/query-shape.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the SHAPE of a query is not a performance detail, it is a rule.",
    "claim": "the SHAPE of a query is not a performance detail, it is a rule.",
@@ -8887,7 +8942,7 @@
   {
    "case_key": "chitbridge-api/tests/raida.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "raida.test.cjs",
    "claim": null,
@@ -8912,7 +8967,7 @@
   {
    "case_key": "chitbridge-api/tests/read-batch.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "read-batch.test.js",
    "claim": null,
@@ -8934,7 +8989,7 @@
   {
    "case_key": "chitbridge-api/tests/reporting.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the network reporting currency, and the line between a LENS and a DENOMINATION.",
    "claim": "the network reporting currency, and the line between a LENS and a DENOMINATION.",
@@ -8959,7 +9014,7 @@
   {
    "case_key": "chitbridge-api/tests/retention-floor.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "retention-floor.test.js",
    "claim": null,
@@ -8983,7 +9038,7 @@
   {
    "case_key": "chitbridge-api/tests/reward-cycle.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "reward-cycle.test.js",
    "claim": null,
@@ -8999,13 +9054,16 @@
    "areas": [
     "engine"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/reward-store.js",
+    "lib/rewards.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/rewards.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "WHAT A REWARD POINT IS WORTH, AND WHAT A LEDGER MAY DO.",
    "claim": "WHAT A REWARD POINT IS WORTH, AND WHAT A LEDGER MAY DO.",
@@ -9021,13 +9079,15 @@
    "areas": [
     "engine"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/rewards.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/rls-predicate.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "rls-predicate.test.cjs",
    "claim": null,
@@ -9049,7 +9109,7 @@
   {
    "case_key": "chitbridge-api/tests/round-trips-chit.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "round-trips-chit.test.cjs",
    "claim": null,
@@ -9073,7 +9133,7 @@
   {
    "case_key": "chitbridge-api/tests/round-trips.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "round-trips.test.cjs",
    "claim": null,
@@ -9099,7 +9159,7 @@
   {
    "case_key": "chitbridge-api/tests/route-auth.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "route-auth.test.js",
    "claim": null,
@@ -9122,7 +9182,7 @@
   {
    "case_key": "chitbridge-api/tests/run-tests-exit.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "run-tests-exit.test.cjs",
    "claim": null,
@@ -9142,7 +9202,7 @@
   {
    "case_key": "chitbridge-api/tests/run-tests.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "run-tests.js",
    "claim": null,
@@ -9164,7 +9224,7 @@
   {
    "case_key": "chitbridge-api/tests/schedule.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "schedule.test.js",
    "claim": null,
@@ -9188,7 +9248,7 @@
   {
    "case_key": "chitbridge-api/tests/schema-probe.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "schema-probe.test.cjs",
    "claim": null,
@@ -9214,7 +9274,7 @@
   {
    "case_key": "chitbridge-api/tests/search-engine.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "HOW A SHOPKEEPER FINDS A PRODUCT, PROVEN OUTSIDE A BROWSER (2026-09-08).",
    "claim": "HOW A SHOPKEEPER FINDS A PRODUCT, PROVEN OUTSIDE A BROWSER (2026-09-08).",
@@ -9232,13 +9292,16 @@
     "engine",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/search.js",
+    "lib/search-engine.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/seed-traceability-demo.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "seed-traceability-demo.js",
    "claim": null,
@@ -9260,7 +9323,7 @@
   {
    "case_key": "chitbridge-api/tests/sheet.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "a spreadsheet carries ANSWERS, not RECORDS.",
    "claim": "a spreadsheet carries ANSWERS, not RECORDS.",
@@ -9284,7 +9347,7 @@
   {
    "case_key": "chitbridge-api/tests/slab-cites.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "slab-cites.test.js",
    "claim": null,
@@ -9308,7 +9371,7 @@
   {
    "case_key": "chitbridge-api/tests/snapshot-wire.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "WHAT THE COUNTER ACTUALLY RECEIVES (2026-09-08).",
    "claim": "WHAT THE COUNTER ACTUALLY RECEIVES (2026-09-08).",
@@ -9328,13 +9391,22 @@
     "engine",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/itemstatus.js",
+    "lib/jurisdiction.js",
+    "lib/profile.js",
+    "lib/reward-store.js",
+    "lib/rewards.js",
+    "lib/tax-lines.js",
+    "lib/tax-slab.js",
+    "lib/units.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/speech.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "THE SEAM, NOT THE VENDOR (2026-09-08). Athi: *\"can't we use other services like whisper?\"* then *\"build the seam",
    "claim": "THE SEAM, NOT THE VENDOR (2026-09-08). Athi: *\"can't we use other services like whisper?\"* then *\"build the seam",
@@ -9354,13 +9426,16 @@
     "middleware",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/speech.js",
+    "middleware/auth.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/sql-placeholders.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "sql-placeholders.test.cjs",
    "claim": null,
@@ -9380,7 +9455,7 @@
   {
    "case_key": "chitbridge-api/tests/sql-runner.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "sql-runner.test.js",
    "claim": null,
@@ -9400,7 +9475,7 @@
   {
    "case_key": "chitbridge-api/tests/stock-cycle.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "stock-cycle.test.js",
    "claim": null,
@@ -9416,13 +9491,18 @@
    "areas": [
     "engine"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/inventory.js",
+    "lib/lotfields.js",
+    "lib/stock-from-chit.js",
+    "lib/stock-store.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/tax-governance.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "tax-governance.test.js",
    "claim": null,
@@ -9448,7 +9528,7 @@
   {
    "case_key": "chitbridge-api/tests/tax-lines.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "tax-lines.test.js",
    "claim": null,
@@ -9473,7 +9553,7 @@
   {
    "case_key": "chitbridge-api/tests/tax-registration.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "tax-registration.test.js",
    "claim": null,
@@ -9497,7 +9577,7 @@
   {
    "case_key": "chitbridge-api/tests/tax-scheme.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "tax-scheme.test.js",
    "claim": null,
@@ -9523,7 +9603,7 @@
   {
    "case_key": "chitbridge-api/tests/tax-slab.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "the product answers, else its category, else the catalogue, and we know which.",
    "claim": "the product answers, else its category, else the catalogue, and we know which.",
@@ -9550,7 +9630,7 @@
   {
    "case_key": "chitbridge-api/tests/tax-vendor.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "THE TILL'S TAX ENGINE IS THE SAME ENGINE (2026-09-07).",
    "claim": "THE TILL'S TAX ENGINE IS THE SAME ENGINE (2026-09-07).",
@@ -9576,7 +9656,7 @@
   {
    "case_key": "chitbridge-api/tests/tax.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "GST determination: two addresses in, INV-01 vocabulary out.",
    "claim": "GST determination: two addresses in, INV-01 vocabulary out.",
@@ -9600,7 +9680,7 @@
   {
    "case_key": "chitbridge-api/tests/test-board.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "test-board.test.js",
    "claim": null,
@@ -9608,7 +9688,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · static · 494 lines. Run: node chitbridge-api/tests/test-board.test.js",
+   "note": "test.unit · static · 495 lines. Run: node chitbridge-api/tests/test-board.test.js",
    "layer": "engine",
    "test_type": "static",
    "group": "test.unit",
@@ -9624,7 +9704,7 @@
   {
    "case_key": "chitbridge-api/tests/test_governance.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "test_governance.js",
    "claim": null,
@@ -9644,7 +9724,7 @@
   {
    "case_key": "chitbridge-api/tests/tier2-record.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "tier2-record.test.js",
    "claim": null,
@@ -9663,14 +9743,18 @@
     "middleware"
    ],
    "subjects": [
-    "lib/order-input.js"
+    "lib/conformance.js",
+    "lib/kyb.js",
+    "lib/order-input.js",
+    "lib/storage.js",
+    "middleware/customer-auth.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/till-vendor.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "ONE COUNTER SCREEN, AND THE ARITHMETIC IT DOES (2026-09-07).",
    "claim": "ONE COUNTER SCREEN, AND THE ARITHMETIC IT DOES (2026-09-07).",
@@ -9688,13 +9772,22 @@
     "engine",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js",
+    "engine/lots.js",
+    "engine/nums.js",
+    "engine/offers.js",
+    "engine/pricing.js",
+    "engine/qr.js",
+    "engine/search.js",
+    "lib/docnumber.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/traceability-massbalance.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "traceability-massbalance.test.js",
    "claim": null,
@@ -9716,7 +9809,7 @@
   {
    "case_key": "chitbridge-api/tests/traceability-walk.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "traceability-walk.test.js",
    "claim": null,
@@ -9738,7 +9831,7 @@
   {
    "case_key": "chitbridge-api/tests/traceability.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "traceability.test.js",
    "claim": null,
@@ -9760,7 +9853,7 @@
   {
    "case_key": "chitbridge-api/tests/type-tokens.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "type-tokens.test.js",
    "claim": null,
@@ -9782,7 +9875,7 @@
   {
    "case_key": "chitbridge-api/tests/units-alias.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "units-alias.test.js",
    "claim": null,
@@ -9806,7 +9899,7 @@
   {
    "case_key": "chitbridge-api/tests/user-id-rule.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "user-id-rule.test.cjs",
    "claim": null,
@@ -9830,7 +9923,7 @@
   {
    "case_key": "chitbridge-api/tests/vault-sections.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "vault-sections.test.js",
    "claim": null,
@@ -9854,7 +9947,7 @@
   {
    "case_key": "chitbridge-api/tests/visibility-cap.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "a choice, bounded by a cap.",
    "claim": "a choice, bounded by a cap.",
@@ -9878,7 +9971,7 @@
   {
    "case_key": "chitbridge-api/tests/visibility-mirror.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "TWO COLUMNS HOLD ONE FACT, so anything writing one must write the other.",
    "claim": "TWO COLUMNS HOLD ONE FACT, so anything writing one must write the other.",
@@ -9902,7 +9995,7 @@
   {
    "case_key": "chitbridge-api/tests/whatsapp-out.test.js",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "whatsapp-out.test.js",
    "claim": null,
@@ -9928,7 +10021,7 @@
   {
    "case_key": "chitbridge-api/tests/worklist-unassigned.test.cjs",
    "module_key": "chitbridge-api/tests",
-   "module_name": "chitbridge-api · tests",
+   "module_name": "API guards",
    "intro": "",
    "title": "worklist-unassigned.test.cjs",
    "claim": null,
@@ -9952,7 +10045,7 @@
   {
    "case_key": "chitbridge-web/e2e/a11y-contrast.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "measure every theme against the level it CLAIMS.",
    "claim": "measure every theme against the level it CLAIMS.",
@@ -9974,7 +10067,7 @@
   {
    "case_key": "chitbridge-web/e2e/app-syntax.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "every inline <script> block of app.html must PARSE. 2026-09-06: a relabel shipped `'Space Mono'` inside a single-quoted",
    "claim": "every inline <script> block of app.html must PARSE. 2026-09-06: a relabel shipped `'Space Mono'` inside a single-quoted",
@@ -9996,7 +10089,7 @@
   {
    "case_key": "chitbridge-web/e2e/arabic-catalogue.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "prove the Arabic catalogue RESOLVES, including all six plural categories.",
    "claim": "prove the Arabic catalogue RESOLVES, including all six plural categories.",
@@ -10018,7 +10111,7 @@
   {
    "case_key": "chitbridge-web/e2e/arrow-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "arrow-probe.cjs",
    "claim": null,
@@ -10040,7 +10133,7 @@
   {
    "case_key": "chitbridge-web/e2e/asi-return.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "asi-return.cjs",
    "claim": null,
@@ -10062,7 +10155,7 @@
   {
    "case_key": "chitbridge-web/e2e/attach-gate.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "attach-gate.cjs",
    "claim": null,
@@ -10084,7 +10177,7 @@
   {
    "case_key": "chitbridge-web/e2e/barcode-check.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "barcode-check.cjs",
    "claim": null,
@@ -10108,7 +10201,7 @@
   {
    "case_key": "chitbridge-web/e2e/bridge-id-audit.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "bridge-id-audit.cjs",
    "claim": null,
@@ -10130,7 +10223,7 @@
   {
    "case_key": "chitbridge-web/e2e/bulk-shop.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "A SHOP WITH TEN THOUSAND THINGS IN IT (Athi, 2026-09-08: \"can you add a product catalogue size of say 10,000 or",
    "claim": "A SHOP WITH TEN THOUSAND THINGS IN IT (Athi, 2026-09-08: \"can you add a product catalogue size of say 10,000 or",
@@ -10153,7 +10246,7 @@
   {
    "case_key": "chitbridge-web/e2e/cart-api.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "`lines()` is a COUNT. Anything treating it as an array is a dead feature.",
    "claim": "`lines()` is a COUNT. Anything treating it as an array is a dead feature.",
@@ -10175,7 +10268,7 @@
   {
    "case_key": "chitbridge-web/e2e/cat03-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "cat03-probe.cjs",
    "claim": null,
@@ -10197,7 +10290,7 @@
   {
    "case_key": "chitbridge-web/e2e/catsetup-panels.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "every panel on the Catalogue setup hub renders something.",
    "claim": "every panel on the Catalogue setup hub renders something.",
@@ -10219,7 +10312,7 @@
   {
    "case_key": "chitbridge-web/e2e/chart-smoke.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "chart-smoke.cjs",
    "claim": null,
@@ -10241,7 +10334,7 @@
   {
    "case_key": "chitbridge-web/e2e/chip-audit.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "every chip, badge, pill, tag and icon: where it is used, what it says, and whether that",
    "claim": "every chip, badge, pill, tag and icon: where it is used, what it says, and whether that",
@@ -10263,7 +10356,7 @@
   {
    "case_key": "chitbridge-web/e2e/compose-onleave.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "compose-onleave.cjs",
    "claim": null,
@@ -10285,7 +10378,7 @@
   {
    "case_key": "chitbridge-web/e2e/connector-b2b.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the B2B voucher, end to end against fake Tally, with a hand-made invoice (no API).",
    "claim": "the B2B voucher, end to end against fake Tally, with a hand-made invoice (no API).",
@@ -10307,7 +10400,7 @@
   {
    "case_key": "chitbridge-web/e2e/connector-gofrugal.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the GoFrugal adapter against fake GoFrugal (from the published knowledge base).",
    "claim": "the GoFrugal adapter against fake GoFrugal (from the published knowledge base).",
@@ -10329,7 +10422,7 @@
   {
    "case_key": "chitbridge-web/e2e/connector-purchase.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the BUYER's side against fake Tally: one chit, the buyer's books.",
    "claim": "the BUYER's side against fake Tally: one chit, the buyer's books.",
@@ -10351,7 +10444,7 @@
   {
    "case_key": "chitbridge-web/e2e/connector-zoho.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the Zoho Books adapter to the same level as Tally, against fake Zoho (no API, no OAuth).",
    "claim": "the Zoho Books adapter to the same level as Tally, against fake Zoho (no API, no OAuth).",
@@ -10373,7 +10466,7 @@
   {
    "case_key": "chitbridge-web/e2e/counter-rail.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "counter-rail.cjs",
    "claim": null,
@@ -10395,7 +10488,7 @@
   {
    "case_key": "chitbridge-web/e2e/currency-distinct.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "currency-distinct.cjs",
    "claim": null,
@@ -10411,13 +10504,15 @@
    "areas": [
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/e2e/dead-surface.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "find top-level functions nothing calls.",
    "claim": "find top-level functions nothing calls.",
@@ -10439,7 +10534,7 @@
   {
    "case_key": "chitbridge-web/e2e/detail-shot.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "is the order/task line really on TWO lines?",
    "claim": "is the order/task line really on TWO lines?",
@@ -10461,7 +10556,7 @@
   {
    "case_key": "chitbridge-web/e2e/docnumber-continuity.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "docnumber-continuity.cjs",
    "claim": null,
@@ -10487,7 +10582,7 @@
   {
    "case_key": "chitbridge-web/e2e/docs-guard.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "docs-guard.cjs",
    "claim": null,
@@ -10507,7 +10602,7 @@
   {
    "case_key": "chitbridge-web/e2e/double-fire.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "double-fire.cjs",
    "claim": null,
@@ -10530,7 +10625,7 @@
   {
    "case_key": "chitbridge-web/e2e/dup-functions.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "two top-level functions with one name is a feature deleted in silence.",
    "claim": "two top-level functions with one name is a feature deleted in silence.",
@@ -10553,7 +10648,7 @@
   {
    "case_key": "chitbridge-web/e2e/empty-shot.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "empty-shot.cjs",
    "claim": null,
@@ -10575,7 +10670,7 @@
   {
    "case_key": "chitbridge-web/e2e/empty-states.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "empty-states.cjs",
    "claim": null,
@@ -10597,7 +10692,7 @@
   {
    "case_key": "chitbridge-web/e2e/fixtures.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "fixtures.js",
    "claim": null,
@@ -10619,7 +10714,7 @@
   {
    "case_key": "chitbridge-web/e2e/flows/design2.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "design2.js",
    "claim": null,
@@ -10641,7 +10736,7 @@
   {
    "case_key": "chitbridge-web/e2e/flows/detail-design.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "detail-design.js",
    "claim": null,
@@ -10663,7 +10758,7 @@
   {
    "case_key": "chitbridge-web/e2e/flows/storefront.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "storefront.js",
    "claim": null,
@@ -10685,7 +10780,7 @@
   {
    "case_key": "chitbridge-web/e2e/group-sum.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "group-sum.cjs",
    "claim": null,
@@ -10701,13 +10796,15 @@
    "areas": [
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/e2e/guard-static.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the checks a parser will never make for you.",
    "claim": "the checks a parser will never make for you.",
@@ -10729,7 +10826,7 @@
   {
    "case_key": "chitbridge-web/e2e/guard-static.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "MUTATION TEST FOR THE GUARD ITSELF.",
    "claim": "MUTATION TEST FOR THE GUARD ITSELF.",
@@ -10749,7 +10846,7 @@
   {
    "case_key": "chitbridge-web/e2e/helper-scope.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "helper-scope.cjs",
    "claim": null,
@@ -10771,7 +10868,7 @@
   {
    "case_key": "chitbridge-web/e2e/html-syntax.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "html-syntax.cjs",
    "claim": null,
@@ -10793,7 +10890,7 @@
   {
    "case_key": "chitbridge-web/e2e/http-waves.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "http-waves.cjs",
    "claim": null,
@@ -10815,7 +10912,7 @@
   {
    "case_key": "chitbridge-web/e2e/l3-apply.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "apply the verified L3 proposals to source.",
    "claim": "apply the verified L3 proposals to source.",
@@ -10837,7 +10934,7 @@
   {
    "case_key": "chitbridge-web/e2e/l3-verify.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "prove an L3 rewrite changed NOTHING that a reader sees.",
    "claim": "prove an L3 rewrite changed NOTHING that a reader sees.",
@@ -10857,7 +10954,7 @@
   {
    "case_key": "chitbridge-web/e2e/labels-collect.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "every string now reachable by tx(), written out as the translator's worklist.",
    "claim": "every string now reachable by tx(), written out as the translator's worklist.",
@@ -10879,7 +10976,7 @@
   {
    "case_key": "chitbridge-web/e2e/lazy-screen-guard.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "A LAZY SCREEN IS NEVER CALLED BEFORE IT EXISTS.",
    "claim": "A LAZY SCREEN IS NEVER CALLED BEFORE IT EXISTS.",
@@ -10901,7 +10998,7 @@
   {
    "case_key": "chitbridge-web/e2e/legend-complete.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "legend-complete.cjs",
    "claim": null,
@@ -10923,7 +11020,7 @@
   {
    "case_key": "chitbridge-web/e2e/legend-shot.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "does the all-fields legend fold away, and can anyone tell it opens?",
    "claim": "does the all-fields legend fold away, and can anyone tell it opens?",
@@ -10945,7 +11042,7 @@
   {
    "case_key": "chitbridge-web/e2e/lighthouse-check.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "lighthouse-check.js",
    "claim": null,
@@ -10967,7 +11064,7 @@
   {
    "case_key": "chitbridge-web/e2e/live-run-mint.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "drive the REAL UI through both consolidated mint paths (lib/mint.js).",
    "claim": "drive the REAL UI through both consolidated mint paths (lib/mint.js).",
@@ -10990,7 +11087,7 @@
   {
    "case_key": "chitbridge-web/e2e/locale-map.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "locale-map.cjs",
    "claim": null,
@@ -11006,13 +11103,15 @@
    "areas": [
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/e2e/locators.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "locators.cjs",
    "claim": null,
@@ -11034,7 +11133,7 @@
   {
    "case_key": "chitbridge-web/e2e/loop-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "loop-probe.cjs",
    "claim": null,
@@ -11057,7 +11156,7 @@
   {
    "case_key": "chitbridge-web/e2e/manual-cases.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "manual-cases.cjs",
    "claim": null,
@@ -11077,7 +11176,7 @@
   {
    "case_key": "chitbridge-web/e2e/match-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "match-probe.cjs",
    "claim": null,
@@ -11099,7 +11198,7 @@
   {
    "case_key": "chitbridge-web/e2e/mobile-audit.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "a STOCK-TAKE of mobile friendliness, measured in a phone-sized browser.",
    "claim": "a STOCK-TAKE of mobile friendliness, measured in a phone-sized browser.",
@@ -11121,7 +11220,7 @@
   {
    "case_key": "chitbridge-web/e2e/modal-safe-repaint.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "A BACKGROUND READ MUST NEVER REPAINT OVER SOMEONE'S OPEN WORK.",
    "claim": "A BACKGROUND READ MUST NEVER REPAINT OVER SOMEONE'S OPEN WORK.",
@@ -11143,7 +11242,7 @@
   {
    "case_key": "chitbridge-web/e2e/morning-shots.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "morning-shots.cjs",
    "claim": null,
@@ -11165,7 +11264,7 @@
   {
    "case_key": "chitbridge-web/e2e/movable-panels.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "movable-panels.cjs",
    "claim": null,
@@ -11187,7 +11286,7 @@
   {
    "case_key": "chitbridge-web/e2e/offers-combined.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "several offers on one basket, all the way to the minted line.",
    "claim": "several offers on one basket, all the way to the minted line.",
@@ -11211,7 +11310,7 @@
   {
    "case_key": "chitbridge-web/e2e/offers-kinds.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "EVERY KIND IN THE REGISTRY, on a real basket, with the rules the FORM writes.",
    "claim": "EVERY KIND IN THE REGISTRY, on a real basket, with the rules the FORM writes.",
@@ -11235,7 +11334,7 @@
   {
    "case_key": "chitbridge-web/e2e/offers-promise.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "what a ROW may advertise, before anything is in a cart.",
    "claim": "what a ROW may advertise, before anything is in a cart.",
@@ -11259,7 +11358,7 @@
   {
    "case_key": "chitbridge-web/e2e/offline-poll.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "offline-poll.cjs",
    "claim": null,
@@ -11281,7 +11380,7 @@
   {
    "case_key": "chitbridge-web/e2e/one-cart.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "THE CART IS THE ONLY PLACE MONEY IS COMPUTED FOR A BUYER'S EYES.",
    "claim": "THE CART IS THE ONLY PLACE MONEY IS COMPUTED FOR A BUYER'S EYES.",
@@ -11303,7 +11402,7 @@
   {
    "case_key": "chitbridge-web/e2e/ownstock-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "WATCH the own-stock cycle instead of reading it.",
    "claim": "WATCH the own-stock cycle instead of reading it.",
@@ -11325,7 +11424,7 @@
   {
    "case_key": "chitbridge-web/e2e/ownstock-repaint.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "how often does our own shelf repaint after it opens?",
    "claim": "how often does our own shelf repaint after it opens?",
@@ -11347,7 +11446,7 @@
   {
    "case_key": "chitbridge-web/e2e/pack-parity.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "every language pack must carry the SAME key set.",
    "claim": "every language pack must carry the SAME key set.",
@@ -11369,7 +11468,7 @@
   {
    "case_key": "chitbridge-web/e2e/per-row-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "per-row-probe.cjs",
    "claim": null,
@@ -11391,7 +11490,7 @@
   {
    "case_key": "chitbridge-web/e2e/playwright.config.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "playwright.config.js",
    "claim": null,
@@ -11411,7 +11510,7 @@
   {
    "case_key": "chitbridge-web/e2e/post-results.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "push a Playwright run onto the test board.",
    "claim": "push a Playwright run onto the test board.",
@@ -11433,7 +11532,7 @@
   {
    "case_key": "chitbridge-web/e2e/prefetch.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "prefetch.cjs",
    "claim": null,
@@ -11455,7 +11554,7 @@
   {
    "case_key": "chitbridge-web/e2e/prof-dirty.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "prof-dirty.cjs",
    "claim": null,
@@ -11477,7 +11576,7 @@
   {
    "case_key": "chitbridge-web/e2e/profile-groups.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "profile-groups.cjs",
    "claim": null,
@@ -11493,13 +11592,15 @@
    "areas": [
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/e2e/prose-scan.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "how much of L3 is EDITORIAL and how much is just source line-wrapping?",
    "claim": "how much of L3 is EDITORIAL and how much is just source line-wrapping?",
@@ -11521,7 +11622,7 @@
   {
    "case_key": "chitbridge-web/e2e/prose-worklist.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "prose-worklist.cjs",
    "claim": null,
@@ -11543,7 +11644,7 @@
   {
    "case_key": "chitbridge-web/e2e/register-shots.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "drive the Register through its outcome loop and photograph each view.",
    "claim": "drive the Register through its outcome loop and photograph each view.",
@@ -11565,7 +11666,7 @@
   {
    "case_key": "chitbridge-web/e2e/render-smoke.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "render-smoke.cjs",
    "claim": null,
@@ -11581,13 +11682,15 @@
    "areas": [
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/e2e/report-card.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "WHICH SCREEN IS WORST, AND WHY?",
    "claim": "WHICH SCREEN IS WORST, AND WHY?",
@@ -11609,7 +11712,7 @@
   {
    "case_key": "chitbridge-web/e2e/repro-intake.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "repro-intake.cjs",
    "claim": null,
@@ -11631,7 +11734,7 @@
   {
    "case_key": "chitbridge-web/e2e/rtl-audit.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "MEASURE whether this app can render right-to-left, rather than assert it.",
    "claim": "MEASURE whether this app can render right-to-left, rather than assert it.",
@@ -11647,13 +11750,15 @@
    "areas": [
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/e2e/scale-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "scale-probe.cjs",
    "claim": null,
@@ -11676,7 +11781,7 @@
   {
    "case_key": "chitbridge-web/e2e/schemes-shot.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "read the Classification schemes block back off the screen after Athi's four changes.",
    "claim": "read the Classification schemes block back off the screen after Athi's four changes.",
@@ -11698,7 +11803,7 @@
   {
    "case_key": "chitbridge-web/e2e/screen-reads.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "HOW MANY ROUND TRIPS DOES ONE SCREEN COST TO PAINT?",
    "claim": "HOW MANY ROUND TRIPS DOES ONE SCREEN COST TO PAINT?",
@@ -11720,7 +11825,7 @@
   {
    "case_key": "chitbridge-web/e2e/search-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "search-probe.cjs",
    "claim": null,
@@ -11742,7 +11847,7 @@
   {
    "case_key": "chitbridge-web/e2e/seed.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "seed.js",
    "claim": null,
@@ -11764,7 +11869,7 @@
   {
    "case_key": "chitbridge-web/e2e/seedpick-shot.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "can you see what is in a standard set, and take part of it?",
    "claim": "can you see what is in a standard set, and take part of it?",
@@ -11786,7 +11891,7 @@
   {
    "case_key": "chitbridge-web/e2e/selfbill.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "selfbill.cjs",
    "claim": null,
@@ -11808,7 +11913,7 @@
   {
    "case_key": "chitbridge-web/e2e/session-keys.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "session-keys.cjs",
    "claim": null,
@@ -11830,7 +11935,7 @@
   {
    "case_key": "chitbridge-web/e2e/session.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "session.cjs",
    "claim": null,
@@ -11850,7 +11955,7 @@
   {
    "case_key": "chitbridge-web/e2e/shot-rows.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "LOOK AT THE ROWS. Signs in with the saved e2e session and screenshots the seller's Catalogue list and a",
    "claim": "LOOK AT THE ROWS. Signs in with the saved e2e session and screenshots the seller's Catalogue list and a",
@@ -11874,7 +11979,7 @@
   {
    "case_key": "chitbridge-web/e2e/silent-control.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "silent-control.cjs",
    "claim": null,
@@ -11896,7 +12001,7 @@
   {
    "case_key": "chitbridge-web/e2e/stale-paint.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "stale-paint.cjs",
    "claim": null,
@@ -11918,7 +12023,7 @@
   {
    "case_key": "chitbridge-web/e2e/storefront-probe.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "does a shop's OWN catalogue reach its public storefront?",
    "claim": "does a shop's OWN catalogue reach its public storefront?",
@@ -11941,7 +12046,7 @@
   {
    "case_key": "chitbridge-web/e2e/strings-extract.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "find every English string a reader can see, and say which ones can be translated ALONE.",
    "claim": "find every English string a reader can see, and say which ones can be translated ALONE.",
@@ -11963,7 +12068,7 @@
   {
    "case_key": "chitbridge-web/e2e/swarm-api.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "swarm-api.js",
    "claim": null,
@@ -11985,7 +12090,7 @@
   {
    "case_key": "chitbridge-web/e2e/swarm-fanin.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "swarm-fanin.js",
    "claim": null,
@@ -12007,7 +12112,7 @@
   {
    "case_key": "chitbridge-web/e2e/tax-slab.test.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the browser really has the API's tax engine, and it really answers the same way.",
    "claim": "the browser really has the API's tax engine, and it really answers the same way.",
@@ -12025,6 +12130,8 @@
     "web"
    ],
    "subjects": [
+    "lib/tax-slab.js",
+    "lib/tax.js",
     "public/app/tax-slab.js",
     "public/app/tax.js"
    ],
@@ -12033,7 +12140,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/a11y-theme.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the accessibility themes, and the promise their cards make.",
    "claim": "the accessibility themes, and the promise their cards make.",
@@ -12055,7 +12162,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/adopt-screen.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "adopt-screen.spec.js",
    "claim": null,
@@ -12078,7 +12185,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/adopt.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "adopt.spec.js",
    "claim": null,
@@ -12101,7 +12208,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/api-keys.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "api-keys.spec.js",
    "claim": null,
@@ -12125,7 +12232,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/appearance.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "Settings › Appearance: theme, text size and motion in one place.",
    "claim": "Settings › Appearance: theme, text size and motion in one place.",
@@ -12147,7 +12254,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/auth.setup.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "auth.setup.js",
    "claim": null,
@@ -12169,7 +12276,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/axe.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "axe.spec.js",
    "claim": null,
@@ -12191,7 +12298,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/b2b.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "b2b.spec.js",
    "claim": null,
@@ -12214,7 +12321,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/books-at.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "books-at.spec.js",
    "claim": null,
@@ -12238,7 +12345,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/cap-collision.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "two lazily-loaded capabilities must not claim the same global.",
    "claim": "two lazily-loaded capabilities must not claim the same global.",
@@ -12260,7 +12367,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/capture-offers.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "capture-offers.spec.js",
    "claim": null,
@@ -12283,7 +12390,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/capture.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "capture.spec.js",
    "claim": null,
@@ -12305,7 +12412,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/catalogue-schedule.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "catalogue-schedule.spec.js",
    "claim": null,
@@ -12327,7 +12434,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/catalogue-wizard.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "catalogue-wizard.spec.js",
    "claim": null,
@@ -12349,7 +12456,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/catalogue.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "catalogue.spec.js",
    "claim": null,
@@ -12371,7 +12478,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/categories-attach.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "categories-attach.spec.js",
    "claim": null,
@@ -12393,7 +12500,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/chits.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "chits.spec.js",
    "claim": null,
@@ -12415,7 +12522,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/coassists.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "coassists.spec.js",
    "claim": null,
@@ -12437,7 +12544,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/connector.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "connector.spec.js",
    "claim": null,
@@ -12457,7 +12564,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/counter-key.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "counter-key.spec.js",
    "claim": null,
@@ -12480,7 +12587,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/currency-matrix.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "every CURRENCY × INPUT MODE combination, rendered in a real browser.",
    "claim": "every CURRENCY × INPUT MODE combination, rendered in a real browser.",
@@ -12503,7 +12610,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/delivery-full.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "FULL DELIVERY, end to end.",
    "claim": "FULL DELIVERY, end to end.",
@@ -12525,7 +12632,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/demo-invoice.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "demo-invoice.spec.js",
    "claim": null,
@@ -12547,7 +12654,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/demo-lifecycle.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "demo-lifecycle.spec.js",
    "claim": null,
@@ -12564,13 +12671,15 @@
     "connector",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/csv.js"
+   ],
    "run_by": "a person, against a live environment — never unattended"
   },
   {
    "case_key": "chitbridge-web/e2e/tests/demo-media.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "demo-media.spec.js",
    "claim": null,
@@ -12592,7 +12701,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/demo-offers.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "demo-offers.spec.js",
    "claim": null,
@@ -12614,7 +12723,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/design-guard.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "design-guard.spec.js",
    "claim": null,
@@ -12636,7 +12745,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/design2-service.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "design2-service.spec.js",
    "claim": null,
@@ -12658,7 +12767,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/detail-design-parties.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "detail-design-parties.spec.js",
    "claim": null,
@@ -12680,7 +12789,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/detail-design.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "detail-design.spec.js",
    "claim": null,
@@ -12702,7 +12811,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/dispute-privacy.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "THE USP, PROVEN: A disputes with B only, and C never learns of it.",
    "claim": "THE USP, PROVEN: A disputes with B only, and C never learns of it.",
@@ -12724,7 +12833,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/disputes.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "disputes.spec.js",
    "claim": null,
@@ -12746,7 +12855,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/enquiry.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "ASK A SUPPLIER ABOUT A PRODUCT, and prove the question lands only where it should.",
    "claim": "ASK A SUPPLIER ABOUT A PRODUCT, and prove the question lands only where it should.",
@@ -12768,7 +12877,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/exposure.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "exposure.spec.js",
    "claim": null,
@@ -12791,7 +12900,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/flow.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "flow.spec.js",
    "claim": null,
@@ -12813,7 +12922,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/governance.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "governance.spec.js",
    "claim": null,
@@ -12835,7 +12944,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/helpdesk.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "helpdesk.spec.js",
    "claim": null,
@@ -12857,7 +12966,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/i18n.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the string registry: does choosing a language actually change what the app says?",
    "claim": "the string registry: does choosing a language actually change what the app says?",
@@ -12879,7 +12988,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/iam.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the IAM screen, driven in a real browser.",
    "claim": "the IAM screen, driven in a real browser.",
@@ -12902,7 +13011,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/identifiers.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "identifiers.spec.js",
    "claim": null,
@@ -12924,7 +13033,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/intake-sender.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "intake-sender.spec.js",
    "claim": null,
@@ -12946,7 +13055,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/intake.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "THE CAPTURE CONNECTOR, end to end in a browser.",
    "claim": "THE CAPTURE CONNECTOR, end to end in a browser.",
@@ -12968,7 +13077,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/integrations.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "integrations.spec.js",
    "claim": null,
@@ -12992,7 +13101,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/invoice-party.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "invoice-party.spec.js",
    "claim": null,
@@ -13014,7 +13123,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/invoice-row.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "invoice-row.spec.js",
    "claim": null,
@@ -13036,7 +13145,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/keyboard.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "keyboard.spec.js",
    "claim": null,
@@ -13058,7 +13167,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/keymap.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the global keyboard map: does every advertised key actually do its job?",
    "claim": "the global keyboard map: does every advertised key actually do its job?",
@@ -13080,7 +13189,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/lifecycle-history.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "lifecycle-history.spec.js",
    "claim": null,
@@ -13102,7 +13211,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/lifecycle.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "lifecycle.spec.js",
    "claim": null,
@@ -13125,7 +13234,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/live-checks.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "live-checks.spec.js",
    "claim": null,
@@ -13147,7 +13256,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/locale-sync.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "b165: does the reader's choice actually follow the PERSON?",
    "claim": "b165: does the reader's choice actually follow the PERSON?",
@@ -13169,7 +13278,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/locale.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the localisation layer and its screen.",
    "claim": "the localisation layer and its screen.",
@@ -13191,7 +13300,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/measure-catalogue.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "measure-catalogue.spec.js",
    "claim": null,
@@ -13213,7 +13322,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/meat-blueprint.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "meat-blueprint.spec.js",
    "claim": null,
@@ -13235,7 +13344,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/message-privacy.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "AN INTERNAL NOTE MUST NEVER REACH THE COUNTERPARTY.",
    "claim": "AN INTERNAL NOTE MUST NEVER REACH THE COUNTERPARTY.",
@@ -13257,7 +13366,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/messages.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "messages.spec.js",
    "claim": null,
@@ -13279,7 +13388,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/mode-survives-order.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "does the DECLARED MODE survive the transaction?",
    "claim": "does the DECLARED MODE survive the transaction?",
@@ -13301,7 +13410,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/multiparty.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "multiparty.spec.js",
    "claim": null,
@@ -13323,7 +13432,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/network-cascade.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the parent/child visibility cascade, as a CUSTOMER actually experiences it.",
    "claim": "the parent/child visibility cascade, as a CUSTOMER actually experiences it.",
@@ -13346,7 +13455,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/no-wrapper-leak.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "the string wrapper must never appear ON the screen.",
    "claim": "the string wrapper must never appear ON the screen.",
@@ -13368,7 +13477,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/notif-clear.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "clearing Activity must hide the row and KEEP the event.",
    "claim": "clearing Activity must hide the row and KEEP the event.",
@@ -13390,7 +13499,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/offer-lab.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "offer-lab.spec.js",
    "claim": null,
@@ -13412,7 +13521,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/offers-customer.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "offers-customer.spec.js",
    "claim": null,
@@ -13436,7 +13545,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/offers-groups.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "offers-groups.spec.js",
    "claim": null,
@@ -13459,7 +13568,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/offers-lifecycle.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "offers-lifecycle.spec.js",
    "claim": null,
@@ -13481,7 +13590,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/onboarding.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "onboarding.spec.js",
    "claim": null,
@@ -13503,7 +13612,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/order-models.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "order-models.spec.js",
    "claim": null,
@@ -13525,7 +13634,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/order-steps.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "order-steps.spec.js",
    "claim": null,
@@ -13548,7 +13657,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/parity-money.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "parity-money.spec.js",
    "claim": null,
@@ -13571,7 +13680,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/parity-order.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "parity-order.spec.js",
    "claim": null,
@@ -13594,7 +13703,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/parity.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "parity.spec.js",
    "claim": null,
@@ -13617,7 +13726,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/payment.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "payment.spec.js",
    "claim": null,
@@ -13641,7 +13750,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/picker.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "AMBIGUITY RESOLUTION, end to end.",
    "claim": "AMBIGUITY RESOLUTION, end to end.",
@@ -13663,7 +13772,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/pool.setup.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "pool.setup.js",
    "claim": null,
@@ -13683,7 +13792,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/prefs-sync.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "b166: does the LOOK follow the person, the way the language does?",
    "claim": "b166: does the LOOK follow the person, the way the language does?",
@@ -13705,7 +13814,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/preview.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "preview.spec.js",
    "claim": null,
@@ -13728,7 +13837,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/pricing-structure.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "pricing-structure.spec.js",
    "claim": null,
@@ -13750,7 +13859,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/prof.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "prof.spec.js",
    "claim": null,
@@ -13772,7 +13881,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/profile-map.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "profile-map.spec.js",
    "claim": null,
@@ -13790,13 +13899,15 @@
     "connector",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/csv.js"
+   ],
    "run_by": "a person, against a live environment — never unattended"
   },
   {
    "case_key": "chitbridge-web/e2e/tests/promo-pair.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "promo-pair.spec.js",
    "claim": null,
@@ -13819,7 +13930,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/promo.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "promo.spec.js",
    "claim": null,
@@ -13841,7 +13952,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/purchase.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "purchase.spec.js",
    "claim": null,
@@ -13864,7 +13975,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/push.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "push.spec.js",
    "claim": null,
@@ -13886,7 +13997,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/reconcile.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "reconcile.spec.js",
    "claim": null,
@@ -13910,7 +14021,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/record-sale.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "record-sale.spec.js",
    "claim": null,
@@ -13933,7 +14044,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/redproof.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "redproof.spec.js",
    "claim": null,
@@ -13955,7 +14066,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/register.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "register.spec.js",
    "claim": null,
@@ -13978,7 +14089,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/render-smoke.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "DOES THE PAGE STILL RENDER? Run this BEFORE pushing anything that touches",
    "claim": "DOES THE PAGE STILL RENDER? Run this BEFORE pushing anything that touches",
@@ -14000,7 +14111,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/rtl.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "does the interface actually mirror when the reading order does?",
    "claim": "does the interface actually mirror when the reading order does?",
@@ -14022,7 +14133,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/services.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "services.spec.js",
    "claim": null,
@@ -14045,7 +14156,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/shop-publish.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "CAN A NEW BUSINESS ACTUALLY OPEN ITS SHOP?",
    "claim": "CAN A NEW BUSINESS ACTUALLY OPEN ITS SHOP?",
@@ -14067,7 +14178,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/signed-out.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "a tab with no session must STAY on the login screen.",
    "claim": "a tab with no session must STAY on the login screen.",
@@ -14089,7 +14200,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/smoke.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "smoke.spec.js",
    "claim": null,
@@ -14111,7 +14222,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/standards.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "Settings › Standards: what the platform follows, what you follow, what your trade follows.",
    "claim": "Settings › Standards: what the platform follows, what you follow, what your trade follows.",
@@ -14133,7 +14244,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/stock-guard.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "stock-guard.spec.js",
    "claim": null,
@@ -14156,7 +14267,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/stock.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "stock.spec.js",
    "claim": null,
@@ -14174,13 +14285,15 @@
     "connector",
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/csv.js"
+   ],
    "run_by": "a person, against a live environment — never unattended"
   },
   {
    "case_key": "chitbridge-web/e2e/tests/store.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "store.spec.js",
    "claim": null,
@@ -14202,7 +14315,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/storefront.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "storefront.spec.js",
    "claim": null,
@@ -14224,7 +14337,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/supplier-local.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "supplier-local.spec.js",
    "claim": null,
@@ -14246,7 +14359,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/suppliers.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "suppliers.spec.js",
    "claim": null,
@@ -14268,7 +14381,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/supplies-screen.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "supplies-screen.spec.js",
    "claim": null,
@@ -14290,7 +14403,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/swarm.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "swarm.spec.js",
    "claim": null,
@@ -14312,7 +14425,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/tax-categories.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "tax-categories.spec.js",
    "claim": null,
@@ -14334,7 +14447,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/tax-ledger.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "tax-ledger.spec.js",
    "claim": null,
@@ -14356,7 +14469,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/tax-slab.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "tax-slab.spec.js",
    "claim": null,
@@ -14378,7 +14491,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/tax-takeover.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "tax-takeover.spec.js",
    "claim": null,
@@ -14400,7 +14513,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/theme-contrast.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "EVERY THEME, EVERY SCREEN, CHECKED BY MACHINE.",
    "claim": "EVERY THEME, EVERY SCREEN, CHECKED BY MACHINE.",
@@ -14422,7 +14535,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/theme-picker.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "does clicking a theme actually change the theme?",
    "claim": "does clicking a theme actually change the theme?",
@@ -14444,7 +14557,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/till-observation5.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "till-observation5.spec.js",
    "claim": null,
@@ -14467,7 +14580,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/till-rewards.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "till-rewards.spec.js",
    "claim": null,
@@ -14490,7 +14603,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/till-tax.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "till-tax.spec.js",
    "claim": null,
@@ -14513,7 +14626,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/till-verify.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "till-verify.spec.js",
    "claim": null,
@@ -14536,7 +14649,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/till.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "till.spec.js",
    "claim": null,
@@ -14559,7 +14672,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/tour-two.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "tour-two.spec.js",
    "claim": null,
@@ -14581,7 +14694,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/tour.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "tour.spec.js",
    "claim": null,
@@ -14604,7 +14717,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/trash-recovery.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "A DELETED CHIT MUST BE FINDABLE, WITHOUT TOUCHING A FILTER.",
    "claim": "A DELETED CHIT MUST BE FINDABLE, WITHOUT TOUCHING A FILTER.",
@@ -14626,7 +14739,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/two-books.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "two-books.spec.js",
    "claim": null,
@@ -14649,7 +14762,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/two-shops.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "two-shops.spec.js",
    "claim": null,
@@ -14672,7 +14785,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/ux.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "ux.spec.js",
    "claim": null,
@@ -14695,7 +14808,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/variants.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "one product, several purchasable lines: does a SHOPPER see it that way?",
    "claim": "one product, several purchasable lines: does a SHOPPER see it that way?",
@@ -14718,7 +14831,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/veg-blueprint.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "veg-blueprint.spec.js",
    "claim": null,
@@ -14740,7 +14853,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/visual.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "visual.spec.js",
    "claim": null,
@@ -14762,7 +14875,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/withdraw.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "THE WHOLE LOOP: A withdraws, B is told, and B's copy does not move.",
    "claim": "THE WHOLE LOOP: A withdraws, B is told, and B's copy does not move.",
@@ -14784,7 +14897,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/wizard-reach.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "wizard-reach.spec.js",
    "claim": null,
@@ -14806,7 +14919,7 @@
   {
    "case_key": "chitbridge-web/e2e/tests/worklist.spec.js",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "EVERY LINE ASSIGNED, ACROSS EVERY CHIT.",
    "claim": "EVERY LINE ASSIGNED, ACROSS EVERY CHIT.",
@@ -14828,7 +14941,7 @@
   {
    "case_key": "chitbridge-web/e2e/text-budget.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "how much of this product is a LABEL, and how much is an EXPLANATION?",
    "claim": "how much of this product is a LABEL, and how much is an EXPLANATION?",
@@ -14850,7 +14963,7 @@
   {
    "case_key": "chitbridge-web/e2e/theme-literals.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "a colour written as a LITERAL is a colour the theme cannot reach.",
    "claim": "a colour written as a LITERAL is a colour the theme cannot reach.",
@@ -14872,7 +14985,7 @@
   {
    "case_key": "chitbridge-web/e2e/till-demo.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "A SHOP TO TRY THE COUNTER WITH (2026-09-07).",
    "claim": "A SHOP TO TRY THE COUNTER WITH (2026-09-07).",
@@ -14895,7 +15008,7 @@
   {
    "case_key": "chitbridge-web/e2e/till-modes.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "till-modes.cjs",
    "claim": null,
@@ -14917,7 +15030,7 @@
   {
    "case_key": "chitbridge-web/e2e/till-render.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "till-render.cjs",
    "claim": null,
@@ -14939,7 +15052,7 @@
   {
    "case_key": "chitbridge-web/e2e/token-check.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "every `var(--x)` must resolve to something.",
    "claim": "every `var(--x)` must resolve to something.",
@@ -14961,7 +15074,7 @@
   {
    "case_key": "chitbridge-web/e2e/tooltip-length.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "tooltip-length.cjs",
    "claim": null,
@@ -14983,7 +15096,7 @@
   {
    "case_key": "chitbridge-web/e2e/tour.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "photograph every screen that changed, so \"what is finished\" is a thing you can look at.",
    "claim": "photograph every screen that changed, so \"what is finished\" is a thing you can look at.",
@@ -15006,7 +15119,7 @@
   {
    "case_key": "chitbridge-web/e2e/try-engines.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "try-engines.cjs",
    "claim": null,
@@ -15023,13 +15136,40 @@
     "engine",
     "web"
    ],
+   "subjects": [
+    "engine/locale.js",
+    "engine/nums.js",
+    "lib/docnumber.js",
+    "lib/money.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+  },
+  {
+   "case_key": "chitbridge-web/e2e/tx-leak.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "tx-leak.cjs",
+   "claim": null,
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 126 lines. Run: node chitbridge-web/e2e/tx-leak.cjs",
+   "layer": "web",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "areas": [
+    "web"
+   ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/e2e/type-scale.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "type-scale.cjs",
    "claim": null,
@@ -15051,7 +15191,7 @@
   {
    "case_key": "chitbridge-web/e2e/verify-att.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "verify-att.cjs",
    "claim": null,
@@ -15073,7 +15213,7 @@
   {
    "case_key": "chitbridge-web/e2e/verify-folder-ux.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "verify-folder-ux.cjs",
    "claim": null,
@@ -15095,7 +15235,7 @@
   {
    "case_key": "chitbridge-web/e2e/verify-raise.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "verify-raise.cjs",
    "claim": null,
@@ -15117,7 +15257,7 @@
   {
    "case_key": "chitbridge-web/e2e/wrap-apply.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "wrap-apply.cjs",
    "claim": null,
@@ -15139,7 +15279,7 @@
   {
    "case_key": "chitbridge-web/e2e/wrap-status.cjs",
    "module_key": "chitbridge-web/e2e",
-   "module_name": "chitbridge-web · e2e",
+   "module_name": "Browser probes",
    "intro": "",
    "title": "wrap-status.cjs",
    "claim": null,
@@ -15161,7 +15301,7 @@
   {
    "case_key": "chitbridge-web/scripts/attach-deferred.test.mjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "the deferred attach path, proven without a browser.",
    "claim": "the deferred attach path, proven without a browser.",
@@ -15184,7 +15324,7 @@
   {
    "case_key": "chitbridge-web/scripts/cap-network-render.test.mjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "DOES THE NETWORK BROWSE SCREEN ACTUALLY RENDER?",
    "claim": "DOES THE NETWORK BROWSE SCREEN ACTUALLY RENDER?",
@@ -15198,13 +15338,15 @@
    "group": "test.guard",
    "automated": true,
    "areas": [],
-   "subjects": [],
+   "subjects": [
+    "engine/locale.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/scripts/cart-ui.test.mjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "the ONE cart helper (public/app/cart-ui.js).",
    "claim": "the ONE cart helper (public/app/cart-ui.js).",
@@ -15224,7 +15366,7 @@
   {
    "case_key": "chitbridge-web/scripts/check-adoption.js",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "the SPEC-adoption-generalize regression: an adopted catalogue must render for ANY vertical.",
    "claim": "the SPEC-adoption-generalize regression: an adopted catalogue must render for ANY vertical.",
@@ -15247,7 +15389,7 @@
   {
    "case_key": "chitbridge-web/scripts/check-app-parses.cjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "check-app-parses.cjs",
    "claim": null,
@@ -15269,7 +15411,7 @@
   {
    "case_key": "chitbridge-web/scripts/check-syntax.js",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "validate the inline JS in public/app.html + the public/app/*.js modules.",
    "claim": "validate the inline JS in public/app.html + the public/app/*.js modules.",
@@ -15291,7 +15433,7 @@
   {
    "case_key": "chitbridge-web/scripts/offers.test.mjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "CBOffers, proven without a browser.",
    "claim": "CBOffers, proven without a browser.",
@@ -15307,13 +15449,15 @@
    "areas": [
     "web"
    ],
-   "subjects": [],
+   "subjects": [
+    "engine/offers.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-web/scripts/price-origin.test.mjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "where a price is referred from.",
    "claim": "where a price is referred from.",
@@ -15335,7 +15479,7 @@
   {
    "case_key": "chitbridge-web/scripts/price-resolve.test.mjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "which price applies, and why.",
    "claim": "which price applies, and why.",
@@ -15357,7 +15501,7 @@
   {
    "case_key": "chitbridge-web/scripts/step-flow.test.mjs",
    "module_key": "chitbridge-web/scripts",
-   "module_name": "chitbridge-web · scripts",
+   "module_name": "Web checks",
    "intro": "",
    "title": "the rules of the shared wizard, headless.",
    "claim": "the rules of the shared wizard, headless.",
