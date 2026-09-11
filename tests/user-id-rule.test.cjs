@@ -1,5 +1,5 @@
 /**
- * The User ID rule, exercised through the REAL route handlers with a stubbed database.
+ * user-id-rule.test.cjs — The User ID rule, exercised through the REAL route handlers with a stubbed database.
  *
  * ⚠️ Not a unit test of checkRoot — that would pass while the routes ignored it, which is exactly the failure
  * the hat gate had (20/20 green while the gate read the wrong property). This drives express.

@@ -1,4 +1,4 @@
-// The locator, end to end: build a network, give the stores stock, and ask "who has it?"
+// prove-availability.js — The locator, end to end: build a network, give the stores stock, and ask "who has it?"
 const API='https://chitbridge-api-production.up.railway.app';
 const a=async(p,o={})=>{const r=await fetch(API+p,{method:o.method||'GET',headers:{'Content-Type':'application/json',...(o.token?{Authorization:'Bearer '+o.token}:{})},body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await r.json()}catch(e){};return{status:r.status,json:j}};
 let pass=0,fail=0; const ok=(c,v,d)=>{console.log((v?'   ✓ ':'   ✗ ')+c+(d?'  '+d:'')); v?pass++:fail++;};

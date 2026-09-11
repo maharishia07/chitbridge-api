@@ -1,5 +1,5 @@
 /**
- * THE KIT SHIPS BLANKS, NOT PLACEHOLDERS (2026-09-07, Athi's first live Zoho run).
+ * connector-kit.test.js — THE KIT SHIPS BLANKS, NOT PLACEHOLDERS (2026-09-07, Athi's first live Zoho run).
  * connector.json used to ship zoho.org = "YOUR ORGANISATION ID". A placeholder is truthy, so setup's "which organisation?" question
  * never ran and every Zoho call came back `Invalid value passed for organization_id` — the connector read nothing, wrote nothing, and
  * could not even auto-approve (no organisation → no GSTIN → no facts to match). Source-level, no DB, no network.

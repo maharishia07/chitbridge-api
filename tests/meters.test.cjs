@@ -27,8 +27,24 @@ const t = (name, cond, extra) => {
 };
 
 const meterSrc = fs.readFileSync(path.join(L, 'meter.js'), 'utf8');
+/**
+ * ── ⚠️⚠️ IT SCANNED routes/ AND THE FOURTH METER HAD MOVED TO lib/ ────────────────────────────────────────────
+ *
+ * This looked for four wired meters and found three, so it reported *"meters are wired ✗"* — which reads as a
+ * meter having been REMOVED. None was. `catalogue.item` is wired at lib/mint-product.js:49; it simply left
+ * routes/ when the mint was extracted, and this was still looking only where it used to be.
+ *
+ * ⚠️ A TEST THAT SCANS A DIRECTORY INSTEAD OF A BEHAVIOUR GOES BLIND WHEN THE CODE MOVES, and it fails in the
+ * most misleading direction: it says the thing is gone. That is the same fault as gherkin.test.js this morning
+ * and query-shape's file list — three stale SCOPES in one day, each of them louder than the bug it hid.
+ *
+ * ⭐ A meter call is a meter call wherever it lives. Both directories are read, and the file is reported with
+ * the finding so the next move is visible rather than a guess.
+ */
+const srcOf = (dir) => fs.readdirSync(dir).filter((f) => f.endsWith('.js'))
+  .map((f) => ({ f: path.basename(dir) + '/' + f, src: fs.readFileSync(path.join(dir, f), 'utf8') }));
 const routeFiles = fs.readdirSync(R).filter((f) => f.endsWith('.js'));
-const allRoutes = routeFiles.map((f) => ({ f, src: fs.readFileSync(path.join(R, f), 'utf8') }));
+const allRoutes = srcOf(R).concat(srcOf(L));
 
 console.log('\n── one path, and it cannot fail the action it measures ──');
 
@@ -64,8 +80,25 @@ t('meters are wired', calls.length >= 4, calls.map((c) => c.name).join(' · '));
  */
 console.log('\n── the entity argument exists in the file that passes it ──');
 calls.forEach((c) => {
-  const src = allRoutes.find((r) => r.f === c.f).src;
-  const declared = new RegExp('(const|let|var)\\s+' + c.entityVar + '\\s*=').test(src);
+  const src = (allRoutes.find((r) => r.f === c.f) || { src: '' }).src;
+  /**
+   * ⚠️⚠️ AND THIS ONLY KNEW ONE WAY TO DECLARE A NAME. It required `const entity_id =`, so
+   * lib/mint-product.js — which destructures it off its argument, `const { query, entity_id, rid } = o;` —
+   * was reported as "NOT DECLARED, this meter records nothing". It is declared, on line 28, and the meter
+   * works. The test was describing its own regex.
+   *
+   * ⚠️ THIRD TIME TODAY a guard has read a declaration it did not recognise as one: undeclared.cjs missed a
+   * comma list, this missed a destructure. ⭐ The fix is the same both times — read the LINE a declaration
+   * keyword introduces, and treat every name it binds as bound, punctuation included.
+   *
+   * ⚠️ THE ASSERTION IS UNCHANGED AND STILL THE POINT: meter() returns false on a falsy entity and swallows
+   * its own errors, so a wrong variable name here is invisible forever. It must be a name that EXISTS.
+   */
+  const declared = src.split('\n').some(function (line) {
+    if (!new RegExp('\\b' + c.entityVar + '\\b').test(line)) return false;
+    /* a declaration keyword on the same line, or a function signature that takes it */
+    return /\b(const|let|var)\b/.test(line) || /\bfunction\b|=>|\basync\b/.test(line);
+  });
   t('  ' + c.f + ' → ' + c.name + ' passes ' + c.entityVar, declared,
     declared ? '' : 'NOT DECLARED — this meter records nothing');
 });

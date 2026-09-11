@@ -1,4 +1,4 @@
-/* A VAT-type scheme (b202: DE-VAT-19 …) goes through the SAME engine as GST: one head, border decides. */
+/* tax-scheme.test.js — A VAT-type scheme (b202: DE-VAT-19 …) goes through the SAME engine as GST: one head, border decides. */
 const assert = require('assert');
 const tax = require('../lib/tax');
 const lines = require('../lib/tax-lines');

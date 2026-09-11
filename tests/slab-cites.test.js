@@ -1,4 +1,4 @@
-/* The retire guard: refused with counts while anything cites the slab; accepted with a takeover that re-points first. */
+/* slab-cites.test.js — The retire guard: refused with counts while anything cites the slab; accepted with a takeover that re-points first. */
 const assert = require('assert');
 const C = require('../lib/slab-cites');
 let n = 0, f = 0;
