@@ -1011,4 +1011,109 @@ router.get('/report', auth, async (req, res) => {
   }
 });
 
+/**
+ * ⭐⭐⭐ GET /api/testing/reliability — HOW OFTEN DID THIS RUN, AND HOW OFTEN DID IT FAIL.
+ *
+ * Athi, 2026-09-11: *"can we make the log so we know, out of these many sequence, this particular test is
+ * drifting due to whatever reason — which means it is still not matured… the total number of times it ran and
+ * how many times it failed."*
+ *
+ * ⭐⭐ THE LEDGER ALREADY HELD THIS AND NOTHING ASKED IT. Every result has been an appended row since b219, so
+ * the sequence was there from the first run — what was missing was the question. A summary line says "172 green,
+ * 17 red" and cannot distinguish a check that has NEVER worked from one that fails one time in six, and those
+ * need opposite responses: one is a bug, the other is a test nobody can trust.
+ *
+ * ⭐⭐⭐ FLIPS ARE THE MEASURE, NOT THE FAILURE COUNT. A case that went pass·pass·fail·fail·fail broke once and
+ * stayed broken — that is a defect, and the failure count describes it fairly. A case that went
+ * pass·fail·pass·fail·pass failed the same number of times and is a different animal entirely: nothing about the
+ * product changed between those runs, so the TEST is the thing that is not mature. Counting how many times the
+ * answer CHANGED separates them, and no other number does.
+ *
+ * ⚠ It reads RESULTS, not cases — so a guard file that has never been written up as a case still gets its
+ * history. The board answers "what should be tested"; this answers "what can be believed".
+ */
+router.get('/reliability', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const q = req.query || {};
+    const kind = q.run_kind ? String(q.run_kind) : null;
+
+    const r = await withEntity(entity_id, (db) => db.query(
+      `WITH ordered AS (
+         SELECT case_key, module_key, status, at, run_kind, layer,
+                lag(status) OVER (PARTITION BY case_key ORDER BY at) AS prev
+           FROM test_result
+          WHERE entity_id = $1 AND ($2::text IS NULL OR run_kind = $2)
+       ), agg AS (
+         SELECT case_key,
+                max(module_key) AS module_key,
+                count(*)                                    AS runs,
+                count(*) FILTER (WHERE status = 'pass')      AS passed,
+                count(*) FILTER (WHERE status = 'fail')      AS failed,
+                count(*) FILTER (WHERE status = 'blocked')   AS blocked,
+                count(*) FILTER (WHERE status = 'skipped')   AS skipped,
+                /* ⭐ the drift signal: how many times consecutive runs disagreed */
+                count(*) FILTER (WHERE prev IS NOT NULL AND prev <> status) AS flips,
+                min(at) AS first_seen, max(at) AS last_seen,
+                string_agg(DISTINCT run_kind, ', ') AS kinds,
+                string_agg(DISTINCT layer, ', ')    AS layers
+           FROM ordered GROUP BY case_key
+       ), latest AS (
+         SELECT DISTINCT ON (case_key) case_key, status AS last_status, tester_name, run_kind AS last_kind
+           FROM test_result
+          WHERE entity_id = $1 AND ($2::text IS NULL OR run_kind = $2)
+          ORDER BY case_key, at DESC
+       )
+       SELECT a.*, l.last_status, l.tester_name, l.last_kind
+         FROM agg a JOIN latest l ON l.case_key = a.case_key
+        ORDER BY a.flips DESC, a.failed DESC, a.case_key`, [entity_id, kind]));
+
+    const rows = r.rows.map((x) => {
+      const runs = Number(x.runs), failed = Number(x.failed), flips = Number(x.flips);
+      return {
+        case_key: x.case_key, module_key: x.module_key,
+        runs, passed: Number(x.passed), failed, blocked: Number(x.blocked), skipped: Number(x.skipped),
+        flips,
+        pass_rate: runs ? Math.round((Number(x.passed) / runs) * 100) : 0,
+        first_seen: x.first_seen, last_seen: x.last_seen,
+        kinds: x.kinds, layers: x.layers,
+        last_status: x.last_status, tester_name: x.tester_name, last_kind: x.last_kind,
+        /**
+         * ⭐ THE VERDICT, IN WORDS, BECAUSE A NUMBER IS NOT A DECISION.
+         * ⚠ 'once' is not a judgement at all and says so — a single green run is the commonest way a suite
+         * claims maturity it has not earned, and calling it 'settled' would be this metric telling the lie it
+         * exists to catch.
+         */
+        verdict: runs < 2 ? 'run once — nothing to judge yet'
+          : flips === 0 && failed === 0 ? 'settled'
+          : flips === 0 ? 'broken, consistently — the product, not the test'
+          : flips === 1 ? 'changed once — a fix or a regression, not drift'
+          : 'DRIFTING — ' + flips + ' changes of answer across ' + runs + ' runs; this test is not mature',
+      };
+    });
+
+    const drifting = rows.filter((x) => x.flips >= 2);
+    const settled = rows.filter((x) => x.runs >= 2 && x.flips === 0 && x.failed === 0);
+    res.json({
+      cases: rows,
+      totals: {
+        tracked: rows.length,
+        runs: rows.reduce((a, x) => a + x.runs, 0),
+        failures: rows.reduce((a, x) => a + x.failed, 0),
+        drifting: drifting.length,
+        settled: settled.length,
+        once: rows.filter((x) => x.runs < 2).length,
+      },
+      says: rows.length
+        ? (drifting.length
+            ? drifting.length + ' test(s) have changed their answer more than once. Those are the ones to read '
+              + 'first \u2014 a test nobody can believe costs more than a missing one.'
+            : 'Nothing is drifting. Every test that has run twice has given the same answer both times.')
+        : 'Nothing has been recorded yet.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read the history', message: String(err.message || err) });
+  }
+});
+
 module.exports = router;
