@@ -1191,11 +1191,27 @@ router.get('/reliability', auth, async (req, res) => {
          */
         verdict: runs < 2 ? 'run once — nothing to judge yet'
           : flips === 0 && failed === 0 ? 'settled'
-          : flips === 0 ? 'broken, consistently — the product, not the test'
+          /**
+           * ⚠️⚠️ THIS USED TO SAY "the product, not the test", AND IT WAS WRONG ABOUT HALF OF THEM.
+           *
+           * A triage of the 27 reds on 2026-09-11 found 9 genuine product faults, 13 STALE TESTS and 4 that
+           * should never have run unattended. `products-bulk.test.cjs` tests a file deliberately deleted in
+           * September; `arrow-probe.cjs` wants an env var that is not here. Both fail every single time with
+           * zero flips — indistinguishable, from this data, from a real defect.
+           *
+           * ⭐ Flips can tell you a test is NOT mature. Nothing here can tell you that a consistent failure is
+           * the product's fault, and saying so sent somebody to read nine files that were fine.
+           */
+          : flips === 0 ? 'red every time — a defect, or a test that has gone stale; this cannot tell which'
           : flips === 1 ? 'changed once — a fix or a regression, not drift'
           : 'DRIFTING — ' + flips + ' changes of answer across ' + runs + ' runs; this test is not mature',
       };
     });
+
+    /* ⭐ a SITTING is one posted run, however many results it carried */
+    const sittings = await withEntity(entity_id, (db) => db.query(
+      'SELECT COUNT(DISTINCT run_id)::int AS n FROM test_result WHERE entity_id = $1', [entity_id]))
+      .then((r) => (r.rows[0] || {}).n || 0);
 
     const drifting = rows.filter((x) => x.flips >= 2);
     const settled = rows.filter((x) => x.runs >= 2 && x.flips === 0 && x.failed === 0);
@@ -1203,7 +1219,14 @@ router.get('/reliability', auth, async (req, res) => {
       cases: rows,
       totals: {
         tracked: rows.length,
-        runs: rows.reduce((a, x) => a + x.runs, 0),
+        /**
+         * ⚠️⚠️ THIS SAID "runs recorded" AND COUNTED RESULT ROWS. Two sittings of 186 tests reported "368
+         * runs recorded", which reads as 368 sittings — off by a factor of 184 on the one number that tells
+         * a reader how much history there is to trust. Both figures are worth having; they are not the same
+         * figure and must not share a label.
+         */
+        results: rows.reduce((a, x) => a + x.runs, 0),
+        runs: sittings,
         failures: rows.reduce((a, x) => a + x.failed, 0),
         drifting: drifting.length,
         settled: settled.length,
