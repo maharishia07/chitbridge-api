@@ -199,6 +199,17 @@ async function importCases(entity_id, who, rows) {
         claim: c.claim || null,
         run_by: c.run_by || null,
         /**
+         * ⚠️⚠️ THE JOURNEY POSITION, AND IT WAS BEING SILENTLY DROPPED. `importCases` copies a NAMED LIST of
+         * fields into `rules`; anything not named is discarded without a word. So build-test-cases.cjs emitted
+         * `seq` on all 616 cases, the file shipped with it, the button loaded it — and the board sorted
+         * alphabetically, because the one field that decides the order never survived the door.
+         *
+         * ⭐ Caught by asking the loaded board what it actually held (`withSeq: 0`) rather than by trusting the
+         * build output. A field that exists at both ends is not a field that arrived.
+         */
+        seq: (typeof c.seq === 'number' ? c.seq : 99),
+        step: c.step || '',
+        /**
          * ⭐⭐⭐ THE CITATION — which clause of which spec this case proves.
          *
          * Athi: *"so the spec and the test cases can match… if it is not the intended behaviour, then capture,

@@ -494,6 +494,28 @@ it('⚠️⚠️ the loader and the run-poster are always reachable, not only on
   });
 });
 
+it('⚠️⚠️ every field the builder emits survives the import', () => {
+  /**
+   * ⭐⭐⭐ THE FAULT THIS IS FOR: `seq` — the journey position — was emitted on all 616 cases, shipped in the
+   * data file, and loaded by the button. The board still sorted alphabetically, because `importCases` copies a
+   * NAMED LIST of fields into `rules` and anything not named is discarded WITHOUT A WORD.
+   *
+   * ⚠️ A field that exists at both ends is not a field that arrived. It was found by asking the loaded board
+   * what it actually held — `withSeq: 0` — not by reading the build output, which was perfect.
+   *
+   * ⭐ This is the general shape of it, so the next field cannot go missing the same way.
+   */
+  assert.ok(DOC, 'data/test-cases.json is missing — run build-test-cases.cjs');
+  const sample = DOC.cases[0];
+  const carried = route.slice(route.indexOf('async function importCases'), route.indexOf('if (!want.length)'));
+  const dropped = Object.keys(sample).filter((k) => {
+    if (['case_key', 'id', 'module_key'].indexOf(k) >= 0) return false;   /* identity, handled separately */
+    return carried.indexOf(k + ':') < 0;
+  });
+  assert.deepStrictEqual(dropped, [],
+    'the builder emits these and importCases never copies them, so they vanish at the door: ' + dropped.join(', '));
+});
+
 it('⚠️ support files are on the board but are never called tests', () => {
   /* ⚠️ A fixture counted as coverage is the cheapest way to inflate a number nobody meant to inflate. */
   const sup = DOC.cases.filter((c) => c.test_type === 'support');
