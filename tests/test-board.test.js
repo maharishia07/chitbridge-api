@@ -66,11 +66,21 @@ it('⚠️ every run kind the two screens offer is one the route accepts', () =>
     .map((s) => (s.match(/value="(\w+)"/) || [])[1]);
   fromBoard.forEach((k) => assert.ok(kinds.indexOf(k) >= 0, 'the board offers run kind "' + k + '", which the route refuses'));
 
-  /* the panel builds its options from a literal list rather than the server — assert that list too */
-  const m = panel.match(/\[([^\]]*)\]\.map\(function \(k\)/);
+  /**
+   * the panel builds its options from a literal list rather than the server — assert that list too.
+   *
+   * ⚠️ THE LIST BECAME PAIRS AND THIS GUARD CAUGHT IT, which is the whole point of it existing. The options
+   * used to be bare tokens (`['manual','t0',…]`) and are now `[value, what it means]` because "t0" told a
+   * tester nothing. ⭐ The fix is to read the new shape — the VALUE is the first element of each pair — not to
+   * loosen the check until it passes.
+   */
+  const m = panel.match(/\[\s*\[\s*'manual'[\s\S]*?\]\]\.map\(function \(k\)/);
   assert.ok(m, 'the panel no longer builds its run-kind options from a list this guard can read');
-  (m[1].match(/'([^']+)'/g) || []).map((s) => s.replace(/'/g, ''))
-    .forEach((k) => assert.ok(kinds.indexOf(k) >= 0, 'the test panel offers run kind "' + k + '", which the route refuses'));
+  /* ⚠ only the first string of each pair is a value; the second is prose and must NOT be checked as one */
+  const offered = (m[0].match(/\['([a-z0-9]+)',/g) || []).map((s) => s.replace(/\['|',/g, ''));
+  assert.ok(offered.length >= 3, 'read ' + offered.length + ' run kinds from the panel — the shape has changed again');
+  offered.forEach((k) => assert.ok(kinds.indexOf(k) >= 0,
+    'the test panel offers run kind "' + k + '", which the route refuses'));
 });
 
 console.log('— append-only, or the board is an opinion —');
