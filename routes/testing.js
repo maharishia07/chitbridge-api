@@ -117,6 +117,18 @@ async function importCases(entity_id, who, rows) {
           steps: Array.isArray(c.steps) ? c.steps : [], note: c.note || '',
           layer: LAYERS.indexOf(c.layer) >= 0 ? c.layer : null,
           module_name: c.module_name || '', intro: c.intro || '',
+          /**
+           * ⭐⭐⭐ THE CITATION — which clause of which spec this case proves.
+           *
+           * Athi, 2026-09-11: *"so the spec and the test cases can match… if it is not the intended behaviour,
+           * then capture, update the spec and build and test again."*
+           *
+           * ⭐ THE VERSION IS THE WHOLE MECHANISM. A case cites a clause AT A VERSION. Edit the clause and it
+           * gains a new version, so every case still citing the old one is, by construction, exactly the set that
+           * has to be looked at again — no hashing, no sweep, no flag anybody has to remember to set. It is the
+           * same reason a result carries the case version, one level up.
+           */
+          cites: c.cites || null,
         };
 
         const cur = await db.query(
@@ -132,8 +144,9 @@ async function importCases(entity_id, who, rows) {
             [entity_id, mod, key, rules.title || null, who.id]);
           const id = ins.rows[0].definition_id;
           await db.query(
-            `INSERT INTO definition_version (definition_id, version, rules, created_by)
-             VALUES ($1,1,$2,$3)`, [id, JSON.stringify(rules), who.id]);
+            /* ⚠ entity_id IS NOT OPTIONAL HERE — definition_version carries its own and RLS checks it. */
+            `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+             VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
           out.added++; out.cases.push({ case_key: key, definition_id: id, version: 1 });
           continue;
         }
@@ -148,8 +161,9 @@ async function importCases(entity_id, who, rows) {
         }
         const next = Number(cur.rows[0].current_version) + 1;
         await db.query(
-          `INSERT INTO definition_version (definition_id, version, rules, created_by) VALUES ($1,$2,$3,$4)`,
-          [id, next, JSON.stringify(rules), who.id]);
+          `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+           VALUES ($1,$2,$3,$4,$5)`,
+          [id, next, entity_id, JSON.stringify(rules), who.id]);
         await db.query(
           `UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`,
           [id, next, mod, rules.title || null]);
@@ -202,6 +216,59 @@ router.post('/cases/seed', auth, async (req, res) => {
     res.status(500).json({ error: 'Could not load the documented cases', message: String(err.message || err) });
   }
 });
+
+/**
+ * ⭐⭐ A SPEC CLAUSE IS A DEFINITION, kind 'spec' — the same argument the test case itself won.
+ *
+ * It is a rule somebody declared, it gets edited, and a test written against it has to be able to say WHICH
+ * wording it was written against. Every one of those is what definition_version already does. A separate table
+ * would have meant re-implementing versioning beside code that already has it.
+ *
+ *   kind      'spec'
+ *   sub_kind  the document        'TILL-SPEC-2026-09-07'
+ *   name      the clause id       'CTR'  (a feature's key — the clause the module is written against)
+ *   rules     { text }            the clause itself
+ *
+ * Returns { definition_id, version } — what a case cites.
+ */
+async function upsertClause(db, entity_id, who, spec, clause, text) {
+  const name = String(clause || '').trim();
+  if (!name) return null;
+  const doc = String(spec || '').trim() || null;
+  const rules = { text: String(text || '').trim(), spec: doc };
+
+  const cur = await db.query(
+    `SELECT d.definition_id, d.current_version, v.rules
+       FROM definition d
+       JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+      WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.name = $2`, [entity_id, name]);
+
+  if (!cur.rows[0]) {
+    const ins = await db.query(
+      `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+       VALUES ($1,'spec',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
+      [entity_id, doc, name, rules.text.slice(0, 200) || null, who.id]);
+    const id = ins.rows[0].definition_id;
+    await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                    VALUES ($1,1,$2,$3,$4)`,
+      [id, entity_id, JSON.stringify(rules), who.id]);
+    return { definition_id: id, version: 1, changed: true };
+  }
+
+  const id = cur.rows[0].definition_id;
+  /* ⚠️ NO NEW VERSION FOR AN IDENTICAL RE-IMPORT. A version per import would mark every case stale on every
+     load, which trains a person to ignore the word "stale" — and then it means nothing when it is true. */
+  if (JSON.stringify(cur.rows[0].rules || {}) === JSON.stringify(rules)) {
+    return { definition_id: id, version: cur.rows[0].current_version, changed: false };
+  }
+  const next = Number(cur.rows[0].current_version) + 1;
+  await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                  VALUES ($1,$2,$3,$4,$5)`,
+    [id, next, entity_id, JSON.stringify(rules), who.id]);
+  await db.query(`UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`,
+    [id, next, doc, rules.text.slice(0, 200) || null]);
+  return { definition_id: id, version: next, changed: true };
+}
 
 /* ── THE RESULTS ──────────────────────────────────────────────────────────────────────────────────────────── */
 
@@ -386,6 +453,155 @@ router.post('/results/junit', auth, async (req, res) => {
     return res.status(out.status).json(Object.assign({ unmatched }, out.body));
   } catch (err) {
     res.status(500).json({ error: 'Could not read that report', message: String(err.message || err) });
+  }
+});
+
+/* ── ⭐⭐⭐ GHERKIN · the spec and the test as one text ─────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-11: *"then possibly both can work together? Spec vs test, in the V model? Or maybe Gherkin /
+ * Cucumber kind of?"*
+ *
+ * A `.feature` file carries BOTH halves: the Feature description is the spec clause, the Scenarios are the cases
+ * written against it. So one file is the left arm and the right arm of the V, and neither can be edited without
+ * the other being in front of you.
+ *
+ * ⭐ Gherkin the FORMAT is adopted; Cucumber the RUNNER is not — see the header of lib/gherkin.js for why.
+ */
+
+/** GET /api/testing/cases/gherkin[?module=CTR] — download the board as .feature text. */
+router.get('/cases/gherkin', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const gherkin = require('../lib/gherkin');
+    const only = req.query && req.query.module ? String(req.query.module).trim() : null;
+
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.name, d.sub_kind, d.current_version, v.rules
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
+          AND ($2::text IS NULL OR d.sub_kind = $2)
+        ORDER BY d.sub_kind, d.name`, [entity_id, only]));
+
+    const groups = [], seen = {};
+    r.rows.forEach((x) => {
+      const ru = x.rules || {}, key = x.sub_kind || '-';
+      if (!seen[key]) {
+        seen[key] = { module: { key: key, name: ru.module_name || '', intro: ru.intro || '',
+                                spec: (ru.cites && ru.cites.spec) || '',
+                                clause: (ru.cites && ru.cites.clause) || key },
+                      cases: [] };
+        groups.push(seen[key]);
+      }
+      seen[key].cases.push(Object.assign({ case_key: x.name }, ru));
+    });
+
+    /* ⚠️ text/plain and a filename, because this is a FILE — it goes into the repository beside the code it
+       describes, is reviewed in a diff, and is edited by hand. Returning it as JSON would make the one thing
+       Gherkin is actually for — being readable and editable by a person — into the caller's problem. */
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + (only || 'chitbridge') + '.feature"');
+    res.send(gherkin.toFeatures(groups));
+  } catch (err) {
+    res.status(500).json({ error: 'Could not export', message: String(err.message || err) });
+  }
+});
+
+/**
+ * POST /api/testing/cases/gherkin — import .feature text as { text: "Feature: …" }.
+ *
+ * ⭐⭐ THIS IS THE LOOP HE DESCRIBED. Edit the Feature description (the spec clause), send the file, and the
+ * clause gains a version — which marks every case citing the old one as needing another look. Edit a Scenario
+ * and the case gains a version. Nothing has to be remembered, because the versions do the remembering.
+ */
+router.post('/cases/gherkin', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const who = testerOf(req);
+    const gherkin = require('../lib/gherkin');
+    const text = String((req.body && req.body.text) || '');
+    if (!text.trim()) return res.status(400).json({ error: 'Nothing to import',
+      message: 'Send { text: "Feature: …" }.' });
+
+    const parts = gherkin.splitFeatures(text);
+    if (!parts.length) {
+      return res.status(422).json({ error: 'Not a feature file',
+        message: 'No "Feature:" line was found. A .feature file starts with one.' });
+    }
+
+    const out = { added: 0, updated: 0, unchanged: 0, clauses: [], problems: [], cases: [] };
+    for (const part of parts) {
+      const f = gherkin.parseFeature(part);
+      /* ⚠️ EVERY PROBLEM IS RETURNED, never swallowed. A scenario that was skipped is a test that silently does
+         not exist, and the board would be showing coverage it does not have. */
+      (f.problems || []).forEach((x) => out.problems.push((f.key || f.name || '?') + ': ' + x));
+
+      /* the clause FIRST, so the cases can cite the version it ends up at */
+      let cite = null;
+      await withEntity(entity_id, async (db) => {
+        const cl = await upsertClause(db, entity_id, who, f.spec, f.clause || f.key, f.intro);
+        if (cl) {
+          cite = { definition_id: cl.definition_id, version: cl.version,
+                   spec: f.spec || null, clause: f.clause || f.key };
+          out.clauses.push({ clause: f.clause || f.key, spec: f.spec || null,
+                             version: cl.version, changed: cl.changed });
+        }
+      });
+
+      const rows = (f.cases || []).filter((c) => c.case_key).map((c) => Object.assign({}, c, {
+        module_key: f.key || (c.case_key || '').split('-')[0],
+        module_name: f.name || '', intro: f.intro || '', cites: cite,
+      }));
+      if (!rows.length) continue;
+      const r = await importCases(entity_id, who, rows);
+      out.added += r.added; out.updated += r.updated; out.unchanged += r.unchanged;
+      out.cases = out.cases.concat(r.cases);
+    }
+    res.json(out);
+  } catch (err) {
+    res.status(500).json({ error: 'Could not import', message: String(err.message || err) });
+  }
+});
+
+/**
+ * ⭐⭐⭐ GET /api/testing/stale — the cases whose spec has moved since they were written.
+ *
+ * Athi: *"if it is not the intended behaviour, then capture, update the spec and build and test again."* This is
+ * the "and test again" made visible. A case citing clause v2 when the clause is now at v3 was written against
+ * wording that no longer stands — and a PASS recorded against it proves nothing about what the spec says today.
+ *
+ * ⚠️ IT REPORTS, IT DOES NOT ACT. Nothing is retired, no result is deleted, no case is rewritten. A person reads
+ * the clause, decides whether the case still holds, and either edits it or tests it again. Invalidating results
+ * automatically would destroy evidence on the strength of a version number.
+ */
+router.get('/stale', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.name AS case_key, d.sub_kind AS module_key, v.rules,
+              s.name AS clause, s.sub_kind AS spec, s.current_version AS clause_now
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+         JOIN definition s ON s.definition_id = (v.rules->'cites'->>'definition_id')::uuid
+        WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
+          AND v.rules->'cites'->>'definition_id' IS NOT NULL
+          AND (v.rules->'cites'->>'version')::int < s.current_version
+        ORDER BY s.name, d.name`, [entity_id]));
+
+    res.json({
+      stale: r.rows.map((x) => ({
+        case_key: x.case_key, module_key: x.module_key, title: (x.rules || {}).title || '',
+        spec: x.spec, clause: x.clause,
+        cited_version: Number(((x.rules || {}).cites || {}).version), clause_now: Number(x.clause_now),
+      })),
+      count: r.rowCount,
+      says: r.rowCount
+        ? 'These cases were written against an earlier wording of their clause. Read the clause, then either '
+          + 'edit the case or test it again.'
+        : 'Every case cites the current wording of its clause.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read that', message: String(err.message || err) });
   }
 });
 

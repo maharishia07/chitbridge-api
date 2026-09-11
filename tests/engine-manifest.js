@@ -69,6 +69,14 @@ const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './contain
  * The test PRINTS the pending count every run, so it is visible debt rather than silence.
  */
 const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "What is NOT engine"
+  /* ⭐⭐ ADOPTION IN THE MOST LITERAL SENSE THE LIST HAS: gherkin.js implements SOMEBODY ELSE'S FORMAT, and the
+     test for adoption — "if the standard changed tomorrow, this file changes and nothing else does" — is not
+     an argument here, it is the definition. It decides nothing. Given/When/Then already IS what a test case
+     is, so there was no rule of ours to encode: the file renders our shape as that text and reads it back.
+     ⚠️ It is Tier-A pure (zero dependencies, asserted in its own test) and could sit in TIER_A on those
+     grounds — but purity is not what makes something engine. Cucumber's grammar is not our judgement, and
+     filing it as engine would put a third party's syntax under the engine lock. */
+  'gherkin.js',
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
   /* ADOPTION, not engine, and the split is the point: lib/rewards.js decides what a point is WORTH (pure, no DB,
      Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap

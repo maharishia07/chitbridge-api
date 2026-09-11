@@ -146,4 +146,50 @@ it('⚠️ neither screen prints a currency symbol or a hard-coded date format',
   });
 });
 
+console.log('— and RLS refuses a row that cannot prove whose it is —');
+
+it('⭐⭐⭐ every definition_version insert passes entity_id', () => {
+  /**
+   * ⚠️⚠️ THE FAULT THIS GUARD IS FOR, found by Athi within minutes of the first load:
+   *   *"couldn't load the test cases, it says row level security violates the definition."*
+   *
+   * `definition_version` carries its OWN entity_id and its policy checks it. The parent `definition` row wrote
+   * fine, because that insert passed one. This one did not, so entity_id went in NULL and WITH CHECK refused the
+   * row — and the message reads as a policy problem when it is a missing COLUMN. The policy was doing exactly
+   * its job: refusing a row that cannot demonstrate whose it is.
+   *
+   * ⚠️ AND THE REAL LESSON IS THE ONE BEHIND IT: routes/definitions.js has always passed entity_id here. I wrote
+   * a second insert against a table that already had a working one, instead of reading the working one first.
+   */
+  const inserts = route.split('INSERT INTO definition_version').slice(1);
+  assert.ok(inserts.length, 'no definition_version insert found — has the shape changed?');
+  inserts.forEach((tail, i) => {
+    const cols = tail.slice(0, tail.indexOf(')'));
+    assert.ok(/\bentity_id\b/.test(cols),
+      'definition_version insert #' + (i + 1) + ' omits entity_id — RLS will refuse the row, and the error will',
+      'name the policy rather than the missing column');
+  });
+});
+
+it('⚠️ the spec clause is a definition too, not a table of its own', () => {
+  /* ⭐ the same argument the test case itself won: a clause is a declared rule that gets edited, and a case
+     written against it must say WHICH wording — which is what definition_version already does. */
+  assert.ok(/kind = 'spec'/.test(route), 'spec clauses are no longer definitions');
+  assert.ok(!/CREATE TABLE[^;]*spec_clause/i.test(sql), 'a spec_clause table appeared');
+});
+
+it('⭐⭐⭐ a case cites its clause AT A VERSION, and stale is derived from that', () => {
+  /**
+   * ⭐ THE VERSION IS THE WHOLE MECHANISM of Athi's loop: *"if it is not the intended behaviour, then capture,
+   * update the spec and build and test again."* Edit the clause, it gains a version, and every case citing the
+   * old one IS the set that has to be looked at again. No hash, no sweep, no flag to remember to set.
+   */
+  assert.ok(/cites: c\.cites/.test(route), 'a case no longer carries its citation');
+  assert.ok(/cites'->>'version'\)::int < s\.current_version/.test(route),
+    'stale is no longer derived by comparing the cited version with the clause current version');
+  /* ⚠️ IT REPORTS, IT DOES NOT ACT — no result may be deleted on the strength of a version number */
+  assert.ok(!/DELETE FROM test_result|UPDATE definition SET status = 'retired'/.test(route),
+    'the stale path destroys evidence — it must only report');
+});
+
 console.log('\n  ' + pass + ' checks\n');
