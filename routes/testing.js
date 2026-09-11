@@ -336,6 +336,23 @@ router.post('/cases/import', auth, async (req, res) => {
  * their version, edited ones gain a new one, and every result already recorded keeps pointing at the version it
  * was actually given. There is no "already loaded" state to get wrong.
  */
+/**
+ * GET /api/testing/engine — the declared engine tiers, so a screen can show WHAT THE PURE RULES ARE.
+ *
+ * ⭐ It reads the same data/test-cases.json the seed button reads, which in turn reads
+ * tests/engine-manifest.js at build time. One declaration, one build, no second list to go stale.
+ * ⚠️ These are NOT cases and must never be loaded as definitions: they are what the tests are about, and
+ * putting them in the case table would make them countable as coverage.
+ */
+router.get('/engine', auth, (req, res) => {
+  try {
+    const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
+    if (!require('fs').existsSync(f)) return res.json({ engine: null });
+    const doc = JSON.parse(require('fs').readFileSync(f, 'utf8'));
+    res.json({ engine: doc.engine || null });
+  } catch (err) { res.status(500).json({ error: 'Could not read the engine manifest' }); }
+});
+
 router.post('/cases/seed', auth, async (req, res) => {
   try {
     const file = require('path').join(__dirname, '..', 'data', 'test-cases.json');
