@@ -461,6 +461,28 @@ it('⭐⭐ the board shows the four facts a project manager asks of a test', () 
   assert.ok(/id="f_area"/.test(board), 'the area filter is no longer a control a person can see or clear');
 });
 
+it('⚠️⚠️ the loader and the run-poster are always reachable, not only on an empty board', () => {
+  /**
+   * ⭐⭐⭐ THE FAULT THIS GUARD IS FOR, found by Athi on the live screen: *"no unit test cases and all visible
+   * and filter also not changing."*
+   *
+   * `seed()` was rendered ONLY inside `if (!CASES.length)` — the empty-board message. A one-time onboarding
+   * button that disappeared the moment it worked, while its own copy read *"safe to press again later — it
+   * reloads the wording and leaves every result exactly where it is."* So a board holding 110 cases had no way
+   * to take the 498 new ones, and I spent an afternoon telling him to press a control that was not on the page.
+   *
+   * ⚠️ AN UPSERT THAT CANNOT BE RE-RUN IS NOT AN UPSERT. The same applies to posting a run: evidence that
+   * requires a copied token and a command line is evidence nobody ever posts, which is why the board held 608
+   * cases and zero results.
+   */
+  const toolbar = board.slice(0, board.indexOf('</div>\n\n<!--') > 0 ? board.indexOf('<script>') : board.indexOf('<script>'));
+  ['onclick="seed()"', 'id="f_res"'].forEach((ctl) => {
+    assert.ok(toolbar.indexOf(ctl) >= 0,
+      ctl + ' is not in the page chrome — if it only renders inside a conditional, it is a control that '
+      + 'vanishes exactly when somebody needs it a second time');
+  });
+});
+
 it('⚠️ support files are on the board but are never called tests', () => {
   /* ⚠️ A fixture counted as coverage is the cheapest way to inflate a number nobody meant to inflate. */
   const sup = DOC.cases.filter((c) => c.test_type === 'support');
