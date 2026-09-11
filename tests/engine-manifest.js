@@ -16,6 +16,14 @@ const TIER_A = [
   'lib/order-input.js',      // the declaration: 7 presets, schema fragment, documents, sources
   'lib/form-handshake.js',   // document → field, with provenance; coverage() at design time
   'lib/money.js',            // { amount, currency }; never converts
+  /* ⚠⚠ THE COUNTERPART OF money.js, AND THE REASON IT IS A SEPARATE FILE. Athi, 2026-09-11: *"the reward
+     point also one of the currency, correct?"* — and then the part that decided the design: *"my only view is
+     it gets guarded."* A symbol cannot guard anything; strings concatenate. What guards money here is its
+     SHAPE, so points get a deliberately DIFFERENT shape — { points, programme } — and each refuses the other.
+     ⚠ The hole is narrow and real: money's CODE_RE is /^[A-Z]{3}$/, so { amount: 50, currency: 'PTS' } would
+     pass every check money makes and be summed with rupees. One file holding both types would make that a typo
+     away at all times. Zero dependencies, pure predicates — Tier A. */
+  'lib/points.js',           // { points, programme }; never money, never converts
   /* ⚠️ THE SIBLING OF money.js, AND FOR THE SAME REASON: it never converts. units.js folds spellings of one unit
      onto one name (கிலோ → kg) and is forbidden from ever relating two DIFFERENT units (crate → kg), because that
      needs a factor and a factor is entity-specific. A rename is engine vocabulary; a conversion is a declaration.

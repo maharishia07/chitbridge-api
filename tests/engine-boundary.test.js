@@ -61,6 +61,11 @@ const UNWIRED = [
   /* lib/adopt.js was here for about two hours on 2026-09-10, while the rules existed and no route acted on
      them. routes/adopt.js now does — the order was deliberate, because a catalogue row created under a
      wrong rule is a product on somebody's storefront. */
+  /* ⚠ lib/points.js — the points TYPE, built 2026-09-11 and DELIBERATELY not wired yet. The shape exists so
+     that points and money can never be summed; what is still missing is the other half of the guard, which is
+     money.js REFUSING a points-shaped value and a reward-ish code ('PTS' passes /^[A-Z]{3}$/ today). Wiring the
+     display before that guard exists would put the safe-looking half in service while the hole stays open. */
+  'lib/points.js',
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //

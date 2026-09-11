@@ -107,5 +107,62 @@ t('TIER A · zero dependencies', () => {
   assert.deepStrictEqual([...src.matchAll(/require\(/g)], []);
 });
 
-console.log(`\n  ${pass} passed, ${fail} failed\n`);
+console.log('');
+console.log('handle · minted names — is there room, and can they be mixed up?');
+
+t('⭐⭐ a minted name FITS the column in the worst case the rules allow', () => {
+  /**
+   * Athi, 2026-09-11: *"do we have enough room in our convention? We should not have enough char to name supplier
+   * with entity-id.sup01 etc and get mixed up?"*
+   *
+   * The longest handle check() accepts is two labels of MAX_LABEL. Minting adds `~`, a dot, the kind and the
+   * digits. Asserted rather than measured once, because MAX_LABEL and MINTED_DIGITS are both things somebody will
+   * raise later — and the failure mode of getting it wrong is a silently truncated id in the database.
+   */
+  const longest = 'a'.repeat(H.MAX_LABEL) + '.' + 'a'.repeat(H.MAX_LABEL);
+  assert.ok(H.check(longest).ok, 'the worst case is no longer a legal handle — this test needs rewriting');
+  const r = H.minted(longest, 'sup', 9999);
+  assert.ok(r.handle, 'the longest legal owner cannot mint at all: ' + r.error);
+  assert.ok(r.handle.length <= H.MAX_TOTAL,
+    'a minted name is ' + r.handle.length + ' chars and the column holds ' + H.MAX_TOTAL);
+});
+
+t('⚠⚠ running past the padding LENGTHENS the name, it never wraps or truncates', () => {
+  /* ⚠ A reused ordinal attaches a new supplier to the old one's purchase history — the one outcome that must be
+     impossible. Beyond the column, minting REFUSES rather than cutting the name down to fit. */
+  const a = H.minted('tallytest', 'sup', 9999).handle;
+  const b = H.minted('tallytest', 'sup', 10000).handle;
+  assert.ok(b.length > a.length, 'the 10000th supplier did not get a longer name — an ordinal is being reused');
+  const over = H.minted('a'.repeat(H.MAX_LABEL) + '.' + 'a'.repeat(H.MAX_LABEL), 'sup', 1e18);
+  assert.ok(over.error && !over.handle, 'an over-long minted name was returned instead of refused');
+});
+
+t('⭐⭐⭐ a person can never REGISTER a name that reads like a minted party', () => {
+  /**
+   * Two halves. `~` is unforgeable because a label must start with a letter or number — that is what stops the
+   * CODE confusing them. But `tallytest.sup-0001` was a perfectly legal store name sitting one tilde away from a
+   * supplier somebody's purchase history hangs from, and that is what would confuse a PERSON reading a list.
+   */
+  assert.ok(!H.check('~tallytest.sup-0001').ok, 'a tilde handle can be registered — minted names are forgeable');
+  assert.ok(!H.check('tallytest.sup-0001').ok, 'a store can be named like a minted supplier');
+  assert.ok(!H.check('TALLYTEST.SUP-0001').ok, 'the shape rule missed upper case');
+  /* ⚠ and it must not over-reach — these are ordinary names */
+  assert.ok(H.check('tallytest.support').ok, 'a department called support was refused');
+  assert.ok(H.check('athi.mens').ok);
+  assert.ok(H.check('sup-0001').ok,
+    'the ROOT was caught — check() also runs on handles that ALREADY EXIST (network-design reads your current',
+    'User ID before building a network), so this would lock a business out of its own tree over a name we only',
+    'started objecting to today');
+});
+
+t('⚠ isMinted reads the tilde, not the shape', () => {
+  assert.strictEqual(H.isMinted('~tallytest.sup-0007'), true);
+  assert.strictEqual(H.isMinted('tallytest.sup-0007'), false, 'a lookalike was treated as one of ours');
+  assert.deepStrictEqual(H.mintedParts('~tallytest.sup-0007'), { owner: 'tallytest', kind: 'sup', n: 7 });
+  assert.strictEqual(H.mintedParts('tallytest.sup-0007'), null);
+});
+
+console.log(`
+  ${pass} passed, ${fail} failed
+`);
 process.exit(fail ? 1 : 0);

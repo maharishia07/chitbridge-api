@@ -133,8 +133,8 @@ router.post('/suggest-key',
 // Called when admin overrides suggestion
 router.post('/check-key',
   auth,
-  [body('actor_key').trim().isLength({ min: 4 }).matches(/^[a-z0-9]+$/)
-    .withMessage('Lowercase letters and numbers only — minimum 4 characters')],
+  [body('actor_key').trim().isLength({ min: 4, max: 12 }).matches(/^[a-z0-9]+$/)
+    .withMessage('Lowercase letters and numbers only — 4 to 12 characters')],
   validate,
   async (req, res) => {
     try {
@@ -164,8 +164,11 @@ router.post('/',
   auth,
   [
     body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
-    body('actor_key').trim().isLength({ min: 4 })
-      .matches(/^[a-z0-9]+$/).withMessage('Lowercase and numbers only — minimum 4 chars'),
+    /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
+       at all, so a 40-character key would have produced a login nobody could type. The cap is on CREATE only:
+       an actor_key is never re-validated on edit, so no existing co-assist is locked out by it. */
+    body('actor_key').trim().isLength({ min: 4, max: 12 })
+      .matches(/^[a-z0-9]+$/).withMessage('Lowercase and numbers only — 4 to 12 characters'),
     body('actor_role').optional().trim().isLength({ max: 100 }),
     body('phone').optional().trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),

@@ -61,6 +61,12 @@ const BUDGET = {
   'lib/amend.js': 1,         // ENGINE · locked. Needs Athi before the shape changes.
   'lib/cost.js': 1,          // not engine — a genuine candidate to batch. See BACKLOG.
   'lib/capture.js': 1,       // not engine — a genuine candidate to batch. See BACKLOG.
+  /* ⭐ NOT AN N+1 — A RETRY LOOP, and the distinction is the whole reason this budget carries reasons rather
+     than only numbers. mint() reads the highest ordinal, then INSERTs; two tills minting a supplier at the
+     same moment read the same maximum, and the unique index on lower(user_id) refuses the loser. Losing that
+     race is a NORMAL outcome, so it re-reads and tries the next number, at most five times. Batching it would
+     mean trusting the read, which is the one thing that cannot be trusted here. */
+  'lib/local-identity.js': 1,
   'routes/chits.js': 9,
   'routes/governance.js': 1,
   'routes/network-design.js': 3,

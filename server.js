@@ -246,6 +246,9 @@ app.use('/api/notifications', require('./routes/notifications'));
 
 // ── Assistant tier-1 LLM proxy (STUB — model key stays server-side; client falls through to its library floor) ───
 app.use('/api/assist', require('./routes/assist'));
+/* ⭐ the test board — cases are `definition`s of kind 'testcase', results are the b219 append-only ledger.
+   Accepts JUnit XML at /api/testing/results/junit, so an automated suite and a person write to one board. */
+app.use('/api/testing', require('./routes/testing'));
 
 // ── Capture connector — inbound channels (WhatsApp/email/web) → capture → AI structure → confirm → chit (b104) ───
 app.use('/api/capture', require('./routes/capture'));

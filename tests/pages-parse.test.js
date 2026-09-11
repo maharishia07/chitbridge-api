@@ -24,6 +24,12 @@ const PAGES = [
   ['the counter (web)',  path.join(WEB, 'till.html')],
   ['the shop screen (master)', path.join(API, 'tools', 'tally-connector', 'promo.html')],
   ['the shop screen (web)', path.join(WEB, 'promo.html')],
+  /* ⚠ THE STANDALONE PAGES BELONG HERE TOO, and were missing. Each is a one-file app with all of its script
+     inline, so a syntax error is total in exactly the way the header above describes — and neither is covered
+     by a spec that would have caught it. The offer lab is where offers are proved before they are published;
+     the test board is where every other result is recorded, so a broken one is a testing session lost. */
+  ['the offer lab',      path.join(WEB, 'offer-lab.html')],
+  ['the test board',     path.join(WEB, 'testing.html')],
 ];
 
 let pass = 0;
