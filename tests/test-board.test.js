@@ -397,7 +397,8 @@ const DOC = (() => {
 
 it('⭐⭐⭐ every case on the board declares what KIND of test it is', () => {
   assert.ok(DOC, 'data/test-cases.json is missing — run build-test-cases.cjs');
-  const allowed = ['unit', 'integration', 'system', 'acceptance', 'static', 'support'];
+  const allowed = ['unit', 'integration', 'system', 'acceptance', 'performance', 'security', 'penetration',
+    'static', 'support'];
   const bad = DOC.cases.filter((c) => allowed.indexOf(c.test_type) < 0).map((c) => c.case_key);
   assert.deepStrictEqual(bad.slice(0, 8), [],
     'these cases carry no kind, so the board would count them as evidence without saying of what');

@@ -50,7 +50,8 @@ const STATUSES = ['pass', 'fail', 'blocked', 'skipped'];
  * `support` is not a test at all: fixtures and harnesses other tests stand on, listed so they stop being
  * counted as coverage by anyone skim-reading a file count.
  */
-const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'static', 'support'];
+const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'performance', 'security', 'penetration',
+  'static', 'support'];
 
 router.get('/vocabulary', (req, res) => {
   res.json({
@@ -64,6 +65,16 @@ router.get('/vocabulary', (req, res) => {
       acceptance: 'A person deciding whether it does the job. The only kind that can find "correct but useless".',
       static: 'Reads the source and judges the TEXT — nothing is executed. Real evidence, but of a different thing.',
       support: 'Not a test. A fixture or harness other tests stand on, listed so it is never counted as coverage.',
+      /**
+       * ⭐ PURPOSE, WHERE A PERSON WOULD SAY PURPOSE. A load test is a system test and nobody filtering a board
+       * looks for it there. ⚠️ Both lists are DECLARED by name in classify-tests.cjs — detecting them from the
+       * source put money.test.js under performance and returned eighty-nine security files, because every proof
+       * script signs in and therefore contains the words token and scope.
+       */
+      performance: 'Round trips, query shape, load and concurrency. What it costs, not whether it is right.',
+      security: 'Forged tokens, algorithm pinning, key scopes, tenant isolation, routes left unguarded.',
+      penetration: '⚠ There is none. Shown at zero so the absence cannot pass for "not applicable" — '
+        + 'scripts/penetration.js is MARKET penetration and is not a security test.',
     },
     /* ⚠️ SAID OUT LOUD, because the distinction is the one people get wrong: 'blocked' is not 'fail'. */
     says: {
