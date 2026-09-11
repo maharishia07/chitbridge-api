@@ -66,6 +66,25 @@ require.cache[require.resolve(API + '/middleware/auth')] = { exports: Object.ass
 const express = require('express');
 const app = express();
 app.use(express.json());
+
+/**
+ * ── ⭐⭐ THE MARK AT res.json() — TWO NUMBERS, BECAUSE THEY COST DIFFERENT PEOPLE ────────────────
+ *
+ * Some of a status change happens AFTER the answer is sent and is deliberately not awaited (b126: the courtesy
+ * notice back to a customer who wrote in on WhatsApp). That work is real and must stay visible — it occupies a
+ * pool connection, and the pool is max:10 — but it is NOT what a shopkeeper waits for after pressing a button,
+ * and a single total was charging it to them.
+ *
+ * ⚠️ A SPLIT IS ONLY HONEST IF BOTH HALVES STAY BUDGETED. Measuring the wait alone would make "move it after
+ * the response" a way to hide any amount of work from the ceiling. So the wait has a budget and the total has
+ * one too, and this mark is what separates them — taken inside res.json, not guessed from timing.
+ */
+let mark = null;
+app.use((req, res, next) => {
+  const j = res.json.bind(res);
+  res.json = (b) => { if (!mark) mark = { q: queries.length, tx: txOpens }; return j(b); };
+  next();
+});
 app.use('/api/chits', require(API + '/routes/chits'));
 
 let pass = 0;
@@ -104,6 +123,21 @@ const BUDGET = Number(process.env.CHIT_READ_BUDGET || 14);
  * run is enough.
  */
 const WRITE_BUDGET = Number(process.env.CHIT_WRITE_BUDGET || 20);
+/**
+ * ⭐ THE TOTAL, INCLUDING THE WORK AFTER THE ANSWER. 22 cold today — 18 of them before the response.
+ *
+ * ⚠️ A CEILING WITH HEADROOM, NOT TODAY'S NUMBER WRITTEN DOWN. Pinning it at 22 would fail on the next
+ * harmless statement and be raised without thought, which is how a budget stops meaning anything.
+ *
+ * ── WHAT IS LEFT, AND WHY IT WAS NOT TAKEN (2026-09-11) ──────────────────────────────
+ * One collapse remains, worth 4 trips: the state_log write (`crossing`) could run on the handle the status
+ * UPDATE already holds. ⚠️ NOT DONE, and the reason is behavioural rather than technical. Today a failed log
+ * leaves the status changed and answers 500; folded, it would roll the status back. That is arguably the
+ * better rule — a status change with no timeline entry is a governance hole — but the pre-b50 fallback path
+ * "fails closed (degraded)" under FORCE RLS, and degraded today still means the status moved. Which of those
+ * two survives is Athi's call about the record, not a tuning decision.
+ */
+const WRITE_TOTAL_BUDGET = Number(process.env.CHIT_WRITE_TOTAL_BUDGET || 24);
 
 const PORT = 45873;
 const srv = app.listen(PORT, async () => {
@@ -130,16 +164,26 @@ const srv = app.listen(PORT, async () => {
   console.log('\n── changing one chit\'s status ──');
   queries = [];
   txOpens = 0;
+  mark = null;
   const w = await fetch(`http://localhost:${PORT}/api/chits/00000000-0000-0000-0000-000000000001/status`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: 'completed' }),
   }).then((x) => x.status).catch((e) => 'ERR ' + e.message);
 
+  /* ⚠️ let the un-awaited tail run before counting it, or it is simply missing from the total */
+  await new Promise((r) => setTimeout(r, 50));
+
   const wTrips = queries.length + txOpens * 3;
+  const wait = mark ? mark.q + mark.tx * 3 : wTrips;
   console.log(`  status ${w} · ${queries.length} statement(s) in ${txOpens} transaction(s) → ${wTrips} round trip(s)`);
   queries.forEach((q, i) => console.log('    ' + String(i + 1).padStart(2) + '  ' + q.slice(0, 118)));
 
-  t(`changing a status stays within ${WRITE_BUDGET} round trips`, wTrips <= WRITE_BUDGET, wTrips + ' used');
+  if (mark) console.log('    ── the answer is sent after statement ' + mark.q + ': '
+    + wait + ' round trip(s) waited for, ' + (wTrips - wait) + ' after ──');
+
+  t(`the shopkeeper waits for at most ${WRITE_BUDGET} round trips`, wait <= WRITE_BUDGET, wait + ' used');
+  t(`and the whole change costs at most ${WRITE_TOTAL_BUDGET}`, wTrips <= WRITE_TOTAL_BUDGET, wTrips + ' used');
+  t('the mark was taken — a split guessed from timing would not be a measurement', mark !== null);
 
   console.log(`\n  ${pass} passed · ${fail} failed\n`);
   /**

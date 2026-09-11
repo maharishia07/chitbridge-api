@@ -2754,56 +2754,29 @@ router.put('/:chit_id/status',
 
       // Get current status
       // B1 RLS: own received-copy read -> withEntity(me).
-      const current = await withEntity(entity_id, (db) => db.query(
-        `SELECT current_status FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'`,
-        [chit_id, entity_id]
-      ));
+      /**
+       * ── ⭐⭐⭐ FOUR TRANSACTIONS BECAME ONE, AND THE READ MOVED INSIDE THE WRITE ────────────────────────────
+       *
+       * Athi, 2026-09-11: *"fix the 29 round trips."* The note below this one records the last time this was
+       * cut — from six transactions to three. It drifted back to SIX, which is the argument for the budget
+       * existing at all: an optimisation with no guard is a thing that gets undone by the next feature.
+       *
+       * ⚠️⚠️ THE STATUS READ WAS ITS OWN TRANSACTION, AND EVERYTHING IT GATES IS IN THE NEXT ONE. BEGIN,
+       * set_config, one SELECT, COMMIT — four round trips across the Pacific to learn one word, and then the
+       * whole ceremony again to act on it. The validation between them is PURE: a table lookup and two string
+       * comparisons. There was never a reason for it to cost a connection round trip.
+       *
+       * ⭐ So the read, the validation and the write are one transaction now, and an early return is a MARKER
+       * carried out of it rather than a `return` from inside the callback — returning from inside would leave
+       * the transaction to be committed by the pool wrapper with the response already sent, which is how a
+       * connection leak starts.
+       *
+       * ⚠️ THE DISPUTE PROBE STAYS OUTSIDE. `schema.hasTable` is a plain query, cached per process, and the
+       * note below explains why it must not move in: Postgres aborts the WHOLE transaction on any error, so a
+       * missing chit_disputes would take the status change down with it. A savepoint would cost two more trips
+       * than it saves.
+       */
 
-      if (current.rows.length === 0) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Chit not found'
-        });
-      }
-
-      const previous_status = current.rows[0].current_status;
-
-      // Idempotent: advancing to the status it's already in is a no-op success (not a 400).
-      // Fixes the "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. (E — symptom fix; direction-scoping still backlog.)
-      if (new_status === previous_status) {
-        return res.json({ message: `Already ${new_status}`, chit_id, status: new_status, noop: true });
-      }
-
-      // Validate state transitions
-      // Arrow model: Open(pending/delivered/read) → in_progress → completed
-      // ← regress: in_progress/accepted → pending, completed → in_progress
-      // Legacy accepted step kept for backward compat (ChitDetailPage still uses it)
-      // 3-state UI model (Open / Act / Close) is bidirectional: from any state you can reach any of the three
-      // canonical targets — pending (Open), in_progress (Act), completed (Close). Sub-statuses kept for compat.
-      const validTransitions = {
-        'pending':     ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled'],
-        'delivered':   ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
-        'read':        ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
-        'accepted':    ['in_progress', 'completed', 'pending', 'rejected', 'cancelled'],
-        'in_progress': ['partial', 'completed', 'pending', 'accepted', 'cancelled'],
-        'partial':     ['in_progress', 'completed', 'pending', 'cancelled'],
-        'completed':   ['in_progress', 'pending'],
-        'rejected':    ['accepted', 'pending', 'in_progress', 'completed'],
-        'cancelled':   ['accepted', 'pending', 'in_progress', 'completed'],
-      };
-
-      const allowed = validTransitions[previous_status] || [];
-      if (!allowed.includes(new_status)) {
-        return res.status(400).json({
-          error: 'Invalid transition',
-          message: `Cannot move from ${previous_status} to ${new_status}`,
-          allowed_transitions: allowed
-        });
-      }
-
-      // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
-      // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
       /**
        * ── ⭐⭐ THREE TRANSACTIONS BECAME ONE ─────────────────────────────────────────────────────────────────
        *
@@ -2825,27 +2798,87 @@ router.put('/:chit_id/status',
        * A savepoint would fix that and cost two more round trips — measured on the chit read today — while
        * schema.hasTable costs one query per process.
        */
+
+      const validTransitions = {
+        'pending':     ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled'],
+        'delivered':   ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
+        'read':        ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
+        'accepted':    ['in_progress', 'completed', 'pending', 'rejected', 'cancelled'],
+        'in_progress': ['partial', 'completed', 'pending', 'accepted', 'cancelled'],
+        'partial':     ['in_progress', 'completed', 'pending', 'cancelled'],
+        'completed':   ['in_progress', 'pending'],
+        'rejected':    ['accepted', 'pending', 'in_progress', 'completed'],
+        'cancelled':   ['accepted', 'pending', 'in_progress', 'completed'],
+      };
+
+      // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
+      // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
       let disputeWarning = null;
       const _checkDisputes = (new_status === 'completed' || new_status === 'cancelled')
         && await schema.hasTable('chit_disputes');
 
       const _pre = await withEntity(entity_id, async (db) => {
+        /* B1 RLS: own received-copy read — and the gate for everything below it */
+        const current = await db.query(
+          `SELECT current_status FROM chit_status
+            WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'`,
+          [chit_id, entity_id]);
+        if (current.rows.length === 0) return { stop: 'missing' };
+
+        const previous_status = current.rows[0].current_status;
+        /* Idempotent: advancing to the status it is already in is a no-op success, not a 400. Fixes the
+           "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. */
+        if (new_status === previous_status) return { stop: 'noop', previous_status };
+
+        const allowed = validTransitions[previous_status] || [];
+        if (!allowed.includes(new_status)) return { stop: 'invalid', previous_status, allowed };
+
         const openCount = _checkDisputes
           ? (((await db.query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
               [chit_id])).rows[0] || {}).count || 0)
           : 0;
-        const hdr = await db.query(
-          `SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
-          [chit_id, entity_id]);
+        /**
+         * ⭐ THE FREEZE'S COPY, READ HERE RATHER THAN IN ITS OWN TRANSACTION. G3 stamps the invoice when this
+         * copy reaches `completed`, and it was re-reading the very row this transaction has open — a second
+         * BEGIN · set_config · SELECT · COMMIT for chit_header, four trips to fetch what was already in hand.
+         * ⚠️ Only on `completed`; every other status takes the narrow read below and nothing more.
+         */
+        const copy = (new_status === 'completed')
+          ? await taxCopy.copyOn(db, chit_id, entity_id)
+          : undefined;
+        /* ⚠️ AND THE NARROW READ IS THE ELSE, NOT AN EXTRA. The wide copy already carries sender_entity_id, so
+           reading chit_header twice in one transaction — which is what the first cut of this left behind — was
+           a statement spent on a column already on the row above. */
+        const hdr = (copy !== undefined)
+          ? { rows: copy ? [copy] : [] }
+          : await db.query(
+              `SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
+              [chit_id, entity_id]);
         // Update chit_status — the caller's OWN received copy.
         await db.query(
           `UPDATE chit_status SET current_status = $1, updated_at = NOW()
             WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`,
           [new_status, chit_id, entity_id]);
-        return { openCount, header: hdr };
+        return { previous_status, openCount, header: hdr, copy };
       });
+
+      /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
+      if (_pre.stop === 'missing') {
+        return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+      }
+      if (_pre.stop === 'noop') {
+        return res.json({ message: `Already ${new_status}`, chit_id, status: new_status, noop: true });
+      }
+      if (_pre.stop === 'invalid') {
+        return res.status(400).json({
+          error: 'Invalid transition',
+          message: `Cannot move from ${_pre.previous_status} to ${new_status}`,
+          allowed_transitions: _pre.allowed,
+        });
+      }
+      const previous_status = _pre.previous_status;
       /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
-      if (new_status === 'completed') { try { await taxCopy.freezeOnComplete(chit_id, entity_id); } catch (_) {} }
+      if (new_status === 'completed') { try { await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy); } catch (_) {} }
 
       if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
 

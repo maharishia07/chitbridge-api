@@ -40,10 +40,31 @@ const { withEntity } = require('../db');
 const RUN_KINDS = ['manual', 'unit', 't0', 't1', 't2', 't3', 'regression'];
 const LAYERS = ['engine', 'transport', 'web', 'capability', 'db', 'connector'];
 const STATUSES = ['pass', 'fail', 'blocked', 'skipped'];
+/**
+ * ⭐⭐ THE TEST LEVELS — how much of the product one test puts under test.
+ *
+ * The first four are the standard ones (ISTQB's levels, ISO/IEC/IEEE 29119's test types), so a reader can look
+ * ours up in theirs. ⚠️ `static` is ours and is the honest name for a large part of what this platform has: a
+ * check that reads SOURCE and asserts a rule about it without executing anything. Calling those unit tests
+ * would overstate the evidence — and 83 of 464 files are exactly that.
+ * `support` is not a test at all: fixtures and harnesses other tests stand on, listed so they stop being
+ * counted as coverage by anyone skim-reading a file count.
+ */
+const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'static', 'support'];
 
 router.get('/vocabulary', (req, res) => {
   res.json({
-    run_kinds: RUN_KINDS, layers: LAYERS, statuses: STATUSES,
+    run_kinds: RUN_KINDS, layers: LAYERS, statuses: STATUSES, test_types: TEST_TYPES,
+    /* ⚠️ said plainly, because "unit vs integration" is argued about endlessly and the argument is avoidable
+       if the board states which meaning it uses */
+    levels: {
+      unit: 'One module, on its own. A green run proves that function, and nothing about the product.',
+      integration: 'Several of our pieces wired together — a route over a stubbed database, an engine over a store.',
+      system: 'The whole product: a real browser, or a live API, or a real database.',
+      acceptance: 'A person deciding whether it does the job. The only kind that can find "correct but useless".',
+      static: 'Reads the source and judges the TEXT — nothing is executed. Real evidence, but of a different thing.',
+      support: 'Not a test. A fixture or harness other tests stand on, listed so it is never counted as coverage.',
+    },
     /* ⚠️ SAID OUT LOUD, because the distinction is the one people get wrong: 'blocked' is not 'fail'. */
     says: {
       pass: 'It did what the case says it should.',
@@ -134,6 +155,38 @@ async function importCases(entity_id, who, rows) {
         steps: Array.isArray(c.steps) ? c.steps : [], note: c.note || '',
         layer: LAYERS.indexOf(c.layer) >= 0 ? c.layer : null,
         module_name: c.module_name || '', intro: c.intro || '',
+        /**
+         * ⭐⭐ WHAT KIND OF TEST THIS IS — Athi, 2026-09-11: *"say it is unit, integration and so on."*
+         *
+         * ⚠️ NOT THE SAME AXIS AS `run_kind` OR `layer`, and conflating them would lose all three. `run_kind`
+         * is how a result was PRODUCED this time (a person tapping, a T2 sweep, a nightly suite); `layer` is
+         * what the test exercises; `test_type` is how much of the product is under test at once, which is what
+         * decides how much a green run is worth. A unit test and a system test both pass; they do not prove the
+         * same amount, and a board that adds them together says something untrue.
+         *
+         * ⚠️ It rides in `rules` rather than a column on purpose: `rules` is jsonb and already versioned, so
+         * this needed no migration and cannot drift from the case it describes.
+         */
+        test_type: TEST_TYPES.indexOf(c.test_type) >= 0 ? c.test_type : null,
+        group: c.group || null,
+        automated: !!c.automated,
+        /**
+         * ⭐⭐ THE THREE FACTS A PROJECT MANAGER ASKS FOR, Athi 2026-09-11: *"each level — how many test cases,
+         * what are they, which function it belongs to, what it proves, who runs it."*
+         *
+         *   areas     which part of the system it reaches — api · middleware · engine · web · database · connector
+         *   subjects  the module under test, by name, when the file names one
+         *   claim     what it proves, IN THE FILE'S OWN WORDS — null when the file never said
+         *   run_by    the suite unattended, or a person against a live environment
+         *
+         * ⚠️ `claim` is null for 244 of 464 automated tests and the board must SAY "not stated" rather than
+         * fall back to the filename dressed as a sentence. A guess in a column headed "what it proves" is read
+         * as evidence by exactly the person the column exists for.
+         */
+        areas: Array.isArray(c.areas) ? c.areas.slice(0, 8) : [],
+        subjects: Array.isArray(c.subjects) ? c.subjects.slice(0, 8) : [],
+        claim: c.claim || null,
+        run_by: c.run_by || null,
         /**
          * ⭐⭐⭐ THE CITATION — which clause of which spec this case proves.
          *
@@ -514,7 +567,22 @@ router.post('/results/junit', auth, async (req, res) => {
        a dependency to a route that has none. If a report ever needs real nesting this becomes wrong, and the
        unmatched list below is what will say so. */
     const cases = [...xml.matchAll(/<testcase\b([^>]*)>([\s\S]*?)<\/testcase>|<testcase\b([^>]*)\/>/g)];
-    const attr = (s, k) => { const m = String(s || '').match(new RegExp(k + '="([^"]*)"')); return m ? m[1] : ''; };
+    /**
+     * ⚠️⚠️ THE BOUNDARY IS THE WHOLE FIX, AND WITHOUT IT THIS ROUTE QUIETLY DESTROYED EVERY GUARD RUN.
+     *
+     * JUnit writes `<testcase classname="test.guard" name="chitbridge-api/tests/handle.test.js">`. Asking for
+     * `name="…"` without a boundary matches **classname** first, because it contains the word. So 185 results
+     * all came back keyed `test.guard` / `test.unit` — three rows instead of a hundred and eighty-five, each one
+     * overwriting the last, and the board would have shown a healthy history of a case that does not exist.
+     *
+     * ⭐ Found 2026-09-11 by a number that was obviously wrong: a report with 185 tests in it produced 2.
+     * ⚠️ Nothing had ever been posted through this route, so no data was lost — but it would have been on the
+     * first real run, and silently.
+     */
+    const attr = (s, k) => {
+      const m = String(s || '').match(new RegExp('(?:^|\\s)' + k + '="([^"]*)"'));
+      return m ? m[1] : '';
+    };
 
     const results = [], unmatched = [];
     for (const c of cases) {
@@ -540,8 +608,16 @@ router.post('/results/junit', auth, async (req, res) => {
       if (!key) { unmatched.push(name); continue; }
       const why = (body.match(/message="([^"]*)"/) || [])[1] || '';
       results.push({ case_key: key, run_kind, layer,
-        /* ⭐ a path-named case groups by its REPO, which is the only grouping a file path carries */
-        module_key: keyFromName ? String(key).split('/')[0].slice(0, 40) : undefined,
+        /**
+         * ⭐ A PATH-NAMED CASE GROUPS BY ITS DIRECTORY, WHICH IS THE CATEGORY THE PATH ALREADY CARRIES.
+         *
+         * Athi, 2026-09-11: *"through category we can filter or see as a summary?"* The repo alone gives two
+         * buckets for 185 guards, which is not a filter — it is a label. Two segments give the groups people
+         * actually mean: `chitbridge-api/tests` (the API's guards), `chitbridge-web/e2e` (the browser probes),
+         * `chitbridge-api/scripts` (the one-off checks). ⚠️ The directory is not a taxonomy somebody designed;
+         * it is where the files were already put, which is why it needs no maintenance to stay true.
+         */
+        module_key: keyFromName ? String(key).split('/').slice(0, 2).join('/').slice(0, 40) : undefined,
         status: failed ? 'fail' : (skipped ? 'skipped' : 'pass'),
         note: failed ? why.slice(0, 500) : null, evidence: name.slice(0, 200) });
     }

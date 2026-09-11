@@ -140,9 +140,24 @@ it('⚠️ the board and the panel both read the LATEST word, not the first row'
 });
 
 it('⚠️ neither screen prints a currency symbol or a hard-coded date format', () => {
-  /* the same rule every other surface follows — a test board is a screen like any other */
+  /**
+   * the same rule every other surface follows — a test board is a screen like any other.
+   *
+   * ⚠️⚠️ IT LOOKS AT CODE, NOT AT COMMENTS, AND IT DID NOT USED TO. This check went red the day the board grew a
+   * Try-it view for the currency rule, whose header explains *why* `₹12,34,567` is wrong for a dollar — and to
+   * explain that you have to write the symbol down. The screen printed nothing; the guard was reading prose.
+   *
+   * ⭐ `tests/governed-currency.test.js` had already settled this exact question in its own wording — *"the ₹
+   * symbol appears in no minted STRING (prose about it is fine)"* — and this guard was written without looking
+   * at it. A guard that reports a fault the product does not have costs more than a missing one, because
+   * somebody spends an afternoon on it before discovering the instrument was wrong.
+   */
+  const code = (s) => String(s)
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')          /* block comments, including the big headers */
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')      /* line comments — ⚠ not a bare // , that eats https:// */
+    .replace(/<!--[\s\S]*?-->/g, ' ');          /* and HTML comments, since one of these is a page */
   [['the board', board], ['the panel', panel]].forEach(([name, src]) => {
-    assert.ok(!/₹/.test(src), name + ' prints a rupee sign of its own');
+    assert.ok(!/₹/.test(code(src)), name + ' prints a rupee sign of its own');
   });
 });
 
@@ -364,6 +379,93 @@ it('⚠ the standard named is the current one, not the withdrawn one', () => {
      more familiar to more readers and been wrong. */
   assert.ok(/29119-3/.test(route), 'the report no longer names the standard it follows');
   assert.ok(/supersedes/.test(route), 'the report no longer says which standard this replaced');
+});
+
+console.log('— every test on one board, and each one saying what kind it is —');
+
+/**
+ * ⭐⭐⭐ Athi, 2026-09-11: *"bring all the test cases and show if it is internal unit testing… say it is unit,
+ * integration and so on."*
+ *
+ * ⚠️⚠️ THE BOARD SHOWED 144 CASES WHILE THE PLATFORM HAD 464 TEST FILES. A coverage figure computed over a
+ * quarter of the testing is not a partial answer, it is a misleading one — it looks complete.
+ */
+const DOC = (() => {
+  const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
+  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
+})();
+
+it('⭐⭐⭐ every case on the board declares what KIND of test it is', () => {
+  assert.ok(DOC, 'data/test-cases.json is missing — run build-test-cases.cjs');
+  const allowed = ['unit', 'integration', 'system', 'acceptance', 'static', 'support'];
+  const bad = DOC.cases.filter((c) => allowed.indexOf(c.test_type) < 0).map((c) => c.case_key);
+  assert.deepStrictEqual(bad.slice(0, 8), [],
+    'these cases carry no kind, so the board would count them as evidence without saying of what');
+  /* ⚠️ the route must accept the same six, or a kind is built and then dropped on the way in */
+  allowed.forEach((t) => assert.ok(route.indexOf("'" + t + "'") >= 0,
+    'routes/testing.js does not know the kind "' + t + '" — importCases would null it'));
+});
+
+it('⭐⭐ an automated case is keyed by its PATH, which is what a posted run lands on', () => {
+  /**
+   * ⚠️⚠️ THIS IS THE JOIN AND IT IS INVISIBLE UNTIL IT BREAKS. suite.cjs writes `repo/file` into the JUnit
+   * `name`; post-suite.cjs posts with `key_from: 'name'`; the case key here has to be the same string or the
+   * result creates a SECOND row and the history silently splits in two, with both halves looking healthy.
+   */
+  const auto = DOC.cases.filter((c) => c.automated);
+  assert.ok(auto.length > 300, 'only ' + auto.length + ' automated cases — the classifier found almost nothing');
+  const shaped = auto.every((c) => /^chitbridge-(api|web)\/[^/]+\/.+\.(js|cjs|mjs)$/.test(c.case_key));
+  assert.ok(shaped, 'an automated case key is not a repo-relative file path');
+  /* and the module is the DIRECTORY, which is what makes the filter useful rather than a two-way split */
+  const mods = new Set(auto.map((c) => c.module_key));
+  assert.ok(mods.size >= 4, 'automated cases collapse into ' + mods.size + ' groups — that is a label, not a filter');
+});
+
+it('⚠️⚠️ the JUnit ingest reads `name`, not `classname` — the bug that would have erased every run', () => {
+  /**
+   * ⭐⭐⭐ FOUND 2026-09-11 BY A NUMBER THAT WAS OBVIOUSLY WRONG: a report containing 185 tests produced 2.
+   *
+   * JUnit writes `<testcase classname="test.guard" name="chitbridge-api/tests/handle.test.js">`. Matching
+   * `name="…"` without a word boundary finds **classname** first — so all 185 results came back keyed
+   * `test.guard` / `test.unit`, three rows instead of a hundred and eighty-five, each overwriting the last.
+   *
+   * ⚠️ The board would not have looked broken. It would have shown a tidy history for a case that does not
+   * exist, and the Reliability tab would have called it settled. Nothing had been posted yet, so nothing was
+   * lost — but it would have been on the first real run, silently. That is the whole argument for this guard.
+   */
+  const m = route.match(/const attr = \(s, k\) => \{[\s\S]*?\n {4}\};/);
+  assert.ok(m, 'the JUnit attribute reader has changed shape — re-check it reads name, not classname');
+  /* eslint-disable no-eval */
+  const attr = eval('(' + m[0].replace('const attr = ', '').replace(/;$/, '') + ')');
+  const head = ' classname="test.guard" name="chitbridge-api/tests/handle.test.js" time="0"';
+  assert.strictEqual(attr(head, 'name'), 'chitbridge-api/tests/handle.test.js',
+    'the ingest is reading classname as the case key — every posted run would collapse into three rows');
+  assert.strictEqual(attr(head, 'classname'), 'test.guard');
+});
+
+it('⭐⭐ the board shows the four facts a project manager asks of a test', () => {
+  /**
+   * Athi, 2026-09-11: *"each level, how many test cases, what are they, which function it belongs to, what it
+   * proves, who runs it"* — and then *"can I see those details in the test lab?"*
+   *
+   * ⚠️ A fact carried all the way from the classifier into the database and then not rendered is worse than one
+   * never measured: the board reports it as present and no one can see it.
+   */
+  ['Reaches', 'Module under test', 'What it proves', 'Run by'].forEach((label) => {
+    assert.ok(board.indexOf(label) >= 0, 'the case body no longer shows "' + label + '"');
+  });
+  /* ⚠️⚠️ and the honest answer stays honest — a filename dressed as a sentence would be read as evidence */
+  assert.ok(/not stated in the file/.test(board),
+    'the board no longer says when a test states no claim — 244 of 464 do not, and inventing one is worse');
+  /* the area filter must be a VISIBLE control, not state the summary sets behind the reader's back */
+  assert.ok(/id="f_area"/.test(board), 'the area filter is no longer a control a person can see or clear');
+});
+
+it('⚠️ support files are on the board but are never called tests', () => {
+  /* ⚠️ A fixture counted as coverage is the cheapest way to inflate a number nobody meant to inflate. */
+  const sup = DOC.cases.filter((c) => c.test_type === 'support');
+  assert.ok(sup.length > 0, 'no support files listed — harnesses and fixtures have gone missing');
+  assert.ok(/not a test/i.test(route), 'the vocabulary no longer says that support proves nothing');
 });
 
 console.log('\n  ' + pass + ' checks\n');
