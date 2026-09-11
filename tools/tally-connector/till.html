@@ -1365,7 +1365,24 @@ var CloudHost = {
           tried++;
           var r = await fetchBy(url, { method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
-          if (r.ok) { await DB.del('queue', bill.no); sent++; }
+          if (r.ok) {
+            /**
+             * ⭐⭐ THE SERVER CHECKS THE NUMBER WE PRINTED, and answers `number_check` only when something is
+             * wrong with it — too long for this country, or a character the rule does not allow.
+             *
+             * ⚠⚠ IT ACCEPTED THE BILL, and that is correct: the number is already on paper in a customer's hand,
+             * so refusing it would not un-print it, it would only wedge this queue and lose the sale from the
+             * books. What it can do is tell us, and what WE can do is put it where the shopkeeper will read it
+             * rather than let it vanish with the HTTP response.
+             */
+            try {
+              var ans = await r.json();
+              if (ans && ans.number_check && !ans.number_check.ok) {
+                ls.set('cb_numwarn', JSON.stringify({ no: bill.no, why: ans.number_check.reason, at: Date.now() }));
+              }
+            } catch (_) { /* a body we cannot read is not a reason to lose the bill */ }
+            await DB.del('queue', bill.no); sent++;
+          }
           else if (r.status === 403 || r.status === 401) {
             /* ⚠️ A KEY PROBLEM IS NOT FIXED BY TRYING HARDER, and it is also not fixed by saying nothing. This is
                the one failure a shopkeeper can actually act on — and until now it was the most invisible. */
@@ -3581,6 +3598,26 @@ function health(){
 
   if (!S) { add('warn', 'No copy of the shop yet', 'The counter has never read your catalogue, so it cannot price anything.',
     'Press ↻ once while the internet is on.'); return out; }
+
+  /**
+   * ⭐⭐⭐ THE SHOP SAID A BILL NUMBER WE ISSUED DOES NOT FIT ITS RULE.
+   *
+   * ⚠ A WARNING, not a note — unlike the unstudied-country line below, this is a specific document that a
+   * specific rule says is wrong, and it is on paper. The shopkeeper is the only person who can decide whether it
+   * matters, and they cannot decide about something they were never told.
+   * ⚠ It names the bill, because "some bill was wrong" is not something anybody can act on.
+   */
+  (function(){
+    var raw = ls.get('cb_numwarn','');
+    if (!raw) return;
+    var w = null; try { w = JSON.parse(raw); } catch (_) { return; }
+    if (!w || !w.no) return;
+    add('warn', 'Bill ' + w.no + ' has a number the rules do not allow',
+      w.why + ' The bill itself went through and nothing is lost — it is the NUMBER that is wrong, and it is '
+      + 'already printed.',
+      'Give this counter a shorter id in ⚙ Settings so the next bills are right, then ask your accountant what '
+      + 'to do about the ones already issued.', [w.no]);
+  })();
 
   /**
    * ⭐⭐⭐ SAY WHEN THE NUMBERING RULES FOR THIS COUNTRY HAVE NOT BEEN CHECKED.

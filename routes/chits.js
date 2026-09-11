@@ -7,6 +7,29 @@ const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const storage = require('../lib/storage');
+const docnumber = require('../lib/docnumber');   // what a document number may look like, per country
+
+/**
+ * ⭐ THE SHOP'S JURISDICTION, MEMOISED FOR FIVE MINUTES.
+ *
+ * ⚠️ A BILL MUST NOT PAY A ROUND TRIP TO LEARN A FACT THAT CHANGES ONCE IN A SHOP'S LIFETIME. This API runs in
+ * San Francisco and the database is in Mumbai, so an uncached read here would put a Pacific crossing on every
+ * counter sale to answer "which country" — a question whose answer is the same every time.
+ * ⚠️ Five minutes, not forever: a shop that corrects its country should not have to wait for a deploy.
+ */
+const _countryMemo = new Map();
+async function countryOfEntity(entity_id) {
+  const hit = _countryMemo.get(entity_id);
+  if (hit && hit.at > Date.now() - 300000) return hit.c;
+  let c = null;
+  try {
+    const r = await query(`SELECT country, gstn FROM identities WHERE identity_id = $1`, [entity_id]);
+    const row = r.rows[0] || {};
+    c = require('../lib/profile').countryOf({ country: row.country, gstin: row.gstn });
+  } catch (_) { /* ⚠️ a bill must never fail because we could not look up a country */ }
+  _countryMemo.set(entity_id, { c: c, at: Date.now() });
+  return c;
+}
 /* Cached "does the database actually have this?" probe — cheaper than a savepoint and truer than a guess. */
 const schema = require('../lib/schema');
 const { validate, sanitise } = require('../middleware/validate');
@@ -248,6 +271,35 @@ router.post('/send',
         const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
         if (_ent.rows[0]) { sender_bridge_id = _ent.rows[0].bridge_id; sender_display_name = _ent.rows[0].display_name; }
       }
+      /**
+       * ⭐⭐⭐ THE NUMBER ON THE PAPER, CHECKED AGAINST THE RULE FOR THIS SHOP'S COUNTRY.
+       *
+       * The counter now asks lib/docnumber for the shape it issues (vendored as /engine/docnumber.js), but the
+       * SERVER held the same rule and accepted anything — so a counter on older code, or one whose till id was
+       * set before the cap existed, could post a number that is too long and nothing would notice.
+       *
+       * ⚠️⚠️ IT RECORDS, IT DOES NOT REFUSE, and that is the whole judgement rather than a shortcut.
+       *
+       * A bill number is not a request — it is already printed and already in a customer's hand. Refusing it
+       * does not un-print it; it wedges the counter's queue forever and loses the sale from the books, which is
+       * strictly worse than a long number. The physical world happened first, and a server does not get a vote
+       * on it. What a server CAN do is say so, and put the finding where the shop will read it.
+       *
+       * ⚠️ ONLY FOR A COUNTER DOCUMENT. `client_ref` carries an ERP's own reference, a WhatsApp id, a connector's
+       * key — none of which are document numbers and none of which this rule governs. The till id is the marker
+       * that this one is a bill, and without it nothing is checked.
+       */
+      let number_check = null;
+      if (client_ref) {
+        const _b = req.body && req.body.business_json;
+        if (_b && _b.till && _b.till.id) {
+          const v = docnumber.check(client_ref, await countryOfEntity(sender_id));
+          /* ⚠ an unstudied country passes on the only rule everyone agrees on, and `verified` says so — a green
+             tick there would be the platform claiming something nobody checked. */
+          if (!v.ok) number_check = { ok: false, reason: v.reason, verified: v.verified, number: client_ref };
+        }
+      }
+
       // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
       /**
        * ⭐⭐ THE SAME BILL TWICE IS THE SAME CHIT (the till, 2026-09-07). A counter queues its bills and replays them when the line
@@ -324,6 +376,10 @@ router.post('/send',
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
       /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
       if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;
+      /* ⭐ ON THE CHIT, not only in the reply. The counter may be offline when the answer comes back, the person
+         who reads the books is not the person who pressed the key, and a finding that lives only in an HTTP
+         response is a finding nobody will ever see again. */
+      if (number_check && business_json && typeof business_json === 'object') business_json.number_check = number_check;
 
       /**
        * ── ⭐⭐⭐ THE SENDER'S TRADE TRAVELS WITH THE GOODS (2026-09-10) ──────────────────────────────────────
@@ -1205,7 +1261,10 @@ router.post('/send',
         is_draft,
         recipients: is_draft ? 0 : receiverDetails.length,
         fan_out: { to: counts.to, cc: counts.cc, for: counts.for },
-        summary: summary_json
+        summary: summary_json,
+        /* ⚠ present only when something is wrong, so a caller can treat its absence as silence rather than as
+           a claim that the number was checked and approved. */
+        ...(number_check ? { number_check } : {}),
       });
 
     } catch (err) {

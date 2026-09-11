@@ -67,16 +67,9 @@ const UNWIRED = [
      display before that guard exists would put the safe-looking half in service while the hole stays open. */
   'lib/points.js',
   /**
-   * ⚠ lib/docnumber.js — WIRED IN THE BROWSER, UNWIRED ON THE SERVER, and the distinction is the point of this
-   * list. The counter calls it on every bill (vendored as /engine/docnumber.js), which is where it has to run:
-   * a number is issued at the moment there may be no server. But NO ROUTE requires it.
-   *
-   * ⭐ THAT IS A REAL GAP, RECORDED RATHER THAN HIDDEN: the server now holds the rule for what a document number
-   * may look like, and still accepts any `client_ref` a counter sends without checking it against that rule. A
-   * counter running older code, or one whose till id was set before the cap existed, can still post a number
-   * that is too long — and the server would take it. Validating at the door is the next step.
-   */
-  'lib/docnumber.js',
+  /* lib/docnumber.js was here for about an hour on 2026-09-11, wired in the BROWSER and unwired on the server.
+     routes/chits.js now checks every counter bill number against the rule for the shop country, so the test
+     derives that it is live — the mechanism working as intended. */
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //
