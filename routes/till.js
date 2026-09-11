@@ -51,6 +51,46 @@ router.get('/snapshot', auth, async (req, res) => {
       `SELECT display_name, gstn, country, policy_flags FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = me.rows[0] || {};
     const flags = await policy.get(entity_id).catch(() => ({}));
+
+    /**
+     * ⭐⭐⭐ WHICH COUNTER IS THIS — decided by the SERVER, from the thing that is already unique.
+     *
+     * Athi, 2026-09-11: *"we cannot have same receipt number if the same login opens from couple of places?"*
+     *
+     * ⚠⚠ THE BILL SERIES IS PREFIXED BY A TEXT BOX. `cb_till_id` lives in the counter's localStorage, defaults
+     * to `C1`, and is only ever set by hand in Settings — pairing never assigns one. So two counters nobody
+     * renamed both emit C1/26-27/0041, and under GST that is two tax invoices carrying one number.
+     *
+     * ⭐ THE KEY WAS ALWAYS THE UNIQUE THING. Every counter pairs with its own till key; the series was simply
+     * not using it. The ordinal of this key among the shop's till keys, oldest first, gives C1, C2, C3 — short,
+     * sayable, and decided by something nobody types.
+     *
+     * ⚠ A SUGGESTION, NOT AN ORDER, and that is the continuity half. A counter that has ALREADY issued numbers
+     * keeps its own prefix whatever this says — a series that changes shape mid-year destroys the one property
+     * numbering exists to prove. The counter adopts this only when it has issued nothing; otherwise it warns.
+     *
+     * ⚠ NO MIGRATION: the key list already lives in identities.policy_flags.api_keys (routes/keys.js).
+     */
+    let till = null;
+    try {
+      const jti = req.api_key && req.api_key.jti;
+      if (jti) {
+        const kr = await query(`SELECT policy_flags FROM identities WHERE identity_id = $1`, [entity_id]);
+        const keys = ((kr.rows[0] || {}).policy_flags || {}).api_keys || [];
+        const tills = keys
+          .filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0)
+          .sort((x, y) => String(x.created_at || '').localeCompare(String(y.created_at || '')));
+        const at = tills.findIndex((k) => String(k.jti) === String(jti));
+        if (at >= 0) {
+          /* ⚠ C1..C9 then A1.. — TWO CHARACTERS, because the whole number must stay within 16 and the kind
+             tag and the financial year already take nine of them. */
+          const n = at + 1;
+          const id = n <= 9 ? ('C' + n)
+            : (String.fromCharCode(65 + Math.floor((n - 10) / 9)) + (((n - 10) % 9) + 1));
+          till = { suggested_id: id, ordinal: n, counters: tills.length };
+        }
+      }
+    } catch (_) { /* ⚠ best effort — a counter must open whatever this says */ }
     let profile = {}, sectors = [];
     try {
       /**
@@ -309,6 +349,9 @@ router.get('/snapshot', auth, async (req, res) => {
        * opened FOR. A mismatch is caught before a single line is billed, rather than found in the books afterwards.
        */
       entity_id,
+      /* ⭐ which counter this key is, so the bill series is prefixed by something nobody types. A SUGGESTION:
+         a counter that has already issued numbers keeps its own — see the note above the allocation. */
+      till,
       shop: {
         name: profile.trade_name || row.display_name || 'This shop',
         legal_name: profile.legal_name || null,

@@ -259,9 +259,49 @@ router.post('/send',
       if (client_ref) {
         try {
           const seen = await withEntity(sender_id, (db) => db.query(
-            `SELECT chit_id FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1`,
+            /* ⚠️ the till id comes back too — see the collision check below */
+            `SELECT chit_id, business_json->'till'->>'id' AS till_id
+               FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2
+              ORDER BY created_at LIMIT 1`,
             [sender_id, client_ref]));
-          if (seen.rows[0]) return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
+          if (seen.rows[0]) {
+            /**
+             * ⭐⭐⭐ A RETRY AND A COLLISION LOOK IDENTICAL FROM HERE, AND THEY ARE OPPOSITES.
+             *
+             * Athi, 2026-09-11, planning two testers at once: *"we cannot have same receipt number if the same
+             * login opens from couple of places?"* — and the answer was that we could.
+             *
+             * The counter numbers its bills LOCALLY as `<till>/<FY>/<nnnn>`, and the till prefix defaults to
+             * `C1` and is only ever set by hand. So two counters nobody renamed both produce C1/26-27/0041.
+             * Returning the first chit is exactly right for a RETRY from the same device — which is what this
+             * guard was built for — and exactly wrong for two devices: the second shop's real sale is absorbed,
+             * the counter is told it succeeded, and it hands back somebody else's chit id.
+             *
+             * ⚠⚠ AND IT IS NOT MERELY A LOST RECORD. An invoice number must be a consecutive serial UNIQUE for
+             * the financial year, so two counters on one number is two tax invoices carrying one number.
+             *
+             * ⭐ THE TILL ID TELLS THEM APART, and it is already on the chit. Same till — or either side missing
+             * one, which is every chit that is not a counter bill — behaves exactly as before. Different tills
+             * is REFUSED AND NAMED, because a number that two devices both think is theirs is a thing a person
+             * has to settle, not something a server may quietly pick a winner for.
+             */
+             /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
+                here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
+            const _bj = req.body && req.body.business_json;
+            const mine = (_bj && _bj.till && _bj.till.id) || null;
+            const theirs = seen.rows[0].till_id || null;
+            if (mine && theirs && String(mine) !== String(theirs)) {
+              return res.status(409).json({
+                error: 'Bill number already used by another counter',
+                code: 'TILL_SERIES_COLLISION',
+                client_ref, till: mine, taken_by: theirs,
+                message: 'Bill ' + client_ref + ' was already recorded by counter ' + theirs + ', and this is '
+                  + 'counter ' + mine + '. Two counters are numbering from the same series. Give this counter its '
+                  + 'own till id in Settings, then send again — nothing has been lost.',
+              });
+            }
+            return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
+          }
         } catch (_) { /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
       }
       /**

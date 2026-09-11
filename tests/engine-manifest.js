@@ -24,6 +24,14 @@ const TIER_A = [
      pass every check money makes and be summed with rupees. One file holding both types would make that a typo
      away at all times. Zero dependencies, pure predicates — Tier A. */
   'lib/points.js',           // { points, programme }; never money, never converts
+  /* ⭐⭐ THE FOURTH OF THE SAME FAMILY, and the one Athi asked for by name, 2026-09-11: *"first set a
+     country and see how that can be globalised"*. docnumber.js holds what a document NUMBER may look like,
+     per jurisdiction — the 16-character cap, the April–March year and the annual reset are ALL India GST
+     rules, and every one of them was about to be written into the counter where nothing would announce it.
+     ⚠ Every rule set carries `verified`. India is studied; everything else is a permissive default that
+     enforces only what all jurisdictions agree on (unique + sequential) and REFUSES TO INVENT the rest — a
+     guessed limit would refuse a number that is perfectly legal where the shop actually is. Tier A. */
+  'lib/docnumber.js',        // what a document number may look like, per country; never guesses an unstudied rule
   /* ⚠️ THE SIBLING OF money.js, AND FOR THE SAME REASON: it never converts. units.js folds spellings of one unit
      onto one name (கிலோ → kg) and is forbidden from ever relating two DIFFERENT units (crate → kg), because that
      needs a factor and a factor is entity-specific. A rename is engine vocabulary; a conversion is a declaration.

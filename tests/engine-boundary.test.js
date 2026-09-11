@@ -66,6 +66,11 @@ const UNWIRED = [
      money.js REFUSING a points-shaped value and a reward-ish code ('PTS' passes /^[A-Z]{3}$/ today). Wiring the
      display before that guard exists would put the safe-looking half in service while the hole stays open. */
   'lib/points.js',
+  /* ⚠ lib/docnumber.js — built 2026-09-11 in the same change that fixes the counter series, and unwired for
+     exactly as long as it takes to vendor it and have till.html call it. It is listed here rather than left
+     unlabelled because the gap between "the rules exist" and "the rules are what the counter uses" is the
+     whole risk: a rule file nobody calls reads as a solved problem. */
+  'lib/docnumber.js',
   'lib/reporting.js',
   // ⚠ FOUND BY THIS TEST, 2026-08-04, and it corrected a claim already written down.
   //
