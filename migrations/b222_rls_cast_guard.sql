@@ -40,89 +40,64 @@
 
 BEGIN;
 
--- b203_catalogue_item_schedule_APPLY.sql
-DROP POLICY IF EXISTS catalogue_item_schedule_isolation ON catalogue_item_schedule;
-CREATE POLICY catalogue_item_schedule_isolation ON catalogue_item_schedule
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
+-- ── ⚠️⚠️ AND IT HARD-FAILED ON A TABLE THAT IS NOT ON EVERY DATABASE ─────────────────────────────────────────
+--
+-- Athi, 2026-09-11, running it: `ERROR: 42P01: relation "chit_amendment" does not exist`.
+--
+-- ⚠️ THE MIGRATION WAS WRITTEN AGAINST THE SCHEMA I COULD SEE and named all fourteen tables outright, so the
+-- first one this database has not got aborted the whole transaction — and because it is one transaction, the
+-- thirteen that WOULD have applied did not. A migration that stops at the first absent table is a migration
+-- that can only run on the machine it was written on.
+--
+-- ⭐ SO IT SKIPS WHAT IS NOT THERE AND SAYS SO. Each policy is applied only if its table exists; anything
+-- missing is raised as a NOTICE, not an error. That is the same self-healing rule lib/regional.js already
+-- follows ("degrades to just the container content if b81 isn't applied") — a migration should fix what it
+-- can reach and report what it cannot, never refuse to start.
+--
+-- ⚠️ A SKIPPED TABLE IS NOT A FIXED TABLE. If a NOTICE names one, that table's migration was never applied
+-- here; run it, then run this again. Re-running is safe — every statement is DROP IF EXISTS + CREATE.
+DO $b222$
+DECLARE
+  skipped   text[] := '{}';
+  applied   int := 0;
+  policies  text[][] := ARRAY[
+    ['catalogue_item_schedule_isolation', 'catalogue_item_schedule', 'entity_id'],
+    ['catalogue_item_version_isolation', 'catalogue_item_version', 'entity_id'],
+    ['chit_amendment_isolation', 'chit_amendment', 'entity_id'],
+    ['chit_line_isolation', 'chit_line', 'entity_id'],
+    ['chit_line_amendment_isolation', 'chit_line_amendment', 'entity_id'],
+    ['chit_line_assign_isolation', 'chit_line_assignment', 'entity_id'],
+    ['chit_line_cost_isolation', 'chit_line_cost', 'entity_id'],
+    ['chit_line_delivery_isolation', 'chit_line_delivery', 'entity_id'],
+    ['chit_sla_isolation', 'chit_sla', 'entity_id'],
+    ['chit_sla_pause_isolation', 'chit_sla_pause', 'entity_id'],
+    ['definition_isolation', 'definition', 'entity_id'],
+    ['definition_version_isolation', 'definition_version', 'entity_id'],
+    ['folder_rule_isolation', 'folder_rule', 'entity_id'],
+    ['wholesaler_store_isolation', 'wholesaler_store', 'owner_entity_id']
+  ];
+  i int;
+BEGIN
+  FOR i IN 1 .. array_length(policies, 1) LOOP
+    IF to_regclass(policies[i][2]) IS NULL THEN
+      skipped := skipped || policies[i][2];
+      CONTINUE;
+    END IF;
+    EXECUTE format('DROP POLICY IF EXISTS %I ON %I', policies[i][1], policies[i][2]);
+    EXECUTE format(
+      'CREATE POLICY %I ON %I USING (%I = NULLIF(current_setting(''app.current_entity'', true), '''')::uuid)'
+      || ' WITH CHECK (%I = NULLIF(current_setting(''app.current_entity'', true), '''')::uuid)',
+      policies[i][1], policies[i][2], policies[i][3], policies[i][3]);
+    applied := applied + 1;
+  END LOOP;
 
--- b146_catalogue_item_version.sql
-DROP POLICY IF EXISTS catalogue_item_version_isolation ON catalogue_item_version;
-CREATE POLICY catalogue_item_version_isolation ON catalogue_item_version
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b137_chit_amendment.sql
-DROP POLICY IF EXISTS chit_amendment_isolation ON chit_amendment;
-CREATE POLICY chit_amendment_isolation ON chit_amendment
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b142_chit_line.sql
-DROP POLICY IF EXISTS chit_line_isolation ON chit_line;
-CREATE POLICY chit_line_isolation ON chit_line
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b138_line_amendment.sql
-DROP POLICY IF EXISTS chit_line_amendment_isolation ON chit_line_amendment;
-CREATE POLICY chit_line_amendment_isolation ON chit_line_amendment
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b143_line_assignment.sql
-DROP POLICY IF EXISTS chit_line_assign_isolation ON chit_line_assignment;
-CREATE POLICY chit_line_assign_isolation ON chit_line_assignment
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b145_line_cost.sql
-DROP POLICY IF EXISTS chit_line_cost_isolation ON chit_line_cost;
-CREATE POLICY chit_line_cost_isolation ON chit_line_cost
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b144_line_delivery.sql
-DROP POLICY IF EXISTS chit_line_delivery_isolation ON chit_line_delivery;
-CREATE POLICY chit_line_delivery_isolation ON chit_line_delivery
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b147_service_sla.sql
-DROP POLICY IF EXISTS chit_sla_isolation ON chit_sla;
-CREATE POLICY chit_sla_isolation ON chit_sla
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b147_service_sla.sql
-DROP POLICY IF EXISTS chit_sla_pause_isolation ON chit_sla_pause;
-CREATE POLICY chit_sla_pause_isolation ON chit_sla_pause
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b160_definitions.sql
-DROP POLICY IF EXISTS definition_isolation ON definition;
-CREATE POLICY definition_isolation ON definition
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b160_definitions.sql
-DROP POLICY IF EXISTS definition_version_isolation ON definition_version;
-CREATE POLICY definition_version_isolation ON definition_version
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b132_folder_rules.sql
-DROP POLICY IF EXISTS folder_rule_isolation ON folder_rule;
-CREATE POLICY folder_rule_isolation ON folder_rule
-  USING       (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
-
--- b135_wholesaler_stores.sql
-DROP POLICY IF EXISTS wholesaler_store_isolation ON wholesaler_store;
-CREATE POLICY wholesaler_store_isolation ON wholesaler_store
-  USING       (owner_entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK  (owner_entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
+  RAISE NOTICE 'b222: % policy/policies guarded', applied;
+  IF array_length(skipped, 1) IS NOT NULL THEN
+    RAISE NOTICE 'b222: SKIPPED (table not on this database) — %', array_to_string(skipped, ', ');
+    RAISE NOTICE 'b222: those migrations were never applied here. Run them, then run b222 again.';
+  END IF;
+END
+$b222$;
 
 COMMIT;
 
