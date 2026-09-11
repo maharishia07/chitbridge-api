@@ -181,7 +181,7 @@
     "name": "jurisdiction",
     "says": "WHERE A PARTY IS, AND WHAT THAT DECIDES. Pure: no database, no network, no state.",
     "stage": null,
-    "lines": 142,
+    "lines": 158,
     "missing": false
    },
    {
@@ -277,7 +277,7 @@
     "tier": "pure",
     "name": "jurisdiction",
     "purpose": "WHERE A PARTY IS, AND WHAT THAT DECIDES. Pure: no database, no network, no state.",
-    "note": "142 lines",
+    "note": "158 lines",
     "stage": null
    },
    {
@@ -9973,6 +9973,32 @@
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
+   "case_key": "chitbridge-api/tests/jurisdiction.test.js",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "jurisdiction.test.js",
+   "claim": null,
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.unit · unit · 146 lines. Run: node chitbridge-api/tests/jurisdiction.test.js",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/jurisdiction.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+  },
+  {
    "case_key": "chitbridge-api/tests/key-scopes.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -10478,6 +10504,33 @@
    ],
    "subjects": [
     "lib/mint.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+  },
+  {
+   "case_key": "chitbridge-api/tests/points.test.js",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "points.test.js",
+   "claim": null,
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.unit · unit · 151 lines. Run: node chitbridge-api/tests/points.test.js",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/money.js",
+    "lib/points.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
