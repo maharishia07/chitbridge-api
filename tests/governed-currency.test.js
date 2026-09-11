@@ -95,12 +95,42 @@ t('8. no hard-coded \'INR\' remains on the network path', () => {
 });
 
 t('9. the ₹ symbol appears in no minted STRING (prose about it is fine)', () => {
-  // Checking the raw file would fail on the comment explaining the fix, so judge each occurrence by position:
-  // a ₹ that sits after a `//` on its line is commentary; anywhere else it is a literal that would ship.
-  const offenders = route.split('\n')
+  /**
+   * Checking the raw file would fail on the comment explaining the fix, so each occurrence is judged by
+   * position: a ₹ inside a comment is commentary; anywhere else it is a literal that would ship.
+   *
+   * ⚠️⚠️ AND IT KNEW ONLY `//`. routes/catalogue.js explains applyLiveOffers in a JSDoc block quoting Athi's
+   * own words — *"10% off · save ₹100"* — and every line of a /* *​/ block fails the `//` test, so the guard
+   * reported line 178 as a currency literal about to ship. The rule was right; its idea of a comment was not.
+   *
+   * ⭐ THE THIRD GUARD TODAY THAT READ PROSE AS CODE — engine-boundary saw a require inside a doc comment,
+   * undeclared saw hex colours in CSS, and now this. It is a pattern worth naming: a text-scanning guard must
+   * strip comments FIRST, or it grades the documentation instead of the code, and the better a file is
+   * documented the more likely it is to be wrongly accused.
+   *
+   * ⚠️ Blanked, not removed, so the line NUMBERS the failure reports still point at the real line.
+   */
+  const noComments = (() => {
+    const out = route.split('\n');
+    let inBlock = false;
+    return out.map((line) => {
+      let kept = line;
+      if (inBlock) { const e = kept.indexOf('*/'); if (e < 0) return ''; inBlock = false; kept = kept.slice(e + 2); }
+      for (;;) {
+        const b2 = kept.indexOf('/*');
+        if (b2 < 0) break;
+        const e2 = kept.indexOf('*/', b2 + 2);
+        if (e2 < 0) { kept = kept.slice(0, b2); inBlock = true; break; }
+        kept = kept.slice(0, b2) + ' ' + kept.slice(e2 + 2);
+      }
+      const l = kept.indexOf('//');
+      return l < 0 ? kept : kept.slice(0, l);
+    });
+  })();
+
+  const offenders = noComments
     .map((line, i) => ({ line, n: i + 1 }))
-    .filter(({ line }) => line.includes('₹'))
-    .filter(({ line }) => { const c = line.indexOf('//'); return c === -1 || line.indexOf('₹') < c; });
+    .filter(({ line }) => line.includes('₹'));
   assert.strictEqual(offenders.length, 0,
     `a currency SYMBOL is unrenderable for other currencies — mint the CODE. Line(s): ${offenders.map((o) => o.n).join(', ')}`);
 });

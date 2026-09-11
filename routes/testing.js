@@ -349,7 +349,9 @@ router.get('/engine', auth, (req, res) => {
     const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
     if (!require('fs').existsSync(f)) return res.json({ engine: null });
     const doc = JSON.parse(require('fs').readFileSync(f, 'utf8'));
-    res.json({ engine: doc.engine || null, contents: doc.contents || null });
+    /* ⭐ the notes ride with the contents: each row states what its own rule leaves out */
+    res.json({ engine: doc.engine || null, contents: doc.contents || null,
+               notes: doc.notes || null, foot: doc.foot || null });
   } catch (err) { res.status(500).json({ error: 'Could not read the engine manifest' }); }
 });
 

@@ -134,7 +134,7 @@
     "file": "lib/form-handshake.js",
     "tier": "A",
     "name": "form-handshake",
-    "says": "Ran end to end in scripts/prototype-form16-to-itr2.js against a real PDF (12 of 17 fields, with provenance). 17 assertions. NOT in a route: the browser re-implements extraction in shop.html,",
+    "says": "Ran end to end in scripts/prototype-form16-to-itr2.js against a real PDF (12 of 17 fields, with provenance). 17 assertions. NOT in a route: the browser re-implements extraction in shop.html, and coverage() is not surfaced anywhere. Wiring it needs the two implementations to be shown to agree first.",
     "stage": "proven",
     "lines": 136,
     "missing": false
@@ -170,9 +170,9 @@
     "file": "lib/units.js",
     "tier": "A",
     "name": "units",
-    "says": "ONE UNIT, THREE NAMES: ours (kg · litre · bag …), the UN/ECE Recommendation 20 code the world uses",
+    "says": "ONE UNIT, THREE NAMES: ours (kg · litre · bag …), the UN/ECE Recommendation 20 code the world uses (KGM · LTR · BG …, what GS1, Peppol and INV-01 carry), and India's GST Unit Quantity Code (KGS · LTR · BAG …, what a tax invoice and the GSTR must print). Athi, 2026-09-05, on Tally's UQC list: \"do we need to map to ourselves?\" — yes, and by the CODE, so a unit spelt \"bag\" here, \"BAG\" in Tally and \"BG\" on a Peppol invoice is one unit.",
     "stage": null,
-    "lines": 105,
+    "lines": 146,
     "missing": false
    },
    {
@@ -188,7 +188,7 @@
     "file": "lib/rewards.js",
     "tier": "A",
     "name": "rewards",
-    "says": "Built 2026-09-10 and called by NOTHING — tests/rewards.test.js, 15 checks. The interpretation and the",
+    "says": "Built 2026-09-10 and called by NOTHING — tests/rewards.test.js, 15 checks. The interpretation and the ledger arithmetic are both here and asserted, including every refusal. What is missing is STORAGE — the table the entries live in — which is a migration and belongs to the host product, exactly as region_layer does for jurisdiction. Deliberately in this order: a balance is a LIABILITY, and a shop should agree what a point is worth before anything starts accruing them. See UNWIRED in tests/engine-boundary.test.js.",
     "stage": "tested",
     "lines": 511,
     "missing": false
@@ -208,7 +208,7 @@
     "file": "lib/regional.js",
     "tier": "B",
     "name": "regional",
-    "says": "REGIONAL SCATTER (6a): \"spin the globe\". Resolve a container's presentation + governance for a",
+    "says": "REGIONAL SCATTER (6a): \"spin the globe\". Resolve a container's presentation + governance for a customer REGION, then SEAL it into an immutable resolved blueprint (resolve-at-mint, cache-forever; runtime just dereferences). Hybrid merge: global container content < regional override < auto-cascaded basics (currency/units/ language/jurisdiction). Self-healing: degrades to just the container content if b81 isn't applied.",
     "stage": null,
     "lines": 95,
     "missing": false
@@ -229,11 +229,227 @@
    "infrastructure": 58
   }
  },
+ "maturity": [
+  {
+   "id": "cart",
+   "name": "Cart — one basket, everywhere",
+   "icon": "🛒",
+   "load": "eager",
+   "maturity": 2,
+   "target": 3,
+   "gov": 2,
+   "govTarget": 3,
+   "lever": "the Compose typed lines carry no seller tax until send (the review shows offers and any rate the line already has)",
+   "file": null
+  },
+  {
+   "id": "money-language",
+   "name": "Money & language — one renderer, one string layer",
+   "icon": "💱",
+   "load": "eager",
+   "maturity": 3,
+   "target": 4,
+   "gov": 3,
+   "govTarget": 4,
+   "lever": "the two engines (cart.js · pricing.js) keep a GUARDED fallback: they forward to CBMoney and only unwrap inline if the engine failed to load. Defensible for an engine that must run alone, and still two places where the rule is written — L4 decides whether an engine may hard-depend on another",
+   "file": null
+  },
+  {
+   "id": "testing",
+   "name": "Test lab — cases, results and the spec they cite",
+   "icon": "🧪",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 3,
+   "gov": 3,
+   "govTarget": 4,
+   "lever": "⚠️ NO API-KEY SCOPE YET — an external CI server cannot post results without a person's token. The scope exists as of today; nothing has been issued or proven against it",
+   "file": "chitbridge-web/public/app/cap-testing.js"
+  },
+  {
+   "id": "core",
+   "name": "Core — Governance rail",
+   "icon": "🛤️",
+   "load": "eager",
+   "maturity": 2,
+   "target": 3,
+   "gov": 3,
+   "govTarget": 4,
+   "lever": "governed provenance is thin",
+   "file": null
+  },
+  {
+   "id": "dispute",
+   "name": "Disputes — the USP",
+   "icon": "⚑",
+   "load": "lazy",
+   "maturity": 3,
+   "target": 4,
+   "gov": 3,
+   "govTarget": 4,
+   "lever": "governed provenance → L4",
+   "file": "chitbridge-web/public/app/cap-dispute.js"
+  },
+  {
+   "id": "admin",
+   "name": "Admin",
+   "icon": "⚙️",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 3,
+   "gov": 2,
+   "govTarget": 4,
+   "lever": "the 7-layer cascade is still DECLARED, not enforced",
+   "file": "chitbridge-web/public/app/cap-admin.js"
+  },
+  {
+   "id": "workforce",
+   "name": "Co-assists",
+   "icon": "🧑‍🤝‍🧑",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 3,
+   "gov": 2,
+   "govTarget": 3,
+   "lever": "governed role provenance (who granted a hat, when)",
+   "file": "chitbridge-web/public/app/cap-workforce.js"
+  },
+  {
+   "id": "connector",
+   "name": "Connector · IoT / ERP",
+   "icon": "🛰️",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 3,
+   "gov": 2,
+   "govTarget": 3,
+   "lever": "governed fleets (allowlisted devices, per-device control)",
+   "file": "chitbridge-web/public/app/cap-connector.js"
+  },
+  {
+   "id": "intake",
+   "name": "Capture connector — a message becomes a chit",
+   "icon": "📥",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 3,
+   "gov": 2,
+   "govTarget": 4,
+   "lever": "NOT EXERCISED AGAINST A REAL PROVIDER — transport is stood in for; needs a WhatsApp Business account",
+   "file": "chitbridge-web/public/app/cap-intake.js"
+  },
+  {
+   "id": "catalogue",
+   "name": "Catalogue — source-governed distribution",
+   "icon": "🏬",
+   "load": "lazy",
+   "maturity": 3,
+   "target": 4,
+   "gov": 2,
+   "govTarget": 4,
+   "lever": "tighten-only enforcement test",
+   "file": null
+  },
+  {
+   "id": "network",
+   "name": "Network — one shopfront, many entities",
+   "icon": "🏬",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 4,
+   "gov": 2,
+   "govTarget": 4,
+   "lever": "no HUMAN live-run of the build or the network storefront page — by the review gate, a script is not a live-run",
+   "file": "chitbridge-web/public/app/cap-network.js"
+  },
+  {
+   "id": "readiness",
+   "name": "Trade ready — compliance + commerce",
+   "icon": "🛡️",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 4,
+   "gov": 2,
+   "govTarget": 4,
+   "lever": "registry verification is format-only until a KYB key is connected",
+   "file": "chitbridge-web/public/app/cap-readiness.js"
+  },
+  {
+   "id": "help",
+   "name": "Assistant",
+   "icon": "💬",
+   "load": "eager",
+   "maturity": 1,
+   "target": 3,
+   "gov": null,
+   "govTarget": null,
+   "lever": null,
+   "file": null
+  },
+  {
+   "id": "legend",
+   "name": "Legend (this map)",
+   "icon": "🔑",
+   "load": "lazy",
+   "maturity": 2,
+   "target": 2,
+   "gov": null,
+   "govTarget": null,
+   "lever": null,
+   "file": "chitbridge-web/public/app/cap-legend.js"
+  },
+  {
+   "id": "relations-x",
+   "name": "Relations (extract)",
+   "icon": "🔗",
+   "load": "planned",
+   "maturity": null,
+   "target": null,
+   "gov": null,
+   "govTarget": null,
+   "lever": null,
+   "file": null
+  },
+  {
+   "id": "employee",
+   "name": "Employee / HR",
+   "icon": "🗂️",
+   "load": "planned",
+   "maturity": null,
+   "target": null,
+   "gov": null,
+   "govTarget": null,
+   "lever": null,
+   "file": null
+  },
+  {
+   "id": "api-service",
+   "name": "API as a service",
+   "icon": "🔌",
+   "load": "planned",
+   "maturity": null,
+   "target": null,
+   "gov": null,
+   "govTarget": null,
+   "lever": null,
+   "file": null
+  }
+ ],
+ "notes": {
+  "engine": "Only the rules DECLARED in tests/engine-manifest.js — Tier A (zero dependencies, forever) and Tier B (bound). engine-boundary.test.js fails the day a Tier A rule grows a require. The other 116 files in lib/ are adoption and infrastructure, counted there not here.",
+  "middleware": "Every file in middleware/ — what decides who may do what, before a route sees the request. The database-side half of the same job is RLS, which is on the database row.",
+  "web": "The 24 capabilities app.html loads (cap-*.js). ⚠ CO-ASSIST is here under its OLD NAME: cap-workforce.js. The React pages in src/ and the standalone screens (till.html, promo.html, shop.html, iot-howitworks.html) are not capabilities and are not counted.",
+  "api": "One entry per route file, sized in COSMIC function points (ISO/IEC 19761) rather than lines. ⭐ ACTOR IS THE MODEL UNDERNEATH ALL OF THIS: actors.js is the \"B3 Actor model API\", and a person, a co-assist and a connector are each an actor — which is why the word turns up wherever you look. integrations.js is the declared HOME of connectors (catalogue, kit download, heartbeat); connectors.js is the actor + its connections. ⚠ assist.js is NOT the co-assist — it is the tier-1 LLM proxy, so a model key never reaches the browser.",
+  "database": "The last 40 migrations, newest first, out of 196. There is no schema document to read: the migrations ARE the schema, which is why they are the row.",
+  "connector": "ONE CONCEPT, and routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ So IoT and ERP are not two subjects — they are the two shapes of ONE connection string, and routes/integrations.js adds that a downloaded kit IS a co-assist connector. That is why co-assist, IoT, ERP and Tally all land here, and why ACTOR is the word you meet first. ⚠ The list below is the FILES: ADAPTER (one per foreign system), KIT (the spine that drives them), CHANNEL (how a chit reaches a person). IoT has no adapter among them — its 3 file(s) are the signal blueprint and the lifecycle scripts, and it becomes a row the day it is written as an adapter."
+ },
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 469 cases read from a test file, plus 150 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
     "tier": "pure",
     "name": "order-input",
+    "file": "chitbridge-api/lib/order-input.js",
     "purpose": "WHAT A CATALOGUE RECEIVES, declared as a schema (SPEC-negotiation-position, revised).",
     "note": "355 lines",
     "stage": null
@@ -241,13 +457,15 @@
    {
     "tier": "pure",
     "name": "form-handshake",
-    "purpose": "Ran end to end in scripts/prototype-form16-to-itr2.js against a real PDF (12 of 17 fields, with provenance). 17 assertions. NOT in a route: the browser re-implements extraction in ",
+    "file": "chitbridge-api/lib/form-handshake.js",
+    "purpose": "Ran end to end in scripts/prototype-form16-to-itr2.js against a real PDF (12 of 17 fields, with provenance). 17 assertions. NOT in a route: the browser re-implements extraction in shop.html, and coverage() is not surfaced anywhere. Wiring it needs the two implementations to be shown to agree first.",
     "note": "136 lines",
     "stage": "proven"
    },
    {
     "tier": "pure",
     "name": "money",
+    "file": "chitbridge-api/lib/money.js",
     "purpose": "an amount is never a bare number.",
     "note": "346 lines",
     "stage": null
@@ -255,6 +473,7 @@
    {
     "tier": "pure",
     "name": "points",
+    "file": "chitbridge-api/lib/points.js",
     "purpose": "a reward point is NOT money, and this file exists so the two can never be confused.",
     "note": "140 lines",
     "stage": null
@@ -262,6 +481,7 @@
    {
     "tier": "pure",
     "name": "docnumber",
+    "file": "chitbridge-api/lib/docnumber.js",
     "purpose": "The numbering RULES, per jurisdiction. Built 2026-09-11; the counter adopts it in the same change.",
     "note": "162 lines",
     "stage": "held"
@@ -269,13 +489,15 @@
    {
     "tier": "pure",
     "name": "units",
-    "purpose": "ONE UNIT, THREE NAMES: ours (kg · litre · bag …), the UN/ECE Recommendation 20 code the world uses",
-    "note": "105 lines",
+    "file": "chitbridge-api/lib/units.js",
+    "purpose": "ONE UNIT, THREE NAMES: ours (kg · litre · bag …), the UN/ECE Recommendation 20 code the world uses (KGM · LTR · BG …, what GS1, Peppol and INV-01 carry), and India's GST Unit Quantity Code (KGS · LTR · BAG …, what a tax invoice and the GSTR must print). Athi, 2026-09-05, on Tally's UQC list: \"do we need to map to ourselves?\" — yes, and by the CODE, so a unit spelt \"bag\" here, \"BAG\" in Tally and \"BG\" on a Peppol invoice is one unit.",
+    "note": "146 lines",
     "stage": null
    },
    {
     "tier": "pure",
     "name": "jurisdiction",
+    "file": "chitbridge-api/lib/jurisdiction.js",
     "purpose": "WHERE A PARTY IS, AND WHAT THAT DECIDES. Pure: no database, no network, no state.",
     "note": "158 lines",
     "stage": null
@@ -283,13 +505,15 @@
    {
     "tier": "pure",
     "name": "rewards",
-    "purpose": "Built 2026-09-10 and called by NOTHING — tests/rewards.test.js, 15 checks. The interpretation and the",
+    "file": "chitbridge-api/lib/rewards.js",
+    "purpose": "Built 2026-09-10 and called by NOTHING — tests/rewards.test.js, 15 checks. The interpretation and the ledger arithmetic are both here and asserted, including every refusal. What is missing is STORAGE — the table the entries live in — which is a migration and belongs to the host product, exactly as region_layer does for jurisdiction. Deliberately in this order: a balance is a LIABILITY, and a shop should agree what a point is worth before anything starts accruing them. See UNWIRED in tests/engine-boundary.test.js.",
     "note": "511 lines",
     "stage": "tested"
    },
    {
     "tier": "pure",
     "name": "inventory",
+    "file": "chitbridge-api/lib/inventory.js",
     "purpose": "WHAT A MOVEMENT DOES TO A BALANCE",
     "note": "245 lines",
     "stage": null
@@ -297,13 +521,15 @@
    {
     "tier": "bound",
     "name": "regional",
-    "purpose": "REGIONAL SCATTER (6a): \"spin the globe\". Resolve a container's presentation + governance for a",
+    "file": "chitbridge-api/lib/regional.js",
+    "purpose": "REGIONAL SCATTER (6a): \"spin the globe\". Resolve a container's presentation + governance for a customer REGION, then SEAL it into an immutable resolved blueprint (resolve-at-mint, cache-forever; runtime just dereferences). Hybrid merge: global container content < regional override < auto-cascaded basics (currency/units/ language/jurisdiction). Self-healing: degrades to just the container content if b81 isn't applied.",
     "note": "95 lines",
     "stage": null
    },
    {
     "tier": "bound",
     "name": "reporting",
+    "file": "chitbridge-api/lib/reporting.js",
     "purpose": "Built for the network MIS + Beckn work that is queued. 17 assertions. No caller yet, by design — the Beckn phase is where it lands.",
     "note": "132 lines",
     "stage": "tested"
@@ -312,30 +538,35 @@
   "middleware": [
    {
     "name": "auth",
+    "file": "chitbridge-api/middleware/auth.js",
     "purpose": "JWT validation middleware",
     "note": "302 lines",
     "stage": null
    },
    {
     "name": "customer-auth",
+    "file": "chitbridge-api/middleware/customer-auth.js",
     "purpose": "the STOREFRONT CUSTOMER's authenticated surface.",
     "note": "50 lines",
     "stage": null
    },
    {
     "name": "hat-gate",
+    "file": "chitbridge-api/middleware/hat-gate.js",
     "purpose": "make the co-assist HAT actually govern writes, by default, everywhere.",
     "note": "166 lines",
     "stage": null
    },
    {
     "name": "idempotency",
-    "purpose": "server-side idempotency for the offline OUTBOX (Phase 2). A mutation carrying an",
+    "file": "chitbridge-api/middleware/idempotency.js",
+    "purpose": "server-side idempotency for the offline OUTBOX (Phase 2). A mutation carrying an `Idempotency-Key` header is executed AT MOST ONCE per (entity, key): the first request runs and its response is recorded; any REPLAY with the same key returns the recorded response WITHOUT re-executing — so an outbox replay on reconnect can never mint a second chit / form / credential. Concurrent in-flight duplicate → 409; same key reused with a DIFFERENT body → 422. Opt-in (no header ⇒ untouched) and SELF-HEALING (store missing ⇒ proceeds without idempotency, never breaks a request) so it is safe to deploy before b109 is run. Scoped per entity, WITH RLS (via withEntity).",
     "note": "96 lines",
     "stage": null
    },
    {
     "name": "validate",
+    "file": "chitbridge-api/middleware/validate.js",
     "purpose": "Input validation helpers",
     "note": "29 lines",
     "stage": null
@@ -344,217 +575,253 @@
   "api": [
    {
     "name": "chits",
+    "file": "chitbridge-api/routes/chits.js",
     "purpose": "Chit send, inbox, detail, status update",
     "note": "717 function points",
     "stage": null
    },
    {
     "name": "products",
+    "file": "chitbridge-api/routes/products.js",
     "purpose": "B3.7a Catalogue items (products) CRUD + search",
     "note": "154 function points",
     "stage": null
    },
    {
     "name": "folders",
-    "purpose": "FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per",
+    "file": "chitbridge-api/routes/folders.js",
+    "purpose": "FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.",
     "note": "138 function points",
     "stage": null
    },
    {
     "name": "governance",
+    "file": "chitbridge-api/routes/governance.js",
     "purpose": "GOV-01 protected entity / constitution / governed inheritance.",
     "note": "137 function points",
     "stage": null
    },
    {
     "name": "till",
+    "file": "chitbridge-api/routes/till.js",
     "purpose": "WHAT A COUNTER NEEDS, IN ONE CALL (TILL-SPEC-2026-09-07).",
     "note": "118 function points",
     "stage": null
    },
    {
     "name": "actors",
-    "purpose": "B3 Actor model API",
+    "file": "chitbridge-api/routes/actors.js",
+    "purpose": "B3 Actor model API All endpoints for create login manage actors",
     "note": "112 function points",
     "stage": null
    },
    {
     "name": "assist",
+    "file": "chitbridge-api/routes/assist.js",
     "purpose": "POST /api/assist — tier-1 assistant LLM proxy (STUB).",
     "note": "109 function points",
     "stage": null
    },
    {
     "name": "catalogue",
+    "file": "chitbridge-api/routes/catalogue.js",
     "purpose": "B3.7 Public catalogue + end-customer order (no business login)",
     "note": "107 function points",
     "stage": null
    },
    {
     "name": "relationships",
+    "file": "chitbridge-api/routes/relationships.js",
     "purpose": "B3.6 Supplier List + Customer List + Promotions",
     "note": "106 function points",
     "stage": null
    },
    {
     "name": "connectors",
-    "purpose": "L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1),",
+    "file": "chitbridge-api/routes/connectors.js",
+    "purpose": "L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)",
     "note": "84 function points",
     "stage": null
    },
    {
     "name": "entities",
+    "file": "chitbridge-api/routes/entities.js",
     "purpose": "Entity registration, login, search",
     "note": "76 function points",
     "stage": null
    },
    {
     "name": "integrations",
-    "purpose": null,
+    "file": "chitbridge-api/routes/integrations.js",
+    "purpose": "/api/integrations — THE HOME OF CONNECTORS (Athi, 2026-09-05: \"include the tally connector as a downloadable option in the system itself … all should reside as part of Integrations; if we build more, it should stay there\").",
     "note": "75 function points",
     "stage": null
    },
    {
     "name": "capture",
-    "purpose": "the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm",
+    "file": "chitbridge-api/routes/capture.js",
+    "purpose": "the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm (send via /api/chits/send) → mark converted. See SPEC-capture-connector.md. Migration b104.",
     "note": "69 function points",
     "stage": null
    },
    {
     "name": "testing",
-    "purpose": null,
+    "file": "chitbridge-api/routes/testing.js",
+    "purpose": "/api/testing — THE TEST BOARD: cases you can append to, results you can record, and who recorded them.",
     "note": "68 function points",
     "stage": null
    },
    {
     "name": "channels",
-    "purpose": "Settings → Channels. Which inbound number / address belongs to this entity, and whether the",
+    "file": "chitbridge-api/routes/channels.js",
+    "purpose": "Settings → Channels. Which inbound number / address belongs to this entity, and whether the provider behind it is actually configured. This is the map the capture webhooks have been waiting for (b104 → b123). See SPEC-capture-connector.md.",
     "note": "67 function points",
     "stage": null
    },
    {
     "name": "definitions",
+    "file": "chitbridge-api/routes/definitions.js",
     "purpose": "an entity's own named things: \"Carton of 6\", \"Diwali 10%\", a category list.",
     "note": "57 function points",
     "stage": null
    },
    {
     "name": "forms",
+    "file": "chitbridge-api/routes/forms.js",
     "purpose": "the AUTHORITY-FORMS engine surface. Define → resolve (fill + provenance) → issue (freeze) → sign.",
     "note": "48 function points",
     "stage": null
    },
    {
     "name": "network-design",
-    "purpose": "NETWORK DESIGN persistence: the design-first Network builder's draft, stored",
+    "file": "chitbridge-api/routes/network-design.js",
+    "purpose": "NETWORK DESIGN persistence: the design-first Network builder's draft, stored per entity so the SAME design follows the user across machines/browsers (was browser-localStorage only).",
     "note": "48 function points",
     "stage": null
    },
    {
     "name": "schemas",
+    "file": "chitbridge-api/routes/schemas.js",
     "purpose": "Schema engine basic",
     "note": "44 function points",
     "stage": null
    },
    {
     "name": "tax",
+    "file": "chitbridge-api/routes/tax.js",
     "purpose": "the invoice for a chit, the month's ledger, the GSTR shapes. Read-only; nothing here files.",
     "note": "36 function points",
     "stage": null
    },
    {
     "name": "kyb",
-    "purpose": "the \"Know your business\" value panel. Sections 1-3 are computed from owned data → FREE (SELECTs over",
+    "file": "chitbridge-api/routes/kyb.js",
+    "purpose": "the \"Know your business\" value panel. Sections 1-3 are computed from owned data → FREE (SELECTs over the entity's own rows). Section 4 (field) is metered per search + 24h-cached. Entity-scoped; identity from the token.",
     "note": "35 function points",
     "stage": null
    },
    {
     "name": "service",
+    "file": "chitbridge-api/routes/service.js",
     "purpose": "a chit AS A SERVICE REQUEST. The clock, and the pause that gets argued about.",
     "note": "27 function points",
     "stage": null
    },
    {
     "name": "supplies",
+    "file": "chitbridge-api/routes/supplies.js",
     "purpose": "WHAT A SHOP BUYS TO USE",
     "note": "25 function points",
     "stage": null
    },
    {
     "name": "connections",
+    "file": "chitbridge-api/routes/connections.js",
     "purpose": "Connection handshake",
     "note": "21 function points",
     "stage": null
    },
    {
     "name": "offers",
-    "purpose": null,
+    "file": "chitbridge-api/routes/offers.js",
+    "purpose": "/api/offers — THE OFFER ENGINE AS A SERVICE.",
     "note": "18 function points",
     "stage": null
    },
    {
     "name": "notifications",
+    "file": "chitbridge-api/routes/notifications.js",
     "purpose": "derived notification feed (no notifications table).",
     "note": "17 function points",
     "stage": null
    },
    {
     "name": "simulator",
+    "file": "chitbridge-api/routes/simulator.js",
     "purpose": "public showcase API for the /tour page (SimulatorPage).",
     "note": "17 function points",
     "stage": null
    },
    {
     "name": "attachments",
+    "file": "chitbridge-api/routes/attachments.js",
     "purpose": null,
     "note": "14 function points",
     "stage": null
    },
    {
     "name": "invoice",
-    "purpose": null,
+    "file": "chitbridge-api/routes/invoice.js",
+    "purpose": "/api/invoice — THE INVOICE AS A SERVICE (rung 2): the whole line pipeline in one call, on the same engines the chit uses — pricing structure → offers → tax → the INV-01 block (India's e-invoice JSON shape; `_cb.scheme` names GST or a VAT-type scheme; `_cb.supply` intra · inter · domestic · cross · unknown).",
     "note": "14 function points",
     "stage": null
    },
    {
     "name": "identity-docs",
+    "file": "chitbridge-api/routes/identity-docs.js",
     "purpose": "a person's own identity record: phone, email, and government IDs.",
     "note": "13 function points",
     "stage": null
    },
    {
     "name": "catalogue-face",
-    "purpose": "CATALOGUE FACE persistence: the catalogue setup config (purpose · method · units ·",
+    "file": "chitbridge-api/routes/catalogue-face.js",
+    "purpose": "CATALOGUE FACE persistence: the catalogue setup config (purpose · method · units · facets · tax · ERP mapping), stored per entity so the SAME setup follows the user across machines/browsers (was browser-localStorage only). The catalogue ITEMS live in catalogue_items (real products); this holds only the face.",
     "note": "10 function points",
     "stage": null
    },
    {
     "name": "events",
-    "purpose": null,
+    "file": "chitbridge-api/routes/events.js",
+    "purpose": "/api/events — the mailbox bell (see lib/events.js).",
     "note": "8 function points",
     "stage": null
    },
    {
     "name": "keys",
-    "purpose": null,
+    "file": "chitbridge-api/routes/keys.js",
+    "purpose": "/api/keys — API KEYS FOR OTHER SYSTEMS (Athi, 2026-09-05: \"create the entire offer as a capability and attach it to any other systems … an api or micro service\").",
     "note": "8 function points",
     "stage": null
    },
    {
     "name": "adopt",
+    "file": "chitbridge-api/routes/adopt.js",
     "purpose": "TAKING A SUPPLIER'S DELIVERY INTO YOUR OWN CATALOGUE",
     "note": "7 function points",
     "stage": null
    },
    {
     "name": "pricing",
-    "purpose": null,
+    "file": "chitbridge-api/routes/pricing.js",
+    "purpose": "/api/pricing — THE PRICING STRUCTURE AS A SERVICE (rung 2). Same engine as the product page, the cart, the storefront and the order line (lib/pricing-engine.js, vendored from app/pricing.js).",
     "note": "7 function points",
     "stage": null
    },
    {
     "name": "openapi",
-    "purpose": null,
+    "file": "chitbridge-api/routes/openapi.js",
+    "purpose": "/api/openapi.json — ONE CONTRACT FOR THE SERVICES: offers · pricing · tax · invoice · keys. Each service route carries its own fragment (router.openapi = { paths, schemas }) beside the code it describes, and this assembles them.",
     "note": "2 function points",
     "stage": null
    }
@@ -562,144 +829,168 @@
   "web": [
    {
     "name": "cap-admin",
+    "file": "chitbridge-web/public/app/cap-admin.js",
     "purpose": "the \"admin\" capability (progressively loaded on demand).",
     "note": "5383 lines",
     "stage": null
    },
    {
     "name": "cap-adopt",
+    "file": "chitbridge-web/public/app/cap-adopt.js",
     "purpose": "TAKING A SUPPLIER'S DELIVERY INTO YOUR OWN CATALOGUE.",
     "note": "192 lines",
     "stage": null
    },
    {
     "name": "cap-categories",
+    "file": "chitbridge-web/public/app/cap-categories.js",
     "purpose": "CATEGORIES, the shelf you shape (lazy; ensureCap('categories')).",
     "note": "955 lines",
     "stage": null
    },
    {
     "name": "cap-catsetup",
+    "file": "chitbridge-web/public/app/cap-catsetup.js",
     "purpose": "CATALOGUE SETUP: how the catalogue is SHAPED (lazy; ensureCap('catsetup')).",
     "note": "1738 lines",
     "stage": null
    },
    {
     "name": "cap-chit2",
+    "file": "chitbridge-web/public/app/cap-chit2.js",
     "purpose": "DESIGN 2: the chit as LINE-LEVEL work (lazy; ensureCap('chit2')).",
     "note": "1399 lines",
     "stage": null
    },
    {
     "name": "cap-connector",
+    "file": "chitbridge-web/public/app/cap-connector.js",
     "purpose": "IoT / ERP connector MANAGEMENT (lazy; loaded via ensureCap('connector') on INVOCATION).",
     "note": "282 lines",
     "stage": null
    },
    {
     "name": "cap-definitions",
-    "purpose": "DEFINITIONS · the shelf a catalogue takes things off.  (lazy capability)",
+    "file": "chitbridge-web/public/app/cap-definitions.js",
+    "purpose": "DEFINITIONS · the shelf a catalogue takes things off. (lazy capability)",
     "note": "1878 lines",
     "stage": null
    },
    {
     "name": "cap-dispute",
+    "file": "chitbridge-web/public/app/cap-dispute.js",
     "purpose": "the DISPUTE capability (the USP), lazy-loaded via ensureCap('dispute').",
     "note": "308 lines",
     "stage": null
    },
    {
     "name": "cap-folders",
+    "file": "chitbridge-web/public/app/cap-folders.js",
     "purpose": "FOLDERS capability (lazy; loaded via ensureCap('folders')).",
     "note": "708 lines",
     "stage": null
    },
    {
     "name": "cap-iddocs",
+    "file": "chitbridge-web/public/app/cap-iddocs.js",
     "purpose": "a person's identity record, as ONE module used in every place it appears.",
     "note": "219 lines",
     "stage": null
    },
    {
     "name": "cap-intake",
+    "file": "chitbridge-web/public/app/cap-intake.js",
     "purpose": "THE INTAKE INBOX. Lazy via ensureCap('intake').",
     "note": "386 lines",
     "stage": null
    },
    {
     "name": "cap-legend",
+    "file": "chitbridge-web/public/app/cap-legend.js",
     "purpose": "the 🔑 LEGEND capability: a live map of \"what we serve\".",
     "note": "820 lines",
     "stage": null
    },
    {
     "name": "cap-match",
+    "file": "chitbridge-web/public/app/cap-match.js",
     "purpose": "THE THREE-WAY MATCH (lazy; ensureCap('match')).",
     "note": "191 lines",
     "stage": null
    },
    {
     "name": "cap-messages",
+    "file": "chitbridge-web/public/app/cap-messages.js",
     "purpose": "REPLIES: every external conversation that still wants you, across every chit. Lazy.",
     "note": "351 lines",
     "stage": null
    },
    {
     "name": "cap-network",
+    "file": "chitbridge-web/public/app/cap-network.js",
     "purpose": "DESIGN-FIRST network builder. Lazy via ensureCap('network').",
     "note": "2978 lines",
     "stage": null
    },
    {
     "name": "cap-readiness",
-    "purpose": "TRADE capability (lazy; ensureCap('readiness')). Two tabs:",
+    "file": "chitbridge-web/public/app/cap-readiness.js",
+    "purpose": "TRADE capability (lazy; ensureCap('readiness')). Two tabs: • My readiness — the supplier side: the clearances your standards require, gathered vs pending, rolling up.",
     "note": "550 lines",
     "stage": null
    },
    {
     "name": "cap-register",
+    "file": "chitbridge-web/public/app/cap-register.js",
     "purpose": "THE REGISTER. Lazy (ensureCap('register')).",
     "note": "1159 lines",
     "stage": null
    },
    {
     "name": "cap-service",
+    "file": "chitbridge-web/public/app/cap-service.js",
     "purpose": "a chit AS A SERVICE REQUEST. Lazy-loaded (ensureCap('service')).",
     "note": "222 lines",
     "stage": null
    },
    {
     "name": "cap-standards",
+    "file": "chitbridge-web/public/app/cap-standards.js",
     "purpose": "THE REGISTER OF STANDARDS, and the argument for following them.",
     "note": "391 lines",
     "stage": null
    },
    {
     "name": "cap-supplies",
+    "file": "chitbridge-web/public/app/cap-supplies.js",
     "purpose": "SUPPLIES: what the shop buys to USE, never to sell.",
     "note": "275 lines",
     "stage": null
    },
    {
     "name": "cap-testing",
+    "file": "chitbridge-web/public/app/cap-testing.js",
     "purpose": "THE TEST PANEL, ON TOP OF THE APP",
     "note": "957 lines",
     "stage": null
    },
    {
     "name": "cap-traceability",
+    "file": "chitbridge-web/public/app/cap-traceability.js",
     "purpose": "TRACEABILITY capability (lazy via ensureCap('traceability')).",
     "note": "207 lines",
     "stage": null
    },
    {
     "name": "cap-workforce",
+    "file": "chitbridge-web/public/app/cap-workforce.js",
     "purpose": "the CO-ASSIST (workforce) capability: FUNCTIONALITY only.",
     "note": "663 lines",
     "stage": null
    },
    {
     "name": "cap-worklist",
+    "file": "chitbridge-web/public/app/cap-worklist.js",
     "purpose": "MY WORK, across every chit. Lazy (ensureCap('worklist')).",
     "note": "1602 lines",
     "stage": null
@@ -708,240 +999,280 @@
   "database": [
    {
     "name": "sim01_simulator",
+    "file": "chitbridge-api/migrations/sim01_simulator.sql",
     "purpose": "sim01_simulator.sql — DB-backed content for the public /tour showcase page (SimulatorPage).",
     "note": null,
     "stage": null
    },
    {
     "name": "purge_test_entities_ROUTINE",
+    "file": "chitbridge-api/migrations/purge_test_entities_ROUTINE.sql",
     "purpose": "purge_test_entities — ONE script, routine maintenance. Athi, 2026-09-04: \"give me a single sql script to execute,",
     "note": null,
     "stage": null
    },
    {
     "name": "purge_test_entities_1_LIST",
+    "file": "chitbridge-api/migrations/purge_test_entities_1_LIST.sql",
     "purpose": "purge_test_entities · step 1 of 3 — LIST what would go. Read-only. ONE result set.",
     "note": null,
     "stage": null
    },
    {
     "name": "net03_full_schema",
+    "file": "chitbridge-api/migrations/net03_full_schema.sql",
     "purpose": "===== 0. helpers =====",
     "note": null,
     "stage": null
    },
    {
     "name": "net02_chit",
+    "file": "chitbridge-api/migrations/net02_chit.sql",
     "purpose": "create table if not exists cb_chit (",
     "note": null,
     "stage": null
    },
    {
     "name": "net01_network",
+    "file": "chitbridge-api/migrations/net01_network.sql",
     "purpose": "NET-01: network establishment & delinking",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b57_connector_actor",
+    "file": "chitbridge-api/migrations/migration_b57_connector_actor.sql",
     "purpose": "migration_b57_connector_actor.sql — L3.1: connector as a first-class ACTOR + its endpoints (connections).",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b56_dispute_schema",
+    "file": "chitbridge-api/migrations/migration_b56_dispute_schema.sql",
     "purpose": "migration_b56_dispute_schema.sql — ensure the per-party dispute schema the code needs actually EXISTS.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b55_connector_blueprint_and_capabilities",
+    "file": "chitbridge-api/migrations/migration_b55_connector_blueprint_and_capabilities.sql",
     "purpose": "migration_b55_connector_blueprint_and_capabilities.sql",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b54_disable_rls_carveout",
+    "file": "chitbridge-api/migrations/migration_b54_disable_rls_carveout.sql",
     "purpose": "migration_b54_disable_rls_carveout.sql — B1 RLS: enforce RLS ONLY on the 6 Direct tables; carve-out/stage-2 OFF.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b53_assist_residency_qa",
+    "file": "chitbridge-api/migrations/migration_b53_assist_residency_qa.sql",
     "purpose": "migration_b53_assist_residency_qa.sql — seed a curated assistant Q&A about DATA RESIDENCY.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b52_rls_parity_read",
+    "file": "chitbridge-api/migrations/migration_b52_rls_parity_read.sql",
     "purpose": "migration_b52_rls_parity_read.sql — B1 RLS · STEP D2 (crossing pass): the dispute parity cross-read.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b51_rls_delivery_functions_extra",
+    "file": "chitbridge-api/migrations/migration_b51_rls_delivery_functions_extra.sql",
     "purpose": "migration_b51_rls_delivery_functions_extra.sql — B1 RLS · STEP D2 (crossing pass): two more delivery-agent fns.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b50_rls_delivery_functions",
+    "file": "chitbridge-api/migrations/migration_b50_rls_delivery_functions.sql",
     "purpose": "migration_b50_rls_delivery_functions.sql — B1 RLS · STEP D2: the SECURITY DEFINER \"delivery agent\" layer.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b49_rls_policies",
+    "file": "chitbridge-api/migrations/migration_b49_rls_policies.sql",
     "purpose": "migration_b49_rls_policies.sql — B1 RLS · STEP E: ENABLE + FORCE RLS + per-table policy on the Direct group.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b48_cb_app_role",
+    "file": "chitbridge-api/migrations/migration_b48_cb_app_role.sql",
     "purpose": "migration_b48_cb_app_role.sql — B1 RLS · STEP A: a dedicated NOSUPERUSER NOBYPASSRLS app role (`cb_app`).",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b47_mint_path",
+    "file": "chitbridge-api/migrations/migration_b47_mint_path.sql",
     "purpose": "migration_b47_mint_path.sql — UNIFY THE MINT PATH (reviewer #3): one create_from_blueprint(), a blueprint",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b46_helpdesk_blueprint",
+    "file": "chitbridge-api/migrations/migration_b46_helpdesk_blueprint.sql",
     "purpose": "migration_b46_helpdesk_blueprint.sql — templatize the helpdesk into a reusable BLUEPRINT.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b45_gov01help_rename",
+    "file": "chitbridge-api/migrations/migration_b45_gov01help_rename.sql",
     "purpose": "migration_b45_gov01help_rename.sql — name the Help source entity GOV-01-Help so it is operated the HARD WAY:",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b44_assist_projection",
+    "file": "chitbridge-api/migrations/migration_b44_assist_projection.sql",
     "purpose": "migration_b44_assist_projection.sql — projection sync: Help CATALOGUE (source of truth) -> assist_qa (serving).",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b43_help_entity",
+    "file": "chitbridge-api/migrations/migration_b43_help_entity.sql",
     "purpose": "migration_b43_help_entity.sql — provision the PROTECTED Help entity + its Q&A schema + lift the 52 into its catalogue.",
     "note": null,
     "stage": null
    },
    {
     "name": "migration_b42_assist_qa",
+    "file": "chitbridge-api/migrations/migration_b42_assist_qa.sql",
     "purpose": "migration_b42_assist_qa.sql — assistant Q&A library, DB-backed (single source of truth).",
     "note": null,
     "stage": null
    },
    {
     "name": "b99_ai_usage",
+    "file": "chitbridge-api/migrations/b99_ai_usage.sql",
     "purpose": "b99: METERING LEDGER + PREPAID WALLET (general — AI is just the first meter).",
     "note": null,
     "stage": null
    },
    {
     "name": "b98_gst_registration",
+    "file": "chitbridge-api/migrations/b98_gst_registration.sql",
     "purpose": "b98: a GSTIN clearance so the LIVE source-check shows in the UI. GSTIN is verifiable at source (GST registry via",
     "note": null,
     "stage": null
    },
    {
     "name": "b97_pharma_auto",
+    "file": "chitbridge-api/migrations/b97_pharma_auto.sql",
     "purpose": "b97: two more sectors — PHARMA and AUTOMOBILE — to widen the \"generic, not chemical-only\" showcase. Same engine as",
     "note": null,
     "stage": null
    },
    {
     "name": "b96_entity_profile",
+    "file": "chitbridge-api/migrations/b96_entity_profile.sql",
     "purpose": "b96: per-entity TRADE PROFILE — makes Trade-ready INDIVIDUAL-specific. The entity declares its trade mode, markets,",
     "note": null,
     "stage": null
    },
    {
     "name": "b95_more_sectors",
+    "file": "chitbridge-api/migrations/b95_more_sectors.sql",
     "purpose": "b95: prove the tool is GENERIC, not chemical-only. Seed FOOD, TEXTILES and ELECTRONICS sectors — each with its own",
     "note": null,
     "stage": null
    },
    {
     "name": "b93_commerce_standards",
+    "file": "chitbridge-api/migrations/b93_commerce_standards.sql",
     "purpose": "b93: seed the COMMERCE standards as SEALED SOURCE-ENTITIES — Incoterms 2020, UCP 600, FRM. This is the DDL move Athi",
     "note": null,
     "stage": null
    },
    {
     "name": "b92_verification",
+    "file": "chitbridge-api/migrations/b92_verification.sql",
     "purpose": "b92: the VERIFICATION stamp on a gathered clearance — the trust ladder (declared→documented→attested→verified).",
     "note": null,
     "stage": null
    },
    {
     "name": "b91_trade_lanes",
+    "file": "chitbridge-api/migrations/b91_trade_lanes.sql",
     "purpose": "b91: TRADE LANES — destination-resolved readiness, GENERIC (derive, don't enumerate). Requirements are COMPUTED from",
     "note": null,
     "stage": null
    },
    {
     "name": "b90_compliance",
+    "file": "chitbridge-api/migrations/b90_compliance.sql",
     "purpose": "b90: MAKE COMPLIANCE REAL — a standard's document CATALOGUE (the vector) + a per-entity GATHERED-evidence store.",
     "note": null,
     "stage": null
    },
    {
     "name": "b89_source_entities",
+    "file": "chitbridge-api/migrations/b89_source_entities.sql",
     "purpose": "b89: standards become SOURCE-ENTITIES (stable identity + mutable name) — mirrors b78 (catalogue source owned by an",
     "note": null,
     "stage": null
    },
    {
     "name": "b88_boilerplate",
+    "file": "chitbridge-api/migrations/b88_boilerplate.sql",
     "purpose": "b88: THE BOILERPLATE-DECLARES-ITS-SOURCES keystone (DDL layer of the entity lifecycle).",
     "note": null,
     "stage": null
    },
    {
     "name": "b87_exim_standard",
+    "file": "chitbridge-api/migrations/b87_exim_standard.sql",
     "purpose": "b87: seed a SECOND canonical standard facet — EXIM (foreign-trade) policy — to prove the boilerplate assimilates",
     "note": null,
     "stage": null
    },
    {
     "name": "b86_sealed_guard",
+    "file": "chitbridge-api/migrations/b86_sealed_guard.sql",
     "purpose": "b86: enforce identities.sealed at the DB — the backstop behind the app guards (P0-1).",
     "note": null,
     "stage": null
    },
    {
     "name": "b85_standard_source",
+    "file": "chitbridge-api/migrations/b85_standard_source.sql",
     "purpose": "b85: canonical SHARED standard source — the second source CLASS.",
     "note": null,
     "stage": null
    },
    {
     "name": "b84_india_languages",
+    "file": "chitbridge-api/migrations/b84_india_languages.sql",
     "purpose": "b84: India-local language regions for spin-the-globe — Tamil (TN) and Hindi (HI). Both INR/litre (India), just the",
     "note": null,
     "stage": null
    },
    {
     "name": "b83_more_regions",
+    "file": "chitbridge-api/migrations/b83_more_regions.sql",
     "purpose": "b83: more region flavours for spin-the-globe (China/Japan/Spain/France/Germany). Additive INSERT into region_layer",
     "note": null,
     "stage": null
    },
    {
     "name": "b82_erp_handoff",
+    "file": "chitbridge-api/migrations/b82_erp_handoff.sql",
     "purpose": "b82: ERP handoff (6b) — receipt-only, process-then-forget. When an order is placed, CB records a RECEIPT of handing",
     "note": null,
     "stage": null
    },
    {
     "name": "b81_regional_scatter",
+    "file": "chitbridge-api/migrations/b81_regional_scatter.sql",
     "purpose": "b81: regional scatter (6a). Resolve a product's presentation + governance per customer REGION.",
     "note": null,
     "stage": null
@@ -949,34 +1280,100 @@
   ],
   "connector": [
    {
-    "name": "beckn-map",
-    "purpose": "The Beckn <-> chit mapping as a readable TABLE plus a small applier. 22 assertions. Deliberately UNWIRED: alignment you can review and reject, with no new surface area to confuse t",
-    "note": "270 lines",
-    "stage": "tested"
+    "name": "csv",
+    "file": "chitbridge-api/tools/tally-connector/adapters/csv.js",
+    "purpose": "ADAPTER: any system that can export a CSV and read one back — the proof that the core is system-neutral.",
+    "note": "70 lines",
+    "stage": null,
+    "tier": "adapter"
    },
    {
-    "name": "boilerplate",
-    "purpose": "the DDL keystone: a BOILERPLATE is the sealed mould that DECLARES which sources it inherits",
-    "note": "60 lines",
-    "stage": null
+    "name": "gofrugal",
+    "file": "chitbridge-api/tools/tally-connector/adapters/gofrugal.js",
+    "purpose": "ADAPTER: GoFrugal RetailEasy / HQ — its \"WebReporter\" API on the retailer's own server (grocery and pharmacy POS).",
+    "note": "71 lines",
+    "stage": null,
+    "tier": "adapter"
+   },
+   {
+    "name": "tally",
+    "file": "chitbridge-api/tools/tally-connector/adapters/tally.js",
+    "purpose": "ADAPTER: Tally Prime / Tally.ERP 9 — over its own XML port (Gateway of Tally › F1 Help › Settings › Connectivity: \"Enable ODBC/XML\" on port 9000). Two functions, as every adapter: readProducts() and pushOrder(order) — plus the optional readStock() · readProfile() · pushReceipt(p) (a Receipt voucher when the seller marks the chit paid, 2026-09-05).",
+    "note": "343 lines",
+    "stage": null,
+    "tier": "adapter"
+   },
+   {
+    "name": "zoho",
+    "file": "chitbridge-api/tools/tally-connector/adapters/zoho.js",
+    "purpose": "ADAPTER: Zoho Books (REST) — the shape a hosted system attaches through: fetch() instead of a local port.",
+    "note": "200 lines",
+    "stage": null,
+    "tier": "adapter"
+   },
+   {
+    "name": "core",
+    "file": "chitbridge-api/tools/tally-connector/core.js",
+    "purpose": "ChitBridge connector CORE — the half that talks to ChitBridge. Adapters (./adapters/*.js) talk to the outside system.",
+    "note": "452 lines",
+    "stage": null,
+    "tier": "kit"
+   },
+   {
+    "name": "index",
+    "file": "chitbridge-api/tools/tally-connector/index.js",
+    "purpose": "ChitBridge connector — CLI.",
+    "note": "155 lines",
+    "stage": null,
+    "tier": "kit"
+   },
+   {
+    "name": "setup",
+    "file": "chitbridge-api/tools/tally-connector/setup.js",
+    "purpose": "THE ONLY SCREEN THE CONNECTOR HAS: a short conversation in the console (Athi, 2026-09-05: \"how will they upload the key, where is it supposed to be — within Tally? does our connector open any screen?\").",
+    "note": "130 lines",
+    "stage": null,
+    "tier": "kit"
+   },
+   {
+    "name": "beckn-map",
+    "file": "chitbridge-api/lib/beckn-map.js",
+    "purpose": "The Beckn <-> chit mapping as a readable TABLE plus a small applier. 22 assertions. Deliberately UNWIRED: alignment you can review and reject, with no new surface area to confuse the Saturday team run.",
+    "note": "270 lines",
+    "stage": "tested",
+    "tier": "channel"
+   },
+   {
+    "name": "channels",
+    "file": "chitbridge-api/lib/channels.js",
+    "purpose": "the CHANNEL MAP: which inbound number / address belongs to which entity.",
+    "note": "279 lines",
+    "stage": null,
+    "tier": "channel"
    },
    {
     "name": "whatsapp-media",
+    "file": "chitbridge-api/lib/whatsapp-media.js",
     "purpose": "fetch the BYTES of a photo a customer sent, so a co-assist can read it.",
     "note": "59 lines",
-    "stage": null
+    "stage": null,
+    "tier": "channel"
    },
    {
     "name": "whatsapp-out",
+    "file": "chitbridge-api/lib/whatsapp-out.js",
     "purpose": "NOTIFY BACK. A chit's status change reaches the customer on the channel they wrote in on.",
     "note": "172 lines",
-    "stage": null
+    "stage": null,
+    "tier": "channel"
    },
    {
     "name": "whatsapp-templates",
+    "file": "chitbridge-api/lib/whatsapp-templates.js",
     "purpose": "the ONLY thing that may be sent outside Meta's 24-hour window.",
     "note": "84 lines",
-    "stage": null
+    "stage": null,
+    "tier": "channel"
    }
   ]
  },
@@ -6452,8 +6849,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "STONE 5 WIRING: catalogue items mirror to containers; the ORDER CHIT freezes the container",
-   "claim": "STONE 5 WIRING: catalogue items mirror to containers; the ORDER CHIT freezes the container",
+   "title": "STONE 5 WIRING: catalogue items mirror to containers; the ORDER CHIT freezes the container ref + version → verifiable forever even after the source enhances. Needs b78 + b80. Run: node scripts/container-wiring.js",
+   "claim": "STONE 5 WIRING: catalogue items mirror to containers; the ORDER CHIT freezes the container ref + version → verifiable forever even after the source enhances. Needs b78 + b80. Run: node scripts/container-wiring.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -6500,8 +6897,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can",
-   "claim": "THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can",
+   "title": "THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can present it on a screen: define the mould (DDL) → operate it (DML). Provisions fresh demo rows each run (repeatable).",
+   "claim": "THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can present it on a screen: define the mould (DDL) → operate it (DML). Provisions fresh demo rows each run (repeatable).",
    "priority": "Medium",
    "pre": "",
    "data": "",
@@ -6596,8 +6993,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "6b: on order, CB emits a RECEIPT-ONLY handoff of the order + its governance to the distributor's",
-   "claim": "6b: on order, CB emits a RECEIPT-ONLY handoff of the order + its governance to the distributor's",
+   "title": "6b: on order, CB emits a RECEIPT-ONLY handoff of the order + its governance to the distributor's ERP (refs + routing + hash, NOT the raw payload; process-then-forget). CB does NOT route. Needs b78+b80+b82.",
+   "claim": "6b: on order, CB emits a RECEIPT-ONLY handoff of the order + its governance to the distributor's ERP (refs + routing + hash, NOT the raw payload; process-then-forget). CB does NOT route. Needs b78+b80+b82.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -6668,8 +7065,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "\"I'll call the document from Alpha Timbers; in the supplier of Alpha Timbers I can call",
-   "claim": "\"I'll call the document from Alpha Timbers; in the supplier of Alpha Timbers I can call",
+   "title": "\"I'll call the document from Alpha Timbers; in the supplier of Alpha Timbers I can call the document and should be able to see the document entity.\" (Athi, 2026-07-29)",
+   "claim": "\"I'll call the document from Alpha Timbers; in the supplier of Alpha Timbers I can call the document and should be able to see the document entity.\" (Athi, 2026-07-29)",
    "priority": "Medium",
    "pre": "",
    "data": "",
@@ -6816,8 +7213,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "CHARACTERISATION. Proves lib/mint.js reproduces, byte for byte, what each of the four mint",
-   "claim": "CHARACTERISATION. Proves lib/mint.js reproduces, byte for byte, what each of the four mint",
+   "title": "CHARACTERISATION. Proves lib/mint.js reproduces, byte for byte, what each of the four mint paths built by hand before it existed.",
+   "claim": "CHARACTERISATION. Proves lib/mint.js reproduces, byte for byte, what each of the four mint paths built by hand before it existed.",
    "priority": "Medium",
    "pre": "",
    "data": "",
@@ -7111,8 +7508,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "PROVE the channel map routes many numbers to many entities, and that a claim is not a",
-   "claim": "PROVE the channel map routes many numbers to many entities, and that a claim is not a",
+   "title": "PROVE the channel map routes many numbers to many entities, and that a claim is not a permission. Runs against the LIVE API. No Meta account, no BSP, no cost.",
+   "claim": "PROVE the channel map routes many numbers to many entities, and that a claim is not a permission. Runs against the LIVE API. No Meta account, no BSP, no cost.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7159,8 +7556,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93):",
-   "claim": "LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93):",
+   "title": "LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93): each resolves from standard_source (facet 'commerce') with a SEALED owning source-entity, AND they do NOT pollute the compliance readiness roll-up. Run AFTER b93. node scripts/prove-commerce-standards.js",
+   "claim": "LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93): each resolves from standard_source (facet 'commerce') with a SEALED owning source-entity, AND they do NOT pollute the compliance readiness roll-up. Run AFTER b93. node scripts/prove-commerce-standards.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7183,8 +7580,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end",
-   "claim": "LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end",
+   "title": "LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end settlement chain (partner + cover per stage), both DERIVED from the lane (cross_border + Incoterm). Pure catalogue — no schema, no external calls. node scripts/prove-commerce.js",
+   "claim": "LIVE proof of the COMMERCE LAYER: the instrument cluster (grouped by risk) + the end-to-end settlement chain (partner + cover per stage), both DERIVED from the lane (cross_border + Incoterm). Pure catalogue — no schema, no external calls. node scripts/prove-commerce.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7231,8 +7628,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "DB-DIRECT proof of the three definer guards the reviewer flagged as untested:",
-   "claim": "DB-DIRECT proof of the three definer guards the reviewer flagged as untested:",
+   "title": "DB-DIRECT proof of the three definer guards the reviewer flagged as untested: NEW-1 — a non-raiser calling chit_dispute_resolve must RAISE (\"only the raiser can resolve\") M2 — an unresolvable dispute roster must RAISE (never fall through to a broadcast) M3/ROOT— chit_message_deliver called with NO entity context must RAISE (\"no entity context\") These call the definers DIRECTLY (via ../db withEntity/query), which the API can't reach (the route guards fire first).",
+   "claim": "DB-DIRECT proof of the three definer guards the reviewer flagged as untested: NEW-1 — a non-raiser calling chit_dispute_resolve must RAISE (\"only the raiser can resolve\") M2 — an unresolvable dispute roster must RAISE (never fall through to a broadcast) M3/ROOT— chit_message_deliver called with NO entity context must RAISE (\"no entity context\") These call the definers DIRECTLY (via ../db withEntity/query), which the API can't reach (the route guards fire first).",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7256,8 +7653,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "the shelf, and the promise Athi made the design turn on:",
-   "claim": "the shelf, and the promise Athi made the design turn on:",
+   "title": "the shelf, and the promise Athi made the design turn on: **\"frozen by value when stamped\"** (2026-08-16).",
+   "claim": "the shelf, and the promise Athi made the design turn on: **\"frozen by value when stamped\"** (2026-08-16).",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7304,8 +7701,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "OFFLINE proof that AI skills are DATA (F5 closed). node scripts/prove-f5.js",
-   "claim": "OFFLINE proof that AI skills are DATA (F5 closed). node scripts/prove-f5.js",
+   "title": "OFFLINE proof that AI skills are DATA (F5 closed). node scripts/prove-f5.js Stubs the DB to control the ai_skill table, then shows invokeSkill's resolver (getSkill/loadSkills): (1) resolves a NEW skill that exists ONLY as a table row — added by DATA, ZERO code change (the F5 test); (2) treats the table as authoritative; (3) a dropped/orphaned skill is gone; (4) self-heals to the in-code SEED when the table is missing. No model call, no network — pure resolution logic.",
+   "claim": "OFFLINE proof that AI skills are DATA (F5 closed). node scripts/prove-f5.js Stubs the DB to control the ai_skill table, then shows invokeSkill's resolver (getSkill/loadSkills): (1) resolves a NEW skill that exists ONLY as a table row — added by DATA, ZERO code change (the F5 test); (2) treats the table as authoritative; (3) a dropped/orphaned skill is gone; (4) self-heals to the in-code SEED when the table is missing. No model call, no network — pure resolution logic.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7354,8 +7751,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of the authority-forms engine. node scripts/prove-forms.js",
-   "claim": "LIVE proof of the authority-forms engine. node scripts/prove-forms.js",
+   "title": "LIVE proof of the authority-forms engine. node scripts/prove-forms.js Runs against the live API. Proves the field×source-precedence model + provenance/rung stamping + freeze + sign.",
+   "claim": "LIVE proof of the authority-forms engine. node scripts/prove-forms.js Runs against the live API. Proves the field×source-precedence model + provenance/rung stamping + freeze + sign.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7405,8 +7802,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of the offline-outbox idempotency layer (Phase 2). node scripts/prove-idempotency.js",
-   "claim": "LIVE proof of the offline-outbox idempotency layer (Phase 2). node scripts/prove-idempotency.js",
+   "title": "LIVE proof of the offline-outbox idempotency layer (Phase 2). node scripts/prove-idempotency.js Proves a replayed mutation executes AT MOST ONCE: same Idempotency-Key ⇒ same chit (no double), replay header set; new key ⇒ new chit; same key + different body ⇒ 422. Needs the API up + b109 run.",
+   "claim": "LIVE proof of the offline-outbox idempotency layer (Phase 2). node scripts/prove-idempotency.js Proves a replayed mutation executes AT MOST ONCE: same Idempotency-Key ⇒ same chit (no double), replay header set; new key ⇒ new chit; same key + different body ⇒ 422. Needs the API up + b109 run.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7479,8 +7876,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of the \"Know your business\" panel. node scripts/prove-kyb.js",
-   "claim": "LIVE proof of the \"Know your business\" panel. node scripts/prove-kyb.js",
+   "title": "LIVE proof of the \"Know your business\" panel. node scripts/prove-kyb.js Runs against the live API. Tests the runnable directive boxes (R1/R2/P1/P2/K1/K2 + the Field wall structure F2/F3).",
+   "claim": "LIVE proof of the \"Know your business\" panel. node scripts/prove-kyb.js Runs against the live API. Tests the runnable directive boxes (R1/R2/P1/P2/K1/K2 + the Field wall structure F2/F3).",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7503,8 +7900,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of GENERIC, origin-aware, destination-resolved readiness (b91). Requirements are DERIVED",
-   "claim": "LIVE proof of GENERIC, origin-aware, destination-resolved readiness (b91). Requirements are DERIVED",
+   "title": "LIVE proof of GENERIC, origin-aware, destination-resolved readiness (b91). Requirements are DERIVED (home rules ∪ destination rules ∪ universal), never enumerated. Run AFTER b91. node scripts/prove-lanes.js",
+   "claim": "LIVE proof of GENERIC, origin-aware, destination-resolved readiness (b91). Requirements are DERIVED (home rules ∪ destination rules ∪ universal), never enumerated. Run AFTER b91. node scripts/prove-lanes.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7527,8 +7924,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE end-to-end proof of \"N sources assimilate into a boilerplate, and a standard actively",
-   "claim": "LIVE end-to-end proof of \"N sources assimilate into a boilerplate, and a standard actively",
+   "title": "LIVE end-to-end proof of \"N sources assimilate into a boilerplate, and a standard actively governs at runtime.\" Hits the live API. Run AFTER: (1) b87 EXIM seeded, (2) the multi-layer seam deployed.",
+   "claim": "LIVE end-to-end proof of \"N sources assimilate into a boilerplate, and a standard actively governs at runtime.\" Hits the live API. Run AFTER: (1) b87 EXIM seeded, (2) the multi-layer seam deployed.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7800,8 +8197,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of ORDER-BINDING: a supplier's HELD clearances FOLD into the order chit (summary_json,",
-   "claim": "LIVE proof of ORDER-BINDING: a supplier's HELD clearances FOLD into the order chit (summary_json,",
+   "title": "LIVE proof of ORDER-BINDING: a supplier's HELD clearances FOLD into the order chit (summary_json, per-copy, frozen), so the BUYER sees them on the order. node scripts/prove-orderbind.js",
+   "claim": "LIVE proof of ORDER-BINDING: a supplier's HELD clearances FOLD into the order chit (summary_json, per-copy, frozen), so the BUYER sees them on the order. node scripts/prove-orderbind.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7923,8 +8320,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of the ENTITY TRADE PROFILE (individual-specific). A domestic-only trader holding only",
-   "claim": "LIVE proof of the ENTITY TRADE PROFILE (individual-specific). A domestic-only trader holding only",
+   "title": "LIVE proof of the ENTITY TRADE PROFILE (individual-specific). A domestic-only trader holding only ISO 9001 sees exactly ISO 9001 (adopted) + no export standards; switching to export EU + adopting nothing pulls in the mandatory regulatory set. Run AFTER b96. node scripts/prove-profile.js",
+   "claim": "LIVE proof of the ENTITY TRADE PROFILE (individual-specific). A domestic-only trader holding only ISO 9001 sees exactly ISO 9001 (adopted) + no export standards; switching to export EU + adopting nothing pulls in the mandatory regulatory set. Run AFTER b96. node scripts/prove-profile.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7947,8 +8344,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required",
-   "claim": "LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required",
+   "title": "LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required clearances (from its standards) → GATHERS each → readiness rolls up to import-ready → a BUYER reads the shareable passport and sees it. Run AFTER b90. node scripts/prove-readiness.js",
+   "claim": "LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required clearances (from its standards) → GATHERS each → readiness rolls up to import-ready → a BUYER reads the shareable passport and sees it. Run AFTER b90. node scripts/prove-readiness.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -7971,8 +8368,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real",
-   "claim": "LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real",
+   "title": "LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real chit, the receiver settles it, and the sender's track record reflects 1 counterparty / 1 settled — DERIVED, not entered. node scripts/prove-reference.js",
+   "claim": "LIVE proof of the SELF-PROVING REFERENCE (relationship rung). Two entities transact a real chit, the receiver settles it, and the sender's track record reflects 1 counterparty / 1 settled — DERIVED, not entered. node scripts/prove-reference.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -8045,8 +8442,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof the tool is GENERIC: switching the SECTOR (vertical) re-resolves sector-specific",
-   "claim": "LIVE proof the tool is GENERIC: switching the SECTOR (vertical) re-resolves sector-specific",
+   "title": "LIVE proof the tool is GENERIC: switching the SECTOR (vertical) re-resolves sector-specific certifications/clearances (b95: food/textiles/electronics), same engine as chemical. Run AFTER b95.",
+   "claim": "LIVE proof the tool is GENERIC: switching the SECTOR (vertical) re-resolves sector-specific certifications/clearances (b95: food/textiles/electronics), same engine as chemical. Run AFTER b95.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -8143,8 +8540,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE end-to-end proof of THE LIFE OF A CHIT through the STOREFRONT path:",
-   "claim": "LIVE end-to-end proof of THE LIFE OF A CHIT through the STOREFRONT path:",
+   "title": "LIVE end-to-end proof of THE LIFE OF A CHIT through the STOREFRONT path: provision a shop → open its storefront → a walk-in customer orders → the storefront chit carries the FULL governance stamp (constitution · capability · work-pattern · N standards) + an advisory conformance verdict.",
+   "claim": "LIVE end-to-end proof of THE LIFE OF A CHIT through the STOREFRONT path: provision a shop → open its storefront → a walk-in customer orders → the storefront chit carries the FULL governance stamp (constitution · capability · work-pattern · N standards) + an advisory conformance verdict.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -8215,8 +8612,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID",
-   "claim": "LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID",
+   "title": "LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID is accepted but is NOT \"verified\" — it is a format-checked claim (rung 'declared'). A malformed ID is refused (422).",
+   "claim": "LIVE proof of HONEST verification. Without a KYB provider connected (prod default), a well-formed ID is accepted but is NOT \"verified\" — it is a format-checked claim (rung 'declared'). A malformed ID is refused (422).",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -8340,8 +8737,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "6a \"spin the globe\": one product resolves differently per customer region (auto-basics +",
-   "claim": "6a \"spin the globe\": one product resolves differently per customer region (auto-basics +",
+   "title": "6a \"spin the globe\": one product resolves differently per customer region (auto-basics + regional overrides), sealed + cached. Needs b80 + b81. Run: node scripts/regional-scatter.js",
+   "claim": "6a \"spin the globe\": one product resolves differently per customer region (auto-basics + regional overrides), sealed + cached. Needs b80 + b81. Run: node scripts/regional-scatter.js",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -8413,8 +8810,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "LOCAL proof of the retire_at FLOOR rule (no DB). The proof request calls out the",
-   "claim": "LOCAL proof of the retire_at FLOOR rule (no DB). The proof request calls out the",
+   "title": "LOCAL proof of the retire_at FLOOR rule (no DB). The proof request calls out the \"late dispute must NOT restart the clock\" case as the one a naive impl gets catastrophically wrong. node scripts/retention-logic-test.js",
+   "claim": "LOCAL proof of the retire_at FLOOR rule (no DB). The proof request calls out the \"late dispute must NOT restart the clock\" case as the one a naive impl gets catastrophically wrong. node scripts/retention-logic-test.js",
    "priority": "Medium",
    "pre": "",
    "data": "",
@@ -8461,8 +8858,8 @@
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
    "intro": "",
-   "title": "P0-1: a PROTECTED (sealed) entity must not leak through the directory or the storefront, and",
-   "claim": "P0-1: a PROTECTED (sealed) entity must not leak through the directory or the storefront, and",
+   "title": "P0-1: a PROTECTED (sealed) entity must not leak through the directory or the storefront, and stays reachable by NAME for the help-desk send. Targets the real sealed entity GOV-01-Help (bridge CBHELPSRC01).",
+   "claim": "P0-1: a PROTECTED (sealed) entity must not leak through the directory or the storefront, and stays reachable by NAME for the help-desk send. Targets the real sealed entity GOV-01-Help (bridge CBHELPSRC01).",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -9718,7 +10115,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 189 lines. Run: node chitbridge-api/tests/gherkin.test.js",
+   "note": "test.unit · unit · 213 lines. Run: node chitbridge-api/tests/gherkin.test.js",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.unit",
@@ -9744,7 +10141,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 162 lines. Run: node chitbridge-api/tests/governed-currency.test.js",
+   "note": "test.unit · unit · 192 lines. Run: node chitbridge-api/tests/governed-currency.test.js",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.unit",
@@ -11246,8 +11643,8 @@
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
    "intro": "",
-   "title": "THE SEAM, NOT THE VENDOR (2026-09-08). Athi: *\"can't we use other services like whisper?\"* then *\"build the seam",
-   "claim": "THE SEAM, NOT THE VENDOR (2026-09-08). Athi: *\"can't we use other services like whisper?\"* then *\"build the seam",
+   "title": "THE SEAM, NOT THE VENDOR (2026-09-08). Athi: *\"can't we use other services like whisper?\"* then *\"build the seam with whisper behind it, I'll test the accuracy.\"*",
+   "claim": "THE SEAM, NOT THE VENDOR (2026-09-08). Athi: *\"can't we use other services like whisper?\"* then *\"build the seam with whisper behind it, I'll test the accuracy.\"*",
    "priority": "Medium",
    "pre": "",
    "data": "",
@@ -12131,8 +12528,8 @@
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
    "intro": "",
-   "title": "A SHOP WITH TEN THOUSAND THINGS IN IT (Athi, 2026-09-08: \"can you add a product catalogue size of say 10,000 or",
-   "claim": "A SHOP WITH TEN THOUSAND THINGS IN IT (Athi, 2026-09-08: \"can you add a product catalogue size of say 10,000 or",
+   "title": "A SHOP WITH TEN THOUSAND THINGS IN IT (Athi, 2026-09-08: \"can you add a product catalogue size of say 10,000 or 100,000 with real data and category etc, maximum attributes and variants, and see how it behaves on desktop, mobile and the browser?\").",
+   "claim": "A SHOP WITH TEN THOUSAND THINGS IN IT (Athi, 2026-09-08: \"can you add a product catalogue size of say 10,000 or 100,000 with real data and category etc, maximum attributes and variants, and see how it behaves on desktop, mobile and the browser?\").",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -12252,8 +12649,8 @@
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
    "intro": "",
-   "title": "every chip, badge, pill, tag and icon: where it is used, what it says, and whether that",
-   "claim": "every chip, badge, pill, tag and icon: where it is used, what it says, and whether that",
+   "title": "every chip, badge, pill, tag and icon: where it is used, what it says, and whether that text can be translated.",
+   "claim": "every chip, badge, pill, tag and icon: where it is used, what it says, and whether that text can be translated.",
    "priority": "Medium",
    "pre": "",
    "data": "",
@@ -14019,8 +14416,8 @@
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
    "intro": "",
-   "title": "LOOK AT THE ROWS. Signs in with the saved e2e session and screenshots the seller's Catalogue list and a",
-   "claim": "LOOK AT THE ROWS. Signs in with the saved e2e session and screenshots the seller's Catalogue list and a",
+   "title": "LOOK AT THE ROWS. Signs in with the saved e2e session and screenshots the seller's Catalogue list and a buyer's Suppliers picker, so a layout change can be judged by eye before anyone is asked to. node e2e/shot-rows.cjs [outdir] /",
+   "claim": "LOOK AT THE ROWS. Signs in with the saved e2e session and screenshots the seller's Catalogue list and a buyer's Suppliers picker, so a layout change can be judged by eye before anyone is asked to. node e2e/shot-rows.cjs [outdir] /",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -16343,8 +16740,8 @@
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
    "intro": "",
-   "title": "DOES THE PAGE STILL RENDER? Run this BEFORE pushing anything that touches",
-   "claim": "DOES THE PAGE STILL RENDER? Run this BEFORE pushing anything that touches",
+   "title": "DOES THE PAGE STILL RENDER? Run this BEFORE pushing anything that touches app.html, shop.html or app/*.js.",
+   "claim": "DOES THE PAGE STILL RENDER? Run this BEFORE pushing anything that touches app.html, shop.html or app/*.js.",
    "priority": "High",
    "pre": "",
    "data": "",
@@ -17526,6 +17923,30 @@
    "data": "",
    "steps": [],
    "note": "test.guard · static · 61 lines. Run: node chitbridge-web/e2e/type-scale.cjs",
+   "layer": "web",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "web"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+  },
+  {
+   "case_key": "chitbridge-web/e2e/undeclared.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "undeclared.cjs",
+   "claim": null,
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 182 lines. Run: node chitbridge-web/e2e/undeclared.cjs",
    "layer": "web",
    "test_type": "static",
    "group": "test.guard",

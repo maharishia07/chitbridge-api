@@ -77,7 +77,7 @@ it('⭐⭐⭐ a case survives export and import unchanged', () => {
   assert.deepStrictEqual(c.steps, CASE.steps, 'the steps changed');
 });
 
-it('⭐⭐⭐ ALL 110 REAL CASES survive the round trip', () => {
+it('⭐⭐⭐ EVERY AUTHORED CASE survives the round trip', () => {
   /**
    * ⚠️ THE REAL DOCUMENT, NOT A FIXTURE. A fixture proves the parser handles what I thought of. The real cases
    * carry em dashes, curly quotes, rupee signs, numbered sub-clauses, five-line notes, and steps that end in a
@@ -87,8 +87,32 @@ it('⭐⭐⭐ ALL 110 REAL CASES survive the round trip', () => {
   if (!fs.existsSync(file)) { console.log('       (data/test-cases.json missing — run build-test-cases.cjs)'); return; }
   const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
 
+  /**
+   * ── ⚠️⚠️ AND I CHANGED THIS TEST'S POPULATION WITHOUT TOUCHING THE TEST ──────────────────────────────────
+   *
+   * It was written against 110 hand-authored cases and it round-trips them through Gherkin, which is the right
+   * thing to assert about a case somebody WROTE in that format. On 2026-09-11 the board grew to carry every
+   * test FILE in the platform as a case too — 469 of them — and this test silently started demanding that a
+   * pointer to `scripts/prove-f5.js` survive a Gherkin round trip it was never authored in. It failed with a
+   * wall of "no case key in: …" naming a hundred proof scripts, and every one of those complaints was correct
+   * and pointless.
+   *
+   * ⚠️ THE TEST WAS NOT WRONG AND THE CASES ARE NOT WRONG. I widened what the board holds and left the
+   * assertion describing the old population — which is the stale-case fault exactly: a change and its case
+   * have to ship together, and a case that has quietly changed meaning is worse than one that is missing.
+   *
+   * ⭐ A FILE-BACKED CASE IS A POINTER, NOT A SCENARIO. Its key is a path, its steps are "run this file", and
+   * its truth lives in the file. Gherkin round-tripping is a property of AUTHORED cases, so that is what this
+   * asserts — and it asserts the split itself, so the day somebody starts authoring Gherkin into a file-backed
+   * row, this says so instead of drowning.
+   */
+  const authored = doc.cases.filter((c) => String(c.case_key || '').indexOf('/') < 0);
+  const backed = doc.cases.length - authored.length;
+  assert.ok(authored.length > 0, 'no authored cases left to round-trip — the split rule has broken');
+  console.log('       ' + authored.length + ' authored \u00b7 ' + backed + ' file-backed (pointers, not scenarios)');
+
   const byMod = {};
-  doc.cases.forEach((c) => { (byMod[c.module_key] = byMod[c.module_key] || []).push(c); });
+  authored.forEach((c) => { (byMod[c.module_key] = byMod[c.module_key] || []).push(c); });
 
   let checked = 0;
   Object.keys(byMod).forEach((k) => {
