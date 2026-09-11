@@ -326,4 +326,44 @@ it('⚠️⚠️ the panel body is a SCROLL container, not a flex column', () =>
     + 'the list can never overflow and nothing will scroll');
 });
 
+console.log('— a report must not sign itself —');
+
+it('⭐⭐⭐ the judgement sections carry a QUESTION, never a generated answer', () => {
+  /**
+   * ⚠⚠ THE FAULT THIS PREVENTS IS THE WORST ONE A REPORT CAN HAVE. Half of ISO/IEC/IEEE 29119-3's completion
+   * report is judgement — whether the exit criteria were met, what risk is left, who accepts it — and no
+   * database holds any of that. Filling those headings with something plausible produces a document that LOOKS
+   * signed off and is not, read by people who were not in the room and cannot tell invented prose from
+   * evidence.
+   *
+   * ⚠ So each of these five must stay marked 'needs a person' and must carry `asks`, not `body`.
+   */
+  ['5', '6', '7', '9', '10'].forEach((id) => {
+    const from = route.indexOf("id: '" + id + "'");
+    const next = route.indexOf("{ id: ", from + 5);
+    const m = from > 0 ? [route.slice(from, next > from ? next : from + 900)] : null;
+    assert.ok(m, 'section ' + id + ' of the completion report is gone');
+    assert.ok(/source: 'needs a person'/.test(m[0]),
+      'section ' + id + ' now claims to be measured — a generated judgement is a report that signs itself');
+    assert.ok(/asks:/.test(m[0]), 'section ' + id + ' no longer carries the question it needs a person to answer');
+  });
+});
+
+it('⚠ the evaluation states what would make a green report wrong', () => {
+  /* ⚠ The two facts that most often invalidate a pass rate, stated where the judgement is made rather than
+     buried in a table: cases nobody ran, and cases citing a clause that has since changed. */
+  const m = route.match(/id: '6'[\s\S]{0,900}?\},\n\n/);
+  assert.ok(m, 'the completion evaluation section is gone');
+  assert.ok(/never been run/.test(m[0]), 'the evaluation no longer says how many cases were never run');
+  assert.ok(/older version of their spec clause/.test(m[0]),
+    'the evaluation no longer warns that a pass on a stale case is not evidence about today');
+});
+
+it('⚠ the standard named is the current one, not the withdrawn one', () => {
+  /* ⚠ IEEE 829 is the name most people reach for and it was withdrawn in 2013. Naming it would have looked
+     more familiar to more readers and been wrong. */
+  assert.ok(/29119-3/.test(route), 'the report no longer names the standard it follows');
+  assert.ok(/supersedes/.test(route), 'the report no longer says which standard this replaced');
+});
+
 console.log('\n  ' + pass + ' checks\n');

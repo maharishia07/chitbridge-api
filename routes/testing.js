@@ -779,4 +779,156 @@ router.get('/coverage', auth, async (req, res) => {
   }
 });
 
+/**
+ * ⭐⭐⭐ GET /api/testing/report[?run_id=] — a TEST COMPLETION REPORT, on the standard's own template.
+ *
+ * Athi, 2026-09-11: *"is there any report available… standard report template?"*
+ *
+ * ⭐ ADOPTED: **ISO/IEC/IEEE 29119-3**, clause 6 — the Test Completion Report. It is the current standard and it
+ * SUPERSEDED IEEE 829, which is the one most people still name and which was withdrawn in 2013. Using the
+ * withdrawn one would have looked more familiar to more readers and been wrong.
+ *
+ * ⚠️⚠️ AND HERE IS THE PART THAT MATTERS MORE THAN THE TEMPLATE. Half of a completion report is JUDGEMENT —
+ * whether the exit criteria were met, what risk is left, what should change next time. No database holds any of
+ * that. A generator that emits those headings with something plausible under them produces a document that
+ * LOOKS signed off and is not, which is worse than having no report: a report is read by people who were not in
+ * the room, and they cannot tell invented prose from evidence.
+ *
+ * ⭐ So every section is marked `source: 'measured'` or `source: 'needs a person'`, and the ones that need a
+ * person carry the QUESTION rather than an answer. The screen renders that difference plainly.
+ */
+router.get('/report', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+
+    const data = await withEntity(entity_id, async (db) => {
+      /* ⚠️ THE LATEST WORD PER CASE for the board-wide picture; the RUN's own rows when one is named. Mixing
+         them would be the classic report fault: totals that answer a different question from the detail. */
+      const cover = await db.query(
+        `WITH cases AS (
+           SELECT d.name AS case_key, COALESCE(d.sub_kind,'-') AS module_key,
+                  COALESCE(v.rules->>'priority','Medium') AS priority,
+                  COALESCE(v.rules->>'module_name','') AS module_name, d.current_version
+             FROM definition d
+             JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+            WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
+         ), latest AS (
+           SELECT DISTINCT ON (case_key) case_key, status FROM test_result
+            WHERE entity_id = $1 ORDER BY case_key, at DESC
+         )
+         SELECT c.module_key, max(c.module_name) AS module_name, count(*) AS total,
+                count(*) FILTER (WHERE l.status='pass')    AS passed,
+                count(*) FILTER (WHERE l.status='fail')    AS failed,
+                count(*) FILTER (WHERE l.status='blocked') AS blocked,
+                count(*) FILTER (WHERE l.status='skipped') AS skipped,
+                count(*) FILTER (WHERE l.case_key IS NULL) AS untested,
+                count(*) FILTER (WHERE l.case_key IS NULL AND c.priority='High') AS high_untested
+           FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
+          GROUP BY c.module_key ORDER BY c.module_key`, [entity_id]);
+
+      /* the incidents: what actually went wrong, latest word only, worst first */
+      const bad = await db.query(
+        `SELECT DISTINCT ON (case_key) case_key, module_key, status, note, evidence,
+                tester_name, run_kind, layer, at, case_version
+           FROM test_result
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid)
+          ORDER BY case_key, at DESC`, [entity_id, run_id]);
+
+      const runs = await db.query(
+        `SELECT run_id, max(run_label) AS run_label, max(build) AS build,
+                min(at) AS started, max(at) AS finished,
+                string_agg(DISTINCT run_kind, ', ') AS kinds,
+                string_agg(DISTINCT tester_name, ', ') AS testers,
+                string_agg(DISTINCT layer, ', ') AS layers, count(*) AS total
+           FROM test_result
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid)
+          GROUP BY run_id ORDER BY max(at) DESC LIMIT $3`, [entity_id, run_id, run_id ? 1 : 12]);
+
+      /* ⚠️ cases written against wording that has since changed — a PASS on one of these is not evidence about
+         what the spec says today, and a completion report that stays silent about it overstates its own case */
+      const stale = await db.query(
+        `SELECT count(*)::int AS n FROM definition d
+           JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+           JOIN definition sp ON sp.definition_id = (v.rules->'cites'->>'definition_id')::uuid
+          WHERE d.entity_id = $1 AND d.kind='testcase' AND d.status <> 'retired'
+            AND (v.rules->'cites'->>'version')::int < sp.current_version`, [entity_id]);
+
+      return { cover: cover.rows, bad: bad.rows, runs: runs.rows, stale: stale.rows[0] ? stale.rows[0].n : 0 };
+    });
+
+    const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0 };
+    data.cover.forEach((c) => Object.keys(n).forEach((k) => { n[k] += Number(c[k] || 0); }));
+    const incidents = data.bad.filter((r) => r.status === 'fail' || r.status === 'blocked');
+    const tested = n.total - n.untested;
+
+    res.json({
+      standard: 'ISO/IEC/IEEE 29119-3:2021 · Test Completion Report',
+      /* ⚠️ named so a reader can check it, and because IEEE 829 is the one most people expect */
+      supersedes: 'IEEE 829 (withdrawn 2013)',
+      generated_at: new Date().toISOString(),
+      scope: run_id ? 'one run' : 'the whole board',
+
+      sections: [
+        { id: '1', title: 'Overview', source: 'measured',
+          body: {
+            tested_by: [...new Set(data.runs.map((r) => r.testers).filter(Boolean))].join(', ') || '—',
+            period: data.runs.length
+              ? { from: data.runs[data.runs.length - 1].started, to: data.runs[0].finished } : null,
+            runs: data.runs.length,
+            kinds: [...new Set(data.runs.flatMap((r) => String(r.kinds || '').split(', ')))].filter(Boolean),
+            layers: [...new Set(data.runs.flatMap((r) => String(r.layers || '').split(', ')))].filter(Boolean),
+            builds: [...new Set(data.runs.map((r) => r.build).filter(Boolean))],
+          } },
+
+        { id: '2', title: 'Test results', source: 'measured',
+          body: { totals: n, tested: tested,
+            coverage_pct: n.total ? Math.round((tested / n.total) * 100) : 0,
+            pass_pct: tested ? Math.round((n.passed / tested) * 100) : 0,
+            by_feature: data.cover } },
+
+        { id: '3', title: 'Incidents', source: 'measured',
+          body: { count: incidents.length, items: incidents } },
+
+        { id: '4', title: 'Factors blocking progress', source: 'measured',
+          /* ⭐ 29119-3 asks for this by name, and we HAVE it: a blocked case is a case somebody could not reach. */
+          body: { blocked: data.bad.filter((r) => r.status === 'blocked').length,
+            items: data.bad.filter((r) => r.status === 'blocked') } },
+
+        { id: '5', title: 'Deviations from the test plan', source: 'needs a person',
+          asks: 'What was planned that did not happen, and why? No plan is declared anywhere in this system, so '
+              + 'nothing can be compared against one.' },
+
+        { id: '6', title: 'Test completion evaluation', source: 'needs a person',
+          asks: 'Were the exit criteria met? No exit criteria are declared, so this cannot be measured — the '
+              + 'numbers in section 2 are evidence FOR the judgement, not the judgement.',
+          /* ⚠️ THE TWO FACTS THAT MOST OFTEN MAKE A GREEN REPORT WRONG, stated where the evaluation is made */
+          caveats: [
+            n.untested ? n.untested + ' case(s) have never been run'
+              + (n.high_untested ? ', ' + n.high_untested + ' of them High priority' : '') : null,
+            data.stale ? data.stale + ' case(s) cite an older version of their spec clause, so a pass on them is '
+              + 'not evidence about what the spec says today' : null,
+          ].filter(Boolean) },
+
+        { id: '7', title: 'Residual risks', source: 'needs a person',
+          asks: 'What is still not known, and what would it cost if it is wrong? A count of passes is not a risk '
+              + 'assessment.' },
+
+        { id: '8', title: 'Reusable test assets', source: 'measured',
+          body: { cases: n.total, features: data.cover.length,
+            note: 'Every case is a versioned definition and can be exported as Gherkin (.feature).' } },
+
+        { id: '9', title: 'Lessons learned and recommendations', source: 'needs a person',
+          asks: 'What should be done differently next time?' },
+
+        { id: '10', title: 'Approval', source: 'needs a person',
+          asks: 'Who accepts this report, and on what date? ⚠️ Nothing here signs anything — a generated document '
+              + 'must not carry an approval nobody gave.' },
+      ],
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not build the report', message: String(err.message || err) });
+  }
+});
+
 module.exports = router;
