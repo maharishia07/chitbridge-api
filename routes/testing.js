@@ -599,6 +599,10 @@ function layerOfCase(key) {
     if (!ar || !ar.length) return null;
     /* ⚠️ one value per row, and it must be the WIDEST thing the test reaches — a file that drives a browser and
        also reads a lib is a web test; calling it an engine test would understate what its failure implicates. */
+    /* ⚠️ THIS ONE IS NOT THE ARCHITECTURE ORDER AND MUST NOT BE CHANGED TO MATCH IT. It answers a different
+       question — which is the WIDEST thing this test reaches — so it runs from the widest blast radius to
+       the narrowest. A file driving a browser is a web test even though the engine is the more important
+       layer, because that is what its failure implicates. */
     for (const a of ['web', 'connector', 'database', 'api', 'middleware', 'engine']) {
       if (ar.indexOf(a) >= 0) return AREA_TO_LAYER[a];
     }
