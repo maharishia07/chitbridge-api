@@ -127,6 +127,55 @@ it('⭐⭐⭐ an unreadable applies_to is refused, not treated as the whole bask
   assert.strictEqual(sum(ev([L('a', 100, 3)], [{ id: 'e', label: 'Dear', kind: 'buy_x_get_y', buy: 2, get: 1,
     applies_to: { min_unit_price: 50 } }])), -100);
 });
+/**
+ * ── ⭐⭐⭐ MIX AND MATCH — the other half of the split, and the one the counter got wrong ─────────────────────
+ *
+ * Athi, 2026-09-10: *"we cannot offer for different product, but in cloth line it works as per category, so
+ * possibly we need to have a different naming convention"*, then *"cheapest free for mix and match."*
+ *
+ * ⚠️ THIS IS THE BEHAVIOUR buy_x_get_y USED TO HAVE, and it was not wrong — it was unnamed. A kirana writing
+ * "Buy 2 biscuits, get 1 free" means two of THIS packet; an apparel floor means any two shirts. The bug was that
+ * one kind answered both, so a shop could not tell which it had bought into until it read a bill.
+ */
+it('⭐⭐⭐ mix and match: any two in the category, and the CHEAPEST unit is the free one', () => {
+  const o = { id: 'm', label: 'Any 2', kind: 'mix_and_match', buy: 2, get: 1 };
+  /* the exact basket that started this: 3 Cookies at 31 and 1 Cream biscuit at 9 */
+  const r = ev([L('cookies', 31, 3), L('cream', 9, 1)], [o]);
+  assert.strictEqual(r.adjustments.length, 1);
+  assert.strictEqual(r.adjustments[0].target, 'cream', 'the free unit must be the cheapest, not the one that earned it');
+  assert.strictEqual(sum(r), -9);
+  assert.strictEqual(r.line_net.cookies, 93, 'the line that earned the set is not the line that is discounted');
+
+  /* ⚠️ AND IT POOLS ACROSS LINES, which is the whole difference from buy_x_get_y: neither line has three units */
+  const split = ev([L('a', 100, 2), L('b', 40, 1)], [o]);
+  assert.strictEqual(sum(split), -40, 'two of one product and one of another make a set — that is what mix and match IS');
+  assert.strictEqual(split.adjustments[0].target, 'b');
+
+  /* ⚠️ the free units SPILL to the next-cheapest rather than taking more from one line than it holds */
+  const spill = ev([L('cheap', 10, 1), L('mid', 20, 1), L('dear', 90, 4)], [o]);
+  assert.strictEqual(sum(spill), -30, 'two sets from six units: the ₹10 and the ₹20 go, not two off one line');
+  assert.strictEqual(spill.adjustments.length, 2);
+
+  /* max_sets still caps the bill */
+  assert.strictEqual(sum(ev([L('a', 10, 6)], [Object.assign({ max_sets: 1 }, o)])), -10);
+
+  /* ⭐ and the badge says ANY, or a customer reads it as the narrow kind and is handed the cheaper thing */
+  const words = eng.promise(Object.assign({ applies_to: { category: 'Shirts' } }, o), { now: new Date(), money: (n) => '₹' + n });
+  assert.ok(/any 2/i.test(words), 'the badge does not say "any" — it is indistinguishable from buy 2 get 1 of this');
+  assert.ok(/cheapest/i.test(words), 'the badge does not say which unit is free, which is the whole term');
+});
+
+it('⭐⭐ the two kinds are genuinely different on the same basket', () => {
+  /* ⚠️ THE CASE THAT PROVES THE SPLIT WAS WORTH MAKING. One basket, one wording, two answers — and before
+     2026-09-10 a shop got the second when it had written down the first. */
+  const basket = [L('cookies', 31, 3), L('cream', 9, 1)];
+  const narrow = ev(basket, [{ id: 'n', label: 'B2G1', kind: 'buy_x_get_y', buy: 2, get: 1 }]);
+  const wide = ev(basket, [{ id: 'w', label: 'Any 2', kind: 'mix_and_match', buy: 2, get: 1 }]);
+  assert.strictEqual(sum(narrow), -31, 'per product: the Cookies earn a Cookie');
+  assert.strictEqual(sum(wide), -9, 'mix and match: the cheapest qualifying unit goes');
+  assert.notStrictEqual(narrow.adjustments[0].target, wide.adjustments[0].target);
+});
+
 it('buy X get a DIFFERENT item: held → discounted; not held → a claim; the basket is never mutated', () => {
   const o = { id: 'b', label: 'Rice→Oil', kind: 'buy_x_get_y', buy: 3, get: 1, get_item_id: 'oil', get_item_name: 'Oil', applies_to: { item_ids: ['rice'] } };
   const lines = [L('rice', 80, 3), L('oil', 120, 1)]; const before = JSON.stringify(lines);
