@@ -25,7 +25,11 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
 
 /* the renderer, loaded the way a browser loads it */
 global.window = global.window || {}; global.self = global;
+/* ⚠️ money BEFORE locale, the same order every page loads them in — locale forwards to it */
+require(path.join(WEB, 'engine', 'money.js'));
 require(path.join(WEB, 'app', 'locale.js'));
+const M = (global.window && global.window.CBMoney) || global.CBMoney;
+global.CBMoney = M;
 const L = (global.window && global.window.CBLocale) || global.CBLocale;
 
 console.log('— money is not a number with a symbol in front of it —');

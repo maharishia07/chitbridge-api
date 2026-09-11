@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -112,6 +112,18 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'gs1.browser.js'), wrapForBrowser('gs1.js', 'CBGS1')],   /* what /api/till/engine/gs1 serves a shop PC */
   /* ⭐ and the trade's own rules — what a consignment must carry, and how much difference it absorbs. ONE definition, because the
      counter decides at the door and the match decides afterwards, and those two must never disagree. */
+  /**
+   * ⭐⭐⭐ MONEY — AN AMOUNT IS NEVER A BARE NUMBER, and until 2026-09-11 the browser did not have this module.
+   *
+   * ⚠️⚠️ SO THE RULE WAS WRITTEN OUT FIVE TIMES IN THE BROWSER INSTEAD: cbAmount() in app.html, three times in
+   * cart.js, once in pricing.js — and a sixth place (offer-lab.html) simply forgot, read Number(price) on a
+   * stamped value, and silently dropped an entire catalogue while reporting 'no priced products yet'.
+   *
+   * ⭐ The copies were never carelessness: there was nothing to import. lib/money.js has been the one definition
+   * on the server since 2026-07-31 and was the only engine of its kind not vendored. Athi, 2026-09-11: 'remove
+   * any duplicate code, call it perfectly.'
+   */
+  [null, path.join(WEB, 'engine', 'money.js'), wrapForBrowser('money.js', 'CBMoney')],
   [null, path.join(WEB, 'engine', 'lots.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
      follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
