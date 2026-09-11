@@ -757,6 +757,64 @@ router.get('/coverage', auth, async (req, res) => {
                  count(*) FILTER (WHERE l.case_key IS NULL) DESC,
                  c.module_key`, [entity_id, run_id]));
 
+    /**
+     * ⭐⭐ THE SAME QUESTION, ASKED FOUR WAYS. Athi, 2026-09-11: *"any graph / chart according to group?"*
+     *
+     * ⚠ THEY ARE NOT THE SAME CHART WITH A DIFFERENT LABEL, and that is why all four are worth the round trips:
+     *   by AREA      which part of the product is untested        — decides what to test next
+     *   by LEVEL     whether anything below the screen is proved  — decides whether the testing is shallow
+     *   by PRIORITY  whether the important cases are the done ones — a high pass rate on Low cases is not coverage
+     *   by SITTING   whether it is getting better or worse        — the only one that is a trend
+     *
+     * ⚠ One transaction, four aggregates. Not one query per group in a loop.
+     */
+    const groups = await withEntity(entity_id, async (db) => {
+      const latest = `WITH cases AS (
+           SELECT d.name AS case_key, COALESCE(d.sub_kind,'-') AS module_key,
+                  COALESCE(v.rules->>'priority','Medium') AS priority,
+                  COALESCE(v.rules->>'layer','(not set)') AS layer
+             FROM definition d
+             JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+            WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
+         ), latest AS (
+           SELECT DISTINCT ON (case_key) case_key, status FROM test_result
+            WHERE entity_id = $1 ORDER BY case_key, at DESC
+         )`;
+      const tally = (col) => `${latest}
+         SELECT c.${col} AS key, count(*) AS total,
+                count(*) FILTER (WHERE l.status='pass')    AS passed,
+                count(*) FILTER (WHERE l.status='fail')    AS failed,
+                count(*) FILTER (WHERE l.status='blocked') AS blocked,
+                count(*) FILTER (WHERE l.case_key IS NULL) AS untested
+           FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
+          GROUP BY c.${col} ORDER BY c.${col}`;
+
+      const byLayer = await db.query(tally('layer'), [entity_id]);
+      const byPriority = await db.query(tally('priority'), [entity_id]);
+
+      /* ⚠ THE TREND IS A DIFFERENT SHAPE, and must be: it counts RESULTS in a sitting, not the latest word per
+         case. "What happened on Tuesday" and "where do we stand" are different questions and a chart that
+         answered one with the other would be quietly wrong. */
+      const trend = await db.query(
+        `SELECT run_id, max(run_label) AS run_label, max(at) AS at,
+                count(*) FILTER (WHERE status='pass')    AS passed,
+                count(*) FILTER (WHERE status='fail')    AS failed,
+                count(*) FILTER (WHERE status='blocked') AS blocked,
+                count(*) AS total
+           FROM test_result WHERE entity_id = $1
+          GROUP BY run_id ORDER BY max(at) DESC LIMIT 12`, [entity_id]);
+
+      const num = (rows) => rows.map((x) => ({ key: x.key, total: Number(x.total), passed: Number(x.passed),
+        failed: Number(x.failed), blocked: Number(x.blocked), untested: Number(x.untested) }));
+      return {
+        by_layer: num(byLayer.rows),
+        by_priority: num(byPriority.rows),
+        /* oldest first, because a trend is read left to right */
+        trend: trend.rows.slice().reverse().map((x) => ({ run_id: x.run_id, run_label: x.run_label, at: x.at,
+          passed: Number(x.passed), failed: Number(x.failed), blocked: Number(x.blocked), total: Number(x.total) })),
+      };
+    });
+
     const areas = r.rows.map((x) => ({
       module_key: x.module_key, module_name: x.module_name,
       total: Number(x.total), tested: Number(x.tested), untested: Number(x.untested),
@@ -767,6 +825,7 @@ router.get('/coverage', auth, async (req, res) => {
 
     res.json({
       areas: areas,
+      groups: groups,
       /* ⭐ the panel opens on this when no focus has been chosen — the gap, named, rather than a dropdown */
       suggest: worst ? worst.module_key : null,
       says: worst
