@@ -690,4 +690,93 @@ router.get('/stale', auth, async (req, res) => {
   }
 });
 
+/**
+ * ⭐⭐⭐ GET /api/testing/coverage — which AREAS are untested, worst first.
+ *
+ * Athi, 2026-09-11: *"can we force an area to test? For example, this area testing not done yet? So whoever
+ * tests, can we force them to test an area? Kind of preference, focus and so on. Irrespective of the shop, that
+ * functionality to be tested."*
+ *
+ * ⚠️⚠️ YOU CANNOT FORCE A PERSON TO TEST, AND TRYING IS WORSE THAN NOT. A panel that refuses to show anything
+ * except one module is a panel somebody closes — and then nothing is tested at all, and you have lost the only
+ * thing you actually had, which was their willingness. What you CAN do is make the gap impossible to miss and
+ * make the untested area the path of least resistance.
+ *
+ * ⭐ SO THIS IS THE HONEST HALF OF "FORCE": it answers what has NOT been covered, ranked, so the panel can open
+ * on it, name it, and count down. The pressure is that the number is visible and goes to zero — which is the
+ * only kind of pressure that works on somebody doing you a favour.
+ *
+ * ⭐⭐ AND "IRRESPECTIVE OF THE SHOP" IS THE KEY PHRASE. What must be tested is a property of the BUILD, not of
+ * one shop's board — so weight is taken from the case's own PRIORITY, which is declared in the reviewed document
+ * and travels to every entity that loads it. A High case nobody has run outranks ten Low ones, in every shop.
+ *
+ * ⚠️ ONE QUERY. A per-module loop here would be sixteen Pacific crossings to answer a question the panel asks on
+ * every open. [[project-roundtrip-cost]]
+ */
+router.get('/coverage', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+
+    const r = await withEntity(entity_id, (db) => db.query(
+      `WITH cases AS (
+         SELECT d.definition_id, d.name AS case_key, COALESCE(d.sub_kind, '-') AS module_key,
+                COALESCE(v.rules->>'priority', 'Medium') AS priority,
+                COALESCE(v.rules->>'module_name', '') AS module_name
+           FROM definition d
+           JOIN definition_version v
+             ON v.definition_id = d.definition_id AND v.version = d.current_version
+          WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
+       ),
+       /* ⚠️ THE LATEST WORD PER CASE, not every row — the ledger is append-only, so a case tested five times
+          would otherwise count five times and a module could report more coverage than it has cases. */
+       latest AS (
+         SELECT DISTINCT ON (case_key) case_key, status, at
+           FROM test_result WHERE entity_id = $1
+          ORDER BY case_key, at DESC
+       ),
+       inrun AS (
+         SELECT DISTINCT case_key FROM test_result
+          WHERE entity_id = $1 AND $2::uuid IS NOT NULL AND run_id = $2::uuid
+       )
+       SELECT c.module_key, max(c.module_name) AS module_name,
+              count(*) AS total,
+              count(l.case_key) AS tested,
+              count(*) FILTER (WHERE l.status = 'pass')    AS passed,
+              count(*) FILTER (WHERE l.status = 'fail')    AS failed,
+              count(*) FILTER (WHERE l.status = 'blocked') AS blocked,
+              count(*) FILTER (WHERE l.case_key IS NULL)   AS untested,
+              /* ⭐ the weight: a High case nobody has run is what should pull a tester in */
+              count(*) FILTER (WHERE l.case_key IS NULL AND c.priority = 'High') AS high_untested,
+              count(i.case_key) AS tested_in_run
+         FROM cases c
+         LEFT JOIN latest l ON l.case_key = c.case_key
+         LEFT JOIN inrun  i ON i.case_key = c.case_key
+        GROUP BY c.module_key
+        ORDER BY count(*) FILTER (WHERE l.case_key IS NULL AND c.priority = 'High') DESC,
+                 count(*) FILTER (WHERE l.case_key IS NULL) DESC,
+                 c.module_key`, [entity_id, run_id]));
+
+    const areas = r.rows.map((x) => ({
+      module_key: x.module_key, module_name: x.module_name,
+      total: Number(x.total), tested: Number(x.tested), untested: Number(x.untested),
+      passed: Number(x.passed), failed: Number(x.failed), blocked: Number(x.blocked),
+      high_untested: Number(x.high_untested), tested_in_run: Number(x.tested_in_run),
+    }));
+    const worst = areas.filter((a) => a.untested > 0)[0] || null;
+
+    res.json({
+      areas: areas,
+      /* ⭐ the panel opens on this when no focus has been chosen — the gap, named, rather than a dropdown */
+      suggest: worst ? worst.module_key : null,
+      says: worst
+        ? worst.module_key + ' has ' + worst.untested + ' case(s) nobody has run'
+          + (worst.high_untested ? ', ' + worst.high_untested + ' of them High' : '') + '.'
+        : 'Every case has been run at least once.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read the coverage', message: String(err.message || err) });
+  }
+});
+
 module.exports = router;

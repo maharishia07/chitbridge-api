@@ -249,4 +249,58 @@ it('⚠️ a size preset writes makeMovable\'s OWN saved shape, not a second one
   assert.ok(/TEST_SIZES/.test(panel), 'the size presets are gone');
 });
 
+console.log('— the tags the panel builds by hand must balance —');
+
+it('⚠️⚠️ the panel header opens and closes the same number of divs', () => {
+  /**
+   * ⚠️ FOUND A REAL ONE, AND ONLY BY COUNTING. When the header moved into its own element the wrapper stopped
+   * OPENING and its `</div>` stayed behind. innerHTML silently drops a stray closing tag, so the panel looked
+   * perfect and the markup was wrong — and the next person to nest something inside it would have had their
+   * element land outside, with nothing to explain why.
+   *
+   * ⚠️ THIS IS THE COST OF BUILDING MARKUP BY STRING CONCATENATION, which the panel does because a capability
+   * ships as one file with no template layer. The guard is the price of that choice.
+   */
+  const start = panel.indexOf("var hd = ''");
+  const end = panel.indexOf('head.innerHTML = hd');
+  assert.ok(start > 0 && end > start, 'the panel header is no longer built where this guard looks');
+  const hd = panel.slice(start, end);
+  const open = (hd.match(/<div/g) || []).length, close = (hd.match(/<\/div>/g) || []).length;
+  assert.strictEqual(open, close,
+    'the header string opens ' + open + ' divs and closes ' + close + ' — innerHTML will quietly swallow the '
+    + 'difference and the next element nested here will land in the wrong place');
+});
+
+console.log('— you cannot force a tester, so measure the gap instead —');
+
+it('⭐⭐⭐ coverage answers what has NOT been run, ranked by priority', () => {
+  /**
+   * Athi, 2026-09-11: *"can we force an area to test? Irrespective of the shop, that functionality to be
+   * tested."*
+   *
+   * ⚠️ A PANEL THAT REFUSES TO SHOW ANYTHING BUT ONE MODULE IS A PANEL SOMEBODY CLOSES, and then nothing is
+   * tested at all — you have lost the only thing you had, which was their willingness. So the focus PINS and
+   * counts down; it does not lock.
+   *
+   * ⭐ And "irrespective of the shop" is answered by taking the weight from the case's own PRIORITY, which is
+   * declared in the reviewed document and travels to every entity that loads it. A High case nobody has run
+   * outranks ten Low ones, in every shop, without anything being configured per shop.
+   */
+  assert.ok(/router\.get\('\/coverage'/.test(route), 'the coverage endpoint is gone');
+  assert.ok(/high_untested/.test(route), 'coverage no longer weights by priority, so every area looks alike');
+  /* ⚠️ the ledger is append-only, so a case tested five times would count five times without this */
+  assert.ok(/DISTINCT ON \(case_key\) case_key, status/.test(route),
+    'coverage counts every result rather than the latest per case — a module could report more coverage than '
+    + 'it has cases');
+});
+
+it('⚠️ the focus pins and warns; it never blocks', () => {
+  assert.ok(/function testSetFocus/.test(panel), 'the focus control is gone');
+  /* ⚠️ leaving a focus is often right — something looked wrong on the way past. It must be noticed, not
+     prevented, and a guard here stops a later "improvement" turning the nudge into a cage. */
+  assert.ok(/still to run in/.test(panel), 'leaving the focus no longer says how much is left');
+  assert.ok(!/return;\s*\/\* focus lock|if \(CBTEST\.run\.focus\) return/.test(panel),
+    'the panel now refuses to leave the focus — that is a panel somebody closes');
+});
+
 console.log('\n  ' + pass + ' checks\n');
