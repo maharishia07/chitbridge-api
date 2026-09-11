@@ -39,25 +39,24 @@ const path = require('path');
 const M = path.join(__dirname, '..', 'migrations');
 
 /**
- * ⚠️ THE BASELINE IS EVIDENCE, NOT CONFIGURATION. Every number here was counted on 2026-08-22; each is the
- * count of unguarded casts in that file. Lowering one is the fix landing. Raising one, or adding a key, is the
- * thing this test exists to refuse.
+ * ⚠️ THE BASELINE IS EVIDENCE, NOT CONFIGURATION. Each number was the count of unguarded casts in that file.
+ * Lowering one is the fix landing. Raising one, or adding a key, is the thing this test exists to refuse.
+ *
+ * ── ⭐⭐ AND IT IS EMPTY NOW, BECAUSE THE DEBT IS PAID — 2026-09-11 ───────────────────────────────────────────
+ *
+ * Athi ran b222. All fourteen policies are NULLIF-guarded in the database, and the counter reads it from the
+ * tree rather than from this table: a cast in migration X is settled if a LATER migration gives that table a
+ * guarded policy. 32 casts across 14 migrations, all superseded, b203 included.
+ *
+ * ⚠️⚠️ AND THE BASELINE WAS OVERSTATING THE DEBT BY FOUR SINCE AUGUST. b172_access_events and
+ * b174_identity_documents were listed at 2 each — and b175_fix_rls_predicate.sql had already guarded both
+ * tables, three weeks before b222 existed. Nobody had looked, because the number only ever had to stop going
+ * UP. ⭐ A ratchet measures the direction and can be wrong about the level the whole time.
+ *
+ * ⭐ EMPTY IS THE STRICTEST STATE THIS CAN BE IN, not the most relaxed: every file is now checked against
+ * ZERO, so one new unguarded policy is unsuperseded, unlisted, and red on the next run.
  */
-const BASELINE = {
-  'b132_folder_rules.sql': 2,
-  'b135_wholesaler_stores.sql': 2,
-  'b137_chit_amendment.sql': 2,
-  'b138_line_amendment.sql': 2,
-  'b142_chit_line.sql': 2,
-  'b143_line_assignment.sql': 2,
-  'b144_line_delivery.sql': 2,
-  'b145_line_cost.sql': 2,
-  'b146_catalogue_item_version.sql': 2,
-  'b147_service_sla.sql': 4,
-  'b160_definitions.sql': 4,
-  'b172_access_events.sql': 2,
-  'b174_identity_documents.sql': 2,
-};
+const BASELINE = {};
 
 let pass = 0, fail = 0;
 const t = (name, cond, extra) => {
@@ -86,12 +85,74 @@ const countUnguarded = (src) => {
   return n;
 };
 
-const files = fs.readdirSync(M).filter((f) => f.endsWith('.sql'));
+const files = fs.readdirSync(M).filter((f) => f.endsWith('.sql')).sort();
+
+/**
+ * ── ⭐⭐ A LATER MIGRATION CAN SETTLE AN EARLIER ONE'S DEBT ───────────────────────────────────────────────────
+ *
+ * b222 ran on 2026-09-11 and rewrote all fourteen policies with NULLIF. ⚠️ This counter reads MIGRATION TEXT,
+ * and b222 did not edit those files — it could not; they are history. So the count stayed at 32 and b203 stayed
+ * red, describing a database that no longer exists.
+ *
+ * ⚠️⚠️ AND THE MIGRATION'S OWN INSTRUCTION WAS WRONG. b222's header says "after running this, lower the
+ * baseline to zero" — I wrote that, and it is the wrong fix: hand-zeroing a baseline makes the guard agree with
+ * me rather than with the tree, and the next unguarded cast in an old file would then read as new debt.
+ *
+ * ⭐ WHAT IS ACTUALLY TRUE is that a policy REPLACES the one before it. An unguarded cast in migration X no
+ * longer describes the database if a LATER migration creates a guarded policy on the same table. So the
+ * counter asks that question instead of being told the answer — and the day someone writes a new unguarded
+ * policy, it is unsuperseded and goes red on its own.
+ *
+ * ⚠️ TABLE-LEVEL, WHICH IS DELIBERATELY CONSERVATIVE. A later guarded policy on a table clears that table's
+ * earlier casts; it does not clear a cast anywhere else. Migrations apply in filename order, which is the order
+ * they ran, so "later" is sortable.
+ */
+const guardedLater = {};   /* table -> the first migration that gave it a NULLIF-guarded policy */
+files.forEach((f) => {
+  const sql = stripComments(fs.readFileSync(path.join(M, f), 'utf8'));
+  /* a policy body carrying NULLIF, however it is written — b222 builds its own with format() */
+  const direct = /CREATE\s+POLICY\s+\w+\s+ON\s+"?(\w+)"?([\s\S]{0,400}?);/gi;
+  let m;
+  while ((m = direct.exec(sql))) {
+    if (m[2].indexOf('NULLIF') > -1 && !guardedLater[m[1].toLowerCase()]) guardedLater[m[1].toLowerCase()] = f;
+  }
+  /* a policy built dynamically from a table list, as b222 does */
+  if (sql.indexOf('NULLIF') > -1 && /EXECUTE\s+format\s*\(/i.test(sql)) {
+    const arr = sql.match(/\[\s*'[^']+'\s*,\s*'(\w+)'\s*,\s*'\w+'\s*\]/g) || [];
+    arr.forEach((row) => {
+      const t2 = row.match(/,\s*'(\w+)'\s*,/);
+      if (t2 && !guardedLater[t2[1].toLowerCase()]) guardedLater[t2[1].toLowerCase()] = f;
+    });
+  }
+});
+
+/** the tables an unguarded cast in THIS file sits on */
+const tablesIn = (sql) => {
+  const out = new Set();
+  let m;
+  const re = /(?:CREATE|ALTER)\s+POLICY\s+\w+\s+ON\s+"?(\w+)"?/gi;
+  while ((m = re.exec(sql))) out.add(m[1].toLowerCase());
+  return [...out];
+};
+
 const found = {};
+const settled = {};
 let total = 0;
 for (const f of files) {
-  const n = countUnguarded(fs.readFileSync(path.join(M, f), 'utf8'));
-  if (n) { found[f] = n; total += n; }
+  const raw = fs.readFileSync(path.join(M, f), 'utf8');
+  const n = countUnguarded(raw);
+  if (!n) continue;
+  /* ⭐ superseded only if EVERY table this file touches was later given a guarded policy */
+  const ts = tablesIn(stripComments(raw));
+  const later = ts.length && ts.every((t2) => guardedLater[t2] && guardedLater[t2] > f);
+  if (later) { settled[f] = n; continue; }
+  found[f] = n; total += n;
+}
+
+if (Object.keys(settled).length) {
+  console.log('\n  \u2b50 settled by a later guarded policy: '
+    + Object.keys(settled).length + ' migration(s), '
+    + Object.keys(settled).reduce((t2, k) => t2 + settled[k], 0) + ' cast(s)');
 }
 
 console.log('\n── the debt is capped at what was measured ──');

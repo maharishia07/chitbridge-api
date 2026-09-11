@@ -10642,7 +10642,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · security · 137 lines. Run: node chitbridge-api/tests/entity-cast-guard.test.cjs",
+   "note": "test.guard · security · 198 lines. Run: node chitbridge-api/tests/entity-cast-guard.test.cjs",
    "layer": "engine",
    "test_type": "security",
    "group": "test.guard",

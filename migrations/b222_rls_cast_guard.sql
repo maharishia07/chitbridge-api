@@ -1,6 +1,6 @@
 -- b222_rls_cast_guard.sql — NULLIF the entity cast on every policy that is missing it.
 --
--- ⚠️⚠️ NOT RUN. Athi runs migrations. Read this first — it rewrites RLS policies on live tables.
+-- ⭐ RAN 2026-09-11 by Athi. Re-running is safe: every statement is DROP IF EXISTS + CREATE.
 --
 -- ── WHAT IS WRONG ─────────────────────────────────────────────────────────────────────────────────────────────
 -- 14 policies across 12 migrations cast the entity setting without guarding it:
@@ -27,8 +27,14 @@
 -- indistinguishable from stale tooling until somebody reads every one of them — which is the argument for the
 -- whole test board, and the reason this migration exists at all.
 --
--- ⚠️ AFTER RUNNING THIS: lower the baseline in tests/entity-cast-guard.test.cjs to zero. The guard fails when a
--- file drops below its baseline, on purpose — "a stale baseline is the same failure as a stale backlog row".
+-- ⭐ RAN 2026-09-11. AFTER RUNNING THIS the guard settles itself: tests/entity-cast-guard.test.cjs now asks
+-- whether a LATER migration gave each table a guarded policy, instead of being told the answer.
+--
+-- ⚠️ MY ORIGINAL INSTRUCTION HERE WAS WRONG and said "lower the baseline to zero" by hand. That makes the guard
+-- agree with ME rather than with the tree, and the next unguarded cast in an old file would then read as new
+-- debt. Deriving it also turned up that the baseline had been overstating by FOUR since August: b172 and b174
+-- were listed at 2 each and b175_fix_rls_predicate.sql had already guarded both. Nobody looked, because the
+-- number only ever had to stop going up.
 --
 -- ⭐ Found 2026-09-11 by tests/entity-cast-guard.test.cjs, which flagged the NEWEST one (b203) and was right.
 -- The other 11 are older and were never flagged, because that guard only looks at new migrations.
