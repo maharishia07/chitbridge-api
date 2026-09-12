@@ -1251,7 +1251,7 @@
     "name": "cart",
     "file": "chitbridge-web/public/app/cart.js",
     "purpose": "CAPABILITY: CART — one basket, everywhere (app/cart.js). Athi, 2026-09-05: \"the cart is a single view we should be able to embed anywhere so we get the same style and response everywhere — single source of truth; convert as a capability and remove duplicate code, so we can work on one piece of code.\"",
-    "note": "2833 lines",
+    "note": "2906 lines",
     "stage": null
    },
    {
@@ -40902,7 +40902,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 132 lines. Run: node chitbridge-api/tests/units-alias.test.js",
+   "note": "test.unit · unit · 193 lines. Run: node chitbridge-api/tests/units-alias.test.js",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.unit",
@@ -40910,10 +40910,12 @@
    "seq": 90,
    "step": "",
    "areas": [
-    "engine"
+    "engine",
+    "web"
    ],
    "subjects": [
-    "lib/units.js"
+    "lib/units.js",
+    "public/app/catalogue-model.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-08-17T09:20:28+05:30"
@@ -47808,7 +47810,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 300 lines. Run: node chitbridge-web/scripts/cart-ui.test.mjs",
+   "note": "test.guard · unit · 402 lines. Run: node chitbridge-web/scripts/cart-ui.test.mjs",
    "layer": "web",
    "test_type": "unit",
    "group": "test.guard",
