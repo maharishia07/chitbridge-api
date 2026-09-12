@@ -326,6 +326,66 @@ async function importCases(entity_id, who, rows) {
         out.cases.push({ case_key: t.key, definition_id: t.id, version: t.next });
       });
     }
+
+    /**
+     * ── ⭐⭐⭐ A CASE WHOSE FILE HAS GONE ─────────────────────────────────────────────────────────────────────
+     *
+     * Athi, 2026-09-12: *"api/test and api/tests, two library — if there is no difference can we make it as
+     * one?"* I had already moved test/hat-gate.test.cjs into tests/ and pushed it. The board still showed BOTH,
+     * because an upsert adds the new key and NEVER removes the old one. The file moved; its case did not.
+     *
+     * ⚠️ So every rename, move or deletion left a permanent ghost — a case nobody can run, counted in the
+     * totals, dragging the coverage percentage down forever. `chitbridge-api/test` appeared as a whole
+     * DIRECTORY on the report with one case in it, and the directory no longer exists.
+     *
+     * ⚠️⚠️ AND RETIRING EVERYTHING ABSENT FROM THE DOCUMENT IS HOW YOU DELETE A BOARD. One truncated build, one
+     * half-written file, one failed git checkout, and the import would quietly retire six hundred cases and
+     * every result hanging off them. The destructive reading of "not in the document" is indistinguishable
+     * from the correct one WITHOUT knowing the document is whole.
+     *
+     * ⭐ SO IT ASKS WHETHER THE DOCUMENT IS PLAUSIBLE FIRST. A document carrying at least 90% of what the board
+     * already holds is a real rebuild; anything smaller is reported and NOT acted on. A partial document cannot
+     * clear the bar, which is the point — the guard is on the input, not on the operator's memory.
+     *
+     * ⭐ And it RETIRES rather than deletes: status='retired' is already what every read filters on, so the
+     * case and its whole result history stay on the record and can be brought back by name. Evidence is never
+     * destroyed to tidy a count.
+     */
+    /**
+     * ⚠️ TWO THINGS I GOT WRONG WRITING THIS, BOTH CAUGHT BEFORE IT RAN:
+     *
+     * ⚠️ It was called `seen`, and `seen` ALREADY EXISTS in this function meaning something else entirely —
+     * the de-duplicator for repeated keys in one payload. A nested scope makes that legal and silent, and the
+     * next person to read either one would have to work out which was which.
+     *
+     * ⚠️ And it re-derived the key as `c.case_key || c.key`, while the normaliser above uses
+     * `c.case_key || c.id`. A case arriving with only `id` would have been imported under one name and then
+     * immediately RETIRED for not being in the document — by two lines that disagreed about what a key is.
+     *
+     * ⭐ So it reads `want`, which is the normalised list the upsert itself used. One derivation, one answer.
+     */
+    const inDoc = new Set(want.map((t) => t.key));
+    const live = await db.query(
+      `SELECT definition_id, name FROM definition
+        WHERE entity_id = $1 AND kind = 'testcase' AND status <> 'retired'`, [entity_id]);
+    const orphans = live.rows.filter((r) => !inDoc.has(r.name));
+
+    out.orphans = orphans.map((r) => r.name);
+    /* ⚠️ the threshold is on the INCOMING document against what is already there */
+    const plausible = live.rows.length === 0 || inDoc.size >= Math.floor(live.rows.length * 0.9);
+
+    if (orphans.length && plausible) {
+      await db.query(
+        `UPDATE definition SET status = 'retired'
+          WHERE entity_id = $1 AND definition_id = ANY($2::uuid[])`,
+        [entity_id, orphans.map((r) => r.definition_id)]);
+      out.retired = orphans.length;
+    } else if (orphans.length) {
+      /* ⭐ say why nothing happened, or a person reads "0 retired" as "nothing was orphaned" */
+      out.retired = 0;
+      out.retire_held = 'the document carried ' + inDoc.size + ' cases against ' + live.rows.length
+        + ' on the board \u2014 too few to trust as a complete rebuild, so nothing was retired';
+    }
   });
 
   return out;
