@@ -653,13 +653,13 @@
  "notes": {
   "engine": "Only the rules DECLARED in tests/engine-manifest.js — Tier A (zero dependencies, forever) and Tier B (bound). engine-boundary.test.js fails the day a Tier A rule grows a require. The other 117 files in lib/ are adoption and infrastructure, counted there not here.",
   "middleware": "Every file in middleware/ — what decides who may do what, before a route sees the request. The database-side half of the same job is RLS, which is on the database row.",
-  "web": "The 25 capabilities app.html loads on demand (cap-*.js), and the 27 SHARED files they lean on — core.js, cart.js, the language packs, the test board’s own verdict and menu shape. ⭐ Shared files were absent from this row until 2026-09-12, so the web layer was reported at the size of its capabilities alone. ⚠ CO-ASSIST is here under its OLD NAME: cap-workforce.js. The React pages in src/ and the standalone screens (till.html, promo.html, shop.html, iot-howitworks.html) are neither, and are still not counted.",
+  "web": "The 25 capabilities app.html loads on demand (cap-*.js), and the 28 SHARED files they lean on — core.js, cart.js, the language packs, the test board’s own verdict and menu shape. ⭐ Shared files were absent from this row until 2026-09-12, so the web layer was reported at the size of its capabilities alone. ⚠ CO-ASSIST is here under its OLD NAME: cap-workforce.js. The React pages in src/ and the standalone screens (till.html, promo.html, shop.html, iot-howitworks.html) are neither, and are still not counted.",
   "api": "One entry per route file, sized in COSMIC function points (ISO/IEC 19761) rather than lines. ⭐ ACTOR IS THE MODEL UNDERNEATH ALL OF THIS: actors.js is the \"B3 Actor model API\", and a person, a co-assist and a connector are each an actor — which is why the word turns up wherever you look. integrations.js is the declared HOME of connectors (catalogue, kit download, heartbeat); connectors.js is the actor + its connections. ⚠ assist.js is NOT the co-assist — it is the tier-1 LLM proxy, so a model key never reaches the browser.",
   "database": "Every TABLE the 196 migrations create — not the migrations themselves, which are changes rather than things. There is no schema document to read: the migrations ARE the schema, so they are read for what they add up to. ⭐ RLS IS THE COLUMN THAT MATTERS, and it says one of three things. · POLICY: the database itself keeps one entity's rows away from another's. · SHARED: the table has no entity column at all — blueprints, capabilities, AI skills, the standards register. Every entity reads the same rows, there is nothing to isolate, and a policy here would be wrong. This is a correct state, not a missing one. · ⚠ UNGUARDED: it HOLDS entity rows and has no policy. That is the only one of the three that is a finding, and there are 17 of them. ⚠ They were all printed as \"none\" until 2026-09-12, which made the 43 correct ones look like failures and hid the 17 real ones among them. ⚠ Born-in is where each table came from; later ALTERs are followed for added columns only, so this is an inventory, not a live schema dump.",
   "bridge": "THE CROSSING, and the half of the product's name that had no row until 2026-09-12. ⚠ NOT A NEW LAYER — every file here also sits on another row, which is the point: a crossing is something the layers DO, not a place. This row answers the question the architecture rows cannot: which code decides that this chit reaches THIS entity and no other, and what rights travel with it. ⭐ IDENTIFY resolves a typed name to one identity or refuses (404, never best-effort delivery). ⭐ CROSS mints ONE COPY PER PARTICIPANT — never shared, always replicated — and freezes the clearances, the governance and the retention floor onto each copy at that moment. ⭐ PROTECT is RLS: after it lands, the database itself refuses rows that are not yours. ⚠ THE KNOWN GAP: the crossing is NOT TAMPER-EVIDENT. chit_hash exists on cb_chit, the RETIRED table; the live chit_header has 22 columns and no content hash. Identity is proven, ownership is enforced and rights are frozen — but nobody can later prove a copy is byte-identical to what was sent, which is exactly what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "ONE CONCEPT, and routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ So IoT and ERP are not two subjects — they are the two shapes of ONE connection string, and routes/integrations.js adds that a downloaded kit IS a co-assist connector. That is why co-assist, IoT, ERP and Tally all land here, and why ACTOR is the word you meet first. ⚠ The list below is the FILES: ADAPTER (one per foreign system), KIT (the spine that drives them), CHANNEL (how a chit reaches a person). IoT has no adapter among them — its 3 file(s) are the signal blueprint and the lifecycle scripts, and it becomes a row the day it is written as an adapter."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 479 cases read from a test file, plus 983 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 480 cases read from a test file, plus 983 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -1088,7 +1088,7 @@
     "name": "cap-cmdb",
     "file": "chitbridge-web/public/app/cap-cmdb.js",
     "purpose": "THE CONFIGURATION REGISTER, ON A SCREEN.",
-    "note": "164 lines",
+    "note": "261 lines",
     "stage": null
    },
    {
@@ -1245,6 +1245,14 @@
    },
    {
     "tier": "shared",
+    "name": "assets",
+    "file": "chitbridge-web/public/app/assets.js",
+    "purpose": "GENERATED by C:\\dev\\assets.cjs — DO NOT EDIT. Run `node assets.cjs` and commit.",
+    "note": "1887 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
     "name": "attach-ui",
     "file": "chitbridge-web/public/app/attach-ui.js",
     "purpose": "ATTACH + VIEW, as a helper any screen can reuse. (classic script, shared global scope)",
@@ -1352,7 +1360,7 @@
     "name": "screens",
     "file": "chitbridge-web/public/app/screens.js",
     "purpose": "GENERATED by C:\\dev\\screens.cjs — DO NOT EDIT. Run `node screens.cjs` and commit.",
-    "note": "533 lines",
+    "note": "613 lines",
     "stage": null
    },
    {
@@ -30738,6 +30746,39 @@
    "module_key": "M-S-CMDB",
    "module_name": "Inside a screen › Cmdb — reached from within another screen",
    "intro": "cap-cmdb.js — THE CONFIGURATION REGISTER, ON A SCREEN. ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
+   "title": "the control behind cmdbFilter — what does it do?",
+   "priority": "Medium",
+   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Cmdb panel first — for a chit or task panel that means opening a row, not just the list.",
+   "data": "—",
+   "steps": [
+    [
+     "Find the control behind cmdbFilter — ⚠ NOTHING ON IT SAYS WHAT IT IS: no text, no tooltip, no screen-reader name.",
+     "It is on the panel and can be operated."
+    ],
+    [
+     "Use it.",
+     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
+    ]
+   ],
+   "note": "⚠ GENERATED from the control cmdbFilter in cap-cmdb.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler cmdbFilter() belongs to this capability (cap-cmdb.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 93,
+   "step": "93",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Inside a screen › Cmdb",
+   "screen_code": "SCR011",
+   "generated": true
+  },
+  {
+   "case_key": "M-S-CMDB-002",
+   "module_key": "M-S-CMDB",
+   "module_name": "Inside a screen › Cmdb — reached from within another screen",
+   "intro": "cap-cmdb.js — THE CONFIGURATION REGISTER, ON A SCREEN. ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
    "title": "“u2013” — what does it do?",
    "priority": "Medium",
    "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Cmdb panel first — for a chit or task panel that means opening a row, not just the list.",
@@ -30763,11 +30804,11 @@
    "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Cmdb",
-   "screen_code": null,
+   "screen_code": "SCR011",
    "generated": true
   },
   {
-   "case_key": "M-S-CMDB-002",
+   "case_key": "M-S-CMDB-003",
    "module_key": "M-S-CMDB",
    "module_name": "Inside a screen › Cmdb — reached from within another screen",
    "intro": "cap-cmdb.js — THE CONFIGURATION REGISTER, ON A SCREEN. ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -30796,40 +30837,7 @@
    "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Cmdb",
-   "screen_code": null,
-   "generated": true
-  },
-  {
-   "case_key": "M-S-CMDB-003",
-   "module_key": "M-S-CMDB",
-   "module_name": "Inside a screen › Cmdb — reached from within another screen",
-   "intro": "cap-cmdb.js — THE CONFIGURATION REGISTER, ON A SCREEN. ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
-   "title": "the control behind cmdbFilter — what does it do?",
-   "priority": "Medium",
-   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Cmdb panel first — for a chit or task panel that means opening a row, not just the list.",
-   "data": "—",
-   "steps": [
-    [
-     "Find the control behind cmdbFilter — ⚠ NOTHING ON IT SAYS WHAT IT IS: no text, no tooltip, no screen-reader name.",
-     "It is on the panel and can be operated."
-    ],
-    [
-     "Use it.",
-     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
-    ]
-   ],
-   "note": "⚠ GENERATED from the control cmdbFilter in cap-cmdb.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler cmdbFilter() belongs to this capability (cap-cmdb.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
-   "layer": null,
-   "test_type": "acceptance",
-   "automated": false,
-   "areas": [
-    "web"
-   ],
-   "seq": 93,
-   "step": "93",
-   "run_by": "a person on the board (a customer, and it is UAT)",
-   "menu": "Inside a screen › Cmdb",
-   "screen_code": null,
+   "screen_code": "SCR011",
    "generated": true
   },
   {
@@ -44218,7 +44226,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 116 lines. Run: node chitbridge-web/e2e/panel-reachable.cjs",
+   "note": "test.guard · unit · 133 lines. Run: node chitbridge-web/e2e/panel-reachable.cjs",
    "layer": "web",
    "test_type": "unit",
    "group": "test.guard",
@@ -44230,7 +44238,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-12T17:24:28+05:30"
+   "changed_at": "2026-09-12T17:56:31+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/per-row-probe.cjs",
@@ -44714,6 +44722,31 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-08-22T20:36:50+05:30"
+  },
+  {
+   "case_key": "chitbridge-web/e2e/screens-register.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "THE REGISTER THE BROWSER GETS IS THE REGISTER ON DISK.",
+   "claim": "THE REGISTER THE BROWSER GETS IS THE REGISTER ON DISK.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 116 lines. Run: node chitbridge-web/e2e/screens-register.cjs",
+   "layer": "web",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "web"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T18:08:51+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/search-probe.cjs",
