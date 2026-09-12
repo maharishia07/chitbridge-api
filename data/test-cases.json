@@ -219,6 +219,21 @@
    "count": 1
   },
   {
+   "key": "M-LANGPICKER",
+   "name": "Account › Language — the door and what is behind it",
+   "count": 1
+  },
+  {
+   "key": "M-THEMEPICKER",
+   "name": "Account › Appearance — the door and what is behind it",
+   "count": 1
+  },
+  {
+   "key": "M-SIGNOUT",
+   "name": "Account › Sign out — the door and what is behind it",
+   "count": 1
+  },
+  {
    "key": "M-A-COUNTER",
    "name": "Its own app › Counter — till.html",
    "count": 60
@@ -634,7 +649,7 @@
   "bridge": "THE CROSSING, and the half of the product's name that had no row until 2026-09-12. ⚠ NOT A NEW LAYER — every file here also sits on another row, which is the point: a crossing is something the layers DO, not a place. This row answers the question the architecture rows cannot: which code decides that this chit reaches THIS entity and no other, and what rights travel with it. ⭐ IDENTIFY resolves a typed name to one identity or refuses (404, never best-effort delivery). ⭐ CROSS mints ONE COPY PER PARTICIPANT — never shared, always replicated — and freezes the clearances, the governance and the retention floor onto each copy at that moment. ⭐ PROTECT is RLS: after it lands, the database itself refuses rows that are not yours. ⚠ THE KNOWN GAP: the crossing is NOT TAMPER-EVIDENT. chit_hash exists on cb_chit, the RETIRED table; the live chit_header has 22 columns and no content hash. Identity is proven, ownership is enforced and rights are frozen — but nobody can later prove a copy is byte-identical to what was sent, which is exactly what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "ONE CONCEPT, and routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ So IoT and ERP are not two subjects — they are the two shapes of ONE connection string, and routes/integrations.js adds that a downloaded kit IS a co-assist connector. That is why co-assist, IoT, ERP and Tally all land here, and why ACTOR is the word you meet first. ⚠ The list below is the FILES: ADAPTER (one per foreign system), KIT (the spine that drives them), CHANNEL (how a chit reaches a person). IoT has no adapter among them — its 3 file(s) are the signal blueprint and the lifecycle scripts, and it becomes a row the day it is written as an adapter."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 473 cases read from a test file, plus 706 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 473 cases read from a test file, plus 709 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -1183,7 +1198,7 @@
     "name": "cap-testing",
     "file": "chitbridge-web/public/app/cap-testing.js",
     "purpose": "THE TEST PANEL, ON TOP OF THE APP",
-    "note": "1756 lines",
+    "note": "1764 lines",
     "stage": null
    },
    {
@@ -18677,6 +18692,114 @@
    "generated": true
   },
   {
+   "case_key": "M-RAIL-LANGPICKER",
+   "module_key": "M-LANGPICKER",
+   "module_name": "Account › Language — the door and what is behind it",
+   "intro": "In the avatar menu. ⭐ An ACTION rather than a screen, so there are no controls to sweep — the single case below is the whole of it, and it is the kind most worth writing a real expectation into.",
+   "title": "Language opens, and says what it is",
+   "priority": "High",
+   "pre": "Signed in to the app.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Language from the rail.",
+     "The screen opens."
+    ],
+    [
+     "Read the first thing on it.",
+     "⚠ THIS DOOR DECLARES NO PURPOSE anywhere in the product, so there is nothing to check it against. Write one, or record what the screen says it is for."
+    ],
+    [
+     "Reload the page.",
+     "You are still on Language."
+    ]
+   ],
+   "note": "⭐ AN ACTION, NOT A SCREEN — nothing sits behind it and there is nothing to list. Pick another language and the whole app follows — including the right-to-left ones, which change the layout and not only the words. ⚠ No declared purpose — the missing sentence is the finding.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 56,
+   "step": "56",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Account › Language",
+   "generated": true
+  },
+  {
+   "case_key": "M-RAIL-THEMEPICKER",
+   "module_key": "M-THEMEPICKER",
+   "module_name": "Account › Appearance — the door and what is behind it",
+   "intro": "In the avatar menu. ⭐ An ACTION rather than a screen, so there are no controls to sweep — the single case below is the whole of it, and it is the kind most worth writing a real expectation into.",
+   "title": "Appearance opens, and says what it is",
+   "priority": "High",
+   "pre": "Signed in to the app.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Appearance from the rail.",
+     "The screen opens."
+    ],
+    [
+     "Read the first thing on it.",
+     "⚠ THIS DOOR DECLARES NO PURPOSE anywhere in the product, so there is nothing to check it against. Write one, or record what the screen says it is for."
+    ],
+    [
+     "Reload the page.",
+     "You are still on Appearance."
+    ]
+   ],
+   "note": "⭐ AN ACTION, NOT A SCREEN — nothing sits behind it and there is nothing to list. Pick a theme. Each names the audience it is for, and the contrast each claims is measured by e2e/a11y-contrast.cjs. ⚠ No declared purpose — the missing sentence is the finding.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 57,
+   "step": "57",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Account › Appearance",
+   "generated": true
+  },
+  {
+   "case_key": "M-RAIL-SIGNOUT",
+   "module_key": "M-SIGNOUT",
+   "module_name": "Account › Sign out — the door and what is behind it",
+   "intro": "In the avatar menu. ⭐ An ACTION rather than a screen, so there are no controls to sweep — the single case below is the whole of it, and it is the kind most worth writing a real expectation into.",
+   "title": "Sign out opens, and says what it is",
+   "priority": "High",
+   "pre": "Signed in to the app.",
+   "data": "—",
+   "steps": [
+    [
+     "Open Sign out from the rail.",
+     "The screen opens."
+    ],
+    [
+     "Read the first thing on it.",
+     "⚠ THIS DOOR DECLARES NO PURPOSE anywhere in the product, so there is nothing to check it against. Write one, or record what the screen says it is for."
+    ],
+    [
+     "Reload the page.",
+     "You are still on Sign out."
+    ]
+   ],
+   "note": "⭐ AN ACTION, NOT A SCREEN — nothing sits behind it and there is nothing to list. ⭐ THE ONE CONTROL THAT CAN LOSE A TESTER’S WORK, and the only one whose failure stays invisible until the next person opens this browser. Sign out, then check: the session is gone, a reload does not walk back in, and nothing of this business is left on the device. ⚠ No declared purpose — the missing sentence is the finding.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 58,
+   "step": "58",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Account › Sign out",
+   "generated": true
+  },
+  {
    "case_key": "M-A-COUNTER-001",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
@@ -18702,8 +18825,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18734,8 +18857,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18766,8 +18889,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18798,8 +18921,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18830,8 +18953,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18862,8 +18985,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18894,8 +19017,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18926,8 +19049,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18958,8 +19081,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -18990,8 +19113,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19022,8 +19145,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19054,8 +19177,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19086,8 +19209,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19118,8 +19241,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19150,8 +19273,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19182,8 +19305,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19214,8 +19337,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19246,8 +19369,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19278,8 +19401,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19310,8 +19433,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19342,8 +19465,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19374,8 +19497,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19406,8 +19529,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19438,8 +19561,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19470,8 +19593,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19502,8 +19625,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19534,8 +19657,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19566,8 +19689,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19598,8 +19721,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19630,8 +19753,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19662,8 +19785,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19694,8 +19817,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19726,8 +19849,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19758,8 +19881,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19790,8 +19913,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19822,8 +19945,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19854,8 +19977,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19886,8 +20009,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19918,8 +20041,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19950,8 +20073,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -19982,8 +20105,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20014,8 +20137,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20046,8 +20169,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20078,8 +20201,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20110,8 +20233,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20142,8 +20265,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20174,8 +20297,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20206,8 +20329,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20238,8 +20361,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20270,8 +20393,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20302,8 +20425,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20334,8 +20457,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20366,8 +20489,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20398,8 +20521,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20430,8 +20553,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20462,8 +20585,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20494,8 +20617,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20526,8 +20649,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20558,8 +20681,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20590,8 +20713,8 @@
    "areas": [
     "web"
    ],
-   "seq": 116,
-   "step": "116",
+   "seq": 119,
+   "step": "119",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Counter",
    "generated": true
@@ -20622,8 +20745,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20654,8 +20777,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20686,8 +20809,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20718,8 +20841,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20750,8 +20873,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20782,8 +20905,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20814,8 +20937,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20846,8 +20969,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20878,8 +21001,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20910,8 +21033,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20942,8 +21065,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -20974,8 +21097,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -21006,8 +21129,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -21038,8 +21161,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -21070,8 +21193,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -21102,8 +21225,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -21134,8 +21257,8 @@
    "areas": [
     "web"
    ],
-   "seq": 117,
-   "step": "117",
+   "seq": 120,
+   "step": "120",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Its own app › Storefront",
    "generated": true
@@ -21166,8 +21289,8 @@
    "areas": [
     "web"
    ],
-   "seq": 88,
-   "step": "88",
+   "seq": 91,
+   "step": "91",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Adopt",
    "generated": true
@@ -21198,8 +21321,8 @@
    "areas": [
     "web"
    ],
-   "seq": 88,
-   "step": "88",
+   "seq": 91,
+   "step": "91",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Adopt",
    "generated": true
@@ -21230,8 +21353,8 @@
    "areas": [
     "web"
    ],
-   "seq": 88,
-   "step": "88",
+   "seq": 91,
+   "step": "91",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Adopt",
    "generated": true
@@ -21262,8 +21385,8 @@
    "areas": [
     "web"
    ],
-   "seq": 88,
-   "step": "88",
+   "seq": 91,
+   "step": "91",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Adopt",
    "generated": true
@@ -21294,8 +21417,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21326,8 +21449,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21358,8 +21481,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21390,8 +21513,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21422,8 +21545,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21454,8 +21577,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21486,8 +21609,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21518,8 +21641,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21550,8 +21673,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21582,8 +21705,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21614,8 +21737,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21646,8 +21769,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21678,8 +21801,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21710,8 +21833,8 @@
    "areas": [
     "web"
    ],
-   "seq": 89,
-   "step": "89",
+   "seq": 92,
+   "step": "92",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Connector",
    "generated": true
@@ -21742,8 +21865,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21774,8 +21897,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21806,8 +21929,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21838,8 +21961,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21870,8 +21993,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21902,8 +22025,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21934,8 +22057,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21966,8 +22089,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -21998,8 +22121,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22030,8 +22153,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22062,8 +22185,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22094,8 +22217,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22126,8 +22249,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22158,8 +22281,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22190,8 +22313,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22222,8 +22345,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22254,8 +22377,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22286,8 +22409,8 @@
    "areas": [
     "web"
    ],
-   "seq": 90,
-   "step": "90",
+   "seq": 93,
+   "step": "93",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Definitions",
    "generated": true
@@ -22318,8 +22441,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22350,8 +22473,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22382,8 +22505,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22414,8 +22537,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22446,8 +22569,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22478,8 +22601,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22510,8 +22633,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22542,8 +22665,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22574,8 +22697,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22606,8 +22729,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22638,8 +22761,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22670,8 +22793,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22702,8 +22825,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22734,8 +22857,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22766,8 +22889,8 @@
    "areas": [
     "web"
    ],
-   "seq": 91,
-   "step": "91",
+   "seq": 94,
+   "step": "94",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Folders",
    "generated": true
@@ -22798,8 +22921,8 @@
    "areas": [
     "web"
    ],
-   "seq": 92,
-   "step": "92",
+   "seq": 95,
+   "step": "95",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Iddocs",
    "generated": true
@@ -22830,8 +22953,8 @@
    "areas": [
     "web"
    ],
-   "seq": 93,
-   "step": "93",
+   "seq": 96,
+   "step": "96",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Legend",
    "generated": true
@@ -22862,8 +22985,8 @@
    "areas": [
     "web"
    ],
-   "seq": 93,
-   "step": "93",
+   "seq": 96,
+   "step": "96",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Legend",
    "generated": true
@@ -22894,8 +23017,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -22926,8 +23049,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -22958,8 +23081,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -22990,8 +23113,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23022,8 +23145,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23054,8 +23177,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23086,8 +23209,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23118,8 +23241,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23150,8 +23273,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23182,8 +23305,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23214,8 +23337,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23246,8 +23369,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23278,8 +23401,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23310,8 +23433,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23342,8 +23465,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23374,8 +23497,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23406,8 +23529,8 @@
    "areas": [
     "web"
    ],
-   "seq": 94,
-   "step": "94",
+   "seq": 97,
+   "step": "97",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Register",
    "generated": true
@@ -23438,8 +23561,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23470,8 +23593,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23502,8 +23625,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23534,8 +23657,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23566,8 +23689,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23598,8 +23721,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23630,8 +23753,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23662,8 +23785,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23694,8 +23817,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23726,8 +23849,8 @@
    "areas": [
     "web"
    ],
-   "seq": 95,
-   "step": "95",
+   "seq": 98,
+   "step": "98",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Service",
    "generated": true
@@ -23758,8 +23881,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -23790,8 +23913,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -23822,8 +23945,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -23854,8 +23977,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -23886,8 +24009,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -23918,8 +24041,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -23950,8 +24073,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -23982,8 +24105,8 @@
    "areas": [
     "web"
    ],
-   "seq": 96,
-   "step": "96",
+   "seq": 99,
+   "step": "99",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Supplies",
    "generated": true
@@ -24014,8 +24137,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24046,8 +24169,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24078,8 +24201,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24110,8 +24233,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24142,8 +24265,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24174,8 +24297,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24206,8 +24329,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24238,8 +24361,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24270,8 +24393,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24302,8 +24425,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24334,8 +24457,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24366,8 +24489,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24398,8 +24521,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24430,8 +24553,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24462,8 +24585,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24494,8 +24617,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24526,8 +24649,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24558,8 +24681,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24590,8 +24713,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24622,8 +24745,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
@@ -24654,8 +24777,8 @@
    "areas": [
     "web"
    ],
-   "seq": 97,
-   "step": "97",
+   "seq": 100,
+   "step": "100",
    "run_by": "a person on the board (a customer, and it is UAT)",
    "menu": "Inside a screen › Testing",
    "generated": true
