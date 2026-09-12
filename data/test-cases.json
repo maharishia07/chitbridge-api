@@ -296,7 +296,7 @@
   {
    "key": "M-S-TESTING",
    "name": "Inside a screen › Testing — reached from within another screen",
-   "count": 21
+   "count": 27
   },
   {
    "key": "RULE",
@@ -654,7 +654,7 @@
   "bridge": "THE CROSSING, and the half of the product's name that had no row until 2026-09-12. ⚠ NOT A NEW LAYER — every file here also sits on another row, which is the point: a crossing is something the layers DO, not a place. This row answers the question the architecture rows cannot: which code decides that this chit reaches THIS entity and no other, and what rights travel with it. ⭐ IDENTIFY resolves a typed name to one identity or refuses (404, never best-effort delivery). ⭐ CROSS mints ONE COPY PER PARTICIPANT — never shared, always replicated — and freezes the clearances, the governance and the retention floor onto each copy at that moment. ⭐ PROTECT is RLS: after it lands, the database itself refuses rows that are not yours. ⚠ THE KNOWN GAP: the crossing is NOT TAMPER-EVIDENT. chit_hash exists on cb_chit, the RETIRED table; the live chit_header has 22 columns and no content hash. Identity is proven, ownership is enforced and rights are frozen — but nobody can later prove a copy is byte-identical to what was sent, which is exactly what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "ONE CONCEPT, and routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ So IoT and ERP are not two subjects — they are the two shapes of ONE connection string, and routes/integrations.js adds that a downloaded kit IS a co-assist connector. That is why co-assist, IoT, ERP and Tally all land here, and why ACTOR is the word you meet first. ⚠ The list below is the FILES: ADAPTER (one per foreign system), KIT (the spine that drives them), CHANNEL (how a chit reaches a person). IoT has no adapter among them — its 3 file(s) are the signal blueprint and the lifecycle scripts, and it becomes a row the day it is written as an adapter."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 476 cases read from a test file, plus 973 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 477 cases read from a test file, plus 979 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -848,6 +848,13 @@
     "stage": null
    },
    {
+    "name": "testing",
+    "file": "chitbridge-api/routes/testing.js",
+    "purpose": "/api/testing — THE TEST BOARD: cases you can append to, results you can record, and who recorded them.",
+    "note": "87 function points",
+    "stage": null
+   },
+   {
     "name": "connectors",
     "file": "chitbridge-api/routes/connectors.js",
     "purpose": "L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)",
@@ -873,13 +880,6 @@
     "file": "chitbridge-api/routes/capture.js",
     "purpose": "the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm (send via /api/chits/send) → mark converted. See SPEC-capture-connector.md. Migration b104.",
     "note": "69 function points",
-    "stage": null
-   },
-   {
-    "name": "testing",
-    "file": "chitbridge-api/routes/testing.js",
-    "purpose": "/api/testing — THE TEST BOARD: cases you can append to, results you can record, and who recorded them.",
-    "note": "68 function points",
     "stage": null
    },
    {
@@ -1203,7 +1203,7 @@
     "name": "cap-testing",
     "file": "chitbridge-web/public/app/cap-testing.js",
     "purpose": "THE TEST PANEL, ON TOP OF THE APP",
-    "note": "1764 lines",
+    "note": "2011 lines",
     "stage": null
    },
    {
@@ -32761,6 +32761,70 @@
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
+   "title": "“Open the board in its own window” — what does it do?",
+   "priority": "Medium",
+   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Testing panel first — for a chit or task panel that means opening a row, not just the list.",
+   "data": "—",
+   "steps": [
+    [
+     "Find “Open the board in its own window” — its name comes from its tooltip.",
+     "It is on the panel and can be operated."
+    ],
+    [
+     "Use it.",
+     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
+    ]
+   ],
+   "note": "⚠ GENERATED from the control testPopOut in cap-testing.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler testPopOut() belongs to this capability (cap-testing.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 101,
+   "step": "101",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Inside a screen › Testing",
+   "generated": true
+  },
+  {
+   "case_key": "M-S-TESTING-008",
+   "module_key": "M-S-TESTING",
+   "module_name": "Inside a screen › Testing — reached from within another screen",
+   "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
+   "title": "“u2013” — what does it do?",
+   "priority": "Medium",
+   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Testing panel first — for a chit or task panel that means opening a row, not just the list.",
+   "data": "—",
+   "steps": [
+    [
+     "Find “u2013” — its name comes from its text.",
+     "It is on the panel and can be operated."
+    ],
+    [
+     "Use it.",
+     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
+    ]
+   ],
+   "note": "⚠ GENERATED from the control testMinimise in cap-testing.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler testMinimise() belongs to this capability (cap-testing.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 101,
+   "step": "101",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Inside a screen › Testing",
+   "generated": true
+  },
+  {
+   "case_key": "M-S-TESTING-009",
+   "module_key": "M-S-TESTING",
+   "module_name": "Inside a screen › Testing — reached from within another screen",
+   "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
    "title": "“u2715” — what does it do?",
    "priority": "Medium",
    "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Testing panel first — for a chit or task panel that means opening a row, not just the list.",
@@ -32789,7 +32853,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-008",
+   "case_key": "M-S-TESTING-010",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -32821,7 +32885,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-009",
+   "case_key": "M-S-TESTING-011",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -32853,7 +32917,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-010",
+   "case_key": "M-S-TESTING-012",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -32885,7 +32949,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-011",
+   "case_key": "M-S-TESTING-013",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -32917,7 +32981,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-012",
+   "case_key": "M-S-TESTING-014",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -32949,7 +33013,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-013",
+   "case_key": "M-S-TESTING-015",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -32981,7 +33045,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-014",
+   "case_key": "M-S-TESTING-016",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -33013,7 +33077,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-015",
+   "case_key": "M-S-TESTING-017",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -33045,7 +33109,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-016",
+   "case_key": "M-S-TESTING-018",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -33077,7 +33141,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-017",
+   "case_key": "M-S-TESTING-019",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -33109,7 +33173,135 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-018",
+   "case_key": "M-S-TESTING-020",
+   "module_key": "M-S-TESTING",
+   "module_name": "Inside a screen › Testing — reached from within another screen",
+   "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
+   "title": "“Cancel” — what does it do?",
+   "priority": "Medium",
+   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Testing panel first — for a chit or task panel that means opening a row, not just the list. It is drawn by testReqFormHTML().",
+   "data": "—",
+   "steps": [
+    [
+     "Find “Cancel” — its name comes from its text.",
+     "It is on the panel and can be operated."
+    ],
+    [
+     "Use it.",
+     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
+    ]
+   ],
+   "note": "⚠ GENERATED from the control testReqForm in cap-testing.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler testReqForm() belongs to this capability (cap-testing.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠⚠ THE SAME NAME APPEARS ELSEWHERE, WIRED TO DIFFERENT CODE: cap-categories.js (closeModal()), cap-categories.js (cbcatCancel()), cap-catsetup.js (closeModal()), cap-connector.js (paintAcDetail()). DOES THIS ONE WORK THE SAME WAY? Operate both and compare — two controls a person reads as one thing, kept in step by nothing but habit, is exactly where behaviour drifts. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 101,
+   "step": "101",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Inside a screen › Testing",
+   "generated": true
+  },
+  {
+   "case_key": "M-S-TESTING-021",
+   "module_key": "M-S-TESTING",
+   "module_name": "Inside a screen › Testing — reached from within another screen",
+   "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
+   "title": "“Raise” — what does it do?",
+   "priority": "Medium",
+   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Testing panel first — for a chit or task panel that means opening a row, not just the list. It is drawn by testReqFormHTML().",
+   "data": "—",
+   "steps": [
+    [
+     "Find “Raise” — its name comes from its text.",
+     "It is on the panel and can be operated."
+    ],
+    [
+     "Use it.",
+     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
+    ]
+   ],
+   "note": "⚠ GENERATED from the control testReqSend in cap-testing.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler testReqSend() belongs to this capability (cap-testing.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 101,
+   "step": "101",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Inside a screen › Testing",
+   "generated": true
+  },
+  {
+   "case_key": "M-S-TESTING-022",
+   "module_key": "M-S-TESTING",
+   "module_name": "Inside a screen › Testing — reached from within another screen",
+   "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
+   "title": "the control behind testReqFilter — what does it do?",
+   "priority": "Medium",
+   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Testing panel first — for a chit or task panel that means opening a row, not just the list.",
+   "data": "—",
+   "steps": [
+    [
+     "Find the control behind testReqFilter — ⚠ NOTHING ON IT SAYS WHAT IT IS: no text, no tooltip, no screen-reader name.",
+     "It is on the panel and can be operated."
+    ],
+    [
+     "Use it.",
+     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
+    ]
+   ],
+   "note": "⚠ GENERATED from the control testReqFilter in cap-testing.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler testReqFilter() belongs to this capability (cap-testing.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 101,
+   "step": "101",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Inside a screen › Testing",
+   "generated": true
+  },
+  {
+   "case_key": "M-S-TESTING-023",
+   "module_key": "M-S-TESTING",
+   "module_name": "Inside a screen › Testing — reached from within another screen",
+   "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
+   "title": "“Accept” — what does it do?",
+   "priority": "Medium",
+   "pre": "⚠ NOT ON THE RAIL. Open the screen that shows the Testing panel first — for a chit or task panel that means opening a row, not just the list.",
+   "data": "—",
+   "steps": [
+    [
+     "Find “Accept” — its name comes from its text.",
+     "It is on the panel and can be operated."
+    ],
+    [
+     "Use it.",
+     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
+    ]
+   ],
+   "note": "⚠ GENERATED from the control testReqSet in cap-testing.js — a capability NO DOOR opens. It asserts only that the control EXISTS. ⭐ Its handler testReqSet() belongs to this capability (cap-testing.js). It is NOT shared — a control that looks the same on another screen is a separate piece of code. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 101,
+   "step": "101",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": "Inside a screen › Testing",
+   "generated": true
+  },
+  {
+   "case_key": "M-S-TESTING-024",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -33141,7 +33333,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-019",
+   "case_key": "M-S-TESTING-025",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -33173,7 +33365,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-020",
+   "case_key": "M-S-TESTING-026",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -33205,7 +33397,7 @@
    "generated": true
   },
   {
-   "case_key": "M-S-TESTING-021",
+   "case_key": "M-S-TESTING-027",
    "module_key": "M-S-TESTING",
    "module_name": "Inside a screen › Testing — reached from within another screen",
    "intro": "cap-testing.js ⭐ NO DOOR ON THE RAIL OPENS THIS. It is loaded by the app and its controls appear inside other screens, which is exactly why they are the easiest ones to forget. ⚠ Every case here is GENERATED and carries no expectation.",
@@ -39479,7 +39671,7 @@
     "public/app/catalogue-model.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-08-22T19:55:12+05:30",
+   "changed_at": "2026-09-12T16:57:16+05:30",
    "needs": [
     "a database (via policy.js)"
    ]
@@ -42910,6 +43102,34 @@
    "needs": [
     "a browser"
    ]
+  },
+  {
+   "case_key": "chitbridge-web/e2e/policy-reachable.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "EVERY POLICY FLAG THE API READS CAN BE SET BY SOMEBODY.",
+   "claim": "EVERY POLICY FLAG THE API READS CAN BE SET BY SOMEBODY.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 107 lines. Run: node chitbridge-web/e2e/policy-reachable.cjs",
+   "layer": "web",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine",
+    "web"
+   ],
+   "subjects": [
+    "lib/policy.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T16:56:57+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/post-results.cjs",
@@ -47851,7 +48071,7 @@
    "areas": [],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-12T16:22:26+05:30"
+   "changed_at": "2026-09-12T16:56:57+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/check-adoption.js",

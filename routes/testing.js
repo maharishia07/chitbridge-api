@@ -937,6 +937,221 @@ router.post('/cases/gherkin', auth, async (req, res) => {
  * the clause, decides whether the case still holds, and either edits it or tests it again. Invalidating results
  * automatically would destroy evidence on the strength of a version number.
  */
+/**
+ * ── ⭐⭐⭐ A REQUIREMENT RAISED WHILE TESTING ──────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-12: *"you are running a test and you found an issue and it becomes a new requirement... the
+ * testers will not have you. So it has to be written down and we have to pick it up and then it has to be
+ * fulfilled and the status updated as implemented or rejected, either way."* And: *"we must be having an option
+ * to filter the requirements which are not actioned, so we can set the flag."*
+ *
+ * ⭐⭐ NOTHING NEW UNDERNEATH. A requirement IS a spec clause — `definition` kind 'spec' — which is already
+ * versioned, already RLS-isolated, and already what a case cites. The only thing missing was a door into it.
+ *
+ * ⭐⭐⭐ AND THIS IS WHAT FILLS THE REQUIREMENT COLUMN. Measured 2026-09-12: **0 of 889 cases cite a clause**, and
+ * a column added on top of that would be empty down its whole length. Nobody back-fills citations — but a
+ * tester who has just watched something fail knows exactly what the rule should be, at the only moment anybody
+ * does. Raising it FROM the case writes the citation as a by-product of the work.
+ *
+ * ── ⚠️⚠️ THE LIFECYCLE RIDES ON THE STATUS VOCABULARY THAT ALREADY EXISTS ────────────────────────────────────
+ *
+ * b160 documents `draft | live | retired` and other screens filter on those words. Inventing 'raised' would have
+ * made every one of them quietly wrong about what is on the shelf. So:
+ *
+ *     raised       status draft   · state raised       written down, nobody has decided
+ *     accepted     status draft   · state accepted     agreed, not built
+ *     implemented  status live    · state implemented  it is a rule now, and cases cite it
+ *     rejected     status retired · state rejected     decided against, WITH the reason, and it stays on the case
+ *
+ * ⚠️ REJECTED IS RETIRED, NOT DELETED. The next tester must find that this was already raised and answered —
+ * otherwise the same finding is re-raised every quarter and the board teaches people their input goes nowhere.
+ *
+ * ── ⚠️ TWO FIELDS, AND BOTH ARE REQUIRED ────────────────────────────────────────────────────────────────────
+ *
+ *   observed      "typed 0.5 kg and the line disappeared"        the evidence
+ *   requirement   "a unit sold by weight must accept a fraction"  the rule
+ *
+ * Only the second is the requirement. Without the first, in six months nobody can tell whether it was ever real
+ * — and the fraction work of 2026-09-12 is the proof: the rule was obvious BECAUSE the line vanished.
+ */
+const REQ_STATES = ['raised', 'accepted', 'implemented', 'rejected'];
+const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rejected: 'retired' };
+
+/** POST /api/testing/requirements — raise one from the case that found it. */
+router.post('/requirements', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const who = testerOf(req);
+    const b = req.body || {};
+    const observed = String(b.observed || '').trim();
+    const requirement = String(b.requirement || '').trim();
+    const case_key = String(b.case_key || '').trim() || null;
+    /* ⚠️ BOTH, and refused rather than defaulted. A requirement with no evidence is a wish, and evidence with no
+       requirement is a note — neither can be actioned, which is the whole point of the list. */
+    if (!requirement) return res.status(400).json({ error: 'Nothing to raise', message: 'Say what must be true.' });
+    if (!observed) return res.status(400).json({ error: 'No evidence', message: 'Say what you saw happen.' });
+
+    const out = await withEntity(entity_id, async (db) => {
+      /* the clause id: given, or minted from the case it came from so it reads as what it is */
+      const name = String(b.clause || '').trim()
+        || ('REQ-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-'
+            + Math.random().toString(36).slice(2, 6).toUpperCase());
+      /* ⭐ PRIORITY, because Athi: *"this will help to keep it prioratised, backlog and so on"*. Same three
+         words the cases already use — a second vocabulary for the same idea is how two lists stop sorting alike. */
+      const PRI = ['High', 'Medium', 'Low'];
+      const priority = PRI.indexOf(String(b.priority || '')) >= 0 ? String(b.priority) : 'Medium';
+      const rules = {
+        text: requirement, observed: observed, spec: String(b.spec || '').trim() || null, priority: priority,
+        state: 'raised', raised_from: case_key, raised_by: who.name, raised_at: new Date().toISOString(),
+        history: [{ state: 'raised', by: who.name, at: new Date().toISOString(), why: null }],
+      };
+      const ins = await db.query(
+        `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+         VALUES ($1,'spec',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
+        [entity_id, rules.spec, name, requirement.slice(0, 200), who.id]);
+      const id = ins.rows[0].definition_id;
+      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
+
+      /**
+       * ⭐ THE CASE NOW CITES IT, at version 1 — which is the citation the board has never had. ⚠️ Only when the
+       * case has no citation already: overwriting one would lose the clause it was actually written against.
+       */
+      let cited = false;
+      if (case_key) {
+        const c = await db.query(
+          `SELECT d.definition_id, d.current_version, v.rules
+             FROM definition d JOIN definition_version v
+               ON v.definition_id = d.definition_id AND v.version = d.current_version
+            WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2`, [entity_id, case_key]);
+        const row = c.rows[0];
+        if (row && !((row.rules || {}).cites || {}).definition_id) {
+          const next = Object.assign({}, row.rules, {
+            cites: { definition_id: id, version: 1, spec: rules.spec, clause: name },
+          });
+          await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                          VALUES ($1,$2,$3,$4,$5)`,
+            [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]);
+          await db.query(`UPDATE definition SET current_version = $2, updated_at = now()
+                            WHERE definition_id = $1 AND entity_id = $3`,
+            [row.definition_id, row.current_version + 1, entity_id]);
+          cited = true;
+        }
+      }
+      return { definition_id: id, clause: name, cited };
+    });
+
+    res.json(Object.assign({ raised: true, state: 'raised' }, out));
+  } catch (err) {
+    res.status(500).json({ error: 'Could not raise it', message: String(err.message || err) });
+  }
+});
+
+/**
+ * GET /api/testing/requirements?state=open — the list, and the filter Athi asked for.
+ *
+ * ⭐ `open` IS THE DEFAULT AND IT MEANS "NOT ACTIONED": raised, plus accepted-but-not-built. Both are waiting on
+ * somebody, which is the question the person opening this screen is asking. ⚠️ Not the same as "raised" alone —
+ * an accepted requirement nobody has built is exactly the one that gets forgotten.
+ */
+router.get('/requirements', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const want = String((req.query || {}).state || 'open');
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND d.kind = 'spec' AND v.rules->>'state' IS NOT NULL
+        ORDER BY d.updated_at DESC LIMIT 500`, [entity_id]));
+
+    const all = r.rows.map((x) => {
+      const ru = x.rules || {};
+      return {
+        definition_id: x.definition_id, clause: x.name, spec: x.sub_kind || null,
+        requirement: ru.text || '', observed: ru.observed || '', priority: ru.priority || 'Medium',
+        state: ru.state || 'raised', shelf: x.status,
+        raised_from: ru.raised_from || null, raised_by: ru.raised_by || null, raised_at: ru.raised_at || null,
+        why: ru.why || null, history: ru.history || [], at: x.updated_at,
+      };
+    });
+    /* ⭐ A BACKLOG READS BY PRIORITY FIRST. Newest-first is right for a log and wrong for a worklist — the
+       oldest High is exactly the row that must not sink. Within a priority, oldest first: it has waited longest. */
+    const RANK = { High: 0, Medium: 1, Low: 2 };
+    all.sort((a, b2) => (RANK[a.priority] - RANK[b2.priority]) || (String(a.raised_at) < String(b2.raised_at) ? -1 : 1));
+    const open = all.filter((q) => q.state === 'raised' || q.state === 'accepted');
+    const list = want === 'all' ? all : (want === 'open' ? open : all.filter((q) => q.state === want));
+    /* ⭐ the counts travel with the list so a filter can say what it is hiding rather than just showing less */
+    const counts = REQ_STATES.reduce((a, k) => { a[k] = all.filter((q) => q.state === k).length; return a; }, {});
+    res.json({ requirements: list, count: list.length, counts, open: open.length, total: all.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read them', message: String(err.message || err) });
+  }
+});
+
+/**
+ * PATCH /api/testing/requirements/:id — set the flag.
+ *
+ * ⚠️⚠️ A DECISION IS APPENDED, NEVER OVERWRITTEN. Every state change adds a new definition_version and a line to
+ * `history` with who and when — the same append-only argument the result ledger won. A requirement whose status
+ * can be changed with no trace is a requirement nobody can be held to.
+ * ⚠️ REJECTING NEEDS A REASON. "No" without one gets re-raised by the next tester, and rightly.
+ */
+router.patch('/requirements/:id', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const who = testerOf(req);
+    const state = String((req.body || {}).state || '');
+    const why = String((req.body || {}).why || '').trim();
+    /**
+     * ⭐ A PRIORITY-ONLY CHANGE IS LEGITIMATE. Re-ranking the backlog is not a decision about the requirement,
+     * so it must not be forced to restate one — an empty state means "leave it where it is".
+     * ⚠️ It still lands in the history: a row that moved to the top and nobody knows who moved it is how a
+     * backlog stops being trusted.
+     */
+    const onlyPriority = !state && (req.body || {}).priority;
+    if (!onlyPriority && REQ_STATES.indexOf(state) < 0) {
+      return res.status(400).json({ error: 'Not a state', message: 'One of: ' + REQ_STATES.join(' · ') });
+    }
+    if (state === 'rejected' && !why) {
+      return res.status(400).json({ error: 'Say why',
+        message: 'A rejected requirement needs its reason, or the next tester raises it again.' });
+    }
+
+    const out = await withEntity(entity_id, async (db) => {
+      const c = await db.query(
+        `SELECT d.definition_id, d.current_version, v.rules
+           FROM definition d JOIN definition_version v
+             ON v.definition_id = d.definition_id AND v.version = d.current_version
+          WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.definition_id = $2::uuid`,
+        [entity_id, req.params.id]);
+      const row = c.rows[0];
+      if (!row) return null;
+      const ru = row.rules || {};
+      /* ⚠️ re-prioritising is a decision too, and lands in the same history rather than editing quietly */
+      const PRI = ['High', 'Medium', 'Low'];
+      const pri = PRI.indexOf(String((req.body || {}).priority || '')) >= 0 ? String(req.body.priority) : (ru.priority || 'Medium');
+      const nextState = state || ru.state || 'raised';
+      const next = Object.assign({}, ru, {
+        state: nextState, priority: pri, why: why || ru.why || null,
+        history: (ru.history || []).concat([{ state: nextState, priority: pri, by: who.name, at: new Date().toISOString(), why: why || null }]),
+      });
+      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,$2,$3,$4,$5)`,
+        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]);
+      await db.query(`UPDATE definition SET current_version = $2, status = $3, updated_at = now()
+                        WHERE definition_id = $1 AND entity_id = $4`,
+        [row.definition_id, row.current_version + 1, REQ_SHELF[nextState], entity_id]);
+      return { state: nextState, shelf: REQ_SHELF[nextState], version: row.current_version + 1 };
+    });
+
+    if (!out) return res.status(404).json({ error: 'Not found', message: 'No requirement with that id.' });
+    res.json(Object.assign({ ok: true }, out));
+  } catch (err) {
+    res.status(500).json({ error: 'Could not set it', message: String(err.message || err) });
+  }
+});
+
 router.get('/stale', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
