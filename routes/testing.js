@@ -32,6 +32,7 @@
  * b213 made for points, and the same append-only grant: a re-test is a NEW ROW and the latest one wins.
  */
 const express = require('express');
+const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
@@ -1273,6 +1274,10 @@ router.post('/incidents', auth, async (req, res) => {
         /* ⭐ where they were standing, in the words the registers already use — CAT005 is a work item,
            'the catalogue screen' is a conversation. Shape-checked, and a missing code stays missing. */
         screen_code: codeOf(b.screen_code), popup_code: codeOf(b.popup_code),
+        /* ⭐ the screenshot, by id — the bytes stay in the attachment store and are read through its own
+           entity-scoped door. ⚠️ Shape-checked: an id that is not a uuid is dropped rather than stored as
+           a link that will 404 for whoever opens the incident next. */
+        evidence_id: /^[0-9a-f-]{36}$/i.test(String(b.evidence_id || '')) ? String(b.evidence_id) : null,
         affected: String(b.affected || '').trim() || null,
         build: String(b.build || '').trim() || null,
         found_by_case: String(b.case_key || '').trim() || null,
@@ -1329,6 +1334,7 @@ router.get('/incidents', auth, async (req, res) => {
         definition_id: x.definition_id, ref: x.name,
         observed: ru.observed || '', severity: sev, severity_means: SEV_MEANS[sev] || null,
         screen_code: ru.screen_code || null, popup_code: ru.popup_code || null,
+        evidence_id: ru.evidence_id || null,
         affected: ru.affected || null, build: ru.build || null,
         found_by_case: ru.found_by_case || null,
         state: ru.state || 'raised', shelf: x.status,
@@ -1443,6 +1449,58 @@ router.patch('/incidents/:id', auth, async (req, res) => {
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not set it', message: String(err.message || err) });
+  }
+});
+
+/**
+ * ── ⭐⭐⭐ A PICTURE OF WHAT THEY ARE SEEING ──────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-12: *"if he wants a screenshot to be taken, can we provide an icon, so the screenshot is
+ * taken and attached?"*
+ *
+ * ⭐⭐ NO NEW TABLE, NO NEW STORAGE, NO MIGRATION. `cb_attachment` already holds bytes per entity under RLS,
+ * already falls back from object storage to the database when the bucket is not configured, and its GET is
+ * already entity-scoped and XSS-hardened — an uploader-declared MIME cannot render as anything but an image
+ * or a PDF. All of that was built for chit attachments and none of it cares that this one has no chit.
+ * [[feedback-search-before-you-build]]
+ *
+ * ⚠️ `chit_id` IS NULL AND THAT IS THE WHOLE TRICK. A test screenshot belongs to the tester who took it and
+ * to nobody else — so there is no participant fan-out here, which is the one thing chit attachments do that
+ * would be wrong for evidence.
+ *
+ * ⚠️ IMAGES ONLY, AND 4 MB. A tester pasting a PDF of a spec into an incident is not evidence of what they
+ * saw, and an unbounded upload from a browser is a way to fill a database by accident.
+ */
+router.post('/evidence', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const who = testerOf(req);
+    const b = req.body || {};
+    const mime = String(b.mime || '').toLowerCase();
+    const data = String(b.data_base64 || '');
+    if (!data) return res.status(400).json({ error: 'Nothing to attach', message: 'Send data_base64.' });
+    if (!/^image\/(png|jpe?g|gif|webp|bmp)$/.test(mime)) {
+      return res.status(400).json({ error: 'Not an image',
+        message: 'A screenshot, please \u2014 png, jpg, gif, webp or bmp.' });
+    }
+    const buffer = Buffer.from(data, 'base64');
+    if (!buffer.length) return res.status(400).json({ error: 'Empty', message: 'That decoded to nothing.' });
+    if (buffer.length > 4 * 1024 * 1024) {
+      return res.status(413).json({ error: 'Too large',
+        message: 'Screenshots are capped at 4 MB \u2014 crop it, or grab the part that matters.' });
+    }
+    const id = await storage.putForParticipants({
+      chit_id: null, message_id: null, line_index: null,
+      name: String(b.name || 'screenshot.png').slice(0, 120),
+      mime: mime, size: buffer.length, buffer: buffer,
+      uploaded_by: who.id, participants: [entity_id], forEntity: entity_id,
+    });
+    if (!id) return res.status(500).json({ error: 'Not stored', message: 'The attachment store returned nothing.' });
+    /* ⭐ the id is all the caller keeps; the bytes come back from /api/attachments/:id, which is already
+       entity-scoped, so evidence cannot be read by anyone the tester does not work for. */
+    res.json({ id: id, name: b.name || null, mime: mime, size: buffer.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not attach it', message: String(err.message || err) });
   }
 });
 
