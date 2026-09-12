@@ -147,7 +147,7 @@ router.get('/cases', auth, async (req, res) => {
  * at all: a case loaded by the button and a case loaded from a file must be the SAME row, or the board holds two
  * kinds of case that only look alike.
  */
-async function importCases(entity_id, who, rows) {
+async function importCases(entity_id, who, rows, mode) {
   const out = { added: 0, updated: 0, unchanged: 0, cases: [] };
 
   /* ── 1 · normalise, and drop anything with no key. One pass, no database. ── */
@@ -381,7 +381,21 @@ async function importCases(entity_id, who, rows) {
     const live = await db.query(
       `SELECT definition_id, name FROM definition
         WHERE entity_id = $1 AND kind = 'testcase' AND status <> 'retired'`, [entity_id]);
-    const orphans = live.rows.filter((r) => !inDoc.has(r.name));
+    /**
+     * ── ⚠️⚠️⚠️ ADDING ONE CASE IS NOT A REBUILD, AND THIS ROUTE COULD NOT TELL THE DIFFERENCE ──────────────
+     *
+     * Found 2026-09-12 while wiring the lab's "write a case" door: a one-case payload came back listing
+     * 1447 ORPHANS. Nothing was retired, and only because the 90% plausibility guard below refused — a
+     * guard written for a different worry (a truncated document) that happened to cover this one.
+     *
+     * ⚠️ LUCK IS NOT A DESIGN. On a board with one or two cases the same call would have retired the lot,
+     * and the person writing their second case would have deleted their first.
+     *
+     * ⭐ So the CALLER says which it is. `mode: "add"` means these rows are additions and everything else on
+     * the board is none of this call's business; the seed button and the document import say nothing and
+     * keep the rebuild behaviour they have always had.
+     */
+    const orphans = mode === 'add' ? [] : live.rows.filter((r) => !inDoc.has(r.name));
 
     out.orphans = orphans.map((r) => r.name);
     /* ⚠️ the threshold is on the INCOMING document against what is already there */
@@ -408,7 +422,10 @@ router.post('/cases/import', auth, async (req, res) => {
   try {
     const rows = Array.isArray(req.body && req.body.cases) ? req.body.cases : [];
     if (!rows.length) return res.status(400).json({ error: 'Nothing to import', message: 'Send { cases: [...] }.' });
-    res.json(await importCases(auth.entityOf(req), testerOf(req), rows));
+    /* ⚠️ shape-checked, not trusted: anything but the exact word means a rebuild, which is the safe default
+       — a typo must never quietly turn a rebuild into an add and leave retired cases live. */
+    const mode = (req.body && req.body.mode === 'add') ? 'add' : null;
+    res.json(await importCases(auth.entityOf(req), testerOf(req), rows, mode));
   } catch (err) {
     res.status(500).json({ error: 'Import failed', message: String(err.message || err) });
   }
