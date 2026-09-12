@@ -553,7 +553,7 @@
  "notes": {
   "engine": "Only the rules DECLARED in tests/engine-manifest.js — Tier A (zero dependencies, forever) and Tier B (bound). engine-boundary.test.js fails the day a Tier A rule grows a require. The other 117 files in lib/ are adoption and infrastructure, counted there not here.",
   "middleware": "Every file in middleware/ — what decides who may do what, before a route sees the request. The database-side half of the same job is RLS, which is on the database row.",
-  "web": "The 24 capabilities app.html loads (cap-*.js). ⚠ CO-ASSIST is here under its OLD NAME: cap-workforce.js. The React pages in src/ and the standalone screens (till.html, promo.html, shop.html, iot-howitworks.html) are not capabilities and are not counted.",
+  "web": "The 24 capabilities app.html loads on demand (cap-*.js), and the 26 SHARED files they lean on — core.js, cart.js, the language packs, the test board’s own verdict and menu shape. ⭐ Shared files were absent from this row until 2026-09-12, so the web layer was reported at the size of its capabilities alone. ⚠ CO-ASSIST is here under its OLD NAME: cap-workforce.js. The React pages in src/ and the standalone screens (till.html, promo.html, shop.html, iot-howitworks.html) are neither, and are still not counted.",
   "api": "One entry per route file, sized in COSMIC function points (ISO/IEC 19761) rather than lines. ⭐ ACTOR IS THE MODEL UNDERNEATH ALL OF THIS: actors.js is the \"B3 Actor model API\", and a person, a co-assist and a connector are each an actor — which is why the word turns up wherever you look. integrations.js is the declared HOME of connectors (catalogue, kit download, heartbeat); connectors.js is the actor + its connections. ⚠ assist.js is NOT the co-assist — it is the tier-1 LLM proxy, so a model key never reaches the browser.",
   "database": "Every TABLE the 196 migrations create — not the migrations themselves, which are changes rather than things. There is no schema document to read: the migrations ARE the schema, so they are read for what they add up to. ⭐ RLS IS THE COLUMN THAT MATTERS, and it says one of three things. · POLICY: the database itself keeps one entity's rows away from another's. · SHARED: the table has no entity column at all — blueprints, capabilities, AI skills, the standards register. Every entity reads the same rows, there is nothing to isolate, and a policy here would be wrong. This is a correct state, not a missing one. · ⚠ UNGUARDED: it HOLDS entity rows and has no policy. That is the only one of the three that is a finding, and there are 17 of them. ⚠ They were all printed as \"none\" until 2026-09-12, which made the 43 correct ones look like failures and hid the 17 real ones among them. ⚠ Born-in is where each table came from; later ALTERs are followed for added columns only, so this is an inventory, not a live schema dump.",
   "bridge": "THE CROSSING, and the half of the product's name that had no row until 2026-09-12. ⚠ NOT A NEW LAYER — every file here also sits on another row, which is the point: a crossing is something the layers DO, not a place. This row answers the question the architecture rows cannot: which code decides that this chit reaches THIS entity and no other, and what rights travel with it. ⭐ IDENTIFY resolves a typed name to one identity or refuses (404, never best-effort delivery). ⭐ CROSS mints ONE COPY PER PARTICIPANT — never shared, always replicated — and freezes the clearances, the governance and the retention floor onto each copy at that moment. ⭐ PROTECT is RLS: after it lands, the database itself refuses rows that are not yours. ⚠ THE KNOWN GAP: the crossing is NOT TAMPER-EVIDENT. chit_hash exists on cb_chit, the RETIRED table; the live chit_header has 22 columns and no content hash. Identity is proven, ownership is enforced and rights are frozen — but nobody can later prove a copy is byte-identical to what was sent, which is exactly what a dispute needs. See BACKLOG-test-cases.md.",
@@ -944,6 +944,7 @@
   ],
   "web": [
    {
+    "tier": "capability",
     "name": "cap-admin",
     "file": "chitbridge-web/public/app/cap-admin.js",
     "purpose": "the \"admin\" capability (progressively loaded on demand).",
@@ -951,6 +952,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-adopt",
     "file": "chitbridge-web/public/app/cap-adopt.js",
     "purpose": "TAKING A SUPPLIER'S DELIVERY INTO YOUR OWN CATALOGUE.",
@@ -958,6 +960,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-categories",
     "file": "chitbridge-web/public/app/cap-categories.js",
     "purpose": "CATEGORIES, the shelf you shape (lazy; ensureCap('categories')).",
@@ -965,6 +968,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-catsetup",
     "file": "chitbridge-web/public/app/cap-catsetup.js",
     "purpose": "CATALOGUE SETUP: how the catalogue is SHAPED (lazy; ensureCap('catsetup')).",
@@ -972,6 +976,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-chit2",
     "file": "chitbridge-web/public/app/cap-chit2.js",
     "purpose": "DESIGN 2: the chit as LINE-LEVEL work (lazy; ensureCap('chit2')).",
@@ -979,6 +984,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-connector",
     "file": "chitbridge-web/public/app/cap-connector.js",
     "purpose": "IoT / ERP connector MANAGEMENT (lazy; loaded via ensureCap('connector') on INVOCATION).",
@@ -986,6 +992,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-definitions",
     "file": "chitbridge-web/public/app/cap-definitions.js",
     "purpose": "DEFINITIONS · the shelf a catalogue takes things off. (lazy capability)",
@@ -993,6 +1000,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-dispute",
     "file": "chitbridge-web/public/app/cap-dispute.js",
     "purpose": "the DISPUTE capability (the USP), lazy-loaded via ensureCap('dispute').",
@@ -1000,6 +1008,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-folders",
     "file": "chitbridge-web/public/app/cap-folders.js",
     "purpose": "FOLDERS capability (lazy; loaded via ensureCap('folders')).",
@@ -1007,6 +1016,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-iddocs",
     "file": "chitbridge-web/public/app/cap-iddocs.js",
     "purpose": "a person's identity record, as ONE module used in every place it appears.",
@@ -1014,6 +1024,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-intake",
     "file": "chitbridge-web/public/app/cap-intake.js",
     "purpose": "THE INTAKE INBOX. Lazy via ensureCap('intake').",
@@ -1021,6 +1032,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-legend",
     "file": "chitbridge-web/public/app/cap-legend.js",
     "purpose": "the 🔑 LEGEND capability: a live map of \"what we serve\".",
@@ -1028,6 +1040,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-match",
     "file": "chitbridge-web/public/app/cap-match.js",
     "purpose": "THE THREE-WAY MATCH (lazy; ensureCap('match')).",
@@ -1035,6 +1048,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-messages",
     "file": "chitbridge-web/public/app/cap-messages.js",
     "purpose": "REPLIES: every external conversation that still wants you, across every chit. Lazy.",
@@ -1042,6 +1056,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-network",
     "file": "chitbridge-web/public/app/cap-network.js",
     "purpose": "DESIGN-FIRST network builder. Lazy via ensureCap('network').",
@@ -1049,6 +1064,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-readiness",
     "file": "chitbridge-web/public/app/cap-readiness.js",
     "purpose": "TRADE capability (lazy; ensureCap('readiness')). Two tabs: • My readiness — the supplier side: the clearances your standards require, gathered vs pending, rolling up.",
@@ -1056,6 +1072,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-register",
     "file": "chitbridge-web/public/app/cap-register.js",
     "purpose": "THE REGISTER. Lazy (ensureCap('register')).",
@@ -1063,6 +1080,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-service",
     "file": "chitbridge-web/public/app/cap-service.js",
     "purpose": "a chit AS A SERVICE REQUEST. Lazy-loaded (ensureCap('service')).",
@@ -1070,6 +1088,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-standards",
     "file": "chitbridge-web/public/app/cap-standards.js",
     "purpose": "THE REGISTER OF STANDARDS, and the argument for following them.",
@@ -1077,6 +1096,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-supplies",
     "file": "chitbridge-web/public/app/cap-supplies.js",
     "purpose": "SUPPLIES: what the shop buys to USE, never to sell.",
@@ -1084,6 +1104,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-testing",
     "file": "chitbridge-web/public/app/cap-testing.js",
     "purpose": "THE TEST PANEL, ON TOP OF THE APP",
@@ -1091,6 +1112,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-traceability",
     "file": "chitbridge-web/public/app/cap-traceability.js",
     "purpose": "TRACEABILITY capability (lazy via ensureCap('traceability')).",
@@ -1098,6 +1120,7 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-workforce",
     "file": "chitbridge-web/public/app/cap-workforce.js",
     "purpose": "the CO-ASSIST (workforce) capability: FUNCTIONALITY only.",
@@ -1105,10 +1128,219 @@
     "stage": null
    },
    {
+    "tier": "capability",
     "name": "cap-worklist",
     "file": "chitbridge-web/public/app/cap-worklist.js",
     "purpose": "MY WORK, across every chit. Lazy (ensureCap('worklist')).",
     "note": "1602 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "attach-ui",
+    "file": "chitbridge-web/public/app/attach-ui.js",
+    "purpose": "ATTACH + VIEW, as a helper any screen can reuse. (classic script, shared global scope)",
+    "note": "529 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "barcode",
+    "file": "chitbridge-web/public/app/barcode.js",
+    "purpose": "CBBarcode — Code 128 as inline SVG, no dependency, no network.",
+    "note": "65 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "cart",
+    "file": "chitbridge-web/public/app/cart.js",
+    "purpose": "CAPABILITY: CART — one basket, everywhere (app/cart.js). Athi, 2026-09-05: \"the cart is a single view we should be able to embed anywhere so we get the same style and response everywhere — single source of truth; convert as a capability and remove duplicate code, so we can work on one piece of code.\"",
+    "note": "2833 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "catalogue-lines",
+    "file": "chitbridge-web/public/app/catalogue-lines.js",
+    "purpose": "ONE walk from a catalogue payload to a list of display rows.",
+    "note": "140 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "catalogue-model",
+    "file": "chitbridge-web/public/app/catalogue-model.js",
+    "purpose": "THE canonical catalogue model (single source of truth).",
+    "note": "715 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "catalogue-starter-categories",
+    "file": "chitbridge-web/public/app/catalogue-starter-categories.js",
+    "purpose": "A SMALL STANDARD SET OF CATEGORIES, PER TRADE.",
+    "note": "100 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "core",
+    "file": "chitbridge-web/public/app/core.js",
+    "purpose": "shared client module for the Task Panel (module 1 of the app split).",
+    "note": "606 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "helpers",
+    "file": "chitbridge-web/public/app/helpers.js",
+    "purpose": "generic, dependency-free helpers (module 2 of the app split).",
+    "note": "122 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "locale",
+    "file": "chitbridge-web/public/app/locale.js",
+    "purpose": "THE LOCALISATION LAYER. One roof for every decision that changes across a border.",
+    "note": "918 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "offers",
+    "file": "chitbridge-web/public/app/offers.js",
+    "purpose": "OFFERS AS A SUBJECT OF THEIR OWN. (classic script, shared global scope)",
+    "note": "1009 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "pick",
+    "file": "chitbridge-web/public/app/pick.js",
+    "purpose": "CBPick: open the catalogue over any screen and hand the selection back.",
+    "note": "206 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "price-resolve",
+    "file": "chitbridge-web/public/app/price-resolve.js",
+    "purpose": "WHICH PRICE APPLIES, AND WHY. (classic script, shared global scope)",
+    "note": "189 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "pricing",
+    "file": "chitbridge-web/public/app/pricing.js",
+    "purpose": "THE PRICING STRUCTURE A PRODUCT CITES, AND THE UNIT PRICE IT YIELDS AT A QUANTITY.",
+    "note": "86 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "search",
+    "file": "chitbridge-web/public/app/search.js",
+    "purpose": "What \"ac co\" means, for the counter and for the Catalogue. Pure — no I/O, no DB, no network; the API only serves the file.",
+    "note": "251 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "step-flow",
+    "file": "chitbridge-web/public/app/step-flow.js",
+    "purpose": "THE step flow. One implementation, used by every screen that composes an order in steps.",
+    "note": "295 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "strings-ar",
+    "file": "chitbridge-web/public/app/strings-ar.js",
+    "purpose": "the Arabic label pack. Loaded by locale.js ONLY when Arabic is chosen.",
+    "note": "801 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "strings-fr",
+    "file": "chitbridge-web/public/app/strings-fr.js",
+    "purpose": "the French label pack. Loaded by locale.js ONLY when French is chosen.",
+    "note": "702 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "strings-hi",
+    "file": "chitbridge-web/public/app/strings-hi.js",
+    "purpose": "the Hindi label pack. Loaded by locale.js ONLY when Hindi is chosen.",
+    "note": "703 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "strings-ta",
+    "file": "chitbridge-web/public/app/strings-ta.js",
+    "purpose": "the Tamil label pack. Loaded by locale.js ONLY when Tamil is chosen.",
+    "note": "701 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "table-resize",
+    "file": "chitbridge-web/public/app/table-resize.js",
+    "purpose": "drag a column edge; the width is yours and it is remembered.",
+    "note": "129 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "tax-engine",
+    "file": "chitbridge-web/public/app/tax-engine.js",
+    "purpose": "Which slab answers for this product, and WHO answered. Pure — no I/O, no DB, no rate table.",
+    "note": "638 lines",
+    "stage": "tested"
+   },
+   {
+    "tier": "shared",
+    "name": "tax-slab",
+    "file": "chitbridge-web/public/app/tax-slab.js",
+    "purpose": "Which slab answers for this product, and WHO answered. Pure — no I/O, no DB, no rate table.",
+    "note": "324 lines",
+    "stage": "tested"
+   },
+   {
+    "tier": "shared",
+    "name": "tax",
+    "file": "chitbridge-web/public/app/tax.js",
+    "purpose": "GST determination: two addresses in, INV-01 vocabulary out. Pure — no I/O, no rate tables, no DB.",
+    "note": "318 lines",
+    "stage": "tested"
+   },
+   {
+    "tier": "shared",
+    "name": "test-menu-tree",
+    "file": "chitbridge-web/public/app/test-menu-tree.js",
+    "purpose": "the product as a menu. ONE shape, two surfaces.",
+    "note": "101 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "test-verdict",
+    "file": "chitbridge-web/public/app/test-verdict.js",
+    "purpose": "what would make this red green. ONE judgement, two surfaces.",
+    "note": "105 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "units",
+    "file": "chitbridge-web/public/app/units.js",
+    "purpose": "vendored VERBATIM from chitbridge-api/lib/units.js (one unit · three names: ours · UN/ECE Rec 20 · GST UQC).",
+    "note": "36 lines",
     "stage": null
    }
   ],
