@@ -241,6 +241,19 @@ async function importCases(entity_id, who, rows) {
         changed_at: c.changed_at || null,
         needs: Array.isArray(c.needs) ? c.needs.slice(0, 4) : null,
         held: c.held || null,
+        /**
+         * ⚠️ AND A THIRD TIME, SAME DOOR, SAME DAY. `menu` and `generated` came from the menu sweep; the
+         * build emitted them on 266 cases and the board showed `menu: (none)` — because this list did not
+         * name them. Three fields, three symptoms, one shape.
+         *
+         * ⭐ `menu` is WHERE IN THE PRODUCT the tester is standing ("Rail › Task"), which Athi asked for so
+         * that somebody reading ONE ROW knows what they are testing and why. `generated` says the case was
+         * swept out
+         * of the rail rather than written by a person — it carries a question, not an expectation, and the board
+         * must never let it read as a verified check.
+         */
+        menu: c.menu || null,
+        generated: c.generated === true,
       },
     });
   }
