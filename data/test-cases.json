@@ -39913,7 +39913,7 @@
    "areas": [],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-08-30T10:04:31+05:30"
+   "changed_at": "2026-09-12T15:21:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/run-tests.js",
@@ -40107,7 +40107,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-08-30T10:04:31+05:30",
+   "changed_at": "2026-09-12T15:21:34+05:30",
    "needs": [
     "the API running"
    ]
@@ -40688,7 +40688,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-12T14:29:04+05:30"
+   "changed_at": "2026-09-12T15:21:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/test_governance.js",
@@ -47783,7 +47783,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 248 lines. Run: node chitbridge-web/scripts/cap-network-render.test.mjs",
+   "note": "test.guard · unit · 252 lines. Run: node chitbridge-web/scripts/cap-network-render.test.mjs",
    "layer": "web",
    "test_type": "unit",
    "group": "test.guard",
@@ -47795,7 +47795,7 @@
     "engine/locale.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-08-22T22:26:36+05:30"
+   "changed_at": "2026-09-12T15:25:01+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/cart-ui.test.mjs",
@@ -47808,7 +47808,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 297 lines. Run: node chitbridge-web/scripts/cart-ui.test.mjs",
+   "note": "test.guard · unit · 300 lines. Run: node chitbridge-web/scripts/cart-ui.test.mjs",
    "layer": "web",
    "test_type": "unit",
    "group": "test.guard",
@@ -47818,7 +47818,7 @@
    "areas": [],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-08-09T01:49:19+05:30"
+   "changed_at": "2026-09-12T15:25:01+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/check-adoption.js",
