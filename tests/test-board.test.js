@@ -212,9 +212,25 @@ it('⭐⭐⭐ a case cites its clause AT A VERSION, and stale is derived from th
   assert.ok(/cites: c\.cites/.test(route), 'a case no longer carries its citation');
   assert.ok(/cites'->>'version'\)::int < s\.current_version/.test(route),
     'stale is no longer derived by comparing the cited version with the clause current version');
-  /* ⚠️ IT REPORTS, IT DOES NOT ACT — no result may be deleted on the strength of a version number */
-  assert.ok(!/DELETE FROM test_result|UPDATE definition SET status = 'retired'/.test(route),
-    'the stale path destroys evidence — it must only report');
+  /**
+   * ⚠️ IT REPORTS, IT DOES NOT ACT — no result may be deleted on the strength of a version number.
+   *
+   * ⚠️⚠️ SCOPED TO THE STALE HANDLER, and it was not always. Grepping the whole file for
+   * `UPDATE definition SET status = 'retired'` also caught the ORPHAN RETIREMENT in importCases, which is a
+   * different mechanism answering a different question: a case whose FILE no longer exists, retired only when
+   * the incoming document carries at least 90% of what the board already holds, and retired rather than
+   * deleted — the case and every result hanging off it stay on the record and can be brought back by name.
+   * ⭐ A rule about one path, enforced over a whole file, eventually vetoes something it was never about.
+   */
+  const staleAt = route.indexOf("router.get('/stale'");
+  const staleEnd = staleAt > -1 ? route.indexOf("router.", staleAt + 20) : -1;
+  const stalePath = staleAt > -1 ? route.slice(staleAt, staleEnd > -1 ? staleEnd : route.length) : route;
+  assert.ok(!/UPDATE definition SET status = 'retired'/.test(stalePath),
+    'the stale path retires cases — it must only report');
+
+  /* ⭐ AND THIS HALF STAYS FILE-WIDE: no result is deleted anywhere, by any path, for any reason. */
+  assert.ok(!/DELETE FROM test_result/.test(route),
+    'a result is deleted somewhere in this route — evidence is never destroyed');
 });
 
 console.log('— who tested it —');
