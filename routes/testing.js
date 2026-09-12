@@ -1742,6 +1742,42 @@ router.get('/report', auth, async (req, res) => {
           WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid)
           ORDER BY case_key, at DESC`, [entity_id, run_id]);
 
+      /**
+       * ── ⭐⭐⭐ WHO DID WHAT, PER PERSON ────────────────────────────────────────────────────────────────────
+       *
+       * Athi, 2026-09-13: *"if 10 people are doing testing using 10 different ids, we should get all report
+       * together? per id?"*
+       *
+       * ⭐ BOTH, AND THE DATA WAS ALREADY THERE. Every result row carries `tested_by` — the person's own
+       * identity, not the shop's — and `tester_name` beside it. Ten people signed in to one entity write
+       * into one board, and RLS shows it to all of them: together by default, and separable because every
+       * row knows who. What was missing was only the grouping.
+       *
+       * ⚠️⚠️ TEN SEPARATE ENTITIES IS A DIFFERENT ANSWER AND THE RIGHT ONE IS "NO". If each tester signs in
+       * as their own shop, RLS keeps the boards apart and no combined report exists — that is the core
+       * principle working, not a gap ([[reference-cb-core-principle]]). Ten testers of ONE product should be
+       * ten identities in one entity.
+       *
+       * ⚠️ GROUPED BY `tested_by`, NOT BY NAME. Two people can share a display name and one person can change
+       * theirs; the identity is what does not move. The name comes along for reading.
+       */
+      const people = await db.query(
+        `WITH latest AS (
+           SELECT DISTINCT ON (case_key) case_key, status, tested_by, tester_name, at
+             FROM test_result
+            WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid)
+            ORDER BY case_key, at DESC
+         )
+         SELECT tested_by, max(tester_name) AS tester_name, count(*)::int AS recorded,
+                count(*) FILTER (WHERE status = 'pass')::int    AS passed,
+                count(*) FILTER (WHERE status = 'fail')::int    AS failed,
+                count(*) FILTER (WHERE status = 'blocked')::int AS blocked,
+                count(*) FILTER (WHERE status = 'skipped')::int AS skipped,
+                min(at) AS first_at, max(at) AS last_at
+           FROM latest
+          GROUP BY tested_by
+          ORDER BY count(*) DESC`, [entity_id, run_id]);
+
       const runs = await db.query(
         `SELECT run_id, max(run_label) AS run_label, max(build) AS build,
                 min(at) AS started, max(at) AS finished,
@@ -1761,7 +1797,7 @@ router.get('/report', auth, async (req, res) => {
           WHERE d.entity_id = $1 AND d.kind='testcase' AND d.status <> 'retired'
             AND (v.rules->'cites'->>'version')::int < sp.current_version`, [entity_id]);
 
-      return { cover: cover.rows, bad: bad.rows, runs: runs.rows, stale: stale.rows[0] ? stale.rows[0].n : 0 };
+      return { cover: cover.rows, bad: bad.rows, runs: runs.rows, people: people.rows, stale: stale.rows[0] ? stale.rows[0].n : 0 };
     });
 
     const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0 };
@@ -1804,6 +1840,24 @@ router.get('/report', auth, async (req, res) => {
             kinds: [...new Set(data.runs.flatMap((r) => String(r.kinds || '').split(', ')))].filter(Boolean),
             layers: [...new Set(data.runs.flatMap((r) => String(r.layers || '').split(', ')))].filter(Boolean),
             builds: [...new Set(data.runs.map((r) => r.build).filter(Boolean))],
+          } },
+
+        /**
+         * ⚠️ IT IS THE LATEST WORD PER CASE, not every row ever written — the same rule the totals use. A
+         * tester who ran one case five times has run ONE case, and a report that says five is a report that
+         * rewards re-pressing the button.
+         */
+        { id: '1b', title: 'By tester', source: 'measured',
+          body: {
+            people: data.people.map((p) => ({
+              tester: p.tester_name || 'someone', tester_id: p.tested_by,
+              recorded: p.recorded, passed: p.passed, failed: p.failed,
+              blocked: p.blocked, skipped: p.skipped,
+              first_at: p.first_at, last_at: p.last_at,
+            })),
+            note: data.people.length > 1
+              ? 'Everyone signed in to this entity writes to one board; each row carries who recorded it.'
+              : 'One person has recorded anything so far.',
           } },
 
         { id: '2', title: 'Test results', source: 'measured',
