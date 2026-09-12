@@ -10244,34 +10244,6 @@
    "changed_at": "2026-07-13T22:35:23+05:30"
   },
   {
-   "case_key": "chitbridge-api/test/hat-gate.test.cjs",
-   "module_key": "chitbridge-api/test",
-   "module_name": "API guards",
-   "intro": "",
-   "title": "Unit-test the hat gate in isolation — before it goes anywhere near a deploy.",
-   "claim": "Unit-test the hat gate in isolation — before it goes anywhere near a deploy.",
-   "priority": "Medium",
-   "pre": "",
-   "data": "",
-   "steps": [],
-   "note": "test.guard · unit · 84 lines. Run: node chitbridge-api/test/hat-gate.test.cjs",
-   "layer": "engine",
-   "test_type": "unit",
-   "group": "test.guard",
-   "automated": true,
-   "seq": 90,
-   "step": "",
-   "areas": [
-    "api",
-    "middleware"
-   ],
-   "subjects": [
-    "middleware/hat-gate.js"
-   ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-08-18T21:38:12+05:30"
-  },
-  {
    "case_key": "chitbridge-api/tests/access-events.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -11460,6 +11432,33 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-09-11T10:01:02+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/hat-gate.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "Unit-test the hat gate in isolation — before it goes anywhere near a deploy.",
+   "claim": "Unit-test the hat gate in isolation — before it goes anywhere near a deploy.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 84 lines. Run: node chitbridge-api/tests/hat-gate.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "middleware"
+   ],
+   "subjects": [
+    "middleware/hat-gate.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
   },
   {
    "case_key": "chitbridge-api/tests/iam-access.test.cjs",
