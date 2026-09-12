@@ -1431,6 +1431,10 @@ router.get('/folder', auth, async (req, res) => {
          SELECT DISTINCT ON (ch.chit_id)
               ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
               ch.purpose, ch.auto_subject, ch.manual_subject, ch.summary_json, ch.created_at,
+              /* ⭐ ROLE, because the LIST is where a draft has to be recognisable. Without it the mailbox could
+                 not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
+                 "the other party holds a matching copy" about a chit nobody had ever been sent. */
+              ch.role,
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction,
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
