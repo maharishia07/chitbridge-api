@@ -60,7 +60,18 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ||
 const corsOptions = {
   origin(origin, cb) {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    return cb(new Error(`Origin ${origin} not allowed by CORS`));
+    /**
+     * ⚠ A REFUSED ORIGIN IS A DECISION THIS API MADE, NOT A FAULT IT SUFFERED. Found 2026-09-12 walking the
+     * counter through a dev proxy: OPTIONS /api/till/snapshot came back 500, which sent me looking for a broken
+     * server. The allowlist was working exactly as written — localhost:4173 is correctly not on it — but a bare
+     * Error falls through to the catch-all handler, which answers 500 and logs 'unhandled'.
+     * ⭐ The log entry is the worse half: a policy refusal filed as an unhandled error teaches you to skim past
+     * the one line that would have told you the answer.
+     */
+    const err = new Error(`Origin ${origin} not allowed by CORS`);
+    err.status = 403;
+    err.code = 'ORIGIN_NOT_ALLOWED';
+    return cb(err);
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   /**
@@ -295,6 +306,17 @@ app.use((req, res) => {
 
 // ── Error handler ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
+  /**
+   * ⭐ A DECISION THIS API MADE ANSWERS AS A DECISION. Only an error that declares this code reaches this
+   * branch — an ordinary throw still gets the generic 500 below, so nothing new leaks. The origin is echoed
+   * back because the caller already knows it; what they do not know is that it was refused on purpose.
+   */
+  if (err && err.code === 'ORIGIN_NOT_ALLOWED') {
+    log.warn('origin refused', { id: req.id, path: req.path, origin: req.headers.origin || null,
+      reason: 'not in ALLOWED_ORIGINS — add it on the host to permit this caller' });
+    return res.status(403).json({ error: 'Origin not allowed',
+      message: `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.` });
+  }
   // Full detail stays in server logs (with the request id for traceability); client gets a generic message.
   log.error('unhandled', { id: req.id, path: req.path, err: err.message, stack: err.stack });
   res.status(500).json({ error: 'Server error', message: 'Something went wrong' });

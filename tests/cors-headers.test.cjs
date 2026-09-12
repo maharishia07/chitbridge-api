@@ -72,6 +72,40 @@ for (const h of sent) {
     'and the app will report "You\'re offline" on a working connection');
 }
 
+/**
+ * ── A REFUSED ORIGIN ANSWERS AS A DECISION, NOT AS A FAULT ──────────────────────────────────
+ *
+ * ⚠ Found 2026-09-12 walking the counter through a dev proxy: OPTIONS /api/till/snapshot answered 500 from an
+ * origin the allowlist correctly does not contain. The allowlist was right; the ANSWER was wrong, and it cost
+ * time looking for a broken server. Same family as the bug above — a true refusal reported as something else.
+ *
+ * ⭐ THE RISK THIS GUARDS IS THE PAIRING, which is why both halves are asserted together: a code set in the
+ * origin callback that no handler branches on is a 500 again, silently, and nothing would say so.
+ */
+const CODE = 'ORIGIN_NOT_ALLOWED';
+const originCb = server.slice(server.indexOf('const corsOptions'), server.indexOf('allowedHeaders:'));
+const handler = server.slice(server.indexOf('app.use((err, req, res, next)'));
+
+/** ⚠ Plain string checks, not regexes: what is asserted here IS the literal text of a contract between two
+    places in one file, and a regex would only add a way to be wrong about it. */
+const wants = [
+  [originCb, "code = '" + CODE + "'",
+    'the CORS origin callback rejects without ' + CODE + ' - a bare Error falls through to the catch-all '
+    + 'handler, which answers 500 and logs it as unhandled'],
+  [handler, "err.code === '" + CODE + "'",
+    'the error handler does not branch on ' + CODE + ' - the code is set and nobody reads it, so a refused '
+    + 'origin still answers 500'],
+  [handler, 'status(403)',
+    'the ' + CODE + ' branch does not answer 403 - an allowlist decision must not read as a server fault'],
+  [handler, "log.warn('origin refused'",
+    "a refused origin is not logged as 'origin refused' - filed under log.error('unhandled') it teaches you "
+    + 'to skim past the line that answers the question'],
+];
+for (const [where, want, why] of wants) {
+  if (where.includes(want)) pass++; else fails.push(why);
+}
+if (!fails.length) console.log('  OK - a refused origin answers 403, named, and is logged as a decision');
+
 fails.forEach((f) => console.error('  x ' + f));
 if (!fails.length) console.log(`  OK — ${pass} header(s) declared on both sides\n`);
 process.exit(fails.length ? 1 : 0);
