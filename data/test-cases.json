@@ -440,7 +440,8 @@
   "middleware": "Every file in middleware/ — what decides who may do what, before a route sees the request. The database-side half of the same job is RLS, which is on the database row.",
   "web": "The 24 capabilities app.html loads (cap-*.js). ⚠ CO-ASSIST is here under its OLD NAME: cap-workforce.js. The React pages in src/ and the standalone screens (till.html, promo.html, shop.html, iot-howitworks.html) are not capabilities and are not counted.",
   "api": "One entry per route file, sized in COSMIC function points (ISO/IEC 19761) rather than lines. ⭐ ACTOR IS THE MODEL UNDERNEATH ALL OF THIS: actors.js is the \"B3 Actor model API\", and a person, a co-assist and a connector are each an actor — which is why the word turns up wherever you look. integrations.js is the declared HOME of connectors (catalogue, kit download, heartbeat); connectors.js is the actor + its connections. ⚠ assist.js is NOT the co-assist — it is the tier-1 LLM proxy, so a model key never reaches the browser.",
-  "database": "Every TABLE the 196 migrations create — not the migrations themselves, which are changes rather than things. There is no schema document to read: the migrations ARE the schema, so they are read for what they add up to. ⭐ The column headed RLS is the one that matters here: a table with a POLICY keeps one entity's rows away from another's, and that is this platform's whole isolation model. ⚠ \"enabled, no policy\" is called out separately — under FORCE such a table returns nothing to anyone, which is a different fault from an unguarded one. ⚠ Born-in is where each table came from; later ALTERs are followed for added columns only, so this is an inventory, not a live schema dump.",
+  "database": "Every TABLE the 196 migrations create — not the migrations themselves, which are changes rather than things. There is no schema document to read: the migrations ARE the schema, so they are read for what they add up to. ⭐ RLS IS THE COLUMN THAT MATTERS, and it says one of three things. · POLICY: the database itself keeps one entity's rows away from another's. · SHARED: the table has no entity column at all — blueprints, capabilities, AI skills, the standards register. Every entity reads the same rows, there is nothing to isolate, and a policy here would be wrong. This is a correct state, not a missing one. · ⚠ UNGUARDED: it HOLDS entity rows and has no policy. That is the only one of the three that is a finding, and there are 17 of them. ⚠ They were all printed as \"none\" until 2026-09-12, which made the 43 correct ones look like failures and hid the 17 real ones among them. ⚠ Born-in is where each table came from; later ALTERs are followed for added columns only, so this is an inventory, not a live schema dump.",
+  "bridge": "THE CROSSING, and the half of the product's name that had no row until 2026-09-12. ⚠ NOT A NEW LAYER — every file here also sits on another row, which is the point: a crossing is something the layers DO, not a place. This row answers the question the architecture rows cannot: which code decides that this chit reaches THIS entity and no other, and what rights travel with it. ⭐ IDENTIFY resolves a typed name to one identity or refuses (404, never best-effort delivery). ⭐ CROSS mints ONE COPY PER PARTICIPANT — never shared, always replicated — and freezes the clearances, the governance and the retention floor onto each copy at that moment. ⭐ PROTECT is RLS: after it lands, the database itself refuses rows that are not yours. ⚠ THE KNOWN GAP: the crossing is NOT TAMPER-EVIDENT. chit_hash exists on cb_chit, the RETIRED table; the live chit_header has 22 columns and no content hash. Identity is proven, ownership is enforced and rights are frozen — but nobody can later prove a copy is byte-identical to what was sent, which is exactly what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "ONE CONCEPT, and routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ So IoT and ERP are not two subjects — they are the two shapes of ONE connection string, and routes/integrations.js adds that a downloaded kit IS a co-assist connector. That is why co-assist, IoT, ERP and Tally all land here, and why ACTOR is the word you meet first. ⚠ The list below is the FILES: ADAPTER (one per foreign system), KIT (the spine that drives them), CHANNEL (how a chit reaches a person). IoT has no adapter among them — its 3 file(s) are the signal blueprint and the lifecycle scripts, and it becomes a row the day it is written as an adapter."
  },
  "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 469 cases read from a test file, plus 150 written by hand for the journeys no file covers.",
@@ -1010,7 +1011,7 @@
     "purpose": "skill_id · category · gate · kind · format · label · system · vertical · +3 more",
     "note": "11 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b110_ai_skills.sql"
    },
    {
@@ -1018,7 +1019,7 @@
     "purpose": "id · context · topics · question · answer · fit · media · sort · +2 more",
     "note": "10 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1026,7 +1027,7 @@
     "purpose": "source_key · label · authority · description · version · created_at",
     "note": "6 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b60_blueprint_catalogue.sql"
    },
    {
@@ -1034,7 +1035,7 @@
     "purpose": "template_key · source_key · label · description · data_elements · display_order · created_at",
     "note": "7 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b60_blueprint_catalogue.sql"
    },
    {
@@ -1042,7 +1043,7 @@
     "purpose": "blueprint_key · label · pack · active · created_at · updated_at  — later: source_key · template_keys · requires · prerequisites · provides",
     "note": "12 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1050,7 +1051,7 @@
     "purpose": "boilerplate_key · version · label · region_code · locale · sealed · active · minted_at",
     "note": "8 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b88_boilerplate.sql"
    },
    {
@@ -1058,7 +1059,7 @@
     "purpose": "boilerplate_key · version · source_key · source_kind · facet",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b88_boilerplate.sql"
    },
    {
@@ -1066,7 +1067,7 @@
     "purpose": "capability_key · version · label · vertical · source_key · governance · work_patterns · active · +1 more",
     "note": "9 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b71_capability_mint.sql"
    },
    {
@@ -1121,8 +1122,8 @@
     "name": "catalogue_source",
     "purpose": "source_key · version · for_vertical · title · collection · schema · items · commercials_fields · +2 more  — later: owner_entity_id · experience · formatting",
     "note": "13 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/b75_catalogue_reference.sql"
    },
    {
@@ -1138,31 +1139,31 @@
     "purpose": "id · city_id · name · legacy_id",
     "note": "4 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_catalogue_category",
     "purpose": "id · entity_id · name · image · currency_code · currency_id · sort_by · legacy_id",
     "note": "8 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_catalogue_item",
     "purpose": "id · entity_id · name · price · currency_code · currency_id · out_of_stock · copy_flag · +19 more",
     "note": "27 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_chit",
     "purpose": "id · chit_hash · originator_id · parent_id · edge_id · from_entity · to_entity · for_entity · +42 more",
     "note": "50 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1170,7 +1171,7 @@
     "purpose": "id · chit_id · particulars · qty · price · total · reply_qty · reply_price · +5 more",
     "note": "13 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1178,7 +1179,7 @@
     "purpose": "id · chit_id · originator_id · parent_id · created_by · action · description · remark · +2 more",
     "note": "10 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1186,7 +1187,7 @@
     "purpose": "id · name · legacy_id",
     "note": "3 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1194,7 +1195,7 @@
     "purpose": "id · business_id · consumer_id · total_visited · field_json_data · status · created_at · updated_at",
     "note": "8 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1202,7 +1203,7 @@
     "purpose": "id · owner_id · contact_id · role · preference · is_favourite · created_at",
     "note": "7 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1210,15 +1211,15 @@
     "purpose": "id · code · name · name_plural · rounding · decimal_digits · symbol · symbol_native · +1 more",
     "note": "9 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_device",
     "purpose": "id · entity_id · service_provider_id · device_id · device_token · platform · priority · updated_at",
     "note": "8 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1226,7 +1227,7 @@
     "purpose": "id · parent_id · child_id · type · state · in_flight · requested_by · approved_by · +6 more",
     "note": "14 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1234,7 +1235,7 @@
     "purpose": "id · bridge_id · name · mode · owner_scope · path · claimed · status · +38 more",
     "note": "46 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1242,23 +1243,23 @@
     "purpose": "id · owner_id · employee_id · employee_name · field_json_data",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_entity_supplier",
     "purpose": "id · entity_id · industry_id · building_id",
     "note": "4 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_external_reference",
     "purpose": "id · entity_id · purpose · purpose_type · contact_number · contact_name · contact_visit_count · contact_visit_value · +12 more",
     "note": "20 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1266,23 +1267,23 @@
     "purpose": "id · name · legacy_id",
     "note": "3 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_task",
     "purpose": "id · task_purpose · link_flag · from_entity · from_chit_id · from_ref_id · from_case_id · from_purpose · +10 more",
     "note": "18 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "cb_transaction_history",
     "purpose": "id · info_entity · to_entity · txn_status · batch_create_date · batch_process_date · header_count · total_chit_item_count · +4 more",
     "note": "12 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1426,7 +1427,7 @@
     "purpose": "connection_id · from_entity_id · from_display_name · from_bridge_id · to_entity_id · to_display_name · to_bridge_id · status · +3 more",
     "note": "11 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1442,7 +1443,7 @@
     "purpose": "constitution_key · version · label · vertical · governance · capabilities · active · minted_at  — later: is_default",
     "note": "9 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b72_constitution_mint.sql"
    },
    {
@@ -1450,7 +1451,7 @@
     "purpose": "container_id · region_code · overrides · updated_at",
     "note": "4 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b81_regional_scatter.sql"
    },
    {
@@ -1481,16 +1482,16 @@
     "name": "dispute_participants",
     "purpose": "dispute_id · chit_id · entity_id · display_name · role · dispute_status · added_at",
     "note": "7 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "entity_actor_settings",
     "purpose": "setting_id · entity_id · assignment_model · default_max_tasks · all_task_visible · auto_return_on_short_break · created_at · updated_at · +2 more",
     "note": "10 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1521,8 +1522,8 @@
     "name": "entity_schemas",
     "purpose": "schema_id · entity_id · schema_name · schema_type · source · status · is_default · version · +4 more",
     "note": "12 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1569,8 +1570,8 @@
     "name": "governance_exceptions",
     "purpose": "exception_id · entity_id · klass · key · detail · created_at",
     "note": "6 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1586,7 +1587,7 @@
     "purpose": "identity_id · bridge_id · display_name · email · email_verified · phone · country · currency_code · +48 more  — later: catalogue_visibility · purpose · sort_order · lat · lng",
     "note": "82 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1602,7 +1603,7 @@
     "purpose": "installation_key · label · purpose · cloud_provider · region · zone · domain · currency · +6 more",
     "note": "14 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b74_platform_governance.sql"
    },
    {
@@ -1610,7 +1611,7 @@
     "purpose": "dest_key",
     "note": "1 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b91_trade_lanes.sql"
    },
    {
@@ -1625,8 +1626,8 @@
     "name": "media_blobs",
     "purpose": "key · entity_id · mime · size · bytes · created_at",
     "note": "6 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/b204_media_blobs_APPLY.sql"
    },
    {
@@ -1650,7 +1651,7 @@
     "purpose": "constitution_id · root_id · version · as_of · params · plan_menu · is_active · created_at · +1 more",
     "note": "9 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1658,15 +1659,15 @@
     "purpose": "root_id · label · sealed · singleton · created_at",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
     "name": "product_container",
     "purpose": "container_id · owner_entity_id · source_key · name · current_version · created_at · updated_at",
     "note": "7 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/b80_container_model.sql"
    },
    {
@@ -1674,7 +1675,7 @@
     "purpose": "container_id · version · content · schema · schema_version · minted_at",
     "note": "6 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b80_container_model.sql"
    },
    {
@@ -1682,7 +1683,7 @@
     "purpose": "region_code · currency · units · language · jurisdiction",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b81_regional_scatter.sql"
    },
    {
@@ -1738,7 +1739,7 @@
     "purpose": "container_id · version · region_code · resolved · sealed_at",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b81_regional_scatter.sql"
    },
    {
@@ -1754,7 +1755,7 @@
     "purpose": "field_id · schema_id · field_name · field_key · field_type · required · min_value · max_value · +6 more  — later: unit · leg · via",
     "note": "17 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1762,7 +1763,7 @@
     "purpose": "id · ord · neighbour · does · difference",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1770,7 +1771,7 @@
     "purpose": "id · lead_id · section · rating · message · created_at",
     "note": "6 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1778,7 +1779,7 @@
     "purpose": "id · layer_id · name · meaning · readiness · ex_pharmacy · ex_restaurant · pleasure · +2 more",
     "note": "10 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1786,7 +1787,7 @@
     "purpose": "id · ord · name · purpose",
     "note": "4 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1794,7 +1795,7 @@
     "purpose": "id · name · email · org · created_at",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1802,7 +1803,7 @@
     "purpose": "id · ord · question · disposition · detail",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1810,7 +1811,7 @@
     "purpose": "id · name · customer_home · discovery · note",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1818,7 +1819,7 @@
     "purpose": "id · ord · name · why · readiness · pleasure · pain",
     "note": "7 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1826,7 +1827,7 @@
     "purpose": "id · source_key · distributor_entity_id · locality · created_at",
     "note": "5 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b79_source_penetration.sql"
    },
    {
@@ -1834,15 +1835,15 @@
     "purpose": "standard_key · doc_key · title · mandate · clause · capture_type · scope · frequency · +2 more",
     "note": "10 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b90_compliance.sql"
    },
    {
     "name": "standard_source",
     "purpose": "standard_key · version · title · facet · template · active · minted_at  — later: owner_entity_id · applicability · guidance · voluntary",
     "note": "11 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/b85_standard_source.sql"
    },
    {
@@ -1873,8 +1874,8 @@
     "name": "supplier_list",
     "purpose": "supplier_list_id · owner_entity_id · supplier_entity_id · category · added_via · created_at · nickname · preferred · +1 more  — later: supply_kind",
     "note": "10 cols",
-    "stage": null,
-    "tier": "none",
+    "stage": "held",
+    "tier": "unguarded",
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
@@ -1922,7 +1923,7 @@
     "purpose": "vertical",
     "note": "1 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b91_trade_lanes.sql"
    },
    {
@@ -1938,7 +1939,7 @@
     "purpose": "pattern_key · version · vertical · source_key · template_keys · governance · active · minted_at  — later: capability_key",
     "note": "9 cols",
     "stage": null,
-    "tier": "none",
+    "tier": "shared",
     "file": "chitbridge-api/chitbridge-api/migrations/b70_iot_signal_blueprint.sql"
    }
   ],
@@ -2038,6 +2039,72 @@
     "note": "84 lines",
     "stage": null,
     "tier": "channel"
+   }
+  ],
+  "bridge": [
+   {
+    "name": "chits",
+    "file": "chitbridge-api/routes/chits.js",
+    "purpose": "Resolution in order of how STABLE an identifier is, never how convenient: entity_id, then bridge_id, then user_id (the handle), and display_name only as a LAST resort — a display name is a VIEW name, free to change. ⚠ Two guards stop a chit reaching the wrong party: status must be active, and a minted party (user_id ~) can NEVER be resolved by name, because minted suppliers carry ordinary shop names and a name typed by any business could otherwise reach another business's private supplier record. Nothing resolves → 404 and the send is refused.",
+    "note": "4356 lines",
+    "stage": null,
+    "tier": "identify"
+   },
+   {
+    "name": "handle",
+    "file": "chitbridge-api/lib/handle.js",
+    "purpose": "What a handle IS: athi.clothing — a name a person can say out loud, exactly two levels, chosen at registration and never changed. Pure, no database.",
+    "note": "352 lines",
+    "stage": "tested",
+    "tier": "identify"
+   },
+   {
+    "name": "mint",
+    "file": "chitbridge-api/lib/mint.js",
+    "purpose": "The SHAPE of a chit in one place, so four minting paths agree on what one is.",
+    "note": "214 lines",
+    "stage": null,
+    "tier": "cross"
+   },
+   {
+    "name": "readiness",
+    "file": "chitbridge-api/lib/readiness.js",
+    "purpose": "What gets FROZEN onto the copy at the crossing: the sender's held clearances and assurance rung, snapshot per copy. Later changes never alter a copy that has already crossed.",
+    "note": "194 lines",
+    "stage": null,
+    "tier": "cross"
+   },
+   {
+    "name": "workpattern",
+    "file": "chitbridge-api/lib/workpattern.js",
+    "purpose": "The governance stamped onto the crossing: constitution, capability, work pattern and standards, resolved at send and carried as lineage.",
+    "note": "177 lines",
+    "stage": null,
+    "tier": "cross"
+   },
+   {
+    "name": "policy",
+    "file": "chitbridge-api/lib/policy.js",
+    "purpose": "Retention is PER COPY and each owner sets its own floor — MAX, never MIN. A counterparty may ask you to keep a record longer and you will; they can never make your copy disappear sooner.",
+    "note": "343 lines",
+    "stage": null,
+    "tier": "protect"
+   },
+   {
+    "name": "auth",
+    "file": "chitbridge-api/middleware/auth.js",
+    "purpose": "Who is asking, before any route sees the request.",
+    "note": "302 lines",
+    "stage": null,
+    "tier": "protect"
+   },
+   {
+    "name": "index",
+    "file": "chitbridge-api/db/index.js",
+    "purpose": "Sets app.current_entity on the transaction — the value every RLS policy reads. This is the seam the whole isolation model hangs on.",
+    "note": "327 lines",
+    "stage": null,
+    "tier": "protect"
    }
   ]
  },
