@@ -224,7 +224,7 @@
    }
   ],
   "other": {
-   "engine_adjacent": 31,
+   "engine_adjacent": 32,
    "adoption": 27,
    "infrastructure": 58
   }
@@ -436,7 +436,7 @@
   }
  ],
  "notes": {
-  "engine": "Only the rules DECLARED in tests/engine-manifest.js — Tier A (zero dependencies, forever) and Tier B (bound). engine-boundary.test.js fails the day a Tier A rule grows a require. The other 116 files in lib/ are adoption and infrastructure, counted there not here.",
+  "engine": "Only the rules DECLARED in tests/engine-manifest.js — Tier A (zero dependencies, forever) and Tier B (bound). engine-boundary.test.js fails the day a Tier A rule grows a require. The other 117 files in lib/ are adoption and infrastructure, counted there not here.",
   "middleware": "Every file in middleware/ — what decides who may do what, before a route sees the request. The database-side half of the same job is RLS, which is on the database row.",
   "web": "The 24 capabilities app.html loads (cap-*.js). ⚠ CO-ASSIST is here under its OLD NAME: cap-workforce.js. The React pages in src/ and the standalone screens (till.html, promo.html, shop.html, iot-howitworks.html) are not capabilities and are not counted.",
   "api": "One entry per route file, sized in COSMIC function points (ISO/IEC 19761) rather than lines. ⭐ ACTOR IS THE MODEL UNDERNEATH ALL OF THIS: actors.js is the \"B3 Actor model API\", and a person, a co-assist and a connector are each an actor — which is why the word turns up wherever you look. integrations.js is the declared HOME of connectors (catalogue, kit download, heartbeat); connectors.js is the actor + its connections. ⚠ assist.js is NOT the co-assist — it is the tier-1 LLM proxy, so a model key never reaches the browser.",
@@ -444,7 +444,7 @@
   "bridge": "THE CROSSING, and the half of the product's name that had no row until 2026-09-12. ⚠ NOT A NEW LAYER — every file here also sits on another row, which is the point: a crossing is something the layers DO, not a place. This row answers the question the architecture rows cannot: which code decides that this chit reaches THIS entity and no other, and what rights travel with it. ⭐ IDENTIFY resolves a typed name to one identity or refuses (404, never best-effort delivery). ⭐ CROSS mints ONE COPY PER PARTICIPANT — never shared, always replicated — and freezes the clearances, the governance and the retention floor onto each copy at that moment. ⭐ PROTECT is RLS: after it lands, the database itself refuses rows that are not yours. ⚠ THE KNOWN GAP: the crossing is NOT TAMPER-EVIDENT. chit_hash exists on cb_chit, the RETIRED table; the live chit_header has 22 columns and no content hash. Identity is proven, ownership is enforced and rights are frozen — but nobody can later prove a copy is byte-identical to what was sent, which is exactly what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "ONE CONCEPT, and routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ So IoT and ERP are not two subjects — they are the two shapes of ONE connection string, and routes/integrations.js adds that a downloaded kit IS a co-assist connector. That is why co-assist, IoT, ERP and Tally all land here, and why ACTOR is the word you meet first. ⚠ The list below is the FILES: ADAPTER (one per foreign system), KIT (the spine that drives them), CHANNEL (how a chit reaches a person). IoT has no adapter among them — its 3 file(s) are the signal blueprint and the lifecycle scripts, and it becomes a row the day it is written as an adapter."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 469 cases read from a test file, plus 150 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 124 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 470 cases read from a test file, plus 150 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -562,7 +562,7 @@
     "name": "idempotency",
     "file": "chitbridge-api/middleware/idempotency.js",
     "purpose": "server-side idempotency for the offline OUTBOX (Phase 2). A mutation carrying an `Idempotency-Key` header is executed AT MOST ONCE per (entity, key): the first request runs and its response is recorded; any REPLAY with the same key returns the recorded response WITHOUT re-executing — so an outbox replay on reconnect can never mint a second chit / form / credential. Concurrent in-flight duplicate → 409; same key reused with a DIFFERENT body → 422. Opt-in (no header ⇒ untouched) and SELF-HEALING (store missing ⇒ proceeds without idempotency, never breaks a request) so it is safe to deploy before b109 is run. Scoped per entity, WITH RLS (via withEntity).",
-    "note": "96 lines",
+    "note": "100 lines",
     "stage": null
    },
    {
@@ -7383,7 +7383,11 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T16:14:14+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/akums-demo.js",
@@ -7407,7 +7411,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T08:31:31+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/catalogue-persist.js",
@@ -7431,7 +7439,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-09T21:50:04+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/check-db-role.js",
@@ -7453,7 +7465,11 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-06-28T20:56:59+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/check-screw-message.js",
@@ -7477,7 +7493,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-11T21:57:20+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/cleanup-test-data.js",
@@ -7501,7 +7521,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-11T09:59:43+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/close-proof-lines.js",
@@ -7525,7 +7549,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-24T09:14:04+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/conform-check.js",
@@ -7549,7 +7577,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/container-model.js",
@@ -7573,7 +7605,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-10T09:05:25+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/container-wiring.js",
@@ -7597,7 +7633,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-10T09:30:08+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/dedupe-catalogue.js",
@@ -7621,7 +7661,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-23T20:42:31+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/demo-lifecycle.js",
@@ -7645,7 +7689,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-11T14:26:23+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/dept-store-demo.js",
@@ -7669,7 +7717,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-06T22:35:25+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/dispute-reads.js",
@@ -7693,7 +7745,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/dispute-scope.js",
@@ -7717,7 +7773,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/erp-handoff.js",
@@ -7741,7 +7801,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/gold-demo.js",
@@ -7765,7 +7829,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T08:31:31+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/journey-document-store.js",
@@ -7789,7 +7857,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-30T10:10:51+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/journey-supplier-hop.js",
@@ -7813,7 +7885,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T09:57:46+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/lifecycle-iot.js",
@@ -7838,7 +7914,11 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-08T19:54:57+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/make-test-media.js",
@@ -7860,7 +7940,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-15T17:19:11+05:30"
   },
   {
    "case_key": "chitbridge-api/scripts/match.test.js",
@@ -7886,7 +7967,8 @@
    "subjects": [
     "lib/match.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-10T11:47:20+05:30"
   },
   {
    "case_key": "chitbridge-api/scripts/matrix.js",
@@ -7910,7 +7992,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-30T10:27:18+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/measure.test.js",
@@ -7937,7 +8023,8 @@
     "lib/measure.js",
     "lib/money.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-10T11:42:33+05:30"
   },
   {
    "case_key": "chitbridge-api/scripts/mint-shape.test.js",
@@ -7963,7 +8050,11 @@
    "subjects": [
     "lib/mint.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-10T10:31:20+05:30",
+   "needs": [
+    "a database (via mint.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/multi-source.js",
@@ -7987,7 +8078,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/penetration.js",
@@ -8011,7 +8106,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/powerplay-itr2.js",
@@ -8038,7 +8137,8 @@
     "lib/form-handshake.js",
     "lib/order-input.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T09:11:24+05:30"
   },
   {
    "case_key": "chitbridge-api/scripts/prove-adoption-freeze.js",
@@ -8062,7 +8162,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-amend-live.js",
@@ -8086,7 +8190,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-12T00:08:48+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-amend.js",
@@ -8112,7 +8220,11 @@
    "subjects": [
     "lib/amend.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-11T23:35:55+05:30",
+   "needs": [
+    "a database (via amend.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-assign-live.js",
@@ -8136,7 +8248,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-autoraise.js",
@@ -8160,7 +8276,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T09:37:15+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-availability.js",
@@ -8184,7 +8304,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:31+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-b159-attachments.js",
@@ -8208,7 +8332,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-15T21:03:52+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-capture.js",
@@ -8232,7 +8360,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-channels.js",
@@ -8256,7 +8388,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T09:37:15+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-chitline-live.js",
@@ -8280,7 +8416,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-13T08:43:43+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-commerce-standards.js",
@@ -8304,7 +8444,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-commerce.js",
@@ -8328,7 +8472,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-cost-live.js",
@@ -8352,7 +8500,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-12T23:06:35+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-definer-guards.js",
@@ -8377,7 +8529,12 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "a database",
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-definitions.js",
@@ -8401,7 +8558,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-16T00:34:04+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-delivery-live.js",
@@ -8425,7 +8586,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-12T22:20:55+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-f5.js",
@@ -8451,7 +8616,12 @@
    "subjects": [
     "lib/ai.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-17T23:44:41+05:30",
+   "needs": [
+    "a database (via ai.js)",
+    "the API running (via ai.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-folders-scorecard.js",
@@ -8475,7 +8645,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T22:25:49+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-forms.js",
@@ -8499,7 +8673,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-groupsum.js",
@@ -8526,7 +8704,11 @@
     "lib/consolidate.js",
     "lib/groupsum.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-11T11:50:21+05:30",
+   "needs": [
+    "a database (via groupsum.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-idempotency.js",
@@ -8550,7 +8732,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-itemmatch.js",
@@ -8576,7 +8762,11 @@
    "subjects": [
     "lib/itemmatch.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-13T22:27:41+05:30",
+   "needs": [
+    "a database (via itemmatch.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-itemversion.js",
@@ -8600,7 +8790,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-13T23:09:24+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-kyb.js",
@@ -8624,7 +8818,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-lanes.js",
@@ -8648,7 +8846,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-lifecycle.js",
@@ -8672,7 +8874,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-line-events.js",
@@ -8696,7 +8902,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-14T19:04:06+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-line-threads.js",
@@ -8720,7 +8930,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-15T11:39:10+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-lot.js",
@@ -8748,7 +8962,11 @@
     "lib/gs1.js",
     "lib/starter-fields.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-13T22:58:54+05:30",
+   "needs": [
+    "a database (via amend.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-message-to-chit.js",
@@ -8772,7 +8990,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T10:20:23+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-network-cap.js",
@@ -8799,7 +9021,11 @@
    "subjects": [
     "lib/visibility-cap.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T22:26:35+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-network-mint.js",
@@ -8823,7 +9049,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-08T00:07:52+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-network-search.js",
@@ -8847,7 +9077,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T22:26:35+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-nothing-dropped.js",
@@ -8871,7 +9105,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T23:04:05+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-numerals.js",
@@ -8897,7 +9135,8 @@
    "subjects": [
     "lib/numerals.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-13T19:47:48+05:30"
   },
   {
    "case_key": "chitbridge-api/scripts/prove-one-roof.js",
@@ -8921,7 +9160,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-06T13:42:58+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-orderbind.js",
@@ -8945,7 +9188,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-outbound.js",
@@ -8969,7 +9216,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T09:16:28+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-partial.js",
@@ -8996,7 +9247,11 @@
    "subjects": [
     "lib/deliverline.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-14T17:53:37+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-policy-flags.js",
@@ -9020,7 +9275,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T09:37:15+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-private-shop.js",
@@ -9044,7 +9303,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-06T18:09:07+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-profile.js",
@@ -9068,7 +9331,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-readiness.js",
@@ -9092,7 +9359,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-reference.js",
@@ -9116,7 +9387,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-request-from-message.js",
@@ -9140,7 +9415,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T09:37:15+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-retention.js",
@@ -9166,7 +9445,11 @@
    "subjects": [
     "lib/retention.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "a database (via retention.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-sectors.js",
@@ -9190,7 +9473,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-security-fixes.js",
@@ -9214,7 +9501,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-sla.js",
@@ -9240,7 +9531,8 @@
    "subjects": [
     "lib/sla.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-13T23:44:27+05:30"
   },
   {
    "case_key": "chitbridge-api/scripts/prove-storefront-mint.js",
@@ -9264,7 +9556,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-11T08:39:59+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-storefront.js",
@@ -9288,7 +9584,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-three-party-messaging.js",
@@ -9312,7 +9612,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-15T13:43:39+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-usecases.js",
@@ -9336,7 +9640,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-23T20:33:44+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-verify.js",
@@ -9360,7 +9668,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-vision.js",
@@ -9384,7 +9696,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T10:20:23+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-whatsapp-live.js",
@@ -9408,7 +9724,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T09:37:15+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-wholesaler-e2e.js",
@@ -9435,7 +9755,11 @@
    "subjects": [
     "lib/transcribe.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-11T08:39:59+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/prove-wholesaler.js",
@@ -9461,7 +9785,11 @@
    "subjects": [
     "lib/consolidate.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-11T00:35:43+05:30",
+   "needs": [
+    "a database (via consolidate.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/regional-scatter.js",
@@ -9485,7 +9813,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-10T09:37:34+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/regression.js",
@@ -9509,7 +9841,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-10T22:42:56+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/reset-and-seed.js",
@@ -9534,7 +9870,11 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-30T10:36:07+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/retention-logic-test.js",
@@ -9560,7 +9900,11 @@
    "subjects": [
     "lib/retention.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-14T05:15:41+05:30",
+   "needs": [
+    "a database (via retention.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/rls-context-test.js",
@@ -9582,7 +9926,11 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-04T13:20:48+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/sealed-guard.js",
@@ -9606,7 +9954,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-10T23:01:32+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/seed-2026-08-05.js",
@@ -9630,7 +9982,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-05T22:55:06+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/seed-bulk-catalogue.js",
@@ -9654,7 +10010,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-08T21:55:15+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/seed-catalogue-veg.js",
@@ -9678,7 +10038,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-13T20:53:39+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/seed-folders-demo.js",
@@ -9702,7 +10066,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-10T21:59:48+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/seed-livewalk.js",
@@ -9726,7 +10094,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-13T08:43:43+05:30",
+   "needs": [
+    "the API running (via _proof.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/seed-test-entities.js",
@@ -9750,7 +10122,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-30T10:36:07+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/source-entity.js",
@@ -9774,7 +10150,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/source-rules.js",
@@ -9798,7 +10178,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/storage-object.test.js",
@@ -9825,7 +10209,12 @@
     "lib/storage-object.js",
     "lib/storage.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-15T17:19:11+05:30",
+   "needs": [
+    "a database (via storage-object.js)",
+    "the API running (via storage-object.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/scripts/vault-crypto-test.js",
@@ -9851,7 +10240,8 @@
    "subjects": [
     "lib/vaultcrypto.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-13T22:35:23+05:30"
   },
   {
    "case_key": "chitbridge-api/test/hat-gate.test.cjs",
@@ -9878,7 +10268,8 @@
    "subjects": [
     "middleware/hat-gate.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T21:38:12+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/access-events.test.cjs",
@@ -9904,7 +10295,8 @@
    "subjects": [
     "lib/access-events.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T17:18:18+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/adopt.test.js",
@@ -9930,7 +10322,8 @@
    "subjects": [
     "lib/adopt.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-10T10:16:13+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/ai-vision.test.js",
@@ -9957,7 +10350,12 @@
    "subjects": [
     "lib/ai.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-09T18:05:31+05:30",
+   "needs": [
+    "a database (via ai.js)",
+    "the API running (via ai.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/auth-before-validate.test.cjs",
@@ -9981,7 +10379,8 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T07:31:03+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/auth-middleware.test.js",
@@ -10009,7 +10408,11 @@
     "middleware/auth.js",
     "middleware/hat-gate.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T15:21:12+05:30",
+   "needs": [
+    "a database (via auth.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/availability.test.js",
@@ -10035,7 +10438,8 @@
    "subjects": [
     "lib/availability.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-08T20:23:12+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/beckn-map.test.js",
@@ -10061,7 +10465,8 @@
    "subjects": [
     "lib/beckn-map.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-05T23:24:43+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/canon-depth.test.js",
@@ -10087,7 +10492,39 @@
    "subjects": [
     "middleware/idempotency.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T08:31:31+05:30",
+   "needs": [
+    "a database"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/canon.test.js",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "lib/canon.js is BYTE-IDENTICAL to the three hand-rolled copies it replaces.",
+   "claim": "lib/canon.js is BYTE-IDENTICAL to the three hand-rolled copies it replaces.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.unit · unit · 157 lines. Run: node chitbridge-api/tests/canon.test.js",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "connector",
+    "engine"
+   ],
+   "subjects": [
+    "lib/canon.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T07:30:06+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/catalogue-columns.test.js",
@@ -10113,7 +10550,11 @@
    "subjects": [
     "lib/catalogue-columns.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T21:00:58+05:30",
+   "needs": [
+    "a database (via catalogue-columns.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/catalogue-read.test.js",
@@ -10140,7 +10581,8 @@
     "lib/catalogue-read.js",
     "lib/identity.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-06T12:25:18+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/catalogue-visibility.test.js",
@@ -10167,7 +10609,11 @@
     "lib/catalogue-view.js",
     "lib/order-input.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T21:55:52+05:30",
+   "needs": [
+    "a database (via catalogue-view.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/catalogue.spec.js",
@@ -10193,7 +10639,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-30T10:14:48+05:30",
+   "needs": [
+    "a database (via db.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/channels.test.js",
@@ -10221,7 +10671,11 @@
    "subjects": [
     "lib/channels.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-09T17:19:26+05:30",
+   "needs": [
+    "a database (via channels.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/column-home.test.cjs",
@@ -10246,7 +10700,8 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-09T11:15:04+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/column-parity.test.js",
@@ -10272,7 +10727,11 @@
    "subjects": [
     "lib/catalogue-columns.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T21:00:58+05:30",
+   "needs": [
+    "a database (via catalogue-columns.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/column-rules.test.cjs",
@@ -10298,7 +10757,8 @@
    "subjects": [
     "lib/column-rules.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-03T21:26:29+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/conf-cache.test.cjs",
@@ -10324,7 +10784,8 @@
    "subjects": [
     "lib/confcache.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-29T21:05:35+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/connector-kit.test.js",
@@ -10348,7 +10809,11 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:31+05:30",
+   "needs": [
+    "the API running (via zoho.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/consolidate-units.test.js",
@@ -10375,7 +10840,11 @@
     "lib/consolidate.js",
     "lib/itemmatch.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-17T02:36:30+05:30",
+   "needs": [
+    "a database (via consolidate.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/cors-headers.test.cjs",
@@ -10399,7 +10868,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-07T22:47:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/csv-preflight.test.js",
@@ -10427,7 +10897,8 @@
     "lib/csv.js",
     "lib/starter-fields.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T23:00:13+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/csv.test.js",
@@ -10453,7 +10924,8 @@
    "subjects": [
     "lib/csv.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T22:12:44+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/currency-envelope.test.cjs",
@@ -10481,7 +10953,8 @@
    "subjects": [
     "lib/govresolve.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T08:00:58+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/current-actor.test.cjs",
@@ -10507,7 +10980,8 @@
    "subjects": [
     "lib/reqctx.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T09:00:24+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/db-coldstart.test.js",
@@ -10531,7 +11005,8 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T08:26:53+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/defaults.test.js",
@@ -10558,7 +11033,8 @@
     "lib/defaults.js",
     "lib/sheet.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-03T04:11:07+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/dev-otp.test.js",
@@ -10582,7 +11058,8 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-29T21:40:16+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/docnumber-gate.test.js",
@@ -10609,7 +11086,8 @@
    "subjects": [
     "lib/docnumber.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T13:38:30+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/docnumber.test.js",
@@ -10635,7 +11113,8 @@
    "subjects": [
     "lib/docnumber.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T13:22:27+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/engine-boundary.test.js",
@@ -10663,7 +11142,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T13:38:30+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/engine-manifest.js",
@@ -10676,7 +11156,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.harness · support · 349 lines. Run: node chitbridge-api/tests/engine-manifest.js",
+   "note": "test.harness · support · 359 lines. Run: node chitbridge-api/tests/engine-manifest.js",
    "layer": "engine",
    "test_type": "support",
    "group": "test.harness",
@@ -10696,7 +11176,8 @@
     "lib/assist-kb.js",
     "lib/autoraise.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T07:30:06+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/entity-cast-guard.test.cjs",
@@ -10720,7 +11201,8 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T23:54:40+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/env-posture.test.cjs",
@@ -10746,7 +11228,8 @@
    "subjects": [
     "lib/dev-otp.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-23T07:18:11+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/exports-exist.test.cjs",
@@ -10773,7 +11256,8 @@
     "lib/offers-engine.js",
     "lib/x.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T18:32:51+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/fixtures/walkthrough.js",
@@ -10806,7 +11290,11 @@
     "lib/sheet.js",
     "lib/tax.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T23:00:13+05:30",
+   "needs": [
+    "a database (via catalogue-columns.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/form-handshake.test.js",
@@ -10833,7 +11321,8 @@
     "lib/form-handshake.js",
     "lib/order-input.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-30T09:54:08+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/gherkin.test.js",
@@ -10859,7 +11348,8 @@
    "subjects": [
     "lib/gherkin.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T23:32:23+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/governed-currency.test.js",
@@ -10887,7 +11377,11 @@
     "lib/container.js",
     "lib/regional.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T23:32:23+05:30",
+   "needs": [
+    "a database (via container.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/groupsum-selection.test.js",
@@ -10909,7 +11403,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-16T23:20:30+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/gs1.test.js",
@@ -10935,7 +11430,8 @@
    "subjects": [
     "lib/gs1.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-05T23:24:43+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/handle.test.js",
@@ -10962,7 +11458,8 @@
    "subjects": [
     "lib/handle.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T10:01:02+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/iam-access.test.cjs",
@@ -10995,7 +11492,8 @@
     "routes/actors.js",
     "routes/chits.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T13:41:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/identity.test.js",
@@ -11021,7 +11519,8 @@
    "subjects": [
     "lib/identity.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-06T10:28:41+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/idoc-normalise.test.cjs",
@@ -11045,7 +11544,8 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T17:29:25+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/idoc-subject.test.cjs",
@@ -11072,7 +11572,11 @@
    "subjects": [
     "routes/identity-docs.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T16:48:54+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/itemmatch-qualifier.test.cjs",
@@ -11098,7 +11602,8 @@
    "subjects": [
     "lib/itemmatch.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-30T11:25:06+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/jurisdiction.test.js",
@@ -11124,7 +11629,8 @@
    "subjects": [
     "lib/jurisdiction.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T22:07:53+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/key-scopes.test.js",
@@ -11153,7 +11659,8 @@
    "subjects": [
     "middleware/auth.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T11:44:25+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/kit-update.test.js",
@@ -11182,7 +11689,8 @@
    "subjects": [
     "middleware/auth.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-08T10:08:58+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/line-complete.test.cjs",
@@ -11208,7 +11716,11 @@
    "subjects": [
     "lib/deliverline.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-24T09:14:04+05:30",
+   "needs": [
+    "a database (via deliverline.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/local-supplier.test.js",
@@ -11237,7 +11749,8 @@
     "lib/handle.js",
     "lib/local-identity.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-10T20:34:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/lotfields.test.js",
@@ -11265,7 +11778,8 @@
     "lib/lotfields.browser.js",
     "lib/lotfields.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-08T19:53:39+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/me-include.test.cjs",
@@ -11291,7 +11805,8 @@
    "subjects": [
     "routes/entities.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T13:52:51+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/meters.test.cjs",
@@ -11318,7 +11833,8 @@
    "subjects": [
     "lib/meter.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:31+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/migration-lint.test.cjs",
@@ -11342,7 +11858,8 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-30T15:41:17+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/money-language.test.js",
@@ -11370,7 +11887,8 @@
     "engine/locale.js",
     "lib/money.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T15:03:29+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/money.test.js",
@@ -11396,7 +11914,8 @@
    "subjects": [
     "lib/money.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-05T21:59:51+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/network-build.test.js",
@@ -11422,7 +11941,8 @@
    "subjects": [
     "lib/network-build.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T22:26:35+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/network-view.test.js",
@@ -11448,7 +11968,8 @@
    "subjects": [
     "lib/network-view.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T22:26:35+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/network.spec.js",
@@ -11474,7 +11995,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-30T10:14:48+05:30",
+   "needs": [
+    "a database (via db.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/numerals.test.js",
@@ -11500,7 +12025,8 @@
    "subjects": [
     "lib/numerals.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T15:09:13+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/offerable.test.cjs",
@@ -11528,7 +12054,11 @@
     "lib/itemstatus.js",
     "lib/policy.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-01T22:35:51+05:30",
+   "needs": [
+    "a database (via policy.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/offers-engine.test.js",
@@ -11556,7 +12086,8 @@
     "engine/offers.js",
     "lib/offers-engine.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T06:52:07+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/order-input.test.js",
@@ -11582,7 +12113,8 @@
    "subjects": [
     "lib/order-input.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-30T09:54:08+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/pages-parse.test.js",
@@ -11607,7 +12139,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T10:01:02+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/per-copy-design.test.cjs",
@@ -11633,7 +12166,11 @@
    "subjects": [
     "lib/mint.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-25T18:00:48+05:30",
+   "needs": [
+    "a database (via mint.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/points.test.js",
@@ -11660,7 +12197,9 @@
     "lib/money.js",
     "lib/points.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T22:07:53+05:30",
+   "held": "the file is @stage held"
   },
   {
    "case_key": "chitbridge-api/tests/policy-defaults.test.js",
@@ -11688,7 +12227,11 @@
    "subjects": [
     "lib/policy.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-07T20:19:59+05:30",
+   "needs": [
+    "a database (via policy.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/policy-set.test.js",
@@ -11717,7 +12260,11 @@
     "lib/units.js",
     "public/app/catalogue-model.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T19:55:12+05:30",
+   "needs": [
+    "a database (via policy.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/price-provenance.test.cjs",
@@ -11743,7 +12290,8 @@
    "subjects": [
     "lib/money.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T11:28:59+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/printer.test.js",
@@ -11767,7 +12315,8 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-08T10:29:21+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/products-bulk.test.cjs",
@@ -11793,7 +12342,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-01T22:35:51+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/proof-exit.test.cjs",
@@ -11815,7 +12365,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T19:55:12+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/pulse.test.cjs",
@@ -11841,7 +12392,8 @@
    "subjects": [
     "routes/chits.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T22:57:25+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/query-shape.test.js",
@@ -11865,7 +12417,8 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T10:49:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/raida.test.cjs",
@@ -11892,7 +12445,8 @@
    "subjects": [
     "lib/raida.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-31T10:01:06+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/read-batch.test.js",
@@ -11916,7 +12470,11 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T09:17:24+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/reporting.test.js",
@@ -11943,7 +12501,11 @@
     "lib/money.js",
     "lib/reporting.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-31T21:41:58+05:30",
+   "needs": [
+    "a database (via reporting.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/retention-floor.test.js",
@@ -11969,7 +12531,11 @@
    "subjects": [
     "lib/policy.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-17T03:10:54+05:30",
+   "needs": [
+    "a database (via policy.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/reward-cycle.test.js",
@@ -11996,7 +12562,11 @@
     "lib/reward-store.js",
     "lib/rewards.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-10T07:15:14+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/rewards.test.js",
@@ -12022,7 +12592,8 @@
    "subjects": [
     "lib/rewards.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-10T07:15:14+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/rls-predicate.test.cjs",
@@ -12046,7 +12617,8 @@
     "database"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T17:15:40+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/round-trips-chit.test.cjs",
@@ -12072,7 +12644,11 @@
    "subjects": [
     "routes/chits.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T17:23:53+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/round-trips.test.cjs",
@@ -12100,7 +12676,8 @@
     "lib/schema.js",
     "routes/entities.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-29T21:05:35+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/route-auth.test.js",
@@ -12125,7 +12702,8 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T15:27:28+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/run-tests-exit.test.cjs",
@@ -12147,7 +12725,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-30T10:04:31+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/run-tests.js",
@@ -12171,7 +12750,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-30T10:04:31+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/schedule.test.js",
@@ -12197,7 +12780,11 @@
    "subjects": [
     "lib/schedule.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T01:18:35+05:30",
+   "needs": [
+    "a database (via schedule.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/schema-probe.test.cjs",
@@ -12225,7 +12812,11 @@
     "lib/access.js",
     "lib/schema.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T22:11:49+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/search-engine.test.js",
@@ -12254,7 +12845,8 @@
     "engine/search.js",
     "lib/search-engine.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-09T20:50:44+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/seed-traceability-demo.js",
@@ -12278,7 +12870,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T09:12:48+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/sheet.test.js",
@@ -12304,7 +12900,8 @@
    "subjects": [
     "lib/sheet.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T22:12:44+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/slab-cites.test.js",
@@ -12330,7 +12927,8 @@
    "subjects": [
     "lib/slab-cites.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:31+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/snapshot-wire.test.js",
@@ -12367,7 +12965,11 @@
     "lib/tax-slab.js",
     "lib/units.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T08:52:48+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/speech.test.js",
@@ -12398,7 +13000,8 @@
     "lib/speech.js",
     "middleware/auth.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-08T21:23:47+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/sql-placeholders.test.cjs",
@@ -12420,7 +13023,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T14:07:21+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/sql-runner.test.js",
@@ -12442,7 +13046,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-10T08:44:20+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/stock-cycle.test.js",
@@ -12471,7 +13076,11 @@
     "lib/stock-from-chit.js",
     "lib/stock-store.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-10T19:33:03+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/tax-governance.test.js",
@@ -12499,7 +13108,8 @@
     "lib/tax-slab.js",
     "lib/tax.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T00:16:54+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/tax-lines.test.js",
@@ -12526,7 +13136,8 @@
     "lib/tax-lines.js",
     "lib/tax-slab.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T01:44:40+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/tax-registration.test.js",
@@ -12552,7 +13163,8 @@
    "subjects": [
     "lib/tax.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T00:41:24+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/tax-scheme.test.js",
@@ -12580,7 +13192,8 @@
     "lib/tax-slab.js",
     "lib/tax.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:31+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/tax-slab.test.js",
@@ -12609,7 +13222,11 @@
     "lib/tax-slab.js",
     "lib/tax.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T10:37:37+05:30",
+   "needs": [
+    "a database (via catalogue-columns.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/tax-vendor.test.js",
@@ -12637,7 +13254,8 @@
     "lib/tax-slab.js",
     "lib/tax.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-07T22:22:57+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/tax.test.js",
@@ -12663,7 +13281,8 @@
    "subjects": [
     "lib/tax.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T22:51:28+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/test-board.test.js",
@@ -12689,7 +13308,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T21:50:42+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/test_governance.js",
@@ -12711,7 +13331,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-06-20T09:39:36+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/tier2-record.test.js",
@@ -12743,7 +13364,8 @@
     "lib/storage.js",
     "middleware/customer-auth.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T22:26:35+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/till-vendor.test.js",
@@ -12778,7 +13400,8 @@
     "engine/search.js",
     "lib/docnumber.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T13:29:38+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/traceability-massbalance.test.js",
@@ -12802,7 +13425,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T09:12:48+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/traceability-walk.test.js",
@@ -12826,7 +13453,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T09:12:48+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/traceability.test.js",
@@ -12850,7 +13481,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T09:12:48+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/type-tokens.test.js",
@@ -12874,7 +13509,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T11:09:27+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/units-alias.test.js",
@@ -12900,7 +13536,8 @@
    "subjects": [
     "lib/units.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-17T09:20:28+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/user-id-rule.test.cjs",
@@ -12926,7 +13563,8 @@
    "subjects": [
     "routes/entities.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:31+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/vault-sections.test.js",
@@ -12952,7 +13590,11 @@
    "subjects": [
     "lib/profile.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-16T22:51:47+05:30",
+   "needs": [
+    "a database (via profile.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/visibility-cap.test.js",
@@ -12978,7 +13620,8 @@
    "subjects": [
     "lib/visibility-cap.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-07T10:25:49+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/visibility-mirror.test.cjs",
@@ -13004,7 +13647,11 @@
    "subjects": [
     "lib/schema-bootstrap.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-01T22:23:26+05:30",
+   "needs": [
+    "a database (via schema-bootstrap.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/whatsapp-out.test.js",
@@ -13032,7 +13679,12 @@
     "lib/whatsapp-out.js",
     "lib/whatsapp-templates.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-09T18:38:05+05:30",
+   "needs": [
+    "a database (via whatsapp-out.js)",
+    "the API running (via whatsapp-out.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/worklist-unassigned.test.cjs",
@@ -13058,7 +13710,8 @@
    "subjects": [
     "lib/assign.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-30T11:09:52+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/a11y-contrast.cjs",
@@ -13082,7 +13735,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T11:06:41+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/app-syntax.cjs",
@@ -13106,7 +13760,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-06T19:00:04+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/arabic-catalogue.test.cjs",
@@ -13130,7 +13785,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T09:48:30+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/arrow-probe.cjs",
@@ -13154,7 +13810,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-08T07:36:52+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/asi-return.cjs",
@@ -13178,7 +13838,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T06:38:19+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/attach-gate.cjs",
@@ -13202,7 +13863,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T09:25:59+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/barcode-check.cjs",
@@ -13228,7 +13890,8 @@
    "subjects": [
     "public/app/barcode.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T01:13:10+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/bridge-id-audit.cjs",
@@ -13252,7 +13915,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T18:36:02+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/bulk-shop.cjs",
@@ -13277,7 +13941,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-08T07:25:24+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/cart-api.cjs",
@@ -13301,7 +13970,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-01T22:08:30+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/cat03-probe.cjs",
@@ -13325,7 +13995,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/catsetup-panels.cjs",
@@ -13349,7 +14023,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T21:01:10+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/chart-smoke.cjs",
@@ -13373,7 +14051,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:46+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/chip-audit.cjs",
@@ -13397,7 +14076,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T19:21:59+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/compose-onleave.cjs",
@@ -13421,7 +14101,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T20:04:58+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/connector-b2b.test.cjs",
@@ -13445,7 +14129,8 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-05T17:28:43+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/connector-gofrugal.test.cjs",
@@ -13469,7 +14154,11 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-05T18:42:50+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/connector-purchase.test.cjs",
@@ -13493,7 +14182,8 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-05T18:42:50+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/connector-zoho.test.cjs",
@@ -13517,7 +14207,8 @@
     "connector"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-05T18:28:54+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/counter-rail.cjs",
@@ -13541,7 +14232,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/currency-distinct.cjs",
@@ -13567,7 +14262,8 @@
    "subjects": [
     "engine/locale.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T07:41:16+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/dead-surface.cjs",
@@ -13591,7 +14287,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T11:48:17+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/detail-shot.cjs",
@@ -13615,7 +14312,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T08:31:34+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/docnumber-continuity.cjs",
@@ -13643,7 +14344,8 @@
    "subjects": [
     "public/engine/docnumber.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:46+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/docs-guard.cjs",
@@ -13665,7 +14367,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T13:27:53+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/double-fire.cjs",
@@ -13690,7 +14393,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T21:48:29+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/dup-functions.cjs",
@@ -13715,7 +14419,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-05T15:14:36+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/empty-shot.cjs",
@@ -13739,7 +14444,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/empty-states.cjs",
@@ -13763,7 +14472,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T12:37:52+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/fixtures.js",
@@ -13787,7 +14497,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/flows/design2.js",
@@ -13811,7 +14526,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-24T13:29:56+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/flows/detail-design.js",
@@ -13835,7 +14554,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/flows/storefront.js",
@@ -13859,7 +14582,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-06T07:02:01+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/group-sum.cjs",
@@ -13885,7 +14609,8 @@
    "subjects": [
     "engine/locale.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T22:42:55+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/guard-static.cjs",
@@ -13909,7 +14634,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T00:31:34+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/guard-static.test.cjs",
@@ -13931,7 +14657,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-15T17:18:45+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/helper-scope.cjs",
@@ -13955,7 +14682,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-04T19:25:18+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/html-syntax.cjs",
@@ -13979,7 +14707,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T12:10:46+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/http-waves.cjs",
@@ -14003,7 +14732,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T16:54:04+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/l3-apply.cjs",
@@ -14027,7 +14757,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T20:59:08+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/l3-verify.cjs",
@@ -14049,7 +14780,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T20:59:08+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/labels-collect.cjs",
@@ -14073,7 +14805,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T18:25:40+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/lazy-screen-guard.cjs",
@@ -14097,7 +14830,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-23T13:24:08+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/legend-complete.cjs",
@@ -14121,7 +14855,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-02T10:06:15+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/legend-shot.cjs",
@@ -14145,7 +14880,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T08:47:08+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/lighthouse-check.js",
@@ -14169,7 +14908,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-18T18:21:55+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/live-run-mint.cjs",
@@ -14194,7 +14934,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-11T07:15:11+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/locale-map.cjs",
@@ -14220,7 +14965,8 @@
    "subjects": [
     "engine/locale.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T08:33:59+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/locators.cjs",
@@ -14244,7 +14990,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T13:06:22+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/loop-probe.cjs",
@@ -14269,7 +15016,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/manual-cases.cjs",
@@ -14291,7 +15042,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T21:48:29+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/match-probe.cjs",
@@ -14315,7 +15067,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/mobile-audit.cjs",
@@ -14339,7 +15095,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T11:25:06+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/modal-safe-repaint.cjs",
@@ -14363,7 +15123,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-23T15:37:02+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/morning-shots.cjs",
@@ -14387,7 +15148,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/movable-panels.cjs",
@@ -14411,7 +15176,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-29T22:23:49+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/offers-combined.test.cjs",
@@ -14437,7 +15203,8 @@
    "subjects": [
     "public/app/offers.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-03T21:58:21+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/offers-kinds.test.cjs",
@@ -14463,7 +15230,8 @@
    "subjects": [
     "public/app/offers.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T13:57:32+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/offers-promise.test.cjs",
@@ -14489,7 +15257,8 @@
    "subjects": [
     "public/app/offers.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-03T10:25:28+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/offline-poll.cjs",
@@ -14513,7 +15282,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T22:51:47+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/one-cart.cjs",
@@ -14537,7 +15307,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-07T00:58:48+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/ownstock-probe.cjs",
@@ -14561,7 +15332,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-01T22:08:30+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/ownstock-repaint.cjs",
@@ -14585,7 +15360,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-01T22:08:30+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/pack-parity.test.cjs",
@@ -14609,7 +15388,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T18:51:30+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/per-row-probe.cjs",
@@ -14633,7 +15413,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/playwright.config.js",
@@ -14655,7 +15439,11 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T10:01:18+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/post-results.cjs",
@@ -14679,7 +15467,12 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-11T10:01:18+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/prefetch.cjs",
@@ -14703,7 +15496,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T16:37:18+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/prof-dirty.cjs",
@@ -14727,7 +15521,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-20T19:36:33+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/profile-groups.cjs",
@@ -14753,7 +15548,8 @@
    "subjects": [
     "engine/locale.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T07:41:16+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/prose-scan.cjs",
@@ -14777,7 +15573,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T20:42:06+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/prose-worklist.cjs",
@@ -14801,7 +15598,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T13:28:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/register-shots.cjs",
@@ -14825,7 +15623,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-31T09:05:45+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/render-smoke.cjs",
@@ -14851,7 +15653,8 @@
    "subjects": [
     "engine/locale.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-05T23:14:03+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/report-card.cjs",
@@ -14875,7 +15678,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-01T11:28:35+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/repro-intake.cjs",
@@ -14899,7 +15703,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-09T20:09:54+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/rtl-audit.cjs",
@@ -14925,7 +15733,8 @@
    "subjects": [
     "engine/locale.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-19T17:34:45+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/scale-probe.cjs",
@@ -14950,7 +15759,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/schemes-shot.cjs",
@@ -14974,7 +15787,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-01T22:08:30+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/screen-reads.cjs",
@@ -14998,7 +15815,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T20:36:50+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/search-probe.cjs",
@@ -15022,7 +15840,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-08T07:56:01+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/seed.js",
@@ -15046,7 +15868,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T08:22:42+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/seedpick-shot.cjs",
@@ -15070,7 +15893,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T08:40:25+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/selfbill.cjs",
@@ -15094,7 +15921,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T20:04:58+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/session-keys.cjs",
@@ -15118,7 +15949,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-21T21:29:44+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/session.cjs",
@@ -15140,7 +15972,12 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T20:04:58+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/shot-rows.cjs",
@@ -15166,7 +16003,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T09:56:32+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/silent-control.cjs",
@@ -15190,7 +16032,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T18:03:18+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/stale-paint.cjs",
@@ -15214,7 +16057,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T06:16:19+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/storefront-probe.cjs",
@@ -15239,7 +16083,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T08:31:34+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/strings-extract.cjs",
@@ -15263,7 +16112,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T09:21:14+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/swarm-api.js",
@@ -15287,7 +16137,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-18T17:48:38+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/swarm-fanin.js",
@@ -15311,7 +16165,11 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-18T17:58:17+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tax-slab.test.cjs",
@@ -15341,7 +16199,11 @@
     "public/app/tax-slab.js",
     "public/app/tax.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-03T22:15:40+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/a11y-theme.spec.js",
@@ -15365,7 +16227,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T09:21:14+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/adopt-screen.spec.js",
@@ -15390,7 +16256,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-10T19:12:36+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/adopt.spec.js",
@@ -15415,7 +16286,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-10T10:56:40+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/api-keys.spec.js",
@@ -15441,7 +16317,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/appearance.spec.js",
@@ -15465,7 +16346,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T20:14:26+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/auth.setup.js",
@@ -15489,7 +16374,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-16T23:46:09+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/axe.spec.js",
@@ -15513,7 +16402,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T18:21:55+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/b2b.spec.js",
@@ -15538,7 +16431,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/books-at.spec.js",
@@ -15564,7 +16462,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/cap-collision.spec.js",
@@ -15588,7 +16491,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T20:12:24+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/capture-offers.spec.js",
@@ -15613,7 +16520,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/capture.spec.js",
@@ -15637,7 +16549,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T02:30:53+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/catalogue-schedule.spec.js",
@@ -15661,7 +16577,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T19:17:48+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/catalogue-wizard.spec.js",
@@ -15685,7 +16605,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-09T08:49:14+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/catalogue.spec.js",
@@ -15709,7 +16633,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T13:49:24+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/categories-attach.spec.js",
@@ -15733,7 +16661,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/chits.spec.js",
@@ -15757,7 +16689,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T11:28:03+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/coassists.spec.js",
@@ -15781,7 +16717,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-23T18:12:53+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/connector.spec.js",
@@ -15803,7 +16743,11 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T02:30:53+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/counter-key.spec.js",
@@ -15828,7 +16772,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/currency-matrix.spec.js",
@@ -15853,7 +16801,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/delivery-full.spec.js",
@@ -15877,7 +16830,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-14T19:06:48+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/demo-invoice.spec.js",
@@ -15901,7 +16858,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T18:50:43+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/demo-lifecycle.spec.js",
@@ -15928,7 +16889,12 @@
    "subjects": [
     "lib/csv.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-05T13:17:03+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/demo-media.spec.js",
@@ -15952,7 +16918,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T14:57:05+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/demo-offers.spec.js",
@@ -15976,7 +16946,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/design-guard.spec.js",
@@ -16000,7 +16974,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-16T18:07:41+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/design2-service.spec.js",
@@ -16024,7 +17002,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/detail-design-parties.spec.js",
@@ -16048,7 +17030,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/detail-design.spec.js",
@@ -16072,7 +17058,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/dispute-privacy.spec.js",
@@ -16096,7 +17086,12 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/disputes.spec.js",
@@ -16120,7 +17115,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T01:08:26+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/enquiry.spec.js",
@@ -16144,7 +17143,12 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/exposure.spec.js",
@@ -16169,7 +17173,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/flow.spec.js",
@@ -16193,7 +17202,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T02:30:53+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/governance.spec.js",
@@ -16217,7 +17230,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T18:50:43+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/helpdesk.spec.js",
@@ -16241,7 +17258,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T11:52:43+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/i18n.spec.js",
@@ -16265,7 +17286,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T05:23:07+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/iam.spec.js",
@@ -16290,7 +17315,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-21T13:06:22+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/identifiers.spec.js",
@@ -16314,7 +17344,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T15:42:37+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/intake-sender.spec.js",
@@ -16338,7 +17372,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/intake.spec.js",
@@ -16362,7 +17400,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-16T14:37:31+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/integrations.spec.js",
@@ -16388,7 +17430,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/invoice-party.spec.js",
@@ -16412,7 +17459,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/invoice-row.spec.js",
@@ -16436,7 +17487,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-05T10:16:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/keyboard.spec.js",
@@ -16460,7 +17515,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-17T00:01:36+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/keymap.spec.js",
@@ -16484,7 +17543,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T20:12:24+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/lifecycle-history.spec.js",
@@ -16508,7 +17571,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T19:17:48+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/lifecycle.spec.js",
@@ -16533,7 +17600,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/live-checks.spec.js",
@@ -16557,7 +17629,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T06:57:43+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/locale-sync.spec.js",
@@ -16581,7 +17657,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T09:55:21+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/locale.spec.js",
@@ -16605,7 +17685,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T20:12:24+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/measure-catalogue.spec.js",
@@ -16629,7 +17713,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/meat-blueprint.spec.js",
@@ -16653,7 +17741,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T04:32:08+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/message-privacy.spec.js",
@@ -16677,7 +17769,12 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/messages.spec.js",
@@ -16701,7 +17798,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T01:04:43+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/mode-survives-order.spec.js",
@@ -16725,7 +17826,12 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/multiparty.spec.js",
@@ -16749,7 +17855,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T01:08:26+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/network-cascade.spec.js",
@@ -16774,7 +17884,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T22:26:36+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/no-wrapper-leak.spec.js",
@@ -16798,7 +17913,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T11:28:32+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/notif-clear.spec.js",
@@ -16822,7 +17941,12 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/offer-lab.spec.js",
@@ -16846,7 +17970,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-11T08:43:04+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/offers-customer.spec.js",
@@ -16872,7 +18000,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/offers-groups.spec.js",
@@ -16897,7 +18030,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/offers-lifecycle.spec.js",
@@ -16921,7 +18059,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T07:39:56+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/onboarding.spec.js",
@@ -16945,7 +18087,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T08:43:40+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/order-models.spec.js",
@@ -16969,7 +18115,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-05T10:16:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/order-steps.spec.js",
@@ -16994,7 +18144,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T07:39:56+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/parity-money.spec.js",
@@ -17019,7 +18174,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T00:00:42+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/parity-order.spec.js",
@@ -17044,7 +18204,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T11:41:10+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/parity.spec.js",
@@ -17069,7 +18234,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/payment.spec.js",
@@ -17095,7 +18265,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/picker.spec.js",
@@ -17119,7 +18294,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-16T14:16:20+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/pool.setup.js",
@@ -17141,7 +18320,11 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T18:08:30+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/prefs-sync.spec.js",
@@ -17165,7 +18348,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T09:55:21+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/preview.spec.js",
@@ -17190,7 +18377,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T15:59:58+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/pricing-structure.spec.js",
@@ -17214,7 +18406,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/prof.spec.js",
@@ -17238,7 +18434,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-01T11:24:41+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/profile-map.spec.js",
@@ -17266,7 +18466,12 @@
    "subjects": [
     "lib/csv.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/promo-pair.spec.js",
@@ -17291,7 +18496,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/promo.spec.js",
@@ -17315,7 +18525,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/purchase.spec.js",
@@ -17340,7 +18554,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/push.spec.js",
@@ -17364,7 +18583,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/reconcile.spec.js",
@@ -17390,7 +18613,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/record-sale.spec.js",
@@ -17415,7 +18643,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/redproof.spec.js",
@@ -17439,7 +18672,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-07-18T11:52:43+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/register.spec.js",
@@ -17464,7 +18701,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-31T10:21:33+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/render-smoke.spec.js",
@@ -17488,7 +18730,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-09T09:03:32+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/rtl.spec.js",
@@ -17512,7 +18759,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T06:57:49+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/services.spec.js",
@@ -17537,7 +18788,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/shop-publish.spec.js",
@@ -17561,7 +18817,12 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/signed-out.spec.js",
@@ -17585,7 +18846,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-08T09:00:26+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/smoke.spec.js",
@@ -17609,7 +18874,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/standards.spec.js",
@@ -17633,7 +18902,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T00:36:19+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/stock-guard.spec.js",
@@ -17658,7 +18931,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/stock.spec.js",
@@ -17686,7 +18964,12 @@
    "subjects": [
     "lib/csv.js"
    ],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/store.spec.js",
@@ -17710,7 +18993,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-19T09:12:52+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/storefront.spec.js",
@@ -17734,7 +19022,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T07:02:01+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/supplier-local.spec.js",
@@ -17758,7 +19050,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-10T20:57:58+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/suppliers.spec.js",
@@ -17782,7 +19078,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-16T07:22:14+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/supplies-screen.spec.js",
@@ -17806,7 +19106,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/swarm.spec.js",
@@ -17830,7 +19134,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-18T17:48:38+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/tax-categories.spec.js",
@@ -17854,7 +19162,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/tax-ledger.spec.js",
@@ -17878,7 +19190,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-04T10:37:33+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/tax-slab.spec.js",
@@ -17902,7 +19218,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T07:39:56+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/tax-takeover.spec.js",
@@ -17926,7 +19246,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/theme-contrast.spec.js",
@@ -17950,7 +19274,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T08:38:13+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/theme-picker.spec.js",
@@ -17974,7 +19302,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T05:28:13+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/till-observation5.spec.js",
@@ -17999,7 +19331,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-10T22:48:11+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/till-rewards.spec.js",
@@ -18024,7 +19360,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-10T22:31:34+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/till-tax.spec.js",
@@ -18049,7 +19390,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-10T22:31:34+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/till-verify.spec.js",
@@ -18074,7 +19420,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/till.spec.js",
@@ -18099,7 +19450,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/tour-two.spec.js",
@@ -18123,7 +19479,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T07:02:01+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/tour.spec.js",
@@ -18148,7 +19509,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T08:46:02+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/trash-recovery.spec.js",
@@ -18172,7 +19537,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-16T14:06:36+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/two-books.spec.js",
@@ -18197,7 +19566,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/two-shops.spec.js",
@@ -18222,7 +19596,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/ux.spec.js",
@@ -18247,7 +19626,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T10:30:05+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/variants.spec.js",
@@ -18272,7 +19656,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-06T00:00:42+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/veg-blueprint.spec.js",
@@ -18296,7 +19685,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-18T04:32:08+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/visual.spec.js",
@@ -18320,7 +19713,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-22T09:47:09+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/withdraw.spec.js",
@@ -18344,7 +19741,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T10:53:52+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/wizard-reach.spec.js",
@@ -18368,7 +19769,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/tests/worklist.spec.js",
@@ -18392,7 +19797,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-15T10:12:22+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/text-budget.cjs",
@@ -18416,7 +19825,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T10:57:46+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/theme-literals.cjs",
@@ -18440,7 +19850,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-01T21:23:30+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/till-demo.cjs",
@@ -18465,7 +19876,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-07T23:05:42+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/till-modes.cjs",
@@ -18489,7 +19905,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/till-render.cjs",
@@ -18513,7 +19933,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-12T00:00:46+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/token-check.cjs",
@@ -18537,7 +19961,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-18T20:23:39+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/tooltip-length.cjs",
@@ -18561,7 +19986,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T10:26:29+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/tour.cjs",
@@ -18586,7 +20012,12 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-09-02T10:06:15+05:30",
+   "needs": [
+    "the API running",
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/try-engines.cjs",
@@ -18616,7 +20047,8 @@
     "lib/docnumber.js",
     "lib/money.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T15:15:40+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/tx-leak.cjs",
@@ -18640,7 +20072,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T18:38:54+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/type-scale.cjs",
@@ -18664,7 +20097,9 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T07:17:12+05:30",
+   "held": "the file says this is Athi's decision"
   },
   {
    "case_key": "chitbridge-web/e2e/undeclared.cjs",
@@ -18688,7 +20123,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T23:32:46+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/verify-att.cjs",
@@ -18712,7 +20148,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T00:08:56+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/verify-folder-ux.cjs",
@@ -18736,7 +20176,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T16:37:55+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/verify-raise.cjs",
@@ -18760,7 +20204,11 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "a person, against a live environment — never unattended"
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-08-10T00:08:56+05:30",
+   "needs": [
+    "a browser"
+   ]
   },
   {
    "case_key": "chitbridge-web/e2e/wrap-apply.cjs",
@@ -18784,7 +20232,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T11:24:21+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/wrap-status.cjs",
@@ -18808,7 +20257,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T11:18:42+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/attach-deferred.test.mjs",
@@ -18833,7 +20283,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-15T23:01:30+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/cap-network-render.test.mjs",
@@ -18857,7 +20308,8 @@
    "subjects": [
     "engine/locale.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T22:26:36+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/cart-ui.test.mjs",
@@ -18879,7 +20331,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-09T01:49:19+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/check-adoption.js",
@@ -18904,7 +20357,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T13:57:32+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/check-app-parses.cjs",
@@ -18928,7 +20382,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-06T08:59:40+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/check-syntax.js",
@@ -18952,7 +20407,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-07-28T09:41:40+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/offers.test.mjs",
@@ -18978,7 +20434,8 @@
    "subjects": [
     "engine/offers.js"
    ],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-09-11T13:57:32+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/price-origin.test.mjs",
@@ -19002,7 +20459,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-16T00:28:31+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/price-resolve.test.mjs",
@@ -19026,7 +20484,8 @@
     "web"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-22T21:56:31+05:30"
   },
   {
    "case_key": "chitbridge-web/scripts/step-flow.test.mjs",
@@ -19048,7 +20507,8 @@
    "step": "",
    "areas": [],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)"
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-08-09T02:29:40+05:30"
   }
  ]
 }
