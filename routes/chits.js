@@ -289,6 +289,18 @@ router.post('/send',
        * key — none of which are document numbers and none of which this rule governs. The till id is the marker
        * that this one is a bill, and without it nothing is checked.
        */
+      /**
+       * ⚠️⚠️ DECLARED HERE BECAUSE THE NUMBER CHECK BELOW READS IT. It used to be declared ~17 lines further down,
+       * and on 2026-09-11 the document-number check was added ABOVE it — so every POST to this route died in the
+       * temporal dead zone with "Cannot access 'client_ref' before initialization", and the screen showed nothing
+       * at all: no toast, no error, the composer simply stayed open.
+       *
+       * ⭐ FOUND BY PRESSING "Save draft" IN A REAL SHOP AND READING THE NETWORK TAB: 500, silently. A `const` read
+       * above its own declaration parses perfectly — `node -c` has nothing to say, because a TDZ violation is a
+       * RUNTIME error — which is why tests/tdz-guard.test.js now exists.
+       */
+      const client_ref = (typeof req.body.client_ref === 'string' && req.body.client_ref.trim()) ? req.body.client_ref.trim().slice(0, 64) : null;
+
       let number_check = null;
       if (client_ref) {
         const _b = req.body && req.body.business_json;
@@ -307,7 +319,6 @@ router.post('/send',
        * till's own bill number — asked for FIRST, before anything is created, and answered with the chit that already exists.
        * ⚠️ Scoped to this entity: a bill number is unique to the shop that issued it, not to the platform.
        */
-      const client_ref = (typeof req.body.client_ref === 'string' && req.body.client_ref.trim()) ? req.body.client_ref.trim().slice(0, 64) : null;
       if (client_ref) {
         try {
           const seen = await withEntity(sender_id, (db) => db.query(
@@ -374,6 +385,18 @@ router.post('/send',
       let line_items = mint.lines(req.body.line_items || []);   // `let`: rated below, once the sender is known
       const business_json = req.body.business_json
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
+      /**
+       * ⚠️⚠️ THE SAME FAULT, LATENT. `currency_code` was declared ~90 lines below the tax-invoice block that reads
+       * it as `currency: currency_code`. Same scope, proven by brace depth over source with strings blanked (a
+       * naive count is useless in this file — it is full of SQL braces).
+       *
+       * ⭐ IT HAS NOT BEEN FIRING DAILY, and the difference matters: that block needs a chit with LINES, a buyer
+       * different from the seller, and identity rows for both. Counter bills and self-addressed chits never reach
+       * it — so the first thing to break would have been a real invoice to a real counterparty, which is the exact
+       * transaction this product exists for.
+       */
+      const currency_code = (business_json && business_json.currency) || 'INR';
+
       /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
       if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;
       /* ⭐ ON THE CHIT, not only in the reply. The counter may be offline when the answer comes back, the person
@@ -737,7 +760,6 @@ router.post('/send',
 
       // Calculate summary from line items
       const summary = calculateSummary(line_items);
-      const currency_code = (business_json && business_json.currency) || 'INR';
       // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
       const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
       // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
