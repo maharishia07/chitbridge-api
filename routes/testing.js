@@ -1000,8 +1000,20 @@ router.post('/requirements', auth, async (req, res) => {
          words the cases already use — a second vocabulary for the same idea is how two lists stop sorting alike. */
       const PRI = ['High', 'Medium', 'Low'];
       const priority = PRI.indexOf(String(b.priority || '')) >= 0 ? String(b.priority) : 'Medium';
+      /**
+       * ⭐⭐ WHERE THE TESTER WAS STANDING, CAPTURED RATHER THAN ASKED FOR. Athi, 2026-09-12: *"I am doing all
+       * those so when I ask the external tester to perform testing they should be able to record against it."*
+       *
+       * The screen code (CAT004) and the dialog code (POP005) are the whole reason those registers exist: a
+       * report that says "the catalogue screen" is a conversation, and one that says CAT004 is a work item.
+       * ⚠️ The browser sends what it was showing at that moment; nothing here derives it, because the server
+       * cannot know which of 84 dialogs was open. A missing code stays missing rather than being guessed.
+       * ⚠️ Shape-checked, not trusted: it reaches a screen, so it is six characters of code or it is dropped.
+       */
+      const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
       const rules = {
         text: requirement, observed: observed, spec: String(b.spec || '').trim() || null, priority: priority,
+        screen_code: codeOf(b.screen_code), popup_code: codeOf(b.popup_code),
         state: 'raised', raised_from: case_key, raised_by: who.name, raised_at: new Date().toISOString(),
         history: [{ state: 'raised', by: who.name, at: new Date().toISOString(), why: null }],
       };
@@ -1070,6 +1082,7 @@ router.get('/requirements', auth, async (req, res) => {
       return {
         definition_id: x.definition_id, clause: x.name, spec: x.sub_kind || null,
         requirement: ru.text || '', observed: ru.observed || '', priority: ru.priority || 'Medium',
+        screen_code: ru.screen_code || null, popup_code: ru.popup_code || null,
         state: ru.state || 'raised', shelf: x.status,
         raised_from: ru.raised_from || null, raised_by: ru.raised_by || null, raised_at: ru.raised_at || null,
         why: ru.why || null, history: ru.history || [], at: x.updated_at,

@@ -118,4 +118,22 @@ if (APP && PANEL) {
   console.log('  (web repo not checked out — the two cross-repo checks are skipped, never failed)');
 }
 
+it('⭐⭐ a raised requirement records WHERE the tester was standing', () => {
+  /**
+   * Athi, 2026-09-12: *"I am doing all those so when I ask the external tester to perform testing they should be
+   * able to record against it."* A report saying "the catalogue screen" is a conversation; one saying CAT004 is
+   * a work item.
+   * ⚠️ The BROWSER sends it — the server cannot know which of 84 dialogs was open — so it is shape-checked here
+   * rather than trusted, because it reaches a screen.
+   */
+  assert.ok(/screen_code: codeOf/.test(SRC), 'the screen code is not stored with the requirement');
+  assert.ok(/popup_code: codeOf/.test(SRC), 'the dialog code is not stored with the requirement');
+  assert.ok(SRC.indexOf('[A-Z]{3}[0-9]{3}') > 0, 'a code is accepted without being shape-checked');
+  if (PANEL) {
+    assert.ok(PANEL.indexOf('screen_code: sc') > 0, 'the panel does not send the screen code');
+    /* ⚠️ and it must SAY what it is about to record — capturing quietly is how a tool loses trust */
+    assert.ok(PANEL.indexOf('Recorded against') > 0, 'the form does not say what it will record');
+  }
+});
+
 console.log('\n  ' + pass + ' checks\n');
