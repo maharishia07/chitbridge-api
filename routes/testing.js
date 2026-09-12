@@ -1165,6 +1165,260 @@ router.patch('/requirements/:id', auth, async (req, res) => {
   }
 });
 
+/**
+ * ── ⭐⭐⭐ INCIDENTS — WHAT A PERSON EXPERIENCED, WHICH IS NOT WHAT IS WRONG WITH THE CODE ─────────────────────
+ *
+ * Athi, 2026-09-12: *"similarly we have to create incident management tool from our system so we can use it to
+ * record incidents and the entire change control."*
+ *
+ * ⭐⭐ NOTHING NEW UNDERNEATH, AGAIN. An incident is a `definition` of kind 'incident'. `definition.kind` is
+ * free text on purpose (b160), so THIS NEEDS NO MIGRATION — it is already versioned, already RLS-isolated, and
+ * already the thing the rest of the board reads. The one new table in this whole area is still `test_result`,
+ * and it earned that because results ACCUMULATE.
+ *
+ * ── ⚠️⚠️ AN INCIDENT IS NOT A DEFECT AND NOT A REQUIREMENT. THREE THINGS, ON PURPOSE ─────────────────────────
+ *
+ *   INCIDENT      "the counter stopped taking bills at 4pm"        service interrupted, someone is waiting
+ *   DEFECT        the fault in the code behind it                  may be none, one, or several per incident
+ *   REQUIREMENT   "the counter must snap 1.010 to 1"               a rule that did not exist yet
+ *
+ * ITIL 4 draws the first line and it earns its keep here: the shop does not care which module is wrong, it
+ * cares that billing stopped. ⚠️ Filed as one thing, nobody can answer *"how many Sev-1 are open right now"*,
+ * which is the question a release gate and a support desk both ask. The requirement door already exists above
+ * (kind 'spec'); this is the other one, and an incident LINKS to a requirement rather than becoming one.
+ *
+ * ── ⭐ THE CLOCK IS THE POINT, AND IT IS TWO TIMES NOT ONE ───────────────────────────────────────────────────
+ *
+ * `happened_at` is when the shop stopped; `raised_at` is when somebody told us. They are never the same and the
+ * gap between them is the most useful number on the board — it is how long the shop suffered before anyone
+ * knew. ⚠️ A tool that stores only the report time silently reports its own responsiveness as the shop's.
+ *
+ * ── ⚠️ WHAT IS DELIBERATELY NOT HERE ────────────────────────────────────────────────────────────────────────
+ *
+ * NO CHANGE RECORD IS TYPED. Every change already exists, written at the moment it was made, in the commits of
+ * these three repos. A change-control tool that re-types them is a second copy that drifts from the first, and
+ * the drifted copy is the one people read. ⭐ So resolving an incident CITES a commit — repo and sha — and the
+ * chain is incident → defect → change → the case that proves it. That chain is the traceability matrix
+ * ISO/IEC/IEEE 29119-3 asks for, assembled from records that already had to exist.
+ */
+const INC_STATES = ['raised', 'investigating', 'resolved', 'closed'];
+/* ⚠️ the shelf words are b160's draft|live|retired, NOT new ones: other screens filter on them, and inventing
+   a fifth would make every one of those quietly wrong about what is on the shelf. */
+const INC_SHELF = { raised: 'draft', investigating: 'draft', resolved: 'live', closed: 'retired' };
+/**
+ * ⭐ SEVERITY IS WHAT THE SHOP LOST, NOT HOW HARD IT IS TO FIX. IEEE 1044 classifies by impact and that is the
+ * axis a person standing at a stopped counter can actually judge. Four levels, because five invites debate
+ * about the middle one and nobody has ever needed it.
+ */
+const INC_SEV = ['Sev-1', 'Sev-2', 'Sev-3', 'Sev-4'];
+const SEV_MEANS = {
+  'Sev-1': 'stopped — the work cannot go on',
+  'Sev-2': 'blocked — there is a way round, and it costs',
+  'Sev-3': 'wrong — it runs, and it is not right',
+  'Sev-4': 'noticed — nothing is at risk',
+};
+
+/** POST /api/testing/incidents — record one where it happened. */
+router.post('/incidents', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const who = testerOf(req);
+    const b = req.body || {};
+    const observed = String(b.observed || '').trim();
+    /* ⚠️ refused, not defaulted: an incident with no account of what happened cannot be investigated by
+       anybody but the person who filed it, and they are the one person who will not need to. */
+    if (!observed) return res.status(400).json({ error: 'Nothing recorded', message: 'Say what happened.' });
+
+    const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
+    const sev = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : 'Sev-3';
+    const now = new Date().toISOString();
+    /* ⚠️ the client's clock is not trusted to be in the future: a 'happened' after 'raised' is a wrong clock,
+       and it would show as a negative delay on the one number this board exists to make visible. */
+    let happened = String(b.happened_at || '').trim() || now;
+    if (!(Date.parse(happened) > 0) || Date.parse(happened) > Date.parse(now)) happened = now;
+
+    const out = await withEntity(entity_id, async (db) => {
+      const name = String(b.ref || '').trim()
+        || ('INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase());
+      const rules = {
+        observed: observed,
+        severity: sev, severity_means: SEV_MEANS[sev],
+        /* ⭐ where they were standing, in the words the registers already use — CAT005 is a work item,
+           'the catalogue screen' is a conversation. Shape-checked, and a missing code stays missing. */
+        screen_code: codeOf(b.screen_code), popup_code: codeOf(b.popup_code),
+        affected: String(b.affected || '').trim() || null,
+        build: String(b.build || '').trim() || null,
+        found_by_case: String(b.case_key || '').trim() || null,
+        state: 'raised', happened_at: happened, raised_at: now,
+        raised_by: who.name,
+        /* the links, empty until somebody makes them — never invented here */
+        defects: [], changes: [], resolved_at: null,
+        history: [{ state: 'raised', by: who.name, at: now, why: null }],
+      };
+      const ins = await db.query(
+        `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+         VALUES ($1,'incident',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
+        [entity_id, sev, name, observed.slice(0, 200), who.id]);
+      const id = ins.rows[0].definition_id;
+      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
+      return { definition_id: id, ref: name, severity: sev, happened_at: happened };
+    });
+
+    res.json(Object.assign({ recorded: true, state: 'raised' }, out));
+  } catch (err) {
+    res.status(500).json({ error: 'Could not record it', message: String(err.message || err) });
+  }
+});
+
+/**
+ * GET /api/testing/incidents?state=open — the board.
+ *
+ * ⭐ `open` MEANS RAISED OR BEING INVESTIGATED, and it is the default for the same reason it is on the
+ * requirements list: the person opening this screen is asking what is still waiting on somebody.
+ */
+router.get('/incidents', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const want = String((req.query || {}).state || 'open');
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND d.kind = 'incident'
+        ORDER BY d.updated_at DESC LIMIT 500`, [entity_id]));
+
+    const all = r.rows.map((x) => {
+      const ru = x.rules || {};
+      const sev = ru.severity || 'Sev-3';
+      /* ⭐ THE TWO NUMBERS NOBODY CAN GET FROM A LIST OF ROWS: how long the shop suffered before anyone knew,
+         and how long it then took. Computed on read from the stamps, never stored — a stored duration is a
+         number that stops being true the moment the row changes and nobody recomputes it. */
+      const t0 = Date.parse(ru.happened_at || ru.raised_at || x.updated_at);
+      const t1 = Date.parse(ru.raised_at || x.updated_at);
+      const t2 = ru.resolved_at ? Date.parse(ru.resolved_at) : null;
+      const mins = (a, b2) => ((a > 0 && b2 > 0) ? Math.max(0, Math.round((b2 - a) / 60000)) : null);
+      return {
+        definition_id: x.definition_id, ref: x.name,
+        observed: ru.observed || '', severity: sev, severity_means: SEV_MEANS[sev] || null,
+        screen_code: ru.screen_code || null, popup_code: ru.popup_code || null,
+        affected: ru.affected || null, build: ru.build || null,
+        found_by_case: ru.found_by_case || null,
+        state: ru.state || 'raised', shelf: x.status,
+        happened_at: ru.happened_at || null, raised_at: ru.raised_at || null, resolved_at: ru.resolved_at || null,
+        unnoticed_mins: mins(t0, t1), open_mins: mins(t1, t2),
+        defects: ru.defects || [], changes: ru.changes || [],
+        raised_by: ru.raised_by || null, why: ru.why || null, history: ru.history || [], at: x.updated_at,
+      };
+    });
+    /* ⚠️ SEVERITY FIRST, THEN OLDEST. Newest-first is right for a log and wrong for a board: the oldest Sev-1
+       is precisely the row that must never sink, and it is the one a date sort buries. */
+    const RANK = { 'Sev-1': 0, 'Sev-2': 1, 'Sev-3': 2, 'Sev-4': 3 };
+    all.sort((a, b2) => (RANK[a.severity] - RANK[b2.severity])
+      || (String(a.happened_at) < String(b2.happened_at) ? -1 : 1));
+    const open = all.filter((q) => q.state === 'raised' || q.state === 'investigating');
+    const list = want === 'all' ? all : (want === 'open' ? open : all.filter((q) => q.state === want));
+    const counts = INC_STATES.reduce((a, k) => { a[k] = all.filter((q) => q.state === k).length; return a; }, {});
+    /* ⭐ the count a release gate actually asks for, computed here so no caller has to know the rule */
+    const bySev = INC_SEV.reduce((a, k) => { a[k] = open.filter((q) => q.severity === k).length; return a; }, {});
+    res.json({ incidents: list, count: list.length, counts, open: open.length, open_by_severity: bySev,
+      total: all.length, severities: INC_SEV, means: SEV_MEANS });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read them', message: String(err.message || err) });
+  }
+});
+
+/**
+ * PATCH /api/testing/incidents/:id — move it, and say what was done.
+ *
+ * ⚠️⚠️ APPEND, NEVER OVERWRITE — the same argument the result ledger and the requirement flag both won. An
+ * incident whose state can change with no trace is an incident nobody can be held to, and the support desk is
+ * exactly where that matters.
+ */
+router.patch('/incidents/:id', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const who = testerOf(req);
+    const b = req.body || {};
+    const state = String(b.state || '');
+    const why = String(b.why || '').trim();
+    const sevIn = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : null;
+    /* re-grading the severity is a legitimate change on its own — it is a judgement, not a decision to move */
+    const onlySeverity = !state && sevIn;
+    const linking = !state && (b.defect || b.change);
+    if (!onlySeverity && !linking && INC_STATES.indexOf(state) < 0) {
+      return res.status(400).json({ error: 'Not a state', message: 'One of: ' + INC_STATES.join(' · ') });
+    }
+    /**
+     * ⚠️⚠️ RESOLVED WITHOUT SAYING WHAT CHANGED IS THE FAILURE MODE OF EVERY INCIDENT TOOL. The row goes green,
+     * the shop is still broken, and six months later nobody can tell whether it was fixed or forgotten. So a
+     * resolution carries either the commit that did it or, in words, why nothing needed doing.
+     */
+    if (state === 'resolved' && !b.change && !why) {
+      return res.status(400).json({ error: 'Say what changed',
+        message: 'Cite the commit that fixed it, or say why nothing needed to change.' });
+    }
+    if (state === 'closed' && !why) {
+      return res.status(400).json({ error: 'Say why',
+        message: 'Closing is a decision — record it, or the next person reopens the same thing.' });
+    }
+
+    const out = await withEntity(entity_id, async (db) => {
+      const c = await db.query(
+        `SELECT d.definition_id, d.current_version, v.rules
+           FROM definition d JOIN definition_version v
+             ON v.definition_id = d.definition_id AND v.version = d.current_version
+          WHERE d.entity_id = $1 AND d.kind = 'incident' AND d.definition_id = $2::uuid`,
+        [entity_id, req.params.id]);
+      const row = c.rows[0];
+      if (!row) return null;
+      const ru = row.rules || {};
+      const now = new Date().toISOString();
+      const nextState = state || ru.state || 'raised';
+      const sev = sevIn || ru.severity || 'Sev-3';
+      /**
+       * ⭐ A CHANGE IS A CITATION, NOT A COPY: repo and sha, so the message, the diff and the author are read
+       * from git where they already are and cannot drift from it. A subject line is kept for reading, and it
+       * is explicitly a CACHE of git's — git remains the record.
+       */
+      const changes = (ru.changes || []).slice();
+      if (b.change) {
+        const sha = String((b.change.sha || b.change.commit || '')).trim().toLowerCase();
+        if (/^[0-9a-f]{7,40}$/.test(sha)) {
+          changes.push({ repo: String(b.change.repo || '').trim() || null, sha: sha,
+            subject: String(b.change.subject || '').trim().slice(0, 200) || null, by: who.name, at: now });
+        }
+      }
+      /* a defect is a requirement/spec row that already exists — its id, never its text copied over */
+      const defects = (ru.defects || []).slice();
+      if (b.defect && /^[0-9a-f-]{36}$/i.test(String(b.defect))) {
+        if (defects.indexOf(String(b.defect)) < 0) defects.push(String(b.defect));
+      }
+      const next = Object.assign({}, ru, {
+        state: nextState, severity: sev, severity_means: SEV_MEANS[sev],
+        why: why || ru.why || null, changes: changes, defects: defects,
+        /* ⚠️ stamped once, on the FIRST resolution: a reopened-and-resolved incident must not lose the day the
+           shop actually got its counter back, which is the number anybody reporting on this will quote. */
+        resolved_at: (nextState === 'resolved' || nextState === 'closed') ? (ru.resolved_at || now) : ru.resolved_at || null,
+        history: (ru.history || []).concat([{ state: nextState, severity: sev, by: who.name, at: now, why: why || null }]),
+      });
+      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,$2,$3,$4,$5)`,
+        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]);
+      await db.query(`UPDATE definition SET current_version = $2, status = $3, sub_kind = $4, updated_at = now()
+                        WHERE definition_id = $1 AND entity_id = $5`,
+        [row.definition_id, row.current_version + 1, INC_SHELF[nextState], sev, entity_id]);
+      return { state: nextState, severity: sev, shelf: INC_SHELF[nextState],
+        version: row.current_version + 1, changes: changes.length, defects: defects.length };
+    });
+
+    if (!out) return res.status(404).json({ error: 'Not found', message: 'No incident with that id.' });
+    res.json(Object.assign({ ok: true }, out));
+  } catch (err) {
+    res.status(500).json({ error: 'Could not set it', message: String(err.message || err) });
+  }
+});
+
 router.get('/stale', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
