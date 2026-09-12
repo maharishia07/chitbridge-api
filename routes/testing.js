@@ -554,6 +554,18 @@ function badResult(r) {
   if (STATUSES.indexOf(r.status) < 0) return `"${r.status}" is not a status — ${STATUSES.join(', ')}`;
   if (RUN_KINDS.indexOf(r.run_kind) < 0) return `"${r.run_kind}" is not a kind of run — ${RUN_KINDS.join(', ')}`;
   if (r.layer && LAYERS.indexOf(r.layer) < 0) return `"${r.layer}" is not a layer — ${LAYERS.join(', ')}`;
+  /**
+   * ⭐⭐ BLOCKED MUST SAY WHY — ISO/IEC/IEEE 29119-3 asks for the reason a case could not be run, and it is
+   * right to. A blocked case with no reason is indistinguishable from a case nobody got to, and the two lead
+   * to opposite actions: one needs the blocker fixed, the other needs a tester.
+   *
+   * ⚠ ONLY BLOCKED. A pass needs no words, and a failure already has the observation the panel demanded
+   * before it would file one. Nothing automated posts blocked today — checked, not assumed — so this cannot
+   * quietly redden a suite.
+   */
+  if (r.status === 'blocked' && !String(r.note || '').trim()) {
+    return 'a blocked case must say what blocked it — otherwise it reads the same as one nobody reached';
+  }
   return null;
 }
 
