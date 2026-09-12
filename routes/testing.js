@@ -50,8 +50,18 @@ const STATUSES = ['pass', 'fail', 'blocked', 'skipped'];
  * `support` is not a test at all: fixtures and harnesses other tests stand on, listed so they stop being
  * counted as coverage by anyone skim-reading a file count.
  */
-const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'performance', 'security', 'penetration',
-  'static', 'support'];
+/**
+ * ⚠️⚠️ `screen` WAS MISSING FROM THIS LIST, so every screen-level case was silently filed as no type at all.
+ * The sweep set it, the builder carried it, the importer read it against this list, found nothing, and wrote
+ * null — with no error anywhere, because a whitelist that drops what it does not know is a named-list door
+ * like any other. Athi asked for these to be filterable as a set; they could not be.
+ *
+ * ⭐ A SCREEN TEST IS ITS OWN KIND. It is not an acceptance test (which asks whether the product does the
+ * job) and not a static one: it asks whether ONE SCREEN opens, names itself and does what it claims. That
+ * is a different question and a different amount of evidence, so it counts separately.
+ */
+const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'performance', 'security',
+  'penetration', 'static', 'support'];
 
 router.get('/vocabulary', (req, res) => {
   res.json({
