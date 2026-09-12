@@ -11,7 +11,9 @@ const state = {
   tokens: {},
   connections: {},
   chit_id: null,
-  results: []
+  results: [],
+  /* ⭐ which section is running — a condition without the scenario it belongs to is a sentence with no subject */
+  section: null
 };
 
 // ── Colours ───────────────────────────────────────────────────
@@ -27,7 +29,14 @@ const C = {
 
 // ── Helpers ───────────────────────────────────────────────────
 async function api(method, path, body, token) {
-  const fetch = (await import('node-fetch')).default;
+  /**
+   * ⚠ THIS SUITE COULD NOT RUN AT ALL (found 2026-09-12): node-fetch is not installed and is not in
+   * package.json, so the harness aborted at the health check with 0 assertions — it has been unrunnable for
+   * however long that has been true. ⭐ The fix is not to install it: Node has shipped a global fetch since
+   * 18, and this runtime is 24. Adding a dependency to get what the runtime already provides is how a suite
+   * acquires a reason to break again. node-fetch stays as the fallback for an older Node.
+   */
+  const fetch = globalThis.fetch || (await import('node-fetch')).default;
   const opts = {
     method,
     headers: {
@@ -44,16 +53,17 @@ async function api(method, path, body, token) {
 function pass(test, detail = '') {
   const msg = `${C.green}✅ PASS${C.reset} ${test}${detail ? ` — ${detail}` : ''}`;
   console.log(msg);
-  state.results.push({ test, passed: true });
+  state.results.push({ test, passed: true, detail, section: state.section });
 }
 
 function fail(test, detail = '') {
   const msg = `${C.red}❌ FAIL${C.reset} ${test}${detail ? ` — ${detail}` : ''}`;
   console.log(msg);
-  state.results.push({ test, passed: false, detail });
+  state.results.push({ test, passed: false, detail, section: state.section });
 }
 
 function section(title) {
+  state.section = title;
   console.log(`\n${C.bold}${C.blue}── ${title} ──${C.reset}`);
 }
 
@@ -503,6 +513,155 @@ async function testCatalogueFace() {
   else fail('Reject bad face (400)', 'status ' + bad.status);
 }
 
+// ── ⭐⭐ THE RUN GOES ON THE BOARD ─────────────────────────────
+/**
+ * Athi, 2026-09-12: *"my only concern is test case, condition and the result is not getting reflected in the
+ * test lab."*
+ *
+ * ⚠️⚠️ HE WAS RIGHT, AND THE HOLE WAS WIDER THAN NOT POSTING. This file reached the board only as a classified
+ * FILE — "test.harness · support · 551 lines" — carrying no steps and no result. Forty-two assertions against
+ * the live API, and the page that reports what is tested could not see one of them.
+ *
+ * ⭐ SO ONE RUN NOW WRITES BOTH HALVES, AND THEY CANNOT DRIFT APART: the CONDITIONS (what this suite checks)
+ * into TEST-CONDITIONS.json, which build-test-cases.cjs hangs on this file's case; and the RESULT into a JUnit
+ * report post-suite.cjs puts on that same case. The definitions and the evidence come out of one pass, so a
+ * condition cannot be on the board without the run that proved it, or the other way round.
+ *
+ * ⚠️ ONE RESULT PER CASE, NOT PER ASSERTION, because that is the ledger's shape: uq_test_result_once is one row
+ * per (run, case, layer). Posting 42 rows keyed to one case would keep the first and drop 41 without a word —
+ * so the case passes only when every condition in it passed, and the note carries the count and the failures.
+ *
+ * ⚠️⚠️ AND NOTHING IS WRITTEN ON AN ABORTED RUN. A suite that stopped at scenario 2 knows about six conditions,
+ * not forty-two; writing that list would DELETE thirty-six conditions from the board and read as a tidy-up.
+ * [[feedback-improvise-update-cases]] — a case is moved, never quietly dropped.
+ */
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * ⚠️ THIS KEY MUST BE THE ONE classify-tests.cjs EMITS FOR THIS FILE. Two spellings of one identity is how a
+ * history splits in half with nothing to say it did — the same warning suite.cjs carries about its own keys.
+ * chitbridge-api/tests/test-board.test.js fails if TEST-CONDITIONS.json ever names a case the board lacks.
+ */
+const CASE_KEY = 'chitbridge-api/tests/run-tests.js';
+const DEV = path.join(__dirname, '..', '..');
+const CONDITIONS_FILE = path.join(DEV, 'TEST-CONDITIONS.json');
+const JUNIT_FILE = path.join(__dirname, '..', 'test-results', 'harness.xml');
+
+/**
+ * ⭐ WHAT VARIES BETWEEN RUNS IS NOT A CONDITION. Every entity here is created fresh, so an assertion detail
+ * reads "bridge_id: CBWZR6JLF4" today and something else tomorrow. Left alone, the board's conditions would
+ * change on every single run and `board.cjs --check` would go red daily until nobody read it any more.
+ * ⚠️ The shape is kept and only the value is replaced, so a reader still sees WHAT was checked.
+ */
+function steady(s) {
+  const flat = String(s == null ? '' : s)
+    .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/g, '«at»')
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '«id»')
+    .replace(/\bCB[A-Z0-9]{8}\b/g, '«bridge id»')
+    /**
+     * ⚠️ NO WORD BOUNDARY. \\b\\d{9,}\\b missed `ops45635@e1789206464341320473` — the digits are welded to a
+     * letter, so there is no boundary to find, and the condition moved on every run while looking normalised.
+     * ⭐ Found by running the suite twice and diffing, which is the only way this kind of thing is ever found.
+     */
+    .replace(/\d{5,}/g, '«run»');
+  /**
+   * ⚠️⚠️ AN UNORDERED LIST IS NOT A CHANGING CONDITION. "All 3 participants visible" came back as B·A·C on one
+   * run and C·B·A on the next — the API promises the SET, not the order, and the assertion only ever checked
+   * that all three were there. Left alone the board would have rewritten itself every run over nothing.
+   * ⭐ Sorted, so the condition says the same thing twice; the check itself is unchanged.
+   */
+  return flat.indexOf(', ') > 0 ? flat.split(', ').sort().join(', ') : flat;
+}
+
+/** The conditions, in the order the suite runs them, grouped under the section that ran them. */
+function conditionsOfRun() {
+  const seen = [], bySection = {};
+  for (const r of state.results) {
+    const sec = r.section || 'Unsectioned';
+    if (!bySection[sec]) { bySection[sec] = []; seen.push(sec); }
+    bySection[sec].push(r);
+  }
+  const steps = [];
+  for (const sec of seen) {
+    for (const r of bySection[sec]) {
+      /**
+       * ⭐ A STEP IS [what is done, what must be true]. For an automated case the assertion label IS the check
+       * and the detail is what the suite accepted as proof — which is why these are written by the run and not
+       * by me: a hand-written expectation for code that asserts for itself is a sentence nobody verified.
+       */
+      steps.push([sec + ' — ' + steady(r.test),
+        steady(r.detail) || 'The suite accepts this as proven when it holds.']);
+    }
+  }
+  return steps;
+}
+
+/**
+ * ⚠️ MERGED, NEVER OVERWRITTEN. Any other suite that learns to describe its own conditions writes into the same
+ * file under its own case key; a whole-file rewrite here would erase theirs on the next run of this one.
+ */
+function writeConditions(steps) {
+  let doc = {};
+  try { doc = JSON.parse(fs.readFileSync(CONDITIONS_FILE, 'utf8')); } catch (_) { doc = {}; }
+  if (!doc._what) {
+    doc._what = 'CONDITIONS WRITTEN BY THE RUN ITSELF. Keyed by case key. build-test-cases.cjs hangs these on '
+      + 'the matching case so the board shows WHAT an automated suite checks, not only that it exists. '
+      + '⚠ Never hand-edited: the suite is the source, and a typed condition here would claim a check nobody wrote.';
+  }
+  doc[CASE_KEY] = {
+    at: new Date().toISOString(),
+    against: String(BASE_URL).replace(/^https?:\/\//, ''),
+    /* ⚠️ the timestamp above is provenance and deliberately does NOT reach the board — a date in the case text
+       would move the committed board on every run and turn `--check` into noise. */
+    count: steps.length,
+    steps: steps,
+  };
+  fs.writeFileSync(CONDITIONS_FILE, JSON.stringify(doc, null, 1) + '\n');
+  return CONDITIONS_FILE;
+}
+
+/** The result, in the format the board already ingests — the same JUnit suite.cjs writes for the guards. */
+function writeJunit(passed, total, failures) {
+  const esc = (x) => String(x == null ? '' : x)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const red = failures.length > 0;
+  const why = red
+    ? failures.length + ' of ' + total + ' conditions failed: '
+      + failures.slice(0, 6).map((f) => steady(f.test)).join(' · ')
+    : '';
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    + '<testsuites name="chitbridge-harness" tests="1" failures="' + (red ? 1 : 0) + '">\n'
+    + '  <testsuite name="api-integration" tests="1" failures="' + (red ? 1 : 0) + '">\n'
+    + '    <testcase classname="test.harness" name="' + esc(CASE_KEY) + '" time="0">'
+    + (red ? '<failure message="' + esc(why) + '"/>' : '')
+    + '<system-out>' + esc(passed + ' of ' + total + ' conditions passed against ' + BASE_URL) + '</system-out>'
+    + '</testcase>\n  </testsuite>\n</testsuites>\n';
+  fs.mkdirSync(path.dirname(JUNIT_FILE), { recursive: true });
+  fs.writeFileSync(JUNIT_FILE, xml);
+  return JUNIT_FILE;
+}
+
+function writeBoardArtefacts(aborted) {
+  const total = state.results.length;
+  const failures = state.results.filter((r) => !r.passed);
+  const passed = total - failures.length;
+  console.log(`\n${C.bold}── the board ──${C.reset}`);
+  if (aborted) {
+    /* ⚠️ SAID OUT LOUD, because a runner that skips a step in silence is the thing board-day.cjs exists to end. */
+    console.log(`  ${C.yellow}conditions NOT written — this run stopped early and knows only ${total} of them.`
+      + `${C.reset}\n  A short list would delete the rest from the board and look deliberate.`);
+  } else {
+    const f = writeConditions(conditionsOfRun());
+    console.log(`  conditions: ${total} written to ${f}`);
+  }
+  const j = writeJunit(passed, total, failures);
+  console.log(`  result:     ${j}`);
+  console.log(`  ⭐ to put it on the live board:  node C:\\dev\\post-suite.cjs <token> --file `
+    + `chitbridge-api/test-results/harness.xml --keys name --kind t2 --layer transport --label "api harness"`);
+  console.log(`     Rebuild first if the conditions moved:  node C:\\dev\\board.cjs\n`);
+}
+
 // ── Main ──────────────────────────────────────────────────────
 async function main() {
   let aborted = null;
@@ -540,11 +699,14 @@ async function main() {
    * flushed, which on a failing run throws away the very output someone needs. Setting the code lets
    * the process end on its own with everything printed.
    */
-  process.exitCode = printResults(aborted) ? 0 : 1;
+  const green = printResults(aborted);
+  /* ⚠ written even on a red run — a failure is today's answer and belongs on the board more than a pass does */
+  try { writeBoardArtefacts(aborted); } catch (e) { console.log('  could not write the board artefacts: ' + e.message); }
+  process.exitCode = green ? 0 : 1;
 }
 
 /* Requiring this file must not run the suite — tests/run-tests-exit.test.cjs asks printResults()
    directly for its verdict in each of the four states. */
 if (require.main === module) main();
 
-module.exports = { printResults, state };
+module.exports = { printResults, state, steady, CASE_KEY };

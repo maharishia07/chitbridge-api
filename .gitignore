@@ -37,3 +37,6 @@ tools/tally-connector/*.log
 
 # generated scale data — rebuild with tools/seed/generate.cjs, never worth 3 MB in history
 tools/seed/tallytest-10k.json
+
+# a run artefact, not a document: the JUnit the harness writes for the board (C:\dev ignores its own)
+test-results/

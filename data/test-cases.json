@@ -39903,7 +39903,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · static · 64 lines. Run: node chitbridge-api/tests/run-tests-exit.test.cjs",
+   "note": "test.guard · static · 77 lines. Run: node chitbridge-api/tests/run-tests-exit.test.cjs",
    "layer": "engine",
    "test_type": "static",
    "group": "test.guard",
@@ -39922,13 +39922,182 @@
    "intro": "",
    "title": "Chit and Bridge MVP Test Harness Run: node tests/run-tests.js Requires server running at BASE_URL",
    "claim": "Chit and Bridge MVP Test Harness Run: node tests/run-tests.js Requires server running at BASE_URL",
-   "priority": "Medium",
+   "priority": "High",
    "pre": "",
    "data": "",
-   "steps": [],
-   "note": "test.harness · support · 551 lines. Run: node chitbridge-api/tests/run-tests.js",
+   "steps": [
+    [
+     "Health Check — Server is running",
+     "v1.0.0"
+    ],
+    [
+     "Scenario 1 — Entity Registration — Register and verify Test Entity A «run»",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "Scenario 1 — Entity Registration — Register and verify Test Entity B «run»",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "Scenario 1 — Entity Registration — Register and verify Test Entity C «run»",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "Scenario 1 — Entity Registration — Bridge IDs are unique",
+     "«bridge id», «bridge id», «bridge id»"
+    ],
+    [
+     "ENTITY + KEY — actor (co-assist) provisioning — Register and verify KeyTest Co",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "ENTITY + KEY — actor (co-assist) provisioning — Create actor (key)",
+     "login ops«run»@e«run»"
+    ],
+    [
+     "NETWORK DESIGN persistence (b111 — cross-device, RLS) — Register and verify NetDesign A",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "NETWORK DESIGN persistence (b111 — cross-device, RLS) — Register and verify NetDesign B",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "NETWORK DESIGN persistence (b111 — cross-device, RLS) — Save design (A)",
+     "updated_at «at»"
+    ],
+    [
+     "NETWORK DESIGN persistence (b111 — cross-device, RLS) — Load design (A) round-trip",
+     "nodes: 1"
+    ],
+    [
+     "NETWORK DESIGN persistence (b111 — cross-device, RLS) — RLS isolation — B cannot see A design",
+     "B draft is null"
+    ],
+    [
+     "NETWORK DESIGN persistence (b111 — cross-device, RLS) — Reject bad draft (400)",
+     "guard holds"
+    ],
+    [
+     "CATALOGUE FACE persistence (b112 — cross-device, RLS) — Register and verify CatFace A",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "CATALOGUE FACE persistence (b112 — cross-device, RLS) — Register and verify CatFace B",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "CATALOGUE FACE persistence (b112 — cross-device, RLS) — Save face (A)",
+     "updated_at «at»"
+    ],
+    [
+     "CATALOGUE FACE persistence (b112 — cross-device, RLS) — Load face (A) round-trip",
+     "units: kg·litre"
+    ],
+    [
+     "CATALOGUE FACE persistence (b112 — cross-device, RLS) — RLS isolation — B cannot see A face",
+     "B face is null"
+    ],
+    [
+     "CATALOGUE FACE persistence (b112 — cross-device, RLS) — Reject bad face (400)",
+     "guard holds"
+    ],
+    [
+     "Scenario 2 — Connection Handshake — A sends connection request to B",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 2 — Connection Handshake — A sends connection request to C",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 2 — Connection Handshake — B sees pending request from A",
+     "1 pending"
+    ],
+    [
+     "Scenario 2 — Connection Handshake — B accepts connection from A",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 2 — Connection Handshake — C accepts connection from A",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 2 — Connection Handshake — A has 2 accepted connections",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 3 — Send Chit from A to B and C — A sends chit to B and C",
+     "chit_id: «id»"
+    ],
+    [
+     "Scenario 3 — Send Chit from A to B and C — Auto subject generated",
+     "Order from Test Entity A «run» — 12 Sept 2026"
+    ],
+    [
+     "Scenario 3 — Send Chit from A to B and C — Summary calculated",
+     "2 items, INR 6100"
+    ],
+    [
+     "Scenario 3 — Send Chit from A to B and C — B sees chit in inbox",
+     "status: pending"
+    ],
+    [
+     "Scenario 3 — Send Chit from A to B and C — C sees chit in inbox",
+     "status: pending"
+    ],
+    [
+     "Scenario 3 — Send Chit from A to B and C — A sees chit in sent items",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — B opens chit — sees full detail",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — All 3 participants visible",
+     "Test Entity A «run», Test Entity B «run», Test Entity C «run»"
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — State log has entries",
+     "1 entries"
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — Line items visible to B",
+     "2 items"
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — B accepts chit",
+     "pending → accepted"
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — C rejects chit",
+     "pending → rejected"
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — A sees B status: accepted",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 4 — Chit Detail and State Updates — A sees C status: rejected",
+     "The suite accepts this as proven when it holds."
+    ],
+    [
+     "Scenario 5 — Invalid State Transition Rejected — Platform rejects invalid transition",
+     "Cannot move from accepted to partial"
+    ],
+    [
+     "Scenario 6 — Cannot Send Chit Without Connection — Register and verify Test Entity D «run»",
+     "bridge_id: «bridge id»"
+    ],
+    [
+     "Scenario 6 — Cannot Send Chit Without Connection — Platform allows chit to any entity (mailing model — no connection required)",
+     "The suite accepts this as proven when it holds."
+    ]
+   ],
+   "note": "test.harness · system · 713 lines. Run: node chitbridge-api/tests/run-tests.js ⭐ The 42 conditions below were written by the run itself, against chitbridge-api-production.up.railway.app — not typed by anybody.",
    "layer": "engine",
-   "test_type": "support",
+   "test_type": "system",
    "group": "test.harness",
    "automated": true,
    "seq": 90,
@@ -39937,7 +40106,7 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "run_by": "a person, against a live environment — never unattended",
    "changed_at": "2026-08-30T10:04:31+05:30",
    "needs": [
     "the API running"
@@ -40505,7 +40674,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · static · 565 lines. Run: node chitbridge-api/tests/test-board.test.js",
+   "note": "test.unit · static · 593 lines. Run: node chitbridge-api/tests/test-board.test.js",
    "layer": "engine",
    "test_type": "static",
    "group": "test.unit",
@@ -40620,13 +40789,13 @@
    "intro": "",
    "title": "mass-balance invariant, Fragment 3 (RED-first, TR-4).",
    "claim": "mass-balance invariant, Fragment 3 (RED-first, TR-4).",
-   "priority": "Medium",
+   "priority": "High",
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 59 lines. Run: node chitbridge-api/tests/traceability-massbalance.test.js",
+   "note": "test.unit · system · 59 lines. Run: node chitbridge-api/tests/traceability-massbalance.test.js",
    "layer": "engine",
-   "test_type": "unit",
+   "test_type": "system",
    "group": "test.unit",
    "automated": true,
    "seq": 90,
@@ -40635,7 +40804,7 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "run_by": "a person, against a live environment — never unattended",
    "changed_at": "2026-08-19T09:12:48+05:30",
    "needs": [
     "the API running"
@@ -40648,13 +40817,13 @@
    "intro": "",
    "title": "Traceability WALK + operator lens, Fragment 2 (RED-first).",
    "claim": "Traceability WALK + operator lens, Fragment 2 (RED-first).",
-   "priority": "Medium",
+   "priority": "High",
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 125 lines. Run: node chitbridge-api/tests/traceability-walk.test.js",
+   "note": "test.unit · system · 125 lines. Run: node chitbridge-api/tests/traceability-walk.test.js",
    "layer": "engine",
-   "test_type": "unit",
+   "test_type": "system",
    "group": "test.unit",
    "automated": true,
    "seq": 90,
@@ -40663,7 +40832,7 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "run_by": "a person, against a live environment — never unattended",
    "changed_at": "2026-08-19T09:12:48+05:30",
    "needs": [
     "the API running"
@@ -40676,13 +40845,13 @@
    "intro": "",
    "title": "Traceability edge, Fragment 1 (RED-first).",
    "claim": "Traceability edge, Fragment 1 (RED-first).",
-   "priority": "Medium",
+   "priority": "High",
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 133 lines. Run: node chitbridge-api/tests/traceability.test.js",
+   "note": "test.unit · system · 133 lines. Run: node chitbridge-api/tests/traceability.test.js",
    "layer": "engine",
-   "test_type": "unit",
+   "test_type": "system",
    "group": "test.unit",
    "automated": true,
    "seq": 90,
@@ -40691,7 +40860,7 @@
     "api"
    ],
    "subjects": [],
-   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "run_by": "a person, against a live environment — never unattended",
    "changed_at": "2026-08-19T09:12:48+05:30",
    "needs": [
     "the API running"

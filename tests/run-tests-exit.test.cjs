@@ -54,7 +54,20 @@ const src = require('fs').readFileSync(path.join(__dirname, 'run-tests.js'), 'ut
    code. Same trap pack-parity.test.cjs already records: a verification that shares an assumption
    with the thing it verifies is not a verification. */
 const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-t('process.exitCode is set from the verdict', /process\.exitCode = printResults\(aborted\) \? 0 : 1;/.test(code));
+/**
+ * ⚠ THE RULE IS THE WIRING, NOT ONE SPELLING OF IT. This asserted the exact line
+ * `process.exitCode = printResults(aborted) ? 0 : 1;` and went red on 2026-09-12 when the run learned to
+ * write its conditions and result to the board between the verdict and the exit — a change that does not
+ * touch what this case is about. ⭐ So it now asks the two things that matter: the verdict is TAKEN from
+ * printResults, and the exit code is set FROM that same value. [[feedback-improvise-update-cases]] — the
+ * assertion is moved, not dropped.
+ */
+const heldIn = (code.match(/(?:const|let)\s+(\w+)\s*=\s*printResults\(aborted\)/) || [])[1];
+t('the verdict is taken from printResults(aborted)',
+  !!heldIn || /process\.exitCode = printResults\(aborted\)/.test(code));
+t('process.exitCode is set from that verdict',
+  heldIn ? new RegExp('process\\.exitCode = ' + heldIn + ' \\? 0 : 1;').test(code)
+          : /process\.exitCode = printResults\(aborted\) \? 0 : 1;/.test(code));
 /* ⚠️ process.exit() would truncate unflushed stdout on a failing run — the output someone needs. */
 t('and it does NOT use process.exit()', !/process\.exit\(/.test(code));
 t('main() only runs when executed directly', /require\.main === module/.test(src));

@@ -561,4 +561,32 @@ it('⚠️ support files are on the board but are never called tests', () => {
   assert.ok(/not a test/i.test(route), 'the vocabulary no longer says that support proves nothing');
 });
 
+it('⚠⚠ every suite that describes its own conditions is describing a case that exists', () => {
+  /**
+   * ⭐⭐ CONDITIONS WRITTEN BY A RUN, HUNG ON A CASE BY ITS KEY — and a key is a spelling, which drifts.
+   *
+   * TEST-CONDITIONS.json is written by a suite about itself (tests/run-tests.js writes 42 of them) and
+   * build-test-cases.cjs hangs them on the case whose key matches. ⚠ If the two spellings ever part — a file
+   * renamed, a path written with a backslash — nothing breaks and nothing is said: the conditions simply
+   * stop appearing, and the board goes back to showing a line count as if that were the whole truth.
+   *
+   * ⭐ The same warning suite.cjs carries about its own keys, enforced here rather than repeated.
+   */
+  const f = path.join(API, '..', 'TEST-CONDITIONS.json');
+  if (!fs.existsSync(f)) return;   /* nothing has described itself yet — an empty board is honest */
+  const doc = JSON.parse(fs.readFileSync(f, 'utf8'));
+  const keys = Object.keys(doc).filter((k) => k.charAt(0) !== '_');
+  const known = new Set(DOC.cases.map((c) => c.case_key));
+  const orphans = keys.filter((k) => !known.has(k));
+  assert.deepStrictEqual(orphans, [],
+    'these suites describe conditions for a case the board does not have — the conditions are invisible and '
+    + 'nothing says so: ' + orphans.join(', '));
+  for (const k of keys) {
+    const c = DOC.cases.find((x) => x.case_key === k);
+    assert.strictEqual((c.steps || []).length, doc[k].count,
+      k + ' wrote ' + doc[k].count + ' conditions and the board carries ' + (c.steps || []).length
+      + ' — rebuild the board (node board.cjs) or the page is describing an older run');
+  }
+});
+
 console.log('\n  ' + pass + ' checks\n');
