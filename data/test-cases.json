@@ -1087,7 +1087,7 @@
     "name": "cap-testing",
     "file": "chitbridge-web/public/app/cap-testing.js",
     "purpose": "THE TEST PANEL, ON TOP OF THE APP",
-    "note": "1551 lines",
+    "note": "1739 lines",
     "stage": null
    },
    {
