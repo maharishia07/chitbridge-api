@@ -221,6 +221,26 @@ async function importCases(entity_id, who, rows) {
          * level up.
          */
         cites: c.cites || null,
+        /**
+         * ── ⚠️⚠️ AND IT HAPPENED AGAIN, THREE COMMENTS BELOW THE ONE RECORDING IT ────────────────────────────
+         *
+         * The note above says `seq` was silently dropped because importCases copies a NAMED LIST and discards
+         * anything not on it. On 2026-09-12 I added `changed_at`, `needs` and `held` to the build, shipped
+         * them in the file, pressed the button — and the board judged seven reds as DEFECTS using fields that
+         * never came through the door. Two of those "defects" I had fixed hours earlier.
+         *
+         * ⭐ THE SHAPE IS THE LESSON, NOT THE FIELDS. A named-list copier is a door that drops what it does not
+         * recognise, WITHOUT SAYING SO, and it will do it to the next field too. The cheap guard is to ask the
+         * loaded board what it actually holds — `CASES.filter(c => c.changed_at).length` — rather than trust
+         * that the build emitted it. A field that exists at both ends is not a field that arrived.
+         *
+         * ⭐ These three are what let a red say what would make it green: when the FILE last changed (so a
+         * result older than the file is stale, not a defect), what the file NEEDS to run, and whether it
+         * declares a held decision.
+         */
+        changed_at: c.changed_at || null,
+        needs: Array.isArray(c.needs) ? c.needs.slice(0, 4) : null,
+        held: c.held || null,
       },
     });
   }
