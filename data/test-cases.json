@@ -40505,7 +40505,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · static · 549 lines. Run: node chitbridge-api/tests/test-board.test.js",
+   "note": "test.unit · static · 565 lines. Run: node chitbridge-api/tests/test-board.test.js",
    "layer": "engine",
    "test_type": "static",
    "group": "test.unit",
@@ -40519,7 +40519,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-11T21:50:42+05:30"
+   "changed_at": "2026-09-12T14:29:04+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/test_governance.js",
