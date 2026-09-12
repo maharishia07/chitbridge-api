@@ -38016,7 +38016,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · static · 78 lines. Run: node chitbridge-api/tests/cors-headers.test.cjs",
+   "note": "test.guard · static · 112 lines. Run: node chitbridge-api/tests/cors-headers.test.cjs",
    "layer": "engine",
    "test_type": "static",
    "group": "test.guard",
@@ -38028,7 +38028,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-07T22:47:34+05:30"
+   "changed_at": "2026-09-12T14:55:22+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/csv-preflight.test.js",
