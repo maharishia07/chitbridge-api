@@ -11,13 +11,17 @@ const { withEntity } = require('../db');
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 // deterministic stringify so the request fingerprint is stable regardless of key order
-const CANON_MAX_DEPTH = 256; // bound recursion: a deeply-nested body must not overflow the stack
-function stable(o, depth = 0) {
-  if (depth > CANON_MAX_DEPTH) throw new Error('request body nesting exceeds ' + CANON_MAX_DEPTH + ' levels');
-  if (o === null || typeof o !== 'object') return JSON.stringify(o);
-  if (Array.isArray(o)) return '[' + o.map((x) => stable(x, depth + 1)).join(',') + ']';
-  return '{' + Object.keys(o).sort().map((k) => JSON.stringify(k) + ':' + stable(o[k], depth + 1)).join(',') + '}';
-}
+const CANON_MAX_DEPTH = require('../lib/canon').MAX_DEPTH;   /* ⭐ one bound, declared once */
+/**
+ * ⭐ ONE CANONICAL SERIALISATION (lib/canon.js, 2026-09-12). This was one of THREE copies — connectors.js and
+ * canon-depth.test.js had the others, each carrying its own CANON_MAX_DEPTH = 256.
+ *
+ * ⚠️⚠️ THE OUTPUT IS UNCHANGED, AND THAT IS LOAD-BEARING RATHER THAN TIDY. This key IS the replay detector:
+ * if its shape moves, a replayed mutation stops matching the one it should match and executes A SECOND TIME.
+ * tests/canon.test.js proves byte-identity against this function AS IT WAS WRITTEN, over a corpus, rather
+ * than trusting that the new one looks the same.
+ */
+const stable = (o) => require('../lib/canon').canon(o);
 
 // scope from the SAME bearer token auth uses (parent_entity_id || identity_id); null ⇒ let the route's auth reject it
 function scope(req) {

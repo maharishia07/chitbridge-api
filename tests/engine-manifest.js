@@ -307,6 +307,16 @@ const ENGINE_OTHER = [
    * the infra list on purpose: each one changes the state of an obligation between two parties, which is the
    * thing CB exists to carry. Swap any of them for another implementation and a chit no longer behaves the same.
    */
+  /**
+   * ⭐⭐ THE SEAL'S FOUNDATION (2026-09-12). One canonical serialisation, replacing three hand-rolled copies:
+   * connectors.js stableStringify, idempotency.js stable, and canon-depth.test.js's own third copy.
+   *
+   * ⚠️ NOT TIER A, AND THE REASON IS EXACTLY ONE LINE: it requires `crypto`. Tier A means ZERO requires,
+   * builtins included — 'liftable as FILES into any Node project with no untangling'. The canonicaliser
+   * itself is that pure; the hash is not. Splitting one small file in two to win a tier would be
+   * architecture decided by a test, so it sits here and says why instead.
+   */
+  'canon.js',          // ENGINE: the same value, always the same bytes — what a seal is built on
   'mint.js',           // ENGINE: the STAMP. Loose becomes authoritative here — the one irreversible moment
   'amend.js',          // ENGINE: how a stamped thing changes without losing what it was
   'assign.js',         // ENGINE: who carries the obligation next
