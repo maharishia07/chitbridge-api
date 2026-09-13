@@ -769,7 +769,9 @@ router.post('/:bridge_id/order/start',
       res.json({
         message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
         channel,
-        ...(sent.dev && { dev_otp: otp })   // dev/dormant only — NEVER returned in production
+        /* ⚠ was `sent.dev` — a DELIVERY flag. It says the mail did not go out; it says nothing about who
+           may read the code. One rule, in lib/dev-otp.js, and it now needs an explicit opt-in. */
+        ...(devOtp.mayExposeOtp() && { dev_otp: otp })
       });
     } catch (err) { console.error('order/start:', err.message); res.status(500).json({ error: 'Order start failed', message: safeErr(err) }); }
   });

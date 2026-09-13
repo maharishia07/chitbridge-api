@@ -196,7 +196,10 @@ router.post('/register',
         });
       }
 
-      // F2-entity: gate dev_otp on the sender's `dev` flag (false in production) so the OTP is NEVER returned in
+      // ⚠ WAS GATED ON THE SENDER'S `dev` FLAG, which is a DELIVERY signal — it says the mail did not go
+      // out, and says nothing about who may read the code. Armed-and-unsealed is the state this product has
+      // been in every day, and in it that flag published the OTP to any unauthenticated caller for any email.
+      // One rule now, in lib/dev-otp.js, and it needs an explicit opt-in.
       // a prod response. Soft message on a real send failure so we don't report success on failure.
       const sent = await sendOtpEmail(email, display_name, otp);
       res.json({
@@ -204,7 +207,7 @@ router.post('/register',
                : sent.dev       ? 'Dev mode — verification code issued'
                :                  "We couldn't send your code — please try again.",
         email,
-        ...(sent.dev && { dev_otp: otp })   // dev/dormant only — NEVER in production
+        ...(require('../lib/dev-otp').mayExposeOtp() && { dev_otp: otp })
       });
 
     } catch (err) {

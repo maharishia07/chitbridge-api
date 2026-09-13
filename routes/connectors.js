@@ -464,7 +464,9 @@ router.post('/reissue-code', auth, requireConnector, async (req, res) => {
     await db(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, entity_id]);
     const sent = await sendOtpEmail(ent.email, ent.display_name, otp);
     res.json({ message: sent.delivered ? 'Code sent to the account email.' : sent.dev ? 'Dev mode — code issued.' : 'Could not send the code — try again.',
-      email: String(ent.email).replace(/(.).*(@.*)/, '$1***$2'), ...(sent.dev && { dev_otp: otp }) });
+      email: String(ent.email).replace(/(.).*(@.*)/, '$1***$2'),
+      /* ⚠ was `sent.dev` — a delivery flag, not an authorisation. See lib/dev-otp.js. */
+      ...(devOtp.mayExposeOtp() && { dev_otp: otp }) });
   } catch (err) { res.status(500).json({ error: 'Send failed', message: safeErr(err) }); }
 });
 
