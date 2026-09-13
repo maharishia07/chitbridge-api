@@ -111,6 +111,28 @@ const corsOptions = {
   credentials: true,
 };
 /* ⭐ MEASURE BEFORE CHANGING (Athi, 2026-09-07: "look at each of the API for round trips and enhance"). Off unless CB_TRIPS=1. */
+/**
+ * ── ⭐⭐⭐ LET THE BROWSER SHOW WHERE THE TIME WENT ──────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-13: *"do we know why it takes more time — for example network speed, wifi speed, encryption
+ * and so on? All the layers?"*
+ *
+ * ⭐⭐ THE BROWSER ALREADY TIMES ALL OF IT and hands it to the page through Resource Timing: the DNS lookup,
+ * the TCP connection, the TLS handshake (which IS the encryption cost), the wait for the first byte, and the
+ * download. Nothing has to be built to measure it.
+ *
+ * ⚠️⚠️ EXCEPT THAT CROSS-ORIGIN IT IS ALL ZEROED unless the SERVER allows it. The web page is on Vercel and
+ * the API is on Railway, so without `Timing-Allow-Origin` every one of those fields reads 0 — and a zero
+ * looks exactly like "no time spent there", which is the same trap `X-DB-Ms` was in this morning.
+ *
+ * ⚠️ NAMED ORIGINS ONLY, never `*`. This says "that page may read how long my responses took", and the list
+ * of pages allowed to know is the list already allowed to ask.
+ */
+app.use((req, res, next) => {
+  const o = req.headers.origin;
+  if (o && ALLOWED_ORIGINS.includes(o)) res.setHeader('Timing-Allow-Origin', o);
+  next();
+});
 app.use(require('./lib/trips').middleware());
 /**
  * ⭐⭐ NOTHING WAS COMPRESSED, EVER (found 2026-09-08, when a 10,000-product shop hung on a second PC). Every answer this API has
