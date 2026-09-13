@@ -315,9 +315,18 @@ router.get('/profile', auth, async (req, res) => {
     res.json(await require('../lib/profile').getProfile(entity_id));
   } catch (err) { res.status(500).json({ error: 'Profile failed', message: safeErr(err) }); }
 });
+/**
+ * ⚠️ THE PROFILE IS A SHELF EVERY SCREEN HOLDS A COPY OF — `UI._party` feeds the Invoice row, the UPI id and
+ * the vault. It was the one piece of reference data that changed without telling anybody, so a tab open
+ * elsewhere kept showing the old supplier block until it was reloaded.
+ */
 router.put('/profile', auth, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/profile').saveProfile(entity_id, req.body || {}));
+    const saved = await require('../lib/profile').saveProfile(entity_id, req.body || {});
+    /* ⚠ AFTER the save, not before it. Announcing a change that has not happened yet is a lie every open tab
+       acts on, and it would fire even when saveProfile throws. */
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    res.json(saved);
   } catch (err) { res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) }); }
 });
 // TRADE DOCUMENTS VAULT — recurring inputs that pre-fill forms. The vault is now repeatable SECTIONS of free
