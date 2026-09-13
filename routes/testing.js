@@ -35,6 +35,7 @@ const express = require('express');
 const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const teststatus = require('../lib/teststatus');
 const { withEntity } = require('../db');
 
 /* The two axes, in one place. The server is the authority so a screen cannot offer a value the CHECK refuses. */
@@ -1345,6 +1346,7 @@ router.get('/requirements', auth, async (req, res) => {
         state: ru.state || 'raised', shelf: x.status,
         raised_from: ru.raised_from || null, raised_by: ru.raised_by || null, raised_at: ru.raised_at || null,
         raised_by_id: ru.raised_by_id || x.created_by || null,
+        work_status: teststatus.workStatus({ kind: 'requirement', state: ru.state || 'raised' }),
         why: ru.why || null, history: ru.history || [], at: x.updated_at,
       };
     });
@@ -1598,6 +1600,9 @@ router.get('/incidents', auth, async (req, res) => {
         unnoticed_mins: mins(t0, t1), open_mins: mins(t1, t2),
         defects: ru.defects || [], changes: ru.changes || [],
         raised_by: ru.raised_by || null, raised_by_id: ru.raised_by_id || x.created_by || null,
+        /* ⭐ ONE RULE, ON THE SERVER — see lib/teststatus.js. The board, the screen and the report print the
+           same word because they read the same function. */
+        work_status: teststatus.workStatus({ kind: 'incident', state: ru.state || 'raised' }),
         why: ru.why || null, history: ru.history || [], at: x.updated_at,
       };
     });
@@ -2112,21 +2117,40 @@ router.get('/report', auth, async (req, res) => {
     } catch (_) { found = { rows: [] }; }
 
     const KINDW = { testcase: 'case', spec: 'requirement', incident: 'incident' };
+    /**
+     * ── ⚠️⚠️⚠️ THE REPORT COUNTED `resolved` AS CLOSED ────────────────────────────────────────────────────
+     *
+     * The line that used to be here read
+     *     const shut = x.status === ‘retired’ || st === ‘accepted’ || st === ‘rejected’
+     *                  || st === ‘resolved’ || st === ‘closed’;
+     * — which is the exact fault the panel had this morning, still live in the artefact that LEAVES THE
+     * BUILDING. `resolved` is the FIXER saying "I believe this is done"; `closed` is the RAISER saying "I
+     * have looked, and it is". Counting the first as the second makes the report say the work is finished
+     * when nobody has verified any of it — and it is the number somebody quotes at a release meeting.
+     *
+     * ⭐ ONE RULE NOW, IN lib/teststatus.js, read by this report and by both lists the screens draw from. The
+     * status a person sees on the board and the status the report prints are the same word because they are
+     * the same function. [[feedback-no-duplicate-functions]]
+     */
     const foundRows = (found.rows || []).map((x) => {
       const r = x.rules || {};
       const st = String(r.state || '');
-      /* ⚠ three vocabularies, one question: is it still open? Said here rather than in four readers. */
-      const shut = x.status === 'retired'
-        || st === 'accepted' || st === 'rejected' || st === 'resolved' || st === 'closed';
+      const kind = KINDW[x.kind] || x.kind;
+      const work = teststatus.workStatus({
+        kind: kind === 'case' ? 'case' : (kind === 'incident' ? 'incident' : 'requirement'),
+        state: st, retired: x.status === 'retired', last: null,
+      });
       return {
-        kind: KINDW[x.kind] || x.kind, ref: x.name,
+        kind: kind, ref: x.name,
         screen: r.screen_code || null,
         what: r.title || r.requirement || r.observed || '',
         seen: r.observed || null,
         by: r.written_by || r.raised_by || null,
         at: r.written_at || r.raised_at || null,
-        state: st || (shut ? 'closed' : 'open'),
-        open: !shut,
+        state: st || (teststatus.isOpen(work) ? 'open' : 'closed'),
+        /* ⭐ the same word the board shows, and what it asks of the reader */
+        work_status: work, work_label: teststatus.LABEL[work], next: teststatus.TELL[work],
+        open: teststatus.isOpen(work),
         closed_note: r.closed_note || r.why || null,
         closed_by: r.closed_by || null,
         has_screenshot: !!r.evidence_id,
@@ -2204,6 +2228,17 @@ router.get('/report', auth, async (req, res) => {
             total: foundRows.length,
             open: foundRows.filter((r) => r.open).length,
             closed: foundRows.filter((r) => !r.open).length,
+            /**
+             * ⭐ THE SAME SEVEN WORDS THE BOARD USES, in the same order — what is waiting on somebody first.
+             * ⚠️ `awaiting_retest` is pulled out by name because it is the one a release meeting must not
+             * miss: somebody says it is fixed and nobody has checked. Under the old binary it was filed as
+             * CLOSED and could not be seen at all.
+             */
+            by_status: teststatus.ORDER
+              .map((k) => ({ status: k, label: teststatus.LABEL[k], next: teststatus.TELL[k],
+                             count: foundRows.filter((r) => r.work_status === k).length }))
+              .filter((x) => x.count),
+            awaiting_retest: foundRows.filter((r) => r.work_status === 'retest').length,
             by_kind: ['case', 'requirement', 'incident'].map((k) => ({
               kind: k,
               total: foundRows.filter((r) => r.kind === k).length,
@@ -2213,7 +2248,9 @@ router.get('/report', auth, async (req, res) => {
             /* ⚠️ said in the document, because the two sections WILL be read as the same thing otherwise */
             note: 'Section 3 counts failed RESULTS. This counts what a person RAISED while testing \u2014 cases '
               + 'written on a screen, requirements, and incidents. A day with no failed results can still have '
-              + 'findings here, and it is usually the more useful list.',
+              + 'findings here, and it is usually the more useful list. The status words are the ones on the '
+              + 'board (Test Capture and Test Manager): Retest \u00b7 To do \u00b7 Failed \u00b7 Change asked \u00b7 '
+              + 'Agreed \u00b7 Blocked \u00b7 Passed \u00b7 Closed.',
             /* ⚠️ a closure with no reason is reported as such: it is the gap the closing note exists to fill */
             closed_without_reason: foundRows.filter((r) => !r.open && !r.closed_note).length,
           } },

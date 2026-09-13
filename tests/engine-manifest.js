@@ -285,6 +285,10 @@ const INFRA_LIBS = [
 ];
 const ENGINE_OTHER = [
   'offers-engine.js',
+  /* ⚠️ NOT infra, and the difference matters. testnews.js ANNOUNCES; this one DECIDES — what state a finding
+     is in, from its own history. That is a rule, and a rule is an engine: swap it and the board, the screen
+     and the report all change their minds together, which is exactly why it is one file. (2026-09-13) */
+  'teststatus.js',
   /* GENERATED, never edited by hand: scripts/vendor-tax.cjs writes it from tax.js + tax-slab.js so a TILL can price a bill with the
      internet unplugged. Same engine, second home — tests/tax-vendor.test.js fails the day the two differ (2026-09-07). */
   'tax-engine.browser.js',
