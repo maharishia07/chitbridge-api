@@ -160,6 +160,8 @@ router.get('/cases', auth, async (req, res) => {
  */
 async function importCases(entity_id, who, rows, mode) {
   const out = { added: 0, updated: 0, unchanged: 0, cases: [] };
+  /* ⭐ what came in that this door does not recognise — reported, never accepted */
+  out.dropped_fields = unknownFields(rows);
 
   /* ── 1 · normalise, and drop anything with no key. One pass, no database. ── */
   const want = [];
@@ -265,6 +267,24 @@ async function importCases(entity_id, who, rows, mode) {
          */
         menu: c.menu || null,
         generated: c.generated === true,
+        /**
+         * ── ⚠️⚠️⚠️ AND A FIFTH TIME, REPORTED BY THE USER THIS TIME ────────────────────────────────────
+         *
+         * Athi, 2026-09-13: *"I wrote 4 lines of information, line 1, 2, 3 and 4 and an attachment. I could
+         * see only 3 lines of information here, and the attachment is not visible."*
+         *
+         * ⚠️ THE FOURTH BOX IS THE OBSERVATION — what you are actually seeing — and it is the one Athi asked
+         * for by name when the form had three. It had nowhere to land: a case could only carry the RULE, and
+         * the observation was passed straight through to an incident. Press Save without choosing incident or
+         * requirement and both it and the screenshot were dropped on the floor. The upload had succeeded.
+         *
+         * ⚠️ `screen_code` and `control_code` were going the same way and nobody had noticed, because the
+         * screen could still be worked out from `menu`.
+         */
+        observed: c.observed || null,
+        evidence_id: c.evidence_id || null,
+        screen_code: c.screen_code || null,
+        control_code: c.control_code || null,
       },
     });
   }
@@ -548,6 +568,35 @@ async function upsertClause(db, entity_id, who, spec, clause, text) {
 }
 
 /* ── THE RESULTS ──────────────────────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * ── ⭐⭐⭐ THE DOOR NOW SAYS WHAT IT DROPPED ──────────────────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ FIVE TIMES. `seq`, then `changed_at`/`needs`/`held`, then `menu`/`generated`, then `screen_code`/
+ * `control_code`, and now `observed`/`evidence_id`. Every time: the field was emitted at one end, named in a
+ * commit message, and silently discarded here. Twice it produced confident WRONG output — a board sorted
+ * alphabetically, seven reds judged as defects using fields that never arrived.
+ *
+ * ⭐ ADDING A SIXTH NAME TO THE LIST IS NOT THE FIX. The fault is a copier that discards without a word, and
+ * it will do it to the next field too. So the door now counts what it did not recognise and hands the list
+ * back with the response. A caller can then check, and the answer to "did my field arrive?" stops being
+ * "read the source and hope".
+ *
+ * ⚠️ IT REPORTS, IT DOES NOT ACCEPT. Copying unknown keys through would put whatever a client sends into the
+ * rules blob, which is how a whitelist becomes decoration.
+ */
+const CASE_FIELDS = new Set(['case_key', 'module_key', 'module_name', 'intro', 'title', 'claim', 'priority',
+  'pre', 'data', 'steps', 'note', 'layer', 'test_type', 'group', 'automated', 'areas', 'subjects', 'run_by',
+  'seq', 'step', 'cites', 'changed_at', 'needs', 'held', 'menu', 'generated', 'observed', 'evidence_id',
+  'screen_code', 'control_code']);
+
+function unknownFields(rows) {
+  const seen = new Set();
+  (rows || []).forEach((c) => Object.keys(c || {}).forEach((k) => {
+    if (!CASE_FIELDS.has(k)) seen.add(k);
+  }));
+  return [...seen].slice(0, 20);
+}
 
 function badResult(r) {
   if (!r || !String(r.case_key || '').trim()) return 'a result must name the case it is about';
