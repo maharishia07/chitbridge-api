@@ -334,6 +334,20 @@ async function importCases(entity_id, who, rows, mode) {
          */
         cites: c.cites || null,
         /**
+         * ── ⚠️⚠️⚠️ AND AGAIN, MAKING IT FIVE — CAUGHT BY THE GUARD THIS TIME, NOT BY A SYMPTOM ────────────────
+         *
+         * `tests/case-fields.test.js` reported these two the moment they were emitted: the build has been
+         * sending `screen_purpose` and `generic` on 1,012 cases and this door has been dropping both.
+         *
+         * ⚠️⚠️ AND `generic` IS THE WORSE LOSS BY FAR. It is the field where a case ADMITS it is the standard
+         * one and not a real one — so dropping it does not lose information, it INVERTS it: every generic case
+         * arrives on the board looking hand-written, filling a row, counting towards coverage, telling the next
+         * person the screen has been thought about when nobody has thought about it.
+         * ⭐ `=== true`, so a case that does not say is treated as real rather than quietly excused.
+         */
+        screen_purpose: c.screen_purpose || null,
+        generic: c.generic === true,
+        /**
          * ── ⚠️⚠️ AND IT HAPPENED AGAIN, THREE COMMENTS BELOW THE ONE RECORDING IT ────────────────────────────
          *
          * The note above says `seq` was silently dropped because importCases copies a NAMED LIST and discards
@@ -592,7 +606,20 @@ router.post('/cases/import', auth, async (req, res) => {
     /* ⚠️ shape-checked, not trusted: anything but the exact word means a rebuild, which is the safe default
        — a typo must never quietly turn a rebuild into an add and leave retired cases live. */
     const mode = (req.body && req.body.mode === 'add') ? 'add' : null;
-    res.json(await importCases(auth.entityOf(req), testerOf(req), rows, mode));
+    const _who = testerOf(req);
+    const _ent = auth.entityOf(req);
+    const _out = await importCases(_ent, _who, rows, mode);
+    /**
+     * ⚠️ ONLY `mode:'add'`, WHICH IS THE PANEL WRITING ONE CASE. The bulk document import runs through the
+     * same door and announcing 1,455 cases would be a notification nobody reads again.
+     */
+    try {
+      if (mode === 'add' && (rows || []).length === 1) {
+        require('../lib/testnews').testRaised(_ent, 'case', rows[0].case_key,
+          { screen: rows[0].screen_code, by: _who.id, byName: _who.name });
+      }
+    } catch (_) {}
+    res.json(_out);
   } catch (err) {
     res.status(500).json({ error: 'Import failed', message: String(err.message || err) });
   }
@@ -725,7 +752,7 @@ const CASE_FIELDS = new Set(['case_key', 'module_key', 'module_name', 'intro', '
   'pre', 'data', 'steps', 'note', 'layer', 'test_type', 'group', 'automated', 'areas', 'subjects', 'run_by',
   'seq', 'step', 'cites', 'changed_at', 'needs', 'held', 'menu', 'generated', 'observed', 'evidence_id',
   'screen_code', 'control_code', 'written_by', 'written_by_id', 'written_at',
-  'closed_note', 'closed_by', 'closed_at']);
+  'closed_note', 'closed_by', 'closed_at', 'screen_purpose', 'generic']);
 
 function unknownFields(rows) {
   const seen = new Set();
@@ -1241,6 +1268,7 @@ router.post('/requirements', auth, async (req, res) => {
         text: requirement, observed: observed, spec: String(b.spec || '').trim() || null, priority: priority,
         screen_code: codeOf(b.screen_code), popup_code: codeOf(b.popup_code),
         state: 'raised', raised_from: case_key, raised_by: who.name, raised_at: new Date().toISOString(),
+        raised_by_id: who.id, /* who to tell when it is accepted or rejected — see lib/testnews.js */
         history: [{ state: 'raised', by: who.name, at: new Date().toISOString(), why: null }],
       };
       const ins = await db.query(
@@ -1279,6 +1307,11 @@ router.post('/requirements', auth, async (req, res) => {
       return { definition_id: id, clause: name, cited };
     });
 
+    try {
+      const w2 = testerOf(req);
+      require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref),
+        { screen: (req.body || {}).screen_code, by: w2.id, byName: w2.name });
+    } catch (_) {}
     res.json(Object.assign({ raised: true, state: 'raised' }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not raise it', message: String(err.message || err) });
@@ -1297,7 +1330,7 @@ router.get('/requirements', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const want = String((req.query || {}).state || 'open');
     const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
+      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'spec' AND v.rules->>'state' IS NOT NULL
@@ -1311,6 +1344,7 @@ router.get('/requirements', auth, async (req, res) => {
         screen_code: ru.screen_code || null, popup_code: ru.popup_code || null,
         state: ru.state || 'raised', shelf: x.status,
         raised_from: ru.raised_from || null, raised_by: ru.raised_by || null, raised_at: ru.raised_at || null,
+        raised_by_id: ru.raised_by_id || x.created_by || null,
         why: ru.why || null, history: ru.history || [], at: x.updated_at,
       };
     });
@@ -1359,7 +1393,7 @@ router.patch('/requirements/:id', auth, async (req, res) => {
 
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
-        `SELECT d.definition_id, d.current_version, v.rules
+        `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.definition_id = $2::uuid`,
@@ -1381,10 +1415,18 @@ router.patch('/requirements/:id', auth, async (req, res) => {
       await db.query(`UPDATE definition SET current_version = $2, status = $3, updated_at = now()
                         WHERE definition_id = $1 AND entity_id = $4`,
         [row.definition_id, row.current_version + 1, REQ_SHELF[nextState], entity_id]);
-      return { state: nextState, shelf: REQ_SHELF[nextState], version: row.current_version + 1 };
+      return { state: nextState, shelf: REQ_SHELF[nextState], version: row.current_version + 1,
+        _ref: row.name || null, _raiser: ru.raised_by_id || row.created_by || null, _screen: ru.screen_code || null };
     });
 
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No requirement with that id.' });
+    /* ⭐ accepted or rejected, the person who raised it hears — a rejection nobody is told about is how the
+       same requirement gets raised a third time. See the argument in lib/testnews.js. */
+    try {
+      require('../lib/testnews').testRaised(entity_id, 'requirement', out._ref,
+        { state: out.state, forId: out._raiser, screen: out._screen, by: who.id, byName: who.name });
+    } catch (_) {}
+    delete out._ref; delete out._raiser; delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not set it', message: String(err.message || err) });
@@ -1481,6 +1523,10 @@ router.post('/incidents', auth, async (req, res) => {
         found_by_case: String(b.case_key || '').trim() || null,
         state: 'raised', happened_at: happened, raised_at: now,
         raised_by: who.name,
+        /* ⚠️ THE ID AS WELL AS THE NAME. The name is what a board read six months from now must still be able
+           to show; the ID is what lets a session ask "is this one MINE to retest?" without matching strings.
+           Two people called Athi on one board would otherwise both be told to go and verify it. */
+        raised_by_id: who.id,
         /* the links, empty until somebody makes them — never invented here */
         defects: [], changes: [], resolved_at: null,
         history: [{ state: 'raised', by: who.name, at: now, why: null }],
@@ -1495,6 +1541,18 @@ router.post('/incidents', auth, async (req, res) => {
       return { definition_id: id, ref: name, severity: sev, happened_at: happened };
     });
 
+    /**
+     * ⭐ AND THE OTHER TESTERS HEAR ABOUT IT. Athi, 2026-09-13: *"do we have a mechanism of getting the
+     * notification when someone raises an incident or a case?"* — we did not, so two people on one product
+     * found the same fault twice and neither knew until somebody opened the lab.
+     * ⚠️ AFTER the write, and it cannot throw: an incident that recorded must not fail because a colleague’s
+     * browser could not be told.
+     */
+    try {
+      const w = testerOf(req);
+      require('../lib/testnews').testRaised(entity_id, 'incident', out && out.ref,
+        { screen: b.screen_code, by: w.id, byName: w.name });
+    } catch (_) {}
     res.json(Object.assign({ recorded: true, state: 'raised' }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not record it', message: String(err.message || err) });
@@ -1512,7 +1570,7 @@ router.get('/incidents', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const want = String((req.query || {}).state || 'open');
     const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
+      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'incident'
@@ -1539,7 +1597,8 @@ router.get('/incidents', auth, async (req, res) => {
         happened_at: ru.happened_at || null, raised_at: ru.raised_at || null, resolved_at: ru.resolved_at || null,
         unnoticed_mins: mins(t0, t1), open_mins: mins(t1, t2),
         defects: ru.defects || [], changes: ru.changes || [],
-        raised_by: ru.raised_by || null, why: ru.why || null, history: ru.history || [], at: x.updated_at,
+        raised_by: ru.raised_by || null, raised_by_id: ru.raised_by_id || x.created_by || null,
+        why: ru.why || null, history: ru.history || [], at: x.updated_at,
       };
     });
     /* ⚠️ SEVERITY FIRST, THEN OLDEST. Newest-first is right for a log and wrong for a board: the oldest Sev-1
@@ -1596,7 +1655,7 @@ router.patch('/incidents/:id', auth, async (req, res) => {
 
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
-        `SELECT d.definition_id, d.current_version, v.rules
+        `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'incident' AND d.definition_id = $2::uuid`,
@@ -1640,10 +1699,30 @@ router.patch('/incidents/:id', auth, async (req, res) => {
                         WHERE definition_id = $1 AND entity_id = $5`,
         [row.definition_id, row.current_version + 1, INC_SHELF[nextState], sev, entity_id]);
       return { state: nextState, severity: sev, shelf: INC_SHELF[nextState],
-        version: row.current_version + 1, changes: changes.length, defects: defects.length };
+        version: row.current_version + 1, changes: changes.length, defects: defects.length,
+        /* carried out of the transaction so the news can name the incident and the person now waiting on it.
+           ⚠️ Stripped again before the reply — the client is answered about the incident, not about the post. */
+        _ref: row.name || null, _raiser: ru.raised_by_id || row.created_by || null, _screen: ru.screen_code || null };
     });
 
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No incident with that id.' });
+    /**
+     * ── ⭐⭐⭐ THE RETURN LEG ─────────────────────────────────────────────────────────────────────────────
+     *
+     * Athi, 2026-09-13: *"a message back stating that this issue has been fixed — that feedback loop is not
+     * there. Say I test it, I create an incident, you fix it and then update the message back that it has
+     * been fixed, so I can retest and confirm that this has been resolved and close it."*
+     *
+     * ⭐ EVERY MOVE IS ANNOUNCED, not only `resolved`. "Investigating" is also news to the person who reported
+     * it — the silence between raising something and hearing anything is what makes people stop reporting.
+     *
+     * ⚠️ AND IT CANNOT THROW: an incident that moved must not fail because a browser could not be told.
+     */
+    try {
+      require('../lib/testnews').testRaised(entity_id, 'incident', out._ref,
+        { state: out.state, forId: out._raiser, screen: out._screen, by: who.id, byName: who.name });
+    } catch (_) {}
+    delete out._ref; delete out._raiser; delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not set it', message: String(err.message || err) });

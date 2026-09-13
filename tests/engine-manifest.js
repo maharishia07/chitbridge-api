@@ -138,6 +138,12 @@ const INFRA_LIBS = [
      lib/events already owned, so a counter and a television stop waiting out a timer. Swap the transport and
      ChitBridge is unchanged — which is what makes it plumbing rather than an engine. (2026-09-09) */
   'shopchanged.js',
+  /* INFRA on the same test, and for the same reason: it says "somebody raised something" or "your incident was
+     resolved" down the pipe lib/events already owned, and deliberately carries no finding — the client rereads
+     through RLS. It holds no rule and decides nothing; swap the transport and ChitBridge is unchanged.
+     ⚠️ It would become an ENGINE the day it started deciding WHO is told what, rather than announcing to the
+     entity and letting the client match `for` against itself. (2026-09-13) */
+  'testnews.js',
   /**
    * INFRA FOR NOW, AND THE "for now" IS THE POINT. Phase 0 of the register (b182) is an append-only note
    * table: six kinds, a body, and a closing row. It holds no rule and decides nothing, so it is replaceable
