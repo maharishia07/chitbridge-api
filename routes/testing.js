@@ -75,6 +75,70 @@ const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'pe
  * self-service diagnostic into a way of watching another shop, and no amount of checking afterwards is as
  * safe as never accepting the field.
  */
+/**
+ * ── ⭐⭐⭐ CLOSING AN OBSERVATION ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-13: *"if that observation can be closed, there is no way of closing it? Which means the list
+ * will grow for ever."*
+ *
+ * ⚠️⚠️ HE IS RIGHT AND THE MACHINERY WAS ALREADY THERE WITH NO DOOR TO IT. `status = 'retired'` is what every
+ * read already filters on, and the ONLY thing that ever set it was the orphan sweep during a bulk import — a
+ * side effect of replacing the whole document. A tester who wrote a note while looking at a screen had no way
+ * to say "dealt with", so the list could only grow, and a list that only grows is a list nobody opens.
+ *
+ * ⭐ RETIRED, NEVER DELETED. Every verdict ever recorded against this case survives — `test_result` holds
+ * `definition_id` deliberately WITHOUT a foreign key so that closing a case cannot destroy the evidence that
+ * it once passed. Closing says "stop asking me this", not "this never happened".
+ *
+ * ⚠️ AND IT REOPENS. A case closed by mistake, or a fault that comes back, must not need a new case with a
+ * new key — that would split its history in two and make the second one look like a first occurrence.
+ *
+ * ⚠️ THE KEY TRAVELS IN THE BODY, NOT THE PATH. Automated case keys ARE FILE PATHS
+ * (`chitbridge-api/scripts/_proof.js`), so a path parameter would break on the slashes for exactly the cases
+ * most likely to need closing in bulk one day.
+ */
+router.post('/cases/close', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    if (!entity_id) return res.status(401).json({ error: 'Unauthorised' });
+    const key = String((req.body && req.body.case_key) || '').trim();
+    if (!key) return res.status(400).json({ error: 'Bad request', message: 'which case?' });
+    /* the default is to CLOSE; {open:true} puts it back */
+    const open = !!(req.body && req.body.open);
+    /**
+     * ⚠️⚠️ CLOSING SAYS WHY, like everything else here. A requirement takes a `why` when it is accepted or
+     * rejected; an incident takes one when it is resolved. A case that could be closed silently would be the
+     * one finding in this tool that leaves no account of itself — and six months on, "closed" with no reason
+     * is indistinguishable from "somebody was tidying up".
+     *
+     * ⭐ It rides in `rules` beside the case, so it travels with the thing it explains and needs no second
+     * table to join. Reopening clears it: a stale reason on a live case would explain a closure that has been
+     * undone.
+     */
+    const why = String((req.body && req.body.why) || '').trim().slice(0, 400);
+    const who = testerOf(req);
+    const r = await withEntity(entity_id, (db) => db.query(
+      `UPDATE definition d SET status = $3
+        WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2
+        RETURNING d.definition_id, d.name, d.status, d.current_version`,
+      [entity_id, key, open ? 'live' : 'retired']));
+    if (r && r.rows.length) {
+      /* the account of the closure goes onto the CURRENT version, where every reader already looks */
+      await withEntity(entity_id, (db) => db.query(
+        `UPDATE definition_version SET rules = rules
+            || jsonb_build_object('closed_note', $3::text, 'closed_by', $4::text, 'closed_at', $5::text)
+          WHERE definition_id = $1 AND version = $2`,
+        [r.rows[0].definition_id, r.rows[0].current_version,
+         open ? null : (why || null), open ? null : (who.name || null),
+         open ? null : new Date().toISOString()]));
+    }
+    if (!r || !r.rows.length) {
+      return res.status(404).json({ error: 'Not found', message: 'no case called ' + key });
+    }
+    return res.json({ case_key: r.rows[0].name, status: r.rows[0].status, closed: !open });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String((e && e.message) || e) }); }
+});
+
 router.post('/trace', auth, (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -148,8 +212,15 @@ router.get('/cases', auth, async (req, res) => {
          FROM definition d
          JOIN definition_version v
            ON v.definition_id = d.definition_id AND v.version = d.current_version
-        WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
-        ORDER BY d.sub_kind, d.name`, [entity_id]));
+        /**
+         * ⚠️ CLOSED CASES ARE HIDDEN BY DEFAULT AND REACHABLE WITH ?all=1 — the same rule the definitions
+         * shelf already follows. A list that can never show what was closed is how somebody writes the same
+         * observation for the third time.
+         */
+        WHERE d.entity_id = $1 AND d.kind = 'testcase'
+          AND ($2::boolean IS TRUE OR d.status <> 'retired')
+        ORDER BY d.sub_kind, d.name`,
+      [entity_id, req.query.all === '1' || req.query.all === 'true']));
 
     const cases = r.rows.map((x) => Object.assign(
       { definition_id: x.definition_id, case_key: x.name, module_key: x.sub_kind || '—',
@@ -1913,6 +1984,58 @@ router.get('/report', auth, async (req, res) => {
     const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0 };
     data.cover.forEach((c) => Object.keys(n).forEach((k) => { n[k] += Number(c[k] || 0); }));
     const incidents = data.bad.filter((r) => r.status === 'fail' || r.status === 'blocked');
+
+    /**
+     * ── ⭐⭐⭐ WHAT PEOPLE FOUND, AS OPPOSED TO WHAT THE SUITE MEASURED ─────────────────────────────────────
+     *
+     * Athi, 2026-09-13: *"we need to have a mechanism of reporting it."*
+     *
+     * ⚠️⚠️ SECTION 3 IS NOT THIS. It is built from FAILED RESULTS — cases the machine or a tester marked
+     * fail — and it has been called "Incidents" since before incidents were a thing you could raise. So a
+     * report could show zero incidents on a day somebody filed four, because the two words meant two
+     * different objects and only one of them was in the document.
+     *
+     * ⭐ THIS SECTION IS THE HUMAN SIDE OF THE BOARD: every case written by hand on a screen, every
+     * requirement raised, every incident filed — with who, where, whether it is still open, and the reason
+     * it was closed. It is what a person would be asked for in a review and could not previously produce.
+     *
+     * ⚠️ ONE QUERY, THREE KINDS. They live in one table by design (definition.kind is free text), so counting
+     * them separately would be three round trips to answer one question.
+     */
+    let found = { rows: [] };
+    try {
+      found = await withEntity(entity_id, (db) => db.query(
+        `SELECT d.kind, d.name, d.status, v.rules
+           FROM definition d
+           JOIN definition_version v
+             ON v.definition_id = d.definition_id AND v.version = d.current_version
+          WHERE d.entity_id = $1
+            AND (d.kind IN ('spec','incident')
+                 OR (d.kind = 'testcase' AND d.name ~ '-H[0-9]+$'))
+          ORDER BY d.kind, d.name`, [entity_id]));
+    } catch (_) { found = { rows: [] }; }
+
+    const KINDW = { testcase: 'case', spec: 'requirement', incident: 'incident' };
+    const foundRows = (found.rows || []).map((x) => {
+      const r = x.rules || {};
+      const st = String(r.state || '');
+      /* ⚠ three vocabularies, one question: is it still open? Said here rather than in four readers. */
+      const shut = x.status === 'retired'
+        || st === 'accepted' || st === 'rejected' || st === 'resolved' || st === 'closed';
+      return {
+        kind: KINDW[x.kind] || x.kind, ref: x.name,
+        screen: r.screen_code || null,
+        what: r.title || r.requirement || r.observed || '',
+        seen: r.observed || null,
+        by: r.written_by || r.raised_by || null,
+        at: r.written_at || r.raised_at || null,
+        state: st || (shut ? 'closed' : 'open'),
+        open: !shut,
+        closed_note: r.closed_note || r.why || null,
+        closed_by: r.closed_by || null,
+        has_screenshot: !!r.evidence_id,
+      };
+    });
     const tested = n.total - n.untested;
 
     res.json({
@@ -1978,6 +2101,26 @@ router.get('/report', auth, async (req, res) => {
 
         { id: '3', title: 'Incidents', source: 'measured',
           body: { count: incidents.length, items: incidents } },
+
+        /* ⭐ 3b, beside 3, because they answer different questions with the same word */
+        { id: '3b', title: 'Raised by people', source: 'measured',
+          body: {
+            total: foundRows.length,
+            open: foundRows.filter((r) => r.open).length,
+            closed: foundRows.filter((r) => !r.open).length,
+            by_kind: ['case', 'requirement', 'incident'].map((k) => ({
+              kind: k,
+              total: foundRows.filter((r) => r.kind === k).length,
+              open: foundRows.filter((r) => r.kind === k && r.open).length,
+            })),
+            items: foundRows,
+            /* ⚠️ said in the document, because the two sections WILL be read as the same thing otherwise */
+            note: 'Section 3 counts failed RESULTS. This counts what a person RAISED while testing \u2014 cases '
+              + 'written on a screen, requirements, and incidents. A day with no failed results can still have '
+              + 'findings here, and it is usually the more useful list.',
+            /* ⚠️ a closure with no reason is reported as such: it is the gap the closing note exists to fill */
+            closed_without_reason: foundRows.filter((r) => !r.open && !r.closed_note).length,
+          } },
 
         { id: '4', title: 'Factors blocking progress', source: 'measured',
           /* ⭐ 29119-3 asks for this by name, and we HAVE it: a blocked case is a case somebody could not reach. */
