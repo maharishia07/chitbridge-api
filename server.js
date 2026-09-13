@@ -75,6 +75,23 @@ const corsOptions = {
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   /**
+   * ── ⭐⭐⭐ THE MEASUREMENTS WERE ALREADY BEING TAKEN AND NOBODY COULD READ THEM ─────────────────────────
+   *
+   * `lib/trips` has counted the database round trips of every request since 2026-09-07 and put the answer on
+   * `X-DB-Trips` and `X-DB-Ms`. ⚠️⚠️ BUT A CROSS-ORIGIN BROWSER CANNOT SEE A RESPONSE HEADER UNLESS IT IS
+   * NAMED HERE. The header was on the wire, DevTools showed it, and `res.headers.get()` returned null — so
+   * the tester panel could only ever report the total round trip and never say WHERE the time went.
+   *
+   * ⭐ With these three exposed, a slow call splits into three honest parts: time in the database, time in
+   * our code, and time on the wire. Athi, 2026-09-13: *"we need to know the name of the API or where
+   * exactly it takes… can we check in runtime, each call?"* — yes, and this is the line that allows it.
+   *
+   * ⚠️ EXPOSING IS NOT ENABLING. `lib/trips` still does nothing unless CB_TRIPS=1 is set in the
+   * environment, deliberately: an AsyncLocalStorage per request is not free, and a permanent header
+   * describing the shape of the inside is something to switch on for a week of work, not to ship on.
+   */
+  exposedHeaders: ['X-DB-Trips', 'X-DB-Ms', 'X-Request-Id'],
+  /**
    * ⚠️⚠️ EVERY HEADER THE BROWSER SENDS MUST BE LISTED HERE OR NOTHING WORKS AT ALL — and the failure does not
    * look like a CORS failure. Athi, 2026-08-22, mid-test: *"I couldn't create or sign in a store, it says
    * Sign-in failed: You're offline — this needs a connection."* He was online. The API was up (health 200).
