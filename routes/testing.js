@@ -2005,7 +2005,11 @@ router.get('/report', auth, async (req, res) => {
         `WITH cases AS (
            SELECT d.name AS case_key, COALESCE(d.sub_kind,'-') AS module_key,
                   COALESCE(v.rules->>'priority','Medium') AS priority,
-                  COALESCE(v.rules->>'module_name','') AS module_name, d.current_version
+                  COALESCE(v.rules->>'module_name','') AS module_name, d.current_version,
+                  /* ⭐ A SWEPT CASE NAMES A CONTROL AND CARRIES NO WRITTEN EXPECTATION, so it cannot legitimately
+                     report pass or fail as written — it is a PROMPT to write one. Counting it beside cases that
+                     are merely awaiting a runner makes one number out of two different jobs. */
+                  CASE WHEN (v.rules->>'generated')::text IN ('true','1') THEN 1 ELSE 0 END AS swept
              FROM definition d
              JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
@@ -2019,7 +2023,9 @@ router.get('/report', auth, async (req, res) => {
                 count(*) FILTER (WHERE l.status='blocked') AS blocked,
                 count(*) FILTER (WHERE l.status='skipped') AS skipped,
                 count(*) FILTER (WHERE l.case_key IS NULL) AS untested,
-                count(*) FILTER (WHERE l.case_key IS NULL AND c.priority='High') AS high_untested
+                count(*) FILTER (WHERE l.case_key IS NULL AND c.priority='High') AS high_untested,
+                count(*) FILTER (WHERE l.case_key IS NULL AND c.swept=1) AS untested_swept,
+                count(*) FILTER (WHERE l.case_key IS NULL AND c.swept=0) AS untested_written
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
           GROUP BY c.module_key ORDER BY c.module_key`, [entity_id]);
 
@@ -2086,10 +2092,57 @@ router.get('/report', auth, async (req, res) => {
           WHERE d.entity_id = $1 AND d.kind='testcase' AND d.status <> 'retired'
             AND (v.rules->'cites'->>'version')::int < sp.current_version`, [entity_id]);
 
-      return { cover: cover.rows, bad: bad.rows, runs: runs.rows, people: people.rows, stale: stale.rows[0] ? stale.rows[0].n : 0 };
+      /**
+       * ── ⭐⭐⭐ WHAT KINDS OF TESTING HAVE ACTUALLY BEEN DONE ────────────────────────────────────────────
+       *
+       * Athi, 2026-09-13: *"is there any way of stating about performance fine tuning and how good the system
+       * is? and what actions have been taken care of, again, in simple terms"* · *"security and so on?"* ·
+       * *"as a heading, type of testing performed if it is not already mentioned."*
+       *
+       * ⚠️ THE REPORT COULD NOT ANSWER "IS IT SECURE" OR "IS IT FAST" AT ALL. It counted cases, results and
+       * incidents, and every one of those totals mixes a security probe with a spelling check. A reader
+       * deciding whether to trust the product asks about the QUALITIES, and the board has typed every case
+       * since b219 — the answer was one GROUP BY away.
+       *
+       * ⚠️ It reports what was RUN, never how good the product is. "14 of 18 security cases passed" is
+       * evidence; "the product is secure" is a judgement and belongs to section 6, with a person.
+       */
+      const kinds = await db.query(
+        `WITH cases AS (
+           SELECT d.name AS case_key, COALESCE(v.rules->>'test_type','(untyped)') AS test_type
+             FROM definition d
+             JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+            WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
+         ), latest AS (
+           SELECT DISTINCT ON (case_key) case_key, status FROM test_result
+            WHERE entity_id = $1 ORDER BY case_key, at DESC
+         )
+         SELECT c.test_type, count(*)::int AS total,
+                count(l.case_key)::int                            AS run,
+                count(*) FILTER (WHERE l.status='pass')::int       AS passed,
+                count(*) FILTER (WHERE l.status='fail')::int       AS failed
+           FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
+          GROUP BY c.test_type ORDER BY count(*) DESC`, [entity_id]);
+
+      return { cover: cover.rows, bad: bad.rows, runs: runs.rows, people: people.rows,
+        kinds: kinds.rows, stale: stale.rows[0] ? stale.rows[0].n : 0 };
     });
 
-    const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0 };
+    /**
+     * ⚠⚠ "NEVER RUN" WAS ONE NUMBER FOR TWO DIFFERENT JOBS. Athi: *"most of the not passed cases … can you
+     * run those and update as completed or not required, otherwise it will be empty always and will never be
+     * completed?"* He is right that it never completes, and the reason is in the mix:
+     *
+     *   untested_written  a case with an expectation, waiting for somebody to RUN it.
+     *   untested_swept    a case swept from the menu that names a control and carries NO written expectation.
+     *                     It cannot legitimately report pass or fail as written — it is a prompt to WRITE one.
+     *
+     * ⚠ NEITHER IS HIDDEN, and that is deliberate: 835 controls with no real case is a genuine coverage
+     * finding, and burying it would be the opposite fault to the one being fixed. They are SEPARATED, so the
+     * board asks for the two different actions it actually needs — go run these, go write those.
+     */
+    const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0,
+                untested_swept: 0, untested_written: 0 };
     data.cover.forEach((c) => Object.keys(n).forEach((k) => { n[k] += Number(c[k] || 0); }));
     const incidents = data.bad.filter((r) => r.status === 'fail' || r.status === 'blocked');
 
@@ -2232,6 +2285,40 @@ router.get('/report', auth, async (req, res) => {
             note: data.people.length > 1
               ? 'Everyone signed in to this entity writes to one board; each row carries who recorded it.'
               : 'One person has recorded anything so far.',
+          } },
+
+        /**
+         * ⭐ EVERY KIND WE DECLARE, INCLUDING THE ONES AT ZERO. Same rule as the empty columns on the matrix:
+         * a kind left out because nobody wrote one lets "we have none" pass for "not applicable", and those
+         * are opposite claims. Penetration in particular is shown at zero on purpose.
+         */
+        { id: '2b', title: 'Types of testing performed', source: 'measured',
+          body: {
+            kinds: (function () {
+              const SAYS = {
+                unit: 'One module on its own. Proves that function, and nothing about the product.',
+                integration: 'Several of our own pieces wired together.',
+                system: 'The whole product — a real browser, a live API, or a real database.',
+                acceptance: 'A person deciding whether it does the job. The only kind that finds "correct but useless".',
+                'static': 'Reads the source and judges the text. Nothing is executed.',
+                performance: 'Round trips, query shape, load. Declared by name, never detected.',
+                security: 'Forged tokens, algorithm pinning, key scopes, tenant isolation, unguarded routes.',
+                penetration: 'An attacker trying to get in. There is none.',
+                screen: 'A named screen, walked by a person.',
+                support: 'Not a test — a fixture or harness other tests stand on.',
+              };
+              const got = {};
+              (data.kinds || []).forEach((k) => { got[k.test_type] = k; });
+              /* ⚠️ the DECLARED list leads, so a kind with no cases still gets a row */
+              const order = TEST_TYPES.concat(Object.keys(got).filter((k) => TEST_TYPES.indexOf(k) < 0));
+              return order.map((k) => {
+                const g = got[k] || { total: 0, run: 0, passed: 0, failed: 0 };
+                return { kind: k, says: SAYS[k] || null,
+                  total: g.total, run: g.run, passed: g.passed, failed: g.failed };
+              });
+            })(),
+            note: 'What was RUN, not how good the product is. "14 of 18 security cases passed" is evidence; '
+              + '"the product is secure" is a judgement and belongs to section 6, with a person.',
           } },
 
         { id: '2', title: 'Test results', source: 'measured',
