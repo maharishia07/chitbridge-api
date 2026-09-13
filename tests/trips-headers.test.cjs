@@ -75,7 +75,26 @@ const YOURS = '22222222-2222-2222-2222-222222222222';
      false statement — and the panel is written to say "the server is not reporting" only when it is missing. */
   ok(r.n === null && r.ms === null, 'an entity NOT on the list gets no header at all, not a zero');
 
+  /**
+   * ⚠️ AND THE SELF-SERVICE SWITCH, WHICH IS THE ONLY WAY A NEW TEST ID GETS MEASURED WITHOUT A REDEPLOY.
+   * The two properties that matter: it works with NO env variable set at all, and it stops by itself.
+   */
   delete process.env.CB_TRIPS;
+  {
+    delete require.cache[require.resolve('../lib/trips')];
+    const t = require('../lib/trips');
+    ok(t.allowed(MINE) === false, "with no env and no trace, nobody is answered");
+    t.traceOn(MINE, 10);
+    ok(t.allowed(MINE) === true, "a tester who switched it on for themselves is answered");
+    ok(t.allowed(YOURS) === false, "and nobody else is");
+    ok(t.on() === true, "the counter runs while any trace is live");
+    t.traceOff(MINE);
+    ok(t.allowed(MINE) === false, "off means off");
+    ok(t.on() === false, "and the counter stops when the last trace ends");
+    /* ⚠ the cap is the promise the UI makes: nothing can ask for a day */
+    ok(t.traceOn(MINE, 9999).minutes === 60, "an hour is the most anyone can ask for");
+    t.traceOff(MINE);
+  }
   console.log('');
   /* ⚠ exitCode, never process.exit(), while an http server is closing — it aborts libuv mid-close */
   process.exitCode = bad ? 1 : 0;

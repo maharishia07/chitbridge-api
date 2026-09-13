@@ -64,6 +64,34 @@ const STATUSES = ['pass', 'fail', 'blocked', 'skipped'];
 const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'performance', 'security',
   'penetration', 'static', 'support'];
 
+/**
+ * ── ⭐⭐ TRACE MY OWN CALLS, FOR A WHILE ───────────────────────────────────────────────────────────────────
+ *
+ *   POST /api/testing/trace  { minutes }    on, for this caller, for up to an hour
+ *   POST /api/testing/trace  { off: true }  off now
+ *   GET  /api/testing/trace                 { on, seconds }
+ *
+ * ⚠️⚠️ THE ENTITY COMES FROM THE TOKEN AND NEVER FROM THE BODY. A `for_entity` parameter would turn a
+ * self-service diagnostic into a way of watching another shop, and no amount of checking afterwards is as
+ * safe as never accepting the field.
+ */
+router.post('/trace', auth, (req, res) => {
+  try {
+    const me = auth.entityOf(req);
+    if (!me) return res.status(401).json({ error: 'Unauthorised' });
+    const t = require('../lib/trips');
+    const b = req.body || {};
+    return res.json(b.off ? t.traceOff(me) : t.traceOn(me, b.minutes));
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String((e && e.message) || e) }); }
+});
+router.get('/trace', auth, (req, res) => {
+  try {
+    const me = auth.entityOf(req);
+    if (!me) return res.status(401).json({ error: 'Unauthorised' });
+    return res.json(require('../lib/trips').traceState(me));
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String((e && e.message) || e) }); }
+});
+
 router.get('/vocabulary', (req, res) => {
   res.json({
     run_kinds: RUN_KINDS, layers: LAYERS, statuses: STATUSES, test_types: TEST_TYPES,
