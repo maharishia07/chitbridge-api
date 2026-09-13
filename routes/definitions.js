@@ -64,7 +64,29 @@ router.get('/', auth, async (req, res) => {
      */
     const params = [entity_id];
     let where = 'd.entity_id = $1';
-    if (req.query.kind)   { params.push(String(req.query.kind));   where += ` AND d.kind = $${params.length}`; }
+    /**
+     * ── ⭐⭐⭐ SEVERAL KINDS IN ONE CALL ────────────────────────────────────────────────────────────────────
+     *
+     * Athi, 2026-09-13: *"batch the defList calls into one."*
+     *
+     * ⭐ MEASURED FIRST, WITH CB_TRIPS ON: opening the Catalogue asked this route SEVEN times — category,
+     * pricing, tax, ordermodel, offer, and two repeats — and each one cost about 65 ms INSIDE THE SERVER for
+     * 273–642 ms of wall time. Nearly all of it was the wire. So the fix is not a faster query; it is fewer
+     * journeys, and this is the end that has to allow it.
+     *
+     * ⚠️ ONE PARAMETER, NOT A NEW ROUTE. `?kind=tax,category` is the same question asked about more than one
+     * shelf, and a second endpoint would be a second thing to keep in step with this one — the retired-row
+     * rule, the governed slabs, the version join.
+     *
+     * ⚠️ A SINGLE KIND STILL COMPARES WITH `=`. Postgres plans `= ANY(array)` differently, and every existing
+     * caller sends one kind; leaving the common path exactly as it was means this change cannot make anything
+     * that works today slower.
+     */
+    const kinds = req.query.kind
+      ? String(req.query.kind).split(',').map((k) => k.trim()).filter(Boolean).slice(0, 12)
+      : [];
+    if (kinds.length === 1) { params.push(kinds[0]); where += ` AND d.kind = $${params.length}`; }
+    else if (kinds.length > 1) { params.push(kinds); where += ` AND d.kind = ANY($${params.length})`; }
     if (req.query.status) { params.push(String(req.query.status)); where += ` AND d.status = $${params.length}`; }
     /**
      * ⚠️ RETIRED IS HIDDEN BY DEFAULT BUT REACHABLE. `?status=retired` returns them, and `?all=1` returns
@@ -79,7 +101,8 @@ router.get('/', auth, async (req, res) => {
            ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE ${where}
         ORDER BY d.kind, d.name`;
-    const wantsTax = !req.query.kind || String(req.query.kind) === 'tax';
+    /* ⚠ among the kinds asked for, not equal to the whole parameter — `kind=tax,category` wants them too */
+    const wantsTax = !kinds.length || kinds.indexOf('tax') >= 0;
     const wantsLive = !req.query.status || String(req.query.status) === 'live';
     /* ⭐⭐ ONE ROUND TRIP (db.readBatch): the list, my identity row and the region layers that decide the governed
        slabs go as one message — this was a transaction (4 trips) plus two plain queries. Falls back to the old
