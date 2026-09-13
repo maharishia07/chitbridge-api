@@ -2186,7 +2186,21 @@ router.get('/report', auth, async (req, res) => {
       sections: [
         { id: '1', title: 'Overview', source: 'measured',
           body: {
-            tested_by: [...new Set(data.runs.map((r) => r.testers).filter(Boolean))].join(', ') || '—',
+            /**
+             * ⚠️⚠️ IT WAS DEDUPING WHOLE STRINGS, NOT NAMES — so the report listed the same person twice.
+             * `r.testers` is ALREADY a joined list per run (string_agg(DISTINCT tester_name, ', ')), so a
+             * board with run A = "Tally Test Shop" and run B = "Athi, Tally Test Shop" produced two distinct
+             * STRINGS, and the Set kept both: "Tally Test Shop, Athi, Tally Test Shop".
+             *
+             * ⭐ Split back to individual names before deduping. Athi asked whether this report is per-user
+             * or overall — it is overall (every query here is scoped `WHERE entity_id = $1`, never by actor),
+             * and a Tested-by line that repeats a name is the single thing most likely to make a reader think
+             * otherwise. [[feedback-silence-is-the-bug]]
+             */
+            tested_by: [...new Set(
+              data.runs.flatMap((r) => String(r.testers || '').split(',').map((x) => x.trim()))
+                .filter(Boolean)
+            )].join(', ') || '—',
             period: data.runs.length
               ? { from: data.runs[data.runs.length - 1].started, to: data.runs[0].finished } : null,
             runs: data.runs.length,
