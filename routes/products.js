@@ -430,7 +430,11 @@ router.get('/', auth, async (req, res) => {
      * whole reason the JS version existed. The counts underneath still go through statusOf itself, so there is one authority.
      */
     const KNOWN = itemstatus.STATUSES.map((x) => `'${x}'`).join(',');
-    const STATUS_SQL = `CASE WHEN lower(trim(coalesce(item_data->>'status',''))) IN (${KNOWN}) THEN lower(trim(item_data->>'status')) ELSE 'available' END`;
+    /* ⚠️ QUALIFIED `ci.` FROM HERE DOWN. The list below gains a LATERAL join, and a bare `item_data` or
+       `entity_id` beside one is AMBIGUOUS — Postgres refuses the whole statement and the route answers 500.
+       routes/definitions.js carries the same scar in its own comment; this is the same lesson, applied
+       BEFORE the fault rather than after it. */
+    const STATUS_SQL = `CASE WHEN lower(trim(coalesce(ci.item_data->>'status',''))) IN (${KNOWN}) THEN lower(trim(ci.item_data->>'status')) ELSE 'available' END`;
     const wantRaw = String(req.query.status || '').toLowerCase().trim();
     let statusWhere = '', statusParams = [];
     if (wantRaw === 'not-available') statusWhere = ` AND ${STATUS_SQL} <> 'available'`;
@@ -439,13 +443,48 @@ router.get('/', auth, async (req, res) => {
       message: 'status must be one of: ' + itemstatus.STATUSES.join(', ') + ', not-available' });
 
     const base = q
-      ? { where: `entity_id=$1 AND is_active=true AND item_data::text ILIKE $2`, params: [entity_id, `%${q}%`] }
-      : { where: `entity_id=$1 AND is_active=true`, params: [entity_id] };
+      ? { where: `ci.entity_id=$1 AND ci.is_active=true AND ci.item_data::text ILIKE $2`, params: [entity_id, `%${q}%`] }
+      : { where: `ci.entity_id=$1 AND ci.is_active=true`, params: [entity_id] };
     const listParams = base.params.concat(statusParams);
-    const listSql = { text: `SELECT * FROM catalogue_items WHERE ${base.where}${statusWhere} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+    /**
+     * ── ⭐⭐⭐ THE CURRENT VERSION RIDES WITH THE ROW ────────────────────────────────────────────────────────
+     *
+     * Athi, 2026-09-13 (CAT001-H07, written with the tool’s own ✎ button): *"21 calls, 13,401 ms —
+     * prodVersions ×5."* Measured after: ONE `/products/:id/versions` per product opened, 459–895 ms each,
+     * ~70% of it inside the server. Browse ten products and that is ten extra calls.
+     *
+     * ⚠️⚠️ AND IT WAS NOT WASTE, which is why lazy-loading would have been the wrong fix. The History row
+     * shows a SUMMARY even collapsed — "v1 · changed 9/9/2026 · by Tally Test Shop" — and that summary needs
+     * the data. The comment on the client says "loaded only when the row asks", and it is telling the truth:
+     * the row does ask, on every product. A lazy fetch would have moved the cost, not removed it.
+     *
+     * ⭐ SO THE SUMMARY TRAVELS WITH THE LIST. Three columns on a query that already runs, and the full
+     * history is still a separate read for whoever expands the row.
+     *
+     * ⭐ `WHERE valid_to IS NULL` IS NOT A GUESS AT THE LATEST — it is the current row by definition, and
+     * b146 built `cat_item_version_current (entity_id, item_id) WHERE valid_to IS NULL` for exactly this
+     * lookup. The index existed before the query that needed it.
+     *
+     * ⚠️ LEFT JOIN, always. A product created before b146 has no version row at all; an inner join would
+     * silently drop it from the catalogue — a performance fix that loses products is not a fix.
+     */
+    const listSql = { text: `SELECT ci.*, v.version_no, v.valid_from AS version_at, v.changed_by_name
+         FROM catalogue_items ci
+         LEFT JOIN LATERAL (
+           SELECT vv.version_no, vv.valid_from, idn.display_name AS changed_by_name
+             FROM catalogue_item_version vv
+             /* ⚠ identity_id is uuid, changed_by is TEXT — the cast is on the same side the versions route
+                already casts, so the two joins agree. Without it Postgres refuses the whole statement with
+                "operator does not exist: uuid = text" and the catalogue answers 500. Caught by EXPLAIN before
+                shipping rather than by the screen going blank. */
+             LEFT JOIN identities idn ON idn.identity_id::text = vv.changed_by
+            WHERE vv.entity_id = ci.entity_id AND vv.item_id = ci.item_id AND vv.valid_to IS NULL
+            LIMIT 1
+         ) v ON true
+        WHERE ${base.where}${statusWhere} ORDER BY ci.created_at DESC LIMIT ${limit} OFFSET ${offset}`,
                       params: listParams };
     /* the tally is over EVERY row, and costs almost nothing: one short string per product, never leaving the server */
-    const tallySql = { text: `SELECT item_data->>'status' AS st FROM catalogue_items WHERE ${base.where}`, params: base.params };
+    const tallySql = { text: `SELECT ci.item_data->>'status' AS st FROM catalogue_items ci WHERE ${base.where}`, params: base.params };
     /* ⭐⭐ ONE NETWORK ROUND TRIP (db.readBatch): the due-probe, the list and the parked rows go as one message.
        Only when a parked change is DUE does this take the write path (applyDue inside a transaction) — rare, and
        then the list is read again after it lands. Athi, 2026-09-05: "reduce the round trip to O(1) if possible". */
