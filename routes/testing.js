@@ -405,6 +405,22 @@ async function importCases(entity_id, who, rows, mode) {
         written_by: (mode === 'add' && who) ? (who.name || null) : (c.written_by || null),
         written_by_id: (mode === 'add' && who) ? (who.id || null) : (c.written_by_id || null),
         written_at: (mode === 'add') ? new Date().toISOString() : (c.written_at || null),
+        /**
+         * ── ⚠️⚠️⚠️ AND THE SEVENTH FIELD THROUGH THE SAME DOOR, CAUGHT BY DRIVING THE LOOP ────────────────
+         *
+         * The closing reason was written onto `definition_version.rules`, read back correctly once, and was
+         * GONE an hour later. Not overwritten by a bug in the close — stripped by the next import, because
+         * this builder composes `rules` from a NAMED LIST and rebuilds the row without anything it does not
+         * mention. `seq`, then changed_at/needs/held, then menu/generated, then screen_code/control_code,
+         * then observed/evidence_id, and now this.
+         *
+         * ⭐ IT WAS FOUND ONLY BECAUSE THE WHOLE CYCLE WAS DRIVEN TWICE. Close, reopen, write two more,
+         * re-read — the field survived every step except the one nobody looks at. Reading the code would not
+         * have shown it; the close and the import are four hundred lines apart.
+         */
+        closed_note: c.closed_note || null,
+        closed_by: c.closed_by || null,
+        closed_at: c.closed_at || null,
       },
     });
   }
@@ -708,7 +724,8 @@ async function upsertClause(db, entity_id, who, spec, clause, text) {
 const CASE_FIELDS = new Set(['case_key', 'module_key', 'module_name', 'intro', 'title', 'claim', 'priority',
   'pre', 'data', 'steps', 'note', 'layer', 'test_type', 'group', 'automated', 'areas', 'subjects', 'run_by',
   'seq', 'step', 'cites', 'changed_at', 'needs', 'held', 'menu', 'generated', 'observed', 'evidence_id',
-  'screen_code', 'control_code', 'written_by', 'written_by_id', 'written_at']);
+  'screen_code', 'control_code', 'written_by', 'written_by_id', 'written_at',
+  'closed_note', 'closed_by', 'closed_at']);
 
 function unknownFields(rows) {
   const seen = new Set();
