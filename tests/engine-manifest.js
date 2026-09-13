@@ -289,6 +289,19 @@ const ENGINE_OTHER = [
      is in, from its own history. That is a rule, and a rule is an engine: swap it and the board, the screen
      and the report all change their minds together, which is exactly why it is one file. (2026-09-13) */
   'teststatus.js',
+  /**
+   * ⚠️ ENGINE BY THIS FILE'S OWN TEST, and it is worth saying why, because it looks like a config read.
+   * INFRA is "holds no rule and decides nothing — swap it and ChitBridge is unchanged". testboard decides
+   * WHICH ENTITY'S DATA every testing route reads and writes. That is not plumbing: it is the rule that
+   * turns the board from per-tenant into one board for the product, and it is the difference between a
+   * finding being private to a shop and visible to the platform.
+   *
+   * The note on testnews.js above draws the line in advance: that file would become an engine "the day it
+   * started deciding WHO is told what". This one decides who SEES what, which is the same line, crossed.
+   * ⭐ It is one file precisely so the exception to the core principle (never share OWNED data) has exactly
+   * one home, and can be found, argued with and switched off. (2026-09-13)
+   */
+  'testboard.js',
   /* GENERATED, never edited by hand: scripts/vendor-tax.cjs writes it from tax.js + tax-slab.js so a TILL can price a bill with the
      internet unplugged. Same engine, second home — tests/tax-vendor.test.js fails the day the two differ (2026-09-07). */
   'tax-engine.browser.js',

@@ -37,6 +37,13 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const teststatus = require('../lib/teststatus');
 const { withEntity } = require('../db');
+/**
+ * ⭐⭐⭐ ONE BOARD FOR THE PRODUCT. Every route below reads and writes the entity testboard.entityFor() names
+ * — the shared board when TEST_BOARD_ENTITY is set, and the caller's own entity when it is not.
+ * ⚠️ /trace is the ONE exception and keeps auth.entityOf(req): it turns on server timings for the CALLER, and
+ * "only your own calls are timed" is a promise the panel makes in as many words.
+ */
+const testboard = require('../lib/testboard');
 
 /* The two axes, in one place. The server is the authority so a screen cannot offer a value the CHECK refuses. */
 const RUN_KINDS = ['manual', 'unit', 't0', 't1', 't2', 't3', 'regression'];
@@ -100,7 +107,7 @@ const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'pe
  */
 router.post('/cases/close', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     if (!entity_id) return res.status(401).json({ error: 'Unauthorised' });
     const key = String((req.body && req.body.case_key) || '').trim();
     if (!key) return res.status(400).json({ error: 'Bad request', message: 'which case?' });
@@ -207,7 +214,7 @@ function testerOf(req) {
  */
 router.get('/cases', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.current_version, v.rules
          FROM definition d
@@ -608,7 +615,7 @@ router.post('/cases/import', auth, async (req, res) => {
        — a typo must never quietly turn a rebuild into an add and leave retired cases live. */
     const mode = (req.body && req.body.mode === 'add') ? 'add' : null;
     const _who = testerOf(req);
-    const _ent = auth.entityOf(req);
+    const _ent = testboard.entityFor(auth.entityOf(req));
     const _out = await importCases(_ent, _who, rows, mode);
     /**
      * ⚠️ ONLY `mode:'add'`, WHICH IS THE PANEL WRITING ONE CASE. The bulk document import runs through the
@@ -671,7 +678,7 @@ router.post('/cases/seed', auth, async (req, res) => {
         message: 'This API was deployed without data/test-cases.json. Run build-test-cases.cjs and deploy again.' });
     }
     const doc = JSON.parse(require('fs').readFileSync(file, 'utf8'));
-    const out = await importCases(auth.entityOf(req), testerOf(req), doc.cases || []);
+    const out = await importCases(testboard.entityFor(auth.entityOf(req)), testerOf(req), doc.cases || []);
     res.json(Object.assign({ version: doc.version, date: doc.date }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not load the documented cases', message: String(err.message || err) });
@@ -864,7 +871,7 @@ async function recordResults(entity_id, who, b) {
 
 router.post('/results', auth, async (req, res) => {
   try {
-    const out = await recordResults(auth.entityOf(req), testerOf(req), req.body || {});
+    const out = await recordResults(testboard.entityFor(auth.entityOf(req)), testerOf(req), req.body || {});
     res.status(out.status).json(out.body);
   } catch (err) {
     res.status(500).json({ error: 'Could not record the result', message: String(err.message || err) });
@@ -880,7 +887,7 @@ router.post('/results', auth, async (req, res) => {
  */
 router.get('/results', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
 
     if (q.case_key || q.run_id) {
@@ -909,7 +916,7 @@ router.get('/results', auth, async (req, res) => {
 /** GET /api/testing/runs — the sittings, newest first, each with its totals. */
 router.get('/runs', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT run_id, max(run_label) AS run_label, max(build) AS build,
               min(at) AS started, max(at) AS finished,
@@ -1065,7 +1072,7 @@ router.post('/results/junit', auth, async (req, res) => {
     }
 
     /* ⭐ the SAME recorder a person's tap goes through — one write path, one shape of row */
-    const out = await recordResults(auth.entityOf(req), testerOf(req), {
+    const out = await recordResults(testboard.entityFor(auth.entityOf(req)), testerOf(req), {
       results, run_id: req.body.run_id, run_label: req.body.run_label || 'automated', build: req.body.build });
     return res.status(out.status).json(Object.assign({ unmatched }, out.body));
   } catch (err) {
@@ -1088,7 +1095,7 @@ router.post('/results/junit', auth, async (req, res) => {
 /** GET /api/testing/cases/gherkin[?module=CTR] — download the board as .feature text. */
 router.get('/cases/gherkin', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const gherkin = require('../lib/gherkin');
     const only = req.query && req.query.module ? String(req.query.module).trim() : null;
 
@@ -1133,7 +1140,7 @@ router.get('/cases/gherkin', auth, async (req, res) => {
  */
 router.post('/cases/gherkin', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const gherkin = require('../lib/gherkin');
     const text = String((req.body && req.body.text) || '');
@@ -1234,7 +1241,7 @@ const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rej
 /** POST /api/testing/requirements — raise one from the case that found it. */
 router.post('/requirements', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const observed = String(b.observed || '').trim();
@@ -1328,7 +1335,7 @@ router.post('/requirements', auth, async (req, res) => {
  */
 router.get('/requirements', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules
@@ -1374,7 +1381,7 @@ router.get('/requirements', auth, async (req, res) => {
  */
 router.patch('/requirements/:id', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const state = String((req.body || {}).state || '');
     const why = String((req.body || {}).why || '').trim();
@@ -1491,7 +1498,7 @@ const SEV_MEANS = {
 /** POST /api/testing/incidents — record one where it happened. */
 router.post('/incidents', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const observed = String(b.observed || '').trim();
@@ -1569,7 +1576,7 @@ router.post('/incidents', auth, async (req, res) => {
  */
 router.get('/incidents', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules
@@ -1632,7 +1639,7 @@ router.get('/incidents', auth, async (req, res) => {
  */
 router.patch('/incidents/:id', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const state = String(b.state || '');
@@ -1755,7 +1762,7 @@ router.patch('/incidents/:id', auth, async (req, res) => {
  */
 router.post('/evidence', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const mime = String(b.mime || '').toLowerCase();
@@ -1788,7 +1795,7 @@ router.post('/evidence', auth, async (req, res) => {
 
 router.get('/stale', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT d.name AS case_key, d.sub_kind AS module_key, v.rules,
               s.name AS clause, s.sub_kind AS spec, s.current_version AS clause_now
@@ -1842,7 +1849,7 @@ router.get('/stale', auth, async (req, res) => {
  */
 router.get('/coverage', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
 
     const r = await withEntity(entity_id, (db) => db.query(
@@ -1988,7 +1995,7 @@ router.get('/coverage', auth, async (req, res) => {
  */
 router.get('/report', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
 
     const data = await withEntity(entity_id, async (db) => {
@@ -2283,6 +2290,29 @@ router.get('/report', auth, async (req, res) => {
               + 'numbers in section 2 are evidence FOR the judgement, not the judgement.',
           /* ⚠️ THE TWO FACTS THAT MOST OFTEN MAKE A GREEN REPORT WRONG, stated where the evaluation is made */
           caveats: [
+            /**
+             * ── ⚠️⚠️⚠️ AN EMPTY BOARD USED TO PRODUCE A CLEAN, SIGNABLE REPORT ──────────────────────────
+             *
+             * Athi, 2026-09-13: *"i used alpha timers and the report came empty?"* It was worse than empty.
+             * A shop with no cases got: §2 all zeros, §3 Incidents "None.", §4 Blocking "None.", six green
+             * MEASURED tags — and §10's two signature rules, ready to sign. On paper that is
+             * INDISTINGUISHABLE from a product that was tested and found clean.
+             *
+             * ⚠️⚠️ AND THE ONE MECHANISM THAT WOULD HAVE CAUGHT IT SWITCHED ITSELF OFF. Both caveats below
+             * are `x ? … : null`, so on the emptiest possible board they both yielded null and section 6
+             * carried NO caveats at all. The warning was strongest when there was something to warn about
+             * and silent when there was nothing but warning to give. [[feedback-silence-is-the-bug]]
+             *
+             * ⭐ These two fire on ZERO, which is exactly when the others cannot.
+             */
+            !n.total
+              ? 'THERE ARE NO TEST CASES ON THIS BOARD. Every count in section 2 is zero because nothing has '
+                + 'been declared — not because it was tested and found clean. Nothing here may be signed.'
+              : null,
+            (n.total && !(n.total - n.untested))
+              ? 'NOT ONE CASE HAS EVER BEEN RUN. The board holds ' + n.total + ' case(s) and no result exists '
+                + 'for any of them, so this report records what is INTENDED, never what was observed.'
+              : null,
             n.untested ? n.untested + ' case(s) have never been run'
               + (n.high_untested ? ', ' + n.high_untested + ' of them High priority' : '') : null,
             data.stale ? data.stale + ' case(s) cite an older version of their spec clause, so a pass on them is '
@@ -2300,9 +2330,24 @@ router.get('/report', auth, async (req, res) => {
         { id: '9', title: 'Lessons learned and recommendations', source: 'needs a person',
           asks: 'What should be done differently next time?' },
 
-        { id: '10', title: 'Approval', source: 'needs a person',
-          asks: 'Who accepts this report, and on what date? ⚠️ Nothing here signs anything — a generated document '
-              + 'must not carry an approval nobody gave.' },
+        /**
+         * ⚠️⚠️⚠️ NO SIGNATURE BLOCK OVER AN EMPTY BOARD. Two ruled signature lines under a document whose
+         * every figure is zero is the most dangerous single object this page can print: it does not just
+         * fail to warn, it INVITES the signature. `evidence` is false when nothing is declared or nothing
+         * has been run, and the clause then says what there is to approve, which is nothing.
+         * ⚠️ The clause is NOT hidden. An empty report is a legitimate and useful document — "we have
+         * declared nothing and run nothing" — it simply must not be signable.
+         */
+        (n.total && (n.total - n.untested))
+          ? { id: '10', title: 'Approval', source: 'needs a person',
+              asks: 'Who accepts this report, and on what date? ⚠️ Nothing here signs anything — a generated '
+                  + 'document must not carry an approval nobody gave.' }
+          : { id: '10', title: 'Approval', source: 'needs a person', no_sign: true,
+              asks: !n.total
+                ? 'There is nothing to approve: this board holds no test cases. The signature block appears '
+                  + 'once there is a result to stand behind.'
+                : 'There is nothing to approve: no case on this board has been run. The signature block '
+                  + 'appears once there is a result to stand behind.' },
       ],
     });
   } catch (err) {
@@ -2333,7 +2378,7 @@ router.get('/report', auth, async (req, res) => {
  */
 router.get('/reliability', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
     const kind = q.run_kind ? String(q.run_kind) : null;
 
