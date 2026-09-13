@@ -313,6 +313,27 @@ async function importCases(entity_id, who, rows, mode) {
         evidence_id: c.evidence_id || null,
         screen_code: c.screen_code || null,
         control_code: c.control_code || null,
+        /**
+         * ── ⭐⭐⭐ WHO WROTE IT, AND WHEN ──────────────────────────────────────────────────────────────────
+         *
+         * Athi, 2026-09-13: *"the test lab should bring all the findings with screen detail, which user id or
+         * the user name, what has been written, what is the screenshot and so on."*
+         *
+         * ⚠️ `who.id` HAS ALWAYS BEEN STORED as `created_by` on the definition — and the cases endpoint never
+         * returned it, so the board could not name a single author. The id alone would not have been enough
+         * anyway: a name shown six months later must not depend on a join to a row that may be gone.
+         *
+         * ⭐ SO THE NAME IS DENORMALISED BESIDE THE ID, exactly as `test_result.tester_name` already does for
+         * a verdict. Same reasoning, same shape, one board.
+         *
+         * ⚠️⚠️ STAMPED FROM THE TOKEN, NEVER FROM THE BODY — a client that could name the author could name
+         * anybody. And only on `mode:add`, which is the panel writing one case: the bulk document import runs
+         * through here too, and stamping there would rewrite the author of all 1,455 cases to whoever last
+         * pressed the button.
+         */
+        written_by: (mode === 'add' && who) ? (who.name || null) : (c.written_by || null),
+        written_by_id: (mode === 'add' && who) ? (who.id || null) : (c.written_by_id || null),
+        written_at: (mode === 'add') ? new Date().toISOString() : (c.written_at || null),
       },
     });
   }
@@ -616,7 +637,7 @@ async function upsertClause(db, entity_id, who, spec, clause, text) {
 const CASE_FIELDS = new Set(['case_key', 'module_key', 'module_name', 'intro', 'title', 'claim', 'priority',
   'pre', 'data', 'steps', 'note', 'layer', 'test_type', 'group', 'automated', 'areas', 'subjects', 'run_by',
   'seq', 'step', 'cites', 'changed_at', 'needs', 'held', 'menu', 'generated', 'observed', 'evidence_id',
-  'screen_code', 'control_code']);
+  'screen_code', 'control_code', 'written_by', 'written_by_id', 'written_at']);
 
 function unknownFields(rows) {
   const seen = new Set();
