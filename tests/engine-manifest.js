@@ -313,6 +313,10 @@ const ENGINE_OTHER = [
    * white-label deployment differs from ours by one environment variable. (2026-09-14)
    */
   'platformroot.js',
+  /* ⭐ ENGINE. It decides that a registered entity BECOMES the operator's customer and that the operator
+     becomes its supplier — a rule about the relationship every shop on this platform has, not plumbing.
+     Swap it and the platform has no customers. (2026-09-14) */
+  'rootlink.js',
   /* GENERATED, never edited by hand: scripts/vendor-tax.cjs writes it from tax.js + tax-slab.js so a TILL can price a bill with the
      internet unplugged. Same engine, second home — tests/tax-vendor.test.js fails the day the two differ (2026-09-07). */
   'tax-engine.browser.js',

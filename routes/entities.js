@@ -290,6 +290,19 @@ router.post('/verify',
       // Reusable + non-fatal; the governed mint path will call the same fn once unification lands (Q2).
       try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (_) {}
 
+      /**
+       * CONNECT the new entity to this deployment's root — it becomes the operator's customer, and the
+       * operator becomes its supplier. See lib/rootlink.js for why that is two one-sided rows and not a link.
+       *
+       * ⚠️ INERT WITHOUT A ROOT. PLATFORM_ROOT_ENTITY unset → returns immediately and registration is exactly
+       * what it was. ⚠️ AND IT CAN NEVER FAIL VERIFICATION — connect() never rejects, for the same reason the
+       * governance mint above is wrapped: losing a signup over a bookkeeping row is far worse than the row.
+       */
+      let rootLink = null;
+      try {
+        rootLink = await require('../lib/rootlink').connect(identity.identity_id, req.id);
+      } catch (e) { console.warn('root link skipped:', (e && e.message) || e); }
+
       // 7 days JWT — longer session for testing
       const token = jwt.sign(
         { identity_id: identity.identity_id, bridge_id: identity.bridge_id,
