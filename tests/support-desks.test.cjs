@@ -245,6 +245,34 @@ if (shop) {
     '"Sent" on its own is the same silence as nothing at all');
 }
 
+
+/* ── THE POPULATION BOUNDARY — a test finding must not land beside a real shop's ───────────────────────────── */
+const proot = R('lib/platformroot.js');
+
+ok('there is a desk PER POPULATION, not one for everybody',
+  /function rootFor\(population\)/.test(proot) && /PLATFORM_ROOT_ENTITY_TEST/.test(proot),
+  'one root meant a test entity’s finding landed in the live queue beside a real shop’s');
+
+ok('the raiser’s population picks it — nobody chooses',
+  /platformroot\.rootFor\(from\.population\)/.test(raise),
+  'b249 stamps the population and b248 inherits it, so the desk cannot be pointed the wrong way');
+
+ok('an unconfigured population falls back rather than losing the report',
+  /entity_id: ROOT,\s*\r?\n?\s*why: own === undefined/.test(proot),
+  'losing a report to a missing environment variable is worse than a ticket in the wrong queue');
+
+ok('...and SAYS it fell back, naming the population',
+  /no desk for population/.test(proot) && /desk configured — sent to the live desk/.test(proot),
+  '"the platform desk" would read as though this population had one');
+
+ok('the receipt names WHICH platform desk',
+  /r\.deskWhy \|\| 'the platform'/.test(raise),
+  '"the platform" cannot tell a test run from a live one, and that is the whole point of the populations');
+
+ok('the note carries it too',
+  /desk_why: r\.deskWhy \|\| null/.test(raise),
+  'the preview and the send answer from one resolver; a field on one and not the other re-opens the gap');
+
 /* the runner reads the LAST "<n> checks" from this output — without it a passing guard reports 0, which is
    indistinguishable from a guard that ran nothing. [[feedback-silence-is-the-bug]] */
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
