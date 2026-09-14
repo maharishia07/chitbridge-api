@@ -1689,6 +1689,11 @@ router.get('/incidents', auth, async (req, res) => {
         unnoticed_mins: mins(t0, t1), open_mins: mins(t1, t2),
         defects: ru.defects || [], changes: ru.changes || [],
         raised_by: ru.raised_by || null, raised_by_id: ru.raised_by_id || x.created_by || null,
+        /* ⭐ WHOSE FAULT IS THIS, AND FROM WHICH SET OF BOOKS. On the operator queue every row is a COPY
+           (lib/supportcopy), and without this the list reads as nine anonymous faults with no way to tell a
+           real customer apart from an e2e run. Null on a shop own board, which is correct: it is theirs. */
+        origin: ru.origin || null,
+        resolved_in: ru.resolved_in || null,
         /* ⭐ ONE RULE, ON THE SERVER — see lib/teststatus.js. The board, the screen and the report print the
            same word because they read the same function. */
         work_status: teststatus.workStatus({ kind: 'incident', state: ru.state || 'raised' }),
