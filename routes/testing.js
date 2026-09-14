@@ -2837,6 +2837,11 @@ router.get('/changes', auth, async (req, res) => {
         summary: ru.text || '', backout: ru.backout || '', cites: ru.cites || null,
         repo: ru.repo || null, sha: ru.sha || null, proves: ru.proves || [],
         shipped_in: ru.shipped_in || null, state: ru.state || 'proposed', shelf: x.status,
+        /* ⭐ ONE RULE, ON THE SERVER — the board, the screen and the report print the same verdict because
+           they all read this. ⚠️ proves is passed: a change that shipped proving nothing reads "retest",
+           not 'closed', which is the whole reason the field is allowed to be empty. */
+        work_status: teststatus.workStatus({ kind: 'change', state: ru.state || 'proposed',
+                                             proves: ru.proves || [] }),
         raised_by: ru.raised_by || null, at: x.updated_at, history: ru.history || [] };
     });
     const open = all.filter((c) => c.state === 'proposed' || c.state === 'reviewed');
@@ -3021,6 +3026,7 @@ router.get('/releases', auth, async (req, res) => {
     res.json({ releases: r.rows.map((x) => ({
       definition_id: x.definition_id, name: x.name, note: x.note,
       carried: (x.rules || {}).carried || [], proves: (x.rules || {}).proves || [],
+      work_status: teststatus.workStatus({ kind: 'release', proves: (x.rules || {}).proves || [] }),
       cut_by: (x.rules || {}).cut_by || null, at: x.updated_at })) });
   } catch (e) {
     console.error('releases list:', e.code || '', e.message);

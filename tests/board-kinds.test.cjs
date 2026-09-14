@@ -158,8 +158,6 @@ const ANSWERED_AS = { spec: 'requirement' };
 const USES_THE_CASE_LADDER = new Set([
   'testcase',   /* it IS a case — retired/last/todo is its own ladder */
   'evidence',   /* a screenshot has no state of its own; it belongs to the finding that carries it */
-  'change',     /* ⚠️ shows as 'todo' until workStatus learns proposed/reviewed/shipped — see the note below */
-  'release',    /* ⚠️ same: a release is shipped the moment it exists, so 'todo' is wrong but harmless today */
 ]);
 
 it('every classified kind is one workStatus can actually answer for', () => {
