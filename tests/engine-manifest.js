@@ -131,6 +131,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* reads one entity uuid out of the environment and checks it is a uuid. Holds no rule and decides nothing —
+     testboard.js and platformroot.js both use it so the read-and-warn exists once. (2026-09-14) */
+  'namedentity.js',
   'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
   'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
@@ -302,6 +305,14 @@ const ENGINE_OTHER = [
    * one home, and can be found, argued with and switched off. (2026-09-13)
    */
   'testboard.js',
+  /**
+   * ⭐ ENGINE, AND FOR TESTBOARD'S EXACT REASON. platformroot decides WHICH ENTITY is the operator of this
+   * deployment — whose customer list holds every registered shop, whose folders hold the support queues.
+   * Swap it and a different company runs the platform, which is not what "swap it and ChitBridge is
+   * unchanged" means. One file so the answer to "who is the operator here?" has exactly one home, and so a
+   * white-label deployment differs from ours by one environment variable. (2026-09-14)
+   */
+  'platformroot.js',
   /* GENERATED, never edited by hand: scripts/vendor-tax.cjs writes it from tax.js + tax-slab.js so a TILL can price a bill with the
      internet unplugged. Same engine, second home — tests/tax-vendor.test.js fails the day the two differ (2026-09-07). */
   'tax-engine.browser.js',
