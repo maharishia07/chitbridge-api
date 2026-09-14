@@ -1381,10 +1381,36 @@ router.get('/mis', auth, async (req, res) => {
         message: 'The platform report is available to the operator entity only.' });
     }
 
-    const LIVE = "coalesce(status,'active') <> 'erased'";
     /* ⭐ asked ONCE, before anything that needs it. Both the class ladder and the population predicate below
        branch on the same answer, so they can never describe two different platforms. */
     const hasIsTest = await require('../lib/istest').ready();
+    const pop = String(req.query.population || 'real') === 'test' ? 'test' : 'real';
+
+    /**
+     * ── ⚠️⚠️ THE HEADLINE SAID 2,252 CUSTOMERS WHEN THERE WERE NINE ─────────────────────────────────────────
+     *
+     * b246 moved 2,243 fixtures out of `entity_kind='test'` and into `customer` + is_test, which was right —
+     * they self-registered, so they were customers that were tests. But every aggregate on this screen counted
+     * with `LIVE` alone, which knows nothing about populations. So the moment the migration ran, the biggest
+     * number on the Platform screen became a lie, and the "test fixtures" tile beside it went to zero because
+     * the kind it counted no longer had any rows.
+     *
+     * ⭐ SO THE POPULATION GOES INTO `LIVE` ITSELF, not beside it. Every aggregate already uses LIVE, and a
+     * new one will too — putting it here means the next count somebody adds is population-aware without
+     * anybody remembering. A predicate you have to remember to add is one that will be forgotten.
+     * [[feedback-silence-is-the-bug]]
+     */
+    const POP = hasIsTest
+      ? (pop === 'test' ? 'AND is_test' : 'AND NOT is_test')
+      : (pop === 'test' ? "AND entity_kind = 'test'" : "AND entity_kind <> 'test'");
+    const LIVE = "coalesce(status,'active') <> 'erased' " + POP;
+
+    /* ⭐ and the size of the population you are NOT looking at, so the third tile can say something true. */
+    const otherPop = Number((await query(
+      `SELECT count(*)::int AS n FROM identities
+        WHERE identity_type = 'entity' AND coalesce(status,'active') <> 'erased' `
+      + (hasIsTest ? (pop === 'test' ? 'AND NOT is_test' : 'AND is_test')
+                   : (pop === 'test' ? "AND entity_kind <> 'test'" : "AND entity_kind = 'test'")))).rows[0].n);
 
     /**
      * ── ⭐⭐ ONE CLASS PER ENTITY — exhaustive, and no row in two boxes ───────────────────────────────────────
@@ -1550,7 +1576,6 @@ router.get('/mis', auth, async (req, res) => {
      *
      * ⭐ SO IT IS A POPULATION, NOT A FLAG. Exactly one is in force, always, and the default is the real one.
      */
-    const pop = String(req.query.population || 'real') === 'test' ? 'test' : 'real';
     /* ⚠️ b246 may not have run yet — deploys are automatic, migrations are by hand, so the code is routinely
        ahead of the database. lib/istest.js probes once and falls back to the old partition, which keeps this
        screen meaning exactly the same thing in both states. */
@@ -1808,6 +1833,9 @@ router.get('/mis', auth, async (req, res) => {
 
     res.json({
       at: new Date().toISOString(),
+      /* ⭐ the screen's third tile reads this. Before b246 it counted entity_kind='test', which is now empty —
+         a tile that silently went to zero rather than to a different number. */
+      other_population: otherPop,
       headline: {
         identities: kinds.rows.reduce((a, x) => a + x.n, 0),
         customers:  (kinds.rows.find((x) => x.k === 'customer') || {}).n || 0,
