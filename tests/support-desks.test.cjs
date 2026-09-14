@@ -279,7 +279,7 @@ ok('the raiser’s population picks it — nobody chooses',
   'b249 stamps the population and b248 inherits it, so the desk cannot be pointed the wrong way');
 
 ok('the desk comes from a ROW the operator can change, not a deploy',
-  /SELECT code, desk_entity_id FROM ops\.population/.test(proot),
+  /FROM ops\.population/.test(proot) && /desk_entity_id/.test(proot),
   'Athi: "we should not write sql for all those" — a desk must be visible and changeable without a deploy');
 
 ok('...and an unreadable registry falls back to exactly today’s behaviour',
@@ -330,6 +330,31 @@ ok('here and them work without an operator entity at all',
   (raise.match(/if \(!root && String\(t\.audience \|\| 'platform'\) === 'platform'\)/g) || []).length === 2,
   'a shop could not log a fault against its OWN business because an entity nobody involved needed was missing '
   + '— and BOTH doors must agree, or the note and the send disagree');
+
+
+
+/* ── THE MEMOS, WHICH THE REVIEW FOUND CACHING THE WRONG THINGS ────────────────────────────────────────────── */
+ok('a routing read that FAILS is retried, not cached like an answer',
+  route.includes("if (e.code === '42P01') memo.set(k, { at: Date.now(), v });"),
+  'one blip froze "nothing routed" for a minute across every ticket for that entity — and those tickets were '
+  + 'then filed in the default folder permanently, with the error string recorded in routed_by as a decision');
+
+ok('a routing write clears the WHOLE memo',
+  /function invalidate\(entity_id\) \{\s*\r?\n\s*memo\.clear\(\);/.test(route),
+  'an inherited answer is cached under the CHILD’s key, so head office setting a destination stayed invisible '
+  + 'to every branch for up to a minute, with no way to force it');
+
+/* ── AND THE INVARIANT b252 ENFORCES ONCE, RE-CHECKED EVERY TIME ───────────────────────────────────────────── */
+ok('the desk is re-validated on every read, not only when it was named',
+  proot.includes("coalesce(d.population, 'live') AS desk_population")
+    && proot.includes('String(row.desk_population).toLowerCase() === code'),
+  'the trigger checks at write time against a column that is itself editable and inherited — move the desk to '
+  + 'another population and every finding routes exactly as it did before b252, while the row looks deliberate');
+
+ok('...and a drifted desk says so rather than silently crossing',
+  proot.includes('the named desk has moved to the')
+    && proot.includes('the named desk is not active'),
+  'a setting that has quietly stopped meaning what it says is not the same as one nobody ever made');
 
 /* the runner reads the LAST "<n> checks" from this output — without it a passing guard reports 0, which is
    indistinguishable from a guard that ran nothing. [[feedback-silence-is-the-bug]] */
