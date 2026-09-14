@@ -168,6 +168,48 @@ function die(msg, code) { console.error('\n  ' + msg + '\n'); process.exit(code 
              : '  — but NO entity is set, so every policy is false: reads return nothing and writes are refused.\n'
              + '                 An empty result here means "you did not say which shop", NOT "there is no data".'));
 
+  /**
+   * ── ⭐⭐⭐ AND NAME THE TABLES, BECAUSE THE GENERAL WARNING ABOVE DOES NOT WORK ─────────────────────────────
+   *
+   * The line above has printed on every run since this file was written, and on 2026-09-14 I read past it FOUR
+   * TIMES IN ONE DAY — reporting "entity_governance is completely empty", "rooting is nearly absent", "b158 did
+   * not apply" and "no real shop has ever sent a chit". Every one was an entity-less read of an RLS-forced
+   * table. Three were wrong; the fourth I only caught by accident.
+   *
+   * ⚠️ A WARNING THAT PRINTS EVERY TIME IS WALLPAPER. It says what is *possible*; it cannot say what is
+   * happening now. So this names the actual tables THIS query touches, and stays silent when none of them is
+   * affected — which is what makes it worth reading when it does appear.
+   *
+   * ⭐ The RLS list is read from the LIVE CATALOGUE, never hard-coded: a table that gains a policy tomorrow is
+   * covered without anyone remembering to update a list here. That is the same reason the role is asked for on
+   * every run rather than assumed.
+   *
+   * ⚠️ It is an OUTLINE, like the verb tally below — an identifier that looks like a table name. It cannot see
+   * through a view or a CTE, so it can miss; it will not invent. A miss leaves you exactly where you were.
+   */
+  if (!ENTITY && !bypasses) {
+    try {
+      const named = [...new Set((sql.match(/\b[a-z_][a-z0-9_]{2,}\b/gi) || []).map((s) => s.toLowerCase()))];
+      if (named.length) {
+        const hit = (await c.query(
+          `SELECT cl.relname AS t, cl.relforcerowsecurity AS forced
+             FROM pg_class cl JOIN pg_namespace n ON n.oid = cl.relnamespace
+            WHERE n.nspname = 'public' AND cl.relkind = 'r'
+              AND cl.relrowsecurity AND cl.relname = ANY($1)
+            ORDER BY 1`, [named])).rows;
+        if (hit.length) {
+          console.log('\n  ⚠⚠ THIS QUERY TOUCHES ROW-LEVEL-SECURED TABLES AND NO ENTITY IS SET:');
+          for (const r of hit) {
+            console.log('       ' + r.t.padEnd(22) + (r.forced ? 'RLS forced' : 'RLS on')
+              + '  → returns 0 rows here, whatever the data');
+          }
+          console.log('     ⭐ Re-run with --entity <uuid> to read it, or accept that a 0 from this table means'
+                    + '\n       NOTHING. Do not report it as a count.');
+        }
+      }
+    } catch (_) { /* the check must never stop the query it is describing */ }
+  }
+
   /* ⚠️ AN OUTLINE, AND SAID TO BE ONE. Postgres does the parsing; this only counts what a person would recognise,
      so nothing here decides what runs. A regex that pretended to be a parser is the bug this file avoids. */
   const verbs = (sql.match(/^\s*(CREATE|ALTER|DROP|GRANT|REVOKE|INSERT|UPDATE|DELETE|SELECT|BEGIN|COMMIT|DO)\b/gim) || [])
