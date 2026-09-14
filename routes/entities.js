@@ -1614,8 +1614,13 @@ router.get('/mis', auth, async (req, res) => {
           AND ($7 = '' OR i.catalogue_visibility = $7)
           AND ($8 = '' OR i.entity_visibility = $8)
           AND ($9 = '' OR i.supplies = $9)
-        ORDER BY ${SORTS[sortKey]} ${dir} NULLS LAST
-        LIMIT $2`,
+        ORDER BY ${SORTS[sortKey]} ${dir} NULLS LAST, i.identity_id
+        /* OFFSET, so the list can be scrolled instead of truncated. Athi: it has to be lazy loaded.
+           matched already told the screen how many there were; without an offset that was a number it
+           could report and never reach.
+           WARNING: ORDER BY must be a total order or paging silently repeats and drops rows between
+           pages. It is a whitelisted column plus NULLS LAST, and identity_id breaks any remaining tie. */
+        LIMIT $2 OFFSET $12`,
       /* ⚠️ '*' MEANS EVERY KIND. Athi, 2026-09-14, after spotting Beta Fresh and Gamma Exports in the data
          but not on the screen: vertical and plan both offered 'any' and kind did not, so there was no way
          to look across the whole platform at once — the one thing an operator report is for. NULL rather
@@ -1631,7 +1636,8 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.entity_visibility || '').trim(),
        String(req.query.supplies || '').trim(),
        String(req.query.standing || '').trim(),
-       String(req.query.class || '').trim()])).rows;
+       String(req.query.class || '').trim(),
+       Math.max(0, Number(req.query.offset) || 0)])).rows;
 
     /**
      * ── ⭐⭐ THE COUNTING SURFACE — counts from any table, rows from none (b241) ──────────────────────────────
