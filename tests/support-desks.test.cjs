@@ -174,6 +174,68 @@ if (web) {
     'routing is a convenience; losing the words is not');
 }
 
+
+/* ── THE STOREFRONT BUYER — the one surface where nobody is signed in ──────────────────────────────────────── */
+const cat = R('routes/catalogue.js');
+
+ok('a storefront buyer has a door at all',
+  /router\.post\('\/:bridge_id\/support'/.test(cat) && /router\.get\('\/:bridge_id\/support\/preview'/.test(cat));
+
+ok('it reuses the ORDER path’s identity, not a second anonymous sender',
+  /crHandle\(c0\.channel, c0\.raw, entity\)/.test(cat.split("router.post('/:bridge_id/support'")[1] || '')
+    && /verifyOtp\(query, c, req\.body\.otp\)/.test(cat.split("router.post('/:bridge_id/support'")[1] || ''),
+  'a second mechanism for who a shopper is ends up with two different answers');
+
+ok('the code is SPENT, so one code is one ticket',
+  /otp_code=NULL[\s\S]{0,120}WHERE identity_id=\$1`, \[c\.identity_id\]\);\s*\r?\n\s*\r?\n\s*const SEV/.test(cat),
+  'verifyOtp does not clear it — without this one code posts tickets for fifteen minutes');
+
+ok('it raises with audience them, addressed to the shop in the URL',
+  /audience: 'them', to_bridge_id: req\.params\.bridge_id/.test(cat),
+  'the shop is the one the buyer is standing in front of — never a bridge id in the body');
+
+ok('severity is taken from the ENGINE’s list, not re-listed here',
+  /require\('\.\.\/lib\/raiseticket'\)\.URGENCY/.test(cat) && !/'Sev-1'/.test(cat),
+  'three sentences written twice is two wordings, and the shop sorting its queue gets both');
+
+ok('a refused raise reaches the buyer as a sentence, not a green tick',
+  /if \(!out\.raised\)[\s\S]{0,160}res\.status\(502\)/.test(cat),
+  'raise() never throws and always answers — raised:false is a real outcome');
+
+/* ⚠️ THE PAYLOAD, NOT THE BLOCK. Scanning the whole handler failed on the COMMENT that explains why there is
+   no folder in it — a guard that cannot tell a rule from the prose about the rule is one people delete. */
+ok('the PUBLIC preview does not publish the shop’s internal arrangement',
+  (() => { const p = cat.split("router.get('/:bridge_id/support/preview'")[1] || '';
+           /* comments are not the answer — strip them, then look only at what is actually sent */
+           const payload = (p.replace(/\/\*[\s\S]*?\*\//g, '')
+                             .match(/res\.json\(\{[\s\S]*?\}\);/g) || []).join('\n');
+           return /to_name/.test(payload) && !/folder/i.test(payload) && !/assignee/i.test(payload); })(),
+  '"filed in 00-support, for Ravi" on the open web is the shop’s arrangement handed to strangers');
+
+const shop = (() => {
+  for (const p of ['../chitbridge-web/public/shop.html', '../../chitbridge-web/public/shop.html']) {
+    try { return fs.readFileSync(path.join(__dirname, '..', p), 'utf8'); } catch (_) {}
+  }
+  return null;
+})();
+if (shop) {
+  ok('the storefront offers it, on the list and on a single product',
+    (shop.match(/supLinkHtml\(\)/g) || []).length >= 3,
+    'a buyer who arrived on one product page has the same problem as one browsing the list');
+  ok('the storefront asks the server where it goes, before anything is typed',
+    /support\/preview/.test(shop) && /function supNoteHtml\(\)/.test(shop));
+  ok('and holds the send when it cannot land',
+    /onclick="supSendCode\(\)"'\+\(_sup\.dead\?' disabled':''\)/.test(shop));
+  ok('the urgency words are the server’s, and absent rather than invented',
+    /_sup\.urgency=j\.urgency/.test(shop) && !/Sev-1/.test(shop),
+    'asking the question with wording the shop has never seen is worse than not asking it');
+  ok('a failed check does not block a real report',
+    /a failed CHECK must not block a real report/.test(shop));
+  ok('the receipt names who has it',
+    /has it<\/div>/.test(shop),
+    '"Sent" on its own is the same silence as nothing at all');
+}
+
 /* the runner reads the LAST "<n> checks" from this output — without it a passing guard reports 0, which is
    indistinguishable from a guard that ran nothing. [[feedback-silence-is-the-bug]] */
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');

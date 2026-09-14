@@ -776,6 +776,93 @@ router.post('/:bridge_id/order/start',
     } catch (err) { console.error('order/start:', err.message); res.status(500).json({ error: 'Order start failed', message: safeErr(err) }); }
   });
 
+/**
+ * ── ⭐⭐⭐ THE BUYER ON A PUBLIC STOREFRONT, RAISING WITH THE SHOP ────────────────────────────
+ *
+ * Athi, 2026-09-14: *"wire the shop.html buyer case too"* — the last of the three desks, and the only one with
+ * nobody signed in.
+ *
+ * ⭐⭐ AND IT IS THE ORDER PATH'S OWN CONSTRUCT, NOT A SECOND ONE. A shopper with no account already becomes a
+ * real identity here: /order/start creates the row and sends a code, and /order/confirm verifies it and makes
+ * that person the SENDER of a chit to the shop. A support ticket is the same shape — a chit from the buyer to
+ * the shop — so it reuses the same start, the same crHandle, the same verifyOtp, and the same activation.
+ * [[feedback-stay-in-the-construct]] Inventing a second anonymous-sender mechanism beside this one is how two
+ * of them end up with two different ideas of who a shopper is.
+ *
+ * ⭐ AND THE SHOP'S OWN ROUTING ANSWERS IT, because lib/raiseticket resolves under the RECIPIENT's id: the
+ * buyer knows nothing about the shop's folders, people or teams, and needs to know nothing.
+ */
+router.get('/:bridge_id/support/preview', async (req, res) => {
+  /**
+   * ⚠⚠ DELIBERATELY LESS THAN THE SIGNED-IN PREVIEW. That one names the folder and the person who will answer;
+   * this page is READ BY ANYONE, and "filed in 00-support, for Ravi Kumar" published to the open web is the
+   * shop's internal arrangement handed to strangers. The buyer needs to know WHO gets it, and whether it will
+   * arrive. Nothing past that is theirs. [[reference-cb-core-principle]]
+   */
+  try {
+    const entity = await resolveEntity(req.params.bridge_id);
+    if (!entity) return res.json({ ok: false, why: 'This shop could not be found.' });
+    res.json({ ok: true,
+      to_name: entity.display_name || null,
+      /* ⭐ SAID, NOT HIDDEN. A closed shop still takes the report — a complaint about an order already placed
+         must not hit a dead end — but the buyer is told not to expect a quick answer, which is the honest
+         version of both. Deliberately different from /order/confirm, which refuses outright: you cannot place
+         a NEW order with a closed shop, and you can always report a fault with an old one. */
+      accepting: entity.business_status !== 'closed',
+      urgency: require('../lib/raiseticket').URGENCY });
+  } catch (e) {
+    res.json({ ok: false, why: 'Could not check where this would go.' });
+  }
+});
+
+router.post('/:bridge_id/support',
+  [ body('otp').trim().isLength({ min: 6, max: 6 }),
+    body('observed').trim().isLength({ min: 1 }).withMessage('Say what went wrong') ],
+  validate,
+  async (req, res) => {
+    try {
+      const entity = await resolveEntity(req.params.bridge_id);
+      if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+      const c0 = resolveContact(req.body);
+      if (c0.error) return res.status(422).json({ error: 'Verify failed', message: c0.error });
+      const handle = crHandle(c0.channel, c0.raw, entity);
+
+      const cr = await query(
+        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
+           FROM identities WHERE email = $1`, [handle]);
+      if (!cr.rows.length)
+        return res.status(400).json({ error: 'Verify failed', message: 'Ask for a code first' });
+      const c = cr.rows[0];
+      const otpCheck = await verifyOtp(query, c, req.body.otp);
+      if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
+
+      /* ⚠️ THE CODE IS SPENT, exactly as /order/confirm spends it. verifyOtp does not clear it, so without this
+         one code would post tickets for the rest of its fifteen minutes. */
+      await query(
+        `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0,
+                last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
+
+      const SEV = require('../lib/raiseticket').URGENCY.map((u) => u[0]);
+      const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
+      const observed = String(req.body.observed || '').trim().slice(0, 4000);
+
+      const out = await require('../lib/raiseticket').raise(
+        { entity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name || 'A customer' },
+        { id: c.identity_id, name: c.display_name || 'A customer' },
+        { kind: 'incident', audience: 'them', to_bridge_id: req.params.bridge_id,
+          subject: observed.slice(0, 160), detail: observed, severity });
+
+      /* ⚠️ raise() never throws and always answers — so 'raised: false' is a real outcome that must reach the
+         buyer as a sentence, not as a green tick. [[feedback-silence-is-the-bug]] */
+      if (!out.raised)
+        return res.status(502).json({ error: 'Could not send it', message: out.why || 'It did not reach the shop.' });
+      res.json({ sent: true, ref: out.chit_id, to: entity.display_name || null, routed: out.routed });
+    } catch (err) {
+      console.error('storefront support:', err.message);
+      res.status(500).json({ error: 'Could not send it', message: safeErr(err) });
+    }
+  });
+
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
 router.post('/:bridge_id/order/confirm',
   [ body('otp').trim().isLength({ min: 6, max: 6 }),
