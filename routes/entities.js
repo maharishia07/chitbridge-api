@@ -1437,8 +1437,11 @@ router.get('/mis', auth, async (req, res) => {
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
-          AND ($6 = '' OR $6 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
-                                    WHEN nlevel(c.path) = 1 THEN 'root' ELSE 'branch' END)
+          AND ($6 = '' OR (CASE WHEN $6 = 'billable'
+                                THEN (c.bridge_id IS NULL OR nlevel(c.path) = 1)
+                                ELSE $6 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
+                                               WHEN nlevel(c.path) = 1 THEN 'root'
+                                               ELSE 'branch' END END))
           AND ($3 = '' OR i.display_name ILIKE '%' || $3 || '%'
                        OR i.user_id     ILIKE '%' || $3 || '%'
                        OR i.bridge_id   ILIKE '%' || $3 || '%')
@@ -1476,8 +1479,11 @@ router.get('/mis', auth, async (req, res) => {
           AND ($4 = '' OR i.plan     = $4)
           AND ($6 = '' OR i.catalogue_visibility = $6)
           AND ($7 = '' OR i.entity_visibility = $7)
-          AND ($5 = '' OR $5 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
-                                    WHEN nlevel(c.path) = 1 THEN 'root' ELSE 'branch' END)`,
+          AND ($5 = '' OR (CASE WHEN $5 = 'billable'
+                                THEN (c.bridge_id IS NULL OR nlevel(c.path) = 1)
+                                ELSE $5 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
+                                               WHEN nlevel(c.path) = 1 THEN 'root'
+                                               ELSE 'branch' END END))`,
       [(String(req.query.kind || 'customer').trim() === '*')
         ? null
         : String(req.query.kind || 'customer').split(',').map((x) => x.trim()).filter(Boolean),
@@ -1548,7 +1554,19 @@ router.get('/mis', auth, async (req, res) => {
         },
         searches: ['display_name', 'user_id', 'bridge_id'],
         /* root · branch · standalone — computed from cb_entity.path, not stored, so it needs naming here */
-        positions: ['root', 'branch', 'standalone'],
+        /**
+         * ⭐⭐ 'billable' IS THE ONE ANYBODY ACTUALLY ASKS FOR. Athi, 2026-09-14: *"only the root node will pay
+         * money, so we need to segregate between root and others."*
+         *
+         * lib/plans.js: the NETWORK TOP NODE holds the plan and quotas count across its whole subtree — so a
+         * billable tenant is a root OR a standalone entity, and a BRANCH IS NEVER ONE: it is billed to its
+         * root. Offering only root/branch/standalone left the money question to be assembled in somebody's
+         * head out of two filters, and assembled differently each time.
+         *
+         * ⚠️ Position is NOT a visibility. It is the BILLING axis, and it is listed beside the two visibility
+         * filters only because that is where a person looks for it. See VISIBILITY-MATRIX.md §4b.
+         */
+        positions: ['billable', 'root', 'branch', 'standalone'],
       },
       /** ⚠️ NAMED, NOT OMITTED. See the header. */
       blind: {
