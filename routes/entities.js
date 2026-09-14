@@ -1502,6 +1502,39 @@ router.get('/mis', auth, async (req, res) => {
      * ⚠️ ORDER IS THE DEFINITION. internal before network before supplies — an internal entity that happened
      * to be a branch must read as internal, or 'internal' stops meaning "not on the market".
      */
+    /**
+     * ── ⭐⭐⭐ THE MASTER SWITCH: TEST ENTITIES ARE OFF UNLESS ASKED FOR ─────────────────────────────────────
+     *
+     * Athi, 2026-09-14: *"if we have a check item on the top to say ignore test entity, or show all test
+     * entities, that would be helpful. so we wanted to work with only the real entities, not the test
+     * entities, so we should know to omit as a whole, irrespective of what they are doing. this will help us
+     * to eliminate every issue we are facing now."*
+     *
+     * ⚠️ HE IS DESCRIBING EVERY BUG OF THE LAST HOUR AT ONCE. 2,243 of 2,509 rows are e2e fixtures. They buried
+     * Tally Test Shop at row 1,400 under Goods; they made "2,498 sell goods" the headline fact about the
+     * platform; they are why a hundred-row page showed nothing anybody recognised. Filtering them one axis at
+     * a time never worked because they are not a KIND of shop — they are not shops.
+     *
+     * ⭐ SO IT IS A SWITCH, NOT A FILTER, AND IT DEFAULTS TO OFF. The screen opens on real entities. Everything
+     * downstream — counts, breakdowns, pages — is then about the business rather than about the test suite.
+     *
+     * ⚠️ DEFAULTING TO OFF CHANGES WHAT THIS ENDPOINT RETURNS TO AN UNCHANGED CALLER. That is the point and it
+     * is deliberate: the old default was answering a question nobody asked. The switch is one parameter away
+     * for anyone who wants the fixtures back.
+     */
+    const showTest = String(req.query.include_test || '') === 'true';
+    const TEST_WHERE = showTest ? '' : "AND i.entity_kind <> 'test'";
+
+    /**
+     * ⭐ OWNERSHIP — ours, or the market's. Athi's first-level filter: *"All / internal / External."*
+     * ⚠️ It reads entity_visibility, not entity_kind: 'internal' is a decision about who may REACH a row, and
+     * kind has an 'internal' value that does not always agree with it. One source per question.
+     */
+    const own = String(req.query.ownership || '').trim();
+    const OWN_WHERE = own === 'internal' ? "AND coalesce(i.entity_visibility,'public') = 'internal'"
+                    : own === 'external' ? "AND coalesce(i.entity_visibility,'public') <> 'internal'"
+                    : '';
+
     const hasStanding = (await query(
       "SELECT to_regprocedure('ops.f_entity_standing()') IS NOT NULL AS ok")).rows[0].ok === true;
     const ST_JOIN = hasStanding ? 'LEFT JOIN ops.f_entity_standing() st ON st.entity_id = i.identity_id' : '';
@@ -1599,7 +1632,8 @@ router.get('/mis', auth, async (req, res) => {
          ${ST_JOIN}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
           ${stWhere(10)}
-          AND ($11 = '' OR ${CLASS_SQL} = $11)
+          ${TEST_WHERE}
+          ${OWN_WHERE}
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
           AND ($6 = '' OR (CASE WHEN $6 = 'billable'
                                 THEN (c.bridge_id IS NULL OR nlevel(c.path) = 1)
@@ -1625,14 +1659,14 @@ router.get('/mis', auth, async (req, res) => {
            could report and never reach.
            WARNING: ORDER BY must be a total order or paging silently repeats and drops rows between
            pages. It is a whitelisted column plus NULLS LAST, and identity_id breaks any remaining tie. */
-        LIMIT $2 OFFSET $12`,
+        LIMIT $2 OFFSET $11`,
       /* ⚠️ '*' MEANS EVERY KIND. Athi, 2026-09-14, after spotting Beta Fresh and Gamma Exports in the data
          but not on the screen: vertical and plan both offered 'any' and kind did not, so there was no way
          to look across the whole platform at once — the one thing an operator report is for. NULL rather
          than a list of every kind, so a kind invented tomorrow is included without touching this. */
-      [(String(req.query.kind || 'customer').trim() === '*')
+      [(String(req.query.kind || '*').trim() === '*')
         ? null
-        : String(req.query.kind || 'customer').split(',').map((s) => s.trim()).filter(Boolean),
+        : String(req.query.kind).split(',').map((s) => s.trim()).filter(Boolean),
        Math.min(Number(req.query.limit) || 100, 500),
        q,
        String(req.query.vertical || '').trim(),
@@ -1641,7 +1675,6 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.entity_visibility || '').trim(),
        String(req.query.supplies || '').trim(),
        String(req.query.standing || '').trim(),
-       String(req.query.class || '').trim(),
        Math.max(0, Number(req.query.offset) || 0)])).rows;
 
     /**
@@ -1709,7 +1742,8 @@ router.get('/mis', auth, async (req, res) => {
          ${ST_JOIN}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
           ${stWhere(9)}
-          AND ($10 = '' OR ${CLASS_SQL} = $10)
+          ${TEST_WHERE}
+          ${OWN_WHERE}
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
           AND ($2 = '' OR i.display_name ILIKE '%' || $2 || '%'
                        OR i.user_id     ILIKE '%' || $2 || '%'
@@ -1729,16 +1763,15 @@ router.get('/mis', auth, async (req, res) => {
                                 ELSE $5 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
                                                WHEN nlevel(c.path) = 1 THEN 'root'
                                                ELSE 'branch' END END))`,
-      [(String(req.query.kind || 'customer').trim() === '*')
+      [(String(req.query.kind || '*').trim() === '*')
         ? null
-        : String(req.query.kind || 'customer').split(',').map((x) => x.trim()).filter(Boolean),
+        : String(req.query.kind).split(',').map((x) => x.trim()).filter(Boolean),
        q, String(req.query.vertical || '').trim(), String(req.query.plan || '').trim(),
        String(req.query.position || '').trim(),
        String(req.query.visibility || '').trim(),
        String(req.query.entity_visibility || '').trim(),
        String(req.query.supplies || '').trim(),
-       String(req.query.standing || '').trim(),
-       String(req.query.class || '').trim()])).rows[0].n);
+       String(req.query.standing || '').trim()])).rows[0].n);
 
     const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
 
@@ -1801,9 +1834,10 @@ router.get('/mis', auth, async (req, res) => {
          * ⭐ A control the server honours and does not name is a control you have to take on trust. Every
          * filter this route reads is now answered back, in the same shape it was read.
          */
-        applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || 'customer',
+        applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || '*',
                     vertical: req.query.vertical || '', plan: req.query.plan || '',
-                    position: req.query.position || '', class: req.query.class || '',
+                    position: req.query.position || '',
+                    ownership: own, include_test: showTest,
                     standing: req.query.standing || '', supplies: req.query.supplies || '',
                     visibility: req.query.visibility || '',
                     entity_visibility: req.query.entity_visibility || '',
