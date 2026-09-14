@@ -1325,12 +1325,14 @@ router.get('/mis', auth, async (req, res) => {
     }
 
     const LIVE = "coalesce(status,'active') <> 'erased'";
-    const [kinds, verticals, vis, plans, tree, joins] = await Promise.all([
+    const [kinds, verticals, evis, vis, plans, tree, joins] = await Promise.all([
       query(`SELECT entity_kind AS k, count(*)::int AS n,
                     count(*) FILTER (WHERE user_id IS NOT NULL)::int AS with_handle,
                     count(*) FILTER (WHERE last_active_at > now()::timestamp - interval '30 days')::int AS active_30d
                FROM identities WHERE ${LIVE} GROUP BY 1 ORDER BY 2 DESC`),
       query(`SELECT vertical AS v, count(*)::int AS n FROM identities
+              WHERE ${LIVE} AND identity_type = 'entity' GROUP BY 1 ORDER BY 2 DESC`),
+      query(`SELECT coalesce(entity_visibility,'(unset)') AS v, count(*)::int AS n FROM identities
               WHERE ${LIVE} AND identity_type = 'entity' GROUP BY 1 ORDER BY 2 DESC`),
       query(`SELECT coalesce(catalogue_visibility,'(unset)') AS v, count(*)::int AS n FROM identities
               WHERE ${LIVE} AND identity_type = 'entity' GROUP BY 1 ORDER BY 2 DESC`),
@@ -1415,6 +1417,10 @@ router.get('/mis', auth, async (req, res) => {
                  ⭐ And the 10 internal rows — the ISO/ICC standards — are ALREADY all private, which is
                  most of what 'internal, cannot be used' was asking for. */
               i.catalogue_visibility AS visibility,
+              /* ⭐ THE OTHER ONE (b234). catalogue_visibility = may you see my PRODUCTS; this = may you
+                 FIND me and name me as a counterparty. They are not the same question and the data does
+                 not line them up — cbincroot is catalogue-private and, until b234, fully findable. */
+              i.entity_visibility    AS entity_visibility,
               i.created_at::date  AS joined,
               i.last_active_at::date AS last_seen,
               CASE WHEN i.last_active_at IS NULL THEN NULL
@@ -1439,6 +1445,7 @@ router.get('/mis', auth, async (req, res) => {
           AND ($4 = '' OR i.vertical = $4)
           AND ($5 = '' OR i.plan     = $5)
           AND ($7 = '' OR i.catalogue_visibility = $7)
+          AND ($8 = '' OR i.entity_visibility = $8)
         ORDER BY ${SORTS[sortKey]} ${dir} NULLS LAST
         LIMIT $2`,
       /* ⚠️ '*' MEANS EVERY KIND. Athi, 2026-09-14, after spotting Beta Fresh and Gamma Exports in the data
@@ -1452,7 +1459,8 @@ router.get('/mis', auth, async (req, res) => {
        q,
        String(req.query.vertical || '').trim(),
        String(req.query.plan || '').trim(), String(req.query.position || '').trim(),
-       String(req.query.visibility || '').trim()])).rows;
+       String(req.query.visibility || '').trim(),
+       String(req.query.entity_visibility || '').trim()])).rows;
 
     /* the SAME predicate as the page above, counted without the LIMIT — see the note on `matched` below */
     const matched = Number((await query(
@@ -1467,6 +1475,7 @@ router.get('/mis', auth, async (req, res) => {
           AND ($3 = '' OR i.vertical = $3)
           AND ($4 = '' OR i.plan     = $4)
           AND ($6 = '' OR i.catalogue_visibility = $6)
+          AND ($7 = '' OR i.entity_visibility = $7)
           AND ($5 = '' OR $5 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
                                     WHEN nlevel(c.path) = 1 THEN 'root' ELSE 'branch' END)`,
       [(String(req.query.kind || 'customer').trim() === '*')
@@ -1474,7 +1483,8 @@ router.get('/mis', auth, async (req, res) => {
         : String(req.query.kind || 'customer').split(',').map((x) => x.trim()).filter(Boolean),
        q, String(req.query.vertical || '').trim(), String(req.query.plan || '').trim(),
        String(req.query.position || '').trim(),
-       String(req.query.visibility || '').trim()])).rows[0].n);
+       String(req.query.visibility || '').trim(),
+       String(req.query.entity_visibility || '').trim()])).rows[0].n);
 
     const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
 
@@ -1489,6 +1499,7 @@ router.get('/mis', auth, async (req, res) => {
       by_vertical: asObj(verticals, 'v', 'n'),
       by_plan:     asObj(plans, 'p', 'n'),
       by_visibility: asObj(vis, 'v', 'n'),
+      by_entity_visibility: asObj(evis, 'v', 'n'),
       by_position: asObj(tree, 'pos', 'n'),
       joined_by_month: joins.rows,
       rows,
@@ -1533,6 +1544,7 @@ router.get('/mis', auth, async (req, res) => {
           vertical: Object.keys(asObj(verticals, 'v', 'n')),
           plan:     Object.keys(asObj(plans, 'p', 'n')),
           visibility: Object.keys(asObj(vis, 'v', 'n')),
+          entity_visibility: Object.keys(asObj(evis, 'v', 'n')),
         },
         searches: ['display_name', 'user_id', 'bridge_id'],
         /* root · branch · standalone — computed from cb_entity.path, not stored, so it needs naming here */
