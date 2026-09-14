@@ -1371,7 +1371,7 @@ router.get('/mis', auth, async (req, res) => {
     }
 
     const LIVE = "coalesce(status,'active') <> 'erased'";
-    const [kinds, verticals, sup, evis, vis, plans, tree, joins] = await Promise.all([
+    const [kinds, verticals, sup, evis, vis, plans, tree, classes, joins] = await Promise.all([
       query(`SELECT entity_kind AS k, count(*)::int AS n,
                     count(*) FILTER (WHERE user_id IS NOT NULL)::int AS with_handle,
                     count(*) FILTER (WHERE last_active_at > now()::timestamp - interval '30 days')::int AS active_30d
@@ -1394,6 +1394,16 @@ router.get('/mis', auth, async (req, res) => {
                FROM identities i LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
               WHERE i.identity_type = 'entity' AND ${LIVE.replace(/status/g, 'i.status')}
               GROUP BY 1 ORDER BY 1`),
+      /* ⭐ THE SAME LADDER, COUNTED. If these do not sum to the entity total the taxonomy is broken, and that
+         is a thing we should be able to see rather than trust. */
+      query(`SELECT CASE
+                      WHEN coalesce(i.entity_visibility,'public') = 'internal'     THEN 'internal'
+                      WHEN c.bridge_id IS NOT NULL AND nlevel(c.path) > 1          THEN 'network'
+                      WHEN i.supplies IN ('goods','services','both')               THEN i.supplies
+                      ELSE 'unset' END AS v, count(*)::int AS n
+               FROM identities i LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
+              WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
+              GROUP BY 1 ORDER BY 2 DESC`),
       query(`SELECT date_trunc('month', created_at)::date AS month, count(*)::int AS n
                FROM identities WHERE ${LIVE} AND entity_kind = 'customer'
               GROUP BY 1 ORDER BY 1 DESC LIMIT 12`),
@@ -1428,6 +1438,41 @@ router.get('/mis', auth, async (req, res) => {
      * ⚠️ TWO PREDICATES, TWO NUMBERS. The rows query binds standing as $10 and `matched` as $9, because they
      * carry different parameter lists. One shared constant here would have been wrong in one of them.
      */
+    /**
+     * ── ⭐⭐ ONE CLASS PER ENTITY — exhaustive, and no row in two boxes ───────────────────────────────────────
+     *
+     * Athi, 2026-09-14, correcting the dropdown I built:
+     *
+     *   *"root network will provide either service or goods, so the root entity should be part of the other
+     *    claim. goods, service, both — they will be the paying entity. assume we have 100 shops: 10 goods, 10
+     *    services, 10 both, and another 10 network — they will be either goods or service, so the 10 network
+     *    shops to be grouped under the previous group based on what they choose … the internal shops are
+     *    another 10 … so the remaining 50 to showcase as network shops, and the root to be shown with the
+     *    owner of the network."*
+     *
+     * ⚠️ MY VERSION WAS WRONG AND WOULD HAVE DOUBLE-COUNTED. I put "Network entities" beside Goods/Services as
+     * if they were alternatives. They are not: a network ROOT is a business — it sells something and it pays,
+     * so it belongs in goods/services/both like any other shop. Picking "Network entities" silently discarded
+     * whatever the shop sold, and the categories could never sum to the total.
+     *
+     * ⭐ THE TEST OF A TAXONOMY IS THAT THE COUNTS ADD UP. This one does, because the ladder is ordered and
+     * every entity falls off exactly one rung:
+     *
+     *   internal   ours — cbincroot and the standards. Never a counterparty, never billed.
+     *   network    a BRANCH (depth > 1). Athi's 50: they trade, but their plan belongs to their root, so they
+     *              are not a paying entity and must not be counted beside one.
+     *   goods · services · both   everyone who pays: standalone shops AND network roots together.
+     *   unset      nobody has asked them yet. ⚠️ Its own rung, never folded into a real answer.
+     *
+     * ⚠️ ORDER IS THE DEFINITION. internal before network before supplies — an internal entity that happened
+     * to be a branch must read as internal, or 'internal' stops meaning "not on the market".
+     */
+    const CLASS_SQL = `CASE
+        WHEN coalesce(i.entity_visibility,'public') = 'internal'        THEN 'internal'
+        WHEN c.bridge_id IS NOT NULL AND nlevel(c.path) > 1            THEN 'network'
+        WHEN i.supplies IN ('goods','services','both')                 THEN i.supplies
+        ELSE 'unset' END`;
+
     const hasStanding = (await query(
       "SELECT to_regprocedure('ops.f_entity_standing()') IS NOT NULL AS ok")).rows[0].ok === true;
     const ST_JOIN = hasStanding ? 'LEFT JOIN ops.f_entity_standing() st ON st.entity_id = i.identity_id' : '';
@@ -1501,6 +1546,11 @@ router.get('/mis', auth, async (req, res) => {
               /* ⭐ what this business DEALS IN (b237) — goods · service · both. Not a visibility, and not
                  the tax field: HSN/SAC stays per ITEM because an invoice needs the right tax per line. */
               i.supplies             AS supplies,
+              ${CLASS_SQL} AS class,
+              /* ⭐ 'the root to be shown with the owner of the network'. cb_entity carries the name, so the
+                 root of a branch is one self-join away — subpath(path,0,1) is its first ltree label. */
+              root.name      AS network_root,
+              root.bridge_id AS network_root_bridge,
               ${ST_COL} AS standing,
               i.created_at::date  AS joined,
               i.last_active_at::date AS last_seen,
@@ -1516,9 +1566,11 @@ router.get('/mis', auth, async (req, res) => {
                 WHERE c.path IS NOT NULL AND k.path <@ c.path AND k.path <> c.path) AS branches
          FROM identities i
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
+         LEFT JOIN cb_entity root ON nlevel(c.path) > 1 AND root.path = subpath(c.path, 0, 1)
          ${ST_JOIN}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
           ${stWhere(10)}
+          AND ($11 = '' OR ${CLASS_SQL} = $11)
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
           AND ($6 = '' OR (CASE WHEN $6 = 'billable'
                                 THEN (c.bridge_id IS NULL OR nlevel(c.path) = 1)
@@ -1549,7 +1601,8 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.visibility || '').trim(),
        String(req.query.entity_visibility || '').trim(),
        String(req.query.supplies || '').trim(),
-       String(req.query.standing || '').trim()])).rows;
+       String(req.query.standing || '').trim(),
+       String(req.query.class || '').trim()])).rows;
 
     /**
      * ── ⭐⭐ THE COUNTING SURFACE — counts from any table, rows from none (b241) ──────────────────────────────
@@ -1616,6 +1669,7 @@ router.get('/mis', auth, async (req, res) => {
          ${ST_JOIN}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
           ${stWhere(9)}
+          AND ($10 = '' OR ${CLASS_SQL} = $10)
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
           AND ($2 = '' OR i.display_name ILIKE '%' || $2 || '%'
                        OR i.user_id     ILIKE '%' || $2 || '%'
@@ -1638,7 +1692,8 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.visibility || '').trim(),
        String(req.query.entity_visibility || '').trim(),
        String(req.query.supplies || '').trim(),
-       String(req.query.standing || '').trim()])).rows[0].n);
+       String(req.query.standing || '').trim(),
+       String(req.query.class || '').trim()])).rows[0].n);
 
     const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
 
@@ -1656,6 +1711,7 @@ router.get('/mis', auth, async (req, res) => {
       by_entity_visibility: asObj(evis, 'v', 'n'),
       by_supplies: asObj(sup, 'v', 'n'),
       by_position: asObj(tree, 'pos', 'n'),
+      by_class: asObj(classes, 'v', 'n'),
       joined_by_month: joins.rows,
       /* ⭐ the screen renders '—' and names the migration when this is false — never a zero */
       counts_wired: counts !== null,
