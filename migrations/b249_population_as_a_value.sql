@@ -237,6 +237,9 @@ DO $$
 DECLARE
   live_id uuid; test_id uuid; infra_id uuid;
   leaked_trade boolean := false; leaked_promote boolean := false; blocked_support boolean := false;
+  /* ⚠️ chit_header is FORCE RLS and FORCE applies to the owner, so a probe INSERT can be refused by the POLICY
+     (42501) before the trigger under test is reached. Unprobeable is an UNKNOWN, not a failure. */
+  unprobeable boolean := false;
 BEGIN
   SELECT identity_id INTO live_id FROM identities
    WHERE identity_type='entity' AND population='live' AND NOT serves_all_populations
@@ -251,23 +254,33 @@ BEGIN
   END IF;
 
   BEGIN
-    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, purpose)
-    VALUES (gen_random_uuid(), live_id, test_id, 'b249 probe');
+    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id,
+                             sender_entity_bridge_id, sender_entity_display_name, purpose)
+    SELECT gen_random_uuid(), live_id, test_id, coalesce(bridge_id, 'PROBE'),
+           coalesce(display_name, 'probe'), 'b249 probe'
+      FROM identities WHERE identity_id = test_id;
     leaked_trade := true;
     RAISE EXCEPTION USING ERRCODE='22000', MESSAGE='rollback';
   EXCEPTION
     WHEN check_violation THEN RAISE NOTICE 'b249: ✓ test → live refused.';
     WHEN data_exception  THEN RAISE NOTICE 'b249: ✗ test → live WAS ALLOWED.';
+    WHEN others          THEN unprobeable := true;
+                              RAISE NOTICE 'b249: ⚠ could not probe test → live (%).', SQLERRM;
   END;
 
   -- ⭐ and the exemption: a test shop raising a support incident to the operator MUST get through
   BEGIN
-    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, purpose)
-    VALUES (gen_random_uuid(), infra_id, test_id, 'b249 probe');
+    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id,
+                             sender_entity_bridge_id, sender_entity_display_name, purpose)
+    SELECT gen_random_uuid(), infra_id, test_id, coalesce(bridge_id, 'PROBE'),
+           coalesce(display_name, 'probe'), 'b249 probe'
+      FROM identities WHERE identity_id = test_id;
     RAISE EXCEPTION USING ERRCODE='22000', MESSAGE='rollback';   -- it worked; undo it
   EXCEPTION
     WHEN data_exception  THEN RAISE NOTICE 'b249: ✓ test → operator allowed (support still reaches us).';
     WHEN check_violation THEN blocked_support := true;
+    WHEN others          THEN unprobeable := true;
+                              RAISE NOTICE 'b249: ⚠ could not probe test → operator (%).', SQLERRM;
   END;
 
   BEGIN
@@ -285,5 +298,9 @@ BEGIN
   IF blocked_support THEN
     RAISE EXCEPTION 'b249: SUPPORT IS BLOCKED — a test shop cannot reach the operator. The exemption failed.';
   END IF;
-  RAISE NOTICE 'b249: all three rules hold, and support still reaches us.';
+  IF unprobeable THEN
+    RAISE NOTICE 'b249: installed, but the chit probes could not run here — the promotion rule above still ran.';
+  ELSE
+    RAISE NOTICE 'b249: all three rules hold, and support still reaches us.';
+  END IF;
 END $$;

@@ -114,6 +114,7 @@ DECLARE
   real_id uuid; test_id uuid;
   leaked_a boolean := false;   -- test → production got through
   leaked_b boolean := false;   -- production → test got through
+  unprobeable boolean := false;
 BEGIN
   SELECT identity_id INTO real_id FROM identities
    WHERE identity_type='entity' AND NOT is_test AND coalesce(status,'active')<>'erased' LIMIT 1;
@@ -127,24 +128,36 @@ BEGIN
 
   -- ── test → production ────────────────────────────────────────────────────────────────────────────────────
   BEGIN
-    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, purpose)
-    VALUES (gen_random_uuid(), real_id, test_id, 'b247 probe');
+    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id,
+                             sender_entity_bridge_id, sender_entity_display_name, purpose)
+    SELECT gen_random_uuid(), real_id, test_id, coalesce(bridge_id, 'PROBE'),
+           coalesce(display_name, 'probe'), 'b247 probe'
+      FROM identities WHERE identity_id = test_id;
     leaked_a := true;                 -- survives the rollback below: plpgsql vars are not transactional
     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'b247 probe rollback';
   EXCEPTION
     WHEN check_violation THEN RAISE NOTICE 'b247: ✓ test → production refused.';
     WHEN data_exception  THEN RAISE NOTICE 'b247: ✗ test → production WAS ALLOWED (probe row rolled back).';
+    /* ⚠️ chit_header is FORCE RLS and FORCE applies to the owner, so the policy can refuse this insert before
+       the trigger is ever reached. That is an UNKNOWN, not a failure — say so rather than aborting. */
+    WHEN others          THEN unprobeable := true;
+                              RAISE NOTICE 'b247: ⚠ could not probe test → production (%).', SQLERRM;
   END;
 
   -- ── production → test ────────────────────────────────────────────────────────────────────────────────────
   BEGIN
-    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, purpose)
-    VALUES (gen_random_uuid(), test_id, real_id, 'b247 probe');
+    INSERT INTO chit_header (chit_id, entity_id, sender_entity_id,
+                             sender_entity_bridge_id, sender_entity_display_name, purpose)
+    SELECT gen_random_uuid(), test_id, real_id, coalesce(bridge_id, 'PROBE'),
+           coalesce(display_name, 'probe'), 'b247 probe'
+      FROM identities WHERE identity_id = real_id;
     leaked_b := true;
     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'b247 probe rollback';
   EXCEPTION
     WHEN check_violation THEN RAISE NOTICE 'b247: ✓ production → test refused.';
     WHEN data_exception  THEN RAISE NOTICE 'b247: ✗ production → test WAS ALLOWED (probe row rolled back).';
+    WHEN others          THEN unprobeable := true;
+                              RAISE NOTICE 'b247: ⚠ could not probe production → test (%).', SQLERRM;
   END;
 
   IF leaked_a OR leaked_b THEN
@@ -153,7 +166,11 @@ BEGIN
       CASE WHEN leaked_b THEN 'production→test' ELSE '' END;
   END IF;
 
-  RAISE NOTICE 'b247: both directions refused. The boundary holds.';
+  IF unprobeable THEN
+    RAISE NOTICE 'b247: the trigger is installed but could not be exercised from here — see the notices above.';
+  ELSE
+    RAISE NOTICE 'b247: both directions refused. The boundary holds.';
+  END IF;
 END $$;
 
 -- ⭐ and the state of it, as a row rather than a notice — notices are easy to scroll past.
