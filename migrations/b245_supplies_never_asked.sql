@@ -33,7 +33,16 @@
 -- ⭐ AND 'unknown' IS NOT A GAP, IT IS A WORKLIST. It is the honest answer to "what does this shop sell?" when
 -- nobody has asked, and it turns a filter that lied into a queue: 2,498 shops to ask.
 --
--- Supabase → SQL Editor → paste → Run. Safe to re-run (the second run changes nothing).
+-- Supabase → SQL Editor → paste → Run — ⭐ WITHOUT RLS (as `postgres`).
+-- ⚠️ Structure needs OWNERSHIP: CREATE/ALTER/GRANT and triggers are refused to a role that merely has
+--    rights on the rows. The rule of thumb for this repo:
+--        structure, or data read ACROSS shops  → WITHOUT RLS (as the owner)
+--        data written FOR ONE shop             → WITH RLS, so the database refuses a row that lands in
+--                                                the wrong shop
+-- ⚠️ Being the owner is NOT the same as bypassing RLS. A table marked FORCE ROW LEVEL SECURITY applies its
+--    policies to its owner too — that is the whole difference between ENABLE and FORCE — so a statement
+--    touching chit_header, customer_list, catalogue_items or cb_attachment can still be refused here.
+-- Safe to re-run (the second run changes nothing).
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 BEGIN;

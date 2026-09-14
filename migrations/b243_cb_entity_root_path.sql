@@ -45,7 +45,16 @@
 -- The last one is the point. "Showcase the shops under the network name" is an ORDER BY on a column, and you
 -- cannot ORDER BY something you have to compute per row without the planner sorting on an expression.
 --
--- Supabase → SQL Editor → paste → Run. Idempotent; changes no behaviour by itself.
+-- Supabase → SQL Editor → paste → Run — ⭐ WITHOUT RLS (as `postgres`).
+-- ⚠️ Structure needs OWNERSHIP: CREATE/ALTER/GRANT and triggers are refused to a role that merely has
+--    rights on the rows. The rule of thumb for this repo:
+--        structure, or data read ACROSS shops  → WITHOUT RLS (as the owner)
+--        data written FOR ONE shop             → WITH RLS, so the database refuses a row that lands in
+--                                                the wrong shop
+-- ⚠️ Being the owner is NOT the same as bypassing RLS. A table marked FORCE ROW LEVEL SECURITY applies its
+--    policies to its owner too — that is the whole difference between ENABLE and FORCE — so a statement
+--    touching chit_header, customer_list, catalogue_items or cb_attachment can still be refused here.
+-- Idempotent; changes no behaviour by itself.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 BEGIN;

@@ -27,6 +27,9 @@
 --
 -- ⚠️ ONE ROW, NAMED BY user_id. Not `WHERE entity_kind = 'internal'` — that would sweep the eight standards
 -- into 'services' as well and quietly assert that a standard can be engaged. The set here is exactly one.
+--
+-- Supabase → SQL Editor → paste → Run — ⭐ WITHOUT RLS (as `postgres`). Safe to re-run.
+
 
 BEGIN;
 
