@@ -59,6 +59,10 @@ const GUARDS = [
   /* ⭐ node -c parses, it does not resolve: a const declared in one function and read in the next compiles
      perfectly and throws on the first real request. Three times in one day's work. */
   'scope-leak.test.cjs',
+  /* ⚠️ summary_json is built from a WHITELIST and drops anything else in silence. It has eaten two riders:
+     detail_design, then routed_by - the whole support-ticket trace, passed and never stored, in the same
+     session as the comment in lib/mint.js warning about it. */
+  'mint-riders.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
