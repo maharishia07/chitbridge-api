@@ -1380,7 +1380,31 @@ router.get('/mis', auth, async (req, res) => {
     const q = String(req.query.q || '').trim();
 
     const rows = (await query(
+      /**
+       * ── ⭐ EVERY WAY THIS SHOP CAN BE ADDRESSED, IN ONE ROW ─────────────────────────────────────────────
+       *
+       * Athi, 2026-09-14: *"we need to have uuid, bridge id, user id, username all in our list."*
+       *
+       *   identity_id   the uuid — the only one the database joins on
+       *   bridge_id     CB………  — what a counterparty is given
+       *   user_id       the handle — what staff sign in under, and what suppliers are numbered beneath
+       *   display_name  what a human calls them; the ONLY one of the four that can change
+       * ⚠️⚠️ THERE IS NO SEPARATE "username", AND I CHECKED BEFORE SAYING SO. `identities` has no such column.
+       * `cb_entity` has `username` and `company_name` — and both are NULL for ALL 340 ROWS. Nothing has ever
+       * written them; they are legacy columns carried by that table's original shape.
+       *
+       * ⭐ So `user_id` IS the username: it is what staff sign in under (`athi@alpha-timers`) and what
+       * suppliers are numbered beneath (`~alpha-timers.sup-0001`). Selecting the two empty columns would have
+       * added two permanently blank fields to every row and made the list look like it was missing data it
+       * never had. Reporting four identifiers that all exist beats five where one is always null.
+       *
+       * ⚠️ EMAIL IS SHOWN HERE AND IS DELIBERATELY NOT SEARCHABLE. Showing an operator their own customer's
+       * address is an account fact — it is how you contact a customer. Letting anything MATCH on a fragment of
+       * it turns the same endpoint into an address harvester. Different question, different answer; the route
+       * is root-only either way.
+       */
       `SELECT i.identity_id, i.display_name, i.user_id, i.bridge_id,
+              i.email,
               i.entity_kind, i.vertical, i.plan,
               i.created_at::date  AS joined,
               i.last_active_at::date AS last_seen,
