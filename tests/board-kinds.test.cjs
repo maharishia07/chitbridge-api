@@ -128,6 +128,52 @@ it('every kind resolves where it was classified — checked with a board actuall
   }
 });
 
+/**
+ * ── ⚠️⚠️ A KIND workStatus DOES NOT KNOW READS AS 'todo' FOR EVER ───────────────────────────────────────────────
+ *
+ * Athi, 2026-09-14: *"we can create other types if we need, like event, problem etc… the same route it will
+ * follow."* Three of the four steps are free. This is the fourth.
+ *
+ * workStatus() names 'incident' and 'requirement'; everything else falls through to the ladder written for a
+ * TEST CASE — retired, then last, then 'todo'. A new kind has none of those fields, so every row of it would
+ * report `todo` regardless of its own state. Not an error and not a blank: a PLAUSIBLE WRONG ANSWER, which is
+ * the worst kind and the hardest to notice.
+ *
+ * ⭐ So a kind that is classified above must either be named by workStatus, or be listed here as deliberately
+ * using the case ladder. Both are decisions; neither is a default.
+ */
+/**
+ * ⚠️⚠️ AND SOME KINDS ARE ANSWERED UNDER A DIFFERENT NAME — found by this guard on its first run, which is the
+ * whole argument for having written it.
+ *
+ * The KIND stored is `spec`; workStatus() names `requirement`, the DISPLAY label. The route translates on the
+ * way in — `workStatus({ kind: 'requirement', … })` — so it is correct today, and would break silently the
+ * moment somebody passed the row's own kind straight through, which is the obvious-looking thing to do.
+ *
+ * ⭐ lib/testboard.js warns about exactly this split: *"anyone splitting these by kind who trusts the route
+ * name instead of the INSERT"*. So the translation is DECLARED here rather than discovered a third time.
+ */
+const ANSWERED_AS = { spec: 'requirement' };
+
+const USES_THE_CASE_LADDER = new Set([
+  'testcase',   /* it IS a case — retired/last/todo is its own ladder */
+  'evidence',   /* a screenshot has no state of its own; it belongs to the finding that carries it */
+  'change',     /* ⚠️ shows as 'todo' until workStatus learns proposed/reviewed/shipped — see the note below */
+  'release',    /* ⚠️ same: a release is shipped the moment it exists, so 'todo' is wrong but harmless today */
+]);
+
+it('every classified kind is one workStatus can actually answer for', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'teststatus.js'), 'utf8');
+  for (const kind of Object.keys(CLASSIFIED)) {
+    if (USES_THE_CASE_LADDER.has(kind)) continue;
+    const named = ANSWERED_AS[kind] || kind;
+    assert.ok(new RegExp("o\\.kind === '" + named + "'").test(src),
+      "lib/teststatus.js workStatus() does not name '" + named + "', so every row of kind '" + kind + "' falls "
+      + "through to the TEST CASE ladder and reports 'todo' whatever its state says. Add a branch for it, add "
+      + 'it to USES_THE_CASE_LADDER with a reason, or declare its label in ANSWERED_AS.');
+  }
+});
+
 it('no kind is written into `definition` that nobody has classified', () => {
   const written = new Set();
   for (const m of CODE.matchAll(/VALUES\s*\(\s*\$1\s*,\s*'([a-z_]+)'/g)) written.add(m[1]);
