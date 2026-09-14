@@ -215,10 +215,10 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
     if (!actor_id) {
       /* the kit's first heartbeat: the connector ACTOR the co-assist rail lists — same row shape routes/connectors.js creates */
       actor_id = uuidv4(); created = true;
-      await query(`INSERT INTO identities (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone, max_tasks, identity_type, status, break_status, hat, connector_type, site, connector_config, last_seen)
+      await query(`INSERT INTO identities (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone, max_tasks, identity_type, status, break_status, hat, connector_type, site, connector_config, last_seen, entity_kind)
                    /* ⚠️ WAS 'human' with 10 tasks (Athi, 2026-09-06, the co-assist card: "the type says human? and the hat says editor"). A kit is a
                       CONNECTOR: it takes no tasks (0), it has no login, and the hat stays 'act' — it writes products and stock. */
-                   VALUES ($1,$2,$3,$4,'connector',$5,NULL,NULL,0,'actor','active','active','act','erp',$6,$7,NOW())`,
+                   VALUES ($1,$2,$3,$4,'connector',$5,NULL,NULL,0,'actor','active','active','act','erp',$6,$7,NOW(),'actor')`,
                   [actor_id, generateBridgeId(), name, uuidv4(), entity_id, host || null, JSON.stringify(patchCfg)]);
     } else {
       /* self-healing: a kit actor minted as 'human · 10 tasks' before 2026-09-06 becomes a connector on its next heartbeat — no migration to run */

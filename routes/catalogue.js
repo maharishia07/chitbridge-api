@@ -548,7 +548,7 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     const cemail = String(cust.email || '').trim().toLowerCase() || ('cust-' + uuidv4().slice(0, 8) + '@shopper.cb');
     let crow = (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE email = $1 LIMIT 1`, [cemail])).rows[0];
     if (!crow) { const cid = uuidv4(), cb = genBridge();
-      await query(`INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status) VALUES ($1,$2,$3,$4,'entity','active')`, [cid, cb, String(cust.name || 'Customer').slice(0, 80), cemail]);
+      await query(`INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, entity_kind) VALUES ($1,$2,$3,$4,'entity','active','shopper')`, [cid, cb, String(cust.name || 'Customer').slice(0, 80), cemail]);
       crow = { identity_id: cid, bridge_id: cb, display_name: String(cust.name || 'Customer') }; }
     const customer = { id: crow.identity_id, bridge_id: crow.bridge_id, display_name: crow.display_name };
     const items = rows.map((r) => { const c = cart.find((x) => x.product_id === r.item_id) || {}; const d = r.item_data || {};
@@ -748,8 +748,8 @@ router.post('/:bridge_id/order/start',
         identity_id = uuidv4(); bridge_id = genBridge();
         await query(
           `INSERT INTO identities
-             (identity_id, bridge_id, display_name, email, phone, otp_contact, identity_type, parent_entity_id, owner_scope, auth_method, status)
-           VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending')`,
+             (identity_id, bridge_id, display_name, email, phone, otp_contact, identity_type, parent_entity_id, owner_scope, auth_method, status, entity_kind)
+           VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending','shopper')`,
           [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
       }
       const otp = genOTP();

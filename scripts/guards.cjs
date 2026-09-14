@@ -32,6 +32,7 @@ const GUARDS = [
   /* ⚠️⚠️ IT WAS NOT IN THIS LIST until 2026-09-10, so the one guard that asks 'is every module classified,
      and does everything unreachable say so' only ran when somebody remembered to. It caught an unclassified
      lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */
+  'entity-kind.test.cjs',      // every identity mint declares WHAT it is — a DELETE predicate depends on it
   'board-kinds.test.cjs',      // the shared board carries CASES and nothing else — findings stay with the raiser
   'engine-boundary.test.js',  // every lib declared engine or not; anything unreachable carries an @stage
   'adopt.test.js',            // what one shop may take into its catalogue from another's delivery

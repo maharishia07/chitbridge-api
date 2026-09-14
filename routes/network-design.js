@@ -388,9 +388,9 @@ router.post('/build', auth, async (req, res) => {
           `INSERT INTO identities
              (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility,
               params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order,
-              address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days)
+              address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind)
            VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13,
-                   $14, $15, $16, $17, $18, $19, $20, $21)`,
+                   $14, $15, $16, $17, $18, $19, $20, $21, 'network')`,
           [identity_id, bridge_id, c.name, c.handle, c.visibility,
            // The provisioning cap. visibility-cap.js: "a node provisioned BY A NETWORK is not its own business —
            // the operator decided, and the entity must not be able to undo that from its own profile screen."

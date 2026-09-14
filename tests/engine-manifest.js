@@ -317,6 +317,10 @@ const ENGINE_OTHER = [
      becomes its supplier — a rule about the relationship every shop on this platform has, not plumbing.
      Swap it and the platform has no customers. (2026-09-14) */
   'rootlink.js',
+  /* ⭐ ENGINE. It decides what an identity IS at the moment it is minted — the fact a DELETE predicate will
+     rest on once cleanup-test-entities.sql moves off email domains. Not plumbing: it is the last surviving
+     inference in the system, deliberately narrowed, and the place to argue with it. (2026-09-14) */
+  'entitykind.js',
   /* GENERATED, never edited by hand: scripts/vendor-tax.cjs writes it from tax.js + tax-slab.js so a TILL can price a bill with the
      internet unplugged. Same engine, second home — tests/tax-vendor.test.js fails the day the two differ (2026-09-07). */
   'tax-engine.browser.js',

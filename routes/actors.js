@@ -257,8 +257,8 @@ router.post('/',
           identity_id, bridge_id, display_name, actor_key,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat
-        ) VALUES ($1,$2,$3,$4,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11)`,
+          otp_code, otp_expires_at, hat, entity_kind
+        ) VALUES ($1,$2,$3,$4,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor')`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
          otp, otp_expires, hat]

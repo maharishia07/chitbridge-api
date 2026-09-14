@@ -104,9 +104,9 @@ router.post('/register',
           }
 
           await query(
-            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id)
-             VALUES ($1, $2, $3, $4, 'entity', 'pending', $5)`,
-            [identity_id, bridge_id, display_name, email, verdict.value]
+            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind)
+             VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6)`,
+            [identity_id, bridge_id, display_name, email, verdict.value, require('../lib/entitykind').atRegistration(email)]
           );
           console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
