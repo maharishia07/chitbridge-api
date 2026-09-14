@@ -1522,8 +1522,22 @@ router.get('/mis', auth, async (req, res) => {
      * is deliberate: the old default was answering a question nobody asked. The switch is one parameter away
      * for anyone who wants the fixtures back.
      */
-    const showTest = String(req.query.include_test || '') === 'true';
-    const TEST_WHERE = showTest ? '' : "AND i.entity_kind <> 'test'";
+    /**
+     * ⚠️⚠️ IT WAS A CHECKBOX AND THAT WAS STILL WRONG. Ticked, it ADDED the 2,243 fixtures to the 266 real
+     * entities and showed both in one list. Athi, 2026-09-14:
+     *
+     *   *"we have to see only test entity or only real entity, not both together, that will confuse. so a
+     *    toggle button would help I guess, so we can totally omit either production or test. never been
+     *    together."*
+     *
+     * ⭐ He is right, and it is the same mistake in a smaller form: a mixed list makes every number on the
+     * screen ambiguous. "28 pay their own bill" — of what population? Two answers in one column is what the
+     * class dropdown did, and what the fixtures did to the Goods filter.
+     *
+     * ⭐ SO IT IS A POPULATION, NOT A FLAG. Exactly one is in force, always, and the default is the real one.
+     */
+    const pop = String(req.query.population || 'real') === 'test' ? 'test' : 'real';
+    const TEST_WHERE = pop === 'test' ? "AND i.entity_kind = 'test'" : "AND i.entity_kind <> 'test'";
 
     /**
      * ⭐ OWNERSHIP — ours, or the market's. Athi's first-level filter: *"All / internal / External."*
@@ -1837,7 +1851,7 @@ router.get('/mis', auth, async (req, res) => {
         applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || '*',
                     vertical: req.query.vertical || '', plan: req.query.plan || '',
                     position: req.query.position || '',
-                    ownership: own, include_test: showTest,
+                    ownership: own, population: pop,
                     standing: req.query.standing || '', supplies: req.query.supplies || '',
                     visibility: req.query.visibility || '',
                     entity_visibility: req.query.entity_visibility || '',
