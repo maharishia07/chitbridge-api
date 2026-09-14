@@ -253,9 +253,25 @@ ok('there is a desk PER POPULATION, not one for everybody',
   /function rootFor\(population\)/.test(proot) && /PLATFORM_ROOT_ENTITY_TEST/.test(proot),
   'one root meant a test entity’s finding landed in the live queue beside a real shop’s');
 
+/* ⚠️ the RULE: whatever the resolver is called, the argument must be the RAISER'S population and nothing else.
+   Pinned to `rootFor` this broke the moment the desk moved from an env var to the b252 registry. */
 ok('the raiser’s population picks it — nobody chooses',
-  /platformroot\.rootFor\(from\.population\)/.test(raise),
+  /platformroot\.(rootFor|deskFor)\(from\.population\)/.test(raise),
   'b249 stamps the population and b248 inherits it, so the desk cannot be pointed the wrong way');
+
+ok('the desk comes from a ROW the operator can change, not a deploy',
+  /SELECT code, desk_entity_id FROM ops\.population/.test(proot),
+  'Athi: "we should not write sql for all those" — a desk must be visible and changeable without a deploy');
+
+ok('...and an unreadable registry falls back to exactly today’s behaviour',
+  /no desk registry yet|desk registry unreadable/.test(proot),
+  'Athi: "already it is working but do not want to disturb" — every fallback is the shipped behaviour');
+
+ok('every ticket CARRIES why it went where it went',
+  /const routed_by = \{/.test(raise) && /routed_by,/.test(raise)
+    && /rung:/.test(raise) && /population:/.test(raise),
+  'the routing row says where work goes NOW; a ticket from March went where March’s rules sent it, and '
+  + 'reading the table to explain it answers today’s question about yesterday’s chit');
 
 ok('an unconfigured population falls back rather than losing the report',
   /entity_id: ROOT,\s*\r?\n?\s*why: own === undefined/.test(proot),

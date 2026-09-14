@@ -56,6 +56,9 @@ const GUARDS = [
      the ones nobody will ever click. Athi: *"if we can figure out all the combination and a single helpdesk
      works for all, nothing like it."* This is what keeps it single. */
   'support-desks.test.cjs',
+  /* ⭐ node -c parses, it does not resolve: a const declared in one function and read in the next compiles
+     perfectly and throws on the first real request. Three times in one day's work. */
+  'scope-leak.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
