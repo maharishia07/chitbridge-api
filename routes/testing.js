@@ -2647,4 +2647,295 @@ router.get('/reliability', auth, async (req, res) => {
   }
 });
 
+/**
+ * ══ ⭐⭐⭐ CHANGE AND RELEASE — the two records that finish the loop ══════════════════════════════════════════════
+ *
+ * DESIGN-SUPPORT-LIFECYCLE.md §1: the board already carries `incident`, `spec` and `testcase`, and the chain
+ * stops there. We can say what was TESTED. We cannot say whether the thing a shop complained about actually
+ * SHIPPED TO THEM — which is the only question a shop asks after reporting a fault.
+ *
+ *     incident  →  spec  →  change  →  testcase  →  release
+ *     "broken"     "build this"  "the diff"   "the proof"   "you have it"
+ *
+ * ⚠️ BOTH ARE PRIVATE TO US, and `release` is the trap: it FACES the shop, so putting it on the shared board
+ * looks like the point of it. It must not be — a shop hears about a release through a notification addressed to
+ * it, not by reading a board that also carries every other shop's fault reports. `change` is worse still: a diff
+ * cites file paths, and file paths describe the product's internals. tests/board-kinds.test.cjs asserts both.
+ */
+
+/* ⭐ THE SAME FOUR-STATE SHAPE the requirements use, so one vocabulary covers the board. */
+const CHANGE_STATES = ['proposed', 'reviewed', 'shipped', 'abandoned'];
+const CHANGE_SHELF = { proposed: 'draft', reviewed: 'draft', shipped: 'live', abandoned: 'retired' };
+
+/**
+ * ⭐ THREE RISK CLASSES AND ONLY THREE — borrowed from ITIL because it is the standard everyone already knows,
+ * and reduced to what one company can actually operate.
+ *
+ * ⚠️ THE EMERGENCY DOOR EXISTS ON PURPOSE. Every change process that forbids emergencies gets one the first bad
+ * night, unrecorded — and then has no record of the one change most worth having a record of. Make the door and
+ * COUNT who goes through it: an emergency rate climbing is a signal about the product, not about discipline.
+ */
+const RISKS = ['routine', 'significant', 'emergency'];
+
+/**
+ * ── ⚠️⚠️ A MIGRATION IS ALWAYS SIGNIFICANT. No exceptions, including one-line ones. ────────────────────────────
+ *
+ * Today's evidence, from this repo, this week: b237_supplies_axis.sql was one ADD CONSTRAINT written against a
+ * column its author had not read. It applied cleanly, sat beside a constraint nobody had looked at, and the
+ * INTERSECTION of the two made 'services' unwritable — a live 500 on the settings screen. b238 then dropped the
+ * wrong constraint BY NAME and missed it again. Three migrations to undo one line.
+ *
+ * ⭐ The `backout` field alone would have caught it: the honest answer to "how do I undo this?" was *"I don't
+ * know what else is on that column"* — and writing that sentence IS the review.
+ *
+ * ⚠️ It is forced, not merely defaulted: a caller cannot declare a migration routine.
+ */
+function riskOf(body) {
+  const asked = String((body || {}).risk || '').trim().toLowerCase();
+  const paths = String((body || {}).files || '') + ' ' + String((body || {}).summary || '');
+  if ((body || {}).migration === true || /\bmigrations?\//i.test(paths) || /\bb\d{3}_[a-z_]+\.sql\b/i.test(paths)) {
+    return { risk: 'significant', forced: 'a migration is always significant — see b237' };
+  }
+  return { risk: RISKS.indexOf(asked) >= 0 ? asked : 'routine', forced: null };
+}
+
+/** POST /api/testing/changes — record what we did, to which code, why, and how to undo it. */
+router.post('/changes', auth, async (req, res) => {
+  try {
+    /* ⚠️ entityForFinding, NOT entityFor: a change is ours and never goes on the shared board. */
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
+    const who = testerOf(req);
+    const b = req.body || {};
+
+    const summary = String(b.summary || '').trim();
+    const backout = String(b.backout || '').trim();
+    const cites = b.cites && typeof b.cites === 'object' ? b.cites : null;
+
+    /* ⚠️ ALL THREE REFUSED RATHER THAN DEFAULTED — each one is the reason the record is worth keeping.
+       A change with no CAUSE is undocumented work or scope creep, and both are worth catching.
+       A change with no BACKOUT has not been thought through; writing the sentence is the review.
+       A change with no SUMMARY is a sha, and a sha is not a record. */
+    if (!summary) return res.status(400).json({ error: 'Nothing recorded', message: 'Say what the change does.' });
+    if (!backout) return res.status(400).json({ error: 'No way back',
+      message: 'How would you undo this? ⚠️ Written before it ships, not after — if the answer is "I am not sure", that is the finding.' });
+    if (!cites || !String(cites.ref || '').trim()) return res.status(400).json({ error: 'No cause',
+      message: 'Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep.' });
+
+    const { risk, forced } = riskOf(b);
+    const name = String(b.ref || '').trim()
+      || ('CHG-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-'
+          + Math.random().toString(36).slice(2, 6).toUpperCase());
+
+    const out = await withEntity(entity_id, async (db) => {
+      const rules = {
+        text: summary, backout, risk,
+        /* ⚠️ the entity is captured WITH the reference. An incident lives in the entity that raised it, and by
+           release time there is no other way to find out which one that was. */
+        cites: { kind: String(cites.kind || 'incident'), ref: String(cites.ref).trim(),
+                 definition_id: cites.definition_id || null, entity_id: cites.entity_id || null },
+        repo: String(b.repo || '').trim() || null,
+        /* ⭐ the SHA is the record. A branch name rots the moment it is merged or deleted. */
+        sha: String(b.sha || '').trim() || null,
+        /* ⭐ empty is allowed, and is itself the finding: a change nothing proves is a change nobody can retest. */
+        proves: Array.isArray(b.proves) ? b.proves.map((x) => String(x).trim()).filter(Boolean) : [],
+        shipped_in: null,
+        state: 'proposed',
+        raised_by: who.name, raised_by_id: who.id, raised_at: new Date().toISOString(),
+        history: [{ state: 'proposed', by: who.name, at: new Date().toISOString(), why: forced }],
+      };
+      const ins = await db.query(
+        `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+         VALUES ($1,'change',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
+        [entity_id, risk, name, summary.slice(0, 200), who.id]);
+      const id = ins.rows[0].definition_id;
+      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
+      return { definition_id: id, ref: name, risk, rules };
+    });
+
+    require('../lib/testnews').testRaised(entity_id, 'change', out.ref,
+      { state: 'proposed', by: who.id, byName: who.name });
+
+    res.status(201).json({ ok: true, ...out, forced_risk: forced,
+      /* ⭐ said out loud rather than silently applied — a rule that changes your answer without telling you is
+         one you will argue with the first time it matters. */
+      needs_review: risk !== 'routine' });
+  } catch (e) {
+    console.error('change create:', e.code || '', e.message);
+    res.status(500).json({ error: 'Failed to record the change', message: e.message });
+  }
+});
+
+/** GET /api/testing/changes */
+router.get('/changes', auth, async (req, res) => {
+  try {
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
+    const want = String((req.query || {}).state || 'open');
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND d.kind = 'change'
+        ORDER BY d.updated_at DESC LIMIT 500`, [entity_id]));
+    const all = r.rows.map((x) => {
+      const ru = x.rules || {};
+      return { definition_id: x.definition_id, ref: x.name, risk: x.sub_kind || ru.risk || 'routine',
+        summary: ru.text || '', backout: ru.backout || '', cites: ru.cites || null,
+        repo: ru.repo || null, sha: ru.sha || null, proves: ru.proves || [],
+        shipped_in: ru.shipped_in || null, state: ru.state || 'proposed', shelf: x.status,
+        raised_by: ru.raised_by || null, at: x.updated_at, history: ru.history || [] };
+    });
+    const open = all.filter((c) => c.state === 'proposed' || c.state === 'reviewed');
+    const list = want === 'all' ? all : (want === 'open' ? open : all.filter((c) => c.state === want));
+    res.json({ changes: list, counts: { all: all.length, open: open.length,
+      unproven: all.filter((c) => !(c.proves || []).length).length } });
+  } catch (e) {
+    console.error('changes list:', e.code || '', e.message);
+    res.status(500).json({ error: 'Failed to list changes' });
+  }
+});
+
+/**
+ * ── ⭐⭐ POST /api/testing/releases — the one record that faces the shop ─────────────────────────────────────────
+ *
+ * DESIGN-SUPPORT-LIFECYCLE.md §3. A release is what turns a support desk into a product: the shop that reported
+ * the fault is told, on the rail it reported on, that the thing it complained about shipped.
+ *
+ * ⚠️⚠️ IT MOVES THE INCIDENT TO `resolved` AND NEVER TO `closed`. lib/teststatus.js: *resolved is the fixer's
+ * claim; closed is the raiser's verdict.* The shop closes its own incident. Every support desk that rots, rots
+ * because the fixing team holds both pens.
+ *
+ * ⚠️ AND THE INCIDENT IS IN SOMEBODY ELSE'S ENTITY. It was raised by the shop, so it lives with the shop —
+ * which is why `cites.entity_id` is captured when the change is recorded and not looked up now. withEntity pins
+ * a transaction to ONE entity, so each shop's incident is moved in its own, after ours is committed.
+ */
+router.post('/releases', auth, async (req, res) => {
+  try {
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
+    const who = testerOf(req);
+    const b = req.body || {};
+    const name = String(b.name || '').trim();
+    const ids = Array.isArray(b.changes) ? b.changes.map((x) => String(x).trim()).filter(Boolean) : [];
+
+    if (!name) return res.status(400).json({ error: 'Unnamed release',
+      message: 'Give it a tag — it is what a shop will be told its fix arrived in.' });
+    if (!ids.length) return res.status(400).json({ error: 'Nothing in it',
+      message: 'A release carries changes. One with none is a tag, and a tag tells nobody anything.' });
+
+    const carried = await withEntity(entity_id, async (db) => {
+      const got = await db.query(
+        `SELECT d.definition_id, d.name, d.current_version, v.rules
+           FROM definition d
+           JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+          WHERE d.entity_id = $1 AND d.kind = 'change' AND d.definition_id = ANY($2::uuid[])`,
+        [entity_id, ids]);
+
+      const rows = got.rows.map((x) => ({ id: x.definition_id, ref: x.name, v: x.current_version, rules: x.rules || {} }));
+
+      const rel = {
+        text: String(b.note || '').trim() || null,
+        carried: rows.map((x) => ({ definition_id: x.id, ref: x.ref, risk: x.rules.risk || 'routine' })),
+        /* ⭐ every case any carried change claims to be proved by, de-duplicated — the release's own evidence. */
+        proves: [...new Set(rows.flatMap((x) => x.rules.proves || []))],
+        state: 'shipped', cut_by: who.name, cut_by_id: who.id, at: new Date().toISOString(),
+      };
+      const ins = await db.query(
+        `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+         VALUES ($1,'release',NULL,$2,$3,'live',1,$4) RETURNING definition_id`,
+        [entity_id, name, rel.text, who.id]);
+      const relId = ins.rows[0].definition_id;
+      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`, [relId, entity_id, JSON.stringify(rel), who.id]);
+
+      /* ⭐ each change now knows what carried it — written by the release, never by hand. */
+      for (const x of rows) {
+        const next = { ...x.rules, state: 'shipped', shipped_in: name,
+          history: (x.rules.history || []).concat([{ state: 'shipped', by: who.name, at: rel.at, why: name }]) };
+        await db.query(
+          `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+           VALUES ($1,$2,$3,$4,$5)`, [x.id, x.v + 1, entity_id, JSON.stringify(next), who.id]);
+        await db.query(
+          `UPDATE definition SET current_version = $2, status = 'live', updated_at = now()
+            WHERE definition_id = $1 AND entity_id = $3`, [x.id, x.v + 1, entity_id]);
+      }
+      return { release_id: relId, rows, rel };
+    });
+
+    /**
+     * ⭐⭐ AND NOW THE PART THAT CLOSES THE LOOP. Each cited incident moves to `resolved` in the entity that
+     * raised it, and that shop's raiser is told.
+     *
+     * ⚠️ OUTSIDE the transaction above and one entity at a time — withEntity pins a connection to a single
+     * entity, so ten shops' incidents cannot be moved inside ours. And a failure here must NOT unmake the
+     * release: the release genuinely happened. Each one is attempted and reported on its own.
+     */
+    const told = [];
+    for (const x of carried.rows) {
+      const c = x.rules.cites || {};
+      if (!c.definition_id || !c.entity_id || c.kind !== 'incident') continue;
+      try {
+        await withEntity(c.entity_id, async (db) => {
+          const cur = await db.query(
+            `SELECT d.current_version, v.rules FROM definition d
+               JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+              WHERE d.definition_id = $1 AND d.entity_id = $2 AND d.kind = 'incident'`,
+            [c.definition_id, c.entity_id]);
+          if (!cur.rows[0]) return;
+          const ru = cur.rows[0].rules || {};
+          /* ⚠️ only from an OPEN state. A shop that already closed it has had the last word, and a release must
+             not reopen or overwrite that — the raiser's verdict outranks the fixer's claim. */
+          if (!['raised', 'acknowledged'].includes(String(ru.state || 'raised'))) return;
+          const v = cur.rows[0].current_version + 1;
+          const next = { ...ru, state: 'resolved', resolved_in: name,
+            history: (ru.history || []).concat([{ state: 'resolved', by: who.name, at: carried.rel.at, why: name }]) };
+          await db.query(
+            `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+             VALUES ($1,$2,$3,$4,$5)`, [c.definition_id, v, c.entity_id, JSON.stringify(next), who.id]);
+          await db.query(
+            `UPDATE definition SET current_version = $2, updated_at = now()
+              WHERE definition_id = $1 AND entity_id = $3`, [c.definition_id, v, c.entity_id]);
+          /* ⚠️ `forId` is the ORIGINAL RAISER. Everyone on that entity hears the event; only the person waiting
+             is told it is theirs to verify. A message telling five people to check one fix gets checked by none. */
+          require('../lib/testnews').testRaised(c.entity_id, 'incident', c.ref,
+            { state: 'resolved', forId: ru.raised_by_id || null, by: who.id, byName: who.name });
+          told.push({ ref: c.ref, entity_id: c.entity_id });
+        });
+      } catch (e) {
+        /* ⚠️ said, not swallowed: "0 shops told" with no explanation reads as "there was nobody to tell". */
+        told.push({ ref: c.ref, entity_id: c.entity_id, failed: e.code || e.message });
+      }
+    }
+
+    res.status(201).json({ ok: true, release_id: carried.release_id, name,
+      carried: carried.rel.carried, proves: carried.rel.proves,
+      resolved: told,
+      /* ⭐ the honest half of the receipt: a release whose changes prove nothing is a release nobody can retest. */
+      unproven: carried.rows.filter((x) => !(x.rules.proves || []).length).map((x) => x.ref) });
+  } catch (e) {
+    console.error('release create:', e.code || '', e.message);
+    res.status(500).json({ error: 'Failed to cut the release', message: e.message });
+  }
+});
+
+/** GET /api/testing/releases */
+router.get('/releases', auth, async (req, res) => {
+  try {
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.definition_id, d.name, d.note, d.updated_at, v.rules
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND d.kind = 'release'
+        ORDER BY d.updated_at DESC LIMIT 200`, [entity_id]));
+    res.json({ releases: r.rows.map((x) => ({
+      definition_id: x.definition_id, name: x.name, note: x.note,
+      carried: (x.rules || {}).carried || [], proves: (x.rules || {}).proves || [],
+      cut_by: (x.rules || {}).cut_by || null, at: x.updated_at })) });
+  } catch (e) {
+    console.error('releases list:', e.code || '', e.message);
+    res.status(500).json({ error: 'Failed to list releases' });
+  }
+});
+
+
 module.exports = router;
