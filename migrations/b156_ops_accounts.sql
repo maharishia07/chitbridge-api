@@ -108,7 +108,7 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
            WHEN e.last_active_at IS NULL                              THEN 'a · never signed in'
            WHEN NOT EXISTS (SELECT 1 FROM chit_header h WHERE h.sender_entity_id = e.identity_id)
                 AND NOT EXISTS (SELECT 1 FROM catalogue_items c
-                                 WHERE c.entity_id = e.identity_id AND c.deleted_at IS NULL AND c.is_active)
+                                 WHERE c.entity_id = e.identity_id AND c.is_active)
                                                                       THEN 'b · registered, never used'
            WHEN e.last_active_at < now()::timestamp - interval '90 days' THEN 'c · lapsed (90d+)'
            WHEN e.last_active_at < now()::timestamp - interval '30 days' THEN 'd · drifting (30d+)'
@@ -123,7 +123,7 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
            WHERE a.parent_entity_id = e.identity_id AND a.entity_kind = 'actor'
              AND coalesce(a.status, 'active') <> 'erased')                               AS seats,
          (SELECT count(*) FROM catalogue_items c
-           WHERE c.entity_id = e.identity_id AND c.deleted_at IS NULL AND c.is_active)   AS items,
+           WHERE c.entity_id = e.identity_id AND c.is_active)   AS items,
          /* ⚠️ supplier_list and customer_list key on owner_entity_id, NOT entity_id. */
          (SELECT count(*) FROM supplier_list s WHERE s.owner_entity_id = e.identity_id)  AS suppliers,
          (SELECT count(*) FROM customer_list k WHERE k.owner_entity_id = e.identity_id)  AS customers,

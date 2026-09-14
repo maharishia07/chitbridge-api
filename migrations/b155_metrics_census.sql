@@ -27,14 +27,14 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 -- ── ⑦ CATALOGUE SIZE — how big are shops' catalogues? ───────────────────────────────────────────────────────────
--- ⚠️ Counts LIVE items only. deleted_at IS NULL AND is_active — a shop that listed 400 products and retired 390
+-- ⚠️ Counts LIVE items only. is_active — a shop that listed 400 products and retired 390
 --    has a catalogue of ten, and billing or roadmap decisions taken on 400 would be wrong.
 CREATE OR REPLACE FUNCTION metrics.f_catalogue_size()
 RETURNS TABLE (bucket text, shops bigint, items bigint)
 LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
   WITH per_entity AS (
     SELECT e.identity_id AS entity_id,
-           count(c.item_id) FILTER (WHERE c.deleted_at IS NULL AND c.is_active) AS n
+           count(c.item_id) FILTER (WHERE c.is_active) AS n
       FROM identities e
       LEFT JOIN catalogue_items c ON c.entity_id = e.identity_id
      WHERE e.entity_kind = 'customer' AND coalesce(e.status, 'active') <> 'erased'
@@ -94,7 +94,7 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
         WHERE a.entity_kind = 'actor' AND a.parent_entity_id IS NOT NULL)
     UNION ALL SELECT 'c · listed a product',
       (SELECT count(DISTINCT c.entity_id) FROM catalogue_items c
-        WHERE c.deleted_at IS NULL AND c.is_active)
+        WHERE c.is_active)
     UNION ALL SELECT 'd · sent a chit',
       (SELECT count(DISTINCT h.sender_entity_id) FROM chit_header h)
   )
@@ -154,7 +154,7 @@ SELECT '① shops registered'  AS q, count(*)::text AS a FROM identities WHERE e
 UNION ALL
 SELECT '② people on shops',       count(*)::text FROM identities WHERE entity_kind = 'actor' AND coalesce(status, 'active') <> 'erased'
 UNION ALL
-SELECT '③ live catalogue items',  count(*)::text FROM catalogue_items WHERE deleted_at IS NULL AND is_active
+SELECT '③ live catalogue items',  count(*)::text FROM catalogue_items WHERE is_active
 UNION ALL
 SELECT '④ chits ever sent',       count(DISTINCT chit_id)::text FROM chit_header
 UNION ALL
