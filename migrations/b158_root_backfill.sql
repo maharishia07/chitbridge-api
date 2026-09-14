@@ -32,6 +32,11 @@
 -- ⚠️ NOT REVERSIBLE BY RE-RUNNING. It is idempotent (ON CONFLICT DO NOTHING), so running it twice is safe, but
 --    undoing it means deleting rows. The rollback is at the bottom, commented out.
 --
+-- ⚠️⚠️ REQUIRES b159, RUN IT FIRST. The first attempt at this migration FAILED:
+--       ERROR: 23514 new row for relation "customer_list" violates check constraint "customer_list_added_via_check"
+--    added_via had no 'system' member. b159 adds one. supply_kind was my error, not the schema's — 'service'
+--    was invented when 'own_use' already existed and is correct, and this file now writes own_use.
+--
 -- Supabase → SQL Editor → paste → Run. Step 1 only looks.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
@@ -65,7 +70,7 @@ ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING;
 
 -- 2b · we become their supplier
 INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, added_via)
-SELECT e.identity_id, r.identity_id, 'service', 'system'
+SELECT e.identity_id, r.identity_id, 'own_use', 'system'
   FROM identities e
  CROSS JOIN (SELECT identity_id FROM identities
               WHERE user_id = 'cbincroot' AND entity_kind = 'internal') r
