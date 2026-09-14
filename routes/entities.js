@@ -1421,7 +1421,9 @@ router.get('/mis', auth, async (req, res) => {
          FROM identities i
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
-          AND i.entity_kind = ANY($1)
+          AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
+          AND ($6 = '' OR $6 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
+                                    WHEN nlevel(c.path) = 1 THEN 'root' ELSE 'branch' END)
           AND ($3 = '' OR i.display_name ILIKE '%' || $3 || '%'
                        OR i.user_id     ILIKE '%' || $3 || '%'
                        OR i.bridge_id   ILIKE '%' || $3 || '%')
@@ -1429,11 +1431,37 @@ router.get('/mis', auth, async (req, res) => {
           AND ($5 = '' OR i.plan     = $5)
         ORDER BY ${SORTS[sortKey]} ${dir} NULLS LAST
         LIMIT $2`,
-      [String(req.query.kind || 'customer').split(',').map((s) => s.trim()).filter(Boolean),
+      /* ⚠️ '*' MEANS EVERY KIND. Athi, 2026-09-14, after spotting Beta Fresh and Gamma Exports in the data
+         but not on the screen: vertical and plan both offered 'any' and kind did not, so there was no way
+         to look across the whole platform at once — the one thing an operator report is for. NULL rather
+         than a list of every kind, so a kind invented tomorrow is included without touching this. */
+      [(String(req.query.kind || 'customer').trim() === '*')
+        ? null
+        : String(req.query.kind || 'customer').split(',').map((s) => s.trim()).filter(Boolean),
        Math.min(Number(req.query.limit) || 100, 500),
        q,
        String(req.query.vertical || '').trim(),
-       String(req.query.plan || '').trim()])).rows;
+       String(req.query.plan || '').trim(), String(req.query.position || '').trim()])).rows;
+
+    /* the SAME predicate as the page above, counted without the LIMIT — see the note on `matched` below */
+    const matched = Number((await query(
+      `SELECT count(*)::int AS n
+         FROM identities i
+         LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
+        WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
+          AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
+          AND ($2 = '' OR i.display_name ILIKE '%' || $2 || '%'
+                       OR i.user_id     ILIKE '%' || $2 || '%'
+                       OR i.bridge_id   ILIKE '%' || $2 || '%')
+          AND ($3 = '' OR i.vertical = $3)
+          AND ($4 = '' OR i.plan     = $4)
+          AND ($5 = '' OR $5 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
+                                    WHEN nlevel(c.path) = 1 THEN 'root' ELSE 'branch' END)`,
+      [(String(req.query.kind || 'customer').trim() === '*')
+        ? null
+        : String(req.query.kind || 'customer').split(',').map((x) => x.trim()).filter(Boolean),
+       q, String(req.query.vertical || '').trim(), String(req.query.plan || '').trim(),
+       String(req.query.position || '').trim()])).rows[0].n);
 
     const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
 
@@ -1450,6 +1478,20 @@ router.get('/mis', auth, async (req, res) => {
       by_position: asObj(tree, 'pos', 'n'),
       joined_by_month: joins.rows,
       rows,
+      /**
+       * ── ⚠️⚠️ HOW MANY MATCHED, NOT HOW MANY FITTED ──────────────────────────────────────────────────────
+       *
+       * Athi, 2026-09-14: *"we cant miss any, how many entity rows, that many has to be here."*
+       *
+       * The list is capped at 100. With 2,788 identities, filtering to 'every kind' returned a hundred rows
+       * and the screen said "100 shown" — TRUE, AND USELESS: it reads as a complete answer. A panel that
+       * quietly shows a subset is the same silent failure as a table that reads empty under RLS, and worse
+       * here, because a round number looks deliberate.
+       *
+       * ⭐ `matched` is counted with THE SAME PREDICATE and no LIMIT, so the screen can say "100 of 2,788".
+       * One extra query; the alternative is a report nobody can trust to be whole.
+       */
+      matched,
       /**
        * ⭐ THE CONTROLS, DESCRIBED BY THE SERVER. Athi, 2026-09-14: *"we need to have a sort mechanism based on
        * field like we have it in the task"* · *"almost every panel is missing this information."*
@@ -1478,6 +1520,8 @@ router.get('/mis', auth, async (req, res) => {
           plan:     Object.keys(asObj(plans, 'p', 'n')),
         },
         searches: ['display_name', 'user_id', 'bridge_id'],
+        /* root · branch · standalone — computed from cb_entity.path, not stored, so it needs naming here */
+        positions: ['root', 'branch', 'standalone'],
       },
       /** ⚠️ NAMED, NOT OMITTED. See the header. */
       blind: {
