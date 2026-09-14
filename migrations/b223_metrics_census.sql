@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b155 — THE CENSUS. The three questions b151 could not answer, plus the seat watermark.
+-- b223 — THE CENSUS. The three questions b151 could not answer, plus the seat watermark.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
 -- Athi, 2026-09-14: *"right now i am not sure how many entity registered and how many catalogue entries they have,
@@ -19,12 +19,17 @@
 -- ⚠️ THE ARITHMETIC TRAP, FOR THE FIFTH TIME. chit_header holds ONE ROW PER PARTICIPANT COPY. count(*) counts
 --    copies, not chits, and a self-chit has two. Every count here is count(DISTINCT chit_id). Do not "simplify".
 --
--- ⚠️ REQUIRES b157. Every predicate below is entity_kind, not identity_type: before b157 there was no
+-- ⚠️ REQUIRES b225. Every predicate below is entity_kind, not identity_type: before b225 there was no
 --    way to say "a business that is our customer" and these views would have counted all 2,502 identity rows
---    where the answer is 90. See b157_entity_kind.sql.
+--    where the answer is 90. See b225_entity_kind.sql.
 --
 -- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b155, and b155 WAS ALREADY TAKEN by
+--    b155_message_line.sql. Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ NOT YET RUN.
+--
 
 -- ── ⑦ CATALOGUE SIZE — how big are shops' catalogues? ───────────────────────────────────────────────────────────
 -- ⚠️ Counts LIVE items only. is_active — a shop that listed 400 products and retired 390

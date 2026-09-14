@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b159 — 'system' IS A PROVENANCE. Let the relationship lists say so.
+-- b227 — 'system' IS A PROVENANCE. Let the relationship lists say so.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
--- ⚠️⚠️ FOUND BY b158 FAILING, 2026-09-14, and the failure was the good outcome.
+-- ⚠️⚠️ FOUND BY b226 FAILING, 2026-09-14, and the failure was the good outcome.
 --
--- b158 tried to write the root↔shop connection with `added_via = 'system'` and `supply_kind = 'service'`. Three
+-- b226 tried to write the root↔shop connection with `added_via = 'system'` and `supply_kind = 'service'`. Three
 -- CHECK constraints refused it:
 --
 --     supplier_list_added_via_check    manual · transaction · import
@@ -30,10 +30,17 @@
 --
 -- ❌ `supply_kind` does NOT change. 'service' was my invention; `own_use` already exists and is CORRECT — a shop
 --    uses ChitBridge for its own operations, it does not resell it. Widening a constraint because I picked the
---    wrong word from outside it would be the actual mistake. b158 and lib/rootlink.js were changed instead.
+--    wrong word from outside it would be the actual mistake. b226 and lib/rootlink.js were changed instead.
 --
--- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run. Run BEFORE re-running b158.
+-- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run. Run BEFORE re-running b226.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b159, and b159 WAS ALREADY TAKEN by
+--    b159_attachment_object_key.sql. Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ THIS ONE HAS ALREADY BEEN RUN against production, as b159. The file name is recorded nowhere,
+--    so the rename changes nothing that happened — but do not run it again expecting it to be new. It is
+--    idempotent, so re-running is harmless if you are unsure.
+--
 
 BEGIN;
 

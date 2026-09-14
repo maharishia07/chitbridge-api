@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b162 — PLAN TYPES. Name them, close the vocabulary, and put everyone on 'test'.
+-- b230 — PLAN TYPES. Name them, close the vocabulary, and put everyone on 'test'.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
 -- Athi, 2026-09-14: *"what plan is? gold, silver, test and so on, we can define the plan types now and will see
@@ -22,6 +22,11 @@
 --
 -- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b162, and b162 WAS ALREADY TAKEN by
+--    b162_enquiry_deliver.sql. Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ NOT YET RUN.
+--
 
 -- ── 1 · LOOK FIRST ─────────────────────────────────────────────────────────────────────────────────────────────
 SELECT plan, count(*) AS entities FROM identities
@@ -53,7 +58,7 @@ ALTER TABLE identities ALTER COLUMN plan SET DEFAULT 'test';
 
 COMMENT ON COLUMN identities.plan IS
   'Commercial tier. test = not for sale, unlimited, no terms — the state of every entity until quotas are '
-  'enforced. Quotas and prices live in lib/plans.js and are NOT set yet (b162).';
+  'enforced. Quotas and prices live in lib/plans.js and are NOT set yet (b230).';
 
 COMMIT;
 

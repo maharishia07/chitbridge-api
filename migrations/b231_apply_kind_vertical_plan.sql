@@ -1,8 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b163 — RE-APPLY b161 + b162. Writes only, one block, nothing to run halfway.
+-- b231 — RE-APPLY b229 + b230. Writes only, one block, nothing to run halfway.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
--- Athi ran b161 and b162 on 2026-09-14 and NEITHER took effect. Verified after:
+-- Athi ran b229 and b230 on 2026-09-14 and NEITHER took effect. Verified after:
 --
 --     identities.vertical column        does not exist
 --     plan values                       still 'enterprise' and 'free', not 'test'
@@ -11,26 +11,31 @@
 --     no user_id, still 'customer'                     75
 --
 -- The predicates all still match, so the statements were never executed rather than executed and refused.
--- ⚠️ MOST LIKELY CAUSE: b161 and b162 open with an exploratory SELECT ("LOOK FIRST"), and a SQL editor that
+-- ⚠️ MOST LIKELY CAUSE: b229 and b230 open with an exploratory SELECT ("LOOK FIRST"), and a SQL editor that
 -- runs only the statement under the cursor — or a person reading the first result and stopping — applies
 -- nothing. That is a fault in how I wrote them, not in how they were run: a migration whose first statement is
 -- a SELECT invites exactly this.
 --
 -- ⭐ SO THIS FILE HAS NO EXPLORATORY SELECTS BEFORE ITS WRITES. One transaction, then one verification at the
--- end. Idempotent: safe whether b161/b162 partially applied or not at all.
+-- end. Idempotent: safe whether b229/b230 partially applied or not at all.
 --
 -- Supabase → SQL Editor → SELECT ALL → Run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b163, and b163 WAS ALREADY TAKEN by
+--    (an existing migration). Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ NOT YET RUN.
+--
 
 BEGIN;
 
--- ── 1 · entity_kind, structural first (b161 §2) ────────────────────────────────────────────────────────────────
+-- ── 1 · entity_kind, structural first (b229 §2) ────────────────────────────────────────────────────────────────
 -- platform-owned rows are OURS: the ISO/ICC standards, system entities, IoT gateways.
 UPDATE identities SET entity_kind = 'internal'
  WHERE identity_type = 'entity' AND entity_kind = 'customer'
    AND (sealed = true OR owner_scope = 'platform');
 
--- domains the b157 list did not know
+-- domains the b225 list did not know
 UPDATE identities SET entity_kind = 'test'
  WHERE identity_type = 'entity' AND entity_kind = 'customer'
    AND (email LIKE '%@proof.test' OR email LIKE '%@node.cb' OR email LIKE '%@shopper.cb'
@@ -41,11 +46,11 @@ UPDATE identities SET entity_kind = 'test'
 UPDATE identities SET entity_kind = 'test'
  WHERE identity_type = 'entity' AND entity_kind = 'customer' AND user_id IS NULL;
 
--- ── 2 · vertical (b161 §3) ─────────────────────────────────────────────────────────────────────────────────────
+-- ── 2 · vertical (b229 §3) ─────────────────────────────────────────────────────────────────────────────────────
 ALTER TABLE identities ADD COLUMN IF NOT EXISTS vertical varchar(40) NOT NULL DEFAULT 'general';
 UPDATE identities SET vertical = 'general' WHERE vertical IS NULL OR vertical = '';
 
--- ── 3 · plan (b162) ────────────────────────────────────────────────────────────────────────────────────────────
+-- ── 3 · plan (b230) ────────────────────────────────────────────────────────────────────────────────────────────
 -- ⚠️ 'enterprise' is in the data today and is NOT in the new vocabulary, so it must move before the CHECK is
 --    added or the constraint refuses rows that already exist.
 UPDATE identities SET plan = 'test'

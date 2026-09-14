@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b156 — THE OPERATOR VIEW. Per-shop ACCOUNT facts, so we can serve a shop. Never a trade fact.
+-- b224 — THE OPERATOR VIEW. Per-shop ACCOUNT facts, so we can serve a shop. Never a trade fact.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
 -- Athi, 2026-09-14: *"each shops last status, when last sign-in? how many supplier link, how many walkin customer,
@@ -50,12 +50,17 @@
 --    shop went dormant" helps nobody. This is the same reasoning `test_result` uses for carrying `tester_name`
 --    beside `tested_by`.
 --
--- ⚠️ RUN b151 FIRST (it creates the pattern this follows). Independent of b154/b155.
--- ⚠️ REQUIRES b157. ops.accounts lists entity_kind = customer — NOT every identity row. Before b157 this
+-- ⚠️ RUN b151 FIRST (it creates the pattern this follows). Independent of b154/b223.
+-- ⚠️ REQUIRES b225. ops.accounts lists entity_kind = customer — NOT every identity row. Before b225 this
 --    sheet would have been 2,163 lines of e2eco-mu0jzb0i929 with the 90 real shops buried in it.
 --
 -- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b156, and b156 WAS ALREADY TAKEN by
+--    b156_message_read.sql. Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ NOT YET RUN.
+--
 
 CREATE SCHEMA IF NOT EXISTS ops;
 

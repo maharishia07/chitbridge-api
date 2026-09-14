@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b157 — WHAT AN ENTITY *IS*, DECLARED AT THE MINT INSTEAD OF GUESSED FROM ITS EMAIL.
+-- b225 — WHAT AN ENTITY *IS*, DECLARED AT THE MINT INSTEAD OF GUESSED FROM ITS EMAIL.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
 -- Athi, 2026-09-14: *"we have to understand what are original, what are network entities, test entities and for
@@ -31,6 +31,13 @@
 --
 -- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b157, and b157 WAS ALREADY TAKEN by
+--    b157_notif_seen.sql. Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ THIS ONE HAS ALREADY BEEN RUN against production, as b157. The file name is recorded nowhere,
+--    so the rename changes nothing that happened — but do not run it again expecting it to be new. It is
+--    idempotent, so re-running is harmless if you are unsure.
+--
 
 BEGIN;
 
@@ -64,7 +71,7 @@ ALTER TABLE identities ADD  CONSTRAINT identities_entity_kind_chk CHECK (entity_
 ));
 
 COMMENT ON COLUMN identities.entity_kind IS
-  'What this identity IS, declared at the mint. Closed vocabulary — see identities_entity_kind_chk. b157.';
+  'What this identity IS, declared at the mint. Closed vocabulary — see identities_entity_kind_chk. b225.';
 
 COMMIT;
 

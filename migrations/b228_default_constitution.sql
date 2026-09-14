@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b160 — is_default POINTS AT A RETIRED CONSTITUTION. Move it to the live one.
+-- b228 — is_default POINTS AT A RETIRED CONSTITUTION. Move it to the live one.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
 -- Found 2026-09-14 while chasing a governance bug that turned out not to exist. This one does.
@@ -33,6 +33,11 @@
 --
 -- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b160, and b160 WAS ALREADY TAKEN by
+--    b160_definitions.sql. Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ NOT YET RUN.
+--
 
 -- ── 1 · LOOK FIRST ─────────────────────────────────────────────────────────────────────────────────────────────
 SELECT constitution_key, version, active, is_default,

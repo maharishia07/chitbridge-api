@@ -1,13 +1,13 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
--- b161 — CORRECT WHAT THE EARLY DAYS LEFT BEHIND, and give every entity a vertical.
+-- b229 — CORRECT WHAT THE EARLY DAYS LEFT BEHIND, and give every entity a vertical.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
 -- Athi, 2026-09-14: *"we are testing our product, in the early days we might have made mistake, if so correct
 -- those and fit into framework"* · *"update all vertical information for the entities as general"*
 --
--- ── ⚠️⚠️ WHAT b157 GOT WRONG, AND WHY ──────────────────────────────────────────────────────────────────────────
+-- ── ⚠️⚠️ WHAT b225 GOT WRONG, AND WHY ──────────────────────────────────────────────────────────────────────────
 --
--- b157 classified test fixtures by EMAIL DOMAIN against a list of domains our harnesses were known to use. It
+-- b225 classified test fixtures by EMAIL DOMAIN against a list of domains our harnesses were known to use. It
 -- reported 90 customers and I quoted that number all afternoon. It is wrong: **75 of those 90 have no user_id
 -- at all**, and their names say what they really are —
 --
@@ -36,6 +36,11 @@
 --
 -- Supabase → SQL Editor → paste → Run. Step 1 only looks. Idempotent.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-- ⚠️⚠️ RENUMBERED 2026-09-14. This was written as b161, and b161 WAS ALREADY TAKEN by
+--    b161_message_subject.sql. Eight files written today collided the same way: I saw b151 and
+--    b154 in the folder and assumed the series ended there. It is at 222.
+-- ⭐ NOT YET RUN.
+--
 
 -- ── 1 · LOOK FIRST ─────────────────────────────────────────────────────────────────────────────────────────────
 SELECT entity_kind, count(*) AS before
@@ -50,7 +55,7 @@ UPDATE identities SET entity_kind = 'internal'
    AND entity_kind = 'customer'
    AND (sealed = true OR owner_scope = 'platform');
 
--- 2b · the domains the b157 list did not know. ⚠️ Still a guess, and used only for what 2a did not catch.
+-- 2b · the domains the b225 list did not know. ⚠️ Still a guess, and used only for what 2a did not catch.
 --      email.com is on this list because it is the address our own seed scripts use — NOT because a real
 --      business could not own it. It is here on the evidence of what is actually in the table, and it is the
 --      last time a domain decides anything: lib/entitykind.js now tests `sealed`/`owner_scope` first.
@@ -89,7 +94,7 @@ ALTER TABLE identities ADD COLUMN IF NOT EXISTS vertical varchar(40) NOT NULL DE
 
 COMMENT ON COLUMN identities.vertical IS
   'Which vertical this business operates in. general = unclassified. Drives vertical-specific content: '
-  'catalogue starters, standards, capabilities. NOT the same as constitution.vertical (b161).';
+  'catalogue starters, standards, capabilities. NOT the same as constitution.vertical (b229).';
 
 -- everything existing is 'general' by the default; this makes it explicit and covers any pre-existing column
 UPDATE identities SET vertical = 'general' WHERE vertical IS NULL OR vertical = '';
