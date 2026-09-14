@@ -103,10 +103,21 @@ router.post('/register',
             });
           }
 
+          /**
+           * ⚠️⚠️ THIS IS WHERE THE DRIFT WOULD HAVE COME BACK. b246 empties `entity_kind = 'test'`; if this
+           * line went on writing it, the very next e2e run would refill the partition and the axis would be
+           * wrong within a day — fixed in the morning, reintroduced by the afternoon, by code nobody thought
+           * to look at. A fixture registration is a CUSTOMER that is a TEST, which is what it always was.
+           */
+          const mark = require('../lib/istest')
+            .atRegistration(email, await require('../lib/istest').ready());
           await query(
-            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind)
-             VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6)`,
-            [identity_id, bridge_id, display_name, email, verdict.value, require('../lib/entitykind').atRegistration(email)]
+            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind`
+            + (mark.is_test === null ? '' : ', is_test')
+            + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6`
+            + (mark.is_test === null ? '' : ', $7') + ')',
+            [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind]
+              .concat(mark.is_test === null ? [] : [mark.is_test])
           );
           console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
@@ -1371,6 +1382,9 @@ router.get('/mis', auth, async (req, res) => {
     }
 
     const LIVE = "coalesce(status,'active') <> 'erased'";
+    /* ⭐ asked ONCE, before anything that needs it. Both the class ladder and the population predicate below
+       branch on the same answer, so they can never describe two different platforms. */
+    const hasIsTest = await require('../lib/istest').ready();
 
     /**
      * ── ⭐⭐ ONE CLASS PER ENTITY — exhaustive, and no row in two boxes ───────────────────────────────────────
@@ -1404,7 +1418,7 @@ router.get('/mis', auth, async (req, res) => {
      */
     const CLASS_SQL = `CASE
         WHEN coalesce(i.entity_visibility,'public') = 'internal'        THEN 'internal'
-        WHEN i.entity_kind = 'test'                                     THEN 'test'
+        WHEN ${hasIsTest ? 'i.is_test' : "i.entity_kind = 'test'"}                        THEN 'test'
         WHEN c.bridge_id IS NOT NULL AND nlevel(c.path) > 1             THEN 'network'
         WHEN i.supplies IN ('goods','services','both')                  THEN i.supplies
         ELSE 'unset' END`;
@@ -1537,7 +1551,10 @@ router.get('/mis', auth, async (req, res) => {
      * ⭐ SO IT IS A POPULATION, NOT A FLAG. Exactly one is in force, always, and the default is the real one.
      */
     const pop = String(req.query.population || 'real') === 'test' ? 'test' : 'real';
-    const TEST_WHERE = pop === 'test' ? "AND i.entity_kind = 'test'" : "AND i.entity_kind <> 'test'";
+    /* ⚠️ b246 may not have run yet — deploys are automatic, migrations are by hand, so the code is routinely
+       ahead of the database. lib/istest.js probes once and falls back to the old partition, which keeps this
+       screen meaning exactly the same thing in both states. */
+    const TEST_WHERE = require('../lib/istest').where(pop, hasIsTest);
 
     /**
      * ⭐ OWNERSHIP — ours, or the market's. Athi's first-level filter: *"All / internal / External."*

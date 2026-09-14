@@ -134,6 +134,12 @@ const INFRA_LIBS = [
   /* reads one entity uuid out of the environment and checks it is a uuid. Holds no rule and decides nothing —
      testboard.js and platformroot.js both use it so the read-and-warn exists once. (2026-09-14) */
   'namedentity.js',
+  /* INFRA by this file's own test: it holds no rule and decides nothing. It answers "has b246 run yet?" once
+     per process and hands back the right SQL predicate either way, because deploys are automatic and
+     migrations are run by hand — so the code is routinely ahead of the database. The RULE it serves (test is
+     an axis, not a kind; test data never becomes production) lives in b246 and in the chit path. Swap this for
+     a feature flag and ChitBridge is unchanged, which is what makes it plumbing. (2026-09-14) */
+  'istest.js',
   'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
   'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
