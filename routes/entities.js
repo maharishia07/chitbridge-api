@@ -1547,10 +1547,22 @@ router.get('/mis', auth, async (req, res) => {
           counts.get(x.entity_id)[x.metric] = x.n;
         }
       } catch (e) {
-        /* 42883 undefined_function · 3F000 invalid_schema_name · 42501 insufficient_privilege — all mean the
-           same thing to the operator: b241 is not in this database yet. Anything else is a real fault and is
-           still reported rather than swallowed. */
-        counts_error = e.code || 'unknown';
+        /* 42883 undefined_function · 3F000 invalid_schema_name · 42501 insufficient_privilege.
+           ⚠️⚠️ THE CODE ALONE IS NOT ENOUGH. 42501 says "permission denied" and stops there — denied on the
+           SCHEMA, on the FUNCTION, or on a table INSIDE it are three different faults with three different
+           fixes, and postgres puts which one in the message. Reporting only e.code sent me guessing at a
+           question the database had already answered. This route is root-only, so the message is safe here
+           and nowhere else. [[feedback-silence-is-the-bug]] */
+        counts_error = (e.code || 'unknown') + (e.message ? ' — ' + e.message : '');
+        /* ⭐⭐ AND WHO WAS REFUSED. b241's own verification query returned real counts when Athi ran it, so the
+           function reads through FORCE RLS correctly and 42501 can only be a GRANT — which means the API is
+           not connecting as the role the migration granted to. Every migration in this repo says `TO cb_app`;
+           if that is not what the pool actually logs in as, 116 grants have been aimed at the wrong name.
+           The database knows. Asking it beats reading a connection string out of a deploy dashboard. */
+        try {
+          const who = await query('SELECT current_user AS u, current_setting(\'is_superuser\') AS su');
+          counts_error += ' [connected as ' + who.rows[0].u + ', superuser=' + who.rows[0].su + ']';
+        } catch (_) { /* if even this fails the original error is the more useful one */ }
       }
     }
     for (const r of rows) {
