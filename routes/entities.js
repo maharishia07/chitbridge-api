@@ -1792,8 +1792,23 @@ router.get('/mis', auth, async (req, res) => {
           ? ['a · never signed in', 'b · registered, never used', 'c · lapsed (90d+)',
              'd · drifting (30d+)', 'e · quiet (7d+)', 'f · active']
           : [],
+        /**
+         * ⚠️⚠️ IT ECHOED SIX OF THIRTEEN. position, class, standing, supplies, visibility, entity_visibility
+         * and the page were all applied and none of them were reported back, so nothing — not the screen, not
+         * a test, not a person reading the network tab — could confirm what the server had actually done. A
+         * check I wrote against it hung for 45 seconds waiting for an echo that was never coming.
+         *
+         * ⭐ A control the server honours and does not name is a control you have to take on trust. Every
+         * filter this route reads is now answered back, in the same shape it was read.
+         */
         applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || 'customer',
-                    vertical: req.query.vertical || '', plan: req.query.plan || '' },
+                    vertical: req.query.vertical || '', plan: req.query.plan || '',
+                    position: req.query.position || '', class: req.query.class || '',
+                    standing: req.query.standing || '', supplies: req.query.supplies || '',
+                    visibility: req.query.visibility || '',
+                    entity_visibility: req.query.entity_visibility || '',
+                    limit: Math.min(Number(req.query.limit) || 100, 500),
+                    offset: Math.max(0, Number(req.query.offset) || 0) },
         /* the named orderings a person actually asks for, rather than a column plus a direction */
         presets: [
           { key: 'newest',     label: 'Most recent',   sort: 'joined',    dir: 'desc' },
