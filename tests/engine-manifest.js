@@ -330,6 +330,15 @@ const ENGINE_OTHER = [
    */
   'workroute.js',
   /**
+   * ENGINE. ⭐ It holds the rule Athi named in four words — *is it not a task?* — that a support ticket IS a
+   * chit: theirs under Order because they asked, ours under Task because answering is our work. Swap this
+   * file and support stops riding the rail and needs a queue of its own again.
+   * ⚠️ It COMPOSES lib/mint.js rather than re-minting. mint.js says four paths mint chits and their policy
+   * differs; this is a fifth policy over the same four helpers, which is what that file asks for.
+   * (2026-09-14)
+   */
+  'raiseticket.js',
+  /**
    * ⭐ ENGINE, AND FOR TESTBOARD'S EXACT REASON. platformroot decides WHICH ENTITY is the operator of this
    * deployment — whose customer list holds every registered shop, whose folders hold the support queues.
    * Swap it and a different company runs the platform, which is not what "swap it and ChitBridge is

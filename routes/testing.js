@@ -1368,12 +1368,26 @@ router.post('/requirements', auth, async (req, res) => {
       return { definition_id: id, clause: name, cited, cite_held: citeHeld };
     });
 
+    let support = { copied: false, why: 'not attempted' };
     try {
       const w2 = testerOf(req);
+      /**
+       * ⭐ THE SAME PATH, A DIFFERENT KIND. Athi: *"same way all can be handled."* A requirement is a request
+       * from a shop just as much as a fault is — it differs only in which folder and which person answers it,
+       * which is exactly what b250's per-kind routing decides.
+       * ⚠️ 'spec' and not 'requirement': that is the KIND the row is written with (lib/testboard.js), and the
+       * word "requirement" is a display label. Routing on the label would file it under a folder nobody set.
+       */
+      try {
+        support = await require('../lib/supportcopy').toOperator('spec', {
+          entity_id, definition_id: out && out.definition_id, ref: out && (out.clause || out.ref),
+          note: out && out.requirement, subject: out && out.requirement, screen_code: b.screen_code,
+        }, w2);
+      } catch (e) { support = { copied: false, why: String(e.message || e) }; }
       require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref),
         { screen: (req.body || {}).screen_code, by: w2.id, byName: w2.name });
     } catch (_) {}
-    res.json(Object.assign({ raised: true, state: 'raised' }, out));
+    res.json(Object.assign({ raised: true, state: 'raised', support }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not raise it', message: String(err.message || err) });
   }
@@ -1630,18 +1644,22 @@ router.post('/incidents', auth, async (req, res) => {
      * ⚠️ BUT IT IS ANSWERED EITHER WAY. "Recorded" with no word about whether anyone was told is exactly the
      * silence this codebase keeps producing.
      */
+    /**
+     * ── ⭐⭐ AND IT REACHES US AS A TICKET, NOT AS A SECOND RECORD ────────────────────────────────────────────
+     *
+     * Athi: *"is it not a task?"* — it is. lib/supportcopy raises a CHIT from this shop to the operator: theirs
+     * under Order, ours under Task, filed by b250's routing. The definition row above stays with the raiser,
+     * because it is their words about their business and they are the one who closes it.
+     *
+     * ⚠️ It looks up nothing here any more: who the shop is belongs to the thing raising the ticket, and this
+     * route had no business knowing about bridge ids.
+     */
     let support = { copied: false, why: 'not attempted' };
     try {
-      const me = auth.entityOf(req);
-      const w2 = testerOf(req);
-      const info = await query(
-        `SELECT display_name, population FROM identities WHERE identity_id = $1`, [me]).catch(() => null);
-      const row = info && info.rows && info.rows[0];
       support = await require('../lib/supportcopy').toOperator('incident', {
-        entity_id: me, definition_id: out && out.definition_id, ref: out && out.ref,
-        sub_kind: out && out.severity, note: out && out.note, rules: (out && out.rules) || {},
-        shop: row && row.display_name, population: row && row.population,
-      }, w2);
+        entity_id: auth.entityOf(req), definition_id: out && out.definition_id, ref: out && out.ref,
+        sub_kind: out && out.severity, note: out && out.note, screen_code: b.screen_code,
+      }, testerOf(req));
     } catch (e) { support = { copied: false, why: String(e.message || e) }; }
 
     res.json(Object.assign({ recorded: true, state: 'raised', support }, out));
