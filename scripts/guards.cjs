@@ -49,6 +49,9 @@ const GUARDS = [
   'column-home.test.cjs',     // where a column actually lives
   'connector-kit.test.js',
   'tax-vendor.test.js',
+  /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only
+     reachable by re-running it — so one that errors on a second run is one nobody can re-verify. */
+  'migration-rerunnable.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

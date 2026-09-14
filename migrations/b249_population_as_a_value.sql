@@ -169,6 +169,9 @@ BEGIN
 END
 $fn$;
 
+-- ⚠️ its header says idempotent; without this line it was not. A migration that cannot be re-run is one
+--    nobody can safely re-run to VERIFY, which is the whole reason these files end in proofs.
+DROP TRIGGER IF EXISTS identities_population_one_way ON identities;
 CREATE TRIGGER identities_population_one_way
   BEFORE UPDATE OF population ON identities
   FOR EACH ROW WHEN (OLD.population IS DISTINCT FROM NEW.population)
@@ -187,6 +190,7 @@ BEGIN
 END
 $fn$;
 
+DROP TRIGGER IF EXISTS identities_population_inheritance ON identities;
 CREATE TRIGGER identities_population_inheritance
   BEFORE INSERT ON identities
   FOR EACH ROW EXECUTE FUNCTION identities_inherit_population();
