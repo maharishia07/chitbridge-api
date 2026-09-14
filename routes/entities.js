@@ -1263,4 +1263,91 @@ router.get('/usage', auth, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/entities/entitlements — WHAT DOES MY PLAN GRANT? Reports. Gates nothing.
+ *
+ * Athi, 2026-09-14: *"we can change some of the entities plan to free, and other things to confirm that the
+ * tier works."*
+ *
+ * ── ⚠️⚠️ CHANGING A PLAN TODAY PROVES NOTHING, AND THAT IS WHY THIS EXISTS ─────────────────────────────────────
+ *
+ * `identities.plan` has exactly one reader that acts on it — lib/visibility-cap.js — and it is DELIBERATELY
+ * SWITCHED OFF. Its own header records why:
+ *
+ *   *"I enforced this and it took the platform down for a minute. The live constitution's plan_menu declares
+ *   free: { public_facing: false }, EVERY entity is on free, and nothing had ever read that field — so the
+ *   moment the check went live, Beta Fresh and every other shop was refused."*
+ *
+ * ⭐ SO: MAKE THE TIER VISIBLE BEFORE MAKING IT BINDING. Set a shop to `free`, call this, and see exactly what
+ * would change — with nothing refused and nobody locked out. The outage above happened because a declaration
+ * nobody had audited became policy the instant something believed it. This is how you audit it first.
+ *
+ * ⚠️ `enforced` IS FALSE AND MUST STAY FALSE until Athi turns tiering on deliberately. A caller that finds this
+ * endpoint and assumes it describes live behaviour would be wrong, so the payload says so in its own field
+ * rather than in a comment nobody reads. [[feedback-silence-is-the-bug]]
+ */
+router.get('/entitlements', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const plans = require('../lib/plans');
+
+    let row = {};
+    try {
+      const r = await query(
+        'SELECT plan, vertical, entity_kind, catalogue_visibility FROM identities WHERE identity_id = $1',
+        [entity_id]);
+      row = r.rows[0] || {};
+    } catch (_) { /* pre-b229/b230 schema — the defaults below still describe the tier honestly */ }
+
+    const code = row.plan || plans.DEFAULT_PLAN;
+    const p = plans.plan(code);
+
+    /* every quota as a STATE, never a bare number — 'unset' must not read as 'unlimited'. See lib/plans.js. */
+    const quotas = {};
+    for (const key of ['entities', 'actors', 'chits_per_month', 'network_depth', 'suppliers']) {
+      quotas[key] = plans.quotaOf(code, key);
+    }
+
+    /**
+     * ⭐⭐ THE ENVELOPE, NOT JUST THE POINT INSIDE IT — govresolve's own distinction, and the reason this
+     * endpoint is worth having. `basics` is the RESOLVED answer (one currency, one timezone); `allowed` is what
+     * the constitution PERMITS. A screen that shows only the resolved value can display the currency and has no
+     * way to offer the choice the layer actually allows.
+     *
+     * ⚠️ The keys are basics / allowed / jurisdiction — NOT `defaults`. I wrote `defaults` first, which would
+     * have quietly reported `{}` for every entity: present, empty, and indistinguishable from "no envelope".
+     */
+    let envelope = null;
+    try {
+      const gov = await require('../lib/govresolve').resolveEntityGovernance(entity_id);
+      envelope = gov && {
+        constitution: gov.constitution,
+        installation: gov.installation || null,
+        allowed:      gov.allowed || {},
+        basics:       gov.basics || {},
+        jurisdiction: gov.jurisdiction || null,
+        capabilities: gov.capabilities || [],
+      };
+    } catch (_) { /* governance unresolvable — reported as null rather than guessed */ }
+
+    res.json({
+      plan: code,
+      name: p.name,
+      sellable: p.sellable !== false,
+      limited: p.limited !== false,
+      features: p.features,
+      quotas,
+      vertical: row.vertical || 'general',
+      entity_kind: row.entity_kind || null,
+      envelope,
+      /* ⚠️ THE MOST IMPORTANT FIELD HERE. Nothing in the product gates on any of the above. */
+      enforced: false,
+      note: 'Reporting only — no route gates on plan today. lib/visibility-cap.js is the one reader and it is '
+          + 'switched off after the outage its header records.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read entitlements', message: String(err.message || err) });
+  }
+});
+
 module.exports = router;

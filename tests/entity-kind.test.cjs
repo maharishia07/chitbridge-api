@@ -18,6 +18,19 @@
 const assert = require('assert'), fs = require('fs'), path = require('path');
 
 const ROOT = path.join(__dirname, '..');
+
+/**
+ * ⚠️ FIND A MIGRATION BY ITS NAME, NOT ITS NUMBER. Both these guards hard-coded b157_/b158_ and broke the
+ * moment those files were renumbered to b225_/b226_ — which happened the same day, because eight of the nine
+ * migrations written that day had collided with existing numbers. A number is an ordering, not an identity.
+ */
+function migration(suffix) {
+  const dir = path.join(ROOT, 'migrations');
+  const hit = fs.readdirSync(dir).filter((f) => f.endsWith(suffix)).sort().pop();
+  if (!hit) throw new Error('no migration ending in ' + suffix + ' — was it renamed as well as renumbered?');
+  return fs.readFileSync(path.join(dir, hit), 'utf8');
+}
+
 const KINDS = ['customer', 'network', 'supplier', 'test', 'internal', 'actor', 'shopper'];
 
 let pass = 0;
@@ -45,7 +58,7 @@ it('the migration exists and its vocabulary matches this guard', () => {
      words — "a real registered business. THE DEFAULT." sits beside 'customer', and the naive parse read the
      prose as four extra members of the vocabulary. Fifth time a guard in this repo has read its own comments;
      the difference is that this one was caught by the guard failing rather than by it passing. */
-  const sql = fs.readFileSync(path.join(ROOT, 'migrations', 'b157_entity_kind.sql'), 'utf8')
+  const sql = migration('_entity_kind.sql')
     .split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
   const inChk = (sql.match(/identities_entity_kind_chk CHECK \(entity_kind IN \(([\s\S]*?)\)\)/) || [])[1] || '';
   const declared = (inChk.match(/'([a-z]+)'/g) || []).map((s) => s.replace(/'/g, '')).sort();

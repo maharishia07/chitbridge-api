@@ -23,6 +23,19 @@ const assert = require('assert'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
+
+/**
+ * ⚠️ FIND A MIGRATION BY ITS NAME, NOT ITS NUMBER. Both these guards hard-coded b157_/b158_ and broke the
+ * moment those files were renumbered to b225_/b226_ — which happened the same day, because eight of the nine
+ * migrations written that day had collided with existing numbers. A number is an ordering, not an identity.
+ */
+function migration(suffix) {
+  const dir = path.join(ROOT, 'migrations');
+  const hit = fs.readdirSync(dir).filter((f) => f.endsWith(suffix)).sort().pop();
+  if (!hit) throw new Error('no migration ending in ' + suffix + ' — was it renamed as well as renumbered?');
+  return fs.readFileSync(path.join(dir, hit), 'utf8');
+}
+
 let pass = 0;
 const it = (what, fn) => {
   try { fn(); pass++; console.log('  ok  ' + what); }
@@ -103,7 +116,7 @@ it("'system' is a declared provenance, not a value someone hoped would work", ()
 });
 
 it('b158 and rootlink write the SAME values — the backfill and the live path must not diverge', () => {
-  const m = read('migrations/b158_root_backfill.sql');
+  const m = migration('_root_backfill.sql');
   for (const v of ['own_use', 'system']) {
     assert.ok(m.indexOf("'" + v + "'") >= 0 && SRC.indexOf("'" + v + "'") >= 0,
       "'" + v + "' appears in one of b158 / rootlink.js but not the other. A shop connected by the backfill "
