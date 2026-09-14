@@ -222,6 +222,15 @@ if (shop) {
   ok('the storefront offers it, on the list and on a single product',
     (shop.match(/supLinkHtml\(\)/g) || []).length >= 3,
     'a buyer who arrived on one product page has the same problem as one browsing the list');
+  /* ⚠️⚠️ THE DOOR WAS INSIDE THE PRODUCT LIST. A shop with an empty catalogue drew no support link at all —
+     and the emptier a shop is, the more likely the person reading it is the one with a problem. */
+  ok('an EMPTY shop still has a door',
+    /nothing on display yet[\s\S]{0,300}\+ supLinkHtml\(\)/.test(shop),
+    'support belongs to the shop, not to its shelves');
+  ok('and so does one whose catalogue is private or gone',
+    /no public catalogue[\s\S]{0,300}supLinkHtml\(\)/.test(shop),
+    'that is the case where a buyer is MOST likely to want somebody');
+
   ok('the storefront asks the server where it goes, before anything is typed',
     /support\/preview/.test(shop) && /function supNoteHtml\(\)/.test(shop));
   ok('and holds the send when it cannot land',
