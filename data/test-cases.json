@@ -1,6 +1,6 @@
 {
  "version": "2.1",
- "date": "11 September 2026",
+ "date": "2026-09-14",
  "build": "371 guard checks · 20 files · 43 offer scenarios · regression 39/0 · 10 engines on the till · migrations b213–b218 run and verified live",
  "modules": [
   {
@@ -54234,6 +54234,52 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-08-09T02:29:40+05:30"
+  },
+  {
+   "case_key": "M-R-NETWORK-105",
+   "module_key": "M-NETWORK",
+   "module_name": "Business › Network — the door and what is behind it",
+   "intro": "Two visibility settings decide different things, and a network node does not own either of them. ACCESS-MATRIX.md is the table this case proves.",
+   "title": "A branch cannot change what its network decided, and its price list is separate from being findable",
+   "priority": "High",
+   "pre": "Signed in as a shop that IS a node in a network (a branch, not a standalone). A second sign-in as a shop OUTSIDE that network, to check from the other side.",
+   "data": "Any network built through Network design, with at least one branch and one product on the branch.",
+   "steps": [
+    [
+     "Open Settings → Your business as the BRANCH.",
+     "Two cards: \"What do you do?\" with four options, and \"Your price list\"."
+    ],
+    [
+     "Look at the second card.",
+     "It does NOT offer radio buttons. It shows a note: \"Your group decides this one.\" The branch cannot set its own price-list visibility — that was decided when the network was drawn. ⚠️ If radios appear here, the branch can overrule its own network and the case FAILS."
+    ],
+    [
+     "Change \"What do you do?\" to \"I do jobs for customers\". Wait for \"Saved.\"",
+     "It saves. This one IS the shop's own — what a business does is never the network's to decide."
+    ],
+    [
+     "Sign in as the shop OUTSIDE the network. Search for the branch by its exact User ID.",
+     "The branch IS found. ⭐ A private or network price list does NOT hide the business itself — you must be able to find a shop to send it work. Findable and publishing are different questions."
+    ],
+    [
+     "From that outside shop, open the branch's storefront.",
+     "No products are shown. The branch's list is for its own network, and an outsider sees it as private — indistinguishably from a shop that has published nothing at all."
+    ],
+    [
+     "Sign in as ANOTHER shop inside the same network. Open the same storefront.",
+     "The products ARE shown. Same row, same setting, different reader — that is what \"network\" means."
+    ],
+    [
+     "Now search for \"cbincroot\", and for \"ISO 9001\".",
+     "⚠️ NOTHING is found, from any shop, ever. The platform operator and the standards are internal: not findable, not addable as a supplier. If either appears, an entity that should never be a counterparty is being offered as one."
+    ],
+    [
+     "Finally, as the branch, open Settings → Your business again.",
+     "The choice made in step 3 is still selected. It survived the round trip and was not reset by anything the network owns."
+    ]
+   ],
+   "expected": "A branch owns what it DOES and not who can see its price list. Being findable and publishing a catalogue are separate — an outsider can find the branch and still see no products. Internal entities are invisible to everyone.",
+   "notes": "Written 2026-09-14 alongside b234 (entity_visibility) and b239 (supplies). ⚠️ The internal check in the last-but-one step is the only part currently enforced in code — entity search filters internal and private. The network-owned price list is enforced by catalogue-view.js. Nothing yet stops an internal entity being named in the supplier ADD path, so if that step passes in search but the entity can still be added by typing its handle, record it and see ACCESS-MATRIX.md \"what is actually enforced\"."
   }
  ]
 }
