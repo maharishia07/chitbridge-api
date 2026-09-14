@@ -378,6 +378,29 @@ router.get('/search', auth, async (req, res) => {
         */
        AND COALESCE(user_id, '') NOT LIKE '~%'
        AND identity_id != $2
+       /*
+        * -- AND NOT AN INTERNAL ENTITY. Athi, 2026-09-14: "you should not search and find cbincroot."
+        *
+        * This is the FIRST thing anywhere to read entity_visibility (b234). Until now the column described a
+        * policy nothing applied: cbincroot and the seven ISO/ICC standards were findable by anyone who typed
+        * their name, and addable as a supplier straight from the result.
+        *
+        * internal ONLY -- not private, not network. Those two have ZERO members and their rules are not agreed;
+        * filtering on them here would hide nothing today and enforce an unaudited decision tomorrow.
+        * lib/visibility-cap.js records what that costs: "a value nobody has audited becomes policy the instant
+        * something starts reading it."
+        *
+        * SAFE BECAUSE IT WAS AUDITED FIRST. The Platform screen shows entity_visibility per row, and the count
+        * was checked before this line was written: exactly 9 rows are internal and every one is ours --
+        * cbincroot, the standards, GOV-01-Help. Nothing a customer could reach disappears.
+        *
+        * COALESCE, because a row minted before b234 ran would hold NULL and must stay findable. Absent is not
+        * the same as hidden.
+        *
+        * NOTE: plain SQL comment markers and NO BACKTICKS -- this block lives inside a JS template literal, and
+        * a backtick here terminates the query string. It did, once.
+        */
+       AND COALESCE(entity_visibility, 'public') <> 'internal'
        /**
         * An exact handle beats a fuzzy name — someone who typed the identifier knew what they wanted.
         * ⚠️ $3, NOT $2. $2 is the CALLER'S identity_id (the "not me" filter); comparing a user_id against it
