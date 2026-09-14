@@ -441,7 +441,9 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
  */
 async function resolveEntity(handle) {
   const r = await query(
-    `SELECT identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status
+    /* population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket
+       claims to have come from the live world. */
+    `SELECT identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status, population
      FROM identities
       WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1))
         AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false
@@ -815,6 +817,65 @@ router.get('/:bridge_id/support/preview', async (req, res) => {
   }
 });
 
+/**
+ * POST /:bridge_id/support/start — the code, for a complaint rather than an order.
+ *
+ * ⚠⚠ IT EXISTS BECAUSE /order/start REFUSES A CLOSED SHOP. The support path deliberately accepts one — a
+ * complaint about an order already placed must not hit a dead end — and then sent the buyer to /order/start
+ * for the code, which answers *"This shop is currently closed and not accepting orders"*. So the one case the
+ * comment below carefully allows was unreachable at the first button, and the refusal talked about orders to
+ * somebody who was not ordering.
+ *
+ * ⭐ EVERYTHING ELSE IS /order/start's, unchanged: the same identity row, the same crHandle, the same code, the
+ * same fifteen minutes, the same attempt counter. Only the closed-shop check differs, because only that
+ * differs. [[feedback-no-duplicate-functions]]
+ */
+router.post('/:bridge_id/support/start', validate, async (req, res) => {
+  try {
+    const entity = await resolveEntity(req.params.bridge_id);
+    if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    const c = resolveContact(req.body);
+    if (c.error) return res.status(422).json({ error: 'Bad request', message: c.error });
+    const { channel, raw } = c;
+    const name   = sanitise(req.body.name || '') || raw;
+    const handle = crHandle(channel, raw, entity);
+
+    let existing = await query('SELECT identity_id, bridge_id FROM identities WHERE email = $1', [handle]);
+    let identity_id, bridge_id;
+    if (existing.rows.length) {
+      identity_id = existing.rows[0].identity_id; bridge_id = existing.rows[0].bridge_id;
+    } else {
+      identity_id = uuidv4(); bridge_id = genBridge();
+      await query(
+        `INSERT INTO identities
+           (identity_id, bridge_id, display_name, email, phone, otp_contact, identity_type, parent_entity_id,
+            owner_scope, auth_method, status, entity_kind)
+         VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending','shopper')`,
+        [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
+    }
+    const otp = genOTP();
+    /* ⚠️ the attempt counter DECAYS with the TTL and is not zeroed by asking again — the T3.12 rule from
+       /order/start, repeated here because repeating the rule is cheaper than sharing a bug. */
+    const OTP_TTL_MS = 15 * 60 * 1000;
+    await query(
+      `UPDATE identities
+          SET otp_code = $1, otp_expires_at = $2, otp_contact = $3,
+              otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW()
+                                  THEN 0 ELSE COALESCE(otp_attempts, 0) END
+        WHERE identity_id = $4`,
+      [otp, new Date(Date.now() + OTP_TTL_MS), raw, identity_id]);
+    const sent = await sendOtp(channel, raw, name, otp);
+    res.json({
+      message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
+      channel,
+      ...(devOtp.mayExposeOtp() && { dev_otp: otp })
+    });
+  } catch (err) {
+    console.error('support/start:', err.message);
+    res.status(500).json({ error: 'Could not send the code', message: safeErr(err) });
+  }
+});
+
 router.post('/:bridge_id/support',
   [ body('otp').trim().isLength({ min: 6, max: 6 }),
     body('observed').trim().isLength({ min: 1 }).withMessage('Say what went wrong') ],
@@ -846,10 +907,16 @@ router.post('/:bridge_id/support',
       const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
       const observed = String(req.body.observed || '').trim().slice(0, 4000);
 
+      /* ⚠️ THE POPULATION TRAVELS. Without it every storefront ticket was stamped 'live' in its immutable
+         routed_by — on the one path where an actual member of the public raises something, which is exactly
+         the distinction b249 exists to draw. A shopper belongs to the population of the shop they are
+         standing in front of. */
       const out = await require('../lib/raiseticket').raise(
-        { entity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name || 'A customer' },
+        { entity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name || 'A customer',
+          population: entity.population || 'live' },
         { id: c.identity_id, name: c.display_name || 'A customer' },
-        { kind: 'incident', audience: 'them', to_bridge_id: req.params.bridge_id,
+        /* ⭐ the RESOLVED shop's own bridge id, not whatever was in the URL — the link may carry a handle. */
+        { kind: 'incident', audience: 'them', to_bridge_id: entity.bridge_id || req.params.bridge_id,
           subject: observed.slice(0, 160), detail: observed, severity });
 
       /* ⚠️ raise() never throws and always answers — so 'raised: false' is a real outcome that must reach the

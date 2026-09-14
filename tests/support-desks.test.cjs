@@ -55,7 +55,13 @@ ok("'them' with no counterparty is REFUSED, not silently sent to us",
   'falling back to the platform would answer a shop complaint with our own support queue');
 
 ok("'them' pointing at an unknown or closed business is a sentence",
-  /no active business with bridge id/.test(raise));
+  /no active business known as/.test(raise));
+
+/* ⚠️ EVERY STOREFRONT LINK THE APP BUILDS IS ?s=<user_id>, and a bridge-id-only lookup refused all of them
+   AFTER the buyer's one-use code had been spent. Both public names, never an entity id. */
+ok("a counterparty may be named by HANDLE as well as bridge id",
+  /WHERE \(bridge_id = \$1 OR lower\(user_id\) = lower\(\$1\)\)/.test(raise),
+  'prodShopHandle builds /shop.html?s=<user_id>, and resolveEntity accepts either');
 
 /* ── WHOSE ROUTING ANSWERS ─────────────────────────────────────────────────────────────────────────────────── */
 ok('the DESK decides the routing, not the raiser',
@@ -190,9 +196,22 @@ ok('the code is SPENT, so one code is one ticket',
   /otp_code=NULL[\s\S]{0,120}WHERE identity_id=\$1`, \[c\.identity_id\]\);\s*\r?\n\s*\r?\n\s*const SEV/.test(cat),
   'verifyOtp does not clear it — without this one code posts tickets for fifteen minutes');
 
-ok('it raises with audience them, addressed to the shop in the URL',
-  /audience: 'them', to_bridge_id: req\.params\.bridge_id/.test(cat),
-  'the shop is the one the buyer is standing in front of — never a bridge id in the body');
+/* ⚠️ THE RESOLVED SHOP'S OWN BRIDGE ID, not the URL param — the link may carry a handle, and resolveEntity has
+   already turned it into the real entity by this point. Still never a bridge id from the request body. */
+ok('it raises with audience them, addressed to the RESOLVED shop',
+  /audience: 'them', to_bridge_id: entity\.bridge_id/.test(cat)
+    && !/to_bridge_id: (req\.body|b)\./.test(cat),
+  'the shop is the one the buyer is standing in front of — never one named in the body');
+
+ok('a closed shop can actually be told — support has its own code step',
+  /router\.post\('\/:bridge_id\/support\/start'/.test(cat),
+  '/order/start 403s a closed shop, so the case the support path carefully allows was unreachable at the '
+  + 'first button, and the refusal talked about orders to somebody who was not ordering');
+
+ok('the storefront ticket carries the SHOP’s population',
+  /population: entity\.population \|\| 'live'/.test(cat)
+    && /business_status, population\b/.test(cat),
+  'without it every buyer ticket claimed the live world on the one path a real member of the public uses');
 
 ok('severity is taken from the ENGINE’s list, not re-listed here',
   /require\('\.\.\/lib\/raiseticket'\)\.URGENCY/.test(cat) && !/'Sev-1'/.test(cat),
@@ -288,6 +307,29 @@ ok('the receipt names WHICH platform desk',
 ok('the note carries it too',
   /desk_why: r\.deskWhy \|\| null/.test(raise),
   'the preview and the send answer from one resolver; a field on one and not the other re-opens the gap');
+
+
+/* ── WHAT THE REVIEW FOUND, HELD DOWN ───────────────────────────────────────── */
+ok('a preview about SOMEBODY ELSE tells you who, and nothing else',
+  /const mine = String(r.desk) === String(from.entity_id) || r.audience !== .them./.test(raise),
+  'it published another business’s folder name, the person who answers and its parent network to any '
+  + 'account that asked, for any bridge id, with no relationship of any kind');
+
+ok('assignment reports the OUTCOME, like filing does',
+  raise.includes('assignedRows = as.rowCount')
+    && raise.includes('assigned: assignedRows === null ? false : assignedRows > 0'),
+  'a routed person who is not on the receiving desk is silently not assigned, and it said yes anyway');
+
+ok('the counterparty copy carries no foreign folder id and no actor id',
+  raise.includes("assignee: route.assignee_actor_id ? 'routed' : null")
+    && raise.includes('String(to) === String(desk) && route.folder_id'),
+  'summary_json sits on BOTH copies and is immutable — it was handing one business’s internal keys '
+  + 'to the other, permanently, including to an anonymous shopper');
+
+ok('here and them work without an operator entity at all',
+  (raise.match(/if \(!root && String\(t\.audience \|\| 'platform'\) === 'platform'\)/g) || []).length === 2,
+  'a shop could not log a fault against its OWN business because an entity nobody involved needed was missing '
+  + '— and BOTH doors must agree, or the note and the send disagree');
 
 /* the runner reads the LAST "<n> checks" from this output — without it a passing guard reports 0, which is
    indistinguishable from a guard that ran nothing. [[feedback-silence-is-the-bug]] */
