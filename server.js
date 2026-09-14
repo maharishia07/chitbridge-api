@@ -346,6 +346,27 @@ app.use((req, res) => {
 // ── Error handler ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
   /**
+   * ── ⭐⭐ A RULE THE DATABASE ENFORCES STILL HAS TO READ LIKE A SENTENCE ────────────────────────────────────
+   *
+   * b247 stops a test entity trading with a production one, and it does so in a trigger precisely so that no
+   * route can get around it — including routes nobody has written yet. The cost of guarding the table rather
+   * than the door is that the refusal arrives here as a raw postgres error, and an unmapped one answers 500:
+   * *"Failed to send"*. That reads as a fault in the product, so the first person to hit it files a bug and
+   * the second works around it.
+   *
+   * ⭐ THE ONLY CORRECT REFUSAL IS ONE THAT SAYS WHAT WAS REFUSED AND WHY. Matched on the trigger's own words
+   * rather than on the bare SQLSTATE, because 23514 is every CHECK constraint in the schema and answering
+   * "cannot trade" to a tax-slab violation would be worse than saying nothing. [[feedback-write-for-the-shopkeeper]]
+   */
+  if (err && err.code === '23514' && /cannot trade with a/.test(String(err.message || ''))) {
+    return res.status(409).json({
+      error: 'Test and live cannot mix',
+      message: String(err.message),
+      hint: err.hint || 'Test data must never reach a real business\'s books. Use a test counterparty.',
+      code: 'POPULATION_BOUNDARY',
+    });
+  }
+  /**
    * ⭐ A DECISION THIS API MADE ANSWERS AS A DECISION. Only an error that declares this code reaches this
    * branch — an ordinary throw still gets the generic 500 below, so nothing new leaks. The origin is echoed
    * back because the caller already knows it; what they do not know is that it was refused on purpose.
