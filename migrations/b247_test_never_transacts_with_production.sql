@@ -93,11 +93,27 @@ COMMIT;
 
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 -- ⭐ PROVE IT — both directions, because a guard that only blocks one is a guard with a way round it.
--- ⚠️ Everything here is rolled back.
+--
+-- ⚠️⚠️ THE FIRST VERSION OF THIS BLOCK ENDED IN `RAISE EXCEPTION` TO UNDO ITS OWN PROBE ROWS, and Athi got:
+--
+--     Failed to run sql query: ERROR: P0001: b247: probes complete and rolled back (this exception is deliberate)
+--
+-- The trigger was installed — the COMMIT above had already happened — but the whole DO block aborted, so the
+-- NOTICEs saying whether the probes actually PASSED were never printed, and a correct run reported as a
+-- failure. A verification step that cannot tell success from failure is not a verification step.
+--
+-- ⭐ EACH PROBE NOW ROLLS BACK ON ITS OWN. A BEGIN…EXCEPTION block in plpgsql is a subtransaction, so raising
+-- inside it undoes that INSERT and nothing else. ⚠️ And plpgsql variables are NOT transactional — an
+-- assignment made just before the raise survives it, which is what lets the flag outlive the rollback.
+--
+-- ⭐ IT RAISES ONLY WHEN SOMETHING IS WRONG. A clean run finishes green with a notice; a guard that failed to
+-- fire still stops the script hard, because that is the one outcome nobody should be able to scroll past.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 DO $$
 DECLARE
-  real_id uuid; test_id uuid; got boolean;
+  real_id uuid; test_id uuid;
+  leaked_a boolean := false;   -- test → production got through
+  leaked_b boolean := false;   -- production → test got through
 BEGIN
   SELECT identity_id INTO real_id FROM identities
    WHERE identity_type='entity' AND NOT is_test AND coalesce(status,'active')<>'erased' LIMIT 1;
@@ -109,27 +125,38 @@ BEGIN
     RETURN;
   END IF;
 
-  got := false;
+  -- ── test → production ────────────────────────────────────────────────────────────────────────────────────
   BEGIN
     INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, purpose)
     VALUES (gen_random_uuid(), real_id, test_id, 'b247 probe');
-    got := true;
+    leaked_a := true;                 -- survives the rollback below: plpgsql vars are not transactional
+    RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'b247 probe rollback';
   EXCEPTION
     WHEN check_violation THEN RAISE NOTICE 'b247: ✓ test → production refused.';
-    WHEN others          THEN RAISE NOTICE 'b247: ⚠ could not probe (%) — check manually.', SQLERRM;
+    WHEN data_exception  THEN RAISE NOTICE 'b247: ✗ test → production WAS ALLOWED (probe row rolled back).';
   END;
-  IF got THEN RAISE EXCEPTION 'b247: ✗ A TEST ENTITY CAN STILL SEND TO A REAL ONE.'; END IF;
 
-  got := false;
+  -- ── production → test ────────────────────────────────────────────────────────────────────────────────────
   BEGIN
     INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, purpose)
     VALUES (gen_random_uuid(), test_id, real_id, 'b247 probe');
-    got := true;
+    leaked_b := true;
+    RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'b247 probe rollback';
   EXCEPTION
     WHEN check_violation THEN RAISE NOTICE 'b247: ✓ production → test refused.';
-    WHEN others          THEN RAISE NOTICE 'b247: ⚠ could not probe (%) — check manually.', SQLERRM;
+    WHEN data_exception  THEN RAISE NOTICE 'b247: ✗ production → test WAS ALLOWED (probe row rolled back).';
   END;
-  IF got THEN RAISE EXCEPTION 'b247: ✗ A REAL ENTITY CAN STILL SEND TO A TEST ONE.'; END IF;
 
-  RAISE EXCEPTION 'b247: probes complete and rolled back (this exception is deliberate).';
+  IF leaked_a OR leaked_b THEN
+    RAISE EXCEPTION 'b247: THE BOUNDARY DOES NOT HOLD — % % still gets through.',
+      CASE WHEN leaked_a THEN 'test→production' ELSE '' END,
+      CASE WHEN leaked_b THEN 'production→test' ELSE '' END;
+  END IF;
+
+  RAISE NOTICE 'b247: both directions refused. The boundary holds.';
 END $$;
+
+-- ⭐ and the state of it, as a row rather than a notice — notices are easy to scroll past.
+SELECT 'chit_header_population_boundary' AS trigger_name,
+       EXISTS (SELECT 1 FROM pg_trigger
+                WHERE tgname = 'chit_header_population_boundary' AND NOT tgisinternal) AS installed;
