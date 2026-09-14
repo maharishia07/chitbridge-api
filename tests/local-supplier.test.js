@@ -245,9 +245,21 @@ it('⭐⭐⭐ the business search excludes them — asserted in the file that do
    * ⚠️ Asserting "we mint a tilde" only proves half. The other half lives in another file, and if someone widens
    * that WHERE clause the leak opens there while every assertion about minting stays green. So read it there.
    */
+  /**
+   * ⚠️ THE WINDOW WAS A MAGIC NUMBER AND IT RAN OUT, 2026-09-14. This matched 4000 characters after
+   * `router.get('/search'`; a comment added to that handler pushed `ORDER BY` past the budget and the guard
+   * reported "moved — now blind". It was RIGHT to refuse rather than pass, and that is the only reason the
+   * breakage was visible — but it failed for a reason that had nothing to do with what it guards.
+   *
+   * ⭐ Bounded by the NEXT ROUTE instead, which is the real end of this handler. A handler can now grow
+   * without silencing its own guard.
+   */
   const s = src('routes/entities.js');
-  const m = s.match(/router\.get\('\/search'[\s\S]{0,4000}?ORDER BY/);
-  assert.ok(m, 'GET /entities/search moved — this guard is now blind and must be repointed');
+  const from = s.indexOf("router.get('/search'");
+  assert.ok(from >= 0, 'GET /entities/search moved — this guard is now blind and must be repointed');
+  const next = s.indexOf('\nrouter.', from + 10);
+  const m = [s.slice(from, next < 0 ? s.length : next)];
+  assert.ok(/ORDER BY/.test(m[0]), 'the search handler no longer has an ORDER BY — repoint this guard');
   assert.ok(/NOT LIKE '~%'/.test(m[0]),
     'the business search no longer excludes minted parties — every local supplier is now public');
 });
