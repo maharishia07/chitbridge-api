@@ -321,6 +321,15 @@ const ENGINE_OTHER = [
    */
   'supportcopy.js',
   /**
+   * ENGINE, on the same test as the two beside it: it holds a RULE about WHERE WORK GOES.
+   * ⭐ The rule is the cascade — device, then connector, then KIND, then the entity default, most specific
+   * wins. Swap this file and CBINC stops being five queues and becomes one inbox with five labels, which is
+   * the exact failure DESIGN-SUPPORT-LIFECYCLE.md 5.1 calls the keystone.
+   * ⚠️ It reads a table, which is what tempts people to file it as a store — but stock-store.js only knows
+   * WHERE a thing is kept, while this one decides which of four rungs answers. (2026-09-14)
+   */
+  'workroute.js',
+  /**
    * ⭐ ENGINE, AND FOR TESTBOARD'S EXACT REASON. platformroot decides WHICH ENTITY is the operator of this
    * deployment — whose customer list holds every registered shop, whose folders hold the support queues.
    * Swap it and a different company runs the platform, which is not what "swap it and ChitBridge is
