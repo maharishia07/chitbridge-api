@@ -1371,6 +1371,43 @@ router.get('/mis', auth, async (req, res) => {
     }
 
     const LIVE = "coalesce(status,'active') <> 'erased'";
+
+    /**
+     * ── ⭐⭐ ONE CLASS PER ENTITY — exhaustive, and no row in two boxes ───────────────────────────────────────
+     *
+     * Athi, 2026-09-14: *"root network will provide either service or goods, so the root entity should be part
+     * of the other claim. goods, service, both — they will be the paying entity … the 10 network shops to be
+     * grouped under the previous group based on what they choose … the internal shops are another 10 … so the
+     * remaining 50 to showcase as network shops."*
+     *
+     * ⚠️ MY FIRST VERSION DOUBLE-COUNTED: it offered "Network entities" beside Goods and Services as if they
+     * were alternatives. A network ROOT is a business — it sells something and it pays — so it belongs in
+     * goods/services/both like any other shop. Picking "Network" silently discarded what the shop sold.
+     *
+     * ⚠️⚠️ AND THE SECOND VERSION BURIED EVERY REAL SHOP. Athi ticked Public + Goods, expected Tally Test Shop
+     * and alpha timers, and got a hundred e2e fixtures: 2,241 of the 2,259 "goods" were test rows. They were
+     * not missing — they were row 1,400 of a list that stops at 100. A category that is 99% noise is not a
+     * category, and "narrow the filters to see the rest" is not an answer when there is no filter that would.
+     *
+     * ⭐ SO 'test' IS A RUNG, for the same reason 'internal' and 'network' are: IT IS NOT A PAYING ENTITY.
+     * The ladder separates everything that cannot be billed before it asks what anything sells, which means
+     * "Goods" finally means what an operator reads it to mean — real shops that sell things.
+     *
+     * ⚠️ ORDER IS THE DEFINITION. A fixture that is also a branch must read as a fixture, or the network count
+     * inherits the noise instead. Most-disqualifying first:
+     *
+     *   internal  ours — cbincroot, the standards. Never a counterparty, never billed.
+     *   test      a fixture. Not a business at all; it exists because a test made it.
+     *   network   a BRANCH. It trades, but its plan belongs to its root, so it is not a paying entity.
+     *   goods · services · both   everyone who PAYS: standalone shops and network roots together.
+     *   unset     nobody has asked them yet. ⚠️ Its own rung, never folded into a real answer.
+     */
+    const CLASS_SQL = `CASE
+        WHEN coalesce(i.entity_visibility,'public') = 'internal'        THEN 'internal'
+        WHEN i.entity_kind = 'test'                                     THEN 'test'
+        WHEN c.bridge_id IS NOT NULL AND nlevel(c.path) > 1             THEN 'network'
+        WHEN i.supplies IN ('goods','services','both')                  THEN i.supplies
+        ELSE 'unset' END`;
     const [kinds, verticals, sup, evis, vis, plans, tree, classes, joins] = await Promise.all([
       query(`SELECT entity_kind AS k, count(*)::int AS n,
                     count(*) FILTER (WHERE user_id IS NOT NULL)::int AS with_handle,
@@ -1396,11 +1433,9 @@ router.get('/mis', auth, async (req, res) => {
               GROUP BY 1 ORDER BY 1`),
       /* ⭐ THE SAME LADDER, COUNTED. If these do not sum to the entity total the taxonomy is broken, and that
          is a thing we should be able to see rather than trust. */
-      query(`SELECT CASE
-                      WHEN coalesce(i.entity_visibility,'public') = 'internal'     THEN 'internal'
-                      WHEN c.bridge_id IS NOT NULL AND nlevel(c.path) > 1          THEN 'network'
-                      WHEN i.supplies IN ('goods','services','both')               THEN i.supplies
-                      ELSE 'unset' END AS v, count(*)::int AS n
+      /* ⭐ THE SAME LADDER, not a second copy of it. The breakdown and the filter must agree by construction:
+         two CASEs that look alike is how a screen comes to say 2,259 and return something else. */
+      query(`SELECT ${CLASS_SQL} AS v, count(*)::int AS n
                FROM identities i LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
               WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
               GROUP BY 1 ORDER BY 2 DESC`),
@@ -1467,12 +1502,6 @@ router.get('/mis', auth, async (req, res) => {
      * ⚠️ ORDER IS THE DEFINITION. internal before network before supplies — an internal entity that happened
      * to be a branch must read as internal, or 'internal' stops meaning "not on the market".
      */
-    const CLASS_SQL = `CASE
-        WHEN coalesce(i.entity_visibility,'public') = 'internal'        THEN 'internal'
-        WHEN c.bridge_id IS NOT NULL AND nlevel(c.path) > 1            THEN 'network'
-        WHEN i.supplies IN ('goods','services','both')                 THEN i.supplies
-        ELSE 'unset' END`;
-
     const hasStanding = (await query(
       "SELECT to_regprocedure('ops.f_entity_standing()') IS NOT NULL AS ok")).rows[0].ok === true;
     const ST_JOIN = hasStanding ? 'LEFT JOIN ops.f_entity_standing() st ON st.entity_id = i.identity_id' : '';
