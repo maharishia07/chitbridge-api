@@ -1241,12 +1241,45 @@ const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rej
 /** POST /api/testing/requirements — raise one from the case that found it. */
 router.post('/requirements', auth, async (req, res) => {
   try {
-    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const observed = String(b.observed || '').trim();
     const requirement = String(b.requirement || '').trim();
     const case_key = String(b.case_key || '').trim() || null;
+
+    /**
+     * ── ⚠️⚠️ THE CASE AND THE REQUIREMENT NO LONGER LIVE IN THE SAME ENTITY ───────────────────────────────
+     *
+     * A `testcase` is on the shared board; a raised requirement stays with whoever raised it (2026-09-14, see
+     * lib/testboard.js). The citation lookup further down searches THIS entity for a case that is on the
+     * board, finds nothing, and would leave the link silently missing while the requirement saves happily.
+     * [[feedback-silence-is-the-bug]]
+     *
+     * ⭐ AND THE OBVIOUS FIX IS WRONG. Reading the case from the board is fine; WRITING the citation back onto
+     * it is not. The board is visible to every signed-in user, and a case stamped
+     * `cites: { definition_id: <a uuid in someone else's entity> }` publishes both a dangling pointer and the
+     * fact that that person raised a requirement. ⚠️ A SHARED ROW MAY NEVER CARRY A PRIVATE ONE'S ID.
+     *
+     * ⚠️ SO THE LINK IS HELD, AND SAID — `cite_held`, exactly as importCases answers `retire_held`, because
+     * "cited: false" with no explanation reads as "there was nothing to cite". The durable fix is to carry the
+     * citation on the REQUIREMENT side; that is a schema change and does not belong in a security patch.
+     *
+     * ⚠️ AND IT IS RESOLVED OUT HERE, BEFORE THE TRANSACTION OPENS. withEntity pins a transaction to ONE
+     * entity — the board cannot be read from inside the one below, and nesting a second withEntity would hold
+     * two connections for the length of the write. [[project-round-trip-cost]]
+     */
+    let citeHeld = null;
+    const caseEntity = testboard.entityFor(auth.entityOf(req));
+    if (case_key && caseEntity !== entity_id) {
+      const seen = await withEntity(caseEntity, (db) => db.query(
+        `SELECT 1 FROM definition WHERE entity_id = $1 AND kind = 'testcase' AND name = $2 LIMIT 1`,
+        [caseEntity, case_key]));
+      citeHeld = seen.rows[0]
+        ? 'the case is on the shared board and this requirement is yours, so the link is not written onto a '
+          + 'shared row. The requirement records the case key and is saved.'
+        : 'no case named ' + case_key + ' on the board.';
+    }
     /* ⚠️ BOTH, and refused rather than defaulted. A requirement with no evidence is a wish, and evidence with no
        requirement is a note — neither can be actioned, which is the whole point of the list. */
     if (!requirement) return res.status(400).json({ error: 'Nothing to raise', message: 'Say what must be true.' });
@@ -1291,8 +1324,26 @@ router.post('/requirements', auth, async (req, res) => {
        * ⭐ THE CASE NOW CITES IT, at version 1 — which is the citation the board has never had. ⚠️ Only when the
        * case has no citation already: overwriting one would lose the clause it was actually written against.
        */
+      /**
+       * ── ⚠️⚠️ THE CASE AND THE REQUIREMENT NO LONGER LIVE IN THE SAME ENTITY ─────────────────────────────
+       *
+       * A `testcase` is on the shared board; a raised requirement stays with whoever raised it (b-2026-09-14,
+       * lib/testboard.js). So this lookup — unchanged — searches the caller's entity for a case that is on the
+       * board, finds nothing, and leaves `cited` false. THE REQUIREMENT STILL SAVES AND THE LINK IS SILENTLY
+       * MISSING, which is the failure this codebase keeps producing. [[feedback-silence-is-the-bug]]
+       *
+       * ⭐ AND THE OBVIOUS FIX IS WRONG. Reading the case from the board is fine; WRITING the citation back
+       * onto it is not. The board is visible to every signed-in user, and a case stamped
+       * `cites: { definition_id: <a uuid in someone else's entity> }` publishes both a dangling pointer and
+       * the fact that that person raised a requirement. A shared row may never carry a private one's id.
+       *
+       * ⚠️ SO THE LINK IS HELD, AND SAID. `cite_held` is answered to the caller for the same reason
+       * importCases answers `retire_held` — "0 linked" with no explanation reads as "nothing to link".
+       * The durable fix is to carry the citation on the REQUIREMENT side, which is a schema change and does
+       * not belong in a security patch. Recorded in BACKLOG.md.
+       */
       let cited = false;
-      if (case_key) {
+      if (case_key && citeHeld === null) {
         const c = await db.query(
           `SELECT d.definition_id, d.current_version, v.rules
              FROM definition d JOIN definition_version v
@@ -1312,7 +1363,7 @@ router.post('/requirements', auth, async (req, res) => {
           cited = true;
         }
       }
-      return { definition_id: id, clause: name, cited };
+      return { definition_id: id, clause: name, cited, cite_held: citeHeld };
     });
 
     try {
@@ -1335,7 +1386,7 @@ router.post('/requirements', auth, async (req, res) => {
  */
 router.get('/requirements', auth, async (req, res) => {
   try {
-    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules
@@ -1381,7 +1432,7 @@ router.get('/requirements', auth, async (req, res) => {
  */
 router.patch('/requirements/:id', auth, async (req, res) => {
   try {
-    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
     const state = String((req.body || {}).state || '');
     const why = String((req.body || {}).why || '').trim();
@@ -1498,7 +1549,7 @@ const SEV_MEANS = {
 /** POST /api/testing/incidents — record one where it happened. */
 router.post('/incidents', auth, async (req, res) => {
   try {
-    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const observed = String(b.observed || '').trim();
@@ -1576,7 +1627,7 @@ router.post('/incidents', auth, async (req, res) => {
  */
 router.get('/incidents', auth, async (req, res) => {
   try {
-    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules
@@ -1639,7 +1690,7 @@ router.get('/incidents', auth, async (req, res) => {
  */
 router.patch('/incidents/:id', auth, async (req, res) => {
   try {
-    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const state = String(b.state || '');
@@ -1762,7 +1813,7 @@ router.patch('/incidents/:id', auth, async (req, res) => {
  */
 router.post('/evidence', auth, async (req, res) => {
   try {
-    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const mime = String(b.mime || '').toLowerCase();
@@ -2163,17 +2214,43 @@ router.get('/report', auth, async (req, res) => {
      * ⚠️ ONE QUERY, THREE KINDS. They live in one table by design (definition.kind is free text), so counting
      * them separately would be three round trips to answer one question.
      */
+    /**
+     * ── ⚠️⚠️ AND THE THREE KINDS NO LONGER LIVE IN ONE ENTITY ─────────────────────────────────────────────
+     *
+     * The comment above still holds — one table, three kinds — but as of 2026-09-14 they are not in the same
+     * ENTITY. `testcase` is the product's own suite on the shared board; `spec` (the requirement kind) and
+     * `incident` are findings and stay with whoever raised them. See lib/testboard.js.
+     *
+     * ⭐ SO IT IS ONE QUERY WHEN THEY COINCIDE AND TWO WHEN THEY DO NOT. With the board off — every entity is
+     * its own board — `mine === entity_id` and this behaves exactly as it did, at exactly the same cost. The
+     * second round trip is only paid when there is genuinely a second entity to read, which matters because
+     * every round trip here is 1.4-2.4 s. [[project-roundtrip-cost]]
+     */
+    const mine = testboard.entityForFinding(auth.entityOf(req));
+    const CASE_H = `d.kind = 'testcase' AND d.name ~ '-H[0-9]+$'`;
+    const FINDING = `d.kind IN ('spec','incident')`;
+    const foundSql = (where) =>
+      `SELECT d.kind, d.name, d.status, v.rules
+         FROM definition d
+         JOIN definition_version v
+           ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND (${where})
+        ORDER BY d.kind, d.name`;
+
     let found = { rows: [] };
     try {
-      found = await withEntity(entity_id, (db) => db.query(
-        `SELECT d.kind, d.name, d.status, v.rules
-           FROM definition d
-           JOIN definition_version v
-             ON v.definition_id = d.definition_id AND v.version = d.current_version
-          WHERE d.entity_id = $1
-            AND (d.kind IN ('spec','incident')
-                 OR (d.kind = 'testcase' AND d.name ~ '-H[0-9]+$'))
-          ORDER BY d.kind, d.name`, [entity_id]));
+      if (mine === entity_id) {
+        found = await withEntity(entity_id, (db) => db.query(foundSql(`${FINDING} OR (${CASE_H})`), [entity_id]));
+      } else {
+        const [cases, findings] = await Promise.all([
+          withEntity(entity_id, (db) => db.query(foundSql(CASE_H),  [entity_id])),
+          withEntity(mine,      (db) => db.query(foundSql(FINDING), [mine])),
+        ]);
+        /* ⚠️ re-sorted after the merge. Two ordered reads concatenated are NOT ordered, and the section below
+           groups by kind — an unsorted list would print incidents interleaved with requirements. */
+        found = { rows: (cases.rows || []).concat(findings.rows || [])
+          .sort((a, b) => (a.kind + a.name).localeCompare(b.kind + b.name)) };
+      }
     } catch (_) { found = { rows: [] }; }
 
     const KINDW = { testcase: 'case', spec: 'requirement', incident: 'incident' };

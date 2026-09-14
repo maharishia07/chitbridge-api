@@ -88,9 +88,27 @@ it('⭐⭐⭐ every onclick in a capability calls a function that exists', () =>
   const defined = new Set(['api', 'toast', 'modal', 'closeModal', 'esc', 'tx', 'txf', 'alert', 'confirm', 'open',
                            'setTimeout', 'clearTimeout', 'event', 'window', 'document', 'history', 'location',
                            'Number', 'String', 'Boolean', 'Array', 'Object', 'JSON', 'parseInt', 'parseFloat']);
+  /**
+   * ── ⚠️⚠️ BLANK THE COMMENTS BEFORE SCANNING. FOURTH GUARD, SAME FAULT ─────────────────────────────────────
+   *
+   * 2026-09-14: this guard reported `cap-testing.js → fn()`. There is no such call. Line 551 of that file is a
+   * COMMENT — `onclick="fn('HERE')"` — written the day before to document the XSS escaping rule, and the guard
+   * read the illustration as a control.
+   *
+   * ⚠️ token-check.cjs, modal-safe-repaint.cjs and screen-reads.cjs each needed exactly this, each after
+   * firing on their own prose. A guard that reads comments punishes the codebase for explaining itself, and
+   * the cheapest way to make it green is to delete the explanation — which is the worst possible outcome.
+   *
+   * ⭐ Replaced with spaces, not stripped: every offset and line number stays where it was, so any message
+   * that quotes a position still points at the right place.
+   */
+  const blankComments = (s) => s
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+    .replace(/(^|[^:\\])\/\/[^\n]*/g, (m) => m[0] + m.slice(1).replace(/[^\n]/g, ' '));
+
   const src = {};
   files.forEach((f) => {
-    const s = fs.readFileSync(f, 'utf8'); src[f] = s;
+    const s = blankComments(fs.readFileSync(f, 'utf8')); src[f] = s;
     let m; const decl = /(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
     while ((m = decl.exec(s))) defined.add(m[1]);
     const assign = /(?:^|\n)\s*(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function|\()/g;
