@@ -400,7 +400,27 @@ router.get('/search', auth, async (req, res) => {
         * NOTE: plain SQL comment markers and NO BACKTICKS -- this block lives inside a JS template literal, and
         * a backtick here terminates the query string. It did, once.
         */
-       AND COALESCE(entity_visibility, 'public') <> 'internal'
+       AND (
+         COALESCE(entity_visibility, 'public') NOT IN ('internal', 'private')
+         /*
+          * -- PRIVATE IS NOT FINDABLE, BUT IT IS REACHABLE. Athi, 2026-09-14, on the rule for 'private':
+          * "reachable only by someone who already holds the handle."
+          *
+          * So an EXACT handle still resolves; a partial or fuzzy match never does. Type "chola" and a private
+          * shop stays hidden; type its whole user_id and you get it, because you already knew it.
+          *
+          * That distinction is the same one rows 3 and 4 of the matrix turn on: FINDABLE and REACHABLE are
+          * different questions. Collapsing them would mean a private shop could never be sent a chit by anyone
+          * who did not already trade with it -- which is most of why a shop would choose private in the first
+          * place: quiet, not cut off.
+          *
+          * $3 is the raw query, already bound for the ORDER BY below.
+          *
+          * NOTE: zero rows are entity_visibility='private' today, so this changes nothing now. That is exactly
+          * why it is safe to write now -- the rule exists before anyone can be surprised by it.
+          */
+         OR (COALESCE(entity_visibility, 'public') = 'private' AND LOWER(user_id) = LOWER($3))
+       )
        /**
         * An exact handle beats a fuzzy name — someone who typed the identifier knew what they wanted.
         * ⚠️ $3, NOT $2. $2 is the CALLER'S identity_id (the "not me" filter); comparing a user_id against it
