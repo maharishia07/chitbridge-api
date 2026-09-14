@@ -1518,6 +1518,51 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.entity_visibility || '').trim(),
        String(req.query.supplies || '').trim()])).rows;
 
+    /**
+     * ── ⭐⭐ THE COUNTING SURFACE — counts from any table, rows from none (b241) ──────────────────────────────
+     *
+     * Athi, 2026-09-14: *"from any table we should be able to take the count, not the details — data cannot be
+     * read, but the metrics should be. if we can't read the metrics, then how to support the platform?"*
+     *
+     * ⚠️ WHY NOT A SUBQUERY BESIDE `suppliers` ABOVE. `supplier_list` has no RLS, so that one works. The same
+     * line against customer_list, catalogue_items or chit_header reads ZERO and does not complain: all three are
+     * FORCE ROW LEVEL SECURITY, cb_app is NOBYPASSRLS, and this route deliberately sets no app.current_entity
+     * because it reads across shops. `ops.f_entity_counts()` is SECURITY DEFINER and returns counts only.
+     *
+     * ⭐ ASKED FOR THIS PAGE'S IDS, not the platform. The function aggregates everything either way, but sending
+     * 2,500 entities × 5 metrics back to Node to throw away 96% of it is waste with no upside.
+     *
+     * ⚠️⚠️ AND IF b241 HAS NOT BEEN RUN, counts is NULL — never {}. The screen must be able to tell "nobody has
+     * any customers" from "nobody has asked", and a 0 cannot say the second. [[feedback-silence-is-the-bug]]
+     */
+    let counts = null, counts_error = null;
+    if (rows.length) {
+      try {
+        const cr = await query(
+          'SELECT entity_id, metric, n::int AS n FROM ops.f_entity_counts() WHERE entity_id = ANY($1::uuid[])',
+          [rows.map((r) => r.identity_id)]);
+        counts = new Map();
+        for (const x of cr.rows) {
+          if (!counts.has(x.entity_id)) counts.set(x.entity_id, {});
+          counts.get(x.entity_id)[x.metric] = x.n;
+        }
+      } catch (e) {
+        /* 42883 undefined_function · 3F000 invalid_schema_name · 42501 insufficient_privilege — all mean the
+           same thing to the operator: b241 is not in this database yet. Anything else is a real fault and is
+           still reported rather than swallowed. */
+        counts_error = e.code || 'unknown';
+      }
+    }
+    for (const r of rows) {
+      const c = counts ? (counts.get(r.identity_id) || {}) : null;
+      /* ⭐ THE SURFACE WINS WHERE BOTH EXIST. seats and suppliers are also read inline above, because they work
+         with no migration and SORTS orders by them. When supplier_list finally gets RLS (BACKLOG), that inline
+         count turns silently into 0 — so the surface, which reads through RLS, takes precedence now. */
+      r.counts = c;
+      if (c && c.people    != null) r.seats     = c.people;
+      if (c && c.suppliers != null) r.suppliers = c.suppliers;
+    }
+
     /* the SAME predicate as the page above, counted without the LIMIT — see the note on `matched` below */
     const matched = Number((await query(
       `SELECT count(*)::int AS n
@@ -1564,6 +1609,9 @@ router.get('/mis', auth, async (req, res) => {
       by_supplies: asObj(sup, 'v', 'n'),
       by_position: asObj(tree, 'pos', 'n'),
       joined_by_month: joins.rows,
+      /* ⭐ the screen renders '—' and names the migration when this is false — never a zero */
+      counts_wired: counts !== null,
+      counts_error,
       rows,
       /**
        * ── ⚠️⚠️ HOW MANY MATCHED, NOT HOW MANY FITTED ──────────────────────────────────────────────────────
