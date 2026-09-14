@@ -19,6 +19,10 @@
 -- ⚠️ THE ARITHMETIC TRAP, FOR THE FIFTH TIME. chit_header holds ONE ROW PER PARTICIPANT COPY. count(*) counts
 --    copies, not chits, and a self-chit has two. Every count here is count(DISTINCT chit_id). Do not "simplify".
 --
+-- ⚠️ REQUIRES b157. Every predicate below is entity_kind, not identity_type: before b157 there was no
+--    way to say "a business that is our customer" and these views would have counted all 2,502 identity rows
+--    where the answer is 90. See b157_entity_kind.sql.
+--
 -- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
@@ -33,7 +37,7 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
            count(c.item_id) FILTER (WHERE c.deleted_at IS NULL AND c.is_active) AS n
       FROM identities e
       LEFT JOIN catalogue_items c ON c.entity_id = e.identity_id
-     WHERE e.identity_type = 'entity' AND coalesce(e.status, 'active') <> 'erased'
+     WHERE e.entity_kind = 'customer' AND coalesce(e.status, 'active') <> 'erased'
      GROUP BY 1
   )
   SELECT CASE WHEN n = 0            THEN 'a · none'
@@ -55,10 +59,10 @@ RETURNS TABLE (bucket text, shops bigint, people bigint)
 LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
   WITH per_entity AS (
     SELECT e.identity_id AS entity_id,
-           count(a.identity_id) FILTER (WHERE a.identity_type = 'actor') AS n
+           count(a.identity_id) FILTER (WHERE a.entity_kind = 'actor') AS n
       FROM identities e
       LEFT JOIN identities a ON a.parent_entity_id = e.identity_id
-     WHERE e.identity_type = 'entity' AND coalesce(e.status, 'active') <> 'erased'
+     WHERE e.entity_kind = 'customer' AND coalesce(e.status, 'active') <> 'erased'
      GROUP BY 1
   )
   SELECT CASE WHEN n = 0          THEN 'a · none'
@@ -81,13 +85,13 @@ CREATE OR REPLACE VIEW metrics.staff_size AS SELECT * FROM metrics.f_staff_size(
 CREATE OR REPLACE FUNCTION metrics.f_adoption()
 RETURNS TABLE (milestone text, shops bigint, pct numeric)
 LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
-  WITH ent AS (SELECT identity_id FROM identities WHERE identity_type = 'entity' AND coalesce(status, 'active') <> 'erased'),
+  WITH ent AS (SELECT identity_id FROM identities WHERE entity_kind = 'customer' AND coalesce(status, 'active') <> 'erased'),
   total AS (SELECT count(*)::numeric AS n FROM ent),
   hit AS (
     SELECT 'a · registered'      AS milestone, (SELECT count(*) FROM ent) AS shops
     UNION ALL SELECT 'b · added a person',
       (SELECT count(DISTINCT a.parent_entity_id) FROM identities a
-        WHERE a.identity_type = 'actor' AND a.parent_entity_id IS NOT NULL)
+        WHERE a.entity_kind = 'actor' AND a.parent_entity_id IS NOT NULL)
     UNION ALL SELECT 'c · listed a product',
       (SELECT count(DISTINCT c.entity_id) FROM catalogue_items c
         WHERE c.deleted_at IS NULL AND c.is_active)
@@ -118,7 +122,7 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
            date_trunc('month', a.created_at)::date AS month,
            count(*) AS added
       FROM identities a
-     WHERE a.identity_type = 'actor' AND a.parent_entity_id IS NOT NULL AND coalesce(a.status, 'active') <> 'erased'
+     WHERE a.entity_kind = 'actor' AND a.parent_entity_id IS NOT NULL AND coalesce(a.status, 'active') <> 'erased'
      GROUP BY 1, 2
   ),
   cume AS (
@@ -146,17 +150,17 @@ GRANT SELECT ON metrics.catalogue_size, metrics.staff_size,
 -- ⭐ THE CENSUS — this is the bit that prints the numbers. Everything above just makes it possible.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-SELECT '① shops registered'  AS q, count(*)::text AS a FROM identities WHERE identity_type = 'entity' AND coalesce(status, 'active') <> 'erased'
+SELECT '① shops registered'  AS q, count(*)::text AS a FROM identities WHERE entity_kind = 'customer' AND coalesce(status, 'active') <> 'erased'
 UNION ALL
-SELECT '② people on shops',       count(*)::text FROM identities WHERE identity_type = 'actor' AND coalesce(status, 'active') <> 'erased'
+SELECT '② people on shops',       count(*)::text FROM identities WHERE entity_kind = 'actor' AND coalesce(status, 'active') <> 'erased'
 UNION ALL
 SELECT '③ live catalogue items',  count(*)::text FROM catalogue_items WHERE deleted_at IS NULL AND is_active
 UNION ALL
 SELECT '④ chits ever sent',       count(DISTINCT chit_id)::text FROM chit_header
 UNION ALL
-SELECT '⑤ first registration',    coalesce(min(created_at)::date::text, '—') FROM identities WHERE identity_type = 'entity' AND coalesce(status, 'active') <> 'erased'
+SELECT '⑤ first registration',    coalesce(min(created_at)::date::text, '—') FROM identities WHERE entity_kind = 'customer' AND coalesce(status, 'active') <> 'erased'
 UNION ALL
-SELECT '⑥ newest registration',   coalesce(max(created_at)::date::text, '—') FROM identities WHERE identity_type = 'entity';
+SELECT '⑥ newest registration',   coalesce(max(created_at)::date::text, '—') FROM identities WHERE entity_kind = 'customer' AND coalesce(status, 'active') <> 'erased';
 
 SELECT * FROM metrics.adoption;         -- ⭐ registered → person → product → chit. The drop-off is the story.
 SELECT * FROM metrics.catalogue_size;

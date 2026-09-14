@@ -51,6 +51,9 @@
 --    beside `tested_by`.
 --
 -- ⚠️ RUN b151 FIRST (it creates the pattern this follows). Independent of b154/b155.
+-- ⚠️ REQUIRES b157. ops.accounts lists entity_kind = customer — NOT every identity row. Before b157 this
+--    sheet would have been 2,163 lines of e2eco-mu0jzb0i929 with the 90 real shops buried in it.
+--
 -- Supabase → SQL Editor → paste → Run. Idempotent; safe to re-run.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
@@ -117,7 +120,7 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
             them would over-state every shop against its plan cap — the exact number §3 of the design says we
             would bill from. The SHOP filter below excludes erased shops for the same reason. */
          (SELECT count(*) FROM identities a
-           WHERE a.parent_entity_id = e.identity_id AND a.identity_type = 'actor'
+           WHERE a.parent_entity_id = e.identity_id AND a.entity_kind = 'actor'
              AND coalesce(a.status, 'active') <> 'erased')                               AS seats,
          (SELECT count(*) FROM catalogue_items c
            WHERE c.entity_id = e.identity_id AND c.deleted_at IS NULL AND c.is_active)   AS items,
@@ -128,7 +131,7 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
          (SELECT count(DISTINCT h.chit_id) FROM chit_header h
            WHERE h.sender_entity_id = e.identity_id)                                     AS chits_sent
     FROM identities e
-   WHERE e.identity_type = 'entity'
+   WHERE e.entity_kind = 'customer'
      AND coalesce(e.status, 'active') <> 'erased'
 $$;
 CREATE OR REPLACE VIEW ops.accounts AS SELECT * FROM ops.f_accounts();
