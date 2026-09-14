@@ -1286,6 +1286,188 @@ router.get('/usage', auth, async (req, res) => {
  * endpoint and assumes it describes live behaviour would be wrong, so the payload says so in its own field
  * rather than in a comment nobody reads. [[feedback-silence-is-the-bug]]
  */
+/**
+ * GET /api/entities/mis — THE PLATFORM AS ONE PAGE. Root only.
+ *
+ * Athi, 2026-09-14: *"how do i see it as a MIS?"* · *"what we need here is entity type, vertical and possible
+ * information."*
+ *
+ * ── ⭐ WHY THIS AND NOT THE `metrics` SCHEMA ────────────────────────────────────────────────────────────────
+ *
+ * b223/b224 built 15 views, and `cb_app` is refused every one of them — deliberately: they are granted to
+ * `cb_metrics` and `cb_ops`, which is the wall that lets a BI tool be pointed at the first without ever
+ * reaching a tenant list. Granting the API those rights would knock a hole in it for the sake of one screen.
+ *
+ * ⭐ SO THIS COMPUTES FROM THE TABLES THAT CARRY NO RLS AT ALL — identities and cb_entity. Everything below is
+ * an account fact or a structural one; not a single number here comes from a tenant's trade.
+ *
+ * ── ⚠️⚠️ AND IT SAYS WHAT IT CANNOT SEE ─────────────────────────────────────────────────────────────────────
+ *
+ * Catalogue size, chit volume and governance stamps live in RLS-forced tables. From this connection they return
+ * ZERO ROWS, not an error — which is how I reported three false findings on 2026-09-14 before `sql.cjs` was
+ * taught to name them. A report that silently omits what it could not read is the same failure with a nicer
+ * font, so `blind` lists them by name. [[feedback-silence-is-the-bug]]
+ */
+router.get('/mis', auth, async (req, res) => {
+  try {
+    const me = auth.entityOf(req);
+    const platformroot = require('../lib/platformroot');
+
+    /* ⚠️ ROOT ONLY. This is a cross-tenant view — every other entity gets a flat refusal, not an empty report,
+       because an empty report reads as "there is nothing" rather than "this is not yours". */
+    if (!platformroot.configured()) {
+      return res.status(404).json({ error: 'No platform root',
+        message: 'PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.' });
+    }
+    if (!platformroot.isRoot(me)) {
+      return res.status(403).json({ error: 'Not the platform root',
+        message: 'The platform report is available to the operator entity only.' });
+    }
+
+    const LIVE = "coalesce(status,'active') <> 'erased'";
+    const [kinds, verticals, plans, tree, joins] = await Promise.all([
+      query(`SELECT entity_kind AS k, count(*)::int AS n,
+                    count(*) FILTER (WHERE user_id IS NOT NULL)::int AS with_handle,
+                    count(*) FILTER (WHERE last_active_at > now()::timestamp - interval '30 days')::int AS active_30d
+               FROM identities WHERE ${LIVE} GROUP BY 1 ORDER BY 2 DESC`),
+      query(`SELECT vertical AS v, count(*)::int AS n FROM identities
+              WHERE ${LIVE} AND identity_type = 'entity' GROUP BY 1 ORDER BY 2 DESC`),
+      query(`SELECT plan AS p, count(*)::int AS n FROM identities
+              WHERE ${LIVE} AND identity_type = 'entity' GROUP BY 1 ORDER BY 2 DESC`),
+      /* rooting, from cb_entity's ltree — 1 = a root, >1 = a branch, absent = standalone */
+      query(`SELECT CASE WHEN c.bridge_id IS NULL THEN 'standalone'
+                         WHEN nlevel(c.path) = 1 THEN 'root'
+                         ELSE 'branch d' || nlevel(c.path) END AS pos,
+                    count(*)::int AS n
+               FROM identities i LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
+              WHERE i.identity_type = 'entity' AND ${LIVE.replace(/status/g, 'i.status')}
+              GROUP BY 1 ORDER BY 1`),
+      query(`SELECT date_trunc('month', created_at)::date AS month, count(*)::int AS n
+               FROM identities WHERE ${LIVE} AND entity_kind = 'customer'
+              GROUP BY 1 ORDER BY 1 DESC LIMIT 12`),
+    ]);
+
+    /* ⭐ THE ROWS THE LEFT PANEL DRAWS — newest first, because "who just joined" is the question a list is
+       opened to answer. Every column here is an account fact; none is about their trade. */
+    /**
+     * ── ⚠️⚠️ SORT IS A WHITELIST, AND IT HAS TO BE ─────────────────────────────────────────────────────────
+     *
+     * `ORDER BY` cannot take a bind parameter, so a sort field from the query string can only reach SQL by
+     * being interpolated — which is a SQL injection hole shaped exactly like a convenience. The map below is
+     * the only way a column name gets in: an unknown key falls back to `joined`, it is never passed through.
+     *
+     * ⭐ And the map doubles as the answer to "what can this list be sorted by?" — the client reads `sortable`
+     * out of the response rather than hard-coding a list that drifts from the server's.
+     */
+    const SORTS = {
+      joined:     'i.created_at',
+      last_seen:  'i.last_active_at',
+      name:       'lower(i.display_name)',
+      handle:     'lower(i.user_id)',
+      kind:       'i.entity_kind',
+      vertical:   'i.vertical',
+      plan:       'i.plan',
+      seats:      'seats',
+      suppliers:  'suppliers',
+      branches:   'branches',
+    };
+    const sortKey = Object.prototype.hasOwnProperty.call(SORTS, String(req.query.sort || ''))
+      ? String(req.query.sort) : 'joined';
+    const dir = String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+    /* ⚠️ SEARCH IS A BIND PARAMETER, unlike the sort. It matches the three things a person actually types:
+       the shop's name, its handle, or its bridge id. NOT email — that is how you build an address harvester. */
+    const q = String(req.query.q || '').trim();
+
+    const rows = (await query(
+      `SELECT i.identity_id, i.display_name, i.user_id, i.bridge_id,
+              i.entity_kind, i.vertical, i.plan,
+              i.created_at::date  AS joined,
+              i.last_active_at::date AS last_seen,
+              CASE WHEN i.last_active_at IS NULL THEN NULL
+                   ELSE extract(day FROM now()::timestamp - i.last_active_at)::int END AS quiet_days,
+              (SELECT count(*)::int FROM identities a
+                WHERE a.parent_entity_id = i.identity_id AND a.entity_kind = 'actor'
+                  AND coalesce(a.status,'active') <> 'erased')                    AS seats,
+              (SELECT count(*)::int FROM supplier_list s WHERE s.owner_entity_id = i.identity_id) AS suppliers,
+              c.path::text AS path,
+              CASE WHEN c.bridge_id IS NULL THEN 0 ELSE nlevel(c.path) END        AS depth,
+              (SELECT count(*)::int FROM cb_entity k
+                WHERE c.path IS NOT NULL AND k.path <@ c.path AND k.path <> c.path) AS branches
+         FROM identities i
+         LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
+        WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
+          AND i.entity_kind = ANY($1)
+          AND ($3 = '' OR i.display_name ILIKE '%' || $3 || '%'
+                       OR i.user_id     ILIKE '%' || $3 || '%'
+                       OR i.bridge_id   ILIKE '%' || $3 || '%')
+          AND ($4 = '' OR i.vertical = $4)
+          AND ($5 = '' OR i.plan     = $5)
+        ORDER BY ${SORTS[sortKey]} ${dir} NULLS LAST
+        LIMIT $2`,
+      [String(req.query.kind || 'customer').split(',').map((s) => s.trim()).filter(Boolean),
+       Math.min(Number(req.query.limit) || 100, 500),
+       q,
+       String(req.query.vertical || '').trim(),
+       String(req.query.plan || '').trim()])).rows;
+
+    const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
+
+    res.json({
+      at: new Date().toISOString(),
+      headline: {
+        identities: kinds.rows.reduce((a, x) => a + x.n, 0),
+        customers:  (kinds.rows.find((x) => x.k === 'customer') || {}).n || 0,
+        active_30d: kinds.rows.reduce((a, x) => a + (x.k === 'customer' ? x.active_30d : 0), 0),
+      },
+      by_kind:     kinds.rows,
+      by_vertical: asObj(verticals, 'v', 'n'),
+      by_plan:     asObj(plans, 'p', 'n'),
+      by_position: asObj(tree, 'pos', 'n'),
+      joined_by_month: joins.rows,
+      rows,
+      /**
+       * ⭐ THE CONTROLS, DESCRIBED BY THE SERVER. Athi, 2026-09-14: *"we need to have a sort mechanism based on
+       * field like we have it in the task"* · *"almost every panel is missing this information."*
+       *
+       * The client renders the sort menu from THIS, not from a list of its own. A panel that hard-codes its
+       * sort options drifts from what the server will actually honour, and the drift is silent — you pick
+       * "oldest" and get "newest" with no error. One source, read at runtime.
+       */
+      controls: {
+        sortable: Object.keys(SORTS),
+        applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || 'customer',
+                    vertical: req.query.vertical || '', plan: req.query.plan || '' },
+        /* the named orderings a person actually asks for, rather than a column plus a direction */
+        presets: [
+          { key: 'newest',     label: 'Most recent',   sort: 'joined',    dir: 'desc' },
+          { key: 'oldest',     label: 'Oldest',        sort: 'joined',    dir: 'asc'  },
+          { key: 'active',     label: 'Recently seen', sort: 'last_seen', dir: 'desc' },
+          { key: 'quiet',      label: 'Gone quiet',    sort: 'last_seen', dir: 'asc'  },
+          { key: 'biggest',    label: 'Most people',   sort: 'seats',     dir: 'desc' },
+          { key: 'az',         label: 'A–Z',           sort: 'name',      dir: 'asc'  },
+        ],
+        /* filter values that actually exist in the data — an empty dropdown is worse than no dropdown */
+        filters: {
+          kind:     kinds.rows.map((x) => x.k),
+          vertical: Object.keys(asObj(verticals, 'v', 'n')),
+          plan:     Object.keys(asObj(plans, 'p', 'n')),
+        },
+        searches: ['display_name', 'user_id', 'bridge_id'],
+      },
+      /** ⚠️ NAMED, NOT OMITTED. See the header. */
+      blind: {
+        tables: ['catalogue_items (public only)', 'chit_header', 'chit_status',
+                 'customer_list', 'definition', 'entity_governance', 'usage_ledger'],
+        why: 'RLS-forced: this connection reads them as zero rows, not as an error. Catalogue size, chit '
+           + 'volume and governance stamps are therefore absent from this report rather than reported as nil.',
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not build the report', message: String(err.message || err) });
+  }
+});
+
 router.get('/entitlements', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
