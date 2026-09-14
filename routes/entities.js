@@ -1411,6 +1411,33 @@ router.get('/mis', auth, async (req, res) => {
      * ⭐ And the map doubles as the answer to "what can this list be sorted by?" — the client reads `sortable`
      * out of the response rather than hard-coding a list that drifts from the server's.
      */
+    /**
+     * ── ⭐⭐ STANDING IS A COLUMN, WHICH MEANS IT IS PART OF THE QUERY ──────────────────────────────────────
+     *
+     * Athi: *"now bring b224 standing as a column"*. Everything the ladder needs is already on the client —
+     * quiet days from the row, chits and items from b241 — so computing it in the browser would have worked.
+     *
+     * ⚠️ AND WOULD HAVE BEEN WRONG. The list caps at 100 rows. Sorted or filtered in the browser, "show me
+     * everyone who registered and never used it" searches one page of 2,509 and answers confidently from 4%
+     * of the data. To ORDER BY it, the database has to know it.
+     *
+     * ⚠️ AND IF b242 IS NOT RUN YET, ASKING FOR IT WOULD 500 THE WHOLE SCREEN. to_regprocedure() returns null
+     * rather than raising, so this is the one safe way to ask. Every fragment below is a constant in this
+     * file — nothing from the request reaches the SQL text.
+     *
+     * ⚠️ TWO PREDICATES, TWO NUMBERS. The rows query binds standing as $10 and `matched` as $9, because they
+     * carry different parameter lists. One shared constant here would have been wrong in one of them.
+     */
+    const hasStanding = (await query(
+      "SELECT to_regprocedure('ops.f_entity_standing()') IS NOT NULL AS ok")).rows[0].ok === true;
+    const ST_JOIN = hasStanding ? 'LEFT JOIN ops.f_entity_standing() st ON st.entity_id = i.identity_id' : '';
+    const ST_COL  = hasStanding ? 'st.standing' : 'NULL::text';
+    /* ⚠️ the placeholder is spent either way so the parameter list keeps its shape. Without b242 the filter
+       cannot narrow anything, so it is a no-op — never a predicate that quietly matches nothing. */
+    const stWhere = (n) => (hasStanding
+      ? `AND ($${n} = '' OR st.standing LIKE $${n} || '%')`
+      : `AND ($${n} IS NOT NULL)`);
+
     const SORTS = {
       joined:     'i.created_at',
       last_seen:  'i.last_active_at',
@@ -1422,6 +1449,8 @@ router.get('/mis', auth, async (req, res) => {
       seats:      'seats',
       suppliers:  'suppliers',
       branches:   'branches',
+      /* ⭐ the ladder's 'a · ', 'b · ' prefixes exist so a plain ORDER BY reads worst-first. */
+      ...(hasStanding ? { standing: 'st.standing' } : {}),
     };
     const sortKey = Object.prototype.hasOwnProperty.call(SORTS, String(req.query.sort || ''))
       ? String(req.query.sort) : 'joined';
@@ -1472,6 +1501,7 @@ router.get('/mis', auth, async (req, res) => {
               /* ⭐ what this business DEALS IN (b237) — goods · service · both. Not a visibility, and not
                  the tax field: HSN/SAC stays per ITEM because an invoice needs the right tax per line. */
               i.supplies             AS supplies,
+              ${ST_COL} AS standing,
               i.created_at::date  AS joined,
               i.last_active_at::date AS last_seen,
               CASE WHEN i.last_active_at IS NULL THEN NULL
@@ -1486,7 +1516,9 @@ router.get('/mis', auth, async (req, res) => {
                 WHERE c.path IS NOT NULL AND k.path <@ c.path AND k.path <> c.path) AS branches
          FROM identities i
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
+         ${ST_JOIN}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
+          ${stWhere(10)}
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
           AND ($6 = '' OR (CASE WHEN $6 = 'billable'
                                 THEN (c.bridge_id IS NULL OR nlevel(c.path) = 1)
@@ -1516,7 +1548,8 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.plan || '').trim(), String(req.query.position || '').trim(),
        String(req.query.visibility || '').trim(),
        String(req.query.entity_visibility || '').trim(),
-       String(req.query.supplies || '').trim()])).rows;
+       String(req.query.supplies || '').trim(),
+       String(req.query.standing || '').trim()])).rows;
 
     /**
      * ── ⭐⭐ THE COUNTING SURFACE — counts from any table, rows from none (b241) ──────────────────────────────
@@ -1580,7 +1613,9 @@ router.get('/mis', auth, async (req, res) => {
       `SELECT count(*)::int AS n
          FROM identities i
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
+         ${ST_JOIN}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
+          ${stWhere(9)}
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
           AND ($2 = '' OR i.display_name ILIKE '%' || $2 || '%'
                        OR i.user_id     ILIKE '%' || $2 || '%'
@@ -1602,7 +1637,8 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.position || '').trim(),
        String(req.query.visibility || '').trim(),
        String(req.query.entity_visibility || '').trim(),
-       String(req.query.supplies || '').trim()])).rows[0].n);
+       String(req.query.supplies || '').trim(),
+       String(req.query.standing || '').trim()])).rows[0].n);
 
     const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
 
@@ -1649,6 +1685,12 @@ router.get('/mis', auth, async (req, res) => {
        */
       controls: {
         sortable: Object.keys(SORTS),
+        /* ⚠️ named by the SERVER, never hard-coded in the page: a filter list that drifts from what the
+           database will honour fails silently — you pick a value and get everything. */
+        standings: hasStanding
+          ? ['a · never signed in', 'b · registered, never used', 'c · lapsed (90d+)',
+             'd · drifting (30d+)', 'e · quiet (7d+)', 'f · active']
+          : [],
         applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || 'customer',
                     vertical: req.query.vertical || '', plan: req.query.plan || '' },
         /* the named orderings a person actually asks for, rather than a column plus a direction */
