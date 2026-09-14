@@ -52,6 +52,10 @@ const GUARDS = [
   /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only
      reachable by re-running it — so one that errors on a second run is one nobody can re-verify. */
   'migration-rerunnable.test.cjs',
+  /* ⭐ three desks × routed/unrouted × network/no-network is twelve paths through ONE function, and eleven are
+     the ones nobody will ever click. Athi: *"if we can figure out all the combination and a single helpdesk
+     works for all, nothing like it."* This is what keeps it single. */
+  'support-desks.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

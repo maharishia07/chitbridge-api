@@ -1419,6 +1419,35 @@ const ROUTABLE = [
   { kind: 'testcase', label: 'Test cases',   hint: 'The suite the product is checked against' },
 ];
 
+/**
+ * GET /api/entities/routing/preview?audience=&to_bridge_id=&kind= — where WOULD this one go?
+ *
+ * Athi, 2026-09-14: *"can we bring a note, you are raising incident to so and so in the incident box, for some
+ * reason if it is not going to work, we know it right away, before raising, still i am not confident."*
+ *
+ * ⭐ IT IS THE SEND’S OWN RESOLVER, ASKED NOT TO WRITE. lib/raiseticket.preview() and .raise() share
+ * resolveDesk(), so the note cannot say one thing and the ticket do another — which is the only version of
+ * this feature worth having. A reassuring note that is sometimes wrong is worse than no note.
+ *
+ * ⚠️ ALWAYS 200. ‘This will not work, and here is why’ is the answer, not an error: a 500 on a preview puts
+ * a red box on a form somebody has not filled in yet, and tells them nothing about the thing they asked.
+ */
+router.get('/routing/preview', auth, async (req, res) => {
+  const me = auth.entityOf(req);
+  const q = req.query || {};
+  try {
+    const r = await query(
+      'SELECT bridge_id, display_name, population FROM identities WHERE identity_id = $1', [me]);
+    const row = r.rows[0] || {};
+    const out = await require('../lib/raiseticket').preview(
+      { entity_id: me, bridge_id: row.bridge_id, display_name: row.display_name, population: row.population },
+      { kind: String(q.kind || 'incident'), audience: q.audience, to_bridge_id: q.to_bridge_id });
+    res.json(out);
+  } catch (e) {
+    res.json({ ok: false, why: String(e.message || e) });
+  }
+});
+
 router.get('/routing', auth, async (req, res) => {
   const me = auth.entityOf(req);
   try {
