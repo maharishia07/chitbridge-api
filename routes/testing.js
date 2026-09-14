@@ -36,7 +36,9 @@ const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const teststatus = require('../lib/teststatus');
-const { withEntity } = require('../db');
+/* ⚠️ `query` as well as withEntity: the operator copy reads identities, which has no RLS, so it must
+   NOT be wrapped in withEntity — that would pin the read to one entity for no reason. */
+const { withEntity, query } = require('../db');
 /**
  * ⭐⭐⭐ ONE BOARD FOR THE PRODUCT. Every route below reads and writes the entity testboard.entityFor() names
  * — the shared board when TEST_BOARD_ENTITY is set, and the caller's own entity when it is not.
@@ -1598,7 +1600,7 @@ router.post('/incidents', auth, async (req, res) => {
       const id = ins.rows[0].definition_id;
       await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
-      return { definition_id: id, ref: name, severity: sev, happened_at: happened };
+      return { definition_id: id, ref: name, severity: sev, happened_at: happened, rules, note: observed };
     });
 
     /**
@@ -1613,7 +1615,36 @@ router.post('/incidents', auth, async (req, res) => {
       require('../lib/testnews').testRaised(entity_id, 'incident', out && out.ref,
         { screen: b.screen_code, by: w.id, byName: w.name });
     } catch (_) {}
-    res.json(Object.assign({ recorded: true, state: 'raised' }, out));
+
+    /**
+     * ── ⭐⭐ AND IT REACHES US (DESIGN-SUPPORT-LIFECYCLE.md §5.2) ─────────────────────────────────────────────
+     *
+     * Until now an incident was written into the raiser's entity and nowhere else — correct for the shop and
+     * useless for support: our queue was empty and a shop that reported a fault was waiting on somebody who
+     * had never been told.
+     *
+     * ⚠️ AFTER the raiser's write and outside its transaction. withEntity pins one entity, and — more
+     * importantly — a shop's incident RECORDED. If our queue is unreachable that is our problem, not a reason
+     * to lose their report.
+     *
+     * ⚠️ BUT IT IS ANSWERED EITHER WAY. "Recorded" with no word about whether anyone was told is exactly the
+     * silence this codebase keeps producing.
+     */
+    let support = { copied: false, why: 'not attempted' };
+    try {
+      const me = auth.entityOf(req);
+      const w2 = testerOf(req);
+      const info = await query(
+        `SELECT display_name, population FROM identities WHERE identity_id = $1`, [me]).catch(() => null);
+      const row = info && info.rows && info.rows[0];
+      support = await require('../lib/supportcopy').toOperator('incident', {
+        entity_id: me, definition_id: out && out.definition_id, ref: out && out.ref,
+        sub_kind: out && out.severity, note: out && out.note, rules: (out && out.rules) || {},
+        shop: row && row.display_name, population: row && row.population,
+      }, w2);
+    } catch (e) { support = { copied: false, why: String(e.message || e) }; }
+
+    res.json(Object.assign({ recorded: true, state: 'raised', support }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not record it', message: String(err.message || err) });
   }
@@ -2874,32 +2905,24 @@ router.post('/releases', auth, async (req, res) => {
       const c = x.rules.cites || {};
       if (!c.definition_id || !c.entity_id || c.kind !== 'incident') continue;
       try {
-        await withEntity(c.entity_id, async (db) => {
-          const cur = await db.query(
-            `SELECT d.current_version, v.rules FROM definition d
-               JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
-              WHERE d.definition_id = $1 AND d.entity_id = $2 AND d.kind = 'incident'`,
-            [c.definition_id, c.entity_id]);
-          if (!cur.rows[0]) return;
-          const ru = cur.rows[0].rules || {};
-          /* ⚠️ only from an OPEN state. A shop that already closed it has had the last word, and a release must
-             not reopen or overwrite that — the raiser's verdict outranks the fixer's claim. */
-          if (!['raised', 'acknowledged'].includes(String(ru.state || 'raised'))) return;
-          const v = cur.rows[0].current_version + 1;
-          const next = { ...ru, state: 'resolved', resolved_in: name,
-            history: (ru.history || []).concat([{ state: 'resolved', by: who.name, at: carried.rel.at, why: name }]) };
-          await db.query(
-            `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-             VALUES ($1,$2,$3,$4,$5)`, [c.definition_id, v, c.entity_id, JSON.stringify(next), who.id]);
-          await db.query(
-            `UPDATE definition SET current_version = $2, updated_at = now()
-              WHERE definition_id = $1 AND entity_id = $3`, [c.definition_id, v, c.entity_id]);
-          /* ⚠️ `forId` is the ORIGINAL RAISER. Everyone on that entity hears the event; only the person waiting
-             is told it is theirs to verify. A message telling five people to check one fix gets checked by none. */
-          require('../lib/testnews').testRaised(c.entity_id, 'incident', c.ref,
-            { state: 'resolved', forId: ru.raised_by_id || null, by: who.id, byName: who.name });
-          told.push({ ref: c.ref, entity_id: c.entity_id });
-        });
+        /* ⭐ ours first — the queue we work from. */
+        const mine = await markIncidentResolved(c.entity_id, c.definition_id, name, who, carried.rel.at);
+        told.push({ ref: c.ref, entity_id: c.entity_id, resolved: mine.ok, why: mine.why || null });
+
+        /**
+         * ⭐⭐ AND THEN THE SHOP'S, WHICH IS THE ONE THAT MATTERS. Our copy carries `origin` (lib/supportcopy)
+         * naming the entity that raised the fault. Resolving only ours would close our own queue and tell
+         * nobody — the failure mode of every support desk that looks tidy from the inside.
+         *
+         * ⚠️ A SEPARATE withEntity, after ours: the transaction is pinned to one entity, and a shop that
+         * cannot be reached must not unmake a release that genuinely happened.
+         */
+        const o = mine.origin;
+        if (o && o.entity_id && o.definition_id && String(o.entity_id) !== String(c.entity_id)) {
+          const theirs = await markIncidentResolved(o.entity_id, o.definition_id, name, who, carried.rel.at);
+          told.push({ ref: o.ref || c.ref, entity_id: o.entity_id, shop: o.shop || null,
+                      resolved: theirs.ok, why: theirs.why || null });
+        }
       } catch (e) {
         /* ⚠️ said, not swallowed: "0 shops told" with no explanation reads as "there was nobody to tell". */
         told.push({ ref: c.ref, entity_id: c.entity_id, failed: e.code || e.message });
@@ -2916,6 +2939,51 @@ router.post('/releases', auth, async (req, res) => {
     res.status(500).json({ error: 'Failed to cut the release', message: e.message });
   }
 });
+
+/**
+ * ── ⭐⭐ MARK ONE INCIDENT RESOLVED, WHEREVER IT LIVES ───────────────────────────────────────────────────────────
+ *
+ * Pulled out of the release loop because it has to run TWICE and on two different entities: once on our copy of
+ * the fault, and once on the shop's — the one that matters, because it is the one the shop is watching.
+ *
+ * ⚠️ Without the second call a release closes our own queue and tells nobody. That is the failure mode of every
+ * support desk that looks tidy from the inside.
+ *
+ * @returns {Promise<{ok:boolean, origin?:object, why?:string}>} — origin is the shop's copy, if this was ours.
+ */
+async function markIncidentResolved(entity_id, definition_id, releaseName, who, at) {
+  if (!entity_id || !definition_id) return { ok: false, why: 'no reference' };
+  return withEntity(entity_id, async (db) => {
+    const cur = await db.query(
+      `SELECT d.current_version, v.rules FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.definition_id = $1 AND d.entity_id = $2 AND d.kind = 'incident'`,
+      [definition_id, entity_id]);
+    if (!cur.rows[0]) return { ok: false, why: 'not found' };
+    const ru = cur.rows[0].rules || {};
+    /* ⚠️ ONLY FROM AN OPEN STATE. A shop that already closed it has had the last word, and a release must not
+       reopen or overwrite that — the raiser's verdict outranks the fixer's claim. */
+    if (!['raised', 'acknowledged'].includes(String(ru.state || 'raised'))) {
+      return { ok: false, why: 'already ' + (ru.state || 'raised'), origin: ru.origin || null };
+    }
+    const v = cur.rows[0].current_version + 1;
+    const next = Object.assign({}, ru, { state: 'resolved', resolved_in: releaseName,
+      history: (ru.history || []).concat([{ state: 'resolved', by: who.name, at, why: releaseName }]) });
+    await db.query(
+      `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+       VALUES ($1,$2,$3,$4,$5)`, [definition_id, v, entity_id, JSON.stringify(next), who.id]);
+    await db.query(
+      `UPDATE definition SET current_version = $2, updated_at = now()
+        WHERE definition_id = $1 AND entity_id = $3`, [definition_id, v, entity_id]);
+    /* ⚠️ `forId` is the ORIGINAL RAISER. Everyone on that entity hears the event; only the person waiting is
+       told it is theirs to verify. A message telling five people to check one fix gets checked by none. */
+    try {
+      require('../lib/testnews').testRaised(entity_id, 'incident', ru.ref || null,
+        { state: 'resolved', forId: ru.raised_by_id || null, by: who.id, byName: who.name });
+    } catch (_) {}
+    return { ok: true, origin: ru.origin || null };
+  });
+}
 
 /** GET /api/testing/releases */
 router.get('/releases', auth, async (req, res) => {

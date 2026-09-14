@@ -312,6 +312,15 @@ const ENGINE_OTHER = [
    */
   'testboard.js',
   /**
+   * ENGINE, and on the same test as testboard.js beside it: it holds a RULE about who may see what.
+   * ⭐ The rule is *a shop's fault report reaches the operator, the raiser keeps their own copy, and the copy
+   * remembers where it came from.* Swap this file and support stops working — our queue empties, and a
+   * release can no longer tell the shop its fault shipped, because nothing records which shop that was.
+   * ⚠️ testnews.js ANNOUNCES and is infra; this one DECIDES what gets copied and what it carries.
+   * (2026-09-14, DESIGN-SUPPORT-LIFECYCLE.md 5.2)
+   */
+  'supportcopy.js',
+  /**
    * ⭐ ENGINE, AND FOR TESTBOARD'S EXACT REASON. platformroot decides WHICH ENTITY is the operator of this
    * deployment — whose customer list holds every registered shop, whose folders hold the support queues.
    * Swap it and a different company runs the platform, which is not what "swap it and ChitBridge is
