@@ -1552,18 +1552,80 @@ router.put('/routing', auth, async (req, res) => {
 router.get('/populations', auth, async (req, res) => {
   if (!rootOnly(req, res)) return;
   try {
+    /* ⭐ the DESK comes back with the row (b252). A screen that has to fetch it separately is a screen where
+       the two can disagree, and this one is the only place it can be set. */
     const r = await query(
-      `SELECT p.code, p.label, p.is_live, p.note,
+      `SELECT p.code, p.label, p.is_live, p.note, p.desk_entity_id,
+              d.display_name AS desk_name, d.bridge_id AS desk_bridge_id,
               count(i.identity_id) FILTER (WHERE i.identity_type = 'entity') ::int AS entities
          FROM ops.population p
+         LEFT JOIN identities d ON d.identity_id = p.desk_entity_id
          LEFT JOIN identities i ON i.population = p.code AND coalesce(i.status,'active') <> 'erased'
-        GROUP BY 1,2,3,4 ORDER BY p.is_live DESC, p.code`);
-    res.json({ populations: r.rows });
+        GROUP BY 1,2,3,4,5,6,7 ORDER BY p.is_live DESC, p.code`)
+      /* ⚠️ b252 not run is an ANSWER too — the screen shows the populations and simply cannot set a desk. */
+      .catch((e) => (e.code === '42703'
+        ? query(`SELECT p.code, p.label, p.is_live, p.note,
+                        NULL::uuid AS desk_entity_id, NULL::text AS desk_name, NULL::text AS desk_bridge_id,
+                        count(i.identity_id) FILTER (WHERE i.identity_type = 'entity') ::int AS entities
+                   FROM ops.population p
+                   LEFT JOIN identities i ON i.population = p.code AND coalesce(i.status,'active') <> 'erased'
+                  GROUP BY 1,2,3,4 ORDER BY p.is_live DESC, p.code`)
+        : Promise.reject(e)));
+
+    /* the entities that COULD answer a population's support: a business, active, already in that population.
+       ⚠️ the b252 trigger refuses anything else, so offering it would be a control that only ever fails. */
+    const cand = await query(
+      `SELECT identity_id, display_name, bridge_id, coalesce(population, 'live') AS population
+         FROM identities
+        WHERE identity_type = 'entity' AND coalesce(status,'active') = 'active'
+          AND coalesce(population, 'live') IN (SELECT code FROM ops.population)
+        ORDER BY lower(display_name)`).catch(() => ({ rows: [] }));
+
+    res.json({ populations: r.rows, desk_candidates: cand.rows });
   } catch (e) {
     /* ⚠️ b249 not run yet is an ANSWER, not a fault: the screen falls back to the two it knows. */
     if (['42P01', '3F000', '42501'].includes(e.code)) return res.json({ populations: [], why: e.code });
     console.error('populations list:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to list populations' });
+  }
+});
+
+/**
+ * PUT /populations/:code/desk — who answers support raised by this population.
+ *
+ * Athi, 2026-09-14: *"we should not write sql for all those."* b252 added the column and the review found that
+ * NOTHING could write it — no route, no screen — so the migration's own instructions (*"Platform › Populations
+ * → Test → Answers support → CBINCTST"*) pointed at a control that did not exist, and every test finding kept
+ * landing on the live desk. A column only hand-written SQL can set is the thing that migration removes.
+ *
+ * ⚠️ ROOT ONLY. Which desk answers a whole population is the operator's decision, not a tenant's.
+ * ⚠️ AND '' CLEARS IT, deliberately: an operator must be able to take a desk back out without a deploy.
+ */
+router.put('/populations/:code/desk', auth, async (req, res) => {
+  if (!rootOnly(req, res)) return;
+  const code = String(req.params.code || '').trim().toLowerCase();
+  const v = (req.body || {}).desk_entity_id;
+  const desk = (v === '' || v === undefined || v === null) ? null : String(v);
+  try {
+    const u = await query(
+      'UPDATE ops.population SET desk_entity_id = $2 WHERE code = $1', [code, desk]);
+    /* ⚠️ an UPDATE matching nothing is not an error. Without this, setting a desk on a population that does
+       not exist answers ok and changes nothing. [[feedback-silence-is-the-bug]] */
+    if (!u.rowCount) return res.status(404).json({ error: 'No such population',
+      message: 'There is no population called ' + code + '.' });
+    /* ⚠️ the resolver memoises for 60s; without this the change looks like it did not save for a minute,
+       which is long enough for somebody to set it twice. */
+    try { require('../lib/platformroot').invalidateDesks(); } catch (_) {}
+    res.json({ ok: true, code, desk_entity_id: desk });
+  } catch (e) {
+    if (e.code === '42703' || e.code === '42P01') return res.status(409).json({ error: 'Not available yet',
+      message: 'Run migration b252 — the desk column does not exist in this database yet.' });
+    /* ⚠️ b252's trigger refuses a desk outside the population it serves, or one that is not a business. That
+       refusal is a sentence somebody can act on, not a stack trace. */
+    if (e.code === '23514') return res.status(409).json({ error: 'Not a desk for this population',
+      message: e.message, hint: e.hint || null });
+    console.error('population desk:', e.code || '', e.message);
+    res.status(500).json({ error: 'Could not set the desk', message: e.message });
   }
 });
 
