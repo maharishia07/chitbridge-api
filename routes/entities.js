@@ -1365,6 +1365,83 @@ router.get('/usage', auth, async (req, res) => {
  * taught to name them. A report that silently omits what it could not read is the same failure with a nicer
  * font, so `blind` lists them by name. [[feedback-silence-is-the-bug]]
  */
+/**
+ * ── ⭐⭐ POPULATIONS — a sealed world each, and the operator may add one ────────────────────────────────────────
+ *
+ * Athi, 2026-09-14: *"yes we need classification, especially the sandbox, so having an option to create
+ * multiple would be really good. And we should be able to create through cbincroot?"*
+ *
+ * Two entities may only transact inside one population (b247/b249), so every row in this registry is a world
+ * that cannot leak into another. That makes adding one a governance act rather than a convenience — which is
+ * why it is root-only, why the code is a slug the database validates, and why there is no edit and no delete.
+ *
+ * ⚠️ NO PUT, NO DELETE, AND THAT IS NOT AN OVERSIGHT. A population is stamped on every identity that joins it:
+ * renaming its code would orphan them, and deleting it is already refused by the foreign key. The one thing
+ * worse than not being able to remove a population is removing one that entities still point at.
+ */
+function rootOnly(req, res) {
+  const platformroot = require('../lib/platformroot');
+  if (!platformroot.configured()) {
+    res.status(404).json({ error: 'No platform root',
+      message: 'PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.' });
+    return false;
+  }
+  if (!platformroot.isRoot(auth.entityOf(req))) {
+    res.status(403).json({ error: 'Not the platform root',
+      message: 'The platform report is available to the operator entity only.' });
+    return false;
+  }
+  return true;
+}
+
+router.get('/populations', auth, async (req, res) => {
+  if (!rootOnly(req, res)) return;
+  try {
+    const r = await query(
+      `SELECT p.code, p.label, p.is_live, p.note,
+              count(i.identity_id) FILTER (WHERE i.identity_type = 'entity') ::int AS entities
+         FROM ops.population p
+         LEFT JOIN identities i ON i.population = p.code AND coalesce(i.status,'active') <> 'erased'
+        GROUP BY 1,2,3,4 ORDER BY p.is_live DESC, p.code`);
+    res.json({ populations: r.rows });
+  } catch (e) {
+    /* ⚠️ b249 not run yet is an ANSWER, not a fault: the screen falls back to the two it knows. */
+    if (['42P01', '3F000', '42501'].includes(e.code)) return res.json({ populations: [], why: e.code });
+    console.error('populations list:', e.code || '', e.message);
+    res.status(500).json({ error: 'Failed to list populations' });
+  }
+});
+
+router.post('/populations', auth, async (req, res) => {
+  if (!rootOnly(req, res)) return;
+  const code  = String((req.body || {}).code  || '').trim().toLowerCase();
+  const label = String((req.body || {}).label || '').trim();
+  const note  = String((req.body || {}).note  || '').trim();
+  /* ⚠️ the same shape the database enforces, checked here too so the answer is a sentence rather than a
+     constraint name. The database remains the authority — this is the courtesy, not the rule. */
+  if (!/^[a-z][a-z0-9_]{1,23}$/.test(code)) {
+    return res.status(400).json({ error: 'Not a usable code',
+      message: 'Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is '
+        + 'stored on every entity in the population and appears in links.' });
+  }
+  if (!label) return res.status(400).json({ error: 'Needs a name', message: 'What should it be called?' });
+  if (!note)  return res.status(400).json({ error: 'Needs a note',
+    message: 'Say what this population is for. A world nobody can describe is one nobody can decide to use.' });
+  try {
+    /* ⚠️ is_live is never accepted from the request. The unique index permits one live world and would refuse
+       it anyway, but a route that forwards the field is a route somebody will one day trust. */
+    await query('INSERT INTO ops.population (code, label, note) VALUES ($1, $2, $3)', [code, label, note]);
+    res.status(201).json({ ok: true, code, label });
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'Already exists',
+      message: 'There is already a population called ' + code + '.' });
+    if (['42P01', '3F000', '42501'].includes(e.code)) return res.status(409).json({ error: 'Not available yet',
+      message: 'Run migration b249 — the population registry does not exist in this database.' });
+    console.error('population create:', e.code || '', e.message);
+    res.status(500).json({ error: 'Failed to add the population', message: e.message });
+  }
+});
+
 router.get('/mis', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -1384,7 +1461,31 @@ router.get('/mis', auth, async (req, res) => {
     /* ⭐ asked ONCE, before anything that needs it. Both the class ladder and the population predicate below
        branch on the same answer, so they can never describe two different platforms. */
     const hasIsTest = await require('../lib/istest').ready();
-    const pop = String(req.query.population || 'real') === 'test' ? 'test' : 'real';
+    /**
+     * ⭐ THE POPULATION IS WHATEVER THE REGISTRY SAYS IT IS. It was `'test' : 'real'` — two values decided in
+     * this file — which is the same hard-coding b249 exists to remove. The list comes from ops.population, and
+     * an unknown value falls back to the live one rather than returning nothing.
+     * ⚠️ 'real' is still accepted: it is what the screen sent before b249 named the live population 'live'.
+     */
+    const popRows = (await query('SELECT code, is_live FROM ops.population')
+      .catch(() => ({ rows: [] }))).rows;
+    const liveCode = (popRows.find((p) => p.is_live) || {}).code || 'live';
+    const asked = String(req.query.population || '').trim().toLowerCase();
+    const pop = (asked === '' || asked === 'real') ? liveCode
+      : (popRows.some((p) => p.code === asked) ? asked : liveCode);
+
+    /**
+     * ⚠️⚠️ INTERPOLATED, NOT BOUND — and that needs saying out loud. `LIVE` is a SQL FRAGMENT spliced into a
+     * dozen aggregate queries, and a fragment cannot carry a bind parameter; that is the same reason ORDER BY
+     * needs its whitelist. The value here is safe for a stronger reason than escaping: it is either a code
+     * that came OUT of ops.population or the literal fallback, so nothing from the request text ever reaches
+     * the SQL. The quoting below is the second lock, not the first.
+     */
+    const escLit = (v) => {
+      const t = String(v);
+      if (!/^[a-z][a-z0-9_]{1,23}$/.test(t)) throw Object.assign(new Error('bad population code'), { status: 400 });
+      return "'" + t + "'";
+    };
 
     /**
      * ── ⚠️⚠️ THE HEADLINE SAID 2,252 CUSTOMERS WHEN THERE WERE NINE ─────────────────────────────────────────
@@ -1400,8 +1501,9 @@ router.get('/mis', auth, async (req, res) => {
      * anybody remembering. A predicate you have to remember to add is one that will be forgotten.
      * [[feedback-silence-is-the-bug]]
      */
-    const POP = hasIsTest
-      ? (pop === 'test' ? 'AND is_test' : 'AND NOT is_test')
+    const hasPopulation = popRows.length > 0;
+    const POP = hasPopulation ? `AND population = ${escLit(pop)}`
+      : hasIsTest ? (pop === 'test' ? 'AND is_test' : 'AND NOT is_test')
       : (pop === 'test' ? "AND entity_kind = 'test'" : "AND entity_kind <> 'test'");
     const LIVE = "coalesce(status,'active') <> 'erased' " + POP;
 
@@ -1409,8 +1511,9 @@ router.get('/mis', auth, async (req, res) => {
     const otherPop = Number((await query(
       `SELECT count(*)::int AS n FROM identities
         WHERE identity_type = 'entity' AND coalesce(status,'active') <> 'erased' `
-      + (hasIsTest ? (pop === 'test' ? 'AND NOT is_test' : 'AND is_test')
-                   : (pop === 'test' ? "AND entity_kind <> 'test'" : "AND entity_kind = 'test'")))).rows[0].n);
+      + (hasPopulation ? `AND population <> ${escLit(pop)}`
+        : hasIsTest ? (pop === 'test' ? 'AND NOT is_test' : 'AND is_test')
+        : (pop === 'test' ? "AND entity_kind <> 'test'" : "AND entity_kind = 'test'")))).rows[0].n);
 
     /**
      * ── ⭐⭐ ONE CLASS PER ENTITY — exhaustive, and no row in two boxes ───────────────────────────────────────
@@ -1579,7 +1682,10 @@ router.get('/mis', auth, async (req, res) => {
     /* ⚠️ b246 may not have run yet — deploys are automatic, migrations are by hand, so the code is routinely
        ahead of the database. lib/istest.js probes once and falls back to the old partition, which keeps this
        screen meaning exactly the same thing in both states. */
-    const TEST_WHERE = require('../lib/istest').where(pop, hasIsTest);
+    /* ⭐ the row list and the aggregates use the SAME predicate. They used to be built separately, which is
+       how a screen comes to report one population and count another. */
+    const TEST_WHERE = hasPopulation ? `AND i.population = ${escLit(pop)}`
+      : require('../lib/istest').where(pop === liveCode ? 'real' : 'test', hasIsTest);
 
     /**
      * ⭐ OWNERSHIP — ours, or the market's. Athi's first-level filter: *"All / internal / External."*
@@ -1836,6 +1942,8 @@ router.get('/mis', auth, async (req, res) => {
       /* ⭐ the screen's third tile reads this. Before b246 it counted entity_kind='test', which is now empty —
          a tile that silently went to zero rather than to a different number. */
       other_population: otherPop,
+      /* ⭐ the screen draws one button per row. Adding a population must not need a front-end release. */
+      populations: popRows.length ? popRows.map((p) => p.code) : ['real', 'test'],
       headline: {
         identities: kinds.rows.reduce((a, x) => a + x.n, 0),
         customers:  (kinds.rows.find((x) => x.k === 'customer') || {}).n || 0,
@@ -1896,7 +2004,7 @@ router.get('/mis', auth, async (req, res) => {
         applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || '*',
                     vertical: req.query.vertical || '', plan: req.query.plan || '',
                     position: req.query.position || '',
-                    ownership: own, population: pop,
+                    ownership: own, population: pop, live_population: liveCode,
                     standing: req.query.standing || '', supplies: req.query.supplies || '',
                     visibility: req.query.visibility || '',
                     entity_visibility: req.query.entity_visibility || '',
