@@ -1382,6 +1382,8 @@ router.post('/requirements', auth, async (req, res) => {
         support = await require('../lib/supportcopy').toOperator('spec', {
           entity_id, definition_id: out && out.definition_id, ref: out && (out.clause || out.ref),
           note: out && out.requirement, subject: out && out.requirement, screen_code: b.screen_code,
+          /* ⭐ 'here' keeps it inside this entity, answered by its own routing; anything else means us. */
+          audience: b.audience,
         }, w2);
       } catch (e) { support = { copied: false, why: String(e.message || e) }; }
       require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref),
@@ -1659,6 +1661,8 @@ router.post('/incidents', auth, async (req, res) => {
       support = await require('../lib/supportcopy').toOperator('incident', {
         entity_id: auth.entityOf(req), definition_id: out && out.definition_id, ref: out && out.ref,
         sub_kind: out && out.severity, note: out && out.note, screen_code: b.screen_code,
+        /* the rail is broken (us) or my business is (me) - the raiser is the only one who knows which */
+        audience: b.audience,
       }, testerOf(req));
     } catch (e) { support = { copied: false, why: String(e.message || e) }; }
 
