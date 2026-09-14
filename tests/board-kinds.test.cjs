@@ -76,6 +76,70 @@ it('testcase is the only shared kind', () => {
 });
 
 /**
+ * ── ⭐⭐ EVERY KIND IS CLASSIFIED ON PURPOSE, NOT BY FALLING THROUGH ─────────────────────────────────────────────
+ *
+ * `entityForKind()` sends any kind it does not recognise to the caller's own entity. That default is the SAFE
+ * one — and a safe default is exactly how a kind comes to be private by accident instead of by decision. The
+ * day somebody flips the fallback, or adds a kind to SHARED_KINDS "to make the report work", nothing here
+ * would notice.
+ *
+ * ⚠️ DESIGN-SUPPORT-LIFECYCLE.md adds two kinds, and `release` is the trap. It faces the shop — it is the
+ * record that says "the thing you reported shipped" — so sharing it onto the board looks like the point of it.
+ * It must NOT be shared: a shop hears about a release through a CHIT addressed to it, not by reading a board
+ * that also carries every other shop's fault reports. `change` is worse still: a diff cites file paths, and
+ * file paths describe the product's internals.
+ *
+ * ⭐ SO THE TEST IS BEHAVIOURAL, NOT A STRING COMPARE. It loads the board WITH an entity configured — the only
+ * state in which shared and private differ at all — and asserts where each kind actually resolves to. With
+ * TEST_BOARD_ENTITY unset every kind resolves to the caller and a string test would pass while proving
+ * nothing. [[feedback-silence-is-the-bug]]
+ */
+const CLASSIFIED = {
+  testcase: 'shared',    /* the product's own suite — nobody's trade in it */
+  spec:     'private',   /* ⚠️ the REQUIREMENT kind. See the note below: it is two things under one name. */
+  incident: 'private',   /* somebody's fault report, in their words, with a screenshot */
+  evidence: 'private',   /* the screenshot itself */
+  change:   'private',   /* ⚠️ cites repo paths — the product's internals */
+  release:  'private',   /* ⚠️ faces the shop, but through a CHIT — never through the shared board */
+};
+
+it('every kind resolves where it was classified — checked with a board actually configured', () => {
+  const BOARD_ID = '00000000-0000-4000-8000-0000000000b0';
+  const CALLER   = '11111111-1111-4111-8111-111111111111';
+  const prev = process.env.TEST_BOARD_ENTITY;
+  process.env.TEST_BOARD_ENTITY = BOARD_ID;
+  delete require.cache[require.resolve('../lib/testboard.js')];
+  delete require.cache[require.resolve('../lib/namedentity.js')];
+  const B = require('../lib/testboard.js');
+  try {
+    assert.strictEqual(B.entityFor(CALLER), BOARD_ID,
+      'the board did not configure — this test proves nothing unless shared and private can differ');
+    for (const [kind, where] of Object.entries(CLASSIFIED)) {
+      const got = B.entityForKind(kind, CALLER);
+      assert.strictEqual(got, where === 'shared' ? BOARD_ID : CALLER,
+        "'" + kind + "' resolved to the " + (got === BOARD_ID ? 'shared board' : "caller's own entity")
+        + ' but is classified as ' + where + '. Publishing a kind to every signed-in user is a decision for '
+        + 'Athi, not a refactor; hiding one that should be shared breaks the report silently.');
+    }
+  } finally {
+    if (prev === undefined) delete process.env.TEST_BOARD_ENTITY; else process.env.TEST_BOARD_ENTITY = prev;
+    delete require.cache[require.resolve('../lib/testboard.js')];
+    delete require.cache[require.resolve('../lib/namedentity.js')];
+  }
+});
+
+it('no kind is written into `definition` that nobody has classified', () => {
+  const written = new Set();
+  for (const m of CODE.matchAll(/VALUES\s*\(\s*\$1\s*,\s*'([a-z_]+)'/g)) written.add(m[1]);
+  assert.ok(written.size > 0, 'found no kind literals — the INSERT shape has drifted and this guard is blind');
+  for (const k of written) {
+    assert.ok(Object.prototype.hasOwnProperty.call(CLASSIFIED, k),
+      "routes/testing.js writes kind='" + k + "' and CLASSIFIED above does not mention it. Decide whether it "
+      + 'is shared or private and say so here — the fallback would make it private without anyone choosing.');
+  }
+});
+
+/**
  * ── ⚠️⚠️ `spec` IS TWO DIFFERENT THINGS, AND ONLY ONE OF THEM IS PRIVATE ────────────────────────────────────────
  *
  * Found by this guard on its first run, which is the entire argument for writing it:
