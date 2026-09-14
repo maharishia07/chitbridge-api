@@ -1603,6 +1603,11 @@ router.get('/mis', auth, async (req, res) => {
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))
           AND ($6 = '' OR (CASE WHEN $6 = 'billable'
                                 THEN (c.bridge_id IS NULL OR nlevel(c.path) = 1)
+                                /* ⭐ Athi, 2026-09-14: *"show all the network shops and its branches: network
+                                   not eq to None"*. Root OR branch — the whole of a network, head included.
+                                   Every other option here narrows to one level; this one is the network. */
+                                WHEN $6 = 'networked'
+                                THEN (c.bridge_id IS NOT NULL)
                                 ELSE $6 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
                                                WHEN nlevel(c.path) = 1 THEN 'root'
                                                ELSE 'branch' END END))
@@ -1716,6 +1721,11 @@ router.get('/mis', auth, async (req, res) => {
           AND ($8 = '' OR i.supplies = $8)
           AND ($5 = '' OR (CASE WHEN $5 = 'billable'
                                 THEN (c.bridge_id IS NULL OR nlevel(c.path) = 1)
+                                /* ⭐ Athi, 2026-09-14: *"show all the network shops and its branches: network
+                                   not eq to None"*. Root OR branch — the whole of a network, head included.
+                                   Every other option here narrows to one level; this one is the network. */
+                                WHEN $5 = 'networked'
+                                THEN (c.bridge_id IS NOT NULL)
                                 ELSE $5 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
                                                WHEN nlevel(c.path) = 1 THEN 'root'
                                                ELSE 'branch' END END))`,
@@ -1816,7 +1826,7 @@ router.get('/mis', auth, async (req, res) => {
          * ⚠️ Position is NOT a visibility. It is the BILLING axis, and it is listed beside the two visibility
          * filters only because that is where a person looks for it. See VISIBILITY-MATRIX.md §4b.
          */
-        positions: ['billable', 'root', 'branch', 'standalone'],
+        positions: ['standalone', 'root', 'branch', 'networked', 'billable'],
       },
       /** ⚠️ NAMED, NOT OMITTED. See the header. */
       blind: {
