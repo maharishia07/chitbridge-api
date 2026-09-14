@@ -1394,6 +1394,132 @@ function rootOnly(req, res) {
   return true;
 }
 
+/**
+ * ── ⭐⭐⭐ WHERE WORK GOES — CONFIGURABLE, NOT A MIGRATION ───────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-14: *"it has to be very simple, we should not raise a SQL, it should be configurable"* — and
+ * the reason, which decides the placement: *"because we should be able to give this model to anyone who wants
+ * to run a simple helpdesk service."*
+ *
+ * ⭐ SO IT IS NOT AN OPERATOR TOOL. Every entity routes its OWN work: a shop running a helpdesk points its
+ * faults at one person and its requests at another, exactly as CBINC does. entity_work_routing was always
+ * per-entity and RLS-forced; it just had no door.
+ *
+ * ⚠️ AND IT ANSWERS THE CHOICES, NOT JUST THE SETTINGS. A dropdown the client has to populate from three other
+ * calls is three chances to show a stale list — so the folders, the people and the teams come back with the
+ * rows they belong to.
+ */
+
+/** ⭐ the kinds a person can route, named for what they ARE rather than for the column they are stored in. */
+const ROUTABLE = [
+  { kind: 'incident', label: 'Faults',       hint: 'Something is broken or not working' },
+  { kind: 'spec',     label: 'Requests',     hint: 'Somebody wants something built or changed' },
+  { kind: 'change',   label: 'Changes',      hint: 'Work done to the product, and how to undo it' },
+  { kind: 'release',  label: 'Releases',     hint: 'What shipped, and what it carried' },
+  { kind: 'testcase', label: 'Test cases',   hint: 'The suite the product is checked against' },
+];
+
+router.get('/routing', auth, async (req, res) => {
+  const me = auth.entityOf(req);
+  try {
+    const out = await withEntity(me, async (db) => {
+      /* ⚠️ every read here is inside withEntity: folder, entity_work_routing and identities-by-parent are all
+         tenant-scoped, and a context-free read would answer an empty list that looks exactly like "you have
+         nothing set up". [[feedback-silence-is-the-bug]] */
+      const rows = await db.query(
+        `SELECT kind, folder_id, assignee_actor_id, notify_email FROM entity_work_routing WHERE entity_id = $1`,
+        [me]).catch((e) => (e.code === '42P01' ? { rows: [] } : Promise.reject(e)));
+      /* route_to_entity_id arrives with b251 — asked for separately so its absence is "no teams yet" and not
+         a failed screen. */
+      let teamsBy = {};
+      try {
+        const t = await db.query(
+          `SELECT kind, route_to_entity_id FROM entity_work_routing WHERE entity_id = $1`, [me]);
+        for (const r of t.rows) teamsBy[r.kind] = r.route_to_entity_id;
+      } catch (_) { teamsBy = {}; }
+
+      const folders = await db.query(
+        `SELECT folder_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, lower(name)`, [me])
+        .catch(() => ({ rows: [] }));
+      const people = await db.query(
+        `SELECT identity_id, display_name FROM identities
+          WHERE parent_entity_id = $1 AND entity_kind = 'actor' AND coalesce(status,'active') = 'active'
+          ORDER BY lower(display_name)`, [me]).catch(() => ({ rows: [] }));
+      return { rows: rows.rows, teamsBy, folders: folders.rows, people: people.rows };
+    });
+
+    /**
+     * ⭐ THE TEAMS — branches of this entity's own network, which is the only place work may be routed to
+     * (b251). Read outside the tenant context because cb_entity is not RLS-scoped the same way, and because
+     * the question is about the TREE rather than about rows this entity owns.
+     */
+    let teams = [];
+    try {
+      const t = await query(
+        `SELECT i.identity_id, i.display_name, c.path::text AS path
+           FROM identities i
+           JOIN cb_entity c ON c.bridge_id = i.bridge_id
+          WHERE c.root_path = (SELECT c2.root_path FROM identities i2
+                                 JOIN cb_entity c2 ON c2.bridge_id = i2.bridge_id
+                                WHERE i2.identity_id = $1)
+            AND i.identity_id <> $1
+            AND coalesce(i.status,'active') <> 'erased'
+          ORDER BY c.path`, [me]);
+      teams = t.rows;
+    } catch (_) { teams = []; }   /* no b243/root_path, or not in a network — then there are no teams */
+
+    const by = {};
+    for (const r of out.rows) by[r.kind] = r;
+    res.json({
+      kinds: ROUTABLE.map((k) => Object.assign({}, k, {
+        folder_id: (by[k.kind] || {}).folder_id || null,
+        assignee_actor_id: (by[k.kind] || {}).assignee_actor_id || null,
+        route_to_entity_id: out.teamsBy[k.kind] || null,
+      })),
+      folders: out.folders, people: out.people, teams,
+    });
+  } catch (e) {
+    console.error('routing read:', e.code || '', e.message);
+    res.status(500).json({ error: 'Could not read where work goes', message: e.message });
+  }
+});
+
+router.put('/routing', auth, async (req, res) => {
+  const me = auth.entityOf(req);
+  const b = req.body || {};
+  const kind = String(b.kind || '').trim();
+  if (!ROUTABLE.some((k) => k.kind === kind)) {
+    return res.status(400).json({ error: 'Not a routable kind',
+      message: 'Routing is set per kind of work, and that is not one of them.' });
+  }
+  /* ⚠️ '' means "clear it", and it must be distinguishable from "leave it alone" — so the client always sends
+     all three and null is an answer rather than an omission. */
+  const nul = (v) => (v === '' || v === undefined || v === null ? null : String(v));
+  try {
+    await withEntity(me, (db) => db.query(
+      `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
+       VALUES ($1,$2,$3,$4,$5, now())
+       ON CONFLICT (entity_id, kind) DO UPDATE
+         SET folder_id = EXCLUDED.folder_id, assignee_actor_id = EXCLUDED.assignee_actor_id,
+             route_to_entity_id = EXCLUDED.route_to_entity_id, updated_at = now()`,
+      [me, kind, nul(b.folder_id), nul(b.assignee_actor_id), nul(b.route_to_entity_id)]));
+    /* ⚠️ the resolver memoises for 60s; without this a change looks like it did not save for a minute, which
+       is exactly long enough for somebody to set it twice. */
+    try { require('../lib/workroute').invalidate(me); } catch (_) {}
+    res.json({ ok: true, kind });
+  } catch (e) {
+    if (e.code === '42P01') return res.status(409).json({ error: 'Not available yet',
+      message: 'Run migration b250 — the routing table does not exist in this database.' });
+    /* ⚠️ b251 refuses a team outside your own network, and that refusal is a sentence, not a stack trace. */
+    if (e.code === '23514') return res.status(409).json({ error: 'Not your network',
+      message: e.message, hint: e.hint || null });
+    if (e.code === '23503') return res.status(409).json({ error: 'Gone',
+      message: 'That folder or person no longer exists. Pick another.' });
+    console.error('routing write:', e.code || '', e.message);
+    res.status(500).json({ error: 'Could not save it', message: e.message });
+  }
+});
+
 router.get('/populations', auth, async (req, res) => {
   if (!rootOnly(req, res)) return;
   try {
