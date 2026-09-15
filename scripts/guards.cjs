@@ -85,6 +85,11 @@ const GUARDS = [
      be our software asset." Ten modules, each proven ALONE (its require() list is empty or a language
      builtin) and proven to ANSWER something, with no database, no network and no chit. */
   'bare-slate.test.cjs',
+  /* ⭐ the conversion engine: currency, and what a QUANTITY is worth at a market price. A rate is EVIDENCE
+     — it carries where it came from and when — and the engine refuses rather than guessing: no unit factor
+     it was not given, no inverted rate unless permitted, and a line it cannot value never vanishes from a
+     total. No database, no network, no chit. */
+  'convert.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

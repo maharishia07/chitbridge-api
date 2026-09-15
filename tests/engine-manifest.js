@@ -390,6 +390,16 @@ const ENGINE_OTHER = [
    * already paid twice for a receipt that reported an intention. (2026-09-15)
    */
   'ctptransport.js',
+  /**
+   * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
+   * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
+   * this does not quietly do what money refuses, it does it ONLY with a rate that says where it came from
+   * and when, and it returns the workings.
+   * ⚠️ NO FEED, on purpose: a live price is somebody’s subscription and a hard-coded one is wrong by
+   * tomorrow while claiming not to be. The rate is an input with a provenance; the feed is a plug.
+   * ⚠️ It knows nothing about chits — it is handed lines, which is what makes it liftable. (2026-09-15)
+   */
+  'convert.js',
   /* ⭐ ENGINE. It decides that a registered entity BECOMES the operator's customer and that the operator
      becomes its supplier — a rule about the relationship every shop on this platform has, not plumbing.
      Swap it and the platform has no customers. (2026-09-14) */

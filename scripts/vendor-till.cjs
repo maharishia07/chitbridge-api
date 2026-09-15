@@ -76,9 +76,29 @@ self.addEventListener('fetch', (e) => {
  * much difference it absorbs. Both are pure, both are read by the server AND by the counter, and both would collide with the page's
  * own names at top level — so each is generated inside a function with its exports handed over.
  */
-const wrapForBrowser = (file, global) => {
-  const src = norm(fs.readFileSync(path.join(API, 'lib', file), 'utf8'));
+/**
+ * ⭐ AND A THIRD CASE (2026-09-15): AN ENGINE THAT STANDS ON ANOTHER ENGINE. lib/convert.js requires money and
+ * units. A browser has no `require`, and the two it needs are already vendored as globals — so `deps` rewrites
+ * `require('./money')` into `window.CBMoney`, leaving every other byte of the master alone.
+ *
+ * ⚠️ THIS MAKES LOAD ORDER LOAD-BEARING: engine/money.js and engine/units.js must be on the page BEFORE
+ * engine/convert.js. tests/till-vendor names the order (DEPS there) and loads them in it, and the lab page checks
+ * its engines are present before it draws anything — an engine that quietly resolved to `undefined` would throw
+ * on the first sum instead of at load, which is the worst possible moment.
+ */
+const wrapForBrowser = (file, global, deps) => {
+  let src = norm(fs.readFileSync(path.join(API, 'lib', file), 'utf8'));
+  for (const spec of Object.keys(deps || {})) {
+    const call = "require('" + spec + "')";
+    if (src.indexOf(call) < 0) throw new Error(file + ' does not ' + call + ' — the dep map is stale');
+    src = src.split(call).join('window.' + deps[spec]);
+  }
   const NL = String.fromCharCode(10);
+  const left = [...src.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]);
+  if (left.length) {
+    throw new Error(file + ' still requires ' + JSON.stringify(left) + ' — a browser has no require(). '
+      + 'Vendor that module too and name it in the dep map, or this engine is not liftable into a page.');
+  }
   return GEN + '(function(){' + NL
     + src.replace(/module\.exports\s*=/, 'var EXPORTS =') + NL
     + 'window.' + global + ' = EXPORTS;' + NL + '})();' + NL;
@@ -139,6 +159,23 @@ const COPIES = () => [
    * confirmed. The alternative — a confident green tick — would be the platform claiming something nobody checked.
    */
   [null, path.join(WEB, 'engine', 'docnumber.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
+  /**
+   * ⭐⭐ TWELFTH AND THIRTEENTH — UNITS, AND WHAT A QUANTITY IS WORTH (2026-09-15).
+   *
+   * Athi: *"a conversion lab… read the qty and provide value according to current value, bullion market or
+   * commodity market."* The lab is a page over an engine, exactly as the offer lab is, and the engine is
+   * lib/convert.js — so the page must run THE SAME FILE the server runs, not a second arithmetic in HTML.
+   *
+   * ⚠️ `units` comes with it because convert stands on it: the refusal to relate two different units is the
+   * whole reason a valuation cannot be wrong by a thousand, and re-implementing that in the page would put the
+   * refusal in two places, which is one place too many for a rule that only has to fail once.
+   *
+   * ⚠️ NOT ON THE TILL'S SHELF, deliberately — the service worker's KEEP list is what a counter needs to BILL
+   * with the line down, and a conversion is not that. A cupboard that holds everything stops being a cupboard.
+   */
+  [null, path.join(WEB, 'engine', 'units.js'), wrapForBrowser('units.js', 'CBUnits')],
+  [null, path.join(WEB, 'engine', 'convert.js'),
+    wrapForBrowser('convert.js', 'CBConvert', { './money': 'CBMoney', './units': 'CBUnits' })],
   [null, path.join(WEB, 'engine', 'lots.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
      follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1

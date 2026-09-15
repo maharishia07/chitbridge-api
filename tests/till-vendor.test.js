@@ -666,7 +666,16 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     /* ⭐ the NINTH engine (2026-09-11): an amount is never a bare number, and the browser did not
                        have this module — so the rule was written out five times instead. */
                     'money.js': 'CBMoney', 'docnumber.js': 'CBDoc',
+                    /* ⭐ the conversion engine and the unit table it stands on (2026-09-15) */
+                    'units.js': 'CBUnits', 'convert.js': 'CBConvert',
                     'rewards.js': 'CBRewards', 'qr.js': null };
+  /**
+   * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
+   * a page will load it" is. convert.js reads window.CBMoney and window.CBUnits at its top, and in an empty
+   * sandbox both would be `undefined`: the file would load without a murmur and throw on the first sum instead.
+   * Naming the order HERE is what makes a page that gets the order wrong a test failure rather than a bug report.
+   */
+  const DEPS = { 'convert.js': ['money.js', 'units.js'] };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
   for (const name of files) {
@@ -677,6 +686,9 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
     sandbox.window = sandbox; sandbox.self = sandbox; sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
     try {
+      for (const dep of DEPS[name] || []) {
+        vm.runInContext(fs.readFileSync(path.join(dir, dep), 'utf8'), sandbox, { filename: dep, timeout: 5000 });
+      }
       vm.runInContext(fs.readFileSync(path.join(dir, name), 'utf8'), sandbox, { filename: name, timeout: 5000 });
     } catch (e) {
       assert.fail(name + ' throws when a browser loads it: ' + (e && e.message)
@@ -687,6 +699,25 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
     if (!want) continue;                    /* qr.js: executing without throwing is the whole assertion */
     assert.ok(sandbox[want] && typeof sandbox[want] === 'object',
       name + ' loaded but did not hand the page ' + want + ' — the counter would silently lose that engine');
+    /**
+     * ⚠️⚠️ AND FOR AN ENGINE WITH DEPS, "the global appeared" PROVES NOTHING. window.CBMoney resolving to
+     * `undefined` still hands the page a perfectly good CBConvert object whose every function throws the moment
+     * it is called. So the one engine that stands on others is made to ANSWER, in the sandbox, with its deps
+     * wired the way a page would wire them.
+     */
+    if (DEPS[name]) {
+      let answered;
+      try {
+        answered = vm.runInContext(
+          '(function(){ var t = CBConvert.table([CBConvert.rate("INR","AED",0.043,{})]);'
+          + ' var r = CBConvert.convertMoney(CBMoney.make(1000,"INR"),"AED",t);'
+          + ' return r.ok ? CBMoney.amountOf(r.amount) : "refused: " + r.why; })()',
+          sandbox, { filename: name + ' (smoke)', timeout: 5000 });
+      } catch (e) { answered = 'threw: ' + (e && e.message); }
+      assert.strictEqual(answered, 43,
+        name + ' loaded and then could not do its job — got ' + JSON.stringify(answered) + '. Its dependencies '
+        + 'are not reaching it, which on a page means an engine that looks present and fails on first use.');
+    }
   }
 }]);
 
