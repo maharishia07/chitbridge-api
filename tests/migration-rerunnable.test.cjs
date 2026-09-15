@@ -64,10 +64,26 @@ for (const f of files) {
 
   for (const m of code.matchAll(/ADD\s+CONSTRAINT\s+([a-z0-9_]+)/gi)) {
     checks++;
+    const name = m[1];
     const before = code.slice(Math.max(0, m.index - 600), m.index);
-    if (!/pg_constraint|IF\s+NOT\s+EXISTS/i.test(before)) {
-      fail(f, 'ADD CONSTRAINT ' + m[1] + ' unguarded',
-        'ADD CONSTRAINT has no IF NOT EXISTS — wrap it in a DO block that checks pg_constraint.');
+    /**
+     * ⭐ DROP-THEN-ADD IS THE THIRD VALID SHAPE, and the guard used to reject it.
+     *
+     *     ALTER TABLE x DROP CONSTRAINT IF EXISTS c;
+     *     ALTER TABLE x ADD  CONSTRAINT c CHECK (…);
+     *
+     * That is idempotent, it is what b254 and b257 both do, and it is BETTER than a pg_constraint DO block when
+     * the definition changes — re-running actually updates the rule instead of leaving the old one in place
+     * because a constraint of that name already existed.
+     *
+     * ⚠️ The DROP must name THIS constraint. A guard that accepted any nearby DROP would pass a file that
+     * dropped one rule and added a different one unguarded.
+     */
+    const droppedFirst = new RegExp('DROP\\s+CONSTRAINT\\s+IF\\s+EXISTS\\s+' + name + '\\b', 'i').test(before);
+    if (!droppedFirst && !/pg_constraint|IF\s+NOT\s+EXISTS/i.test(before)) {
+      fail(f, 'ADD CONSTRAINT ' + name + ' unguarded',
+        'Re-running errors 42710. Either DROP CONSTRAINT IF EXISTS ' + name + ' immediately before it, '
+        + 'or wrap it in a DO block that checks pg_constraint.');
     }
   }
 

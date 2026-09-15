@@ -346,6 +346,19 @@ const ENGINE_OTHER = [
    * white-label deployment differs from ours by one environment variable. (2026-09-14)
    */
   'platformroot.js',
+  /**
+   * ⭐ ENGINE. It answers WHERE AN ENTITY LIVES, which is the question a chit has to settle before a single
+   * copy is written — the first step of CTP (docs/CTP-DESIGN.md §5.1). Swap this file and delivery stops being
+   * addressable, which is the difference between a product that can be federated and one that cannot.
+   *
+   * ⚠️ IT IS ON THE LIVE PATH FROM THE DAY IT EXISTS, answering "local" for everything. A seam that is not
+   * called is a seam that has already drifted — and answering local from the start is the only way to know it
+   * costs nothing, which was Athi's actual question: *"does it look for each transfer?"*
+   *
+   * ⚠️ It is NOT a store, though it reads a table: `installation` says what a world IS, and this decides
+   * whether that world's rows are in this database. Topology, not tenancy. (2026-09-15)
+   */
+  'ctpaddress.js',
   /* ⭐ ENGINE. It decides that a registered entity BECOMES the operator's customer and that the operator
      becomes its supplier — a rule about the relationship every shop on this platform has, not plumbing.
      Swap it and the platform has no customers. (2026-09-14) */
