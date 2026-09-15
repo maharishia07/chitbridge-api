@@ -17,14 +17,14 @@ still answer correctly. That is stricter than it sounds, and it is checkable:
    `../db` is bound to *this* database however pure its arithmetic looks.
 2. **It answers a real question**, exercised with no database, no network, no server, no session, no chit.
 
-`tests/bare-slate.test.cjs` asserts both, per module, every run. **20 checks.**
+`tests/bare-slate.test.cjs` asserts both, per module, every run. **22 checks.**
 
-⚠️ **A green run is not a shipping claim.** It says these ten *can* be lifted. Nobody has packaged, versioned or
+⚠️ **A green run is not a shipping claim.** It says these eleven *can* be lifted. Nobody has packaged, versioned or
 documented them for an outside consumer, and that is the difference between an asset and a product.
 
 ---
 
-## The ten that are assets today
+## The eleven that are assets today
 
 | module | what it decides | notes |
 |---|---|---|
@@ -38,11 +38,19 @@ documented them for an outside consumer, and that is the difference between an a
 | `canon.js` | the same value, always the same bytes | uses node's `crypto`; a Java port would use its own |
 | `order-input.js` | what a catalogue asks a buyer for | 7 presets, schema fragments, documents |
 | `form-handshake.js` | which document fills which field | answers at *design* time, before anyone uploads |
+| `convert.js` | what a quantity is worth, and who said so | ⭐ the first that stands on two others — money and units are Tier A, so they travel **with** it |
 
-**The shared discipline, and why these ten and not others:** every one of them **refuses rather than guesses**.
+**The shared discipline, and why these eleven and not others:** every one of them **refuses rather than guesses**.
 `money` will not convert. `units` will not relate a crate to a kilogram. `docnumber` will not invent a rule for
 a country nobody studied. That refusal is what makes them portable — a module that guesses has to know your
 context, and a module that knows your context cannot leave.
+
+⚠️ **`convert.js` is the strictest case of that rule, and the reason it is worth reading before the others.** A
+conversion is the one place where guessing is easiest and costs the most — a unit factor nobody supplied, a
+reciprocal nobody authorised, a date nobody recorded. It refuses all three, and carries **no price feed**: the
+rate is an input with a declared provenance, so the engine is the asset and the feed is a plug. It is also the
+one with a page over it — `chitbridge-web/public/conversion-lab.html`, running the vendored copy — which is as
+close as anything here gets to a demonstration that a module could serve somebody outside this repo.
 
 ---
 

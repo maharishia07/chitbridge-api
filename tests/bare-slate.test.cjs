@@ -48,6 +48,14 @@ const ASSETS = [
   { file: 'canon.js',          allow: ['crypto'],              what: 'the same value, always the same bytes' },
   { file: 'order-input.js',    allow: [],                      what: 'what a catalogue asks a buyer for' },
   { file: 'form-handshake.js', allow: [],                      what: 'which document fills which field' },
+  /**
+   * ⭐ THE FIRST ASSET THAT STANDS ON TWO OTHERS, and it is still one. `allow` was written for exactly this:
+   * money and units are Tier A themselves, so they travel WITH it — a package containing all three is as
+   * liftable as a package containing one. What would end that is a fourth import from outside the tier.
+   * ⚠️ And it is the strictest test of the "refuses rather than guesses" rule, because a conversion is the one
+   * place where guessing is easiest and costs the most: a factor it was not given, a rate it was not shown.
+   */
+  { file: 'convert.js',        allow: ['./money', './units'],  what: 'what a quantity is worth, and who said so' },
 ];
 
 console.log('\n══ BARE SLATE — ten modules, no database, no chit ══\n');
@@ -152,6 +160,20 @@ ok('form-handshake: which document fills which field', () => {
     { type: 'object', properties: { gstin: {}, pan: {} }, required: ['gstin'] },
     [{ kind: 'gst_certificate', fields: ['gstin'] }]);
   assert.ok(cov, 'coverage must answer at design time, before anybody is asked to upload anything');
+});
+
+ok('convert: a rate is evidence, and a guess is refused', () => {
+  const cv = require('../lib/convert');
+  const m = require('../lib/money');
+  const t = cv.table([cv.rate('INR', 'AED', 0.043, { as_of: '2026-09-15', source: 'RBI', provenance: 'published' })]);
+  const r = cv.convertMoney(m.make(1000, 'INR'), 'AED', t);
+  assert.strictEqual(m.amountOf(r.amount), 43);
+  assert.strictEqual(r.workings[0].source, 'RBI', 'the answer must carry whose word it is on');
+  /* the refusal, which is the part that makes it portable: it cannot know YOUR crate-to-kilogram factor */
+  const bad = cv.valueOf({ qty: 12, unit: 'kg' },
+    { per_unit: 'gram', price: m.make(78.5, 'USD') }, t);
+  assert.strictEqual(bad.ok, false, '12 kg priced per gram must be refused, not multiplied by a guessed 1000');
+  assert.strictEqual(cv.rate('INR', 'AED', 0.043, {}).as_of, null, 'an undated rate is never dated with "now"');
 });
 
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
