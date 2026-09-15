@@ -61,6 +61,11 @@ END $$;
  *
  * ⚠️ Deleted copies (Trash) are excluded: a ticket somebody binned is not outstanding work.
  */
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_support_load();
 CREATE OR REPLACE FUNCTION ops.f_support_load()
 RETURNS TABLE (
   population       text,

@@ -81,6 +81,11 @@ REVOKE ALL ON SCHEMA public FROM cb_ops;
 GRANT USAGE ON SCHEMA ops TO cb_ops;
 
 -- ── ⭐ THE ACCOUNT SHEET — one row per shop, every column an account fact ───────────────────────────────────────
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_accounts();
 CREATE OR REPLACE FUNCTION ops.f_accounts()
 RETURNS TABLE (
   entity_id      uuid,
@@ -142,6 +147,11 @@ $$;
 CREATE OR REPLACE VIEW ops.accounts AS SELECT * FROM ops.f_accounts();
 
 -- ── ⭐ THE ROLL-CALL — the same thing as a distribution, which is what you read first ───────────────────────────
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_standing();
 CREATE OR REPLACE FUNCTION ops.f_standing()
 RETURNS TABLE (standing text, shops bigint, seats bigint, items bigint)
 LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
@@ -155,6 +165,11 @@ CREATE OR REPLACE VIEW ops.standing AS SELECT * FROM ops.f_standing();
 --    so a CASE naming 'walkin' would silently report zero if the value is spelled 'walk_in' or 'guest'. This
 --    GROUPs by whatever is actually in the column and lets the data name itself — the same reason b151 selects
 --    `c.status` rather than asserting the funnel's stages.
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_customer_mix();
 CREATE OR REPLACE FUNCTION ops.f_customer_mix()
 RETURNS TABLE (customer_type text, added_via text, customers bigint, shops bigint)
 LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$

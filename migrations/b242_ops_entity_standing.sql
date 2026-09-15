@@ -87,6 +87,11 @@ COMMENT ON FUNCTION ops.f_standing_of(timestamp, bigint, bigint) IS
 -- ⚠️ `identities.last_active_at` is `timestamp WITHOUT time zone` while now() is timestamptz. Subtracting them
 --    directly makes postgres coerce via the server timezone — a silent off-by-hours on a UTC database read from
 --    IST. now()::timestamp keeps both sides naive; that is why f_standing_of takes a plain timestamp.
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_entity_standing();
 CREATE OR REPLACE FUNCTION ops.f_entity_standing()
 RETURNS TABLE (entity_id uuid, standing text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$

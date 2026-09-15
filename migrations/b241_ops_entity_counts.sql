@@ -128,6 +128,11 @@ ON CONFLICT (metric) DO UPDATE
 --
 -- (entity_id, metric, n). The route pivots it. A wide return type would have to be edited every time the
 -- registry grew, which is the coupling the registry exists to remove.
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_entity_counts();
 CREATE OR REPLACE FUNCTION ops.f_entity_counts()
 RETURNS TABLE (entity_id uuid, metric text, n bigint)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $fn$

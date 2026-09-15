@@ -103,6 +103,11 @@ $fn$;
  * ⚠️ SECURITY DEFINER for the same reason as the trigger: entity_governance is FORCE RLS and this is called
  * from an operator context that is not the entity's own.
  */
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_place_entity(uuid, text);
 CREATE OR REPLACE FUNCTION ops.f_place_entity(p_entity uuid, p_installation text)
 RETURNS TABLE (entity_id uuid, installation_key text, constitution_key text, region text, why text)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, ops, pg_temp AS $fn$
@@ -110,7 +115,10 @@ DECLARE inst record; allowed jsonb; pop text;
 BEGIN
   SELECT i.installation_key, i.vertical_key, i.region, i.active INTO inst
     FROM installation i WHERE i.installation_key = p_installation;
-  IF inst IS NULL THEN
+  /* ⚠️ NOT FOUND, not `inst IS NULL`. A record IS NULL only when every field is null, which is true after a
+     missed SELECT INTO but is a coincidence rather than the test — and it would also be true of a real row
+     whose columns happened to be empty. Ask the question you mean. */
+  IF NOT FOUND THEN
     RAISE EXCEPTION 'no installation called %', p_installation USING ERRCODE = 'check_violation';
   END IF;
   IF NOT inst.active THEN
@@ -148,6 +156,13 @@ GRANT EXECUTE ON FUNCTION ops.f_place_entity(uuid, text) TO cb_app;
 
 -- ── ③ THE WORLD LIST SHOWS ITS REGIONS ──────────────────────────────────────────────────────────────────────────
 -- A world is no longer one region, so a list that shows one region per world would be lying the moment this is used.
+--
+-- ⚠️ DROP FIRST. b254 created this function with a narrower RETURNS TABLE, and `CREATE OR REPLACE` cannot change
+--    the row type of an existing function:
+--        42P13: cannot change return type of existing function
+--    A new column in the output is a new signature. ⚠️ Dropping also drops the GRANT, which is re-issued below —
+--    forget that and the function exists, works from the SQL editor, and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_worlds();
 CREATE OR REPLACE FUNCTION ops.f_worlds()
 RETURNS TABLE (
   population text, label text, is_live boolean, read_only boolean,

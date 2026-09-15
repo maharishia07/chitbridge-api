@@ -71,6 +71,43 @@ for (const f of files) {
     }
   }
 
+  /**
+   * ── ⚠️⚠️ A FUNCTION THAT RETURNS A TABLE CANNOT BE *REPLACED* WITH AN EXTRA COLUMN ────────────────────────────
+   *
+   * b255 widened ops.f_worlds() by one column and Athi got, in the SQL editor:
+   *
+   *     42P13: cannot change return type of existing function
+   *     HINT: Use DROP FUNCTION ops.f_worlds() first.
+   *
+   * `CREATE OR REPLACE` may change a body; it may not change a row type. A new output column is a new signature,
+   * so any RETURNS TABLE function must be dropped first — and every migration here is re-run on purpose, so this
+   * would bite again on the next one that grows a column.
+   *
+   * ⚠️ AND THE DROP TAKES THE GRANT WITH IT. A function re-created without its GRANT exists, works perfectly in
+   * the SQL editor, and is invisible to cb_app — which reads to the application as "the feature does nothing".
+   * [[feedback-silence-is-the-bug]]
+   */
+  for (const m of code.matchAll(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-z0-9_.]+)\s*\([^)]*\)\s*\r?\n?\s*RETURNS\s+TABLE/gi)) {
+    checks++;
+    const name = m[1];
+    const bare = name.replace(/\(.*$/, '');
+    const dropped = new RegExp('DROP\\s+FUNCTION\\s+IF\\s+EXISTS\\s+' + bare.replace(/\./g, '\\.'), 'i').test(code);
+    if (!dropped) {
+      fail(f, bare + '() RETURNS TABLE without a DROP first',
+        'CREATE OR REPLACE cannot change a row type — 42P13 the first time a column is added. '
+        + 'Add DROP FUNCTION IF EXISTS ' + bare + '(); before it, and re-issue the GRANT after.');
+    } else {
+      /* dropped — then the grant MUST come back, or cb_app loses it silently */
+      const granted = new RegExp('GRANT\\s+EXECUTE\\s+ON\\s+FUNCTION\\s+' + bare.replace(/\./g, '\\.'), 'i').test(code);
+      const everGranted = /GRANT\s+EXECUTE\s+ON\s+FUNCTION/i.test(code);
+      checks++;
+      if (everGranted && !granted) {
+        fail(f, bare + '() is dropped and never re-granted',
+          'DROP FUNCTION removes its GRANT. The function will work in the SQL editor and be invisible to cb_app.');
+      }
+    }
+  }
+
   /* ⭐ the claim itself. A file that does not promise idempotency is not held to it — but almost all of them
      do, because re-running is how their proofs get read. */
   if (/idempotent/i.test(sql)) checks++;

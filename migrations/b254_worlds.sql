@@ -179,6 +179,11 @@ CREATE TRIGGER identities_world_stamp
   FOR EACH ROW EXECUTE FUNCTION identities_stamp_world();
 
 /** ⭐ how many entities belong to a world that names an installation and carry no stamp — the silent-failure count */
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_unstamped();
 CREATE OR REPLACE FUNCTION ops.f_unstamped()
 RETURNS TABLE (population text, installation_key text, entities bigint, unstamped bigint)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, ops, pg_temp AS $fn$
@@ -199,6 +204,11 @@ GRANT EXECUTE ON FUNCTION ops.f_unstamped() TO cb_app;
 --
 -- Athi: *"that list should be there with the platform of platform and we should be having a menu to drive that."*
 -- One row per world: what it is, what it costs, how long it has left.
+-- ⚠️ DROP FIRST. `CREATE OR REPLACE` may change a body but NEVER a row type, so the first time this function
+--    gains an output column it raises `42P13: cannot change return type of existing function`. Dropping also
+--    drops the GRANT, which is why one is re-issued below — forget it and the function works in the SQL editor
+--    and is invisible to cb_app.
+DROP FUNCTION IF EXISTS ops.f_worlds();
 CREATE OR REPLACE FUNCTION ops.f_worlds()
 RETURNS TABLE (
   population text, label text, is_live boolean, read_only boolean,
