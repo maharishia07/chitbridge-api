@@ -100,15 +100,37 @@ time, and it settles *meaning* while both parties are still in one database wher
 An address must answer *which installation holds this entity*.
 
 **Decision: a directory lookup, never a prefix in the id.** A `bridge_id` that encodes its installation
-(`CB…@in`) becomes wrong the day a world moves machines — and moving a world is the whole point of §8. The
+(`CB…@in`) becomes wrong the day a world moves machines — and moving a world is the whole point of §10. The
 `bridge_id` stays an opaque, stable public name; the directory says where it currently lives.
 
 ```
 resolve(bridge_id) -> { installation_key, domain, public_key, population }
 ```
 
-Locally this is one row in `identities` joined to `installation`. Remotely it is the same answer from a
-directory service. ⚠️ **The directory is a new trust dependency** — see §9.4.
+#### DNS discovery — DECIDED 2026-09-15
+
+**Nobody runs the namespace. Each installation publishes its own record, and we cache it.**
+
+Athi first said CBINC should run the directory, then said in the same breath: *"we are thinking of creating
+something like SMTP? we can ride on this for cross border… that will find the other end."* The second instinct
+beats the first, and the reason is positioning, not engineering: **an installation whose address book we control
+is not sovereign**, and sovereignty is what `installation.root_key_ref` was called an anchor for.
+
+So, MX-style:
+
+- each installation publishes a signed manifest at a well-known path on its own `installation.domain`
+  (`https://<domain>/.well-known/ctp.json`) — its `installation_key`, public key, populations it will accept,
+  and the endpoint that takes envelopes
+- a `bridge_id` resolves to a domain by the sender asking the recipient's domain, exactly as a mail server asks
+  DNS for an MX record
+- **we run a cache and a member registry, not the namespace** — so *"is he a member of me"* is still checked on
+  arrival, which was Athi's point, but a stranger installation can still be reached without our permission
+
+⚠️ **This removes open decision §9.4 and replaces it with a smaller one:** how does a sender learn the *domain*
+for a bridge id it has never seen? A bridge id is not a domain. Either the address a person types is
+`bridge_id@domain` (the SMTP shape, human-legible, no lookup needed), or there is a discovery hop. **The
+`@domain` form is recommended** — it keeps the id opaque, puts the routing in the address where a person can
+read it, and needs no global index of any kind.
 
 ### 5.2 One deliver(), two transports
 
@@ -185,6 +207,29 @@ anywhere to stop it. Every other guarantee in the product is downstream of that 
 installation and asserts a 409 — the same discipline b247 itself used, which refused to install without proving
 the trigger fired.
 
+### 7.1 ⚠️ A population code is a LOCAL name — matching on the string is a trap
+
+Athi, 2026-09-15: *"only for LIVE to Live, test to test? is that correct?"* — right for live, and a trap for
+everything else.
+
+`live` is a **universally shared meaning**: live is live, on any installation, and two live worlds trading is
+exactly cross-border commerce. But `test` on our engine and `test` on a customer's engine are **two unrelated
+sealed worlds that happen to share a word**. Matching on the code would wire a stranger's sandbox to ours
+because we both typed the obvious thing.
+
+| sender | recipient | |
+|---|---|---|
+| `live` | `live` | **allowed, always** — one live world, spanning installations |
+| non-live | same code, other installation | **refused by default** — a shared name is not a shared world |
+| non-live | non-live | allowed **only** where both sides have declared an explicit pairing |
+
+⭐ The pairing is not a chore, it is a feature people will want: two companies deliberately wiring their
+sandboxes together to rehearse an integration before either goes live. It just has to be *said* by both, rather
+than inferred from a string.
+
+⚠️ This also means the manifest in §5.1 must list **which populations an installation will accept envelopes
+for** — refusing at the door is better than accepting and rejecting after the bytes have crossed a border.
+
 ---
 
 ## 8. Trust, and the rule that keeps the two transports honest
@@ -225,10 +270,10 @@ makes §8's promise checkable, and it is what makes a world liftable in §10.
    it urgent because the data now physically crosses a border.
 3. **Key rotation and revocation.** How is a compromised installation key retired, and what happens to
    envelopes already in flight and already accepted?
-4. **Who runs the directory?** It is a trust root. If CBINC runs it, a "sovereign" installation is not
-   sovereign. Options: a signed static manifest each installation publishes at a well-known path; mutual
-   pinning; or an accepted central registry. **This decides whether the rail is genuinely federated or
-   hub-and-spoke**, and it is a positioning decision as much as a technical one.
+4. ~~**Who runs the directory?**~~ **DECIDED 2026-09-15: nobody.** DNS-style discovery — each installation
+   publishes a signed manifest on its own domain and we run a cache plus the member registry, never the
+   namespace. See §5.1. What remains is smaller: the human-typed address form, where `bridge_id@domain` is
+   recommended.
 5. **Delivery receipts and failure.** The sender's copy must not read *delivered* until the remote **accepted** —
    the receipt-reports-outcome rule at protocol scale. What is the state while queued? What is the state after
    permanent failure, and who is told?
