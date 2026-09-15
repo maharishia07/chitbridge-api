@@ -118,19 +118,25 @@ kinds:
     status: in-code
     note: entity_kind = 'shopper'. NOT our customer — a customer OF a shop.
 
-  - key: storefront_customer_suffixed
-    label: Storefront customer (suffixed form)
-    example: email@entityid.cr / phone@entityid.cr
-    shape: contact + "@" + entity user_id + ".cr"
+  - key: storefront_customer
+    label: Storefront customer
+    example: 9876512345@alpha-timers.cr  ·  xyz=gmail.com@alpha-timers.cr
+    shape: contact + "@" + the shop's user_id + ".cr"
     separator: ".cr"
-    sendable: unknown
-    stored: unknown
-    enforced_in: null
-    status: open
+    unique: global (identities.email)
+    sendable: true
+    stored: true
+    stored_in: identities.email     # ⚠️ NOT user_id — see open NS-5
+    enforced_in: routes/catalogue.js
+    status: in-code
     note: >
-      ⚠️ Athi specified this 2026-09-15. NOT FOUND IN THE CODE — searched *.js and *.sql across both repos.
-      What exists is entity_kind 'shopper'/'customer' keyed by email/otp_contact. Needs one line from him:
-      to be built, live somewhere not found, or superseded.
+      Built. crHandle(channel, raw, entity) is the ONE builder, used at every storefront call site so a
+      returning customer regenerates the same handle. An email keeps its FULL address with "@" swapped to "="
+      so xyz@gmail.com and xyz@yahoo.com at the same shop stay distinct; collapsing them to the local part
+      would have merged two people into one identity. Athi, 2026-08-20: "use user id not bridge id for
+      customer" — the shop is named by its handle, not CBZQK5DAH9, so a customer can read who they are a
+      customer OF. Entities registered before b170 fall back to the bridge id, so both forms exist and that is
+      fine: the handle is only ever COMPARED, never parsed.
 
   - key: employee_suffixed
     label: Employee (suffixed form)
@@ -211,8 +217,26 @@ forbidden_shapes:
 # ── 6 · OPEN ─────────────────────────────────────────────────────────────────────────────────────────────────
 open:
   - id: NS-1
-    what: The storefront customer ".cr" form — specified, not found in code.
-    needs: one line from Athi (build it / point at it / retire it)
+    what: >
+      The three ids must live in identities.user_id — Athi, 2026-09-15: "the user-id table will have three
+      different ids: entity id, employee id, customer id, with its own @ and .br or .cr differentiation."
+      Today only the ENTITY id is in user_id. The customer .cr handle is in identities.email, and the
+      employee handle is not stored at all.
+    needs: decision recorded; then the migration, the backfill and the writers. See NS-5 and NS-6.
+  - id: NS-5
+    what: >
+      The customer .cr handle is stored in identities.email, which is UNIQUE and is the OTP lookup key. It is
+      not an email address (9876512345@alpha-timers.cr), so the column name misstates what it holds.
+    needs: >
+      write user_id as well as email, prove the reads, then move the lookup. ⚠️ It is a customer AUTH path —
+      middleware/customer-auth.js resolves on it — so it hardens only after the dual write is confirmed.
+  - id: NS-6
+    what: >
+      The employee id ".br" — username@entityid.br — must be STORED in user_id. Today the handle is rendered
+      from actor_key + the parent's current user_id and never written.
+    needs: >
+      grammar in lib/handle.js, a writer in routes/actors.js, a backfill for existing co-assists, and login
+      resolution that still accepts what people type today.
   - id: NS-2
     what: actor_key permits a bridge-id-shaped key (4–12 [a-z0-9]), e.g. cbm5p72hb7.
     needs: apply handle.LOOKS_LIKE_BRIDGE to actor_key, making the two spaces disjoint by construction

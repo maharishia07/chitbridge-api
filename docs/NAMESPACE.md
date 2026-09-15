@@ -141,23 +141,54 @@ should be applied in this order:
 
 ---
 
-## 6 · ⚠️ OPEN — the storefront customer id
+## 6 · The storefront customer id — BUILT, and I said twice that it was not
 
-Athi, 2026-09-15: *"storefront customer is mail-id@entityid.cr or phonenumber@entityid.cr."*
+Athi, 2026-09-15: *"storefront customer is mail-id@entityid.cr or phonenumber@entityid.cr"* … *"that was the
+discussion we had and you confirmed me that it has been done."*
 
-**I cannot find `.cr` anywhere in the code.** What exists today: a storefront buyer is an `identities` row with
-`entity_kind = 'shopper'` or `'customer'`, identified by `email` / `otp_contact`, with the fallback
-`cust-<8hex>@shopper.cb` when no email is given. The customers screen labels `c.email` as *"Under-shop id"*,
-which is the same idea without the suffix.
+**He was right and I was wrong, twice.** `.cr` has been built since b170. I missed it because the literal is
+never written as a string in the files I grepped — it is composed inside one builder:
 
-**The question, and it needs one line from him:** is `.cr` (a) a convention from the earlier experiments that
-was never built and should now be, (b) live somewhere I have not found, or (c) superseded by `entity_kind` +
-`email`? Until that is settled this row stays 🟡, because a third marker meaning "not a real registration"
-alongside `~` would be exactly the drift these files keep warning about.
+```js
+// routes/catalogue.js
+function crHandle(channel, raw, entity) {
+  const local = channel === 'email' ? raw.replace('@', '=') : raw;
+  const at = (entity && entity.user_id) || (entity && entity.bridge_id) || '';
+  return `${local}@${at}.cr`;
+}
+```
 
-Related and also open: a **`.br` suffix on employee ids**, proposed as a double-check that a typed id is not an
-employee. §3.3 offers the same guarantee with no new data and no change to the login path, which is the riskiest
-thing in the app to touch — but the decision is his.
+    9876512345@alpha-timers.cr        a phone customer of Alpha Timers
+    xyz=gmail.com@alpha-timers.cr     an email customer — the FULL address, "@" swapped to "="
+
+⭐ **The full address, not the local part**, so `xyz@gmail.com` and `xyz@yahoo.com` at the same shop stay two
+people. Collapsing them would have merged two customers into one identity — cross-customer order visibility and
+a misrouted OTP.
+
+⭐ **The shop is named by its handle, not its bridge id.** Athi, 2026-08-20: *"use user id not bridge id for
+customer"* — `9876512345@CBZQK5DAH9.cr` is unreadable and means nothing to the person it names. Entities
+registered before b170 have no `user_id` and fall back to the bridge id, so **both forms exist at once**. That
+is safe because the handle is only ever COMPARED, never parsed — which is also why there is exactly one builder,
+used at every call site, so a returning customer regenerates the same handle.
+
+⚠️ **It is stored in `identities.email`, which is UNIQUE and is the OTP lookup key** — and it is not an email
+address, so the column name misstates what it holds. That is the real gap against the specification below, and
+it is tracked as **NS-5**.
+
+### The specification, 2026-09-15
+
+> *"the user-id table will have three different ids: a) entity-id, b) employee id, c) customer id with its own
+> @ and .br or .cr differentiation. each id will have their own bridge id, which is going to the 8 char internal
+> id, now 8char internal id @ domain name."*
+
+| | form | in `user_id` today |
+|---|---|---|
+| entity | `acmetraders` | ✅ yes |
+| employee | `username@entityid.br` | ❌ not stored at all — **NS-6** |
+| customer | `contact@entityid.cr` | ❌ stored in `email` — **NS-5** |
+
+Each already has **its own bridge id**, and the cross-boundary address is `bridge_id@domain` (§5) — those two
+halves are already true.
 
 ---
 
