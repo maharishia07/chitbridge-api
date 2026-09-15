@@ -81,6 +81,10 @@ const GUARDS = [
      so CBAAAAAAAA@in.example is not CBAAAAAAAA@ae.example. The dangerous case it holds: a QUALIFIED address
      must never resolve locally just because we hold that id. */
   'ctp-collision.test.cjs',
+  /* ⭐⭐ THE SOFTWARE ASSETS. Athi: "each capability has to be proven without the concept of chit… that will
+     be our software asset." Ten modules, each proven ALONE (its require() list is empty or a language
+     builtin) and proven to ANSWER something, with no database, no network and no chit. */
+  'bare-slate.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
