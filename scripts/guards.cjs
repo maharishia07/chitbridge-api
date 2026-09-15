@@ -90,6 +90,10 @@ const GUARDS = [
      it was not given, no inverted rate unless permitted, and a line it cannot value never vanishes from a
      total. No database, no network, no chit. */
   'convert.test.cjs',
+  /* ⭐⭐ THE NAMESPACE REGISTER — docs/namespace.yaml checked against the code that enforces it. Every kind of
+     id, its shape, its separator, whether it can be sent to, and where the rule lives. It exists because the
+     grammar used to live only in one file’s comments, and a document nothing checks becomes fiction. */
+  'namespace.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

@@ -34,7 +34,8 @@
   "devDependencies": {
     "jest": "^30.4.2",
     "nodemon": "^3.0.2",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "js-yaml": "^4.1.0"
   },
   "jest": {
     "maxWorkers": 1,

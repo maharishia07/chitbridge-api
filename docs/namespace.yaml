@@ -1,0 +1,224 @@
+# ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+#  THE NAMESPACE REGISTER — every identifier this platform mints, types or shows.
+#
+#  Athi, 2026-09-15: "create a mapping rule in tabular format and bring it to test report / or somewhere
+#  referrable… clearly search everything and ensure that all identities are well documented."
+#
+#  ⚠️ THIS FILE IS CHECKED AGAINST THE CODE ON EVERY RUN — tests/namespace.test.cjs. It is not a description
+#  that can quietly go stale: if the CHECK constraint, the alphabet, the length caps, the reserved list or the
+#  minted kinds change and this file does not, the guard fails and names the difference.
+#
+#  The prose version, with the arguments, is docs/NAMESPACE.md. This is the table.
+#  status:  in-code  = built and enforced, `enforced_in` names where
+#           specified = Athi has specified it; NOT built
+#           open      = a contradiction or question that needs settling
+# ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+version: 1
+updated: 2026-09-15
+
+# ── 1 · THE THREE NAMES EVERY PARTY HAS ──────────────────────────────────────────────────────────────────────
+names:
+  - key: bridge_id
+    job: identity
+    example: CBM5P72HB7
+    what: minted, unique, never changes, never reused, rarely typed
+    mutable: false
+  - key: user_id
+    job: handle
+    example: acmetraders
+    what: unique, human, portable — what you give someone
+    mutable: false          # set once; see handle.checkRoot
+  - key: display_name
+    job: label
+    example: Acme Traders
+    what: what a person reads; not unique and does not need to be
+    mutable: true
+
+# ── 2 · THE MAPPING RULE — one row per kind of id ────────────────────────────────────────────────────────────
+#  separator  the character that says which KIND this is, read without a lookup
+#  sendable   can a chit be addressed to it
+#  stored     is the string itself stored, or rendered from parts at display time
+kinds:
+  - key: bridge_id
+    label: Bridge ID
+    example: CBM5P72HB7
+    shape: "CB + 8 characters"
+    alphabet: ABCDEFGHJKLMNPQRSTUVWXYZ23456789   # omits I O 0 1 — it is read aloud
+    separator: null
+    unique: global
+    sendable: true
+    stored: true
+    enforced_in: lib/bridgeid.js
+    status: in-code
+    note: CSPRNG. A flat space with no grammar — which is why it is what crosses a boundary.
+
+  - key: entity
+    label: Entity (a registered business)
+    example: acmetraders
+    shape: 8–20 lowercase, no "@", no "."
+    separator: null
+    unique: global (lower(user_id))
+    sendable: true
+    stored: true
+    enforced_in: lib/handle.js checkRoot()
+    status: in-code
+    note: Set once. The ban on "@" and "." is what keeps the other kinds parseable without a lookup.
+
+  - key: network_node
+    label: Network store
+    example: acmetraders.clothing
+    shape: root + one label, exactly two levels
+    separator: "."
+    unique: global (lower(user_id))
+    sendable: true
+    stored: true
+    enforced_in: lib/handle.js check()
+    status: in-code
+    note: Depth lives in the ltree, not the name. Records where a store was BORN, not where it sits.
+
+  - key: employee
+    label: Employee / co-assist
+    example: ravi@acmetraders
+    shape: actor_key + "@" + the parent entity's current user_id
+    separator: "@"
+    unique: UNIQUE(actor_key, parent_entity_id)
+    sendable: false
+    stored: false            # ⭐ RENDERED. identities.user_id is NOT written for an actor.
+    enforced_in: routes/actors.js
+    status: in-code
+    note: >
+      Because it is rendered and entities may not contain "@", identities.user_id NEVER contains "@".
+      So no stored row can be matched by an address of the form something@somewhere.
+
+  - key: minted_party
+    label: Minted party (never registered)
+    example: ~acmetraders.sup-0001
+    shape: "~ + owner user_id + . + kind-nnnn"
+    separator: "~"
+    minted_kinds: [sup, cus]
+    unique: global (lower(user_id))
+    sendable: false          # ⚠️ isMinted() blocks it in the recipient resolver, search, supplier/customer add
+    stored: true
+    enforced_in: lib/handle.js minted()/isMinted(), lib/local-identity.js
+    status: in-code
+    note: >
+      "~" is unforgeable by construction — check() has always required every label to start with a letter or
+      digit, so no registered handle can begin with it.
+
+  - key: storefront_shopper
+    label: Walk-in / storefront buyer
+    example: someone@theiremail.com, else cust-1a2b3c4d@shopper.cb
+    shape: their real email, or a minted fallback
+    separator: null
+    unique: global (email)
+    sendable: true
+    stored: true
+    enforced_in: routes/catalogue.js
+    status: in-code
+    note: entity_kind = 'shopper'. NOT our customer — a customer OF a shop.
+
+  - key: storefront_customer_suffixed
+    label: Storefront customer (suffixed form)
+    example: email@entityid.cr / phone@entityid.cr
+    shape: contact + "@" + entity user_id + ".cr"
+    separator: ".cr"
+    sendable: unknown
+    stored: unknown
+    enforced_in: null
+    status: open
+    note: >
+      ⚠️ Athi specified this 2026-09-15. NOT FOUND IN THE CODE — searched *.js and *.sql across both repos.
+      What exists is entity_kind 'shopper'/'customer' keyed by email/otp_contact. Needs one line from him:
+      to be built, live somewhere not found, or superseded.
+
+  - key: employee_suffixed
+    label: Employee (suffixed form)
+    example: ravi@acmetraders.br
+    shape: employee handle + ".br"
+    separator: ".br"
+    status: specified
+    enforced_in: null
+    note: >
+      Proposed as a double-check that a typed id is not an employee. NAMESPACE.md §3.3 gives the same guarantee
+      with one query against UNIQUE(actor_key, parent_entity_id) — no new data, no change to the login path.
+
+  - key: foreign_entity
+    label: Entity at another installation (CTP)
+    example: CBM5P72HB7@in.example
+    shape: bridge_id + "@" + installation domain
+    separator: "@"           # the same character as an employee handle; what differs is the RIGHT side
+    qualified_by: domain
+    sendable: true
+    stored: true             # stored on the local row that stands for the foreign party
+    enforced_in: lib/ctpaddress.js
+    status: in-code           # the WIRE form works; the typed→bridge translation does not exist
+    note: >
+      resolveAddress looks up bridge_id ONLY, never user_id — so there is nothing for it to collide with.
+      Missing: a `resolve` verb so a typed handle can be translated to a bridge id at the remote, once, at
+      add time. See NAMESPACE.md §5 and CTP-DESIGN.md §9.6.
+
+# ── 3 · THE CLOSED VOCABULARIES ──────────────────────────────────────────────────────────────────────────────
+# ⚠️ entity_kind is guarded by a CHECK constraint. This list must match it exactly — the test asserts it.
+entity_kind:
+  constraint: identities_entity_kind_chk
+  declared_in: migrations/b225_entity_kind.sql
+  default: customer
+  values:
+    customer: a real registered business — THE DEFAULT
+    network:  a branch/node under a parent tenant; billed as part of the top node, not separately
+    supplier: a local supplier a shop minted for the hardware shop on the corner; never signed up
+    test:     a fixture minted by a test run; swept by cleanup-test-entities.sql
+    internal: ours — the platform root, demo shops, anything we mint for ourselves
+    actor:    a person or co-assist under an entity
+    shopper:  a WALK-IN CUSTOMER of a shop — not our customer
+
+identity_type:
+  values: [entity, actor, customer]
+  note: >
+    Three types share one table. entity_kind defaults for ALL of them, which is why 'actor' and 'shopper' are
+    in the vocabulary above — so no row anywhere carries a misleading 'customer'.
+
+# ── 4 · THE SEPARATOR GRAMMAR — read without a lookup ────────────────────────────────────────────────────────
+separators:
+  "":    an ENTITY — registered, the root of everything below
+  "@":   an EMPLOYEE — binds a person to the business they work for
+  ".":   a NETWORK node — binds a store to the network it was born in
+  "~":   a MINTED party — created BY a business, never registered
+  "@domain": a FOREIGN entity — at another installation (bridge_id on the left, always)
+
+# ── 5 · LIMITS, mirrored from lib/handle.js — the test asserts every one ─────────────────────────────────────
+limits:
+  MIN_ROOT: 8
+  MAX_ROOT: 20
+  MAX_LABEL: 40
+  MAX_DEPTH: 2
+  MAX_TOTAL: 100
+  MINTED_DIGITS: 4
+  actor_key: { min: 4, max: 12, charset: "^[a-z0-9]+$" }
+
+reserved:
+  fixed: [api, www, app, admin, root, cb, chitbridge, network, system, support, help]
+  from_env: PLATFORM_ROOT_HANDLE
+  note: Checked on the ROOT label only — acmetraders.support is legal, a bare "support" is not.
+
+forbidden_shapes:
+  - pattern: "^cb[a-z0-9]{8}$"
+    why: looks like a bridge id — a reader would be fooled even though the code would not
+  - pattern: "<minted kind>-<digits> in the second label"
+    why: looks like a minted party (tallytest.sup-0001 sits one tilde from ~tallytest.sup-0001)
+
+# ── 6 · OPEN ─────────────────────────────────────────────────────────────────────────────────────────────────
+open:
+  - id: NS-1
+    what: The storefront customer ".cr" form — specified, not found in code.
+    needs: one line from Athi (build it / point at it / retire it)
+  - id: NS-2
+    what: actor_key permits a bridge-id-shaped key (4–12 [a-z0-9]), e.g. cbm5p72hb7.
+    needs: apply handle.LOOKS_LIKE_BRIDGE to actor_key, making the two spaces disjoint by construction
+  - id: NS-3
+    what: Typed handle → bridge id across a boundary (the CTP `resolve` verb).
+    needs: build; required by both branches of the catalogue push/pull fork
+  - id: NS-4
+    what: A foreign supplier needs a local row, and isMinted() must not swallow it (it IS sendable).
+    needs: design with NS-3

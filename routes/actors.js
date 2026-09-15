@@ -1,3 +1,5 @@
+/* ⭐ Every kind of id, its shape and which of them may be sent to: docs/NAMESPACE.md, with the
+   machine-checked table in docs/namespace.yaml (guard: tests/namespace.test.cjs). */
 // routes/actors.js — B3 Actor model API
 // All endpoints for create login manage actors
 
