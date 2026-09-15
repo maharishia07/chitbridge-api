@@ -111,13 +111,17 @@ router.post('/register',
            */
           const mark = require('../lib/istest')
             .atRegistration(email, await require('../lib/istest').ready());
+          /* ⚠⚠ population, NOT is_test. b249 made is_test GENERATED ALWAYS and this INSERT kept naming it,
+             which Postgres refuses with 428C9 — so every sign-up failed from the moment b249 ran until this
+             was fixed. `population` null means “say nothing” and lets the DEFAULT and the inheritance trigger
+             answer. [[feedback-name-vs-behaviour]] */
           await query(
             `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind`
-            + (mark.is_test === null ? '' : ', is_test')
+            + (mark.population === null ? '' : ', population')
             + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6`
-            + (mark.is_test === null ? '' : ', $7') + ')',
+            + (mark.population === null ? '' : ', $7') + ')',
             [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind]
-              .concat(mark.is_test === null ? [] : [mark.is_test])
+              .concat(mark.population === null ? [] : [mark.population])
           );
           console.log(`New entity registered: ${display_name} / ${bridge_id}`);
         }
