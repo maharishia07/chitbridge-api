@@ -204,6 +204,39 @@ ok('rubbish is "unknown" with a reason, never an exception', () => {
   }
 });
 
+/**
+ * ── ⭐⭐⭐ § 2b · SIGNING IN AS AN EMPLOYEE STILL WORKS ────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-15: *"if I sign in as employee id, it should work?"*
+ *
+ * ⚠️ THE LOGIN PARSE WAS CHANGED TODAY — `routes/actors.js` had `username.split('@')` written out twice and now
+ * asks the resolver instead. That is the highest-risk edit in the app, so the shapes people actually type are
+ * pinned here. The route's lookups are `LOWER(user_id)`, `LOWER(display_name)` and an EXACT `actor_key = $1`,
+ * and every actor_key is stored lowercase at every mint site — so the resolver lowercasing both halves is
+ * correct, and it FIXES `Ravi@acme`, which previously matched nothing.
+ */
+ok('⭐⭐ every shape a person types at the sign-in box still resolves', () => {
+  const cases = [
+    ['ravi@acmetraders',    'ravi', 'acmetraders'],   /* the User ID form */
+    ['ravi@Alpha Timers',   'ravi', 'alpha timers'],  /* the DISPLAY NAME form — still accepted, still lowercased */
+    ['Ravi@AcmeTraders',    'ravi', 'acmetraders'],   /* ⭐ was broken: actor_key = 'Ravi' matched no row */
+    ['ravi@acmetraders.br', 'ravi', 'acmetraders'],   /* ⭐ the STORED form now resolves to the business too */
+    ['ravi@athi.clothing',  'ravi', 'athi.clothing'], /* an employee of a network store */
+  ];
+  for (const [typed, key, at] of cases) {
+    const c = resolve.classify(typed);
+    assert.ok(c.kind === 'employee' || c.kind === 'employee_typed',
+      typed + ' read as "' + c.kind + '" — a login box must never fail to recognise what people already type');
+    assert.strictEqual(c.actor_key, key, typed + ' → actor_key ' + c.actor_key);
+    assert.strictEqual(c.at, at, typed + ' → business ' + c.at);
+  }
+});
+
+ok('⚠️ and the suffixed form does NOT send anybody looking for a business called "acmetraders.br"', () => {
+  assert.strictEqual(resolve.classify('ravi@acmetraders.br').at, 'acmetraders',
+    'the old split("@") returned "acmetraders.br", which matches no entity row');
+});
+
 /* ── § 3 · THE TWO MODULES SHARE ONE GRAMMAR AND NEVER EACH OTHER ─────────────────────────────────────────── */
 ok('⚠️ mint does not require resolve, and resolve does not require mint', () => {
   const fs = require('fs'), path = require('path');
