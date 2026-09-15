@@ -76,6 +76,11 @@ const GUARDS = [
      lifting a world silently changes behaviour. Also holds the population boundary, which across a wire is a
      PROTOCOL rule because b247 cannot see the far entity. */
   'ctp-conformance.test.cjs',
+  /* ⭐ Athi’s test: two shops with the SAME user id, display name AND bridge id, in two countries. The
+     collision is expected — bridge ids are minted per installation — and the address carries the namespace,
+     so CBAAAAAAAA@in.example is not CBAAAAAAAA@ae.example. The dangerous case it holds: a QUALIFIED address
+     must never resolve locally just because we hold that id. */
+  'ctp-collision.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
