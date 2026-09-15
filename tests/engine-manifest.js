@@ -57,16 +57,56 @@ const TIER_A = [
      counter that is offline and on the server that re-applies the same movement. No database, no clock it does
      not receive, no locale: the moment it needs any of those it stops being answerable in two places at once. */
   'lib/inventory.js',        // perpetual stock, weighted average (Ind AS 2); pure, holds nothing
+  /**
+   * ── ⭐⭐⭐ THE NAMING MODULES (2026-09-15) ──────────────────────────────────────────────────────────────────
+   *
+   * Athi: *"mint user id should be a module, and it should have these combinations in one place, similarly,
+   * resolve user id should be a module"* … *"can you ensure that no different place has another logic for
+   * naming convention."*
+   *
+   * Tier A by every test this manifest applies — no database, no network, no clock, pure string work over
+   * lib/handle's grammar — and ENGINE, because what an identity is CALLED is the product's own rule and
+   * travels with it.
+   *
+   * ⚠️ THEY EXIST BECAUSE THE BUILDERS WERE SCATTERED, and that had already cost something: the customer form
+   * was a private function inside routes/catalogue.js, the login split was written out twice in
+   * routes/actors.js, and `thing@version` was composed in thirteen places and split in three. A grammar nobody
+   * can find is one that gets re-invented — asked where `.cr` was built, it took two wrong answers to reach
+   * the truth.
+   */
+  /* ⚠️ ONLY versionref is TIER A. My first cut put all three here and the guard refused it in one line: Tier A
+     means ZERO dependencies, and mint/resolve both stand on lib/handle. They are TIER B, below — which is what
+     Tier B is FOR, and saying so out loud is the whole point of the boundary. */
+  'lib/versionref.js',       // thing@version — the OTHER meaning of "@", named and resolved separately
 ];
 
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
 const TIER_B = [
   'lib/regional.js',         // governed currency: entity → region → named fallback
   'lib/reporting.js',        // the network reporting LENS; structurally un-mintable output
+  /* ⭐ the naming modules: no database and no clock, but they stand on lib/handle's grammar — which is exactly
+     the case Tier B exists for. What an identity is CALLED is the product's own rule and travels with it. */
+  'lib/mintuserid.js',       // ⭐ MAKE a name — entity · network · employee · customer · minted · bridge id
+  'lib/resolveuserid.js',    // ⭐ READ one back, and say which KIND it is, before anyone reaches the database
 ];
 
 /** Everything an engine module is permitted to reach for. Deliberately tiny. */
-const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', 'crypto']);
+/**
+ * ⚠️ `./versionref` joined on 2026-09-15 and earns its place the way `./money` does: zero dependencies, no
+ * database, no clock — it formats and parses `thing@version` and nothing else. It is here because
+ * lib/regional.js composes a container reference, and the alternative was leaving a thirteenth private copy of
+ * that string join where nothing could see it.
+ */
+/**
+ * ⚠️ AND `./handle` + `./bridgeid` JOINED FOR THE SAME REASON AS `./money`: both are TIER A engine modules
+ * themselves, so a Tier B module standing on them has not left the engine — it has used it. The allowance is
+ * "what an engine module may reach for", and an engine module is exactly what each of these is.
+ *
+ * ⚠️ The list stays tiny on purpose. Every name here is a thing that would have to travel with the engine if
+ * somebody lifted it out, so adding one is a decision about the package, not about an import.
+ */
+const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', './versionref',
+                                    './handle', './bridgeid', 'crypto']);
 
 /**
  * EVERY lib/ file must be classified. This was the first version's real hole: it named 6 files and said NOTHING

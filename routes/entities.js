@@ -1,3 +1,4 @@
+const versionref = require('../lib/versionref');
 // routes/entities.js — Entity registration, login, search
 const express = require('express');
 const router = express.Router();
@@ -296,7 +297,7 @@ router.post('/verify',
             `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
              ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
             [identity.identity_id, c.constitution_key, c.version, installKey]));
-          mintedConstitution = c.constitution_key + '@' + c.version;
+          mintedConstitution = versionref.format(c.constitution_key, c.version);
           console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
         }
       } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }

@@ -94,6 +94,10 @@ const GUARDS = [
      id, its shape, its separator, whether it can be sent to, and where the rule lives. It exists because the
      grammar used to live only in one file’s comments, and a document nothing checks becomes fiction. */
   'namespace.test.cjs',
+  /* ⭐⭐ MINT a user id and RESOLVE one — every combination in one place (lib/mintuserid.js), every reading in
+     another (lib/resolveuserid.js). § 0 holds the customer form byte-identical to what production already
+     stores: one character of drift and every returning customer becomes a second identity. */
+  'userid.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

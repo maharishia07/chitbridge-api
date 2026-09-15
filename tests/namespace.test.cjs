@@ -210,6 +210,95 @@ ok('every open item has an id and says what it needs', () => {
   }
 });
 
+/**
+ * ── ⭐⭐⭐ NO SECOND PLACE MAY BUILD A NAME ────────────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-15: *"can you ensure that no different place has another logic for naming convention."*
+ *
+ * ⚠️⚠️ THE ANSWER WAS NO, AND IT HAD ALREADY COST SOMETHING. The customer builder lived as a private function
+ * inside `routes/catalogue.js`, used at six call sites. Asked where `.cr` was built I searched for the literal,
+ * found nothing — it is COMPOSED, never written — and told him twice it had never been built. It had, since
+ * b170. This is the check that makes that impossible to repeat: the suffixes may appear in code ONLY in the
+ * files that own the grammar. Everywhere else must call the module.
+ *
+ * ⚠️ COMMENTS ARE STRIPPED FIRST. Half this codebase's value is in its comments, and a file that merely
+ * DISCUSSES `.cr` is not building one — failing it would teach people to stop writing the explanation.
+ */
+ok('⭐⭐ only the grammar modules compose a .br or .cr name', () => {
+  const OWNERS = ['lib/handle.js', 'lib/mintuserid.js', 'lib/resolveuserid.js'];
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  const walk = (dir, out) => {
+    for (const e of fs.readdirSync(path.join(API, dir), { withFileTypes: true })) {
+      const rel = dir + '/' + e.name;
+      if (e.isDirectory()) { if (e.name !== 'node_modules') walk(rel, out); }
+      else if (e.name.endsWith('.js')) out.push(rel.replace(/^\.\//, ''));
+    }
+    return out;
+  };
+  const files = [].concat(walk('lib', []), walk('routes', []), walk('middleware', []));
+  const offenders = [];
+  for (const f of files) {
+    if (OWNERS.indexOf(f) >= 0) continue;
+    const code = strip(read(f));
+    if (/['"`]\.(br|cr)['"`]|\.(br|cr)`/.test(code)) offenders.push(f);
+  }
+  assert.deepStrictEqual(offenders, [],
+    'these compose an employee or customer id themselves: ' + offenders.join(', ')
+    + '. There must be ONE builder — lib/mintuserid.js — or a returning person regenerates a different string '
+    + 'than last time and silently becomes a second identity.');
+});
+
+ok('⭐ and only the grammar modules compose a minted "~" name', () => {
+  const OWNERS = ['lib/handle.js', 'lib/mintuserid.js', 'lib/resolveuserid.js'];
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  for (const f of ['lib/local-identity.js', 'routes/relationships.js', 'routes/catalogue.js']) {
+    if (OWNERS.indexOf(f) >= 0) continue;
+    const code = strip(read(f));
+    assert.ok(!/['"`]~['"`]\s*\+|`~\$\{/.test(code),
+      f + ' builds a "~" handle itself — handle.minted() is the one builder');
+  }
+});
+
+/**
+ * ⭐⭐ AND THE SECOND MEANING OF "@" IS REGISTERED, so nobody "fixes" it.
+ * `constitution_key@v1`, `standard_key@v1`, `container_id@v2` are VERSION references, not parties. They are
+ * never stored in identities.user_id, and lib/resolveuserid tells them apart structurally.
+ */
+ok('⭐⭐ only lib/versionref.js composes or splits a thing@version', () => {
+  const OWNERS = ['lib/versionref.js', 'lib/resolveuserid.js', 'lib/mintuserid.js', 'lib/ctpaddress.js'];
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  const walk = (dir, out) => {
+    for (const e of fs.readdirSync(path.join(API, dir), { withFileTypes: true })) {
+      const rel = dir + '/' + e.name;
+      if (e.isDirectory()) { if (e.name !== 'node_modules') walk(rel, out); }
+      else if (e.name.endsWith('.js')) out.push(rel);
+    }
+    return out;
+  };
+  const offenders = [];
+  for (const f of [].concat(walk('lib', []), walk('routes', []), walk('middleware', []))) {
+    if (OWNERS.indexOf(f) >= 0) continue;
+    const code = strip(read(f));
+    /* the connector kit id is the one registered exception — see not_identities in namespace.yaml */
+    if (f === 'routes/integrations.js') continue;
+    if (/\+ *'@' *\+/.test(code) || /split\(['"]@['"]\)/.test(code)) offenders.push(f);
+  }
+  assert.deepStrictEqual(offenders, [],
+    'these join or split on "@" themselves: ' + offenders.join(', ') + '. A version ref has one builder and '
+    + 'one parser (lib/versionref.js); a party name has lib/mintuserid.js. A third copy is how the resolver '
+    + 'came to not know about "thing@code".');
+});
+
+ok('⚠️ a version ref is a documented kind, not an accident', () => {
+  const r = require('../lib/resolveuserid');
+  assert.ok(r.KINDS.indexOf('version_ref') >= 0, 'the resolver must know the shape exists');
+  assert.strictEqual(r.classify('gst-india@v1').kind, 'version_ref');
+  assert.strictEqual(r.isSendable('gst-india@v1'), false);
+  const md = read('docs/NAMESPACE.md') + read('docs/namespace.yaml');
+  assert.ok(/version_ref|thing@version/.test(md),
+    'the register must name it, or somebody will one day "fix" the constitution refs to match the identity grammar');
+});
+
 ok('the prose and the table point at each other', () => {
   const md = read('docs/NAMESPACE.md');
   assert.ok(md.indexOf('namespace.yaml') >= 0 || md.length > 0, 'NAMESPACE.md must reference the register');

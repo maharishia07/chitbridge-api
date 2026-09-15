@@ -37,6 +37,32 @@ async function loginIdFor(actor_key, req) {
   } catch (_) { /* unreadable → fall through to the slug, never to a name with spaces in it */ }
   return `${actor_key}@${handle || require('../lib/handle').slug(req.identity.display_name || '')}`;
 }
+
+/**
+ * ── ⭐⭐ ONE SPLITTER FOR WHAT SOMEBODY TYPES AT A SIGN-IN BOX ───────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-15: *"can you ensure that no different place has another logic for naming convention."*
+ *
+ * ⚠️ THIS FILE HAD `username.split('@')` WRITTEN OUT TWICE, and it was the last place in the API composing or
+ * splitting an identity by hand. `lib/resolveuserid` already knows every form; asking it means the login box
+ * accepts the SUFFIXED form too the moment employee ids start being stored as `ravi@acmetraders.br` — without
+ * this file learning anything new about the grammar.
+ *
+ * ⚠️ AND IT MUST NOT NARROW WHAT LOGIN ACCEPTS. People sign in as `key@Display Name` today, which is not a
+ * legal handle at all — the resolver calls that `employee_typed` and still hands back both halves, so the
+ * existing lookup (user_id first, display_name second, a few lines below) is unchanged.
+ */
+function splitLogin(username) {
+  const c = require('../lib/resolveuserid').classify(username);
+  if (c.kind === 'employee' || c.kind === 'employee_typed') {
+    return { actor_key: c.actor_key, entity_name: c.at };
+  }
+  /* not a shape the grammar knows — hand back the halves anyway, exactly as split('@') did */
+  const s = String(username == null ? '' : username);
+  const at = s.indexOf('@');
+  return at < 0 ? { actor_key: s, entity_name: undefined }
+                : { actor_key: s.slice(0, at), entity_name: s.slice(at + 1) };
+}
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
 const jwt     = require('jsonwebtoken');
@@ -475,7 +501,7 @@ router.get('/check-login', async (req, res) => {
     if (!username.includes('@')) {
       return res.json({ has_pin: false, valid: false });
     }
-    const [actor_key, entity_name] = username.split('@');
+    const { actor_key, entity_name } = splitLogin(username);
     const entity = await db(
       `SELECT identity_id FROM identities
        WHERE LOWER(display_name) = $1
@@ -655,7 +681,7 @@ router.post('/login',
         });
       }
 
-      const [actor_key, entity_name] = username.split('@');
+      const { actor_key, entity_name } = splitLogin(username);
 
       /**
        * ⭐ user_id FIRST, display_name SECOND — and the ORDER is the fix.

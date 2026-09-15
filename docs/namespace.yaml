@@ -164,6 +164,38 @@ kinds:
       Missing: a `resolve` verb so a typed handle can be translated to a bridge id at the remote, once, at
       add time. See NAMESPACE.md §5 and CTP-DESIGN.md §9.6.
 
+# ── 2b · NOT AN IDENTITY: the OTHER thing "@" means here ─────────────────────────────────────────────────────
+# ⚠️ Registered so nobody "fixes" it into the identity grammar. These are VERSION references. None is ever
+#    stored in identities.user_id, so nothing collides where it matters — but a version ref handed to the
+#    resolver would once have come back as a person. lib/resolveuserid tells them apart structurally.
+not_identities:
+  - key: version_ref
+    label: A thing, at a version
+    example: gst-india@v1  ·  iso-29119@v1  ·  container-abc@v2
+    shape: key + "@" + "v" + digits
+    used_by:
+      - routes/entities.js        # constitution_key@version
+      - lib/govresolve.js         # constitution_key@version
+      - lib/conformance.js        # standard_key@version
+      - lib/container.js          # container_id@version
+      - lib/regional.js           # container_id@version
+      - lib/workpattern.js        # facet key@version
+    told_apart_by: >
+      a business handle is at least MIN_ROOT (8) characters and a version is "v" followed by digits alone, so
+      nothing legal is both. "ravi@v1shop" is a person at a business called v1shop, not a version.
+    sendable: false
+    status: in-code
+  - key: connector_kit
+    label: A connector kit
+    example: tally-connector@DESKTOP-4F2
+    shape: name + "@" + host
+    used_by: [routes/integrations.js]
+    note: >
+      ⚠️ Shares the shape of an unsuffixed employee handle and is NOT told apart structurally. It is safe only
+      because it lives in its own column and is never resolved as a party. Do not pass one to lib/resolveuserid.
+    sendable: false
+    status: in-code
+
 # ── 3 · THE CLOSED VOCABULARIES ──────────────────────────────────────────────────────────────────────────────
 # ⚠️ entity_kind is guarded by a CHECK constraint. This list must match it exactly — the test asserts it.
 entity_kind:

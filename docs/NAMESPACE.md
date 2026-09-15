@@ -47,8 +47,8 @@ that can collide.
 | **employee / co-assist** ✅ | `ravi@acmetraders` | `@` | **rendered, not stored** — see §3 |
 | **minted party** ✅ | `~acmetraders.sup-0001`, `~acmetraders.cus-0001` | `~` | `handle.minted()` / `isMinted()`; `lib/local-identity.js` |
 | **storefront shopper** ✅ | their real email, else `cust-<8hex>@shopper.cb` | — | `routes/catalogue.js` — `entity_kind = 'shopper'` |
-| **storefront customer** 🟡 | `email@entityid.cr` / `phone@entityid.cr` | `.cr` | ⚠️ **not in the code** — see §6 |
-| **foreign entity** 🟡 | `CBM5P72HB7@in.example` | `@domain` | wire format works (§5); the typed→bridge translation does not exist |
+| **storefront customer** ✅ | `9876512345@alpha-timers.cr`, `xyz=gmail.com@alpha-timers.cr` | `.cr` | `routes/catalogue.js` `crHandle()` — ⚠️ stored in `identities.email`, not `user_id` (§6, NS-5) |
+| **foreign entity** ✅/🟡 | `CBM5P72HB7@in.example` | `@` + domain | `lib/ctpaddress.js` — the wire form works (§5); the typed→bridge translation does not exist |
 
 **Reserved labels** (`handle.RESERVED`): `api www app admin root cb chitbridge network system support help`, plus
 `PLATFORM_ROOT_HANDLE` from the environment. ⚠️ Checked on the **root label only** — `acmetraders.support` is a
@@ -83,6 +83,52 @@ Consequences, and they are load-bearing:
 4. ⚠️ `actor_key` is validated as 4–12 of `[a-z0-9]` — which **permits a bridge-id-shaped key** such as
    `cbm5p72hb7`. `handle.LOOKS_LIKE_BRIDGE` already exists and is applied to handles; it is **not** applied to
    `actor_key`. Applying it there would make the two spaces disjoint by construction. **Open.**
+
+---
+
+## 3b · "@" means a second thing here — named, and resolved separately
+
+Athi, 2026-09-15: *"check the constitution logic, all should work perfectly"* … and then, on being told `@` had
+two meanings: *"reason why it is required, if not make it redundant, otherwise give a proper naming and resolve
+separately."*
+
+**The three paths, and why the third was taken:**
+
+- **Is it required?** It is *real*, which is not the same thing. A joined `key@version` is what gets **stored** —
+  `boilerplate.standards` is a jsonb map whose values are exactly that — and it is **parsed back** in three
+  places with `String(ref).split('@')[0]`.
+- **Make it redundant?** That means storing `{ key, version }` as two fields. Cleaner in the abstract, and a
+  data migration of live governance rows for no behaviour change. Not worth it.
+- ⭐ **So: a proper name, resolved separately.** It is a `version_ref`; `lib/versionref.js` is its one builder
+  and its one parser; `lib/resolveuserid` **asks that module** whether a string is one, so the two namespaces
+  are told apart in exactly one place. Thirteen compose sites and three parse sites now go through it.
+
+The separator stays `@` because changing it would migrate those same rows for the same nothing.
+
+⚠️ **And the sweep found something the duplicated version of this rule had already got wrong:** a version can be
+the literal `code` — `blueprint@code`, for a blueprint that has never been minted (`lib/workpattern.js`). The
+ten-minute-old copy of the regex in the resolver did not know it, so `blueprint@code` still read as a person.
+One rule, one file.
+
+Here is what the two shapes are:
+
+    ravi@acmetraders     a PARTY    — a person at a business
+    gst-india@v1         a VERSION  — a constitution, standard, container or work pattern, at a version
+
+`constitution_key@version` (`routes/entities.js`, `lib/govresolve.js`), `standard_key@version`
+(`lib/conformance.js`), `container_id@version` (`lib/container.js`, `lib/regional.js`) and the work-pattern
+facet map all compose this. **None is ever stored in `identities.user_id`**, so nothing collides where it
+matters.
+
+⭐ **And they are tellable apart without a lookup**, which is the standard the whole grammar is held to: a
+business handle is at least 8 characters and a version is `v` followed by digits alone. `lib/resolveuserid`
+returns `kind: 'version_ref'` for one, and refuses to call it sendable — before this, `gst-india@v1` came back
+as a person called *gst-india*.
+
+⚠️ **The one exception, registered rather than fixed:** a connector kit id is `name@host`
+(`routes/integrations.js`), which shares the shape of an unsuffixed employee handle and is **not** told apart
+structurally. It is safe only because it lives in its own column and is never resolved as a party — so do not
+pass one to the resolver.
 
 ---
 

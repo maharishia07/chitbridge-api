@@ -1,4 +1,5 @@
 'use strict';
+const versionref = require('../lib/versionref');
 // routes/governance.js — GOV-01 protected entity / constitution / governed inheritance.
 // Adapted to this codebase: Express router + query/withTransaction from ../db, identity_id PK,
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
@@ -231,7 +232,7 @@ router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
        ON CONFLICT (entity_id) DO UPDATE SET boilerplate_key = EXCLUDED.boilerplate_key`,
       [entity_id, bp.key]));
     require('../lib/workpattern').invalidateWorkPattern(entity_id);   // re-stamp → next resolve re-derives
-    res.json({ message: 'Minted from boilerplate', boilerplate: bp.key + '@' + bp.version, standards: bp.standards, locale: bp.locale });
+    res.json({ message: 'Minted from boilerplate', boilerplate: versionref.format(bp.key, bp.version), standards: bp.standards, locale: bp.locale });
   } catch (err) { res.status(500).json({ error: 'Adopt failed', message: safeErr(err) }); }
 });
 

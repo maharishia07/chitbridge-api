@@ -48,32 +48,23 @@ function resolveContact(body) {
 // them into one identity (cross-customer order visibility + OTP misroute). Same builder used in all 3 spots so
 // a returning customer regenerates the same handle.
 function crHandle(channel, raw, entity) {
-  const local = channel === 'email' ? raw.replace('@', '=') : raw;
   /**
-   * ⭐⭐ THE USER ID, NOT THE BRIDGE ID. Athi, 2026-08-20: *"use user id not bridge id for customer."*
+   * ⭐⭐ THE BUILDER MOVED TO lib/mintuserid.js — Athi, 2026-09-15: *"mint user id should be a module, and it
+   * should have these combinations in one place."* This stays as a thin delegate because six call sites in this
+   * file import it by name, and a rename is churn with no reader.
    *
-   *     was    9876512345@CBZQK5DAH9.cr      unreadable, unsayable, and meaningless to the person it names
-   *     now    9876512345@alpha-timers.cr    a customer can read who they are a customer OF
+   * ⚠️ IT LIVED HERE FOR A MONTH AND THAT COST SOMETHING REAL. Asked where the `.cr` id was built, I searched
+   * for the literal `.cr`, found nothing — because it is composed, never written — and told Athi twice that it
+   * had never been built. A builder inside a route file is a builder nobody can find.
    *
-   * ⚠️ THE BRIDGE ID WAS NOT A BAD CHOICE — IT WAS THE ONLY ONE AVAILABLE. This handle IS the lookup key
-   * (stored as identities.email), so it must be stable and never null, and until registration started claiming
-   * a user_id the bridge id was the only value with both properties. user_id now has exactly that guarantee —
-   * set-once, immutable, enforced in the API and again in the SQL — and it is readable, which the bridge id
-   * never was.
-   *
-   * ⚠️ THE FALLBACK IS NOT DEFENSIVE PADDING, IT IS LOAD-BEARING. Entities registered before b170 have a NULL
-   * user_id — Alpha Paints, which serves customers today, is one of them. Without this branch its storefront
-   * would build a handle reading "@null.cr" and every returning customer would fail to match. A shop that
-   * predates the rule must keep working, and it does: it stays on the bridge form until someone sets its
-   * User ID, and moves to the readable one from then on.
-   *
-   * ⚠️ SO BOTH FORMS CAN EXIST AT ONCE and that is fine, because the handle is only ever COMPARED, never
-   * parsed. What must never happen is one customer regenerating a DIFFERENT handle than last time — hence one
-   * builder, used at all three call sites.
+   * ⚠️ The output is asserted byte-identical to the original formula in tests/userid.test.cjs § 0, against a
+   * hand-written second opinion. That check has already earned itself: the moved version lowercased the bridge
+   * id, which would have failed to recognise every returning customer of a pre-b170 shop.
    */
-  const at = (entity && entity.user_id) || (entity && entity.bridge_id) || '';
-  return `${local}@${at}.cr`;
+  return require('../lib/mintuserid').customer(channel, raw, entity).handle;
 }
+
+/** the original, kept only as the comment above describes the shape it must keep producing */
 
 // CJ-07 (security) — PRICE INTEGRITY. A no-login customer sends their own line_items incl. price; never trust it.
 // Re-price every line against THIS shop's own catalogue and recompute totals server-side. Fails CLOSED: a line
