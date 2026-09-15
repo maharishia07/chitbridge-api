@@ -189,9 +189,37 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
      */
     const copy = Object.assign({}, opened.copy, { entity_id: to.identity_id });
 
-    /* ⚠️ idempotent by chit_id: a retried envelope must not duplicate. chit_deliver is upsert-shaped per copy,
-       and the natural key is (chit_id, entity_id, direction). */
-    await mint.deliver(to.identity_id, opened.chit_id, [copy], { is_draft: false });
+    /**
+     * ⚠️⚠️ `arrived: true`, AND IT IS LOAD-BEARING. Without it this call re-resolves the recipient's address,
+     * finds the installation marked remote, builds a fresh envelope and posts it back to this very endpoint —
+     * a loop that ran six times in under a second before the transport timed out. ARRIVAL IS NOT A ROUTING
+     * DECISION: an accepted envelope is written here or refused here, and CTP does not forward.
+     *
+     * ⚠️ Idempotent by chit_id: a retried envelope must not duplicate. chit_deliver is upsert-shaped per copy
+     * and the natural key is (chit_id, entity_id, direction).
+     */
+    /**
+     * ── ⚠️⚠️ THE CONTEXT IS THE *SENDER*, AND THAT IS THE WHOLE TRUST SHIFT ─────────────────────────────────
+     *
+     * `chit_deliver` refuses any copy whose `sender_entity_id` differs from the calling tenant — *"a tenant can
+     * only deliver chits it sends"*. Right for local delivery, and exactly wrong here: a receiving installation
+     * legitimately writes a copy of a chit it did NOT send. Calling as the recipient earned:
+     *
+     *     P0001 chit_deliver: copy sender <a> <> caller <b> (a tenant can only deliver chits it sends)
+     *
+     * ⭐ LOCALLY, PROVENANCE IS PROVED BY TENANCY. ACROSS A WIRE IT IS PROVED BY SIGNATURE — verified three
+     * steps above, against a key fetched from the sender's own domain. So the context is set to the sender the
+     * envelope names, because by then we have cryptographic grounds to say it is them.
+     *
+     * ⚠️ AND IT IS SAFE ONLY BECAUSE OF WHAT CAME BEFORE IT: the recipient was re-resolved from a BRIDGE ID and
+     * `copy.entity_id` overwritten with our own answer, so a peer cannot name a third party's entity id and have
+     * a row written into their books. The sender id it supplies is attributable to a signature; the recipient id
+     * is never theirs to choose. `chit_header.sender_entity_id` has no foreign key precisely so that a
+     * counterparty on another machine can be named without existing here.
+     */
+    const senderCtx = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
+    if (!senderCtx) return no(400, 'the copy does not say who sent it');
+    await mint.deliver(senderCtx, opened.chit_id, [copy], { is_draft: false, arrived: true });
 
     res.json({ accepted: true, chit_id: opened.chit_id, to: toBridge });
   } catch (e) {

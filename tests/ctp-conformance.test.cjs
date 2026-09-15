@@ -84,6 +84,39 @@ ok('a null is preserved, not dropped', () => {
   assert.strictEqual(out.copy.business_json.lines[0].qty, 0, 'zero is not absent');
 });
 
+/* ── ①b THE WIRE, WHICH IS WHERE THIS TEST WAS BLIND ───────────────────────────────────────────────────────── */
+/**
+ * ⚠️⚠️ EVERY ASSERTION ABOVE PASSED WHILE A REAL CROSSING FAILED. They round-trip the envelope IN MEMORY, and
+ * the wire does not: JSON turns a Date into a string, drops an `undefined`, and has no opinion about -0. The
+ * first real delivery was refused with *"the seal does not match the contents"* because `header.created_at` was
+ * a Date on one side and a string on the other.
+ *
+ * ⭐ So the test now does what the transport does — JSON.stringify then JSON.parse — before opening. A
+ * conformance test that never crosses the thing it is conforming to is decoration.
+ */
+const overTheWire = (e) => JSON.parse(JSON.stringify(e));
+
+ok('a Date in the header does not break the seal', () => {
+  const withDate = Object.assign({}, CHIT, {
+    header: Object.assign({}, HEADER, { created_at: new Date('2026-09-15T04:00:00.000Z') }),
+  });
+  const sent = env.sign(env.build(FROM, TO, withDate), { alg: 'test', sign: (h) => 'sig:' + h });
+  const got = env.open(overTheWire(sent), { population: 'live', verify: () => true });
+  assert.ok(got.ok, got.why + ' — the digest must cover the WIRE form, not the in-memory one');
+});
+
+ok('the copy still matches after a real serialisation', () => {
+  const got = env.open(overTheWire(env.sign(env.build(FROM, TO, CHIT), null)), ctx);
+  assert.ok(got.ok, got.why);
+  assert.deepStrictEqual(got.copy, COPY, 'the copy changed crossing JSON');
+});
+
+ok('the digest is stable across the wire', () => {
+  const sent = env.sign(env.build(FROM, TO, CHIT), null);
+  assert.strictEqual(env.digest(overTheWire(sent)), sent.sealed.hash,
+    'sender and receiver must compute the same hash or no signature can ever verify');
+});
+
 /* ── ② ONE COPY, ONE RECIPIENT ─────────────────────────────────────────────────────────────────────────────── */
 ok('an envelope carries exactly one recipient', () => {
   assert.throws(() => env.build(FROM, {}, CHIT), /one recipient/);
