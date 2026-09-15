@@ -12,17 +12,19 @@
 -- `ON CONFLICT (entity_id)`. Postgres cannot tell the parameter from the column and refuses. Annoying, obvious,
 -- fixed in a minute.
 --
--- ── ② ops.f_worlds — SILENT, AND IT LIED ────────────────────────────────────────────────────────────────────────
+-- ── ② ops.f_worlds — THE OUT PARAMETER, AND A CORRECTION TO THIS VERY FILE ──────────────────────────────────────
 --
--- `RETURNS TABLE (…, region text, …)` plus a subquery counting DISTINCT `i2.region` over the stamps. With
--- `entity_governance` EMPTY the honest answer is `[]`, and standalone the very same SQL returns `[]`. Inside the
--- function it returned `["IN"]` — the OUT parameter's own value, wrapped in an array, for every world that had
--- any entities at all.
+-- ⚠️⚠️ WHAT THIS SECTION FIRST CLAIMED WAS WRONG, AND THE WAY IT WAS WRONG IS WORTH MORE THAN THE FIX.
 --
--- ⚠️⚠️ SO THE SCREEN WOULD HAVE SAID "this world contains India" ABOUT 2,485 ENTITIES THAT ARE NOT PLACED
--- ANYWHERE. Not an error, not a zero — a confident wrong answer, on the one number whose whole job is to tell an
--- operator which regions a world actually holds. It was caught only because `entity_governance` was known to be
--- empty and the number disagreed. [[feedback-silence-is-the-bug]]
+-- I wrote that f_worlds "lied" about present_regions, on the evidence that entity_governance held 0 rows while
+-- the function reported ["IN"]. entity_governance is FORCE ROW LEVEL SECURITY. My count ran as cb_app with no
+-- app.current_entity, so it answered 0 no matter what was in the table. f_worlds is SECURITY DEFINER and was
+-- telling the truth the whole time. Read back inside each entity's own context, every stamp is exactly where it
+-- was placed.
+--
+-- ⭐ THE RENAME BELOW IS STILL RIGHT — an OUT parameter named after a column is a trap whether or not it fired
+-- here, and ① was a genuine 42702. But the diagnosis in this file was reached with a blind instrument, and
+-- tests/rls-context.test.cjs now exists because of it.
 --
 -- ⭐ THE RULE, AND IT IS WORTH STATING ONCE: in a `LANGUAGE sql` function, an OUT parameter name is in scope
 -- throughout the body and beats a column of the same name. Qualifying (`i2.region`) does NOT reliably save you.

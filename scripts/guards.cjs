@@ -63,6 +63,10 @@ const GUARDS = [
      detail_design, then routed_by - the whole support-ticket trace, passed and never stored, in the same
      session as the comment in lib/mint.js warning about it. */
   'mint-riders.test.cjs',
+  /* ⚠⚠ 55 tables are FORCE RLS. Read one with no app.current_entity and you get an empty set - not an
+     error. Three near-misses in one day, and one reached a commit message asserting a function was lying
+     when the function was right and the check was blind. */
+  'rls-context.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
