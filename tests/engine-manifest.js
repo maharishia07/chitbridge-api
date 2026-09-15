@@ -359,6 +359,14 @@ const ENGINE_OTHER = [
    * whether that world's rows are in this database. Topology, not tenancy. (2026-09-15)
    */
   'ctpaddress.js',
+  /**
+   * ⭐ ENGINE. The message format of the rail. It holds the rule that ONE copy crosses to ONE recipient and
+   * that the population boundary travels WITH the message — which across a wire is the only thing standing
+   * between a test world and a live one, because b247 cannot see the far entity.
+   * ⚠️ It WRAPS and never tidies: dropping a null or reordering a key is a row that differs, and the two
+   * transports must write identical rows or lifting a world changes behaviour. (2026-09-15)
+   */
+  'ctpenvelope.js',
   /* ⭐ ENGINE. It decides that a registered entity BECOMES the operator's customer and that the operator
      becomes its supplier — a rule about the relationship every shop on this platform has, not plumbing.
      Swap it and the platform has no customers. (2026-09-14) */
