@@ -251,6 +251,19 @@ const productsRouter    = require('./routes/products');
 const governanceRouter  = require('./routes/governance');
 const attachmentsRouter = require('./routes/attachments');
 
+/**
+ * ⭐⭐ CTP — the rail between installations (docs/CTP-DESIGN.md).
+ *
+ * ⚠️ MOUNTED TWICE, DELIBERATELY. The manifest must live at `/.well-known/ctp.json` on the bare domain because
+ * that is where a peer looks without being told — the same reason an MX record is where it is. The receiving
+ * door sits under /api like everything else. One router, two mounts, so "who answers for CTP" has one home.
+ *
+ * ⚠️ The manifest path is OUTSIDE /api and therefore outside the /api limiter, so routes/ctp.js carries its own.
+ */
+const ctpRouter = require('./routes/ctp');
+app.use('/', ctpRouter);                    // GET /.well-known/ctp.json
+app.use('/api/ctp', ctpRouter);             // POST /api/ctp/deliver
+
 app.use('/api/entities',    entitiesRouter);
 app.use('/api/connections', connectionsRouter);
 app.use('/api/chits',       chitsRouter);

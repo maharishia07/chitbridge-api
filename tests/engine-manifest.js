@@ -367,6 +367,29 @@ const ENGINE_OTHER = [
    * transports must write identical rows or lifting a world changes behaviour. (2026-09-15)
    */
   'ctpenvelope.js',
+  /**
+   * ⭐ ENGINE. Who this installation IS, cryptographically — b74 called installation.root_key_ref the
+   * sovereignty anchor and nothing read it until this. Swap this file and envelopes are signed by somebody
+   * else, which is the definition of not being the same installation.
+   * ⚠️ It DEGRADES rather than throwing: no key means unsigned envelopes that say so, because CTP is a
+   * feature almost no deployment uses and "not set up" must not mean "will not boot". (2026-09-15)
+   */
+  'ctpkeys.js',
+  /**
+   * ⭐ ENGINE, and it is the file that decides whether the rail is FEDERATED or hub-and-spoke. Each
+   * installation publishes its own manifest on its own domain; we cache, we never own the namespace. Swap
+   * this for a central registry and a sovereign installation stops being sovereign. (2026-09-15)
+   * ⚠️ A manifest is a CLAIM. It is trusted for one thing — the key that verifies that sender — and never
+   * for who we deal with or which worlds we accept, which are ours.
+   */
+  'ctpdirectory.js',
+  /**
+   * ⭐ ENGINE. The second transport. The first (a local write) has always existed; this one exists so that
+   * deliver() chooses between them by ADDRESS rather than by a branch in every caller.
+   * ⚠️ It reports ACCEPTED, never SENT. A queued envelope is not a delivered chit, and this codebase has
+   * already paid twice for a receipt that reported an intention. (2026-09-15)
+   */
+  'ctptransport.js',
   /* ⭐ ENGINE. It decides that a registered entity BECOMES the operator's customer and that the operator
      becomes its supplier — a rule about the relationship every shop on this platform has, not plumbing.
      Swap it and the platform has no customers. (2026-09-14) */

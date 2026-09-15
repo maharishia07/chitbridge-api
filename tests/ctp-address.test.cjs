@@ -121,10 +121,28 @@ function loadAddress(dbStub) {
       assert.ok(writeAt > 0, 'the chit_deliver call moved — this test is reading the wrong place');
       assert.ok(resolveAt < writeAt, 'addressing must happen BEFORE chit_deliver, or a partial chit is written');
     });
-    ok('…and throws rather than delivering some of them', () => {
+    /* ⚠️ MOVED, not loosened. It asserted `CTP_NOT_BUILT` — the placeholder from step 2, when a remote address
+       was simply refused. Step 5 gave it a transport, so the CODE changed and the RULE did not: every remote
+       copy is settled before a single local row is written, and a failure throws. An assertion pinned to the
+       old spelling would have been deleted here; this one is re-aimed at the rule.
+       [[feedback-improvise-update-cases]] */
+    ok('…and settles every remote copy BEFORE any local write, or throws', () => {
       const guard = body.slice(0, body.indexOf("'SELECT chit_deliver"));
-      assert.ok(/CTP_NOT_BUILT/.test(guard), 'a remote copy must be refused with a named code');
+      assert.ok(/transport\.send/.test(guard), 'remote copies must be sent before the local write');
+      assert.ok(/CTP_REFUSED/.test(guard), 'a refusal must carry a named code');
       assert.ok(/throw e;/.test(guard), 'it must throw, not warn — half a chit is worse than none');
+      assert.ok(/Nothing was written/.test(guard), 'and the message must say the local side was not written');
+    });
+
+    ok('a DRAFT never crosses an installation boundary', () => {
+      const guard = body.slice(0, body.indexOf("'SELECT chit_deliver"));
+      assert.ok(/CTP_DRAFT/.test(guard),
+        'a draft is somebody’s unfinished thought — sending it publishes a thing that has not been sent');
+    });
+
+    ok('only the LOCAL copies reach chit_deliver', () => {
+      assert.ok(/JSON\.stringify\(local\)/.test(body),
+        'passing every copy would write a remote party’s row into this database');
     });
   }
 
