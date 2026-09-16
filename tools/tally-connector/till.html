@@ -4264,20 +4264,33 @@ function cartCols(){
   /**
    * ⚠️⚠️ ONE SOURCE OF TRUTH FOR WHICH COLUMNS EXIST. The grid is written from this, so a media query that
    * ALSO hid a cell would leave an empty track behind it and every column after that would sit one place to the
-   * left. So the narrow-screen rule lives here instead of in the stylesheet: below 1100px the `qty × price`
-   * column goes, because it is the one a person can re-derive in their head from the two columns beside it.
+   * left. So the narrow-bill rule lives here instead of in the stylesheet, and it is measured against the BILL's
+   * own width (see below), dropping the most derivable column first.
    * ⚠️ IT DOES NOT OVERWRITE THE SETTING — the shop's choice is untouched and comes back with the room.
    */
   try {
-    var w = window.innerWidth || 0;
-    if (w && w < 1100) v.calc = false;
+    /**
+     * ── ⚠️⚠️ MEASURE THE BILL, NOT THE WINDOW (corrected 2026-09-16) ─────────────────────────────────────
+     *
+     * The first version read `window.innerWidth`, and the bill is only PART of the window — the split is
+     * draggable, so a wide window can hold a narrow bill and the other way round. It also used 1100px for a
+     * grid that actually needs 732px. Between the two, `Qty × price` disappeared on an ordinary laptop while
+     * there was room for it twice over — and that is the column that makes the new left-to-right order legible,
+     * so the reorder looked as though it had not happened. Athi: *"discount is not switched after qty*price?"*
+     *
+     * ⭐ The numbers below are the grid's own widths added up, not a guess: 872 with the Offer column, 732
+     * without it. Fit to the container; drop the most derivable column first.
+     */
+    var el = document.getElementById('cart');
+    var w = (el && el.clientWidth) || window.innerWidth || 0;
+    if (w && w < 872) v.offer = false;
+    if (w && w < 732) v.calc = false;
     /**
      * ⚠️⚠️ AND THE OFFER COLUMN GIVES WAY BEFORE THE ITEM NAME DOES. With eight columns on a default split,
      * "Cookies 250 g (pack 3)" wrapped over four lines — the product name, which is the thing a shopkeeper
      * actually reads, crushed to make room for a heading. Below this width the offer folds back UNDER the name
      * as a chip (see cartLineNote), so it is never lost and never shown twice.
      */
-    if (w && w < 1280) v.offer = false;
     /**
      * ── ⭐⭐ AND THE COLUMN ONLY EXISTS WHEN SOMETHING IS IN IT ────────────────────────────────────────────
      *
