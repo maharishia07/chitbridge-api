@@ -33,6 +33,10 @@ const auth = async (req, res, next) => {
     if (decoded.kind === 'api_key') {
       const rec = await keyListed(decoded.identity_id, decoded.jti, req);
       if (!rec) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
+      /* ⚠️ A CLOSED COUNTER IS HISTORY (POST /api/till/close) — its record stays so its series can be explained, but the
+         key behind it no longer opens anything */
+      if (rec.till && rec.till.closed_at) return res.status(401).json({ error: 'Unauthorised', code: 'COUNTER_CLOSED',
+        message: 'This counter was closed on ' + String(rec.till.closed_at).slice(0, 10) + '. Open a new counter from ChitBridge to bill again.' });
       req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [], enrol: (rec && rec.enrol) || null };
       const url = String(req.originalUrl || req.url || '').split('?')[0], m = req.method;
       /* ⭐ ENROLMENT (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"):
@@ -233,7 +237,7 @@ const KEY_ROUTES = {
               /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
                  product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
               /* ⭐ a counter that is stuck reports itself — the one thing nobody can reach saying so in its own words */
-              ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile)$/],
+              ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close)$/],
               /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
                  definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
                  authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".

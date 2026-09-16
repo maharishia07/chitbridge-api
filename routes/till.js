@@ -89,7 +89,10 @@ router.get('/snapshot', auth, async (req, res) => {
           const tills = all.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
           till = { suggested_id: c.id, assigned_id: c.id, clash: c.clash || null, counters: tills.length,
                    /* ⭐ said out loud, so the shop learns WHY its numbers changed shape */
-                   moved_from: c.moved_from || null, held_by: c.held_by || null };
+                   moved_from: c.moved_from || null, held_by: c.held_by || null,
+                   /* ⭐ a named counter, and where its series stopped — see claimTill */
+                   counter: c.counter || null, counter_name: c.name || null,
+                   resume_next: c.resume_next || null, resume_period: c.resume_period || null };
         }
       }
     } catch (_) { /* ⚠ best effort — a counter must open whatever this says */ }
@@ -529,6 +532,66 @@ router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => 
     const diag = await require('./keys').setDiag(entity_id, jti, patch);
     if (!diag) return res.status(404).json({ error: 'Not found', message: 'This key is not listed for the shop.' });
     res.json({ ok: true, code: diag.code, at: diag.at });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+/**
+ * ── ⭐⭐⭐ POST /api/till/close — A COUNTER FINISHES, AND SAYS SO ────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-17: *"is there a way of closing the counter from the office PC and creating a new counter?"* and
+ * *"it has to be online to create a counter."* Closing is the other half of that: it happens online, deliberately,
+ * and only after the counter has proved every bill reached the books (the counter enforces that before it calls).
+ *
+ * ⚠️ CLOSED, NOT DELETED. The key is marked closed and stops working at once, but the record stays: which prefix
+ * this counter numbered under, until when, from where. A GST series that ended must still be explainable later,
+ * and a deleted key takes that explanation with it. Its prefix stays reserved for ever (claimTill never reissues a
+ * prefix with bills in the books), so the next counter starts a new series.
+ * ⚠️ A TILL KEY MAY CLOSE ONLY ITSELF. Keys still cannot manage keys; ending your own is the one exception, and it
+ * can only ever make a leaked key less useful.
+ */
+router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const jti = req.api_key && req.api_key.jti;
+    if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can close itself.' });
+    const b = req.body || {};
+    const list = await keys.listOf(entity_id);
+    const me = list.find((k) => k && String(k.jti) === String(jti));
+    if (!me) return res.status(404).json({ error: 'Not found', message: 'This counter is not listed for the shop.' });
+    const till = Object.assign({}, me.till || {}, {
+      closed_at: new Date().toISOString(),
+      closed_ip: String(req.ip || '').slice(0, 45) || null,
+      last_no: b.last_no ? String(b.last_no).slice(0, 32) : null,
+      bills: Math.max(0, Math.min(Number(b.bills) || 0, 1000000)),
+      /* ⭐ where this counter's run stopped — what a REOPEN on another PC would have to continue from, and the
+         thing that makes reopening safe at all: the close has already proved nothing unsent is left behind */
+      next: Number(b.next) > 0 ? Math.min(Number(b.next), 1000000) : null,
+    });
+    await keys.patchTill(entity_id, jti, till);
+    auth.forgetKey(jti);                     /* ⚠️ the auth cache would otherwise honour it for another minute */
+    /**
+     * ⭐⭐ A NAMED COUNTER IS LET GO, NOT ENDED. Its record keeps where the run stopped, so it can be opened again —
+     * on this PC or another — and continue. Only if THIS key still holds it; a counter already released or
+     * reopened elsewhere is left exactly as it is.
+     */
+    if (me.counter) {
+      const cid = String(me.counter).toUpperCase();
+      await require('../db').withTransaction(async (db) => {
+        const r = await db.query(`SELECT policy_flags->'counters'->$2 AS c FROM identities WHERE identity_id = $1 FOR UPDATE`, [entity_id, cid]);
+        const c = r.rows[0] && r.rows[0].c;
+        if (!c) return;
+        const patch = { closed_at: till.closed_at, last_no: till.last_no || c.last_no || null };
+        if (String(c.held_by || '') === String(jti)) { patch.held_by = null; patch.held_at = null; }
+        const period = b.period != null ? String(b.period) : null;
+        if (till.next && (c.period == null || c.period === period)) {
+          patch.next = Math.max(Number(c.next) || 1, till.next);
+          if (period != null) patch.period = period;
+        } else if (till.next && period != null) {
+          patch.next = till.next; patch.period = period;
+        }
+        await require('./counters').patchCounter(db, entity_id, cid, patch);
+      });
+    }
+    res.json({ ok: true, closed_at: till.closed_at, prefix: till.id || null });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {

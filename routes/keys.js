@@ -79,7 +79,9 @@ async function mint(entity_id, identity, opts) {
   if (!scopes.length) throw Object.assign(new Error('scopes must include one of: ' + SCOPES.join(', ')), { status: 400 });
   const days = Math.min(Math.max(Number(opts.days) || 365, 1), 3650);
   const keys = await listOf(entity_id);
-  if (keys.length >= 20) throw Object.assign(new Error('Twenty keys at most — revoke one first.'), { status: 400 });
+  /* ⚠️ a CLOSED counter is kept as history and must not use up a place — closing one is how a shop makes room */
+  if (keys.filter((k) => !(k && k.till && k.till.closed_at)).length >= 20)
+    throw Object.assign(new Error('Twenty keys at most — revoke one first.'), { status: 400 });
   const jti = crypto.randomBytes(12).toString('hex');
   const now = Math.floor(Date.now() / 1000), exp = now + days * 86400;
   const id = identity || {};
@@ -169,6 +171,22 @@ router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => 
   const issued = !!(ask && ask.issued);
   const now = new Date().toISOString();
 
+  /**
+   * ⭐⭐⭐ A KEY OPENED FOR A NAMED COUNTER TAKES THAT COUNTER'S NUMBER, AND ITS PLACE IN THE SERIES (2026-09-17).
+   * Athi: *"like a co-assist — I know the counter number, and I open and close it again and again, in one PC."*
+   * The counter, not the pairing, owns the prefix; routes/counters.js guarantees only one open key holds it. So
+   * there is nothing to decide here — only to say which counter this is and where its run stopped, so a PC that has
+   * never seen it continues rather than starting again at 0001.
+   */
+  if (me.counter) {
+    const cid = String(me.counter).toUpperCase();
+    const c = (pf.counters || {})[cid] || {};
+    me.till = Object.assign({}, me.till || {}, { id: cid, issued: issued || Number(c.next) > 1, at: now });
+    await patchKey(entity_id, jti, { till: me.till }, db);
+    return { id: cid, clash: null, counter: cid, name: c.name || null,
+             resume_next: Number(c.next) > 0 ? Number(c.next) : null, resume_period: c.period || null };
+  }
+
   /* every prefix another counter of this shop holds */
   const held = new Set(others.map((k) => k.till && String(k.till.id || '').toUpperCase()).filter(Boolean));
   /**
@@ -235,6 +253,13 @@ router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => 
   return out;
 });
 router.TILL_IDS = TILL_IDS;
+/** patchTill — replace one key's `till` record in one statement (see patchKey). Used by POST /api/till/close. */
+router.patchTill = (entity_id, jti, till) => patchKey(entity_id, jti, { till });
+/** patchKeyWith — the same one-statement merge, on a transaction's own client (routes/counters.js) */
+router.patchKeyWith = (db, entity_id, jti, patch) => patchKey(entity_id, jti, patch, db);
+/** ⭐ a closed counter is history, not a live key — see POST /api/till/close */
+const isClosed = (k) => !!(k && k.till && k.till.closed_at);
+router.isClosed = isClosed;
 router.setDiag = async (entity_id, jti, patch) => {
   const keys = await listOf(entity_id); if (!keys.find((x) => x && String(x.jti) === String(jti))) return null;
   const diag = Object.assign({}, patch || {}, { at: new Date().toISOString() });

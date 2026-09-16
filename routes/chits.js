@@ -1347,6 +1347,19 @@ router.post('/send',
         ...(number_check ? { number_check } : {}),
       });
 
+      /**
+       * ⭐⭐ THE COUNTER'S PLACE IN ITS SERIES, KEPT IN THE CLOUD (2026-09-17). Athi: *"the system should be updated
+       * with the next seq number whenever the sync completes."* A counter bill carries { prefix, period, seq }; a
+       * registered counter's high-water mark moves with it, so the next PC to open that counter continues from here.
+       * ⚠️ AFTER the answer, and never able to fail the send — a missed update costs nothing the counter's own
+       * count and its close do not already carry.
+       */
+      if (!is_draft && client_ref && business_json && business_json.series) {
+        setImmediate(() => {
+          require('./counters').noteBill(sender_id, business_json.series, business_json.billed_at, client_ref).catch(() => {});
+        });
+      }
+
     } catch (err) {
       console.error('Send chit error:', err.message);
       res.status(500).json({ error: 'Send failed', message: safeErr(err) });

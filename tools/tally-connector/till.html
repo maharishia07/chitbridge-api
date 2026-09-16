@@ -711,6 +711,8 @@
         <button data-testid="till-refresh" onclick="fromMenu(refresh)">↻ <b>Read the shop again</b><i>new prices and products · F4</i></button>
         <!-- ⭐ the answer to "why has this not gone?", where somebody looking for it would look -->
         <button data-testid="till-stuck" onclick="fromMenu(openStuck)">🩺 <b>Why is a bill stuck?</b><i>what is really in this counter's store</i></button>
+        <!-- ⭐ deliberate, online, and only when every bill is safely in the books — see closeCounter() -->
+        <button data-testid="till-close" onclick="fromMenu(closeCounter)">🔒 <b>Close this counter</b><i>sends and checks everything first · it can be opened again</i></button>
         <!--
           ⭐⭐⭐ THE VIEW, TOGGLED WHERE IT IS REACHED (Athi, 2026-09-16): *"those sections are being switched on
           off in the settings — any other way can we bring it in the frontend itself as a toggle button?"*
@@ -1719,9 +1721,10 @@ var CloudHost = {
     return { ok: true, doc: doc };
   },
   async bill(b){
+    LAST_SERIES = null;
     var no = await nextNumber();
     var bill = Object.assign({ no: no, at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
-                               catalogue_version: S && S.version }, b);
+                               catalogue_version: S && S.version, series: LAST_SERIES }, b);
     await DB.put('bills', bill);
     await DB.put('queue', bill);
     this.drain();
@@ -1959,7 +1962,27 @@ var TILL_CLASH = null;
  * ⚠️ Kept out of finish() on purpose: that function's opening is the ordinary one-keystroke cash sale, and a guard
  * (tests/snapshot-wire) reads it to make sure that path survives.
  */
-function tillStopped(){
+/**
+ * ⚠️⚠️ NO NUMBER UNTIL THE SHOP HAS GIVEN ONE (Athi, 2026-09-17: *"we should not create a new counter if the system
+ * is offline — it has to be online to create a counter"*). A freshly paired counter that lost its line before its
+ * first read of the shop would otherwise have billed as the default C1 — exactly how two PCs came to share a series.
+ * ⚠️ A counter that has ALREADY issued numbers is let through: it predates this rule, its prefix is its own, and
+ * stopping it would stop a working shop. Everything else waits for one successful read of the shop.
+ * ⚠️ Only CREATING needs the internet. A counter given its number yesterday opens and bills offline today.
+ */
+function tillGivenKey(){ return shopLs('cb_till_given'); }
+async function tillGivenOK(){
+  if (ls.get(tillGivenKey(), '')) return true;
+  return await tillIssued();
+}
+async function tillStopped(){
+  if (!(await tillGivenOK())) {
+    say('This counter has not been given its number yet.\n\n'
+      + 'A new counter needs the internet once, so ChitBridge can give it a number no other counter uses. '
+      + 'Connect it, press F4 to read the shop, and bill again.\n\n'
+      + 'The bill on the screen is safe — press F6 to park it.');
+    return true;
+  }
   if (!TILL_CLASH) return false;
   say('This counter cannot issue a bill number yet.\n\n'
     + 'Another counter (' + (TILL_CLASH.held_by || 'an older one') + ') is already numbering as ' + TILL_CLASH.id + '. '
@@ -1980,7 +2003,23 @@ async function tillClaim(t){
   TILL_CLASH = t.clash || null;
   if (TILL_CLASH) { try { paintStatus(); } catch (_) {} return; }
   var want = t.assigned_id || t.suggested_id;
-  if (!want || String(tillId()).toUpperCase() === String(want).toUpperCase()) return;
+  if (!want) return;
+  /* ⭐ the shop has answered — from now on this pairing may issue numbers, online or not */
+  ls.set(tillGivenKey(), String(want).toUpperCase());
+  if (t.counter_name) ls.set(shopLs('cb_till_counter_name'), t.counter_name);
+  /**
+   * ⭐⭐⭐ A COUNTER OPENED AGAIN CONTINUES ITS OWN RUN (Athi, 2026-09-17: "open and close the counter again and
+   * again"). The cloud says where the run stopped; this PC's own record may know less (a PC that has never held this
+   * counter knows nothing). The higher of the two wins, and only within the same period — a new period starts at 1
+   * whatever either side remembers, which nextNumber() already does.
+   */
+  if (t.counter) {
+    /* ⚠️ APPLIED IN nextNumber(), NOT HERE — only that function knows the true current period, and a PC that last
+       billed under another prefix would otherwise reset this counter to 0001 when it switched over. */
+    ls.set(shopLs('cb_till_resume'), JSON.stringify({ prefix: String(t.counter).toUpperCase(),
+      period: t.resume_period == null ? null : String(t.resume_period), next: Number(t.resume_next) || 1 }));
+  }
+  if (String(tillId()).toUpperCase() === String(want).toUpperCase()) return;
   /**
    * ⭐⭐ THE SHOP'S ANSWER IS FOLLOWED — including a MOVE for a counter that has already issued numbers.
    * Athi, 2026-09-17: *"the counter sequence number — we should offer it, and it cannot be changed for a PC."*
@@ -1989,8 +2028,10 @@ async function tillClaim(t){
    * ⚠️ A counter the shop did NOT move and that has issued numbers is never renamed by anything else.
    */
   var moved = !!t.moved_from;
-  if (!moved && (await tillIssued())) return;
+  /* ⚠️ a NAMED counter's number is the counter's, so it is always taken — whatever this PC billed under before */
+  if (!moved && !t.counter && (await tillIssued())) return;
   ls.set('cb_till_id', want);
+  if (t.counter) { toastLine('This PC is now counter ' + want + (t.counter_name ? ' — ' + t.counter_name : '') + '.'); try { paintStatus(); } catch (_) {} return; }
   toastLine(moved
     ? ('This counter now numbers its bills as ' + want + '. ' + (t.held_by || 'Another counter')
        + ' was already using ' + t.moved_from + ', so two bills would have shared a number. The '
@@ -2010,6 +2051,7 @@ async function tillClaim(t){
  * its prefix and its next number — a series that changes shape mid-year destroys the one property numbering
  * exists to prove. The only thing that may change is the TAG, and only for a series that has issued nothing.
  */
+var LAST_SERIES = null;
 async function nextNumber(kind){
   var country = docCountry();
   var D = window.CBDoc;
@@ -2073,7 +2115,21 @@ async function nextNumber(kind){
     s.tagStyle = 'short'; s.scheme = tillScheme();
   }
   s.prefix = _now || s.prefix;
+  /**
+   * ⭐⭐ THE CLOUD'S FLOOR FOR A NAMED COUNTER (routes/counters.js). A counter opened on a PC that has never held it,
+   * or held it long ago, continues from where the cloud says its run stopped — never below, and only within the
+   * same period, because a new period starts every run at 1 anyway.
+   */
+  if (!tag) {
+    try {
+      var fl = JSON.parse(ls.get(shopLs('cb_till_resume'), 'null'));
+      if (fl && String(fl.prefix) === String(s.prefix).toUpperCase() && fl.period != null
+          && String(fl.period) === String(period) && Number(s.next) < Number(fl.next)) s.next = Number(fl.next);
+    } catch (_) {}
+  }
   var seq = s.next; s.next = seq + 1;
+  /* ⭐ where this number sits in its counter's run — travels on the bill so the cloud can keep the high-water mark */
+  if (!tag) LAST_SERIES = { prefix: s.prefix, period: s.fy, seq: seq };
   await DB.set(box, s);
 
   if (!D) return (tag ? tag + '/' : '') + s.prefix + '/' + period + '/' + String(seq).padStart(4,'0');
@@ -2150,6 +2206,8 @@ function chitOf(bill){
       bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
       /* ⭐ the number on the customer's paper, when the books had to record the sale under another — see renumberBill */
       printed_as: bill.printed_as || null,
+      /* ⭐ this bill's place in its counter's run — the cloud keeps the highest (routes/counters.js noteBill) */
+      series: bill.series || null,
       renumbered: bill.renumbered || null,
       payment: { mode: (bill.payments||[]).map(function(p){ return p.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[] },
       slip: bill.kind || 'cash',
@@ -5636,7 +5694,7 @@ function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); }
 /* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
 async function finish(){
   if (!CART.length) return;
-  if (tillStopped()) return;      /* ⚠️ two counters on one series — see tillStopped() */
+  if (await tillStopped()) return;   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
   var m = billMoney();
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
@@ -6324,6 +6382,7 @@ function paintRcvSum(){
  * convenience). When the receipt was against an order, the movements ALSO go onto that order through b144, into both parties' copies.
  */
 async function rcvConfirm(){
+  if (await tillStopped()) return;   /* a goods receipt takes a number too */
   var lines = RCV.lines.filter(function(l){ return (Number(l.counted) || 0) > 0 || rcvDiff(l) !== 0; });
   if (!lines.length) return;
   var missing = lines.filter(function(l){ return rcvDiff(l) !== 0 && !l.reason && !rcvAbsorbed(l); });
@@ -6489,6 +6548,7 @@ function paintDespatch(){
  * claim. Divergence is surfaced, never resolved by us.
  */
 async function dspConfirm(){
+  if (await tillStopped()) return;   /* a despatch note takes a number too */
   var picked = DSP.lines.filter(function(l){ return l.picked > 0 || l.dropped; });
   if (!picked.length) return;
   var shortNoReason = DSP.lines.filter(function(l){ return !l.dropped && l.picked > 0 && l.picked < l.ordered && !l.reason; });
@@ -6791,12 +6851,14 @@ async function renumberBill(bill, why){
   var tries = Number(bill._renum) || 0;
   if (tries >= 20) return null;
   var from = bill.no, to = null;
+  LAST_SERIES = null;
   try { to = await nextNumber(); } catch (_) { return null; }
   if (!to || to === from) return null;
   var fresh = Object.assign({}, bill, {
     no: to,
     till: tillId(),
     printed_as: bill.printed_as || from,
+    series: LAST_SERIES,
     renumbered: { from: from, to: to, at: new Date().toISOString(),
                   why: why || 'the number was already used by another counter' },
     _renum: tries + 1, _tries: 0
@@ -6866,6 +6928,92 @@ async function checkAbsorbedNow(){
          + (r.renumbered.length ? '\n\nRecorded under new numbers (the printed number is kept on each):\n· '
              + r.renumbered.map(function(m){ return m.from + ' → ' + m.to; }).join('\n· ') : ''))));
   openStuck();
+}
+/**
+ * ── ⭐⭐⭐ CLOSE THIS COUNTER (Athi, 2026-09-17) ──────────────────────────────────────────────────────────────
+ *
+ * *"Is there a way of closing the counter from the office PC and creating a new counter?"* This is the closing half.
+ * Creating is the ordinary pairing from ChitBridge, online.
+ *
+ * ⚠️⚠️ THE ORDER IS THE WHOLE FEATURE — the same rule as coldStart, and stricter:
+ *   1 it needs the key and the line — closing is something ChitBridge has to hear
+ *   2 everything waiting is sent, and every "sent" bill is checked against the books (absorbed ones are renumbered)
+ *   3 it REFUSES if anything is still outstanding: a queued row, a bill set aside, a bill never confirmed, or bills
+ *     still sitting in an earlier copy of this counter on this PC
+ *   4 only then is the counter marked CLOSED in ChitBridge — its key stops working, its record and series stay
+ *   5 and only then is this PC's copy cleared
+ * A close that loses a sale is not a close. The last number issued travels to ChitBridge, so the series can be shown
+ * to have ended where it did.
+ */
+async function closeCounter(){
+  if (!(HOST && HOST.key)) { say('This counter is not paired, so there is nothing to close.'); return; }
+  if (HOST === AgentHost) { say('This counter runs through the program on this PC. Close it from ChitBridge → Settings → Integrations → Counters.'); return; }
+  if (!navigator.onLine) { say('Closing a counter needs the internet — ChitBridge has to be told, and every bill has to be checked first.\n\nNothing has changed. Try again when the line is back.'); return; }
+  if (!await sure('Close counter ' + tillId() + ' on this PC?\n\n'
+      + 'Every bill is sent and checked against ChitBridge first. If anything is still outstanding, nothing is closed.\n\n'
+      + 'The counter itself is kept. It can be opened again — here or on another PC — and its bill numbers carry on from where they stopped.',
+      'Yes, close it', 'Close this counter')) return;
+
+  busyShow('Closing this counter…');
+  try {
+    busyAt(0, 0, 'Sending everything that is waiting…');
+    try { await HOST.drain(); } catch (_) {}
+    busyAt(0, 0, 'Checking every bill against ChitBridge…');
+    try { await checkAbsorbed(true); } catch (_) {}
+    /**
+     * ⚠️ A BILL WITH NO RECEIPT AT ALL is sent again rather than taken on trust. Bills from before receipts were
+     * kept carry nothing to check, and would otherwise block closing for ever. A re-send is safe: the server knows a
+     * true repeat by its number AND the moment it was taken, answers with the chit it already holds (which becomes
+     * the receipt), and refuses — then renumbers — anything that was really another counter's number.
+     */
+    try {
+      var inQ = {}; ((await DB.allRaw('queue')) || []).forEach(function(x){ if (x && x.no) inQ[x.no] = 1; });
+      var bare = ((await DB.all('bills')) || []).filter(function(b){ return b && isSaleRow(b) && !b._sent && !inQ[b.no]; });
+      for (var bi = 0; bi < bare.length; bi++) { if (bare[bi]._aside) delete bare[bi]._aside; await DB.put('bills', bare[bi]); await DB.put('queue', bare[bi]); }
+    } catch (_) {}
+    try { await HOST.drain(); } catch (_) {}
+
+    /* ⚠️ PROVE it — every reason the books could still be short, each named */
+    var why = [];
+    var q = []; try { q = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (_) { why.push('the waiting list could not be read'); }
+    if (q.length) why.push(q.length + ' bill(s) still waiting to send');
+    var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) { why.push('the bill list could not be read'); }
+    var aside = bills.filter(function(b){ return b && b._aside && !b._sent; }).length;
+    if (aside) why.push(aside + ' bill(s) set aside and not sent');
+    var unconfirmed = bills.filter(function(b){ return b && isSaleRow(b) && !b._sent; }).length - aside;
+    if (unconfirmed > 0) why.push(unconfirmed + ' bill(s) never confirmed by ChitBridge');
+    var left = 0; try { (await otherCounters()).forEach(function(s){ if (String(s.owner || '') === String(OWNER || '')) left += s.bills + s.queue; }); } catch (_) {}
+    if (left) why.push(left + ' bill(s) in an earlier copy of this counter on this PC — bring them in first (🩺 → 🗄)');
+    if (why.length) {
+      busyDone();
+      say('This counter was NOT closed:\n\n· ' + why.join('\n· ') + '\n\nOpen 🩺 (the online pill) to see and fix each one, then close again.');
+      return;
+    }
+
+    busyAt(0, 0, 'Telling ChitBridge…');
+    var series = null; try { series = await DB.get('series'); } catch (_) {}
+    var lastNo = bills.map(function(b){ return b && b.no; }).filter(Boolean).sort().pop() || null;
+    var r = await HOST.tillPost('/api/till/close', { last_no: lastNo, bills: bills.length,
+                                                     next: series ? series.next : null,
+                                                     period: series ? series.fy : null }, { noQueue: true });
+    if (!r || !r.ok) { busyDone(); say('ChitBridge did not accept the close: ' + ((r && r.why) || 'no answer') + '.\n\nNothing on this PC was cleared.'); return; }
+
+    busyAt(0, 0, 'Clearing this PC…');
+    var name = tillStore();
+    try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); } catch (_) {}
+    try { [tillGivenKey(), shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin'),
+           shopLs('cb_till_shop'), shopLs('cb_till_shopname')].forEach(function(k){ localStorage.removeItem(k); });
+          localStorage.removeItem('cb_till_key'); localStorage.removeItem('cb_till_id'); } catch (_) {}
+    busyDone();
+    await _askOpen({ title: 'Counter closed', cancelValue: true,
+      message: 'Counter ' + (r.prefix || tillId()) + ' is closed on this PC' + (lastNo ? ' — its last bill was ' + lastNo : '') + '.\n\n'
+        + 'To open it again — here or on another PC — go to ChitBridge → Settings → Integrations → Counters and press Open. '
+        + 'Its bill numbers carry on from where they stopped.' });
+    location.reload();
+  } catch (e) {
+    busyDone();
+    say('The counter was not closed: ' + ((e && e.message) || 'something went wrong') + '. Nothing on this PC was cleared.');
+  }
 }
 /**
  * ⭐⭐ SET ASIDE — THE WAY OUT OF A ROW THAT WILL NEVER GO. Athi, 2026-09-16: *"it is all stuck, the screen says
