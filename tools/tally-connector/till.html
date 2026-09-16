@@ -680,7 +680,13 @@
       <span class="pill" id="netpill">…</span>
       <span class="pill" id="agepill"></span>
       <span style="flex:1"></span>
-      <span class="pill" id="daypill"></span>
+      <!--
+        ⭐⭐ THE DAY'S TOTAL IS A DOOR, NOT A LABEL. Athi, 2026-09-16: *"today 3, value we are showing — can we make it a chip? if
+        we click, can we bring today's bill detail rather than the settings?"* It was a dead <span> that merely LOOKED like the
+        pills either side of it, so every press either did nothing or caught the ☰ next to it. The number a cashier reads most
+        often is the obvious way in to the list behind it, and that list already exists on F8.
+      -->
+      <button class="pill" id="daypill" data-testid="till-day" onclick="openBills()" title="today's bills — every sale taken at this counter today (F8)"></button>
       <!--
         ⭐⭐ WHAT STAYS ON THE BAR, AND WHY. Athi, 2026-09-09: *"counter header has many now, better we organise and make it kind
         of menu, so we know which menu to look at."* Thirteen controls had accumulated, each one reasonable on the day it landed.
@@ -1115,8 +1121,22 @@ var money = function(n){
   return r2(n).toFixed(2);
 };
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
-var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
-           set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
+/**
+ * ⚠️⚠️ A WRITE THAT FAILS MUST BE ASKABLE ABOUT. This used to be `catch(_){}` and nothing else — a device whose
+ * storage was full or blocked went on looking normal while every setting, every parked bill and the shop's own
+ * key quietly failed to save. Athi, 2026-09-16, on two parked bills that would not go: *"this may be the reason
+ * for the sync not working."* He was right to connect them: one swallowed write looks like several bugs.
+ * ⚠️ It still does not THROW — hundreds of call sites treat a setting as fire-and-forget and should. It answers
+ * whether the write happened, and remembers the last failure so a diagnosis can name it.
+ */
+var ls = { last:null,
+           get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
+           set:function(k,v){ try{ localStorage.setItem(k,v); return true; }
+                              catch(e){ ls.last = { at:Date.now(), key:k, why:(e&&e.name)||'refused' }; return false; } },
+           /* ⭐ can this device store anything at all? the only honest answer is to write something and read it back */
+           works:function(){ try { var p='cb_probe'; localStorage.setItem(p,'1');
+                                   var ok = localStorage.getItem(p)==='1'; localStorage.removeItem(p); return ok; }
+                             catch(e){ return false; } } };
 /**
  * ⭐⭐ WHICH OF THESE BELONG TO THE DEVICE, AND WHICH TO THE SHOP (2026-09-08). Athi, on finding a counter holding two shops at
  * once: *"this is the worst failure I was worried about."* The audit that followed found four more of the same shape.
@@ -3947,7 +3967,34 @@ function clearBill(){ CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; pa
  */
 var PARKED = [];
 function parkedLoad(){ try { PARKED = JSON.parse(ls.get(shopLs('cb_till_parked'), '[]')) || []; } catch (_) { PARKED = []; } paintParked(); }
-function parkedSave(){ ls.set(shopLs('cb_till_parked'), JSON.stringify(PARKED.slice(0, 20))); paintParked(); }
+/**
+ * ⚠️⚠️ THE BUG ATHI HIT, 2026-09-16: *"two bills just saved, but when I click the × it is not getting removed …
+ * other parked bills are removed, but this two got stuck."*
+ *
+ * The serialising used to sit in the ARGUMENT to ls.set — outside every try in sight. One parked cart that would
+ * not stringify therefore threw before `paintParked()` ran, so the chip stayed on the screen and the removal was
+ * never written, and because ls.set swallowed its own failures nothing anywhere said a word. The × was working
+ * perfectly; the saving of the result was not, which is why it looked like a dead button.
+ *
+ * ⚠️ ONE BAD ROW MUST NOT WEDGE THE RAIL. Each bill is serialised on its own, a row that cannot be is dropped
+ * with its name said out loud, and the repaint happens whatever else went wrong.
+ */
+function parkedSave(){
+  var keep = [], lost = [];
+  PARKED.slice(0, 20).forEach(function(p){
+    try { JSON.stringify(p); keep.push(p); }
+    catch (_) { lost.push((p && p.name) || 'a parked bill'); }
+  });
+  var wrote = false, body = null;
+  try { body = JSON.stringify(keep); } catch (_) { body = '[]'; lost.push('the whole parked list'); }
+  wrote = ls.set(shopLs('cb_till_parked'), body);
+  PARKED = keep;
+  paintParked();
+  /* ⚠️ and if it did not go to the device, SAY SO — a rail that silently disagrees with storage is the fault above */
+  if (!wrote) toastLine('This device would not save the parked bills (' + ((ls.last && ls.last.why) || 'refused')
+    + '). Open ☰ → 🩺 Why is a bill stuck?');
+  else if (lost.length) toastLine('Could not keep ' + lost.join(', ') + ' — removed from the rail.');
+}
 function parkBill(){
   if (!CART.length) return;
   var who = (document.getElementById('cname').value || '').trim();
@@ -6496,12 +6543,39 @@ async function resendBill(no){
   try {
     var b = ((await DB.all('bills')) || []).filter(function(x){ return x && String(x.no) === String(no); })[0];
     if (!b) { toastLine('That bill is not on this counter any more.'); return; }
+    /* putting it back cancels the setting-aside — otherwise the bill would carry a stale "given up on" stamp */
+    if (b._aside) { delete b._aside; try { await DB.put('bills', b); } catch (_) {} }
     await DB.put('queue', b);
     await queueTally(); paintStatus();
     toastLine('Bill ' + no + ' is back in the queue — sending it now.');
     if (HOST && HOST.drain) await HOST.drain();
     openBills(true);
   } catch (e) { toastLine('Could not queue bill ' + no + ': ' + ((e && e.message) || 'unknown')); }
+}
+/**
+ * ⭐⭐ SET ASIDE — THE WAY OUT OF A ROW THAT WILL NEVER GO. Athi, 2026-09-16: *"it is all stuck, the screen says
+ * sent but it is not reaching the task — how do I remove the stuck rows?"*
+ *
+ * ⚠️⚠️ HE ASKED TO REMOVE THEM AND REMOVING THEM WOULD BE WRONG. A queue row is a sale the shop has already
+ * taken money for. Delete it and the counter has quietly thrown away the record of a transaction that happened —
+ * which is a worse fault than the queue being blocked. So this takes the row out of the QUEUE only, leaves the
+ * BILL where it is, and stamps it so today's list stops calling it anything but unconfirmed and offers to send
+ * it again. Nothing is lost and the decision is reversible, which is what "remove" actually needs to mean here.
+ */
+async function setAside(no){
+  var ok = await sure('Take bill ' + no + ' out of the sending queue?\n\nThe rest of the queue can then go. '
+    + 'The bill itself is kept — it will show as “not confirmed” in today’s list with a button to send it again.',
+    'Yes, set it aside', 'Bill ' + no);
+  if (!ok) return;
+  try {
+    var q = ((await DB.allRaw('queue')) || []).filter(function(x){ return x && String(x.no) === String(no); })[0];
+    var b = ((await DB.all('bills')) || []).filter(function(x){ return x && String(x.no) === String(no); })[0];
+    if (b) { b._aside = { at: Date.now(), why: (q && q._why) || null, tries: (q && q._tries) || 0 }; await DB.put('bills', b); }
+    await DB.del('queue', no);
+    try { await queueTally(); paintStatus(); } catch (_) {}
+    toastLine('Bill ' + no + ' set aside. It is still in today’s list, marked not confirmed.');
+  } catch (e) { toastLine('Could not set bill ' + no + ' aside: ' + ((e && e.message) || 'unknown')); }
+  openStuck();
 }
 /**
  * ── ⭐⭐⭐ WHY IS A BILL STUCK? ────────────────────────────────────────────────────────────────────────────────
@@ -6536,6 +6610,7 @@ async function openStuck(){
   qForeign.concat(bForeign).forEach(function(r){ if (r && r._shop) others[r._shop] = (others[r._shop] || 0) + 1; });
 
   var last = (HOST && HOST.last) || null;
+  var storeOK = ls.works();
   var line = function(k, v, warn){
     return '<div class="t' + (warn ? ' warnrow' : '') + '"><span>' + esc(k) + '</span><span>' + esc(String(v)) + '</span></div>';
   };
@@ -6548,7 +6623,14 @@ async function openStuck(){
   h += '<div class="sec">This counter</div>'
     + line('Shop this database belongs to', owner || '(not set yet)')
     + line('Paired key', (HOST && HOST.key) ? 'yes' : 'NO — nothing can be sent', !(HOST && HOST.key))
-    + line('Online', navigator.onLine ? 'yes' : 'NO', !navigator.onLine);
+    + line('Online', navigator.onLine ? 'yes' : 'NO', !navigator.onLine)
+    /**
+     * ⭐ CAN THIS DEVICE SAVE ANYTHING AT ALL. Athi, 2026-09-16, on two parked bills that would not go: *"this
+     * may be the reason for the sync not working."* A full or blocked localStorage fails every setting, the
+     * parked rail and the pairing alike, and until this line existed it failed all of them without a sound.
+     */
+    + line('Device storage', storeOK ? 'writes are working'
+        : ('WILL NOT SAVE' + (ls.last ? ' — ' + ls.last.why : '')), !storeOK);
 
   h += '<div class="sec">What is actually in the local database</div>'
     + line('Bills stored', raw.bills.length + '  (this shop ' + bMine.length + (bForeign.length ? ', OTHER SHOP ' + bForeign.length : '') + ')', bForeign.length > 0)
@@ -6562,6 +6644,15 @@ async function openStuck(){
   if (qForeign.length) verdict = '⚠️ ' + qForeign.length + ' queued row(s) on this device belong to a DIFFERENT shop. '
       + 'They are held back on purpose — a sale must never post into another business’s books — and because they '
       + 'are held back, this counter can never empty its queue. That is what is stuck.';
+  /**
+   * ⚠️ AND SAY WHAT IT DOES *NOT* BREAK. Bills and the queue live in IndexedDB, so a dead localStorage does not
+   * by itself hold a sale back — but it loses the pairing and every setting, so it is named here and its reach
+   * is stated exactly. Blaming it for a stuck queue it did not cause would send the next hour the wrong way.
+   */
+  else if (!storeOK) verdict = 'This device will not save anything to the browser’s storage'
+      + (ls.last ? ' (' + ls.last.why + ')' : '') + '. Bills themselves are safe — they are kept elsewhere — but '
+      + 'the pairing, the settings and the parked bills cannot be written, so they come back or disappear. '
+      + 'Usually the browser is out of space or is in a private window.';
   else if (!(HOST && HOST.key)) verdict = 'This counter has no key, so nothing can be sent. Pair it from the shop.';
   else if (!navigator.onLine) verdict = 'No internet. The bills are safe here and go as soon as it returns.';
   else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
@@ -6590,8 +6681,15 @@ async function openStuck(){
     h += '<div class="sec">Waiting, oldest first</div>';
     qMine.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
       .slice(0, 12).forEach(function(q){
-        h += line(q.no || '(unnumbered)', (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted'), !!q._why);
+        var why = (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted');
+        h += '<div class="t' + (q._why ? ' warnrow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
+          + '<span>' + esc(why)
+          + ' <button class="pill" style="margin-inline-start:8px" data-testid="till-stuck-aside-' + esc(q.no)
+          + '" onclick="setAside(\'' + esc(q.no) + '\')">set aside</button></span></div>';
       });
+    h += '<div style="color:var(--dim);font-size:.8em;padding:6px 0">Setting a bill aside takes it out of the '
+      + 'queue so the rest can go. ⚠️ The bill is NOT deleted and the sale is NOT lost — it moves to “not '
+      + 'confirmed” in today’s list with a <b>send it again</b> button, so you can put it back any time.</div>';
   }
   h += '</div>';
 
@@ -6663,6 +6761,9 @@ async function openBills(keepOpen){
   var stateOf = function(b){
     if (waiting[b.no]) return 'waiting';
     if (b && b._sent) return 'sent';
+    /* ⚠️ a bill somebody deliberately set aside is KNOWN not to have been confirmed — it must never fall through
+       to the benign "left this counter", which is the wording for "this counter cannot tell". */
+    if (b && b._aside) return 'unconfirmed';
     return everAcked ? 'unconfirmed' : 'unknown';
   };
   var nWait = rows.filter(function(b){ return stateOf(b) === 'waiting'; }).length;
@@ -6756,13 +6857,21 @@ async function coldStart(){
   busyAt(0, 0, 'Sending anything still waiting…');
   if (navigator.onLine) { try { await HOST.drain(); } catch (_) {} }
 
-  /* 2 · and PROVE it went */
-  var left = 0;
+  /**
+   * 2 · and PROVE it went
+   * ⚠️⚠️ AN EMPTY QUEUE IS NOT THE SAME AS NOTHING LEFT TO LOSE. A bill that was SET ASIDE is out of the queue
+   * by hand and still unconfirmed; wiping on an empty queue alone would delete precisely the sales somebody had
+   * already flagged as not having arrived. Both are counted, and either one stops the wipe.
+   */
+  var left = 0, aside = 0;
   try { left = ((await DB.all('queue')) || []).length; } catch (_) { left = -1; }
-  if (left !== 0) {
+  try { aside = ((await DB.all('bills')) || []).filter(function(b){ return b && b._aside && !b._sent; }).length; } catch (_) { aside = -1; }
+  if (left !== 0 || aside !== 0) {
     busyDone();
     say(left > 0
       ? (left + ' bill(s) have not reached ChitBridge yet, so nothing was cleared.\n\nOpen 🧾 bills and press "Send now" while the internet is on, then try again.')
+      : aside > 0
+      ? (aside + ' bill(s) you set aside have still not reached ChitBridge, so nothing was cleared.\n\nOpen 🧾 bills and press "send it again" on each one — or, if those sales are genuinely not wanted, they must be cancelled properly rather than wiped.')
       : 'Could not read what is waiting, so nothing was cleared. Try again in a moment.');
     return;
   }
