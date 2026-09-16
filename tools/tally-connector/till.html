@@ -396,6 +396,23 @@
   .row .pq{font-weight:500}
   .row .calc{font-size:.88em}
   .row .amt{font-weight:800;font-size:1.08em;letter-spacing:-.01em}
+  /**
+   * ── ⭐ COLUMN RULES, AS A CHOICE ──────────────────────────────────────────────────────────────────────────
+   *
+   * Athi asked to see vertical lines between the columns. Tastes differ on this and neither answer is wrong, so
+   * it is a tick beside the column ones rather than a decision taken for every shop.
+   * ⚠️ THE RULE SITS IN THE GAP, not against the digits: a line hard against a right-aligned number reads as a
+   * digit for a moment, which on a bill is exactly the moment that matters. `--line`, not `--edge` — this
+   * separates, it does not bound a control.
+   */
+  body.cart-rules .row > *:not(:first-child),
+  body.cart-rules .rowhead > *:not(:first-child){
+    border-inline-start:1px solid var(--line);
+    padding-inline-start:8px;
+    margin-inline-start:-4px;
+  }
+  /* ⚠️ no rule before the × — it is a button at the edge, not another column of figures */
+  body.cart-rules .row > .x,body.cart-rules .rowhead > *:last-child{border-inline-start:0}
   /* ⭐ the OFFER column — chips that wrap, next to the item they belong to */
   .rowhead .offh{text-align:start}
   .row .offc{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
@@ -916,6 +933,8 @@
       <input type="checkbox" id="col_calc" data-testid="till-col-calc" onchange="cartColSet('calc',this.checked)"> Qty × price</label>
     <label style="display:flex;gap:6px;align-items:center;font-weight:400">
       <input type="checkbox" id="col_value" data-testid="till-col-value" onchange="cartColSet('value',this.checked)"> Value</label>
+    <label style="display:flex;gap:6px;align-items:center;font-weight:400">
+      <input type="checkbox" id="col_rules" data-testid="till-col-rules" onchange="cartColSet('rules',this.checked)"> Lines between columns</label>
   </div>
   <label>Quick keys — where they come from</label>
   <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})">
@@ -2526,6 +2545,8 @@ function applyTillOptions(){
   SECTIONS.forEach(function(p){ b.classList.remove('hide-' + p[0]); });
   var show = tillShow();
   SECTIONS.forEach(function(p){ if (!show[p[0]]) b.classList.add('hide-' + p[0]); });
+  /* ⭐ vertical rules between the bill's columns — a taste, so a tick rather than a decision */
+  b.classList.toggle('cart-rules', (o.cols || {}).rules === true);
   if (o.shape && o.shape !== 'auto') b.classList.add('shape-' + o.shape);
   try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
   try { paintHits(); } catch (_) {}
