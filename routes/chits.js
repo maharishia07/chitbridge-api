@@ -267,9 +267,34 @@ router.post('/send',
       const sender_id = entityId(req);
       let sender_bridge_id = req.identity.bridge_id;
       let sender_display_name = req.identity.display_name;
-      if (req.identity.identity_type === 'actor' && req.identity.parent_entity_id) {
+      /**
+       * ⚠️⚠️ THE TOKEN'S bridge_id IS A CACHE; THE DATABASE IS THE TRUTH — AND A KEY CACHES IT FOR A YEAR.
+       *
+       * Athi, 2026-09-16: *"how many chits I create, it is creating the receipt, but not able to sync."* On one PC
+       * only. An api key is minted with `bridge_id: identity.bridge_id || null` (routes/keys.js) and that claim is
+       * then FROZEN for the life of the key. Pair a counter before the shop has a bridge_id and every send from it
+       * puts NULL into sender_entity_bridge_id — `character varying(32) NOT NULL` — so it 500s, for ever, on that
+       * counter alone. The receipt prints because the counter prints locally; the sale never reaches ChitBridge and
+       * no amount of retrying will change that. A counter paired later works, which is what made it look like a
+       * sick PC rather than a stale claim.
+       *
+       * ⚠️ So the lookup is no longer an ACTOR special case. Anything missing the claim asks the database, which is
+       * one query on a path that already opens a transaction, and it cannot be wrong the way a year-old claim can.
+       */
+      const staleClaim = !sender_bridge_id || !sender_display_name;
+      if (staleClaim || (req.identity.identity_type === 'actor' && req.identity.parent_entity_id)) {
         const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
         if (_ent.rows[0]) { sender_bridge_id = _ent.rows[0].bridge_id; sender_display_name = _ent.rows[0].display_name; }
+      }
+      /**
+       * ⚠️ AND IF IT IS STILL MISSING, REFUSE IN WORDS. A 500 from a NOT NULL constraint tells a shopkeeper that
+       * "something went wrong" and tells the counter to keep retrying something that can never work. This says what
+       * is actually wrong and who can fix it, and the counter shows it on the bill that is stuck.
+       */
+      if (!sender_bridge_id) {
+        return res.status(409).json({ error: 'no_bridge_id',
+          message: 'This shop has no ChitBridge address yet, so a sale cannot be recorded against it. '
+                 + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
       }
       /**
        * ⭐⭐⭐ THE NUMBER ON THE PAPER, CHECKED AGAINST THE RULE FOR THIS SHOP'S COUNTRY.

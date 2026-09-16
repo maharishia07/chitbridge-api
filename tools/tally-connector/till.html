@@ -1238,11 +1238,20 @@ var KEPT = { asked:false, granted:null, why:'' };
  */
 var OWNER = null, FOREIGN = 0;
 function ownRow(r){ if (r && typeof r === 'object' && OWNER) r._shop = OWNER; return r; }
-function ownOK(r){
+/**
+ * ⭐⭐ THE ONE OWNERSHIP RULE, ASKED TWO WAYS. `ownOK` is the FILTER — it answers and counts, because a foreign
+ * row seen on a read is the thing the badge exists to report. `rowIsMine` is the same question without the
+ * counting, for diagnosis, which must be able to look without changing what it is looking at.
+ * ⚠️⚠️ THE DIAGNOSIS MUST JUDGE BY WHAT THE FILTER JUDGES BY. The stuck panel had its own copy of this test
+ * written against the STORED owner while every real read used the LIVE one — so in the single case where those
+ * two disagree, the panel would have cleared a counter that drain could not read. Four copies of one rule, and
+ * the one that mattered was the odd one out.
+ */
+function rowIsMine(r){
   if (!OWNER || !r || typeof r !== 'object' || !r._shop) return true;   /* unstamped is legacy, not foreign */
-  if (String(r._shop) === String(OWNER)) return true;
-  FOREIGN++; return false;
+  return String(r._shop) === String(OWNER);
 }
+function ownOK(r){ if (rowIsMine(r)) return true; FOREIGN++; return false; }
 
 var DB = (function(){
   var p = null;
@@ -6622,7 +6631,7 @@ async function openStuck(){
     raw.queue = await DB.allRaw('queue');
   } catch (e) { err = (e && e.message) || 'could not read the local database'; }
 
-  var mine = function(r){ return !r || !r._shop || String(r._shop) === String(owner || OWNER || ''); };
+  var mine = rowIsMine;   /* ⚠️ the filter's own rule — never a second copy of it, see rowIsMine() */
   var qMine = raw.queue.filter(mine), qForeign = raw.queue.filter(function(r){ return !mine(r); });
   var bMine = raw.bills.filter(mine), bForeign = raw.bills.filter(function(r){ return !mine(r); });
   /* which other shops are represented, so the answer names them rather than saying "some" */
@@ -6642,6 +6651,11 @@ async function openStuck(){
 
   h += '<div class="sec">This counter</div>'
     + line('Shop this database belongs to', owner || '(not set yet)')
+    /* ⚠️ THE TWO COPIES OF THE OWNER MUST AGREE. The store holds one and the running page holds one; they are
+       written together, so a difference means this page is reading rows under an identity the device never saved
+       — which would hide every row from drain while the panel called the counter clean. */
+    + (String(owner || '') !== String(OWNER || '')
+        ? line('⚠️ the running page thinks it is', OWNER || '(none)', true) : '')
     + line('Paired key', (HOST && HOST.key) ? 'yes' : 'NO — nothing can be sent', !(HOST && HOST.key))
     + line('Online', navigator.onLine ? 'yes' : 'NO', !navigator.onLine)
     /**
@@ -6677,7 +6691,19 @@ async function openStuck(){
   else if (!navigator.onLine) verdict = 'No internet. The bills are safe here and go as soon as it returns.';
   else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
   else verdict = '✓ Nothing is queued. Every bill this counter holds has been sent.';
-  h = '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>' + h;
+  /**
+   * ⭐⭐ THE VERDICT, THEN THE WAY OUT, THEN THE DETAIL. A person who opened this panel wants the queue moving;
+   * the numbers underneath are for the one time in ten when it does not. Reading order is the design.
+   * ⚠️ The report buttons are ALWAYS here, including when the verdict is "nothing is queued" — the times it is
+   * needed most are the times the counter's own account of itself is the thing in doubt.
+   */
+  h = '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
+    + '<div class="qbar" style="padding:8px 0">'
+    + '<button class="pill" data-testid="till-stuck-release" onclick="releaseQueue()"><b>▶ Get my bills moving</b></button>'
+    + '<button class="pill" data-testid="till-stuck-copy" onclick="stuckCopy()">📋 Copy the report</button>'
+    + '<button class="pill" data-testid="till-stuck-save" onclick="stuckSave()">💾 Save it as a file</button>'
+    + '<span class="qwhy">support code ' + esc(stuckCode()) + '</span>'
+    + '</div>' + h;
 
   if (Object.keys(others).length) {
     h += '<div class="sec">Rows belonging to another shop</div>';
@@ -6718,13 +6744,164 @@ async function openStuck(){
   document.getElementById('billsdlg').showModal();
 }
 /**
+ * ── ⭐⭐⭐ THE REPORT THAT LEAVES THE BUILDING ────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16: *"in real life if a PC is in such a situation how do we resolve it, because that PC cannot be
+ * scrutinised through you."* That is the whole problem with the panel as it stood: it explains itself beautifully
+ * to whoever is standing in front of it, and to nobody else.
+ *
+ * ⚠️⚠️ AND IT MUST WORK WHEN NOTHING ELSE DOES. The thing that is broken may be the very thing needed to report
+ * it, so this is PLAIN TEXT a person can copy or save and send by whatever still works — a phone, a message, a
+ * mail. It never needs the network it is reporting on.
+ * ⚠️ NO CUSTOMER DATA. Bill numbers, counts, reasons and ids — never a name, a phone number or a line item. The
+ * shopkeeper is going to paste this to a stranger, so it must be safe to paste before they have to think about it.
+ */
+async function stuckReport(){
+  var L = [], owner = null, raw = { bills: [], queue: [] };
+  try { owner = await DB.ownerRaw(); raw.bills = await DB.allRaw('bills'); raw.queue = await DB.allRaw('queue'); }
+  catch (e) { L.push('THE LOCAL DATABASE WOULD NOT OPEN: ' + ((e && e.message) || 'unknown')); }
+  var mine = rowIsMine;   /* ⚠️ the filter's own rule — never a second copy of it, see rowIsMine() */
+  var qM = raw.queue.filter(mine), qF = raw.queue.filter(function(r){ return !mine(r); });
+  var bM = raw.bills.filter(mine), bF = raw.bills.filter(function(r){ return !mine(r); });
+  var others = {}; qF.concat(bF).forEach(function(r){ if (r && r._shop) others[r._shop] = (others[r._shop] || 0) + 1; });
+  var last = (HOST && HOST.last) || null;
+
+  L.push('CHITBRIDGE COUNTER — why a bill is stuck');
+  L.push('taken ' + new Date().toISOString());
+  L.push('support code ' + stuckCode());
+  L.push('');
+  L.push('COUNTER');
+  L.push('  shop this database belongs to : ' + (owner || '(not set)'));
+  L.push('  till id                       : ' + ls.get(shopLs('cb_till_id'), 'C1'));
+  L.push('  paired key                    : ' + ((HOST && HOST.key) ? 'yes' : 'NO — nothing can be sent'));
+  L.push('  online                        : ' + (navigator.onLine ? 'yes' : 'NO'));
+  L.push('  device storage                : ' + (ls.works() ? 'writes are working'
+    : ('WILL NOT SAVE' + (ls.last ? ' (' + ls.last.why + ')' : ''))));
+  L.push('  host                          : ' + (HOST === AgentHost ? 'the program on this PC' : 'this page (cloud)'));
+  L.push('  page                          : ' + location.origin);
+  L.push('');
+  L.push('WHAT IS ACTUALLY IN THE LOCAL DATABASE');
+  L.push('  bills stored   : ' + raw.bills.length + '  (this shop ' + bM.length + ', other shop ' + bF.length + ')');
+  L.push('  queued to send : ' + raw.queue.length + '  (this shop ' + qM.length + ', other shop ' + qF.length + ')');
+  Object.keys(others).forEach(function(id){ L.push('  rows belonging to ' + id + ' : ' + others[id]); });
+  L.push('');
+  L.push('THE LAST ATTEMPT TO SEND');
+  if (!last) L.push('  never run in this session');
+  else {
+    L.push('  when       : ' + new Date(last.at).toISOString());
+    L.push('  rows tried : ' + last.tried);
+    L.push('  rows sent  : ' + last.sent);
+    L.push('  the shop said : ' + (last.why || 'nothing refused it'));
+  }
+  L.push('');
+  L.push('WAITING, OLDEST FIRST');
+  if (!qM.length) L.push('  nothing of this shop\'s is queued');
+  qM.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
+    .slice(0, 20).forEach(function(q){
+      L.push('  ' + (q.no || '(unnumbered)') + '  tries=' + (q._tries || 0)
+        + '  status=' + (q._status || '—') + '  ' + (q._why || 'not refused — not yet attempted'));
+    });
+  return L.join('\n');
+}
+/** ⭐ a short code a shopkeeper can read down a telephone, so a pasted report can be matched to the call about it */
+function stuckCode(){
+  var s = String(OWNER || '') + '|' + new Date().toISOString().slice(0, 13);
+  var h = 5381; for (var i = 0; i < s.length; i++) h = (((h * 33) ^ s.charCodeAt(i)) >>> 0);
+  return h.toString(36).toUpperCase().slice(0, 6);
+}
+async function stuckCopy(){
+  var t = await stuckReport();
+  try { await navigator.clipboard.writeText(t); toastLine('Report copied. Paste it into a message to ChitBridge.'); }
+  catch (_) {
+    /* ⚠️ clipboard is refused without a gesture in some browsers, and this must not be a dead end */
+    var d = document.getElementById('billsbody');
+    d.innerHTML = '<div class="sec">Copy this and send it to ChitBridge</div>'
+      + '<textarea data-testid="till-stuck-text" readonly style="width:100%;height:46vh;font:12px/1.45 ui-monospace,monospace">'
+      + esc(t) + '</textarea>';
+    try { d.querySelector('textarea').select(); } catch (_) {}
+  }
+}
+/** ⚠️ a file goes where a clipboard cannot — a shop with no line still has a phone with a message app */
+async function stuckSave(){
+  var t = await stuckReport();
+  try {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([t], { type: 'text/plain' }));
+    a.download = 'counter-stuck-' + stuckCode() + '.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    toastLine('Saved. Send that file to ChitBridge.');
+  } catch (e) { toastLine('Could not save the file: ' + ((e && e.message) || 'unknown')); }
+}
+/**
+ * ── ⭐⭐⭐ GET MY BILLS MOVING ────────────────────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16: *"how do I release the stuck queue?"* Everything up to now told a shopkeeper what was wrong
+ * and left the repair to them, spread across three controls they had to pick between. This is the one press that
+ * does the whole safe sequence and then SAYS WHAT IT DID — the sentence at the end is the point, because a button
+ * that silently succeeds is indistinguishable from one that silently does nothing, which is where we came in.
+ *
+ * ⚠️⚠️ IT NEVER THROWS A SALE AWAY. Foreign rows are offered for discard (they belong to another shop and cannot
+ * go from here); everything of this shop's is put BACK in the queue and tried. Nothing is deleted, nothing is
+ * re-stamped, and if it still will not go the report is one press away.
+ */
+async function releaseQueue(){
+  var owner = await DB.ownerRaw();
+  var mine = rowIsMine;   /* ⚠️ the filter's own rule — never a second copy of it, see rowIsMine() */
+  var did = [];
+
+  /* 1 · rows belonging to another shop can never go from here, and while they sit in the queue it never empties */
+  var qF = (await DB.allRaw('queue')).filter(function(r){ return !mine(r); });
+  if (qF.length) {
+    if (await sure('Remove ' + qF.length + ' queued row(s) written while this device was paired to a different '
+      + 'shop?\n\nThey cannot be sent from here. This removes them from THIS DEVICE ONLY and deletes nothing from '
+      + 'that shop\'s books.', 'Yes, remove them', 'Rows from another shop')) {
+      for (var i = 0; i < qF.length; i++) { try { await DB.del('queue', qF[i].no); } catch (_) {} }
+      did.push('removed ' + qF.length + ' row(s) belonging to another shop');
+    } else did.push(qF.length + ' row(s) from another shop were kept, so the queue cannot empty');
+  }
+
+  /* 2 · anything of this shop's that is not acknowledged goes back in the queue, including what was set aside */
+  var back = 0;
+  try {
+    var q = await DB.all('queue'), inQ = {};
+    (q || []).forEach(function(x){ if (x && x.no) inQ[x.no] = 1; });
+    var bills = (await DB.all('bills')) || [];
+    for (var j = 0; j < bills.length; j++) {
+      var b = bills[j];
+      if (!b || b._sent || inQ[b.no]) continue;          /* acknowledged, or already waiting */
+      if (b._aside) delete b._aside;
+      await DB.put('bills', b); await DB.put('queue', b); back++;
+    }
+  } catch (_) {}
+  if (back) did.push('put ' + back + ' unconfirmed bill(s) back in the queue');
+
+  /* 3 · and try, now, with the reason kept if it refuses */
+  var before = ((await DB.all('queue')) || []).length;
+  if (!(HOST && HOST.key)) did.push('this counter has no key, so nothing could be sent — pair it from the shop');
+  else if (!navigator.onLine) did.push('there is no internet, so nothing could be sent — it will go on its own when the line is back');
+  else { try { await HOST.drain(); } catch (_) {} }
+  var after = ((await DB.all('queue')) || []).length;
+  if (before && before > after) did.push('sent ' + (before - after) + ' bill(s)');
+  else if (before && HOST && HOST.key && navigator.onLine) {
+    did.push('tried ' + before + ' bill(s) and none went — ' + ((HOST.last && HOST.last.why) || 'no reason was given'));
+  }
+  if (!before && !qF.length) did.push('there was nothing waiting');
+
+  try { await queueTally(); paintStatus(); } catch (_) {}
+  say('What happened:\n\n· ' + did.join('\n· ') + '\n\n'
+    + (after ? after + ' bill(s) are still waiting. Copy the report and send it to ChitBridge.'
+             : 'Nothing is waiting any more.'));
+  openStuck();
+}
+/**
  * ⚠️⚠️ DISCARD, NEVER RE-STAMP. Re-stamping a foreign row to this shop is how one business's sale lands in
  * another's accounts — the exact injury the ownership guard exists to prevent. The only safe act is to remove
  * the rows from THIS device, and the wording says that is all it does.
  */
 async function discardForeign(){
   var owner = await DB.ownerRaw();
-  var mine = function(r){ return !r || !r._shop || String(r._shop) === String(owner || OWNER || ''); };
+  var mine = rowIsMine;   /* ⚠️ the filter's own rule — never a second copy of it, see rowIsMine() */
   var q = (await DB.allRaw('queue')).filter(function(r){ return !mine(r); });
   var b = (await DB.allRaw('bills')).filter(function(r){ return !mine(r); });
   if (!q.length && !b.length) { toastLine('There are no rows from another shop on this device.'); return; }
