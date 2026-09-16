@@ -137,6 +137,48 @@
   .lotrow input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font-size:1.15em;min-width:110px}
   /* the hour's suggestion, and the two small controls that make it the shop's own */
   .qwhy{grid-column:1/-1;color:var(--dim);font-size:.75em;text-transform:uppercase;letter-spacing:.4px;padding:0 2px 2px}
+  /* ⭐ the group bar sits above the keys and spans them — choose a group, start one, add the marked row */
+  .qbar{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 2px 6px}
+  .qbar select,.qbar button{font:inherit;font-size:.82em;padding:4px 9px;border:1px solid var(--line);
+        border-radius:999px;background:var(--paper);cursor:pointer}
+  .qbar .qwhy{grid-column:auto;padding:0;margin-inline-start:auto}
+  .quick .qadd{position:absolute;inset-inline-start:2px;top:2px;font-style:normal;font-size:.8em;opacity:.35;
+        padding:2px 5px;border-radius:6px}
+  .quick button:hover .qadd{opacity:.9;background:var(--ok-tint);color:var(--ok)}
+  /**
+   * ── ⭐⭐⭐ WHAT THIS COUNTER SHOWS, AND WHAT SHAPE IT IS ──────────────────────────────────────────────────
+   *
+   * Athi: *"depends on business type they can choose what option they wanted to have… a tiffin shop or like
+   * tallytest having a million products — this counter app should be able to cater for them just based on option
+   * selection."* The body wears the choice; nothing else in the file has to know about layout.
+   *
+   *   lay-full   the whole counter (default, unchanged)
+   *   lay-quick  the keys and the bill — no long list. A hotel or tiffin counter bills from a dozen keys.
+   *   lay-cart   the bill and a search — *"left side not required: search and the category, cart, summary."*
+   */
+  body.lay-quick .hits,body.lay-quick .keys{display:none}
+  body.lay-cart .hits,body.lay-cart .quick,body.lay-cart .keys{display:none}
+  /* the bill takes the room the list gave up: the left column shrinks to the search and the chips */
+  body.lay-cart .wrap{grid-template-columns:minmax(0,.62fr) 6px minmax(320px,1.38fr)}
+  body.lay-cart .left{border-right:1px solid var(--line)}
+  /* ⚠️ a shape is a DELIBERATE override of the media query, for a screen the browser cannot guess — a vertical
+     monitor reports plenty of width and would otherwise get the wide counter. */
+  body.shape-tall .wrap,body.shape-mobile .wrap{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}
+  body.shape-tall .grip,body.shape-mobile .grip{display:none}
+  body.shape-tall .left,body.shape-mobile .left{order:2;border-right:none;border-top:1px solid var(--line)}
+  body.shape-tall .right,body.shape-mobile .right{order:1}
+  body.shape-tall .hits{max-height:52vh}
+  body.shape-mobile .hits{max-height:40vh}
+  body.shape-mobile .row,body.shape-mobile .rowhead{grid-template-columns:minmax(0,1fr) 74px 104px 88px 28px}
+  body.shape-mobile .row .pq,body.shape-mobile .rowhead .pqh,
+  body.shape-mobile .row .calc,body.shape-mobile .rowhead .calch{display:none}
+  body.shape-mobile .quick{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  /* wide forces the two-column counter back on, whatever the width says */
+  body.shape-wide .wrap{grid-template-columns:minmax(0,var(--split,1.1fr)) 6px minmax(300px,.9fr);
+        grid-template-rows:none;height:100vh;height:100dvh}
+  body.shape-wide .left{order:0;border-right:1px solid var(--line);border-top:none}
+  body.shape-wide .right{order:0}
+  body.shape-wide .grip{display:block}
   .quick button{position:relative}
   .quick .qx,.quick .qpin{position:absolute;top:2px;font-style:normal;font-size:.8em;opacity:.35;padding:2px 5px;border-radius:6px}
   .quick .qx{inset-inline-end:2px}
@@ -708,9 +750,39 @@
   <label>Counter name — it becomes the bill number's prefix</label>
   <input id="set_till" placeholder="C1">
   <div id="printbox"></div>
-  <label>Quick keys</label>
+  <!--
+    ⭐⭐⭐ THE COUNTER IS SET UP FROM THE COUNTER. Athi, 2026-09-16: *"anything related to counter app setup should
+    be visible in counter app itself, so they don't need to go to the main app."* Everything below is answered
+    here, on the device doing the billing, and stored against THIS shop.
+  -->
+  <label>What this counter shows — a tiffin shop and a ten-thousand-line kirana are not the same counter</label>
+  <select id="set_layout" data-testid="till-set-layout" onchange="tillOptSet({layout:this.value})">
+    <option value="full">Everything — search, categories, quick keys, the whole list, the bill</option>
+    <option value="quick">Quick keys and the bill — no long list</option>
+    <option value="cart">The bill and a search — no shelf on the left</option>
+  </select>
+  <label>Screen shape — for a screen the browser cannot guess</label>
+  <select id="set_shape" data-testid="till-set-shape" onchange="tillOptSet({shape:this.value})">
+    <option value="auto">Automatic — follow the screen</option>
+    <option value="wide">Wide — the shelf beside the bill</option>
+    <option value="tall">Tall — the bill above, the shelf below (a vertical screen)</option>
+    <option value="mobile">Phone</option>
+  </select>
+  <label>Quick keys — where they come from</label>
+  <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})">
+    <option value="frequent">What sells at this hour — learned from this counter's own bills</option>
+    <option value="groups">A group I made</option>
+    <option value="both">My group first, then what sells</option>
+  </select>
+  <div id="setupgroups" data-testid="till-set-groups"></div>
   <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show every hidden key again</button>
-  <div style="color:var(--dim);font-size:.78em;margin:4px 0 8px">The twelve are learned from this counter's own bills — what sells around this time of day. ✕ drops one, 📌 keeps one there all day.</div>
+  <div style="color:var(--dim);font-size:.78em;margin:4px 0 8px">Learned keys come from this counter's own bills — what sells around this time of day. ✕ drops one, 📌 keeps one there all day. A group is a list you make: the same product can sit in Morning and Night at once, and adding or removing one never changes the shelf.</div>
+  <label>UPI — the payee this counter takes money at</label>
+  <input id="set_upi" data-testid="till-set-upi" placeholder="name@bank" autocomplete="off"
+         onchange="tillOptSet({upi:{payee:this.value.trim(),label:(document.getElementById('set_upilabel').value||'UPI').trim()}})">
+  <input id="set_upilabel" data-testid="till-set-upilabel" placeholder="UPI" autocomplete="off" style="max-width:160px"
+         onchange="tillOptSet({upi:{payee:(document.getElementById('set_upi').value||'').trim(),label:this.value.trim()||'UPI'}})">
+  <div id="setupupi" style="color:var(--dim);font-size:.78em;margin:4px 0 8px"></div>
   <label>Speaking — who listens</label>
   <select id="set_speech">
     <option value="auto">Automatic — the better ear available</option>
@@ -2160,6 +2232,98 @@ function quickReset(){ ls.set(shopLs('cb_till_qhide'), '[]'); ls.set(shopLs('cb_
 function partOfDay(h){
   return h < 11 ? 'this morning' : (h < 15 ? 'around midday' : (h < 19 ? 'this afternoon' : 'this evening'));
 }
+/**
+ * ── ⭐⭐⭐ ONE COUNTER, MANY SHOPS — WHAT THIS ONE SHOWS ──────────────────────────────────────────────────────
+ *
+ * Athi's counter-app requirement, 2026-09-16: *"depends on business type they can choose what option they wanted
+ * to have… a tiffin shop or like tallytest having a million products — this counter app should be able to cater
+ * for them just based on option selection."* And: *"hotel kind require frequently used, not everyone, so keep it
+ * as an option in the counter app."*
+ *
+ * ⭐ THE SETTING IS SHOP-SCOPED, like the pins and the hidden keys beside it — two shops open on one device must
+ * not inherit each other's counter. Same `shopLs` the rest of this file uses; nothing new to keep in step.
+ *
+ *   layout       full  — the whole counter (a kirana with ten thousand lines)
+ *                quick — the keys and the bill, no long list (a tiffin shop, a hotel counter)
+ *                cart  — the bill and a search, nothing else (someone who knows what they are billing)
+ *   shape        auto | wide | tall | mobile — the same page on a monitor, a vertical screen or a phone
+ *   quickSource  frequent — what sells at this hour (learned, the default)
+ *                groups   — a list somebody made
+ *                both     — the made list first, then what sells
+ *   groups       { 'Morning': [item_id…] } — a product may sit in as many groups as it likes
+ *   upi          a payee this COUNTER can take money at when the shop has not published one
+ *
+ * ⚠️ A GROUP IS A LIST OF IDS, NOT A CHANGE TO THE SHELF. Athi: *"we should be able to add a few more, or remove
+ * few as per the demand — that should not affect the standard list."* Nothing here ever writes a product.
+ */
+var TILLOPT = null;
+function tillOptDefaults(){
+  return { layout:'full', shape:'auto', quickSource:'frequent', group:'', groups:{}, upi:{ payee:'', label:'UPI' } };
+}
+function tillOpt(){
+  if (TILLOPT) return TILLOPT;
+  var o = tillOptDefaults();
+  try { var raw = JSON.parse(ls.get(shopLs('cb_till_opt'), '{}')) || {}; Object.keys(raw).forEach(function(k){ o[k] = raw[k]; }); } catch (_) {}
+  if (!o.groups || typeof o.groups !== 'object') o.groups = {};
+  if (!o.upi || typeof o.upi !== 'object') o.upi = { payee:'', label:'UPI' };
+  TILLOPT = o; return o;
+}
+function tillOptSet(patch){
+  var o = tillOpt();
+  Object.keys(patch || {}).forEach(function(k){ o[k] = patch[k]; });
+  try { ls.set(shopLs('cb_till_opt'), JSON.stringify(o)); } catch (_) {}
+  applyTillOptions();
+}
+/** ⭐ the body wears the choice, so the CSS decides what is on screen and no painter has to know about layout. */
+function applyTillOptions(){
+  var o = tillOpt(), b = document.body; if (!b) return;
+  ['lay-full','lay-quick','lay-cart','shape-wide','shape-tall','shape-mobile'].forEach(function(c){ b.classList.remove(c); });
+  b.classList.add('lay-' + (o.layout || 'full'));
+  if (o.shape && o.shape !== 'auto') b.classList.add('shape-' + o.shape);
+  try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
+  try { paintHits(); } catch (_) {}
+}
+/** the active group's item ids — [] when no group is chosen, which is also what 'frequent' wants */
+function groupIds(){
+  var o = tillOpt();
+  var g = o.group && o.groups ? o.groups[o.group] : null;
+  return Array.isArray(g) ? g : [];
+}
+/**
+ * ⭐ ADD OR REMOVE ONE PRODUCT IN THE ACTIVE GROUP — the whole of "add a few more, or remove few as per demand".
+ * ⚠️ It touches the group's id list and nothing else: the catalogue, the shelf and every other group are untouched,
+ * so the same product can sit in Morning and Night at once, which is exactly what Athi asked for.
+ */
+function quickGroupToggle(id){
+  var o = tillOpt();
+  if (!o.group) { toastLine('Choose or make a group first — Setup ▸ Quick keys.'); return; }
+  var list = groupIds().slice(), at = list.indexOf(id);
+  if (at >= 0) list.splice(at, 1); else list.push(id);
+  o.groups[o.group] = list;
+  tillOptSet({ groups: o.groups });
+}
+/** ⭐ put the row the shelf is marking into the active group — the fastest way to build one while billing */
+function quickGroupAddMarked(){
+  var list = hits(), i = list[SEL];
+  if (!i) { toastLine('Mark a product on the list first.'); return; }
+  quickGroupToggle(i.item_id);
+  toastLine(i.name + ' → ' + tillOpt().group);
+}
+function quickGroupNew(){
+  var name = String(prompt('Name this group — Morning, Evening, Tiffin…') || '').trim();
+  if (!name) return;
+  var o = tillOpt();
+  if (!o.groups[name]) o.groups[name] = [];
+  tillOptSet({ groups:o.groups, group:name, quickSource: o.quickSource === 'frequent' ? 'both' : o.quickSource });
+  paintSetup();
+}
+function quickGroupDrop(){
+  var o = tillOpt(); if (!o.group) return;
+  if (!confirm('Remove the group "' + o.group + '"? The products themselves are not touched.')) return;
+  delete o.groups[o.group];
+  tillOptSet({ groups:o.groups, group:'' });
+  paintSetup();
+}
 async function loadQuick(){
   var now = new Date(), hour = now.getHours();
   var near = {}, ever = {}, seenHours = false;
@@ -2189,23 +2353,68 @@ async function loadQuick(){
     if (pa >= 0 || pb >= 0) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);   /* pinned first, in the order they were pinned */
     return score(b) - score(a);
   });
-  QUICK = ranked.slice(0, 12);
-  QUICK_WHY = seenHours ? ('what sells ' + partOfDay(hour)) : (Object.keys(ever).length ? 'what sells here' : '');
+  /**
+   * ⭐⭐ WHERE THE KEYS COME FROM IS NOW A CHOICE. Learned (what sells at this hour), made (a group somebody
+   * wrote), or both — the made list first, because a person who took the trouble to write one means it.
+   * ⚠️ A GROUP IS READ THROUGH THE SHELF, so an id for a product this counter no longer carries simply drops out
+   * rather than drawing a key that cannot be pressed.
+   */
+  var opt = tillOpt();
+  var learned = seenHours ? ('what sells ' + partOfDay(hour)) : (Object.keys(ever).length ? 'what sells here' : '');
+  var byId = {}; items.forEach(function(i){ byId[i.item_id] = i; });
+  var made = groupIds().map(function(id){ return byId[id]; }).filter(Boolean);
+  if (opt.quickSource === 'groups') {
+    QUICK = made.slice(0, 24);
+    QUICK_WHY = opt.group || 'no group chosen';
+  } else if (opt.quickSource === 'both') {
+    var seen = {}, out = [];
+    made.forEach(function(i){ if (!seen[i.item_id]) { seen[i.item_id] = 1; out.push(i); } });
+    ranked.forEach(function(i){ if (out.length < 24 && !seen[i.item_id]) { seen[i.item_id] = 1; out.push(i); } });
+    QUICK = out;
+    QUICK_WHY = (opt.group ? opt.group + (learned ? ' · then ' + learned : '') : learned);
+  } else {
+    QUICK = ranked.slice(0, 12);
+    QUICK_WHY = learned;
+  }
   paintQuick();
 }
 function paintQuick(){
   var el = document.getElementById('quick'); if (!el) return;
   var typing = (document.getElementById('q').value || '').trim().length > 0;
-  if (typing || !QUICK.length) { el.innerHTML = ''; return; }
-  var pinned = quickPinned();
-  /* ⭐ THE GRID SAYS WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
-  el.innerHTML = (QUICK_WHY ? '<div class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</div>' : '')
+  var o = tillOpt(), usesGroups = (o.quickSource === 'groups' || o.quickSource === 'both');
+  /* ⚠️ THE BAR SURVIVES AN EMPTY GRID when groups are in use — a new group has nothing in it yet, and hiding the
+     one control that fills it would make the feature unreachable the moment it is switched on. */
+  if (typing || (!QUICK.length && !usesGroups)) { el.innerHTML = ''; return; }
+  var pinned = quickPinned(), mine = groupIds();
+  /* ⭐ THE GROUP BAR — choose the group, start one, and put the marked row in it without leaving the counter. */
+  var names = Object.keys(o.groups || {}).sort();
+  var bar = usesGroups
+    ? '<div class="qbar" data-testid="till-quick-bar">'
+      + '<select data-testid="till-quick-group" title="which group" onchange="tillOptSet({group:this.value})">'
+      + '<option value="">— no group —</option>'
+      + names.map(function(nm){ return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>' + esc(nm) + '</option>'; }).join('')
+      + '</select>'
+      + '<button data-testid="till-quick-group-new" onclick="quickGroupNew()">＋ group</button>'
+      + (o.group ? '<button data-testid="till-quick-group-add" onclick="quickGroupAddMarked()" title="put the row the list is marking into ' + esc(o.group) + '">＋ marked row</button>' : '')
+      + (QUICK_WHY ? '<span class="qwhy">' + esc(QUICK_WHY) + '</span>' : '')
+      + '</div>'
+    /* ⭐ THE GRID SAYS WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
+    : (QUICK_WHY ? '<div class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</div>' : '');
+  el.innerHTML = bar
     + QUICK.map(function(i, n){
     var pin = pinned.indexOf(i.item_id) >= 0;
+    var inG = usesGroups && o.group && mine.indexOf(i.item_id) >= 0;
+    /* ⚠️ ✕ MEANS THE NEAREST THING IT CAN. Inside a group it takes the product OUT OF THE GROUP (the shelf is
+       untouched); outside one it hides the learned key, which is what it has always meant. */
+    var drop = inG
+      ? 'quickGroupToggle(\'' + esc(i.item_id) + '\')'
+      : 'quickHide(\'' + esc(i.item_id) + '\')';
     return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + esc(i.item_id) + '\')"><b>' + esc(i.name) + '</b>'
       + '<span>' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
-      + '<i class="qx" title="not on this counter" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickHide(\'' + esc(i.item_id) + '\')">✕</i>'
-      + '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + esc(i.item_id) + '\')">📌</i>'
+      + '<i class="qx" title="' + (inG ? 'take out of ' + esc(o.group) : 'not on this counter') + '" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();' + drop + '">✕</i>'
+      + (usesGroups && o.group && !inG
+          ? '<i class="qadd" title="add to ' + esc(o.group) + '" data-testid="till-quick-group-add-' + n + '" onclick="event.stopPropagation();quickGroupToggle(\'' + esc(i.item_id) + '\')">＋</i>'
+          : '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + esc(i.item_id) + '\')">📌</i>')
       + '</button>';
   }).join('');
 }
@@ -4457,8 +4666,20 @@ function paintPays(){
   var left = r2(m.net - taken);
   /* ⚠️ FROM THE SHOP. The list used to be a literal, so a Gulf shop was offered UPI it cannot take and a shop with
      no declared payee was offered a QR with no address in it. Cash and Card are always there; a scheme is not. */
-  var ways = (S && S.shop && S.shop.pay && S.shop.pay.length) ? S.shop.pay
+  var ways = (S && S.shop && S.shop.pay && S.shop.pay.length) ? S.shop.pay.slice()
            : [{ id:'cash', label:'Cash' }, { id:'card', label:'Card' }];
+  /**
+   * ⭐ THE COUNTER'S OWN PAYEE, when the shop has not published one. Athi, 2026-09-16: *"I couldn't find how to
+   * include UPI from the counter app — there may be a quick option to invoke or update UPI selection from the
+   * counter app itself."*
+   * ⚠️ IT NEVER REPLACES THE SHOP'S. A published payee is the shop's own declaration; this is added beside it and
+   * only when the shop offers no UPI of its own, so a counter can start taking UPI without silently redirecting
+   * money the shop already told us where to send.
+   */
+  var own = tillOpt().upi;
+  if (own && own.payee && !ways.some(function(w){ return String(w.payee || '') === String(own.payee); })) {
+    ways.push({ id:'upi-local', label:(own.label || 'UPI'), qr:'upi-deeplink', payee:own.payee });
+  }
   document.getElementById('pay').innerHTML = ways.map(function(w){
     return '<button class="' + (PICKED===w.label?'on':'') + '" data-testid="till-pay-' + esc(w.id) + '"'
       + ' onclick="pickPay(\'' + esc(w.label) + '\')">' + esc(w.label)
@@ -6026,7 +6247,50 @@ function openSettings(){
   paintPrinters();
   /* ⚠️ painted on OPEN, not once at boot — the shop is re-read all day and a stale GSTIN here would be worse than none */
   paintShop();
+  paintSetup();
   document.getElementById('setdlg').showModal();
+}
+/**
+ * ⭐⭐ THE COUNTER'S OWN SETUP, READ BACK FROM WHAT IS STORED. Every control here shows the answer that is in
+ * force — a settings panel that opens on its defaults while the counter runs on something else is how a shop
+ * ends up changing a setting it never made.
+ */
+function paintSetup(){
+  var o = tillOpt();
+  var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
+  set('set_layout', o.layout || 'full');
+  set('set_shape', o.shape || 'auto');
+  set('set_qsrc', o.quickSource || 'frequent');
+  set('set_upi', (o.upi && o.upi.payee) || '');
+  set('set_upilabel', (o.upi && o.upi.label) || 'UPI');
+  /* ⭐ the groups, each with what it holds — and the one in hand can be renamed away or emptied from here */
+  var box = document.getElementById('setupgroups');
+  if (box) {
+    var names = Object.keys(o.groups || {}).sort();
+    box.innerHTML = '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0 6px">'
+      + '<select data-testid="till-set-group" onchange="tillOptSet({group:this.value});paintSetup()">'
+      + '<option value="">— no group —</option>'
+      + names.map(function(nm){
+          return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>'
+            + esc(nm) + ' (' + ((o.groups[nm] || []).length) + ')</option>'; }).join('')
+      + '</select>'
+      + '<button class="pill" data-testid="till-set-group-new" onclick="quickGroupNew()">＋ new group</button>'
+      + (o.group ? '<button class="pill" data-testid="till-set-group-drop" onclick="quickGroupDrop()">Remove this group</button>' : '')
+      + '</div>'
+      + (names.length
+          ? '<div style="color:var(--dim);font-size:.78em">' + names.map(function(nm){
+              return esc(nm) + ' · ' + ((o.groups[nm] || []).length) + ' item' + (((o.groups[nm] || []).length) === 1 ? '' : 's'); }).join(' &nbsp;·&nbsp; ') + '</div>'
+          : '<div style="color:var(--dim);font-size:.78em">No groups yet. Morning, Noon, Evening, Night — or whatever this counter actually sells in blocks.</div>');
+  }
+  /* ⚠️ SAY WHERE THE PAYEE COMES FROM. The shop's own published payee wins; this one only fills a gap, and a
+     counter quietly taking money at a different address than the shop declared would be a serious thing. */
+  var note = document.getElementById('setupupi');
+  if (note) {
+    var fromShop = (S && S.shop && S.shop.pay || []).filter(function(w){ return w.payee; })[0];
+    note.innerHTML = fromShop
+      ? 'Your shop already publishes <b>' + esc(fromShop.payee) + '</b> (' + esc(fromShop.label || 'UPI') + '), and that is what the QR uses. Anything typed here is offered as an extra way to pay at this counter only.'
+      : 'Your shop has not published a UPI payee, so the counter cannot draw a QR. Type one here and this counter can take UPI straight away — it is kept on this device, and setting it properly in ChitBridge is still the right thing to do.';
+  }
 }
 async function saveSettings(){
   /* the printer belongs to THIS PC, so it is saved where that PC keeps its own settings, not in the shop's */
@@ -6138,6 +6402,8 @@ gripInit();
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
 ['mic','micphone','micname'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK() && !recordOK()) b.style.display = 'none'; });
 setMode(ls.get('cb_till_mode', 'sell'));
+/* ⭐ the counter opens in the shape and layout this shop chose — before the first paint anybody looks at */
+try { applyTillOptions(); } catch (_) {}
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
