@@ -6927,10 +6927,16 @@ async function openStuck(){
   var last = (HOST && HOST.last) || null;
   var storeOK = ls.works(), dbErr = DB.lastErr();
   /* ⭐ what earlier pairings of THIS shop left behind — see otherCounters() and the verdict below */
-  var stranded = 0;
+  var stranded = 0, leftBills = 0;
+  /**
+   * ⚠️⚠️ BILLS MARKED "SENT" IN AN EARLIER COPY COUNT TOO (2026-09-17). The office PC's earlier pairing held five
+   * bills, all saying "sent" — and every one had been absorbed into another counter's record. Counting only UNSENT
+   * rows meant this panel, and the button that rescues them, never mentioned those five at all. Bringing them in is
+   * harmless for bills that did land: the check that follows marks those verified and leaves them be.
+   */
   try {
     (await otherCounters()).forEach(function(s){
-      if (String(s.owner || '') === String(OWNER || '')) stranded += s.queue;
+      if (String(s.owner || '') === String(OWNER || '')) { stranded += s.queue; leftBills += s.bills; }
     });
   } catch (_) {}
   var line = function(k, v, warn){
@@ -7013,6 +7019,9 @@ async function openStuck(){
   else if (stranded) verdict = '⚠️ ' + stranded + ' sale(s) of this shop are sitting in an EARLIER copy of this '
       + 'counter, left behind when it was paired again. This copy is empty and honest; those bills have still not '
       + 'reached ChitBridge. Open “What is being kept” and bring them in.';
+  else if (leftBills) verdict = '⚠️ An EARLIER copy of this counter still holds ' + leftBills + ' bill(s) of this shop, '
+      + 'left behind when it was paired again. Some may say "sent" without having reached ChitBridge. Open “What is '
+      + 'being kept”, bring them in, and they will be checked against the books.';
   else verdict = '✓ Nothing is queued. Every bill this counter holds has been sent.';
   /**
    * ⭐⭐ THE VERDICT, THEN THE WAY OUT, THEN THE DETAIL. A person who opened this panel wants the queue moving;
@@ -7293,8 +7302,13 @@ async function rescueOrphans(){
   }
   try { await queueTally(); paintStatus(); } catch (_) {}
   if (queued && HOST && HOST.key && navigator.onLine) { try { await HOST.drain(); } catch (_) {} }
+  /* ⭐ a brought-in bill that SAYS sent is checked now — an absorbed one is renumbered and sent (option a) */
+  var chk = null;
+  try { chk = await checkAbsorbed(true); } catch (_) {}
   var left = 0; try { left = ((await DB.all('queue')) || []).length; } catch (_) {}
   say('Brought in ' + moved + ' bill(s), ' + queued + ' of them still to send.\n\n'
+    + (chk && chk.fixed ? chk.fixed + ' bill(s) had said "sent" without reaching ChitBridge — they are being sent now'
+        + (chk.renumbered && chk.renumbered.length ? ', under new numbers (the printed number is kept on each)' : '') + '.\n\n' : '')
     + (left ? left + ' bill(s) are waiting now. Press "Get my bills moving" if they do not go.'
             : 'Everything has been sent.')
     + (strangers.length ? '\n\n' + strangers.length + ' counter(s) on this device belong to a different shop and were left alone.' : ''));
@@ -7323,6 +7337,9 @@ async function openStorage(){
   var mineNow = String(OWNER || '');
   var stranded = others.reduce(function(a, s){
     return a + ((String(s.owner || '') === mineNow) ? s.queue : 0); }, 0);
+  /* ⚠️ and bills that SAY sent — see the note in openStuck(); an absorbed sale reads exactly like a good one */
+  var leftBills = others.reduce(function(a, s){
+    return a + ((String(s.owner || '') === mineNow) ? s.bills : 0); }, 0);
   h += '<div class="sec">Counters on this device — one copy per pairing, not per shop</div>'
     + line(tillStore() + '  ← in use now',
         m.rows ? (m.rows.bills + ' bill(s), ' + m.rows.queue + ' queued') : '—');
@@ -7332,12 +7349,13 @@ async function openStorage(){
       s.bills + ' bill(s), ' + s.queue + ' queued' + (same && s.queue ? '  — NOT SENT' : ''),
       same && s.queue > 0);
   });
-  if (stranded) {
+  if (stranded || leftBills) {
     h += '<div style="color:var(--dim);font-size:.8em;padding:6px 0">Pairing this counter again starts a fresh '
-      + 'copy and leaves the old one behind — including anything it had not sent. ' + stranded + ' sale(s) of '
-      + 'this shop are sitting in an earlier copy, which is why the counter can look empty and still owe bills.</div>'
-      + '<button class="pill" data-testid="till-rescue" onclick="rescueOrphans()"><b>Bring ' + stranded
-      + ' stranded sale(s) into this counter</b></button>';
+      + 'copy and leaves the old one behind. ' + leftBills + ' bill(s) of this shop are in an earlier copy'
+      + (stranded ? ', ' + stranded + ' of them never sent' : ', some of which may say "sent" without having arrived')
+      + '. Bringing them in checks every one against the books and sends whatever is missing.</div>'
+      + '<button class="pill" data-testid="till-rescue" onclick="rescueOrphans()"><b>Bring ' + leftBills
+      + ' bill(s) from the earlier copy into this counter</b></button>';
   }
   h += '<div class="sec">Settings on this device (' + kb(m.lsBytes) + ')</div>';
   if (m.lsErr) h += line('localStorage would not be read', m.lsErr, true);
