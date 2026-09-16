@@ -384,8 +384,41 @@
   .rowhead .qh{text-align:center}
   /* price · discount · computed · value — all money, all tabular so the digits line up down the column */
   .row .pq,.row .disc,.row .calc,.row .amt{text-align:right;font-variant-numeric:tabular-nums}
-  .row .pq b{display:block;font-weight:600}
-  .row .pq i{display:block;font-style:normal;color:var(--dim);font-size:.78em;line-height:1.25}
+  /**
+   * ── ⭐⭐ THE NUMBERS ARE RANKED, NOT MERELY PRESENT (design pass, 2026-09-16) ──────────────────────────────
+   *
+   * Rendered on its own at full size, the row had six right-aligned figures in near-identical weight and the eye
+   * had no anchor — a cashier reading a bill aloud was hunting for the one number the customer is told.
+   *   · VALUE is what is owed on this line, so it is the heaviest thing on the row and nothing shares that weight
+   *   · QTY × PRICE is derivable from the two columns beside it, so it is the quietest
+   *   · PRICE is one line now; the unit moved to the note, which shortened every row and evened them out
+   */
+  .row .pq{font-weight:500}
+  .row .calc{font-size:.88em}
+  .row .amt{font-weight:800;font-size:1.08em;letter-spacing:-.01em}
+  /* ⭐ the OFFER column — chips that wrap, next to the item they belong to */
+  .rowhead .offh{text-align:start}
+  .row .offc{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
+  .u .ochip,.row .ochip{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--ok-tint);
+        color:var(--ok);font-weight:600;font-size:.78em;white-space:nowrap;max-width:100%;overflow:hidden;
+        text-overflow:ellipsis}
+  /* ⚠️ an offer that has NOT fired is not green — green on this counter means money came off */
+  .row .ochip.pend{background:transparent;border:1px dashed var(--edge);color:var(--dim);font-weight:400}
+  /**
+   * ⚠️ AND × IS THE QUIETEST CONTROL ON THE ROW UNTIL YOU ARE ON IT. It sits beside Value — the most destructive
+   * control next to the most important number — and at full strength it competed with the figure it stands next
+   * to. It comes up on hover and on keyboard focus, so it is never actually hidden from anyone.
+   */
+  /**
+   * ⚠️⚠️ AND ONLY WHERE THERE IS A POINTER THAT HOVERS. A counter is very often a TOUCH screen, and on one
+   * there is no hover state ever — so a × that brightens on hover would sit at 40% for the whole shift and
+   * never come up. Dimming it there would be taking a control away from the people most likely to need it.
+   * `@media (hover:hover)` is the honest test: a mouse gets the quiet ×, a finger gets the full one.
+   */
+  @media (hover:hover){
+    .row .x{opacity:.4;color:var(--dim)}
+    .row:hover .x,.row .x:focus-visible{opacity:1;color:var(--warn)}
+  }
   /* ⚠️ a discount is the only GREEN number on the row; a line with none says so with a dash, never a blank —
      an empty cell reads as "not worked out yet", which is the one thing it must not say. */
   .row .disc{color:var(--ok);font-weight:600}
@@ -875,6 +908,8 @@
   -->
   <label>Columns on the bill — the number, the item, its price and Qty are always shown</label>
   <div id="setupcols" data-testid="till-set-cols" style="display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 8px">
+    <label style="display:flex;gap:6px;align-items:center;font-weight:400">
+      <input type="checkbox" id="col_offer" data-testid="till-col-offer" onchange="cartColSet('offer',this.checked)"> Offer</label>
     <label style="display:flex;gap:6px;align-items:center;font-weight:400">
       <input type="checkbox" id="col_disc" data-testid="till-col-disc" onchange="cartColSet('disc',this.checked)"> Discount</label>
     <label style="display:flex;gap:6px;align-items:center;font-weight:400">
@@ -4102,9 +4137,20 @@ function cartLineNote(c){
       extra = d.free + (d.percent === 100 ? ' free' : ' at ' + d.percent + '% off')
             + (d.sets ? ', ' + d.sets + ' set' + (d.sets === 1 ? '' : 's') + ' of this product' : '');
     } else if (a.why && String(a.why) !== String(nm)) extra = a.why;
-    /* ⭐ THE NAME, THEN WHAT IT IS PER PRODUCT — and no money, because the Discount column is the money. */
-    return '<span class="lo save"><span>' + esc(nm) + (extra ? ' <span class="why">(' + esc(extra) + ')</span>' : '')
-      + '</span><span class="rate">' + esc(offerRate(a.offer_id) || 'applied') + '</span></span>';
+    /**
+     * ── ⭐⭐ THE OFFER IS A CHIP BESIDE THE FACTS, NOT A ROW OF ITS OWN ────────────────────────────────────
+     *
+     * ⚠️⚠️ IT USED TO BE A `space-between` ROW, and on the wide bill that column is now 400px — so the terms
+     * were flung to the far right and sat stranded in the middle of the row, half a hand's width from the name
+     * they belong to. Correct at the width it was written for, wrong at the width it has. Seen the moment the
+     * row was rendered on its own at full size (design pass, 2026-09-16).
+     *
+     * ⭐ A chip sits next to what it is about and wraps with it. The terms are the chip's words, because the
+     * terms are the useful half — "Buy 2 get 1 free" tells a shopkeeper what to do; the scheme's name does not.
+     */
+    var rate = offerRate(a.offer_id);
+    return '<span class="ochip" title="' + esc(nm) + (extra ? ' — ' + esc(extra) : '') + '">'
+      + esc(rate || nm) + '</span>';
   }).join('');
   /**
    * ⭐ AND THE OFFERS THAT REACH THIS PRODUCT BUT HAVE NOT FIRED — "buy 2 get 1 free" on a line holding one.
@@ -4117,8 +4163,8 @@ function cartLineNote(c){
   var fired = {}; (c.offs || []).forEach(function(a){ if (a.offer_id) fired[String(a.offer_id)] = true; });
   var shelfItem = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
   var pending = !shelfItem ? '' : offersFor(shelfItem).filter(function(o){ return !fired[String(o.offer_id)]; }).map(function(o){
-    return '<span class="lo pend"><span>' + esc(o.label || 'Offer') + '</span>'
-      + '<span class="rate">' + esc(o.promise || offerRate(o.offer_id) || 'on this product') + '</span></span>';
+    return '<span class="ochip pend" title="' + esc(o.label || 'Offer') + ' — available on this product">'
+      + esc(o.promise || offerRate(o.offer_id) || o.label || 'Offer') + '</span>';
   }).join('');
   /**
    * ── ⚠️⚠️ THE BILL-WIDE SHARE HAS LEFT THE LINE (Athi, 2026-09-16) ─────────────────────────────────────────
@@ -4136,10 +4182,28 @@ function cartLineNote(c){
    */
   /* the PRICE is a column of its own now, so the note keeps only what EXPLAINS the discount column: how the line
      was priced, the tax rate, and then each offer by name with the money it took off. */
-  var bits = (c.gst_rate ? 'GST ' + c.gst_rate + '%' : '') + tierWords;
+  /**
+   * ⭐ THE NOTE IS NOW ONLY THE QUIET FACTS — the unit and the tax. The offers moved to a column of their own
+   * (Athi, 2026-09-16: *"on the header, #, item, offer can be brought in"*), because an offer crammed under the
+   * product name is the one thing on the row with no heading telling you what it is.
+   */
+  var bits = (c.unit ? 'per ' + esc(c.unit) : '') + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '') + tierWords;
   if (bits.indexOf(' · ') === 0) bits = bits.slice(3);
-  return (bits ? '<span class="lp">' + bits + '</span>' : '') + offs + pending;
+  CART_OFFER_CELL = offs + pending;                 /* handed to the Offer column, built in the same pass */
+  /**
+   * ⭐⭐ SHOWN ONCE, WHEREVER THERE IS ROOM FOR IT. Athi, 2026-09-16: *"multiple times buy 2 get 1 free is
+   * appearing — one is part of the product and another one is the offer column. If it is displayed separately,
+   * can we remove it from the product line."* Exactly right, and the rule is one line: when the Offer column is
+   * on, the chips live THERE and the note carries only the unit and the tax; when it is off — a narrow counter,
+   * or the shopkeeper turned it off — they fold back under the name so the offer is never simply lost.
+   * ⚠️ It is a single source either way. Nothing is printed twice, in any width or setting.
+   */
+  var inNote = cartCols().offer ? '' : CART_OFFER_CELL;
+  return (bits ? '<span class="lp">' + bits + '</span>' : '') + inNote;
 }
+/** ⚠️ set by cartLineNote so the offers are computed ONCE per row; read straight after, never later. */
+var CART_OFFER_CELL = '';
+function cartOfferCell(c){ cartLineNote(c); return CART_OFFER_CELL; }
 /**
  * ⭐ WHAT AN OFFER IS, PER PRODUCT — "10% off", "₹20 off", "₹80 each from 3". The engine's own promise(), so the
  * cart states an offer in exactly the words the shelf row and the storefront use.
@@ -4181,9 +4245,22 @@ function lineFigures(c){
  * ⚠️ QTY IS NOT ON THE LIST, and that is not an oversight: it is the stepper, the one control on the row. A
  * column you can only read may be turned off; the control you bill with may not.
  */
+/**
+ * ⭐ Does this line have anything to put in the Offer column — one that fired, or one it is still short of?
+ * ⚠️ Reads the SAME two sources the cell itself renders from, so the heading can never appear over nothing
+ * (or, worse, fail to appear over something).
+ */
+function lineHasOffer(c){
+  if (!c) return false;
+  if ((c.offs || []).length) return true;
+  try {
+    var it = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
+    return !!(it && offersFor(it).length);
+  } catch (_) { return false; }
+}
 function cartCols(){
   var o = tillOpt(), c = o.cols || {};
-  var v = { disc: c.disc !== false, calc: c.calc !== false, value: c.value !== false };
+  var v = { offer: c.offer !== false, disc: c.disc !== false, calc: c.calc !== false, value: c.value !== false };
   /**
    * ⚠️⚠️ ONE SOURCE OF TRUTH FOR WHICH COLUMNS EXIST. The grid is written from this, so a media query that
    * ALSO hid a cell would leave an empty track behind it and every column after that would sit one place to the
@@ -4191,7 +4268,29 @@ function cartCols(){
    * column goes, because it is the one a person can re-derive in their head from the two columns beside it.
    * ⚠️ IT DOES NOT OVERWRITE THE SETTING — the shop's choice is untouched and comes back with the room.
    */
-  try { if (window.innerWidth < 1100) v.calc = false; } catch (_) {}
+  try {
+    var w = window.innerWidth || 0;
+    if (w && w < 1100) v.calc = false;
+    /**
+     * ⚠️⚠️ AND THE OFFER COLUMN GIVES WAY BEFORE THE ITEM NAME DOES. With eight columns on a default split,
+     * "Cookies 250 g (pack 3)" wrapped over four lines — the product name, which is the thing a shopkeeper
+     * actually reads, crushed to make room for a heading. Below this width the offer folds back UNDER the name
+     * as a chip (see cartLineNote), so it is never lost and never shown twice.
+     */
+    if (w && w < 1280) v.offer = false;
+    /**
+     * ── ⭐⭐ AND THE COLUMN ONLY EXISTS WHEN SOMETHING IS IN IT ────────────────────────────────────────────
+     *
+     * ⚠️⚠️ AN OFFER IS NOT A QUANTITY. Price, Qty, Qty × price and Value are on EVERY line — a column each is
+     * honest. An offer is on a handful: on a real kirana bill most lines have none, so a permanent Offer column
+     * is 80–90% empty, and it takes that width from the product NAME, which is on every line and is the thing a
+     * shopkeeper actually reads. On the first render two of four rows had a blank cell there.
+     *
+     * ⭐ So the heading appears when the bill has an offer to put under it, and the bill gets the width back
+     * when it does not. A named column when it means something; no dead column when it does not.
+     */
+    if (v.offer && !(CART || []).some(lineHasOffer)) v.offer = false;
+  } catch (_) {}
   return v;
 }
 function cartColSet(which, on){
@@ -4201,20 +4300,37 @@ function cartColSet(which, on){
   tillOptSet({ cols: c });
   paintCart();
 }
-/** ⭐ the grid, built from the columns actually shown — one string, so the head and the rows cannot disagree */
+/**
+ * ── ⭐⭐⭐ THE COLUMNS ARE IN THE ORDER THE SUM IS SPOKEN (Athi, 2026-09-16) ──────────────────────────────────
+ *
+ * *"Discount can be after qty × price — qty × price − discount, that would be the right order."*
+ *
+ * ⚠️ IT WAS PRICE · DISCOUNT · QTY · QTY×PRICE · VALUE, which is no order at all: the discount sat between the
+ * price and the quantity it is not taken from, and the eye had to jump backwards to finish the arithmetic.
+ * ⭐ Now it reads straight across, exactly as a shopkeeper says it out loud:
+ *
+ *        price/qty   ×  qty   =  qty × price   −  discount   =  value
+ *
+ * ⭐ And OFFER is a column with a HEADING, next to the item it belongs to. Crammed under the product name it was
+ * the one thing on the row nothing told you the name of.
+ */
 function cartGrid(){
   var v = cartCols();
-  return '34px minmax(0,1fr)' + ' 96px' + (v.disc ? ' 86px' : '') + ' 118px'
-    + (v.calc ? ' 92px' : '') + (v.value ? ' 98px' : '') + ' 30px';
+  /* ⚠️ THE ITEM COLUMN HAS A FLOOR. Without it the grid happily squeezed a product name to nothing to satisfy
+     the fixed tracks beside it, and the name is the one thing on the row that must always be readable. */
+  return '30px minmax(150px,1fr)' + (v.offer ? ' minmax(92px,132px)' : '') + ' 92px 112px'
+    + (v.calc ? ' 88px' : '') + (v.disc ? ' 82px' : '') + (v.value ? ' 94px' : '') + ' 28px';
 }
 /** ⭐ the headings, in the order the sum is read. Same grid as .row, so they sit over their own columns. */
 function cartHeadHTML(){
   var v = cartCols();
   return '<div class="rowhead" data-testid="till-cart-cols" style="grid-template-columns:' + cartGrid() + '">'
-    + '<span class="nh">#</span><span>Item</span><span class="pqh">Price / qty</span>'
-    + (v.disc ? '<span>Discount</span>' : '')
+    + '<span class="nh">#</span><span>Item</span>'
+    + (v.offer ? '<span class="offh">Offer</span>' : '')
+    + '<span class="pqh">Price / qty</span>'
     + '<span class="qh">Qty</span>'
     + (v.calc ? '<span class="calch">Qty × price</span>' : '')
+    + (v.disc ? '<span>Discount</span>' : '')
     + (v.value ? '<span>Value</span>' : '')
     + '<span></span></div>';
 }
@@ -4228,10 +4344,10 @@ function cartRowHTML(c, k){
     /* ⚠️ THE NAME IS THE HANDLE, not the whole row: the quantity box, ± and × are all inside it and must keep
        doing their own jobs. Tapping the name is the one gesture that had no meaning here. */
     + '<span onclick="pickLine(' + k + ')" style="cursor:pointer"><span class="nm">' + esc(c.name) + '</span><div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
+    /* ⭐ THE OFFER, under a heading of its own — see cartGrid() */
+    + (v.offer ? '<span class="offc" data-testid="till-offer-' + k + '">' + CART_OFFER_CELL + '</span>' : '')
     /* ⭐ THE SAME NUMBER THE SHELF SHOWS — this is the column that lets a cart line be matched to its list row. */
-    + '<span class="pq" data-testid="till-price-' + k + '"><b>' + money(f.price) + '</b><i>per ' + esc(c.unit || 'piece') + '</i></span>'
-    + (v.disc ? '<span class="disc' + (f.off > 0.004 ? '' : ' none') + '" data-testid="till-disc-' + k + '">'
-      + (f.off > 0.004 ? '−' + money(f.off) : '—') + '</span>' : '')
+    + '<span class="pq" data-testid="till-price-' + k + '">' + money(f.price) + '</span>'
     + '<span class="qty">'
       + '<button data-testid="till-minus-' + k + '" onclick="bumpLine(' + k + ',-1)" title="one fewer" aria-label="one fewer" tabindex="-1">−</button>'
       + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
@@ -4239,6 +4355,8 @@ function cartRowHTML(c, k){
     + '</span>'
     /* ⚠️ PURE ARITHMETIC, no discount applied — Athi: *"just showcase qty × price, do not apply any discount"*. */
     + (v.calc ? '<span class="calc" data-testid="till-calc-' + k + '">' + money(f.gross) + '</span>' : '')
+    + (v.disc ? '<span class="disc' + (f.off > 0.004 ? '' : ' none') + '" data-testid="till-disc-' + k + '">'
+      + (f.off > 0.004 ? '−' + money(f.off) : '—') + '</span>' : '')
     + (v.value ? '<span class="amt" data-testid="till-amt-' + k + '">' + money(f.value) + '</span>' : '')
     + '<button class="x" onclick="drop(' + k + ')" title="remove">×</button></div>';
 }
@@ -4267,7 +4385,9 @@ function paintCartRow(k){
   var pq = document.querySelector('[data-testid="till-price-' + k + '"]');
   var dc = document.querySelector('[data-testid="till-disc-' + k + '"]');
   var cl = document.querySelector('[data-testid="till-calc-' + k + '"]');
-  if (pq) pq.innerHTML = '<b>' + money(f.price) + '</b><i>per ' + esc(c.unit || 'piece') + '</i>';
+  if (pq) pq.textContent = money(f.price);
+  var oc = document.querySelector('[data-testid="till-offer-' + k + '"]');
+  if (oc) oc.innerHTML = cartOfferCell(c);
   if (dc) { dc.textContent = f.off > 0.004 ? '−' + money(f.off) : '—'; dc.className = 'disc' + (f.off > 0.004 ? '' : ' none'); }
   if (cl) cl.textContent = money(f.gross);
   if (amt) amt.textContent = money(f.value);
@@ -6731,7 +6851,7 @@ function paintSetup(){
   /* ⚠️ the STORED choice, not the effective one — cartCols() also drops a column on a narrow screen, and a tick
      that unticked itself when the window got smaller would read as the counter losing the setting. */
   var cols = (o.cols || {});
-  [['col_disc', 'disc'], ['col_calc', 'calc'], ['col_value', 'value']].forEach(function(p){
+  [['col_offer', 'offer'], ['col_disc', 'disc'], ['col_calc', 'calc'], ['col_value', 'value']].forEach(function(p){
     var el = document.getElementById(p[0]); if (el) el.checked = cols[p[1]] !== false;
   });
   /* ⭐ a tick per section, built from SECTIONS so adding one is a single line and never two lists to keep level */
