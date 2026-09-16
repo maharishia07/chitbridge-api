@@ -890,6 +890,32 @@
   <div id="coldbox"></div>
   <label>Counter name — it becomes the bill number's prefix</label>
   <input id="set_till" placeholder="C1">
+  <!--
+    ⭐⭐ THE BILL NUMBER'S SHAPE. Athi, 2026-09-16: *"the design is every day julian date changes and every
+    month, both rotates."* The DATE and the RESET are two separate questions and are asked separately, because
+    tying them together is what forces a repeating tail.
+    ⚠️ Not tax advice — lib/docnumber.js carries the same caveat and the reasoning.
+  -->
+  <label>Bill number — what sits in the middle</label>
+  <select id="set_dating" data-testid="till-set-dating" onchange="tillSeriesSet({dating:this.value})">
+    <option value="fy">Financial year — C1/26-27/0003 · the tax year is readable, the date is not</option>
+    <option value="julian">Date (julian) — C1/26259/0003 · the date changes daily; the tax year is NOT readable</option>
+  </select>
+  <label>Bill number — when the sequence restarts at 0001</label>
+  <select id="set_resets" data-testid="till-set-resets" onchange="tillSeriesSet({resets:this.value})">
+    <option value="year">Once a financial year — the number never comes round again</option>
+    <option value="month">Every month — 0001 is issued 12 times a year</option>
+    <option value="day">Every day — 0001 is issued 365 times a year</option>
+    <option value="never">Never — one run for the life of this counter</option>
+  </select>
+  <label>When does the day roll over?</label>
+  <select id="set_dayroll" data-testid="till-set-dayroll" onchange="tillSeriesSet({dayRollHour:Number(this.value)})">
+    <option value="0">Midnight</option>
+    <option value="2">2 am — a counter that trades past midnight</option>
+    <option value="4">4 am</option>
+    <option value="6">6 am</option>
+  </select>
+  <div id="seriesnote" data-testid="till-series-note" style="color:var(--dim);font-size:.78em;margin:4px 0 8px"></div>
   <div id="printbox"></div>
   <!--
     ⭐⭐⭐ THE COUNTER IS SET UP FROM THE COUNTER. Athi, 2026-09-16: *"anything related to counter app setup should
@@ -1777,7 +1803,32 @@ async function nextNumber(kind){
   var D = window.CBDoc;
   var now = new Date();
   var r = D ? D.rules(country) : null;
-  var period = r ? (r.resets === 'year' ? r.yearLabel(now) : '-') : fyOf(now);
+  /**
+   * ── ⭐⭐⭐ THE SHOP'S SCHEME (Athi, 2026-09-16) ────────────────────────────────────────────────────────────
+   *
+   * *"We keep C"* — julian dating with the sequence still running on — *"also provide an option to reset the
+   * number, for example every month the seq to change from 001"*, and *"the julian date to change at midnight"*.
+   * Then, plainly: *"the design is every day julian date changes and every month, both rotates."*
+   *
+   *   the DATE rotates daily          → dating 'julian'   C1/26259/… → C1/26260/…
+   *   the SEQUENCE rotates monthly    → resets 'month'    0150 on 30 Sept → 0001 on 1 Oct
+   *
+   * ⚠️⚠️ THE LABEL AND THE RESET ARE TWO DIFFERENT QUESTIONS, and that is why lib/docnumber keeps them apart. If
+   * the reset simply followed the printed label, choosing a daily date would force a daily reset — and bring
+   * back the repeating `001` tail that julian dating was chosen to avoid.
+   * ⚠️ A MONTHLY RESET DOES REPEAT THE TAIL, 12 times a year rather than never. Said out loud in the setting.
+   */
+  var _box0 = ((kind === 'GRN' || kind === 'DC') ? ('series-' + kind) : 'series');
+  var _had0 = await DB.get(_box0);
+  /**
+   * ⚠️⚠️ A SERIES THAT HAS ISSUED NUMBERS KEEPS ITS SHAPE UNTIL THE PERIOD ROLLS. This is the same rule the tag
+   * style already follows and it is the one thing the numbering exists to prove — a run that changes shape in
+   * the middle is a run nobody can show is continuous. So a scheme chosen today is stored ON the series and
+   * adopted at the next roll; a series that has issued NOTHING adopts it immediately, which is what a shop
+   * setting this up before its first sale expects. `schemeTakesEffect()` says which, in the settings panel.
+   */
+  var _eff = (_had0 && Number(_had0.next) > 1 && _had0.scheme) ? _had0.scheme : tillScheme();
+  var period = D ? D.periodKey({ country: country, at: now, scheme: _eff }) : fyOf(now);
 
   /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. Sharing a run would put a hole in the sales series, which is
      the one thing the numbering exists to prove. The box keys are unchanged from the first version. */
@@ -1793,16 +1844,19 @@ async function nextNumber(kind){
    */
   var s = had || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short' };
   if (had && !had.tagStyle) s.tagStyle = 'long';          // a record written before this change
-  if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; }
+  if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; s.scheme = tillScheme(); }
   s.prefix = tillId() || s.prefix;
   var seq = s.next; s.next = seq + 1;
   await DB.set(box, s);
 
   if (!D) return (tag ? tag + '/' : '') + s.prefix + '/' + period + '/' + String(seq).padStart(4,'0');
-  var body = D.compose({ country: country, prefix: s.prefix, kind: 'sale', at: now, seq: seq });
+  /* ⚠️ COMPOSED WITH THE SAME SCHEME THE PERIOD WAS KEYED ON, or the printed label and the reset would be
+     answering two different questions — the label would jump shape while the run carried on underneath it. */
+  var sch = _eff;
+  var body = D.compose({ country: country, prefix: s.prefix, kind: 'sale', at: now, seq: seq, scheme: sch });
   if (!tag) return body;
   if (s.tagStyle === 'long') return tag + '/' + body;
-  return D.compose({ country: country, prefix: s.prefix, at: now, seq: seq,
+  return D.compose({ country: country, prefix: s.prefix, at: now, seq: seq, scheme: sch,
                      kind: kind === 'GRN' ? 'receipt' : 'despatch' });
 }
 
@@ -2473,6 +2527,8 @@ function tillOptDefaults(){
            upi:{ payee:'', label:'UPI' },
            /* ⭐ which read-out columns the bill shows — see cartCols() (observation 6, division E) */
            cols:{ disc:true, calc:true, value:true },
+           /* ⭐ the bill-number scheme — defaults are today's behaviour exactly (docnumber DEFAULT_SCHEME) */
+           series:{ dating:'fy', resets:'year', dayRollHour:0 },
            /* ⭐ which SECTIONS the counter shows — see tillShow() (observation 6, divisions A–C) */
            show:{ search:true, chips:true, quick:true, list:true, keys:true, cust:true } };
 }
@@ -2500,6 +2556,14 @@ function tillOptSet(patch){
   try { ls.set(shopLs('cb_till_opt'), JSON.stringify(o)); } catch (_) {}
   applyTillOptions();
   try { paintSetup(); } catch (_) {}
+}
+/** ⭐ one part of the bill-number scheme, kept per shop like the rest of the counter's setup */
+function tillSeriesSet(patch){
+  var o = tillOpt(), s = {};
+  Object.keys(o.series || {}).forEach(function(k){ s[k] = o.series[k]; });
+  Object.keys(patch || {}).forEach(function(k){ s[k] = patch[k]; });
+  tillOptSet({ series: s });
+  paintSetup();
 }
 /** ⭐ one section on or off — and the layout stops claiming to be a preset it no longer matches */
 function tillShowSet(key, on){
@@ -2550,6 +2614,30 @@ function applyTillOptions(){
   if (o.shape && o.shape !== 'auto') b.classList.add('shape-' + o.shape);
   try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
   try { paintHits(); } catch (_) {}
+}
+/**
+ * ⭐⭐ THE BILL-NUMBER SCHEME THIS SHOP HAS CHOSEN — the shape, not the law. lib/docnumber holds what a country
+ * PERMITS; this holds what the shop picked inside that. Defaults are today's behaviour exactly, so a counter
+ * that never opens this setting numbers its bills as it always has.
+ */
+function tillScheme(){
+  var o = tillOpt(), s = o.series || {};
+  return { dating: s.dating === 'julian' ? 'julian' : 'fy',
+           resets: (s.resets === 'month' || s.resets === 'day' || s.resets === 'never') ? s.resets : 'year',
+           dayRollHour: Math.max(0, Math.min(23, Number(s.dayRollHour) || 0)) };
+}
+/**
+ * ⭐ WHEN A CHANGED SCHEME ACTUALLY STARTS — said in the panel rather than discovered on a bill. A series that
+ * has issued nothing adopts it at once; one that is mid-run keeps its shape until the period rolls.
+ */
+async function schemeTakesEffect(){
+  try {
+    var had = await DB.get('series');
+    if (!had || Number(had.next) <= 1) return 'now — this counter has not issued a bill in this series yet';
+    var same = JSON.stringify(had.scheme || {}) === JSON.stringify(tillScheme());
+    if (same) return 'in force now';
+    return 'at the next reset — a series that has already issued numbers must not change shape mid-run';
+  } catch (_) { return ''; }
 }
 /** the active group's item ids — [] when no group is chosen, which is also what 'frequent' wants */
 function groupIds(){
@@ -6884,6 +6972,22 @@ function paintSetup(){
   set('set_upilabel', (o.upi && o.upi.label) || 'UPI');
   /* ⚠️ the STORED choice, not the effective one — cartCols() also drops a column on a narrow screen, and a tick
      that unticked itself when the window got smaller would read as the counter losing the setting. */
+  /* ⭐ the bill-number scheme, and a WORKED EXAMPLE — the fastest way to see what a setting will actually print */
+  var sc = tillScheme();
+  set('set_dating', sc.dating); set('set_resets', sc.resets); set('set_dayroll', String(sc.dayRollHour));
+  var note = document.getElementById('seriesnote');
+  if (note) {
+    var eg = '';
+    try {
+      eg = window.CBDoc ? CBDoc.compose({ country: docCountry(), prefix: tillId(), kind: 'sale',
+                                          at: new Date(), seq: 3, scheme: sc }) : '';
+    } catch (_) {}
+    var warn = (sc.resets === 'day') ? ' ⚠️ the tail repeats every day.'
+             : (sc.resets === 'month') ? ' ⚠️ the tail repeats 12 times a year — the date tells them apart.' : '';
+    var lost = (sc.dating === 'julian') ? ' ⚠️ the financial year cannot be read off the number.' : '';
+    note.textContent = (eg ? 'Your next bill would read ' + eg + '.' : '') + warn + lost;
+    schemeTakesEffect().then(function(w){ if (w) note.textContent += ' Takes effect ' + w + '.'; });
+  }
   var cols = (o.cols || {});
   [['col_offer', 'offer'], ['col_disc', 'disc'], ['col_calc', 'calc'], ['col_value', 'value']].forEach(function(p){
     var el = document.getElementById(p[0]); if (el) el.checked = cols[p[1]] !== false;
