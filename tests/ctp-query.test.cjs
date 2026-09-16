@@ -24,11 +24,23 @@ const ok = (name, fn) => { try { fn(); pass++; console.log('   ok   ' + name); }
 const okA = async (name, fn) => { try { await fn(); pass++; console.log('   ok   ' + name); }
   catch (e) { fail++; console.log('   FAIL ' + name + '\n          ' + e.message); } };
 
-/* an installation's key pair, made here — the same shape lib/ctpkeys hands out */
+/**
+ * ── ⚠️⚠️ THE VERIFIER IS THE REAL ONE, AND THAT IS THE LESSON OF THIS FILE'S FIRST DAY ───────────────────────
+ *
+ * The first version signed the raw hash BYTES (`Buffer.from(hash, 'hex')`) and verified the same way — on both
+ * sides — so every check passed. Then the live two-installation simulation (2026-09-16) had Home refuse every
+ * question from Mexico with "signature did not verify": lib/ctpkeys signs the hex STRING's utf-8 bytes, and a
+ * test that verifies with its own function can never notice that it disagrees with the one production uses.
+ *
+ * ⭐ So the asker signs the way ctpkeys.signer does, and the answerer verifies through ctpkeys.verifyWith —
+ * the exact function routes/ctp.js calls. The convention is pinned against the code that enforces it, not
+ * against a copy of what I believed it was.
+ */
+const keys = require('../lib/ctpkeys');
 const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
-const signer = { alg: 'ed25519', sign: (hash) => crypto.sign(null, Buffer.from(hash, 'hex'), privateKey).toString('base64') };
-const verify = (hash, sigB64, who) => who === 'platform-mx'
-  && crypto.verify(null, Buffer.from(hash, 'hex'), publicKey, Buffer.from(sigB64 || '', 'base64'));
+const publicPem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
+const signer = { alg: 'ed25519', sign: (hash) => crypto.sign(null, Buffer.from(String(hash), 'utf8'), privateKey).toString('base64') };
+const verify = (hash, sigB64, who) => who === 'platform-mx' && keys.verifyWith(publicPem, hash, sigB64);
 
 const FROM = { installation_key: 'platform-mx', population: 'live', bridge_id: 'CBMEX1CO99' };
 const TO = { installation_key: 'platform-0', domain: 'in.example' };
@@ -67,6 +79,17 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
     const o = Q.open(q, { verify });
     assert.strictEqual(o.ok, false);
     assert.ok(/signature did not verify/.test(o.why), o.why);
+  });
+
+  ok('⚠️⚠️ the wire signs the hex STRING — a signature over the raw hash bytes does NOT verify', () => {
+    /* exactly the mistake the first simulation made; it must stay a red check for ever */
+    const rawBytesSigner = { alg: 'ed25519', sign: (h) => crypto.sign(null, Buffer.from(h, 'hex'), privateKey).toString('base64') };
+    const q = Q.sign(Q.build(FROM, TO, { want: 'catalogue', bridge_id: 'CBZQK5DAH9' }), rawBytesSigner);
+    const o = Q.open(q, { verify });
+    assert.strictEqual(o.ok, false, 'Home would refuse this, and did — the simulation proved it');
+    assert.ok(/signature did not verify/.test(o.why), o.why);
+    /* and the correct convention, through the SAME real verifier, passes — so the check is not vacuous */
+    assert.strictEqual(Q.open(Q.sign(Q.build(FROM, TO, { want: 'catalogue', bridge_id: 'CBZQK5DAH9' }), signer), { verify }).ok, true);
   });
 
   ok('⚠️ a captured question is not re-asked next week', () => {
