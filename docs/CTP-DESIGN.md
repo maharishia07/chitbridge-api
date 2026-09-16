@@ -270,6 +270,51 @@ recorded as **§9.11** rather than done quietly.
 
 `lib/ctpquery.js` is the module (build · sign · open · `ask()`); `tests/ctp-query.test.cjs` is the proof.
 
+## 6.3 Does a chit know it came from another domain? — no, and that is the point (2026-09-16)
+
+Athi: *"how does the chit know this request is from another domain? does it need to know? … put some indicator
+so we know the difference."*
+
+**It does not need to know.** Past the door, `mint.deliver` writes a cross-installation copy **byte-for-byte
+the way it writes a local one** — the sender is named by `bridge_id`, which is true whether they are next door
+or across the world. The chit machinery is domain-blind on purpose: if delivery had to branch on origin, every
+downstream reader — the inbox, the dispute flow, the ledger — would have to as well. Proven live: a chit from
+`domaintst` sits in tallytest's books as `received/pending`, the same shape as any local one, and **domaintst
+has zero identity rows here** — the recipient copy names it by bridge id alone.
+
+**But a person wants to see the difference**, so the fact is *recorded, not acted on*. On arrival the copy's
+`business_json` gains:
+
+```
+ctp_arrival: { via_ctp: true, from_installation, from_domain, sender_bridge_id, at }
+```
+
+A screen can render *"arrived from mx.chitandbridge.com"* from that. Nothing in the delivery path reads it or
+behaves differently because of it — **a marker, not a switch** — and a locally-delivered chit has no
+`ctp_arrival` key at all, so its absence *is* the "local" state. It rides in `business_json` (jsonb, already on
+`chit_header` per copy), so there is no migration and no new column.
+
+## 6.4 Is an address also access? — no (the question of 2026-09-16)
+
+Athi: *"when you share your id with someone else, you always share the domain too — so any domain can access
+your entity?"*
+
+**No. An address is discovery; it is not authorization.** `bridge_id@domain` lets someone *find and reach* your
+installation's door, exactly like an email address. Two independent gates stand behind it, both default-deny:
+
+1. **The installation registry (b257).** The sender's `installation_key` must already be a row in *your*
+   `installation` table, `active`, remote. A stranger installation you have never recorded is refused —
+   *"installation X is not one we deal with"* (403) — at both the deliver and the query door. Registering a peer
+   is a deliberate act.
+2. **The population rule (b258, `ops.f_ctp_may_deliver`).** `live` is universally shared between *registered*
+   installations — two live worlds trading is ordinary cross-border commerce — but every sandbox population
+   accepts nobody until it names that installation in `ctp_peers`.
+
+So the domain in your address grants nothing on its own: a chit can only be delivered from an installation you
+have registered, and then only where the population rule allows. *"Is he a member of me?"* is still asked on
+arrival, which was the original requirement. The one thing any registered peer can read is the **public**
+catalogue — the same data already on your public storefront, and never the owner-only view.
+
 ## 7. ⚠️⚠️ The boundary becomes a protocol rule
 
 **This is the most dangerous thing in the design and the reason to write the note before the code.**

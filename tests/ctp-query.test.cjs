@@ -195,6 +195,26 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
       'an employee, a customer or a minted party is never resolvable by another installation');
   });
 
+  /**
+   * ── ⭐⭐ THE ARRIVAL INDICATOR — a marker, never a switch ─────────────────────────────────────────────────────
+   * Athi, 2026-09-16: *"put some indicator so we know the difference … does the chit need to know it is from
+   * another domain?"* It does not; the delivery is byte-identical to a local one. But the fact is RECORDED on the
+   * recipient's copy so a person can see it. Proven end-to-end by the live domaintst→tallytest simulation; here
+   * the guarantees that must not regress are pinned at the source.
+   */
+  ok('⭐⭐ an arriving copy is stamped with its origin, and the stamp changes no behaviour', () => {
+    const src = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
+    assert.ok(/ctp_arrival/.test(src), 'the arrival stamp must be applied to the arriving copy');
+    assert.ok(/via_ctp: true/.test(src) && /from_installation: ik/.test(src) && /from_domain: peer\.domain/.test(src),
+      'it records which installation and domain the copy came from');
+    /* ⚠️ it lands in business_json — a jsonb column that already rides on the copy, so no migration and no new
+       column. And nothing in the delivery path may branch on it: a marker, not a switch. */
+    assert.ok(/business_json: Object\.assign\(\{\}, opened\.copy\.business_json \|\| \{\}, \{ ctp_arrival/.test(src),
+      'the stamp merges into business_json, never replacing what the copy already carried');
+    const gate = /if\s*\([^)]*ctp_arrival[^)]*\)\s*return no\(|ctp_arrival[^\n]*\?\s*[^:]*:/.test(src);
+    assert.strictEqual(gate, false, 'the arrival stamp must never be read as a condition — it is recorded, not acted on');
+  });
+
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })();

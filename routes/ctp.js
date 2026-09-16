@@ -205,7 +205,33 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
      * envelope carried. A sender naming somebody else's entity_id is the one way this door could write into a
      * third party's books, and the envelope's `to` is a BRIDGE ID precisely so that the id is ours to resolve.
      */
-    const copy = Object.assign({}, opened.copy, { entity_id: to.identity_id });
+    /**
+     * ── ⭐⭐ THE INDICATOR: THIS COPY ARRIVED FROM ANOTHER INSTALLATION ────────────────────────────────────────
+     *
+     * Athi, 2026-09-16: *"put some indicator so we know the difference."* And the deeper question with it —
+     * *"how does the chit know this request is from another domain? does it need to know?"*
+     *
+     * ⭐ IT DOES NOT NEED TO, AND THAT IS THE ELEGANCE. Past this door, mint.deliver writes a cross-installation
+     * copy byte-for-byte the way it writes a local one — the sender is named by bridge_id, true whether they are
+     * next door or across the world. The chit machinery is domain-blind on purpose; if it had to branch on
+     * origin, every downstream reader would too.
+     *
+     * ⚠️ BUT A PERSON WANTS TO KNOW, so the fact is RECORDED, not acted on. `ctp_arrival` is stamped into the
+     * recipient copy's business_json (jsonb, already carried): which installation, its domain, when. A screen can
+     * show "arrived from mx.chitandbridge.com"; nothing in the delivery path reads it or behaves differently.
+     * A marker, not a switch.
+     */
+    const arrivalStamp = {
+      via_ctp: true,
+      from_installation: ik,
+      from_domain: peer.domain,
+      sender_bridge_id: (env.from && env.from.bridge_id) || null,
+      at: new Date().toISOString(),
+    };
+    const copy = Object.assign({}, opened.copy, {
+      entity_id: to.identity_id,
+      business_json: Object.assign({}, opened.copy.business_json || {}, { ctp_arrival: arrivalStamp }),
+    });
 
     /**
      * ⚠️⚠️ `arrived: true`, AND IT IS LOAD-BEARING. Without it this call re-resolves the recipient's address,
