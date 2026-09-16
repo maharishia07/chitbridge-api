@@ -383,6 +383,15 @@
   /* ⭐ the stacked line note (2026-09-16): the unit price on its own line, each offer below as name / −value */
   .u .lp{display:block;font-weight:600}
   .u .lo{display:flex;justify-content:space-between;gap:8px;font-size:.92em;padding-top:1px}
+  /* ⭐ the offer's TERMS per product, on the right of its name — never the money, which is the Discount column */
+  .u .lo .rate{white-space:nowrap;font-weight:600}
+  /**
+   * ⚠️ AN OFFER THAT HAS NOT FIRED IS NOT GREEN. Green on this counter means money came off; a "buy 2 get 1
+   * free" sitting on a line holding one has taken nothing yet, and dressing it as a saving already made is the
+   * worst misreading available at a till. It reads as what it is: something available on this product.
+   */
+  .u .lo.pend{color:var(--dim)}
+  .u .lo.pend .rate{font-weight:600;color:var(--dim)}
   /* the engine's own sentence under an offer name — quieter than the name, always present */
   .save .why{color:var(--dim);font-weight:400}
   /* one row per offer under the Saved figure, so the lump can be checked against the lines */
@@ -3859,6 +3868,26 @@ function cartLineNote(c){
    * ⚠️ Each chip carries its OWN amount, never the line total — one name over the sum of several offers is the
    * misreading this replaces.
    */
+  /**
+   * ── ⭐⭐⭐ UNDER THE ITEM IS THE OFFER *PER PRODUCT*, NEVER THE COMPUTATION ─────────────────────────────────
+   *
+   * Athi, observation 6, division F: *"Under item you are showcasing the offer and GST etc. It has to be per
+   * product only. The computation should not be done here — otherwise I do have no way of seeing what the offer
+   * per item is."* And the worked example: *"Rs 20 off on cooking oil, it is per item… 20 Rs stay under the
+   * product as it is the offer per product, and 60 should be there in the discount column."*
+   *
+   * ⚠️⚠️ THE NOTE WAS PRINTING THE LINE TOTAL, which the Discount column already carries — so the row said
+   * "−₹133.00" twice and stated the per-product rate nowhere. Two copies of one number is not redundancy, it is
+   * the loss of the other number.
+   *
+   * ⭐ `CBOffers.promise()` already says an offer's TERMS — "10% off", "₹20 off", "₹80 each from 3" — and it is
+   * the same sentence the shelf row promises, so the cart and the shelf cannot disagree about what is on offer.
+   *
+   * ⭐⭐ AND AN OFFER THAT HAS NOT FIRED YET IS STILL SHOWN. *"If there is an offer of buy 2 get 1 free, then
+   * when you select the product itself the offer should appear — currently it is appearing only when you add
+   * three."* A line that is one unit short of a free one must say so while there is still time to add it; the
+   * ones that have actually come off are marked, the rest read as what they are — available on this product.
+   */
   var offs = (c.offs || []).map(function(a){
     var nm = a.label || a.kind || 'Offer';
     /**
@@ -3875,11 +3904,23 @@ function cartLineNote(c){
       extra = d.free + (d.percent === 100 ? ' free' : ' at ' + d.percent + '% off')
             + (d.sets ? ', ' + d.sets + ' set' + (d.sets === 1 ? '' : 's') + ' of this product' : '');
     } else if (a.why && String(a.why) !== String(nm)) extra = a.why;
-    /* ⭐ ONE ROW PER OFFER, price-then-discount STACKED — the way a retail bill shows it (Athi, 2026-09-16:
-       *"showcase the price first, below the discount / offer in value… so the buyer has no confusion which
-       offer belongs where"*). The name on the left, the money it took off on the right. */
+    /* ⭐ THE NAME, THEN WHAT IT IS PER PRODUCT — and no money, because the Discount column is the money. */
     return '<span class="lo save"><span>' + esc(nm) + (extra ? ' <span class="why">(' + esc(extra) + ')</span>' : '')
-      + '</span><span>−' + money(Math.abs(a.amount)) + '</span></span>';
+      + '</span><span class="rate">' + esc(offerRate(a.offer_id) || 'applied') + '</span></span>';
+  }).join('');
+  /**
+   * ⭐ AND THE OFFERS THAT REACH THIS PRODUCT BUT HAVE NOT FIRED — "buy 2 get 1 free" on a line holding one.
+   * ⚠️ Marked differently and never in the green that means money came off: it is a thing that COULD happen,
+   * and dressing it as a saving already taken would be the worst possible misreading at a counter.
+   */
+  /* ⚠️ `forLine` keys its rows `offer_id`, NOT `id` — matching on the wrong one listed every FIRED offer a
+     second time as though it were still available, which is the one mistake this block must not make. It also
+     already carries `promise`, the engine's own words for the terms, so nothing is recomputed here. */
+  var fired = {}; (c.offs || []).forEach(function(a){ if (a.offer_id) fired[String(a.offer_id)] = true; });
+  var shelfItem = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
+  var pending = !shelfItem ? '' : offersFor(shelfItem).filter(function(o){ return !fired[String(o.offer_id)]; }).map(function(o){
+    return '<span class="lo pend"><span>' + esc(o.label || 'Offer') + '</span>'
+      + '<span class="rate">' + esc(o.promise || offerRate(o.offer_id) || 'on this product') + '</span></span>';
   }).join('');
   /**
    * ── ⚠️⚠️ THE BILL-WIDE SHARE HAS LEFT THE LINE (Athi, 2026-09-16) ─────────────────────────────────────────
@@ -3899,7 +3940,19 @@ function cartLineNote(c){
      was priced, the tax rate, and then each offer by name with the money it took off. */
   var bits = (c.gst_rate ? 'GST ' + c.gst_rate + '%' : '') + tierWords;
   if (bits.indexOf(' · ') === 0) bits = bits.slice(3);
-  return (bits ? '<span class="lp">' + bits + '</span>' : '') + offs;
+  return (bits ? '<span class="lp">' + bits + '</span>' : '') + offs + pending;
+}
+/**
+ * ⭐ WHAT AN OFFER IS, PER PRODUCT — "10% off", "₹20 off", "₹80 each from 3". The engine's own promise(), so the
+ * cart states an offer in exactly the words the shelf row and the storefront use.
+ * ⚠️ Never the money it took off on this line: that is the Discount column's job, and printing it twice was how
+ * the per-product rate came to be missing altogether (Athi, observation 6, division F).
+ */
+function offerRate(offerId){
+  if (!offerId || !S || !window.CBOffers || !CBOffers.promise) return '';
+  var o = (S.offers || []).filter(function(x){ return String(x.id) === String(offerId); })[0];
+  if (!o) return '';
+  try { return CBOffers.promise(o, { now: new Date(), money: money }) || ''; } catch (_) { return ''; }
 }
 /**
  * ── ⭐⭐⭐ ONE PLACE THAT SAYS WHAT A CART LINE'S FIGURES ARE ────────────────────────────────────────────────
