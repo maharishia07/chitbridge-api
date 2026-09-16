@@ -96,6 +96,10 @@
 
   .left{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
   .search{padding:var(--pad) 12px;border-bottom:1px solid var(--line);background:var(--card);display:flex;gap:8px;align-items:center}
+  /* ⭐ the search box's own clear — a target a finger can hit, since Escape belongs to the bill here */
+  .search .qx{flex:none;width:38px;height:38px;border:1px solid var(--edge);border-radius:999px;background:var(--paper);
+              color:var(--dim);cursor:pointer;font-size:1em;line-height:1}
+  .search .qx:hover{color:var(--warn);border-color:var(--warn)}
   /* ⭐ the microphone sits BESIDE the box, never inside it — a control on top of the text is a control that hides what was typed */
   .mic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:1.2em;cursor:pointer}
   .mic.on{border-color:var(--ok);background:var(--ok-tint);animation:hear 1s ease-in-out infinite}
@@ -619,7 +623,9 @@
     </header>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
-      <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="showAgain();paintHits()" onkeydown="searchKey(event)">
+      <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="SEARCH_FRESH=false;showAgain();paintHits()" onkeydown="searchKey(event)">
+      <!-- ⭐ the box's own clear. Escape clears the BILL on this counter, so it must never be the habit here. -->
+      <button class="qx" id="qclear" data-testid="till-search-clear" title="clear the search" aria-label="clear the search" onclick="clearSearch()">✕</button>
     </div>
     <div class="chips" id="chips"></div>
     <div class="quick" id="quick"></div>
@@ -3138,6 +3144,18 @@ function keepSelInView(){
   } catch (_) {}
 }
 var CENTRE_NEXT = false;
+/** ⭐ the search box is ARMED after an add: readable, but the next ordinary character starts a new search */
+var SEARCH_FRESH = false;
+/**
+ * ⭐ AND A WAY TO CLEAR IT WITH THE MOUSE, because not everyone types the next thing — Escape belongs to the
+ * bill on this counter, so the box carries its own ✕ rather than borrowing a key that costs a sale.
+ */
+function clearSearch(){
+  var q = document.getElementById('q');
+  if (!q) return;
+  q.value = ''; SEARCH_FRESH = false; SEL = 0;
+  showAgain(); paintChips(); paintHits(); focusSearch();
+}
 
 /**
  * ── ⭐⭐⭐ TAP A LINE ON THE BILL, SEE IT ON THE SHELF ─────────────────────────────────────────────────────────
@@ -3237,6 +3255,31 @@ function searchKey(e){
    * line) or to the browser (Ctrl+A, Ctrl+C), and neither should be reached through here.
    */
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  /**
+   * ── ⭐⭐⭐ THE NEXT THING YOU TYPE STARTS A NEW SEARCH ──────────────────────────────────────────────────────
+   *
+   * Athi, observation 6, division D: *"even after the selection the product stays, because you have not cleared
+   * the search info — but the problem is when I want to search the next one I have to clear all the data. This
+   * has to be done by some means very quickly… see how that is achieved in other systems, follow that."*
+   *
+   * ⚠️⚠️ AND ESCAPE CANNOT BE THAT KEY HERE. On this counter Escape clears the BILL. A shopkeeper reaching for
+   * the habit every other search box teaches would throw away the sale, so the obvious answer is the dangerous
+   * one and the box needs its own.
+   *
+   * ⭐ WHAT EVERY TILL AND SCANNER ACTUALLY DOES: after a line is added the field still shows what was typed —
+   * so you can read it, and add another of the same — but it is ARMED. The next ordinary character wipes it and
+   * starts again, exactly as though the box had been empty. Nothing to reach for, nothing to remember.
+   * ⚠️ ARMED, NOT SELECTED. Selecting the text does the same thing only while the box keeps focus; a mouse click
+   * on the shelf loses the selection and the next keystroke appends to the old query. This survives that.
+   * ⚠️ REFINING STILL WORKS: Backspace, the arrows and Enter all disarm it without clearing, so "rusk" → "rusk 1"
+   * is still one keystroke away for anyone who wants it.
+   */
+  if (SEARCH_FRESH) {
+    var printable = e.key && e.key.length === 1;
+    var box0 = document.getElementById('q');
+    SEARCH_FRESH = false;
+    if (printable && box0 && box0.value) { box0.value = ''; showAgain(); SEL = 0; }
+  }
   var list = hits(), page = 8;
   /**
    * ── ⭐⭐ TAB GOES TO THE LIST, NOT TO THE CATEGORIES ────────────────────────────────────────────────────────
@@ -3524,6 +3567,9 @@ async function add(n){
       if (String(CART[ci].item_id) === String(i.item_id)) { CARTSEL = ci; break; }
   }
   SEL = n;                 /* the row stays selected where it already is — no jump to the top, no re-centre */
+  /* ⭐ and the box is ARMED: what was typed stays readable, and the next ordinary character starts a fresh
+     search rather than being appended to it (observation 6, division D — see searchKey). */
+  SEARCH_FRESH = true;
   paintHits(); paintCart(); focusSearch();
 }
 /** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */
