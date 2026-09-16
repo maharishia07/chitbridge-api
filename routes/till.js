@@ -601,6 +601,29 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
          MAX(created_at) FILTER (WHERE business_json ? 'slip') AS last_sold
        FROM lines
        WHERE COALESCE(line->>'item_id', line#>>'{item_data,item_id}') IS NOT NULL
+         /**
+          * ── ⚠️⚠️ ONLY PRODUCTS THIS SHOP ACTUALLY SELLS ───────────────────────────────────────────────────
+          *
+          * Athi, observation 6, division H: *"I guess this is one of the test shops I tried that is getting
+          * loaded… this should bring only the items which are rightfully access to the shop."*
+          *
+          * ⚠️ NOTHING WAS LEAKING — every chit read here is this entity's own, and it always was. The trap is
+          * subtler: a chit RECEIVED from somebody else carries THEIR line items. "Order from Chola Auto Care"
+          * put Grapes, OIL, Onion and Test Tax Product into tallytest's own chit history, and this report read
+          * the history rather than the shelf. Seven of the seventeen products it found were never on sale here.
+          *
+          * ⭐⭐ AND IT WAS NOT ONLY UNTIDY, IT BROKE THE PANEL. Tapping one set CARD_ID to a product the till
+          * cannot find on its own shelf, so the maintenance card resolved to null and the right-hand side went
+          * blank — which is the second half of the same observation, from the same cause.
+          * ⚠️ NO BACKTICKS IN THIS COMMENT: it lives inside a template literal, and the first pair of them ended
+          * the SQL string and broke the file. Caught by node --check within the minute.
+          *
+          * ⭐ So the shelf is the authority for WHAT MAY BE SUGGESTED, and the chit history only for WHEN it
+          * last sold. A product the shop does not carry cannot be worth an offer here.
+          */
+         AND EXISTS (SELECT 1 FROM catalogue_items ci
+                      WHERE ci.entity_id = $1 AND ci.is_active = true
+                        AND ci.item_id::text = COALESCE(line->>'item_id', line#>>'{item_data,item_id}'))
        GROUP BY 1`, [entity_id]));
 
     const today = new Date();

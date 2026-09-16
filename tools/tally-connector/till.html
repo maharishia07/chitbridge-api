@@ -1518,12 +1518,38 @@ var CloudHost = {
              * books. What it can do is tell us, and what WE can do is put it where the shopkeeper will read it
              * rather than let it vanish with the HTTP response.
              */
+            /**
+             * ── ⭐⭐⭐ THE ACKNOWLEDGEMENT IS WRITTEN DOWN (Athi, observation 6, division I) ──────────────────
+             *
+             * *"I tried creating couple of invoices from counter app, it says sent, but could not see it task in
+             * the tallytest app. It has to be visible, but it is not."*
+             *
+             * ⚠️⚠️ "SENT" WAS INFERRED FROM AN ABSENCE. A bill was called sent when it was NOT in the queue — and
+             * a row can be missing from that queue for three very different reasons:
+             *   1. it was delivered and the row was deleted here  ← the only one that means the money is safe
+             *   2. it was never queued, because the write failed
+             *   3. `DB.all` filtered it out, because the row is stamped for a different shop on this device
+             * The counter could not tell them apart and showed the most flattering of the three. Three bills read
+             * "✓ sent · All 3 have reached ChitBridge" while ChitBridge had never heard of them.
+             *
+             * ⭐ SO THE PROOF IS KEPT, not deduced: the chit_id ChitBridge answered with, and when. A bill says
+             * "sent" only if it carries one. Absence now reads as "not confirmed", which is the truth, and the
+             * shopkeeper is given a way to send it again rather than a green tick over a missing sale.
+             */
+            var ack = null;
             try {
               var ans = await r.json();
               if (ans && ans.number_check && !ans.number_check.ok) {
                 ls.set('cb_numwarn', JSON.stringify({ no: bill.no, why: ans.number_check.reason, at: Date.now() }));
               }
+              if (ans && (ans.chit_id || (ans.chit && ans.chit.chit_id))) ack = ans.chit_id || ans.chit.chit_id;
             } catch (_) { /* a body we cannot read is not a reason to lose the bill */ }
+            /* ⚠️ the RECEIPT goes on the bill, not on the queue row — the queue row is about to be deleted, and a
+               proof that dies with the thing it proves is not a proof. */
+            try {
+              var kept = (await DB.all('bills')).filter(function(x){ return x && String(x.no) === String(bill.no); })[0];
+              if (kept) { kept._sent = { at: Date.now(), chit_id: ack || null }; await DB.put('bills', kept); }
+            } catch (_) { /* a bill we cannot stamp still went — it will read "not confirmed", which is honest */ }
             await DB.del('queue', bill.no); sent++;
           }
           else if (r.status === 403 || r.status === 401) {
@@ -2681,6 +2707,21 @@ function worthBlock(){
 }
 async function openWorth(id){
   if (!(await pendLeave())) return;
+  /**
+   * ⚠️⚠️ A SUGGESTION THIS COUNTER CANNOT OPEN MUST NOT BLANK THE PANEL (Athi, observation 6, division H).
+   *
+   * The report used to read the chit HISTORY, and a chit received from somebody else carries THEIR products —
+   * so it offered Grapes and Onion to a shop that has never sold either. Tapping one set CARD_ID to an id
+   * `cardItem()` cannot find on the shelf, the card resolved to null, and the whole right-hand side went empty
+   * with no word about why. The server no longer suggests them; this refuses the ones already on a stale panel
+   * rather than trusting that it never will again.
+   */
+  var onShelf = ((S && S.items) || []).some(function(x){ return String(x.item_id) === String(id); });
+  if (!onShelf) {
+    toastLine('That product is not on this counter’s shelf any more — nothing to change here.');
+    loadWorth(true);                       /* the list is stale: ask for it again rather than leave it lying */
+    return;
+  }
   CARD_ID = id; pendClear();
   /* ⚠️ show it in the list too, or the panel would name a product the operator cannot see */
   var n = hits().map(function(x){ return String(x.item_id); }).indexOf(String(id));
@@ -5873,6 +5914,29 @@ function printSlip(){
 
 /* ═══ 5 · this till: pairing, and the look ═══════════════════════════════════════════════════════════════════ */
 /** today's bills — a customer comes back with a slip, and it must be findable and printable again (2026-09-07) */
+/**
+ * ── ⭐⭐ SEND A BILL THAT WAS NEVER CONFIRMED ─────────────────────────────────────────────────────────────────
+ *
+ * Athi, observation 6, division I: *"there is no way of clearing indexed db for the fault."* There is now a way
+ * that does not involve clearing anything — the bill is put back on the queue and drained, which is what should
+ * have happened the first time.
+ *
+ * ⚠️ IT RE-QUEUES THE BILL ITSELF, unchanged, keeping its number. The number is already on paper in a customer's
+ * hand; a resend that renumbered would put a second sale in the books for one transaction.
+ * ⚠️ SAFE TO PRESS TWICE. `client_ref` is the bill number and the server is idempotent on it, so a bill that did
+ * arrive the first time is not duplicated by someone pressing this because they were not sure.
+ */
+async function resendBill(no){
+  try {
+    var b = ((await DB.all('bills')) || []).filter(function(x){ return x && String(x.no) === String(no); })[0];
+    if (!b) { toastLine('That bill is not on this counter any more.'); return; }
+    await DB.put('queue', b);
+    await queueTally(); paintStatus();
+    toastLine('Bill ' + no + ' is back in the queue — sending it now.');
+    if (HOST && HOST.drain) await HOST.drain();
+    openBills(true);
+  } catch (e) { toastLine('Could not queue bill ' + no + ': ' + ((e && e.message) || 'unknown')); }
+}
 function billsTab(which){
   BILLS_TAB = which;
   document.getElementById('tab_today').className = 'pill' + (which === 'today' ? ' on' : '');
@@ -5899,7 +5963,26 @@ async function openBills(keepOpen){
   /* ⭐ AND WHY IT IS STILL WAITING, when drain has been told. The row carries the shop's own words from the last
      refusal (bill._why), so "waiting" stops being a state with no explanation attached to it. */
   try { ((await DB.all('queue')) || []).forEach(function(q){ if (q && q.no) { waiting[q.no] = true; if (q._why) stuckWhy[q.no] = q._why; } }); } catch (_) {}
-  var nWait = rows.filter(function(b){ return waiting[b.no]; }).length;
+  /**
+   * ── ⭐⭐⭐ THREE STATES, BECAUSE THERE ARE THREE (Athi, observation 6, division I) ──────────────────────────
+   *
+   * A bill is SENT only if it carries the acknowledgement drain wrote when ChitBridge accepted it. It is WAITING
+   * if it is still in the queue. Anything else is NOT CONFIRMED — it is neither queued nor acknowledged, which
+   * happens when the row was never queued or when the ownership guard is hiding its queue row, and it is exactly
+   * the case that used to show a green "✓ sent" over a sale ChitBridge had never heard of.
+   *
+   * ⚠️ A BILL WRITTEN BEFORE THIS EXISTED HAS NO RECEIPT and must not be slandered as lost: if the counter has
+   * never recorded an acknowledgement for anything, it cannot tell, and says so once at the top rather than
+   * marking every old bill unconfirmed.
+   */
+  var everAcked = rows.some(function(b){ return b && b._sent; });
+  var stateOf = function(b){
+    if (waiting[b.no]) return 'waiting';
+    if (b && b._sent) return 'sent';
+    return everAcked ? 'unconfirmed' : 'unknown';
+  };
+  var nWait = rows.filter(function(b){ return stateOf(b) === 'waiting'; }).length;
+  var nLost = rows.filter(function(b){ return stateOf(b) === 'unconfirmed'; }).length;
 
   var d = STATE.today || { count:0, total:0, by:{} };
   var by = Object.keys(d.by || {}).map(function(k){ return esc(k) + ' ' + money(d.by[k]); }).join(' · ');
@@ -5907,18 +5990,37 @@ async function openBills(keepOpen){
   document.getElementById('billsbody').innerHTML =
     '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + (by || 'nothing taken yet') + '</div>'
     + '<div data-testid="till-sync-report" style="display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;margin-bottom:8px;'
-      + (nWait ? 'background:var(--warn-tint);color:var(--warn)' : 'background:var(--ok-tint);color:var(--ok)') + '">'
-      + '<b style="flex:1">' + (nWait
-          ? (nWait + ' of ' + rows.length + ' bill(s) have not reached ChitBridge yet')
-          : (rows.length ? 'All ' + rows.length + ' bill(s) have reached ChitBridge' : 'Nothing to send')) + '</b>'
-      + (nWait ? '<button class="pill" data-testid="till-send-now" onclick="sendNow()">Send now</button>' : '')
+      + ((nWait || nLost) ? 'background:var(--warn-tint);color:var(--warn)' : 'background:var(--ok-tint);color:var(--ok)') + '">'
+      /* ⚠️ THE HEADLINE NEVER CLAIMS MORE THAN IS PROVED. "All reached ChitBridge" is said only when every bill
+         carries an acknowledgement — never because the queue happens to be empty. */
+      + '<b style="flex:1">' + (
+          nLost ? (nLost + ' of ' + rows.length + ' bill(s) were never confirmed by ChitBridge')
+        : nWait ? (nWait + ' of ' + rows.length + ' bill(s) have not reached ChitBridge yet')
+        : (rows.length ? (everAcked ? 'All ' + rows.length + ' bill(s) have reached ChitBridge'
+                                    : 'All ' + rows.length + ' bill(s) have left this counter')
+                       : 'Nothing to send')) + '</b>'
+      + ((nWait || nLost) ? '<button class="pill" data-testid="till-send-now" onclick="sendNow()">Send now</button>' : '')
     + '</div>'
     + (rows.length ? rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-bill-' + esc(b.no) + '">'
           + '<span style="flex:1"><b>' + esc(b.no) + '</b>'
-            + '<span data-testid="till-bill-sync-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;'
-              + (waiting[b.no] ? 'color:var(--warn);border-color:var(--warn)' : 'color:var(--ok);border-color:var(--ok)') + '">'
-              + (waiting[b.no] ? '⏳ waiting' : '✓ sent') + '</span>'
+            /* ⭐ the pill says which of the three this bill is, and only "✓ sent" is a promise */
+            + (function(){
+                var st = stateOf(b);
+                var look = (st === 'sent') ? 'color:var(--ok);border-color:var(--ok)'
+                         : (st === 'unknown') ? 'color:var(--dim);border-color:var(--line)'
+                         : 'color:var(--warn);border-color:var(--warn)';
+                var word = (st === 'sent') ? '✓ sent'
+                         : (st === 'waiting') ? '⏳ waiting'
+                         : (st === 'unconfirmed') ? '⚠ not confirmed' : '· left this counter';
+                return '<span data-testid="till-bill-sync-' + esc(b.no) + '" class="pill"'
+                     + ' style="margin-inline-start:8px;' + look + '">' + word + '</span>'
+                     /* ⚠️ a bill nobody can prove arrived is the one thing a shopkeeper must be able to act on */
+                     + (st === 'unconfirmed'
+                        ? '<button class="pill" style="margin-inline-start:6px" data-testid="till-bill-resend-'
+                          + esc(b.no) + '" onclick="resendBill(\'' + esc(b.no) + '\')">send it again</button>'
+                        : '');
+              })()
             /* ⚠️ the refusal, on the bill it belongs to — a reason in a toast is gone by the time anyone acts on it */
             + (stuckWhy[b.no] ? '<div class="u" style="color:var(--warn)" data-testid="till-bill-why-' + esc(b.no) + '">'
                 + esc(stuckWhy[b.no]) + '</div>' : '')
