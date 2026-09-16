@@ -677,7 +677,13 @@
       </select>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is signed in at this counter (F7 to hand over)">…</button>
-      <span class="pill" id="netpill">…</span>
+      <!--
+        ⭐⭐ THE LINE PILL IS THE WAY IN TO "WHY IS A BILL STUCK?". Athi, 2026-09-17: *"do you have a chip called why is a bill
+        stuck? I couldn't see that."* It lived only inside ☰, and this pill — the first place anyone looks when bills are not
+        going — was a dead <span> that merely LOOKED like the buttons beside it. The same fault the day total had until last night.
+        It opens the diagnosis, and it says how many are waiting, so the answer to "is anything stuck?" is on the bar.
+      -->
+      <button class="pill" id="netpill" data-testid="till-net" onclick="openStuck()" title="why is a bill stuck? — what this counter is holding, and why">…</button>
       <span class="pill" id="agepill"></span>
       <span style="flex:1"></span>
       <!--
@@ -2178,7 +2184,14 @@ function paintStatus(){
   var net = document.getElementById('netpill');
   var offline = !STATE.online;
   net.textContent = offline ? (HOST && HOST.mode === 'cloud' && !CloudHost.key ? 'no key yet' : 'offline — billing continues') : 'online';
-  net.className = 'pill ' + (offline ? 'off' : 'on');
+  /**
+   * ⚠️ WAITING IS SAID ON THE PILL, NOT ONLY IN THE NOTE BELOW. "online" beside bills that have not gone read as
+   * "all is well" — the flattering answer again — so the count rides on the pill itself and turns it amber.
+   * ⚠️ Nothing extra is said when nothing is waiting: the bar speaks only when there is something to act on.
+   */
+  var waitingN = Number(STATE.queued) || 0;
+  if (!offline && waitingN) net.textContent = 'online · ' + waitingN + ' waiting';
+  net.className = 'pill ' + ((offline || waitingN) ? 'off' : 'on');
   var age = document.getElementById('agepill');
   if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
     age.textContent = 'prices as at ' + new Date(S.at).toTimeString().slice(0,5) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
