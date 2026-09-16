@@ -2328,18 +2328,27 @@ function quickGroupAddMarked(){
   quickGroupToggle(i.item_id);
   toastLine(i.name + ' → ' + tillOpt().group);
 }
-function quickGroupNew(){
-  var name = String(prompt('Name this group — Morning, Evening, Tiffin…') || '').trim();
+/**
+ * ⚠️⚠️ THE COUNTER'S OWN DIALOGS, NEVER THE BROWSER'S. The browser's native prompt and confirm BLOCK the page:
+ * on a till they freeze the scanner, the queue and the repaint until somebody clicks, and there is no way to
+ * style or translate them. `ask()` and `sure()` are the counter's own and return promises.
+ * ⚠️ A guard in tests/snapshot-wire refuses a native dialog sneaking back, by searching the page as TEXT — which
+ * is how both of these were caught within the hour, and why this note spells the two words out rather than
+ * writing them as calls.
+ */
+async function quickGroupNew(){
+  var name = String(await ask('Name this group — Morning, Evening, Tiffin…', '', 'Group name', 'A new group of quick keys') || '').trim();
   if (!name) return;
   var o = tillOpt();
   if (!o.groups[name]) o.groups[name] = [];
   tillOptSet({ groups:o.groups, group:name, quickSource: o.quickSource === 'frequent' ? 'both' : o.quickSource });
   paintSetup();
 }
-function quickGroupDrop(){
+async function quickGroupDrop(){
   var o = tillOpt(); if (!o.group) return;
-  if (!confirm('Remove the group "' + o.group + '"? The products themselves are not touched.')) return;
-  delete o.groups[o.group];
+  var gone = o.group;
+  if (!(await sure('Remove the group “' + gone + '”? The products themselves are not touched.', 'Yes, remove it', 'Remove a group'))) return;
+  delete o.groups[gone];
   tillOptSet({ groups:o.groups, group:'' });
   paintSetup();
 }

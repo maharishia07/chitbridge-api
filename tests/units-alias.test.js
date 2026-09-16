@@ -7,7 +7,7 @@
  */
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { normUnit, sameUnit, aliasesOf } = require('../lib/units');
+const { normUnit, sameUnit, aliasesOf, unitOf, UNITS } = require('../lib/units');
 
 /**
  * ⭐ The browser's catalogue model, read once. It is a script that attaches to a global rather than a module,
@@ -188,5 +188,36 @@ test('the extra map never changes behaviour when absent — the default path is 
   for (const w of ['kg', 'கிலோ', 'किलो', 'gunny', '']) {
     assert.strictEqual(normUnit(w), normUnit(w, undefined));
     assert.strictEqual(normUnit(w), normUnit(w, {}));
+  }
+});
+
+/**
+ * ── ⭐ `g` IS THE SI SYMBOL FOR GRAM, AND `mg` / `oz` ARE NOT SPELLINGS OF IT ───────────────────────────────
+ *
+ * Backlog item of 2026-09-15: `unitOf('g')` was null, so `12 g` of bullion was refused by lib/convert.js while
+ * `12 gm` was accepted — the table held every long spelling and not the symbol.
+ *
+ * ⚠️⚠️ THE SECOND HALF OF THIS TEST IS THE IMPORTANT HALF. `mg` and `oz` must STAY unknown. They are different
+ * magnitudes, not other ways of writing a gram, and aliasing them here would read "12 mg" as twelve grams — a
+ * thousandfold error, in bullion and pharma, silently. They need canonical units with factors, not names.
+ */
+test('g resolves to gram; mg and oz stay unknown', () => {
+  assert.strictEqual(unitOf('g'), 'gram', 'the SI symbol');
+  assert.strictEqual(unitOf('G'), 'gram', 'case does not matter');
+  assert.strictEqual(unitOf(' g '), 'gram', 'nor does surrounding space');
+  assert.strictEqual(unitOf('gm'), 'gram', 'the spelling that already worked still does');
+  assert.strictEqual(unitOf('mg'), null, '⚠️ a milligram is NOT a gram');
+  assert.strictEqual(unitOf('oz'), null, '⚠️ an ounce is NOT a gram');
+});
+
+test('no two units answer to the same spelling', () => {
+  // A collision would make normUnit's answer depend on key order, which is not a thing anyone could debug.
+  const seen = {};
+  for (const canon of Object.keys(UNITS)) {
+    for (const name of UNITS[canon].names) {
+      const k = String(name).toLowerCase();
+      assert.ok(!seen[k], 'spelling "' + k + '" is claimed by both ' + seen[k] + ' and ' + canon);
+      seen[k] = canon;
+    }
   }
 });
