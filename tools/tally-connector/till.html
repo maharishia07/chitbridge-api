@@ -275,6 +275,9 @@
   .t.warnrow{color:var(--warn);font-size:.9em}
   .row .x{border:none;background:none;color:var(--warn);font-size:1.2em;cursor:pointer}
   .save{color:var(--ok)}
+  /* ⭐ the stacked line note (2026-09-16): the unit price on its own line, each offer below as name / −value */
+  .u .lp{display:block;font-weight:600}
+  .u .lo{display:flex;justify-content:space-between;gap:8px;font-size:.92em;padding-top:1px}
   /* the engine's own sentence under an offer name — quieter than the name, always present */
   .save .why{color:var(--dim);font-weight:400}
   /* one row per offer under the Saved figure, so the lump can be checked against the lines */
@@ -296,6 +299,11 @@
   .totals{border-top:2px solid var(--ink);padding:8px 12px}
   .t{display:flex;justify-content:space-between;padding:1px 0}
   .t.big{font-size:1.7em;font-weight:800;padding-top:4px}
+  /* ⭐ the foldable summary (2026-09-16): the breakdown collapses so the cart keeps its room */
+  .t.foldrow{justify-content:flex-end;padding:2px 0}
+  .foldbtn{background:none;border:0;color:var(--dim);font:inherit;font-size:.85em;cursor:pointer;padding:2px 0}
+  .foldbtn:hover{color:var(--ink)}
+  .totdetail[hidden]{display:none}
   .pay{display:flex;gap:8px;padding:8px 12px;flex-wrap:wrap}
   .pay button{flex:1 1 90px;padding:12px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);color:var(--ink);cursor:pointer}
   /* what will actually be written down — full width under the three buttons, because it is a sentence, not a chip */
@@ -2688,7 +2696,20 @@ function flashRow(el){
   setTimeout(function(){ row.classList.remove('flash'); }, 1400);
 }
 function priceBlock(i){
-  var pay = payPrice(i), r = i.tax_rate;
+  /**
+   * ── ⭐⭐⭐ THE LIST PRICE IS THE PRICE THE CART WILL BILL ────────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-16: *"the price in the list should show in the cart… the price in the list differs from the
+   * cart, so I am not able to match which is the selected item."*
+   *
+   * ⚠️ IT USED TO SHOW payPrice — the SELLING PRICE WITH TAX ADDED IN (for a tax-exclusive shop). The cart line
+   * shows the pre-tax unit and states the GST separately, so the same product wore two different numbers and
+   * the eye could not join the selected line to its row. Now both show the SAME base — the selling unit price —
+   * and both state the tax as a separate fact. Tax showcased, not folded in, exactly as he asked.
+   * ⚠️ pricedAt(i,1) so a tiered product shows its own base here too, the same figure lineOf() bills.
+   */
+  var pay = (window.CBPricing ? (pricedAt(i, 1).amount) : Number(i.price)) || 0;
+  var r = i.tax_rate;
   var per = 'per ' + esc(i.unit || 'piece');
   if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% GST' : ' · rate not set');
   /**
@@ -3509,16 +3530,20 @@ function cartLineNote(c){
       extra = d.free + (d.percent === 100 ? ' free' : ' at ' + d.percent + '% off')
             + (d.sets ? ', ' + d.sets + ' set' + (d.sets === 1 ? '' : 's') + ' of this product' : '');
     } else if (a.why && String(a.why) !== String(nm)) extra = a.why;
-    return ' · <span class="save">' + esc(nm) + ' −' + money(Math.abs(a.amount))
-      + (extra ? ' <span class="why">(' + esc(extra) + ')</span>' : '') + '</span>';
+    /* ⭐ ONE ROW PER OFFER, price-then-discount STACKED — the way a retail bill shows it (Athi, 2026-09-16:
+       *"showcase the price first, below the discount / offer in value… so the buyer has no confusion which
+       offer belongs where"*). The name on the left, the money it took off on the right. */
+    return '<span class="lo save"><span>' + esc(nm) + (extra ? ' <span class="why">(' + esc(extra) + ')</span>' : '')
+      + '</span><span>−' + money(Math.abs(a.amount)) + '</span></span>';
   }).join('');
   /* ⚠️ THE REMAINDER IS OWNED UP TO. A bill-wide offer is spread across the lines by the engine, so a line can
      legitimately drop without any offer of its own — and saying nothing there is exactly what made a correct
      number look invented. */
   var rest = (c.save_unnamed > 0.004)
-    ? ' · <span class="save">' + money(c.save_unnamed) + ' ' + esc('share of a bill-wide offer') + '</span>' : '';
-  return '' + money(c.unitPrice != null ? c.unitPrice : c.price) + ' / ' + esc(c.unit) + tierWords
-    + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '')
+    ? '<span class="lo save"><span>' + esc('share of a bill-wide offer') + '</span><span>−' + money(c.save_unnamed) + '</span></span>' : '';
+  /* the PRICE first, on its own line, then each discount below it — price · per · tier · GST, then the offers */
+  return '<span class="lp">' + money(c.unitPrice != null ? c.unitPrice : c.price) + ' / ' + esc(c.unit) + tierWords
+    + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '') + '</span>'
     + offs + rest;
 }
 function cartRowHTML(c, k){
@@ -4198,6 +4223,12 @@ function savedBreakdown(){
   SAVED_FOOTNOTE = sum;
   return '';
 }
+/**
+ * ⭐ THE SUMMARY FOLD STATE — default FOLDED, remembered per counter. Athi, 2026-09-16: the cart needs the room.
+ * ⚠️ localStorage in a try/catch: a counter in a private window or with site data cleared must still open.
+ */
+var SUMFOLD = (function(){ try { return localStorage.getItem('till_sumfold') !== '0'; } catch (_) { return true; } })();
+function toggleSum(){ SUMFOLD = !SUMFOLD; try { localStorage.setItem('till_sumfold', SUMFOLD ? '1' : '0'); } catch (_) {} paintTotals(); }
 function paintTotals(){
   var m = billMoney();
   /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
@@ -4210,26 +4241,29 @@ function paintTotals(){
   document.getElementById('change').textContent = PARTS.length
     ? (tendered ? (change >= 0 ? 'change ' + money(change) : 'still ' + money(-change)) : 'still ' + money(due))
     : (tendered ? (change >= 0 ? 'change ' + money(change) : 'short ' + money(-change)) : '');
-  document.getElementById('totals').innerHTML =
-      /* ⭐ the count sits with the money it belongs to, and is read in the same glance as the total */
-      (CART.length ? '<div class="t count" data-testid="till-count"><span>On this bill</span><span>' + countWords() + '</span></div>' : '')
-      /* ⚠️ "Items" was this money's label and it is a COUNT word. The figure is the total before any offer came off it. */
-    /**
-     * ⭐⭐⭐ "Saved" NAMES ITSELF NOW. Athi, 2026-09-10: *"also, saving in the total gives the fabrication."*
-     *
-     * ⚠️⚠️ HE IS RIGHT, AND IT IS THE SAME INJURY AS THE SHELF ROW. A bare "Saved −₹9.00" above a total is a
-     * claim with nothing behind it: it cannot be checked against the lines, it cannot be checked against the
-     * shelf (which was calling the MRP gap "save" too), and a figure that reconciles with nothing on screen
-     * reads as invented — however correct it is. On a document a customer is handed, that is not a presentation
-     * problem; it is a claim the shopkeeper cannot stand behind.
-     *
-     * ⭐ So every offer that made up the figure is listed under it, by name and amount, summed from the SAME
-     * evaluation the lines were priced from — never recomputed, or the two could disagree and this whole block
-     * would be back to being unverifiable.
-     */
-    + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div>'
-        + '<div class="t save"><span>Saved' + (SAVED_FOOTNOTE ? ' *' : '') + '</span><span>−' + money(m.save) + '</span></div>'
-        + brk : '')
+  /**
+   * ── ⭐⭐⭐ THE SUMMARY FOLDS, SO THE CART HAS ROOM ──────────────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-16: *"the summary below the cart takes a lot of space, so the cart is not having space at all,
+   * so there must be a way to fold and expand the summary, which has all the tax breakdown and offer breakdown."*
+   *
+   * ⭐ WHAT STAYS VISIBLE WHEN FOLDED is the decision, not the fold itself: the TOTAL (always), and the SAVED
+   * line — because the whole earlier fight was to make an offer legible, and hiding it behind a tap would undo
+   * that. Everything a person only checks occasionally — the pre-offer figure, each offer by name, the taxable
+   * base and the per-rate GST — lives in the detail that folds away. Default folded: the cart is what a counter
+   * needs the room for.
+   * ⚠️ THE FIGURES ARE BUILT THE SAME WAY WHETHER SHOWN OR NOT — folding hides rows, it never changes a number.
+   */
+  var count = (CART.length ? '<div class="t count" data-testid="till-count"><span>On this bill</span><span>' + countWords() + '</span></div>' : '');
+  /**
+   * ⭐⭐⭐ "Saved" NAMES ITSELF (Athi, 2026-09-10). Every offer that made up the figure is listed under it, by
+   * name and amount, from the SAME evaluation the lines were priced from — never recomputed. The named
+   * breakdown (`brk`) is detail; the headline Saved figure stays with the total.
+   */
+  var savedHead = (m.save > 0 ? '<div class="t save" data-testid="till-saved"><span>Saved' + (SAVED_FOOTNOTE ? ' *' : '') + '</span><span>−' + money(m.save) + '</span></div>' : '');
+  var detail =
+      count
+    + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div>' + brk : '')
     + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>'
         + m.heads.map(function(h){
             return '<div class="t head"><span>' + h.name + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
@@ -4238,7 +4272,15 @@ function paintTotals(){
         + (m.supply === 'unknown'
             ? '<div class="t warnrow"><span>GST</span><span>' + money(m.tax) + '</span></div>'
               + '<div class="t warnrow"><span colspan="2">No state on the GSTIN, so CGST/SGST cannot be split</span><span></span></div>'
-            : '<div class="t"><span>GST total</span><span>' + money(m.tax) + '</span></div>') : '')
+            : '<div class="t"><span>GST total</span><span>' + money(m.tax) + '</span></div>') : '');
+  /* the toggle appears only when there IS detail to fold — an empty cart or a plain cash sale needs no control */
+  var toggle = detail.trim()
+    ? '<div class="t foldrow"><button type="button" class="foldbtn" data-testid="till-sum-fold" onclick="toggleSum()">'
+      + (SUMFOLD ? '▸ tax &amp; offer breakdown' : '▾ hide breakdown') + '</button></div>' : '';
+  document.getElementById('totals').innerHTML =
+      '<div class="totdetail" data-testid="till-sum-detail"' + (SUMFOLD ? ' hidden' : '') + '>' + detail + '</div>'
+    + toggle
+    + savedHead
     + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">' + money(m.net) + '</span></div>'
     /* ⭐ THE FOOTNOTE, BELOW THE TOTAL — where a footnote belongs, and where it cannot push the figure a
        shopkeeper is reading off the bottom of the panel. Only when the sum was too long to sit inline. */
