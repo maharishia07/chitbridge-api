@@ -35,14 +35,33 @@
    * standing for nine hours — so the ink is darker and the type larger than a laptop screen needs. Matching a palette is not the
    * same as matching a rendering.
    */
+  /**
+   * ── ⭐⭐⭐ THE COUNTER'S PALETTE, MEASURED (e2e/till-contrast.cjs) ──────────────────────────────────────────
+   *
+   * Athi, 2026-09-16: *"pass our screen through design gateway, so the look and feel should be prominent."*
+   * The app's themes have been measured for months; the till never had been — the one screen read at arm's
+   * length, in a bright shop, by somebody counting money in front of a customer. The gate found two real faults:
+   *
+   * ⚠️⚠️ WHITE ON A LIGHT FILL IN DARK MODE MEASURED 2.22:1. In dark the accents INVERT — --ok becomes a light
+   * mint — so "Save & print", the biggest button on the counter, carried white text on pale green. Unreadable,
+   * and it had been that way since the dark theme existed. `--on-accent` is the ink that sits on a filled
+   * accent, and it flips with the theme instead of being hard-coded white in twenty places.
+   *
+   * ⚠️ AND AN EDGE IS NOT A DIVIDER. WCAG 1.4.11 asks 3:1 of anything you must SEE to identify a control — a box
+   * you type in, a key you press. It does not ask it of a decorative rule between two rows, and forcing 3:1 on
+   * every hairline would turn a shelf of sixty products into a spreadsheet. So there are two tokens and they
+   * mean different things: `--line` separates, `--edge` bounds something you operate. Only --edge is measured.
+   */
   :root{
-    --ink:#141210; --dim:#6b625a; --line:#ddd6cc; --paper:#fdfbf7; --card:#ffffff;
+    --ink:#141210; --dim:#6b625a; --line:#ddd6cc; --edge:#97918d; --paper:#fdfbf7; --card:#ffffff;
     --ok:#1c7a4a; --ok-tint:#e8f5ee; --warn:#a8410f; --warn-tint:#fdeee6; --blue:#1b4f8a;
+    --on-accent:#ffffff;
     --fs:16px; --pad:10px; --radius:12px;
   }
   :root[data-theme="dark"]{
-    --ink:#f2ede6; --dim:#a89f95; --line:#3a352f; --paper:#17150f; --card:#211e18;
+    --ink:#f2ede6; --dim:#a89f95; --line:#3a352f; --edge:#6f6965; --paper:#17150f; --card:#211e18;
     --ok:#4cc38a; --ok-tint:#173226; --warn:#f2a37a; --warn-tint:#3a2318; --blue:#7cb0e8;
+    --on-accent:#0c1a14;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -87,13 +106,13 @@
   /* the dozen this shop sells all day — big targets, no reading, gone the moment somebody types */
   /* everything · on offer · the departments — one row, scrolls sideways on a phone rather than stacking */
   /* ⭐ THE MENU. Three jobs, named, one of them lit — never a dropdown: a person at a counter must see which rules are in force. */
-  .modesel{font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1px solid var(--line);
+  .modesel{font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:1px solid var(--edge);
            border-radius:9px;padding:5px 8px;cursor:pointer}
   .modes{display:inline-flex;gap:2px;background:var(--line);border-radius:9px;padding:2px}
   .modes button{border:0;background:transparent;color:var(--dim);padding:4px 10px;border-radius:7px;cursor:pointer;font-size:.85em;font-weight:700}
   .modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
   .doc{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
-  .doc input,.doc select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:.9em;min-width:0}
+  .doc input,.doc select{padding:8px;border:1px solid var(--edge);border-radius:8px;background:var(--paper);color:var(--ink);font-size:.9em;min-width:0}
   .doc .wide{grid-column:1 / -1}
   /**
    * ⚠️⚠️ THERE WAS NO .pane RULE AT ALL. setMode sets display:flex on the chosen pane, and flex defaults to ROW — so the
@@ -107,7 +126,7 @@
   .lines .ln{display:grid;grid-template-columns:1fr 74px 74px 90px 30px;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
   /* ── the cart's own stepper: this IS the place a quantity is amended ── */
   #cart .qty{display:flex;align-items:center;gap:3px}
-  #cart .qty button{width:34px;height:34px;flex:none;border:1px solid var(--line);border-radius:8px;background:var(--paper);
+  #cart .qty button{width:34px;height:34px;flex:none;border:1px solid var(--edge);border-radius:8px;background:var(--paper);
                     color:var(--ink);font:inherit;font-size:1.15em;font-weight:700;line-height:1;padding:0;cursor:pointer}
   #cart .qty button:hover{border-color:var(--ok);color:var(--ok)}
   #cart .qty button:active{background:var(--ok-tint)}
@@ -117,14 +136,14 @@
   .lines .ln.done{background:var(--ok-tint)}
   /* the tax box is narrower than the money boxes — it is a percentage, and it must not crowd the rate */
   .lines .ln input.gstin{width:64px;text-align:center}
-  .lines .ln input{width:100%;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);text-align:right}
+  .lines .ln input{width:100%;padding:6px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);color:var(--ink);text-align:right}
   .lines .ln .nm{font-weight:600}
   .lines .ln .u{color:var(--dim);font-size:.78em}
   .lines .ln select{width:100%;padding:5px;border:1px solid var(--warn);border-radius:7px;background:var(--paper);color:var(--warn);font-size:.78em}
   .bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);font-size:.85em;color:var(--dim);flex-wrap:wrap}
   .bar b{color:var(--ink)}
   .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch}
-  .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
+  .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   /* the consignment's own facts — shown only when this trade asks for them */
   /* what is not going: still on the screen, still on the paper, out of the way of the work */
@@ -134,12 +153,12 @@
   .lotrow{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 8px 12px;border-bottom:1px solid var(--line)}
   .lotrow label{display:flex;flex-direction:column;font-size:.72em;color:var(--dim);gap:2px}
   .lotrow label.need{color:var(--warn);font-weight:700}
-  .lotrow input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font-size:1.15em;min-width:110px}
+  .lotrow input{padding:5px 7px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);color:var(--ink);font-size:1.15em;min-width:110px}
   /* the hour's suggestion, and the two small controls that make it the shop's own */
   .qwhy{grid-column:1/-1;color:var(--dim);font-size:.75em;text-transform:uppercase;letter-spacing:.4px;padding:0 2px 2px}
   /* ⭐ the group bar sits above the keys and spans them — choose a group, start one, add the marked row */
   .qbar{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 2px 6px}
-  .qbar select,.qbar button{font:inherit;font-size:.82em;padding:4px 9px;border:1px solid var(--line);
+  .qbar select,.qbar button{font:inherit;font-size:.82em;padding:4px 9px;border:1px solid var(--edge);
         border-radius:999px;background:var(--paper);cursor:pointer}
   .qbar .qwhy{grid-column:auto;padding:0;margin-inline-start:auto}
   .quick .qadd{position:absolute;inset-inline-start:2px;top:2px;font-style:normal;font-size:.8em;opacity:.35;
@@ -209,7 +228,7 @@
   /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
   .upd{color:var(--ok);font-weight:700}
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card)}
-  .quick button{padding:14px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
+  .quick button{padding:14px 10px;border:1px solid var(--edge);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
   .quick button b{display:block;font-size:.95em;overflow-wrap:anywhere}
   .quick button span{color:var(--dim);font-size:.8em}
   .quick:empty{display:none}
@@ -231,9 +250,9 @@
        padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
   /* big enough for a counter hand, quiet enough not to shout down the price beside it */
-  .hit .addbtn{width:34px;height:34px;border:1px solid var(--line);background:var(--card);color:var(--ok);
+  .hit .addbtn{width:34px;height:34px;border:1px solid var(--edge);background:var(--card);color:var(--ok);
        border-radius:9px;font-size:1.3em;font-weight:800;line-height:1;cursor:pointer;flex:none}
-  .hit .addbtn:hover{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .hit .addbtn:hover{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
   .hit.sel{position:relative;z-index:2;background:var(--card);border-radius:10px;
            box-shadow:0 0 0 2px var(--ok), 0 6px 18px rgba(0,0,0,.20), inset 4px 0 0 var(--ok)}
   /* the product open in the Maintenance panel — lit by IDENTITY, so it survives a search that moves it */
@@ -258,7 +277,7 @@
    * there is something genuinely unsaved, and then it says so.
    */
   .hit.editing.unsaved::after{content:'not saved';position:absolute;inset-inline-end:10px;top:-9px;
-                      background:var(--warn);color:#fff;font-size:.66em;font-weight:700;padding:1px 7px;border-radius:999px}
+                      background:var(--warn);color:var(--on-accent);font-size:.66em;font-weight:700;padding:1px 7px;border-radius:999px}
   /* both at once is the ordinary case in Maintenance — the ring is already there, so only the tint is added */
   .hit.sel.editing{background:var(--ok-tint)}
   .hit .n{font-weight:600;min-width:0;line-height:1.3}
@@ -295,7 +314,7 @@
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
   .cust{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
-  .cust input{flex:1;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);min-width:0}
+  .cust input{flex:1;padding:9px 10px;border:1px solid var(--edge);border-radius:9px;background:var(--paper);min-width:0}
   .cart{overflow:auto;flex:1;min-height:120px}
   /* ⚠️ THE QUANTITY COLUMN HOLDS A STEPPER NOW, not a bare box — 84px was sized for the box alone, so the - [n] + group
      (34+46+34) overflowed and the AMOUNT sat on top of the + button, which then could not be clicked at all. Found by a
@@ -349,7 +368,7 @@
   /* ⭐ THE LINE IN ACTION — what Ctrl ↑↓ will change, and what the shelf on the left is pointing at. A bar on the
      leading edge rather than a fill: the amounts must stay the easiest thing on this panel to read. */
   .row.sel{background:var(--ok-tint);box-shadow:inset 3px 0 0 var(--ok)}
-  .row input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;background:var(--paper)}
+  .row input{width:100%;padding:7px 8px;border:1px solid var(--edge);border-radius:8px;text-align:right;background:var(--paper)}
   .row .amt{text-align:right;font-variant-numeric:tabular-nums}
   /* ⚠️ STICKY, because it answers "how many so far" and a long bill would scroll the answer away */
   .carthead{position:sticky;top:0;z-index:1;padding:6px 12px;background:var(--card);border-bottom:1px solid var(--line);
@@ -379,9 +398,9 @@
   .rw.on{display:flex}
   .rw b{font-weight:800}
   .rw .u{color:var(--dim)}
-  .rw button{padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);
+  .rw button{padding:4px 10px;border:1px solid var(--edge);border-radius:999px;background:var(--card);
              font-weight:700;cursor:pointer;font-size:.95em}
-  .rw button.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .rw button.on{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
   .totals{border-top:2px solid var(--ink);padding:8px 12px}
   .t{display:flex;justify-content:space-between;padding:1px 0}
   .t.big{font-size:1.7em;font-weight:800;padding-top:4px}
@@ -391,7 +410,7 @@
   .foldbtn:hover{color:var(--ink)}
   .totdetail[hidden]{display:none}
   .pay{display:flex;gap:8px;padding:8px 12px;flex-wrap:wrap}
-  .pay button{flex:1 1 90px;padding:12px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);color:var(--ink);cursor:pointer}
+  .pay button{flex:1 1 90px;padding:12px 8px;border:1px solid var(--edge);border-radius:var(--radius);background:var(--paper);color:var(--ink);cursor:pointer}
   /* what will actually be written down — full width under the three buttons, because it is a sentence, not a chip */
   .paysays{flex-basis:100%;color:var(--dim);font-size:.85em;padding-top:2px}
   .paysays b{color:var(--ink);font-weight:800}
@@ -406,8 +425,8 @@
   .take{display:flex;gap:8px;padding:0 12px 8px;align-items:center}
   .take input{flex:1;font-size:1.2em;padding:10px 12px;border:2px solid var(--line);border-radius:var(--radius);text-align:right;background:var(--paper);min-width:0}
   .go{display:flex;gap:8px;padding:0 12px 10px}
-  .go button{flex:1;padding:16px;font-size:1.1em;font-weight:700;border-radius:var(--radius);border:1px solid var(--line);background:var(--paper);cursor:pointer}
-  .go button.pri{background:var(--ok);border-color:var(--ok);color:#fff}
+  .go button{flex:1;padding:16px;font-size:1.1em;font-weight:700;border-radius:var(--radius);border:1px solid var(--edge);background:var(--paper);cursor:pointer}
+  .go button.pri{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
   .go button:disabled{opacity:.45;cursor:not-allowed}
   /* bills set aside — one line, always visible while any are waiting, so nobody forgets a customer standing at the side */
   .parked{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 8px}
@@ -442,18 +461,18 @@
   .swtxt{color:var(--dim);font-size:.85em;min-width:0}
   /* ⭐ a switch, not a checkbox — it is a STATE of the product, and it takes effect the moment it is moved.
      38px of height keeps the NN/g touch target the row's stepper already follows. */
-  .sw{width:52px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--tint);
+  .sw{width:52px;height:30px;border-radius:999px;border:1px solid var(--edge);background:var(--tint);
       position:relative;cursor:pointer;flex:none;padding:0;transition:background .15s,border-color .15s}
   .sw .knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--paper);
             box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
   .sw.on{background:var(--ok);border-color:var(--ok)}
   .sw.on .knob{left:25px}
   .sw:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
-  #cardprice{width:110px;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;
+  #cardprice{width:110px;height:38px;padding:0 10px;border:1px solid var(--edge);border-radius:9px;
              background:var(--paper);color:var(--ink);font:inherit;font-weight:700;font-variant-numeric:tabular-nums}
   #cardprice:focus{outline:2px solid var(--ok);outline-offset:1px}
   /* the accent button: filled, so it reads as the action and not as another label */
-  .cardrow .pri{height:38px;padding:0 18px;border:1px solid var(--ok);border-radius:9px;background:var(--ok);color:#fff;
+  .cardrow .pri{height:38px;padding:0 18px;border:1px solid var(--ok);border-radius:9px;background:var(--ok);color:var(--on-accent);
                 font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
   .cardrow .pri:hover{filter:brightness(1.08)}
   .cardrow .pri:active{filter:brightness(.94)}
@@ -466,7 +485,7 @@
   .cardsave{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 0 4px;border-top:1px solid var(--line);margin-top:6px}
   .cardsave button{height:42px;padding:0 20px;border-radius:10px;font:inherit;font-weight:700;cursor:pointer;
                    border:1px solid var(--line);background:var(--paper);color:var(--ink)}
-  .cardsave button.pri{border-color:var(--ok);background:var(--ok);color:#fff}
+  .cardsave button.pri{border-color:var(--ok);background:var(--ok);color:var(--on-accent)}
   .cardsave button.pri:hover:not(:disabled){filter:brightness(1.08)}
   /* ⚠️ a disabled Save must LOOK disabled, or it is just a button that does nothing when pressed */
   .cardsave button:disabled{opacity:.45;cursor:not-allowed;background:var(--paper);color:var(--dim);border-color:var(--line)}
@@ -502,15 +521,15 @@
   .nowbox{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);margin-bottom:12px}
   .nowbox b{font-size:1.05em}
   .nowbox.none{border-color:var(--warn);background:var(--warn-tint)}
-  .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
+  .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--edge);border-radius:9px;background:var(--paper)}
   .dlgbtns{display:flex;gap:8px;margin-top:14px}
   .dlgbtns{border-top:1px solid var(--line);padding-top:12px}
-  .dlgbtns button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);
+  .dlgbtns button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--edge);background:var(--paper);
                   color:var(--ink);font-weight:600;cursor:pointer}
   .dlgbtns button:hover{border-color:var(--ok);color:var(--ok)}
-  .dlgbtns button.pri:hover{background:var(--ok);color:#fff;filter:brightness(1.08)}
+  .dlgbtns button.pri:hover{background:var(--ok);color:var(--on-accent);filter:brightness(1.08)}
   .dlgbtns button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
-  .dlgbtns button.pri{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
+  .dlgbtns button.pri{background:var(--ok);border-color:var(--ok);color:var(--on-accent);font-weight:700}
   /* ⚠️ PAPER, ON PURPOSE — a receipt preview must look like the receipt, in either theme. Both colours are pinned
      together: fixing only the background is what produced near-white ink on white. */
   .slipbox{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:#000}
