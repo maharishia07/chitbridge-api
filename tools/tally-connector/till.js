@@ -469,7 +469,9 @@ const server = http.createServer(async (req, res) => {
                    '/api/till/reward', '/api/till/reward/claim',
                    /* ⭐⭐ a counter that is stuck reporting itself. A desktop-kit PC is exactly the machine nobody
                       can reach, so this list is the LAST place it should be missing from. */
-                   '/api/till/diagnostic'];
+                   '/api/till/diagnostic',
+                   /* ⭐ did the chit I was given record MY bill? — the recovery for absorbed sales */
+                   '/api/till/reconcile'];
       if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
       try { const r = await cb.call('POST', o.path, o.body || {});
         return json(res, 200, Object.assign({ ok:true }, r || {}));

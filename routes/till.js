@@ -1038,6 +1038,51 @@ router.post('/pair/claim', async (req, res) => {
  * is the exact failure being checked for. These are drawn across the whole catalogue by offset, so a copy that stops at 500 fails.
  * ⚠️ It never repairs anything. A check that quietly fixes what it finds cannot be trusted to report honestly next time.
  */
+/**
+ * ── ⭐⭐⭐ POST /api/till/reconcile — DID THE CHIT I WAS GIVEN ACTUALLY RECORD *MY* BILL? ─────────────────────────
+ *
+ * Athi, 2026-09-17, choosing option (a) for the bills two PCs both numbered C1: *"go with option a, build the
+ * recovery."* Those bills were ABSORBED — the server answered 200 with the OTHER PC's chit id, so the counter holds
+ * a real chit id that records somebody else's sale, and shows "✓ sent". Nothing on the counter can tell. This can.
+ *
+ * Body: { bills: [{ no, at, chit_id }] } (≤ 200). For each, the chit is read back and its own bill number and
+ * `billed_at` compared with the counter's:
+ *   ok        the chit is this bill
+ *   absorbed  the chit exists but records a DIFFERENT bill — this sale never reached the books
+ *   missing   no such chit for this shop
+ *   unknown   the chit carries no `billed_at`, so nobody can say — left alone rather than guessed at
+ *
+ * ⚠️ ONE QUERY for the whole batch. ⚠️ Read-only: it answers, the counter decides and re-sends.
+ */
+router.post('/reconcile', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const list = (Array.isArray(req.body && req.body.bills) ? req.body.bills : []).slice(0, 200)
+      .map((b) => ({ no: String((b && b.no) || '').slice(0, 64), at: (b && b.at) ? String(b.at) : null,
+                     chit_id: /^[0-9a-f-]{36}$/i.test(String((b && b.chit_id) || '')) ? String(b.chit_id) : null }))
+      .filter((b) => b.no);
+    const ids = [...new Set(list.map((b) => b.chit_id).filter(Boolean))];
+    const found = new Map();
+    if (ids.length) {
+      const r = await withEntity(entity_id, (db) => db.query(
+        `SELECT DISTINCT ON (chit_id) chit_id::text AS chit_id,
+                business_json->>'client_ref' AS ref, business_json->>'billed_at' AS billed_at
+           FROM chit_header WHERE entity_id = $1 AND chit_id = ANY($2::uuid[])
+          ORDER BY chit_id, created_at`, [entity_id, ids]));
+      r.rows.forEach((row) => found.set(row.chit_id, row));
+    }
+    const out = list.map((b) => {
+      const c = b.chit_id ? found.get(b.chit_id) : null;
+      if (!c) return { no: b.no, verdict: 'missing' };
+      if (!c.billed_at || !b.at) return { no: b.no, verdict: 'unknown' };
+      /* ⚠️ same number AND same moment — a chit carrying this number but another moment is another PC's sale */
+      const same = String(c.ref || '') === b.no && String(c.billed_at) === b.at;
+      return { no: b.no, verdict: same ? 'ok' : 'absorbed', recorded_as: c.ref || null };
+    });
+    res.json({ checked: out.length, bills: out });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

@@ -1876,8 +1876,18 @@ var CloudHost = {
              * a 500 is transient and a bill is somebody's money, so nothing here parks or drops it — but the
              * reason now travels with the bill and reaches the screen.
              */
-            var said = '';
-            try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; } catch (_) {}
+            var said = '', code = '';
+            try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; code = (j && j.code) || ''; } catch (_) {}
+            /**
+             * ⭐⭐⭐ A NUMBER ANOTHER COUNTER ALREADY USED IS RECORDED UNDER A NEW ONE (Athi, 2026-09-17, option a).
+             * Retrying it as it is can never succeed — the number is taken. So the sale is given the next number
+             * of THIS counter's own series, keeps the number that was printed as `printed_as`, and goes round again.
+             * ⚠️ Only a SALE is renumbered here. A receipt or despatch note has its own series and is left for a person.
+             */
+            if (r.status === 409 && code === 'TILL_SERIES_COLLISION' && isSaleRow(bill)) {
+              var moved = await renumberBill(bill, said);
+              if (moved) { if (!why) why = 'Bill ' + moved.from + ' shared a number with another counter — recorded as ' + moved.to + '.'; continue; }
+            }
             bill._status = r.status; bill._why = said || ('the shop answered ' + r.status);
             bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
             try { await DB.put('queue', bill); } catch (_) {}
@@ -2138,6 +2148,9 @@ function chitOf(bill){
       customer: (bill.customer && bill.customer.name) ? bill.customer : { name:'Walk-in' },
       till: { id: bill.till, name: ls.get('cb_till_name','Counter 1'), host: 'browser', by: bill.by || null },
       bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
+      /* ⭐ the number on the customer's paper, when the books had to record the sale under another — see renumberBill */
+      printed_as: bill.printed_as || null,
+      renumbered: bill.renumbered || null,
       payment: { mode: (bill.payments||[]).map(function(p){ return p.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[] },
       slip: bill.kind || 'cash',
     },
@@ -6562,6 +6575,8 @@ function slipHTML(bill, m){
     + (bill.kind !== 'cash' && shop.gstin ? '<div style="text-align:center">GSTIN ' + esc(shop.gstin) + '</div>' : '')
     + solid + '<div style="text-align:center;font-weight:700">' + title + '</div>' + dash
     + t('No ' + esc(bill.no), esc(new Date(bill.at).toLocaleString()))
+    /* ⚠️ a REPRINT of a renumbered sale must carry both numbers — the customer's paper says the first one */
+    + (bill.printed_as ? t('Printed as ' + esc(bill.printed_as), 'recorded as ' + esc(bill.no)) : '')
     + t(esc((STATE.till && STATE.till.name) || '') + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in')) + dash
     /**
      * ── ⭐⭐⭐ EVERY ITEM ACCOUNTS FOR ITSELF ON THE PAPER ──────────────────────────────────────────────────────
@@ -6757,6 +6772,102 @@ async function resendBill(no){
   } catch (e) { toastLine('Could not queue bill ' + no + ': ' + ((e && e.message) || 'unknown')); }
 }
 /**
+ * ── ⭐⭐⭐ RECOVERY FOR A SALE THAT SHARED ITS NUMBER WITH ANOTHER COUNTER (Athi, 2026-09-17: option a) ──────────
+ *
+ * Two PCs both numbered as C1, and the second PC's sales were absorbed as retries of the first's. Athi chose:
+ * *record each under a new unique number, keeping the printed number as a reference*. So the books hold one
+ * number per sale, and the customer's paper can still be traced to the sale it describes.
+ *
+ * ⚠️⚠️ THE NEW ROW IS WRITTEN BEFORE THE OLD ONE IS REMOVED. A crash in between leaves the sale twice on this
+ * device — which the server settles, because both copies carry the same `billed_at` — and never leaves it nowhere.
+ * ⚠️ BOUNDED. A counter still sharing its prefix could be handed another taken number; after twenty attempts the
+ * bill stops and says so, rather than burning numbers for ever.
+ * ⚠️ ONLY SALES. A receipt or despatch note has a series of its own and belongs to a person to settle.
+ */
+function isSaleRow(b){
+  return !!(b && !b.tillPost && Array.isArray(b.lines) && b.kind !== 'receipt' && b.kind !== 'despatch');
+}
+async function renumberBill(bill, why){
+  var tries = Number(bill._renum) || 0;
+  if (tries >= 20) return null;
+  var from = bill.no, to = null;
+  try { to = await nextNumber(); } catch (_) { return null; }
+  if (!to || to === from) return null;
+  var fresh = Object.assign({}, bill, {
+    no: to,
+    till: tillId(),
+    printed_as: bill.printed_as || from,
+    renumbered: { from: from, to: to, at: new Date().toISOString(),
+                  why: why || 'the number was already used by another counter' },
+    _renum: tries + 1, _tries: 0
+  });
+  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._verified;
+  await DB.put('bills', fresh);
+  await DB.put('queue', fresh);
+  try { await DB.del('queue', from); } catch (_) {}
+  try { await DB.del('bills', from); } catch (_) {}
+  return { from: from, to: to };
+}
+/**
+ * ⭐⭐⭐ FIND THE SALES THAT SAY "SENT" AND WERE NOT. A bill absorbed before the server fix holds a real chit id —
+ * somebody else's — so nothing on this device can tell it apart from a good one. The shop can: POST
+ * /api/till/reconcile reads each chit back and compares the bill number AND the moment it was taken.
+ *   absorbed → recorded under a new number, printed number kept
+ *   missing  → sent again as it is (the server will renumber-by-refusal if the number turns out to be taken)
+ *   ok       → marked verified, and not asked about again
+ * ⚠️ RECENT BILLS ONLY (thirty days). An older chit may have been retired by the shop's own retention rules, and
+ * "missing" must never become a reason to record an old sale a second time.
+ * ⚠️ At most once every ten minutes unless asked, because it is a question about the past, not the queue.
+ */
+var ABSORB_AT = 0;
+async function checkAbsorbed(force){
+  if (!(HOST && HOST.key) || !navigator.onLine || !HOST.tillPost) return null;
+  if (!force && Date.now() - ABSORB_AT < 600000) return null;
+  ABSORB_AT = Date.now();
+  var cutoff = Date.now() - 30 * 86400000;
+  var bills = [];
+  try { bills = (await DB.all('bills')) || []; } catch (_) { return null; }
+  var sent = bills.filter(function(b){
+    return b && b._sent && b._sent.chit_id && !b._verified && isSaleRow(b)
+        && new Date(b.at).getTime() > cutoff;
+  }).slice(0, 200);
+  if (!sent.length) return { checked: 0, fixed: 0 };
+  var out = await HOST.tillPost('/api/till/reconcile',
+    { bills: sent.map(function(b){ return { no: b.no, at: b.at, chit_id: b._sent.chit_id }; }) }, { noQueue: true });
+  if (!out || !out.ok) return { checked: 0, fixed: 0, why: (out && out.why) || 'the shop did not answer' };
+  var byNo = {}; sent.forEach(function(b){ byNo[b.no] = b; });
+  var fixed = 0, renumbered = [];
+  var list = out.bills || [];
+  for (var i = 0; i < list.length; i++) {
+    var v = list[i], b = byNo[v.no];
+    if (!b) continue;
+    if (v.verdict === 'ok') { b._verified = Date.now(); try { await DB.put('bills', b); } catch (_) {} continue; }
+    if (v.verdict !== 'absorbed' && v.verdict !== 'missing') continue;     /* 'unknown' is left alone */
+    delete b._sent;                                                        /* it never landed — say so */
+    if (v.verdict === 'absorbed') {
+      var m = await renumberBill(b, 'ChitBridge had recorded another counter\'s sale under ' + b.no);
+      if (m) { renumbered.push(m); fixed++; continue; }
+    }
+    try { await DB.put('bills', b); await DB.put('queue', b); fixed++; } catch (_) {}
+  }
+  if (fixed) {
+    try { await queueTally(); paintStatus(); } catch (_) {}
+    try { if (HOST.drain) HOST.drain(); } catch (_) {}
+  }
+  return { checked: list.length, fixed: fixed, renumbered: renumbered };
+}
+async function checkAbsorbedNow(){
+  var r = await checkAbsorbed(true);
+  if (!r) { toastLine('Cannot check — this counter needs its key and the internet.'); return; }
+  if (r.why) { toastLine('Could not check: ' + r.why); return; }
+  say(!r.checked ? 'There are no sent bills to check.'
+    : (!r.fixed ? ('All ' + r.checked + ' sent bill(s) are recorded correctly.')
+      : (r.fixed + ' of ' + r.checked + ' bill(s) had not really reached ChitBridge and are being sent now.'
+         + (r.renumbered.length ? '\n\nRecorded under new numbers (the printed number is kept on each):\n· '
+             + r.renumbered.map(function(m){ return m.from + ' → ' + m.to; }).join('\n· ') : ''))));
+  openStuck();
+}
+/**
  * ⭐⭐ SET ASIDE — THE WAY OUT OF A ROW THAT WILL NEVER GO. Athi, 2026-09-16: *"it is all stuck, the screen says
  * sent but it is not reaching the task — how do I remove the stuck rows?"*
  *
@@ -6919,6 +7030,7 @@ async function openStuck(){
     + '<button class="pill" data-testid="till-stuck-copy" onclick="stuckCopy()">📋 Copy the report</button>'
     + '<button class="pill" data-testid="till-stuck-save" onclick="stuckSave()">💾 Save it as a file</button>'
     + '<button class="pill" data-testid="till-storage" onclick="openStorage()">🗄 What is being kept</button>'
+    + '<button class="pill" data-testid="till-check-sent" onclick="checkAbsorbedNow()">🔎 Check sent bills really arrived</button>'
     + '<span class="qwhy">support code ' + esc(stuckCode()) + '</span>'
     + '</div>' + h;
 
@@ -7518,6 +7630,9 @@ async function openBills(keepOpen){
     + (rows.length ? rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-bill-' + esc(b.no) + '">'
           + '<span style="flex:1"><b>' + esc(b.no) + '</b>'
+            /* ⭐ a renumbered sale shows the number the customer was given, beside the one the books hold */
+            + (b.printed_as ? ' <span class="u" data-testid="till-bill-printed-' + esc(b.no) + '" title="'
+                + esc((b.renumbered && b.renumbered.why) || 'recorded under a new number') + '">printed as ' + esc(b.printed_as) + '</span>' : '')
             /* ⭐ the pill says which of the three this bill is, and only "✓ sent" is a promise */
             + (function(){
                 var st = stateOf(b);
@@ -7697,7 +7812,8 @@ function reprintOld(no){
 }
 async function reprint(no){
   var rows = (HOST && HOST.bills) ? (await HOST.bills()) : [];
-  var b = rows.filter(function(x){ return x.no === no; })[0];
+  /* ⚠️ the customer holds the PRINTED number — a renumbered sale must still be found by it */
+  var b = rows.filter(function(x){ return x.no === no || x.printed_as === no; })[0];
   if (!b) return;
   document.getElementById('billsdlg').close();
   LAST = b;
@@ -8088,6 +8204,9 @@ async function bellUp(){
   } catch (_) { BELL = null; }
 }
 setInterval(bellUp, 30000);
+/* ⭐ are the bills that say "sent" really in the books? — decoupled from drain so the two can never re-enter each other */
+if (typeof setTimeout === 'function') setTimeout(function(){ checkAbsorbed(false); }, 45000);
+setInterval(function(){ checkAbsorbed(false); }, 600000);
 window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
 
 /* ═══ 6 · keys, and the clock ════════════════════════════════════════════════════════════════════════════════ */
