@@ -235,6 +235,14 @@
         border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;min-width:270px;display:flex;flex-direction:column}
   .menu button,.menu a{display:block;text-align:start;border:0;background:transparent;color:var(--ink);cursor:pointer;
         padding:10px 12px;border-radius:9px;font:inherit;text-decoration:none}
+  /* ⭐ the view toggles, in the menu — a section of chips rather than another dialog to open */
+  .menusec{padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
+  .menusec>b{display:block;font-size:.78em;color:var(--dim);text-transform:uppercase;letter-spacing:.03em;padding-bottom:6px}
+  .viewchips{display:flex;flex-wrap:wrap;gap:6px}
+  /* ⚠️ these sit INSIDE .menu, whose button rule is display:block — so they restate what a chip is */
+  .menu .viewchips button.vchip{display:inline-block;width:auto;padding:5px 10px;border:1px solid var(--edge);
+        border-radius:999px;background:var(--paper);color:var(--dim);font-size:.82em;white-space:nowrap}
+  .menu .viewchips button.vchip.on{background:var(--ok-tint);border-color:var(--ok);color:var(--ok);font-weight:600}
   /**
    * ⚠️⚠️ THE SAME TRAP, FOUND IN promo.html AND THEN HERE. `hidden` is display:none from the BROWSER's stylesheet only, so the
    * author rule display:flex above outranks it — this menu would have opened once and never shut, sitting over the search box
@@ -639,6 +647,21 @@
         <button data-testid="till-bills" onclick="fromMenu(openBills)">🧾 <b>Today's bills</b><i>print one again · F8</i></button>
         <button data-testid="till-screen" onclick="fromMenu(openScreen)">📺 <b>Shop screen</b><i>your offers as a sign for a TV</i></button>
         <button data-testid="till-refresh" onclick="fromMenu(refresh)">↻ <b>Read the shop again</b><i>new prices and products · F4</i></button>
+        <!--
+          ⭐⭐⭐ THE VIEW, TOGGLED WHERE IT IS REACHED (Athi, 2026-09-16): *"those sections are being switched on
+          off in the settings — any other way can we bring it in the frontend itself as a toggle button?"*
+
+          ⭐ ON THE SCREEN, BUT NOT ON THE BAR. The rule above sorts controls by FREQUENCY DURING A SALE, and
+          changing the view is a between-customers act — so it belongs here with the bill list and the shop
+          screen, one press away, rather than on the bar beside the things a cashier touches with a customer
+          waiting. Two presses became one; Settings keeps the same ticks for anyone who is already in there.
+          ⚠️ THE SAME `tillShowSet` THE SETTINGS TICKS CALL. One source of truth for what is on screen — a second
+          toggle with its own state is how a menu and a settings panel come to disagree. [[feedback-stay-in-the-construct]]
+        -->
+        <div class="menusec" data-testid="till-view-toggles">
+          <b>Show on this counter</b>
+          <div class="viewchips" id="viewchips"></div>
+        </div>
         <button data-testid="till-settings" onclick="fromMenu(openSettings)">⚙ <b>Settings</b><i>look, printer, this till</i></button>
         <!-- ⚠️ IN THE MENU, NOT BURIED IN SETTINGS. Athi went looking for it — *"where is the hard refresh in the counter?"* —
              and could not find it, which is the only evidence that matters about where a control belongs. -->
@@ -2114,7 +2137,24 @@ function toggleMenu(e){
   var m = document.getElementById('tillmenu'); if (!m) return;
   m.hidden = !m.hidden;
   if (e) e.stopPropagation();
-  if (!m.hidden) focusSearch();          /* the box keeps the caret, so a scan still lands while the menu is open */
+  if (!m.hidden) { paintViewChips(); focusSearch(); }   /* the box keeps the caret, so a scan still lands while the menu is open */
+}
+/**
+ * ⭐⭐ THE SECTIONS AS CHIPS, IN THE MENU (Athi, 2026-09-16) — *"any other way can we bring it in the frontend
+ * itself as a toggle button?"* One press to reach, one press to change, and the counter repaints underneath.
+ * ⚠️ IT CALLS `tillShowSet`, the same function the Settings ticks call. A second toggle holding its own state is
+ * how a menu and a settings panel come to disagree about what is on screen.
+ * ⚠️ THE MENU STAYS OPEN on a toggle — a shopkeeper trying two of them should not have to re-open it each time.
+ */
+function paintViewChips(){
+  var box = document.getElementById('viewchips'); if (!box) return;
+  var show = tillShow();
+  box.innerHTML = SECTIONS.map(function(p){
+    return '<button type="button" class="vchip' + (show[p[0]] ? ' on' : '') + '"'
+      + ' data-testid="till-view-' + p[0] + '" aria-pressed="' + (show[p[0]] ? 'true' : 'false') + '"'
+      + ' onclick="event.stopPropagation();tillShowSet(\'' + p[0] + '\',' + (show[p[0]] ? 'false' : 'true') + ');paintViewChips()">'
+      + (show[p[0]] ? '✓ ' : '') + esc(p[1]) + '</button>';
+  }).join('');
 }
 function closeMenu(){ var m = document.getElementById('tillmenu'); if (m) m.hidden = true; }
 function fromMenu(fn){ closeMenu(); try { fn(); } catch (_) {} }
