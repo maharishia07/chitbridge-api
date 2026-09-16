@@ -86,6 +86,21 @@ router.setEnrol = async (entity_id, jti, patch) => {
  * ⚠️ ONE SLOT PER KEY. It is a last-known-state, not a log: an unbounded array on a jsonb column shared with the
  * key list is how that column stops being readable.
  */
+/**
+ * ⭐⭐ setSeen(entity_id, jti, { ip, agent }) — a sighting: this key was used, now, from there.
+ *
+ * ⚠️ IT MUST NOT INVALIDATE THE AUTH CACHE. setEnrol and setDiag both call forgetKey because they change what the
+ * key IS ALLOWED to do, so the next request must re-read it. A sighting changes nothing about authority, and
+ * dropping the cache every five minutes per counter would put a database read back on the hot path it was added
+ * to avoid. Written straight to the row, cache untouched.
+ * ⚠️ AND IT NEVER THROWS INTO A REQUEST. The caller fires it after the answer has gone; a shop must never lose a
+ * sale because we could not file a timestamp.
+ */
+router.setSeen = async (entity_id, jti, at) => {
+  const keys = await listOf(entity_id); const k = keys.find((x) => x && String(x.jti) === String(jti)); if (!k) return null;
+  k.seen = { at: new Date().toISOString(), ip: (at && at.ip) || null, agent: (at && at.agent) || null };
+  await save(entity_id, keys); return k.seen;
+};
 router.setDiag = async (entity_id, jti, patch) => {
   const keys = await listOf(entity_id); const k = keys.find((x) => x && String(x.jti) === String(jti)); if (!k) return null;
   k.diag = Object.assign({}, patch || {}, { at: new Date().toISOString() });

@@ -31,7 +31,7 @@ const auth = async (req, res, next) => {
     /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
        the token's own expiry says. One read per request, cached a minute per jti. */
     if (decoded.kind === 'api_key') {
-      const rec = await keyListed(decoded.identity_id, decoded.jti);
+      const rec = await keyListed(decoded.identity_id, decoded.jti, req);
       if (!rec) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
       req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [], enrol: (rec && rec.enrol) || null };
       const url = String(req.originalUrl || req.url || '').split('?')[0], m = req.method;
@@ -258,8 +258,38 @@ const KEY_ROUTES = {
 };
 const _keyCache = new Map();   // jti → { ok: the key's listing record (or false), at }
 auth.forgetKey = (jti) => { _keyCache.delete(String(jti)); };   /* an approval must not wait a minute for the cache (routes/integrations.js) */
-async function keyListed(entity_id, jti) {
+/**
+ * ── ⭐⭐⭐ WHEN DID THIS COUNTER LAST SPEAK, AND FROM WHERE ────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16, with one PC pushing bills and another silent: *"can we trace the ip for each counter app and
+ * see what the restrictions are?"* We could not. Nothing was ever written back when a key was used, so a counter
+ * that had gone quiet was indistinguishable from one that had never existed.
+ *
+ * ⚠️⚠️ THE ABSENCE IS THE DIAGNOSIS. If a counter never appears here at all, it is not being refused by us — it
+ * is not reaching us, which points at the network in front of it rather than anything on this side. That single
+ * distinction is the difference between hunting a permissions bug and telephoning an office firewall.
+ *
+ * ⚠️ THROTTLED HARD, AND NEVER IN THE REQUEST'S WAY. A counter calls constantly; one write per request would be a
+ * database trip per bill keystroke. It writes at most once every five minutes, after the answer has gone out, and
+ * a failure here is swallowed on purpose — a shop must never lose a sale because we could not file a timestamp.
+ */
+const _seenAt = new Map();   // jti → when we last filed a sighting
+function noteSeen(entity_id, jti, req) {
+  try {
+    if (!jti) return;
+    const now = Date.now(), was = _seenAt.get(jti) || 0;
+    if (now - was < 300000) return;
+    _seenAt.set(jti, now);
+    const ip = String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '').trim().slice(0, 45) || null;
+    setImmediate(() => {
+      require('../routes/keys').setSeen(entity_id, jti, { ip, agent: String(req.headers['user-agent'] || '').slice(0, 160) })
+        .catch(() => {});
+    });
+  } catch (_) { /* a sighting is never worth an error */ }
+}
+async function keyListed(entity_id, jti, req) {
   if (!jti) return false;
+  if (req) noteSeen(entity_id, jti, req);
   const c = _keyCache.get(jti); if (c && Date.now() - c.at < 60000) return c.ok;
   let ok = false;
   try { const { query } = require('../db'); const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
