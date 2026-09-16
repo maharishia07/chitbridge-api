@@ -412,11 +412,13 @@ router.post('/send',
                 client_ref, till: mine, taken_by: theirs,
                 message: sameName
                   ? ('Bill ' + client_ref + ' was already recorded by a different counter that is ALSO called '
-                    + mine + '. Two counters are numbering from the same series. Give each counter its own till id '
-                    + 'in Settings (C1, C2 …), then send again — nothing has been lost.')
+                    + mine + '. Two counters are numbering from the same series. This counter is given its own '
+                    + 'number the next time it reads the shop. This bill is kept on the counter, unsent — it was '
+                    + 'already printed with this number, so how it is recorded needs a decision. Nothing has been lost.')
                   : ('Bill ' + client_ref + ' was already recorded by counter ' + theirs + ', and this is '
-                    + 'counter ' + mine + '. Two counters are numbering from the same series. Give this counter its '
-                    + 'own till id in Settings, then send again — nothing has been lost.'),
+                    + 'counter ' + mine + '. Two counters are numbering from the same series. This counter is given '
+                    + 'its own number the next time it reads the shop. This bill is kept on the counter, unsent — '
+                    + 'nothing has been lost.'),
               });
             }
             return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });

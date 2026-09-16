@@ -902,8 +902,18 @@
   <div id="shopbox" data-testid="till-shopbox"></div>
   <div id="pairbox"></div>
   <div id="coldbox"></div>
-  <label>Counter name — it becomes the bill number's prefix</label>
-  <input id="set_till" placeholder="C1">
+  <!--
+    ⭐⭐⭐ THE PREFIX IS GIVEN, NOT TYPED. Athi, 2026-09-17: *"the counter sequence number — we should offer it, and it
+    cannot be changed for a PC, so it is a permanent number."* A free text box that defaulted to C1 is exactly how two
+    PCs came to share a series and one PC's sales were absorbed as the other's. The shop assigns each pairing its own
+    prefix (routes/keys.js claimTill) and keeps it; this box only SHOWS it.
+    ⚠️ Read-only, but still an input: saveSettings() reads its value, and an empty or altered one must never be what
+    decides the series — so the save path also refuses to take it (see saveSettings).
+  -->
+  <label>Counter number — given by the shop, and kept for this pairing</label>
+  <input id="set_till" placeholder="C1" readonly data-testid="till-set-till"
+         title="assigned by the shop so no two counters share a bill series — pair again for a new one"
+         style="background:var(--line);cursor:not-allowed">
   <!--
     ⭐⭐ THE BILL NUMBER'S SHAPE. Athi, 2026-09-16: *"the design is every day julian date changes and every
     month, both rotates."* The DATE and the RESET are two separate questions and are asked separately, because
@@ -1499,7 +1509,10 @@ var CloudHost = {
     OWNER = (await DB.get('owner')) || null;
     var have = await DB.get('snapshot');
     var since = (have && have.at) ? ('?since=' + encodeURIComponent(have.at)) : '';
-    var r = await fetchBy(this.api + '/api/till/snapshot' + since, { headers:{ 'X-Api-Key': this.key } }, SLOW);
+    /* ⭐ what this counter numbers under, and whether it has already issued anything — see tillClaim() */
+    var claim = await tillClaimQuery();
+    var r = await fetchBy(this.api + '/api/till/snapshot' + (since ? since + '&' : '?') + claim,
+                          { headers:{ 'X-Api-Key': this.key } }, SLOW);
     if (!r.ok) return { ok:false, status:r.status };
     /**
      * ⭐⭐ COUNTED AS IT ARRIVES. Athi, 2026-09-09: *"when we try to reload, no message is appearing — an image of the progress
@@ -1537,6 +1550,8 @@ var CloudHost = {
       return { ok:false, rejected:true, why:'this counter belongs to another shop' };
     }
     if (!OWNER && snap.entity_id) { OWNER = String(snap.entity_id); await DB.set('owner', OWNER); }
+    /* ⭐⭐ WHICH PREFIX THIS COUNTER NUMBERS UNDER — decided by the shop, not by a text box (tillClaim) */
+    try { await tillClaim(snap.till); } catch (_) {}
     if (REJECTED) { REJECTED = null; try { await DB.del('kv', 'rejected'); } catch (_) {} }
     /**
      * ⚠️⚠️ TWO SHOPS CAN NEVER BE MERGED INTO ONE COPY. Athi, 2026-09-09: *"can we confirm that the entity id is the same in each
@@ -1907,6 +1922,72 @@ function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; retur
  *  this counter has actually been built and tested. */
 function docCountry(){ return (S && S.shop && S.shop.country) || 'IN'; }
 function tillId(){ return ls.get('cb_till_id','C1'); }
+/**
+ * ── ⭐⭐⭐ ONE PREFIX PER COUNTER (Athi, 2026-09-17) ────────────────────────────────────────────────────────────
+ *
+ * *"If the same counter number is already opened in another PC, the sequence numbers collapse. Either stop opening
+ * that counter, or allow — but with a different sequence number. Otherwise we are messing up."*
+ *
+ * The till id used to be a text box that defaulted to C1 and that nobody set, so two PCs both numbered
+ * C1/26-27/0005 and the server absorbed the second as a retry of the first. Now the SHOP decides
+ * (routes/keys.js claimTill) and the counter does what it is told:
+ *   · ISSUED NOTHING YET → take the prefix the shop assigned. Automatic; nobody types anything.
+ *   · ISSUED NUMBERS, AND AN OLDER COUNTER HOLDS THE SAME PREFIX → STOP issuing. A series cannot be renamed
+ *     in the middle of a year — under GST that breaks the one continuous serial numbering exists to prove —
+ *     so a person has to choose a new id. Bills can still be PARKED, so nothing is lost while they decide.
+ *   · ISSUED NUMBERS, PREFIX NOT CONTESTED → carry on, and the shop now reserves that prefix for this counter.
+ *
+ * ⚠️ THE NEXT NUMBER STILL LIVES ONLY ON THIS DEVICE. That is what lets a counter bill with no line, and it is
+ * why the cloud can reserve a PREFIX but cannot say "carry on from 0042". Different prefixes are what keep
+ * two devices apart.
+ */
+var TILL_CLASH = null;
+/**
+ * ⚠️⚠️ STOPPED, NOT SILENTLY RENUMBERED. Two counters issuing one series is two tax invoices carrying one number,
+ * and the second one used to vanish into the first. A counter told it shares its prefix with an older one does not
+ * take another number until somebody chooses — and the bill on the screen can be parked meanwhile.
+ * ⚠️ Kept out of finish() on purpose: that function's opening is the ordinary one-keystroke cash sale, and a guard
+ * (tests/snapshot-wire) reads it to make sure that path survives.
+ */
+function tillStopped(){
+  if (!TILL_CLASH) return false;
+  say('This counter cannot issue a bill number yet.\n\n'
+    + 'Another counter (' + (TILL_CLASH.held_by || 'an older one') + ') is already numbering as ' + TILL_CLASH.id + '. '
+    + 'Two counters on one series would give two bills the same number.\n\n'
+    + 'The shop has no free counter number left to give it. Close counters you no longer use (ChitBridge → Settings → Integrations → Counters), then open this counter again.\n\n'
+    + 'The bill on the screen is safe — press F6 to park it.');
+  return true;
+}
+async function tillIssued(){
+  try { var s = await DB.get('series'); return !!(s && Number(s.next) > 1); } catch (_) { return false; }
+}
+async function tillClaimQuery(){
+  var issued = await tillIssued();
+  return 'till=' + encodeURIComponent(tillId()) + '&issued=' + (issued ? '1' : '0');
+}
+async function tillClaim(t){
+  if (!t) return;
+  TILL_CLASH = t.clash || null;
+  if (TILL_CLASH) { try { paintStatus(); } catch (_) {} return; }
+  var want = t.assigned_id || t.suggested_id;
+  if (!want || String(tillId()).toUpperCase() === String(want).toUpperCase()) return;
+  /**
+   * ⭐⭐ THE SHOP'S ANSWER IS FOLLOWED — including a MOVE for a counter that has already issued numbers.
+   * Athi, 2026-09-17: *"the counter sequence number — we should offer it, and it cannot be changed for a PC."*
+   * The shop only moves a counter that is sharing a prefix with an older one; its old run ends where it stopped,
+   * and nextNumber() starts the new prefix at 0001 while remembering where the old one ended.
+   * ⚠️ A counter the shop did NOT move and that has issued numbers is never renamed by anything else.
+   */
+  var moved = !!t.moved_from;
+  if (!moved && (await tillIssued())) return;
+  ls.set('cb_till_id', want);
+  toastLine(moved
+    ? ('This counter now numbers its bills as ' + want + '. ' + (t.held_by || 'Another counter')
+       + ' was already using ' + t.moved_from + ', so two bills would have shared a number. The '
+       + t.moved_from + ' bills already issued here stay exactly as they are.')
+    : ('This counter numbers its bills as ' + want + ' — the shop gave it its own series.'));
+  try { paintStatus(); } catch (_) {}
+}
 
 /**
  * ⭐⭐⭐ THE NUMBER, FROM THE RULE — not from three constants that happened to be India's.
@@ -1965,8 +2046,23 @@ async function nextNumber(kind){
    */
   var s = had || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short' };
   if (had && !had.tagStyle) s.tagStyle = 'long';          // a record written before this change
-  if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; s.scheme = tillScheme(); }
-  s.prefix = tillId() || s.prefix;
+  if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; s.scheme = tillScheme(); s.runs = {}; }
+  /**
+   * ⚠️⚠️ A NEW PREFIX IS A NEW SERIES, AND A NEW SERIES STARTS AT ONE. This line used to swap the prefix and keep
+   * the count — so a counter renamed C1 → C2 to escape a clash (Athi, 2026-09-17) would have issued C2/…/0008 as
+   * the FIRST number of its new series, which reads as seven missing invoices. The old C1 run simply ends where it
+   * stopped, whole; the C2 run begins cleanly.
+   */
+  /* ⚠️ AND EACH PREFIX REMEMBERS WHERE IT STOPPED. Rename C1 → C2 → C1 without the ledger below and C1 would
+     start again at 0001, on top of its own earlier invoices. `runs` is the high-water mark per prefix, per period. */
+  var _now = tillId();
+  if (_now && s.prefix && String(_now).toUpperCase() !== String(s.prefix).toUpperCase()) {
+    s.runs = s.runs || {};
+    s.runs[String(s.prefix).toUpperCase()] = s.next;                       /* the old run, parked where it ended */
+    s.next = Number(s.runs[String(_now).toUpperCase()]) || 1;              /* the new one resumes, or begins */
+    s.tagStyle = 'short'; s.scheme = tillScheme();
+  }
+  s.prefix = _now || s.prefix;
   var seq = s.next; s.next = seq + 1;
   await DB.set(box, s);
 
@@ -5527,6 +5623,7 @@ function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); }
 /* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
 async function finish(){
   if (!CART.length) return;
+  if (tillStopped()) return;      /* ⚠️ two counters on one series — see tillStopped() */
   var m = billMoney();
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
@@ -6778,7 +6875,11 @@ async function openStuck(){
    * out what they mean has not explained anything.
    */
   var verdict;
-  if (qForeign.length) verdict = '⚠️ ' + qForeign.length + ' queued row(s) on this device belong to a DIFFERENT shop. '
+  /* ⚠️⚠️ FIRST, because it is the one that loses sales while every other line looks healthy (Athi, 2026-09-17) */
+  if (TILL_CLASH) verdict = '⛔ This counter and another (' + (TILL_CLASH.held_by || 'an older one') + ') are both '
+      + 'numbering as ' + TILL_CLASH.id + '. Two bills would get one number, so this counter has stopped issuing. '
+      + 'The shop has no free counter number left to move it to — close counters no longer in use (Settings → Integrations → Counters) and open this one again. Nothing is lost — park the bill on the screen.';
+  else if (qForeign.length) verdict = '⚠️ ' + qForeign.length + ' queued row(s) on this device belong to a DIFFERENT shop. '
       + 'They are held back on purpose — a sale must never post into another business’s books — and because they '
       + 'are held back, this counter can never empty its queue. That is what is stuck.';
   /**
@@ -6888,7 +6989,7 @@ async function stuckReport(){
   L.push('');
   L.push('COUNTER');
   L.push('  shop this database belongs to : ' + (owner || '(not set)'));
-  L.push('  till id                       : ' + ls.get(shopLs('cb_till_id'), 'C1'));
+  L.push('  till id                       : ' + tillId());
   L.push('  paired key                    : ' + ((HOST && HOST.key) ? ('yes · …' + String(HOST.key).slice(-4)) : 'NO — nothing can be sent'));
   L.push('  online                        : ' + (navigator.onLine ? 'yes' : 'NO'));
   L.push('  device storage                : ' + (ls.works() ? 'writes are working'
@@ -7220,7 +7321,7 @@ async function stuckSend(){
   try { owner = await DB.ownerRaw(); rawQ = await DB.allRaw('queue'); rawB = await DB.allRaw('bills'); } catch (_) {}
   var qF = rawQ.filter(function(r){ return !rowIsMine(r); });
   var body = {
-    code: stuckCode(), verdict: STUCK_VERDICT || null, till_id: ls.get(shopLs('cb_till_id'), 'C1'),
+    code: stuckCode(), verdict: STUCK_VERDICT || null, till_id: tillId(),
     online: !!navigator.onLine, storage: ls.works(),
     queued: rawQ.length, foreign: qF.length, bills: rawB.length,
     last_why: (HOST.last && HOST.last.why) || null,
@@ -7927,12 +8028,13 @@ async function saveSettings(){
    * with nothing anywhere saying so. The cap is now DERIVED from the country's rule, so a shop somewhere that
    * caps nothing is not restricted for India's reasons.
    */
-  var _cap = (window.CBDoc ? window.CBDoc.maxPrefix(docCountry(), 'receipt') : 2);
-  var _want = (document.getElementById('set_till').value||'C1').trim().toUpperCase();
-  if (_want.length > _cap) {
-    toast('A counter id is at most ' + _cap + ' character(s) here, or the bill number goes over the limit. Using ' + _want.slice(0,_cap) + '.');
-  }
-  ls.set('cb_till_id', _want.slice(0, _cap) || 'C1');
+  /**
+   * ⚠️⚠️ THE PREFIX IS NO LONGER TAKEN FROM THIS FORM (2026-09-17). It used to be written straight from the text box,
+   * which is how two unrenamed PCs both became C1. The shop assigns it now (tillClaim), and saving Settings must
+   * never be a way round that — so the box is display-only and its value is simply not read here.
+   * ⚠️ The India length cap that used to be enforced here is enforced where the prefix is MADE: routes/keys.js
+   * hands out two-character prefixes only (TILL_IDS), which is inside the sixteen.
+   */
   ls.set('cb_till_fs', document.getElementById('set_fs').value);
   ls.set('cb_till_theme', document.getElementById('set_theme').value);
   var k = document.getElementById('set_key');

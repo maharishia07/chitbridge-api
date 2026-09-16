@@ -71,23 +71,25 @@ router.get('/snapshot', auth, async (req, res) => {
      *
      * ⚠ NO MIGRATION: the key list already lives in identities.policy_flags.api_keys (routes/keys.js).
      */
+    /**
+     * ⭐⭐⭐ 2026-09-17 — THE PREFIX IS NOW CLAIMED AND KEPT, NOT SUGGESTED BY POSITION. The ordinal above was
+     * right in spirit and wrong in two ways that mattered: it SHIFTED whenever an older key was revoked, and the
+     * counter never read it at all — which is how Athi's two PCs both stayed C1 and one PC's sales were absorbed
+     * as the other's. routes/keys.js claimTill() decides, records the decision on the key, and says when a
+     * counter must stop. The counter tells us what it is using and whether it has issued anything under it.
+     */
     let till = null;
     try {
       const jti = req.api_key && req.api_key.jti;
       if (jti) {
-        const kr = await query(`SELECT policy_flags FROM identities WHERE identity_id = $1`, [entity_id]);
-        const keys = ((kr.rows[0] || {}).policy_flags || {}).api_keys || [];
-        const tills = keys
-          .filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0)
-          .sort((x, y) => String(x.created_at || '').localeCompare(String(y.created_at || '')));
-        const at = tills.findIndex((k) => String(k.jti) === String(jti));
-        if (at >= 0) {
-          /* ⚠ C1..C9 then A1.. — TWO CHARACTERS, because the whole number must stay within 16 and the kind
-             tag and the financial year already take nine of them. */
-          const n = at + 1;
-          const id = n <= 9 ? ('C' + n)
-            : (String.fromCharCode(65 + Math.floor((n - 10) / 9)) + (((n - 10) % 9) + 1));
-          till = { suggested_id: id, ordinal: n, counters: tills.length };
+        const c = await keys.claimTill(entity_id, jti, {
+          id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true' });
+        if (c) {
+          const all = await keys.listOf(entity_id);
+          const tills = all.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
+          till = { suggested_id: c.id, assigned_id: c.id, clash: c.clash || null, counters: tills.length,
+                   /* ⭐ said out loud, so the shop learns WHY its numbers changed shape */
+                   moved_from: c.moved_from || null, held_by: c.held_by || null };
         }
       }
     } catch (_) { /* ⚠ best effort — a counter must open whatever this says */ }
