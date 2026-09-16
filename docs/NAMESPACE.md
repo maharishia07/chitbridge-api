@@ -19,6 +19,12 @@ and names the difference. This page is the argument; the YAML is the rule.
 somebody looking for the grammar actually arrives: `lib/bridgeid.js` · `lib/handle.js` · `lib/local-identity.js`
 · `lib/ctpaddress.js` · `routes/actors.js`.
 
+**Which capability this is.** Athi, 2026-09-16: *"is the work coming under IAM?"* — **yes, the identity half.**
+`handle` · `bridgeid` · `mintuserid` · `resolveuserid` answer *who is this and what kind of party* — the **I** of
+IAM. The **A** — what they may do — is `lib/access.js` and the role/permission rules the manifest already files
+under IAM. The constitution cascade (`lib/govresolve.js`) is **not** IAM at all: it answers what the *world*
+allows, which is governance. Three questions, three homes.
+
 ---
 
 ## 1 · Three names, three jobs
@@ -74,8 +80,19 @@ had already changed.
 
 Consequences, and they are load-bearing:
 
-1. **`identities.user_id` never contains an `@`.** Entities are forbidden it by `checkRoot`; actors have no
-   `user_id`. So no stored row can ever be matched by an address of the form `something@somewhere`.
+1. ⚠️⚠️ **THIS WAS TRUE UNTIL b260 AND IS NOT ANY MORE.** It used to read: *"`identities.user_id` never
+   contains an `@` — entities are forbidden it by `checkRoot`, actors have no `user_id`, so no stored row can
+   ever be matched by an address of the form `something@somewhere`."*
+
+   That property was doing real work: it meant an employee handle and a foreign address could not be confused
+   **in storage**, whatever a parser did. **b260 stamps every employee with `ravi@acmetraders.br`**, so
+   `user_id` now holds `@` on purpose, and the separation rests on the `.br` / `.cr` suffixes alone — which is
+   the specification, and is sound, but it is a change to the guarantee rather than a no-op. Anything that
+   leaned on "user_id has no @" must be re-read, which is why this paragraph replaces it rather than being
+   quietly deleted.
+
+   ⭐ What still holds: an **entity** id may never contain `@` or `.` (`checkRoot`), so the three kinds remain
+   tellable apart without a lookup.
 2. Uniqueness is `UNIQUE(actor_key, parent_entity_id)` — *this employee, at this business* — **not** on the
    rendered string.
 3. ⭐ Therefore **"is this an employee handle?" is answerable by one query**, with no marker and no new data:

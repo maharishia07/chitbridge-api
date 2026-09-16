@@ -63,6 +63,7 @@ function splitLogin(username) {
   return at < 0 ? { actor_key: s, entity_name: undefined }
                 : { actor_key: s.slice(0, at), entity_name: s.slice(at + 1) };
 }
+const mintuserid = require('../lib/mintuserid');   /* the ONE builder for an employee id */
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
 const jwt     = require('jsonwebtoken');
@@ -251,9 +252,18 @@ router.post('/',
        * handle the owner had already changed. Same reasoning as the hat in middleware/auth.js.
        */
       let entity_handle = req.identity.display_name;
+      /**
+       * ⭐⭐ AND THE PARENT'S BRIDGE ID, because the STORED employee id falls back to it.
+       * ⚠️ The displayed handle and the stored id are NOT the same value and must not be conflated: the display
+       * may fall back to a display_name (readable, not unique), while the stored id may only ever fall back to
+       * the bridge id (unique, non-null, stable). A display_name in a user_id would break the unique index the
+       * first time two businesses shared a name.
+       */
+      let entity_row = null;
       try {
-        const _u = await db('SELECT user_id, display_name FROM identities WHERE identity_id = $1', [entity_id]);
-        if (_u.rows[0]) entity_handle = _u.rows[0].user_id || _u.rows[0].display_name || entity_handle;
+        const _u = await db('SELECT user_id, display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
+        entity_row = _u.rows[0] || null;
+        if (entity_row) entity_handle = entity_row.user_id || entity_row.display_name || entity_handle;
       } catch (_) { /* fall back to the name we already have — never print an empty handle */ }
       const entity_name  = entity_handle;
       const display_name = sanitise(req.body.display_name);
@@ -279,17 +289,38 @@ router.post('/',
       const otp         = generateOTP();
       const otp_expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
+      /**
+       * ── ⭐⭐⭐ THE EMPLOYEE ID IS STORED, from 2026-09-15 ─────────────────────────────────────────────────────
+       *
+       * Athi: *"each employee must be having an employee id, which is his username what he types while creating
+       * the id, username@entityid, now I am asking you to add .br and that information has to be stored in the
+       * table as user id, which cannot be drifted."*
+       *
+       * ⚠️ UNTIL TODAY THIS INSERT WROTE NO `user_id` AT ALL, and the handle was composed at display time. That
+       * made an employee unaddressable — nothing could look one up — and left `identities.user_id` holding only
+       * entities. One column now carries all three kinds, each saying which it is by its suffix.
+       *
+       * ⚠️ IT CANNOT COLLIDE. `UNIQUE(actor_key, parent_entity_id)` already makes one key unique per business,
+       * and the business half is itself unique, so the composed id is unique by construction. An ENTITY can
+       * never collide with it either: `checkRoot` forbids "@" in a registered handle.
+       *
+       * ⚠️ AND IT IS BUILT BY lib/mintuserid, NEVER HERE. Two builders is two spellings of one identity.
+       */
+      const employee_id = entity_row
+        ? mintuserid.employee(actor_key, entity_row).handle
+        : null;                      /* no parent row readable → store nothing rather than store a guess */
+
       // Create actor
       await db(
         `INSERT INTO identities (
-          identity_id, bridge_id, display_name, actor_key,
+          identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
           otp_code, otp_expires_at, hat, entity_kind
-        ) VALUES ($1,$2,$3,$4,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor')`,
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor')`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat]
+         otp, otp_expires, hat, employee_id]
       );
 
       console.log(`Actor created: ${actor_key}@${entity_name} — OTP: ${otp}`);

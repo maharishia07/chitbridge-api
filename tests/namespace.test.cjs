@@ -129,16 +129,26 @@ ok('a handle may not look like a bridge id or a minted party', () => {
 });
 
 /* ── § 4 · THE EMPLOYEE HANDLE IS RENDERED, NOT STORED ─────────────────────────────────────────────────────── */
-ok('⭐⭐ the register is right that an employee handle is NOT stored', () => {
+/**
+ * ⭐⭐ THE ASSERTION IS MOVED, NOT DELETED. It used to read "the register is right that an employee handle is
+ * NOT stored", and it was correct until b260. Athi asked for the id to be stored — *"that information has to be
+ * stored in the table as user id, which cannot be drifted"* — so the SAME question is now asked of the opposite
+ * answer: the insert must write it, and it must not spell the form itself.
+ * [[feedback-improvise-update-cases]]
+ */
+ok('⭐⭐ the actor insert STORES the employee id, and does not build it itself', () => {
   const src = read('routes/actors.js');
   const ins = src.slice(src.indexOf('INSERT INTO identities ('));
   const cols = ins.slice(0, ins.indexOf(')')).toLowerCase();
   assert.ok(cols.indexOf('actor_key') >= 0, 'the actor insert must write actor_key');
-  assert.ok(cols.indexOf('user_id') < 0,
-    'the actor insert now writes user_id — the register says the handle is RENDERED, and if that has changed '
-    + 'then identities.user_id can contain "@" and every claim in NAMESPACE.md §3 needs re-deciding');
+  assert.ok(cols.indexOf('user_id') >= 0,
+    'the actor insert no longer writes user_id — an employee would go back to being unaddressable, and the '
+    + 'register says the id is STORED');
+  assert.ok(/mintuserid\.employee\(/.test(src),
+    'it must build the id with lib/mintuserid, never inline — two builders is two spellings of one identity');
   const row = REG.kinds.find((k) => k.key === 'employee');
-  assert.strictEqual(row.stored, false);
+  assert.strictEqual(row.stored, true, 'and the register must say so');
+  assert.strictEqual(row.stored_in, 'identities.user_id');
 });
 
 ok('the actor_key rule in the register is the one routes/actors.js validates', () => {

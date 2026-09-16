@@ -323,6 +323,33 @@ router.post('/build', auth, async (req, res) => {
         // which is the correct outcome — two networks must not share a root.
         await db.query('UPDATE identities SET user_id = $1 WHERE identity_id = $2 AND user_id IS NULL',
           [rootHandle, me]);
+        /**
+         * ── ⭐⭐⭐ AND RE-STAMP THIS BUSINESS'S PEOPLE, because their ids hang off the name it just claimed ───────
+         *
+         * Athi, 2026-09-15, on the stored employee id: *"which cannot be drifted."*
+         *
+         * ⚠️ THIS IS THE ONLY PLACE A BUSINESS GAINS A HANDLE AFTER IT WAS CREATED. An entity registered before
+         * b170 has a NULL `user_id`, so every employee minted under it was stored as `ravi@CBZQK5DAH9.br` — the
+         * bridge-id fallback. The line above gives the business a readable name; without this the next line,
+         * its people would keep pointing at the old one for ever, and the two would disagree about who they
+         * work for. That is exactly the drift he named.
+         *
+         * ⚠️ ONLY ROWS THAT STILL CARRY THE OLD FORM. An employee whose id already names the new handle is left
+         * alone, and `WHERE user_id IS NOT NULL` keeps this from inventing ids for actors the backfill has not
+         * reached — b260 owns that, and doing it twice in two places is how two rules appear.
+         */
+        /* ⚠️ THE FORM IS NOT SPELLED HERE. `ops.f_employee_user_id()` (b260) is SQL's one builder, exactly as
+           lib/mintuserid is JavaScript's — so this says WHICH rows to re-stamp and never WHAT an employee id
+           looks like. tests/namespace.test.cjs fails any file outside the grammar modules that writes ".br". */
+        await db.query(
+          `UPDATE identities a
+              SET user_id = ops.f_employee_user_id(a.actor_key, $1, e.bridge_id)
+            FROM identities e
+           WHERE a.parent_entity_id = $2 AND a.identity_type = 'actor'
+             AND a.actor_key IS NOT NULL AND a.user_id IS NOT NULL
+             AND e.identity_id = $2
+             AND a.user_id = ops.f_employee_user_id(a.actor_key, NULL, e.bridge_id)`,
+          [rootHandle, me]);
       }
 
       // The root's own place on the tree. DO NOTHING, never overwrite: if this entity already sits inside somebody

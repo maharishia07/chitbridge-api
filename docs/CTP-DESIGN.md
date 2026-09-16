@@ -189,6 +189,48 @@ One envelope carries **one copy, to one entity**.
 
 ---
 
+## 6.1 The sender's constitution — resolved from its installation, never assumed (2026-09-16)
+
+Athi: *"verify the constitution matrix, so it resolves correctly here; if not, bring it to the same place, so
+it works for CTP"* … *"i hope you are keeping it as a single source and nothing to be found from sweeping the
+entire code base?"*
+
+**It did not work for CTP, and it failed silently.** `resolveEntityGovernance` is keyed by a *local* entity and
+reads `entity_governance` under RLS. A party arriving over the wire has no row here, so its stamp came back
+null and the cascade quietly answered `base @ platform-0` — the way a brand-new local shop resolves. An Emirati
+supplier's chit would have been governed as a default Indian one, with nothing on screen saying so.
+
+**The rule already existed, in SQL.** `identities_stamp_world()` (b254) stamps a new entity by reading
+`installation.vertical_key` and using *that* as the constitution: **installation → vertical → constitution**. A
+remote peer has an `installation` row here (b257, `hosted_locally = false`) carrying exactly that column.
+
+So `lib/govresolve.js` now has **one cascade and two doors**:
+
+| door | keyed by | reads | for |
+|---|---|---|---|
+| `resolveEntityGovernance(entity_id)` | a local entity | its `entity_governance` stamp, under RLS | everything local |
+| `resolveInstallationGovernance(key)` | an installation | its `installation` row alone — no entity, no RLS | **a party that is not here** |
+
+Both return `resolved_from` (`entity_stamp` · `installation` · `fallback`) and `fallback: true|false`, so a
+default is a *stated* default, never a quiet substitution. `POST /api/ctp/deliver` resolves the sender from
+`from.installation_key` and puts the answer on the response as `sender_governance` — **an annotation, never a
+gate**. Which constitution governs a cross-border chit is §9's open decision, not this route's.
+
+**The sweep** (the single-source question) found one more resolver and three writers:
+
+- ⚠️ `lib/workpattern.js` resolved the constitution itself, with a **different fallback** — `is_default` where
+  govresolve says `base`. Two answers to "who governs this entity". It now asks the one cascade; an unstamped
+  entity's work pattern is governed by `base`. Only legacy rows are unstamped.
+- The **stamp has three writers with three defaults**, and this is left open rather than changed unattended:
+  the b254 trigger (population → installation → vertical, else `base`), registration in `routes/entities.js`
+  (chosen constitution else `is_default`, then the *inverse* lookup installation-by-vertical; runs
+  `ON CONFLICT DO UPDATE`, so it wins over the trigger), and boilerplate adoption in `routes/governance.js`
+  (`is_default`, else the literal `'trade'`). → **§9.10.**
+
+`tests/govresolve-ctp.test.cjs` (10 checks) holds all of this: the remote door resolves the *sender's* own
+constitution, the two doors agree for the same world, tighten-only survives, an unknown installation is a
+stated fallback, and — in `lib/` — only `govresolve` may resolve a constitution from the governance tables.
+
 ## 7. ⚠️⚠️ The boundary becomes a protocol rule
 
 **This is the most dangerous thing in the design and the reason to write the note before the code.**
@@ -290,6 +332,15 @@ makes §8's promise checkable, and it is what makes a world liftable in §10.
    installations is materially more to run, back up and migrate. Real and ongoing.
 
 ---
+
+10. **The governance stamp has three writers with three defaults** — *carried in from §6.1, 2026-09-16.*
+    The b254 trigger stamps `population → installation → vertical`, else `base`; registration in
+    `routes/entities.js` stamps the chosen constitution else `is_default`, finds the installation by the
+    *inverse* lookup (`installation WHERE vertical_key = …`) and runs `ON CONFLICT DO UPDATE`, so it wins over
+    the trigger; boilerplate adoption in `routes/governance.js` stamps `is_default`, else the literal
+    `'trade'`. **Resolution** is now single-source (`lib/govresolve`); **writing** is not. Which writer is
+    the authority, and whether `base` / `is_default` / `'trade'` are one default or three, is a decision —
+    left unchanged unattended because it is registration behaviour.
 
 ## 10. Why this makes a world liftable
 

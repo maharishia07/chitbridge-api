@@ -98,6 +98,10 @@ const GUARDS = [
      another (lib/resolveuserid.js). § 0 holds the customer form byte-identical to what production already
      stores: one character of drift and every returning customer becomes a second identity. */
   'userid.test.cjs',
+  /* ⭐⭐ THE CONSTITUTION MATRIX — one cascade, two doors. A party arriving over CTP has no entity row here, so
+     it used to resolve, silently, as base @ platform-0. Now it resolves from ITS installation (the b254 rule)
+     and every answer says resolved_from + fallback. Also: in lib/, only govresolve may resolve a constitution. */
+  'govresolve-ctp.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

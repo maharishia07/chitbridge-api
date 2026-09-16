@@ -139,6 +139,24 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
     }
     if (!peer.domain) return no(403, 'no domain recorded for ' + ik + ', so its key cannot be found');
 
+    /**
+     * ── ⭐⭐ THE SENDER'S GOVERNANCE, RESOLVED FROM ITS INSTALLATION — an annotation, never a gate ──────────────
+     *
+     * Athi, 2026-09-16: *"verify the constitution matrix… bring it to the same place, so it works for CTP."*
+     *
+     * The peer row we just read carries `vertical_key`, and that is the whole rule (b254's stamp trigger):
+     * installation → vertical → constitution. So the sender's constitution, region and currency are resolvable
+     * HERE, from `from.installation_key`, with no entity row for them in this database. Before this the only
+     * resolver was entity-keyed and would have answered `base @ platform-0` for any foreign party — silently.
+     *
+     * ⚠️ IT DOES NOT DECIDE WHETHER TO ACCEPT. Which constitution governs a cross-border chit is CTP-DESIGN §9's
+     * open decision, not this file's; the answer rides back on the response so the fact is visible while the
+     * decision is still Athi's. A resolver that cannot read the row says `fallback: true` rather than nothing.
+     */
+    let senderGov = null;
+    try { senderGov = await require('../lib/govresolve').resolveInstallationGovernance(ik); }
+    catch (_) { senderGov = null; }
+
     /* ── the signature, against the key on THEIR domain. Never one they sent us. */
     const pk = await directory.publicKeyFor(peer.domain, ik);
     if (!pk.ok) return no(403, 'could not read the sender’s manifest: ' + pk.why);
@@ -221,7 +239,18 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
     if (!senderCtx) return no(400, 'the copy does not say who sent it');
     await mint.deliver(senderCtx, opened.chit_id, [copy], { is_draft: false, arrived: true });
 
-    res.json({ accepted: true, chit_id: opened.chit_id, to: toBridge });
+    res.json({
+      accepted: true, chit_id: opened.chit_id, to: toBridge,
+      /* ⭐ the sender's governance as WE resolved it from their installation — visible, and never the reason a
+         copy was accepted or refused (see the note beside senderGov above, and CTP-DESIGN §6.1) */
+      sender_governance: senderGov ? {
+        constitution: senderGov.constitution,
+        region: senderGov.basics && senderGov.basics.region,
+        currency: senderGov.basics && senderGov.basics.currency,
+        resolved_from: senderGov.resolved_from,
+        fallback: senderGov.fallback,
+      } : null,
+    });
   } catch (e) {
     /* ⚠️ a 500 tells a sender to retry something that may never work — so it is reserved for OUR faults, and it
        says which. */

@@ -232,6 +232,32 @@ ok('⭐⭐ every shape a person types at the sign-in box still resolves', () => 
   }
 });
 
+/**
+ * ⭐⭐ A STORE INSIDE A NETWORK, AND ITS PEOPLE. Athi, 2026-09-15: *"an entity is created as part of network,
+ * what its name? and its employee id? can you give how the network entity employee login to the system?"*
+ *
+ *     network root         acmetraders
+ *     store in it          acmetraders.clothing        ⚠️ ROOT first, then the store — never the reverse, and
+ *                                                        never a third level (acmetraders.clothing.mens is
+ *                                                        refused; depth lives in the ltree)
+ *     its employee, stored ravi@acmetraders.clothing.br
+ *     what she types       ravi@acmetraders.clothing   → entity `acmetraders.clothing` → actor `ravi` under it
+ */
+ok('⭐⭐ a network store is root.store, and its employee id hangs off that', () => {
+  const store = mint.network('acmetraders', 'Clothing');
+  assert.strictEqual(store.handle, 'acmetraders.clothing');
+  assert.strictEqual(mint.network('acmetraders.clothing', 'Mens').handle, 'acmetraders.mens',
+    'a department of a department is STILL root.name — a co-assist login must stay sayable');
+  const emp = mint.employee('ravi', { user_id: store.handle, bridge_id: 'CBM5P72HB7' });
+  assert.strictEqual(emp.handle, 'ravi@acmetraders.clothing.br');
+  /* and the login path reads both forms back to the STORE, not to the network root */
+  for (const typed of ['ravi@acmetraders.clothing', 'ravi@acmetraders.clothing.br']) {
+    const c = resolve.classify(typed);
+    assert.strictEqual(c.actor_key, 'ravi');
+    assert.strictEqual(c.at, 'acmetraders.clothing', typed + ' must resolve to the store she works at');
+  }
+});
+
 ok('⚠️ and the suffixed form does NOT send anybody looking for a business called "acmetraders.br"', () => {
   assert.strictEqual(resolve.classify('ravi@acmetraders.br').at, 'acmetraders',
     'the old split("@") returned "acmetraders.br", which matches no entity row');

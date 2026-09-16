@@ -79,13 +79,15 @@ kinds:
 
   - key: employee
     label: Employee / co-assist
-    example: ravi@acmetraders
+    example: ravi@acmetraders.br   # typed without the suffix; STORED with it
     shape: actor_key + "@" + the parent entity's current user_id
     separator: "@"
     unique: UNIQUE(actor_key, parent_entity_id)
     sendable: false
-    stored: false            # ⭐ RENDERED. identities.user_id is NOT written for an actor.
-    enforced_in: routes/actors.js
+    stored: true             # ⭐ STORED since b260 — was rendered; see NAMESPACE.md §3
+    stored_as: ravi@acmetraders.br
+    stored_in: identities.user_id
+    enforced_in: lib/mintuserid.js
     status: in-code
     note: >
       Because it is rendered and entities may not contain "@", identities.user_id NEVER contains "@".
