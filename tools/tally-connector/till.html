@@ -258,8 +258,52 @@
   /* ⚠️ THE QUANTITY COLUMN HOLDS A STEPPER NOW, not a bare box — 84px was sized for the box alone, so the - [n] + group
      (34+46+34) overflowed and the AMOUNT sat on top of the + button, which then could not be clicked at all. Found by a
      probe that tried to press it; invisible to anything that only read the numbers. */
-  .row{display:grid;grid-template-columns:1fr 124px 92px 32px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+  /**
+   * ── ⭐⭐⭐ SIX COLUMNS, SO THE ARITHMETIC IS ON THE ROW ────────────────────────────────────────────────────
+   *
+   * Athi's counter-app requirement, 2026-09-16: *"Name · Price per qty (NEW — same as List) · Discount · Qty ± ·
+   * Computed price value (pure qty × price, no discount) · last column the discounted value. So someone wants to
+   * see what the value of the product — all are there. qty × price − discount, they don't need to break their head."*
+   *
+   * ⭐ EVERY FIGURE THE LINE IS MADE OF IS A COLUMN, in the order the sum is read. Nothing has to be inferred from
+   * a note, and the price column carries the SAME number the shelf row shows, which is what makes a cart line
+   * mappable back to the list it came from.
+   */
+  .row{display:grid;grid-template-columns:minmax(0,1fr) 96px 86px 118px 92px 98px 30px;
+       gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
   .row .nm{font-weight:600;overflow-wrap:anywhere}
+  /* ⭐ the column header, so six numbers are six NAMED numbers. Same grid, or the headings would not line up. */
+  .rowhead{display:grid;grid-template-columns:minmax(0,1fr) 96px 86px 118px 92px 98px 30px;
+           gap:8px;align-items:end;padding:4px 12px 5px;border-bottom:1px solid var(--line);
+           background:var(--card);color:var(--dim);font-size:.74em;font-weight:700;text-transform:uppercase;
+           letter-spacing:.03em;position:sticky;top:0;z-index:1}
+  .rowhead span{text-align:right;line-height:1.25}
+  .rowhead span:first-child{text-align:start}
+  .rowhead .qh{text-align:center}
+  /* price · discount · computed · value — all money, all tabular so the digits line up down the column */
+  .row .pq,.row .disc,.row .calc,.row .amt{text-align:right;font-variant-numeric:tabular-nums}
+  .row .pq b{display:block;font-weight:600}
+  .row .pq i{display:block;font-style:normal;color:var(--dim);font-size:.78em;line-height:1.25}
+  /* ⚠️ a discount is the only GREEN number on the row; a line with none says so with a dash, never a blank —
+     an empty cell reads as "not worked out yet", which is the one thing it must not say. */
+  .row .disc{color:var(--ok);font-weight:600}
+  .row .disc.none{color:var(--dim);font-weight:400}
+  /* the pure arithmetic is quieter than the value that is actually charged */
+  .row .calc{color:var(--dim)}
+  .row .amt{font-weight:700}
+  /**
+   * ⚠️ A TILL IS NOT ALWAYS A DESKTOP. Athi asks for a vertical, a horizontal and a mobile till — so the columns
+   * that can be re-derived give way first: the pure qty × price goes, then the per-unit price, and the row falls
+   * back to what a phone can hold. The figures never change, only how many of them are on screen at once.
+   */
+  @media (max-width:1100px){
+    .row,.rowhead{grid-template-columns:minmax(0,1fr) 92px 80px 112px 96px 30px}
+    .row .calc,.rowhead .calch{display:none}
+  }
+  @media (max-width:820px){
+    .row,.rowhead{grid-template-columns:minmax(0,1fr) 78px 108px 92px 30px}
+    .row .pq,.rowhead .pqh{display:none}
+  }
   /* ⭐ THE LINE IN ACTION — what Ctrl ↑↓ will change, and what the shelf on the left is pointing at. A bar on the
      leading edge rather than a fill: the amounts must stay the easiest thing on this panel to read. */
   .row.sel{background:var(--ok-tint);box-shadow:inset 3px 0 0 var(--ok)}
@@ -2846,29 +2890,50 @@ function pickLine(k){
  * shown nothing is not restraint, it is a dead control. Tapping a line MEANS "show me this one" — so the filter
  * that hides it is the thing that should give way, and the screen says so rather than changing quietly.
  *
- * ⚠️ THE SEARCH BOX IS NOT CLEARED. What was typed is the operator's own work in progress and it is not ours to
- * throw away; only the chips are dropped, which is enough in every case a chip is what hid the row.
+ * ⚠️ IF THE ROW IS ALREADY IN VIEW the search box is left exactly as it is — what was typed is the operator's own
+ * work in progress. Only when the row is nowhere in the current page is the box set to the product's name to
+ * fetch it from the whole shop; see the block below (Athi, 2026-09-16).
  */
 function findOnShelf(c){
   var list = hits(), n;
+  /* ⭐ ALREADY ON SCREEN? centre it and leave everything else — the cheapest answer, and it keeps the operator's
+     own search intact when the row they tapped is one they had already found. */
   for (n = 0; n < list.length; n++)
     if (String(list[n].item_id) === String(c.item_id)) { SEL = n; CENTRE_NEXT = true; paintHits(); return true; }
 
-  /* not in the narrowed shelf — widen it, say so, and look again */
-  if (FILTER.cat || FILTER.offer || FILTER.off) {
-    FILTER = { cat: null, offer: false, off: false };
-    showAgain(); paintChips();
-    list = hits();
-    for (n = 0; n < list.length; n++)
-      if (String(list[n].item_id) === String(c.item_id)) {
-        SEL = n; CENTRE_NEXT = true; paintHits();
-        toastLine('Showing everything, so ' + c.name + ' could be found.');
-        return true;
-      }
-  }
-  /* ⚠️ still not there: it is behind what was TYPED, and that stays. Say which, or the tap looks broken. */
-  toastLine(c.name + ' is not in this list — clear the search box to see it.');
-  paintHits();
+  /**
+   * ── ⭐⭐ NOT IN VIEW → LOCATE IT ACROSS THE WHOLE SHOP (Athi, 2026-09-16) ──────────────────────────────────
+   *
+   * *"select from cart to list works only for the items currently in the list scope — it is not finding from the
+   * entire list. Ponni Maida or Cookies are not showcased in the list, but it appears for others. The search and
+   * locate is not working for the entire catalogue."*
+   *
+   * ⚠️⚠️ hits() IS ONE PAGE. It returns the first SHOWN rows (sixty, grown only by scrolling) of whatever the
+   * search box and chips already allow — so on a ten-thousand row shop a product past the first page was never in
+   * the set this searched. Dropping the chips did not help: the page is still sixty rows deep. The tap worked for
+   * whatever happened to be on screen and did nothing for everything else.
+   *
+   * ⭐ TAPPING A LINE MEANS "SHOW ME THIS ONE", so the tap now ASKS the shelf for it: the product's own name goes
+   * into the search box and the chips drop, which brings the row to the top of the list wherever it lived.
+   * ⚠️ THIS OVERWRITES WHAT WAS TYPED, and that is the point. The earlier build kept the typing and paid for it by
+   * not finding the product — Athi found that in one sitting and it is the wrong trade. Locating a billed line is
+   * the operator's own instruction, so the box carries the answer to it.
+   */
+  var box = document.getElementById('q');
+  if (box) box.value = String(c.name || '');
+  FILTER = { cat: null, offer: false, off: false };
+  showAgain(); paintChips();
+  list = hits();
+  for (n = 0; n < list.length; n++)
+    if (String(list[n].item_id) === String(c.item_id)) {
+      SEL = n; CENTRE_NEXT = true; paintHits();
+      toastLine('Showing ' + c.name + '.');
+      return true;
+    }
+  /* ⚠️ named it and it is still not there: the line is not on this counter's shelf — a manual or off-catalogue
+     line billed by hand. Say so plainly rather than leaving the tap looking broken. */
+  SEL = 0; CENTRE_NEXT = true; paintHits();
+  toastLine(c.name + ' is not on this counter’s shelf.');
   return false;
 }
 /**
@@ -3538,27 +3603,67 @@ function cartLineNote(c){
     return '<span class="lo save"><span>' + esc(nm) + (extra ? ' <span class="why">(' + esc(extra) + ')</span>' : '')
       + '</span><span>−' + money(Math.abs(a.amount)) + '</span></span>';
   }).join('');
-  /* ⚠️ THE REMAINDER IS OWNED UP TO. A bill-wide offer is spread across the lines by the engine, so a line can
-     legitimately drop without any offer of its own — and saying nothing there is exactly what made a correct
-     number look invented. */
-  var rest = (c.save_unnamed > 0.004)
-    ? '<span class="lo save"><span>' + esc('share of a bill-wide offer') + '</span><span>−' + money(c.save_unnamed) + '</span></span>' : '';
-  /* the PRICE first, on its own line, then each discount below it — price · per · tier · GST, then the offers */
-  return '<span class="lp">' + money(c.unitPrice != null ? c.unitPrice : c.price) + ' / ' + esc(c.unit) + tierWords
-    + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '') + '</span>'
-    + offs + rest;
+  /**
+   * ── ⚠️⚠️ THE BILL-WIDE SHARE HAS LEFT THE LINE (Athi, 2026-09-16) ─────────────────────────────────────────
+   *
+   * *"You are introducing a bill-wide offer in the cart — why do you do that? That can be applied only at the
+   * cart summary, not in the cart."*
+   *
+   * ⭐ SO A LINE CARRIES ONLY ITS OWN OFFERS, and the arithmetic on the row closes exactly: qty × price − discount
+   * = value, with nothing unexplained in the middle. The engine still allocates a bill-wide offer across the
+   * lines — that is how it prices — but `lineFigures` deliberately does NOT spend that share on the row, and the
+   * summary takes the whole figure off once, by name. Neither number is invented and neither is hidden; they are
+   * simply stated at the level they belong to.
+   * ⚠️ The earlier build showed "share of a bill-wide offer −₹6.85" on every row. It was correct and it was
+   * unreadable: a shopkeeper cannot explain a fraction of a whole-bill discount to the person in front of them.
+   */
+  /* the PRICE is a column of its own now, so the note keeps only what EXPLAINS the discount column: how the line
+     was priced, the tax rate, and then each offer by name with the money it took off. */
+  var bits = (c.gst_rate ? 'GST ' + c.gst_rate + '%' : '') + tierWords;
+  if (bits.indexOf(' · ') === 0) bits = bits.slice(3);
+  return (bits ? '<span class="lp">' + bits + '</span>' : '') + offs;
+}
+/**
+ * ── ⭐⭐⭐ ONE PLACE THAT SAYS WHAT A CART LINE'S FIGURES ARE ────────────────────────────────────────────────
+ *
+ * price per qty · the line's own discount · qty × price · the discounted value — the four numbers Athi asked to
+ * see on every row, worked out ONCE so the row, the in-place repaint and the summary can never disagree.
+ *
+ * ⚠️ `off` IS THE LINE'S NAMED OFFERS ONLY (save minus the bill-wide share the engine allocated here). That is
+ * what makes `gross − off === value` true on every row. The bill-wide remainder is the summary's to state.
+ * ⚠️ `price` is c.unitPrice — the PRICED unit at this quantity, the same figure the shelf row shows — never
+ * c.price, or a tiered line would show a price its own total contradicts.
+ */
+function lineFigures(c){
+  var price = Number(c.unitPrice != null ? c.unitPrice : c.price) || 0;
+  var gross = Number(c.gross != null ? c.gross : r2(price * (Number(c.qty) || 0))) || 0;
+  var off   = r2(Math.max(0, (Number(c.save) || 0) - (Number(c.save_unnamed) || 0)));
+  return { price: price, gross: gross, off: off, value: r2(gross - off) };
+}
+/** ⭐ the six headings, in the order the sum is read. Same grid as .row, so they sit over their own columns. */
+function cartHeadHTML(){
+  return '<div class="rowhead" data-testid="till-cart-cols">'
+    + '<span>Item</span><span class="pqh">Price / qty</span><span>Discount</span>'
+    + '<span class="qh">Qty</span><span class="calch">Qty × price</span><span>Value</span><span></span></div>';
 }
 function cartRowHTML(c, k){
+  var f = lineFigures(c);
   return '<div class="row' + (k === CARTSEL ? ' sel' : '') + '" data-testid="till-line-' + k + '">'
     /* ⚠️ THE NAME IS THE HANDLE, not the whole row: the quantity box, ± and × are all inside it and must keep
        doing their own jobs. Tapping the name is the one gesture that had no meaning here. */
     + '<span onclick="pickLine(' + k + ')" style="cursor:pointer"><span class="nm">' + esc(c.name) + '</span><div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
+    /* ⭐ THE SAME NUMBER THE SHELF SHOWS — this is the column that lets a cart line be matched to its list row. */
+    + '<span class="pq" data-testid="till-price-' + k + '"><b>' + money(f.price) + '</b><i>per ' + esc(c.unit || 'piece') + '</i></span>'
+    + '<span class="disc' + (f.off > 0.004 ? '' : ' none') + '" data-testid="till-disc-' + k + '">'
+      + (f.off > 0.004 ? '−' + money(f.off) : '—') + '</span>'
     + '<span class="qty">'
       + '<button data-testid="till-minus-' + k + '" onclick="bumpLine(' + k + ',-1)" title="one fewer" aria-label="one fewer" tabindex="-1">−</button>'
       + '<input type="number" min="0" step="0.5" value="' + c.qty + '" data-testid="till-qty-' + k + '" onchange="setQty(' + k + ',this.value)">'
       + '<button data-testid="till-plus-' + k + '" onclick="bumpLine(' + k + ',1)" title="one more" aria-label="one more" tabindex="-1">+</button>'
     + '</span>'
-    + '<span class="amt" data-testid="till-amt-' + k + '">' + money(c.net) + '</span>'
+    /* ⚠️ PURE ARITHMETIC, no discount applied — Athi: *"just showcase qty × price, do not apply any discount"*. */
+    + '<span class="calc" data-testid="till-calc-' + k + '">' + money(f.gross) + '</span>'
+    + '<span class="amt" data-testid="till-amt-' + k + '">' + money(f.value) + '</span>'
     + '<button class="x" onclick="drop(' + k + ')" title="remove">×</button></div>';
 }
 /**
@@ -3575,7 +3680,19 @@ function paintCartRow(k){
   var note = document.querySelector('[data-testid="till-note-' + k + '"]');
   var qty = document.querySelector('[data-testid="till-qty-' + k + '"]');
   if (!amt || !note) return false;
-  amt.textContent = money(c.net);
+  /**
+   * ⚠️⚠️ ALL SIX COLUMNS, OR THE ROW LIES. A quantity change moves the price (a tier), the discount (an offer
+   * threshold), the qty × price and the value — so repainting only the last of them would leave four stale
+   * numbers beside one fresh one, which is worse than not repainting at all.
+   */
+  var f = lineFigures(c);
+  var pq = document.querySelector('[data-testid="till-price-' + k + '"]');
+  var dc = document.querySelector('[data-testid="till-disc-' + k + '"]');
+  var cl = document.querySelector('[data-testid="till-calc-' + k + '"]');
+  if (pq) pq.innerHTML = '<b>' + money(f.price) + '</b><i>per ' + esc(c.unit || 'piece') + '</i>';
+  if (dc) { dc.textContent = f.off > 0.004 ? '−' + money(f.off) : '—'; dc.className = 'disc' + (f.off > 0.004 ? '' : ' none'); }
+  if (cl) cl.textContent = money(f.gross);
+  amt.textContent = money(f.value);
   note.innerHTML = cartLineNote(c);
   /* ⚠️ THE COUNT IS PART OF WHAT CHANGED — but never the box the caret is sitting in, or "2" on its way to "25" would be
      rewritten to 2 between the keystrokes. activeElement is the only honest test of "somebody is typing here". */
@@ -3586,6 +3703,7 @@ function paintCartRow(k){
 function paintCart(){
   document.getElementById('cart').innerHTML = (CART.length
     ? '<div class="carthead" data-testid="till-cart-count">' + countWords() + '</div>'
+      + cartHeadHTML()
       + CART.map(function(c,k){ return cartRowHTML(c,k); }).join('')
     : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>');
 }
@@ -4258,6 +4376,21 @@ function paintTotals(){
    */
   var count = (CART.length ? '<div class="t count" data-testid="till-count"><span>On this bill</span><span>' + countWords() + '</span></div>' : '');
   /**
+   * ── ⭐⭐ WHERE THE BILL-WIDE OFFER IS NOW STATED ───────────────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-16: *"a bill-wide offer can be applied only at the cart summary, not in the cart."* The rows
+   * now carry only their own offers, so the difference between what the lines add up to and what is owed IS the
+   * bill-wide figure — and it is said here, once, by name.
+   * ⚠️ NOTHING IS RECOMPUTED. `lineFigures` and `billMoney` both read the same evaluation the lines were priced
+   * from; this only states the step between them, so the two figures can be checked against each other.
+   */
+  var lineSum  = r2(CART.reduce(function(t, c){ return t + lineFigures(c).value; }, 0));
+  var billWide = r2(CART.reduce(function(t, c){ return t + (Number(c.save_unnamed) || 0); }, 0));
+  var wideRows = (billWide > 0.004)
+    ? '<div class="t" data-testid="till-lines-total"><span>Lines total</span><span>' + money(lineSum) + '</span></div>'
+      + '<div class="t save" data-testid="till-billwide"><span>Offer on the whole bill</span><span>−' + money(billWide) + '</span></div>'
+    : '';
+  /**
    * ⭐⭐⭐ "Saved" NAMES ITSELF (Athi, 2026-09-10). Every offer that made up the figure is listed under it, by
    * name and amount, from the SAME evaluation the lines were priced from — never recomputed. The named
    * breakdown (`brk`) is detail; the headline Saved figure stays with the total.
@@ -4266,6 +4399,7 @@ function paintTotals(){
   var detail =
       count
     + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div>' + brk : '')
+    + wideRows
     + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>'
         + m.heads.map(function(h){
             return '<div class="t head"><span>' + h.name + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
