@@ -315,6 +315,51 @@ have registered, and then only where the population rule allows. *"Is he a membe
 arrival, which was the original requirement. The one thing any registered peer can read is the **public**
 catalogue — the same data already on your public storefront, and never the owner-only view.
 
+## 6.5 ⚠️⚠️ THE RETURN PATH — the unbuilt half, and the authority that shapes it (2026-09-16)
+
+Athi: *"catalogue reading never should be the problem. reaching a chit back to the domain and the status update
+across another domain will be the problem — because you are accessing another domain, you do not have
+authority."*
+
+**He is right, and this is the honest state.** What is built and proven: a chit going ONE way (deliver), and a
+catalogue coming back on request (pull). What is NOT built: **status flowing back across the boundary.**
+
+### The worked example
+
+1. domaintst sends a chit to tallytest. ✅ tallytest holds `received/pending`. (proven)
+2. tallytest **accepts** it — `PUT /:chit_id/status` does `UPDATE chit_status` on **tallytest's own copy**.
+3. domaintst holds the *sender's* copy, on *its own* installation, still showing `pending`.
+4. **Nothing tells domaintst.** In one database the sender reads the recipient's `chit_status` row directly;
+   across the wire that row is not here to read, and the status change sends no envelope. domaintst's copy is
+   stale for ever.
+
+### The authority model — and why it is already sound
+
+⭐ **"You do not have authority in another domain" is not a bug to fix, it is the rule to honour.** Nobody
+writes into anybody else's database. Each installation writes only **its own copies**. So a status change is not
+a remote write — it is a **signed assertion the acting installation SENDS**, which the other installation
+verifies (same door, same peer/signature checks) and then applies **to the copy it already holds, under its own
+authority**. That is exactly per-copy replication carried across the wire: the reverse direction of the deliver
+that already works. No new authority is claimed anywhere.
+
+### What that leaves to decide (these are §9.5–§9.7, now urgent)
+
+- **What crosses, and as what.** domaintst holds the *sender's* copy; it must learn *the recipient's* status.
+  Is that a projection field on the sender's copy (*"counterparty_status: accepted, as of T"*), or a shadow of
+  the recipient's `chit_status`? The local code reads the real row; the wire needs a **pushed projection** (§9.6).
+- **When.** Push on every change, or batch? A dispute and an acceptance seconds apart must arrive **in order**,
+  or the copy settles on the wrong one — so envelopes need a sequence, and the applier must ignore an older one.
+- **Offline and retry.** The far installation may be down when tallytest accepts. The change must **queue** and
+  redeliver, and the sender's copy must say *"accepted (not yet confirmed to the other side)"* rather than
+  silently claim success (§9.5 — the receipt-reports-outcome rule at protocol scale).
+- **Disputes across domains** — the hard one. A dispute is a *shared, co-held* object with a lifecycle; both
+  sides act on it. Across domains it becomes two copies kept in step by envelopes, and *"who may resolve"*
+  (BR-D3) has to hold when the two parties are in different databases neither can read.
+
+⚠️ **None of this is built, and none should be built before the four above are decided** — what a status
+envelope carries and how the far side applies it *is* the decision, not an implementation detail. Raised with
+the example, per the standing instruction, for Athi to settle.
+
 ## 7. ⚠️⚠️ The boundary becomes a protocol rule
 
 **This is the most dangerous thing in the design and the reason to write the note before the code.**
