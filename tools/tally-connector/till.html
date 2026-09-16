@@ -697,6 +697,8 @@
         <button data-testid="till-bills" onclick="fromMenu(openBills)">🧾 <b>Today's bills</b><i>print one again · F8</i></button>
         <button data-testid="till-screen" onclick="fromMenu(openScreen)">📺 <b>Shop screen</b><i>your offers as a sign for a TV</i></button>
         <button data-testid="till-refresh" onclick="fromMenu(refresh)">↻ <b>Read the shop again</b><i>new prices and products · F4</i></button>
+        <!-- ⭐ the answer to "why has this not gone?", where somebody looking for it would look -->
+        <button data-testid="till-stuck" onclick="fromMenu(openStuck)">🩺 <b>Why is a bill stuck?</b><i>what is really in this counter's store</i></button>
         <!--
           ⭐⭐⭐ THE VIEW, TOGGLED WHERE IT IS REACHED (Athi, 2026-09-16): *"those sections are being switched on
           off in the settings — any other way can we bring it in the frontend itself as a toggle button?"*
@@ -1267,6 +1269,28 @@ var DB = (function(){
     /* ⚠️ a row belonging to another shop is never handed back — not to the bill list, not to the drain, not to the day totals */
     all: function(store){ return fall('all', function(){ return tx(store,'readonly',function(s){ return s.getAll(); }); }, function(){ return MEM.all(store); })
                             .then(function(rows){ return (rows || []).filter(ownOK); }); },
+    /**
+     * ── ⭐⭐⭐ THE UNFILTERED TRUTH, FOR DIAGNOSIS ONLY ──────────────────────────────────────────────────────
+     *
+     * Athi, 2026-09-16: *"the sync problem — I checked from this PC, it happens; in another PC it is not
+     * happening. The IndexedDB got stuck somewhere I guess. That issue has to be solved, without which we don't
+     * know WHY it is getting stuck."*
+     *
+     * ⚠️⚠️ AND THE ANSWER IS ABOVE THIS LINE. `all()` drops rows stamped for another shop — correctly, because a
+     * sale must never post into another business's books — but that means a row left behind by a previous
+     * pairing is invisible to the bill list, invisible to the day totals, AND invisible to drain. It sits in the
+     * database forever, and every screen that could have reported it has already filtered it out. That is
+     * exactly "stuck somewhere", and exactly why it happens on one PC and not another: the other PC was never
+     * paired to a different shop.
+     *
+     * ⭐ So there is ONE reader that does not filter, it is named so nobody uses it by accident, and it exists
+     * for the panel that explains the problem. It is never used to SEND anything — see the drain, which keeps
+     * its own check on the way out.
+     */
+    allRaw: function(store){ return fall('allRaw', function(){ return tx(store,'readonly',function(s){ return s.getAll(); }); }, function(){ return MEM.all(store); })
+                            .then(function(rows){ return rows || []; }); },
+    /** ⭐ who this database believes it belongs to — read straight, never through the guard */
+    ownerRaw: function(){ return fall('ownerRaw', function(){ return tx('kv','readonly',function(s){ return s.get('owner'); }); }, function(){ return MEM.get('kv','owner'); }); },
   };
 })();
 
@@ -6478,6 +6502,124 @@ async function resendBill(no){
     if (HOST && HOST.drain) await HOST.drain();
     openBills(true);
   } catch (e) { toastLine('Could not queue bill ' + no + ': ' + ((e && e.message) || 'unknown')); }
+}
+/**
+ * ── ⭐⭐⭐ WHY IS A BILL STUCK? ────────────────────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16: *"the IndexedDB got stuck somewhere I guess — that issue has to be solved, without which we
+ * don't know WHY it is getting stuck."* He is right that the fix is not a fix until it can be SEEN. This reads
+ * the local database WITHOUT the ownership filter and says what is actually in there.
+ *
+ * ⚠️⚠️ THE FILTER IS THE USUAL CULPRIT and it is doing its job. `DB.all()` hides rows stamped for another shop —
+ * a sale must never post into another business's books — but a row left by a previous pairing is then invisible
+ * to the bill list, to the day totals AND to drain, all at once. Nothing was broken; everything that could have
+ * reported it had already filtered it out. That is why it happens on the PC that was paired twice and not on the
+ * one that never was.
+ *
+ * ⚠️ NOTHING HERE SENDS ANYTHING. Diagnosis only. A foreign row can be discarded, deliberately and with the
+ * shop it belongs to named — never silently re-stamped, because re-stamping it is precisely how one shop's sale
+ * ends up in another shop's accounts.
+ */
+async function openStuck(){
+  var owner = null, raw = { bills: [], queue: [] }, err = null;
+  try {
+    owner = await DB.ownerRaw();
+    raw.bills = await DB.allRaw('bills');
+    raw.queue = await DB.allRaw('queue');
+  } catch (e) { err = (e && e.message) || 'could not read the local database'; }
+
+  var mine = function(r){ return !r || !r._shop || String(r._shop) === String(owner || OWNER || ''); };
+  var qMine = raw.queue.filter(mine), qForeign = raw.queue.filter(function(r){ return !mine(r); });
+  var bMine = raw.bills.filter(mine), bForeign = raw.bills.filter(function(r){ return !mine(r); });
+  /* which other shops are represented, so the answer names them rather than saying "some" */
+  var others = {};
+  qForeign.concat(bForeign).forEach(function(r){ if (r && r._shop) others[r._shop] = (others[r._shop] || 0) + 1; });
+
+  var last = (HOST && HOST.last) || null;
+  var line = function(k, v, warn){
+    return '<div class="t' + (warn ? ' warnrow' : '') + '"><span>' + esc(k) + '</span><span>' + esc(String(v)) + '</span></div>';
+  };
+  var ago = function(ms){ if (!ms) return '—'; var s = Math.round((Date.now() - ms) / 1000);
+    return s < 90 ? s + 's ago' : (s < 5400 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'); };
+
+  var h = '<div style="max-height:56vh;overflow:auto">';
+  if (err) h += '<div class="t warnrow"><span>The local database would not open</span><span>' + esc(err) + '</span></div>';
+
+  h += '<div class="sec">This counter</div>'
+    + line('Shop this database belongs to', owner || '(not set yet)')
+    + line('Paired key', (HOST && HOST.key) ? 'yes' : 'NO — nothing can be sent', !(HOST && HOST.key))
+    + line('Online', navigator.onLine ? 'yes' : 'NO', !navigator.onLine);
+
+  h += '<div class="sec">What is actually in the local database</div>'
+    + line('Bills stored', raw.bills.length + '  (this shop ' + bMine.length + (bForeign.length ? ', OTHER SHOP ' + bForeign.length : '') + ')', bForeign.length > 0)
+    + line('Queued to send', raw.queue.length + '  (this shop ' + qMine.length + (qForeign.length ? ', OTHER SHOP ' + qForeign.length : '') + ')', qForeign.length > 0);
+
+  /**
+   * ⭐ THE ANSWER, IN ONE SENTENCE, BEFORE ANY OF THE DETAIL. A panel of numbers that leaves somebody to work
+   * out what they mean has not explained anything.
+   */
+  var verdict;
+  if (qForeign.length) verdict = '⚠️ ' + qForeign.length + ' queued row(s) on this device belong to a DIFFERENT shop. '
+      + 'They are held back on purpose — a sale must never post into another business’s books — and because they '
+      + 'are held back, this counter can never empty its queue. That is what is stuck.';
+  else if (!(HOST && HOST.key)) verdict = 'This counter has no key, so nothing can be sent. Pair it from the shop.';
+  else if (!navigator.onLine) verdict = 'No internet. The bills are safe here and go as soon as it returns.';
+  else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
+  else verdict = '✓ Nothing is queued. Every bill this counter holds has been sent.';
+  h = '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>' + h;
+
+  if (Object.keys(others).length) {
+    h += '<div class="sec">Rows belonging to another shop</div>';
+    Object.keys(others).forEach(function(id){ h += line(id, others[id] + ' row(s)', true); });
+    h += '<div style="color:var(--dim);font-size:.8em;padding:6px 0">These were written while this device was '
+      + 'paired to that shop. They cannot be sent from here and they are not counted anywhere. Discarding them '
+      + 'removes them from THIS device only — it does not delete anything from that shop’s books.</div>'
+      + '<button class="pill" data-testid="till-stuck-discard" onclick="discardForeign()">Discard the other shop’s rows</button>';
+  }
+
+  h += '<div class="sec">The last attempt to send</div>';
+  if (!last) h += line('Never run in this session', '—');
+  else {
+    h += line('When', ago(last.at))
+      + line('Rows tried', last.tried)
+      + line('Rows sent', last.sent)
+      + line('What the shop said', last.why || 'nothing refused it');
+  }
+
+  if (qMine.length) {
+    h += '<div class="sec">Waiting, oldest first</div>';
+    qMine.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
+      .slice(0, 12).forEach(function(q){
+        h += line(q.no || '(unnumbered)', (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted'), !!q._why);
+      });
+  }
+  h += '</div>';
+
+  document.getElementById('billstitle').textContent = 'Why is a bill stuck?';
+  document.getElementById('billsbody').innerHTML = h;
+  document.getElementById('billsdlg').showModal();
+}
+/**
+ * ⚠️⚠️ DISCARD, NEVER RE-STAMP. Re-stamping a foreign row to this shop is how one business's sale lands in
+ * another's accounts — the exact injury the ownership guard exists to prevent. The only safe act is to remove
+ * the rows from THIS device, and the wording says that is all it does.
+ */
+async function discardForeign(){
+  var owner = await DB.ownerRaw();
+  var mine = function(r){ return !r || !r._shop || String(r._shop) === String(owner || OWNER || ''); };
+  var q = (await DB.allRaw('queue')).filter(function(r){ return !mine(r); });
+  var b = (await DB.allRaw('bills')).filter(function(r){ return !mine(r); });
+  if (!q.length && !b.length) { toastLine('There are no rows from another shop on this device.'); return; }
+  var ok = await sure('Remove ' + (q.length + b.length) + ' row(s) written while this device was paired to a '
+    + 'different shop?\n\nThey cannot be sent from here. This removes them from THIS DEVICE ONLY and deletes '
+    + 'nothing from that shop’s books.', 'Yes, remove them', 'Rows from another shop');
+  if (!ok) return;
+  for (var i = 0; i < q.length; i++) { try { await DB.del('queue', q[i].no); } catch (_) {} }
+  for (var j = 0; j < b.length; j++) { try { await DB.del('bills', b[j].no); } catch (_) {} }
+  FOREIGN = 0;
+  try { await queueTally(); paintStatus(); } catch (_) {}
+  toastLine('Removed ' + (q.length + b.length) + ' row(s) from another shop.');
+  openStuck();
 }
 function billsTab(which){
   BILLS_TAB = which;
