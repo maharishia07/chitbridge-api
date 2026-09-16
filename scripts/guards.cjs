@@ -102,6 +102,9 @@ const GUARDS = [
      it used to resolve, silently, as base @ platform-0. Now it resolves from ITS installation (the b254 rule)
      and every answer says resolved_from + fallback. Also: in lib/, only govresolve may resolve a constitution. */
   'govresolve-ctp.test.cjs',
+  /* ⭐⭐ CTP QUERY — the READ verb (Athi: catalogue PULL, by store id, same as local). A signed question,
+     refused when stale/tampered/unpaired, answered with the SAME public view an anonymous visitor gets. */
+  'ctp-query.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

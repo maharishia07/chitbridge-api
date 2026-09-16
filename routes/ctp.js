@@ -259,5 +259,82 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
   }
 });
 
+/* ── ④ A QUESTION FROM A PEER — the READ verb ───────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16: *"catalogue pull I guess. currently, within the platform, we are just pulling the catalogue
+ * based on the store id, the store is not pushing the catalogue; the same resolves in cross platform also."*
+ *
+ *   POST /api/ctp/query   { ctp:'1', kind:'query', from, to, ask:{ want:'resolve'|'catalogue', … }, nonce, at, sealed }
+ *
+ * ⚠️ THE SAME DOOR-KEEPING AS deliver, IN THE SAME ORDER: is the asker an installation we deal with (b257 row,
+ * remote, active, with a domain) → verify the signature against the key on THEIR domain → then, and only then,
+ * answer. ⚠️ The population rule is NOT applied to a read: b247 bounds who may TRANSACT, and a public catalogue
+ * is public to the whole web already. What pairing buys is that a stranger installation gets nothing.
+ *
+ * ⭐ AND THE ANSWER IS THE SAME FUNCTION AN ANONYMOUS VISITOR GETS. `publicViewFor(entity, false)` from
+ * routes/catalogue.js — one view, two doors — so a cross-installation pull can never show more than
+ * /shop.html?s=<store> would. `resolve` answers only for a BUSINESS (entity or network store): an employee, a
+ * customer or a minted party is refused by name, because none of them is a thing another installation may address.
+ */
+router.post('/query', ctpLimiter, async (req, res) => {
+  const no = (status, why) => res.status(status).json({ ok: false, why });
+  try {
+    const q = req.body;
+    const ctpquery = require('../lib/ctpquery');
+    if (!q || q.ctp !== '1' || q.kind !== 'query') return no(400, 'not a CTP/1 query');
+
+    const ik = String((q.from || {}).installation_key || '');
+    if (!ik) return no(400, 'the question does not say which installation is asking');
+    let peer = null;
+    try {
+      const r = await query(
+        `SELECT installation_key, domain, hosted_locally, active FROM installation WHERE installation_key = $1`, [ik]);
+      peer = r.rows[0] || null;
+    } catch (_) { peer = null; }
+    if (!peer || !peer.active) return no(403, 'installation ' + ik + ' is not one we deal with');
+    if (peer.hosted_locally) return no(409, 'installation ' + ik + ' is hosted here — ask locally');
+    if (!peer.domain) return no(403, 'no domain recorded for ' + ik + ', so its key cannot be found');
+
+    const pk = await directory.publicKeyFor(peer.domain, ik);
+    if (!pk.ok) return no(403, 'could not read the asker’s manifest: ' + pk.why);
+    const opened = ctpquery.open(q, {
+      verify: (hash, sig, who) => who === ik && keys.verifyWith(pk.public_key, hash, sig),
+    });
+    if (!opened.ok) return no(403, opened.why);
+
+    const ask = opened.ask;
+    const cat = require('./catalogue');
+
+    if (ask.want === 'resolve') {
+      /* ⭐ the grammar decides what MAY be resolved before the database is asked anything */
+      const c = require('../lib/resolveuserid').classify(ask.handle);
+      if (c.kind !== 'entity' && c.kind !== 'network_node' && c.kind !== 'bridge_id') {
+        return res.json({ ok: true, found: false, why: '"' + ask.handle + '" is not a business — only a business can be addressed across installations' });
+      }
+      const ent = await cat.resolveEntity(c.kind === 'bridge_id' ? c.bridge_id : c.handle);
+      if (!ent) return res.json({ ok: true, found: false, why: 'no business here called ' + ask.handle });
+      const me = await manifest();
+      /* ⚠️ the address is BUILT by lib/ctpaddress, never spelled here — tests/namespace fails any second "@" join */
+      return res.json({ ok: true, found: true, bridge_id: ent.bridge_id, display_name: ent.display_name,
+                        user_id: ent.user_id, address: require('../lib/ctpaddress').format(ent.bridge_id, me.domain),
+                        installation_key: me.installation_key });
+    }
+
+    if (ask.want === 'catalogue') {
+      const ent = await cat.resolveEntity(ask.bridge_id);
+      if (!ent) return res.json({ ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id });
+      /* ⚠️ neither asOwner nor viewer — a peer installation is never the owner and is not a signed-in customer.
+         The RAW view, then the SAME trim a storefront visitor gets: one view, one response, two doors. */
+      const view = await cat.publicViewFor(ent, {});
+      if (!view || !view.available) return res.json({ ok: true, found: false, why: ent.display_name + ' has no public catalogue' });
+      return res.json(Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, cat.publicResponseFor(view, false)));
+    }
+    return no(400, 'not a question this installation answers');
+  } catch (e) {
+    console.error('ctp query:', e.code || '', e.message);
+    return no(500, 'this installation could not answer: ' + (e.message || 'error'));
+  }
+});
+
 module.exports = router;
 module.exports.manifest = manifest;

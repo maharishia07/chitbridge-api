@@ -430,6 +430,9 @@ const ENGINE_OTHER = [
    * already paid twice for a receipt that reported an intention. (2026-09-15)
    */
   'ctptransport.js',
+  /* CTP’s READ verb (2026-09-16): a signed question to a peer — resolve a handle, pull a public catalogue. Like
+     the other ctp* files it leaves as a SPECIFICATION, not a library (docs/SOFTWARE-ASSETS.md). */
+  'ctpquery.js',
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;

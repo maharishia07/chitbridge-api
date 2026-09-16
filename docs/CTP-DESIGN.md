@@ -231,6 +231,45 @@ gate**. Which constitution governs a cross-border chit is §9's open decision, n
 constitution, the two doors agree for the same world, tighten-only survives, an unknown installation is a
 stated fallback, and — in `lib/` — only `govresolve` may resolve a constitution from the governance tables.
 
+## 6.2 The read verb — a catalogue is PULLED, by store id (DECIDED 2026-09-16)
+
+Athi: *"catalogue pull I guess. currently, within the platform, we are just pulling the catalogue based on the
+store id, the store is not pushing the catalogue; the same resolves in cross platform also."*
+
+**This settles §9.6 the other way from what it recommended.** §9.6 said *"push status changes as further
+envelopes rather than invent a read path"* — and for *status* that still stands. For a *catalogue* the local
+shape is a pull (`GET /api/catalogue/:bridge_id`, answered with the anonymous public view), so the
+cross-installation shape is the same pull, over a signed question:
+
+```
+POST <peer>/api/ctp/query
+{ ctp:'1', kind:'query', from:{installation_key, population, bridge_id}, to:{domain},
+  ask:{ want:'resolve', handle } | { want:'catalogue', bridge_id }, nonce, at, sealed }
+```
+
+| question | answers | why it exists |
+|---|---|---|
+| `resolve` | `bridge_id`, `display_name`, `address` | a person types a **handle**; the wire wants a **bridge id**; the handle is a name in the *other* database. Asked once, at add-supplier time — then the bridge id is stored. Closes **NS-3.** |
+| `catalogue` | the public storefront view | the pull itself |
+
+**Door-keeping is the same as `deliver`, in the same order:** is the asker an installation we deal with (b257
+row, remote, active, with a domain) → verify the signature against the key on *their* domain → answer. A
+stranger installation gets nothing; discovery stays open. ⚠️ **The population rule is not applied to a read** —
+b247 bounds who may *transact*, and a public catalogue is public to the whole web already.
+
+⭐ **The answer is the same function an anonymous visitor gets.** `routes/catalogue.js` now has one
+`publicViewFor(entity, asOwner)`; the local `/:bridge_id` route and the CTP `/query` door both call it, the
+latter always with `asOwner: false`. A peer is never the owner, so a cross-installation pull can never show
+more than `/shop.html?s=<store>` shows — and `tests/ctp-query.test.cjs` asserts `buildPublicView` is called
+from exactly one place. `resolve` answers only for a **business**: the grammar (`lib/resolveuserid`) refuses an
+employee, a customer or a minted party before the database is asked.
+
+**Replay:** every question carries a nonce and a time; one older than five minutes is refused. **The answer is
+not signed** — the asker reached the endpoint it resolved for that domain over TLS with `redirect: 'error'` —
+recorded as **§9.11** rather than done quietly.
+
+`lib/ctpquery.js` is the module (build · sign · open · `ask()`); `tests/ctp-query.test.cjs` is the proof.
+
 ## 7. ⚠️⚠️ The boundary becomes a protocol rule
 
 **This is the most dangerous thing in the design and the reason to write the note before the code.**
@@ -341,6 +380,11 @@ makes §8's promise checkable, and it is what makes a world liftable in §10.
     `'trade'`. **Resolution** is now single-source (`lib/govresolve`); **writing** is not. Which writer is
     the authority, and whether `base` / `is_default` / `'trade'` are one default or three, is a decision —
     left unchanged unattended because it is registration behaviour.
+
+11. **The answer to a query is not signed** — *from §6.2, 2026-09-16.* The QUESTION is signed (so the answerer
+    knows who is asking); the ANSWER rides back over TLS to the endpoint the asker resolved for that domain, with
+    `redirect: 'error'`. A signed answer would add a second key ceremony for a public fact. Whether that is
+    enough — or whether a peer should be able to prove *what it was told* to a third party — is undecided.
 
 ## 10. Why this makes a world liftable
 

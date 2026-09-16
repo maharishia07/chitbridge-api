@@ -636,9 +636,7 @@ router.get('/network/:bridge_id', async (req, res) => {
       if (String(bid) === String(root.bridge_id)) continue;      // the root is the front, not a department
       const ent = await resolveEntity(bid);
       if (!ent) continue;
-      const view = await catalogueView.buildPublicView({ entity: ent, query, withEntity, catalogueBuild, orderInput,
-        identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
-        container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap') });
+      const view = await publicViewFor(ent, {});
       departments.push({ entity: ent, view });
     }
 
@@ -673,36 +671,44 @@ function ownerOf(req, entity) {
     return String(mine) === String(entity.identity_id);
   } catch (_) { return false; }
 }
+/**
+ * ── ⭐⭐ THE PUBLIC VIEW OF ONE STORE, AS ONE FUNCTION ───────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16: *"within the platform, we are just pulling the catalogue based on the store id… the same
+ * resolves in cross platform also."* So the CTP pull (routes/ctp.js `/query`) must return EXACTLY what an
+ * anonymous visitor to `/shop.html?s=<store>` gets — and the only way to be sure it always will is for both
+ * doors to call one function. Two copies of that deps object would be two visibility policies within a month.
+ *
+ * ⚠️ `asOwner` is the ONLY thing that widens the view, and a peer installation is never the owner.
+ */
+async function publicViewFor(entity, opts) {
+  const o = opts || {};
+  /* ⚠️ THE ONE CALL. `asOwner` widens the view to the owner's preview; `viewer` lets a signed-in customer see
+     what the visibility cap grants THEM. A peer installation passes neither. */
+  return catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput,
+    identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
+    container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'),
+    asOwner: !!o.asOwner, viewer: o.viewer });
+}
+
+/** what a storefront visitor is SENT — the public response, trimmed from the raw view. One place. */
+function publicResponseFor(view, asOwner) {
+  return { shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
+    groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
+    unpriced_hidden: view.unpriced_hidden,
+    /* ⚠️ the view computed the live offers all along; this line never forwarded them — the customer saw none (Athi, 2026-09-04) */
+    offers: view.offers || [], categories: view.categories || [],
+    finishes: view.finishes, preview: asOwner ? { visibility: view.visibility || 'private' } : undefined };
+}
 router.get('/:bridge_id', async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     const asOwner = req.query.preview === '1' && ownerOf(req, entity);
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
-    const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'), asOwner });
-    // ⚠️ A PRIVATE SHOP MUST BE INDISTINGUISHABLE FROM ONE THAT DOES NOT EXIST.
-    //
-    // Athi, 2026-08-06: *"make the entity private and try to open the store using the storefront — it should say
-    // that such entity does not exist."*
-    //
-    // He was right, and this line was the leak. `Not available · This shop has no public catalogue` versus
-    // `Not found · Shop not found` is an EXISTENCE ORACLE: walk the bridge-id space, and the two messages tell you
-    // which ids are real businesses — including every private one. The id is short and guessable enough that this
-    // is a real enumeration, not a theoretical one.
-    //
-    // catalogue-view.js already got this right and says so in its own header — "identical shape to 'this owner has
-    // published nothing'" — and returns {available:false} either way. The library did its job; this line undid it
-    // one step later, which is where these things usually go wrong.
-    //
-    // Both cases now answer with the SAME status and the SAME body. A private catalogue costs nothing and reveals
-    // nothing, including whether it is there at all.
+    const view = await publicViewFor(entity, { asOwner });
     if (!view.available) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
-    res.json({ shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
-      groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
-      unpriced_hidden: view.unpriced_hidden,
-      /* ⚠️ the view computed the live offers all along; this line never forwarded them — the customer saw none (Athi, 2026-09-04) */
-      offers: view.offers || [], categories: view.categories || [],
-      finishes: view.finishes, preview: asOwner ? { visibility: view.visibility || 'private' } : undefined });
+    res.json(publicResponseFor(view, asOwner));
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
 
@@ -1391,11 +1397,7 @@ const enquiryLimitCheck = async (viewer, item_id) => {
   if (owner_id === viewer) return { ok: true, owner_id };          // your own product
   const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
   if (!ent.rows[0]) return { ok: false };
-  const view = await catalogueView.buildPublicView({
-    entity: ent.rows[0], query, withEntity, catalogueBuild, orderInput,
-    identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
-    container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'), viewer,
-  }).catch(() => null);
+  const view = await publicViewFor(ent.rows[0], { viewer }).catch(() => null);
   return (view && view.available !== false) ? { ok: true, owner_id } : { ok: false };
 };
 
@@ -1448,4 +1450,9 @@ router.post('/enquiry/:item_id', auth,
 
 module.exports = router;
 module.exports.resolveContact = resolveContact;   // exported for unit tests (F2 channel detection)
-module.exports.crHandle = crHandle;               // exported for unit tests (collision-free .cr handle)
+module.exports.crHandle = crHandle;
+/* ⭐ the ONE public view and the ONE store resolver — routes/ctp.js `/query` answers a peer with these, so a
+   cross-installation pull can never show more than an anonymous visitor sees. */
+module.exports.publicViewFor = publicViewFor;
+module.exports.publicResponseFor = publicResponseFor;
+module.exports.resolveEntity = resolveEntity;               // exported for unit tests (collision-free .cr handle)

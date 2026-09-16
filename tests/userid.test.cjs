@@ -255,7 +255,12 @@ ok('⭐⭐ a network store is root.store, and its employee id hangs off that', (
     const c = resolve.classify(typed);
     assert.strictEqual(c.actor_key, 'ravi');
     assert.strictEqual(c.at, 'acmetraders.clothing', typed + ' must resolve to the store she works at');
+    /* ⭐ Athi, 2026-09-16: "just check the root is also resolved" — the network she belongs to, alongside the
+       store. What a root GRANTS is undecided and untouched; the fact is simply there for whoever decides. */
+    assert.strictEqual(c.root, 'acmetraders', typed + ' must also carry the network root');
   }
+  /* for a plain business the store and the root are the same string — no special case for the reader */
+  assert.strictEqual(resolve.classify('ravi@acmetraders.br').root, 'acmetraders');
 });
 
 ok('⚠️ and the suffixed form does NOT send anybody looking for a business called "acmetraders.br"', () => {
