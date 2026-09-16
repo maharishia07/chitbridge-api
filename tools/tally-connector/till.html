@@ -1239,6 +1239,43 @@ var KEPT = { asked:false, granted:null, why:'' };
 var OWNER = null, FOREIGN = 0;
 /* ⭐ the sentence the 🩺 panel last showed, so a report SENT says what the shopkeeper is reading — see openStuck() */
 var STUCK_VERDICT = null;
+/** ⭐ ONE reader for the pairing address — the boot path and the paste handler must not disagree about it */
+function hashVal(n){
+  var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)'));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+/**
+ * ── ⭐⭐ A KEY PASTED INTO AN ALREADY-OPEN COUNTER ────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16. The pairing address is only ever read at boot, and changing just the #fragment of a URL does
+ * NOT reload a page — so pasting a new key into a counter that is already open did nothing whatsoever. No error,
+ * no pairing, no clue. It looked exactly like a key that had been refused, which is the worst thing it could have
+ * looked like while somebody was trying to fix a counter.
+ *
+ * ⚠️ RE-PAIRING IS A RELOAD, DELIBERATELY. A new key means a different copy of the shop (tillStore() is named
+ * after it), so half-switching a running page — cart, catalogue, queue, the who-is-billing marker — is how the
+ * two-shops-on-one-counter fault happened in the first place. The key is stored and the page is started again,
+ * which is the path that is already proven.
+ * ⚠️ AND NOT OVER AN UNFINISHED BILL. What is on the screen has not been sold yet; a reload would lose it.
+ */
+window.addEventListener('hashchange', async function(){
+  if (location.hash.indexOf('key=') < 0) return;
+  var k = hashVal('key');
+  var clean = function(){ try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {} };
+  if (!k) return;
+  if (k === ls.get('cb_till_key', null)) { clean(); toastLine('This counter is already paired with that key.'); return; }
+  if (typeof CART !== 'undefined' && CART.length) {
+    if (!await sure('Pair this counter with a different key?\n\nThe bill on the screen has not been sold and will '
+      + 'be lost. Park it first if you want to keep it.', 'Yes, pair it again', 'A new key was pasted')) { clean(); return; }
+  }
+  /**
+   * ⚠️⚠️ THE HASH IS LEFT WHERE IT IS AND THE PAGE IS SIMPLY STARTED AGAIN. Boot already adopts the key, writes
+   * the shop marker under shopLs() — which must be namespaced by the NEW key, in that order, and getting that
+   * order wrong is a fault we have already paid for once — and cleans the address afterwards. Re-implementing
+   * any of that here would be a second pairing path that has to be kept in step with the first.
+   */
+  location.reload();
+});
 function ownRow(r){ if (r && typeof r === 'object' && OWNER) r._shop = OWNER; return r; }
 /**
  * ⭐⭐ THE ONE OWNERSHIP RULE, ASKED TWO WAYS. `ownOK` is the FILTER — it answers and counts, because a foreign
@@ -2003,7 +2040,7 @@ async function pickHost(){
   CloudHost.key = ls.get('cb_till_key', null);
   /* a key may be handed over once in the address: .../till.html#key=… — it is stored and the address is cleaned */
   if (location.hash.indexOf('key=') >= 0) {
-    var hv = function(n){ var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : ''; };
+    var hv = hashVal;                                     /* ⚠️ one reader — see hashVal(), also used by the paste handler */
     var k = hv('key');
     /**
      * ⭐⭐ WHO THIS COUNTER WAS OPENED FOR. ChitBridge puts the signed-in shop in the address beside the key, so the counter has
