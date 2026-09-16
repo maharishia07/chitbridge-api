@@ -6642,6 +6642,13 @@ async function openStuck(){
 
   var last = (HOST && HOST.last) || null;
   var storeOK = ls.works();
+  /* ⭐ what earlier pairings of THIS shop left behind — see otherCounters() and the verdict below */
+  var stranded = 0;
+  try {
+    (await otherCounters()).forEach(function(s){
+      if (String(s.owner || '') === String(OWNER || '')) stranded += s.queue;
+    });
+  } catch (_) {}
   var line = function(k, v, warn){
     return '<div class="t' + (warn ? ' warnrow' : '') + '"><span>' + esc(k) + '</span><span>' + esc(String(v)) + '</span></div>';
   };
@@ -6692,6 +6699,14 @@ async function openStuck(){
   else if (!(HOST && HOST.key)) verdict = 'This counter has no key, so nothing can be sent. Pair it from the shop.';
   else if (!navigator.onLine) verdict = 'No internet. The bills are safe here and go as soon as it returns.';
   else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
+  /**
+   * ⚠️⚠️ AN EMPTY QUEUE IN *THIS* COPY IS NOT AN EMPTY COUNTER. Pairing again starts a new database named after
+   * the new key, so the previous copy — and anything still queued in it — is abandoned where nothing looks. This
+   * check has to come BEFORE the happy verdict, or the panel congratulates a counter that still owes sales.
+   */
+  else if (stranded) verdict = '⚠️ ' + stranded + ' sale(s) of this shop are sitting in an EARLIER copy of this '
+      + 'counter, left behind when it was paired again. This copy is empty and honest; those bills have still not '
+      + 'reached ChitBridge. Open “What is being kept” and bring them in.';
   else verdict = '✓ Nothing is queued. Every bill this counter holds has been sent.';
   /**
    * ⭐⭐ THE VERDICT, THEN THE WAY OUT, THEN THE DETAIL. A person who opened this panel wants the queue moving;
@@ -6860,6 +6875,120 @@ async function storageMap(){
 }
 function kb(n){ return n == null ? '—' : (n < 1024 ? n + ' B' : (n < 1048576 ? Math.round(n / 1024) + ' KB' : (n / 1048576).toFixed(1) + ' MB')); }
 /**
+ * ── ⭐⭐⭐ THE ORPHANED COUNTERS, AND WHY A RE-PAIR STRANDS SALES ──────────────────────────────────────────────
+ *
+ * Athi's device, 2026-09-16, five databases: cb-till, cb-till-1403k2a, cb-till-14f27ap, cb-till-s396ab and
+ * cb-till-1dyd5gy ← this shop, 3 bills, 0 queued. Storage 0% full, so nothing was ever short of room.
+ *
+ * ⚠️⚠️ tillStore() NAMES THE DATABASE AFTER THE KEY, NOT THE SHOP. That was right for the fault it was built to
+ * stop — two shops must never share one copy — but it means MINTING A FRESH KEY FOR THE SAME SHOP starts a brand
+ * new empty store and silently abandons the old one, with whatever was still queued inside it. His shop holds
+ * eight till keys. Every re-pair since has left a counter behind, and nothing in this page has ever looked at
+ * them: not drain, not the bill list, not the day totals, not the 🩺 panel, which reads only the current store.
+ * That is why the counter can say "3 bills, 0 queued" and be perfectly truthful while sales sit unsent.
+ *
+ * ⚠️ PEEKING MUST NOT JOIN. Diagnosis opens these read-only and never upgrades or creates — a store we have not
+ * seen before is left exactly as it was found.
+ */
+function peekStore(name){
+  return new Promise(function(res){
+    var rq, fresh = false;
+    try { rq = indexedDB.open(name); } catch (_) { return res(null); }
+    rq.onupgradeneeded = function(){ fresh = true; };      /* it did not exist — we are not going to make it */
+    rq.onerror = function(){ res(null); };
+    rq.onblocked = function(){ res(null); };
+    rq.onsuccess = function(){
+      var db = rq.result;
+      if (fresh) { try { db.close(); indexedDB.deleteDatabase(name); } catch (_) {} return res(null); }
+      try {
+        if (!db.objectStoreNames.contains('bills') || !db.objectStoreNames.contains('queue')) { db.close(); return res(null); }
+        var want = ['bills', 'queue'].concat(db.objectStoreNames.contains('kv') ? ['kv'] : []);
+        var tx = db.transaction(want, 'readonly');
+        var b = tx.objectStore('bills').getAll(), q = tx.objectStore('queue').getAll();
+        var o = db.objectStoreNames.contains('kv') ? tx.objectStore('kv').get('owner') : null;
+        tx.oncomplete = function(){
+          db.close();
+          res({ name: name, bills: (b.result || []).length, queue: (q.result || []).length,
+                owner: (o && o.result) || null, rows: { bills: b.result || [], queue: q.result || [] } });
+        };
+        tx.onerror = function(){ try { db.close(); } catch (_) {} res(null); };
+      } catch (_) { try { db.close(); } catch (_) {} res(null); }
+    };
+  });
+}
+/** ⭐ every counter store on this device, this shop's last, each with what is really inside it */
+async function otherCounters(){
+  var names = [];
+  try { if (indexedDB.databases) names = ((await indexedDB.databases()) || []).map(function(d){ return d.name; }); }
+  catch (_) { names = []; }
+  var here = tillStore(), out = [];
+  for (var i = 0; i < names.length; i++) {
+    var n = names[i];
+    if (!n || String(n).indexOf('cb-till') !== 0 || n === here) continue;
+    var p = await peekStore(n);
+    if (p) out.push(p);
+  }
+  return out;
+}
+/**
+ * ── ⭐⭐⭐ BRING THE STRANDED SALES BACK ───────────────────────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ ONLY WHERE THE SHOP MATCHES, AND THAT IS THE WHOLE SAFETY ARGUMENT. A store left behind by re-pairing the
+ * SAME shop holds this shop's own sales — they belong in these books and this counter's key can send them. A
+ * store belonging to a DIFFERENT shop is the injury the ownership guard exists to prevent, and it is never
+ * adopted, never re-stamped: it is reported, and it can be saved to a file for whoever it does belong to.
+ * ⚠️ Nothing is deleted from the old store until the row is safely written into this one, and `client_ref` makes
+ * a second send harmless — so the failure mode is a duplicate attempt, never a lost sale.
+ */
+async function rescueOrphans(){
+  var mineNow = String(OWNER || (await DB.ownerRaw()) || '');
+  if (!mineNow) { toastLine('This counter does not know which shop it is yet. Read the shop again first.'); return; }
+  var others = await otherCounters();
+  var take = [], strangers = [];
+  others.forEach(function(s){
+    /* a row with no stamp is legacy and belongs to whoever the store belonged to */
+    var owner = String(s.owner || '');
+    if (owner && owner === mineNow) take.push(s); else if (s.bills || s.queue) strangers.push(s);
+  });
+  var n = take.reduce(function(a, s){ return a + s.queue + s.bills; }, 0);
+  if (!n) {
+    toastLine(strangers.length
+      ? 'Nothing here belongs to this shop. ' + strangers.length + ' counter(s) on this device belong to another shop.'
+      : 'There is nothing stranded on this device.');
+    return;
+  }
+  if (!await sure('Bring ' + n + ' row(s) from ' + take.length + ' earlier pairing(s) of THIS shop into this counter?\n\n'
+    + 'They were left behind when the counter was paired again. Anything unsent will then be sent normally.\n\n'
+    + 'Nothing belonging to another shop is touched.', 'Yes, bring them in', 'Stranded sales')) return;
+
+  var moved = 0, queued = 0;
+  for (var i = 0; i < take.length; i++) {
+    var s = take[i];
+    for (var j = 0; j < s.rows.bills.length; j++) {
+      var b = s.rows.bills[j]; if (!b || !b.no) continue;
+      try { await DB.put('bills', b); moved++; } catch (_) {}
+    }
+    for (var k = 0; k < s.rows.queue.length; k++) {
+      var q = s.rows.queue[k]; if (!q || !q.no) continue;
+      /* ⚠️ a row already acknowledged must not be queued again — it is in the books */
+      if (q._sent) continue;
+      try { await DB.put('queue', q); queued++; } catch (_) {}
+    }
+  }
+  /* only now is the old copy safe to remove */
+  for (var m = 0; m < take.length; m++) {
+    try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(take[m].name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); } catch (_) {}
+  }
+  try { await queueTally(); paintStatus(); } catch (_) {}
+  if (queued && HOST && HOST.key && navigator.onLine) { try { await HOST.drain(); } catch (_) {} }
+  var left = 0; try { left = ((await DB.all('queue')) || []).length; } catch (_) {}
+  say('Brought in ' + moved + ' bill(s), ' + queued + ' of them still to send.\n\n'
+    + (left ? left + ' bill(s) are waiting now. Press "Get my bills moving" if they do not go.'
+            : 'Everything has been sent.')
+    + (strangers.length ? '\n\n' + strangers.length + ' counter(s) on this device belong to a different shop and were left alone.' : ''));
+  openStorage();
+}
+/**
  * ⭐⭐ THE STORAGE PANEL. Reached from 🩺, because "what is this counter keeping" is only ever asked by somebody
  * already asking why it is behaving strangely.
  */
@@ -6874,12 +7003,30 @@ async function openStorage(){
     h += '<div class="sec">What the browser has given this counter</div>'
       + line('Used', kb(m.quota.used) + ' of ' + kb(m.quota.granted) + '  (' + pct + '%)', pct > 85);
   }
-  h += '<div class="sec">The shop\'s copy — one database per shop</div>';
-  m.idb.forEach(function(d){
-    var here = (d.name === tillStore());
-    h += line(d.name + (here ? '  ← this shop' : ''),
-      here && m.rows ? (m.rows.bills + ' bill(s), ' + m.rows.queue + ' queued') : 'another shop on this device', !here);
+  /**
+   * ⚠️⚠️ NAMING THE OTHER STORES WAS NOT ENOUGH — it is what is INSIDE them that strands a sale. "another shop on
+   * this device" read as housekeeping; "2 queued, NOT SENT, this shop" is the thing somebody has to act on.
+   */
+  var others = await otherCounters();
+  var mineNow = String(OWNER || '');
+  var stranded = others.reduce(function(a, s){
+    return a + ((String(s.owner || '') === mineNow) ? s.queue : 0); }, 0);
+  h += '<div class="sec">Counters on this device — one copy per pairing, not per shop</div>'
+    + line(tillStore() + '  ← in use now',
+        m.rows ? (m.rows.bills + ' bill(s), ' + m.rows.queue + ' queued') : '—');
+  others.forEach(function(s){
+    var same = String(s.owner || '') === mineNow;
+    h += line(s.name + (same ? '  · THIS shop, left behind' : '  · another shop'),
+      s.bills + ' bill(s), ' + s.queue + ' queued' + (same && s.queue ? '  — NOT SENT' : ''),
+      same && s.queue > 0);
   });
+  if (stranded) {
+    h += '<div style="color:var(--dim);font-size:.8em;padding:6px 0">Pairing this counter again starts a fresh '
+      + 'copy and leaves the old one behind — including anything it had not sent. ' + stranded + ' sale(s) of '
+      + 'this shop are sitting in an earlier copy, which is why the counter can look empty and still owe bills.</div>'
+      + '<button class="pill" data-testid="till-rescue" onclick="rescueOrphans()"><b>Bring ' + stranded
+      + ' stranded sale(s) into this counter</b></button>';
+  }
   h += '<div class="sec">Settings on this device (' + kb(m.lsBytes) + ')</div>';
   if (m.lsErr) h += line('localStorage would not be read', m.lsErr, true);
   m.ls.slice(0, 14).forEach(function(r){ h += line(r.key, kb(r.bytes) + (r.shop ? '  · this shop' : '  · this device')); });
