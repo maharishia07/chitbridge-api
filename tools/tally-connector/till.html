@@ -971,11 +971,8 @@
       <input type="checkbox" id="col_rules" data-testid="till-col-rules" onchange="cartColSet('rules',this.checked)"> Lines between columns</label>
   </div>
   <label>Quick keys — where they come from</label>
-  <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})">
-    <option value="frequent">What sells at this hour — learned from this counter's own bills</option>
-    <option value="groups">A group I made</option>
-    <option value="both">My group first, then what sells</option>
-  </select>
+  <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
+  <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})"></select>
   <div id="setupgroups" data-testid="till-set-groups"></div>
   <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show every hidden key again</button>
   <div style="color:var(--dim);font-size:.78em;margin:4px 0 8px">Learned keys come from this counter's own bills — what sells around this time of day. ✕ drops one, 📌 keeps one there all day. A group is a list you make: the same product can sit in Morning and Night at once, and adding or removing one never changes the shelf.</div>
@@ -2565,6 +2562,16 @@ function partOfDay(h){
  * ⚠️ A GROUP IS A LIST OF IDS, NOT A CHANGE TO THE SHELF. Athi: *"we should be able to add a few more, or remove
  * few as per the demand — that should not affect the standard list."* Nothing here ever writes a product.
  */
+/**
+ * ⭐⭐ THE THREE SOURCES, WRITTEN ONCE. They are offered in two places — on the keys themselves and in ⚙ Setup —
+ * and a list of options maintained twice is a list that disagrees with itself the first time one is edited.
+ * Short label for the bar above the keys, long one for Setup, where there is room to explain.
+ */
+var QUICK_SRC = [
+  ['frequent', 'What sells now',    "What sells at this hour — learned from this counter's own bills"],
+  ['groups',   'My group',          'A group I made'],
+  ['both',     'Group, then usual', 'My group first, then what sells']
+];
 var TILLOPT = null;
 function tillOptDefaults(){
   return { layout:'full', shape:'auto', quickSource:'frequent', group:'', groups:{},
@@ -2793,22 +2800,35 @@ function paintQuick(){
   var o = tillOpt(), usesGroups = (o.quickSource === 'groups' || o.quickSource === 'both');
   /* ⚠️ THE BAR SURVIVES AN EMPTY GRID when groups are in use — a new group has nothing in it yet, and hiding the
      one control that fills it would make the feature unreachable the moment it is switched on. */
-  if (typing || (!QUICK.length && !usesGroups)) { el.innerHTML = ''; return; }
+  /**
+   * ⚠️⚠️ THE BAR IS NOW THE ONE THING THAT ALWAYS SURVIVES. Athi, 2026-09-16: *"how do we set the quick keys? it
+   * is just appearing here — where are we setting it?"* He could not find it because on the default source there
+   * was nothing to find: the group controls only existed once somebody had already switched to groups, and the
+   * only way to switch was a trip to ⚙ Setup. A feature reachable only by people who already know it exists is
+   * not reachable. So the keys now carry the control that decides what fills them.
+   * ⚠️ Typing is still the exception — the tiles get out of the way of a search, which is what they are for.
+   */
+  if (typing) { el.innerHTML = ''; return; }
   var pinned = quickPinned(), mine = groupIds();
   /* ⭐ THE GROUP BAR — choose the group, start one, and put the marked row in it without leaving the counter. */
   var names = Object.keys(o.groups || {}).sort();
-  var bar = usesGroups
-    ? '<div class="qbar" data-testid="till-quick-bar">'
-      + '<select data-testid="till-quick-group" title="which group" onchange="tillOptSet({group:this.value})">'
-      + '<option value="">— no group —</option>'
-      + names.map(function(nm){ return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>' + esc(nm) + '</option>'; }).join('')
-      + '</select>'
-      + '<button data-testid="till-quick-group-new" onclick="quickGroupNew()">＋ group</button>'
-      + (o.group ? '<button data-testid="till-quick-group-add" onclick="quickGroupAddMarked()" title="put the row the list is marking into ' + esc(o.group) + '">＋ marked row</button>' : '')
-      + (QUICK_WHY ? '<span class="qwhy">' + esc(QUICK_WHY) + '</span>' : '')
-      + '</div>'
-    /* ⭐ THE GRID SAYS WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
-    : (QUICK_WHY ? '<div class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</div>' : '');
+  var bar = '<div class="qbar" data-testid="till-quick-bar">'
+    /* ⭐ WHERE THESE KEYS COME FROM, said by the control that changes it. The same three sources as ⚙ Setup —
+       one setting, two places to reach it, never two opinions about it (tillOptSet writes both). */
+    + '<select data-testid="till-quick-src" title="where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
+    + QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '"' + (o.quickSource === s[0] ? ' selected' : '') + '>' + esc(s[1]) + '</option>'; }).join('')
+    + '</select>'
+    + (usesGroups
+      ? '<select data-testid="till-quick-group" title="which group" onchange="tillOptSet({group:this.value})">'
+        + '<option value="">— no group —</option>'
+        + names.map(function(nm){ return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>' + esc(nm) + '</option>'; }).join('')
+        + '</select>'
+        + '<button data-testid="till-quick-group-new" onclick="quickGroupNew()">＋ group</button>'
+        + (o.group ? '<button data-testid="till-quick-group-add" onclick="quickGroupAddMarked()" title="put the row the list is marking into ' + esc(o.group) + '">＋ marked row</button>' : '')
+      : '')
+    /* ⭐ AND WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
+    + (QUICK_WHY ? '<span class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</span>' : '')
+    + '</div>';
   el.innerHTML = bar
     + QUICK.map(function(i, n){
     var pin = pinned.indexOf(i.item_id) >= 0;
@@ -7218,6 +7238,9 @@ function paintSetup(){
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
   set('set_layout', o.layout || 'full');
   set('set_shape', o.shape || 'auto');
+  /* ⚠️ the options come from QUICK_SRC, the same list the bar above the keys offers — see the note there */
+  var qs = document.getElementById('set_qsrc');
+  if (qs) qs.innerHTML = QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '">' + esc(s[2]) + '</option>'; }).join('');
   set('set_qsrc', o.quickSource || 'frequent');
   set('set_upi', (o.upi && o.upi.payee) || '');
   set('set_upilabel', (o.upi && o.upi.label) || 'UPI');
