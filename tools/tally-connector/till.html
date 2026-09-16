@@ -175,15 +175,34 @@
    * tallytest having a million products — this counter app should be able to cater for them just based on option
    * selection."* The body wears the choice; nothing else in the file has to know about layout.
    *
-   *   lay-full   the whole counter (default, unchanged)
-   *   lay-quick  the keys and the bill — no long list. A hotel or tiffin counter bills from a dozen keys.
-   *   lay-cart   the bill and a search — *"left side not required: search and the category, cart, summary."*
+   *   full   the whole counter (default, unchanged)
+   *   quick  the keys and the bill — no long list. A hotel or tiffin counter bills from a dozen keys.
+   *   cart   the bill and a search — *"left side not required: search and the category, cart, summary."*
+   *
+   * ⚠️ THESE ARE PRESETS, NOT RULES. Since observation 6 they only WRITE the per-section ticks (`show`), and the
+   * stylesheet reads nothing but those — so a preset and a tick can never disagree about what is on screen. A
+   * mix that matches no preset reports itself as "custom" rather than leaving a stale label on the dropdown.
    */
-  body.lay-quick .hits,body.lay-quick .keys{display:none}
-  body.lay-cart .hits,body.lay-cart .quick,body.lay-cart .keys{display:none}
-  /* the bill takes the room the list gave up: the left column shrinks to the search and the chips */
-  body.lay-cart .wrap{grid-template-columns:minmax(0,.62fr) 6px minmax(320px,1.38fr)}
-  body.lay-cart .left{border-right:1px solid var(--line)}
+  /**
+   * ── ⭐⭐⭐ EVERY SECTION SHOWS OR HIDES, ONE AT A TIME (observation 6, divisions A–C) ──────────────────────
+   *
+   * Athi walked the counter section by section and asked of each one *"is it a must?"*. Three are — the header,
+   * the bill, and the totals — and the rest are a shop's own business: *"Search bar, is it a must? Need not, so
+   * we toggle or hide… Product list, is it a must for everyone? Need not, show or hide, default show."*
+   *
+   * ⭐ ONE MECHANISM, NOT TWO. The layout presets (division B's combinations) do not have rules of their own —
+   * they WRITE this map, and this map is the only thing the stylesheet reads. Two ways to hide the same pane is
+   * how a preset and a tick come to disagree about what is on screen. [[feedback-stay-in-the-construct]]
+   */
+  body.hide-search .search{display:none}
+  body.hide-chips  .chips{display:none}
+  body.hide-quick  .quick{display:none}
+  body.hide-list   .hits{display:none}
+  body.hide-keys   .keys{display:none}
+  body.hide-cust   .cust,body.hide-cust .rw{display:none}
+  /* ⭐ when the shelf is gone entirely the bill takes the room it gave up */
+  body.hide-list.hide-quick .wrap{grid-template-columns:minmax(0,.62fr) 6px minmax(320px,1.38fr)}
+  body.hide-list.hide-quick .left{border-right:1px solid var(--line)}
   /* ⚠️ a shape is a DELIBERATE override of the media query, for a screen the browser cannot guess — a vertical
      monitor reports plenty of width and would otherwise get the wide counter. */
   body.shape-tall .wrap,body.shape-mobile .wrap{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}
@@ -808,8 +827,16 @@
   <select id="set_layout" data-testid="till-set-layout" onchange="tillOptSet({layout:this.value})">
     <option value="full">Everything — search, categories, quick keys, the whole list, the bill</option>
     <option value="quick">Quick keys and the bill — no long list</option>
-    <option value="cart">The bill and a search — no shelf on the left</option>
+    <option value="cart">The bill and a search — no shelf, no customer box</option>
+    <!-- ⚠️ not choosable, only REPORTED: it is what the ticks below say when they match no preset -->
+    <option value="custom" disabled>Your own mix — set by the ticks below</option>
   </select>
+  <!--
+    ⭐⭐ AND EACH SECTION ON ITS OWN (observation 6, division A). Athi walked the screen asking of each one "is
+    it a must?" — three are, and they are not here because a setting that cannot be changed is not a setting.
+  -->
+  <label>Or show and hide each part — the header, the bill and the totals are always shown</label>
+  <div id="setupshow" data-testid="till-set-show" style="display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 8px"></div>
   <label>Screen shape — for a screen the browser cannot guess</label>
   <select id="set_shape" data-testid="till-set-shape" onchange="tillOptSet({shape:this.value})">
     <option value="auto">Automatic — follow the screen</option>
@@ -2351,7 +2378,9 @@ function tillOptDefaults(){
   return { layout:'full', shape:'auto', quickSource:'frequent', group:'', groups:{},
            upi:{ payee:'', label:'UPI' },
            /* ⭐ which read-out columns the bill shows — see cartCols() (observation 6, division E) */
-           cols:{ disc:true, calc:true, value:true } };
+           cols:{ disc:true, calc:true, value:true },
+           /* ⭐ which SECTIONS the counter shows — see tillShow() (observation 6, divisions A–C) */
+           show:{ search:true, chips:true, quick:true, list:true, keys:true, cust:true } };
 }
 function tillOpt(){
   if (TILLOPT) return TILLOPT;
@@ -2364,14 +2393,64 @@ function tillOpt(){
 function tillOptSet(patch){
   var o = tillOpt();
   Object.keys(patch || {}).forEach(function(k){ o[k] = patch[k]; });
+  /**
+   * ⭐ CHOOSING A LAYOUT WRITES THE TICKS — it does not become a second rule beside them. So after picking
+   * "the bill and a search" the Setup panel shows exactly which sections that turned off, and the shopkeeper can
+   * put one back without abandoning the preset. A preset that hid things the ticks disagreed with would be two
+   * sources of truth for one screen.
+   */
+  if (patch && patch.layout && LAYOUTS[patch.layout]) {
+    var m = {}; Object.keys(LAYOUTS[patch.layout]).forEach(function(k){ m[k] = LAYOUTS[patch.layout][k]; });
+    o.show = m;
+  }
   try { ls.set(shopLs('cb_till_opt'), JSON.stringify(o)); } catch (_) {}
   applyTillOptions();
+  try { paintSetup(); } catch (_) {}
+}
+/** ⭐ one section on or off — and the layout stops claiming to be a preset it no longer matches */
+function tillShowSet(key, on){
+  var o = tillOpt(), s = {};
+  SECTIONS.forEach(function(p){ s[p[0]] = tillShow()[p[0]]; });
+  s[key] = !!on;
+  /* ⚠️ if the ticks no longer match the preset, SAY so rather than leaving a stale label on the dropdown */
+  var named = Object.keys(LAYOUTS).filter(function(L){
+    return SECTIONS.every(function(p){ return LAYOUTS[L][p[0]] === s[p[0]]; }); })[0] || 'custom';
+  var o2 = tillOpt(); o2.show = s; o2.layout = named;
+  try { ls.set(shopLs('cb_till_opt'), JSON.stringify(o2)); } catch (_) {}
+  TILLOPT = o2;
+  applyTillOptions();
+  try { paintSetup(); } catch (_) {}
 }
 /** ⭐ the body wears the choice, so the CSS decides what is on screen and no painter has to know about layout. */
+/**
+ * ⭐ WHICH SECTIONS THIS COUNTER SHOWS. The three that are always on — the header, the bill and the totals —
+ * are not in here, because a setting that cannot be changed is not a setting, it is a comment.
+ */
+var SECTIONS = [
+  ['search', 'Search box'],
+  ['chips',  'Categories'],
+  ['quick',  'Quick keys'],
+  ['list',   'The product list'],
+  ['keys',   'Keyboard shortcuts'],
+  ['cust',   'Customer name and phone'],
+];
+/** ⭐ the PRESETS Athi called combinations — each one is just a set of answers to the ticks above */
+var LAYOUTS = {
+  full:  { search:true,  chips:true,  quick:true,  list:true,  keys:true,  cust:true },
+  quick: { search:true,  chips:true,  quick:true,  list:false, keys:false, cust:true },
+  cart:  { search:true,  chips:true,  quick:false, list:false, keys:false, cust:false },
+};
+function tillShow(){
+  var o = tillOpt(), s = o.show || {}, out = {};
+  SECTIONS.forEach(function(p){ out[p[0]] = s[p[0]] !== false; });
+  return out;
+}
 function applyTillOptions(){
   var o = tillOpt(), b = document.body; if (!b) return;
-  ['lay-full','lay-quick','lay-cart','shape-wide','shape-tall','shape-mobile'].forEach(function(c){ b.classList.remove(c); });
-  b.classList.add('lay-' + (o.layout || 'full'));
+  ['shape-wide','shape-tall','shape-mobile'].forEach(function(c){ b.classList.remove(c); });
+  SECTIONS.forEach(function(p){ b.classList.remove('hide-' + p[0]); });
+  var show = tillShow();
+  SECTIONS.forEach(function(p){ if (!show[p[0]]) b.classList.add('hide-' + p[0]); });
   if (o.shape && o.shape !== 'auto') b.classList.add('shape-' + o.shape);
   try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
   try { paintHits(); } catch (_) {}
@@ -6615,6 +6694,16 @@ function paintSetup(){
   [['col_disc', 'disc'], ['col_calc', 'calc'], ['col_value', 'value']].forEach(function(p){
     var el = document.getElementById(p[0]); if (el) el.checked = cols[p[1]] !== false;
   });
+  /* ⭐ a tick per section, built from SECTIONS so adding one is a single line and never two lists to keep level */
+  var sb = document.getElementById('setupshow');
+  if (sb) {
+    var show = tillShow();
+    sb.innerHTML = SECTIONS.map(function(p){
+      return '<label style="display:flex;gap:6px;align-items:center;font-weight:400">'
+        + '<input type="checkbox" data-testid="till-show-' + p[0] + '"' + (show[p[0]] ? ' checked' : '')
+        + ' onchange="tillShowSet(\'' + p[0] + '\',this.checked)"> ' + esc(p[1]) + '</label>';
+    }).join('');
+  }
   /* ⭐ the groups, each with what it holds — and the one in hand can be renamed away or emptied from here */
   var box = document.getElementById('setupgroups');
   if (box) {
