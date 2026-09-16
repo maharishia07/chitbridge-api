@@ -348,7 +348,8 @@ router.post('/send',
         try {
           const seen = await withEntity(sender_id, (db) => db.query(
             /* ⚠️ the till id comes back too — see the collision check below */
-            `SELECT chit_id, business_json->'till'->>'id' AS till_id
+            `SELECT chit_id, business_json->'till'->>'id' AS till_id,
+                    business_json->>'billed_at' AS billed_at
                FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2
               ORDER BY created_at LIMIT 1`,
             [sender_id, client_ref]));
@@ -378,14 +379,44 @@ router.post('/send',
             const _bj = req.body && req.body.business_json;
             const mine = (_bj && _bj.till && _bj.till.id) || null;
             const theirs = seen.rows[0].till_id || null;
-            if (mine && theirs && String(mine) !== String(theirs)) {
+            /**
+             * ── ⚠️⚠️⚠️ THE GUARD ABOVE NEVER FIRED FOR THE ONE CASE ITS OWN COMMENT DESCRIBES ────────────────
+             *
+             * Athi, 2026-09-17: *"from this PC the bills are pushed, but still not happening from the other PC."*
+             * Only three counter bills had reached ChitBridge in five days — C1/26-27/0005, 0006, 0007 — and his
+             * two PCs, on 152.233.15.121 and .123, were BOTH counter `C1`, because nobody had renamed either.
+             *
+             * The comment above says, in so many words, "two counters nobody renamed both produce C1/26-27/0041".
+             * The code then compared TILL IDS — and two unrenamed counters have the SAME till id, so every
+             * collision between them read as a same-device RETRY. The second PC's real sale was absorbed, the
+             * server answered 200 with the FIRST PC's chit id, and the counter recorded that as its receipt and
+             * showed "✓ sent". Nothing failed anywhere, which is why no log, no queue and no panel caught it — and
+             * why the acknowledgement added on 2026-09-16 was fooled too: it received a real chit id, just
+             * somebody else's.
+             *
+             * ⭐ `billed_at` IS WHAT TELLS THEM APART, and every counter already sends it. A retry is the SAME
+             * bill, so it carries the same moment it was taken. Two devices issuing one number carry two different
+             * moments — they would have to be billed in the same millisecond. So: same moment → a retry, answered
+             * as before; different moments → a collision, refused and named, whatever the till ids say.
+             * ⚠️ Either side missing it — every chit that is not a counter bill, and anything older — behaves
+             * exactly as before. This only ever turns a silent absorption into a spoken refusal.
+             */
+            const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
+            const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
+            const otherBill = !!(myAt && theirAt && myAt !== theirAt);
+            if ((mine && theirs && String(mine) !== String(theirs)) || otherBill) {
+              const sameName = mine && theirs && String(mine) === String(theirs);
               return res.status(409).json({
                 error: 'Bill number already used by another counter',
                 code: 'TILL_SERIES_COLLISION',
                 client_ref, till: mine, taken_by: theirs,
-                message: 'Bill ' + client_ref + ' was already recorded by counter ' + theirs + ', and this is '
-                  + 'counter ' + mine + '. Two counters are numbering from the same series. Give this counter its '
-                  + 'own till id in Settings, then send again — nothing has been lost.',
+                message: sameName
+                  ? ('Bill ' + client_ref + ' was already recorded by a different counter that is ALSO called '
+                    + mine + '. Two counters are numbering from the same series. Give each counter its own till id '
+                    + 'in Settings (C1, C2 …), then send again — nothing has been lost.')
+                  : ('Bill ' + client_ref + ' was already recorded by counter ' + theirs + ', and this is '
+                    + 'counter ' + mine + '. Two counters are numbering from the same series. Give this counter its '
+                    + 'own till id in Settings, then send again — nothing has been lost.'),
               });
             }
             return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
