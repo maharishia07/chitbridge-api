@@ -3144,32 +3144,34 @@ async function add(n){
    *
    * Athi, observation 5, finding 3: *"when I select first few products, the selected product stays and I am able
    * to add more count by clicking. But if I search and found a product, once added it goes to the first product
-   * from the list."*
-   *
-   * ⚠️ CLEARING THE BOX IS RIGHT and stays — the next scan must land in an empty box, and every counter works
-   * that way. What was wrong is what it cost: the list reverts to the whole shop, the mark lands on row 0, and
-   * the thing just added is nowhere near the finger that added it. A second one then means searching again.
+   * from the list."*  → then, 2026-09-16: *"it has to stay where it is."*
    *
    * ⭐ TWO MARKS, because there are two ways to ask for another. The BILL LINE becomes the line in action, so
    * Ctrl+↑↓ adds another immediately and the row says so — that mechanism already exists and this is exactly what
-   * it is for. And the LIST mark follows the product when it is still on the page, so a second click also works.
-   * ⚠️ It does NOT hunt through ten thousand rows to find it: a search that walked the whole shop after every
-   * single add would cost more than it saves, and row 0 is a fair answer when the product is genuinely far away.
+   * it is for. And the LIST mark stays on the product: the search is no longer cleared (see below), so the same
+   * filtered rows are still on screen and a second click lands on the same row without any hunting.
    */
-  var box = document.getElementById('q');
-  var listChanges = String(box.value || '').trim().length > 0;
-  box.value = '';
+  /**
+   * ── ⭐⭐ THE SEARCH STAYS PUT AFTER AN ADD (Athi, 2026-09-16) ──────────────────────────────────────────────────
+   *
+   * *"when I select some item, the search is getting empty, so the product goes to the top in the list — it has
+   * to stay where it is; and when you start typing, it has to clear and get the new input."*
+   *
+   * ⚠️ IT USED TO CLEAR THE BOX, which swapped the filtered results for the whole 10,000-row shelf and re-centred
+   * — so the row you just billed vanished into a different list at a different place. Now the box is LEFT AS IS:
+   * the filtered list and the row stay exactly where they were, so you can add another of the same or read what
+   * you just added.
+   *
+   * ⭐ "clear and get the new input" is `focusSearch()` selecting the retained text — the next keystroke, or the
+   * next barcode scan, types OVER the selection and starts a clean search. Stay put, then retype fresh. (This is
+   * also why the box is not blanked: a blank box has nothing to select, so the "replace on next key" is the
+   * selection, not an empty string.)
+   */
   if (MODE === 'sell') {
     for (var ci = 0; ci < CART.length; ci++)
       if (String(CART[ci].item_id) === String(i.item_id)) { CARTSEL = ci; break; }
   }
-  SEL = n;
-  if (listChanges) {
-    SEL = 0;
-    var after = hits();
-    for (var si = 0; si < after.length; si++)
-      if (String(after[si].item_id) === String(i.item_id)) { SEL = si; CENTRE_NEXT = true; break; }
-  }
+  SEL = n;                 /* the row stays selected where it already is — no jump to the top, no re-centre */
   paintHits(); paintCart(); focusSearch();
 }
 /** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */
