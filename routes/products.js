@@ -446,31 +446,67 @@ router.get('/', auth, async (req, res) => {
                       params: listParams };
     /* the tally is over EVERY row, and costs almost nothing: one short string per product, never leaving the server */
     const tallySql = { text: `SELECT item_data->>'status' AS st FROM catalogue_items WHERE ${base.where}`, params: base.params };
+    /**
+     * ── ⭐⭐⭐ HOW MANY PRODUCTS ARE IN EACH CATEGORY — COUNTED WHERE THE ROWS ARE ────────────────────────────
+     *
+     * ⚠️⚠️ THE SCREEN WAS COUNTING A PAGE AND CALLING IT A CATALOGUE. `cbcatCounts` asked `prodList` with no
+     * limit, got one page back, and counted that — so on tallytest (10,441 products) the Categories screen said
+     * "Biscuits 19" where the shop holds 400, and "Beverages 0" where it holds 363. The numbers were not
+     * approximate, they were a different question: how many of the first page happen to be in this category.
+     * Found 2026-09-16, the morning Athi asked why his categories looked empty.
+     *
+     * ⭐ ONE GROUP BY, IN THE SAME BATCHED ROUND TRIP as the list and the status tally — so an accurate count
+     * for a shop of any size costs no extra journey. [[project-roundtrip-cost]]
+     * ⚠️ It counts over EVERY row like the status tally, never the page and never the filtered set: a count that
+     * changed with the scroll position would be worse than no count.
+     * ⚠️ A product may sit in several categories, so these deliberately do NOT sum to the product total —
+     * `uncategorised` is reported beside them so the screen can say what is not filed anywhere.
+     */
+    const catSql = { text:
+      `SELECT c.cat AS id, count(*)::int AS n
+         FROM catalogue_items ci,
+              LATERAL jsonb_array_elements_text(COALESCE(ci.item_data->'categories','[]'::jsonb)) AS c(cat)
+        WHERE ${base.where.replace(/\bentity_id\b/g, 'ci.entity_id').replace(/\bis_active\b/g, 'ci.is_active').replace(/\bitem_data\b/g, 'ci.item_data')}
+        GROUP BY c.cat`, params: base.params };
+    const uncatSql = { text:
+      `SELECT count(*)::int AS n FROM catalogue_items
+        WHERE ${base.where} AND jsonb_array_length(COALESCE(item_data->'categories','[]'::jsonb)) = 0`,
+      params: base.params };
     /* ⭐⭐ ONE NETWORK ROUND TRIP (db.readBatch): the due-probe, the list and the parked rows go as one message.
        Only when a parked change is DUE does this take the write path (applyDue inside a transaction) — rare, and
        then the list is read again after it lands. Athi, 2026-09-05: "reduce the round trip to O(1) if possible". */
     const sched = await schedule.enabled();
     const actor = req.identity && req.identity.identity_id;
-    let r = null, tally = null;
+    let r = null, tally = null, catRows = null, uncat = 0;
     try {
-      const stmts = [listSql, tallySql];
+      const stmts = [listSql, tallySql, catSql, uncatSql];
       if (sched) {
         stmts.push({ text: `SELECT count(*)::int AS n FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL AND effective_at <= NOW()`, params: [entity_id] });
         stmts.push({ text: `SELECT schedule_id, item_id, effective_at, patch, created_at FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL ORDER BY effective_at`, params: [entity_id] });
       }
       const res = await readBatch(entity_id, actor, stmts);
-      const due = sched ? Number(res[2].rows[0].n) : 0;
-      if (!due) { r = res[0]; tally = res[1]; pendingRows = sched ? res[3].rows : []; }
+      /* ⚠️⚠️ THE SCHEDULE STATEMENTS MOVED. They were res[2] and res[3]; the category tally and the
+         uncategorised count now sit there, so the due-probe is res[4] and the parked rows res[5]. Reading the
+         old indices would have taken a GROUP BY for a due-count and quietly decided nothing was ever due. */
+      const due = sched ? Number(res[4].rows[0].n) : 0;
+      if (!due) {
+        r = res[0]; tally = res[1]; catRows = res[2].rows; uncat = Number(res[3].rows[0].n) || 0;
+        pendingRows = sched ? res[5].rows : [];
+      }
     } catch (_) { r = null; }
     if (!r) {
       const both = await withEntity(entity_id, async (db) => {
         await schedule.applyDue(entity_id, db);
         const out = await db.query(listSql.text, listSql.params);
         const t = await db.query(tallySql.text, tallySql.params);
+        /* ⚠️ the slow path answers the SAME questions as the batch, or the counts would appear and vanish
+           depending on whether a parked change happened to be due */
+        const c = await db.query(catSql.text, catSql.params);
+        const u = await db.query(uncatSql.text, uncatSql.params);
         if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (_) { pendingRows = []; } }
-        return { out, t };
+        return { out, t, c, u };
       });
-      r = both.out; tally = both.t;
+      r = both.out; tally = both.t; catRows = both.c.rows; uncat = Number(both.u.rows[0].n) || 0;
     }
 
     /**
@@ -503,10 +539,17 @@ router.get('/', auth, async (req, res) => {
       ? (wantRaw === 'not-available' ? tallyRows.length - counts.available : (counts[wantRaw] || 0))
       : tallyRows.length;
 
+    /* ⭐ the category tally, keyed by definition id — counted over every row, not the page (see catSql) */
+    const category_counts = {};
+    (catRows || []).forEach((x) => { category_counts[String(x.id)] = Number(x.n) || 0; });
+
     res.json({ items, count: items.length, total, offset, limit,
                /* ⚠️ SAID OUT LOUD. A screen that shows a tenth of a catalogue without knowing it is a screen that lies quietly. */
                truncated: (offset + items.length) < total,
-               status_counts: counts });
+               status_counts: counts,
+               /* ⚠️ these do NOT sum to `total`: a product may be filed under several categories, and
+                  `uncategorised` counts the ones filed under none. Said here so nobody treats it as a partition. */
+               category_counts, uncategorised: uncat });
   } catch (e) { res.status(500).json({ error: 'List failed', message: safeErr(e) }); }
 });
 
