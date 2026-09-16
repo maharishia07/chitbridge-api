@@ -1178,10 +1178,22 @@ function tillStore(){
  * outright — and a till that answers "cannot save" to a customer holding money is worse than useless. If the database will not open,
  * everything below falls back to localStorage: smaller and slower, but a day of bills fits, and nothing blocks a sale.
  */
-var MEM = { on:false, key:function(s,k){ return tillStore() + '-' + s + '-' + k; },
-  put:function(store,row,key){ try{ localStorage.setItem(this.key(store, key || row.no), JSON.stringify(row)); }catch(_){ } },
+/**
+ * ⚠️⚠️ AND IF THE FALLBACK ALSO REFUSES, THAT IS A LOST SALE AND IT MUST NOT BE SILENT (2026-09-16).
+ *
+ * These four writes used to end in `catch(_){ }`. The path that reaches them is already the unhappy one — the
+ * database would not open — so the remaining failure is a device that will store NOTHING: a full disk, a private
+ * window, a locked-down browser. In that state the counter went on billing, every screen looked normal, and the
+ * bill was simply never written anywhere. The same shape as ls.set, one level further down, and far more costly.
+ *
+ * ⚠️ IT STILL NEVER THROWS. A till that refuses to serve a customer holding money is worse than useless, so the
+ * sale completes and the failure is RECORDED where 🩺 will say it out loud (MEM.fail, surfaced by openStuck).
+ */
+var MEM = { on:false, fail:null, key:function(s,k){ return tillStore() + '-' + s + '-' + k; },
+  bad:function(op,store,e){ this.fail = { at:Date.now(), op:op, store:store, why:(e && (e.name || e.message)) || 'refused' }; return false; },
+  put:function(store,row,key){ try{ localStorage.setItem(this.key(store, key || row.no), JSON.stringify(row)); return true; }catch(e){ return this.bad('put',store,e); } },
   get:function(store,key){ try{ var v = localStorage.getItem(this.key(store,key)); return v ? JSON.parse(v) : undefined; }catch(_){ return undefined; } },
-  del:function(store,key){ try{ localStorage.removeItem(this.key(store,key)); }catch(_){ } },
+  del:function(store,key){ try{ localStorage.removeItem(this.key(store,key)); return true; }catch(e){ return this.bad('del',store,e); } },
   all:function(store){ var out=[]; try{ for (var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
     if (k && k.indexOf(tillStore()+'-'+store+'-')===0){ try{ out.push(JSON.parse(localStorage.getItem(k))); }catch(_){ } } } }catch(_){ } return out; } };
 
@@ -1294,6 +1306,8 @@ function ownOK(r){ if (rowIsMine(r)) return true; FOREIGN++; return false; }
 
 var DB = (function(){
   var p = null;
+  /* ⭐ why the database last refused — read by the 🩺 panel. A local, so nothing outside can half-assign it. */
+  var lastErr = null;
   function open(){
     if (p) return p;
     p = new Promise(function(res, rej){
@@ -1312,11 +1326,23 @@ var DB = (function(){
     var t = db.transaction(store, mode), s = t.objectStore(store); var rq = fn(s);
     t.oncomplete = function(){ res(rq && ('result' in rq) ? rq.result : undefined); }; t.onerror = function(){ rej(t.error); }; }); }); }
   /* every call falls back to localStorage if IndexedDB refuses — the till keeps billing on a device that will not give us a database */
-  var fall = function(what, fn, alt){ return fn().catch(function(){ MEM.on = true; return alt(); }); };
+  /**
+   * ⚠️⚠️ THE FALLBACK IS NOT A NON-EVENT. This threw the database's own reason away, so a counter that had
+   * dropped to the smaller, slower store looked identical to one that had not, and the reason it dropped —
+   * quota, a private window, a blocked origin — was gone before anyone could read it. Falling back keeps the
+   * shop billing, which is right; doing it without a word is what made "the IndexedDB got stuck somewhere I
+   * guess" the best anyone could say.
+   */
+  var fall = function(what, fn, alt){ return fn().catch(function(e){
+    MEM.on = true;
+    lastErr = { at: Date.now(), op: what, why: (e && (e.name || e.message)) || 'the database refused' };
+    return alt();
+  }); };
   return {
     /** ⚠️ the key changed, so the shop changed — the next read must not come out of the last shop's database, and the owner we
         are holding belongs to the shop we just left */
     reopen: function(){ p = null; OWNER = null; },
+    lastErr: function(){ return lastErr; },
     /**
      * ⚠️ THE SAME GUARD ON THE KEY-VALUE SIDE. Athi, 2026-09-09: *"by mixing up, we are making TWO entities' data wrong. So this has
      * to be well guarded — while writing data in the first place, while reading the data, and when syncing, in all the places."*
@@ -6678,7 +6704,7 @@ async function openStuck(){
   qForeign.concat(bForeign).forEach(function(r){ if (r && r._shop) others[r._shop] = (others[r._shop] || 0) + 1; });
 
   var last = (HOST && HOST.last) || null;
-  var storeOK = ls.works();
+  var storeOK = ls.works(), dbErr = DB.lastErr();
   /* ⭐ what earlier pairings of THIS shop left behind — see otherCounters() and the verdict below */
   var stranded = 0;
   try {
@@ -6710,7 +6736,18 @@ async function openStuck(){
      * parked rail and the pairing alike, and until this line existed it failed all of them without a sound.
      */
     + line('Device storage', storeOK ? 'writes are working'
-        : ('WILL NOT SAVE' + (ls.last ? ' — ' + ls.last.why : '')), !storeOK);
+        : ('WILL NOT SAVE' + (ls.last ? ' — ' + ls.last.why : '')), !storeOK)
+    /**
+     * ⚠️⚠️ A COUNTER RUNNING ON THE FALLBACK STORE LOOKED EXACTLY LIKE ONE THAT WAS NOT. Falling back keeps the
+     * shop billing when the database refuses — that is right — but it is smaller, slower, and it shares the very
+     * localStorage the line above may be reporting as broken. Saying nothing about it is how a device ends up
+     * one failure away from losing a sale with every screen looking normal.
+     */
+    + (MEM.on ? line('⚠️ The database refused — running on the smaller store',
+        (dbErr ? dbErr.why + ' (on ' + dbErr.op + ')' : 'reason not recorded'), true) : '')
+    /* ⚠️ and if the FALLBACK failed too, a bill was not written anywhere at all */
+    + (MEM.fail ? line('⚠️⚠️ A write was lost',
+        MEM.fail.op + ' ' + MEM.fail.store + ' — ' + MEM.fail.why, true) : '');
 
   h += '<div class="sec">What is actually in the local database</div>'
     + line('Bills stored', raw.bills.length + '  (this shop ' + bMine.length + (bForeign.length ? ', OTHER SHOP ' + bForeign.length : '') + ')', bForeign.length > 0)
@@ -6837,6 +6874,11 @@ async function stuckReport(){
   L.push('  device storage                : ' + (ls.works() ? 'writes are working'
     : ('WILL NOT SAVE' + (ls.last ? ' (' + ls.last.why + ')' : ''))));
   L.push('  host                          : ' + (HOST === AgentHost ? 'the program on this PC' : 'this page (cloud)'));
+  /* ⚠️ the two failures that used to leave no trace at all — see fall() and MEM.bad() */
+  L.push('  database                      : ' + (MEM.on
+    ? ('REFUSED, running on the smaller store' + (DB.lastErr() ? ' — ' + DB.lastErr().why + ' (on ' + DB.lastErr().op + ')' : ''))
+    : 'working'));
+  if (MEM.fail) L.push('  A WRITE WAS LOST              : ' + MEM.fail.op + ' ' + MEM.fail.store + ' — ' + MEM.fail.why);
   L.push('  page                          : ' + location.origin);
   L.push('');
   L.push('WHAT IS ACTUALLY IN THE LOCAL DATABASE');

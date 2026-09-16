@@ -1474,7 +1474,9 @@ router.get('/folder', auth, async (req, res) => {
     );
     return { countResult, result };
     });
-    res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit, view });
+    /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
+       caller's own query param travelling in a circle. */
+    res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
   } catch (err) {
     console.error('Folder error:', err.message);
     res.status(500).json({ error: 'Failed to get folder', message: safeErr(err) });
@@ -1689,13 +1691,9 @@ router.get('/inbox', auth, async (req, res) => {
       // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
       total: parseInt(countResult.rows[0].count),
       page,
-      limit,
-      pagination: {
-        total: parseInt(countResult.rows[0].count),
-        page,
-        limit,
-        pages: Math.ceil(countResult.rows[0].count / limit)
-      }
+      limit
+      /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
+         way in. Two spellings of one fact is how they start disagreeing. */
     });
 
   } catch (err) {

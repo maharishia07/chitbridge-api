@@ -897,7 +897,8 @@ router.get('/results', auth, async (req, res) => {
       const r = await withEntity(entity_id, (db) => db.query(
         `SELECT * FROM test_result WHERE entity_id = $1 ${where} ORDER BY at DESC LIMIT 500`,
         [entity_id, q.case_key || q.run_id]));
-      return res.json({ results: r.rows, count: r.rows.length, history: true });
+      /* ⚠️ `history` named which branch answered and no caller read it — dropped by the envelope besides */
+      return res.json({ results: r.rows, count: r.rows.length });
     }
 
     /**
@@ -909,7 +910,7 @@ router.get('/results', auth, async (req, res) => {
       `SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
          FROM test_result WHERE entity_id = $1
         ORDER BY case_key, COALESCE(layer,''), at DESC`, [entity_id]));
-    res.json({ results: r.rows, count: r.rows.length, history: false });
+    res.json({ results: r.rows, count: r.rows.length });
   } catch (err) {
     res.status(500).json({ error: 'Could not read the results', message: String(err.message || err) });
   }
