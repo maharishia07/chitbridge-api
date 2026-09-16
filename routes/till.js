@@ -485,6 +485,50 @@ router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
  * ⚠️ ONE ROUND TRIP. The exclusion list is rebuilt in SQL rather than read-then-written: the same jsonb both removes the id and
  * re-adds it, so the operation is idempotent in both directions and cannot double an entry (Mumbai is a long way from sfo).
  */
+/**
+ * ── ⭐⭐⭐ POST /api/till/diagnostic — A COUNTER THAT CANNOT BE REACHED SAYS SO ITSELF ─────────────────────────
+ *
+ * Athi, 2026-09-16: *"is there any way of interacting with the counter app where it creates the issue, diagnostic
+ * message thrown to server?"* This is that. The counter posts what its own 🩺 panel is showing and it lands on the
+ * key record, which is the counter's identity here and already appears on a screen the shop can open.
+ *
+ * ⚠️⚠️ THE FAILURE IT REPORTS MAY BE THE REASON IT CANNOT REPORT. A counter with no key, no line, or a wedged
+ * store posts nothing — so this is never the only route out. The counter can always copy or save the same report
+ * as text, and that path needs nothing from us at all. Do not let this endpoint's existence retire that one.
+ *
+ * ⚠️ IT ACCEPTS FACTS, NOT PROSE. Counts, flags, reasons and bill numbers — capped, and never a customer name, a
+ * phone number or a line item, because a shop's sales are not ours to collect on a support call.
+ */
+router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const jti = req.api_key && req.api_key.jti;
+    if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can report itself.' });
+    const b = req.body || {};
+    const num = (v, cap) => Math.max(0, Math.min(Number(v) || 0, cap || 100000));
+    const str = (v, n) => (v == null ? null : String(v).slice(0, n || 200));
+    const patch = {
+      code:     str(b.code, 12),
+      verdict:  str(b.verdict, 400),
+      till_id:  str(b.till_id, 16),
+      online:   b.online === true,
+      storage:  b.storage === true,
+      queued:   num(b.queued, 100000),
+      foreign:  num(b.foreign, 100000),
+      bills:    num(b.bills, 1000000),
+      last_why: str(b.last_why, 300),
+      /* ⚠️ bill NUMBERS only — they are the shop's own reference and the thing a support call is about */
+      waiting:  (Array.isArray(b.waiting) ? b.waiting : []).slice(0, 20)
+                  .map((w) => ({ no: str(w && w.no, 32), tries: num(w && w.tries, 9999), why: str(w && w.why, 200) })),
+      /* ⭐ recorded because it is the one fact the counter cannot know about itself, and the shop may need it */
+      ip:       String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '').trim().slice(0, 45) || null,
+      agent:    str(req.headers['user-agent'], 160)
+    };
+    const diag = await require('./keys').setDiag(entity_id, jti, patch);
+    if (!diag) return res.status(404).json({ error: 'Not found', message: 'This key is not listed for the shop.' });
+    res.json({ ok: true, code: diag.code, at: diag.at });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
 router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

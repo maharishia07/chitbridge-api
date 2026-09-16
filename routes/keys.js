@@ -72,6 +72,26 @@ router.setEnrol = async (entity_id, jti, patch) => {
   k.enrol = Object.assign({}, k.enrol || {}, patch || {}); await save(entity_id, keys); auth.forgetKey(jti); return k.enrol;
 };
 
+/**
+ * ⭐⭐⭐ setDiag(entity_id, jti, patch) → what a counter last said about itself, or null if the key is not listed.
+ *
+ * Athi, 2026-09-16: *"in real life if a PC is in such a situation how do we resolve it, because that PC cannot be
+ * scrutinised through you."* A counter that is stuck is the one thing nobody can reach — so it says so itself, and
+ * this is where that lands. It rides the key record for the same reason the enrolment does: the key IS the counter,
+ * it is already listed on a screen the shop can open, and nothing new has to be migrated to hold it.
+ *
+ * ⚠️ IT IS THE COUNTER'S OWN ACCOUNT OF ITSELF, not a measurement we took. A counter whose storage is broken may
+ * report nothing at all, and the absence is then the finding — so `at` is stamped here, by the server, and a stale
+ * `at` says "this counter has not spoken since" rather than pretending to be live.
+ * ⚠️ ONE SLOT PER KEY. It is a last-known-state, not a log: an unbounded array on a jsonb column shared with the
+ * key list is how that column stops being readable.
+ */
+router.setDiag = async (entity_id, jti, patch) => {
+  const keys = await listOf(entity_id); const k = keys.find((x) => x && String(x.jti) === String(jti)); if (!k) return null;
+  k.diag = Object.assign({}, patch || {}, { at: new Date().toISOString() });
+  await save(entity_id, keys); auth.forgetKey(jti); return k.diag;
+};
+
 router.post('/', auth, sessionOnly, async (req, res) => {
   try {
     const b = req.body || {};

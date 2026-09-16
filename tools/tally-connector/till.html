@@ -1237,6 +1237,8 @@ var KEPT = { asked:false, granted:null, why:'' };
  * quietly stamped the next time they are written.
  */
 var OWNER = null, FOREIGN = 0;
+/* ⭐ the sentence the 🩺 panel last showed, so a report SENT says what the shopkeeper is reading — see openStuck() */
+var STUCK_VERDICT = null;
 function ownRow(r){ if (r && typeof r === 'object' && OWNER) r._shop = OWNER; return r; }
 /**
  * ⭐⭐ THE ONE OWNERSHIP RULE, ASKED TWO WAYS. `ownOK` is the FILTER — it answers and counts, because a foreign
@@ -6697,11 +6699,16 @@ async function openStuck(){
    * ⚠️ The report buttons are ALWAYS here, including when the verdict is "nothing is queued" — the times it is
    * needed most are the times the counter's own account of itself is the thing in doubt.
    */
+  /* ⚠️ kept so the report that is SENT says the same thing the shopkeeper is looking at — two accounts of one
+     counter, differing by a refresh, is how a support call goes wrong */
+  STUCK_VERDICT = verdict;
   h = '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
     + '<div class="qbar" style="padding:8px 0">'
     + '<button class="pill" data-testid="till-stuck-release" onclick="releaseQueue()"><b>▶ Get my bills moving</b></button>'
+    + '<button class="pill" data-testid="till-stuck-send" onclick="stuckSend()">📨 Tell ChitBridge</button>'
     + '<button class="pill" data-testid="till-stuck-copy" onclick="stuckCopy()">📋 Copy the report</button>'
     + '<button class="pill" data-testid="till-stuck-save" onclick="stuckSave()">💾 Save it as a file</button>'
+    + '<button class="pill" data-testid="till-storage" onclick="openStorage()">🗄 What is being kept</button>'
     + '<span class="qwhy">support code ' + esc(stuckCode()) + '</span>'
     + '</div>' + h;
 
@@ -6802,6 +6809,184 @@ async function stuckReport(){
         + '  status=' + (q._status || '—') + '  ' + (q._why || 'not refused — not yet attempted'));
     });
   return L.join('\n');
+}
+/**
+ * ── ⭐⭐⭐ WHAT THIS COUNTER IS ACTUALLY KEEPING, AND WHERE ───────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16: *"have we got mechanism understanding temp storage we use?"* We did not. The counter writes
+ * to three different places for three different reasons and nothing had ever listed them in one view, which is
+ * why "the IndexedDB got stuck somewhere I guess" was the best anyone could say.
+ *
+ *   IndexedDB   cb-till-<hash of the key>   the shop's copy: its items, its bills, its queue. ONE PER SHOP, so a
+ *               device paired to two shops holds two, and the one not in use is invisible to every screen.
+ *   localStorage cb_*  and cb_*@<hash>      settings. The bare ones belong to the DEVICE (theme, printer); the
+ *               @-suffixed ones belong to a SHOP (parked bills, who is billing, hidden keys).
+ *   Cache        cb-till-v1                 the page itself, so the counter opens with no line.
+ *
+ * ⚠️ THE SIZES ARE THE POINT. A refusing localStorage looks like six unrelated faults (see ls.set), and the only
+ * way to see it coming is to be able to look at what is in there before it fills.
+ */
+async function storageMap(){
+  var out = { idb: [], ls: [], cache: [], lsBytes: 0 };
+  /* ⚠️ databases() is not everywhere — where it is missing we can still name the one we are using */
+  try {
+    if (indexedDB.databases) { var ds = await indexedDB.databases();
+      out.idb = (ds || []).map(function(d){ return { name: d.name, version: d.version }; }); }
+    else out.idb = [{ name: tillStore(), version: null }];
+  } catch (_) { out.idb = [{ name: tillStore(), version: null }]; }
+  /* how many rows the CURRENT shop's store really holds, past the ownership filter */
+  try {
+    var rb = await DB.allRaw('bills'), rq = await DB.allRaw('queue');
+    out.rows = { bills: rb.length, queue: rq.length };
+  } catch (_) { out.rows = null; }
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i); if (String(k).indexOf('cb_') !== 0) continue;
+      var v = localStorage.getItem(k) || '';
+      out.lsBytes += k.length + v.length;
+      out.ls.push({ key: k, bytes: v.length, shop: k.indexOf('@') > 0 });
+    }
+    out.ls.sort(function(a, b){ return b.bytes - a.bytes; });
+  } catch (e) { out.lsErr = (e && e.name) || 'refused'; }
+  try { if (window.caches) out.cache = await caches.keys(); } catch (_) {}
+  /* ⭐ the browser's own view — the only number that knows about the quota we are being measured against */
+  try {
+    if (navigator.storage && navigator.storage.estimate) {
+      var est = await navigator.storage.estimate();
+      out.quota = { used: est.usage || 0, granted: est.quota || 0 };
+    }
+  } catch (_) {}
+  return out;
+}
+function kb(n){ return n == null ? '—' : (n < 1024 ? n + ' B' : (n < 1048576 ? Math.round(n / 1024) + ' KB' : (n / 1048576).toFixed(1) + ' MB')); }
+/**
+ * ⭐⭐ THE STORAGE PANEL. Reached from 🩺, because "what is this counter keeping" is only ever asked by somebody
+ * already asking why it is behaving strangely.
+ */
+async function openStorage(){
+  var m = await storageMap();
+  var line = function(k, v, warn){
+    return '<div class="t' + (warn ? ' warnrow' : '') + '"><span>' + esc(k) + '</span><span>' + esc(String(v)) + '</span></div>';
+  };
+  var h = '<div style="max-height:56vh;overflow:auto">';
+  if (m.quota) {
+    var pct = m.quota.granted ? Math.round(m.quota.used / m.quota.granted * 100) : 0;
+    h += '<div class="sec">What the browser has given this counter</div>'
+      + line('Used', kb(m.quota.used) + ' of ' + kb(m.quota.granted) + '  (' + pct + '%)', pct > 85);
+  }
+  h += '<div class="sec">The shop\'s copy — one database per shop</div>';
+  m.idb.forEach(function(d){
+    var here = (d.name === tillStore());
+    h += line(d.name + (here ? '  ← this shop' : ''),
+      here && m.rows ? (m.rows.bills + ' bill(s), ' + m.rows.queue + ' queued') : 'another shop on this device', !here);
+  });
+  h += '<div class="sec">Settings on this device (' + kb(m.lsBytes) + ')</div>';
+  if (m.lsErr) h += line('localStorage would not be read', m.lsErr, true);
+  m.ls.slice(0, 14).forEach(function(r){ h += line(r.key, kb(r.bytes) + (r.shop ? '  · this shop' : '  · this device')); });
+  if (m.ls.length > 14) h += line('… and ' + (m.ls.length - 14) + ' more', '');
+  if (m.cache.length) {
+    h += '<div class="sec">The page itself, kept so the counter opens with no line</div>';
+    m.cache.forEach(function(c){ h += line(c, 'cached'); });
+  }
+  h += '</div>'
+    + '<div class="qbar" style="padding:8px 0">'
+    + '<button class="pill" data-testid="till-stuck-back" onclick="openStuck()">← back</button>'
+    + '<button class="pill" data-testid="till-wipe" onclick="wipeDevice()">⚠️ Clear everything on this device</button>'
+    + '</div>';
+  document.getElementById('billstitle').textContent = 'What this counter is keeping';
+  document.getElementById('billsbody').innerHTML = h;
+  if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
+}
+/**
+ * ── ⚠️⚠️⚠️ CLEAR EVERYTHING — THE LAST RESORT, AND IT SAVES THE SALES FIRST ─────────────────────────────────
+ *
+ * Athi, 2026-09-16: *"is there anyway we can delete the entire indexed db, temp storage we set?"* Yes, and it has
+ * to exist: coldStart() deliberately refuses while anything is unsent, which is right for a working counter and
+ * useless for a wedged one — the state you most need to escape is the one that blocks the escape.
+ *
+ * ⚠️⚠️ SO THE ORDER IS THE WHOLE FEATURE. Every unsent bill is written to a FILE FIRST, and the wipe does not
+ * happen unless that file was produced. A counter that loses a sale it took money for is the worst bug this
+ * product could have, and "the shopkeeper asked me to" is not a defence — they are asking to be unstuck, not to
+ * lose the morning's takings. With the file in hand the sales can be re-entered or sent to us; without it they
+ * are gone for ever.
+ * ⚠️ It clears EVERY shop's copy on this device, not just this one — that is what "everything" has to mean here,
+ * and it is said in those words before anyone presses it.
+ */
+async function wipeDevice(){
+  var unsent = [];
+  try { unsent = (await DB.allRaw('queue')) || []; } catch (_) {}
+  var ok = await sure('Clear EVERYTHING this counter keeps on this device?\n\n'
+    + 'Every shop\'s copy on this PC, all the settings, and the saved page.\n\n'
+    + (unsent.length
+        ? unsent.length + ' bill(s) have not reached ChitBridge. They will be SAVED TO A FILE first, and the '
+          + 'clearing will not happen unless that file is written.'
+        : 'Nothing is waiting to be sent.')
+    + '\n\nYou will have to pair this counter again afterwards.', 'Yes, clear it all', 'Clear this device');
+  if (!ok) return;
+
+  /* 1 · the sales leave before anything is destroyed */
+  if (unsent.length) {
+    var saved = false;
+    try {
+      var body = JSON.stringify({ taken: new Date().toISOString(), shop: OWNER || null,
+                                  code: stuckCode(), bills: unsent }, null, 2);
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
+      a.download = 'counter-unsent-' + stuckCode() + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 6000);
+      saved = true;
+    } catch (_) { saved = false; }
+    if (!saved) { say('The unsent bills could NOT be saved to a file, so nothing was cleared.\n\n'
+      + 'Use 📋 Copy the report and send it to ChitBridge first.'); return; }
+    if (!await sure('The file with ' + unsent.length + ' unsent bill(s) has been saved. Is it safely on this PC?\n\n'
+      + 'Nothing is cleared until you say yes.', 'Yes, it is saved', 'Before clearing')) return;
+  }
+
+  /* 2 · now everything goes */
+  busyShow('Clearing this device…');
+  try {
+    var names = [];
+    if (indexedDB.databases) { var ds = await indexedDB.databases(); names = (ds || []).map(function(d){ return d.name; }); }
+    else names = [tillStore()];
+    for (var i = 0; i < names.length; i++) {
+      if (!names[i]) continue;
+      await new Promise(function(res){ var rq = indexedDB.deleteDatabase(names[i]); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; });
+    }
+  } catch (_) {}
+  try {
+    var del = [];
+    for (var j = 0; j < localStorage.length; j++) { var k = localStorage.key(j); if (String(k).indexOf('cb_') === 0) del.push(k); }
+    del.forEach(function(k){ try { localStorage.removeItem(k); } catch (_) {} });
+  } catch (_) {}
+  try { if (window.caches) { var cs = await caches.keys(); for (var n = 0; n < cs.length; n++) await caches.delete(cs[n]); } } catch (_) {}
+  location.reload();
+}
+/**
+ * ⭐⭐ SEND THE DIAGNOSIS TO CHITBRIDGE. The counter's own account of itself, landing where support can read it.
+ * ⚠️ It needs the line and the key — the two things most likely to be the fault — so the copy and save buttons
+ * stay, and the refusal here says which of them is missing rather than "could not send".
+ */
+async function stuckSend(){
+  if (!(HOST && HOST.key)) { toastLine('This counter has no key, so it cannot reach ChitBridge. Use 📋 Copy the report.'); return; }
+  if (!navigator.onLine) { toastLine('No internet, so it cannot be sent. Use 💾 Save it as a file.'); return; }
+  var owner = null, rawQ = [], rawB = [];
+  try { owner = await DB.ownerRaw(); rawQ = await DB.allRaw('queue'); rawB = await DB.allRaw('bills'); } catch (_) {}
+  var qF = rawQ.filter(function(r){ return !rowIsMine(r); });
+  var body = {
+    code: stuckCode(), verdict: STUCK_VERDICT || null, till_id: ls.get(shopLs('cb_till_id'), 'C1'),
+    online: !!navigator.onLine, storage: ls.works(),
+    queued: rawQ.length, foreign: qF.length, bills: rawB.length,
+    last_why: (HOST.last && HOST.last.why) || null,
+    waiting: rawQ.filter(rowIsMine).slice(0, 20).map(function(q){
+      return { no: q.no, tries: q._tries || 0, why: q._why || null }; })
+  };
+  try {
+    /* ⚠️ noQueue: a report about a blocked queue must never join it — it would be one more row that will not go */
+    var r = await HOST.tillPost('/api/till/diagnostic', body, { noQueue: true });
+    toastLine(r && r.ok ? ('Sent to ChitBridge. Quote support code ' + stuckCode() + '.')
+                        : 'ChitBridge did not accept the report. Use 📋 Copy the report.');
+  } catch (e) { toastLine('Could not send it: ' + ((e && e.message) || 'unknown') + '. Use 📋 Copy the report.'); }
 }
 /** ⭐ a short code a shopkeeper can read down a telephone, so a pasted report can be matched to the call about it */
 function stuckCode(){
