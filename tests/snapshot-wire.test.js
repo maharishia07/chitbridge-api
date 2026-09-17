@@ -401,7 +401,8 @@ it('⭐ a modified key is not the search box key', () => {
  */
 it('⭐⭐ the state code comes from the same GSTIN the shop is shown as having', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  assert.ok(src.indexOf('const gstin = row.gstn || profile.gstin || null;') > 0,
+  /* moved 2026-09-17: profile.gstin was never selected, so the fallback now reads invoiceParty (the vault's GSTIN row) */
+  assert.ok(src.indexOf('const gstin = row.gstn || party.gstin || null;') > 0,
     'the GSTIN is not read once into one place');
   assert.ok(src.indexOf('state_code: String(gstin ||') > 0,
     'the state code is derived from a different field than the GSTIN that is shown — a profile GSTIN would charge tax it cannot split');
@@ -1139,6 +1140,23 @@ it('⭐⭐ the shop screen loads the money renderer and asks it for the shop cur
   const fn = promo.slice(promo.indexOf('function money(n){'), promo.indexOf('function live()'));
   assert.ok(/S\.shop\.currency/.test(fn), "the shop screen's money() does not read the shop's currency");
   assert.ok(/CBLocale\.money/.test(fn), 'the shop screen formats money itself instead of through the one renderer');
+});
+
+/**
+ * ⚠️⚠️ A FIELD READ OFF A ROW THAT NEVER HAD IT (2026-09-17). The shop block read trade_name, address, phone, gstin and currency
+ * off `profile` — entity_profile, whose SELECT names trade_mode, markets, sectors and adopted. Every one was undefined, so the
+ * counter showed the account handle and no bill carried the shop's address. The particulars come from invoiceParty now.
+ */
+it('⚠️⚠️ the snapshot reads the shop\'s particulars from invoiceParty, not from entity_profile', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const sel = /SELECT ([^`]*?) FROM entity_profile/.exec(src);
+  assert.ok(sel, 'the snapshot no longer reads entity_profile — re-check what `profile` holds');
+  const has = sel[1].split(',').map((s) => s.trim());
+  const read = [...new Set([...src.matchAll(/\bprofile\.([a-z_]+)(?![A-Za-z(])/g)].map((m) => m[1]))];
+  const ghost = read.filter((f) => has.indexOf(f) < 0);
+  assert.deepStrictEqual(ghost, [], 'these are read off entity_profile but never selected, so they are always undefined');
+  assert.ok(/invoiceParty\(entity_id\)/.test(src), 'the snapshot does not read the shop particulars at all');
+  assert.ok(/name: party\.trade_name/.test(src), 'the counter\'s shop name does not come from the trade name');
 });
 
 console.log(pass + ' checks');

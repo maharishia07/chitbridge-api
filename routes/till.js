@@ -274,10 +274,19 @@ router.get('/snapshot', auth, async (req, res) => {
     const removed = since ? all.filter((r) => !onTheCounter(r)).map((r) => r.item_id) : [];
     /* ⭐ ONE GSTIN, READ ONCE — see the note where it is used. It may be on the identity row or in the profile; whichever it
        is, the state code is its first two digits and must not be derived from the other field. */
-    const gstin = row.gstn || profile.gstin || null;
+    /**
+     * ⚠️⚠️ THE SHOP'S PARTICULARS COME FROM invoiceParty (2026-09-17). The shop block below read trade_name, legal_name,
+     * address, city, state, pincode, phone, gstin and currency off `profile` — and `profile` is entity_profile, which holds
+     * none of them. So every counter showed the account handle as the shop name, and no counter bill ever printed the shop's
+     * address or phone, which a tax invoice must carry. invoiceParty is the one reader the order invoice and Trade ready use.
+     */
+    const cbProfile = require('../lib/profile');
+    let party = {};
+    try { party = (await cbProfile.invoiceParty(entity_id)) || {}; }
+    catch (e) { console.warn('[till] snapshot could not read the shop particulars — the bill header will be thin:', e.message); }
+    const gstin = row.gstn || party.gstin || null;
     /* ⚠️ ONE DERIVATION, read by the shop block AND by payWays — two answers about which country a shop is in would
        eventually mean one screen offering a payment method another refuses. */
-    const cbProfile = require('../lib/profile');
     const cbCountry = cbProfile.countryOf({ country: row.country, gstin, profile });
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
@@ -430,10 +439,10 @@ router.get('/snapshot', auth, async (req, res) => {
          a counter that has already issued numbers keeps its own — see the note above the allocation. */
       till,
       shop: {
-        name: profile.trade_name || row.display_name || 'This shop',
-        legal_name: profile.legal_name || null,
-        address: [profile.address, profile.city, profile.state, profile.pincode].filter(Boolean).join(', ') || null,
-        phone: profile.phone || null,
+        name: party.trade_name || row.display_name || 'This shop',
+        legal_name: party.legal_name || null,
+        address: [party.address, party.city, party.state, party.pincode].filter(Boolean).join(', ') || null,
+        phone: party.phone || null,
         /**
          * ⚠️⚠️ ONE GSTIN, READ ONCE. These two lines disagreed: gstin fell back to the PROFILE, state_code did not. A shop
          * whose GSTIN is recorded in the profile rather than on the identity row therefore came through as registered — so
@@ -457,7 +466,7 @@ router.get('/snapshot', auth, async (req, res) => {
          * acquirer, and there is nothing honest for us to generate.
          */
         pay: cbProfile.payWays({ country: cbCountry, policy_flags: row.policy_flags }),
-        currency: profile.currency || 'INR',
+        currency: party.currency || 'INR',
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
       /* how many sellable products the shop has right now — the counter checks its merged copy against this (see the note above) */
