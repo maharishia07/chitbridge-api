@@ -741,7 +741,7 @@
     </header>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
-      <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="SEARCH_FRESH=false;showAgain();paintHits()" onkeydown="searchKey(event)">
+      <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="searchTyped()" onkeydown="searchKey(event)">
       <!-- ⭐ the box's own clear. Escape clears the BILL on this counter, so it must never be the habit here. -->
       <button class="qx" id="qclear" data-testid="till-search-clear" title="clear the search" aria-label="clear the search" onclick="clearSearch()">✕</button>
     </div>
@@ -2342,7 +2342,12 @@ async function load(){
   document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
   paintStatus(); paintChips(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
   loadQuick().catch(function(){});
+  /* ⚠️ A NEW COUNTER READS ITS SHOP BY ITSELF (2026-09-17). A counter opened for the first time, online and keyed, used to sit on
+     "No copy of the shop yet — press ↻" — a button to press for the one thing it obviously has to do. Once per page, so a shop
+     that cannot be read does not loop; refresh() calls load() again. */
+  if (!S && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.key && navigator.onLine !== false) { FIRST_READ = true; refresh().catch(function(){}); }
 }
+var FIRST_READ = false;
 /* ⚠️ THE BUTTON MAY BE PRESSED BEFORE THE PAGE HAS FINISHED WAKING (caught by [TILL-01]): HOST is chosen asynchronously, and ↻ on
    the first frame called into nothing. Anything that needs the host asks for it. */
 /** show it, move it, and get out of the way — three calls, so no screen has to remember how the box works */
@@ -2793,9 +2798,23 @@ function scanned(){
   var exact = items.filter(function(i){ return String(i.barcode||'').toLowerCase() === q || String(i.code||'').toLowerCase() === q; });
   if (exact.length !== 1) return false;
   var n = hits().indexOf(exact[0]);
-  if (n >= 0) { SEL = n; add(n); return true; }
+  if (n >= 0) { SEL = n; SCAN_AT = Date.now(); add(n); return true; }
   return false;
 }
+/**
+ * ⚠️⚠️ A SCAN IS AN EVENT, NOT A STATE (2026-09-17). scanned() used to run at the top of paintHits(), which was safe only while
+ * add() cleared the box. Once the search started staying put after an add (2026-09-16), every repaint found the same exact code
+ * still sitting there and added it AGAIN — add → paintHits → scanned → add — and one scan froze the counter until the tab died.
+ * A bell push or a refresh with a code in the box would have billed it once more, silently. So the check runs only when the
+ * box's text has just CHANGED: a keystroke, a scanner, a finished spoken phrase. A repaint only repaints.
+ */
+function searchTyped(){ SEARCH_FRESH = false; showAgain(); if (!scanned()) paintHits(); }
+/**
+ * ⚠️ AND THE SCANNER'S OWN ENTER IS NOT A SECOND ORDER. Most scanners send the code and then Enter, a few milliseconds apart. While
+ * the box was cleared that Enter met an empty search; now it meets the product just added and would add another. An Enter that
+ * arrives this soon after a scan-add is the scanner's, and is swallowed. A person pressing Enter later still adds one more.
+ */
+var SCAN_AT = 0, SCAN_ENTER_MS = 250;
 /**
  * ⭐ LEARNED, NOT CONFIGURED. How often each item appears on this till's recent bills decides the grid; a shop that starts selling
  * mangoes in April gets mangoes in April without anybody setting anything. Until there is history, the catalogue's own order stands.
@@ -3748,7 +3767,6 @@ function priceBlock(i){
   return '<span class="p"><span class="pay">' + money(pay) + '</span><span class="per">' + per + '</span>' + was + '</span>';
 }
 function paintHits(){
-  if (scanned()) return;
   paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
   list.forEach(function(i){ i.tax_rate = rateOf(i); });      /* only for the rows about to be drawn — never the whole shelf */
@@ -3925,6 +3943,7 @@ function searchKey(e){
    * line) or to the browser (Ctrl+A, Ctrl+C), and neither should be reached through here.
    */
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'Enter' && SCAN_AT && Date.now() - SCAN_AT < SCAN_ENTER_MS) { SCAN_AT = 0; e.preventDefault(); return; }
   /**
    * ── ⭐⭐⭐ THE NEXT THING YOU TYPE STARTS A NEW SEARCH ──────────────────────────────────────────────────────
    *
@@ -4443,7 +4462,7 @@ function listen(into){
     if (into === 'cphone') box.value = text.replace(/[^0-9]/g, '').slice(0, 15);
     else { box.value = text; paintHits(); }
     var last = e.results[e.results.length - 1];
-    if (last && last.isFinal && into !== 'cphone') { /* a finished phrase behaves exactly like a typed one */ paintHits(); }
+    if (last && last.isFinal && into !== 'cphone') { /* a finished phrase behaves exactly like a typed one */ searchTyped(); }
   };
   _rec.onerror = function(ev){
     if (btn) btn.classList.remove('on'); _rec = null;
