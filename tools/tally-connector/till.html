@@ -5744,8 +5744,17 @@ function billMoney(){
     base = 0;
     CART.forEach(function(c){
       var rate = Number(c.gst_rate)||0;
-      var b = inclusive ? r2((c.net||0) * 100 / (100 + rate)) : r2(c.net||0);
-      var t = inclusive ? r2((c.net||0) - b) : r2(b * rate / 100);
+      /**
+       * ⚠️⚠️ THE SAME FORMULA THE INVOICE WILL USE — CBTax.splitLineTax(), not a shortcut re-derived here.
+       * `net − assessable` looks identical to `assessable × rate ÷ 100` and is not, once assessable itself has
+       * rounded (₹10 at 18% inclusive already lands a paisa apart — proved in tests/tax.test.js SPLIT-01). The
+       * server builds the completed bill's GST invoice with this same function (lib/tax.js), so the figure the
+       * counter shows and the figure the invoice declares can no longer disagree by a paisa nobody can explain.
+       */
+      var split = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: c.net||0, rate: rate, priceIncludesTax: inclusive })
+        /* the engine failed to load — same shape, so a bill can still be checked, not a second formula in normal use */
+        : (function(){ var b2 = inclusive ? r2((c.net||0) * 100 / (100 + rate)) : r2(c.net||0); return { assessable: b2, tax: r2(b2 * rate / 100) }; })();
+      var b = split.assessable, t = split.tax;
       /**
        * ⭐⭐ THE LINE'S OWN TAXABLE VALUE AND TAX, KEPT ON THE LINE. Athi, 2026-09-10: *"so every line item will
        * have its own breakdown — original cost, discount, tax and so on."*
@@ -5760,8 +5769,18 @@ function billMoney(){
       if (rate){ byRate[rate] = byRate[rate] || { base:0, tax:0 }; byRate[rate].base = r2(byRate[rate].base + b); byRate[rate].tax = r2(byRate[rate].tax + t); }
     });
   }
-  /* ⚠️ EXCLUSIVE PRICING CHANGES WHAT THE CUSTOMER PAYS, not just how it is reported: the tax is added to the total. */
-  if (taxed && !inclusive) net = r2(base + tax);
+  /**
+   * ⚠️⚠️ THE TOTAL RECONCILES TO ITS OWN COMPONENTS, THE WAY AN INVOICE'S TotInvVal DOES (lib/tax.js: rounded once
+   * from AssVal + the tax heads, with RndOffAmt as the declared difference). Exclusive pricing always needed this
+   * (the tax is added on top). Inclusive needs it NOW too: splitLineTax() derives each line's tax from its OWN
+   * rate (assessable × rate ÷ 100 — what the invoice justifies itself by), not from "net − assessable" — so on a
+   * multi-rate bill, Σbase + Σtax can land a paisa from Σnet (₹731.00 shelf-priced can decompose to ₹731.01 of
+   * base+tax; tests/till-vendor.test.js, "mixed rates and a zero-rated line, to the paisa"). The BILL, like the
+   * invoice, is the sum of its declared components — never a total its own breakdown fails to add up to.
+   */
+  /* ⭐ NAMED, NOT HIDDEN — the same paisa a printed Indian bill's "Round off" line already shows. */
+  var beforeRound = net, round = 0;
+  if (taxed) { net = r2(base + tax); round = r2(net - beforeRound); }
   /**
    * ⚠️ THE HEADS ARE PART OF THE MONEY, so they are worked out here beside it and never in a painter — the screen, the
    * printed slip and the chit must all read the same figures from one place.
@@ -5781,7 +5800,7 @@ function billMoney(){
     });
   }
   return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed, inclusive:inclusive,
-           supply:supply, heads:heads };
+           supply:supply, heads:heads, round:round };
 }
 function cartCount(){
   var units = 0;
@@ -6180,10 +6199,12 @@ function dayCloseSheet(rows){
       d.items[k].net = r2(d.items[k].net + (Number(l.net)||0));
       var rt = Number(l.gst_rate)||0;
       if (rt){
-        var base = r2((Number(l.net)||0) * 100 / (100 + rt));
+        /* ⚠️ CBTax.splitLineTax() — the same formula the invoice used, not the report's own guess at it */
+        var sp = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: Number(l.net)||0, rate: rt, priceIncludesTax: taxIncluded() })
+          : (function(){ var b2 = taxIncluded() ? r2((Number(l.net)||0) * 100 / (100 + rt)) : Number(l.net)||0; return { assessable: b2, tax: r2(b2 * rt / 100) }; })();
         d.rate[rt] = d.rate[rt] || { base:0, tax:0 };
-        d.rate[rt].base = r2(d.rate[rt].base + base);
-        d.rate[rt].tax = r2(d.rate[rt].tax + r2((Number(l.net)||0) - base));
+        d.rate[rt].base = r2(d.rate[rt].base + sp.assessable);
+        d.rate[rt].tax = r2(d.rate[rt].tax + sp.tax);
       }
     });
   });
@@ -6625,11 +6646,11 @@ function rcvLineTax(l){
   var value = rcvLineValue(l);
   var rate = Number(l && l.gst_rate) || 0;
   if (!rate || !shopTax().charges) return { taxable: value, tax: 0, rate: 0 };
-  if (RCV.tax_inclusive) {
-    var base = r2(value * 100 / (100 + rate));
-    return { taxable: base, tax: r2(value - base), rate: rate };
-  }
-  return { taxable: value, tax: r2(value * rate / 100), rate: rate };
+  /* ⚠️ CBTax.splitLineTax() — the same formula an invoice justifies itself by, not a second one for what we bought */
+  var sp = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: value, rate: rate, priceIncludesTax: !!RCV.tax_inclusive })
+    : (RCV.tax_inclusive ? (function(){ var b2 = r2(value * 100 / (100 + rate)); return { assessable: b2, tax: r2(value - b2) }; })()
+                          : { assessable: value, tax: r2(value * rate / 100) });
+  return { taxable: sp.assessable, tax: sp.tax, rate: rate };
 }
 /**
  * ⭐ THE TAX ON THE WHOLE CONSIGNMENT, split into the heads the return needs.
@@ -8867,7 +8888,11 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F10' && MODE === 'sell'){ dayClose(); e.preventDefault(); }
   if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }
   if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
-  if (e.key === 'Escape' && !document.getElementById('slipdlg').open && !document.getElementById('setdlg').open)
+  /* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
+     Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
+     because only slipdlg/setdlg were excluded. A per-dialog list is exactly the shape that keeps missing the
+     next one (askdlg, shiftdlg, billsdlg were exposed too); asking the DOM which dialog is open cannot drift. */
+  if (e.key === 'Escape' && !document.querySelector('dialog[open]'))
     (MODE === 'receive' ? rcvClear() : (MODE === 'despatch' ? dspClear() : clearBill()));
 });
 window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
