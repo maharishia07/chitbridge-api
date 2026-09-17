@@ -27,6 +27,7 @@ const GUARDS = [
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'docnumber-scheme.test.cjs',// the bill number's shape: what the date says vs when the run restarts
   'bell-param.test.cjs',      // every page opens the bell with the name the stream reads (2026-09-17: counters never heard it)
+  'network-storefront.test.cjs', // a member storefront shows its network's offers and its checkout charges them — one key
   'rewards.test.js',          // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js',     // the SEQUENCE: earn, come back, encash, expire, register — against the real store
   'sql-runner.test.js',       // a tool that runs SQL at production: its WITH/WITHOUT RLS line must be true
@@ -124,7 +125,8 @@ for (const f of files) {
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
   const m = out.match(/(\d+)\s+checks/g);
   const n = m ? Number(String(m[m.length - 1]).match(/\d+/)[0]) : 0;
-  const bad = (r.status !== 0) || /\bFAIL\b/.test(out);
+  /* ⚠️ A GUARD THAT COUNTED NOTHING PROVED NOTHING (2026-09-17: three guards ended without "<n> checks" and read "ok · 0") */
+  const bad = (r.status !== 0) || /\bFAIL\b/.test(out) || n === 0;
   total += n;
   if (bad) failed.push(f);
   console.log('  ' + (bad ? 'FAIL' : ' ok ') + '  ' + f.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(n).padStart(4) + ' checks');

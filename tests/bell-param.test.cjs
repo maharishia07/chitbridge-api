@@ -57,5 +57,5 @@ t('⚠️⚠️ every page that opens the bell listens for those events BY NAME'
   const deaf = clients.filter((c) => !named.some((n) => c.src.indexOf("addEventListener('" + n + "'") >= 0)).map((c) => c.file);
   assert.deepStrictEqual([...new Set(deaf)], [], 'these pages open the bell and can never hear it (onmessage sees no named event)');
 });
-console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed\n');
+console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
 process.exit(fail ? 1 : 0);

@@ -103,5 +103,5 @@ t('⚠️⚠️ AND THE COST OF JULIAN IS REAL: the financial year cannot be rea
   assert.strictEqual(no({ dating: 'fy', resets: 'year' }, '2027-04-01', 1), 'C1/27-28/0001');
 });
 
-console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed\n');
+console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
 process.exit(fail ? 1 : 0);

@@ -319,5 +319,5 @@ t('the resume document exists and names this test', () => {
     'ENGINE-CORE.md must point at the test that enforces it');
 });
 
-console.log(`\n  ${pass} passed, ${fail} failed\n`);
+console.log(`\n  ${pass} passed, ${fail} failed · ${pass + fail} checks\n`);
 process.exit(fail ? 1 : 0);

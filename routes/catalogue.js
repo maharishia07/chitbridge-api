@@ -297,7 +297,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         const unit = _c.unit || it.unit || 'unit';
         // the SELLER's declared band (SPEC-negotiation-position §2) — bounds a buyer's offer; absent → unbounded.
         const band = (_c.price_min != null || _c.price_max != null) ? { min: _c.price_min, max: _c.price_max } : null;
-        const rec = { name: it.name, price: p, unit, band, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
+        const rec = { name: it.name, sku: it.sku || null, category: it.category || null, categories: Array.isArray(it.categories) ? it.categories : null, price: p, unit, band, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
         const nk = _norm(it.name);
         finishMap.set(row.source_key + '|' + nk, rec);
         const nb = finishByName.get(nk) || { count: 0, rec: null };
@@ -342,13 +342,17 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
       // The buyer's POSITION. Deliberately computed AFTER price/total below: the seller's price comes from the
       // catalogue and is authoritative; the buyer's price travels ON THE CHIT and never touches money.
       const proposal = validateProposal(li.proposal, oi, fref.band, fref.name);
-      return { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
+      const finLine = { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
         particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: fref.unit || 'unit', quantity: fq,
         price: fref.price, total: Math.round(fref.price * fq * 100) / 100,
         ...(fref.band ? { seller_band: fref.band } : {}),
         ...(proposal ? { proposal } : {}),
         // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
         governed: { under: fref.source, owner_entity_id: fref.sOwner, container: containerFreeze, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
+      /* ⭐ what the offer engine matches a network line on — its code and category — riding the line WITHOUT being stored on it
+         (not enumerable, so the chit is unchanged); lib/offers-live reads it to apply the brand's released offers */
+      Object.defineProperty(finLine, 'd', { value: { sku: fref.sku, category: fref.category, categories: fref.categories }, enumerable: false });
+      return finLine;
     }
     const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
     // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
@@ -403,11 +407,14 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         if (q <= 0 && age >= 0 && age < 3600e3) throw _422(`"${ref.name}" is out of stock as of ${String(av.as_of).slice(11, 16)} UTC — ask the shop before ordering`);
         if (q < qty) stock = { qty: q, as_of: av.as_of, short: Math.round((qty - q) * 1000) / 1000, ...(av.source ? { source: av.source } : {}) };
       } }
-    return withTax({ item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
+    /* ⚠️ the product's own data rides the line for the offer engine (categories, offers_excluded) and is NOT stored — without it a
+       category offer the storefront showed was never applied at checkout, and an item switched off offers still got one */
+    const ownLine = (l) => { Object.defineProperty(l, 'd', { value: ref.d, enumerable: false }); return l; };
+    return ownLine(withTax({ item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
              price: _unit, total, ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}), ...(proposal ? { proposal } : {}), ...(stock ? { stock } : {}),
              ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), ...((ref.d && ref.d.code) ? { code: ref.d.code } : {}), how: 'picked',
                     ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
-             ref.d);
+             ref.d));
   }));
   const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
   return { items, total };
