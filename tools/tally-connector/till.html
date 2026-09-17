@@ -2499,9 +2499,21 @@ function payPrice(i){
   var r = (i.tax_rate === undefined ? rateOf(i) : i.tax_rate);
   return (!taxIncluded() && r) ? r2(p * (1 + Number(r) / 100)) : p;
 }
+/** how many offer start/end moments have already passed — changes exactly when some offer switches on or off */
+function offerEpoch(){
+  var now = Date.now(), n = 0;
+  (S && S.offers || []).forEach(function(o){
+    if (o.valid_from && new Date(o.valid_from).getTime() <= now) n++;
+    if (o.valid_to && new Date(o.valid_to).getTime() <= now) n++;
+  });
+  return n;
+}
 function offersFor(i){
   if (!S || !window.CBOffers) return [];
-  if (OFFER_STAMP !== (S.version || S.at)) { OFFER_STAMP = (S.version || S.at); (S.items || []).forEach(function(x){ x._off = null; x._rate = undefined; }); }
+  /* ⚠️ THE CACHE ALSO TURNS OVER WHEN AN OFFER'S WINDOW OPENS OR CLOSES. A network offer released for midnight is priced by
+     the engine from midnight — but a shelf chip cached at 23:50 would have gone on saying there was none until the next read. */
+  var stamp = (S.version || S.at) + '|' + offerEpoch();
+  if (OFFER_STAMP !== stamp) { OFFER_STAMP = stamp; (S.items || []).forEach(function(x){ x._off = null; x._rate = undefined; }); }
   if (i._off) return i._off;
   /* ⚠️ THE SAME DESCRIPTION THE BILL USES (lineOf). Built separately, these two drifted — the row promised an offer the cart
      could not apply, because only one of them carried the category. */
@@ -3403,7 +3415,11 @@ function paintCard(){
   var actualOff = statusOf(i) === 'unavailable';
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
   /* ⭐ EVERY live offer, not only the ones already reaching this product — you cannot turn on what you cannot see */
-  var mine = (S.offers || []);
+  /* ⚠️ a NETWORK offer is not this shop's to switch per product — the store takes it or not in ChitBridge, and the brand
+     releases it. Shown, read-only, below the shop's own. */
+  var mine = (S.offers || []).filter(function(o){ return !o.network; });
+  var fromNet = (S.offers || []).filter(function(o){ return o.network && (offersFor(i) || []).some(function(x){ return String(x.id) === String(o.id); }); });
+  var netLater = (S.offers || []).filter(function(o){ return o.network && o.valid_from && new Date(o.valid_from) > new Date(); });
   el.innerHTML = display
     + '<div class="cardhead">' + picOf(i) + '<span><b>' + esc(i.name) + '</b>'
     + '<div class="u">' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span></div>'
@@ -3460,6 +3476,16 @@ function paintCard(){
           + '</div>';
       }).join('')
       : '<span class="swtxt">This shop has no live offers. Declare them in ChitBridge — they appear here to be turned on.</span>')
+    /* ⭐ from the network — applied, named, and not switchable here */
+    + fromNet.map(function(o){
+        return '<div class="swline" data-testid="card-netoffer-' + esc(o.id) + '"><span class="swtxt">🏷 <b>' + esc(o.label || o.name || 'Offer') + '</b>'
+          + ' — from ' + esc((o.network && o.network.brand_name) || 'the network') + '</span></div>';
+      }).join('')
+    + netLater.map(function(o){
+        return '<div class="swline" data-testid="card-netlater-' + esc(o.id) + '"><span class="swtxt">⏳ ' + esc(o.label || o.name || 'Offer')
+          + ' — from ' + esc((o.network && o.network.brand_name) || 'the network') + ', starts '
+          + esc(new Date(o.valid_from).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</span></div>';
+      }).join('')
     + '</div></div>'
 
     + '<div class="cardrow' + (PEND.screen !== undefined ? ' pending' : '') + '"><label>Shop screen</label><div class="swwrap">'

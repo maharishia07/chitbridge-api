@@ -609,7 +609,12 @@ it('⭐⭐ turning an offer off knows whether to opt the product out or remove t
     'turning an offer ON does not choose between lifting the opt-out and ticking the product on');
   /* every live offer must be listed, or you cannot turn on what you cannot see */
   const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function pendPrice('));
-  assert.ok(card.indexOf('var mine = (S.offers || []);') > 0,
+  /* ⚠️ MOVED, NOT DROPPED (2026-09-17): the list is now every live offer OF THIS SHOP — a network offer is read-only here,
+     because the store takes it or not in ChitBridge. What must never return is a list narrowed to the offers that already
+     reach the product, which is the fault this guards. */
+  assert.ok(card.indexOf('var mine = (S.offers || []).filter(function(o){ return !o.network; });') > 0,
+    'the panel no longer lists every live offer of this shop — the potato can never be turned on');
+  assert.ok(!/var mine = [^;]*offersFor/.test(card),
     'the panel lists only the offers that already reach the product — the potato can never be turned on');
 });
 

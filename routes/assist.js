@@ -275,6 +275,11 @@ router.post('/catalogue-adopt', async (req, res) => {
       return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
     }
     log.info('catalogue adopted (reference + commercials)', { id: req.id, source, items_priced: Object.keys(commercials).length });
+    /* ⭐ the store joins the brand's network, so the brand's next offer release reaches this store's counters */
+    try {
+      const owner = (await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source])).rows[0];
+      if (owner && owner.owner_entity_id) await require('../lib/network-offers').noteMember(owner.owner_entity_id, entity);
+    } catch (_) {}
     res.json({ ok: true, persisted: true, source, resolved: await catalogueBuild.resolve(source, commercials),
       acted_by: { deputy: 'ai:catalogue-structure@v1', rung: 'extract', principal: 'entity:' + entity,
         delegator: { type: 'human', id: identity.identity_id }, confirmed_by: { id: identity.identity_id }, grant: 'per-act' } });

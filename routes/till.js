@@ -402,6 +402,21 @@ router.get('/snapshot', auth, async (req, res) => {
       }
     } catch (_) { /* a store with no network, or a source that cannot be read, still opens with its own products */ }
 
+    /**
+     * ⭐⭐⭐ AND THE OFFERS ITS NETWORKS RELEASED (lib/network-offers). Opt-in or opt-out is the brand's model; the store's
+     * own choice decides within it. Each travels with its release moment as valid_from, so it switches on at the counter at
+     * that moment and not a minute before — "not in the middle of the day" is kept even with the line down.
+     */
+    try {
+      const byOwner = {};
+      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id }); });
+      const owners = Object.keys(byOwner);
+      if (owners.length) {
+        const fromNetworks = await require('../lib/network-offers').forStore(entity_id, owners, byOwner);
+        if (fromNetworks.length) offers = offers.concat(fromNetworks);
+      }
+    } catch (_) { /* a network that cannot be read never stops the store's own offers */ }
+
     const body = {
       at: new Date().toISOString(),
       /**

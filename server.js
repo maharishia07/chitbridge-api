@@ -276,7 +276,8 @@ app.use('/api/invoice',     serviceLimiter(), require('./routes/invoice'));   //
 app.use('/api/integrations', serviceLimiter(), require('./routes/integrations'));
 app.use('/api/till', serviceLimiter(), require('./routes/till'));   //   the counter's whole world in one call (TILL-SPEC-2026-09-07)   //   the home of connectors: catalogue · download · heartbeat · status
 app.use('/api',             require('./routes/openapi'));                     //   /api/openapi.json — one contract for all of them
-app.use('/api/counters',    require('./routes/counters'));   // the shop's counters as standing identities — open / close / one PC at a time
+app.use('/api/counters',    require('./routes/counters'));   
+app.use('/api/network-offers', require('./routes/network-offers'));   // a brand releases offers to its stores; a store takes them or not   // the shop's counters as standing identities — open / close / one PC at a time
 app.use('/api/keys',        require('./routes/keys'));     // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);

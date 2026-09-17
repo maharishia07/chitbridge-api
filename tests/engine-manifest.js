@@ -125,6 +125,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      grounds — but purity is not what makes something engine. Cucumber's grammar is not our judgement, and
      filing it as engine would put a third party's syntax under the engine lock. */
   'gherkin.js',
+  /* ADOPTION, not engine: network-offers.js decides which already-declared offers a store's counter is HANDED and from
+     when — a distribution rule. How an offer prices a line stays the engine's, untouched (2026-09-17). */
+  'network-offers.js',
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
   /* ADOPTION, not engine, and the split is the point: lib/rewards.js decides what a point is WORTH (pure, no DB,
      Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap
