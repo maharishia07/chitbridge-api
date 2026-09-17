@@ -658,6 +658,27 @@ it('⚠️⚠️ and it NEVER blocks a sale — every finding is a line and a do
  * the global appears and is an object, and asserts NOTHING WAS THROWN on the way. A new engine added tomorrow is
  * covered without anybody remembering to come back here.
  */
+/**
+ * ⚠️⚠️ A SHOP PC SERVES EVERY ENGINE THE PAGE LOADS (2026-09-17). The desktop program fetched and served four of the thirteen
+ * engines the counter page asks for — money, the bill-number rules, pricing and the QR were simply absent on a shop PC, and the
+ * page's note said so for good. Three lists must agree: the page's <script src="/engine/…">, the program's ENGINE_NAMES, and
+ * the server's ENGINES (what it can hand the program), each of whose files must exist.
+ */
+JOBS.push(['⚠️⚠️ the page, the shop-PC program and the server name the same engines — and every one can be served', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const tags = [...page.matchAll(/<script src="\/engine\/([a-z0-9-]+)\.js"/g)].map((m) => m[1]);
+  const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  const listed = (prog.match(/const ENGINE_NAMES = \[([^\]]*)\]/) || [])[1];
+  assert.ok(listed, 'till.js has no ENGINE_NAMES');
+  const names = [...listed.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]);
+  assert.deepStrictEqual(names, tags, 'the shop-PC program does not fetch and serve exactly the engines the page loads');
+  const route = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const block = route.slice(route.indexOf('const ENGINES = {'), route.indexOf('router.get(\'/engine/:name\''));
+  const served = [...block.matchAll(/(?:^|[\s{,])([a-z0-9]+):\s*'(\.\.\/[^']+)'/g)].map((m) => [m[1], m[2]]);
+  assert.deepStrictEqual(served.map((x) => x[0]).sort(), tags.slice().sort(), 'the server cannot hand the program every engine the page loads');
+  for (const [n, rel] of served) assert.ok(fs.existsSync(path.join(API, 'routes', rel)), n + ' is served from ' + rel + ', which does not exist');
+}]);
+
 JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over its global', () => {
   const dir = path.join(API, '..', 'chitbridge-web', 'public', 'engine');
   /* qr.js is the one third-party file and defines `qrcode` as a bare global, not on window — named, not skipped */
@@ -668,7 +689,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'money.js': 'CBMoney', 'docnumber.js': 'CBDoc',
                     /* ⭐ the conversion engine and the unit table it stands on (2026-09-15) */
                     'units.js': 'CBUnits', 'convert.js': 'CBConvert',
-                    'rewards.js': 'CBRewards', 'qr.js': null };
+                    'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
    * a page will load it" is. convert.js reads window.CBMoney and window.CBUnits at its top, and in an empty

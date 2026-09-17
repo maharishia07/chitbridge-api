@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -198,6 +198,20 @@ const COPIES = () => [
    * compared TEXT, and text was never the question — tests/till-vendor now EXECUTES each engine (see that file).
    */
   [path.join(API, 'lib', 'rewards.js'), path.join(WEB, 'engine', 'rewards.js'), 'copy'],
+  /* ⭐ THE SCREEN LIBRARY (2026-09-17) — themes, tiles, pickers, layouts, presets. A UMD like rewards.js, so copied, not wrapped;
+     on the till's shelf because the counter draws its keys with it, line or no line. */
+  [path.join(API, 'lib', 'screen-kit.js'), path.join(WEB, 'engine', 'screen.js'), 'copy'],
+  /**
+   * ⚠️⚠️ AND THE SHOP PC HAS TO BE ABLE TO SERVE EVERY ONE OF THEM (2026-09-17). The desktop counter fetched and served FOUR
+   * engines (offers, tax, search, gs1) while the page loads thirteen — so on a shop PC money, the bill-number rules, pricing,
+   * the QR and the rest were simply absent, and the page said so in its note for good. These copies are what
+   * GET /api/till/engine/:name hands the program (routes/till.js ENGINES); the web serves its own /engine/ copies.
+   */
+  [null, path.join(API, 'lib', 'money.browser.js'), wrapForBrowser('money.js', 'CBMoney')],
+  [null, path.join(API, 'lib', 'docnumber.browser.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
+  /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
+  [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],
+  [null, path.join(API, 'lib', 'pricing.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'pricing.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],

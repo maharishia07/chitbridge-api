@@ -264,9 +264,16 @@
   /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
   .upd{color:var(--ok);font-weight:700}
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card)}
-  .quick button{padding:14px 10px;border:1px solid var(--edge);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
-  .quick button b{display:block;font-size:.95em;overflow-wrap:anywhere}
-  .quick button span{color:var(--dim);font-size:.8em}
+  .quick button:not(.sk-tile){padding:14px 10px;border:1px solid var(--edge);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
+  .quick button:not(.sk-tile) b{display:block;font-size:.95em;overflow-wrap:anywhere}
+  .quick button:not(.sk-tile) span{color:var(--dim);font-size:.8em}
+  /* ⭐ the library draws the keys (lib/screen-kit); a list style wants one column, a tall style wants wider keys */
+  .quick.sk-style-compactRow{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0}
+  .quick.sk-style-photo,.quick.sk-photos{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  .quick .sk-tray,.quick .qbar{grid-column:1/-1}
+  .quick .sk-tile .qpin,.quick .sk-tile .qadd{top:4px}
+  /* the key's own top-left corner carries the group bar / hotkey number / badge, so the pin sits beside the × */
+  .quick .sk-tile .qpin{inset-inline-start:auto;inset-inline-end:24px}
   .quick:empty{display:none}
   .hits{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
   /**
@@ -759,7 +766,7 @@
             <label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook('cb_till_fs',this.value)">
               <option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select></label>
             <label title="Look">◐ <select id="mq_theme" data-testid="till-mq-theme" onchange="quickLook('cb_till_theme',this.value)">
-              <option value="light">Light</option><option value="dark">Dark</option></select></label>
+              <option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select></label>
             <label title="What this counter shows">▦ <select id="mq_layout" data-testid="till-mq-layout" onchange="tillOptSet({layout:this.value});paintMenuQuick()">
               <option value="full">Everything</option><option value="quick">Quick keys + bill</option><option value="cart">Search + bill</option>
               <option value="custom" disabled>Custom</option></select></label>
@@ -1055,8 +1062,21 @@
       <select id="set_fs"><option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select>
     </div>
     <div class="srow">
-      <span>Look</span>
-      <select id="set_theme"><option value="light">Light</option><option value="dark">Dark</option></select>
+      <span>Colours</span>
+      <select id="set_theme" data-testid="till-set-theme" onchange="screenSet({theme:this.value==='light'?'lightCream':this.value})"><option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select>
+    </div>
+    <!-- ⭐ THE SCREEN LIBRARY (lib/screen-kit): a named style, then its parts — the options are filled from the library itself -->
+    <div class="srow" title="A named combination of layout, keys and colours. The parts below can still be changed after.">
+      <span>Style</span>
+      <select id="set_preset" data-testid="till-set-preset" onchange="screenSet({preset:this.value})"></select>
+    </div>
+    <div class="srow">
+      <span>Keys</span>
+      <select id="set_tile" data-testid="till-set-tile" onchange="screenSet({tile:this.value})"></select>
+    </div>
+    <div class="srow" title="Items with no photo show their initials. Fewer keys fit on the screen.">
+      <span>Photos</span>
+      <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_photos" data-testid="till-set-photos" onchange="screenSet({photos:this.checked})"> on keys</label>
     </div>
   </section>
 
@@ -1158,6 +1178,8 @@
 <!-- ⭐ REWARDS. The counter has to say what a customer just earned while they are still standing there, so the
      arithmetic runs here with the line down; the server runs the same file again and its answer is written. -->
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
+<!-- ⭐ the screen library — colour schemes, key tiles, presets (lib/screen-kit.js). Without it the counter draws as before. -->
+<script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
 <script>
 /* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
 var MISSING = [];
@@ -2688,7 +2710,7 @@ function paintMenuQuick(){
   paintViewChips();
 }
 /** text size or look, from the menu — stored where ⚙ keeps them, applied at once */
-function quickLook(key, value){ ls.set(key, value); applyLook(); }
+function quickLook(key, value){ ls.set(key, value); applyLook(); try { paintQuick(); } catch (_) {} }
 /**
  * ⭐⭐ THE SECTIONS AS CHIPS, IN THE MENU (Athi, 2026-09-16) — *"any other way can we bring it in the frontend
  * itself as a toggle button?"* One press to reach, one press to change, and the counter repaints underneath.
@@ -2948,7 +2970,61 @@ function quickPin(id){
   ls.set(shopLs('cb_till_qpin'), JSON.stringify(p.slice(0, 12)));
   loadQuick();
 }
-function quickReset(){ ls.set(shopLs('cb_till_qhide'), '[]'); ls.set(shopLs('cb_till_qpin'), '[]'); loadQuick(); }
+function quickReset(){ ls.set(shopLs('cb_till_qhide'), '[]'); ls.set(shopLs('cb_till_qpin'), '[]'); ls.set(shopLs('cb_till_qsold'), '[]'); loadQuick(); }
+/**
+ * ── ⭐⭐ SOLD OUT, FOR TODAY (quick-keys design handoff, 2026-09-17) ───────────────────────────────────────────────
+ * ✕ on a key now means what a cashier means by it: "we have run out". The key leaves the grid and waits in the sold-out
+ * tray, one tap from coming back — and the next business day (the counter's own day-roll hour) every key is back without
+ * anybody remembering to do it. It is this counter's mark only (the handoff's level 2), and it is PER ITEM: a thing that
+ * has run out has run out in every group. Search and scan still bill it.
+ */
+function bizDay(){
+  var d = new Date(Date.now() - tillScheme().dayRollHour * 3600000);
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function quickSold(){
+  var raw = []; try { raw = JSON.parse(ls.get(shopLs('cb_till_qsold'), '[]')) || []; } catch (_) {}
+  var today = bizDay();
+  return raw.filter(function(x){ return x && x.id && x.day === today; });
+}
+function quickSoldOut(id){
+  var s = quickSold().filter(function(x){ return x.id !== id; });
+  s.push({ id: id, day: bizDay() });
+  ls.set(shopLs('cb_till_qsold'), JSON.stringify(s.slice(-200)));
+  loadQuick();
+}
+function quickBringBack(id){
+  ls.set(shopLs('cb_till_qsold'), JSON.stringify(quickSold().filter(function(x){ return x.id !== id; })));
+  loadQuick();
+}
+/**
+ * ── ⭐⭐ THE SCREEN THIS COUNTER WEARS (lib/screen-kit → /engine/screen.js) ─────────────────────────────────────────
+ * Athi: *"a library of different designs and colour schemes so people, or their system, can pick up the required
+ * format."* A preset, a tile style, a colour scheme and photos on/off, chosen here (the device) — resolve() is where the
+ * counter's and the shop's defaults join when they are set upstream. Without the library the counter draws as it always has.
+ */
+function screenCfg(){
+  var o = tillOpt(), s = o.screen || {};
+  if (!window.CBScreen) return { tile: 'classic', theme: 'lightCream', photos: false, preset: 'counterClassic' };
+  /* the look already chosen on this device (☰ text & look) is the device's theme unless a preset says otherwise */
+  var t = ls.get('cb_till_theme', 'light');
+  var theme = (t === 'light') ? 'lightCream' : t;
+  /* ⚠️ the device's look LAST: choosing a preset writes its theme there (screenSet), and a later change in ☰ must win */
+  return CBScreen.resolve(s, { theme: theme });
+}
+function screenSet(patch){
+  var o = tillOpt(), s = Object.assign({}, o.screen || {}, patch || {});
+  /* a preset carries its own theme — the device's look follows it, so ☰ and ⚙ keep saying the same thing */
+  if (patch && patch.preset && window.CBScreen && CBScreen.PRESETS[patch.preset]) {
+    var p = CBScreen.PRESETS[patch.preset];
+    s = { preset: patch.preset };
+    ls.set('cb_till_theme', p.theme === 'lightCream' ? 'light' : p.theme);
+  }
+  if (patch && patch.theme) { ls.set('cb_till_theme', patch.theme === 'lightCream' ? 'light' : patch.theme); delete s.theme; }
+  tillOptSet({ screen: s });
+  applyLook(); loadQuick();
+  try { paintSetup(); paintMenuQuick(); } catch (_) {}
+}
 /** the words for the hour, as a shopkeeper would say them */
 function partOfDay(h){
   return h < 11 ? 'this morning' : (h < 15 ? 'around midday' : (h < 19 ? 'this afternoon' : 'this evening'));
@@ -2987,7 +3063,7 @@ var QUICK_SRC = [
   ['groups',   'My group',          'A group I made'],
   ['both',     'Group, then usual', 'My group first, then what sells']
 ];
-var TILLOPT = null;
+var TILLOPT = null, TILLOPT_AT = '';
 function tillOptDefaults(){
   return { layout:'full', shape:'auto', quickSource:'frequent', group:'', groups:{},
            upi:{ payee:'', label:'UPI' },
@@ -2999,12 +3075,15 @@ function tillOptDefaults(){
            show:{ search:true, chips:true, quick:true, list:true, keys:true, cust:true } };
 }
 function tillOpt(){
-  if (TILLOPT) return TILLOPT;
+  /* ⚠️ THE COPY BELONGS TO THE SHOP IT WAS READ FOR. Read before the key was known, it held the defaults and kept them —
+     every choice made in ⚙ came back as the default after a reload ([TILL-28]). */
+  var at = shopLs('cb_till_opt');
+  if (TILLOPT && TILLOPT_AT === at) return TILLOPT;
   var o = tillOptDefaults();
   try { var raw = JSON.parse(ls.get(shopLs('cb_till_opt'), '{}')) || {}; Object.keys(raw).forEach(function(k){ o[k] = raw[k]; }); } catch (_) {}
   if (!o.groups || typeof o.groups !== 'object') o.groups = {};
   if (!o.upi || typeof o.upi !== 'object') o.upi = { payee:'', label:'UPI' };
-  TILLOPT = o; return o;
+  TILLOPT = o; TILLOPT_AT = at; return o;
 }
 function tillOptSet(patch){
   var o = tillOpt();
@@ -3041,7 +3120,7 @@ function tillShowSet(key, on){
     return SECTIONS.every(function(p){ return LAYOUTS[L][p[0]] === s[p[0]]; }); })[0] || 'custom';
   var o2 = tillOpt(); o2.show = s; o2.layout = named;
   try { ls.set(shopLs('cb_till_opt'), JSON.stringify(o2)); } catch (_) {}
-  TILLOPT = o2;
+  TILLOPT = o2; TILLOPT_AT = shopLs('cb_till_opt');
   applyTillOptions();
   try { paintSetup(); } catch (_) {}
 }
@@ -3177,7 +3256,9 @@ async function loadQuick(){
   try { if (HOST && HOST.history) { var h = await HOST.history(30); take((h && h.bills) || []); } } catch (_) {}
 
   var hidden = quickHidden(), pinned = quickPinned();
-  var items = ((S && S.items) || []).filter(function(i){ return hidden.indexOf(i.item_id) < 0; });
+  /* ⭐ sold out today is off the keys too — it waits in the tray (paintQuick), and search and scan still bill it */
+  var sold = quickSold().map(function(x){ return x.id; });
+  var items = ((S && S.items) || []).filter(function(i){ return hidden.indexOf(i.item_id) < 0 && sold.indexOf(i.item_id) < 0; });
   var score = function(i){ return (near[i.item_id] || 0) * 3 + (ever[i.item_id] || 0); };
   var ranked = items.slice().sort(function(a, b){
     var pa = pinned.indexOf(a.item_id), pb = pinned.indexOf(b.item_id);
@@ -3244,23 +3325,46 @@ function paintQuick(){
     /* ⭐ AND WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
     + (QUICK_WHY ? '<span class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</span>' : '')
     + '</div>';
-  el.innerHTML = bar
-    + QUICK.map(function(i, n){
+  /**
+   * ⭐⭐ THE KEYS ARE DRAWN BY THE SCREEN LIBRARY (lib/screen-kit TILES) — the style this counter chose, in its group's
+   * colour, with the quantity already on the bill, a photo or its initials when photos are on. What a key DOES is still
+   * this page's: the face adds, ✕ marks it sold out for today, 📌 pins, ＋ puts it in the group.
+   */
+  var cfg = screenCfg(), K = window.CBScreen;
+  var colour = K ? K.groupColour(usesGroups && o.group ? o.group : 0) : null;
+  var inBill = {}; CART.forEach(function(c){ inBill[String(c.item_id)] = (inBill[String(c.item_id)] || 0) + (Number(c.qty) || 0); });
+  el.className = 'quick sk-style-' + (cfg.tile || 'classic') + (cfg.photos ? ' sk-photos' : '');
+  var keys = QUICK.map(function(i, n){
     var pin = pinned.indexOf(i.item_id) >= 0;
     var inG = usesGroups && o.group && mine.indexOf(i.item_id) >= 0;
-    /* ⚠️ ✕ MEANS THE NEAREST THING IT CAN. Inside a group it takes the product OUT OF THE GROUP (the shelf is
-       untouched); outside one it hides the learned key, which is what it has always meant. */
-    var drop = inG
-      ? 'quickGroupToggle(\'' + esc(i.item_id) + '\')'
-      : 'quickHide(\'' + esc(i.item_id) + '\')';
-    return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + esc(i.item_id) + '\')"><b>' + esc(i.name) + '</b>'
-      + '<span>' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
-      + '<i class="qx" title="' + (inG ? 'take out of ' + esc(o.group) : 'not on this counter') + '" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();' + drop + '">✕</i>'
-      + (usesGroups && o.group && !inG
-          ? '<i class="qadd" title="add to ' + esc(o.group) + '" data-testid="till-quick-group-add-' + n + '" onclick="event.stopPropagation();quickGroupToggle(\'' + esc(i.item_id) + '\')">＋</i>'
-          : '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + esc(i.item_id) + '\')">📌</i>')
-      + '</button>';
+    var id = esc(i.item_id);
+    var extra = (usesGroups && o.group && !inG
+          ? '<i class="qadd" title="add to ' + esc(o.group) + '" data-testid="till-quick-group-add-' + n + '" onclick="event.stopPropagation();quickGroupToggle(\'' + id + '\')">＋</i>'
+          : '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + id + '\')">📌</i>')
+      /* ⚠️ INSIDE A GROUP, taking it out of the group stays one press — a list somebody made is edited where it is used */
+      + (inG ? '<i class="qx" title="take out of ' + esc(o.group) + '" data-testid="till-quick-ungroup-' + n + '" style="inset-inline-end:26px" onclick="event.stopPropagation();quickGroupToggle(\'' + id + '\')">⊖</i>' : '');
+    if (!K) {
+      return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + id + '\')"><b>' + esc(i.name) + '</b>'
+        + '<span>' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
+        + '<i class="qx" title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')">✕</i>' + extra + '</button>';
+    }
+    return K.tile(cfg.tile, {
+      name: i.name, price: money(i.price), unit: i.unit || 'piece', image: i.image || null, colour: colour,
+      qty: inBill[String(i.item_id)] || 0, showPhoto: !!cfg.photos, hotkey: n < 9 ? n + 1 : (n === 9 ? 0 : null),
+      attrs: 'type="button" data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + id + '\')"',
+      hideAttrs: 'title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')"',
+      extra: extra });
   }).join('');
+  /* ⭐ THE SOLD-OUT TRAY — what ran out today, one tap from coming back (it also comes back by itself tomorrow) */
+  var soldIds = quickSold().map(function(x){ return x.id; });
+  var byId = {}; ((S && S.items) || []).forEach(function(i){ byId[String(i.item_id)] = i; });
+  var sold = soldIds.map(function(sid){ return byId[String(sid)]; }).filter(Boolean);
+  var tray = sold.length
+    ? '<div class="sk-tray" data-testid="till-soldout"><b>SOLD OUT · ' + sold.length + '</b>'
+      + sold.map(function(i, n){ return '<button class="sk-trayitem" data-testid="till-soldout-' + n + '" title="bring it back"'
+          + ' onclick="quickBringBack(\'' + esc(i.item_id) + '\')">' + esc(i.name) + '</button>'; }).join('') + '</div>'
+    : '';
+  el.innerHTML = bar + keys + tray;
 }
 function quickAdd(id){
   var i = ((S && S.items) || []).filter(function(x){ return x.item_id === id; })[0];
@@ -5046,6 +5150,8 @@ function paintCart(){
       + cartHeadHTML()
       + CART.map(function(c,k){ return cartRowHTML(c,k); }).join('')
     : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>');
+  /* the keys show how many of each are on the bill — they follow it */
+  try { paintQuick(); } catch (_) {}
 }
 /** ⚠️ the heading carries a COUNT, so it changes on a quantity edit too — and paintCartRow is the in-place path */
 function paintCartHead(){
@@ -8393,8 +8499,25 @@ function cartGripInit(){
   g.addEventListener('dblclick', function(){ apply(''); ls.set('cb_till_carth', ''); });
 }
 function applyLook(){
-  document.documentElement.setAttribute('data-theme', ls.get('cb_till_theme','light'));
-  document.documentElement.style.setProperty('--fs', ls.get('cb_till_fs','16px'));
+  var t = ls.get('cb_till_theme','light'), root = document.documentElement;
+  /**
+   * ⭐ A COLOUR SCHEME FROM THE LIBRARY (lib/screen-kit THEMES): the page's own light/dark rules stay as the base —
+   * data-theme picks which — and the scheme's variables are laid over them inline. Light is the library's light cream,
+   * which IS this page's light; without the library, light and dark are what they always were.
+   */
+  var K = window.CBScreen, id = (t === 'light') ? 'lightCream' : t;
+  var th = K && K.THEMES[id];
+  root.setAttribute('data-theme', th ? (th.dark ? 'dark' : 'light') : (t === 'dark' ? 'dark' : 'light'));
+  if (K) {
+    var all = K.THEMES.lightCream.vars;
+    Object.keys(all).forEach(function(k){ root.style.removeProperty(k); });
+    if (th && id !== 'lightCream' && id !== 'dark') Object.keys(th.vars).forEach(function(k){ root.style.setProperty(k, th.vars[k]); });
+    root.style.colorScheme = th && th.dark ? 'dark' : 'light';
+    if (!document.getElementById('sk-css')) {
+      var st = document.createElement('style'); st.id = 'sk-css'; st.textContent = K.CSS; document.head.appendChild(st);
+    }
+  }
+  root.style.setProperty('--fs', ls.get('cb_till_fs','16px'));
 }
 /**
  * ⭐ THE PRINTER PANE, AND WHY IT IS SOMETIMES ABSENT. Only the program on a shop PC can send a bill straight to a printer; a browser
@@ -8479,6 +8602,16 @@ function paintSetup(){
   var o = tillOpt();
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
   set('set_layout', o.layout || 'full');
+  /* ⭐ the screen library's choices, filled from its registries — a style added there appears here with no edit */
+  var K = window.CBScreen, sc0 = screenCfg();
+  var fill = function(id, reg, v){ var el = document.getElementById(id); if (!el || !K) return;
+    el.innerHTML = Object.keys(reg).map(function(k){ return '<option value="' + k + '">' + esc(reg[k].label) + '</option>'; }).join(''); el.value = v; };
+  if (K) {
+    fill('set_preset', K.PRESETS, (o.screen && o.screen.preset) || sc0.preset);
+    fill('set_tile', K.TILES, sc0.tile);
+    var ph = document.getElementById('set_photos'); if (ph) ph.checked = !!sc0.photos;
+  }
+  set('set_theme', ls.get('cb_till_theme', 'light'));
   set('set_shape', o.shape || 'auto');
   /* ⚠️ the options come from QUICK_SRC, the same list the bar above the keys offers — see the note there */
   var qs = document.getElementById('set_qsrc');

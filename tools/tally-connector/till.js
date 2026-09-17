@@ -71,6 +71,13 @@ const cfg = core.loadConfig(cfgFile);
 const tillCfg = Object.assign({ port: 7071, id: 'C1', name: 'Counter 1', refreshMinutes: 15, drainSeconds: 20 }, cfg.till || {});
 const PORT = Number(flag('port', tillCfg.port)) || 7071;
 const DIR = path.join(path.dirname(cfgFile), 'till-data');
+/**
+ * ⭐ EVERY ENGINE THE COUNTER PAGE LOADS, in its order (till.html <script src="/engine/…">). The program fetches each from
+ * GET /api/till/engine/:name and serves it at /engine/<name>.js; tests/till-vendor.test.js holds the three lists equal.
+ * ⚠️ It was four of thirteen until 2026-09-17 — on a shop PC money, the bill-number rules, pricing and the QR were absent.
+ */
+const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'gs1', 'lots', 'nums', 'rewards', 'screen'];
+const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),
   series: path.join(DIR, 'series.json'),
@@ -152,7 +159,8 @@ async function refresh() {
     }
     /* the engines, cached beside the snapshot — the till prices with the same code the server does.
        ⚠️ CB.call parses JSON and hands back { raw } when the body is not JSON, which is exactly what a .js file is. */
-    for (const [name, file] of [['offers', F.engine('offers')], ['tax', F.engine('tax')], ['search', F.engine('search')], ['gs1', F.engine('gs1')]]) {
+    /* ⚠️ EVERY engine the page loads (ENGINE_NAMES) — it was four of thirteen until 2026-09-17 */
+    for (const [name, file] of ENGINE_NAMES.map((n) => [n, F.engine(n)])) {
       try { const r = await cb.call('GET', '/api/till/engine/' + name); const js = (r && typeof r.raw === 'string') ? r.raw : '';
         if (js.length > 500) fs.writeFileSync(file, js); }
       catch (_) { /* keep the copy we have — an engine we already hold is what makes the counter work offline */ }
@@ -352,7 +360,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html'))
       return send(res, 200, 'text/html; charset=utf-8', fs.readFileSync(PAGE, 'utf8'));
 
-    if (req.method === 'GET' && /^\/engine\/(offers|tax|search|gs1)\.js$/.test(url.pathname)) {
+    if (req.method === 'GET' && ENGINE_RE.test(url.pathname)) {
       const n = url.pathname.split('/')[2].replace('.js', '');
       if (!fs.existsSync(F.engine(n))) return send(res, 503, 'text/plain', '// the engine has not been fetched yet — press Refresh while online');
       return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(F.engine(n), 'utf8'));
@@ -423,7 +431,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/state')
       return json(res, 200, { snapshot: snapshot, online: online, queued: readLines(F.queue).length, today: todayTotals(),
                               till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
-                              engines: { offers: fs.existsSync(F.engine('offers')), tax: fs.existsSync(F.engine('tax')), search: fs.existsSync(F.engine('search')) },
+                              engines: Object.fromEntries(ENGINE_NAMES.map((n) => [n, fs.existsSync(F.engine(n))])),
                               printer: { chosen: tillCfg.printer || null, mm: tillCfg.paper_mm || 80, drawer: !!tillCfg.drawer },
                               update: UPDATE });
 

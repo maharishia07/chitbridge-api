@@ -134,6 +134,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   /* ADOPTION, not engine: network-membership.js answers "is this store in that brand's network" from the network's own
      tree and edges — a relationship question, no pricing (2026-09-17). */
   'network-membership.js',
+  /* NOT ENGINE: screen-kit.js decides what a counter LOOKS like — themes, tiles, pickers, layouts, presets. Pure and vendored,
+     but it judges nothing about money or trade; a price reaches it already formatted (2026-09-17). */
+  'screen-kit.js',
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
   /* ADOPTION, not engine, and the split is the point: lib/rewards.js decides what a point is WORTH (pure, no DB,
      Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap
@@ -479,6 +482,9 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/numerals.js: the closed class — numerals in English and transliterated Tamil — so a counter that hears
      "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
   'numerals.browser.js',
+  /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
+     a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
+  'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
   /* ENGINE: what somebody SAID, as text — a seam with a provider behind it (lib/speech.js). It decides nothing about money, but it
      is the one place a second AI vendor enters the platform, which makes it a boundary rather than a helper. */
   'speech.js',

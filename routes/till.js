@@ -1647,7 +1647,12 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   gs1: '../lib/gs1.browser.js',        /* what a pack's barcode carries — batch, expiry, serial */
                   lots: '../lib/lotfields.browser.js', /* what this trade must capture, and the difference it absorbs */
                   nums: '../lib/numerals.browser.js', /* "two kilo", "rendu kilo" — the closed class, in both */
-                  rewards: '../lib/rewards.js' };     /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */
+                  rewards: '../lib/rewards.js',      /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */
+                  /* ⭐ 2026-09-17: the rest of what the page loads — a shop PC had none of these (scripts/vendor-till.cjs) */
+                  screen: '../lib/screen-kit.js',     /* the screen library — a UMD, the master itself */
+                  money: '../lib/money.browser.js', docnumber: '../lib/docnumber.browser.js',
+                  locale: '../lib/locale.browser.js', pricing: '../lib/pricing.browser.js',
+                  qr: '../node_modules/qrcode-generator/qrcode.js' };
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
   if (!rel) return res.status(404).json({ error: 'Not found' });
