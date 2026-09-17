@@ -426,7 +426,9 @@ it('⭐ the till shows the shop tax identity, and only what decides something', 
   /* ⚠️ painted when the dialog OPENS, not once at boot — the shop is re-read all day and a stale GSTIN here is worse than none */
   /* ⚠️ slice to where the function actually ENDS. A fixed character window stopped short of the call and reported it
      missing — a guard that fails on a function growing longer is a guard nobody will trust for long. */
-  const at = page.indexOf('function openSettings(){');
+  /* moved 2026-09-17: openSettings takes the tab to open, so the function is found by its name, not its empty argument list */
+  const at = page.search(/function openSettings\(/);
+  assert.ok(at > 0, 'openSettings is gone');
   const open = page.slice(at, page.indexOf('async function saveSettings', at));
   assert.ok(open.indexOf('paintShop();') > 0, 'the shop block is not repainted when the settings dialog opens');
 });

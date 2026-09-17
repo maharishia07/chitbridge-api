@@ -241,6 +241,9 @@
   .menusec{padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
   .menusec>b{display:block;font-size:.78em;color:var(--dim);text-transform:uppercase;letter-spacing:.03em;padding-bottom:6px}
   .viewchips{display:flex;flex-wrap:wrap;gap:6px}
+  .mq{display:flex;gap:8px;flex-wrap:wrap}
+  .menu .mq label{display:flex;align-items:center;gap:4px;font-size:.85em;color:var(--dim)}
+  .menu .mq select{padding:4px 6px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);font:inherit;font-size:.95em}
   /* ⚠️ these sit INSIDE .menu, whose button rule is display:block — so they restate what a chip is */
   .menu .viewchips button.vchip{display:inline-block;width:auto;padding:5px 10px;border:1px solid var(--edge);
         border-radius:999px;background:var(--paper);color:var(--dim);font-size:.82em;white-space:nowrap}
@@ -621,6 +624,28 @@
   .nowbox b{font-size:1.05em}
   .nowbox.none{border-color:var(--warn);background:var(--warn-tint)}
   .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--edge);border-radius:9px;background:var(--paper)}
+  /* ⭐ SETTINGS, REDRAWN (2026-09-17) — tabs across the top, one short name and its control per row; the "why" is in title= */
+  .setdlg{width:min(640px,96vw)}
+  .sethead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .sethead h3{border:0;margin:0;padding:0}
+  .setx{border:0;background:none;font-size:1.15em;cursor:pointer;color:var(--dim);padding:4px 8px}
+  .settabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);margin:10px 0 8px}
+  .settabs button{border:0;background:none;padding:8px 10px;border-bottom:2px solid transparent;cursor:pointer;color:var(--dim);
+                  white-space:nowrap;font:inherit;font-size:.92em}
+  .settabs button.on{color:inherit;border-bottom-color:var(--ok);font-weight:700}
+  .settab{display:none;min-height:240px}
+  .settab.on{display:block}
+  .srow{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+  .srow.top{align-items:start}
+  .srow>span{color:var(--dim);font-size:.88em}
+  .srow>input,.srow>select{padding:8px}
+  .schips{display:flex;flex-wrap:wrap;gap:6px 14px}
+  .dlg .schips label{display:flex;gap:6px;align-items:center;margin:0;color:inherit;font-size:.9em}
+  .dlg input[type=checkbox]{width:auto;padding:0}
+  .snote{color:var(--dim);font-size:.78em;margin:6px 0}
+  .dlg input.ro{background:var(--line);cursor:not-allowed}
+  .settab .shopfacts{margin-bottom:6px}
+  @media (max-width:520px){ .srow{grid-template-columns:1fr;gap:4px} }
   .dlgbtns{display:flex;gap:8px;margin-top:14px}
   .dlgbtns{border-top:1px solid var(--line);padding-top:12px}
   .dlgbtns button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--edge);background:var(--paper);
@@ -727,6 +752,19 @@
           ⚠️ THE SAME `tillShowSet` THE SETTINGS TICKS CALL. One source of truth for what is on screen — a second
           toggle with its own state is how a menu and a settings panel come to disagree. [[feedback-stay-in-the-construct]]
         -->
+        <!-- ⭐ THE EVERYDAY THREE, AS DROPDOWNS, ONE PRESS AWAY (Athi, 2026-09-17: "bring the controls to the top, or a dropdown").
+             The same stored settings ⚙ edits — tillOptSet for the layout, applyLook for text and look — never a second copy. -->
+        <div class="menusec" data-testid="till-quick-settings">
+          <div class="mq">
+            <label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook('cb_till_fs',this.value)">
+              <option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select></label>
+            <label title="Look">◐ <select id="mq_theme" data-testid="till-mq-theme" onchange="quickLook('cb_till_theme',this.value)">
+              <option value="light">Light</option><option value="dark">Dark</option></select></label>
+            <label title="What this counter shows">▦ <select id="mq_layout" data-testid="till-mq-layout" onchange="tillOptSet({layout:this.value});paintMenuQuick()">
+              <option value="full">Everything</option><option value="quick">Quick keys + bill</option><option value="cart">Search + bill</option>
+              <option value="custom" disabled>Custom</option></select></label>
+          </div>
+        </div>
         <div class="menusec" data-testid="till-view-toggles">
           <b>Show on this counter</b>
           <div class="viewchips" id="viewchips"></div>
@@ -919,128 +957,180 @@
   <div class="dlgbtns"><button data-testid="till-dayclose" onclick="dayClose()">Day close sheet</button><button onclick="document.getElementById('billsdlg').close()">Close</button></div>
 </div></dialog>
 
-<dialog id="setdlg"><div class="dlg">
-  <h3>This till</h3>
-  <div id="shopbox" data-testid="till-shopbox"></div>
-  <div id="pairbox"></div>
-  <div id="coldbox"></div>
+<dialog id="setdlg" class="setdlg"><div class="dlg">
   <!--
-    ⭐⭐⭐ THE PREFIX IS GIVEN, NOT TYPED. Athi, 2026-09-17: *"the counter sequence number — we should offer it, and it
-    cannot be changed for a PC, so it is a permanent number."* A free text box that defaulted to C1 is exactly how two
-    PCs came to share a series and one PC's sales were absorbed as the other's. The shop assigns each pairing its own
-    prefix (routes/keys.js claimTill) and keeps it; this box only SHOWS it.
-    ⚠️ Read-only, but still an input: saveSettings() reads its value, and an empty or altered one must never be what
-    decides the series — so the save path also refuses to take it (see saveSettings).
+    ⭐⭐ SETTINGS, REDRAWN (Athi, 2026-09-17: "it looks like junk — reduce text as much as possible … bring controls to the top
+    or into a dropdown, easy to manage rather than a set of controls in one place").
+    ⭐ ONE ROW = A SHORT NAME AND ITS CONTROL. The explanation a row used to carry lives in its title (hover / long-press);
+       the words on screen are only the ones needed to choose. [[feedback-text-budget]]
+    ⭐ TABS, not one scroll: what a shop sets once (Counter, Device) apart from what it tunes (Screen, Bill, Keys, Pay, Voice).
+       The last tab is remembered. Every id below is unchanged — saveSettings(), paintSetup() and the specs read them.
+    ⚠️ The everyday three — text size, look, what the counter shows — are ALSO in ☰ (menu "quick" row), one press away.
   -->
-  <label>Counter number — given by the shop, and kept for this pairing</label>
-  <input id="set_till" placeholder="C1" readonly data-testid="till-set-till"
-         title="assigned by the shop so no two counters share a bill series — pair again for a new one"
-         style="background:var(--line);cursor:not-allowed">
-  <!--
-    ⭐⭐ THE BILL NUMBER'S SHAPE. Athi, 2026-09-16: *"the design is every day julian date changes and every
-    month, both rotates."* The DATE and the RESET are two separate questions and are asked separately, because
-    tying them together is what forces a repeating tail.
-    ⚠️ Not tax advice — lib/docnumber.js carries the same caveat and the reasoning.
-  -->
-  <label>Bill number — what sits in the middle</label>
-  <select id="set_dating" data-testid="till-set-dating" onchange="tillSeriesSet({dating:this.value})">
-    <option value="fy">Financial year — C1/26-27/0003 · the tax year is readable, the date is not</option>
-    <option value="julian">Date (julian) — C1/26259/0003 · the date changes daily; the tax year is NOT readable</option>
-  </select>
-  <label>Bill number — when the sequence restarts at 0001</label>
-  <select id="set_resets" data-testid="till-set-resets" onchange="tillSeriesSet({resets:this.value})">
-    <option value="year">Once a financial year — the number never comes round again</option>
-    <option value="month">Every month — 0001 is issued 12 times a year</option>
-    <option value="day">Every day — 0001 is issued 365 times a year</option>
-    <option value="never">Never — one run for the life of this counter</option>
-  </select>
-  <label>When does the day roll over?</label>
-  <select id="set_dayroll" data-testid="till-set-dayroll" onchange="tillSeriesSet({dayRollHour:Number(this.value)})">
-    <option value="0">Midnight</option>
-    <option value="2">2 am — a counter that trades past midnight</option>
-    <option value="4">4 am</option>
-    <option value="6">6 am</option>
-  </select>
-  <div id="seriesnote" data-testid="till-series-note" style="color:var(--dim);font-size:.78em;margin:4px 0 8px"></div>
-  <div id="printbox"></div>
-  <!--
-    ⭐⭐⭐ THE COUNTER IS SET UP FROM THE COUNTER. Athi, 2026-09-16: *"anything related to counter app setup should
-    be visible in counter app itself, so they don't need to go to the main app."* Everything below is answered
-    here, on the device doing the billing, and stored against THIS shop.
-  -->
-  <label>What this counter shows — a tiffin shop and a ten-thousand-line kirana are not the same counter</label>
-  <select id="set_layout" data-testid="till-set-layout" onchange="tillOptSet({layout:this.value})">
-    <option value="full">Everything — search, categories, quick keys, the whole list, the bill</option>
-    <option value="quick">Quick keys and the bill — no long list</option>
-    <option value="cart">The bill and a search — no shelf, no customer box</option>
-    <!-- ⚠️ not choosable, only REPORTED: it is what the ticks below say when they match no preset -->
-    <option value="custom" disabled>Your own mix — set by the ticks below</option>
-  </select>
-  <!--
-    ⭐⭐ AND EACH SECTION ON ITS OWN (observation 6, division A). Athi walked the screen asking of each one "is
-    it a must?" — three are, and they are not here because a setting that cannot be changed is not a setting.
-  -->
-  <label>Or show and hide each part — the header, the bill and the totals are always shown</label>
-  <div id="setupshow" data-testid="till-set-show" style="display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 8px"></div>
-  <label>Screen shape — for a screen the browser cannot guess</label>
-  <select id="set_shape" data-testid="till-set-shape" onchange="tillOptSet({shape:this.value})">
-    <option value="auto">Automatic — follow the screen</option>
-    <option value="wide">Wide — the shelf beside the bill</option>
-    <option value="tall">Tall — the bill above, the shelf below (a vertical screen)</option>
-    <option value="mobile">Phone</option>
-  </select>
-  <!--
-    ⭐ WHICH COLUMNS THE BILL SHOWS (observation 6, division E). Athi: *"There is nothing right or wrong, it is
-    the way people look at it — depending on the individual how they want to use it, let them switch."*
-    ⚠️ The number, the item, its price and the Qty stepper are not on this list: the first three are what a line
-    IS, and Qty is the control you bill with, not a column you read.
-  -->
-  <label>Columns on the bill — the number, the item, its price and Qty are always shown</label>
-  <div id="setupcols" data-testid="till-set-cols" style="display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 8px">
-    <label style="display:flex;gap:6px;align-items:center;font-weight:400">
-      <input type="checkbox" id="col_offer" data-testid="till-col-offer" onchange="cartColSet('offer',this.checked)"> Offer</label>
-    <label style="display:flex;gap:6px;align-items:center;font-weight:400">
-      <input type="checkbox" id="col_disc" data-testid="till-col-disc" onchange="cartColSet('disc',this.checked)"> Discount</label>
-    <label style="display:flex;gap:6px;align-items:center;font-weight:400">
-      <input type="checkbox" id="col_calc" data-testid="till-col-calc" onchange="cartColSet('calc',this.checked)"> Qty × price</label>
-    <label style="display:flex;gap:6px;align-items:center;font-weight:400">
-      <input type="checkbox" id="col_value" data-testid="till-col-value" onchange="cartColSet('value',this.checked)"> Value</label>
-    <label style="display:flex;gap:6px;align-items:center;font-weight:400">
-      <input type="checkbox" id="col_rules" data-testid="till-col-rules" onchange="cartColSet('rules',this.checked)"> Lines between columns</label>
+  <div class="sethead">
+    <h3>Settings</h3>
+    <button class="setx" onclick="document.getElementById('setdlg').close()" aria-label="Close" title="Close">✕</button>
   </div>
-  <label>Quick keys — where they come from</label>
-  <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
-  <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})"></select>
-  <div id="setupgroups" data-testid="till-set-groups"></div>
-  <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show every hidden key again</button>
-  <div style="color:var(--dim);font-size:.78em;margin:4px 0 8px">Learned keys come from this counter's own bills — what sells around this time of day. ✕ drops one, 📌 keeps one there all day. A group is a list you make: the same product can sit in Morning and Night at once, and adding or removing one never changes the shelf.</div>
-  <label>UPI — the payee this counter takes money at</label>
-  <input id="set_upi" data-testid="till-set-upi" placeholder="name@bank" autocomplete="off"
-         onchange="tillOptSet({upi:{payee:this.value.trim(),label:(document.getElementById('set_upilabel').value||'UPI').trim()}})">
-  <input id="set_upilabel" data-testid="till-set-upilabel" placeholder="UPI" autocomplete="off" style="max-width:160px"
-         onchange="tillOptSet({upi:{payee:(document.getElementById('set_upi').value||'').trim(),label:this.value.trim()||'UPI'}})">
-  <div id="setupupi" style="color:var(--dim);font-size:.78em;margin:4px 0 8px"></div>
-  <label>Speaking — who listens</label>
-  <select id="set_speech">
-    <option value="auto">Automatic — the better ear available</option>
-    <option value="server">ChitBridge — better on Tamil and mixed speech; the audio goes to our speech service</option>
-    <option value="browser">This browser — instant and free; the audio goes to the browser's own service (Google, in Chrome)</option>
-    <option value="off">Off — no microphone</option>
-  </select>
-  <label>Speaking — which language the microphone listens for</label>
-  <select id="set_lang"><option value="en-IN">English (India)</option><option value="ta-IN">தமிழ் · Tamil</option><option value="hi-IN">हिन्दी · Hindi</option><option value="en-GB">English (UK)</option></select>
-  <div style="color:var(--dim);font-size:.78em;margin:-4px 0 8px">The browser does the listening, and it sends what is said to its own speech service over the internet. It is off until you press 🎤. Billing itself never needs it.</div>
-  <label>Row detail — a pharmacy wants the composition on the row; a kirana does not</label>
-  <select id="set_rows"><option value="compact">Compact — name, offer, price</option><option value="full">Full — brand, MRP and what you declared</option></select>
-  <label>Text size</label>
-  <select id="set_fs"><option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select>
-  <label>Look</label>
-  <select id="set_theme"><option value="light">Light</option><option value="dark">Dark</option></select>
+  <div class="settabs" role="tablist" id="settabs">
+    <button role="tab" data-tab="counter" onclick="setTab('counter')">Counter</button>
+    <button role="tab" data-tab="screen" onclick="setTab('screen')">Screen</button>
+    <button role="tab" data-tab="bill" onclick="setTab('bill')">Bill</button>
+    <button role="tab" data-tab="keys" onclick="setTab('keys')">Quick keys</button>
+    <button role="tab" data-tab="pay" onclick="setTab('pay')">Pay</button>
+    <button role="tab" data-tab="voice" onclick="setTab('voice')">Voice</button>
+    <button role="tab" data-tab="device" onclick="setTab('device')">Device</button>
+  </div>
+
+  <section class="settab" data-tab="counter">
+    <div id="shopbox" data-testid="till-shopbox"></div>
+    <!--
+      ⭐⭐⭐ THE PREFIX IS GIVEN, NOT TYPED (Athi, 2026-09-17) — the shop assigns it (routes/keys.js claimTill); this only SHOWS it.
+      ⚠️ Read-only, but still an input: saveSettings() reads its value and refuses to let it decide the series.
+    -->
+    <div class="srow" title="Given by the shop so no two counters share a bill series. Pair again for a new one.">
+      <span>Counter</span>
+      <input id="set_till" placeholder="C1" readonly data-testid="till-set-till" class="ro">
+    </div>
+    <!-- ⭐⭐ THE BILL NUMBER'S SHAPE (Athi, 2026-09-16): the DATE and the RESET are separate questions. Not tax advice (lib/docnumber.js). -->
+    <div class="srow" title="Financial year: the tax year is readable. Date: changes daily, the tax year is not readable.">
+      <span>Bill number</span>
+      <select id="set_dating" data-testid="till-set-dating" onchange="tillSeriesSet({dating:this.value})">
+        <option value="fy">C1/26-27/0003 · financial year</option>
+        <option value="julian">C1/26259/0003 · date</option>
+      </select>
+    </div>
+    <div class="srow" title="How often the running number goes back to 0001.">
+      <span>Restart at 0001</span>
+      <select id="set_resets" data-testid="till-set-resets" onchange="tillSeriesSet({resets:this.value})">
+        <option value="year">Every year</option>
+        <option value="month">Every month</option>
+        <option value="day">Every day</option>
+        <option value="never">Never</option>
+      </select>
+    </div>
+    <div class="srow" title="A counter that trades past midnight keeps one day until this hour.">
+      <span>Day starts</span>
+      <select id="set_dayroll" data-testid="till-set-dayroll" onchange="tillSeriesSet({dayRollHour:Number(this.value)})">
+        <option value="0">Midnight</option>
+        <option value="2">2 am</option>
+        <option value="4">4 am</option>
+        <option value="6">6 am</option>
+      </select>
+    </div>
+    <div id="seriesnote" data-testid="till-series-note" class="snote"></div>
+  </section>
+
+  <section class="settab" data-tab="screen">
+    <!-- ⭐⭐⭐ THE COUNTER IS SET UP FROM THE COUNTER (Athi, 2026-09-16). -->
+    <div class="srow" title="A tiffin shop and a ten-thousand-line kirana are not the same counter.">
+      <span>Layout</span>
+      <select id="set_layout" data-testid="till-set-layout" onchange="tillOptSet({layout:this.value})">
+        <option value="full">Everything</option>
+        <option value="quick">Quick keys + bill</option>
+        <option value="cart">Search + bill</option>
+        <!-- ⚠️ not choosable, only REPORTED: what the ticks below say when they match no preset -->
+        <option value="custom" disabled>Custom</option>
+      </select>
+    </div>
+    <!-- ⭐⭐ AND EACH SECTION ON ITS OWN (observation 6, division A) — the header, the bill and the totals are always shown -->
+    <div class="srow top" title="The header, the bill and the totals are always shown.">
+      <span>Show</span>
+      <div id="setupshow" data-testid="till-set-show" class="schips"></div>
+    </div>
+    <div class="srow" title="For a screen the browser cannot guess — a vertical screen, a phone.">
+      <span>Shape</span>
+      <select id="set_shape" data-testid="till-set-shape" onchange="tillOptSet({shape:this.value})">
+        <option value="auto">Automatic</option>
+        <option value="wide">Wide</option>
+        <option value="tall">Tall</option>
+        <option value="mobile">Phone</option>
+      </select>
+    </div>
+    <div class="srow" title="Full adds brand, MRP and what you declared — a pharmacy wants the composition on the row.">
+      <span>Rows</span>
+      <select id="set_rows"><option value="compact">Compact</option><option value="full">Full</option></select>
+    </div>
+    <div class="srow">
+      <span>Text</span>
+      <select id="set_fs"><option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select>
+    </div>
+    <div class="srow">
+      <span>Look</span>
+      <select id="set_theme"><option value="light">Light</option><option value="dark">Dark</option></select>
+    </div>
+  </section>
+
+  <section class="settab" data-tab="bill">
+    <!-- ⭐ WHICH COLUMNS THE BILL SHOWS (observation 6, division E). The number, item, price and Qty are always shown. -->
+    <div class="srow top" title="The number, the item, its price and Qty are always shown.">
+      <span>Columns</span>
+      <div id="setupcols" data-testid="till-set-cols" class="schips">
+        <label><input type="checkbox" id="col_offer" data-testid="till-col-offer" onchange="cartColSet('offer',this.checked)"> Offer</label>
+        <label><input type="checkbox" id="col_disc" data-testid="till-col-disc" onchange="cartColSet('disc',this.checked)"> Discount</label>
+        <label><input type="checkbox" id="col_calc" data-testid="till-col-calc" onchange="cartColSet('calc',this.checked)"> Qty × price</label>
+        <label><input type="checkbox" id="col_value" data-testid="till-col-value" onchange="cartColSet('value',this.checked)"> Value</label>
+        <label><input type="checkbox" id="col_rules" data-testid="till-col-rules" onchange="cartColSet('rules',this.checked)"> Lines</label>
+      </div>
+    </div>
+    <div id="printbox"></div>
+  </section>
+
+  <section class="settab" data-tab="keys">
+    <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
+      <span>Keys from</span>
+      <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
+      <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})"></select>
+    </div>
+    <div class="srow top" title="A group is a list you make — the same product can sit in Morning and Night, and the shelf never changes.">
+      <span>Group</span>
+      <div id="setupgroups" data-testid="till-set-groups"></div>
+    </div>
+    <div class="srow" title="✕ on a key hides it, 📌 keeps it there all day.">
+      <span>Hidden keys</span>
+      <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show all again</button>
+    </div>
+  </section>
+
+  <section class="settab" data-tab="pay">
+    <div class="srow" title="The UPI address this counter takes money at.">
+      <span>UPI payee</span>
+      <input id="set_upi" data-testid="till-set-upi" placeholder="name@bank" autocomplete="off"
+             onchange="tillOptSet({upi:{payee:this.value.trim(),label:(document.getElementById('set_upilabel').value||'UPI').trim()}})">
+    </div>
+    <div class="srow" title="The name the pay button carries.">
+      <span>Button</span>
+      <input id="set_upilabel" data-testid="till-set-upilabel" placeholder="UPI" autocomplete="off"
+             onchange="tillOptSet({upi:{payee:(document.getElementById('set_upi').value||'').trim(),label:this.value.trim()||'UPI'}})">
+    </div>
+    <div id="setupupi" class="snote"></div>
+  </section>
+
+  <section class="settab" data-tab="voice">
+    <div class="srow" title="ChitBridge: better on Tamil and mixed speech (audio goes to our speech service). Browser: instant and free (audio goes to the browser's own service). Off: no microphone.">
+      <span>Listener</span>
+      <select id="set_speech">
+        <option value="auto">Automatic</option>
+        <option value="server">ChitBridge</option>
+        <option value="browser">This browser</option>
+        <option value="off">Off</option>
+      </select>
+    </div>
+    <div class="srow" title="Off until you press 🎤 — billing never needs it.">
+      <span>Language</span>
+      <select id="set_lang"><option value="en-IN">English (India)</option><option value="ta-IN">தமிழ்</option><option value="hi-IN">हिन्दी</option><option value="en-GB">English (UK)</option></select>
+    </div>
+  </section>
+
+  <section class="settab" data-tab="device">
+    <div id="pairbox"></div>
+    <div id="coldbox"></div>
+  </section>
+
   <div class="dlgbtns">
     <button onclick="document.getElementById('setdlg').close()">Close</button>
     <button class="pri" onclick="saveSettings()">Save</button>
   </div>
-  <div id="setnote" style="color:var(--dim);font-size:.8em;margin-top:10px"></div>
+  <div id="setnote" class="snote"></div>
 </div></dialog>
 
 <div id="busy" hidden><div class="busybox">
@@ -2373,7 +2463,7 @@ async function refresh(){
   busyShow('Reading your shop…');
   try {
     var r = await HOST.refresh();
-    if (r && r.need === 'key') { busyDone(); return openSettings(); }
+    if (r && r.need === 'key') { busyDone(); return openSettings('device'); }
     if (r && r.rejected) { busyDone(); return; }        /* the refusal has already said its piece on the bar */
     busyAt(1, 1, 'Sorting it out…');
     await load();
@@ -2587,8 +2677,18 @@ function toggleMenu(e){
   var m = document.getElementById('tillmenu'); if (!m) return;
   m.hidden = !m.hidden;
   if (e) e.stopPropagation();
-  if (!m.hidden) { paintViewChips(); focusSearch(); }   /* the box keeps the caret, so a scan still lands while the menu is open */
+  if (!m.hidden) { paintViewChips(); paintMenuQuick(); focusSearch(); }   /* the box keeps the caret, so a scan still lands while the menu is open */
 }
+/** the menu's quick dropdowns show what is in force (text, look, layout) */
+function paintMenuQuick(){
+  var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
+  set('mq_fs', ls.get('cb_till_fs', '16px'));
+  set('mq_theme', ls.get('cb_till_theme', 'light'));
+  set('mq_layout', (tillOpt().layout) || 'full');
+  paintViewChips();
+}
+/** text size or look, from the menu — stored where ⚙ keeps them, applied at once */
+function quickLook(key, value){ ls.set(key, value); applyLook(); }
 /**
  * ⭐⭐ THE SECTIONS AS CHIPS, IN THE MENU (Athi, 2026-09-16) — *"any other way can we bring it in the frontend
  * itself as a toggle button?"* One press to reach, one press to change, and the counter repaints underneath.
@@ -5533,8 +5633,8 @@ function paintShop(){
     + (tx.charges ? '<div class="f"><span>Tax shown as</span>'
         + (sh.state_code ? '<b>' + esc(split) + '</b>'
                          : '<b class="miss">cannot be split</b> <span>no state on the GSTIN</span>') + '</div>' : '')
-    + '<div class="src">Read from ChitBridge' + (S.at ? ' at ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '')
-    + ' and kept here, so bills stay headed correctly with the line down. Change it in ChitBridge.</div>'
+    + '<div class="src" title="Kept here so bills stay headed correctly with the line down. Change it in ChitBridge.">From ChitBridge'
+    + (S.at ? ' · ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '') + '</div>'
     + '</div>';
 }
 /**
@@ -8307,22 +8407,21 @@ var PRINTERS = null;
 async function paintPrinters(){
   var box = document.getElementById('printbox'); if (!box) return;
   if (!HOST || HOST.mode !== 'agent'){
-    box.innerHTML = '<label>Printing</label><div style="color:var(--dim);font-size:.85em">This counter is running in a browser, so a bill goes through the usual print dialog — pick the till printer there once and it is remembered. '
-      + 'To have slips print by themselves, with the paper cut, put the counter on the shop PC (ChitBridge › Counter › Download).</div>';
+    box.innerHTML = '<div class="srow" title="In a browser a bill goes through the print dialog — pick the till printer there once and it is remembered. For slips that print and cut by themselves, install the counter on the shop PC (ChitBridge › Counter › Download).">'
+      + '<span>Printer</span><span>the browser\'s print dialog</span></div>';
     return;
   }
   var r = PRINTERS || (PRINTERS = await HOST.printers());
   var list = (r && r.printers) || [];
-  box.innerHTML = '<label>Printer — slips print here by themselves</label>'
-    + (list.length
-      ? '<select id="set_printer">' + '<option value="">Ask me each time (print dialog)</option>'
-        + list.map(function(p){ return '<option value="' + esc(p.name) + '"' + (r.chosen === p.name ? ' selected' : '') + '>' + esc(p.name) + (p.thermal ? ' — till printer' : '') + '</option>'; }).join('')
-        + '</select>'
-        + '<label>Paper</label><select id="set_paper"><option value="80"' + (r.mm !== 58 ? ' selected' : '') + '>80 mm (42 characters)</option><option value="58"' + (r.mm === 58 ? ' selected' : '') + '>58 mm (32 characters)</option></select>'
-        + '<label><input type="checkbox" id="set_drawer"' + (r.drawer ? ' checked' : '') + '> Open the cash drawer on a cash sale</label>'
-        + '<button class="pill" data-testid="till-testprint" onclick="testPrint()" style="margin-top:8px">Print a test slip</button>'
-      : '<div style="color:var(--warn);font-size:.85em">Windows cannot see any printer on this PC yet. A USB till printer needs its driver installed once — plugging in the cable is not enough. '
-        + 'Install the maker\'s driver (for an Epson TM printer: their Advanced Printer Driver), then press ⚙ again and it will be in this list.</div>');
+  box.innerHTML = list.length
+      ? '<div class="srow" title="Slips print here by themselves."><span>Printer</span><select id="set_printer">' + '<option value="">Ask each time</option>'
+        + list.map(function(p){ return '<option value="' + esc(p.name) + '"' + (r.chosen === p.name ? ' selected' : '') + '>' + esc(p.name) + (p.thermal ? ' · till' : '') + '</option>'; }).join('')
+        + '</select></div>'
+        + '<div class="srow"><span>Paper</span><select id="set_paper"><option value="80"' + (r.mm !== 58 ? ' selected' : '') + '>80 mm</option><option value="58"' + (r.mm === 58 ? ' selected' : '') + '>58 mm</option></select></div>'
+        + '<div class="srow"><span>Cash drawer</span><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_drawer"' + (r.drawer ? ' checked' : '') + '> open on a cash sale</label></div>'
+        + '<div class="srow"><span></span><button class="pill" data-testid="till-testprint" onclick="testPrint()">Print a test slip</button></div>'
+      : '<div class="srow" title="A USB till printer needs its driver installed once — the cable alone is not enough (Epson TM: Advanced Printer Driver). Then open ⚙ again.">'
+        + '<span>Printer</span><span style="color:var(--warn)">none found on this PC</span></div>';
 }
 async function testPrint(){
   var sel = document.getElementById('set_printer');
@@ -8330,7 +8429,18 @@ async function testPrint(){
   var n = document.getElementById('setnote');
   if (n) n.textContent = (r && r.ok) ? 'A test slip went to the printer.' : ('It did not print: ' + ((r && r.why) || 'no reason given'));
 }
-function openSettings(){
+/** ⭐ one tab of Settings on show; the last one is remembered on this device */
+function setTab(name){
+  var want = name || ls.get('cb_till_settab', 'counter');
+  var tabs = document.querySelectorAll('#setdlg .settab');
+  if (![].some.call(tabs, function(t){ return t.getAttribute('data-tab') === want; })) want = 'counter';
+  [].forEach.call(tabs, function(t){ t.classList.toggle('on', t.getAttribute('data-tab') === want); });
+  [].forEach.call(document.querySelectorAll('#settabs button'), function(b){
+    var on = b.getAttribute('data-tab') === want; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+  ls.set('cb_till_settab', want);
+}
+function openSettings(tab){
+  setTab(typeof tab === 'string' ? tab : null);
   document.getElementById('set_till').value = ls.get('cb_till_id','C1');
   document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
   document.getElementById('set_rows').value = ls.get('cb_till_rows','compact');
@@ -8342,19 +8452,18 @@ function openSettings(){
   document.getElementById('set_theme').value = ls.get('cb_till_theme','light');
   var pair = document.getElementById('pairbox');
   if (HOST && HOST.mode === 'cloud') {
-    pair.innerHTML = '<label>Till key — ChitBridge › Settings › Integrations › Keys, scope "till"</label>'
-      + '<input id="set_key" placeholder="paste the key once" value="' + esc(CloudHost.key ? '••••••••' + String(CloudHost.key).slice(-6) : '') + '">'
-      + '<label>ChitBridge address</label><input id="set_api" value="' + esc(CloudHost.api||'') + '">';
+    pair.innerHTML = '<div class="srow" title="ChitBridge › Settings › Integrations › Counters — open a counter there to get its key.">'
+      + '<span>Counter key</span><input id="set_key" placeholder="paste the key once" value="' + esc(CloudHost.key ? '••••••••' + String(CloudHost.key).slice(-6) : '') + '"></div>'
+      + '<div class="srow"><span>ChitBridge</span><input id="set_api" value="' + esc(CloudHost.api||'') + '"></div>';
   } else {
-    pair.innerHTML = '<div style="color:var(--dim);font-size:.85em">This till runs beside the little program on this PC, so the key lives in connector.json and there is nothing to paste.</div>';
+    pair.innerHTML = '<div class="srow" title="This counter runs beside the ChitBridge program on this PC — its key is in connector.json.">'
+      + '<span>Counter key</span><span>on this PC</span></div>';
   }
-  document.getElementById('setnote').textContent = 'Everything here is kept on this device only.';
+  document.getElementById('setnote').textContent = 'Kept on this device.';
   /* ⚠️ in ⚙ rather than on the counter itself: it is a maintenance act, and it should take a deliberate walk to reach */
   var cs = document.getElementById('coldbox');
-  if (cs) cs.innerHTML = '<label>Start from scratch</label>'
-    + '<div style="color:var(--dim);font-size:.85em;margin-bottom:6px">Sends anything waiting, then clears this counter'
-    + ' and reads your shop again. Use it if the counter feels slow or is showing something it should not.</div>'
-    + '<button class="pill" data-testid="till-coldstart" onclick="coldStart()">↺ Clear and read the shop again</button>';
+  if (cs) cs.innerHTML = '<div class="srow" title="Sends anything waiting, then clears this counter and reads your shop again. For a counter that feels slow or shows something it should not.">'
+    + '<span>Start fresh</span><button class="pill" data-testid="till-coldstart" onclick="coldStart()">↺ Clear and reload</button></div>';
   paintPrinters();
   /* ⚠️ painted on OPEN, not once at boot — the shop is re-read all day and a stale GSTIN here would be worse than none */
   paintShop();
@@ -8389,11 +8498,12 @@ function paintSetup(){
       eg = window.CBDoc ? CBDoc.compose({ country: docCountry(), prefix: tillId(), kind: 'sale',
                                           at: new Date(), seq: 3, scheme: sc }) : '';
     } catch (_) {}
-    var warn = (sc.resets === 'day') ? ' ⚠️ the tail repeats every day.'
-             : (sc.resets === 'month') ? ' ⚠️ the tail repeats 12 times a year — the date tells them apart.' : '';
-    var lost = (sc.dating === 'julian') ? ' ⚠️ the financial year cannot be read off the number.' : '';
-    note.textContent = (eg ? 'Your next bill would read ' + eg + '.' : '') + warn + lost;
-    schemeTakesEffect().then(function(w){ if (w) note.textContent += ' Takes effect ' + w + '.'; });
+    /* ⭐ the worked example is the explanation — the cautions are short, the reasons are on the rows' titles */
+    var warn = (sc.resets === 'day') ? ' · ⚠️ 0001 every day'
+             : (sc.resets === 'month') ? ' · ⚠️ 0001 every month' : '';
+    var lost = (sc.dating === 'julian') ? ' · ⚠️ no tax year in the number' : '';
+    note.textContent = (eg ? 'Next bill: ' + eg : '') + warn + lost;
+    schemeTakesEffect().then(function(w){ if (w) note.textContent += ' · from ' + w; });
   }
   var cols = (o.cols || {});
   [['col_offer', 'offer'], ['col_disc', 'disc'], ['col_calc', 'calc'], ['col_value', 'value']].forEach(function(p){
@@ -8420,13 +8530,11 @@ function paintSetup(){
           return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>'
             + esc(nm) + ' (' + ((o.groups[nm] || []).length) + ')</option>'; }).join('')
       + '</select>'
-      + '<button class="pill" data-testid="till-set-group-new" onclick="quickGroupNew()">＋ new group</button>'
-      + (o.group ? '<button class="pill" data-testid="till-set-group-drop" onclick="quickGroupDrop()">Remove this group</button>' : '')
+      + '<button class="pill" data-testid="till-set-group-new" onclick="quickGroupNew()" title="A list you make — Morning, Noon, Night…">＋ New</button>'
+      + (o.group ? '<button class="pill" data-testid="till-set-group-drop" onclick="quickGroupDrop()">Remove</button>' : '')
       + '</div>'
-      + (names.length
-          ? '<div style="color:var(--dim);font-size:.78em">' + names.map(function(nm){
-              return esc(nm) + ' · ' + ((o.groups[nm] || []).length) + ' item' + (((o.groups[nm] || []).length) === 1 ? '' : 's'); }).join(' &nbsp;·&nbsp; ') + '</div>'
-          : '<div style="color:var(--dim);font-size:.78em">No groups yet. Morning, Noon, Evening, Night — or whatever this counter actually sells in blocks.</div>');
+      /* the counts are in the dropdown itself — no second list under it */
+      ;
   }
   /* ⚠️ SAY WHERE THE PAYEE COMES FROM. The shop's own published payee wins; this one only fills a gap, and a
      counter quietly taking money at a different address than the shop declared would be a serious thing. */
@@ -8434,8 +8542,8 @@ function paintSetup(){
   if (note) {
     var fromShop = (S && S.shop && S.shop.pay || []).filter(function(w){ return w.payee; })[0];
     note.innerHTML = fromShop
-      ? 'Your shop already publishes <b>' + esc(fromShop.payee) + '</b> (' + esc(fromShop.label || 'UPI') + '), and that is what the QR uses. Anything typed here is offered as an extra way to pay at this counter only.'
-      : 'Your shop has not published a UPI payee, so the counter cannot draw a QR. Type one here and this counter can take UPI straight away — it is kept on this device, and setting it properly in ChitBridge is still the right thing to do.';
+      ? 'QR uses the shop payee <b>' + esc(fromShop.payee) + '</b> · a payee here is an extra way to pay at this counter'
+      : '⚠️ The shop has no UPI payee in ChitBridge — one typed here works on this counter only.';
   }
 }
 async function saveSettings(){
