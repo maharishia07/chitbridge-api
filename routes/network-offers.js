@@ -103,7 +103,9 @@ router.post('/:id/release', auth, sessionOnly, async (req, res) => {
      */
     const { flags: bf } = await net.flagsOf(me);
     const cur = ((bf.network_offers || {}).released || {})[o.definition_id] || null;
-    const curLive = cur && cur.version && (!cur.until || cur.until > at);
+    /* ⚠️ the old version is kept only if it actually RUNS before the new one starts — re-releasing an offer that has not
+       begun simply replaces it (a kept copy would have an empty window, and would show twice as "waiting") */
+    const curLive = cur && cur.version && cur.at && cur.at < at && (!cur.until || cur.until > at);
     const rec = { version: Number(o.current_version) || 1, at, until, released_at: new Date().toISOString(),
                   released_by: (req.identity && (req.identity.display_name || req.identity.identity_id)) || null,
                   prev: (curLive && Number(cur.version) !== Number(o.current_version))
