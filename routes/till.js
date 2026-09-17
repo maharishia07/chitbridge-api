@@ -753,6 +753,123 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
 });
 
 /**
+ * ⭐⭐ QUICK KEYS, LEVEL 2 — WHAT THIS COUNTER IS SHOWING RIGHT NOW (b262, 2026-09-18, migrations/b262_quick_key_groups.sql).
+ *
+ * Level 1 (the groups themselves, /api/quick-keys) is back-office. This is the counter's own view of them: which
+ * groups it has active, and which items it has personally marked sold out — the server-side counterpart to
+ * till.html's existing local quickSoldOut()/bizDay() ([TILL-28]), which already does this entirely offline in
+ * localStorage. That local mechanism is NOT replaced — these routes exist so a hide can also reach OTHER counters
+ * when a person chooses to (decision 3, 2026-09-18: ask, don't auto-push), which a browser cannot do on its own.
+ *
+ * ⚠️ business_date is whatever the CALLER's own bizDay() computed — the server does not recompute "today" itself,
+ * so there is one definition of a counter's business day, not two that can drift apart.
+ */
+async function counterOfReq(req) {
+  const jti = req.api_key && req.api_key.jti;
+  if (!jti) return null;
+  const list = await keys.listOf(auth.entityOf(req));
+  const me = list.find((k) => k && String(k.jti) === String(jti));
+  return (me && me.counter) ? String(me.counter).toUpperCase() : null;
+}
+const qk = require('../lib/quick-keys');
+
+/* ⭐ the shop's other counters, id+name only (decision 3's "also mark sold out on...?" prompt) — see counters.js's listNarrow */
+router.get('/counters', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const counters = await require('./counters').listNarrow(auth.entityOf(req));
+    res.json({ counters });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.get('/quick-keys/groups', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const groups = await withEntity(entity_id, (db) => qk.listGroups(db, entity_id));
+    res.json({ groups });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.get('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const counter_id = await counterOfReq(req);
+    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    const business_date = String(req.query.business_date || '').trim();
+    if (!business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
+    const state = await withEntity(entity_id, (db) => qk.getActiveGroups(db, entity_id, counter_id, business_date));
+    res.json(state);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.post('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const counter_id = await counterOfReq(req);
+    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    const b = req.body || {};
+    if (!b.business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
+    const state = await withEntity(entity_id, (db) => qk.setActiveGroups(db, entity_id, counter_id, b.business_date, b.shift_id, b.active_group_ids));
+    res.json(state);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const counter_id = await counterOfReq(req);
+    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    const hidden = await withEntity(entity_id, (db) => qk.listHidden(db, entity_id, counter_id));
+    res.json({ hidden });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/* ⚠️ IDEMPOTENT ON PURPOSE — a queued offline write can replay, and re-hiding an already-hidden item must be a
+   no-op, never a conflict. also_counters (decision 3): the OTHER counters a person chose in the "also mark sold
+   out on...?" prompt; this counter itself is always included. */
+router.post('/quick-keys/hide', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const counter_id = await counterOfReq(req);
+    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    const b = req.body || {};
+    if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
+    const rows = await withEntity(entity_id, (db) => qk.hideItem(db, entity_id, counter_id, b.product_id, b.shift_id, (b.by || null), b.also_counters));
+    res.json({ hidden: rows });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.post('/quick-keys/unhide', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const counter_id = await counterOfReq(req);
+    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    const b = req.body || {};
+    if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
+    const r = await withEntity(entity_id, (db) => qk.unhideItem(db, entity_id, counter_id, b.product_id, b.also_counters));
+    res.json(r);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const counter_id = await counterOfReq(req);
+    const cfg = await withEntity(entity_id, (db) => qk.getScreenConfig(db, entity_id, counter_id));
+    res.json(cfg);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const counter_id = await counterOfReq(req);
+    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    const cfg = await withEntity(entity_id, (db) => qk.setScreenConfig(db, entity_id, counter_id, (req.body || {}).config, null));
+    res.json(cfg);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
  * ⭐⭐ TURN A DECLARED OFFER ON OR OFF FOR ONE PRODUCT. Athi, 2026-09-09: *"no new offers can be created; an already
  * existing offer can be made obsolete for the product … you already have multiple offers listed, which you want to
  * turn on."* His example is the whole point: *"a lot of tomato is being sold but potato is not moving — turn on the

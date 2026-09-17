@@ -3011,20 +3011,96 @@ function bizDay(){
   var d = new Date(Date.now() - tillScheme().dayRollHour * 3600000);
   return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
 }
+/** the actual instant the current business day began — bizDay() gives the LABEL, this gives the boundary,
+ * needed to tell a fresh server-side push (b262) from a stale one nobody has cleared yet (see quickSyncHidden). */
+function bizDayStart(){
+  var rollH = tillScheme().dayRollHour;
+  var shifted = new Date(Date.now() - rollH * 3600000);
+  var mid = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate(), 0, 0, 0, 0);
+  return new Date(mid.getTime() + rollH * 3600000);
+}
 function quickSold(){
   var raw = []; try { raw = JSON.parse(ls.get(shopLs('cb_till_qsold'), '[]')) || []; } catch (_) {}
   var today = bizDay();
   return raw.filter(function(x){ return x && x.id && x.day === today; });
 }
-function quickSoldOut(id){
+async function quickSoldOut(id){
   var s = quickSold().filter(function(x){ return x.id !== id; });
   s.push({ id: id, day: bizDay() });
   ls.set(shopLs('cb_till_qsold'), JSON.stringify(s.slice(-200)));
   loadQuick();
+  quickPushHide(id);   /* fire-and-forget — the tray above has already updated, this never makes the tap wait */
 }
-function quickBringBack(id){
+async function quickBringBack(id){
   ls.set(shopLs('cb_till_qsold'), JSON.stringify(quickSold().filter(function(x){ return x.id !== id; })));
   loadQuick();
+  if (HOST && HOST.tillPost) { try { await HOST.tillPost('/api/till/quick-keys/unhide', { product_id: id }); } catch (_) {} }
+}
+/**
+ * ── ⭐⭐ QUICK KEYS, LEVEL 2 — SERVER SIDE (b262, 2026-09-18) ────────────────────────────────────────────────────
+ * The tray above is the fast, offline-first truth for THIS counter's own taps and is never touched by what
+ * follows. These three add the part a browser cannot do alone: telling OTHER counters, and hearing from them.
+ */
+var QUICK_OTHER_COUNTERS = null;
+/** the shop's other counters (id+name only) — cached for the session, since this only feeds a one-line prompt */
+async function quickOtherCounters(){
+  if (QUICK_OTHER_COUNTERS) return QUICK_OTHER_COUNTERS;
+  if (!HOST || !HOST.tillGet || !navigator.onLine) return [];
+  try {
+    var r = await HOST.tillGet('/api/till/counters');
+    var mine = ls.get('cb_till_id', '');
+    var list = (r && r.ok && Array.isArray(r.counters)) ? r.counters : [];
+    QUICK_OTHER_COUNTERS = list.filter(function(c){ return c && c.id !== mine; });
+  } catch (_) { QUICK_OTHER_COUNTERS = []; }
+  return QUICK_OTHER_COUNTERS;
+}
+/**
+ * ⭐⭐ DECISION 3, 2026-09-18: ASK, DON'T AUTO-PUSH. A single-counter shop never sees this — there is nobody to
+ * ask. A multi-counter shop is asked ONCE per sold-out tap, plainly, and only a yes writes to the other counters.
+ * ⚠️ FIRE-AND-FORGET ON PURPOSE — quickSoldOut() has already updated this counter's own tray before calling this,
+ * so a slow line or a "no" here never delays the tap that matters. HOST.tillPost queues it offline like any
+ * other till write, same as /api/till/stock and /api/till/price already do.
+ */
+async function quickPushHide(id){
+  if (!HOST || !HOST.tillPost) return;
+  var also = [];
+  try {
+    var others = await quickOtherCounters();
+    if (others.length) {
+      var names = others.map(function(c){ return c.name; }).join(', ');
+      if (await sure('Also mark this sold out on ' + names + '?', 'Yes, everywhere', 'Sold out on the other counters too?'))
+        also = others.map(function(c){ return c.id; });
+    }
+  } catch (_) {}
+  try { await HOST.tillPost('/api/till/quick-keys/hide', { product_id: id, also_counters: also }); } catch (_) {}
+}
+/**
+ * ⭐⭐ PULLS IN WHAT ANOTHER COUNTER PUSHED HERE. Called from loadQuick(), at most once every 30 seconds — this is
+ * a courtesy heads-up, not billing, and does not deserve a round trip on every repaint. Only ADDS rows; a row
+ * already known locally, or brought back locally, is left alone — bringing an item back is always this
+ * counter's own explicit tap (quickBringBack), never inferred from a sync.
+ * ⚠️ FILTERED TO TODAY (bizDayStart()). counter_hidden_item has no day-close job yet — nothing expires it on the
+ * server — so a push from yesterday must not haunt today's grid. It stays in the tray others read from the
+ * next 30-day window in that respect; it is simply never pulled in here again after this counter's own roll.
+ */
+var QUICK_HIDDEN_SYNCED_AT = 0;
+async function quickSyncHidden(){
+  if (!HOST || !HOST.tillGet || !navigator.onLine) return;
+  if (Date.now() - QUICK_HIDDEN_SYNCED_AT < 30000) return;
+  QUICK_HIDDEN_SYNCED_AT = Date.now();
+  try {
+    var r = await HOST.tillGet('/api/till/quick-keys/hidden');
+    if (!r || !r.ok || !Array.isArray(r.hidden)) return;
+    var since = bizDayStart(), today = bizDay();
+    var have = quickSold(), known = {}; have.forEach(function(x){ known[x.id] = 1; });
+    var changed = false;
+    r.hidden.forEach(function(row){
+      if (!row || !row.product_id || known[row.product_id]) return;
+      if (row.hidden_at && new Date(row.hidden_at) < since) return;
+      have.push({ id: row.product_id, day: today }); changed = true;
+    });
+    if (changed) ls.set(shopLs('cb_till_qsold'), JSON.stringify(have.slice(-200)));
+  } catch (_) {}
 }
 /**
  * ── ⭐⭐ THE SCREEN THIS COUNTER WEARS (lib/screen-kit → /engine/screen.js) ─────────────────────────────────────────
@@ -3333,6 +3409,7 @@ async function loadQuick(){
      skipped the evidence on every device that reports itself offline while being perfectly able to fetch. */
   try { if (HOST && HOST.history) { var h = await HOST.history(30); take((h && h.bills) || []); } } catch (_) {}
 
+  try { await quickSyncHidden(); } catch (_) {}   /* pulls in what another counter pushed here, before sold-out filters below read it */
   var hidden = quickHidden(), pinned = quickPinned();
   /* ⭐ sold out today is off the keys too — it waits in the tray (paintQuick), and search and scan still bill it */
   var sold = quickSold().map(function(x){ return x.id; });

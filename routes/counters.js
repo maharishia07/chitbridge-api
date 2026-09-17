@@ -105,6 +105,18 @@ function view(c, list) {
   };
 }
 
+/**
+ * ⭐ NARROW READ FOR A TILL KEY (routes/till.js GET /counters — b262, 2026-09-18, decision 3: the "also mark
+ * sold out on Counter 2, Counter 3...?" prompt needs to name the shop's other counters). Deliberately not the
+ * full view() above: id and name only, none of held_by/status/series — a stolen till key learns nothing about
+ * who is working where, matching the "narrow on purpose" rule every other till-scoped read follows.
+ */
+router.listNarrow = async (entity_id) => {
+  const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+  const counters = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.counters) || {};
+  return Object.keys(counters).map((id) => ({ id, name: (counters[id] && counters[id].name) || ('Counter ' + id) }));
+};
+
 router.get('/', auth, sessionOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

@@ -224,6 +224,12 @@ const KEY_ROUTES = {
      refuses. A scope map that advertises what a route will not open is worse than not listing it. */
   screen:    [['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/], ['POST', /^\/api\/events\/ticket$/]],
   till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|worth-an-offer|reward|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
+              /* ⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — a counter reads the groups it can choose from, and reads/writes
+                 only ITS OWN active groups, hidden items and screen style. It cannot author a group (that's /api/quick-keys,
+                 session-only, no scope grants it). */
+              ['GET', /^\/api\/till\/counters$/],
+              ['GET', /^\/api\/till\/quick-keys\/(groups|state|hidden|screen-config)$/],
+              ['POST', /^\/api\/till\/quick-keys\/(state|hide|unhide|screen-config)$/],
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */

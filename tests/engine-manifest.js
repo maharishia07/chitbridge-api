@@ -538,6 +538,10 @@ const ENGINE_OTHER = [
   'source.js',            // source-entity: a sealed entity that governs downstream
   'workpattern.js',       // the resolution seam — resolve-before-act
   'govresolve.js',        // governance resolution
+  'quick-keys.js',        // ENGINE, not adoption: hide-scope (everywhere, not per-group), idempotent hide/unhide
+                          // for offline replay, optimistic-lock versioning, and screen-config resolution order
+                          // (counter overrides the shop default) are Athi's own rules (2026-09-18 decisions),
+                          // not a borrowed format. Tier B in spirit (needs a db handle) but not curated-core.
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [];

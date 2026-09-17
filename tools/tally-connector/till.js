@@ -459,7 +459,10 @@ const server = http.createServer(async (req, res) => {
      */
     if (req.method === 'GET' && url.pathname === '/api/op') {
       var want = url.searchParams.get('get') || '';
-      var READ = ['/api/till/worth-an-offer', '/api/till/reward'];
+      var READ = ['/api/till/worth-an-offer', '/api/till/reward',
+                  /* ⭐⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) */
+                  '/api/till/counters', '/api/till/quick-keys/groups', '/api/till/quick-keys/hidden',
+                  '/api/till/quick-keys/screen-config'];
       var base = want.split('?')[0];
       if (READ.indexOf(base) < 0) return json(res, 400, { ok:false, why:'not a question this counter may ask' });
       try { const r = await cb.call('GET', want, null);
@@ -483,7 +486,11 @@ const server = http.createServer(async (req, res) => {
                    /* ⭐ a counter finishing, deliberately and online */
                    '/api/till/close',
                    /* ⭐ on break, or billing — for the shop's Counters screen */
-                   '/api/till/state'];
+                   '/api/till/state',
+                   /* ⭐⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — this counter's own active groups and sold-out
+                      items, and pushing a sold-out to the shop's other counters when asked (decision 3). */
+                   '/api/till/quick-keys/state', '/api/till/quick-keys/hide', '/api/till/quick-keys/unhide',
+                   '/api/till/quick-keys/screen-config'];
       if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
       try { const r = await cb.call('POST', o.path, o.body || {});
         return json(res, 200, Object.assign({ ok:true }, r || {}));
