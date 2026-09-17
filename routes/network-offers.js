@@ -28,7 +28,7 @@ const sessionOnly = (req, res, next) => {
 async function ownOffer(entity_id, id) {
   if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
   const r = await withEntity(entity_id, (db) => db.query(
-    `SELECT definition_id, name, status FROM definition WHERE entity_id = $1 AND definition_id = $2 AND kind = 'offer'`,
+    `SELECT definition_id, name, status, current_version FROM definition WHERE entity_id = $1 AND definition_id = $2 AND kind = 'offer'`,
     [entity_id, id])).catch(() => ({ rows: [] }));
   return r.rows[0] || null;
 }
@@ -95,8 +95,19 @@ router.post('/:id/release', auth, sessionOnly, async (req, res) => {
     const at = net.whenOf(b.at, net.nextOpening());
     const until = b.until ? net.whenOf(b.until, null) : null;
     if (until && until <= at) return res.status(400).json({ error: 'validation', message: 'The offer would end before it starts.' });
-    const rec = { at, until, released_at: new Date().toISOString(),
-                  released_by: (req.identity && (req.identity.display_name || req.identity.identity_id)) || null };
+    /**
+     * ⭐⭐ THE RELEASE PINS THE VERSION. An edit to a released offer is a new version the stores do NOT see until it is
+     * released again — otherwise "changing the offer" would reach every store in the middle of the day, which is the one
+     * thing a controlled release exists to prevent. And the version already running KEEPS running until the new one's
+     * moment, so a re-release never leaves a gap where neither applies.
+     */
+    const { flags: bf } = await net.flagsOf(me);
+    const cur = ((bf.network_offers || {}).released || {})[o.definition_id] || null;
+    const curLive = cur && cur.version && (!cur.until || cur.until > at);
+    const rec = { version: Number(o.current_version) || 1, at, until, released_at: new Date().toISOString(),
+                  released_by: (req.identity && (req.identity.display_name || req.identity.identity_id)) || null,
+                  prev: (curLive && Number(cur.version) !== Number(o.current_version))
+                    ? { version: cur.version, at: cur.at, until: at } : null };
     await net.setReleased(me, o.definition_id, rec);
     /* ⭐ the push: every member store is told, and each store's counters are the clients subscribed under it */
     const pushed = await net.pushToNetwork(me, 'network offer released');

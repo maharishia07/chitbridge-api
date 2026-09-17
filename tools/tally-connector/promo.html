@@ -1143,15 +1143,17 @@ async function bellUp(){
     var r = await fetch(API + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': KEY } });
     if (!r.ok) return;
     var t = (await r.json()).ticket; if (!t) return;
-    BELL = new EventSource(API + '/api/events/stream?ticket=' + encodeURIComponent(t));
-    BELL.onmessage = async function(ev){
+    BELL = new EventSource(API + '/api/events/stream?t=' + encodeURIComponent(t));
+    /* ⚠️ the server names its events ("event: cb"), and onmessage only ever sees UNNAMED ones — so this screen never
+       reacted, even on the days its stream did connect. Listened for by name, as the app always has (core.js). */
+    BELL.addEventListener('cb', async function(ev){
       var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
       if (d.kind !== 'shop') return;
       await readShop();
       SLIDES = build();
       paintBar();
       say('The shop changed — this screen is up to date');
-    };
+    });
     BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };
   } catch (_) { BELL = null; }
 }

@@ -8483,12 +8483,17 @@ async function bellUp(){
     var r = await fetchBy(CloudHost.api + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': CloudHost.key } });
     if (!r.ok) return;
     var t = (await r.json()).ticket; if (!t) return;
-    BELL = new EventSource(CloudHost.api + '/api/events/stream?ticket=' + encodeURIComponent(t));
-    BELL.onmessage = function(ev){
+    BELL = new EventSource(CloudHost.api + '/api/events/stream?t=' + encodeURIComponent(t));
+    /**
+     * ⚠️⚠️ BY NAME. The server names its events ("event: cb") and onmessage only ever sees UNNAMED ones — the second of
+     * two faults that kept "the shop changed" from ever reaching a counter (the first: this page asked for the stream as
+     * ?ticket= and was refused). The app has always listened this way (core.js).
+     */
+    BELL.addEventListener('cb', function(ev){
       var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
       /* ⚠️ only the kinds this screen actually holds a copy of; a chit arriving is the mailbox's business, not the counter's */
       if (d.kind === 'shop') { refresh().then(function(){ toastLine('The shop changed — this counter is up to date.'); }); }
-    };
+    });
     BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };   /* it reconnects on the next tick */
   } catch (_) { BELL = null; }
 }
