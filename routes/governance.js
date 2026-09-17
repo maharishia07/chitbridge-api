@@ -342,7 +342,10 @@ router.get('/vault-schema', auth, async (req, res) => {
 router.put('/profile/vault', auth, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    res.json(await require('../lib/profile').saveVault(entity_id, b.vault || b));
+    const saved = await require('../lib/profile').saveVault(entity_id, b.vault || b);
+    /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    res.json(saved);
   } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
