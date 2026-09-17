@@ -95,7 +95,9 @@ function view(c, list) {
   const open = !!(holder && !keys.isClosed(holder));
   return {
     id: c.id, name: c.name || ('Counter ' + c.id), created_at: c.created_at || null,
-    state: open ? 'open' : (pendingLive(c) ? 'opening' : 'closed'),
+    state: open ? (c.status === 'break' ? 'break' : 'open') : (pendingLive(c) ? 'opening' : 'closed'),
+    break_since: open && c.status === 'break' ? (c.status_since || null) : null,
+    break_by: open && c.status === 'break' ? (c.status_by || null) : null,
     held_by: open ? { name: holder.name, last4: holder.last4, since: c.held_at || null, seen: holder.seen || null,
                       diag: holder.diag || null } : null,
     next: c.next || null, period: c.period || null, last_no: c.last_no || null,
@@ -166,7 +168,7 @@ router.post('/:id/open', auth, sessionOnly, async (req, res) => {
       const c = counters[id];
       if (!c) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + id + ' in this shop.' } };
       const v = view(c, list);
-      if (v.state === 'open' || v.state === 'opening') {
+      if (v.state === 'open' || v.state === 'break' || v.state === 'opening') {
         return { status: 409, body: { error: 'Counter already open', code: 'COUNTER_HELD', counter: v,
           message: 'Counter ' + id + ' is already open' + (v.held_by ? ' on ' + v.held_by.name
             + (v.held_by.seen && v.held_by.seen.ip ? ' (' + v.held_by.seen.ip + ')' : '') : '')
@@ -218,7 +220,8 @@ router.post('/:id/release', auth, sessionOnly, async (req, res) => {
           till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true }) });
         auth.forgetKey(holder.jti);
       }
-      await patchCounter(db, entity_id, id, { held_by: null, held_at: null, closed_at: new Date().toISOString(), released: true });
+      await patchCounter(db, entity_id, id, { held_by: null, held_at: null, closed_at: new Date().toISOString(), released: true,
+                                              status: null, status_since: null, status_by: null });
       return { id, released_from: holder ? holder.name : null };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });

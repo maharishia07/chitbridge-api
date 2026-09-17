@@ -237,7 +237,7 @@ const KEY_ROUTES = {
               /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
                  product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
               /* ⭐ a counter that is stuck reports itself — the one thing nobody can reach saying so in its own words */
-              ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close)$/],
+              ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close|state)$/],
               /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
                  definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
                  authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".

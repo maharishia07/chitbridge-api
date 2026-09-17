@@ -65,6 +65,8 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%}
+  #breakcover{position:fixed;inset:0;z-index:9000;background:var(--paper);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  #breakcover[hidden]{display:none}
   body{margin:0;background:var(--paper);color:var(--ink);font:var(--fs)/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-text-size-adjust:100%}
   button,input,select{font:inherit;color:inherit}
 
@@ -712,6 +714,7 @@
         <!-- ⭐ the answer to "why has this not gone?", where somebody looking for it would look -->
         <button data-testid="till-stuck" onclick="fromMenu(openStuck)">🩺 <b>Why is a bill stuck?</b><i>what is really in this counter's store</i></button>
         <!-- ⭐ deliberate, online, and only when every bill is safely in the books — see closeCounter() -->
+        <button data-testid="till-break-menu" onclick="fromMenu(takeBreak)">☕ <b>Take a break</b><i>the counter stays on this PC · nothing is closed</i></button>
         <button data-testid="till-close" onclick="fromMenu(closeCounter)">🔒 <b>Close this counter</b><i>sends and checks everything first · it can be opened again</i></button>
         <!--
           ⭐⭐⭐ THE VIEW, TOGGLED WHERE IT IS REACHED (Athi, 2026-09-16): *"those sections are being switched on
@@ -869,6 +872,23 @@
   </div>
 </div></dialog>
 
+<!--
+  ⭐⭐ ON BREAK (Athi, 2026-09-17: *"closing a counter need not be closing the sale for the day — they can go for a break
+  also"*). A cover over the whole counter, not a dialog: Escape must not uncover a till nobody is standing at. The counter
+  stays HELD by this PC, and the queue keeps sending underneath.
+-->
+<!-- ⚠️⚠️ NO INLINE display HERE. An inline display:flex outranks the hidden attribute, so the first version of this cover
+     sat over EVERY counter on EVERY load, break or not — caught by [TILL-25] before it shipped. The rule lives in the
+     stylesheet, where [hidden] can still win. -->
+<div id="breakcover" hidden data-testid="till-break-cover">
+  <div style="max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px">
+    <div style="font-size:3em;line-height:1">☕</div>
+    <div style="font-size:1.4em;font-weight:700" id="breaktitle">On break</div>
+    <div style="color:var(--dim)" id="breakwho"></div>
+    <div style="color:var(--dim);font-size:.85em">This counter is kept for this PC. Bills already taken keep going to ChitBridge. Nothing can be billed until the break ends.</div>
+    <button class="pill" style="font-size:1.1em;padding:12px 18px" data-testid="till-break-end" onclick="endBreak()"><b>Back to billing</b></button>
+  </div>
+</div>
 <dialog id="whodlg"><div class="dlg">
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
@@ -1976,6 +1996,7 @@ async function tillGivenOK(){
   return await tillIssued();
 }
 async function tillStopped(){
+  if (BREAK) { paintBreak(); return true; }        /* ☕ nobody is at the counter */
   if (!(await tillGivenOK())) {
     say('This counter has not been given its number yet.\n\n'
       + 'A new counter needs the internet once, so ChitBridge can give it a number no other counter uses. '
@@ -2288,7 +2309,16 @@ function wrongShop(){
   return { want: want, wantName: ls.get(shopLs('cb_till_shopname'), '') || 'another shop', got: (S.shop && S.shop.name) || 'this one' };
 }
 async function load(){
-  if (!HOST) HOST = await pickHost();
+  if (!HOST) {
+    HOST = await pickHost();
+    /**
+     * ⚠️⚠️ WHO IS SIGNED IN, AND ANY BREAK, ARE READ AGAIN HERE — once the key is known. Both are stored under shopLs(),
+     * which is named after the key, and both were read only at the bottom of this file, BEFORE pickHost had learned it:
+     * so they looked under the fallback name and found nothing. A break vanished on reload ([TILL-25] caught it) — and so,
+     * for longer, did the cashier signed in at the counter, which read "nobody signed in" after every refresh.
+     */
+    try { whoLoad(); breakLoad(); } catch (_) {}
+  }
   /**
    * ⚠️⚠️ NOT ONE LINE EARLIER THAN THIS. The owner and any refusal are read HERE, after pickHost, because pickHost is what learns
    * the key — and the database is NAMED after the key. Read before it, tillStore() answers with the fallback name, DB.open()
@@ -8019,7 +8049,8 @@ function openWho(){
           + esc(a.name) + (a.hat ? '<span class="u">' + esc(a.hat) + '</span>' : '') + '</button>';
       }).join('')
     : '<div style="color:var(--dim)">This shop has no co-assists yet — add people in ChitBridge › Co-assists and they appear here. Until then bills are recorded as the shop itself.</div>')
-    + (WHO ? '<button class="choice" style="margin-top:12px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
+    + '<button class="choice" style="margin-top:12px" data-testid="till-break" onclick="takeBreak()">☕ Take a break<span class="u">the counter stays yours — nothing is closed or counted</span></button>'
+    + (WHO ? '<button class="choice" style="margin-top:6px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
   document.getElementById('whodlg').showModal();
 }
 async function setWho(id, name){
@@ -8031,6 +8062,70 @@ async function setWho(id, name){
   WHO = { id: id, name: name, since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
   ls.set(shopLs('cb_till_who'), JSON.stringify(WHO));
   paintWho(); document.getElementById('whodlg').close(); focusSearch();
+}
+/**
+ * ── ⭐⭐⭐ FOUR DIFFERENT THINGS A COUNTER CAN "STOP" FOR (Athi, 2026-09-17) ─────────────────────────────────────
+ *
+ * *"Closing a counter need not be closing the sale for the day. They can go for a break also."* They are four acts, and
+ * the counter keeps them apart:
+ *
+ *   ☕ BREAK       the person steps away. The counter stays held by this PC, nothing can be billed, the queue keeps
+ *                  sending. Needs no internet. The break is recorded on the shift.
+ *   👤 HAND OVER   the person changes. Blind cash count, recorded against them. The counter stays held.
+ *   🧾 DAY CLOSE   the day's totals (F10). A report — it releases nothing, and billing can carry on after it.
+ *   🔒 CLOSE       this PC stops using the counter. Everything is sent and checked first, it needs the internet, and
+ *                  the counter is free to open elsewhere, carrying on its series.
+ *
+ * ⚠️ A break that silently released the counter would let another PC take it while this one still held unsent bills —
+ * which is the two-PCs-one-series fault all over again. That is why a break is not a small close.
+ */
+var BREAK = null;
+function breakKey(){ return shopLs('cb_till_break'); }
+function breakLoad(){
+  try { BREAK = JSON.parse(ls.get(breakKey(), 'null')); } catch (_) { BREAK = null; }
+  paintBreak();
+}
+function paintBreak(){
+  var c = document.getElementById('breakcover'); if (!c) return;
+  c.hidden = !BREAK;
+  if (!BREAK) return;
+  var nm = ls.get(shopLs('cb_till_counter_name'), '');
+  document.getElementById('breaktitle').textContent = 'Counter ' + tillId() + (nm ? ' · ' + nm : '') + ' — on break';
+  document.getElementById('breakwho').textContent = (BREAK.by ? BREAK.by + ' · ' : '')
+    + 'since ' + new Date(BREAK.since).toTimeString().slice(0, 5);
+}
+/** tell ChitBridge, so the shop's Counters screen can say "on break" — best effort, a break never waits for the line */
+function breakTell(state){
+  try {
+    if (HOST && HOST.tillPost && HOST.key && navigator.onLine)
+      HOST.tillPost('/api/till/state', { state: state, by: (WHO && WHO.name) || null,
+                                         since: BREAK ? BREAK.since : new Date().toISOString() }, { noQueue: true });
+  } catch (_) {}
+}
+function takeBreak(){
+  if (BREAK) { paintBreak(); return; }
+  /* ⚠️ the bill on the screen is parked, not lost — a break is exactly when a half-rung basket gets forgotten */
+  if (CART.length) { try { parkBill(); toastLine('The bill on the screen was parked (F6 list) for when you are back.'); } catch (_) {} }
+  BREAK = { since: new Date().toISOString(), by: (WHO && WHO.name) || null };
+  ls.set(breakKey(), JSON.stringify(BREAK));
+  try { document.getElementById('whodlg').close(); } catch (_) {}
+  paintBreak();
+  breakTell('break');
+}
+function endBreak(){
+  if (!BREAK) return;
+  var mins = Math.max(0, Math.round((Date.now() - new Date(BREAK.since).getTime()) / 60000));
+  /* ⭐ the break belongs to the shift — the hand-over can then say how the time was spent */
+  if (WHO) {
+    WHO.breaks = (WHO.breaks || []).concat([{ from: BREAK.since, to: new Date().toISOString(), minutes: mins }]);
+    ls.set(shopLs('cb_till_who'), JSON.stringify(WHO));
+  }
+  BREAK = null;
+  ls.set(breakKey(), '');
+  paintBreak();
+  breakTell('billing');
+  toastLine('Back to billing' + (mins ? ' after ' + mins + ' min' : '') + '.');
+  focusSearch();
 }
 /**
  * ⭐⭐ HANDING OVER IS A BLIND COUNT. The person is asked what is in the drawer BEFORE being shown what should be — a figure you can
@@ -8047,7 +8142,9 @@ async function handOver(){
   var cash = r2((by.Cash || 0) + (WHO && WHO.float ? WHO.float : 0));
   SHIFT = { by: { id: WHO.id, name: WHO.name }, from: WHO.since, to: new Date().toISOString(),
             bills: mine.length, total: mine.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0),
-            float: (WHO && WHO.float) || 0, modes: by, expected_cash: cash, till: ls.get('cb_till_id','C1') };
+            float: (WHO && WHO.float) || 0, modes: by, expected_cash: cash, till: ls.get('cb_till_id','C1'),
+            /* ⭐ breaks taken during the shift — minutes each, so the shift record is a record of the time too */
+            breaks: (WHO && WHO.breaks) || [] };
   document.getElementById('whodlg').close();
   document.getElementById('shifttitle').textContent = 'Hand over — ' + WHO.name;
   document.getElementById('shiftbody').innerHTML =
@@ -8403,6 +8500,7 @@ function installApp(){ if (!_install) return; _install.prompt(); _install = null
 
 applyLook();
 whoLoad();
+breakLoad();
 parkedLoad();
 try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
 load();

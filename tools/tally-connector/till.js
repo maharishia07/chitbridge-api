@@ -473,7 +473,9 @@ const server = http.createServer(async (req, res) => {
                    /* ⭐ did the chit I was given record MY bill? — the recovery for absorbed sales */
                    '/api/till/reconcile',
                    /* ⭐ a counter finishing, deliberately and online */
-                   '/api/till/close'];
+                   '/api/till/close',
+                   /* ⭐ on break, or billing — for the shop's Counters screen */
+                   '/api/till/state'];
       if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
       try { const r = await cb.call('POST', o.path, o.body || {});
         return json(res, 200, Object.assign({ ok:true }, r || {}));

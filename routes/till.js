@@ -279,9 +279,10 @@ router.get('/snapshot', auth, async (req, res) => {
        eventually mean one screen offering a payment method another refuses. */
     const cbProfile = require('../lib/profile');
     const cbCountry = cbProfile.countryOf({ country: row.country, gstin, profile });
-    const items = all.filter(onTheCounter).map((it) => {
-      const d = it.item_data || {};
-      return { item_id: it.item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
+    /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
+       added for one can never be missing from the other */
+    const tillItem = (item_id, d) => {
+      return { item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
                /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
                   and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
                price: amountOf(d.price), mrp: amountOf(d.mrp),
@@ -343,7 +344,63 @@ router.get('/snapshot', auth, async (req, res) => {
                facts: declared.map((f) => { const v = d[f.k];
                           return (v == null || typeof v === 'object' || String(v) === '') ? null : { n: f.n, v: String(v).slice(0, 40) };
                         }).filter(Boolean) };
-    }).filter((x) => x.name);
+    };
+    const items = all.filter(onTheCounter).map((it) => tillItem(it.item_id, it.item_data || {})).filter((x) => x.name);
+
+    /**
+     * ── ⭐⭐⭐ THE NETWORK'S PRODUCTS, AT THE COUNTER (2026-09-17) ───────────────────────────────────────────────────
+     *
+     * Athi, on a showroom brand with stores across a city: *"a network store where the network provides the catalogue and
+     * offer details — every store underneath is a store on its own with its own GSTIN, but they use the catalogue
+     * information from the network to sell the product."*
+     *
+     * ⚠️⚠️ THAT ALREADY REACHED THE STORE'S SHOPFRONT AND NEVER ITS COUNTER. A store adopts a brand's catalogue BY REFERENCE
+     * (catalogue_adoption → catalogue_source, owned by the brand) and the storefront resolved it — but this snapshot read
+     * only catalogue_items, so a member store's till could not ring up a single one of the network's products.
+     *
+     * ⭐ THE SAME READ THE SHOPFRONT USES — catalogueBuild.resolve + catalogueRead.lines — never a second path. Nothing is
+     * copied: the brand's fields stay the brand's, the store's own commercials (its price, its availability) overlay them,
+     * and a change at the source reaches every store's counter on its next read.
+     *
+     * ⚠️ UNPRICED LINES ARE HELD BACK, NOT SENT AT ZERO. A referenced line with no commercials from this store has no price
+     * a counter can charge; offering it would bill a real product for nothing. It is counted, so the gap can be named.
+     * ⚠️ THE LINE ID IS THE REFERENCE ('src:<source>:<sku>') — stable across reads, so the counter's merge and its quick keys
+     * hold on to it, and it can never collide with an owned product's uuid.
+     */
+    let networkUnpriced = 0;
+    try {
+      const ado = await withEntity(entity_id, (db) => db.query(
+        'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [entity_id]));
+      if (ado.rows.length) {
+        const catalogueBuild = require('../lib/catalogue-build');
+        const catalogueRead = require('../lib/catalogue-read');
+        let container = null; try { container = require('../lib/container'); } catch (_) {}
+        const resolved = await Promise.all(ado.rows.map((r) => catalogueBuild.resolve(r.source_key, r.commercials || {}).catch(() => null)));
+        const srcs = [];
+        ado.rows.forEach((r, i) => { const x = resolved[i]; if (x) srcs.push({ source_key: r.source_key, title: x.title,
+          owner_entity_id: x.owner_entity_id || null, items: x.items || [] }); });
+        let containers = {};
+        if (container && container.resolveMany && container.itemContainerId) {
+          const ids = [];
+          for (const sx of srcs) for (const it of sx.items) if (it && it.name) ids.push(container.itemContainerId(sx.source_key, it.name));
+          try { containers = (await container.resolveMany(ids)) || {}; } catch (_) { containers = {}; }
+        }
+        const lines = catalogueRead.lines({ owned: [], sources: srcs, me: entity_id, containers,
+          containerIdFor: container ? container.itemContainerId : null });
+        for (const l of lines) {
+          const f = l.fields || {};
+          if (['available', 'unavailable'].indexOf(itemstatus.statusOf(f)) < 0) continue;
+          /* ⚠️ the counter puts an item id inside click handlers — a name like "Men's shirt" would break the button. The
+             id is made safe here; the true reference rides beside it for the chit. */
+          const row = tillItem(String(l.line_id).replace(/['"\\<>&\s]/g, '_'), f);
+          if (!row.name) continue;
+          if (!(Number(row.price) > 0)) { networkUnpriced++; continue; }
+          /* ⭐ where it came from — the slip, the chit and the shop screen can all say "from <brand>" */
+          row.source = { key: l.source_key, title: l.source_title || null, owner: l.owner_entity_id || null, line: l.line_id };
+          items.push(row);
+        }
+      }
+    } catch (_) { /* a store with no network, or a source that cannot be read, still opens with its own products */ }
 
     const body = {
       at: new Date().toISOString(),
@@ -389,7 +446,12 @@ router.get('/snapshot', auth, async (req, res) => {
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
       /* how many sellable products the shop has right now — the counter checks its merged copy against this (see the note above) */
-      total: (liveCount && liveCount.rows && liveCount.rows[0] && liveCount.rows[0].n != null) ? liveCount.rows[0].n : null,
+      /* ⚠️ INCLUDES THE NETWORK LINES, which ride on every read: the counter compares its merged copy against this, and a
+         total that left them out would make every refresh look wrong and pull the whole shop again, for ever */
+      total: (liveCount && liveCount.rows && liveCount.rows[0] && liveCount.rows[0].n != null)
+        ? liveCount.rows[0].n + items.filter((x) => x.source).length : null,
+      /* ⭐ the network lines the store has not priced yet — named, so the gap is a fact and not a mystery */
+      network: { lines: items.filter((x) => x.source).length, unpriced: networkUnpriced },
       /**
        * ⚠️⚠️ A MAP DOES NOT SURVIVE JSON, AND THAT IS WHY THE COUNTER HAD NO TAX (Athi, 2026-09-08: *"no, tax is not there"*).
        *
@@ -580,7 +642,7 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
         const c = r.rows[0] && r.rows[0].c;
         if (!c) return;
         const patch = { closed_at: till.closed_at, last_no: till.last_no || c.last_no || null };
-        if (String(c.held_by || '') === String(jti)) { patch.held_by = null; patch.held_at = null; }
+        if (String(c.held_by || '') === String(jti)) { patch.held_by = null; patch.held_at = null; patch.status = null; patch.status_since = null; patch.status_by = null; }
         const period = b.period != null ? String(b.period) : null;
         if (till.next && (c.period == null || c.period === period)) {
           patch.next = Math.max(Number(c.next) || 1, till.next);
@@ -592,6 +654,36 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
       });
     }
     res.json({ ok: true, closed_at: till.closed_at, prefix: till.id || null });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+/**
+ * ⭐⭐ POST /api/till/state — ON BREAK, OR BILLING (Athi, 2026-09-17: *"closing a counter need not be closing the sale
+ * for the day — they can go for a break also"*). A break does NOT release the counter: this PC keeps it, so no other PC
+ * can take the series while unsent bills may still be here. This only tells the shop's Counters screen what it would
+ * see if it walked over. Best effort — a break never waits for the line.
+ */
+router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const jti = req.api_key && req.api_key.jti;
+    const b = req.body || {};
+    const state = b.state === 'break' ? 'break' : 'billing';
+    const list = await keys.listOf(entity_id);
+    const me = list.find((k) => k && String(k.jti) === String(jti));
+    if (!me || !me.counter) return res.json({ ok: true, recorded: false });
+    const cid = String(me.counter).toUpperCase();
+    await require('../db').withTransaction(async (db) => {
+      const r = await db.query(`SELECT policy_flags->'counters'->$2 AS c FROM identities WHERE identity_id = $1 FOR UPDATE`, [entity_id, cid]);
+      const c = r.rows[0] && r.rows[0].c;
+      /* ⚠️ only the PC that holds the counter may say what it is doing */
+      if (!c || String(c.held_by || '') !== String(jti)) return;
+      await require('./counters').patchCounter(db, entity_id, cid, {
+        status: state,
+        status_since: state === 'break' ? (b.since ? String(b.since).slice(0, 40) : new Date().toISOString()) : null,
+        status_by: state === 'break' ? (b.by ? String(b.by).slice(0, 80) : null) : null,
+      });
+    });
+    res.json({ ok: true, recorded: true, state });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
