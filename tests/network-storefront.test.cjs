@@ -92,6 +92,29 @@ it('⚠️ a public storefront view never writes the brand\'s member index', () 
   assert.ok(/noteMembers: false/.test(src.slice(src.indexOf('async function forFinishes'))), 'forFinishes would write on every anonymous view');
 });
 
+it('⭐⭐ a brand\'s offers say whether its stores have them — unreleased, released, changed since release', () => {
+  const rows = [
+    { kind: 'offer', definition_id: 'new', current_version: 2 },
+    { kind: 'offer', definition_id: 'out', current_version: 20 },
+    { kind: 'offer', definition_id: 'edited', current_version: 5 },
+    { kind: 'category', definition_id: 'cat', current_version: 1 },
+  ];
+  net.stampReleases(rows, { stores: 5, released: { out: { at: '2026-09-17T02:47:53Z', version: 20 }, edited: { at: 'x', version: 4 } } });
+  assert.deepStrictEqual(rows[0].network, { stores: 5, released: false, at: null, changed: false });
+  assert.deepStrictEqual(rows[1].network, { stores: 5, released: true, at: '2026-09-17T02:47:53Z', changed: false });
+  assert.strictEqual(rows[2].network.changed, true);
+  assert.ok(!rows[3].network, 'a category was given a release state');
+  const lone = [{ kind: 'offer', definition_id: 'a', current_version: 1 }];
+  net.stampReleases(lone, { stores: 0, released: {} });
+  assert.ok(!lone[0].network, 'a shop with no stores was told about a network it does not have');
+});
+
+it('⚠️ the definitions list stamps them in the SAME message as the list (no extra trip)', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'definitions.js'), 'utf8');
+  assert.ok(/at\.net = stmts\.push\(/.test(src), 'the release state is not read in the batch');
+  assert.ok(/stampReleases\(rows, res\[at\.net\]/.test(src), 'the list is not stamped');
+});
+
 (async () => {
   console.log('\nnetwork offers · the member storefront and its checkout');
   for (const [name, fn] of tests) {

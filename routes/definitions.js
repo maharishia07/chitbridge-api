@@ -107,21 +107,36 @@ router.get('/', auth, async (req, res) => {
     /* ⭐⭐ ONE ROUND TRIP (db.readBatch): the list, my identity row and the region layers that decide the governed
        slabs go as one message — this was a transaction (4 trips) plus two plain queries. Falls back to the old
        path if the batch cannot be built. */
+    /* ⭐ a brand's offers say whether its stores have them (see the note where they are stamped) */
+    const wantsOffers = !kinds.length || kinds.indexOf('offer') >= 0;
     let rows = null;
     try {
       const stmts = [{ text: listSql, params }];
+      const at = {};
       if (wantsTax && wantsLive) {
-        stmts.push({ text: 'SELECT country, currency_code FROM identities WHERE identity_id = $1', params: [entity_id] });
-        stmts.push({ text: `SELECT region_code, currency, units, language, jurisdiction FROM region_layer WHERE region_code IN ('IN', (SELECT upper(trim(country)) FROM identities WHERE identity_id = $1))`, params: [entity_id] });
+        at.id = stmts.push({ text: 'SELECT country, currency_code FROM identities WHERE identity_id = $1', params: [entity_id] }) - 1;
+        at.layers = stmts.push({ text: `SELECT region_code, currency, units, language, jurisdiction FROM region_layer WHERE region_code IN ('IN', (SELECT upper(trim(country)) FROM identities WHERE identity_id = $1))`, params: [entity_id] }) - 1;
+      }
+      if (wantsOffers) {
+        at.net = stmts.push({ text: `SELECT policy_flags#>'{network_offers,released}' AS released,
+            (SELECT count(*) FROM jsonb_object_keys(COALESCE(policy_flags->'network_members', '{}'::jsonb)))::int AS stores
+            FROM identities WHERE identity_id = $1`, params: [entity_id] }) - 1;
       }
       const res = await readBatch(entity_id, req.identity && req.identity.identity_id, stmts);
       rows = res[0].rows;
-      if (wantsTax && wantsLive) {
-        const juris = taxGov.jurisdictionOf(res[1].rows[0]);
-        const layers = new Map(res[2].rows.map((x) => [String(x.region_code).toUpperCase(), x]));
+      if (at.id !== undefined) {
+        const juris = taxGov.jurisdictionOf(res[at.id].rows[0]);
+        const layers = new Map(res[at.layers].rows.map((x) => [String(x.region_code).toUpperCase(), x]));
         const gov = taxGov.governedFromRows(juris, layers.get(juris) || null, layers.get('IN') || null);
         if (gov.length) rows = rows.concat(gov);
       }
+      /**
+       * ⭐⭐ "NOT RELEASED TO YOUR STORES" (Athi, 2026-09-17). He ticked a new offer on a brand product and expected his five stores
+       * to have it; a network offer reaches them only when RELEASED, and no screen said so. Every offer of a shop that HAS member
+       * stores now carries network { stores, released, changed, at } — read in the same message as the list, so it costs no trip.
+       * A shop with no stores gets nothing: the words would be about a network it does not have.
+       */
+      if (at.net !== undefined) require('../lib/network-offers').stampReleases(rows, res[at.net].rows[0]);
     } catch (_) { rows = null; }
     const r = rows === null ? await withEntity(entity_id, (db) => db.query(listSql, params)) : null;
     /**
