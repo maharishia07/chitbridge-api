@@ -166,6 +166,29 @@ t('⚠️⚠️ THE DEFAULT PROVIDER SHIPS NO RATES — a line with no rate is t
     'a stale rate table in our repo would be a compliance liability; the rate comes from the catalogue or a provider');
 });
 
+/**
+ * ⭐⭐⭐ [SPLIT-01] ONE FORMULA, NOT TWO. Athi, 2026-09-17: *"UI should use the results given… no computation should
+ * be tightly bound to the presentation logic anywhere."* A till preview must show the SAME tax a completed bill's
+ * INV-01 will carry — splitLineTax() is the only place that arithmetic exists, and itemLine() (proven above,
+ * indirectly, by every determine() case) calls it too. Pinning the shortcut a UI must NOT reinvent:
+ * `net − assessable` looks identical to `assessable × rate ÷ 100` and is NOT, once assessable itself has rounded.
+ */
+t('⭐⭐⭐ splitLineTax is the one formula an inclusive preview must call, not "net − assessable"', () => {
+  /* ⚠️ ₹10 at 18% inclusive — an entirely ordinary counter line, not a contrived edge case */
+  const net = 10, rate = 18;
+  const { assessable, tax } = T.splitLineTax({ net, rate, priceIncludesTax: true });
+  const shortcut = r2(net - assessable);
+  assert.notStrictEqual(tax, shortcut, 'the case only proves something if the two methods actually disagree here');
+  assert.strictEqual(tax, r2(assessable * rate / 100), 'splitLineTax must derive tax from the rate, the way an invoice justifies it');
+});
+t('exclusive pricing: assessable is the net itself, tax is added on top', () => {
+  assert.deepStrictEqual(T.splitLineTax({ net: 100, rate: 18, priceIncludesTax: false }), { assessable: 100, tax: 18 });
+});
+t('a zero-rated line records no tax, whichever way the price was quoted', () => {
+  assert.strictEqual(T.splitLineTax({ net: 118, rate: 18, priceIncludesTax: true, zeroRate: true }).tax, 0);
+  assert.strictEqual(T.splitLineTax({ net: 100, rate: 18, priceIncludesTax: false, zeroRate: true }).tax, 0);
+});
+
 function r2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed\n');

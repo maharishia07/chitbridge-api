@@ -30,6 +30,7 @@ const GUARDS = [
   'network-storefront.test.cjs', // a member storefront shows its network's offers and its checkout charges them — one key
   'network-catalogue.test.cjs',  // a brand publishes product changes; a store's own price is only ever suggested to
   'screen-kit.test.cjs',        // the screen library: every layout places every part; presets resolve; tiles fall back
+  'no-tax-reformula.test.cjs',  // the counter calls CBTax.splitLineTax() — no page re-derives the tax split itself
   'network-authority.test.cjs',  // who may act on a network edge — from the token, never the body (ATH-86)
   'rewards.test.js',          // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js',     // the SEQUENCE: earn, come back, encash, expire, register — against the real store

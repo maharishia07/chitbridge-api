@@ -86,7 +86,7 @@ it('a registered shop splits the tax OUT of the shelf price — the customer pay
   assert.strictEqual(m.base, 100); assert.strictEqual(m.tax, 18);
 });
 
-it('mixed rates and a zero-rated line, to the paisa', () => {
+it('⭐⭐⭐ [SPLIT-01] mixed rates and a zero-rated line, to the paisa — with a NAMED round-off, never a silent one', () => {
   P.CART = [
     { price: 250, qty: 1, gross: 250, net: 250, save: 0, gst_rate: 5 },
     { price: 200, qty: 2, gross: 400, net: 400, save: 0, gst_rate: 0 },
@@ -94,8 +94,19 @@ it('mixed rates and a zero-rated line, to the paisa', () => {
   ];
   P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } };   /* ⚠️ registered MEANS a GSTIN */
   const m = P.billMoney();
-  assert.strictEqual(m.net, 731);
-  assert.strictEqual(Math.round((m.base + m.tax) * 100) / 100, 731, 'taxable plus tax is the total, always');
+  /**
+   * ⚠️⚠️ THIS ASSERTION MOVED, IT WAS NOT DELETED (Athi, 2026-09-17: "no computation should be tightly bound to
+   * the presentation logic anywhere"). It used to read `assert.strictEqual(m.net, 731)` — true only because the
+   * OLD billMoney() derived tax as `net − assessable`, which reconciles to the shelf total by construction but is
+   * not what GST charges: a rate is levied ON the assessable value (assessable × rate ÷ 100), which is what
+   * lib/tax.js's invoice already computed and what CBTax.splitLineTax() now shares with this page. On THIS bill
+   * (5%, 0% and 18% together) the two methods disagree by one paisa — 250 at 5% inclusive assesses to ₹238.10,
+   * and its tax is ₹11.91 by rate, not the ₹11.90 the old shortcut gave it. Real Indian bills already have a
+   * name for this paisa: "Round off" — lib/tax.js declares it as RndOffAmt, and billMoney() now declares it too.
+   */
+  assert.strictEqual(m.net, 731.01, 'the total reconciles to its own components, the way an invoice does');
+  assert.strictEqual(m.round, 0.01, 'the paisa is NAMED — a "Round off" line, never folded silently into the total');
+  assert.strictEqual(Math.round((m.base + m.tax) * 100) / 100, 731.01, 'taxable plus tax is the total, always');
   assert.ok(m.byRate['5'] && m.byRate['18'], 'each rate is reported on its own, as a slip must show it');
 });
 
