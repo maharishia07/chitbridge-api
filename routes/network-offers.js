@@ -7,9 +7,9 @@
  *   POST /api/network-offers/:id/release      { at?: iso | 'now', until?: iso }             (brand)
  *   POST /api/network-offers/:id/withdraw     { at?: iso | 'now' }                          (brand)
  *   POST /api/network-offers/:id/choice       { choice: 'in' | 'out' | null }               (store)
- *   POST /api/network-offers/catalogue/publish { source_key, at?: iso | 'now', add?: [item ids] } (brand)
+ *   POST /api/network-offers/catalogue/publish { source_key, at?: iso | 'now', add?: [item ids], withdraw?: [names], withdraw_at?/restore_at?: { name: [store ids] } } (brand)
  *   POST /api/network-offers/catalogue/cancel  { source_key }                               (brand)
- *   POST /api/network-offers/catalogue/price   { source_key, name, key, choice: use|keep }  (store)
+ *   POST /api/network-offers/catalogue/price   { source_key, name, key, choice: use|keep|ok } (store)
  *   The catalogue half lives in lib/network-catalogue.js — a brand SUGGESTS prices, it never sets a store's.
  *
  * ⚠️ SESSION ONLY — a counter key never releases, withdraws or chooses. Those are decisions people take.
@@ -94,13 +94,14 @@ router.put('/policy', auth, sessionOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
+const mapOf = (v) => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
 const who = (req) => (req.identity && (req.identity.display_name || req.identity.identity_id)) || null;
 const fail = (res, out) => res.status(out.error === 'not_yours' ? 404 : (out.error === 'validation' ? 400 : 409)).json({ error: out.error, message: out.message });
 
 router.post('/catalogue/publish', auth, sessionOnly, async (req, res) => {
   try {
     const b = req.body || {};
-    const out = await ncat.publish(auth.entityOf(req), String(b.source_key || ''), { at: b.at, add: Array.isArray(b.add) ? b.add : [], by: who(req) });
+    const out = await ncat.publish(auth.entityOf(req), String(b.source_key || ''), { at: b.at, add: Array.isArray(b.add) ? b.add : [], withdraw: Array.isArray(b.withdraw) ? b.withdraw : [], withdraw_at: mapOf(b.withdraw_at), restore_at: mapOf(b.restore_at), by: who(req) });
     if (out.error) return fail(res, out);
     res.json(Object.assign({ ok: true }, out));
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }

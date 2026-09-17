@@ -55,6 +55,45 @@ it('⭐ a product is shared for the first time only when the brand ticks it', ()
   assert.deepStrictEqual(d.candidates, []);
 });
 
+it('⭐⭐ withdraw: the product leaves what the stores sell from, and is said as a change — the others are untouched', () => {
+  const d = ncat.diff(OLD, PRODUCTS, [], ['old kettle', 'Apex 500W']);
+  assert.deepStrictEqual(d.items.map((x) => x.name), ['Marvel Gas Hob']);
+  assert.deepStrictEqual(d.changes.filter((c) => c.kind === 'withdrawn').map((c) => c.name), ['Apex 500W', 'Old kettle']);
+  assert.deepStrictEqual(d.missing, [], 'a withdrawn product was also reported as missing');
+  assert.deepStrictEqual(d.published, OLD.map((x) => x.name), 'the screen needs what the stores have NOW to offer the withdraw');
+});
+
+it('⭐ a withdrawn product can be shared again — it is a brand product not in the published copy', () => {
+  const after = ncat.diff(OLD, PRODUCTS, [], ['Apex 500W']).items;
+  const d = ncat.diff(after, PRODUCTS, ['p1'], []);
+  assert.ok(d.items.some((x) => x.name === 'Apex 500W'), 'sharing a withdrawn product again did not bring it back');
+});
+
+it('⭐⭐ withdraw from SOME stores: only members, only published products, only real changes', () => {
+  const ch = ncat.storeChanges(
+    { 'Apex 500W': ['s1', 's2', 'stranger'], 'No such': ['s1'] },
+    { 'Gas Hob': ['s1', 's3'] },
+    ['s1', 's2', 's3'], ['Apex 500W', 'Gas Hob'], { 'Apex 500W': ['s2'], 'Gas Hob': ['s3'] });
+  assert.deepStrictEqual(ch, [
+    { kind: 'withdrawn_at', name: 'Apex 500W', stores: ['s1'], fields: [] },
+    { kind: 'restored_at', name: 'Gas Hob', stores: ['s3'], fields: [] },
+  ]);
+  assert.deepStrictEqual(ncat.withdrawnAfter({ 'Apex 500W': ['s2'], 'Gas Hob': ['s3'] }, ch), { 'Apex 500W': ['s2', 's1'] });
+});
+
+it('⚠️⚠️ the brand\'s mark survives the store\'s own save — even though the store never sees the product', () => {
+  const existing = { 'Apex 500W': { price: 3799, brand_withdrawn: true }, 'Gas Hob': { price: 6860 } };
+  const saved = ncat.keepFollow({ 'Gas Hob': { price: 6900, brand_withdrawn: true } }, existing, []);
+  assert.deepStrictEqual(saved['Apex 500W'], { price: 3799, brand_withdrawn: true }, 'a store save dropped the withdrawal');
+  assert.ok(!('brand_withdrawn' in saved['Gas Hob']), 'a store marked its own product as withdrawn by the brand');
+});
+
+it('⭐⭐ reading the catalogue at a store the brand withdrew a product from: it is simply not there', async () => {
+  SOURCE_ROW = { source_key: 'k@v1', title: 'Prestige', items: OLD.slice(0, 2), owner_entity_id: null, pending: null };
+  const r = await build.resolve('k@v1', { 'Apex 500W': { price: 3799, brand_withdrawn: true }, 'Gas Hob': { price: 6860 } });
+  assert.deepStrictEqual(r.items.map((x) => x.name), ['Gas Hob']);
+});
+
 it('⚠️ nothing changed → nothing to publish', () => {
   const same = [prod('p1', { name: 'Apex 500W', code: 'PR-APEX-500', mrp: 4035, category: 'Mixer grinders', unit: 'piece', image: 'a.png' })];
   assert.deepStrictEqual(ncat.diff([OLD[0]], same, []).changes, []);
