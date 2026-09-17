@@ -111,7 +111,7 @@ async function itemDeclFor(entity_id, itemName, cache) {
           WHERE entity_id = $1 AND visible = true ORDER BY source_key`, [entity_id]));
       const decls = new Map();          // normalised name → [{source_key, order_input}]
       for (const row of ado.rows) {
-        const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
+        const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {}, { entity_id });
         for (const it of ((resolved && resolved.items) || [])) {
           const k = _norm(it.name);
           if (!decls.has(k)) decls.set(k, []);
@@ -265,7 +265,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
     const ado = await withEntity(entity_id, (db) => db.query(
       `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity_id]));
     for (const row of ado.rows) {
-      const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {});
+      const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {}, { entity_id });
       if (!resolved) continue;
       // STONE 2: the SOURCE's governance resolves HERE — an item runs under its source's rules, not the host's.
       const rules  = (resolved.experience && resolved.experience.rules) || {};

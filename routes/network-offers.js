@@ -52,9 +52,19 @@ router.get('/', auth, sessionOnly, async (req, res) => {
       src.rows.forEach((r) => { if (r.owner_entity_id && String(r.owner_entity_id) !== String(me)) owners.push(String(r.owner_entity_id)); });
     }
     const choices = ((await net.flagsOf(me)).flags.network_choices) || {};
+    /* ⭐ where this store stands with each brand it sells for — in, asked, invited, suspended, or not yet asked */
+    const standing = await require('../lib/network-membership').standing(me, owners);
+    /* ⭐ and the brands that INVITED this store without it selling their catalogue yet */
+    const invites = await query(
+      `SELECT i.identity_id::text AS brand_id, e.id::text AS edge_id
+         FROM identities mi JOIN cb_entity mc ON mc.bridge_id = mi.bridge_id
+         JOIN cb_edge e ON e.child_id = mc.id AND e.type = 'commercial' AND e.state = 'requested' AND e.requested_by = e.parent_id
+         JOIN cb_entity bc ON bc.id = e.parent_id JOIN identities i ON i.bridge_id = bc.bridge_id AND i.identity_type = 'entity'
+        WHERE mi.identity_id = $1`, [me]).catch(() => ({ rows: [] }));
     const networks = [];
-    for (const brand_id of [...new Set(owners)]) {
-      net.noteMember(brand_id, me);
+    for (const brand_id of [...new Set(owners.concat(invites.rows.map((x) => x.brand_id)))]) {
+      const st = standing[brand_id] || { state: 'invited', via: 'joined', edge_id: (invites.rows.find((x) => x.brand_id === brand_id) || {}).edge_id, asked_by: 'brand' };
+      const inside = st.state === 'active';
       const { name, flags } = await net.flagsOf(brand_id);
       const no = flags.network_offers || {};
       const policy = net.POLICIES.indexOf(no.policy) >= 0 ? no.policy : 'opt_in';
@@ -68,7 +78,11 @@ router.get('/', auth, sessionOnly, async (req, res) => {
         rows = r.rows;
       }
       networks.push({ brand_id, brand_name: await net.brandName(brand_id, name), policy,
-        offers: rows.map((d) => {
+        /* in | requested (asked_by says who must answer) | suspended | none — the store half of lib/network-membership */
+        membership: { state: st.state === 'requested' ? (st.asked_by === 'brand' ? 'invited' : 'asked') : st.state,
+                      via: st.via, edge_id: st.edge_id || null, brand_node: st.brand_node || null },
+        /* a store outside the network is told nothing of its offers */
+        offers: (inside ? rows : []).map((d) => {
           const c = choices[d.definition_id] || null;
           return { id: d.definition_id, name: d.name, kind: d.sub_kind, live: d.status === 'live',
                    at: rel[d.definition_id].at || null, until: rel[d.definition_id].until || null,

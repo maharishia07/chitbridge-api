@@ -555,26 +555,31 @@ router.post('/build', auth, async (req, res) => {
           failedInvites.push({ key: inv.key, name: inv.name, reason: 'That is your own handle.' });
           continue;
         }
-        const existing = await db.query(
-          `SELECT status FROM connections
-            WHERE (from_entity_id = $1 AND to_entity_id = $2) OR (from_entity_id = $2 AND to_entity_id = $1)`,
-          [me, them.identity_id]);
+        /**
+         * ⭐ THE INVITATION IS THE NETWORK'S OWN (2026-09-17). It used to be a row in `connections`, which nothing reads as
+         * membership — a partner who accepted was still outside the network. It is now a `commercial` edge from this root
+         * to the partner (src/services/network.js): the partner accepts it, and lib/network-membership counts it.
+         */
+        const netsvc = require('../src/services/network');
+        const partnerNode = await netsvc.nodeOf(them.identity_id, { ensure: true }, db);
+        const rootNode = (await db.query('SELECT * FROM cb_entity WHERE bridge_id = $1', [meRow.bridge_id])).rows[0];
+        const existing = (partnerNode && rootNode) ? await db.query(
+          `SELECT id, state FROM cb_edge WHERE parent_id = $1 AND child_id = $2 AND type = 'commercial'
+             AND state IN ('requested', 'active', 'suspended')`, [rootNode.id, partnerNode.id]) : { rows: [] };
         if (existing.rows.length) {
           invited.push({ key: inv.key, name: inv.name, handle: ref, bridge_id: them.bridge_id,
-                         status: existing.rows[0].status, already: true });
+                         status: existing.rows[0].state === 'requested' ? 'pending' : 'accepted', edge_id: existing.rows[0].id, already: true });
           continue;
         }
-        const connection_id = uuidv4();
-        await db.query(
-          `INSERT INTO connections
-             (connection_id, from_entity_id, from_display_name, from_bridge_id,
-              to_entity_id, to_display_name, to_bridge_id, status, note)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)`,
-          [connection_id, me, meRow.display_name, meRow.bridge_id,
-           them.identity_id, them.display_name, them.bridge_id,
-           `Invitation to join the ${rootHandle} network`]);
+        if (!partnerNode || !rootNode) {
+          failedInvites.push({ key: inv.key, name: inv.name, reason: 'That business has no bridge id to invite.' });
+          continue;
+        }
+        const edge = await db.query(
+          `INSERT INTO cb_edge (parent_id, child_id, type, state, requested_by)
+           VALUES ($1, $2, 'commercial', 'requested', $1) RETURNING id`, [rootNode.id, partnerNode.id]);
         invited.push({ key: inv.key, name: inv.name, handle: ref, bridge_id: them.bridge_id,
-                       status: 'pending', connection_id });
+                       status: 'pending', edge_id: edge.rows[0].id });
       }
 
       // ── WRITE THE RESULT BACK INTO THE DESIGN ──────────────────────────────────────────────────────────────

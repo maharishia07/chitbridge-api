@@ -281,10 +281,22 @@ router.post('/catalogue-adopt', async (req, res) => {
       return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
     }
     log.info('catalogue adopted (reference + commercials)', { id: req.id, source, items_priced: Object.keys(commercials).length });
-    /* ⭐ the store joins the brand's network, so the brand's next offer release reaches this store's counters */
+    /**
+     * ⭐ ADOPTING A BRAND'S CATALOGUE ASKS TO JOIN ITS NETWORK — it does not join it (Athi, 2026-09-17: "the network has to
+     * approve"). The request is the network's own (src/services/network — a `commercial` edge the brand approves); until then
+     * the brand's products are not sold here (catalogue-build.resolve). A store already in, or already asking, is left alone.
+     */
     try {
       const owner = (await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source])).rows[0];
-      if (owner && owner.owner_entity_id) await require('../lib/network-offers').noteMember(owner.owner_entity_id, entity);
+      if (owner && owner.owner_entity_id && String(owner.owner_entity_id) !== String(entity)) {
+        const inside = await require('../lib/network-membership').brandsOf(entity, [owner.owner_entity_id]);
+        if (!inside.has(String(owner.owner_entity_id))) {
+          const netsvc = require('../src/services/network');
+          const me = await netsvc.nodeOf(entity, { ensure: true });
+          const brandNode = await netsvc.nodeOf(owner.owner_entity_id, { ensure: true });
+          if (me && brandNode) await netsvc.requestConnect({ parentId: brandNode.id, childId: me.id, type: 'commercial' }, me).catch(() => {});
+        }
+      }
     } catch (_) {}
     res.json({ ok: true, persisted: true, source, resolved: await catalogueBuild.resolve(source, commercials),
       acted_by: { deputy: 'ai:catalogue-structure@v1', rung: 'extract', principal: 'entity:' + entity,

@@ -384,7 +384,7 @@ router.get('/snapshot', auth, async (req, res) => {
         const catalogueBuild = require('../lib/catalogue-build');
         const catalogueRead = require('../lib/catalogue-read');
         let container = null; try { container = require('../lib/container'); } catch (_) {}
-        const resolved = await Promise.all(ado.rows.map((r) => catalogueBuild.resolve(r.source_key, r.commercials || {}).catch(() => null)));
+        const resolved = await Promise.all(ado.rows.map((r) => catalogueBuild.resolve(r.source_key, r.commercials || {}, { entity_id }).catch(() => null)));
         const srcs = [];
         ado.rows.forEach((r, i) => { const x = resolved[i]; if (x) srcs.push({ source_key: r.source_key, title: x.title,
           owner_entity_id: x.owner_entity_id || null, items: x.items || [] }); });

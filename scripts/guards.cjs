@@ -29,6 +29,7 @@ const GUARDS = [
   'bell-param.test.cjs',      // every page opens the bell with the name the stream reads (2026-09-17: counters never heard it)
   'network-storefront.test.cjs', // a member storefront shows its network's offers and its checkout charges them — one key
   'network-catalogue.test.cjs',  // a brand publishes product changes; a store's own price is only ever suggested to
+  'network-authority.test.cjs',  // who may act on a network edge — from the token, never the body (ATH-86)
   'rewards.test.js',          // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js',     // the SEQUENCE: earn, come back, encash, expire, register — against the real store
   'sql-runner.test.js',       // a tool that runs SQL at production: its WITH/WITHOUT RLS line must be true

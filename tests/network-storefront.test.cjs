@@ -87,9 +87,15 @@ it('⚠️ the wiring: the storefront read adds the network offers, and both ord
   assert.ok(/defineProperty\(l, 'd', \{ value: ref\.d, enumerable: false \}\)/.test(cat), 'an own order line does not carry its categories');
 });
 
-it('⚠️ a public storefront view never writes the brand\'s member index', () => {
-  const src = fs.readFileSync(path.join(API, 'lib', 'network-offers.js'), 'utf8');
-  assert.ok(/noteMembers: false/.test(src.slice(src.indexOf('async function forFinishes'))), 'forFinishes would write on every anonymous view');
+/* moved 2026-09-17: the member index a storefront view must not write is RETIRED — membership is the network's own
+   (lib/network-membership), which nothing writes on a read. The guard now holds the stronger line: the index is not read. */
+it('⚠️ a public storefront view writes nothing — and nothing reads the retired adoption-based member list', () => {
+  for (const f of ['lib/network-offers.js', 'lib/network-catalogue.js', 'routes/network-offers.js', 'routes/assist.js', 'routes/definitions.js']) {
+    const src = fs.readFileSync(path.join(API, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert.ok(!/network_members|noteMember\(/.test(src), f + ' still reads or writes the retired member list');
+  }
+  const offers = fs.readFileSync(path.join(API, 'lib', 'network-offers.js'), 'utf8');
+  assert.ok(/membership\.brandsOf\(store_id/.test(offers), 'a store outside a network could still be handed its offers');
 });
 
 it('⭐⭐ a brand\'s offers say whether its stores have them — unreleased, released, changed since release', () => {

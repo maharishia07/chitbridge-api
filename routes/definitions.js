@@ -119,7 +119,7 @@ router.get('/', auth, async (req, res) => {
       }
       if (wantsOffers) {
         at.net = stmts.push({ text: `SELECT policy_flags#>'{network_offers,released}' AS released,
-            (SELECT count(*) FROM jsonb_object_keys(COALESCE(policy_flags->'network_members', '{}'::jsonb)))::int AS stores
+            ${require('../lib/network-membership').ACTIVE_COUNT_SQL} AS stores
             FROM identities WHERE identity_id = $1`, params: [entity_id] }) - 1;
       }
       const res = await readBatch(entity_id, req.identity && req.identity.identity_id, stmts);

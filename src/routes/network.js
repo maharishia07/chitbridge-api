@@ -8,7 +8,12 @@ const { safeErr } = require("../../lib/respond");   // generic client error + se
 // derive actingEntityId from req.identity + check authority/cascade per op), writes are DISABLED unless
 // NETWORK_WRITE_ENABLED=true (dev only). This removes the body-authority exposure in prod without shipping the
 // half-built authority model. Reads stay available (auth still required). Full spec: docs/NETWORK-AUTHORITY.md.
-const WRITES_ENABLED = process.env.NETWORK_WRITE_ENABLED === "true";
+/* ⭐ 2026-09-17: the authority half is built (src/services/network.js — the actor comes from the token, per-op rules), so writes
+   are ON unless switched off. NETWORK_WRITE_ENABLED=false is the kill switch. */
+const WRITES_ENABLED = process.env.NETWORK_WRITE_ENABLED !== "false";
+const auth_ = require("../../middleware/auth");
+/** the signed-in business's node — made a root the first time it takes part */
+const actorOf = (req) => net.nodeOf(auth_.entityOf(req), { ensure: true });
 const gateWrite = (req, res, next) => WRITES_ENABLED ? next()
   : res.status(503).json({ error: "Network editing disabled",
       message: "Network changes aren't available yet.", code: "NET_WRITE_DISABLED" });
@@ -23,7 +28,7 @@ const h = (fn) => async (req, res) => {
 };
 router.post("/entities",               auth, gateWrite, h((req) => net.register(req.body)));
 router.get ("/entities/lookup",        auth, h(async (req) => { const c = await net.lookup(req.query.bridgeId || ""); return c ? { found: true, entity: c } : { found: false }; }));
-router.post("/entities/:id/claim",     auth, gateWrite, h((req) => net.claim(req.params.id)));
+router.post("/entities/:id/claim",     auth, gateWrite, h((req) => net.claim(req.params.id, auth_.entityOf(req))));
 /**
  * ⭐⭐ GET /network/place?bridgeId=… — "where do I sit, and what is the whole network?", in ONE round trip.
  *
@@ -47,7 +52,8 @@ router.get ("/place", auth, h(async (req) => {
   const me = card.entity || card;
   if (!me || !me.id) return { found: false };
 
-  const mine = await net.subtree(me.id);
+  const actor = await actorOf(req);
+  const mine = await net.subtree(me.id, actor);
   const nodes0 = Array.isArray(mine) ? mine : (mine && mine.nodes) || [];
 
   /* WALK UP. subtree(me) is me AND MY DESCENDANTS, so a leaf gets back only itself — the one view that cannot
@@ -62,7 +68,7 @@ router.get ("/place", auth, h(async (req) => {
     const rc = await net.lookup(rootBridge);
     const root = rc && (rc.entity || rc);
     if (root && root.id) {
-      const whole = await net.subtree(root.id);
+      const whole = await net.subtree(root.id, actor);
       const w = Array.isArray(whole) ? whole : (whole && whole.nodes) || null;
       if (w && w.length) nodes = w;
     }
@@ -70,12 +76,25 @@ router.get ("/place", auth, h(async (req) => {
   return { found: true, entity: me, rootBridge, nodes };
 }));
 
-router.get ("/entities/:id/subtree",   auth, h((req) => net.subtree(req.params.id)));
-router.get ("/entities/:id/connections", auth, h((req) => net.connections(req.params.id)));
-router.post("/connections",                 auth, gateWrite, h((req) => net.requestConnect(req.body)));
-router.post("/connections/:id/approve",     auth, gateWrite, h((req) => net.approve({ edgeId: req.params.id, actingEntityId: req.body.actingEntityId })));
-router.post("/connections/:id/decline",     auth, gateWrite, h((req) => net.decline({ edgeId: req.params.id, actingEntityId: req.body.actingEntityId })));
-router.post("/connections/:id/suspend",     auth, gateWrite, h((req) => net.suspend(req.params.id)));
-router.post("/connections/:id/resume",      auth, gateWrite, h((req) => net.resume(req.params.id)));
-router.post("/connections/:id/disconnect",  auth, gateWrite, h((req) => net.disconnect({ edgeId: req.params.id, settle: !!req.body.settle })));
+/* ⚠️ every write and scoped read acts AS the signed-in business — anything in the body that claims to be the actor is ignored */
+router.get ("/entities/:id/subtree",   auth, h(async (req) => net.subtree(req.params.id, await actorOf(req))));
+router.get ("/entities/:id/connections", auth, h(async (req) => net.connections(req.params.id, await actorOf(req))));
+router.post("/connections",                 auth, gateWrite, h(async (req) => { const b = req.body || {};
+  const out = await net.requestConnect({ parentId: b.parentId, parentHandle: b.parentHandle, childId: b.childId, childBridgeId: b.childBridgeId,
+                                          childHandle: b.childHandle, type: b.type }, await actorOf(req));
+  _told(out); return out; }));
+router.post("/connections/:id/approve",     auth, gateWrite, h(async (req) => _told(await net.approve({ edgeId: req.params.id }, await actorOf(req)))));
+router.post("/connections/:id/decline",     auth, gateWrite, h(async (req) => _told(await net.decline({ edgeId: req.params.id }, await actorOf(req)))));
+router.post("/connections/:id/suspend",     auth, gateWrite, h(async (req) => _told(await net.suspend(req.params.id, await actorOf(req)))));
+router.post("/connections/:id/resume",      auth, gateWrite, h(async (req) => _told(await net.resume(req.params.id, await actorOf(req)))));
+router.post("/connections/:id/disconnect",  auth, gateWrite, h(async (req) => _told(await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req)))));
+/** ⭐ both businesses on an edge hear that it moved — a store's counters re-read when it joins, is suspended or removed */
+function _told(edge) {
+  if (!edge || !edge.parent_id) return edge;
+  require("../../db").query(
+    "select i.identity_id from cb_entity c join identities i on i.bridge_id = c.bridge_id and i.identity_type = 'entity' where c.id = any($1::uuid[])",
+    [[edge.parent_id, edge.child_id]]).then((r) => r.rows.forEach((x) => { try { require("../../lib/shopchanged").shopChanged(x.identity_id, "network membership"); } catch (_) {} }))
+    .catch(() => {});
+  return edge;
+}
 module.exports = router;
