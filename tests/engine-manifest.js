@@ -128,6 +128,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   /* ADOPTION, not engine: network-offers.js decides which already-declared offers a store's counter is HANDED and from
      when — a distribution rule. How an offer prices a line stays the engine's, untouched (2026-09-17). */
   'network-offers.js',
+  /* ADOPTION, not engine: network-catalogue.js decides WHEN a brand's product changes become what its stores sell from, and
+     which store prices follow the brand's suggestion — distribution and consent, no pricing arithmetic (2026-09-17). */
+  'network-catalogue.js',
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
   /* ADOPTION, not engine, and the split is the point: lib/rewards.js decides what a point is WORTH (pure, no DB,
      Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap

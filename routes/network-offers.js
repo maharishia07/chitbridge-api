@@ -7,6 +7,10 @@
  *   POST /api/network-offers/:id/release      { at?: iso | 'now', until?: iso }             (brand)
  *   POST /api/network-offers/:id/withdraw     { at?: iso | 'now' }                          (brand)
  *   POST /api/network-offers/:id/choice       { choice: 'in' | 'out' | null }               (store)
+ *   POST /api/network-offers/catalogue/publish { source_key, at?: iso | 'now', add?: [item ids] } (brand)
+ *   POST /api/network-offers/catalogue/cancel  { source_key }                               (brand)
+ *   POST /api/network-offers/catalogue/price   { source_key, name, key, choice: use|keep }  (store)
+ *   The catalogue half lives in lib/network-catalogue.js — a brand SUGGESTS prices, it never sets a store's.
  *
  * ⚠️ SESSION ONLY — a counter key never releases, withdraws or chooses. Those are decisions people take.
  * ⚠️ A release with no time takes effect at the NEXT OPENING. Athi: *"not to change in the middle of the day."* Releasing
@@ -18,6 +22,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
 const net = require('../lib/network-offers');
+const ncat = require('../lib/network-catalogue');
 
 const sessionOnly = (req, res, next) => {
   if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Network offers are managed by a signed-in person.' });
@@ -39,7 +44,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
     const brand = await net.brandView(me);
     /* the networks THIS shop belongs to, read from its own adoptions */
     const ado = await withEntity(me, (db) => db.query(
-      'SELECT source_key FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [me])).catch(() => ({ rows: [] }));
+      'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [me])).catch(() => ({ rows: [] }));
     const owners = [];
     if (ado.rows.length) {
       const src = await query('SELECT source_key, owner_entity_id FROM catalogue_source WHERE source_key = ANY($1::text[])',
@@ -70,7 +75,11 @@ router.get('/', auth, sessionOnly, async (req, res) => {
                    choice: c, applies: policy === 'opt_in' ? c === 'in' : c !== 'out' };
         }) });
     }
-    res.json({ brand, store: { networks } });
+    /* ⭐ the catalogue half: what the brand would publish, and the prices its stores are being asked about */
+    brand.catalogue = await ncat.brandView(me).catch(() => null);
+    if (brand.catalogue) brand.is_brand = true;
+    const price_notices = await ncat.storeNotices(me, ado.rows).catch(() => []);
+    res.json({ brand, store: { networks, price_notices } });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
@@ -82,6 +91,35 @@ router.put('/policy', auth, sessionOnly, async (req, res) => {
     await net.mergeFlag(me, 'network_offers', { policy });
     const pushed = await net.pushToNetwork(me, 'network offer policy');
     res.json({ ok: true, policy, pushed });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+const who = (req) => (req.identity && (req.identity.display_name || req.identity.identity_id)) || null;
+const fail = (res, out) => res.status(out.error === 'not_yours' ? 404 : (out.error === 'validation' ? 400 : 409)).json({ error: out.error, message: out.message });
+
+router.post('/catalogue/publish', auth, sessionOnly, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const out = await ncat.publish(auth.entityOf(req), String(b.source_key || ''), { at: b.at, add: Array.isArray(b.add) ? b.add : [], by: who(req) });
+    if (out.error) return fail(res, out);
+    res.json(Object.assign({ ok: true }, out));
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.post('/catalogue/cancel', auth, sessionOnly, async (req, res) => {
+  try {
+    const out = await ncat.cancel(auth.entityOf(req), String((req.body || {}).source_key || ''));
+    if (out.error) return fail(res, out);
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+router.post('/catalogue/price', auth, sessionOnly, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const out = await ncat.answer(auth.entityOf(req), { source_key: String(b.source_key || ''), name: String(b.name || ''), key: b.key ? String(b.key) : null, choice: b.choice });
+    if (out.error) return fail(res, out);
+    res.json(out);
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

@@ -260,7 +260,13 @@ router.post('/catalogue-adopt', async (req, res) => {
     if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.' });
     // STAMP the adoption's commercials. This is the SECOND price home — `{ "Tussar": { price, unit, … } }` — and the
     // one the seed scripts mostly use, so missing it would leave half the catalogue unstamped while looking done.
-    const commercialsIn = (req.body && req.body.commercials && typeof req.body.commercials === 'object') ? req.body.commercials : {};
+    let commercialsIn = (req.body && req.body.commercials && typeof req.body.commercials === 'object') ? req.body.commercials : {};
+    /* ⭐ a store following its brand's price keeps following while it saves that price; its own price ends it (network-catalogue) */
+    try {
+      const prev = await withEntity(entity, (db) => db.query(
+        'SELECT commercials FROM catalogue_adoption WHERE entity_id = $1 AND source_key = $2', [entity, source]));
+      commercialsIn = require('../lib/network-catalogue').keepFollow(commercialsIn, (prev.rows[0] && prev.rows[0].commercials) || {}, built.items);
+    } catch (_) { /* first adoption, or b75 absent — nothing to keep */ }
     const commercials = money.stampCommercials(commercialsIn, await regional.currencyFor(entity));
     const visible = !(req.body && req.body.visible === false);
     try {
