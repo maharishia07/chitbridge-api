@@ -315,6 +315,60 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
 });
 
 /**
+ * ⭐⭐ THE MAINTENANCE LIST, AS png/MaintV2.png DRAWS IT ([TILL-58b], 2026-09-18).
+ * Every one of these describes something the screenshot caught and the other 781 checks did not.
+ */
+it('⭐⭐ the maintenance list wears each row\'s problem, and its chips all fit on the screen', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️⚠️ ELEVEN CHIPS IN A SIDEWAYS-SCROLLING ROW put "No photo" and "No price" off the right-hand edge, where
+     nothing said they existed. Maintenance wraps; the selling screen keeps its one line and its four chips. */
+  assert.ok(/'chips' \+ \(MODE === 'maintain' \? ' wrapped' : ''\)/.test(page),
+    'the maintenance chip row no longer wraps — chips past the fold are chips nobody can reach');
+  /* ⚠️⚠️ AND NOT UNDER THE NAME `wrap`, which is this page's TOP-LEVEL TWO-PANE SPLIT and carries height:100dvh.
+     class="chips wrap" made the chip row fill the pane and squeezed the product list to zero height. */
+  assert.ok(page.indexOf('.chips.wrap{') < 0,
+    '.chips.wrap collides with the page wrapper (height:100dvh) — the list collapses to nothing');
+  assert.ok(/\.chips\.wrapped\{[^}]*flex:0 0 auto/.test(page),
+    'the wrapped chip row must be flex:0 0 auto, or it grows to fill the pane');
+  /* ⭐ the worklists are what this screen is FOR, so they lead — they used to sit after the categories */
+  const chips = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
+  assert.ok(chips.indexOf('jobChips') > 0 && chips.indexOf('jobChips') < chips.indexOf('list.map('),
+    'the worklist chips no longer come before the categories');
+  assert.ok(chips.indexOf('till-chip-all') > 0 && /Everything <span class="u">' \+ allN/.test(chips),
+    'Everything carries no count, while every chip beside it does');
+  /* ⭐ a row says what is wrong with it, capped at two — five badges on a row is the same as none */
+  assert.ok(page.indexOf('function rowBadges(') > 0, 'the rows no longer wear their problem');
+  const rb = page.slice(page.indexOf('function rowBadges('), page.indexOf('\n}', page.indexOf('function rowBadges(')));
+  for (const w of ['Editing', 'Off the shelf', 'No price', 'Changed today', 'Not on any key', 'No photo'])
+    assert.ok(rb.indexOf(w) > 0, 'the row cannot say "' + w + '"');
+  assert.ok(rb.indexOf('out.length < 2') > 0, 'the badges are uncapped — a row wearing five has said nothing');
+  assert.ok(rb.indexOf("MODE !== 'maintain'") > 0, 'the badges would show while billing, where they are noise');
+});
+
+it('⭐⭐ the bulk bar can do the two things the screen exists for, and does not shove the list', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  for (const [what, fn] of [['change a price', 'async function pickedPrice('],
+                            ['put products on a group', 'async function pickedGroup(']])
+    assert.ok(page.indexOf(fn) > 0, 'several products at once cannot ' + what);
+  /* ⚠️⚠️ ADD, NEVER TOGGLE. quickGroupToggle() on a multi-selection REMOVES the ones already on the group —
+     the exact opposite of what the button says. [[feedback-name-vs-behaviour]] */
+  const pg = page.slice(page.indexOf('async function pickedGroup('), page.indexOf('async function pickedDo('));
+  assert.ok(pg.indexOf('quickGroupToggle(') < 0,
+    'Add to a quick key group toggles — it would take products OFF the group it says it adds to');
+  assert.ok(pg.indexOf("list.indexOf(id) < 0") > 0, 'the bulk add is not a union, so it cannot be idempotent');
+  /* ⚠️ the price change must state what it will do BEFORE it does it, product by product */
+  const pp = page.slice(page.indexOf('async function pickedPrice('), page.indexOf('async function pickedGroup('));
+  assert.ok(pp.indexOf('await sure(') > 0, 'a bulk reprice happens without asking');
+  assert.ok(pp.indexOf('priceWrite(') > 0, 'the bulk reprice does not go through the one price write');
+  assert.ok(/!\(p\.now > 0\)/.test(pp), 'a bulk reprice can take a price to zero or below');
+  /* ⚠️ THE BAR IS DRAWN AFTER THE ROWS and sticks to the BOTTOM. Stuck to the top and drawn first, every tick
+     pushed the whole shelf down by one bar — on the screen whose entire job is ticking boxes. */
+  const ph = page.slice(page.indexOf('function paintHits(){'), page.indexOf('function keepSelInView('));
+  assert.ok(ph.indexOf('+ pickBar;') > 0 && ph.indexOf('head + pickBar') < 0,
+    'the bulk bar is drawn above the rows again, so ticking a box shoves the list');
+  assert.ok(/\.pickbar\{position:sticky;bottom:0/.test(page), 'the bulk bar is not pinned to the foot');
+});
+/**
  * ⭐⭐ FOUR DECISIONS, ONE PLACE. Athi, 2026-09-09: *"changing availability, product price, offer enable/disable, show on TV —
  * all can be kept in the same place."* Each calls the function that already did that job; none may grow a second write.
  */

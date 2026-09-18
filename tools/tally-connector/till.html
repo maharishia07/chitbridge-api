@@ -196,6 +196,14 @@
   .chips.more{-webkit-mask-image:linear-gradient(to var(--chip-fade,right),#000 calc(100% - 34px),transparent);
               mask-image:linear-gradient(to var(--chip-fade,right),#000 calc(100% - 34px),transparent)}
   [dir="rtl"] .chips.more{--chip-fade:left}
+  /* ⚠️ a wrapped row must NOT wear the fade mask — there is nothing off-screen to hint at, and the mask would
+     just dim the last chip of every line. .more is only ever set by chipsOverflow(), which measures. */
+  /* ⚠️ flex:0 0 auto — WITHOUT IT the row grows to fill the pane, because overflow-x:auto was what kept the
+     unwrapped row to its own height. align-items/align-content keep each chip its own size and the lines at
+     the top, instead of every chip stretching to the height of the tallest line. */
+  .chips.wrapped{flex:0 0 auto;flex-wrap:wrap;align-items:flex-start;align-content:flex-start;
+              overflow-x:visible;row-gap:6px;padding-bottom:8px}
+  .chips.wrapped.more{-webkit-mask-image:none;mask-image:none}
   /* a chip a thumb can catch, and a scrollbar thin enough not to shout */
   .chips::-webkit-scrollbar{height:4px}
   .chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
@@ -651,7 +659,19 @@
   .menu b{font-weight:700;margin-inline-start:6px}
   .menu i{display:block;font-style:normal;color:var(--dim);font-size:.82em;margin-inline-start:26px}
   /* ⚠️ a FACT, not a warning — it must never compete with the row a person is trying to read */
-  .shelfline{padding:5px 12px;color:var(--dim);font-size:.78em;border-bottom:1px solid var(--line);background:var(--paper)}
+  /* ⚠️ THE ROW SAYS WHAT IS WRONG WITH IT — png/MaintV2.png. Muted by default; only a blocking fault gets colour,
+     or a list where a third of the rows are shouting has taught the eye to skip all of them. */
+  .rbadges{display:inline-flex;gap:6px;flex-wrap:wrap;margin-inline-start:8px;vertical-align:middle}
+  .rbadge{border-radius:999px;padding:2px 10px;font-size:.78em;font-weight:700;white-space:nowrap;
+          border:1px solid var(--line);background:var(--panel);color:var(--dim)}
+  .rbadge.now{border-color:var(--ok);background:var(--ok-tint);color:var(--ok)}
+  /* ⚠️ THE FAULT THAT STOPS A SALE WEARS THE BORDER. Same hue as Changed today, because --warn IS this page's
+     red; what separates them is weight, not colour, so neither needs a token the theme does not define. */
+  .rbadge.bad{border-color:var(--warn);color:var(--warn)}
+  .rbadge.was{border-color:var(--warn-tint);background:var(--warn-tint);color:var(--warn)}
+  /* ⚠️ said once, beside the count, and only while nothing is ticked — once rows ARE ticked the bar says it */
+  .sltip{margin-inline-start:auto;color:var(--dim);font-size:.9em}
+  .shelfline{display:flex;align-items:baseline;gap:10px;padding:5px 12px;color:var(--dim);font-size:.78em;border-bottom:1px solid var(--line);background:var(--paper)}
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
   /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
   .upd{color:var(--ok);font-weight:700}
@@ -900,9 +920,17 @@
   /* ⚠ A TICK, NOT JUST A COLOUR — chosen must read without telling green from grey (NOW-reliability §U4). */
   .hitpick.on::after{content:'\2713';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
                      color:var(--on-accent);font-size:.8em;font-weight:700}
-  .pickbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
-           padding:8px 10px;margin-bottom:6px;background:var(--ok-tint);border:1px solid var(--ok);border-radius:10px}
-  .pickbar b{color:var(--ok)}
+  /* ⚠️ BOTTOM, NOT TOP — see the note in paintHits. And DARK, as png/MaintV2.png draws it: a bar across the
+     foot in the opposite colour says "the screen is in a different mode" without a word of explanation. */
+  .pickbar{position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+           padding:10px 12px;margin-top:6px;background:var(--ink);color:var(--paper);border-radius:12px;
+           box-shadow:0 -6px 18px rgba(0,0,0,.18)}
+  .pickbar b{color:var(--paper);margin-inline-end:6px}
+  /* the pills have to read on the dark — they inherit a paper-on-card look otherwise and disappear */
+  .pickbar .pill{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+  .pickbar .pill:hover{background:rgba(255,255,255,.14);border-color:var(--paper)}
+  /* ⭐ Clear is the way OUT of the mode, so it is the one filled control — the render gives it the accent */
+  .pickbar [data-testid="till-pick-none"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
   /* ⭐ §8 / mobile-first §2 rule 3: a touch target is ≥44px. It was 34, which is a mouse's button, not a thumb's. */
   .hit .addbtn{width:44px;height:44px;border:1px solid var(--edge);background:var(--card);color:var(--ok);
        border-radius:10px;font-size:1.35em;font-weight:800;line-height:1;cursor:pointer;flex:none}
@@ -1255,6 +1283,8 @@
   .gchip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;
          padding:7px 14px;min-height:38px;cursor:pointer;font:inherit}
   .gchip.on{border-color:var(--ok);background:var(--ok);color:var(--on-accent);font-weight:700}
+  /* ⚠️ .u carries its own dim colour, so the count went invisible on exactly the chip it matters on */
+  .gchip.on .u{color:var(--on-accent);opacity:.75}
   .chgrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:.9em}
   .chgrow .cn{flex:1;min-width:0;font-weight:700}
   .chgrow .cw{color:var(--dim)}
@@ -1516,7 +1546,7 @@
   <section class="right">
     <!-- ⭐⭐ MAINTENANCE — the four small decisions about ONE product, away from the till that is taking money. -->
     <div class="pane" id="pane_maintain" style="display:none">
-      <div class="doc"><div class="wide" style="color:var(--dim)">
+      <div class="doc" id="maintempty"><div class="wide" style="color:var(--dim)">
         Tap anything on the left. Everything is listed here, including what is off the shelf.</div></div>
       <div class="lines" id="cardbox"></div>
       <div class="bar"><span id="pricenote">Nothing changed yet today.</span></div>
@@ -4766,10 +4796,34 @@ document.addEventListener('click', function(e){
  * can read before they act on it.
  */
 var MAINT_JOBS = [
+  /**
+   * ⭐⭐ WHAT CHANGED TODAY IS A WORKLIST TOO. The editor has shown the day's changes since [TILL-52]; the
+   * render puts the same question on the list, where it answers "what did I already do this morning?" without
+   * opening a product. It reads CHANGED — the same store the editor's block reads, not a second one.
+   */
+  { id: 'changed', label: 'Changed today',
+    why: 'you changed these since the shift opened — check them before the rush',
+    when: function(){ try { return (CHANGED.price.length + CHANGED.stock.length) > 0; } catch (_) { return false; } },
+    hit: function(i){
+      var id = String((i && i.item_id) || '');
+      return CHANGED.price.concat(CHANGED.stock).some(function(c){ return String(c.item_id || '') === id; });
+    } },
+  /**
+   * ⭐⭐ NOT ON ANY KEY — any group's, not the group on screen. A product nobody can reach with a thumb is one
+   * that gets typed for, every time, by every cashier; it is the quietest cost on a counter and nothing said it.
+   */
+  { id: 'nokey', label: 'Not on any key',
+    why: 'a cashier has to type for these — put them on a group and they get a thumb',
+    hit: function(i){
+      var id = String((i && i.item_id) || ''), all = groupsAll();
+      return !Object.keys(all).some(function(nm){
+        return (all[nm] || []).map(String).indexOf(id) >= 0;
+      });
+    } },
   { id: 'noprice', label: 'No price',
     why: 'these add nothing to a bill — they are sellable and free',
     hit: function(i){ return !(Number(i && i.price) > 0); } },
-  { id: 'nopic', label: 'No picture',
+  { id: 'nopic', label: 'No photo',
     why: 'their keys and rows fall back to initials on a colour',
     hit: function(i){ return !(i && i.image); } },
   { id: 'nocat', label: 'No category',
@@ -4816,32 +4870,40 @@ function paintChips(){
   /* ⚠️ THE COUNT IS SHOWN EVEN WHEN IT IS ZERO. A chip that appears only when something is out of stock is a chip nobody can
      find when they want to check — and "0" is itself the answer to "is anything off today?" */
   var offN = (S.items || []).filter(function(i){ return statusOf(i) === 'unavailable'; }).length;
-  el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything</button>'
+  /**
+   * ⭐ THE COUNT ON `Everything` is the number the screen is about — and in maintenance it counts the whole
+   * shop, off-the-shelf rows included, so it agrees with the line under the chips rather than contradicting it.
+   */
+  var allN = (MODE === 'maintain') ? (S.items || []).length
+    : (S.items || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
+  /**
+   * ⚠️⚠️ MAINTENANCE WRAPS ITS CHIPS; SELLING SCROLLS THEM. Eleven chips in a sideways-scrolling row put two
+   * of them off the screen entirely, and nothing said so — the mask that fades the edge is the only hint, and
+   * it reads as decoration. The selling screen keeps the one-line row: a cashier has four chips and a queue.
+   */
+  el.className = 'chips' + (MODE === 'maintain' ? ' wrapped' : '');
+  /* ⚠️ the worklists come FIRST in maintenance — they are what this screen is for, and they were past the fold */
+  var jobChips = (MODE === 'maintain')
+    ? maintJobs().map(function(j){
+        var jn = maintJobCount(j);
+        return '<button class="job' + (FILTER.job === j.id ? ' on' : '') + (jn ? '' : ' none') + '"'
+          + ' data-testid="till-job-' + j.id + '" title="' + esc(j.why) + '"'
+          + ' onclick="setFilter(\'job\',\'' + j.id + '\')">' + esc(j.label)
+          + ' <span class="u">' + jn + '</span></button>';
+      }).join('')
+    : '';
+  el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything <span class="u">' + allN + '</span></button>'
+    + jobChips
     + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer</button>'
     + '<button class="' + (FILTER.off ? 'on' : '') + '" data-testid="till-chip-off" onclick="setFilter(\'off\')">Off the shelf <span class="u">' + offN + '</span></button>'
     + list.map(function(c){ return '<button class="' + (FILTER.cat === c ? 'on' : '') + '" data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '" onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">' + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'; }).join('')
-    /**
-     * ⭐⭐ AND, IN MAINTENANCE ONLY, THE JOBS — see MAINT_JOBS. Not on the selling screen: a cashier with a
-     * customer waiting has no use for "no picture", and every chip there is one more thing to read past.
-     * ⚠ THE COUNT SHOWS EVEN WHEN IT IS ZERO, because "is anything missing a price?" is a question whose answer
-     * is most often no, and a chip that vanishes when the answer is no is one nobody can ask.
-     */
-    + (MODE === 'maintain'
-        ? '<span class="chipsep" data-testid="till-chip-jobs">needs doing</span>'
-          + maintJobs().map(function(j){
-              var n = maintJobCount(j);
-              return '<button class="job' + (FILTER.job === j.id ? ' on' : '') + (n ? '' : ' none') + '"'
-                + ' data-testid="till-job-' + j.id + '" title="' + esc(j.why) + '"'
-                + ' onclick="setFilter(\'job\',\'' + j.id + '\')">' + esc(j.label)
-                + ' <span class="u">' + n + '</span></button>';
-            }).join('')
-        : '');
+    ;
   chipsOverflow();
 }
 /** does the chip row actually run past its own edge? measured, never assumed — see the note on .chips */
 function chipsOverflow(){
   var el = document.getElementById('chips'); if (!el) return;
-  el.classList.toggle('more', el.scrollWidth > el.clientWidth + 2);
+  el.classList.toggle('more', !el.classList.contains('wrapped') && el.scrollWidth > el.clientWidth + 2);
 }
 /**
  * ⭐ THE QUANTITY GOES IN FRONT OF THE NAME — "3*rice", "0.75 x tomato" (2026-09-08). It is how a counter has always entered three of
@@ -6437,7 +6499,15 @@ function quickAdd(id){
  */
 function shelfLine(shown){
   if (!S) return '';
-  var total = ((S && S.items) || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
+  /**
+   * ⚠️⚠️ MAINTENANCE COUNTS EVERYTHING. This line counted only what could be sold — on the one screen whose
+   * whole purpose is reaching a row that is OFF. A shop with 113 products and 4 off the shelf was told it had
+   * 109, and the missing four were exactly the ones somebody had come here to find.
+   * ⭐ And it SAYS SO, because a number that differs from the selling screen's has to explain itself.
+   */
+  var seeAll = (MODE === 'maintain');
+  var total = seeAll ? ((S && S.items) || []).length
+    : ((S && S.items) || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
   if (!total) return '';
   var when = S.at ? new Date(S.at).toTimeString().slice(0, 5) : null;
   var n = function(v){ return Number(v).toLocaleString('en-IN'); };
@@ -6451,8 +6521,12 @@ function shelfLine(shown){
   else if (FILTER.offer) txt = n(shown) + ' carrying an offer — of ' + n(total) + ' on this counter';
   else if (typed().text) txt = shown ? ('showing ' + n(shown) + ' of ' + n(total) + ' — keep typing to narrow it')
                                      : ('nothing matches, of ' + n(total) + ' on this counter');
-  else                   txt = n(total) + ' products on this counter' + (when ? ', read at ' + when : '');
-  return '<div class="shelfline" data-testid="till-shelf-count">' + txt + '</div>';
+  else                   txt = n(total) + ' products on this counter' + (when ? ', read at ' + when : '')
+    + (seeAll ? ' · everything is here, including what is off the shelf' : '');
+  /* ⭐ the ticks need saying once. A column of checkboxes nobody has been told about reads as decoration. */
+  return '<div class="shelfline" data-testid="till-shelf-count">' + txt
+    + (seeAll && !PICKED_IDS.length ? '<span class="sltip">tick rows to change many at once</span>' : '')
+    + '</div>';
 }
 /**
  * ⭐ THE TILE. An image when the product has one (drawn only for the rows on screen, and lazily even then — a shelf of 10,441
@@ -6810,6 +6884,109 @@ function pickAllShown(){
  * ⚠⚠ ONE AT A TIME, AND IT SAYS WHAT HAPPENED TO EACH. A batch that reports only ‘done’ is a batch nobody can
  * trust when it half-works — and half-working is the normal case on a counter whose line comes and goes.
  */
+/** the products behind the ticks, in the order they were ticked — Boolean() drops any that left the shelf since */
+function pickedItems(){
+  return PICKED_IDS.map(function(id){
+    return ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(id); })[0];
+  }).filter(Boolean);
+}
+/**
+ * ⭐⭐⭐ CHANGE PRICE, ON SEVERAL. A morning's revision was one product at a time, thirty times, and that is the
+ * work this screen exists to take away.
+ *
+ * ⚠️⚠️ IT TAKES A RELATIVE CHANGE, NOT ONLY A NUMBER. Setting nine different products to one flat ₹66 is almost
+ * never what anybody means; "+10%" across a category is what a price revision IS. So "66" sets, "+10%" and
+ * "-5%" scale, "+5" and "-5" add — and a percentage on a tiered product moves its LIST price, which is the
+ * figure the structure works from, exactly as the single-product editor does.
+ * ⚠️⚠️ THE ANSWER IS SHOWN BEFORE IT IS TAKEN. The confirm names each product and the price it will land on,
+ * up to six of them, because a bulk write that cannot be read back is a bulk write nobody can check. Over six
+ * it states the range instead — a wall of thirty lines is not read either. [[feedback-text-budget]]
+ */
+async function pickedPrice(){
+  var items = pickedItems(); if (!items.length) return;
+  var typedIn = await ask('A price for all of them — 66. Or a change — +10%, -5%, +2.50.',
+    '', 'New price or change', 'Change the price of ' + items.length);
+  if (typedIn == null) return;
+  var raw = String(typedIn).trim();
+  if (!raw) return;
+  var m = /^([+-])?\s*([0-9]+(?:\.[0-9]+)?)\s*(%?)$/.exec(raw);
+  if (!m) { toastLine('I could not read "' + raw + '". Try 66, or +10%, or -2.50.'); return; }
+  var sign = m[1], amt = Number(m[2]), pct = m[3] === '%';
+  if (pct && !sign) { toastLine('A percentage needs a direction — +10% or -10%.'); return; }
+  /* ⚠️ the list price is what a structure works from, so that is the figure a revision moves */
+  var plan = items.map(function(i){
+    var was = Number(i.price) || 0, now;
+    if (!sign) now = amt;
+    else if (pct) now = was * (1 + (sign === '-' ? -amt : amt) / 100);
+    else now = was + (sign === '-' ? -amt : amt);
+    return { i: i, was: was, now: r2(now) };
+  });
+  /* ⚠️ a price at or below zero is not a discount, it is a bill that pays the customer */
+  var bad = plan.filter(function(p){ return !(p.now > 0); });
+  if (bad.length) {
+    toastLine('That would take ' + bad.length + ' to zero or below (' + esc(bad[0].i.name) + '). Nothing was changed.');
+    return;
+  }
+  var lines = (plan.length <= 6)
+    ? plan.map(function(p){ return p.i.name + '  ' + money(p.was) + ' \u2192 ' + money(p.now); }).join('\n')
+    : plan.length + ' products \u2014 from ' + money(Math.min.apply(null, plan.map(function(p){ return p.now; })))
+      + ' to ' + money(Math.max.apply(null, plan.map(function(p){ return p.now; })));
+  if (!(await sure(lines + '\n\nThis reaches every counter and the shop screen.',
+    'Yes, change ' + plan.length, 'Change the price of ' + plan.length))) return;
+  var done = 0, queued = 0, failed = [];
+  for (var k = 0; k < plan.length; k++) {
+    try {
+      var out = await priceWrite(plan[k].i, plan[k].now);
+      if (out && out.queued) { queued++; done++; }
+      else if (out && out.ok) done++;
+      else failed.push(plan[k].i.name);
+    } catch (e) { failed.push(plan[k].i.name); }
+  }
+  PICKED_IDS = [];
+  changedLoad(); paintHits(); paintCard(); paintChips();
+  toastLine(done + ' of ' + plan.length + ' repriced'
+    + (queued ? ' \u00b7 ' + queued + ' saved here, they will reach the shop' : '')
+    + (failed.length ? ' \u00b7 NOT done: ' + failed.join(', ') : ''));
+}
+/**
+ * ⭐⭐ ADD TO A QUICK KEY GROUP, on several. "Not on any key" is one of this list's own chips, and until now the
+ * only cure was ⚙ Setup, one product at a time.
+ * ⚠️ ADD, NEVER TOGGLE. quickGroupToggle() is right for a single product in the editor, where the tap means
+ * "this one, on or off". Here the ticks mean "these", and a toggle would silently REMOVE the ones already on
+ * the group — the opposite of what the button says. [[feedback-name-vs-behaviour]]
+ * ⚠️ COPY-ON-WRITE, like every other edit to a shop group: the shop keeps publishing its list, this counter
+ * keeps its change, neither overwrites the other.
+ */
+async function pickedGroup(){
+  var items = pickedItems(); if (!items.length) return;
+  /* ⚠️ NOT .sort(). Day-parts have an order and it is not the alphabet — a shop writes Morning, Afternoon,
+     Evening, Night, and alphabetising turned that into Afternoon, Evening, Morning, Night. Object.keys already
+     gives the order they were written in. [[feedback-name-vs-behaviour]] */
+  var all = groupsAll(), names = Object.keys(all);
+  if (!names.length) { toastLine('There are no groups yet \u2014 make one in Setup \u25b8 Quick keys.'); return; }
+  var o = tillOpt();
+  var want = await ask('Which group? ' + names.join(', '), o.group || names[0], 'Group name',
+    'Put ' + items.length + ' on a quick key group');
+  if (want == null) return;
+  var name = String(want).trim();
+  /* ⚠️ a typo must not quietly author a new group nobody meant — the names are on screen, so it can say which */
+  var hit = names.filter(function(nm){ return nm.toLowerCase() === name.toLowerCase(); })[0];
+  if (!hit) { toastLine('There is no group called "' + esc(name) + '". It is one of: ' + names.join(', ')); return; }
+  var wasShop = groupIsShop(hit);
+  var list = (all[hit] || []).map(String), added = 0;
+  items.forEach(function(i){
+    var id = String(i.item_id);
+    if (list.indexOf(id) < 0) { list.push(id); added++; }
+  });
+  o.groups[hit] = list;
+  tillOptSet({ groups: o.groups });
+  PICKED_IDS = [];
+  paintQuick(); paintHits(); paintCard(); paintChips();
+  /* ⚠️ the ones already there are SAID, or "5 chosen" answering "2 added" reads as three failures */
+  toastLine(added + ' added to "' + hit + '"'
+    + (added < items.length ? ' \u00b7 ' + (items.length - added) + ' were already on it' : '')
+    + (wasShop ? ' \u00b7 it is the shop\u2019s group, so this counter now keeps its own copy' : ''));
+}
 async function pickedDo(what){
   var ids = PICKED_IDS.slice();
   if (!ids.length) return;
@@ -6963,7 +7140,10 @@ function cardFoot(i){
  * either place is the same group and copy-on-write still protects the shop's published list.
  */
 function cardGroups(i){
-  var all = groupsAll(), names = Object.keys(all).sort();
+  /* ⚠️ NOT .sort(). Day-parts have an order and it is not the alphabet — a shop writes Morning, Afternoon,
+     Evening, Night, and alphabetising turned that into Afternoon, Evening, Morning, Night. Object.keys already
+     gives the order they were written in. [[feedback-name-vs-behaviour]] */
+  var all = groupsAll(), names = Object.keys(all);
   if (!names.length) return '';
   var o = tillOpt();
   return '<div class="cardblock" data-testid="card-groups">'
@@ -7016,6 +7196,10 @@ function cardChanged(){
 }
 function paintCard(){
   var el = document.getElementById('cardbox'); if (!el) return;
+  /* ⚠️ AN EMPTY STATE, so it goes once there is something in the pane. Above a filled editor it was telling
+     somebody to do the thing they had just done. [[feedback-text-budget]] */
+  var hint = document.getElementById('maintempty');
+  if (hint) hint.style.display = cardItem() ? 'none' : '';
   /* ⭐ THE ONE SETTING ON THIS SCREEN, and it is about the SCREEN, not about a product — so it shows whether or not
      something is selected, which is also the only way it can be found before anything has been tapped. */
   var display = '<div class="cardrow"><label>Thumbnails</label><div class="swwrap">'
@@ -7282,6 +7466,35 @@ function priceBlock(i){
     ? '<span class="was">MRP <s>' + money(mrp) + '</s>' + money(r2(mrp - pay)) + ' under</span>' : '';
   return '<span class="p"><span class="pay">' + money(pay) + '</span><span class="per">' + per + '</span>' + was + '</span>';
 }
+/**
+ * ⭐⭐⭐ THE ROW SAYS WHAT IS WRONG WITH IT ([TILL-58b]). png/MaintV2.png puts a pill on every row that needs
+ * one, and that is what makes the chips above a FILTER rather than the only answer: you narrow to "No price",
+ * and inside that list each row still tells you what it is, so a row that also has no photo is visible as such
+ * without changing chip.
+ *
+ * ⚠️ MAINTENANCE ONLY. A cashier billing a queue must not have six new words to read per row.
+ * ⚠️ TWO AT MOST, in the render's own order of consequence: what is happening NOW (editing), then what is not
+ * sellable (off the shelf, no price), then what merely wants tidying. A row wearing five badges has said
+ * nothing — it is the same as a row wearing none. [[feedback-text-budget]]
+ */
+function rowBadges(i, editing){
+  if (MODE !== 'maintain') return '';
+  var out = [];
+  var add = function(cls, words){ if (out.length < 2) out.push('<span class="rbadge ' + cls + '">' + words + '</span>'); };
+  if (editing) add('now', 'Editing');
+  if (statusOf(i) === 'unavailable') add('off', 'Off the shelf');
+  if (!(Number(i.price) > 0)) add('bad', 'No price');
+  try {
+    var id = String(i.item_id || '');
+    if (CHANGED.price.concat(CHANGED.stock).some(function(c){ return String(c.item_id || '') === id; }))
+      add('was', 'Changed today');
+    var all = groupsAll();
+    if (Object.keys(all).length && !Object.keys(all).some(function(nm){
+      return (all[nm] || []).map(String).indexOf(id) >= 0; })) add('dim', 'Not on any key');
+  } catch (_) {}
+  if (!i.image) add('dim', 'No photo');
+  return out.length ? '<span class="rbadges">' + out.join('') + '</span>' : '';
+}
 function paintHits(){
   paintQuick();
   var list = hits(); if (SEL >= list.length) SEL = 0;
@@ -7300,6 +7513,14 @@ function paintHits(){
   var pickBar = (MODE === 'maintain' && PICKED_IDS.length)
     ? '<div class="pickbar" data-testid="till-pickbar">'
       + '<b>' + PICKED_IDS.length + ' chosen</b>'
+      /**
+       * ⭐⭐ CHANGE PRICE AND ADD TO A GROUP — the render's own two, and the two things a shopkeeper opens this
+       * screen to do to more than one product at a time. Everything here went through the shelf before; a
+       * morning's price revision was one product at a time, thirty times.
+       * ⚠️ BOTH ASK FIRST, and the question states the count, because neither can be taken back by one Escape.
+       */
+      + '<button class="pill" data-testid="till-pick-price" onclick="pickedPrice()">Change price</button>'
+      + '<button class="pill" data-testid="till-pick-group" onclick="pickedGroup()">Add to a quick key group</button>'
       + '<button class="pill" data-testid="till-pick-today" onclick="pickedDo(\'today\')">Run out today</button>'
       + '<button class="pill" data-testid="till-pick-off" onclick="pickedDo(\'off\')">Off the shelf</button>'
       + '<button class="pill" data-testid="till-pick-on" onclick="pickedDo(\'on\')">Back on the shelf</button>'
@@ -7308,7 +7529,7 @@ function paintHits(){
       + '<button class="pill" data-testid="till-pick-none" onclick="pickClear()">Clear</button>'
       + '</div>'
     : '';
-  document.getElementById('hits').innerHTML = head + pickBar + (list.length ? list.map(function(i,n){
+  document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
     var off = statusOf(i) === 'unavailable';
     var editing = (MODE === 'maintain' && CARD_ID && String(CARD_ID) === String(i.item_id));
     var unsaved = (editing && pendCount() > 0);
@@ -7328,7 +7549,10 @@ function paintHits(){
       + '<span class="n">' + esc(i.name)
         + (i.unit ? ' <span class="unit">' + esc(i.unit) + '</span>' : '')
         + '<div class="meta">' + esc(i.code||'') + (i.category ? ' · ' + esc(i.category) : '')
-          + (off ? ' · <b class="offword">off the shelf</b>' : '') + '</div>'
+          + (off && MODE !== 'maintain' ? ' · <b class="offword">off the shelf</b>' : '')
+          /* ⚠️ ON THE META LINE, not under it — stacked, the badges added a line to every row and the
+             render's list is compact enough to read ten products without scrolling. */
+          + rowBadges(i, editing) + '</div>'
         + rowFacts(i)
         /* ⚠️ ONLY WHEN THERE IS ONE. Most products carry no structure, and a chip saying "list price" on ten
            thousand rows is noise that teaches the eye to skip the row it does matter on. */
@@ -7344,7 +7568,11 @@ function paintHits(){
           ? '<button class="addbtn" data-testid="till-add-' + n + '" title="put this on the bill"'
             + ' aria-label="put this on the bill" onclick="event.stopPropagation();add(' + n + ')">+</button>' : '')
       + '</div>';
-  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>');
+  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>')
+    /* ⚠️ AFTER THE ROWS, not before them. Sticky-to-the-bottom only works for an element the scroll would
+       otherwise reach at the end; drawn first it was pushed out of view immediately, so it was stuck to the
+       TOP instead and every tick shoved the shelf down by its height. */
+    + pickBar;
   keepSelInView();
 }
 /** ⭐ THE ROW YOU ARE ON MUST BE THE ROW YOU CAN SEE. Without this the arrows worked and looked broken (2026-09-08). */
