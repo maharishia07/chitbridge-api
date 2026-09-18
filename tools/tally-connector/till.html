@@ -181,8 +181,32 @@
   .lines .ln select{width:100%;padding:5px;border:1px solid var(--warn);border-radius:7px;background:var(--paper);color:var(--warn);font-size:.78em}
   .bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);font-size:.85em;color:var(--dim);flex-wrap:wrap}
   .bar b{color:var(--ink)}
-  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch}
-  .chips button{white-space:nowrap;padding:6px 11px;border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
+  /**
+   * ⚠️ THE ROW ALWAYS SCROLLED; IT NEVER SAID SO. With sixty products and nine categories the last chip was cut
+   * mid-word at the right edge of a terminal — "Brea…" — with no fade, no arrow and no scrollbar, so a
+   * shopkeeper with a mouse had no reason to think Sweets or Curries existed at all (found in a screenshot
+   * review, 2026-09-18).
+   * ⚠️ THE HINT ONLY APPEARS WHEN IT IS TRUE. .more is set by paintChips() from a real measurement, not left on
+   * permanently — a fade over a row that fits is a promise of chips that are not there.
+   * ⚠️ AND IT IS SIDE-AGNOSTIC: the fade is drawn at the END of the row in the page's own direction, so it is
+   * the right edge in English and the left in Arabic.
+   */
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch;
+         scrollbar-width:thin;position:relative}
+  .chips.more{-webkit-mask-image:linear-gradient(to var(--chip-fade,right),#000 calc(100% - 34px),transparent);
+              mask-image:linear-gradient(to var(--chip-fade,right),#000 calc(100% - 34px),transparent)}
+  [dir="rtl"] .chips.more{--chip-fade:left}
+  /* a chip a thumb can catch, and a scrollbar thin enough not to shout */
+  .chips::-webkit-scrollbar{height:4px}
+  .chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+  /**
+   * ⚠️⚠️ flex:0 0 auto — A CHIP MUST NOT SHRINK. These are flex items, so with eleven categories the browser
+   * squashed them to fit rather than letting the row overflow: the text was clipped inside the button ("Brea…")
+   * while scrollWidth stayed equal to clientWidth, so the row could not be scrolled AND nothing could detect
+   * that anything was hidden. Keeping their natural width makes the overflow real, which is what makes both
+   * the scrolling and the .more fade above honest. (Found in a screenshot review, 2026-09-18.)
+   */
+  .chips button{flex:0 0 auto;white-space:nowrap;padding:6px 11px;border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   /* the consignment's own facts — shown only when this trade asks for them */
   /* what is not going: still on the screen, still on the paper, out of the way of the work */
@@ -200,6 +224,9 @@
   /* ⭐ the design's badge — the block says its own name, in ink, the way the mockup heads the panel */
   .qbadge{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--card);
           border-radius:10px;padding:7px 11px;font-weight:700;font-size:.86em;white-space:nowrap}
+  /* the Photos switch reads as a control, not a label — same height as the selects beside it */
+  .qphotos{display:inline-flex;align-items:center;gap:6px;font-size:.82em;padding:6px 10px;border:1px solid var(--edge);border-radius:10px;background:var(--card);cursor:pointer;white-space:nowrap}
+  .qphotos input{margin:0;cursor:pointer}
   .qbadge .n{background:var(--accent);color:#1D1B16;border-radius:999px;min-width:18px;height:18px;
           display:inline-grid;place-items:center;font-size:.82em;padding:0 5px}
   .qbar select,.qbar button{font:inherit;font-size:.82em;padding:6px 10px;border:1px solid var(--edge);
@@ -341,6 +368,37 @@
         background:var(--ok-tint);color:var(--ok);font-weight:700}
   .daylink{border:0;background:transparent;color:var(--blue);cursor:pointer;font:inherit;font-size:.85em;
         text-decoration:underline;padding:4px}
+  /**
+   * ⭐⭐ THE IDLE SCREEN (Athi, 2026-09-18: *"the shops logo and other thing to be seen during idle period"*).
+   *
+   * ⚠️⚠️ IT MUST NEVER COST A SALE. A scanner is a keyboard: if a customer puts something down while the screen
+   * is showing, the cashier scans and the FIRST scan has to land on the bill, not be eaten by a screensaver.
+   * So it is dismissed by any key, any touch and any pointer — and the key that dismissed it is passed through
+   * to the search box rather than swallowed (idleWake).
+   * ⚠️ OFF BY DEFAULT. A till that blanks itself unasked is a till a shopkeeper distrusts on day one.
+   */
+  .idle{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:14px;background:var(--paper);cursor:pointer;padding:24px;text-align:center}
+  .idle[hidden]{display:none}
+  .idle img{max-width:min(560px,86vw);max-height:56vh;object-fit:contain;border-radius:16px;border:1px solid var(--line)}
+  .idle .iname{font-size:1.6em;font-weight:800}
+  .idle .iclock{font-size:3em;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .idle .ifoot{color:var(--dim);font-size:.9em}
+  /* today, read off this counter's own bills */
+  .today{display:flex;flex-direction:column;gap:2px;padding:8px 8px 6px}
+  .trow{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:3px 0;font-size:.9em}
+  .trow>span{color:var(--dim)}
+  .trow>b{font-variant-numeric:tabular-nums}
+  .trow>b.big{font-size:1.5em}
+  .bohni{display:flex;flex-direction:column;gap:2px;margin:8px 0 4px;padding:8px 10px;border-radius:10px;
+         background:var(--ok-tint);border:1px solid var(--ok)}
+  .bohni b{color:var(--ok);font-size:.78em;text-transform:uppercase;letter-spacing:.05em}
+  .bohni span{font-variant-numeric:tabular-nums}
+  .bohni.none{background:var(--panel);border-color:var(--line)}
+  .bohni.none b{color:var(--dim)}
+  .tmoved{margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
+  .tmoved>b{display:block;font-size:.78em;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;padding-bottom:2px}
+  .tnote{margin-top:8px;color:var(--dim);font-size:.8em;line-height:1.35}
   /* the day's own list — the shopkeeper's, written and ticked where they stand */
   .todo{border-top:1px solid var(--line);padding-top:8px;margin-top:2px;display:flex;flex-direction:column;gap:4px}
   .todohead{display:flex;align-items:baseline;justify-content:space-between}
@@ -476,8 +534,33 @@
    * eye had nothing to land on. In the design they are a cream card with the group controls along its top —
    * one object that says "these are the keys", with the shelf below it plainly separate.
    */
+  /**
+   * ⚠️⚠️ IT SCROLLS, AND IT IS CAPPED (Athi, 2026-09-18: *"if we have more quick key items, are they
+   * scrolling?"* — measured: they were not). With a sixty-item group the panel grew to 621px and squeezed the
+   * product list underneath it to SEVENTY-TWO PIXELS, about one row: the keys quietly ate the shelf. Nothing
+   * overflowed, so nothing scrolled, so the rest of the keys were simply unreachable.
+   * ⭐ 42vh leaves the shelf, the bill and the shortcuts their share of a terminal, and the keys scroll inside
+   * their own panel — which is also what makes a long group usable at all.
+   */
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;
-         margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+         margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);
+         max-height:42vh;overflow-y:auto;align-content:start}
+  /* the bar stays put while the keys move under it — it says which list you are looking at */
+  .quick .qbar{position:sticky;top:-12px;z-index:2;background:var(--panel);
+               margin:-12px -12px 0;padding:12px 12px 6px}
+  /* ⚠️ a phone shows its keys inside the Items step, where 42vh of a short screen is too little */
+  @media (max-width:600px){ .quick{max-height:56vh} }
+  /**
+   * ⭐⭐ SELF SERVICE IS A DIFFERENT SCREEN (Athi, 2026-09-18: *"the same panel can be used as a self service
+   * panel"*). On a counter the keys SHARE the screen with the shelf, the bill and the shortcuts, so they are
+   * capped and scroll. On a kiosk the keys ARE the screen and a customer is choosing by picture from a metre
+   * away — so the cap comes off, the tiles get wider, and the photo box is turned up through the library own
+   * lever (--sk-ph) rather than by overriding its rules.
+   * ⚠️ vertical is the layout the kiosk preset uses (screen-kit PRESETS.kiosk), so keying on the layout covers
+   * a shop that built its own kiosk-ish combination without naming it kiosk.
+   */
+  body[data-sklayout="vertical"] .quick{max-height:none;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));--sk-ph:150px}
+  body[data-sklayout="vertical"] .quick .sk-name{font-size:1.1em}
   .quick > button:not(.sk-tile){padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);
          cursor:pointer;text-align:left;min-height:92px;display:flex;flex-direction:column;gap:4px}
   .quick > button:not(.sk-tile) b{display:block;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
@@ -831,6 +914,11 @@
     body[data-hand="left"] .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto)}
     body[data-hand="left"] .hit .addbtn{order:0}
     body[data-hand="left"] .pay,body[data-hand="left"] .go{flex-direction:row}
+    /* ⚠️ THE STEP BAR TOO. It was left out of this exemption and stayed mirrored on a mouse-driven screen, so a
+       kiosk on a desktop showed "Pay ›" on the left and "Items" on the right — the mirror half-applied, which
+       is worse than either choice. Found in a self-service screenshot, 2026-09-18. */
+    body[data-hand="left"] .stepbar button[data-testid="till-step-pay"],
+    body[data-hand="left"] .stepbar button[data-testid="till-step-pick"]{order:0}
   }
   .go{display:flex;gap:8px;padding:0 12px 10px}
   .go button{flex:1;padding:16px;font-size:1.1em;font-weight:700;border-radius:var(--radius);border:1px solid var(--edge);background:var(--paper);cursor:pointer}
@@ -999,6 +1087,9 @@
        looking exactly like an "off" one — found by a critic pass, 2026-09-18. -->
   <div class="menu sfull" id="tillmenu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
 </aside>
+<!-- ⭐⭐ THE IDLE SCREEN — the shop's own picture while nobody is billing. Painted by paintIdle(); shown by a
+     timer; dismissed by ANY key, scan or touch (see idleWake). -->
+<div class="idle" id="tillidle" hidden aria-hidden="true"></div>
 <div class="wrap">
   <section class="left">
     <header>
@@ -2999,6 +3090,19 @@ var TILL_MENU = [
    * unsent from yesterday. Bless the day and check the till in one place.
    */
   { id: 'day',     icon: '🪔', title: 'Start your day',  sum: 'your image · the day opened · what needs doing', day: true },
+  /**
+   * ⭐⭐ WHAT TODAY HAS DONE (Athi, 2026-09-18: *"need to think MIS for the day etc in the menu, total sale and a
+   * small inventory and so on, self sustaining, possible?"*).
+   *
+   * Every figure here is read from THIS counter's own bills, so it works with the line down — which is what
+   * "self sustaining" has to mean at a till. A shopkeeper can close up knowing the day without opening a
+   * back office or waiting for a sync.
+   * ⚠️⚠️ IT DOES NOT SAY "STOCK". Nothing on this counter counts stock down: there is no opening balance, no
+   * goods-in, nothing to subtract from. So it reports WHAT MOVED — sold today, and what somebody marked as run
+   * out — and never a quantity on hand. A number a shopkeeper cannot defend is the one injury this counter has
+   * already been taught not to repeat.
+   */
+  { id: 'today',   icon: '📊', title: 'Today',         sum: 'the sale so far · what moved · bohni',  today: true },
   { id: 'bills',   icon: '🧾', title: 'Bills',         sum: "today's bills · why one is stuck",      ops: ['bills', 'stuck'] },
   { id: 'shop',    icon: '🏷️', title: 'Shop & prices', sum: 'read the shop again · the TV sign',     ops: ['refresh', 'screen'] },
   { id: 'counter', icon: '🧑', title: 'This counter',  sum: 'a break · settings for this till',      ops: ['break-menu', 'settings', 'install'] },
@@ -3043,6 +3147,60 @@ async function beginDay(){
   paintMenu();
 }
 function dayImg(){ return ls.get(shopLs('cb_till_dayimg'), ''); }
+/**
+ * ── ⭐⭐ THE IDLE SCREEN ──────────────────────────────────────────────────────────────────────────────────────
+ * Minutes of quiet, then the shop's own picture and the time. It shows what the shop already owns — the picture
+ * it put on Start your day — so there is nothing to license and nothing to fetch.
+ * ⚠️ ANY INPUT WAKES IT, and a keystroke is REPLAYED into the search box, so the first barcode of the next
+ * customer lands on the bill instead of being spent opening the screen.
+ * ⚠️ It never shows while a bill is being built, while a dialog is open, or while the menu is open — a counter
+ * mid-sale is not idle, whatever the timer thinks.
+ */
+var IDLE_T = null;
+function idleMins(){ var v = Number(ls.get(shopLs('cb_till_idle'), '0')) || 0; return Math.max(0, Math.min(120, v)); }
+function idleOn(){ return !document.getElementById('tillidle').hidden; }
+function idleShow(){
+  if (idleOn()) return;
+  if (!idleMins()) return;
+  if (CART && CART.length) return;                                   /* a bill in progress is not idle */
+  if (document.querySelector('dialog[open]')) return;
+  var m = document.getElementById('tillmenu'); if (m && !m.hidden) return;
+  var el = document.getElementById('tillidle'); if (!el) return;
+  var img = dayImg();
+  el.innerHTML = (img ? '<img src="' + esc(img) + '" alt="">' : '')
+    + '<div class="iname">' + esc(ls.get('cb_till_name', '') || (S && S.entity_name) || '') + '</div>'
+    + '<div class="iclock" id="idleclock">' + esc(new Date().toTimeString().slice(0, 5)) + '</div>'
+    + '<div class="ifoot">Touch, or press any key, to go on billing</div>';
+  el.hidden = false; el.setAttribute('aria-hidden', 'false');
+}
+/** wake, and hand the keystroke that woke us to the search box so a scan is not eaten */
+function idleWake(e){
+  var el = document.getElementById('tillidle');
+  if (el && !el.hidden) {
+    el.hidden = true; el.setAttribute('aria-hidden', 'true');
+    try { focusSearch(); } catch (_) {}
+    /* ⚠️ a PRINTABLE key is replayed — the scanner's first digit must reach the box it was aimed at */
+    if (e && e.type === 'keydown' && e.key && e.key.length === 1) {
+      var q = document.getElementById('q');
+      if (q) { q.value += e.key; try { searchTyped(); } catch (_) {} e.preventDefault(); }
+    }
+  }
+  idlePoke();
+}
+/** the idle delay, per shop and per device — 0 means never (the default) */
+function idleSet(v){
+  try { ls.set(shopLs('cb_till_idle'), String(Number(v) || 0)); } catch (_) {}
+  idlePoke();
+}
+function idlePoke(){
+  if (IDLE_T) clearTimeout(IDLE_T);
+  var m = idleMins(); if (!m) return;
+  IDLE_T = setTimeout(idleShow, m * 60000);
+}
+['keydown', 'pointerdown', 'wheel', 'touchstart'].forEach(function(t){
+  document.addEventListener(t, idleWake, true);
+});
+setInterval(function(){ var c = document.getElementById('idleclock'); if (c) c.textContent = new Date().toTimeString().slice(0, 5); }, 20000);
 function dayImgPick(){
   var i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*';
   i.onchange = function(){
@@ -3142,6 +3300,89 @@ function menuTodoBody(){
     + '</div>'
     + '</div>';
 }
+/**
+ * ⭐⭐ TODAY, FROM THIS COUNTER'S OWN BILLS. Nothing here is fetched: the bills are already on the device
+ * because that is how this counter bills at all, so the day reads the same with the line up or down.
+ *
+ * ⚠️ THE BUSINESS DAY, NOT THE CALENDAR DAY — a shop that closes at 01:00 counts those bills as yesterday's,
+ * which is what bizDayStart() is for and what the day-close sheet already uses.
+ */
+var TODAY_BILLS = null, TODAY_AT = 0;
+async function todayBills(){
+  /* a short memo so opening the menu three times does not re-read the store three times */
+  if (TODAY_BILLS && Date.now() - TODAY_AT < 20000) return TODAY_BILLS;
+  var all = [];
+  try { all = (await HOST.bills()) || []; } catch (_) { all = []; }
+  var since = bizDayStart().getTime();
+  TODAY_BILLS = all.filter(function(b){ return b && b.at && new Date(b.at).getTime() >= since; })
+                   .sort(function(a, b){ return new Date(a.at) - new Date(b.at); });
+  TODAY_AT = Date.now();
+  return TODAY_BILLS;
+}
+/**
+ * ⭐⭐⭐ BOHNI — THE FIRST SALE OF THE DAY (Athi, 2026-09-18; the custom is documented, not invented: the first
+ * sale is widely held to set the day's luck, is kept cash-only and un-discounted, and the money is touched to
+ * the shop's picture and the register — en.wikipedia.org/wiki/Bohni).
+ *
+ * ⚠️ IT REPORTS, IT NEVER ENFORCES. The counter does not refuse a card on the first bill or block a discount:
+ * that is the shopkeeper's custom to keep or not, and a till that argued with them about it would be
+ * insufferable by the second morning. It marks which bill was the bohni and leaves it there.
+ */
+function bohniOf(bills){ return (bills && bills.length) ? bills[0] : null; }
+function menuTodayBody(){
+  /* painted synchronously from whatever the last read gave us, then repainted when the read lands */
+  var bills = TODAY_BILLS;
+  if (!bills) { todayBills().then(function(){ try { paintMenu(); } catch (_) {} }); }
+  bills = bills || [];
+  var n = bills.length;
+  var total = bills.reduce(function(a, b){ return a + (Number(b.total) || 0); }, 0);
+  var saved = bills.reduce(function(a, b){ return a + (Number(b.saved) || 0); }, 0);
+  /* how the money came in — recorded on each bill, never re-derived */
+  var by = {};
+  bills.forEach(function(b){ (b.payments || []).forEach(function(pmt){
+    var how = String(pmt.how || 'cash'); by[how] = r2((by[how] || 0) + (Number(pmt.amount) || 0)); }); });
+  /* what moved: quantity per product across today's lines */
+  var moved = {};
+  bills.forEach(function(b){ (b.lines || []).forEach(function(l){
+    if (!l || !l.name) return; moved[l.name] = (moved[l.name] || 0) + (Number(l.qty) || 0); }); });
+  var top = Object.keys(moved).sort(function(a, b){ return moved[b] - moved[a]; }).slice(0, 5);
+  /* the busiest hour, said as a range a person reads rather than a number */
+  var hours = {};
+  bills.forEach(function(b){ var h = new Date(b.at).getHours(); hours[h] = (hours[h] || 0) + 1; });
+  var busiest = Object.keys(hours).sort(function(a, b){ return hours[b] - hours[a]; })[0];
+  var soldOut = quickSold().length;
+  var bohni = bohniOf(bills);
+
+  var row = function(label, value, strong){
+    return '<div class="trow"><span>' + esc(label) + '</span><b' + (strong ? ' class="big"' : '') + '>' + value + '</b></div>';
+  };
+  var out = '<div class="today" data-testid="till-today">'
+    + row("Today's sale", money(total), true)
+    + row('Bills', String(n))
+    + (n ? row('Average bill', money(r2(total / n))) : '')
+    + (saved ? row('Taken off by offers', money(saved)) : '');
+  Object.keys(by).sort().forEach(function(how){ out += row(how.charAt(0).toUpperCase() + how.slice(1), money(by[how])); });
+  if (busiest != null && n > 1) out += row('Busiest hour', String(busiest).padStart(2, '0') + ':00–' + String((Number(busiest) + 1) % 24).padStart(2, '0') + ':00');
+
+  /* ⭐ bohni — the first sale, named. Before there is one, it says so: a blank is not an answer. */
+  out += '<div class="bohni' + (bohni ? '' : ' none') + '" data-testid="till-bohni">'
+    + '<b>Bohni</b>'
+    + (bohni
+        ? '<span>' + esc(String(bohni.no || '')) + ' · ' + money(Number(bohni.total) || 0)
+          + ' · ' + esc(new Date(bohni.at).toTimeString().slice(0, 5)) + '</span>'
+        : '<span>the first sale of the day is still to come</span>')
+    + '</div>';
+
+  if (top.length) {
+    out += '<div class="tmoved"><b>What moved</b>'
+      + top.map(function(nm){ return '<div class="trow"><span>' + esc(nm) + '</span><b>' + moved[nm] + '</b></div>'; }).join('')
+      + '</div>';
+  }
+  /* ⚠️ SAID PLAINLY: this is movement, not stock. See the note on the section. */
+  out += '<div class="tnote">' + (soldOut ? soldOut + ' marked run out today. ' : '')
+    + 'This counter counts what was SOLD; it does not hold stock figures.</div>';
+  return out + '</div>';
+}
 /** one action row, the same shape in every section */
 function menuOpRow(op){
   if (!op) return '';
@@ -3166,7 +3407,7 @@ function paintMenu(){
     + '</div>';
   var secs = TILL_MENU.map(function(sec){
     var open = menuFirstSection() === sec.id;
-    var body = sec.day ? menuDayBody() : sec.look
+    var body = sec.day ? menuDayBody() : sec.today ? menuTodayBody() : sec.look
       ? '<div class="menusec" data-testid="till-quick-settings">'
         + '<div class="mq">'
         + '<label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook(\'cb_till_fs\',this.value)">'
@@ -3174,6 +3415,9 @@ function paintMenu(){
         + '<label title="Look">◐ <select id="mq_theme" data-testid="till-mq-theme" onchange="quickLook(\'cb_till_theme\',this.value)">'
         + '<option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select></label>'
         /* ⭐ which edge the menu sits on — see applyHand(). Per device, like the two beside it. */
+        /* ⭐ the idle screen — OFF by default; a till that blanks itself unasked is one a shopkeeper distrusts */
+        + '<label title="Show the shop picture after a quiet spell">🖼 <select id="mq_idle" data-testid="till-mq-idle" onchange="idleSet(this.value)">'
+        + '<option value="0">No idle screen</option><option value="3">After 3 min</option><option value="5">After 5 min</option><option value="10">After 10 min</option></select></label>'
         + '<label title="Which hand this counter is used with — moves the + on a row, the pay buttons and a key\'s controls">✋ <select id="mq_hand" data-testid="till-mq-hand" onchange="quickLook(\'cb_till_hand\',this.value)">'
         + '<option value="right">Right hand</option><option value="left">Left hand</option></select></label>'
         + '<label title="What this counter shows">▦ <select id="mq_layout" data-testid="till-mq-layout" onchange="tillOptSet({layout:this.value});paintMenuQuick()">'
@@ -3289,6 +3533,7 @@ function paintMenuQuick(){
   set('mq_fs', ls.get('cb_till_fs', '16px'));
   set('mq_theme', ls.get('cb_till_theme', 'light'));
   set('mq_hand', ls.get('cb_till_hand', 'right'));
+  set('mq_idle', ls.get(shopLs('cb_till_idle'), '0'));
   set('mq_layout', (tillOpt().layout) || 'full');
   paintViewChips();
 }
@@ -3346,6 +3591,12 @@ function paintChips(){
     + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer</button>'
     + '<button class="' + (FILTER.off ? 'on' : '') + '" data-testid="till-chip-off" onclick="setFilter(\'off\')">Off the shelf <span class="u">' + offN + '</span></button>'
     + list.map(function(c){ return '<button class="' + (FILTER.cat === c ? 'on' : '') + '" data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '" onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">' + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'; }).join('');
+  chipsOverflow();
+}
+/** does the chip row actually run past its own edge? measured, never assumed — see the note on .chips */
+function chipsOverflow(){
+  var el = document.getElementById('chips'); if (!el) return;
+  el.classList.toggle('more', el.scrollWidth > el.clientWidth + 2);
 }
 /**
  * ⭐⭐ FINDING A PRODUCT IS NOT THE COUNTER'S OWN IDEA (2026-09-08). Every rule about what "ac co" means lives in ONE file,
@@ -3475,7 +3726,30 @@ function hits(){
   }
   /* ⚠️ one more than we show, so the list knows whether there IS a next page without counting the whole shop */
   HAS_MORE = found.length > SHOWN;
-  return HAS_MORE ? found.slice(0, SHOWN) : found;
+  found = HAS_MORE ? found.slice(0, SHOWN) : found;
+  return keysFirst(found, raw);
+}
+/**
+ * ⭐⭐ WHAT IS ON THE KEYS COMES FIRST WHILE SEARCHING (Athi, 2026-09-18: *"while searching, can we bring the
+ * quick key item on top and then below other items?"*).
+ *
+ * The keys are the shop's own answer to "what do we sell most" — learned from its bills, or written by hand as
+ * a group. So when "dosa" matches nine things, the dosas this shop actually sells lead and the rest follow.
+ *
+ * ⚠️ IT IS A PARTITION, NOT A RE-SORT. Relevance still decides the order INSIDE each half, so the best match is
+ * still the best match; all this does is lift the ones the counter already puts under the cashier's thumb.
+ * ⚠️ ONLY WHILE SEARCHING. With an empty box the shelf keeps its own order — the keys are already on screen
+ * above it, and repeating them at the top of the list would just be the same twelve things twice.
+ * ⚠️ A SCAN IS UNTOUCHED: scanned() matches a code and bills it before this is ever reached.
+ */
+function keysFirst(list, raw){
+  if (!raw || !list || list.length < 2) return list;
+  if (!QUICK || !QUICK.length) return list;
+  var onKeys = {};
+  QUICK.forEach(function(i){ if (i && i.item_id) onKeys[String(i.item_id)] = 1; });
+  var top = [], rest = [];
+  list.forEach(function(i){ (onKeys[String(i.item_id)] ? top : rest).push(i); });
+  return top.length ? top.concat(rest) : list;
 }
 var PAGE_ROWS = 60, SHOWN = PAGE_ROWS, HAS_MORE = false;
 /** ⭐ back to the first page — called wherever the QUESTION changes, never when the answer merely repaints */
@@ -3769,6 +4043,7 @@ function partOfDay(h){
  * and a list of options maintained twice is a list that disagrees with itself the first time one is edited.
  * Short label for the bar above the keys, long one for Setup, where there is room to explain.
  */
+var QUICK_MORE = 0;   /* keys a cap is holding back, said out loud in QUICK_WHY */
 var QUICK_SRC = [
   ['frequent', 'What sells now',    "What sells at this hour — learned from this counter's own bills"],
   ['groups',   'My group',          'A group I made'],
@@ -3868,8 +4143,14 @@ function applyTillOptions(){
   /* ⭐ vertical rules between the bill's columns — a taste, so a tick rather than a decision */
   b.classList.toggle('cart-rules', (o.cols || {}).rules === true);
   if (o.shape && o.shape !== 'auto') b.classList.add('shape-' + o.shape);
+  /* ⭐ which screen-library layout is in force, so the CSS can tell a COUNTER from a SELF-SERVICE screen */
+  try { b.setAttribute('data-sklayout', (screenCfg().layout) || 'auto'); } catch (_) {}
   try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
   try { paintHits(); } catch (_) {}
+  /* ⚠️ THE CHIPS REPAINT WITH EVERYTHING ELSE. applyTillOptions() redrew the keys and the shelf but not the
+     category row, so a counter whose options changed before the shop finished loading kept whatever chips it
+     had at that moment — on a fresh screenshot run, none at all. (2026-09-18) */
+  try { paintChips(); } catch (_) {}
   stepsApply();
 }
 /**
@@ -3885,7 +4166,15 @@ function stepsWanted(){
   var o = tillOpt();
   if (o.shape === 'mobile') return true;
   if (o.shape && o.shape !== 'auto') return false;
-  try { var L = screenCfg().layout; if (L === 'phone' || L === 'handheld') return true; } catch (_) {}
+  /**
+   * ⭐⭐ SELF SERVICE USES THE SAME THREE STEPS (Athi, 2026-09-18: *"another option could be full panel with
+   * quick keys and click next to complete the cart and payment mode"*). That is Items → Bill → Pay, which this
+   * counter already has for a phone — so a kiosk turns the SAME flow on rather than growing a second one.
+   * A customer picks from a full panel of pictures, presses Pay, and the bill and the payment follow.
+   * ⚠️ 'vertical' is the layout the kiosk preset carries (screen-kit PRESETS.kiosk), and the CSS keys the big
+   * photos off the same attribute — one choice, one behaviour. [[feedback-stay-in-the-construct]]
+   */
+  try { var L = screenCfg().layout; if (L === 'phone' || L === 'handheld' || L === 'vertical') return true; } catch (_) {}
   return (window.innerWidth || 1024) < 600;
 }
 function stepsApply(){
@@ -4074,16 +4363,27 @@ async function loadQuick(){
   var byId = {}; items.forEach(function(i){ byId[i.item_id] = i; });
   var made = groupIds().map(function(id){ return byId[id]; }).filter(Boolean);
   if (opt.quickSource === 'groups') {
-    QUICK = made.slice(0, 24);
-    QUICK_WHY = opt.group || 'no group chosen';
+    /**
+     * ⚠️⚠️ A GROUP IS SHOWN WHOLE. This was slice(0, 24): a group of sixty drew twenty-four keys and said
+     * nothing about the other thirty-six — a list somebody built by hand, silently truncated. A person who put
+     * sixty things in a group meant all sixty, and now that the panel scrolls there is somewhere to put them.
+     * ⭐ 120 is a stop against a runaway list, not a design limit; QUICK_MORE below says when it bites, because
+     * a cap nobody is told about is the fault this replaces. [[feedback-silence-is-the-bug]]
+     */
+    QUICK = made.slice(0, 120);
+    QUICK_MORE = Math.max(0, made.length - QUICK.length);
+    QUICK_WHY = (opt.group || 'no group chosen') + (QUICK_MORE ? ' · ' + QUICK_MORE + ' more not shown' : '');
   } else if (opt.quickSource === 'both') {
+    QUICK_MORE = 0;
     var seen = {}, out = [];
     made.forEach(function(i){ if (!seen[i.item_id]) { seen[i.item_id] = 1; out.push(i); } });
     ranked.forEach(function(i){ if (out.length < 24 && !seen[i.item_id]) { seen[i.item_id] = 1; out.push(i); } });
     QUICK = out;
     QUICK_WHY = (opt.group ? opt.group + (learned ? ' · then ' + learned : '') : learned);
   } else {
+    /* learned suggestions are a SHORTLIST, not a list somebody wrote — twelve is the design, not a truncation */
     QUICK = ranked.slice(0, 12);
+    QUICK_MORE = 0;
     QUICK_WHY = learned;
   }
   paintQuick();
@@ -4116,10 +4416,24 @@ function paintQuick(){
    * came from, and choosing is not authoring.
    */
   var names = Object.keys(o.groups || {}).sort();
+  /* the screen config is read BEFORE the bar, because the bar now carries the Photos switch */
+  var cfg = screenCfg(), K = window.CBScreen;
   var bar = '<div class="qbar" data-testid="till-quick-bar">'
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
     + '<span class="qbadge" data-testid="till-quick-badge">⊞ Quick keys'
     + (QUICK.length ? '<span class="n">' + QUICK.length + '</span>' : '') + '</span>'
+    /**
+     * ⭐ PHOTOS, WHERE THE DESIGNER PUT IT (png/FullDesktop.png has this switch on the quick-keys bar) and where
+     * Athi asked for it: *"a radio button to on or off the images"*. Seeing the keys with and without pictures
+     * is a judgement made while LOOKING at them, so the switch belongs beside them rather than three taps away.
+     * ⚠️ IT WRITES THE SAME SETTING ⚙ Settings writes (screenSet → the screen config). Not a second copy of the
+     * state: one source, two places to reach it. [[feedback-stay-in-the-construct]]
+     * ⚠️ This is the KEYS' photos. Thumbnails on the shelf list are their own switch (cb_till_thumbs) because
+     * they are a different surface with a different cost — a row is read, a key is aimed at.
+     */
+    + '<label class="qphotos" data-testid="till-quick-photos" title="pictures on the keys">'
+    + '<input type="checkbox"' + (cfg.photos ? ' checked' : '') + ' onchange="screenSet({photos:this.checked})">'
+    + '<span>Photos</span></label>'
     /* ⭐ WHERE THESE KEYS COME FROM, said by the control that changes it. The same three sources as ⚙ Setup —
        one setting, two places to reach it, never two opinions about it (tillOptSet writes both). */
     + '<select data-testid="till-quick-src" title="where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
@@ -4141,7 +4455,6 @@ function paintQuick(){
    * ⚠️ ＋ (put in the group) and ⊖ (take out of it) were HERE until 2026-09-18 and are not any more — see the bar
    * above: on the sell screen a key says what it costs and whether it has run out, and nothing else.
    */
-  var cfg = screenCfg(), K = window.CBScreen;
   var colour = K ? K.groupColour(usesGroups && o.group ? o.group : 0) : null;
   var inBill = {}; CART.forEach(function(c){ inBill[String(c.item_id)] = (inBill[String(c.item_id)] || 0) + (Number(c.qty) || 0); });
   el.className = 'quick sk-style-' + (cfg.tile || 'classic') + (cfg.photos ? ' sk-photos' : '');
@@ -5624,6 +5937,19 @@ function price(){
   if (inPlace) { for (var n = 0; n < CART.length && inPlace; n++) inPlace = paintCartRow(n); }
   if (!inPlace) paintCart();
   paintTotals();
+  /**
+   * ⚠️⚠️ THE KEYS CARRY THE COUNT TOO, so they have to be redrawn with the bill. Athi, 2026-09-18: *"when i
+   * touch the quick key, the item is coming in the screen, again touching count increases, but not on the
+   * image or quick key? when i move to the next item, that count shows the final one."* Exactly right: the
+   * badge is built by paintQuick() from the cart, and price() repainted the cart and the totals and left the
+   * keys alone — so the number only caught up when something ELSE happened to redraw them (choosing another
+   * row calls paintHits, which calls paintQuick). A key that has been pressed three times has to say three
+   * while the customer is still standing there.
+   * ⚠️ The library draws the badge, not this line — one renderer, so a tile style that shows the count
+   * differently keeps doing so. paintHits() already repaints the keys on every keystroke, so this costs
+   * nothing new.
+   */
+  try { paintQuick(); } catch (_) {}
 }
 /** the words under a line: its price, its rate, and the offer that came off it */
 /**
@@ -9667,7 +9993,8 @@ var _install = null;
  */
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); _install = e;
   var b = document.getElementById('installbtn'); if (b) b.style.display = '';
-  try { paintSide(); } catch (_) {} });
+  try { paintSide(); } catch (_) {}
+try { idlePoke(); } catch (_) {} });
 function installApp(){ if (!_install) return; _install.prompt(); _install = null;
   var b = document.getElementById('installbtn'); if (b) b.style.display = 'none';
   try { paintSide(); } catch (_) {}   /* it is spent — take it off the strip too */ }
@@ -9683,7 +10010,7 @@ gripInit();
 cartGripInit();
 /* ⚠️ the bill's columns depend on the width (cartCols), so the bill is repainted when the width changes —
    otherwise a window dragged narrower keeps a grid with one more track than it has cells. */
-window.addEventListener('resize', function(){ try { paintCart(); } catch (_) {} try { stepsApply(); } catch (_) {} });
+window.addEventListener('resize', function(){ try { chipsOverflow(); } catch (_) {} try { paintCart(); } catch (_) {} try { stepsApply(); } catch (_) {} });
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
 ['mic','micphone','micname'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK() && !recordOK()) b.style.display = 'none'; });
 setMode(ls.get('cb_till_mode', 'sell'));
