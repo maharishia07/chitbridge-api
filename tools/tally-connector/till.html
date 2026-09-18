@@ -4539,10 +4539,25 @@ async function quickSyncScreen(){
     Object.keys(cfg).forEach(function(k){
       if (mine[k] === undefined) { next[k] = cfg[k]; changed = true; }
     });
-    if (!changed) return;
     Object.keys(mine).forEach(function(k){ next[k] = mine[k]; });   /* the device's own choices win */
+    /**
+     * ⭐⭐ AND THE SHOP SAYS WHAT KIND OF SHOP IT IS. Athi: *"i wanted to have the till which caters to demands
+     * very quickly, say veg market, hotel, simple shops."* A hotel wants a kitchen ticket; a vegetable market
+     * wants the weighing machine's labels. Both were device-only switches, so every counter in a chain had
+     * to be set by hand — the same fault the groups had, in a different place.
+     * ⚠️ DEFAULTS, NOT ORDERS: only keys this counter has never set itself are taken. config.till = { kot, weigh }.
+     */
+    var tillDefaults = cfg.till && typeof cfg.till === "object" ? cfg.till : null;
+    if (tillDefaults) {
+      var raw = {};
+      try { raw = JSON.parse(ls.get(shopLs("cb_till_opt"), "{}")) || {}; } catch (_) {}
+      var patch = {};
+      Object.keys(tillDefaults).forEach(function(k){ if (raw[k] === undefined) { patch[k] = tillDefaults[k]; changed = true; } });
+      if (Object.keys(patch).length) tillOptSet(patch);
+    }
+    if (!changed) return;
     tillOptSet({ screen: next });
-    try { applyLook(); loadQuick(); } catch (_) {}
+    try { applyLook(); loadQuick(); paintOrderBar(); } catch (_) {}
   } catch (_) {}
 }
 var SHOPG_AT = 0;
