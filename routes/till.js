@@ -773,11 +773,18 @@ async function counterOfReq(req) {
 }
 const qk = require('../lib/quick-keys');
 
-/* ⭐ the shop's other counters, id+name only (decision 3's "also mark sold out on...?" prompt) — see counters.js's listNarrow */
+/**
+ * ⭐ the shop's other counters, id+name only (decision 3's "also mark sold out on...?" prompt) — see counters.js's listNarrow.
+ *
+ * ⚠️ IT ALSO ANSWERS "WHICH ONE AM I", AND THAT IS NOT A CONVENIENCE. The page cannot tell: `cb_till_id` is
+ * empty on a counter paired by key (found 2026-09-18, walking a two-counter hotel through the prompt — it
+ * offered "Front desk, Take-away" to the person standing at Front desk). The key knows, because the register
+ * binds it; so the server says, and the page filters on `me` rather than guessing at its own name.
+ */
 router.get('/counters', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const counters = await require('./counters').listNarrow(auth.entityOf(req));
-    res.json({ counters });
+    res.json({ counters, me: await counterOfReq(req) });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

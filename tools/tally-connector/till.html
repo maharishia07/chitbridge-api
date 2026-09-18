@@ -52,15 +52,39 @@
    * every hairline would turn a shelf of sixty products into a spreadsheet. So there are two tokens and they
    * mean different things: `--line` separates, `--edge` bounds something you operate. Only --edge is measured.
    */
+  /**
+   * ⭐⭐⭐ THE DESIGN'S OWN TOKENS (quick-keys-design-handoff §8 "Design tokens (from the mockups)", ported
+   * 2026-09-18). Athi: *"the design was showcasing something very nice, but i am not seeing that way."* He was
+   * right, and the reason was not React: the STRUCTURE from §7 was built and the COLOURS from §8 never were.
+   * These are the mockups' numbers, not approximations of them.
+   *
+   * ⚠️ --edge IS DELIBERATELY NOT §8's #CFC7B5. That value is the mockups' input border, and against white it
+   * measures about 1.7:1 — under WCAG 1.4.11's 3:1 for a control boundary, which is the line between "a border
+   * a designer can see on a calibrated screen" and "a border a shopkeeper can see on a sunlit counter". So the
+   * decorative rules take the design's soft line (--line) and anything that BOUNDS A CONTROL keeps a measured
+   * one. e2e/till-contrast.cjs is the judge, and it is run on every change to this block.
+   * ⚠️ AND lib/screen-kit.js's THEMES.lightCream MUST MOVE WITH THIS. The parity assertion in till-contrast
+   * exists because those two drifted once already (2026-09-17) and Settings previewed a theme nobody had.
+   */
   :root{
-    --ink:#141210; --dim:#6b625a; --line:#ddd6cc; --edge:#97918d; --paper:#fdfbf7; --card:#ffffff;
-    --ok:#1c7a4a; --ok-tint:#e8f5ee; --warn:#a8410f; --warn-tint:#fdeee6; --blue:#1b4f8a;
+    --ink:#1D1B16; --dim:#5E594D; --line:#E6E0D2; --edge:#918B87; --paper:#FCFAF5; --card:#FFFFFF;
+    --panel:#F3EFE6;
+    --ok:#16693F; --ok-tint:#E8F4ED; --warn:#8E3517; --warn-tint:#FBEAE3; --blue:#1b4f8a;
+    --accent:#F2B544;
     --on-accent:#ffffff;
     --fs:16px; --pad:10px; --radius:12px;
   }
+  /**
+   * ⚠️⚠️ EVERY TOKEN :root DECLARES MUST BE ANSWERED HERE. --panel and --accent arrived with the §8 port and
+   * were LIGHT-ONLY for about a minute: dark mode inherited the cream #F3EFE6 and the new quick-keys panel
+   * would have been a slab of cream in a dark counter. e2e/till-contrast.cjs's parity check caught it before
+   * it was ever vendored — which is exactly the failure that check was written for.
+   */
   :root[data-theme="dark"]{
     --ink:#f2ede6; --dim:#a89f95; --line:#3a352f; --edge:#6f6965; --paper:#17150f; --card:#211e18;
+    --panel:#14171B;
     --ok:#4cc38a; --ok-tint:#173226; --warn:#f2a37a; --warn-tint:#3a2318; --blue:#7cb0e8;
+    --accent:#F2A93B;
     --on-accent:#0c1a14;
   }
   *{box-sizing:border-box}
@@ -163,8 +187,13 @@
   /* the hour's suggestion, and the two small controls that make it the shop's own */
   .qwhy{grid-column:1/-1;color:var(--dim);font-size:.75em;text-transform:uppercase;letter-spacing:.4px;padding:0 2px 2px}
   /* ⭐ the group bar sits above the keys and spans them — choose a group, start one, add the marked row */
-  .qbar{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 2px 6px}
-  .qbar select,.qbar button{font:inherit;font-size:.82em;padding:4px 9px;border:1px solid var(--edge);
+  .qbar{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 0 4px}
+  /* ⭐ the design's badge — the block says its own name, in ink, the way the mockup heads the panel */
+  .qbadge{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--card);
+          border-radius:10px;padding:7px 11px;font-weight:700;font-size:.86em;white-space:nowrap}
+  .qbadge .n{background:var(--accent);color:#1D1B16;border-radius:999px;min-width:18px;height:18px;
+          display:inline-grid;place-items:center;font-size:.82em;padding:0 5px}
+  .qbar select,.qbar button{font:inherit;font-size:.82em;padding:6px 10px;border:1px solid var(--edge);
         border-radius:999px;background:var(--paper);cursor:pointer}
   .qbar .qwhy{grid-column:auto;padding:0;margin-inline-start:auto}
   .quick .qadd{position:absolute;inset-inline-start:2px;top:2px;font-style:normal;font-size:.8em;opacity:.35;
@@ -231,15 +260,97 @@
   .qtyhint{padding:6px 12px;background:var(--ok-tint);color:var(--ok);font-size:.85em;border-bottom:1px solid var(--line)}
   /* ⚠️ BIG ROWS, NOT A TIGHT DROPDOWN. This is opened with a finger on a tablet as often as with a mouse, and every row is a
      whole sentence rather than an icon a person has to remember the meaning of. */
-  .menu{position:absolute;inset-inline-end:12px;top:52px;z-index:40;background:var(--card);border:1px solid var(--line);
-        border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;min-width:270px;display:flex;flex-direction:column}
-  .menu button,.menu a{display:block;text-align:start;border:0;background:transparent;color:var(--ink);cursor:pointer;
-        padding:10px 12px;border-radius:9px;font:inherit;text-decoration:none}
+  /**
+   * ⭐⭐⭐ THE COUNTER MENU — PHONE FIRST, THEN WIDENED (mobile-first-instructions.md §1/§4, Athi 2026-09-18).
+   * base (<600) a full-height sheet · sm unfolded · md a centred card (720) · lg a two-column panel (880).
+   * Every size shows the SAME five sections in the SAME order; the narrow ones fold, they never drop a row.
+   */
+  .menu{position:fixed;inset:0;z-index:60;background:var(--card);border:0;border-radius:0;
+        display:flex;flex-direction:column;padding:0;
+        padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .menu[hidden]{display:none}
+  /* the drag handle a sheet is grabbed by — decoration on a mouse, an affordance on a thumb */
+  .menu::before{content:'';flex:0 0 auto;width:38px;height:4px;border-radius:99px;background:var(--line);margin:8px auto 2px}
+  .mhead{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-bottom:1px solid var(--line)}
+  .mwho{display:flex;flex-direction:column;min-width:0;flex:1}
+  .mwho b{font-size:1.02em} .mwho i{font-style:normal;color:var(--dim);font-size:.82em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mdot{width:9px;height:9px;border-radius:99px;background:var(--ok);flex:0 0 auto}
+  .mdot.off{background:var(--warn)}
+  .mtime{color:var(--dim);font-size:.85em;font-variant-numeric:tabular-nums}
+  .mx{flex:0 0 40px;height:40px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);cursor:pointer;font:inherit}
+  .msecs{flex:1;overflow:auto;padding:8px 14px 4px;display:flex;flex-direction:column;gap:10px}
+  .msec{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+  /* §4: a closed row is icon square 36px, title, one-line summary, chevron — and at least 60px tall */
+  .mrow{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 12px;
+        border:0;background:transparent;color:var(--ink);cursor:pointer;font:inherit;text-align:start}
+  .mrow .mi,.mact .mi{flex:0 0 36px;height:36px;display:flex;align-items:center;justify-content:center;
+        background:var(--panel);border-radius:9px;font-size:16px}
+  .mrow .mt,.mact .mt{flex:1;min-width:0;display:flex;flex-direction:column}
+  .mrow .mt b{font-size:1em} .mrow .mt i,.mact .mt i{font-style:normal;color:var(--dim);font-size:.83em;
+        overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mch{color:var(--dim);flex:0 0 auto}
+  .mbody{padding:2px 8px 8px;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line)}
+  .mact{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 6px;border:0;
+        background:transparent;color:var(--ink);cursor:pointer;font:inherit;text-align:start;border-radius:10px}
+  .mact:hover{background:var(--panel)}
+  /* §4: Careful is last, in a warm-red bordered box, and says what it costs before anybody presses */
+  .msec.care{border-color:var(--warn);background:var(--warn-tint)}
+  .msec.care .mrow .mi{background:var(--warn);color:var(--card)}
+  .carenote{margin:6px 6px 2px;color:var(--ink);font-size:.86em}
+  .mfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+         padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);
+         color:var(--dim);font-size:.85em}
+  .mfoot .lnk{border:0;background:transparent;color:var(--blue);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+  .mfoot a{color:var(--blue)}
+  /* sm — the same sheet, sections unfolded (§4) */
+  @media (min-width:600px){ .msec .mbody[hidden]{display:flex} .msec .mch{opacity:.4} }
+  /* md — a centred card, max 720 (§4) */
+  @media (min-width:900px){
+    .menu{inset:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(720px,94vw);max-height:88vh;
+          border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.28)}
+    .menu::before{display:none}
+    .msecs{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+    .msec.care{grid-column:1 / -1}
+  }
+  /* lg — the wide panel, max 880, look card beside the actions (§4) */
+  @media (min-width:1200px){ .menu{width:min(880px,94vw)} .msecs{grid-template-columns:1.1fr .9fr} }
+  .menu button,.menu a{color:var(--ink);font:inherit;text-decoration:none}
   /* ⭐ the view toggles, in the menu — a section of chips rather than another dialog to open */
   .menusec{padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
   .menusec>b{display:block;font-size:.78em;color:var(--dim);text-transform:uppercase;letter-spacing:.03em;padding-bottom:6px}
   .viewchips{display:flex;flex-wrap:wrap;gap:6px}
   .mq{display:flex;gap:8px;flex-wrap:wrap}
+
+  /**
+   * ⭐⭐ THE OPERATIONS RAIL (Athi, 2026-09-18: "a simple menu bar in the left hand side for the till
+   * application, mostly hidden so it will be good to manage the operations nicely").
+   *
+   * MOSTLY HIDDEN IS THE DESIGN, not a compromise: a strip of icons at the edge, out of the way of the shelf
+   * and the bill, that widens into labels when somebody reaches for it. Selling never moves — the rail
+   * OVERLAYS when open rather than pushing the page, so a shelf a cashier is reading does not jump sideways.
+   * ⚠️ IT IS THE SAME OPERATIONS AS ☰, RENDERED FROM THE SAME LIST (TILL_OPS). Two menus with two hardcoded
+   * lists is how one of them quietly loses an item. [[feedback-stay-in-the-construct]]
+   * ⚠️ AND IT NEVER TRAPS FOCUS. The same rule the ☰ menu follows: a barcode scan must still land while it is
+   * open, so nothing here steals the caret from the search box.
+   */
+  .rail{position:fixed;inset-block:0;inset-inline-start:0;z-index:45;width:var(--rail,38px);
+        background:var(--card);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;gap:2px;
+        padding:calc(env(safe-area-inset-top,0px) + 6px) 4px calc(env(safe-area-inset-bottom,0px) + 6px);
+        overflow:hidden;transition:width .12s ease}
+  .rail:hover,.rail.on{width:212px;box-shadow:6px 0 24px rgba(0,0,0,.16)}
+  .rail button,.rail a{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--ink);
+        cursor:pointer;padding:8px 6px;border-radius:9px;font:inherit;text-decoration:none;white-space:nowrap;text-align:start}
+  .rail button:hover,.rail a:hover{background:var(--panel)}
+  .rail .ic{flex:0 0 26px;text-align:center;font-size:16px}
+  /* the label exists at every width so a screen reader always has it; it is the RAIL that is narrow, not the name */
+  .rail .lb{opacity:0;transition:opacity .12s ease;overflow:hidden}
+  .rail:hover .lb,.rail.on .lb{opacity:1}
+  .rail .sp{flex:1}
+  .rail .pin{color:var(--dim);font-size:12px}
+  /* the page keeps clear of the collapsed strip; opening the rail overlays, so this never changes while selling */
+  body{padding-inline-start:var(--rail,38px)}
+  /* ⚠️ NOT ON A PHONE. 38px of a 360px screen is the bill's width, and ☰ is already at the thumb there. */
+  @media (max-width:600px){ .rail{display:none} body{padding-inline-start:0} }
   .menu .mq label{display:flex;align-items:center;gap:4px;font-size:.85em;color:var(--dim)}
   .menu .mq select{padding:4px 6px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);font:inherit;font-size:.95em}
   /* ⚠️ these sit INSIDE .menu, whose button rule is display:block — so they restate what a chip is */
@@ -261,10 +372,18 @@
   .hit .tag{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:999px;background:var(--ok-tint);color:var(--ok);font-size:.75em;font-weight:700}
   /* the counter was updated — said once, quietly, in the footer where the other true things about this device are said */
   .upd{color:var(--ok);font-weight:700}
-  .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card)}
-  .quick button:not(.sk-tile){padding:14px 10px;border:1px solid var(--edge);border-radius:var(--radius);background:var(--paper);cursor:pointer;text-align:left;min-height:64px}
-  .quick button:not(.sk-tile) b{display:block;font-size:.95em;overflow-wrap:anywhere}
-  .quick button:not(.sk-tile) span{color:var(--dim);font-size:.8em}
+  /**
+   * ⭐⭐ THE QUICK KEYS SIT IN A PANEL (§8 / png/FullDesktop.png). This is the single biggest reason the live
+   * counter did not look like the mockups: the keys were loose on the page, so the block had no edges and the
+   * eye had nothing to land on. In the design they are a cream card with the group controls along its top —
+   * one object that says "these are the keys", with the shelf below it plainly separate.
+   */
+  .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;
+         margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+  .quick > button:not(.sk-tile){padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+         cursor:pointer;text-align:left;min-height:92px;display:flex;flex-direction:column;gap:4px}
+  .quick > button:not(.sk-tile) b{display:block;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+  .quick > button:not(.sk-tile) span{color:var(--dim);font-size:.86em;margin-top:auto}
   /* ⭐ the library draws the keys (lib/screen-kit); a list style wants one column, a tall style wants wider keys */
   .quick.sk-style-compactRow{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0}
   .quick.sk-style-photo,.quick.sk-photos{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
@@ -316,12 +435,13 @@
             font-weight:800;font-size:1.1em;color:#fff;flex:none;overflow:hidden}
   /* ⚠️ A THIRD COLUMN for the + button (2026-09-10). A click on the row now only CHOOSES, so the mouse needs
      its own way to bill — see pick(). The column is auto-width and empty in maintenance, where + has no meaning. */
-  .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto;gap:12px;align-items:center;
-       padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  /* ⭐ §8 spacing: the design gives a shelf row room to breathe — 14px down the row, not 9 */
+  .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto;gap:14px;align-items:center;
+       padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
-  /* big enough for a counter hand, quiet enough not to shout down the price beside it */
-  .hit .addbtn{width:34px;height:34px;border:1px solid var(--edge);background:var(--card);color:var(--ok);
-       border-radius:9px;font-size:1.3em;font-weight:800;line-height:1;cursor:pointer;flex:none}
+  /* ⭐ §8 / mobile-first §2 rule 3: a touch target is ≥44px. It was 34, which is a mouse's button, not a thumb's. */
+  .hit .addbtn{width:44px;height:44px;border:1px solid var(--edge);background:var(--card);color:var(--ok);
+       border-radius:10px;font-size:1.35em;font-weight:800;line-height:1;cursor:pointer;flex:none}
   .hit .addbtn:hover{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
   .hit.sel{position:relative;z-index:2;background:var(--card);border-radius:10px;
            box-shadow:0 0 0 2px var(--ok), 0 6px 18px rgba(0,0,0,.20), inset 4px 0 0 var(--ok)}
@@ -350,7 +470,8 @@
                       background:var(--warn);color:var(--on-accent);font-size:.66em;font-weight:700;padding:1px 7px;border-radius:999px}
   /* both at once is the ordinary case in Maintenance — the ring is already there, so only the tint is added */
   .hit.sel.editing{background:var(--ok-tint)}
-  .hit .n{font-weight:600;min-width:0;line-height:1.3}
+  /* ⭐ the product's name is the thing being read — the mockups set it a step above the rest of the row */
+  .hit .n{font-weight:600;min-width:0;line-height:1.3;font-size:1.05em}
   /* the unit belongs beside the name, quietly, exactly as the storefront sets it */
   .hit .n .unit{color:var(--dim);font-size:.8em;font-weight:400}
   .hit .offword{color:var(--warn)}
@@ -718,6 +839,9 @@
 </style>
 </head>
 <body>
+<!-- ⭐⭐ THE OPERATIONS RAIL — mostly hidden, widens on reach. Filled by paintRail() from TILL_OPS, the same
+     list ☰ renders, so the two doors always open onto the same room. -->
+<nav class="rail" id="tillrail" data-testid="till-rail" aria-label="Counter operations"></nav>
 <div class="wrap">
   <section class="left">
     <header>
@@ -766,50 +890,18 @@
       -->
       <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="Health check — what would go wrong today">✓</button>
       <button class="pill" id="menubtn" data-testid="till-menu" onclick="toggleMenu(event)" title="bills, the shop screen, settings">☰</button>
-      <div id="tillmenu" class="menu" hidden>
-        <button data-testid="till-bills" onclick="fromMenu(openBills)">🧾 <b>Today's bills</b><i>print one again · F8</i></button>
-        <button data-testid="till-screen" onclick="fromMenu(openScreen)">📺 <b>Shop screen</b><i>your offers as a sign for a TV</i></button>
-        <button data-testid="till-refresh" onclick="fromMenu(refresh)">↻ <b>Read the shop again</b><i>new prices and products · F4</i></button>
-        <!-- ⭐ the answer to "why has this not gone?", where somebody looking for it would look -->
-        <button data-testid="till-stuck" onclick="fromMenu(openStuck)">🩺 <b>Why is a bill stuck?</b><i>what is really in this counter's store</i></button>
-        <!-- ⭐ deliberate, online, and only when every bill is safely in the books — see closeCounter() -->
-        <button data-testid="till-break-menu" onclick="fromMenu(takeBreak)">☕ <b>Take a break</b><i>the counter stays on this PC · nothing is closed</i></button>
-        <button data-testid="till-close" onclick="fromMenu(closeCounter)">🔒 <b>Close this counter</b><i>sends and checks everything first · it can be opened again</i></button>
-        <!--
-          ⭐⭐⭐ THE VIEW, TOGGLED WHERE IT IS REACHED (Athi, 2026-09-16): *"those sections are being switched on
-          off in the settings — any other way can we bring it in the frontend itself as a toggle button?"*
+      <!--
+        ⭐⭐⭐ THE COUNTER MENU, PHONE FIRST (Athi, 2026-09-18, mobile-first-instructions.md §4: the menu style he
+        supplied so it fits a phone as well as a terminal).
 
-          ⭐ ON THE SCREEN, BUT NOT ON THE BAR. The rule above sorts controls by FREQUENCY DURING A SALE, and
-          changing the view is a between-customers act — so it belongs here with the bill list and the shop
-          screen, one press away, rather than on the bar beside the things a cashier touches with a customer
-          waiting. Two presses became one; Settings keeps the same ticks for anyone who is already in there.
-          ⚠️ THE SAME `tillShowSet` THE SETTINGS TICKS CALL. One source of truth for what is on screen — a second
-          toggle with its own state is how a menu and a settings panel come to disagree. [[feedback-stay-in-the-construct]]
-        -->
-        <!-- ⭐ THE EVERYDAY THREE, AS DROPDOWNS, ONE PRESS AWAY (Athi, 2026-09-17: "bring the controls to the top, or a dropdown").
-             The same stored settings ⚙ edits — tillOptSet for the layout, applyLook for text and look — never a second copy. -->
-        <div class="menusec" data-testid="till-quick-settings">
-          <div class="mq">
-            <label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook('cb_till_fs',this.value)">
-              <option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select></label>
-            <label title="Look">◐ <select id="mq_theme" data-testid="till-mq-theme" onchange="quickLook('cb_till_theme',this.value)">
-              <option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select></label>
-            <label title="What this counter shows">▦ <select id="mq_layout" data-testid="till-mq-layout" onchange="tillOptSet({layout:this.value});paintMenuQuick()">
-              <option value="full">Everything</option><option value="quick">Quick keys + bill</option><option value="cart">Search + bill</option>
-              <option value="custom" disabled>Custom</option></select></label>
-          </div>
-        </div>
-        <div class="menusec" data-testid="till-view-toggles">
-          <b>Show on this counter</b>
-          <div class="viewchips" id="viewchips"></div>
-        </div>
-        <button data-testid="till-settings" onclick="fromMenu(openSettings)">⚙ <b>Settings</b><i>look, printer, this till</i></button>
-        <!-- ⚠️ IN THE MENU, NOT BURIED IN SETTINGS. Athi went looking for it — *"where is the hard refresh in the counter?"* —
-             and could not find it, which is the only evidence that matters about where a control belongs. -->
-        <button data-testid="till-coldstart-menu" onclick="fromMenu(coldStart)">↺ <b>Clear and reload</b><i>throw this copy away and read the shop fresh</i></button>
-        <button id="installbtn" style="display:none" onclick="fromMenu(installApp)">⤓ <b>Install as an app</b><i>opens without a browser</i></button>
-        <a id="cblink" href="#" target="_blank" rel="noopener">↗ <b>ChitBridge</b><i>orders, suppliers, the books</i></a>
-      </div>
+        Five folded sections, ALWAYS IN THIS ORDER — Bills · Shop & prices · This counter · How it looks · Careful.
+        A sheet on a phone, a centred card at md, a two-column panel at lg. Nothing is dropped at any width: the
+        narrow sizes FOLD, they never remove an action (§2 rule 1).
+
+        ⚠️ IT IS PAINTED, NOT WRITTEN OUT. paintMenu() builds it from TILL_MENU + TILL_OPS — the same list the
+        left rail renders, so an operation added once appears in both and neither can quietly lose it.
+      -->
+      <div id="tillmenu" class="menu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
     </header>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
@@ -2721,6 +2813,139 @@ function stopWrongShop(bad){
   paintStatus();
 }
 /**
+ * ⭐⭐ THE COUNTER'S OPERATIONS, DECLARED ONCE (2026-09-18). ☰ at the top and the rail down the left side are two
+ * doors onto the same room, and a room with two doors is exactly where an item gets added to one and forgotten
+ * in the other. So the list lives here and both render it. [[feedback-stay-in-the-construct]]
+ *
+ * ⚠️ `fn` IS NAMED, NOT REFERENCED, because several of these are declared further down the file than this line
+ * and a direct reference would capture `undefined` at parse time. paintRail() resolves the name when it draws.
+ */
+var TILL_OPS = [
+  { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills' },
+  { id: 'screen',   icon: '📺', label: 'Shop screen',        hint: 'your offers as a sign for a TV',                fn: 'openScreen' },
+  { id: 'refresh',  icon: '↻',  label: 'Read the shop again', hint: 'new prices and products · F4',                 fn: 'refresh' },
+  { id: 'stuck',    icon: '🩺', label: 'Why is a bill stuck?', hint: "what is really in this counter's store",      fn: 'openStuck' },
+  { id: 'break-menu', icon: '☕', label: 'Take a break',      hint: 'the counter stays on this PC · nothing is closed', fn: 'takeBreak' },
+  { id: 'close',    icon: '🔒', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeCounter' },
+  { id: 'settings', icon: '⚙',  label: 'Settings',           hint: 'look, printer, this till',                      fn: 'openSettings' },
+  { id: 'coldstart-menu', icon: '↺', label: 'Clear and reload', hint: 'throw this copy away and read the shop fresh', fn: 'coldStart' },
+  /* ⚠️ ONLY WHEN THE BROWSER OFFERS IT (beforeinstallprompt). A button that cannot install anything is worse
+     than no button — the same rule the microphone follows on a browser with no speech. */
+  { id: 'install', icon: '⤓', label: 'Install as an app', hint: 'opens without a browser', fn: 'installApp', when: 'install' },
+];
+function tillOp(id){ for (var i = 0; i < TILL_OPS.length; i++) if (TILL_OPS[i].id === id) return TILL_OPS[i]; return null; }
+/**
+ * ⭐⭐⭐ THE FIVE SECTIONS, IN THE ORDER THE DESIGN FIXES THEM (mobile-first-instructions.md §4).
+ * *"Groups, in this order, always: Bills · Shop & prices · This counter · How it looks · Careful."* The order is
+ * part of the design, not a default — §2 rule 2: it never changes from phone to terminal, so muscle memory carries.
+ */
+var TILL_MENU = [
+  { id: 'bills',   icon: '🧾', title: 'Bills',         sum: "today's bills · why one is stuck",      ops: ['bills', 'stuck'] },
+  { id: 'shop',    icon: '🏷️', title: 'Shop & prices', sum: 'read the shop again · the TV sign',     ops: ['refresh', 'screen'] },
+  { id: 'counter', icon: '🧑', title: 'This counter',  sum: 'a break · settings for this till',      ops: ['break-menu', 'settings', 'install'] },
+  { id: 'look',    icon: '◐',  title: 'How it looks',  sum: 'text size · colours · what shows',      look: true },
+  /* ⚠️ LAST, AND IT LOOKS LIKE IT. §4: a warm-red bordered box, and this exact sentence, because both of these
+     stop billing for a moment and a person deserves to know that before they press, not after. */
+  { id: 'care',    icon: '⚠',  title: 'Careful',       sum: 'close the counter · clear and reload',  ops: ['close', 'coldstart-menu'], careful: true },
+];
+var MENU_OPEN_SEC = 'bills';   /* §4: "Bills opens by default; only one section open at a time" */
+function menuSection(id){
+  MENU_OPEN_SEC = (MENU_OPEN_SEC === id) ? '' : id;
+  paintMenu();
+  var el = document.querySelector('[data-testid="till-msec-' + id + '"]');
+  if (el && el.scrollIntoView) { try { el.scrollIntoView({ block: 'nearest' }); } catch (_) {} }
+}
+/** one action row, the same shape in every section */
+function menuOpRow(op){
+  if (!op) return '';
+  if (op.when === 'install' && !_install) return '';   /* nothing to install — see TILL_OPS */
+  return '<button class="mact" data-testid="till-' + op.id + '" onclick="fromMenu(' + op.fn + ')">'
+    + '<span class="mi">' + op.icon + '</span>'
+    + '<span class="mt"><b>' + esc(op.label) + '</b><i>' + esc(op.hint) + '</i></span></button>';
+}
+/**
+ * ⭐ THE MENU, DRAWN. Sections fold on a phone and sit side by side on a terminal — the SAME markup either way,
+ * because §2 rule 1 says a narrow screen folds rather than drops, and two markups is how one of them loses a row.
+ */
+function paintMenu(){
+  var m = document.getElementById('tillmenu'); if (!m) return;
+  var online = navigator.onLine, who = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
+  var head = '<div class="mhead">'
+    + '<span class="mwho"><b data-testid="till-m-counter">' + esc(ls.get('cb_till_name', 'Counter')) + '</b>'
+    + '<i>' + esc((S && S.entity_name) || (STATE && STATE.till && STATE.till.name) || '') + '</i></span>'
+    + '<span class="mdot ' + (online ? 'on' : 'off') + '" title="' + (online ? 'online' : 'offline — billing continues') + '"></span>'
+    + '<span class="mtime">' + esc(new Date().toTimeString().slice(0, 5)) + '</span>'
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
+    + '</div>';
+  var secs = TILL_MENU.map(function(sec){
+    var open = MENU_OPEN_SEC === sec.id;
+    var body = sec.look
+      ? '<div class="menusec" data-testid="till-quick-settings">'
+        + '<div class="mq">'
+        + '<label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook(\'cb_till_fs\',this.value)">'
+        + '<option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select></label>'
+        + '<label title="Look">◐ <select id="mq_theme" data-testid="till-mq-theme" onchange="quickLook(\'cb_till_theme\',this.value)">'
+        + '<option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select></label>'
+        + '<label title="What this counter shows">▦ <select id="mq_layout" data-testid="till-mq-layout" onchange="tillOptSet({layout:this.value});paintMenuQuick()">'
+        + '<option value="full">Everything</option><option value="quick">Quick keys + bill</option><option value="cart">Search + bill</option>'
+        + '<option value="custom" disabled>Custom</option></select></label>'
+        + '</div></div>'
+        + '<div class="menusec" data-testid="till-view-toggles"><b>Show on this counter</b><div class="viewchips" id="viewchips"></div></div>'
+      : (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
+    return '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '" data-testid="till-msec-' + sec.id + '">'
+      + '<button class="mrow" aria-expanded="' + (open ? 'true' : 'false') + '" data-testid="till-msec-btn-' + sec.id + '"'
+      + ' onclick="menuSection(\'' + sec.id + '\')">'
+      + '<span class="mi">' + sec.icon + '</span>'
+      + '<span class="mt"><b>' + esc(sec.title) + '</b><i>' + esc(sec.sum) + '</i></span>'
+      + '<span class="mch">' + (open ? '⌄' : '›') + '</span></button>'
+      + '<div class="mbody"' + (open ? '' : ' hidden') + '>'
+      + (sec.careful ? '<p class="carenote">These two stop billing for a moment. Everything is sent and checked first.</p>' : '')
+      + body + '</div></section>';
+  }).join('');
+  var foot = '<div class="mfoot">'
+    + '<span>' + (who ? esc(who) : 'Nobody signed in') + ' · <button class="lnk" data-testid="till-menu-signin" onclick="fromMenu(openWho)">Sign in · F7</button></span>'
+    + '<a id="cblink" href="#" target="_blank" rel="noopener">ChitBridge ↗</a>'
+    + '</div>';
+  m.innerHTML = head + '<div class="msecs">' + secs + '</div>' + foot;
+  try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbHome(); } catch (_) {}
+  paintMenuQuick();
+}
+/**
+ * ⭐ THE RAIL. Icons at the edge; labels when somebody reaches for it. A click on the ☰ at its head PINS it open
+ * (`.on`) for anyone who would rather not hover — a touch screen has no hover at all.
+ * ⚠️ IT DOES NOT TAKE THE CARET. Same rule as the menu: a scan must still land while this is open, so choosing
+ * an item hands focus straight back to the search box.
+ */
+function paintRail(){
+  var el = document.getElementById('tillrail'); if (!el) return;
+  el.innerHTML =
+    '<button data-testid="till-rail-pin" title="keep this open" onclick="railPin(event)">'
+      + '<span class="ic">☰</span><span class="lb">Operations</span></button>'
+    + TILL_OPS.map(function(op){
+        if (op.when === 'install' && !_install) return '';
+        return '<button data-testid="till-rail-' + op.id + '" title="' + esc(op.label + ' — ' + op.hint) + '"'
+          + ' onclick="railGo(\'' + op.fn + '\')">'
+          + '<span class="ic">' + op.icon + '</span><span class="lb">' + esc(op.label) + '</span></button>';
+      }).join('')
+    + '<span class="sp"></span>'
+    + '<a data-testid="till-rail-cb" id="raillink" href="#" target="_blank" rel="noopener" title="ChitBridge — orders, suppliers, the books">'
+      + '<span class="ic">↗</span><span class="lb">ChitBridge</span></a>';
+  try { var a = document.getElementById('raillink'); if (a) a.href = cbHome(); } catch (_) {}
+}
+function railPin(e){
+  if (e) e.stopPropagation();
+  var el = document.getElementById('tillrail'); if (!el) return;
+  el.classList.toggle('on');
+  focusSearch();
+}
+/** run one operation by name — the rail holds names, not functions, so nothing here depends on declaration order */
+function railGo(name){
+  var el = document.getElementById('tillrail'); if (el) el.classList.remove('on');
+  var f = window[name];
+  if (typeof f === 'function') { try { f(); } catch (_) {} }
+  focusSearch();
+}
+/**
  * ⭐ THE MENU CLOSES ON ANYTHING. A menu left open over the search box is a menu that swallows the next barcode, and a scanner
  * fires faster than anyone can reach for Escape — so it shuts on a click anywhere, on Escape, and on choosing anything in it.
  */
@@ -2728,8 +2953,40 @@ function toggleMenu(e){
   var m = document.getElementById('tillmenu'); if (!m) return;
   m.hidden = !m.hidden;
   if (e) e.stopPropagation();
-  if (!m.hidden) { paintViewChips(); paintMenuQuick(); focusSearch(); }   /* the box keeps the caret, so a scan still lands while the menu is open */
+  /**
+   * ⚠️⚠️ THE CARET MOVES INTO THE MENU NOW, AND THAT IS A DELIBERATE REVERSAL (2026-09-18).
+   *
+   * It used to stay in the search box so a barcode scan still landed while the menu was open. That was right
+   * for the old dropdown. Athi's menu spec makes this a `role="dialog" aria-modal="true"` SHEET — on a phone it
+   * covers the screen — and a modal that leaves the caret behind it is one where a scan lands on a bill nobody
+   * is looking at. The counter's other dialogs (ask, slip, settings) are modal for the same reason.
+   * ⚠️ So the way back out is guarded instead: Escape closes and returns focus to ☰ (§4), every action closes
+   * the menu before it runs (fromMenu), and closeMenu() hands the caret back to the search box — which is where
+   * a scan must land the instant this is shut.
+   */
+  if (!m.hidden) { paintMenu(); menuFocusFirst(); }
+  else closeMenu();
 }
+/** the first thing a keyboard lands on when the sheet opens — its close button, per §4's "Esc closes" pairing */
+function menuFocusFirst(){
+  var b = document.querySelector('#tillmenu [data-testid="till-menu-close"]');
+  if (b && b.focus) { try { b.focus(); } catch (_) {} }
+}
+/**
+ * ⚠️ FOCUS STAYS INSIDE WHILE IT IS OPEN (§4 "focus is trapped inside while open"). Tab from the last control
+ * wraps to the first and Shift+Tab from the first wraps to the last, so a keyboard cannot walk out into a
+ * screen the sheet is covering. Escape is the way out, and it is handled with the page's other keys.
+ */
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Tab') return;
+  var m = document.getElementById('tillmenu');
+  if (!m || m.hidden) return;
+  var f = m.querySelectorAll('button, a[href], select, input, [tabindex]:not([tabindex="-1"])');
+  if (!f.length) return;
+  var first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}, true);
 /** the menu's quick dropdowns show what is in force (text, look, layout) */
 function paintMenuQuick(){
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
@@ -2757,7 +3014,12 @@ function paintViewChips(){
       + (show[p[0]] ? '✓ ' : '') + esc(p[1]) + '</button>';
   }).join('');
 }
-function closeMenu(){ var m = document.getElementById('tillmenu'); if (m) m.hidden = true; }
+/** ⚠️ shutting it hands the caret straight back to the search box — the next scan has to land on the bill */
+function closeMenu(){
+  var m = document.getElementById('tillmenu'); if (!m || m.hidden) return;
+  m.hidden = true;
+  try { focusSearch(); } catch (_) {}
+}
 function fromMenu(fn){ closeMenu(); try { fn(); } catch (_) {} }
 document.addEventListener('click', function(e){
   var m = document.getElementById('tillmenu');
@@ -3042,15 +3304,23 @@ async function quickBringBack(id){
  * follows. These three add the part a browser cannot do alone: telling OTHER counters, and hearing from them.
  */
 var QUICK_OTHER_COUNTERS = null;
-/** the shop's other counters (id+name only) — cached for the session, since this only feeds a one-line prompt */
+/**
+ * the shop's other counters (id+name only) — cached for the session, since this only feeds a one-line prompt.
+ * ⚠️⚠️ "OTHER" IS DECIDED BY THE SERVER'S `me`, NEVER BY cb_till_id. A counter paired by key has no cb_till_id
+ * at all, so filtering on it excluded nothing and the prompt offered the person the very counter they were
+ * standing at — "Also mark this sold out on Front desk, Take-away?" asked at Front desk (found 2026-09-18,
+ * walking a two-counter hotel through it). The key is bound to a counter in the register; the server reads
+ * that binding and returns it as `me`.
+ */
 async function quickOtherCounters(){
   if (QUICK_OTHER_COUNTERS) return QUICK_OTHER_COUNTERS;
   if (!HOST || !HOST.tillGet || !navigator.onLine) return [];
   try {
     var r = await HOST.tillGet('/api/till/counters');
-    var mine = ls.get('cb_till_id', '');
+    var mine = (r && r.me) || '';
     var list = (r && r.ok && Array.isArray(r.counters)) ? r.counters : [];
-    QUICK_OTHER_COUNTERS = list.filter(function(c){ return c && c.id !== mine; });
+    /* ⚠️ no `me` means we cannot tell ourselves apart — offer nobody rather than offer the wrong counter */
+    QUICK_OTHER_COUNTERS = mine ? list.filter(function(c){ return c && c.id !== mine; }) : [];
   } catch (_) { QUICK_OTHER_COUNTERS = []; }
   return QUICK_OTHER_COUNTERS;
 }
@@ -3357,13 +3627,9 @@ function quickGroupToggle(id){
   o.groups[o.group] = list;
   tillOptSet({ groups: o.groups });
 }
-/** ⭐ put the row the shelf is marking into the active group — the fastest way to build one while billing */
-function quickGroupAddMarked(){
-  var list = hits(), i = list[SEL];
-  if (!i) { toastLine('Mark a product on the list first.'); return; }
-  quickGroupToggle(i.item_id);
-  toastLine(i.name + ' → ' + tillOpt().group);
-}
+/* quickGroupAddMarked() lived here until 2026-09-18 — "＋ marked row" on the sell panel, which is exactly the
+   authoring Athi moved off the selling screen. Its job is done by the tick-list in ⚙ Setup ▸ Quick keys
+   (setupGroupItems), which can also take a product back OUT, so nothing it did is now unreachable. */
 /**
  * ⚠️⚠️ THE COUNTER'S OWN DIALOGS, NEVER THE BROWSER'S. The browser's native prompt and confirm BLOCK the page:
  * on a till they freeze the scanner, the queue and the repaint until somebody clicks, and there is no way to
@@ -3379,6 +3645,41 @@ async function quickGroupNew(){
   if (!o.groups[name]) o.groups[name] = [];
   tillOptSet({ groups:o.groups, group:name, quickSource: o.quickSource === 'frequent' ? 'both' : o.quickSource });
   paintSetup();
+}
+/**
+ * ⭐⭐ WHAT IS IN A GROUP, DECIDED WHERE GROUPS ARE MANAGED (2026-09-18). Athi: *"quick key management is not
+ * part of selling."* Putting a product in a group used to be a ＋ on the key itself, on the sell screen; that
+ * is gone, so this is where it lives now — and it HAD to come with it, because ⚙ Setup could make a group and
+ * empty one but never fill one. Moving the buttons without moving this would have left a feature that can
+ * create a list nobody can put anything in.
+ * ⚠️ FILTERED, NOT PAGED, AND CAPPED. A shop can carry ten thousand products; what is already IN the group is
+ * always shown, and the rest is whatever the box matches, 40 at a time — so this cannot become a page that
+ * takes a second to draw every time somebody types.
+ */
+var SETUP_GQ = '';
+function setupGroupFilter(v){ SETUP_GQ = String(v || ''); paintSetup(); }
+function setupGroupItems(o){
+  if (!o.group) return '';
+  var inG = groupIds(), all = (S && S.items) || [];
+  var q = SETUP_GQ.trim().toLowerCase();
+  var picked = all.filter(function(i){ return inG.indexOf(i.item_id) >= 0; });
+  var rest = all.filter(function(i){
+    return inG.indexOf(i.item_id) < 0 && (!q || String(i.name || '').toLowerCase().indexOf(q) >= 0);
+  });
+  if (!q) rest = rest.slice(0, 40); else rest = rest.slice(0, 40);
+  var row = function(i, on){
+    return '<label style="display:flex;gap:6px;align-items:center;font-weight:400;padding:2px 0">'
+      + '<input type="checkbox"' + (on ? ' checked' : '') + ' data-testid="till-set-group-item-' + esc(i.item_id) + '"'
+      + ' onchange="quickGroupToggle(\'' + esc(i.item_id) + '\');paintSetup()"> '
+      + esc(i.name) + '</label>';
+  };
+  return '<input id="set_gq" data-testid="till-set-group-find" placeholder="find a product to add…"'
+      + ' value="' + esc(SETUP_GQ) + '" oninput="setupGroupFilter(this.value)" style="width:100%;margin:0 0 4px">'
+    + '<div data-testid="till-set-group-items" style="max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:4px 6px">'
+    + (picked.length ? '<div class="dim" style="font-size:11px;margin:2px 0">In ' + esc(o.group) + '</div>' + picked.map(function(i){ return row(i, true); }).join('') : '')
+    + (rest.length ? '<div class="dim" style="font-size:11px;margin:6px 0 2px">Add</div>' + rest.map(function(i){ return row(i, false); }).join('') : '')
+    + (!picked.length && !rest.length ? '<div class="dim" style="font-size:11px">Nothing matches.</div>' : '')
+    + '</div>';
 }
 async function quickGroupDrop(){
   var o = tillOpt(); if (!o.group) return;
@@ -3461,9 +3762,22 @@ function paintQuick(){
    */
   if (typing) { el.innerHTML = ''; return; }
   var pinned = quickPinned(), mine = groupIds();
-  /* ⭐ THE GROUP BAR — choose the group, start one, and put the marked row in it without leaving the counter. */
+  /**
+   * ⭐⭐ THE BAR CHOOSES, IT NO LONGER AUTHORS. Athi, 2026-09-18: *"quick key management is not part of selling
+   * — sell panel should have only temporary out of stock buttons, not to create or update the group."*
+   *
+   * So what a person can do here is pick WHICH list fills the keys, and say what has run out. Making a group,
+   * adding a product to one, taking one out — those are maintenance, and they happen in ⚙ Setup ▸ Quick keys
+   * (till-set-group-new / till-set-group-drop), which is where a manager already goes. Nothing was removed
+   * from the product: the capability MOVED off the screen a cashier uses at speed with a customer waiting.
+   * ⚠️ The source and group choosers STAY — [TILL-11] exists because the keys once gave no clue where they
+   * came from, and choosing is not authoring.
+   */
   var names = Object.keys(o.groups || {}).sort();
   var bar = '<div class="qbar" data-testid="till-quick-bar">'
+    /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
+    + '<span class="qbadge" data-testid="till-quick-badge">⊞ Quick keys'
+    + (QUICK.length ? '<span class="n">' + QUICK.length + '</span>' : '') + '</span>'
     /* ⭐ WHERE THESE KEYS COME FROM, said by the control that changes it. The same three sources as ⚙ Setup —
        one setting, two places to reach it, never two opinions about it (tillOptSet writes both). */
     + '<select data-testid="till-quick-src" title="where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
@@ -3474,8 +3788,6 @@ function paintQuick(){
         + '<option value="">— no group —</option>'
         + names.map(function(nm){ return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>' + esc(nm) + '</option>'; }).join('')
         + '</select>'
-        + '<button data-testid="till-quick-group-new" onclick="quickGroupNew()">＋ group</button>'
-        + (o.group ? '<button data-testid="till-quick-group-add" onclick="quickGroupAddMarked()" title="put the row the list is marking into ' + esc(o.group) + '">＋ marked row</button>' : '')
       : '')
     /* ⭐ AND WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
     + (QUICK_WHY ? '<span class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</span>' : '')
@@ -3483,7 +3795,9 @@ function paintQuick(){
   /**
    * ⭐⭐ THE KEYS ARE DRAWN BY THE SCREEN LIBRARY (lib/screen-kit TILES) — the style this counter chose, in its group's
    * colour, with the quantity already on the bill, a photo or its initials when photos are on. What a key DOES is still
-   * this page's: the face adds, ✕ marks it sold out for today, 📌 pins, ＋ puts it in the group.
+   * this page's: the face adds, ✕ marks it sold out for today, 📌 pins.
+   * ⚠️ ＋ (put in the group) and ⊖ (take out of it) were HERE until 2026-09-18 and are not any more — see the bar
+   * above: on the sell screen a key says what it costs and whether it has run out, and nothing else.
    */
   var cfg = screenCfg(), K = window.CBScreen;
   var colour = K ? K.groupColour(usesGroups && o.group ? o.group : 0) : null;
@@ -3491,13 +3805,8 @@ function paintQuick(){
   el.className = 'quick sk-style-' + (cfg.tile || 'classic') + (cfg.photos ? ' sk-photos' : '');
   var keys = QUICK.map(function(i, n){
     var pin = pinned.indexOf(i.item_id) >= 0;
-    var inG = usesGroups && o.group && mine.indexOf(i.item_id) >= 0;
     var id = esc(i.item_id);
-    var extra = (usesGroups && o.group && !inG
-          ? '<i class="qadd" title="add to ' + esc(o.group) + '" data-testid="till-quick-group-add-' + n + '" onclick="event.stopPropagation();quickGroupToggle(\'' + id + '\')">＋</i>'
-          : '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + id + '\')">📌</i>')
-      /* ⚠️ INSIDE A GROUP, taking it out of the group stays one press — a list somebody made is edited where it is used */
-      + (inG ? '<i class="qx" title="take out of ' + esc(o.group) + '" data-testid="till-quick-ungroup-' + n + '" style="inset-inline-end:26px" onclick="event.stopPropagation();quickGroupToggle(\'' + id + '\')">⊖</i>' : '');
+    var extra = '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + id + '\')">📌</i>';
     if (!K) {
       return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + id + '\')"><b>' + esc(i.name) + '</b>'
         + '<span>' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
@@ -8854,7 +9163,7 @@ function paintSetup(){
       + (o.group ? '<button class="pill" data-testid="till-set-group-drop" onclick="quickGroupDrop()">Remove</button>' : '')
       + '</div>'
       /* the counts are in the dropdown itself — no second list under it */
-      ;
+      + setupGroupItems(o);
   }
   /* ⚠️ SAY WHERE THE PAYEE COMES FROM. The shop's own published payee wins; this one only fills a gap, and a
      counter quietly taking money at a different address than the shop declared would be a serious thing. */
@@ -8996,6 +9305,8 @@ window.addEventListener('resize', function(){ try { paintCart(); } catch (_) {} 
 setMode(ls.get('cb_till_mode', 'sell'));
 /* ⭐ the counter opens in the shape and layout this shop chose — before the first paint anybody looks at */
 try { applyTillOptions(); } catch (_) {}
+/* ⭐ the operations rail, drawn once from TILL_OPS (2026-09-18) */
+try { paintRail(); } catch (_) {}
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
