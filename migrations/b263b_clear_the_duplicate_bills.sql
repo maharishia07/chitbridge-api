@@ -1,7 +1,23 @@
 -- b263b: the duplicates b263 refused to index over — find out whose they are, then clear only what is safe.
 --
--- ⚠️⚠️ DRAFT — NOT RUN. Supabase SQL editor, as superuser (RLS off), because this has to see EVERY entity at once
--- and `cb_app` can only ever see one.
+-- ⚠️⚠️ DRAFT — NOT RUN.
+--
+-- ── RUN IT **WITHOUT RLS** ── Supabase SQL editor, as `postgres`. Not `railway run`. ─────────────────
+--
+--   · Step 1 has to see EVERY entity at once — that is its whole job: telling a throwaway test shop from a real
+--     one before anything is deleted. Under RLS you see exactly one entity, so the answer would be a subset and
+--     you could not tell which.
+--   · It joins `identities` for the shop NAME, which is a cross-entity read.
+--   · Step 3 deletes across several entities at once.
+--
+-- ⚠⚠ AND THE FAILURE MODE IF YOU RUN IT UNDER RLS IS THE QUIETEST ONE ON THE PLATFORM. `cb_app` with no
+-- `app.current_entity` set makes every policy false, so step 1 comes back with ZERO ROWS — which reads exactly
+-- like "there are no duplicates". You would then run b263 again, get the same 23505, and have no idea why. An
+-- empty answer here means nothing until you know which role asked the question. [[feedback-state-rls-status]]
+--
+-- ⚠ THE COST OF RLS-OFF, said plainly: nothing is guarding the entity_id in step 3 but the person typing it. A
+-- wrong uuid there deletes from a real shop's books and no policy will stop it. That is why the list is empty in
+-- the file and has to be filled in by hand, from step 1's own output, after reading the names.
 --
 -- b263 step 2 answered, correctly:
 --     ERROR: 23505: could not create unique index "ux_chit_client_ref_per_entity"
