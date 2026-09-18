@@ -327,7 +327,7 @@ router.post('/send',
        * above its own declaration parses perfectly — `node -c` has nothing to say, because a TDZ violation is a
        * RUNTIME error — which is why tests/tdz-guard.test.js now exists.
        */
-      const client_ref = (typeof req.body.client_ref === 'string' && req.body.client_ref.trim()) ? req.body.client_ref.trim().slice(0, 64) : null;
+      const client_ref = refOf(req);        /* ⚠️ one reader — the route's catch asks the same question again */
 
       let number_check = null;
       if (client_ref) {
@@ -340,7 +340,26 @@ router.post('/send',
         }
       }
 
-      // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
+      /**
+ * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
+ * from the route's catch when the b263 unique index refuses an insert (the race the first ask lost). Two copies
+ * of this query would be two opinions about what "already here" means. [[feedback-no-duplicate-functions]]
+ */
+async function sameRefLook(sender_id, client_ref) {
+  return withEntity(sender_id, (db) => db.query(
+    /* ⚠️ the till id comes back too — see the collision check at the call site */
+    `SELECT chit_id, business_json->'till'->>'id' AS till_id,
+            business_json->>'billed_at' AS billed_at
+       FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2
+      ORDER BY created_at LIMIT 1`,
+    [sender_id, client_ref]));
+}
+/** the one place the bill number is read off a request, so the catch below cannot drift from the check above */
+function refOf(req) {
+  const v = req && req.body && req.body.client_ref;
+  return (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 64) : null;
+}
+// Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
       /**
        * ⭐⭐ THE SAME BILL TWICE IS THE SAME CHIT (the till, 2026-09-07). A counter queues its bills and replays them when the line
        * comes back; a replay that arrived twice would bill the customer twice and put two vouchers in the books. 'client_ref' is the
@@ -349,13 +368,7 @@ router.post('/send',
        */
       if (client_ref) {
         try {
-          const seen = await withEntity(sender_id, (db) => db.query(
-            /* ⚠️ the till id comes back too — see the collision check below */
-            `SELECT chit_id, business_json->'till'->>'id' AS till_id,
-                    business_json->>'billed_at' AS billed_at
-               FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2
-              ORDER BY created_at LIMIT 1`,
-            [sender_id, client_ref]));
+          const seen = await sameRefLook(sender_id, client_ref);
           if (seen.rows[0]) {
             /**
              * ⭐⭐⭐ A RETRY AND A COLLISION LOOK IDENTICAL FROM HERE, AND THEY ARE OPPOSITES.
@@ -1386,6 +1399,59 @@ router.post('/send',
       }
 
     } catch (err) {
+      /**
+       * ── ⭐⭐⭐ A LOST RACE IS A DUPLICATE, NOT A FAILURE (2026-09-18) ───────────────────────
+       *
+       * b263's unique index closed the hole the duplicate-bill fault came through: the check above is a SELECT,
+       * and two requests arriving together both see nothing and both write. The database now refuses the second
+       * — which is correct, and arrives here as a raw 23505 that would be reported as "Send failed". It is not a
+       * failure. It is the very duplicate we asked the database to catch, and the answer is the one the check
+       * above would have given had it won the race: the existing chit for a retry, or a named collision for two
+       * counters.
+       *
+       * ⚠⚠ WHY NOT `INSERT … ON CONFLICT DO NOTHING`, which is the usual advice and what was first planned:
+       *   · DO NOTHING makes the INSERT SUCCEED with zero rows, and the transaction then carries on writing
+       *     chit_detail, chit_status and the recipient rows against a header that was never inserted. It turns a
+       *     clean refusal into a half-written chit — a worse fault than the one being fixed, and a silent one.
+       *   · The index is PARTIAL, so inference needs its predicate spelled out at every insert site; there are
+       *     two, and a mismatch there fails open rather than closed.
+       *   · Letting the constraint throw rolls the whole transaction back, which is exactly what should happen.
+       * So the mechanism is the same and the seam is different: the database refuses, nothing is written, and
+       * this translates the refusal into the answer.
+       *
+       * ⚠️ `client_ref` and `sender_id` are declared INSIDE the try and are not in scope here — block scoping,
+       * which is the same rule that made this file's temporal-dead-zone bug (tests/tdz-guard). They are asked of
+       * the request again, through the one reader both sides use.
+       */
+      const raceRef = refOf(req);
+      if (raceRef && err && (err.code === '23505')
+          && /client_ref/.test(String(err.constraint || err.detail || err.message || ''))) {
+        try {
+          const who = entityId(req);
+          const seen = await sameRefLook(who, raceRef);
+          if (seen.rows[0]) {
+            const _bj = req.body && req.body.business_json;
+            const mine = (_bj && _bj.till && _bj.till.id) || null;
+            const theirs = seen.rows[0].till_id || null;
+            const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
+            const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
+            /* ⚠ THE SAME TWO TESTS AS THE CHECK ABOVE, in the same order — a different tie-break here would mean
+               a bill was answered one way when the check won and another way when it lost. */
+            if ((mine && theirs && String(mine) !== String(theirs)) || (myAt && theirAt && myAt !== theirAt)) {
+              return res.status(409).json({
+                error: 'Bill number already used by another counter',
+                code: 'TILL_SERIES_COLLISION', client_ref: raceRef, till: mine, taken_by: theirs,
+                message: 'Bill ' + raceRef + ' reached ChitBridge from two places at once and the other one was '
+                       + 'recorded first. This counter is given its own number the next time it reads the shop. '
+                       + 'This bill is kept on the counter, unsent — nothing has been lost.',
+              });
+            }
+            /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
+            return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true,
+                                          client_ref: raceRef, raced: true });
+          }
+        } catch (_) { /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
+      }
       console.error('Send chit error:', err.message);
       res.status(500).json({ error: 'Send failed', message: safeErr(err) });
     }
