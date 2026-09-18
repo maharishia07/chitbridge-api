@@ -206,3 +206,61 @@ totals → pay → actions → status.
   `Evening off` · `Night off`, with a coloured underline on the active ones.
 - Keys are **list rows**, not tiles: a colour bar down the left, **name** (large), price, a green qty badge, `✕`.
 - Foot: `Bill · 15` / `customer · points` on the left, and a wide green **`Charge ₹2,750.25`** on the right.
+
+## Quick-keys maintenance, list view — `Maintenance.png` (back office, 1366×900)
+
+⚠️ **This is a BACK-OFFICE screen, not the counter's maintain mode.** Dark bar: `‹ Sell screen` ·
+`Back office / Menu /` **`Quick keys maintenance`** … right `Manager · Ravi K.`
+
+**Three columns.**
+- **Left — Groups.** Heading `Groups` with `Order = sell-screen order` beside it. Each group is a card with a
+  colour bar, name, `06:00 — 11:30`, and `10 keys` on the right. Then a dashed `+ New group`.
+  At the foot, a tinted note: *"**Permanent changes.** Edits here apply to every counter after you save. Cashiers
+  can still hide keys for their shift from the sell screen."*
+- **Centre — the group.** Colour swatch + **`Morning`** + `Delete group`. Then four fields on one row:
+  `Group name` · `Show from` `06:00 AM` · `Until` `11:30 AM` · `Colour` (four swatches, the chosen one ringed).
+  A checkbox: *"Suggest this group on the sell screen when its window starts"*.
+  A tinted note: *"Item photos: **8 of 10** have a photo. Items without one show initials. Photos on/off is set
+  per device."* with a link **`Device display settings`**.
+  Then **`KEYS IN THIS GROUP · 10`** … right *"Use arrows to set key position"*, and a table:
+  `# · Move (▲▼) · Photo (thumbnail, or a dashed `+` to upload) · Item · Code · Price · Remove`.
+- **Right — `Add from menu`.** A `Search items` box, then every product: name, `BF01 · ₹40`, and either a green
+  **`In group`** label (greyed row) or an **`Add`** button.
+- **Foot:** `Discard` · **`Save changes`** (green).
+
+## Quick-key groups, board view — `MaintBoard.png` (back office, 1600×900)
+
+`Back office / Menu / Quick keys · board view` / **`Quick key groups`**; right: a `Board | List` segmented
+control, `+ New group`, and a **blue `Publish to 6 counters`**.
+- **Left rail — `Menu items`**: `Search menu`, *"Drag an item onto a group"*, then draggable rows (grip, name,
+  price).
+- **Four columns**, one per group, each with a coloured top edge: `Morning` · `10 keys` · `⋯`, then
+  `06:00 → 11:30` and **`Suggest ✓`**, then numbered rows `01 Idli (2 pc) … ₹40 🗑`, each with a drag grip.
+  At the bottom of each column a dashed **`Drop here or + Add item`**.
+- A card mid-drag is drawn lifted, tilted and shadowed over the column it is being dropped into.
+
+## Back office → device screen style — `DisplaySettings.png`
+
+`← Quick keys` · `Back office / Devices /` **`Screen style`** … right: *"Applies at next sync · per device
+overrides per counter"*.
+- **Left — `Devices`**: a card per device with a type badge (`POS`, `KSK`, `TAB`, `PH`, `HH`), the name, and its
+  current style (`Counter classic · photos on`).
+- **Centre**: `Counter 1` + `Horizontal terminal · 1600×900`. Then **`PRESET`** as 8 cards, each with a name and
+  a one-line note: `Counter classic A · light` (selected, green) · `Counter dark B · dark` ·
+  `Counter timeline C · day bar` · `Counter rail D · list keys` · `Compact 15″ terminal` · `Kiosk vertical` ·
+  `Tablet waiter sell → pay` · `Phone 3 steps`.
+  Then five rows of **pill choices**, the active one black:
+  `Layout` — Horizontal · Vertical · Compact · Tablet · Phone · Handheld · Timeline · Rail · **Auto**
+  `Tile style` — Classic · Colour block · Monogram · Compact row · Hotkey · Photo
+  `Quick keys picker` — Popup · Side drawer · Full screen · Bottom sheet · Day timeline · Group rail · Tab strip
+  `Theme` — Light cream · Dark · Paper · Navy
+  `Density` — Comfortable · Compact
+  Then `Photos on keys` + switch + *"On — items without a photo show initials. Fewer keys fit per screen."*
+  and `Cashier may change` + a checkbox *"Tile style & photos for this device only"*.
+- **Right — `Preview`**: a miniature of the sell screen in the chosen style, and under it a sentence naming every
+  choice: *"Horizontal layout · Classic tiles · Popup picker · Light cream · Comfortable · photos on"*.
+- Foot: `Reset to counter` · **`Save`**.
+
+⚠️ **This screen is the UI for `device_screen_config`** (handoff §5) and for everything `lib/screen-kit.js`
+already holds. The counter has the ENGINE and a tiny `Style` dropdown in ⚙ Setup; this is the manager's version
+of the same thing, with a live preview.
