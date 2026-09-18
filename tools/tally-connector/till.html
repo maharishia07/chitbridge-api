@@ -321,6 +321,32 @@
   .mtime{color:var(--dim);font-size:.85em;font-variant-numeric:tabular-nums}
   .mx{flex:0 0 40px;height:40px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);cursor:pointer;font:inherit}
   .msecs{flex:1;overflow:auto;padding:8px 14px 4px;display:flex;flex-direction:column;gap:10px}
+  /**
+   * ── ⭐⭐⭐ THE HUB TAKES FOUR SHAPES ([TILL-56], counter-hub-menu-spec §4) ──────────────────
+   *   < 600    a full-height SHEET, one column, sections folded          (what it always was)
+   *   600–899  the same sheet, with room for two action rows abreast
+   *   900–1199 a centred DIALOG, two columns: sections left, How it looks right, Careful full width
+   *   1200+    the same dialog, capped at 880 px so it does not sprawl across a wide counter
+   *
+   * ⚠ MIN-WIDTH ONLY, and the phone rules are the ones written without a query — mobile-first is not a
+   * preference here, it is what stops a narrow screen inheriting a wide screen's assumptions.
+   * ⚠ NOTHING IS DROPPED AT ANY SIZE. The columns are a re-flow of the same sections in the same order; a
+   * section that only existed on a wide screen would be a feature a phone cannot reach.
+   */
+  @media (min-width:600px){
+    .msecs .mbody .mq{grid-template-columns:1fr 1fr}
+  }
+  @media (min-width:900px){
+    /* the panel stops being a side sheet and becomes a card in the middle of the screen */
+    body[data-menuside] #tillside.on ~ .menu, .menu.asdialog{
+      position:fixed;inset:0;margin:auto;width:min(92vw,880px);max-height:92vh;height:max-content;
+      border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.28);z-index:60}
+    /* ⚠ two columns of SECTIONS — the look card is pulled to the right, Careful spans both. Order is unchanged;
+       only how they are packed changes, so muscle memory survives the resize. */
+    .menu.asdialog .msecs{display:grid;grid-template-columns:1.15fr .85fr;align-items:start;gap:10px 14px}
+    .menu.asdialog .msec[data-testid='till-msec-look']{grid-column:2;grid-row:1 / span 4}
+    .menu.asdialog .msec[data-testid='till-msec-care']{grid-column:1 / -1}
+  }
   .msec{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
   /* §4: a closed row is icon square 36px, title, one-line summary, chevron — and at least 60px tall */
   .mrow{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 12px;
@@ -456,6 +482,17 @@
   .hubwho .mt{flex:1;min-width:0}
   .hubav{width:34px;height:34px;flex:0 0 auto;border-radius:999px;display:flex;align-items:center;justify-content:center;
          background:var(--ok-tint);color:var(--ok);font-weight:700;font-size:.85em}
+  /* ── type to find anything ([TILL-57]) ───────────────────────────────────────── */
+  .hubfind{padding:8px 12px;border-bottom:1px solid var(--line)}
+  .hubfind input{width:100%;min-height:40px;padding:8px 12px;border:1px solid var(--edge);border-radius:10px;
+                 background:var(--paper);color:var(--ink);font:inherit}
+  .hubnone{padding:8px 2px 0;color:var(--dim);font-size:.85em}
+  .hubres{display:flex;flex-direction:column;gap:4px;padding-top:8px}
+  .hubhit{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 10px;text-align:start;
+          border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);cursor:pointer}
+  .hubhit:hover,.hubhit:focus-visible{border-color:var(--ok);background:var(--ok-tint)}
+  .hubhit .mt{display:flex;flex-direction:column;min-width:0}
+  .hubhit .mt i{font-style:normal;color:var(--dim);font-size:.8em}
   .hubchips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
   /* ⚠ STATE IS NEVER SHOWN BY COLOUR ALONE — each chip carries its own words, so it reads the same to somebody
      who cannot tell the green from the red (NOW-reliability-usability §U4). */
@@ -3722,12 +3759,39 @@ var TILL_MENU = [
 ];
 /* ⭐ the day panel opens the menu until the day has been opened; after that Bills leads, as §4 says */
 var MENU_OPEN_SEC = null;
+/**
+ * ── ⭐⭐ ONE AT A TIME ON A PHONE, SEVERAL WHERE THERE IS ROOM (hub spec §2) ──────────────────
+ *
+ * An accordion exists because a phone cannot show two sections at once without one of them being off the
+ * bottom. A 1200 px counter can show three, and folding them anyway makes somebody tap three times to read
+ * what would have fitted — the same screen, worse.
+ * ⚠ THE CHOICE IS THE WIDTH, NOT THE DEVICE. A foldable opened mid-shift is a wide screen from that moment;
+ * paintMenu() is called on resize for exactly this. [[feedback-ui-placement-standards]]
+ */
+function menuRoomy(){ return (window.innerWidth || 0) >= 900; }
+/** the sections open right now — a list, because wide screens hold more than one */
+var MENU_OPEN_MANY = null;
+function menuOpenSet(){
+  if (MENU_OPEN_MANY) return MENU_OPEN_MANY;
+  /* ⭐ the spec's own defaults: the day first until it has been opened, then the three that matter while trading */
+  var started = ls.get(shopLs('cb_till_daystart'), '') === bizDay();
+  return menuRoomy() ? (started ? ['today', 'bills', 'alerts'] : ['day', 'today', 'bills'])
+                     : [started ? 'bills' : 'day'];
+}
+function menuIsOpen(id){ return menuOpenSet().indexOf(id) >= 0; }
 function menuFirstSection(){
   if (MENU_OPEN_SEC !== null) return MENU_OPEN_SEC;
   return (ls.get(shopLs('cb_till_daystart'), '') === bizDay()) ? 'bills' : 'day';
 }
 function menuSection(id){
-  MENU_OPEN_SEC = (menuFirstSection() === id) ? '' : id;
+  var open = menuOpenSet();
+  if (menuRoomy()) {
+    /* ⚠ a wide screen TOGGLES the one pressed and leaves the rest alone — that is what the room is for */
+    MENU_OPEN_MANY = (open.indexOf(id) >= 0) ? open.filter(function(x){ return x !== id; }) : open.concat([id]);
+  } else {
+    MENU_OPEN_MANY = (open.indexOf(id) >= 0 && open.length === 1) ? [] : [id];
+  }
+  MENU_OPEN_SEC = (MENU_OPEN_MANY[0] === undefined) ? '' : MENU_OPEN_MANY[0];
   paintMenu();
   var el = document.querySelector('[data-testid="till-msec-' + id + '"]');
   if (el && el.scrollIntoView) { try { el.scrollIntoView({ block: 'nearest' }); } catch (_) {} }
@@ -4218,6 +4282,70 @@ function menuOpRow(op){
  * ⚠ PIN sign-in does not exist yet (R5). This row states the truth and offers the break/handover that DOES
  * exist; it will carry Sign in · F7 the day that ships, in the same place.
  */
+/**
+ * ── ⭐⭐⭐ TYPE TO FIND ANYTHING IN HERE ([TILL-57]) ────────────────────────────────
+ *
+ * Athi: *"take the inventory and look at the menu option from other till applications, blend the best."* The one
+ * genuinely better idea in the others is Square's: ONE SEARCH ACROSS EVERY SETTING. The package's own review
+ * says why it matters here — *"your 7 tabs will not scale past ~40 fields"* — and this hub now holds nine
+ * sections, a dozen actions and eighteen switches. Remembering which section holds "printer" is a tax on
+ * somebody who opens this twice a day.
+ *
+ * ⚠⚠ IT SEARCHES WHAT IS THERE, NOT A SECOND LIST. Every row comes from TILL_OPS and TILL_MENU, which are what
+ * the panel is built from — so a row added tomorrow is findable tomorrow with nobody remembering to index it. A
+ * hand-kept search index is the first thing to drift. [[feedback-no-duplicate-functions]]
+ *
+ * ⚠ AND IT NEVER HIDES THE SECTIONS. Square replaces the page with results; here the hub stays exactly where it
+ * was and the matches appear above it, because a shopkeeper who mistypes should not lose the thing they know how
+ * to reach by hand. [[feedback-stay-in-the-construct]]
+ */
+var HUB_Q = '';
+function hubFind(v){ HUB_Q = String(v || ''); paintMenu();
+  /* ⚠ paintMenu() replaced the box, so the caret has to be put back or every second letter is lost */
+  var b = document.getElementById('hubq');
+  if (b) { try { b.focus(); b.setSelectionRange(b.value.length, b.value.length); } catch (_) {} } }
+/** every row this hub can reach, from the lists it is built from — never a second inventory */
+function hubRows(){
+  var out = [];
+  TILL_MENU.forEach(function(sec){
+    /* the section itself is findable — "alerts", "shop details", "careful" */
+    out.push({ what: sec.title, hint: sec.sum, icon: sec.icon, sec: sec.id, go: "menuSection('" + sec.id + "')" });
+    (sec.ops || []).forEach(function(id){
+      var op = tillOp(id); if (!op) return;
+      out.push({ what: op.label, hint: op.hint, icon: op.icon, sec: sec.id, go: 'fromMenu(' + op.fn + ')' });
+    });
+  });
+  /* the look switches are not ops — they are the section's own controls, so they are named here by hand and
+     they all lead to the same place, which is the honest thing a search can promise about them */
+  ['Text size', 'Colours', 'Theme', 'Left hand', 'Right hand', 'Idle screen', 'What shows on this counter']
+    .forEach(function(w){ out.push({ what: w, hint: 'How it looks', icon: '◐', sec: 'look', go: "menuSection('look')" }); });
+  return out;
+}
+function hubHits(){
+  var q = HUB_Q.trim().toLowerCase();
+  if (!q) return [];
+  return hubRows().filter(function(r){
+    return (r.what + ' ' + (r.hint || '')).toLowerCase().indexOf(q) >= 0;
+  }).slice(0, 8);
+}
+function hubFindBox(){
+  var hits = hubHits();
+  return '<div class="hubfind">'
+    + '<input id="hubq" data-testid="till-hub-find" placeholder="Find anything — printer, GSTIN, close, colours…"'
+    + ' autocomplete="off" value="' + esc(HUB_Q) + '" oninput="hubFind(this.value)">'
+    + (HUB_Q.trim() && !hits.length
+        ? '<div class="hubnone" data-testid="till-hub-find-none">Nothing in this menu matches “' + esc(HUB_Q.trim())
+          + '”. The sections below are all still here.</div>'
+        : '')
+    + (hits.length
+        ? '<div class="hubres" data-testid="till-hub-find-hits">' + hits.map(function(r, n){
+            return '<button class="hubhit" data-testid="till-hub-hit-' + n + '" onclick="' + r.go + '">'
+              + '<span class="mi">' + r.icon + '</span>'
+              + '<span class="mt"><b>' + esc(r.what) + '</b><i>' + esc(r.hint || '') + '</i></span></button>';
+          }).join('') + '</div>'
+        : '')
+    + '</div>';
+}
 function hubWhoRow(){
   var name = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
   var since = (typeof WHO !== 'undefined' && WHO && WHO.at) ? new Date(WHO.at).toTimeString().slice(0, 5) : '';
@@ -4264,9 +4392,9 @@ function paintMenu(){
     + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
     + '</div>'
     /* ⭐ pinned — see hubWhoRow() and hubChips(). They sit ABOVE the folding sections and never fold. */
-    + hubWhoRow() + hubChips();
+    + hubWhoRow() + hubChips() + hubFindBox();
   var secs = TILL_MENU.map(function(sec){
-    var open = menuFirstSection() === sec.id;
+    var open = menuIsOpen(sec.id);
     var body = sec.day ? menuDayBody() : sec.today ? menuTodayBody()
       : sec.alerts ? menuAlertsBody() : sec.shopdet ? menuShopBody() : sec.look
       ? '<div class="menusec" data-testid="till-quick-settings">'
@@ -4306,6 +4434,9 @@ function paintMenu(){
     + '<span class="u">' + esc(ls.get('cb_till_name', 'Counter')) + '</span>'
     + '<a id="cblink" href="#" target="_blank" rel="noopener">ChitBridge ↗</a>'
     + '</div>';
+  /* ⭐ ONE WIDTH TEST, TWO READERS — menuRoomy() decides both how many sections open and which shape the panel
+     takes, so the two can never disagree about what "there is room" means. */
+  m.classList.toggle('asdialog', menuRoomy());
   m.innerHTML = head + '<div class="msecs">' + secs + '</div>' + foot;
   try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbHome(); } catch (_) {}
   paintMenuQuick();
@@ -12819,7 +12950,9 @@ cartGripInit();
    otherwise a window dragged narrower keeps a grid with one more track than it has cells. */
 /* ⚠ A CONVERTIBLE CHANGES SHAPE WITHOUT RELOADING — Athi tilts the screen mid-shift, so anything keyed off the
    shape has to settle again, the keyboard included. */
-window.addEventListener('resize', function(){ try { chipsOverflow(); } catch (_) {} try { paintCart(); } catch (_) {} try { stepsApply(); } catch (_) {} try { kbdApply(); } catch (_) {} });
+window.addEventListener('resize', function(){ try { chipsOverflow(); } catch (_) {} try { paintCart(); } catch (_) {} try { stepsApply(); } catch (_) {} try { kbdApply(); } catch (_) {}
+  /* ⚠ the hub is a sheet on a phone and a dialog on a counter — a tilt crosses that line, so it repaints too */
+  try { var _m = document.getElementById('tillmenu'); if (_m && !_m.hidden) paintMenu(); } catch (_) {} });
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
 ['mic','micphone','micname'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK() && !recordOK()) b.style.display = 'none'; });
 setMode(ls.get('cb_till_mode', 'sell'));
