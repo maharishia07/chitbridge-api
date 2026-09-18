@@ -557,8 +557,15 @@ it('⭐⭐ no browser dialog is left in the counter', () => {
   const prompts = page.split('prompt(').length - 1;
   assert.strictEqual(prompts, 1, 'expected only _install.prompt() (the PWA install offer), found ' + prompts);
   assert.ok(page.indexOf('_install.prompt()') > 0, 'the one allowed prompt is not the PWA install offer');
-  /* the three primitives that replaced them */
-  for (const fn of ['function say(message, title){', 'function sure(message, okWord, title){', 'function ask(message, value, label, title){'])
+  /**
+   * the three primitives that replaced them.
+   * ⚠ MATCHED ON THE OPENING, NOT THE WHOLE SIGNATURE. The assertion is "the counter has its own dialog
+   * primitive", and that is what must not be deleted. Pinning every parameter made it fail the first time one
+   * gained an OPTIONAL argument — sure() took a fourth, cancelWord, so R1 could ask a question whose two
+   * answers are "Continue that bill" and "Start fresh" and neither is a cancel. A guard that fires on an
+   * additive change is a guard people learn to edit rather than read. [[feedback-improvise-update-cases]]
+   */
+  for (const fn of ['function say(message, title', 'function sure(message, okWord, title', 'function ask(message, value, label, title'])
     assert.ok(page.indexOf(fn) > 0, 'missing primitive: ' + fn);
   /* ⚠️ and it must survive having no dialog at all — the despatch logic runs in node against a stub document */
   const open = page.slice(page.indexOf('function _askOpen(opts){'), page.indexOf('/** alert'));

@@ -1165,6 +1165,16 @@
   .dlg h3{margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:1.15em;letter-spacing:.01em}
   .dlg label{display:block;margin:10px 0 4px;color:var(--dim);font-size:.85em}
   /**
+   * ⚠⚠ `hidden` LOSES TO A DISPLAY RULE, AND HAD BEEN LOSING ON EVERY DIALOG (found 2026-09-18, on the screen
+   * rather than in the code). _askOpen sets `lab.hidden = !opts.field`, which is correct — but `.dlg label`
+   * sets display:block, and a type selector beats the [hidden] attribute, so the words "Your answer" sat under
+   * the message of every say() and every sure() in the counter. "Give back ₹500 against C1/…?" · Your answer.
+   * The input above it was spared only because it carries its own display rule by accident.
+   * ⚠ Scoped to the dialog rather than global, because that is where the fault is and a page-wide !important
+   * is a thing that surprises somebody later.
+   */
+  .dlg [hidden]{display:none!important}
+  /**
    * ⭐ THE CHOICE ROW. Picking a person, a printer or a counter is the same shape every time: a full-width target with the
    * name in ink and whatever qualifies it underneath in the quiet colour. It replaces four different piles of inline style.
    * ⚠️ 52px tall — a finger's worth. These are pressed on a tablet at a counter, not clicked with a mouse.
@@ -1301,7 +1311,7 @@
         pills either side of it, so every press either did nothing or caught the ☰ next to it. The number a cashier reads most
         often is the obvious way in to the list behind it, and that list already exists on F8.
       -->
-      <button class="pill" id="daypill" data-testid="till-day" onclick="openBills()" title="today's bills — every sale taken at this counter today (F8)"></button>
+      <button class="pill" id="daypill" data-testid="till-day" onclick="dayPillGo()" title="today's bills — every sale taken at this counter today (F8)"></button>
       <!--
         ⭐⭐ WHAT STAYS ON THE BAR, AND WHY. Athi, 2026-09-09: *"counter header has many now, better we organise and make it kind
         of menu, so we know which menu to look at."* Thirteen controls had accumulated, each one reasonable on the day it landed.
@@ -1319,6 +1329,12 @@
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
       <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="searchTyped()" onkeydown="searchKey(event)">
       <!-- ⭐ the box's own clear. Escape clears the BILL on this counter, so it must never be the habit here. -->
+      <!--
+        ⭐⭐ THE KEYBOARD IS INVOKED, NOT INFLICTED ([TILL-43], 2026-09-18). Athi, testing the kiosk shape on a
+        convertible: *"keyboard is keep poping up … possibly we need to switch off keyboard in touch panel if we
+        want, we may have to invoke."* On a touch panel it is this button that invokes it.
+      -->
+      <button class="qx" id="qkbd" data-testid="till-search-kbd" title="type on the screen" aria-label="show the on-screen keyboard" onclick="kbdToggle()" hidden>⌨</button>
       <button class="qx" id="qclear" data-testid="till-search-clear" title="clear the search" aria-label="clear the search" onclick="clearSearch()">✕</button>
     </div>
     <div class="chips" id="chips"></div>
@@ -1366,7 +1382,7 @@
     <div class="totals" id="totals"></div>
     <div class="pay" id="pay"></div>
     <div class="take">
-      <input id="tendered" type="number" min="0" step="1" inputmode="decimal" placeholder="Amount taken" oninput="paintTotals()">
+      <input id="tendered" type="number" min="0" step="1" inputmode="decimal" placeholder="Amount taken" oninput="paintTotals();draftSave()">
       <button class="pill" data-testid="till-split" onclick="addPart()" title="take part of this bill in this way, and the rest another">+ part</button>
       <span id="change" style="min-width:120px;text-align:right;font-weight:700"></span>
     </div>
@@ -3100,6 +3116,13 @@ async function load(){
      "No copy of the shop yet — press ↻" — a button to press for the one thing it obviously has to do. Once per page, so a shop
      that cannot be read does not loop; refresh() calls load() again. */
   if (!S && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.key && navigator.onLine !== false) { FIRST_READ = true; refresh().catch(function(){}); }
+  /**
+   * ⭐⭐⭐ R1 · "YOU HAD A BILL OPEN…" — HERE, not at boot. load() is where the shop arrives, and the lines have
+   * to be re-priced through the offers engine before anybody is shown a total. Once per page (DRAFT_ASKED):
+   * load() runs again on every reconnect, and a question that reappears every time the line wobbles is a
+   * question people learn to dismiss.
+   */
+  try { draftResume(); } catch (_) {}
 }
 var FIRST_READ = false;
 /* ⚠️ THE BUTTON MAY BE PRESSED BEFORE THE PAGE HAS FINISHED WAKING (caught by [TILL-01]): HOST is chosen asynchronously, and ↻ on
@@ -3154,7 +3177,18 @@ function paintStatus(){
     age.className = 'pill' + (mins > 240 ? ' off' : ''); }
   else { age.textContent = 'no prices yet'; age.className = 'pill off'; }
   var d = STATE.today || {};
-  document.getElementById('daypill').textContent = 'today ' + (d.count||0) + ' · ' + money(d.total||0);
+  /**
+   * ⭐⭐ AT THE TOP OF A TOUCH SHAPE, THIS BILL — NOT THE DAY ([TILL-44], 2026-09-18). Athi: *"my eyes are
+   * focusing on the top."* They are, and on the steps shapes the top was answering a question nobody had asked:
+   * the DAY's takings. So the top now says what is being rung and opens the bill; the bottom takes the money.
+   * One reading each, and still one Pay button.
+   *
+   * ⚠⚠ AND IT SHOULD NEVER HAVE SHOWN THE DAY ON A KIOSK ANYWAY. A vertical panel is the one a CUSTOMER is
+   * standing in front of, and the day's takings are not theirs to read — the package's own idle design hides
+   * the money for exactly this reason (png/IdleShop.png, "money hidden").
+   * ⚠ A terminal is unchanged: nobody is looking over it, and the day total is the number its owner wants.
+   */
+  paintDayPill(d);
   var note = queueWords();
   /* ⚠️ THE ABSENCE OF TAX IS ALSO AN ANSWER, and it should not look like a fault. A shop that charges no GST is told why, once,
      rather than left wondering where the tax column went. */
@@ -3599,6 +3633,30 @@ async function todayBills(){
                    .sort(function(a, b){ return new Date(a.at) - new Date(b.at); });
   TODAY_AT = Date.now();
   return TODAY_BILLS;
+}
+/**
+ * ── ⚠⚠ A SALE MUST REACH THE PANEL THAT IS SHOWING THE DAY ([TILL-45], 2026-09-18) ────────────────
+ *
+ * Athi: *"i made a sale, but still bohni sale not recorded, i guess it is not picking up from the same place.
+ * but when i refresh, these values are appearing."*
+ *
+ * ⚠⚠ TODAY_BILLS IS A MEMO AND NOTHING INVALIDATED IT ON A SALE. retIssue() cleared it after a credit note;
+ * finish() never did. So the header, which reads STATE.today, moved to "today 1 · ₹210.00" while the panel
+ * open beside it went on saying ₹0.00, "Bills 0" and "the first sale of the day is still to come" — two
+ * readings of one fact, disagreeing on screen at the same moment, which is the worst way to learn a number is
+ * cached. A refresh "fixed" it only because a reload starts the memo empty.
+ *
+ * ⚠ IT REPAINTS ONLY WHAT IS OPEN, AND NEVER OVER SOMEBODY'S TYPING. The TO DO box lives in this panel, and a
+ * loader that rebuilds an open form throws away what was being written into it.
+ * [[feedback-loader-never-repaints-open-form]]
+ */
+function menuFresh(){
+  TODAY_BILLS = null;
+  var m = document.getElementById('tillmenu');
+  if (!m || m.hidden) return;
+  var a = document.activeElement;
+  if (a && m.contains(a) && /input|textarea|select/i.test(a.tagName)) return;
+  try { paintMenu(); } catch (_) {}
 }
 /**
  * ⭐⭐⭐ BOHNI — THE FIRST SALE OF THE DAY (Athi, 2026-09-18; the custom is documented, not invented: the first
@@ -4322,7 +4380,9 @@ function scanned(){
  * A bell push or a refresh with a code in the box would have billed it once more, silently. So the check runs only when the
  * box's text has just CHANGED: a keystroke, a scanner, a finished spoken phrase. A repaint only repaints.
  */
-function searchTyped(){ SEARCH_FRESH = false; showAgain(); if (!scanned()) paintHits(); }
+/* ⭐ the keys narrow with the shelf — see quickShown() [TILL-46] */
+function searchTyped(){
+  try { paintQuick(); } catch (_) {} SEARCH_FRESH = false; showAgain(); if (!scanned()) paintHits(); }
 /**
  * ⚠️ AND THE SCANNER'S OWN ENTER IS NOT A SECOND ORDER. Most scanners send the code and then Enter, a few milliseconds apart. While
  * the box was cleared that Enter met an empty search; now it meets the product just added and would add another. An Enter that
@@ -4816,6 +4876,8 @@ function applyTillOptions(){
   if (o.shape && o.shape !== 'auto') b.classList.add('shape-' + o.shape);
   /* ⭐ which screen-library layout is in force, so the CSS can tell a COUNTER from a SELF-SERVICE screen */
   try { b.setAttribute('data-sklayout', (screenCfg().layout) || 'auto'); } catch (_) {}
+  /* ⭐ the shape decides where the on-screen keyboard starts, so it is settled with the rest of the look */
+  try { kbdApply(); } catch (_) {}
   try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
   try { paintHits(); } catch (_) {}
   /* ⚠️ THE CHIPS REPAINT WITH EVERYTHING ELSE. applyTillOptions() redrew the keys and the shelf but not the
@@ -4852,6 +4914,9 @@ function stepsApply(){
   var b = document.body; if (!b) return;
   var on = stepsWanted();
   b.classList.toggle('steps', on);
+  /* the header pill reads the BILL in this shape and the DAY otherwise, so it settles when the shape does
+     — on the first paint stepsApply() runs after paintStatus(), and the pill kept saying today. */
+  try { paintDayPill(); } catch (_) {}
   /* ⚠️ the bill's columns only fit a phone in the Phone shape — steps on a narrow 'Automatic' screen wear it too */
   if (on) b.classList.add('shape-mobile');
   else if (tillOpt().shape !== 'mobile') b.classList.remove('shape-mobile');
@@ -4863,8 +4928,36 @@ function stepGo(s){
   if (s === 'pay' && !CART.length) s = 'bill';
   b.dataset.step = s;
   paintStepBar();
+  try { paintDayPill(); } catch (_) {}   /* the header pill now reads the BILL, so it follows the bill */
   try { window.scrollTo(0, 0); } catch (_) {}
   if (s === 'pick' && b.classList.contains('steps')) focusSearch();
+}
+/**
+ * ⚠ THE PILL SAYS TWO DIFFERENT THINGS, so it must go to two different places — a control whose words changed
+ * but whose action did not is the exact shape of the dead buttons this counter has already paid for twice.
+ */
+/**
+ * ⚠ ITS OWN PAINTER, because it now follows the BILL and the bill changes on every keystroke. paintStatus()
+ * repaints the queue words, the tax note, the age pill and the line pill — running all of that to move one
+ * number is the repaint-the-world habit this counter has a rule against. [[feedback-repaint-locally]]
+ * ⚠ `d` is optional: the bill path has no day figures to hand and does not need them.
+ */
+var DAY_LAST = null;
+function paintDayPill(d){
+  var dp = document.getElementById('daypill'); if (!dp) return;
+  if (d) DAY_LAST = d; else d = DAY_LAST || {};
+  if (document.body.classList.contains('steps')) {
+    var mine = 0; try { mine = CART.length ? billMoney().net : 0; } catch (_) {}
+    dp.textContent = CART.length ? ('this bill · ' + money(mine)) : 'nothing on this bill';
+    dp.title = 'what is on the bill being rung — tap to see it';
+  } else {
+    dp.textContent = 'today ' + (d.count||0) + ' · ' + money(d.total||0);
+    dp.title = 'today’s bills — every sale taken at this counter today (F8)';
+  }
+}
+function dayPillGo(){
+  if (document.body.classList.contains('steps') && CART.length) { stepGo('bill'); return; }
+  openBills();
 }
 function paintStepBar(){
   var el = document.getElementById('stepbar'); if (!el) return;
@@ -4878,7 +4971,18 @@ function paintStepBar(){
   };
   el.innerHTML = btn('pick', 'Items')
     + btn('bill', 'Bill' + (n ? ' <b data-testid="till-step-count">' + n + '</b> <span>' + money(net) + '</span>' : ''))
-    + btn('pay', 'Pay ›', 'go', !n);
+    /**
+     * ⭐⭐ THE MONEY IS ON THE BUTTON ([TILL-44], 2026-09-18). Athi, on the kiosk shape: *"the pay panel is at
+     * very bottom, so i was searching where it is, as my eyes are focusing on the top… can we introduce Pay
+     * button there also, i know it is duplicate."*
+     *
+     * ⚠ NOT A SECOND PAY BUTTON, and the reason is his own specification: *"One primary action per screen,
+     * always in the same place"* (NOW-reliability-usability §U2). Two of them on a panel a CUSTOMER touches is
+     * two states to keep right and two places to learn. What was actually wrong is that the one button said a
+     * bare word: on a 1759 px screen "Pay ›" is a small grey-green target a long way from the eye, while
+     * "Pay ₹130.00 ›" is a NUMBER, which is the thing anybody at a counter is hunting for anyway.
+     */
+    + btn('pay', 'Pay' + (n ? ' <span>' + money(net) + '</span>' : '') + ' ›', 'go', !n);
 }
 /**
  * ⭐⭐ THE BILL-NUMBER SCHEME THIS SHOP HAS CHOSEN — the shape, not the law. lib/docnumber holds what a country
@@ -5085,13 +5189,47 @@ async function loadQuick(){
  * the list that would write an order nobody chose. Arrange shows the group whole, and says so.
  */
 function quickCatOn(){ return !QK_ARRANGE && !!(FILTER && FILTER.cat); }
+/** what has been typed, when it is the keys' business to narrow — never while an ORDER is being written */
+function quickQ(){
+  if (QK_ARRANGE) return '';
+  var el = document.getElementById('q');
+  return el ? String(el.value || '').trim() : '';
+}
+/**
+ * ── ⭐⭐ THE KEYS NARROW WITH THE SHELF ([TILL-46], 2026-09-18) ──────────────────────────────
+ *
+ * Athi: *"when i search the item, the list is getting filtered, but not the quick keys item. when we use the
+ * quick keys, the item there also should get filter."*
+ *
+ * ⚠⚠ THE KEYS USED TO VANISH ON THE FIRST KEYSTROKE — `if (typing) { el.innerHTML = ''; return; }`, written to
+ * get the tiles out of the way of a search. But a shopkeeper who types "dos" has not stopped wanting the
+ * pictures; they have asked a narrower question, and the answer to it is the same answer the shelf gives.
+ * Blanking the panel meant the one screen showed the question answered twice — once as a list, once as
+ * nothing at all.
+ *
+ * ⭐ SAME ENGINE AS THE SHELF (CBSearch), so the two cannot disagree about what "dos" matches. One rule, one
+ * place: the chip narrows by category, the box narrows by words, and both come out of quickShown().
+ * ⚠ NOT WHILE ARRANGING — see quickQ() and quickCatOn(). qkDropOn() places a key at the position it was
+ * dropped on, and a partial list would write an order nobody chose.
+ */
 function quickShown(){
-  if (!quickCatOn()) return QUICK;
-  return QUICK.filter(function(i){ return i && i.category === FILTER.cat; });
+  var out = QUICK;
+  if (quickCatOn()) out = out.filter(function(i){ return i && i.category === FILTER.cat; });
+  var q = quickQ();
+  if (!q) return out;
+  if (window.CBSearch && CBSearch.search) {
+    /* ⚠ limit is the WHOLE narrowed set: this is a filter, not a shortlist — a key silently dropped off the
+       end is the truncation fault the group panel already paid for once. */
+    try { return CBSearch.search(out, q, { limit: out.length }) || []; } catch (_) {}
+  }
+  var w = q.toLowerCase();
+  return out.filter(function(i){
+    return String((i && i.name) || '').toLowerCase().indexOf(w) >= 0
+        || String((i && i.code) || '').toLowerCase().indexOf(w) >= 0;
+  });
 }
 function paintQuick(){
   var el = document.getElementById('quick'); if (!el) return;
-  var typing = (document.getElementById('q').value || '').trim().length > 0;
   var o = tillOpt(), usesGroups = (o.quickSource === 'groups' || o.quickSource === 'both');
   /* ⚠️ THE BAR SURVIVES AN EMPTY GRID when groups are in use — a new group has nothing in it yet, and hiding the
      one control that fills it would make the feature unreachable the moment it is switched on. */
@@ -5101,9 +5239,9 @@ function paintQuick(){
    * was nothing to find: the group controls only existed once somebody had already switched to groups, and the
    * only way to switch was a trip to ⚙ Setup. A feature reachable only by people who already know it exists is
    * not reachable. So the keys now carry the control that decides what fills them.
-   * ⚠️ Typing is still the exception — the tiles get out of the way of a search, which is what they are for.
+   * ⚠️ Typing NARROWS the keys rather than blanking them — see quickShown() [TILL-46]. It used to return here
+   * with an empty panel, so the first keystroke took the pictures away from somebody who was still choosing.
    */
-  if (typing) { el.innerHTML = ''; return; }
   var pinned = quickPinned(), mine = groupIds();
   /**
    * ⭐⭐ THE BAR CHOOSES, IT NO LONGER AUTHORS. Athi, 2026-09-18: *"quick key management is not part of selling
@@ -5122,10 +5260,15 @@ function paintQuick(){
   /* ⚠⚠ A NARROWED GRID MUST SAY SO. Keys gone without a reason read as keys LOST, and the chip that did it is
      a row away on a screen somebody uses at speed. So the bar names the filter and carries the way out of it. */
   var shown = quickShown();
-  var catNote = quickCatOn()
-    ? '<span class="qwhy" data-testid="till-quick-cat">' + esc(FILTER.cat) + ' only · ' + shown.length + ' of ' + QUICK.length + '</span>'
-      + '<button class="qarr" data-testid="till-quick-catall" title="every key in this group again"'
-      + ' onclick="setFilter(\'all\')">show all</button>'
+  /* ⚠ WHICHEVER NARROWING IS ON, IT IS NAMED. Keys gone without a reason read as keys LOST — and now there are
+     two ways to lose them, a chip and a typed word, so the bar says which one is doing it. */
+  var qtyped = quickQ();
+  var narrowed = quickCatOn() || !!qtyped;
+  var why = [quickCatOn() ? esc(FILTER.cat) : '', qtyped ? '“' + esc(qtyped) + '”' : ''].filter(Boolean).join(' · ');
+  var catNote = narrowed
+    ? '<span class="qwhy" data-testid="till-quick-cat">' + why + ' only · ' + shown.length + ' of ' + QUICK.length + '</span>'
+      + (quickCatOn() ? '<button class="qarr" data-testid="till-quick-catall" title="every key in this group again"'
+           + ' onclick="setFilter(\'all\')">show all</button>' : '')
     : '';
   var bar = '<div class="qbar" data-testid="till-quick-bar">'
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
@@ -5230,9 +5373,16 @@ function paintQuick(){
       + (FILTER && FILTER.cat ? ' Every key in the group is shown while you arrange.' : '') + '</div>'
     : '';
   /* ⚠ AN EMPTY GRID EXPLAINS ITSELF. A blank panel is a fault report; a sentence is an answer. */
-  var catEmpty = (quickCatOn() && !shown.length)
-    ? '<div class="qarrnote" data-testid="till-quick-catempty">No ' + esc(FILTER.cat)
-      + ' among these keys \u2014 the shelf below still has it.</div>'
+  /**
+   * ⚠️ AND THE SENTENCE MUST BE TRUE. "the shelf below still has it" is the right thing to say about a
+   * CATEGORY with no key — Jalebi is on the shelf and not in Morning. It is a LIE about a typed word that
+   * matches nothing anywhere, and a counter that reassures a shopkeeper wrongly is worse than one that says
+   * nothing at all. So it reads what the shelf actually found. [[feedback-write-for-the-shopkeeper]]
+   */
+  var onShelf = 0; try { onShelf = hits().length; } catch (_) { onShelf = 0; }
+  var catEmpty = (narrowed && !shown.length)
+    ? '<div class="qarrnote" data-testid="till-quick-catempty">No ' + why + ' among these keys'
+      + (onShelf ? ' \u2014 the shelf below still has it.' : ' \u2014 and nothing on the shelf matches either.') + '</div>'
     : '';
   el.innerHTML = bar + arrNote + catEmpty + inBillStrip() + keys + tray;
 }
@@ -6893,6 +7043,134 @@ function unpark(n){
   PARKED.splice(n, 1); parkedSave(); price(); focusSearch();
 }
 function dropParked(n){ PARKED.splice(n, 1); parkedSave(); }
+/* ═══ R1 · THE BILL BEING RUNG SURVIVES THE DEVICE ══════════════════════════════════════ */
+/**
+ * ── ⭐⭐⭐ A BILL CAN NEVER BE LOST ([TILL-41], 2026-09-18) ────────────────────────────────
+ *
+ * Athi: *"go ahead with R1, dont lose the bill."* The design package makes this the first promise of the
+ * counter and lets nothing else ship in front of it.
+ *
+ * ⚠⚠ WHAT WAS ACTUALLY MISSING. The two bills that are EASY to see already survived: a parked bill is on the
+ * rail and a finished one is in IndexedDB. The bill being RUNG — the one with a customer standing at the
+ * counter — lived in a `var` and nowhere else. A power cut, a browser update, a tab closed by a thumb, and it
+ * was gone with no trace it had ever existed, and no way to tell the customer what they had asked for.
+ *
+ * ⭐ WRITTEN AFTER EVERY CHANGE, NEVER ON A TIMER. A timer is a window in which work is lost and the window is
+ * exactly as long as the timer. localStorage is synchronous and a basket is a few kilobytes, so the write costs
+ * well under a millisecond — and DRAFT_MS keeps the measurement rather than the hope, because R1 carries a
+ * number ("bill saved locally < 50 ms") and a promise nobody measures is a promise nobody keeps.
+ *
+ * ⚠⚠ SHOP-SCOPED, like everything read out of a shop. A browser pointed at a second shop must never be offered
+ * the first shop's basket with their customer's phone number on it. [[feedback-shop-scoped-local-store]]
+ *
+ * ⚠ THE DRAFT IS NOT A BILL. No number has been taken, nothing is queued, nothing has been sold — exactly like
+ * a parked bill. It is the screen, kept.
+ */
+var DRAFT_KEY = 'cb_till_draft', DRAFT_ASKED = false, DRAFT_HOLD = false, DRAFT_WARNED = false, DRAFT_MS = 0;
+/** everything on the screen that belongs to this customer — the same set parkBill() keeps, plus how they are paying */
+function draftBody(){
+  return { v: 1, at: Date.now(),
+           cart: CART, sel: CARTSEL, picked: PICKED, asked: PAY_ASKED, parts: PARTS, kot: KOT_N,
+           /* ⚠ the 18+ answers ride WITH the bill, for the reason spelled out on parkBill() */
+           ages: ageRecord(),
+           name: fieldVal('cname'), phone: fieldVal('cphone'), tendered: fieldVal('tendered') };
+}
+function fieldVal(id){ var el = document.getElementById(id); return el ? String(el.value || '') : ''; }
+/**
+ * ⚠⚠ A SAVE THAT FAILS MUST SAY SO, ONCE. ls.set() answers false on a full or blocked store and swallows the
+ * reason — which is the exact shape of the parked-bill fault of 2026-09-16, where the × looked like a dead
+ * button because the write behind it was failing in silence. But this runs on every keystroke, so it says it
+ * once per run of failures and goes quiet again the moment a write lands. [[feedback-silence-is-the-bug]]
+ */
+function draftSave(){
+  if (DRAFT_HOLD) return;           /* mid-restore: the paints that follow must not write over what is being read */
+  try {
+    /* an empty screen is not a bill — and this is what clears the draft after finish(), clearBill() and parkBill(),
+       all three of which end in price(). One chokepoint, so a new way to empty the bill cannot forget. */
+    if (!CART.length && !fieldVal('cname') && !fieldVal('cphone')) { draftDrop(); return; }
+    var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+    var body = JSON.stringify(draftBody());
+    var wrote = ls.set(shopLs(DRAFT_KEY), body);
+    DRAFT_MS = ((window.performance && performance.now) ? performance.now() : Date.now()) - t0;
+    if (!wrote) {
+      if (!DRAFT_WARNED) {
+        DRAFT_WARNED = true;
+        toastLine('This device will not keep the open bill (' + ((ls.last && ls.last.why) || 'refused')
+          + ') — finish or park it rather than leaving it. ☰ → 🩺 Why is a bill stuck?');
+      }
+    } else DRAFT_WARNED = false;
+  } catch (_) { /* a draft that cannot be written must never stop a sale being rung */ }
+}
+function draftDrop(){ try { ls.set(shopLs(DRAFT_KEY), ''); } catch (_) {} }
+function draftRead(){
+  var d = null;
+  /* ⚠ A CORRUPT DRAFT MUST NOT BRICK THE BOOT. Whatever is in there, the counter opens and can sell. */
+  try { d = JSON.parse(ls.get(shopLs(DRAFT_KEY), 'null')); } catch (_) { d = null; }
+  return (d && Array.isArray(d.cart) && d.cart.length) ? d : null;
+}
+/** when it was left, in the words a person would use — a bill from yesterday is a different decision from one from a minute ago */
+function draftWhen(at){
+  var t = Number(at) || 0; if (!t) return '';
+  var d = new Date(t), now = new Date();
+  var clock = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (d.toDateString() === now.toDateString()) return 'at ' + clock;
+  var y = new Date(now.getTime() - 86400000);
+  return (d.toDateString() === y.toDateString() ? 'yesterday at ' : d.toLocaleDateString() + ', ') + clock;
+}
+/**
+ * ⭐⭐ ASKED ONCE, AT THE START, AND NEVER DECIDED FOR THEM. R1: *"Never silently discard."*
+ * ⚠⚠ AND "START FRESH" DOES NOT THROW IT AWAY EITHER — it goes on the parked rail, where one tap brings it
+ * back and one × gets rid of it deliberately. The promise is that a bill is never lost, so the answer to the
+ * question cannot be a way of losing one.
+ * ⚠ It runs after load(), not at boot: the lines are re-priced through the offers engine, and that needs the
+ * shop. And only when nothing is being rung — a live basket is never written over.
+ */
+async function draftResume(){
+  if (DRAFT_ASKED) return; DRAFT_ASKED = true;
+  var d = draftRead(); if (!d) return;
+  if (CART.length) return;
+  var n = d.cart.length;
+  var total = d.cart.reduce(function(a, c){ return r2(a + (c.net != null ? c.net : (Number(c.price) || 0) * (Number(c.qty) || 0))); }, 0);
+  var who = (d.name || '').trim();
+  var go = await sure(
+    'You had a bill open with ' + n + ' item' + (n === 1 ? '' : 's') + ' · ' + money(total)
+      + (who ? ' for ' + who : '') + ', left ' + draftWhen(d.at) + '.\n'
+      + 'Nothing has been sold and no number has been taken.',
+    'Continue that bill', 'A bill was left open', 'Start fresh');
+  if (go) draftApply(d); else draftAside(d);
+}
+/** put the screen back exactly as it was */
+function draftApply(d){
+  DRAFT_HOLD = true;
+  try {
+    CART = d.cart || [];
+    CARTSEL = (typeof d.sel === 'number' && d.sel < CART.length) ? d.sel : -1;
+    PARTS = Array.isArray(d.parts) ? d.parts : [];
+    PICKED = d.picked || PICKED; PAY_ASKED = !!d.asked; KOT_N = Number(d.kot) || 0;
+    /* ⚠ the checks come back with the bill — an 18+ line whose check was wiped would finish with age_checks:
+       null on a sale where a check HAD been made. Same reasoning as unpark(). */
+    AGE_OK = {};
+    (d.ages || []).forEach(function(a){ if (a && a.age) AGE_OK[a.age] = { at: a.at, by: a.by }; });
+    var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v || ''; };
+    set('cname', d.name); set('cphone', d.phone); set('tendered', d.tendered);
+  } catch (_) {}
+  DRAFT_HOLD = false;
+  try { paintParts(); paintPays(); } catch (_) {}
+  price();                       /* re-priced against today's offers, then written back as the draft */
+  try { focusSearch(); } catch (_) {}
+  toastLine('Brought that bill back — ' + CART.length + ' line' + (CART.length === 1 ? '' : 's') + '.');
+}
+/** not thrown away: onto the rail, where getting rid of it is somebody's deliberate act */
+function draftAside(d){
+  try {
+    PARKED.push({ at: new Date(Number(d.at) || Date.now()).toISOString(),
+                  name: (d.name || '').trim() || ('Left open ' + draftWhen(d.at)),
+                  phone: d.phone || '', ages: d.ages || null, cart: d.cart });
+    parkedSave();
+    toastLine('That bill is on the rail below the keys rather than thrown away — ⏸ to bring it back, × to drop it.');
+  } catch (_) {}
+  draftDrop();
+}
 function paintParked(){
   var el = document.getElementById('parked'); if (!el) return;
   el.innerHTML = PARKED.map(function(p, n){
@@ -7006,6 +7284,54 @@ function listen(into){
   };
   _rec.onend = function(){ if (btn) btn.classList.remove('on'); _rec = null; focusSearch(); };
   try { _rec.start(); } catch (_) { if (btn) btn.classList.remove('on'); _rec = null; }
+}
+/**
+ * ── ⭐⭐ THE ON-SCREEN KEYBOARD, ON A PANEL THAT IS TOUCHED ([TILL-43], 2026-09-18) ────────────────
+ *
+ * Athi, testing the kiosk shape on an HP convertible tilted into tablet mode: *"my only observation is, keyboard
+ * is keep poping up … we need to switch off keyboard in touch panel if we want, we may have to invoke."*
+ *
+ * ⚠⚠ IT IS NOT focusSearch() THAT IS WRONG, AND THIS IS THE WHOLE TRAP. The search box holding focus all day is
+ * the counter's oldest design decision and it is load-bearing: **a barcode scanner is a keyboard.** It types into
+ * whatever has focus, and so do F2, Enter, the digits and 3*. Taking the focus away to hide the on-screen
+ * keyboard would have made every scan land nowhere — a fix for an annoyance that breaks the way a shop bills.
+ *
+ * ⭐ SO THE FOCUS STAYS AND THE KEYBOARD GOES. `inputmode="none"` is the platform's own answer to exactly this:
+ * the field is focused, a scanner and every shortcut still reach it, and the system does not raise its keyboard.
+ * The ⌨ button beside the box turns it back on — which is the "invoke" Athi guessed at — and the choice is
+ * remembered for this device, because only the person in the shop knows whether their panel has a keyboard
+ * folded behind it.
+ *
+ * ⚠ THE DEFAULT IS THE SHAPE, NOT THE HARDWARE. A convertible reports a keyboard whether it is folded away or
+ * not, so sniffing the device would be a guess. The LAYOUT is something the shop chose on purpose: Kiosk, Phone,
+ * Handheld and Tablet are shapes for fingers, so they start with the keyboard off; a terminal starts with it on.
+ * Either way one tap changes it. [[feedback-stay-in-the-construct]]
+ */
+function kbdShape(){
+  try { var L = screenCfg().layout;
+        if (L === 'phone' || L === 'handheld' || L === 'vertical' || L === 'tablet') return true; } catch (_) {}
+  return (window.innerWidth || 1024) < 900 && !window.matchMedia('(pointer:fine)').matches;
+}
+/** on = the system keyboard may appear. The device's own answer wins; the shape only decides where it starts. */
+function kbdOn(){
+  var v = ls.get('cb_till_kbd', '');
+  return v === '' ? !kbdShape() : v === '1';
+}
+function kbdApply(){
+  var q = document.getElementById('q'), b = document.getElementById('qkbd');
+  var on = kbdOn();
+  /* ⚠ 'search' rather than 'text' — it is what the box has always declared, and it puts a search key on the phone */
+  if (q) q.setAttribute('inputmode', on ? 'search' : 'none');
+  /* the button is only offered where the question arises; a terminal with a real keyboard is not asked it */
+  if (b) { b.hidden = !kbdShape(); b.classList.toggle('on', on);
+           b.title = on ? 'stop the on-screen keyboard appearing' : 'type on the screen'; }
+}
+function kbdToggle(){
+  ls.set('cb_till_kbd', kbdOn() ? '0' : '1');
+  kbdApply();
+  /* ⚠ REFOCUS, or turning the keyboard ON does not bring it up until the next tap — which reads as a dead button */
+  var q = document.getElementById('q'); if (q) { q.blur(); q.focus(); }
+  toastLine(kbdOn() ? 'The on-screen keyboard will show when you tap the box.' : 'The on-screen keyboard will stay down — scanning and the F-keys still work.');
 }
 function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus(); q.select(); } }
 
@@ -7161,6 +7487,17 @@ function price(){
    * nothing new.
    */
   try { paintQuick(); } catch (_) {}
+  /**
+   * ⭐⭐⭐ R1 · THE ONE PLACE THE OPEN BILL IS KEPT. Every change to the lines ends here — addItem, setQty,
+   * drop, bumpLine, unpark, and the three that EMPTY it (finish, clearBill, parkBill) all finish with price().
+   * So one call covers the lifecycle, and a new way to change the bill cannot forget to save it.
+   * ⚠ The four things that move WITHOUT touching a line call draftSave() themselves: pickPay (the tender),
+   * addPart and dropPart (a split), and the customer and amount boxes. Those are named, and tests/till-draft
+   * refuses their removal, because a save nobody makes is exactly the silence R1 exists to end.
+   */
+  try { draftSave(); } catch (_) {}
+  /* ⭐ on a touch shape the header says what is on THIS bill — see paintDayPill() */
+  try { paintDayPill(); } catch (_) {}
 }
 /** the words under a line: its price, its rate, and the offer that came off it */
 /**
@@ -7948,7 +8285,7 @@ async function rwLook(){
 }
 /* ⚠️ ON CHANGE, NOT ON EVERY KEYSTROKE. A lookup per character would be a request per letter of somebody's name. */
 var RW_T = null;
-function rwTyped(){ clearTimeout(RW_T); RW_T = setTimeout(rwLook, 450); }
+function rwTyped(){ clearTimeout(RW_T); RW_T = setTimeout(rwLook, 450); draftSave(); }   /* R1 · who the bill is for is part of it */
 
 function paintRw(){
   var el = document.getElementById('rw'); if (!el) return;
@@ -8272,9 +8609,9 @@ function addPart(){
   PARTS.push({ how: PICKED, amount: r2(Math.min(amt, left > 0 ? left : amt)) });
   PAY_ASKED = true;                                  /* taking a part IS saying how it was paid */
   document.getElementById('tendered').value = '';
-  paintParts(); paintTotals();
+  paintParts(); paintTotals(); draftSave();          /* R1 · a part payment is part of the bill */
 }
-function dropPart(n){ PARTS.splice(n, 1); paintParts(); paintTotals(); }
+function dropPart(n){ PARTS.splice(n, 1); paintParts(); paintTotals(); draftSave(); }
 /* paintTotals already sends; addPart and dropPart both go through it, so the amount due on the screen follows */
 /** ⭐ dine-in · takeaway · delivery, and a table when it is dine-in. Three words, not a form. */
 function paintOrderBar(){
@@ -8459,7 +8796,7 @@ function payQr(link){
   } catch (_) { return ''; }
 }
 /** ⚠️ the choice repaints the LINE that states it, not the whole bill — and it is a statement, so it must be seen */
-function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); }
+function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); draftSave(); }   /* R1 · "tender picked" is a change to the bill */
 
 /* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
 async function finish(){
@@ -8552,6 +8889,8 @@ async function finish(){
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
   price(); document.getElementById('lastnote').textContent = 'last bill ' + r.bill.no;
+  /* ⚠ the day just changed — so must anything on screen that is showing the day. See menuFresh(). */
+  menuFresh();
   load(); loadQuick();
   stepGo('pick');   /* the next customer starts at Items */
 }
@@ -8879,8 +9218,11 @@ function _askOpen(opts){
 /** alert — fire and forget, exactly like the one it replaces, so a call site needs no other change */
 function say(message, title){ _askOpen({ message: message, title: title, cancelValue: true }); }
 /** confirm */
-function sure(message, okWord, title){
-  return _askOpen({ message: message, twoWays: true, okWord: okWord || 'Yes, do it', title: title, cancelValue: false });
+/* ⚠ cancelWord is OPTIONAL and the default is unchanged — every existing caller still reads "Cancel". It exists
+   because R1's question has two real answers ("Continue that bill" / "Start fresh") and neither is a cancel. */
+function sure(message, okWord, title, cancelWord){
+  return _askOpen({ message: message, twoWays: true, okWord: okWord || 'Yes, do it', title: title,
+                    cancelWord: cancelWord, cancelValue: false });
 }
 /** prompt — resolves to the typed string, or null if it was cancelled */
 function ask(message, value, label, title){
@@ -10871,7 +11213,8 @@ async function retIssue(){
   var sd = document.getElementById('slipdlg'); if (sd && sd.showModal && !sd.open) sd.showModal();
   autoPrint(html);
   toastLine('Credit note ' + (cn.no || '') + ' — ' + money(m.total) + ' back in ' + how);
-  try { TODAY_BILLS = null; paintStatus(); } catch (_) {}
+  /* ⭐ ONE WAY OF SAYING "the day moved", so a sale and a return cannot drift apart again */
+  try { menuFresh(); paintStatus(); } catch (_) {}
 }
 /**
  * ⭐ THE PAPER. §34 wants the original invoice named on it, the reason, and the tax being reversed — a customer
@@ -11631,6 +11974,13 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'Escape' && !document.querySelector('dialog[open]'))
     (MODE === 'receive' ? rcvClear() : (MODE === 'despatch' ? dspClear() : clearBill()));
 });
+/**
+ * ⚠ A NET, NOT THE MECHANISM. The draft is already written after every change; this only catches a change
+ * that arrived in the same instant the page went away. It does nothing for the power cut — which is exactly
+ * why it is not what R1 relies on.
+ */
+window.addEventListener('pagehide', function(){ try { draftSave(); } catch (_) {} });
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') { try { draftSave(); } catch (_) {} } });
 window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
 window.addEventListener('offline', function(){ load(); });
 
@@ -11661,7 +12011,9 @@ gripInit();
 cartGripInit();
 /* ⚠️ the bill's columns depend on the width (cartCols), so the bill is repainted when the width changes —
    otherwise a window dragged narrower keeps a grid with one more track than it has cells. */
-window.addEventListener('resize', function(){ try { chipsOverflow(); } catch (_) {} try { paintCart(); } catch (_) {} try { stepsApply(); } catch (_) {} });
+/* ⚠ A CONVERTIBLE CHANGES SHAPE WITHOUT RELOADING — Athi tilts the screen mid-shift, so anything keyed off the
+   shape has to settle again, the keyboard included. */
+window.addEventListener('resize', function(){ try { chipsOverflow(); } catch (_) {} try { paintCart(); } catch (_) {} try { stepsApply(); } catch (_) {} try { kbdApply(); } catch (_) {} });
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
 ['mic','micphone','micname'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK() && !recordOK()) b.style.display = 'none'; });
 setMode(ls.get('cb_till_mode', 'sell'));
