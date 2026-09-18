@@ -574,6 +574,55 @@
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;
          margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);
          max-height:42vh;overflow-y:auto;align-content:start}
+  /**
+   * ⭐⭐ THE DAY REPORT — full screen, and the SAME markup is what prints. No second template for paper: a
+   * report that is typeset twice is a report whose two versions eventually disagree about a number.
+   */
+  .dayrep{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border:0;padding:0;margin:0;
+          background:var(--paper);color:var(--ink);font:inherit;overflow:auto}
+  .dayrep::backdrop{background:rgba(20,18,16,.5)}
+  .drhead{position:sticky;top:0;z-index:2;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;
+          padding:14px 20px calc(14px + env(safe-area-inset-top, 0px));background:var(--card);border-bottom:2px solid var(--ink)}
+  .drtitle h1{margin:0;font-size:1.25em;letter-spacing:-.01em}
+  .drsub{color:var(--dim);font-size:.85em;margin-top:2px}
+  .dracts{margin-inline-start:auto;display:flex;gap:8px}
+  .dracts button{min-height:40px;padding:0 18px;border:1px solid var(--edge);border-radius:10px;
+                 background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
+  .dracts button:first-child{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+  .drbody{padding:16px 20px 40px;max-width:1100px}
+  .drnone{padding:28px 20px;color:var(--dim)}
+  .drsec{margin:0 0 22px}
+  .drsec h3{margin:0 0 6px;font-size:.78em;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+  /* ⭐ tabular figures, so a column of money reads as a column */
+  .drt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  .drt th,.drt td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:start;vertical-align:top}
+  .drt thead th{border-bottom:1px solid var(--edge);font-size:.76em;letter-spacing:.05em;text-transform:uppercase;color:var(--dim)}
+  .drt .num{text-align:end;white-space:nowrap}
+  .drt tfoot td{border-top:2px solid var(--ink);border-bottom:0;padding-top:8px}
+  .drt tbody tr:nth-child(even){background:var(--panel)}
+  .drfoot{margin-top:20px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:.88em;
+          display:flex;flex-direction:column;gap:4px}
+  .drfoot b{color:var(--ink)}
+  .drwarn{margin-top:4px;font-size:.92em}
+  /**
+   * ⚠️⚠️ WHAT ACTUALLY REACHES THE PAPER. Without this the browser prints the counter BEHIND the sheet — the
+   * search box, the keys, the bill — and the report itself comes out clipped to the dialog's box. Everything
+   * but the report is taken out, the sheet is un-boxed back to ordinary flow, and the buttons (.norip) go.
+   */
+  @media print{
+    body > *:not(#dayrep){display:none !important}
+    #dayrep{position:static !important;display:block !important;width:auto;max-width:none;height:auto;
+            max-height:none;overflow:visible;background:#fff;color:#000}
+    #dayrep .norip{display:none !important}
+    .drhead{position:static;border-bottom:2px solid #000;background:#fff;padding:0 0 8px}
+    .drbody{padding:0;max-width:none}
+    .drt tbody tr:nth-child(even){background:transparent}
+    .drt th,.drt td{border-bottom:1px solid #999}
+    .drsec{break-inside:auto}
+    .drt thead{display:table-header-group}    /* a long table repeats its head on every page */
+    .drt tr{break-inside:avoid}
+    @page{margin:14mm}
+  }
   /* ⭐ arranging the keys by hand */
   .qarr{display:inline-flex;align-items:center;padding:3px 11px;min-height:32px;cursor:pointer;
         border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);font:inherit;font-size:.85em}
@@ -1370,6 +1419,8 @@
   </div>
 </div></dialog>
 
+<!-- ⭐⭐ THE DAY'S SALES, FULL SCREEN AND PRINTABLE — see dayReport() -->
+<dialog id="dayrep" class="dayrep" data-testid="till-dayreport"></dialog>
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <div class="slipbox" id="slipbox"></div>
@@ -3168,6 +3219,7 @@ function stopWrongShop(bad){
  */
 var TILL_OPS = [
   { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills' },
+  { id: 'dayreport', icon: '📊', label: "Today's sales",      hint: 'the whole day, in a table you can print',       fn: 'dayReport' },
   { id: 'screen',   icon: '📺', label: 'Shop screen',        hint: 'your offers as a sign for a TV',                fn: 'openScreen' },
   { id: 'refresh',  icon: '↻',  label: 'Read the shop again', hint: 'new prices and products · F4',                 fn: 'refresh' },
   { id: 'stuck',    icon: '🩺', label: 'Why is a bill stuck?', hint: "what is really in this counter's store",      fn: 'openStuck' },
@@ -3492,6 +3544,157 @@ function menuTodayBody(){
     + 'This counter counts what was SOLD; it does not hold stock figures.</div>';
   return out + '</div>';
 }
+/**
+ * ── ⭐⭐⭐ THE DAY, IN A TABLE YOU CAN HAND TO SOMEBODY ([TILL-40], 2026-09-18) ────────────────────────────────
+ *
+ * Athi: *"instead of total sale etc, in a printable format, proper tabular format to be showcased for the total
+ * sales today"* · *"full screen with all the breakdown."*
+ *
+ * The menu's Today panel is a GLANCE — six figures in a drawer, read while standing up. This is the other
+ * thing a shopkeeper needs at eight in the evening: the whole day, laid out, on paper, in the order an
+ * accountant reads it. Both exist because they answer different questions, and neither is the other one
+ * stretched.
+ *
+ * ⚠️ IT COMPUTES NOTHING IT CAN READ. Every figure below is taken off the stored bills — taxable, tax, rate,
+ * offers, how it was paid — because each bill already recorded what it was ISSUED with. Re-deriving a day's
+ * tax from today's slabs would quietly restate a filed return, which is the same rule the reprint follows.
+ * ⚠️ AND IT IS SALES, NOT STOCK. Said at the foot, in the same words the Today panel uses.
+ */
+/** ⚠️ "1 bills" reads as a machine talking. One helper, so no table here ever has to remember. */
+function dayRepCount(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
+function dayRepRows(bills){
+  var items = {}, byRate = {}, byPay = {}, payBills = {};
+  bills.forEach(function(b){
+    (b.lines || []).forEach(function(l){
+      if (!l || !l.name) return;
+      var k = l.name;
+      var r = items[k] || (items[k] = { name: l.name, unit: l.unit || '', qty: 0, gross: 0, off: 0, net: 0 });
+      r.qty = r2(r.qty + (Number(l.qty) || 0));
+      r.gross = r2(r.gross + (Number(l.gross) || 0));
+      r.off = r2(r.off + (Number(l.save) || 0));
+      r.net = r2(r.net + (Number(l.net) || 0));
+    });
+    /* ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
+    Object.keys(b.by_rate || {}).forEach(function(rate){
+      var v = b.by_rate[rate] || {};
+      var r = byRate[rate] || (byRate[rate] = { rate: rate, taxable: 0, tax: 0 });
+      r.taxable = r2(r.taxable + (Number(v.taxable) || 0));
+      r.tax = r2(r.tax + (Number(v.tax) || 0));
+    });
+    var seen = {};
+    (b.payments || []).forEach(function(pmt){
+      var how = String(pmt.how || 'cash');
+      byPay[how] = r2((byPay[how] || 0) + (Number(pmt.amount) || 0));
+      if (!seen[how]) { payBills[how] = (payBills[how] || 0) + 1; seen[how] = 1; }
+    });
+  });
+  return { items: items, byRate: byRate, byPay: byPay, payBills: payBills };
+}
+/** one table, one shape — a heading, columns, rows, and a total line when there is one */
+function dayRepTable(title, cols, rows, foot){
+  if (!rows.length) return '';
+  return '<section class="drsec"><h3>' + esc(title) + '</h3><table class="drt"><thead><tr>'
+    + cols.map(function(c){ return '<th' + (c.num ? ' class="num"' : '') + '>' + esc(c.label) + '</th>'; }).join('')
+    + '</tr></thead><tbody>'
+    + rows.map(function(r){ return '<tr>' + r.map(function(cell, n){
+        return '<td' + (cols[n] && cols[n].num ? ' class="num"' : '') + '>' + cell + '</td>'; }).join('') + '</tr>'; }).join('')
+    + '</tbody>'
+    + (foot ? '<tfoot><tr>' + foot.map(function(cell, n){
+        return '<td' + (cols[n] && cols[n].num ? ' class="num"' : '') + '>' + cell + '</td>'; }).join('') + '</tr></tfoot>' : '')
+    + '</table></section>';
+}
+function dayReportHTML(bills){
+  var n = bills.length;
+  var agg = dayRepRows(bills);
+  var total = bills.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
+  var taxable = bills.reduce(function(a, b){ return r2(a + (Number(b.taxable) || 0)); }, 0);
+  var tax = bills.reduce(function(a, b){ return r2(a + (Number(b.tax) || 0)); }, 0);
+  var saved = bills.reduce(function(a, b){ return r2(a + (Number(b.saved) || 0)); }, 0);
+  var qty = Object.keys(agg.items).reduce(function(a, k){ return r2(a + agg.items[k].qty); }, 0);
+  var bohni = bohniOf(bills);
+  var hours = {};
+  bills.forEach(function(b){ var h = new Date(b.at).getHours(); hours[h] = (hours[h] || 0) + 1; });
+  var busiest = Object.keys(hours).sort(function(a, b){ return hours[b] - hours[a]; })[0];
+  var hhmm = function(d){ return new Date(d).toTimeString().slice(0, 5); };
+  var day = bizDayStart();
+
+  var head = '<header class="drhead">'
+    + '<div class="drtitle"><h1>' + esc(ls.get('cb_till_name', 'Counter')) + ' \u2014 sales for the day</h1>'
+    + '<div class="drsub">' + esc(day.toDateString())
+    + ' \u00b7 ' + esc(ls.get('cb_till_counter', 'Counter'))
+    + (WHO && WHO.name ? ' \u00b7 ' + esc(WHO.name) : '')
+    + ' \u00b7 printed ' + esc(hhmm(Date.now())) + '</div></div>'
+    /* ⚠️ THE CONTROLS ARE MARKED norip SO THEY DO NOT APPEAR ON THE PAPER */
+    + '<div class="dracts norip">'
+    + '<button data-testid="till-dayreport-print" onclick="window.print()">Print</button>'
+    + '<button data-testid="till-dayreport-close" onclick="dayReportClose()">Close</button>'
+    + '</div></header>';
+
+  if (!n) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
+
+  var summary = dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], [
+    ['Bills', String(n)],
+    ['Items sold', String(qty)],
+    ['Average bill', money(r2(total / n))],
+    ['Taken off by offers', saved ? '\u2212' + money(saved) : money(0)],
+    ['Taxable value', money(taxable)],
+    ['Tax', money(tax)],
+  ], ['<b>Net sales</b>', '<b>' + money(total) + '</b>']);
+
+  var payRows = Object.keys(agg.byPay).sort().map(function(how){
+    return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(agg.payBills[how] || 0), money(agg.byPay[how])];
+  });
+  var payTotal = Object.keys(agg.byPay).reduce(function(a, k){ return r2(a + agg.byPay[k]); }, 0);
+  var pay = dayRepTable('How it was paid', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Amount', num: true }],
+    payRows, ['<b>Total</b>', '', '<b>' + money(payTotal) + '</b>']);
+
+  var rateRows = Object.keys(agg.byRate).sort(function(a, b){ return Number(a) - Number(b); }).map(function(k){
+    var r = agg.byRate[k];
+    /* ⚠️ HALVED FOR THE TWO HEADS, NOT RECOMPUTED — the bill recorded the total tax at this rate */
+    return [esc(k) + '%', money(r.taxable), money(r2(r.tax / 2)), money(r2(r.tax / 2)), money(r.tax)];
+  });
+  var rate = dayRepTable('Tax by rate', [{ label: 'Rate' }, { label: 'Taxable', num: true },
+    { label: 'CGST', num: true }, { label: 'SGST', num: true }, { label: 'Tax', num: true }], rateRows,
+    rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '', '', '<b>' + money(tax) + '</b>'] : null);
+
+  var sold = Object.keys(agg.items).map(function(k){ return agg.items[k]; })
+    .sort(function(a, b){ return b.net - a.net; })
+    .map(function(r){ return [esc(r.name), esc(r.unit), String(r.qty), money(r.gross),
+                              r.off ? '\u2212' + money(r.off) : '', money(r.net)]; });
+  var items = dayRepTable('Everything sold', [{ label: 'Item' }, { label: 'Unit' }, { label: 'Qty', num: true },
+    { label: 'Gross', num: true }, { label: 'Offers', num: true }, { label: 'Net', num: true }], sold,
+    ['<b>' + dayRepCount(sold.length, 'product', 'products') + '</b>', '', '<b>' + qty + '</b>', '', '', '<b>' + money(total) + '</b>']);
+
+  var billRows = bills.map(function(b){
+    var ct = (b.lines || []).reduce(function(a, l){ return r2(a + (Number(l.qty) || 0)); }, 0);
+    var how = (b.payments || []).map(function(x){ return x.how; }).filter(Boolean).join(' + ') || '\u2014';
+    return [esc(String(b.no || '')), esc(hhmm(b.at)), esc(((b.customer || {}).name) || 'Walk-in'),
+            String(ct), esc(how), money(Number(b.total) || 0)];
+  });
+  var billsT = dayRepTable('Every bill', [{ label: 'No' }, { label: 'Time' }, { label: 'Customer' },
+    { label: 'Items', num: true }, { label: 'Paid', num: true }, { label: 'Total', num: true }], billRows,
+    ['<b>' + dayRepCount(n, 'bill', 'bills') + '</b>', '', '', '<b>' + qty + '</b>', '', '<b>' + money(total) + '</b>']);
+
+  var notes = '<footer class="drfoot">'
+    + '<div><b>Bohni</b> \u2014 ' + (bohni
+        ? esc(String(bohni.no || '')) + ' at ' + esc(hhmm(bohni.at)) + ', ' + money(Number(bohni.total) || 0)
+        : 'the first sale of the day is still to come') + '</div>'
+    + (busiest != null && n > 1 ? '<div><b>Busiest hour</b> \u2014 ' + String(busiest).padStart(2, '0')
+        + ':00\u2013' + String((Number(busiest) + 1) % 24).padStart(2, '0') + ':00</div>' : '')
+    + '<div class="drwarn">This counter counts what was SOLD; it does not hold stock figures.</div>'
+    + '</footer>';
+
+  return head + '<div class="drbody">' + summary + pay + rate + items + billsT + notes + '</div>';
+}
+async function dayReport(){
+  var d = document.getElementById('dayrep'); if (!d) return;
+  d.innerHTML = dayReportHTML(TODAY_BILLS || []);
+  if (d.showModal && !d.open) d.showModal();
+  /* the read lands a moment later; the sheet is already up, and repaints itself in place */
+  var bills = await todayBills();
+  d.innerHTML = dayReportHTML(bills || []);
+}
+function dayReportClose(){ var d = document.getElementById('dayrep'); if (d && d.open) d.close(); }
 /** one action row, the same shape in every section */
 function menuOpRow(op){
   if (!op) return '';
@@ -4181,6 +4384,38 @@ async function quickSyncHidden(){
  * publishing, this counter keeps its change, and neither overwrites the other. [[feedback-stay-in-the-construct]]
  * ⚠️ CACHED, so the keys still draw with the line down — same as every other thing this counter reads.
  */
+/**
+ * ⭐⭐ AND THE LOOK THE SHOP CHOSE FOR ITS COUNTERS ([TILL-36b], 2026-09-18).
+ *
+ * ⚠️⚠️ THE SECOND HALF OF THE SAME SILENCE. The shop-wide default screen config is written by
+ * PUT /api/quick-keys/screen-config/default, both key allow-lists already pass
+ * GET /api/till/quick-keys/screen-config, and this page never called it either. A shop that turned photos on
+ * for its counters got exactly what a shop that had never heard of the setting got: initials on every key,
+ * with 111 photographs sitting unused in the snapshot. Found by opening a real seeded shop and looking.
+ *
+ * ⚠️ IT FILLS BLANKS, IT DOES NOT OVERRULE. Only keys this device has never set itself are taken from the
+ * shop — a cashier who turned photos off at this counter keeps them off, and the shop does not reach across
+ * and switch them back on mid-shift. A default is what you get before you choose, not instead of choosing.
+ */
+var SCREENC_AT = 0;
+async function quickSyncScreen(){
+  if (!HOST || !HOST.tillGet || !navigator.onLine) return;
+  if (Date.now() - SCREENC_AT < 60000) return;
+  SCREENC_AT = Date.now();
+  try {
+    var r = await HOST.tillGet('/api/till/quick-keys/screen-config');
+    var cfg = r && r.ok && (r.config || (r.screen_config && r.screen_config.config));
+    if (!cfg || typeof cfg !== 'object') return;
+    var o = tillOpt(), mine = o.screen || {}, next = {}, changed = false;
+    Object.keys(cfg).forEach(function(k){
+      if (mine[k] === undefined) { next[k] = cfg[k]; changed = true; }
+    });
+    if (!changed) return;
+    Object.keys(mine).forEach(function(k){ next[k] = mine[k]; });   /* the device's own choices win */
+    tillOptSet({ screen: next });
+    try { applyLook(); loadQuick(); } catch (_) {}
+  } catch (_) {}
+}
 var SHOPG_AT = 0;
 function shopGroups(){
   try { var o = JSON.parse(ls.get(shopLs('cb_till_shopgroups'), '{}')); return (o && typeof o === 'object') ? o : {}; }
@@ -4592,6 +4827,7 @@ async function loadQuick(){
    */
   try { quickSyncHidden(); } catch (_) {}
   try { quickSyncGroups(); } catch (_) {}
+  try { quickSyncScreen(); } catch (_) {}
   var hidden = quickHidden(), pinned = quickPinned();
   /* ⭐ sold out today is off the keys too — it waits in the tray (paintQuick), and search and scan still bill it */
   var sold = quickSold().map(function(x){ return x.id; });
