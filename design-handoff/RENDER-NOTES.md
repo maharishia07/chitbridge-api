@@ -171,3 +171,38 @@ Pongal, Poori, Rava Dosa*) `Bring back` · `! Evening keys start at 3:30` (*not 
 a tender bar, `Busiest hour: 8–9 am · Idli ran out at 10:40`.
 **SIGN IN TO SELL** (dark card) — avatars `RK Ravi K` · `PR Priya` · `SU Suresh`, *"Tap a name, then the 4-digit
 PIN. Any key or a scan also wakes the counter."* then `Shop screen` and amber **`Sign in · F7`**.
+
+## Vertical terminal — `FullPortrait.png` (1080×1920)
+
+**One column, in this order:** header → search → category chips → quick keys → results → customer → bill →
+totals → pay → actions → status.
+- Header is compact: `CB Test Traders` · `Sell ▾` … right: `Counter 1` · `nobody signed in` · `online` · `≡`.
+- Quick keys **5 per row**, and the bar carries **two group chips at once** — `Morning 9/10 ✕` (amber) and
+  `Afternoon 10/10 ✕` (pink) — which is the two-groups-ticked case the spec describes. Right: `+ marked row`.
+- Results are only **3 rows**; they are a strip between the keys and the bill, not the main event.
+- The **bill rows are cards, not a table**: `1  Red Label Green tea 100 g (premium)` / `₹64.00 per packet · GST
+  5%` on the left, a `− 5 +` stepper in the middle, `₹320.00` and `✕` on the right.
+- Totals: `Saved · ▸ tax & offer breakdown` … `−₹144.75`, then **`TOTAL`** / **`₹2,750.25`** on one line, both huge.
+- Pay: `Cash` · `Card` · `UPI` (selected) as three wide buttons, with the **QR to their right**; then `Amount
+  taken` + `+ part`; then `Recorded as UPI · pays [shop UPI ID]`.
+- Actions across the foot: `Clear` · `Park` · **`Save & print`** (green, widest).
+
+## Phone, step 1 of 3 — `FullPhoneSell.png` (390×844)
+
+- Header stacks: `CB Test Traders` then `Sell ▾ · Counter 1 · nobody signed in · online`, `≡` on the right.
+- Search row: field + **mic** + a **scan** button (the camera — this is a touch device).
+- Chips scroll horizontally.
+- Quick-keys bar is abbreviated: **`⊞ Keys · 2`** · `Morning ✕` · `Afternoon ✕` … `+ row`.
+- Keys **3 per row**, name wrapping to 2–3 lines, price, dark round qty badge.
+- Results are **two-line rows**: name, then `BEV-01613 · MRP ₹358 · ₹67 under`; price and a `+` on the right.
+- **A green bar pinned to the bottom** is the way to step 2: a round `15` badge, `3 products · view bill`, and
+  `₹2,750.25`. That bar IS the primary action on a phone.
+
+## Handheld POS — `FullHandheld.png` (360×720)
+
+- **Dark header**: `CB Test Traders` `Sell · Counter 1` … `● online` `≡`.
+- Search + **mic** + a black **`SCAN`** button (biggest thing in the row — a handheld is a scanner first).
+- Category chips, then **group TABS across the width**: `Morning ✓ 9/10` · `Afternoon ✓ 10/10` ·
+  `Evening off` · `Night off`, with a coloured underline on the active ones.
+- Keys are **list rows**, not tiles: a colour bar down the left, **name** (large), price, a green qty badge, `✕`.
+- Foot: `Bill · 15` / `customer · points` on the left, and a wide green **`Charge ₹2,750.25`** on the right.
