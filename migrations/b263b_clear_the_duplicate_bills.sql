@@ -88,51 +88,77 @@ SELECT i.display_name AS shop,
 
 
 -- ═══ 3 · CLEAR THE TEST SHOPS ════════════════════════════════════════════════════════════════════════════════
--- ⚠️⚠️ PASTE THE ENTITY IDS FROM STEP 1 INTO THE LIST BELOW, BY HAND, AND ONLY THE TEST ONES. The list is
--- deliberately empty: a cleanup that defaults to "everything I found" is how a real shop's books get edited by a
--- script written for test data.
 --
--- It keeps the EARLIEST copy of every bill and removes the later ones, with their children, inside one
--- transaction. Run it as one block.
+-- ⚠️⚠️ THE FIRST VERSION OF THIS SHIPPED WITH AN EMPTY LIST AND SO DELETED NOTHING — quietly, reporting zero,
+-- after which b263 failed again with the identical error. "Paste the ids by hand" was the right instinct and the
+-- wrong mechanism: it made doing nothing the default and gave no sign that nothing was what happened.
+--
+-- ⭐ SO THE SCOPE IS BY NAME, AND 3a MAKES YOU LOOK AT IT. Every entity my own e2e fixtures create is named for
+-- the test that made it — offline40…, ladder…, draftkill…, catkeys…, arrange…, kot…, shopgroups…, qty…, draft… —
+-- with a base-36 timestamp on the end, so several runs make several shops and listing them by hand was never
+-- going to be right either.
+
+
+-- ── 3a · WHAT WILL GO. Run this ALONE and read the `shop` column. ───────────────────────────────────────────
+-- ⚠️⚠️ EVERY NAME HERE MUST LOOK LIKE A TEST FIXTURE. If one does not — if it is a shop somebody actually bills
+-- from — STOP, and go back to step 2 for that entity. Nothing below distinguishes them; only you can.
+
+WITH dupes AS (
+  SELECT entity_id, business_json->>'client_ref' AS ref
+    FROM chit_header
+   WHERE business_json->>'client_ref' IS NOT NULL
+   GROUP BY 1, 2 HAVING count(*) > 1
+)
+SELECT i.display_name AS shop,
+       d.entity_id,
+       count(DISTINCT d.ref) AS bills_affected,
+       (i.display_name ~ '^(offline40|ladder|draftkill|catkeys|arrange|kot|shopgroups|qty|draft|hotelbigdemo)')
+         AS matches_the_test_pattern,
+       i.created_at
+  FROM dupes d
+  LEFT JOIN identities i ON i.identity_id = d.entity_id
+ GROUP BY 1, 2, 4, 5
+ ORDER BY matches_the_test_pattern DESC, shop;
+
+
+-- ── 3b · REMOVE THE SURPLUS COPIES, for the shops 3a marked true. Run the whole block. ──────────────────────
+-- Keeps the EARLIEST copy of every bill — the one the server's own dedupe has always returned, so it is the copy
+-- anything else already points at. Removes the later ones.
 
 BEGIN;
 
--- ⭐ every id typed here, and nothing else, is in scope
-CREATE TEMP TABLE _scope (entity_id uuid) ON COMMIT DROP;
-INSERT INTO _scope (entity_id) VALUES
-  -- ('10513b58-a79a-4356-9ade-f14c51c40717'),   -- offline40mu72vxpa   ← uncomment the ones step 1 showed as tests
-  (NULL);
-DELETE FROM _scope WHERE entity_id IS NULL;
-
--- the surplus copies: every duplicate except the earliest of each bill
 CREATE TEMP TABLE _surplus ON COMMIT DROP AS
-SELECT h.chit_id, h.entity_id, h.business_json->>'client_ref' AS bill_no
+SELECT h.chit_id, h.entity_id, h.bill_no
   FROM (
-        SELECT chit_id, entity_id, business_json, created_at,
-               row_number() OVER (PARTITION BY entity_id, business_json->>'client_ref'
-                                      ORDER BY created_at) AS n
-          FROM chit_header
-         WHERE business_json->>'client_ref' IS NOT NULL
-           AND entity_id IN (SELECT entity_id FROM _scope)
+        SELECT c.chit_id, c.entity_id,
+               c.business_json->>'client_ref' AS bill_no,
+               row_number() OVER (PARTITION BY c.entity_id, c.business_json->>'client_ref'
+                                      ORDER BY c.created_at) AS n
+          FROM chit_header c
+          JOIN identities i ON i.identity_id = c.entity_id
+         WHERE c.business_json->>'client_ref' IS NOT NULL
+           /* ⚠️ THE ONE LINE THAT DECIDES WHAT IS TOUCHED — the same pattern 3a showed you, and nothing else */
+           AND i.display_name ~ '^(offline40|ladder|draftkill|catkeys|arrange|kot|shopgroups|qty|draft|hotelbigdemo)'
        ) h
  WHERE h.n > 1;
 
--- ⚠️ SAY WHAT IS ABOUT TO GO, before it goes — read this number, then COMMIT or ROLLBACK
-SELECT count(*) AS copies_to_remove, count(DISTINCT bill_no) AS bills_affected FROM _surplus;
+-- ⚠️ READ THIS BEFORE COMMITTING. If it says 0, the pattern matched nothing and 3a is where to look — do NOT
+-- go back to b263 expecting a different answer, which is exactly the loop the first version of this caused.
+SELECT count(*) AS copies_to_remove,
+       count(DISTINCT bill_no) AS bills_affected,
+       count(DISTINCT entity_id) AS shops FROM _surplus;
 
--- children first; a delete that trips an FK halfway leaves a worse mess than the one it was clearing
 DELETE FROM chit_detail WHERE chit_id IN (SELECT chit_id FROM _surplus);
 DELETE FROM chit_header WHERE chit_id IN (SELECT chit_id FROM _surplus);
 
--- ⚠⚠ STOCK IS DELIBERATELY NOT TOUCHED HERE, and this is the one paragraph to read before deciding it is an
--- oversight. stock_movement is keyed by `ref` = the bill number, NOT by chit_id, so both copies' movements are
--- indistinguishable rows under one reference. Nothing here can tell which belongs to the copy being removed.
---   · On a TEST shop it does not matter — nobody counts that stock, and the index only cares about chit_header.
---   · On a REAL shop it matters a great deal: the shelf was decremented twice for those bills and is short by
---     exactly the duplicated quantity. Deleting half the rows blind would be a second guess on top of the first.
--- That correction is its own decision, with its own count sheet. See C:\dev\BACKLOG.md.
--- This query shows the damage per bill, if step 1 named a real shop:
---   SELECT m.entity_id, m.ref AS bill_no, m.item_id, m.reason, count(*) AS movement_rows, sum(m.qty) AS qty_moved
+-- ⚠️⚠️ STOCK IS DELIBERATELY NOT TOUCHED, and this is the paragraph to read before calling it an oversight.
+-- stock_movement is keyed by `ref` = the bill number, NOT by chit_id, so both copies' movements are
+-- indistinguishable rows under one reference and nothing here can tell which belongs to the copy being removed.
+--   · On a TEST shop it does not matter — nobody counts that stock, and the index only reads chit_header.
+--   · On a REAL shop it matters: the shelf was decremented twice and is short by exactly the duplicated
+--     quantity. Deleting half the rows blind would be a second guess on top of the first. Its own decision.
+-- This shows that damage per bill, if 3a named a real shop:
+--   SELECT m.entity_id, m.ref AS bill_no, m.item_id, m.reason, count(*) AS rows, sum(m.qty) AS qty_moved
 --     FROM stock_movement m
 --     JOIN (SELECT entity_id, business_json->>'client_ref' AS ref FROM chit_header
 --            WHERE business_json->>'client_ref' IS NOT NULL
@@ -140,16 +166,15 @@ DELETE FROM chit_header WHERE chit_id IN (SELECT chit_id FROM _surplus);
 --       ON d.entity_id = m.entity_id AND d.ref = m.ref
 --    GROUP BY 1,2,3,4 HAVING count(*) > 1 ORDER BY 1,2;
 
--- ⚠️ IF EITHER DELETE ERRORS ON A TABLE NOT LISTED HERE, this query names what else points at a chit —
--- run it, add the table, and start the block again. Nothing is committed until the line below.
---   SELECT c.conrelid::regclass AS referencing_table, a.attname AS column
+-- ⚠️ IF EITHER DELETE ERRORS ON A TABLE NOT LISTED HERE, this names what else points at a chit — add it above
+-- and start the block again. Nothing is committed until COMMIT.
+--   SELECT c.conrelid::regclass AS referencing_table, a.attname AS column_name
 --     FROM pg_constraint c JOIN unnest(c.conkey) k(attnum) ON true
 --     JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
 --    WHERE c.contype = 'f' AND c.confrelid = 'chit_header'::regclass;
 
 COMMIT;
 -- ROLLBACK;   -- ← use this instead if the count above was not what you expected
-
 
 -- ═══ 4 · THEN RUN b263 STEP 2 AGAIN ══════════════════════════════════════════════════════════════════════════
 -- It is idempotent; it will build this time, and its proof query should return one row.
