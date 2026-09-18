@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; } a:hover { color: #0D4A2B; }
+    code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: #EFE9DC; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1560px; box-sizing: border-box; padding: 48px 56px; display: flex; flex-direction: column; gap: 32px; background: #FCFAF5; color: #1D1B16;">
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #16693F;">Design flow · handoff for build</span>
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 48px; font-weight: 800; letter-spacing: -0.02em;">Quick keys: two levels of control</h1>
+    <p style="margin: 0; max-width: 1000px; font-size: 17px; line-height: 1.5; color: #4A463C;">The business decides which keys exist, and that change is permanent. The counter decides what shows right now, and that change is temporary. Example: a hotel with four groups (Morning, Afternoon, Evening, Night) of 10 items each.</p>
+  </div>
+
+  <!-- Two levels -->
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+    <div style="padding: 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5E594D;">LEVEL 1 · PERMANENT</span>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 800;">Maintenance screen</span>
+      <div style="display: grid; grid-template-columns: 120px minmax(0, 1fr); row-gap: 6px; font-size: 15px; line-height: 1.45;">
+        <span style="color: #5E594D;">Who</span><span>Manager / owner (permission <code>quickkeys.manage</code>)</span>
+        <span style="color: #5E594D;">Where</span><span>Back office › Menu › Quick keys</span>
+        <span style="color: #5E594D;">Does</span><span>Create, rename, colour, order and delete groups; set the time window; add, remove and reorder items in a group</span>
+        <span style="color: #5E594D;">Scope</span><span>All counters of the outlet, after save and sync</span>
+        <span style="color: #5E594D;">Lifetime</span><span>Until changed again. Audited (who, when, what)</span>
+      </div>
+    </div>
+    <div style="padding: 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5E594D;">LEVEL 2 · TEMPORARY</span>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 800;">Sell screen</span>
+      <div style="display: grid; grid-template-columns: 120px minmax(0, 1fr); row-gap: 6px; font-size: 15px; line-height: 1.45;">
+        <span style="color: #5E594D;">Who</span><span>Cashier at the counter</span>
+        <span style="color: #5E594D;">Where</span><span>Sell › Quick keys button (popup) and × on each key</span>
+        <span style="color: #5E594D;">Does</span><span>Choose which groups show now; hide or bring back items that are sold out</span>
+        <span style="color: #5E594D;">Scope</span><span>This counter only</span>
+        <span style="color: #5E594D;">Lifetime</span><span>Until shift close (or end of business day). Never changes Level 1 data</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow -->
+  <div style="display: flex; flex-direction: column; gap: 14px;">
+    <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800;">Screen flow</h2>
+
+    <div style="display: flex; align-items: stretch; gap: 0;">
+      <div style="width: 200px; padding: 14px 16px; border-radius: 12px; background: #1D1B16; color: #FCFAF5; font-size: 14px; line-height: 1.4;"><strong>M1 · Groups list</strong><br>Pick a group or “New group”</div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="width: 220px; padding: 14px 16px; border-radius: 12px; background: #1D1B16; color: #FCFAF5; font-size: 14px; line-height: 1.4;"><strong>M2 · Group details</strong><br>Name, window (from–to), colour, “suggest when window starts”</div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="width: 240px; padding: 14px 16px; border-radius: 12px; background: #1D1B16; color: #FCFAF5; font-size: 14px; line-height: 1.4;"><strong>M3 · Keys in group</strong><br>Add from menu · Remove (confirm) · Move up/down</div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="width: 200px; padding: 14px 16px; border-radius: 12px; background: #1D1B16; color: #FCFAF5; font-size: 14px; line-height: 1.4;"><strong>M4 · Save</strong><br>Write + audit log, bump <code style="background: #3E3A31; color: #FCFAF5;">version</code></div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="flex-grow: 1; padding: 14px 16px; border-radius: 12px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 14px; line-height: 1.4;"><strong>Sync to counters</strong><br>Counters reload groups on next sync; their temporary choices are kept where the group/item still exists</div>
+    </div>
+
+    <div style="display: flex; align-items: stretch; gap: 0;">
+      <div style="width: 200px; padding: 14px 16px; border-radius: 12px; background: #FFFFFF; border: 1.5px solid #1D1B16; font-size: 14px; line-height: 1.4;"><strong>S1 · Sell opens</strong><br>Restore this shift’s choice, or default to groups whose window contains now</div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="width: 220px; padding: 14px 16px; border-radius: 12px; background: #FFFFFF; border: 1.5px solid #1D1B16; font-size: 14px; line-height: 1.4;"><strong>S2 · Quick keys grid</strong><br>One section per ticked group, in group order; × on every key</div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="width: 240px; padding: 14px 16px; border-radius: 12px; background: #FFFFFF; border: 1.5px solid #1D1B16; font-size: 14px; line-height: 1.4;"><strong>S3 · Popup: groups</strong><br>Checkbox per group (tick 1, 2 or more) · group name is a link · “x / 10 available”</div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="width: 200px; padding: 14px 16px; border-radius: 12px; background: #FFFFFF; border: 1.5px solid #1D1B16; font-size: 14px; line-height: 1.4;"><strong>S4 · Popup: items</strong><br>All items in the group with a checkbox · Show all / Hide all · Back</div>
+      <div style="width: 40px; display: flex; align-items: center; justify-content: center; color: #9C9483;"><svg width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h24M20 2l5 5-5 5"></path></svg></div>
+      <div style="flex-grow: 1; padding: 14px 16px; border-radius: 12px; background: #FDF3DC; border: 1px solid #EFD39A; color: #5C3D03; font-size: 14px; line-height: 1.4;"><strong>Done</strong><br>Popup closes, grid redraws at once. Saved locally + to server as this counter’s shift state</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+      <div style="padding: 16px 18px; border-radius: 12px; background: #F3EFE6; font-size: 14px; line-height: 1.5;"><strong>Shortcut · × on a key</strong><br>Hides that item now (sold out). It moves to the “Sold out” tray under the grid; tapping it there brings it back. Same state as unticking it in S4.</div>
+      <div style="padding: 16px 18px; border-radius: 12px; background: #F3EFE6; font-size: 14px; line-height: 1.5;"><strong>Shortcut · chip ×</strong><br>The group chips beside the Quick keys button untick a group without opening the popup.</div>
+      <div style="padding: 16px 18px; border-radius: 12px; background: #F3EFE6; font-size: 14px; line-height: 1.5;"><strong>Time nudge</strong><br>When a group’s window starts and the group is not ticked, a banner offers “Show Afternoon” / “Not now”. It never switches groups automatically.</div>
+    </div>
+  </div>
+
+  <!-- Data + rules -->
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800;">Data model</h2>
+      <div style="padding: 18px 20px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.5;">
+        <div><code>quick_key_group</code> id, outlet_id, name, color, sort_order, window_from, window_to, suggest_on_start, is_deleted, version, updated_by, updated_at</div>
+        <div><code>quick_key_group_item</code> group_id, product_id, position · unique (group_id, product_id)</div>
+        <div><code>counter_quick_key_state</code> counter_id, business_date, shift_id, active_group_ids[], updated_at · <em>Level 2</em></div>
+        <div><code>counter_hidden_item</code> counter_id, shift_id, group_id, product_id, hidden_at, hidden_by · <em>Level 2</em></div>
+        <div><code>quick_key_audit</code> who, when, action (add / remove / move / rename / delete), before, after</div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800;">Rules</h2>
+      <ol style="margin: 0; padding: 18px 20px 18px 40px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5;">
+        <li>Removing a key on the maintenance screen never deletes the product from the menu.</li>
+        <li>Level 2 actions never write Level 1 tables.</li>
+        <li>A hidden item can still be billed through search or barcode.</li>
+        <li>Temporary state resets at shift close; a new shift starts from the time-window default.</li>
+        <li>Several groups ticked: sections show in group sort order, items in position order.</li>
+        <li>An item placed in two groups is hidden per group (hiding in Morning does not hide it in Afternoon). <em>Decision to confirm.</em></li>
+        <li>If a group is deleted in back office, counters drop it from their ticked list on sync.</li>
+        <li>No limit on keys per group in the model; the UI is laid out for 10 per group.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Acceptance -->
+  <div style="display: flex; flex-direction: column; gap: 12px;">
+    <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800;">Acceptance checks</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; font-size: 14px; line-height: 1.5;">
+      <div style="padding: 16px 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DDD6C6;"><strong>Given</strong> Morning ticked at 09:00<br><strong>When</strong> the cashier ticks Afternoon and taps Done<br><strong>Then</strong> 20 keys show, Morning first</div>
+      <div style="padding: 16px 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DDD6C6;"><strong>Given</strong> Ven Pongal is showing<br><strong>When</strong> the cashier taps its ×<br><strong>Then</strong> it leaves the grid, appears in Sold out, and S4 shows it unticked</div>
+      <div style="padding: 16px 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DDD6C6;"><strong>Given</strong> the manager removes Rava Dosa from Morning and saves<br><strong>When</strong> counters sync<br><strong>Then</strong> no counter shows it in Morning, and it is still in the menu</div>
+      <div style="padding: 16px 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DDD6C6;"><strong>Given</strong> 3 items are hidden<br><strong>When</strong> the shift closes and a new one opens<br><strong>Then</strong> all items show again</div>
+      <div style="padding: 16px 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DDD6C6;"><strong>Given</strong> it is 11:30 and Afternoon is not ticked<br><strong>When</strong> the sell screen is open<br><strong>Then</strong> the banner appears once; “Not now” hides it for that window</div>
+      <div style="padding: 16px 18px; border-radius: 12px; background: #FFFFFF; border: 1px solid #DDD6C6;"><strong>Given</strong> the counter is offline<br><strong>When</strong> the cashier changes groups or hides items<br><strong>Then</strong> it works locally and syncs later</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

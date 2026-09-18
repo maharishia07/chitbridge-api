@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1024px; height: 768px; box-sizing: border-box; display: flex; flex-direction: column; background: #FCFAF5; color: #1D1B16;">
+  <div style="height: 48px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E6E0D2;">
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 16px; font-weight: 800;">CB Test Traders</span>
+    <span style="font-size: 12px; color: #5E594D;">· Counter 1 · online</span>
+    <div style="flex-grow: 1;"></div>
+    <button style="height: 36px; padding: 0 12px; border-radius: 9px; border: none; background: #1D1B16; color: #FCFAF5; font-size: 13px; font-weight: 600;">Quick keys · 2</button>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; gap: 6px;">
+        <sc-for list="{{tabs}}" as="g" hint-placeholder-count="4">
+          <span style="height: 36px; padding: 0 12px; border-radius: 9px; border: {{g.border}}; background: {{g.bg}}; color: {{g.ink}}; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+            <span style="width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid {{g.ink}}; background: {{g.box}};"></span>
+            {{g.name}}
+          </span>
+        </sc-for>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 72px; gap: 6px;">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="20">
+          <div style="position: relative; box-sizing: border-box; padding: 8px 10px; border-radius: 10px; background: #FFFFFF; border: 1px solid #DDD6C6; border-left-width: 1px; display: flex; flex-direction: column; justify-content: space-between;">
+            <span style="font-size: 13px; font-weight: 700; line-height: 1.15; padding-right: 16px;">{{t.name}}</span>
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5E594D;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: {{t.color}};"></span>{{t.price}}
+            </span>
+            <span style="position: absolute; top: 6px; right: 6px; color: #9C9483; display: flex;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5E594D;">
+        <span style="font-weight: 700;">SOLD OUT</span>
+        <span style="padding: 4px 8px; border-radius: 12px; border: 1px dashed #BDB4A1; text-decoration: line-through;">Ven Pongal</span>
+        <span style="padding: 4px 8px; border-radius: 12px; border: 1px dashed #BDB4A1; text-decoration: line-through;">Poori Masala</span>
+      </div>
+    </div>
+    <div style="width: 340px; flex-shrink: 0; box-sizing: border-box; display: flex; flex-direction: column; border-left: 1px solid #DDD6C6; background: #FFFFFF;">
+      <div style="padding: 10px 12px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #E6E0D2;">3 products · 5 items</div>
+      <div style="flex-grow: 1; padding: 0 12px;">
+        <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+          <div style="min-height: 48px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #EDE8DC; font-size: 14px;">
+            <span style="flex-grow: 1; font-weight: 600;">{{l.name}}</span>
+            <span style="width: 64px; height: 30px; border-radius: 7px; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; box-sizing: border-box; font-size: 13px;"><span>−</span>{{l.qty}}<span>+</span></span>
+            <span style="width: 64px; text-align: right; font-weight: 700;">{{l.total}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #1D1B16;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800;">TOTAL</span><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 800;">₹220.00</span></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">
+          <button style="height: 40px; border-radius: 9px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 14px;">Cash</button>
+          <button style="height: 40px; border-radius: 9px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 14px;">Card</button>
+          <button style="height: 40px; border-radius: 9px; border: 2px solid #16693F; background: #E8F4ED; color: #16693F; font-size: 14px; font-weight: 700;">UPI</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 6px;">
+          <button style="height: 44px; border-radius: 9px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 13px; font-weight: 700;">Clear</button>
+          <button style="height: 44px; border-radius: 9px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 13px; font-weight: 700;">Park</button>
+          <button style="height: 44px; border-radius: 9px; border: none; background: #16693F; color: #FFFFFF; font-size: 13px; font-weight: 700;">Save · F9</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1024,"height":768}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const M = ['Idli (2 pc)', 'Masala Dosa', 'Medu Vada', 'Rava Upma', 'Rava Dosa', 'Kesari Bath', 'Filter Coffee', 'Masala Tea'];
+    const MP = [40, 70, 30, 45, 75, 35, 25, 20];
+    const A = ['South Indian Meals', 'Veg Biryani', 'Curd Rice', 'Sambar Rice', 'Lemon Rice', 'Chapati Kurma', 'Veg Pulao', 'Paneer Butter Masala', 'Buttermilk', 'Gulab Jamun'];
+    const AP = [150, 140, 70, 80, 65, 75, 110, 160, 25, 40];
+    const tiles = M.map((n, i) => ({ name: n, price: '₹' + MP[i], color: '#E0A020' }))
+      .concat(A.map((n, i) => ({ name: n, price: '₹' + AP[i], color: '#D9602B' })));
+    const tab = (name, on) => ({ name, bg: on ? '#1D1B16' : '#FFFFFF', ink: on ? '#FCFAF5' : '#5E594D', box: on ? '#F2B544' : 'transparent', border: on ? '1px solid #1D1B16' : '1px solid #DDD6C6' });
+    return {
+      tiles,
+      tabs: [tab('Morning', true), tab('Afternoon', true), tab('Evening', false), tab('Night', false)],
+      lines: [{ name: 'Masala Dosa', qty: 2, total: '₹140' }, { name: 'Filter Coffee', qty: 2, total: '₹50' }, { name: 'Medu Vada', qty: 1, total: '₹30' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

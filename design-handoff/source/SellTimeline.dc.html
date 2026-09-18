@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FFFDF7; font-family: 'Archivo', system-ui, sans-serif; }
+    a { color: #C2381F; } a:hover { color: #8A2410; }
+    button, input { font-family: inherit; }
+    .blk { transition: transform 80ms, filter 120ms; }
+    .blk:hover { filter: brightness(0.96); }
+    .blk:active { transform: scale(0.97); }
+    .xx:hover { background: #151412 !important; color: #FFFFFF !important; }
+    .seg:hover { filter: brightness(0.97); }
+    .lite:hover { background: #F1EDE3 !important; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #151412; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #FFFDF7; color: #151412; overflow: hidden;">
+
+  <!-- Header -->
+  <div style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 14px; background: #151412; color: #FFFDF7;">
+    <span style="font-size: 20px; font-weight: 900; letter-spacing: -0.02em;">CB Test Traders</span>
+    <span style="height: 28px; padding: 0 12px; border-radius: 14px; background: #E4472B; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center;">SELL</span>
+    <span style="font-size: 13px; color: #BDB7AA;">Counter 1 · online · prices as at 11:42</span>
+    <div style="flex-grow: 1;"></div>
+    <label style="height: 38px; width: 320px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; border-radius: 8px; background: #2A2823; color: #BDB7AA;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input type="text" placeholder="Search · scan · F2" aria-label="Search or scan" style="flex-grow: 1; min-width: 0; border: none; outline: none; background: transparent; color: #FFFDF7; font-size: 14px;">
+    </label>
+  </div>
+
+  <!-- Day rail -->
+  <div style="flex-shrink: 0; box-sizing: border-box; padding: 16px 20px 12px; display: flex; flex-direction: column; gap: 6px; border-bottom: 2px solid #151412;">
+    <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6E695E;">
+      <span>06:00</span><span>TAP A BLOCK TO SHOW / HIDE ITS KEYS</span><span>23:00</span>
+    </div>
+    <div style="position: relative; display: flex; gap: 4px; height: 64px;">
+      <sc-for list="{{segs}}" as="g" hint-placeholder-count="4">
+        <button class="seg" onClick="{{g.toggle}}" aria-pressed="{{g.pressed}}" style="flex-grow: {{g.grow}}; flex-basis: 0; box-sizing: border-box; padding: 8px 12px; border-radius: 10px; border: {{g.border}}; background: {{g.bg}}; color: #151412; display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer;">
+          <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; border: 2px solid #151412; background: {{g.boxBg}}; display: flex; align-items: center; justify-content: center; color: #FFFFFF;">
+            <sc-if value="{{g.on}}" hint-placeholder-val="{{ true }}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>
+            </sc-if>
+          </span>
+          <span style="display: flex; flex-direction: column; min-width: 0;">
+            <span style="font-size: 17px; font-weight: 800;">{{g.name}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #3E3A31;">{{g.win}} · {{g.avail}}</span>
+          </span>
+        </button>
+      </sc-for>
+      <div style="position: absolute; left: 33.5%; top: -6px; bottom: -6px; width: 2px; background: #151412;"></div>
+      <div style="position: absolute; left: 33.5%; top: -22px; transform: translateX(-50%); padding: 1px 6px; border-radius: 4px; background: #151412; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;">NOW 11:42</div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <!-- Keys -->
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div style="flex-grow: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 16px 20px; display: flex; flex-direction: column; gap: 18px;">
+        <sc-if value="{{noneActive}}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 80px 0; text-align: center; font-size: 18px; font-weight: 700; color: #6E695E;">Tap a block on the day rail to show its keys.</div>
+        </sc-if>
+        <sc-for list="{{sections}}" as="s" hint-placeholder-count="1">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 24px; font-weight: 900; letter-spacing: -0.02em;">{{s.name}}</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E695E;">{{s.count}}</span>
+              <div style="flex-grow: 1; height: 2px; background: #151412;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;">
+              <sc-for list="{{s.tiles}}" as="t" hint-placeholder-count="10">
+                <div style="position: relative; height: 104px;">
+                  <button class="blk" onClick="{{t.add}}" style="width: 100%; height: 100%; box-sizing: border-box; padding: 12px; border-radius: 14px; border: none; background: {{s.block}}; color: #151412; text-align: left; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;">
+                    <span style="font-size: 16px; font-weight: 800; line-height: 1.15; padding-right: 28px;">{{t.name}}</span>
+                    <span style="font-size: 15px; font-weight: 600;">{{t.price}}</span>
+                  </button>
+                  <button class="xx" onClick="{{t.hide}}" aria-label="Sold out: hide {{t.name}}" style="position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%; border: none; background: rgba(255,255,255,0.72); color: #151412; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                  </button>
+                  <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+                    <span style="position: absolute; bottom: 10px; right: 10px; min-width: 30px; height: 30px; padding: 0 6px; box-sizing: border-box; border-radius: 15px; background: #151412; color: #FFFFFF; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{t.qty}}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <sc-for list="{{s.gone}}" as="h" hint-placeholder-count="1">
+                <button class="lite" onClick="{{h.restore}}" aria-label="Bring back {{h.name}}" style="height: 104px; box-sizing: border-box; padding: 12px; border-radius: 14px; border: 2px dashed #B8B2A5; background: repeating-linear-gradient(135deg, #F1EDE3 0 8px, #FFFDF7 8px 16px); color: #6E695E; text-align: left; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;">
+                  <span style="font-size: 15px; font-weight: 700; text-decoration: line-through;">{{h.name}}</span>
+                  <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em;">SOLD OUT · UNDO</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Receipt bill -->
+    <div style="width: 420px; flex-shrink: 0; box-sizing: border-box; padding: 16px; background: #EFEBE1; border-left: 2px solid #151412; display: flex; flex-direction: column; gap: 12px;">
+      <div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 18px 18px 14px; background: #FFFFFF; border-radius: 4px; box-shadow: 0 2px 0 #D6D0C3; display: flex; flex-direction: column; font-family: 'JetBrains Mono', monospace;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6E695E; padding-bottom: 10px; border-bottom: 1px dashed #B8B2A5;">
+          <span>BILL · {{countLine}}</span><span>11:42</span>
+        </div>
+        <div style="flex-grow: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column;">
+          <sc-if value="{{cartEmpty}}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 40px 0; text-align: center; font-size: 13px; color: #6E695E;">Empty — tap a key</div>
+          </sc-if>
+          <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+            <div style="padding: 10px 0; display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed #E2DDD2;">
+              <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-family: 'Archivo', sans-serif; font-size: 15px; font-weight: 700;">{{l.name}}</span>
+                <span style="font-size: 12px; color: #6E695E;">{{l.qty}} × {{l.unit}}</span>
+              </div>
+              <button class="lite" onClick="{{l.dec}}" aria-label="One less {{l.name}}" style="width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #151412; background: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer; padding: 0;">−</button>
+              <button class="lite" onClick="{{l.inc}}" aria-label="One more {{l.name}}" style="width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #151412; background: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer; padding: 0;">+</button>
+              <span style="width: 86px; text-align: right; font-size: 15px; font-weight: 700;">{{l.total}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding-top: 10px; border-top: 1px dashed #B8B2A5; display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6E695E;"><span>incl. GST 5%</span><span>{{tax}}</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 900;">TOTAL</span><span style="font-family: 'Archivo', sans-serif; font-size: 34px; font-weight: 900;">{{total}}</span></div>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <button class="lite" style="height: 48px; border-radius: 10px; border: 2px solid #151412; background: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Cash</button>
+        <button class="lite" style="height: 48px; border-radius: 10px; border: 2px solid #151412; background: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Card</button>
+        <button style="height: 48px; border-radius: 10px; border: 2px solid #151412; background: #151412; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">UPI</button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 8px;">
+        <button class="lite" onClick="{{clearCart}}" style="height: 56px; border-radius: 10px; border: 2px solid #151412; background: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer;">Clear<br><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;">Esc</span></button>
+        <button class="lite" style="height: 56px; border-radius: 10px; border: 2px solid #151412; background: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer;">Park<br><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;">F6</span></button>
+        <button style="height: 56px; border-radius: 10px; border: none; background: #C2381F; color: #FFFFFF; font-size: 17px; font-weight: 800; cursor: pointer;">Save &amp; print<br><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;">F9</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const GROUPS = [
+  { id: 'm', name: 'Morning', win: '06:00–11:30', hours: 5.5, block: '#F6C554', items: [['Idli (2 pc)', 40], ['Masala Dosa', 70], ['Ven Pongal', 60], ['Poori Masala', 65], ['Medu Vada', 30], ['Rava Upma', 45], ['Rava Dosa', 75], ['Kesari Bath', 35], ['Filter Coffee', 25], ['Masala Tea', 20]] },
+  { id: 'a', name: 'Afternoon', win: '11:30–15:30', hours: 4, block: '#F58A6E', items: [['South Indian Meals', 150], ['Veg Biryani', 140], ['Curd Rice', 70], ['Sambar Rice', 80], ['Lemon Rice', 65], ['Chapati Kurma', 75], ['Veg Pulao', 110], ['Paneer Butter Masala', 160], ['Buttermilk', 25], ['Gulab Jamun', 40]] },
+  { id: 'e', name: 'Evening', win: '15:30–19:00', hours: 3.5, block: '#B7A8F5', items: [['Onion Bajji', 40], ['Samosa (2 pc)', 35], ['Mysore Bonda', 40], ['Pav Bhaji', 90], ['Veg Puff', 25], ['Veg Cutlet', 45], ['Sweet Corn Cup', 50], ['Chana Sundal', 30], ['Ginger Tea', 20], ['Badam Milk', 45]] },
+  { id: 'n', name: 'Night', win: '19:00–23:00', hours: 4, block: '#8FBDF2', items: [['Chapati (2 pc)', 50], ['Parotta Salna', 70], ['Idiyappam', 60], ['Kothu Parotta', 120], ['Onion Uttapam', 80], ['Ghee Roast', 95], ['Veg Fried Rice', 130], ['Gobi Manchurian', 120], ['Veg Noodles', 125], ['Hot Milk', 25]] }
+];
+const money = (n) => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: { m: true, a: true, e: false, n: false }, hidden: { 'm:2': true, 'm:3': true }, cart: [{ key: 'm:1', qty: 2 }, { key: 'a:0', qty: 1 }] };
+  }
+  item(key) { const [g, i] = key.split(':'); const it = GROUPS.find((x) => x.id === g).items[+i]; return { name: it[0], price: it[1] }; }
+  setHidden(key, on) { this.setState((s) => { const h = { ...s.hidden }; if (on) h[key] = true; else delete h[key]; return { hidden: h }; }); }
+  add(key, d) {
+    this.setState((s) => {
+      const cart = s.cart.map((l) => ({ ...l }));
+      const l = cart.find((x) => x.key === key);
+      if (l) l.qty += d; else if (d > 0) cart.push({ key, qty: d });
+      return { cart: cart.filter((x) => x.qty > 0) };
+    });
+  }
+  renderVals() {
+    const s = this.state;
+    const q = {}; s.cart.forEach((l) => { q[l.key] = l.qty; });
+    const vis = (g) => g.items.filter((_, i) => !s.hidden[g.id + ':' + i]).length;
+    const segs = GROUPS.map((g) => {
+      const on = !!s.active[g.id];
+      return {
+        name: g.name, win: g.win, grow: g.hours, on, pressed: on ? 'true' : 'false',
+        avail: vis(g) + '/10',
+        bg: on ? g.block : '#FFFDF7', boxBg: on ? '#151412' : '#FFFFFF',
+        border: on ? '2px solid #151412' : '2px dashed #B8B2A5',
+        toggle: () => this.setState((st) => ({ active: { ...st.active, [g.id]: !st.active[g.id] } }))
+      };
+    });
+    const act = GROUPS.filter((g) => s.active[g.id]);
+    const sections = act.map((g) => ({
+      name: g.name, block: g.block,
+      count: vis(g) + ' OF 10 ON',
+      tiles: g.items.map((it, i) => ({ key: g.id + ':' + i, it })).filter((x) => !s.hidden[x.key]).map((x) => ({
+        name: x.it[0], price: '₹' + x.it[1], inBill: !!q[x.key], qty: q[x.key] || 0,
+        add: () => this.add(x.key, 1), hide: () => this.setHidden(x.key, true)
+      })),
+      gone: g.items.map((it, i) => ({ key: g.id + ':' + i, it })).filter((x) => s.hidden[x.key]).map((x) => ({
+        name: x.it[0], restore: () => this.setHidden(x.key, false)
+      }))
+    }));
+    const lines = s.cart.map((l) => { const it = this.item(l.key); return { name: it.name, qty: l.qty, unit: '₹' + it.price, total: money(it.price * l.qty), inc: () => this.add(l.key, 1), dec: () => this.add(l.key, -1) }; });
+    const sum = s.cart.reduce((a, l) => a + this.item(l.key).price * l.qty, 0);
+    const n = s.cart.reduce((a, l) => a + l.qty, 0);
+    return {
+      segs, sections, noneActive: act.length === 0,
+      lines, cartEmpty: lines.length === 0, countLine: n + ' ITEMS',
+      tax: money(sum - sum / 1.05), total: money(sum),
+      clearCart: () => this.setState({ cart: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>

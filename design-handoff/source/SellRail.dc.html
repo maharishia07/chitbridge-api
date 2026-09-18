@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0C1522; font-family: 'Onest', system-ui, sans-serif; }
+    a { color: #6FE3C1; } a:hover { color: #A6F0DA; }
+    button, input { font-family: inherit; }
+    .rw:hover { background: #16243A !important; }
+    .card:hover { border-color: #3A5578 !important; }
+    .x:hover { color: #FF9C8A !important; }
+    button:focus-visible, input:focus-visible { outline: 2px solid #6FE3C1; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; background: #0C1522; color: #E8EEF6; overflow: hidden;">
+
+  <!-- Group rail -->
+  <div style="width: 260px; flex-shrink: 0; box-sizing: border-box; padding: 18px 14px; display: flex; flex-direction: column; gap: 10px; background: #0A111B; border-right: 1px solid #1C2A3E;">
+    <div style="padding: 0 6px 8px; display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-size: 18px; font-weight: 800;">CB Test Traders</span>
+      <span style="font-size: 12px; color: #8C9BB0;">Counter 1 · online · 11:42</span>
+    </div>
+    <span style="padding: 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #8C9BB0;">SHOWING NOW</span>
+    <sc-for list="{{rail}}" as="g" hint-placeholder-count="4">
+      <button class="card" onClick="{{g.toggle}}" aria-pressed="{{g.pressed}}" style="box-sizing: border-box; width: 100%; padding: 12px; border-radius: 14px; border: 1px solid {{g.line}}; background: {{g.bg}}; color: #E8EEF6; text-align: left; display: flex; flex-direction: column; gap: 8px; cursor: pointer;">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: {{g.color}};"></span>
+          <span style="flex-grow: 1; font-size: 16px; font-weight: 700;">{{g.name}}</span>
+          <span style="width: 40px; height: 24px; padding: 3px; box-sizing: border-box; border-radius: 12px; background: {{g.track}}; display: flex; justify-content: {{g.justify}};">
+            <span style="width: 18px; height: 18px; border-radius: 50%; background: #FFFFFF;"></span>
+          </span>
+        </span>
+        <span style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8C9BB0;">
+          <span>{{g.win}}</span><span>{{g.avail}}</span>
+        </span>
+        <span style="height: 4px; border-radius: 2px; background: #1C2A3E; display: flex;">
+          <span style="width: {{g.pct}}; border-radius: 2px; background: {{g.color}};"></span>
+        </span>
+      </button>
+    </sc-for>
+    <div style="margin-top: 8px; padding: 12px; border-radius: 14px; background: #111D2D; display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto;">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #8C9BB0;">SOLD OUT · {{hiddenCount}}</span>
+      <sc-if value="{{noHidden}}" hint-placeholder-val="{{ false }}">
+        <span style="font-size: 13px; color: #8C9BB0;">Nothing hidden.</span>
+      </sc-if>
+      <sc-for list="{{hiddenList}}" as="h" hint-placeholder-count="2">
+        <button class="rw" onClick="{{h.restore}}" style="min-height: 36px; padding: 0 8px; border-radius: 8px; border: none; background: transparent; color: #C9D3E0; display: flex; align-items: center; gap: 8px; text-align: left; font-size: 13px; cursor: pointer;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: {{h.color}};"></span>
+          <span style="flex-grow: 1; text-decoration: line-through;">{{h.name}}</span>
+          <span style="font-size: 12px; font-weight: 600; color: #6FE3C1;">Undo</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- Keys as rows -->
+  <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+    <div style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1C2A3E;">
+      <label style="flex-grow: 1; height: 42px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 10px; border-radius: 12px; background: #111D2D; color: #8C9BB0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="text" placeholder="Search all 10,441 products or scan" aria-label="Search or scan" style="flex-grow: 1; border: none; outline: none; background: transparent; color: #E8EEF6; font-size: 14px;">
+      </label>
+    </div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 16px 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-content: start;">
+      <sc-for list="{{sections}}" as="s" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column; border-radius: 16px; background: #0F1B2B; border: 1px solid #1C2A3E; overflow: hidden;">
+          <div style="padding: 12px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1C2A3E;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: {{s.color}};"></span>
+            <span style="flex-grow: 1; font-size: 16px; font-weight: 700;">{{s.name}}</span>
+            <span style="font-size: 12px; color: #8C9BB0;">{{s.count}}</span>
+          </div>
+          <sc-for list="{{s.rows}}" as="t" hint-placeholder-count="10">
+            <div class="rw" style="min-height: 48px; padding: 0 6px 0 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #16243A;">
+              <button onClick="{{t.add}}" style="flex-grow: 1; min-height: 48px; border: none; background: transparent; color: #E8EEF6; display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer; padding: 0;">
+                <span style="flex-grow: 1; font-size: 15px; font-weight: 500;">{{t.name}}</span>
+                <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+                  <span style="height: 22px; padding: 0 8px; border-radius: 11px; background: #6FE3C1; color: #062A20; font-size: 12px; font-weight: 700; display: flex; align-items: center;">{{t.qty}}</span>
+                </sc-if>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #A9B6C7;">{{t.price}}</span>
+              </button>
+              <button class="x" onClick="{{t.hide}}" aria-label="Sold out: hide {{t.name}}" style="width: 36px; height: 36px; border: none; background: transparent; color: #5E708A; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+              </button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- Bill -->
+  <div style="width: 440px; flex-shrink: 0; box-sizing: border-box; display: flex; flex-direction: column; background: #0F1B2B; border-left: 1px solid #1C2A3E;">
+    <div style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1C2A3E;">
+      <span style="font-size: 18px; font-weight: 700;">Bill</span>
+      <span style="font-size: 13px; color: #8C9BB0;">{{countLine}}</span>
+    </div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;">
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+        <div style="padding: 10px 12px; border-radius: 12px; background: #13223A; display: flex; align-items: center; gap: 10px;">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 15px; font-weight: 600;">{{l.name}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8C9BB0;">{{l.unit}} · GST 5%</span>
+          </span>
+          <span style="display: flex; align-items: center; border-radius: 10px; background: #0A111B;">
+            <button onClick="{{l.dec}}" aria-label="One less {{l.name}}" style="width: 36px; height: 36px; border: none; background: transparent; color: #E8EEF6; font-size: 17px; cursor: pointer;">−</button>
+            <span style="width: 24px; text-align: center; font-size: 14px; font-weight: 700;">{{l.qty}}</span>
+            <button onClick="{{l.inc}}" aria-label="One more {{l.name}}" style="width: 36px; height: 36px; border: none; background: transparent; color: #E8EEF6; font-size: 17px; cursor: pointer;">+</button>
+          </span>
+          <span style="width: 80px; text-align: right; font-size: 15px; font-weight: 700;">{{l.total}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #1C2A3E;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <span style="font-size: 14px; color: #8C9BB0;">Total · incl. GST {{tax}}</span>
+        <span style="font-size: 36px; font-weight: 800;">{{total}}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <button style="height: 46px; border-radius: 11px; border: 1px solid #2A3D58; background: transparent; color: #E8EEF6; font-size: 15px; cursor: pointer;">Cash</button>
+        <button style="height: 46px; border-radius: 11px; border: 1px solid #2A3D58; background: transparent; color: #E8EEF6; font-size: 15px; cursor: pointer;">Card</button>
+        <button style="height: 46px; border-radius: 11px; border: 2px solid #6FE3C1; background: #0F3A33; color: #6FE3C1; font-size: 15px; font-weight: 700; cursor: pointer;">UPI</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+        <button onClick="{{clearCart}}" style="height: 46px; border-radius: 11px; border: 1px solid #2A3D58; background: transparent; color: #E8EEF6; font-size: 14px; cursor: pointer;">Clear · Esc</button>
+        <button style="height: 46px; border-radius: 11px; border: 1px solid #2A3D58; background: transparent; color: #E8EEF6; font-size: 14px; cursor: pointer;">Park · F6</button>
+      </div>
+      <button style="height: 58px; border-radius: 13px; border: none; background: #6FE3C1; color: #062A20; font-size: 17px; font-weight: 800; cursor: pointer;">Save &amp; print · F9</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const GROUPS = [
+  { id: 'm', name: 'Morning', win: '06:00–11:30', color: '#FFC24D', items: [['Idli (2 pc)', 40], ['Masala Dosa', 70], ['Ven Pongal', 60], ['Poori Masala', 65], ['Medu Vada', 30], ['Rava Upma', 45], ['Rava Dosa', 75], ['Kesari Bath', 35], ['Filter Coffee', 25], ['Masala Tea', 20]] },
+  { id: 'a', name: 'Afternoon', win: '11:30–15:30', color: '#FF7A59', items: [['South Indian Meals', 150], ['Veg Biryani', 140], ['Curd Rice', 70], ['Sambar Rice', 80], ['Lemon Rice', 65], ['Chapati Kurma', 75], ['Veg Pulao', 110], ['Paneer Butter Masala', 160], ['Buttermilk', 25], ['Gulab Jamun', 40]] },
+  { id: 'e', name: 'Evening', win: '15:30–19:00', color: '#B39CFF', items: [['Onion Bajji', 40], ['Samosa (2 pc)', 35], ['Mysore Bonda', 40], ['Pav Bhaji', 90], ['Veg Puff', 25], ['Veg Cutlet', 45], ['Sweet Corn Cup', 50], ['Chana Sundal', 30], ['Ginger Tea', 20], ['Badam Milk', 45]] },
+  { id: 'n', name: 'Night', win: '19:00–23:00', color: '#5FB2FF', items: [['Chapati (2 pc)', 50], ['Parotta Salna', 70], ['Idiyappam', 60], ['Kothu Parotta', 120], ['Onion Uttapam', 80], ['Ghee Roast', 95], ['Veg Fried Rice', 130], ['Gobi Manchurian', 120], ['Veg Noodles', 125], ['Hot Milk', 25]] }
+];
+const money = (n) => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: { m: true, a: true, e: false, n: false }, hidden: { 'm:2': true, 'm:3': true, 'm:6': true }, cart: [{ key: 'm:1', qty: 2 }, { key: 'm:8', qty: 3 }, { key: 'a:0', qty: 1 }] };
+  }
+  item(key) { const [g, i] = key.split(':'); const it = GROUPS.find((x) => x.id === g).items[+i]; return { name: it[0], price: it[1] }; }
+  setHidden(key, on) { this.setState((s) => { const h = { ...s.hidden }; if (on) h[key] = true; else delete h[key]; return { hidden: h }; }); }
+  add(key, d) {
+    this.setState((s) => {
+      const cart = s.cart.map((l) => ({ ...l }));
+      const l = cart.find((x) => x.key === key);
+      if (l) l.qty += d; else if (d > 0) cart.push({ key, qty: d });
+      return { cart: cart.filter((x) => x.qty > 0) };
+    });
+  }
+  renderVals() {
+    const s = this.state;
+    const q = {}; s.cart.forEach((l) => { q[l.key] = l.qty; });
+    const vis = (g) => g.items.filter((_, i) => !s.hidden[g.id + ':' + i]).length;
+    const rail = GROUPS.map((g) => {
+      const on = !!s.active[g.id];
+      return {
+        name: g.name, win: g.win, color: g.color, pressed: on ? 'true' : 'false',
+        avail: vis(g) + ' / 10 on', pct: (vis(g) * 10) + '%',
+        bg: on ? '#13223A' : 'transparent', line: on ? '#2F4A6E' : '#1C2A3E',
+        track: on ? '#2FBF98' : '#2A3D58', justify: on ? 'flex-end' : 'flex-start',
+        toggle: () => this.setState((st) => ({ active: { ...st.active, [g.id]: !st.active[g.id] } }))
+      };
+    });
+    const act = GROUPS.filter((g) => s.active[g.id]);
+    const sections = act.map((g) => ({
+      name: g.name, color: g.color, count: vis(g) + ' of 10',
+      rows: g.items.map((it, i) => ({ key: g.id + ':' + i, it })).filter((x) => !s.hidden[x.key]).map((x) => ({
+        name: x.it[0], price: '₹' + x.it[1], inBill: !!q[x.key], qty: q[x.key] || 0,
+        add: () => this.add(x.key, 1), hide: () => this.setHidden(x.key, true)
+      }))
+    }));
+    const hiddenList = [];
+    GROUPS.forEach((g) => g.items.forEach((it, i) => { const k = g.id + ':' + i; if (s.hidden[k]) hiddenList.push({ name: it[0], color: g.color, restore: () => this.setHidden(k, false) }); }));
+    const lines = s.cart.map((l) => { const it = this.item(l.key); return { name: it.name, qty: l.qty, unit: '₹' + it.price, total: money(it.price * l.qty), inc: () => this.add(l.key, 1), dec: () => this.add(l.key, -1) }; });
+    const sum = s.cart.reduce((a, l) => a + this.item(l.key).price * l.qty, 0);
+    const n = s.cart.reduce((a, l) => a + l.qty, 0);
+    return {
+      rail, sections, hiddenList, hiddenCount: hiddenList.length, noHidden: hiddenList.length === 0,
+      lines, countLine: lines.length + ' products · ' + n + ' items',
+      tax: money(sum - sum / 1.05), total: money(sum),
+      clearCart: () => this.setState({ cart: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>

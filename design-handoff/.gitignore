@@ -1,0 +1,11 @@
+# ⚠️ THE PICTURES LIVE IN THE DOCS REPO, NOT THIS ONE.
+#
+# png/ and pdf/ are 29 MB of renders. This repo is the RAILWAY DEPLOY artifact, so every byte here is shipped to
+# the server on every deploy, for ever, to be read by nobody. The rules the counter is built against are the
+# markdown and status.json, and those are committed here where the code that must obey them lives.
+#
+# The full package — renders, PDFs and the design-tool sources — is in the docs repo at
+#   C:\dev\design\quick-keys-2026-09-18\   (github.com/maharishia07/chitbridge-docs)
+# Copy png/ back in if you want `/design status` to compare screenshots against the renders.
+png/
+pdf/

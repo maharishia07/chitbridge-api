@@ -4035,7 +4035,9 @@ function setFilter(what, val){
   else if (what === 'off') { FILTER = { offer:false, cat:null, off: !FILTER.off }; }
   else { FILTER = { offer:false, cat:null, off:false }; }
   /* ⚠️ a new question, so a new first page — otherwise a two-letter search inherits the depth of the last one */
-  SEL = 0; showAgain(); paintChips(); paintHits();
+  /* ⭐ THE KEYS FOLLOW THE CHIP TOO — see quickShown(). paintQuick(), never quickCompute(): the group has not
+     changed, only how much of it is on screen, and quickCompute() goes to the network. */
+  SEL = 0; showAgain(); paintChips(); paintHits(); paintQuick();
 }
 function paintChips(){
   var el = document.getElementById('chips'); if (!el || !S) return;
@@ -5066,6 +5068,27 @@ async function loadQuick(){
   }
   paintQuick();
 }
+/**
+ * ── ⭐⭐ THE CHIP NARROWS THE KEYS TOO ([TILL-40], 2026-09-18) ───────────────────────────
+ *
+ * Athi: *"assume you select a category, the product to be filtered for that category also. For example,
+ * Morning, you have variety of food, say 25 items, out of which 10 are dosa type, so in your category, you
+ * select dosa, quick key item also to be filtered for Dosa."*
+ *
+ * The chip row and the key grid were two separate answers to one question. Narrowing the shelf to Dosa left
+ * all twenty-five keys standing, so the narrowing helped the list and not the thing a cashier actually presses.
+ *
+ * ⚠️ DRAWN, NOT RECOMPUTED. quickCompute() reads thirty days of history to rank the learned keys; putting a
+ * chip tap behind that fetch would make a filter feel like a page load. The group is still the whole group
+ * — this is only which part of it is on screen, so dropping the chip brings every key straight back.
+ * ⚠⚠ AND NEVER WHILE ARRANGING. qkDropOn() places a key at the position it was dropped on; against a part of
+ * the list that would write an order nobody chose. Arrange shows the group whole, and says so.
+ */
+function quickCatOn(){ return !QK_ARRANGE && !!(FILTER && FILTER.cat); }
+function quickShown(){
+  if (!quickCatOn()) return QUICK;
+  return QUICK.filter(function(i){ return i && i.category === FILTER.cat; });
+}
 function paintQuick(){
   var el = document.getElementById('quick'); if (!el) return;
   var typing = (document.getElementById('q').value || '').trim().length > 0;
@@ -5096,6 +5119,14 @@ function paintQuick(){
   var names = Object.keys(groupsAll()).sort();
   /* the screen config is read BEFORE the bar, because the bar now carries the Photos switch */
   var cfg = screenCfg(), K = window.CBScreen;
+  /* ⚠⚠ A NARROWED GRID MUST SAY SO. Keys gone without a reason read as keys LOST, and the chip that did it is
+     a row away on a screen somebody uses at speed. So the bar names the filter and carries the way out of it. */
+  var shown = quickShown();
+  var catNote = quickCatOn()
+    ? '<span class="qwhy" data-testid="till-quick-cat">' + esc(FILTER.cat) + ' only · ' + shown.length + ' of ' + QUICK.length + '</span>'
+      + '<button class="qarr" data-testid="till-quick-catall" title="every key in this group again"'
+      + ' onclick="setFilter(\'all\')">show all</button>'
+    : '';
   var bar = '<div class="qbar" data-testid="till-quick-bar">'
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
     + '<span class="qbadge" data-testid="till-quick-badge">⊞ Quick keys'
@@ -5134,6 +5165,7 @@ function paintQuick(){
       : '')
     /* ⭐ AND WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
     + (QUICK_WHY ? '<span class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</span>' : '')
+    + catNote
     + '</div>';
   /**
    * ⭐⭐ THE KEYS ARE DRAWN BY THE SCREEN LIBRARY (lib/screen-kit TILES) — the style this counter chose, in its group's
@@ -5145,7 +5177,7 @@ function paintQuick(){
   var colour = K ? K.groupColour(usesGroups && o.group ? o.group : 0) : null;
   var inBill = {}; CART.forEach(function(c){ inBill[String(c.item_id)] = (inBill[String(c.item_id)] || 0) + (Number(c.qty) || 0); });
   el.className = 'quick sk-style-' + (cfg.tile || 'classic') + (cfg.photos ? ' sk-photos' : '') + (QK_ARRANGE ? ' arranging' : '');
-  var keys = QUICK.map(function(i, n){
+  var keys = shown.map(function(i, n){
     var pin = pinned.indexOf(i.item_id) >= 0;
     var id = esc(i.item_id);
     var extra = '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + id + '\')">📌</i>';
@@ -5193,9 +5225,16 @@ function paintQuick(){
      stop selling, so the panel says why, for as long as it lasts. */
   var arrNote = QK_ARRANGE
     ? '<div class="qarrnote" data-testid="till-arrange-note">Arranging \u2014 drag a key where you want it'
-      + (QK_FROM ? ', then tap where it should go' : '') + '. Nothing is billed until you press Done.</div>'
+      + (QK_FROM ? ', then tap where it should go' : '') + '. Nothing is billed until you press Done.'
+      /* ⚠ the grid just grew back under their hands, and an ORDER is being written — so it is said plainly */
+      + (FILTER && FILTER.cat ? ' Every key in the group is shown while you arrange.' : '') + '</div>'
     : '';
-  el.innerHTML = bar + arrNote + inBillStrip() + keys + tray;
+  /* ⚠ AN EMPTY GRID EXPLAINS ITSELF. A blank panel is a fault report; a sentence is an answer. */
+  var catEmpty = (quickCatOn() && !shown.length)
+    ? '<div class="qarrnote" data-testid="till-quick-catempty">No ' + esc(FILTER.cat)
+      + ' among these keys \u2014 the shelf below still has it.</div>'
+    : '';
+  el.innerHTML = bar + arrNote + catEmpty + inBillStrip() + keys + tray;
 }
 /**
  * ── ⭐⭐ WHAT IS ALREADY ON THE BILL, IN PICTURES ([TILL-37], 2026-09-18) ────────────────────────────────────

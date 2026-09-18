@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; } a:hover { color: #0D4A2B; }
+    button, input { font-family: inherit; }
+    .soft:hover { background: #EFE9DC !important; }
+    .tile:hover { border-color: #B9B09C !important; box-shadow: 0 4px 12px rgba(60,48,20,0.10) !important; }
+    .x:hover { background: #F6E1DA !important; color: #A33418 !important; }
+    .res:hover { background: #FFFFFF !important; }
+    .row:hover { background: #F7F3EA !important; }
+    button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid #16693F; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1600px; height: 900px; box-sizing: border-box; display: flex; background: #F3EFE6; color: #1D1B16; overflow: hidden;">
+
+  <!-- ================= LEFT ================= -->
+  <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; background: #FCFAF5; border-right: 1px solid #DDD6C6;">
+    <!-- header -->
+    <div style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E6E0D2;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800;">CB Test Traders</span>
+      <button class="soft" style="height: 38px; padding: 0 10px; display: flex; align-items: center; gap: 8px; border-radius: 9px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6558" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg>
+        Sell
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="height: 24px; padding: 0 9px; border-radius: 12px; border: 1px solid #D8D1C1; font-size: 12px; color: #5E594D; display: flex; align-items: center;">Counter 1</span>
+      <span style="height: 24px; padding: 0 9px; border-radius: 12px; border: 1px solid #E7B9A8; background: #FBEAE3; font-size: 12px; color: #8E3517; display: flex; align-items: center;">nobody signed in</span>
+      <span style="height: 24px; padding: 0 9px; border-radius: 12px; border: 1px solid #A9D3BC; background: #E8F4ED; font-size: 12px; color: #16693F; display: flex; align-items: center; gap: 5px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #1F8A52;"></span>online</span>
+      <span style="height: 24px; padding: 0 9px; border-radius: 12px; border: 1px solid #D8D1C1; font-size: 12px; color: #5E594D; display: flex; align-items: center;">prices as at 17:35</span>
+      <div style="flex-grow: 1;"></div>
+      <span style="height: 26px; padding: 0 9px; border-radius: 13px; border: 1px solid #D8D1C1; font-family: 'IBM Plex Mono', monospace; font-size: 12px; display: flex; align-items: center;">today 0 · ₹0.00</span>
+      <span style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid #A9D3BC; background: #E8F4ED; color: #16693F; display: flex; align-items: center; justify-content: center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>
+      </span>
+      <button class="soft" aria-label="Menu" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid #D8D1C1; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+    </div>
+
+    <!-- search -->
+    <div style="flex-shrink: 0; padding: 10px 14px 6px; display: flex; align-items: center; gap: 10px;">
+      <button class="soft" aria-label="Voice search" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+      </button>
+      <label style="flex-grow: 1; height: 52px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; gap: 12px; border-radius: 12px; border: 2px solid #CFC7B5; background: #FFFFFF;">
+        <input type="text" placeholder="Item name, code or barcode…" aria-label="Item name, code or barcode" style="flex-grow: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 20px; color: #1D1B16;">
+        <span style="font-size: 14px; color: #6B6558; white-space: nowrap;">↓↑ choose · Enter add</span>
+      </label>
+      <button class="soft" aria-label="Clear search" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+
+    <!-- categories -->
+    <div style="flex-shrink: 0; padding: 4px 14px 8px; display: flex; gap: 6px; overflow: hidden;">
+      <sc-for list="{{cats}}" as="c" hint-placeholder-count="9">
+        <span style="flex-shrink: 0; height: 34px; padding: 0 12px; border-radius: 17px; border: {{c.border}}; background: {{c.bg}}; color: {{c.ink}}; font-size: 14px; font-weight: {{c.weight}}; display: flex; align-items: center; gap: 6px;">
+          {{c.name}}<span style="font-size: 11px; color: {{c.countInk}};">{{c.count}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <!-- quick keys panel -->
+    <div style="flex-shrink: 0; margin: 0 14px; box-sizing: border-box; padding: 10px 12px 12px; border-radius: 14px; background: #F5F1E7; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button onClick="{{openPopup}}" style="height: 38px; padding: 0 12px 0 10px; display: flex; align-items: center; gap: 8px; border-radius: 10px; border: none; background: #1D1B16; color: #FCFAF5; font-size: 14px; font-weight: 600; cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+          Quick keys
+          <span style="min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; background: #F2B544; color: #1D1B16; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{activeCount}}</span>
+        </button>
+        <sc-for list="{{activeChips}}" as="c" hint-placeholder-count="1">
+          <span style="height: 32px; padding: 0 2px 0 10px; display: flex; align-items: center; gap: 6px; border-radius: 16px; background: {{c.tint}}; border: 1px solid {{c.line}}; color: {{c.ink}}; font-size: 13px; font-weight: 600;">
+            {{c.name}} · {{c.count}}
+            <button class="x" onClick="{{c.remove}}" aria-label="Stop showing {{c.name}}" style="width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent; color: {{c.ink}}; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </span>
+        </sc-for>
+        <div style="flex-grow: 1;"></div>
+        <sc-if value="{{hasHidden}}" hint-placeholder-val="{{ true }}">
+          <button class="soft" onClick="{{restoreAll}}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px dashed #BDB4A1; background: transparent; color: #5E594D; font-size: 12px; cursor: pointer;">{{hiddenCount}} sold out · bring back</button>
+        </sc-if>
+        <button onClick="{{togglePhotos}}" aria-pressed="{{photoPressed}}" style="height: 32px; padding: 0 6px 0 10px; border-radius: 8px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          Photos
+          <span style="width: 36px; height: 20px; padding: 2px; box-sizing: border-box; border-radius: 10px; background: {{photoTrack}}; display: flex; justify-content: {{photoJustify}};"><span style="width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF;"></span></span>
+        </button>
+        <button class="soft" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; cursor: pointer;">+ group</button>
+        <button class="soft" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; cursor: pointer;">+ marked row</button>
+      </div>
+      <sc-if value="{{noPhotos}}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; max-height: 196px; overflow-y: auto;">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="12">
+          <div style="position: relative; height: 92px;">
+            <button class="tile" onClick="{{t.add}}" style="width: 100%; height: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 11px; border: 1px solid #DDD6C6; background: #FFFFFF; color: #1D1B16; text-align: left; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;">
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="{{t.color}}"><path d="M14 3l7 7-3 1-4 4 1 5-2 1-4-5-5 5-1-1 5-5-5-4 1-2 5 1 4-4z"></path></svg>
+                <span style="width: 14px; height: 3px; border-radius: 2px; background: {{t.color}};"></span>
+              </span>
+              <span style="font-size: 13px; font-weight: 700; line-height: 1.2; padding-right: 10px;">{{t.name}}</span>
+              <span style="display: flex; align-items: center; font-size: 12px; color: #5E594D;">{{t.price}}<span style="flex-grow: 1;"></span>
+                <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}"><span style="min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{t.qty}}</span></sc-if>
+              </span>
+            </button>
+            <button class="x" onClick="{{t.hide}}" aria-label="Sold out: hide {{t.name}}" style="position: absolute; top: 3px; right: 3px; width: 28px; height: 28px; border-radius: 7px; border: none; background: transparent; color: #9C9483; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+      <sc-if value="{{photos}}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; max-height: 316px; overflow-y: auto;">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="12">
+          <div style="position: relative; height: 154px;">
+            <button class="tile" onClick="{{t.add}}" style="width: 100%; height: 100%; box-sizing: border-box; padding: 0; border-radius: 11px; border: 1px solid #DDD6C6; background: #FFFFFF; color: #1D1B16; text-align: left; display: flex; flex-direction: column; overflow: hidden; cursor: pointer;">
+              <span style="height: 78px; flex-shrink: 0; align-self: stretch; background: {{t.tint}}; display: flex; align-items: center; justify-content: center; color: {{t.ink}};">
+                <sc-if value="{{t.hasPhoto}}" hint-placeholder-val="{{ true }}">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l7-4 7 4v9l-7 4-7-4z"></path><path d="M5 8l7 4 7-4M12 12v9"></path></svg>
+                </sc-if>
+                <sc-if value="{{t.noPhoto}}" hint-placeholder-val="{{ false }}">
+                  <span style="width: 46px; height: 46px; border-radius: 12px; background: #FFFFFF; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{t.initials}}</span>
+                </sc-if>
+              </span>
+              <span style="height: 3px; flex-shrink: 0; align-self: stretch; background: {{t.color}};"></span>
+              <span style="padding: 6px 9px 0; font-size: 12px; font-weight: 700; line-height: 1.2;">{{t.name}}</span>
+              <span style="margin-top: auto; padding: 0 9px 7px; display: flex; align-items: center; font-size: 11px; color: #5E594D;">{{t.price}}<span style="flex-grow: 1;"></span>
+                <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}"><span style="min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{t.qty}}</span></sc-if>
+              </span>
+            </button>
+            <button class="x" onClick="{{t.hide}}" aria-label="Sold out: hide {{t.name}}" style="position: absolute; top: 5px; right: 5px; width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9); color: #5E594D; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- results -->
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; margin-top: 8px; border-top: 1px solid #E6E0D2;">
+      <sc-for list="{{results}}" as="r" hint-placeholder-count="5">
+        <div class="res" style="min-height: 84px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #E6E0D2; border-left: 3px solid {{r.focus}};">
+          <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 18px; font-weight: 500;">{{r.name}} <span style="font-size: 13px; color: #6B6558;">{{r.unit}}</span></span>
+            <span style="font-size: 13px; color: #5E594D;">{{r.code}} · {{r.cat}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+            <span style="font-size: 22px; font-weight: 700;">{{r.price}}</span>
+            <span style="font-size: 12px; color: #5E594D;">per {{r.unit}} · incl. 5% GST</span>
+            <span style="font-size: 12px; color: #5E594D;">MRP <span style="text-decoration: line-through;">{{r.mrp}}</span> <strong style="color: #16693F;">{{r.save}} under</strong></span>
+          </div>
+          <button class="soft" onClick="{{r.add}}" aria-label="Add {{r.name}}" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #16693F; font-size: 22px; font-weight: 700; cursor: pointer;">+</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- shortcuts -->
+    <div style="flex-shrink: 0; padding: 8px 14px; display: flex; flex-wrap: wrap; column-gap: 18px; row-gap: 4px; border-top: 1px solid #E6E0D2; background: #F7F3EA; font-size: 12px; color: #5E594D;">
+      <sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
+        <span><strong style="color: #1D1B16;">{{k.k}}</strong> {{k.v}}</span>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- ================= RIGHT ================= -->
+  <div style="width: 660px; flex-shrink: 0; box-sizing: border-box; display: flex; flex-direction: column; background: #FCFAF5;">
+    <div style="flex-shrink: 0; padding: 10px 14px; display: flex; gap: 8px;">
+      <label style="flex-grow: 1; height: 44px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF;">
+        <input type="text" placeholder="Customer (optional)" aria-label="Customer" style="width: 100%; border: none; outline: none; background: transparent; font-size: 16px;">
+      </label>
+      <button class="soft" aria-label="Voice customer" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+      </button>
+      <label style="width: 150px; height: 44px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF;">
+        <input type="tel" placeholder="Phone" aria-label="Phone" style="width: 100%; border: none; outline: none; background: transparent; font-size: 16px;">
+      </label>
+      <button class="soft" aria-label="Voice phone" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+      </button>
+    </div>
+    <div style="flex-shrink: 0; padding: 7px 14px; background: #E8F4ED; border-top: 1px solid #CFE6D8; border-bottom: 1px solid #CFE6D8; font-size: 12px; color: #3E5A4A;">
+      <strong style="font-size: 14px; color: #0D4A2B;">Shop points</strong> &#160; 1 point for every ₹100.00 spent · a name or a phone number to hold them
+    </div>
+    <div style="flex-shrink: 0; padding: 8px 14px; font-size: 14px; font-weight: 700; color: #3E3A31; border-bottom: 1px solid #E6E0D2;">{{countLine}}</div>
+    <div style="flex-shrink: 0; display: grid; grid-template-columns: 28px minmax(0, 1fr) 76px 120px 80px 64px 88px 28px; align-items: end; padding: 8px 10px; border-bottom: 1px solid #DDD6C6; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #5E594D;">
+      <span style="text-align: center;">#</span><span>ITEM</span><span style="text-align: right;">PRICE</span><span style="text-align: center;">QTY</span><span style="text-align: right;">QTY×PRICE</span><span style="text-align: right;">DISC.</span><span style="text-align: right;">VALUE</span><span></span>
+    </div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 0 10px;">
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+        <div class="row" style="display: grid; grid-template-columns: 28px minmax(0, 1fr) 76px 120px 80px 64px 88px 28px; align-items: center; min-height: 66px; border-bottom: 1px solid #EDE8DC;">
+          <span style="text-align: center; font-size: 12px; color: #6B6558;">{{l.n}}</span>
+          <span style="display: flex; flex-direction: column; gap: 2px; padding-right: 6px;"><span style="font-size: 14px; font-weight: 600; line-height: 1.25;">{{l.name}}</span><span style="font-size: 11px; color: #6B6558;">per packet · GST 5%</span></span>
+          <span style="text-align: right; font-size: 14px; font-weight: 500;">{{l.unit}}</span>
+          <span style="display: flex; align-items: center; justify-content: center; gap: 3px;">
+            <button class="soft" onClick="{{l.dec}}" aria-label="One less" style="width: 30px; height: 30px; border-radius: 7px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer; padding: 0;">−</button>
+            <span style="width: 36px; height: 30px; box-sizing: border-box; border-radius: 7px; border: 1px solid #DDD6C6; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{l.qty}}</span>
+            <button class="soft" onClick="{{l.inc}}" aria-label="One more" style="width: 30px; height: 30px; border-radius: 7px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer; padding: 0;">+</button>
+          </span>
+          <span style="text-align: right; font-size: 12px; color: #6B6558;">{{l.gross}}</span>
+          <span style="text-align: right; font-size: 12px; color: #9C9483;">—</span>
+          <span style="text-align: right; font-size: 15px; font-weight: 700;">{{l.gross}}</span>
+          <button class="x" onClick="{{l.remove}}" aria-label="Remove line" style="width: 26px; height: 26px; margin-left: 2px; border-radius: 7px; border: none; background: transparent; color: #C08A78; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="flex-shrink: 0; padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 7px; border-top: 2px solid #1D1B16;">
+      <div style="text-align: right; font-size: 12px; color: #5E594D;">▸ tax &amp; offer breakdown</div>
+      <div style="display: flex; justify-content: space-between; font-size: 15px; color: #16693F;"><span>Saved</span><span>−{{saved}}</span></div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800;">TOTAL</span><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 32px; font-weight: 800;">{{total}}</span></div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{payModes}}" as="p" hint-placeholder-count="3">
+          <button onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="height: 44px; border-radius: 10px; border: {{p.border}}; background: {{p.bg}}; color: {{p.ink}}; font-size: 16px; font-weight: {{p.weight}}; cursor: pointer;">{{p.label}}</button>
+        </sc-for>
+      </div>
+      <sc-if value="{{isUpi}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 80px; height: 80px; flex-shrink: 0; border-radius: 8px; border: 1px solid #DDD6C6; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #3E3A31;">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 18px; font-weight: 700;">{{total}}</span>
+            <span style="font-size: 12px; color: #5E594D;">Scan with any UPI app · pays [shop UPI ID]</span>
+            <span style="font-size: 12px; color: #5E594D;">The shop marks it paid here once the money arrives.</span>
+          </div>
+        </div>
+      </sc-if>
+      <span style="font-size: 13px; color: #5E594D;">This bill will be recorded as <strong style="color: #1D1B16;">{{payLabel}}</strong></span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <label style="flex-grow: 1; height: 44px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF;">
+          <input type="text" placeholder="Amount taken" aria-label="Amount taken" style="width: 100%; border: none; outline: none; background: transparent; text-align: right; font-size: 20px;">
+        </label>
+        <button class="soft" style="height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 12px; cursor: pointer;">+ part</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <button class="soft" onClick="{{clearCart}}" style="height: 52px; border-radius: 10px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Clear · Esc</button>
+        <button class="soft" style="height: 52px; border-radius: 10px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Park · F6</button>
+        <button style="height: 52px; border-radius: 10px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Save &amp; print · F9</button>
+      </div>
+    </div>
+    <div style="flex-shrink: 0; height: 30px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #E6E0D2; font-size: 12px; color: #5E594D;">
+      <span>everything has reached ChitBridge</span><span>10,441 products, up to date.</span>
+    </div>
+  </div>
+
+  <!-- ================= POPUP ================= -->
+  <sc-if value="{{popupOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(29,27,22,0.45); display: flex; align-items: center; justify-content: center;">
+      <div role="dialog" aria-label="Quick key groups" style="width: 620px; max-height: 780px; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 18px; background: #FCFAF5; border: 1px solid #DDD6C6; box-shadow: 0 30px 80px rgba(29,27,22,0.28);">
+        <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+          <div style="padding: 22px 24px 6px; display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">Quick key groups</span>
+            <span style="font-size: 14px; color: #5E594D;">Tick what this counter shows now. Tap a name to pick its items.</span>
+          </div>
+          <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
+            <sc-for list="{{popupGroups}}" as="g" hint-placeholder-count="4">
+              <div class="row" style="padding: 10px 12px; display: flex; align-items: center; gap: 14px; border-radius: 12px; border: 1px solid {{g.line}}; background: {{g.bg}};">
+                <input type="checkbox" checked="{{g.checked}}" onChange="{{g.toggle}}" aria-label="Show {{g.name}}" style="width: 22px; height: 22px; margin: 0; accent-color: #16693F; cursor: pointer;">
+                <span style="width: 6px; height: 34px; border-radius: 3px; background: {{g.color}};"></span>
+                <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+                  <a href="#" onClick="{{g.open}}" style="font-size: 17px; font-weight: 700; text-underline-offset: 3px;">{{g.name}}</a>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B6558;">{{g.win}}</span>
+                </div>
+                <span style="font-size: 13px;">{{g.avail}}</span>
+                <button class="soft" onClick="{{g.open}}" aria-label="Pick items in {{g.name}}" style="width: 40px; height: 40px; border-radius: 10px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+                </button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{showDrill}}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 16px 16px 8px; display: flex; align-items: center; gap: 10px;">
+            <button class="soft" onClick="{{backToList}}" aria-label="Back to all groups" style="width: 40px; height: 40px; border-radius: 10px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+            </button>
+            <span style="width: 6px; height: 34px; border-radius: 3px; background: {{drill.color}};"></span>
+            <div style="flex-grow: 1; display: flex; flex-direction: column;">
+              <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">{{drill.name}}</span>
+              <span style="font-size: 13px; color: #5E594D;">{{drill.summary}}</span>
+            </div>
+          </div>
+          <div style="padding: 4px 12px; overflow-y: auto; display: flex; flex-direction: column;">
+            <sc-for list="{{drill.items}}" as="it" hint-placeholder-count="10">
+              <label class="row" style="padding: 6px 12px; min-height: 48px; display: flex; align-items: center; gap: 14px; border-radius: 10px; border-bottom: 1px solid #EDE8DC; cursor: pointer;">
+                <input type="checkbox" checked="{{it.on}}" onChange="{{it.toggle}}" style="width: 22px; height: 22px; margin: 0; accent-color: #16693F;">
+                <span style="flex-grow: 1; font-size: 15px; font-weight: 600; color: {{it.textColor}}; text-decoration: {{it.strike}};">{{it.name}}</span>
+                <span style="font-size: 14px; color: #5E594D;">{{it.price}}</span>
+              </label>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="padding: 14px 24px 20px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #E6E0D2;">
+          <span style="flex-grow: 1; font-size: 13px; color: #5E594D;">For this counter until shift close. <a href="Maintenance.dc.html">Change groups for good</a></span>
+          <button onClick="{{closePopup}}" style="height: 46px; padding: 0 28px; border-radius: 11px; border: none; background: #16693F; color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer;">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"photos":{"editor":"boolean","default":true},"$preview":{"width":1600,"height":900}}'>
+const GROUPS = [
+  { id: 'm', name: 'Morning', win: '06:00 – 11:30', color: '#E0A020', tint: '#FDF3DC', line: '#EFD39A', ink: '#7A5205', items: [['Tata Filter coffee 250 g (premium)', 352], ['Tata Health drink 100 g (premium)', 163], ['Red Label Green tea 100 g (premium)', 64], ['Aavin Milk 500 ml', 27], ['Modern Bread 400 g', 45], ['Britannia Rusk 300 g', 60], ['Amul Butter 100 g', 58], ['Eggs · 6 pcs', 42], ['Horlicks 500 g', 255], ['Idli batter 1 kg', 80]] },
+  { id: 'a', name: 'Afternoon', win: '11:30 – 15:30', color: '#D9602B', tint: '#FCE9DF', line: '#F0C3AC', ink: '#8A3410', items: [['Curd 500 g', 35], ['Buttermilk 200 ml', 15], ['Aashirvaad Atta 1 kg', 62], ['Sona Masoori rice 1 kg', 70], ['Tomato 1 kg', 40], ['Onion 1 kg', 38], ['Sambar powder 100 g', 42], ['Appalam 100 g', 30], ['Mango pickle 200 g', 55], ['Lemon 250 g', 30]] },
+  { id: 'e', name: 'Evening', win: '15:30 – 19:00', color: '#7A62D9', tint: '#EEEAFB', line: '#CFC4F2', ink: '#44308F', items: [['Good Day 200 g', 40], ['Madras mixture 200 g', 50], ['Maggi 70 g', 14], ['Murukku 200 g', 45], ['Banana · dozen', 60], ['Coke 750 ml', 45], ['Potato chips 50 g', 20], ['Peanut chikki', 25], ['Tea biscuit', 10], ['Rusk toast 200 g', 38]] },
+  { id: 'n', name: 'Night', win: '19:00 – 23:00', color: '#2F74C9', tint: '#E4EEFA', line: '#B6CEEE', ink: '#174A87', items: [['Dosa batter 1 kg', 80], ['Paneer 200 g', 90], ['Curd 1 kg', 60], ['Ice cream 500 ml', 160], ['Brown bread 400 g', 50], ['Mixed fruit jam 200 g', 85], ['Mosquito coil', 35], ['Toothpaste 100 g', 55], ['Dark chocolate', 100], ['Soda 600 ml', 20]] }
+];
+const RESULTS = [
+  ['Narasus Filter coffee 200 g', 'packet', 'BEV-01612', 141, 172],
+  ['Narasus Tea dust 500 g', 'packet', 'BEV-01613', 291, 358],
+  ['Narasus Green tea 100 g', 'packet', 'BEV-01614', 59.5, 74],
+  ['Narasus Green tea 250 g', 'packet', 'BEV-01615', 151, 163],
+  ['Narasus Coffee chicory 500 g', 'packet', 'BEV-01616', 238, 265]
+];
+const money = (n) => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      photos: this.props.photos ?? true, active: { m: true, a: false, e: false, n: false }, hidden: { 'm:3': true }, popup: false, drill: null, pay: 'upi',
+      cart: [{ key: 'm:2', qty: 5 }, { key: 'm:1', qty: 5 }, { key: 'm:0', qty: 5 }]
+    };
+  }
+  item(key) {
+    if (key.startsWith('r:')) { const r = RESULTS[+key.slice(2)]; return { name: r[0], price: r[3] }; }
+    const [g, i] = key.split(':'); const it = GROUPS.find((x) => x.id === g).items[+i]; return { name: it[0], price: it[1] };
+  }
+  setHidden(key, on) { this.setState((s) => { const h = { ...s.hidden }; if (on) h[key] = true; else delete h[key]; return { hidden: h }; }); }
+  add(key, d) {
+    this.setState((s) => {
+      const cart = s.cart.map((l) => ({ ...l }));
+      const l = cart.find((x) => x.key === key);
+      if (l) l.qty += d; else if (d > 0) cart.push({ key, qty: d });
+      return { cart: cart.filter((x) => x.qty > 0) };
+    });
+  }
+  renderVals() {
+    const s = this.state;
+    const q = {}; s.cart.forEach((l) => { q[l.key] = l.qty; });
+    const vis = (g) => g.items.filter((_, i) => !s.hidden[g.id + ':' + i]).length;
+    const act = GROUPS.filter((g) => s.active[g.id]);
+    const tiles = [];
+    act.forEach((g) => g.items.forEach((it, i) => {
+      const k = g.id + ':' + i;
+      if (s.hidden[k]) return;
+      const hasPhoto = it[0].indexOf('Eggs') < 0 && it[0].indexOf('Idli') < 0;
+      tiles.push({ name: it[0], price: '₹' + it[1] + ' / pkt', color: g.color, tint: g.tint, ink: g.ink, hasPhoto, noPhoto: !hasPhoto, initials: ((ws) => (ws.length > 1 ? ws[0][0] + ws[1][0] : ws[0].slice(0, 2)))(it[0].split(' ').filter((w) => /^[A-Za-z]/.test(w))).toUpperCase(), inBill: !!q[k], qty: q[k] || 0, add: () => this.add(k, 1), hide: () => this.setHidden(k, true) });
+    }));
+    const hiddenKeys = Object.keys(s.hidden).filter((k) => s.active[k.split(':')[0]]);
+    const cat = (name, count, on) => ({ name, count, bg: on ? '#E8F4ED' : '#FFFFFF', border: on ? '2px solid #16693F' : '1px solid #CFC7B5', ink: on ? '#0D4A2B' : '#3E3A31', weight: on ? '700' : '400', countInk: '#6B6558' });
+    let drill = { name: '', color: '#000', summary: '', items: [] };
+    if (s.drill) {
+      const g = GROUPS.find((x) => x.id === s.drill);
+      drill = {
+        name: g.name, color: g.color, summary: vis(g) + ' of 10 showing',
+        items: g.items.map((it, i) => {
+          const k = g.id + ':' + i; const v = !s.hidden[k];
+          return { name: it[0], price: money(it[1]), on: v, textColor: v ? '#1D1B16' : '#8A8374', strike: v ? 'none' : 'line-through', toggle: () => this.setHidden(k, v) };
+        })
+      };
+    }
+    const lines = s.cart.map((l, i) => { const it = this.item(l.key); return { n: i + 1, name: it.name, qty: l.qty, unit: money(it.price), gross: money(it.price * l.qty), inc: () => this.add(l.key, 1), dec: () => this.add(l.key, -1), remove: () => this.add(l.key, -l.qty) }; });
+    const sum = s.cart.reduce((a, l) => a + this.item(l.key).price * l.qty, 0);
+    const saved = Math.round(sum * 0.05 * 100) / 100;
+    const n = s.cart.reduce((a, l) => a + l.qty, 0);
+    const labels = { cash: 'Cash', card: 'Card', upi: 'UPI' };
+    return {
+      cats: [cat('Everything', '', true), cat('On offer', '', false), cat('Off the shelf', '5', false), cat('Spices', '1461', false), cat('Rice & grains', '1283', false), cat('Personal care', '1124', false), cat('Cleaning', '983', false), cat('Vegetables', '965', false), cat('Pulses', '650', false)],
+      activeCount: act.length,
+      activeChips: act.map((g) => ({ name: g.name, count: vis(g) + '/10', tint: g.tint, line: g.line, ink: g.ink, remove: () => this.setState((st) => ({ active: { ...st.active, [g.id]: false } })) })),
+      photos: s.photos, noPhotos: !s.photos, photoPressed: s.photos ? 'true' : 'false', photoTrack: s.photos ? '#16693F' : '#CFC7B5', photoJustify: s.photos ? 'flex-end' : 'flex-start',
+      togglePhotos: () => this.setState((st) => ({ photos: !st.photos })),
+      tiles, hasHidden: hiddenKeys.length > 0, hiddenCount: hiddenKeys.length,
+      restoreAll: () => this.setState({ hidden: {} }),
+      results: RESULTS.map((r, i) => ({ name: r[0], unit: r[1], code: r[2], cat: 'Beverages', price: money(r[3]), mrp: money(r[4]), save: money(r[4] - r[3]), focus: i === 3 ? '#16693F' : 'transparent', add: () => this.add('r:' + i, 1) })),
+      keys: [['F2', 'search'], ['↓↑ PgUp/PgDn', 'choose'], ['Enter', 'or double-click add'], ['3*', 'quantity'], ['Ctrl ↓↑', 'change line'], ['F9', 'save & print'], ['F6', 'park'], ['F8', 'bills'], ['F10', 'day close'], ['F7', 'who'], ['F4', 're-read the shop'], ['Esc', 'clear']].map((x) => ({ k: x[0], v: x[1] })),
+      popupOpen: s.popup, showList: s.popup && !s.drill, showDrill: s.popup && !!s.drill,
+      openPopup: () => this.setState({ popup: true, drill: null }),
+      closePopup: () => this.setState({ popup: false, drill: null }),
+      backToList: () => this.setState({ drill: null }),
+      popupGroups: GROUPS.map((g) => ({
+        name: g.name, win: g.win, color: g.color, checked: !!s.active[g.id],
+        bg: s.active[g.id] ? g.tint : '#FFFFFF', line: s.active[g.id] ? g.line : '#E6E0D2',
+        avail: vis(g) + ' / 10 available',
+        toggle: () => this.setState((st) => ({ active: { ...st.active, [g.id]: !st.active[g.id] } })),
+        open: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ drill: g.id }); }
+      })),
+      drill,
+      countLine: lines.length + ' products · ' + n + ' items',
+      lines, saved: money(saved), total: money(sum - saved),
+      payModes: ['cash', 'card', 'upi'].map((id) => {
+        const on = s.pay === id;
+        return { label: labels[id], pressed: on ? 'true' : 'false', bg: on ? '#E8F4ED' : '#FFFFFF', border: on ? '2px solid #16693F' : '1px solid #BDB4A1', ink: on ? '#16693F' : '#1D1B16', weight: on ? '700' : '500', pick: () => this.setState({ pay: id }) };
+      }),
+      isUpi: s.pay === 'upi', payLabel: labels[s.pay],
+      clearCart: () => this.setState({ cart: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+    .k:hover { background: #F0ECE2 !important; }
+    button:focus-visible { outline: 2px solid #16693F; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 34px 40px; display: flex; flex-direction: column; gap: 22px; background: #FCFAF5; color: #1D1B16;">
+
+  <div style="display: flex; align-items: flex-end; gap: 18px;">
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">RESTING · NOTHING IS CLOSED</span>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; font-weight: 800; letter-spacing: -0.02em;">Counter 1 is ready</span>
+      <span style="font-size: 17px; color: #5E594D;">Mayur Bhavan · T Nagar · Friday 18 September</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 62px; font-weight: 800; line-height: 1;">3:42 pm</span>
+      <span style="font-size: 15px; color: #5E594D;">31°C · rain after 5 · closes 11 pm</span>
+    </div>
+  </div>
+
+  <!-- ready checks -->
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;">
+    <sc-for list="{{checks}}" as="c" hint-placeholder-count="4">
+      <div style="padding: 16px 18px; border-radius: 16px; background: {{c.bg}}; border: 1px solid {{c.line}}; display: flex; flex-direction: column; gap: 8px;">
+        <span style="width: 36px; height: 36px; border-radius: 10px; background: {{c.iconBg}}; color: {{c.ink}}; display: flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{c.icon}}"></path></svg>
+        </span>
+        <span style="font-size: 17px; font-weight: 700; color: {{c.ink}};">{{c.title}}</span>
+        <span style="font-size: 14px; color: {{c.sub}};">{{c.detail}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px;">
+    <!-- waiting -->
+    <div style="padding: 20px 22px; border-radius: 18px; background: #F5F1E7; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">WAITING FOR THE COUNTER</span>
+      <sc-for list="{{waiting}}" as="w" hint-placeholder-count="4">
+        <div style="min-height: 64px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid {{w.line}};">
+          <span style="width: 38px; height: 38px; border-radius: 10px; background: {{w.tint}}; color: {{w.ink}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800;">{{w.badge}}</span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 16px; font-weight: 600;">{{w.title}}</span>
+            <span style="font-size: 13px; color: #5E594D;">{{w.detail}}</span>
+          </span>
+          <span style="height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center;">{{w.action}}</span>
+        </div>
+      </sc-for>
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 12px; background: #E8F4ED; border: 1px solid #A9D3BC; font-size: 14px; color: #0D4A2B;">
+        The bill in hand is saved. Sign in and it comes back exactly as it was.
+      </div>
+    </div>
+
+    <!-- day so far + sign in -->
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="padding: 20px 22px; border-radius: 18px; background: #F5F1E7; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">TODAY SO FAR</span>
+          <div style="flex-grow: 1;"></div>
+          <span style="height: 28px; padding: 0 10px; border-radius: 14px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 12px; color: #5E594D; display: flex; align-items: center; gap: 6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6zM3 3l18 18"></path></svg>
+            hide
+          </span>
+        </div>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 44px; font-weight: 800; line-height: 1;">₹18,420</span>
+        <span style="font-size: 14px; color: #5E594D;">96 bills · avg ₹192 · cash ₹7,900 · UPI ₹9,100 · card ₹1,420</span>
+        <div style="height: 10px; border-radius: 5px; background: #EFEBE1; display: flex; overflow: hidden;">
+          <span style="width: 43%; background: #16693F;"></span><span style="width: 49%; background: #2F74C9;"></span><span style="width: 8%; background: #E0A020;"></span>
+        </div>
+        <span style="font-size: 13px; color: #5E594D;">Busiest hour: 8–9 am · Idli ran out at 10:40</span>
+      </div>
+
+      <div style="flex-grow: 1; padding: 20px 22px; border-radius: 18px; background: #1D1B16; color: #FCFAF5; display: flex; flex-direction: column; gap: 12px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #A8A295;">SIGN IN TO SELL</span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <sc-for list="{{people}}" as="p" hint-placeholder-count="3">
+            <span style="height: 44px; padding: 0 14px 0 6px; border-radius: 22px; background: {{p.bg}}; color: {{p.ink}}; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 9px;">
+              <span style="width: 32px; height: 32px; border-radius: 50%; background: {{p.dot}}; color: #1D1B16; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{p.initials}}</span>
+              {{p.name}}
+            </span>
+          </sc-for>
+        </div>
+        <span style="font-size: 14px; color: #A8A295;">Tap a name, then the 4-digit PIN. Any key or a scan also wakes the counter.</span>
+        <div style="margin-top: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+          <button class="k" style="height: 56px; border-radius: 13px; border: 1px solid #3A362D; background: transparent; color: #FCFAF5; font-size: 16px; font-weight: 600; cursor: pointer;">Shop screen</button>
+          <button style="height: 56px; border-radius: 13px; border: none; background: #F2B544; color: #1D1B16; font-size: 17px; font-weight: 700; cursor: pointer;">Sign in · F7</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const I = {
+  cloud: 'M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2A3.5 3.5 0 0 0 7 18z',
+  printer: 'M7 9V4h10v5M7 19h10v-5H7zM5 9h14v6h-2',
+  cash: 'M3 7h18v10H3zM12 12a2.5 2.5 0 1 0 0-.01',
+  battery: 'M3 8h14v8H3zM19 11v2'
+};
+class Component extends DCLogic {
+  renderVals() {
+    const ok = ['#E8F4ED', '#A9D3BC', '#CFE9DA', '#0D4A2B', '#3E6B52'];
+    const warn = ['#FDF3DC', '#EFD39A', '#F6E3B8', '#7A5205', '#8A6A22'];
+    const mk = (t, d, icon, kind) => {
+      const C = kind === 'ok' ? ok : warn;
+      return { title: t, detail: d, icon: I[icon], bg: C[0], line: C[1], iconBg: C[2], ink: C[3], sub: C[4] };
+    };
+    return {
+      checks: [
+        mk('Online · all sent', '96 bills reached ChitBridge', 'cloud', 'ok'),
+        mk('Printer ready', 'paper checked at 2:10 pm', 'printer', 'ok'),
+        mk('Drawer ₹7,900', 'counted at open: ₹2,000', 'cash', 'ok'),
+        mk('Battery 38%', 'about 2 hours left', 'battery', 'warn')
+      ],
+      waiting: [
+        { badge: '3', title: 'A bill in hand', detail: '3 items · ₹210 · saved 3:28 pm', action: 'Take it up', tint: '#FDF3DC', ink: '#7A5205', line: '#EFD39A' },
+        { badge: '2', title: 'Parked bills', detail: 'Table 4 and a takeaway', action: 'See them', tint: '#E4EEFA', ink: '#174A87', line: '#E6E0D2' },
+        { badge: '4', title: 'Sold out today', detail: 'Idli, Ven Pongal, Poori, Rava Dosa', action: 'Bring back', tint: '#F0ECE2', ink: '#5E594D', line: '#E6E0D2' },
+        { badge: '!', title: 'Evening keys start at 3:30', detail: 'not showing yet on this counter', action: 'Show them', tint: '#EEEAFB', ink: '#44308F', line: '#E6E0D2' }
+      ],
+      people: [
+        { name: 'Ravi K', initials: 'RK', bg: '#F2B544', ink: '#1D1B16', dot: '#FFFFFF' },
+        { name: 'Priya', initials: 'PR', bg: '#2A2823', ink: '#FCFAF5', dot: '#C9C3B6' },
+        { name: 'Suresh', initials: 'SU', bg: '#2A2823', ink: '#FCFAF5', dot: '#C9C3B6' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

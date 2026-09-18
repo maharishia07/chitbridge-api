@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F4F1EA; font-family: 'Archivo', system-ui, sans-serif; }
+    a { color: #1F5FBF; } a:hover { color: #123F82; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 900px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 28px; background: #F4F1EA; color: #151412;">
+  <div style="display: flex; align-items: baseline; gap: 16px;">
+    <h1 style="margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -0.02em;">Quick key tile — 5 directions</h1>
+    <span style="font-size: 15px; color: #5A564D;">Each shows: normal · in the bill (qty) · sold out (after ×)</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; flex-grow: 1;">
+
+    <!-- 1 Colour block -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 18px; font-weight: 800;">1 · Colour block</span>
+        <span style="font-size: 13px; color: #5A564D; line-height: 1.4;">Whole tile in the group colour. Fastest to scan when two groups are on.</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{items}}" as="t" hint-placeholder-count="4">
+          <div style="position: relative; height: 112px; box-sizing: border-box; padding: 12px; border-radius: 14px; background: {{t.block}}; color: #151412; display: flex; flex-direction: column; justify-content: space-between;">
+            <span style="font-size: 16px; font-weight: 700; line-height: 1.15; padding-right: 22px;">{{t.name}}</span>
+            <span style="font-size: 14px; font-weight: 600;">{{t.price}}</span>
+            <span style="position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#151412" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </span>
+            <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+              <span style="position: absolute; bottom: 10px; right: 10px; min-width: 28px; height: 28px; border-radius: 14px; background: #151412; color: #FFFFFF; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{t.qty}}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="height: 112px; box-sizing: border-box; padding: 12px; border-radius: 14px; border: 2px dashed #B8B2A5; background: repeating-linear-gradient(135deg, #ECE8DF 0 8px, #F4F1EA 8px 16px); display: flex; flex-direction: column; justify-content: space-between; color: #6E695E;">
+        <span style="font-size: 16px; font-weight: 700; text-decoration: line-through;">Ven Pongal</span>
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em;">SOLD OUT · TAP TO BRING BACK</span>
+      </div>
+    </div>
+
+    <!-- 2 Monogram -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 18px; font-weight: 800;">2 · Monogram</span>
+        <span style="font-size: 13px; color: #5A564D; line-height: 1.4;">White card with a big initials badge. Works without product photos.</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{items}}" as="t" hint-placeholder-count="4">
+          <div style="position: relative; height: 112px; box-sizing: border-box; padding: 10px; border-radius: 14px; background: #FFFFFF; border: {{t.monoBorder}}; display: flex; flex-direction: column; gap: 6px;">
+            <span style="width: 40px; height: 40px; border-radius: 12px; background: {{t.tint}}; color: {{t.ink}}; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{t.initials}}</span>
+            <span style="font-size: 14px; font-weight: 700; line-height: 1.15;">{{t.name}}</span>
+            <span style="font-size: 12px; color: #5A564D;">{{t.price}}</span>
+            <span style="position: absolute; top: 8px; right: 8px; color: #A39E92;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </span>
+            <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+              <span style="position: absolute; top: 34px; left: 38px; min-width: 20px; height: 20px; border-radius: 10px; border: 2px solid #FFFFFF; background: #E4472B; color: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{t.qty}}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position: relative; height: 112px; box-sizing: border-box; padding: 10px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2DDD2; display: flex; flex-direction: column; gap: 6px; overflow: hidden;">
+        <span style="width: 40px; height: 40px; border-radius: 12px; background: #ECE8DF; color: #A39E92; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center;">VP</span>
+        <span style="font-size: 14px; font-weight: 700; color: #A39E92;">Ven Pongal</span>
+        <span style="position: absolute; right: -8px; top: 38px; transform: rotate(-12deg); padding: 4px 14px; border: 2.5px solid #C2381F; border-radius: 6px; color: #C2381F; font-size: 14px; font-weight: 800; letter-spacing: 0.1em;">SOLD OUT</span>
+      </div>
+    </div>
+
+    <!-- 3 Compact rows -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 18px; font-weight: 800;">3 · Compact rows</span>
+        <span style="font-size: 13px; color: #5A564D; line-height: 1.4;">Two-column list. Fits 30+ keys; stepper appears once in the bill.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2DDD2; overflow: hidden;">
+        <sc-for list="{{rows}}" as="t" hint-placeholder-count="6">
+          <div style="min-height: 48px; box-sizing: border-box; padding: 0 8px 0 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #F0ECE3;">
+            <span style="width: 4px; align-self: stretch; background: {{t.color}};"></span>
+            <span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{t.name}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5A564D;">{{t.price}}</span>
+            <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+              <span style="display: flex; align-items: center; border-radius: 8px; background: #151412; color: #FFFFFF;">
+                <span style="width: 26px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 15px;">−</span>
+                <span style="font-size: 13px; font-weight: 700;">{{t.qty}}</span>
+                <span style="width: 26px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 15px;">+</span>
+              </span>
+            </sc-if>
+            <sc-if value="{{t.notInBill}}" hint-placeholder-val="{{ true }}">
+              <span style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: #A39E92;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+              </span>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="min-height: 48px; padding: 0 12px 0 14px; display: flex; align-items: center; gap: 10px; background: #F7F4ED; color: #8A8578;">
+          <span style="flex-grow: 1; font-size: 14px; text-decoration: line-through;">Ven Pongal</span>
+          <span style="font-size: 12px; font-weight: 700; color: #1F5FBF;">Undo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Hotkey -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 18px; font-weight: 800;">4 · Hotkey dark</span>
+        <span style="font-size: 13px; color: #5A564D; line-height: 1.4;">Number shortcut on each key for keyboard counters (1–9, 0).</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{items}}" as="t" hint-placeholder-count="4">
+          <div style="position: relative; height: 112px; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; background: #151412; color: #F4F1EA; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 -3px 0 {{t.color}};">
+            <span style="width: 24px; height: 24px; border-radius: 6px; border: 1px solid #4A463E; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #BDB7AA; display: flex; align-items: center; justify-content: center;">{{t.key}}</span>
+            <span style="font-size: 15px; font-weight: 700; line-height: 1.15;">{{t.name}}</span>
+            <span style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: {{t.color}};">{{t.price}}</span>
+              <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #151412; background: {{t.color}}; padding: 1px 6px; border-radius: 4px;">×{{t.qty}}</span>
+              </sc-if>
+            </span>
+            <span style="position: absolute; top: 10px; right: 10px; color: #6E695E;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="height: 112px; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 1.5px dashed #6E695E; background: #2A2823; color: #8A8578; display: flex; flex-direction: column; justify-content: space-between;">
+        <span style="width: 24px; height: 24px; border-radius: 6px; border: 1px dashed #6E695E; font-family: 'JetBrains Mono', monospace; font-size: 12px; display: flex; align-items: center; justify-content: center;">5</span>
+        <span style="font-size: 15px; font-weight: 700; text-decoration: line-through;">Ven Pongal</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">OUT · key 5 is free</span>
+      </div>
+    </div>
+
+    <!-- 5 Photo -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 18px; font-weight: 800;">5 · Photo</span>
+        <span style="font-size: 13px; color: #5A564D; line-height: 1.4;">Dish photo on top. Best for new staff; needs an image per item.</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{items}}" as="t" hint-placeholder-count="4">
+          <div style="position: relative; height: 150px; box-sizing: border-box; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2DDD2; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="height: 80px; background: {{t.tint}}; display: flex; align-items: center; justify-content: center; color: {{t.ink}};">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="13" r="7"></circle><circle cx="12" cy="13" r="3.5"></circle><path d="M3 4v5M5 4v5M4 9v11M20 4c-2 1-2 5 0 6v10"></path></svg>
+            </div>
+            <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 14px; font-weight: 700; line-height: 1.15;">{{t.name}}</span>
+              <span style="font-size: 12px; color: #5A564D;">{{t.price}}</span>
+            </div>
+            <span style="position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #5A564D;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </span>
+            <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+              <span style="position: absolute; top: 6px; left: 6px; height: 24px; padding: 0 8px; border-radius: 12px; background: #151412; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center;">{{t.qty}} in bill</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position: relative; height: 90px; border-radius: 14px; background: #D9D4C9; overflow: hidden; display: flex; align-items: flex-end; padding: 10px; box-sizing: border-box;">
+        <span style="font-size: 14px; font-weight: 700; color: #5A564D; text-decoration: line-through;">Ven Pongal</span>
+        <span style="position: absolute; top: 10px; left: 10px; padding: 3px 8px; border-radius: 4px; background: #151412; color: #FFFFFF; font-size: 11px; font-weight: 800; letter-spacing: 0.08em;">SOLD OUT</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":900}}'>
+const SRC = [
+  { name: 'Masala Dosa', price: 70, g: 'm', qty: 2 },
+  { name: 'Medu Vada', price: 30, g: 'm', qty: 0 },
+  { name: 'Veg Biryani', price: 140, g: 'a', qty: 0 },
+  { name: 'Curd Rice', price: 70, g: 'a', qty: 1 }
+];
+const EXTRA = [
+  { name: 'Filter Coffee', price: 25, g: 'm', qty: 3 },
+  { name: 'South Indian Meals', price: 150, g: 'a', qty: 0 }
+];
+const C = {
+  m: { color: '#E0A020', block: '#F6C554', tint: '#FDF0D2', ink: '#7A5205' },
+  a: { color: '#E4472B', block: '#F58A6E', tint: '#FDE3DB', ink: '#8A2410' }
+};
+const initials = (n) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+class Component extends DCLogic {
+  renderVals() {
+    const map = (x, i) => ({
+      name: x.name, price: '₹' + x.price, qty: x.qty, inBill: x.qty > 0, notInBill: x.qty === 0,
+      key: String(i + 1), initials: initials(x.name),
+      color: C[x.g].color, block: C[x.g].block, tint: C[x.g].tint, ink: C[x.g].ink,
+      monoBorder: x.qty > 0 ? '2px solid #151412' : '1px solid #E2DDD2'
+    });
+    return { items: SRC.map(map), rows: SRC.concat(EXTRA).map(map) };
+  }
+}
+</script>
+</body>
+</html>

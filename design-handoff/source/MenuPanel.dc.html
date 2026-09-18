@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #E9E4D8; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    button { font-family: inherit; }
+    .t:hover { border-color: #B9B09C !important; box-shadow: 0 4px 14px rgba(60,48,20,0.10) !important; }
+    .dz:hover { background: #F9E3DB !important; }
+    button:focus-visible { outline: 2px solid #16693F; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="width: 880px; height: 1010px; box-sizing: border-box; padding: 22px 24px 20px; display: flex; flex-direction: column; gap: 16px; background: #FCFAF5; color: #1D1B16; border-radius: 20px;">
+
+  <div style="display: flex; align-items: flex-start; gap: 12px;">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 800;">Counter 1</span>
+      <span style="font-size: 14px; color: #5E594D;">Prestige Smart Kitchen · T Nagar &#160;·&#160; <span style="color: #16693F;">● online</span> &#160;·&#160; prices as at 11:28 &#160;·&#160; today 0 · ₹0.00</span>
+    </div>
+    <button style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer;">Sign in · F7</button>
+    <button aria-label="Close" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+    <!-- left -->
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="2">
+        <div style="padding: 14px 16px 16px; border-radius: 16px; background: #F5F1E7; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">{{c.label}}</span>
+          <sc-for list="{{c.tiles}}" as="t" hint-placeholder-count="2">
+            <button class="t" style="width: 100%; box-sizing: border-box; min-height: 64px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; border-radius: 12px; border: 1px solid #E2DCCD; background: #FFFFFF; text-align: left; color: #1D1B16; cursor: pointer;">
+              <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px; background: {{t.tint}}; color: {{t.ink}}; display: flex; align-items: center; justify-content: center;">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{t.icon}}"></path></svg>
+              </span>
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 16px; font-weight: 600;">{{t.name}}</span>
+                <span style="font-size: 13px; color: #5E594D;">{{t.desc}}</span>
+              </span>
+              <sc-if value="{{t.hasKey}}" hint-placeholder-val="{{ false }}">
+                <span style="height: 24px; padding: 0 8px; border-radius: 6px; border: 1px solid #D8D1C1; background: #F5F1E7; font-family: 'IBM Plex Mono', monospace; font-size: 12px; display: flex; align-items: center;">{{t.key}}</span>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- right: look -->
+    <div style="padding: 14px 16px 16px; border-radius: 16px; background: #F5F1E7; display: flex; flex-direction: column; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">HOW IT LOOKS</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{look}}" as="l" hint-placeholder-count="3">
+          <label style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 600; color: #5E594D;">
+            {{l.label}}
+            <span style="height: 42px; box-sizing: border-box; padding: 0 10px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; color: #1D1B16; display: flex; align-items: center; justify-content: space-between;">
+              {{l.value}}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5E594D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+            </span>
+          </label>
+        </sc-for>
+      </div>
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">SHOW ON THIS COUNTER</span>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{shows}}" as="s" hint-placeholder-count="6">
+          <label style="min-height: 44px; padding: 0 10px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: #FFFFFF; border: 1px solid #E2DCCD; font-size: 14px;">
+            <span style="flex-grow: 1; color: #1D1B16;">{{s.name}}</span>
+            <span style="width: 46px; height: 26px; padding: 2px; box-sizing: border-box; border-radius: 13px; background: {{s.track}}; display: flex; justify-content: {{s.justify}};"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF;"></span></span>
+          </label>
+        </sc-for>
+      </div>
+      <div style="margin-top: auto; padding: 10px 12px; border-radius: 10px; background: #EFEBE1; font-size: 12px; color: #5E594D; line-height: 1.5;">These settings are kept on this device only. The counter's own style is set in <a href="DisplaySettings.dc.html">back office</a>.</div>
+    </div>
+  </div>
+
+  <!-- danger strip -->
+  <div style="flex-shrink: 0; padding: 12px 14px; border-radius: 14px; border: 1px solid #F1C7AE; background: #FDF3EE; display: flex; align-items: center; gap: 12px;">
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #A3542F;">CAREFUL</span>
+    <span style="flex-grow: 1; font-size: 13px; color: #8A4A2A;">These two stop billing for a moment. Everything is sent and checked first.</span>
+    <button class="dz" style="height: 46px; padding: 0 16px; border-radius: 11px; border: 1px solid #E8B79C; background: #FFFFFF; color: #6E2A0C; font-size: 14px; font-weight: 700; cursor: pointer;">Clear and reload</button>
+    <button class="dz" style="height: 46px; padding: 0 16px; border-radius: 11px; border: 1px solid #E8B79C; background: #FFFFFF; color: #6E2A0C; font-size: 14px; font-weight: 700; cursor: pointer;">Close this counter</button>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":880,"height":1010}}'>
+const I = {
+  bills: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',
+  stuck: 'M12 21a9 9 0 1 0-9-9M3 3v6h6M12 8v4l3 2',
+  refresh: 'M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5',
+  tv: 'M4 5h16v11H4zM9 20h6M12 16v4',
+  book: 'M7 17L17 7M9 7h8v8',
+  settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M4 12h2M18 12h2M12 4v2M12 18v2M7 7l1.5 1.5M15.5 15.5L17 17M17 7l-1.5 1.5M8.5 15.5L7 17',
+  install: 'M12 4v11M8 11l4 4 4-4M5 20h14',
+  lock: 'M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3'
+};
+class Component extends DCLogic {
+  renderVals() {
+    const t = (name, desc, icon, key, tint, ink) => ({ name, desc, icon: I[icon], key: key || '', hasKey: !!key, tint, ink });
+    return {
+      cards: [
+        { label: 'BILLS', tiles: [
+          t("Today's bills", 'find a bill and print it again', 'bills', 'F8', '#FDF3DC', '#7A5205'),
+          t('Why is a bill stuck?', "what is waiting in this counter's store", 'stuck', '', '#FDF3DC', '#7A5205')
+        ] },
+        { label: 'SHOP & PRICES', tiles: [
+          t('Read the shop again', 'new prices and products', 'refresh', 'F4', '#E8F4ED', '#16693F'),
+          t('Shop screen', 'your offers as a sign for a TV', 'tv', '', '#E4EEFA', '#174A87'),
+          t('ChitBridge', 'orders, suppliers, the books', 'book', '', '#E4EEFA', '#174A87')
+        ] },
+        { label: 'THIS COUNTER', tiles: [
+          t('Settings', 'look, printer, this till', 'settings', '', '#EFEBE1', '#3E3A31'),
+          t('Take a break', 'stays open on this PC · nothing is closed', 'lock', '', '#EFEBE1', '#3E3A31'),
+          t('Install as an app', 'opens without a browser', 'install', '', '#EFEBE1', '#3E3A31')
+        ] }
+      ],
+      look: [
+        { label: 'Text size', value: 'Normal' },
+        { label: 'Theme', value: 'Light cream' },
+        { label: 'Products', value: 'Everything' }
+      ],
+      shows: ['Search box', 'Categories', 'Quick keys', 'The product list', 'Keyboard shortcuts', 'Customer name and phone'].map((n, i) => {
+        const on = i !== 4;
+        return { name: n, track: on ? '#16693F' : '#CFC7B5', justify: on ? 'flex-end' : 'flex-start' };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

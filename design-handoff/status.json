@@ -1,0 +1,255 @@
+{
+  "updated": "2026-09-18T10:23:35+00:00",
+  "legend": [
+    "built",
+    "partly",
+    "not_built"
+  ],
+  "screens": [
+    {
+      "id": "Main",
+      "route": "/till.html",
+      "design": "png/Main.png",
+      "state": "built",
+      "notes": ""
+    },
+    {
+      "id": "FullDesktop",
+      "route": "/till.html",
+      "design": "png/FullDesktop.png",
+      "state": "built",
+      "notes": ""
+    },
+    {
+      "id": "SellDark",
+      "route": null,
+      "design": "png/SellDark.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "SellTimeline",
+      "route": null,
+      "design": "png/SellTimeline.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "SellRail",
+      "route": null,
+      "design": "png/SellRail.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "Tiles",
+      "route": null,
+      "design": "png/Tiles.png",
+      "state": "partly",
+      "notes": ""
+    },
+    {
+      "id": "PopupDrawer",
+      "route": null,
+      "design": "png/PopupDrawer.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "PopupFull",
+      "route": null,
+      "design": "png/PopupFull.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullDesktopPhotos",
+      "route": "/till.html",
+      "design": "png/FullDesktopPhotos.png",
+      "state": "built",
+      "notes": ""
+    },
+    {
+      "id": "FullPortrait",
+      "route": null,
+      "design": "png/FullPortrait.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullCompact",
+      "route": null,
+      "design": "png/FullCompact.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullTablet",
+      "route": null,
+      "design": "png/FullTablet.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullTabletPay",
+      "route": null,
+      "design": "png/FullTabletPay.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullPhoneSell",
+      "route": null,
+      "design": "png/FullPhoneSell.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullPhoneBill",
+      "route": null,
+      "design": "png/FullPhoneBill.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullPhonePay",
+      "route": null,
+      "design": "png/FullPhonePay.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullHandheld",
+      "route": null,
+      "design": "png/FullHandheld.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "FullHandheldPay",
+      "route": null,
+      "design": "png/FullHandheldPay.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "MenuPanel",
+      "route": "/till.html#menu",
+      "design": "png/MenuPanel.png",
+      "state": "partly",
+      "notes": ""
+    },
+    {
+      "id": "MenuPhoneFold",
+      "route": null,
+      "design": "png/MenuPhoneFold.png",
+      "state": "partly",
+      "notes": ""
+    },
+    {
+      "id": "HubPhone",
+      "route": null,
+      "design": "png/HubPhone.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "HubWide",
+      "route": null,
+      "design": "png/HubWide.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "PanelSizing",
+      "route": null,
+      "design": "png/PanelSizing.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "DisplaySettings",
+      "route": null,
+      "design": "png/DisplaySettings.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "Maintenance",
+      "route": null,
+      "design": "png/Maintenance.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "MaintBoard",
+      "route": null,
+      "design": "png/MaintBoard.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "MenuPhoneStack",
+      "route": null,
+      "design": "png/MenuPhoneStack.png",
+      "state": "partly",
+      "notes": ""
+    },
+    {
+      "id": "MenuDrawer",
+      "route": null,
+      "design": "png/MenuDrawer.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "MenuPalette",
+      "route": null,
+      "design": "png/MenuPalette.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "MaintV2",
+      "route": "/till.html#maintenance",
+      "design": "png/MaintV2.png",
+      "state": "partly",
+      "notes": ""
+    },
+    {
+      "id": "MaintV2Phone",
+      "route": null,
+      "design": "png/MaintV2Phone.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "IdleShop",
+      "route": null,
+      "design": "png/IdleShop.png",
+      "state": "partly",
+      "notes": ""
+    },
+    {
+      "id": "IdleReady",
+      "route": null,
+      "design": "png/IdleReady.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "IdlePhone",
+      "route": null,
+      "design": "png/IdlePhone.png",
+      "state": "not_built",
+      "notes": ""
+    },
+    {
+      "id": "DesignStatus",
+      "route": null,
+      "design": "png/DesignStatus.png",
+      "state": "n/a",
+      "notes": ""
+    }
+  ]
+}

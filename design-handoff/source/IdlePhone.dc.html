@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #14130F; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #14130F; color: #FCFAF5; overflow: hidden;">
+
+  <div style="padding: 22px 18px 10px; display: flex; align-items: center; gap: 8px;">
+    <div style="flex-grow: 1; display: flex; flex-direction: column;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800;">Mayur Bhavan</span>
+      <span style="font-size: 12px; color: #A8A295;">Counter 1 · resting</span>
+    </div>
+    <sc-for list="{{pills}}" as="p" hint-placeholder-count="2">
+      <span style="height: 26px; padding: 0 9px; border-radius: 13px; border: 1px solid {{p.line}}; background: {{p.bg}}; color: {{p.ink}}; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 5px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{p.dot}};"></span>{{p.name}}</span>
+    </sc-for>
+  </div>
+
+  <div style="padding: 6px 18px 0; display: flex; flex-direction: column; gap: 2px;">
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 60px; font-weight: 800; line-height: 1.05;">3:42</span>
+    <span style="font-size: 15px; color: #C9C3B6;">Friday 18 September · 31°C, rain after 5</span>
+  </div>
+
+  <div style="margin: 16px 18px 0; height: 190px; border-radius: 18px; background: #221F19; border: 1px solid #332F27; display: flex; align-items: center; justify-content: center; color: #6B6558;">
+    <span style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.6"></circle><path d="M21 16l-5-5-9 8"></path></svg>
+      <span style="font-size: 13px;">the shop's own picture</span>
+    </span>
+  </div>
+
+  <div style="margin: 14px 18px 0; padding: 14px 16px; border-radius: 16px; background: #221F19; border: 1px solid #332F27; display: flex; flex-direction: column; gap: 10px;">
+    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">WAITING FOR YOU</span>
+    <sc-for list="{{waiting}}" as="w" hint-placeholder-count="3">
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 15px;">
+        <span style="width: 26px; height: 26px; border-radius: 8px; background: {{w.tint}}; color: #1D1B16; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{w.badge}}</span>
+        <span style="flex-grow: 1;">{{w.title}}</span>
+        <span style="font-size: 13px; color: #A8A295;">{{w.detail}}</span>
+      </div>
+    </sc-for>
+    <span style="font-size: 12px; color: #8A8374;">Today's sale is hidden until you sign in.</span>
+  </div>
+
+  <div style="flex-grow: 1;"></div>
+
+  <div style="padding: 0 18px 28px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; gap: 8px;">
+      <sc-for list="{{people}}" as="p" hint-placeholder-count="2">
+        <span style="flex-grow: 1; height: 52px; border-radius: 14px; background: {{p.bg}}; color: {{p.ink}}; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="width: 28px; height: 28px; border-radius: 50%; background: {{p.dot}}; color: #1D1B16; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{p.initials}}</span>
+          {{p.name}}
+        </span>
+      </sc-for>
+    </div>
+    <button style="height: 62px; border-radius: 16px; border: none; background: #F2B544; color: #1D1B16; font-size: 18px; font-weight: 700; cursor: pointer;">Tap to sell</button>
+    <span style="font-size: 12px; color: #8A8374; text-align: center;">Nothing is closed · the bill in hand is saved</span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pill = (name, kind) => {
+      const C = { ok: ['#16321F', '#2C5A3C', '#8FD9AE', '#3FB06F'], warn: ['#3A2418', '#5E3823', '#F0A882', '#D97B45'] }[kind];
+      return { name, bg: C[0], line: C[1], ink: C[2], dot: C[3] };
+    };
+    return {
+      pills: [pill('online', 'ok'), pill('all sent', 'ok')],
+      waiting: [
+        { badge: '3', title: 'A bill in hand', detail: '₹210', tint: '#F2B544' },
+        { badge: '2', title: 'Parked bills', detail: 'table 4, takeaway', tint: '#8FBDF2' },
+        { badge: '4', title: 'Sold out today', detail: 'bring back', tint: '#D8D1C1' }
+      ],
+      people: [
+        { name: 'Ravi K', initials: 'RK', bg: '#2A2823', ink: '#FCFAF5', dot: '#F2B544' },
+        { name: 'Priya', initials: 'PR', bg: '#2A2823', ink: '#FCFAF5', dot: '#C9C3B6' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

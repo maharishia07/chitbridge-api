@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap">
+  <style>
+    body { margin: 0; background: #EEF1F5; font-family: 'Schibsted Grotesk', system-ui, sans-serif; }
+    a { color: #1F5FBF; } a:hover { color: #123F82; }
+    button, input { font-family: inherit; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1600px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #EEF1F5; color: #101828;">
+  <div style="height: 72px; flex-shrink: 0; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; gap: 16px; background: #FFFFFF; border-bottom: 1px solid #DCE2EA;">
+    <div style="flex-grow: 1; display: flex; flex-direction: column;">
+      <span style="font-size: 12px; color: #5B6B80;">Back office / Menu / Quick keys · board view</span>
+      <span style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">Quick key groups</span>
+    </div>
+    <div style="display: flex; padding: 4px; border-radius: 10px; background: #EEF1F5;">
+      <span style="height: 34px; padding: 0 14px; border-radius: 7px; background: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; box-shadow: 0 1px 2px rgba(16,24,40,0.1);">Board</span>
+      <span style="height: 34px; padding: 0 14px; font-size: 13px; color: #5B6B80; display: flex; align-items: center;">List</span>
+    </div>
+    <button style="height: 42px; padding: 0 16px; border-radius: 10px; border: 1px solid #C9D2DE; background: #FFFFFF; font-size: 14px; font-weight: 600;">+ New group</button>
+    <button style="height: 42px; padding: 0 20px; border-radius: 10px; border: none; background: #1F5FBF; color: #FFFFFF; font-size: 14px; font-weight: 700;">Publish to 6 counters</button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <!-- Menu source -->
+    <div style="width: 260px; flex-shrink: 0; box-sizing: border-box; padding: 18px 16px; background: #FFFFFF; border-right: 1px solid #DCE2EA; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 15px; font-weight: 800;">Menu items</span>
+      <label style="height: 40px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid #C9D2DE; color: #5B6B80;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="text" placeholder="Search menu" aria-label="Search menu" style="flex-grow: 1; min-width: 0; border: none; outline: none; font-size: 14px;">
+      </label>
+      <span style="font-size: 12px; color: #5B6B80;">Drag an item onto a group</span>
+      <sc-for list="{{menu}}" as="m" hint-placeholder-count="10">
+        <div style="min-height: 40px; padding: 0 10px; display: flex; align-items: center; gap: 8px; border-radius: 8px; border: 1px solid #E4E9F0; font-size: 14px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9AA8BA"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg>
+          <span style="flex-grow: 1;">{{m.name}}</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5B6B80;">{{m.price}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Columns -->
+    <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 18px 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;">
+      <sc-for list="{{cols}}" as="g" hint-placeholder-count="4">
+        <div style="min-height: 0; display: flex; flex-direction: column; border-radius: 16px; background: #F7F9FC; border: 1px solid #DCE2EA; overflow: hidden;">
+          <div style="padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; border-top: 5px solid {{g.color}};">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="flex-grow: 1; font-size: 18px; font-weight: 800;">{{g.name}}</span>
+              <span style="font-size: 12px; color: #5B6B80;">{{g.count}} keys</span>
+              <span style="width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #5B6B80;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+              </span>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+              <span style="padding: 4px 8px; border-radius: 6px; border: 1px solid #C9D2DE;">{{g.from}}</span>
+              <span style="color: #5B6B80;">→</span>
+              <span style="padding: 4px 8px; border-radius: 6px; border: 1px solid #C9D2DE;">{{g.to}}</span>
+              <span style="flex-grow: 1;"></span>
+              <span style="font-family: 'Schibsted Grotesk', sans-serif; font-size: 12px; color: #1F7A4C; font-weight: 600;">Suggest ✓</span>
+            </div>
+          </div>
+          <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+            <sc-for list="{{g.items}}" as="it" hint-placeholder-count="10">
+              <div style="min-height: 44px; box-sizing: border-box; padding: 0 8px 0 6px; display: flex; align-items: center; gap: 8px; border-radius: 10px; background: #FFFFFF; border: 1px solid #E4E9F0; box-shadow: 0 1px 1px rgba(16,24,40,0.04);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#9AA8BA"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9AA8BA;">{{it.pos}}</span>
+                <span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{it.name}}</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B6B80;">{{it.price}}</span>
+                <span style="color: #B42318; display: flex;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+                </span>
+              </div>
+            </sc-for>
+            <div style="min-height: 40px; border-radius: 10px; border: 1.5px dashed #9AB6E0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #1F5FBF; font-weight: 600;">Drop here or + Add item</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- drag ghost -->
+  <div style="position: absolute; left: 700px; top: 520px; width: 260px; min-height: 44px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; border-radius: 10px; background: #FFFFFF; border: 2px solid #1F5FBF; box-shadow: 0 16px 32px rgba(16,24,40,0.2); transform: rotate(-3deg); font-size: 14px; font-weight: 700;">
+    <span style="flex-grow: 1;">Mini Tiffin</span>
+    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B6B80;">₹110</span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":900}}'>
+const G = [
+  { name: 'Morning', from: '06:00', to: '11:30', color: '#E0A020', items: [['Idli (2 pc)', 40], ['Masala Dosa', 70], ['Ven Pongal', 60], ['Poori Masala', 65], ['Medu Vada', 30], ['Rava Upma', 45], ['Rava Dosa', 75], ['Kesari Bath', 35], ['Filter Coffee', 25], ['Masala Tea', 20]] },
+  { name: 'Afternoon', from: '11:30', to: '15:30', color: '#E4472B', items: [['South Indian Meals', 150], ['Veg Biryani', 140], ['Curd Rice', 70], ['Sambar Rice', 80], ['Lemon Rice', 65], ['Chapati Kurma', 75], ['Veg Pulao', 110], ['Paneer Butter Masala', 160], ['Buttermilk', 25], ['Gulab Jamun', 40]] },
+  { name: 'Evening', from: '15:30', to: '19:00', color: '#7A62D9', items: [['Onion Bajji', 40], ['Samosa (2 pc)', 35], ['Mysore Bonda', 40], ['Pav Bhaji', 90], ['Veg Puff', 25], ['Veg Cutlet', 45], ['Sweet Corn Cup', 50], ['Chana Sundal', 30], ['Ginger Tea', 20], ['Badam Milk', 45]] },
+  { name: 'Night', from: '19:00', to: '23:00', color: '#2F74C9', items: [['Chapati (2 pc)', 50], ['Parotta Salna', 70], ['Idiyappam', 60], ['Kothu Parotta', 120], ['Onion Uttapam', 80], ['Ghee Roast', 95], ['Veg Fried Rice', 130], ['Gobi Manchurian', 120], ['Veg Noodles', 125], ['Hot Milk', 25]] }
+];
+const MENU = [['Plain Dosa', 55], ['Onion Dosa', 70], ['Mini Tiffin', 110], ['Fresh Lime Soda', 40], ['Coffee (large)', 40], ['Rasmalai', 60], ['Veg Sandwich', 60], ['Tomato Soup', 55], ['Mushroom Biryani', 170], ['Paneer Tikka', 180], ['Masala Papad', 30], ['Lassi', 50]];
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      menu: MENU.map((m) => ({ name: m[0], price: '₹' + m[1] })),
+      cols: G.map((g) => ({
+        name: g.name, from: g.from, to: g.to, color: g.color, count: g.items.length,
+        items: g.items.map((it, i) => ({ pos: String(i + 1).padStart(2, '0'), name: it[0], price: '₹' + it[1] }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
