@@ -815,6 +815,18 @@
   .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto;gap:14px;align-items:center;
        padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
+  /* ── choosing several in maintenance ([TILL-55]) ───────────────────────────────────── */
+  .hit.picking{grid-template-columns:24px minmax(0,1fr) minmax(92px,auto) auto}
+  .hit.picking.pics{grid-template-columns:24px 42px minmax(0,1fr) minmax(92px,auto)}
+  .hitpick{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;cursor:pointer;
+           align-self:center;background:var(--paper);position:relative}
+  .hitpick.on{border-color:var(--ok);background:var(--ok)}
+  /* ⚠ A TICK, NOT JUST A COLOUR — chosen must read without telling green from grey (NOW-reliability §U4). */
+  .hitpick.on::after{content:'\2713';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                     color:var(--on-accent);font-size:.8em;font-weight:700}
+  .pickbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+           padding:8px 10px;margin-bottom:6px;background:var(--ok-tint);border:1px solid var(--ok);border-radius:10px}
+  .pickbar b{color:var(--ok)}
   /* ⭐ §8 / mobile-first §2 rule 3: a touch target is ≥44px. It was 34, which is a mouse's button, not a thumb's. */
   .hit .addbtn{width:44px;height:44px;border:1px solid var(--edge);background:var(--card);color:var(--ok);
        border-radius:10px;font-size:1.35em;font-weight:800;line-height:1;cursor:pointer;flex:none}
@@ -1137,6 +1149,9 @@
   .cardrow{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:start;padding:11px 0;
            border-bottom:1px solid var(--line)}
   .cardrow>label{color:var(--dim);font-size:.85em;font-weight:700;padding-top:9px}
+  /* ⭐ a today-only choice acts at once and undoes itself tomorrow — it must not wear the clothes of the
+     staged switches above it, or "nothing leaves until Save" reads as a lie on the same panel. */
+  .cardrow.today{background:var(--warn-tint);border-inline-start:3px solid var(--warn);padding-inline-start:9px}
   .swwrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
   .swwrap.col{flex-direction:column;align-items:stretch;gap:6px}
   /* the switch, its words, and under them what it does in money — the example belongs to the row, not to a footnote */
@@ -6404,6 +6419,67 @@ async function openWorth(id){
   if (n >= 0) SEL = n;
   paintCard(); paintHits(); keepSelInView();
 }
+/**
+ * ── ⭐⭐⭐ PICK SEVERAL, DO ONE THING ([TILL-55], MaintV2 "bulk edit") ───────────────────────
+ *
+ * A shop that has run out of dosa has run out of eight kinds of dosa, and doing that one product at a time is
+ * how a screen gets abandoned. The jobs chips already narrow the list to the right rows; this acts on them.
+ *
+ * ⚠⚠ IT IS NOT ‘APPLY TO EVERYTHING THE FILTER FOUND’, AND THAT IS DELIBERATE. One tap taking sixty products
+ * off the shelf is a mistake nobody can see until customers cannot buy them. Each row is chosen by hand, the
+ * count is on the button, and the confirmation names it.
+ * ⚠ IT WRITES THROUGH THE SAME stockWrite() ONE PRODUCT AT A TIME — not a bulk endpoint. The till key reaches
+ * /api/till/stock and nothing wider, every write queues on its own if the line is down, and one refusal cannot
+ * take the rest of the batch with it. Slower, and the only version that is honest when half of it fails.
+ */
+var PICKED_IDS = [];
+function pickedOn(){ return MODE === 'maintain' && PICKED_IDS.length > 0; }
+function pickToggle(id, ev){
+  if (ev) { ev.stopPropagation(); }
+  var at = PICKED_IDS.indexOf(String(id));
+  if (at >= 0) PICKED_IDS.splice(at, 1); else PICKED_IDS.push(String(id));
+  paintHits();
+}
+function pickClear(){ PICKED_IDS = []; paintHits(); }
+/** every row the list is showing right now — what "all of these" means, and it is what is on screen, never more */
+function pickAllShown(){
+  var shown = hits();
+  var every = shown.every(function(i){ return PICKED_IDS.indexOf(String(i.item_id)) >= 0; });
+  PICKED_IDS = every ? [] : shown.map(function(i){ return String(i.item_id); });
+  paintHits();
+}
+/**
+ * ⚠⚠ ONE AT A TIME, AND IT SAYS WHAT HAPPENED TO EACH. A batch that reports only ‘done’ is a batch nobody can
+ * trust when it half-works — and half-working is the normal case on a counter whose line comes and goes.
+ */
+async function pickedDo(what){
+  var ids = PICKED_IDS.slice();
+  if (!ids.length) return;
+  var items = ids.map(function(id){
+    return ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(id); })[0];
+  }).filter(Boolean);
+  var words = what === 'today' ? 'mark ' + items.length + ' as run out today (they come back tomorrow)'
+            : what === 'off'   ? 'take ' + items.length + ' off the shelf — for good, on every counter'
+                               : 'put ' + items.length + ' back on the shelf';
+  if (!(await sure('Shall I ' + words + '?', 'Yes, do it', 'Several at once'))) return;
+  var done = 0, queued = 0, failed = [];
+  for (var k = 0; k < items.length; k++) {
+    var i = items[k];
+    try {
+      if (what === 'today') { await quickSoldOut(i.item_id); done++; continue; }
+      var out = await stockWrite(i, what === 'off' ? 'unavailable' : 'available');
+      if (out && out.queued) { queued++; done++; }
+      else if (out && out.ok) done++;
+      else failed.push(i.name);
+    } catch (e) { failed.push(i.name); }
+  }
+  PICKED_IDS = [];
+  paintHits(); paintCard(); paintChips();
+  /* ⚠ the failures are NAMED. "3 of 8 done" with no names is a puzzle somebody has to solve by tapping eight rows. */
+  toastLine(done + ' of ' + items.length + ' done'
+    + (queued ? ' · ' + queued + ' saved here, they will reach the shop' : '')
+    + (failed.length ? ' · NOT done: ' + failed.join(', ') : ''));
+}
 function paintCard(){
   var el = document.getElementById('cardbox'); if (!el) return;
   /* ⭐ THE ONE SETTING ON THIS SCREEN, and it is about the SCREEN, not about a product — so it shows whether or not
@@ -6437,6 +6513,36 @@ function paintCard(){
         off ? 'Off the shelf — it will not be listed for selling' : 'Listed and sellable')
     + (PEND.status !== undefined ? '<span class="was">was ' + (actualOff ? 'off the shelf' : 'on the shelf') + '</span>' : '')
     + '</div></div>'
+
+    /**
+     * ── ⭐⭐⭐ FOR GOOD, OR JUST FOR TODAY ([TILL-54], MaintV2) ────────────────────────────
+     *
+     * ⚠⚠ THE COUNTER HAS ALWAYS HAD BOTH AND MAINTENANCE ONLY EVER OFFERED ONE. "Off the shelf" is a fact about
+     * the PRODUCT — it goes to the shop, it stays until somebody changes it back, and every counter sees it. What
+     * a cook actually means at nine in the morning is "the idli is finished", which is a fact about TODAY and
+     * about THIS counter. Told only the permanent switch, a shopkeeper records a batch running out as a product
+     * being discontinued, and next week wonders why nobody is selling idli.
+     *
+     * ⭐ IT IS THE SAME MACHINERY AS THE ✕ ON A QUICK KEY — quickSoldOut/quickBringBack, stored per shop, keyed to
+     * the business day, pushed to the other counters. Nothing new is invented here; the choice is simply put
+     * where somebody making it would look. [[feedback-stay-in-the-construct]]
+     *
+     * ⚠ AND IT ACTS AT ONCE, while everything above it stages. That is deliberate and is the reason the rows look
+     * different: a today-only hide undoes itself tomorrow, has a way back on this very row, and is the same
+     * one-tap act the sell screen already offers. The staging rule exists because a mis-tapped PERMANENT switch
+     * reached the shop with no undo — which is not this.
+     */
+    + (function(){
+        var outToday = quickSold().some(function(x){ return String(x.id) === String(i.item_id); });
+        return '<div class="cardrow today"><label>Run out today</label><div class="swwrap">'
+          + cardSwitch(outToday, 'card-today',
+              outToday ? "quickBringBack('" + esc(i.item_id) + "');paintCard()"
+                       : "quickSoldOut('" + esc(i.item_id) + "');paintCard()",
+              outToday ? 'Finished for today — it comes back by itself tomorrow'
+                       : 'Say it has run out, without changing the product')
+          + '<span class="swtxt">this counter, today only · the switch above is for good</span>'
+          + '</div></div>';
+      }())
 
     + '<div class="cardrow' + (PEND.price !== undefined ? ' pending' : '') + '"><label>Price</label><div class="swwrap">'
     + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(cardVal(i, 'price'))) + '"'
@@ -6768,13 +6874,38 @@ function paintHits(){
     ? '<div class="qtyhint" data-testid="till-qty-ahead">Adding <b>' + t.qty + (t.unit ? ' ' + esc(t.unit) : '') + '</b> of whatever you choose'
       + (t.unit ? ' <span class="u">— converted to the unit it is sold in</span>' : '') + '</div>'
     : '');
-  document.getElementById('hits').innerHTML = head + (list.length ? list.map(function(i,n){
+  /**
+   * ⭐⭐ THE BAR APPEARS BECAUSE SOMETHING IS CHOSEN, and says the count on every button — an action that cannot
+   * be taken back states its size before it is taken, which is the rule the Careful box already follows.
+   * ⚠ "All of these" means the rows ON SCREEN, which is what the filter above found. Never the whole shelf.
+   */
+  var pickBar = (MODE === 'maintain' && PICKED_IDS.length)
+    ? '<div class="pickbar" data-testid="till-pickbar">'
+      + '<b>' + PICKED_IDS.length + ' chosen</b>'
+      + '<button class="pill" data-testid="till-pick-today" onclick="pickedDo(\'today\')">Run out today</button>'
+      + '<button class="pill" data-testid="till-pick-off" onclick="pickedDo(\'off\')">Off the shelf</button>'
+      + '<button class="pill" data-testid="till-pick-on" onclick="pickedDo(\'on\')">Back on the shelf</button>'
+      + '<span style="flex:1"></span>'
+      + '<button class="pill" data-testid="till-pick-all" onclick="pickAllShown()">All of these</button>'
+      + '<button class="pill" data-testid="till-pick-none" onclick="pickClear()">Clear</button>'
+      + '</div>'
+    : '';
+  document.getElementById('hits').innerHTML = head + pickBar + (list.length ? list.map(function(i,n){
     var off = statusOf(i) === 'unavailable';
     var editing = (MODE === 'maintain' && CARD_ID && String(CARD_ID) === String(i.item_id));
     var unsaved = (editing && pendCount() > 0);
     return '<div class="hit' + (n===SEL?' sel':'') + (editing?' editing':'') + (off?' off':'') + (thumbs?' pics':'')
       + (unsaved ? ' unsaved' : '')
+      /* ⚠⚠ .hit IS A GRID WITH NAMED COLUMNS. Dropping a tick in as a fourth child of a three-column grid puts
+         it wherever the browser has room — the class adds the column instead. */
+      + (MODE === 'maintain' ? ' picking' : '')
       + '" data-testid="till-hit-' + n + '" data-item="' + esc(String(i.item_id)) + '" onclick="pick(' + n + ')" ondblclick="add(' + n + ')">'
+      /* ⭐ the tick is maintenance-only — a cashier billing must not have one more thing to hit by accident */
+      + (MODE === 'maintain'
+          ? '<i class="hitpick' + (PICKED_IDS.indexOf(String(i.item_id)) >= 0 ? ' on' : '') + '"'
+            + ' data-testid="till-pick-' + n + '" title="choose this one"'
+            + ' onclick="pickToggle(\'' + esc(String(i.item_id)) + '\', event)"></i>'
+          : '')
       + (thumbs ? picOf(i) : '')
       + '<span class="n">' + esc(i.name)
         + (i.unit ? ' <span class="unit">' + esc(i.unit) + '</span>' : '')
