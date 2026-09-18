@@ -299,20 +299,75 @@
         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mch{color:var(--dim);flex:0 0 auto}
   .mbody{padding:2px 8px 8px;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line)}
-  .mact{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 6px;border:0;
+  /**
+   * ⚠️ A SECTION HEADING MUST NOT LOOK LIKE A THING YOU CAN PRESS (Athi, 2026-09-18: *"what is the difference
+   * between this counter and take a break in the menu?"*). They read alike because both were an icon tile, a
+   * bold line and a grey line — so "This counter", which only folds a section, looked like an action beside
+   * "Take a break", which stops billing. The heading now sits on the panel tint and its icon tile is flat; the
+   * actions are indented under it with a plain glyph, so the nesting is visible before anything is read.
+   */
+  .mrow{background:var(--panel)}
+  .msec.care .mrow{background:transparent}
+  /* ⚠️ padding-inline-start, not a left pad — in Arabic the nesting indent would land on the wrong edge */
+  .mact{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 6px;padding-inline-start:14px;border:0;
         background:transparent;color:var(--ink);cursor:pointer;font:inherit;text-align:start;border-radius:10px}
   .mact:hover{background:var(--panel)}
+  /* the action's glyph is a mark, not a tile — the tile belongs to the heading above it */
+  .mact .mi{background:transparent;width:22px;flex-basis:22px;height:auto;font-size:15px;justify-content:flex-start}
+  .mact .mt b{font-weight:600}
   /* §4: Careful is last, in a warm-red bordered box, and says what it costs before anybody presses */
   .msec.care{border-color:var(--warn);background:var(--warn-tint)}
   .msec.care .mrow .mi{background:var(--warn);color:var(--card)}
   .carenote{margin:6px 6px 2px;color:var(--ink);font-size:.86em}
+  /**
+   * ⭐⭐ START YOUR DAY. Quiet on purpose — this is a moment, not a dashboard, so it is the shop's own picture,
+   * the date, three plain facts and one button. ⚠️ The picture is whatever the shop keeps at its counter; we
+   * ship none (see TILL_MENU), so the empty state INVITES rather than showing a faith nobody chose.
+   */
+  .daypanel{display:flex;flex-direction:column;gap:8px;padding:10px 8px 6px}
+  .dayimg{width:100%;max-height:190px;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:block}
+  button.dayimg.none{min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+        background:var(--panel);border:1px dashed var(--edge);color:var(--dim);cursor:pointer;font:inherit}
+  button.dayimg.none b{font-size:1.6em;line-height:1;color:var(--ink)}
+  button.dayimg.none i{font-style:normal;font-size:.85em}
+  .daywhen{font-weight:700;font-size:1.02em}
+  .dayline{display:flex;gap:8px;align-items:flex-start;color:var(--dim);font-size:.88em;line-height:1.35}
+  .dayline .yes{color:var(--ok);font-weight:700}
+  .dayline .no{color:var(--warn);font-weight:700}
+  .daybtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+  .daygo{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--ok);background:var(--ok);
+        color:var(--on-accent);font:inherit;font-weight:700;cursor:pointer}
+  .dayok{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;
+        background:var(--ok-tint);color:var(--ok);font-weight:700}
+  .daylink{border:0;background:transparent;color:var(--blue);cursor:pointer;font:inherit;font-size:.85em;
+        text-decoration:underline;padding:4px}
+  /* the day's own list — the shopkeeper's, written and ticked where they stand */
+  .todo{border-top:1px solid var(--line);padding-top:8px;margin-top:2px;display:flex;flex-direction:column;gap:4px}
+  .todohead{display:flex;align-items:baseline;justify-content:space-between}
+  .todohead b{font-size:.78em;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+  .todohead span{font-size:.78em;color:var(--dim)}
+  .todolist{display:flex;flex-direction:column;max-height:160px;overflow:auto}
+  .todorow{display:flex;align-items:center;gap:8px;min-height:40px;padding:2px 2px;font-weight:400;cursor:pointer}
+  .todorow span{flex:1;min-width:0;overflow-wrap:anywhere}
+  .todorow.done span{text-decoration:line-through;color:var(--dim)}
+  .todox{border:0;background:transparent;color:var(--dim);cursor:pointer;font:inherit;padding:4px 6px;border-radius:8px}
+  .todox:hover{background:var(--warn-tint);color:var(--warn)}
+  .todoadd{display:flex;gap:6px;align-items:center}
+  .todomic{flex:0 0 40px;min-height:40px;border:1px solid var(--edge);border-radius:10px;background:var(--card);cursor:pointer}
+  .todomic.on{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
+  .todoin{flex:1;min-width:0;min-height:40px;padding:8px 10px;border:1px solid var(--edge);border-radius:10px;
+        background:var(--card);color:var(--ink);font:inherit}
   .mfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
          padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);
          color:var(--dim);font-size:.85em}
   .mfoot .lnk{border:0;background:transparent;color:var(--blue);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
   .mfoot a{color:var(--blue)}
-  /* sm — the same sheet, sections unfolded (§4) */
-  @media (min-width:600px){ .msec .mbody[hidden]{display:flex} .msec .mch{opacity:.4} }
+  /**
+   * ⚠️ §4 SAYS sm AND UP ARE UNFOLDED, AND THAT RULE IS GONE (Athi, 2026-09-18: *"in the menu, each section
+   * should be collapsable"*). It was written for a menu that opens as a wide card, where everything fits at
+   * once. In a 348px drawer it meant five sections stacked into a long scroll AND a chevron on every heading
+   * that did nothing — a control that lies about being a control. Folding now works at every width.
+   */
   /* md — a centred card, max 720 (§4) */
   /**
    * ⚠️ THE CENTRED-CARD BREAKPOINTS WERE REMOVED HERE (2026-09-18). §4 describes the menu as a sheet that
@@ -323,6 +378,11 @@
    * ⚠️ Nothing is dropped by that — §2 rule 1 is about CONTENT, and every section is still here at every size.
    */
   .side .msecs{display:flex;flex-direction:column;gap:10px}
+  /* ⚠️ A SECTION KEEPS ITS OWN HEIGHT. .msecs is a flex column, so its children shrink by default — and with
+     .msec's overflow:hidden that silently CLIPPED the tallest one: "Start your day" lost two of its three
+     checks, both buttons and the whole to-do list, with no scrollbar to say so. The drawer scrolls; the
+     sections do not compress. */
+  .side .msec{flex:0 0 auto}
   .menu button,.menu a{color:var(--ink);font:inherit;text-decoration:none}
   /* ⭐ the view toggles, in the menu — a section of chips rather than another dialog to open */
   .menusec{padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
@@ -341,13 +401,31 @@
    * labels; on a phone it is the full-height sheet the design asks for.
    * ⚠️ RIGHT EDGE, on purpose: the bill and its pay buttons live on that side, so the hand is already there.
    */
-  .side{position:fixed;inset-block:0;inset-inline-end:0;z-index:60;width:var(--side,44px);
-        background:var(--card);border-inline-start:1px solid var(--line);display:flex;flex-direction:column;
+  /**
+   * ⭐⭐ WHICH EDGE IT LIVES ON IS A SETTING, AND THE DEFAULT IS LEFT (Athi, 2026-09-18: *"menu is on the right
+   * side? is it the standard? generally menu is on the left side?"* — he is right and I should have said so
+   * when he first asked for the right).
+   *
+   * The convention is not arbitrary: LEFT is where primary navigation lives, RIGHT is where contextual drawers
+   * live (a cart, an inspector, a filter panel). The counter's ☰ is operations, which is navigation, so left is
+   * the standard place and is the default here. Right stays available because it has a real argument at a
+   * till — the bill and the pay buttons are on that side, so the hand is already there.
+   * ⚠️ LOGICAL PROPERTIES, NOT left/right. In Arabic the page mirrors (project-arabic-rtl), and a menu pinned
+   * to a physical edge would end up on the wrong side of an RTL counter. inset-inline-* flips with the page.
+   */
+  .side{position:fixed;inset-block:0;inset-inline-start:0;z-index:60;width:var(--side,44px);
+        background:var(--card);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;
         padding:calc(env(safe-area-inset-top,0px) + 6px) 5px calc(env(safe-area-inset-bottom,0px) + 6px);
         overflow:hidden;transition:width .14s ease;box-shadow:none}
-  .side.on{width:min(348px,92vw);box-shadow:-10px 0 34px rgba(0,0,0,.18);overflow:auto;padding:0}
+  body[data-menuside="right"] .side{inset-inline-start:auto;inset-inline-end:0;
+        border-inline-end:0;border-inline-start:1px solid var(--line)}
+  /* ⚠️ a SYMMETRIC shadow: a physical x-offset threw it off-screen on one side or the other once the page
+     mirrors (RTL) or the menu side is switched. */
+  .side.on{width:min(348px,92vw);box-shadow:0 0 34px rgba(0,0,0,.20);overflow:auto;padding:0}
   /* collapsed: the icon strip. Each one is a real operation, and its title says which. */
-  .side .sicons{display:flex;flex-direction:column;gap:2px}
+  /* ⚠️ SCROLLS. Ten operations need ~480px; on a 1024x600 terminal the last of them were clipped with no
+     scrollbar and no hint they existed (critic pass, 2026-09-18). */
+  .side .sicons{display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0}
   .side.on .sicons{display:none}
   .side .sicons button{display:flex;align-items:center;justify-content:center;min-height:40px;border:0;
         background:transparent;color:var(--ink);cursor:pointer;border-radius:10px;font:inherit;font-size:16px}
@@ -355,8 +433,9 @@
   .side .sicons .top{background:var(--ink);color:var(--card);margin-bottom:6px}
   /* open: the menu itself, the same five sections the sheet shows */
   /* the page keeps clear of the collapsed strip; opening OVERLAYS, so nothing reflows while selling */
-  body{padding-inline-end:44px}
-  @media (max-width:600px){ body{padding-inline-end:0} }
+  body{padding-inline-start:44px}
+  body[data-menuside="right"]{padding-inline-start:0;padding-inline-end:44px}
+  @media (max-width:600px){ body,body[data-menuside="right"]{padding-inline-start:0;padding-inline-end:0} }
   /* ⚠️ ONE WAY IN PER SIZE. The strip is always there on a terminal, so the header ☰ would be a second door to
      the same menu; on a phone the strip is gone and the header ☰ is the ONLY door. So each size shows exactly one. */
   @media (min-width:601px){ #menubtn{display:none} }
@@ -412,6 +491,10 @@
   .quick .sk-tile .qpin{inset-inline-start:auto;inset-inline-end:24px}
   /* ⭐⭐ THE PHONE'S THREE STEPS (stepsApply) — Items · Bill · Pay. Each step shows its own parts; the header stays on all three. */
   .stepbar{display:none}
+  /* ⚠️ A FIXED BAR IS NOT MOVED BY body PADDING. The strip is fixed at the edge, so the step bar starts
+     after it — a 15" terminal forced into the Phone shape had its "Items" button's first 44px dead. */
+  body.steps .stepbar{margin-inline-start:var(--side,44px)}
+  @media (max-width:600px){ body.steps .stepbar{margin-inline-start:0} }
   body.steps .stepbar{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:6px;position:fixed;inset-inline:0;bottom:0;z-index:30;
     padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px));background:var(--card);border-top:1px solid var(--line)}
   .stepbar button{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);
@@ -700,6 +783,55 @@
   .pay button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   .take{display:flex;gap:8px;padding:0 12px 8px;align-items:center}
   .take input{flex:1;font-size:1.2em;padding:10px 12px;border:2px solid var(--line);border-radius:var(--radius);text-align:right;background:var(--paper);min-width:0}
+  /**
+   * ── ⭐⭐⭐ LEFT HAND / RIGHT HAND — THE WHOLE MIRROR (Athi, 2026-09-18: *"left hander / right hander, not just
+   * the menu, do we need to switch anything else, can you check the standard?"* then: *"do the full mirror"*).
+   *
+   * THE STANDARD IS THE THUMB ZONE. About three quarters of touches on a hand-held screen are the thumb, and
+   * the comfortable arc mirrors with the hand: bottom-RIGHT is the easy reach for a right hander, bottom-LEFT
+   * for a left hander, and the opposite top corner is effectively out of reach
+   * (smashingmagazine.com/2016/09/the-thumb-zone-designing-for-mobile-users/).
+   *
+   * So the menu was the LEAST important thing to move — it is touched a few times a day. What moves here is
+   * what a hand touches on EVERY SALE:
+   *   · the + that puts a row on the bill        (hundreds of times a day)
+   *   · the phone's primary step button           (once per customer)
+   *   · Cash / Card / UPI and Save & print        (once per customer)
+   *   · the ✕ / 📌 / quantity badge on a key tile (all day, while stock moves)
+   *
+   * ⚠️ IT IS A TOUCH SETTING. On a terminal driven by a mouse and a keyboard, which hand a person writes with
+   * changes nothing, so this deliberately does NOT re-order a 24" counter's furniture — a shopkeeper who set it
+   * on the tablet should not find the desktop till rearranged.
+   * ⚠️ IT DOES NOT MIRROR THE TWO PANELS. The shelf-then-bill order is reading order, not reach: the bill is
+   * the record being built and the shelf is what feeds it. Thumb-zone guidance is about the bottom corners, not
+   * about which half of a wide screen a panel sits in, and swapping them would relearn the whole screen to fix
+   * a reach problem that the controls below already solve.
+   */
+  /* 1 · the + on a shelf row moves to the hand's side. The row is a grid, so only the ORDER changes — the
+     price column keeps its width and the rupees stay in their column. */
+  body[data-hand="left"] .hit{grid-template-columns:auto minmax(0,1fr) minmax(92px,auto)}
+  body[data-hand="left"] .hit.pics{grid-template-columns:auto 42px minmax(0,1fr) minmax(92px,auto)}
+  body[data-hand="left"] .hit .addbtn{order:-1}
+  /* 2 · the phone's primary action sits under the thumb; Bill stays in the middle where it belongs */
+  body[data-hand="left"] .stepbar button[data-testid="till-step-pay"]{order:-1}
+  body[data-hand="left"] .stepbar button[data-testid="till-step-pick"]{order:1}
+  /* 3 · how the money is taken, and the button that finishes it */
+  body[data-hand="left"] .pay{flex-direction:row-reverse}
+  body[data-hand="left"] .go{flex-direction:row-reverse}
+  /* 4 · a key tile's own corner controls (screen-kit draws these; only their side changes) */
+  body[data-hand="left"] .sk-x,
+  body[data-hand="left"] .quick .qx{inset-inline-end:auto;inset-inline-start:6px}
+  body[data-hand="left"] .quick .sk-tile .qpin,
+  body[data-hand="left"] .quick .qpin{inset-inline-start:auto;inset-inline-end:6px}
+  body[data-hand="left"] .sk-qty{inset-inline-end:auto;inset-inline-start:8px}
+  /* ⚠️ THE MOUSE-DRIVEN TERMINAL IS LEFT ALONE — see the note above. Touch layouts are the phone and the
+     narrow tablet widths, which is also where the step bar lives. */
+  @media (min-width:901px) and (pointer:fine){
+    body[data-hand="left"] .hit{grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto}
+    body[data-hand="left"] .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto)}
+    body[data-hand="left"] .hit .addbtn{order:0}
+    body[data-hand="left"] .pay,body[data-hand="left"] .go{flex-direction:row}
+  }
   .go{display:flex;gap:8px;padding:0 12px 10px}
   .go button{flex:1;padding:16px;font-size:1.1em;font-weight:700;border-radius:var(--radius);border:1px solid var(--edge);background:var(--paper);cursor:pointer}
   .go button.pri{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
@@ -862,7 +994,10 @@
      Filled by paintSide() + paintMenu() from TILL_OPS / TILL_MENU — one list, one door. -->
 <aside class="side" id="tillside" data-testid="till-side" aria-label="Counter menu">
   <div class="sicons" id="tillsideicons"></div>
-  <div class="sfull" id="tillmenu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
+  <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
+       (the look dropdowns' font) live on it. Dropping it when this moved into the drawer left an "on" chip
+       looking exactly like an "off" one — found by a critic pass, 2026-09-18. -->
+  <div class="menu sfull" id="tillmenu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
 </aside>
 <div class="wrap">
   <section class="left">
@@ -2829,7 +2964,7 @@ function stopWrongShop(bad){
  * menu? can we merge both."* [[feedback-stay-in-the-construct]]
  *
  * ⚠️ `fn` IS NAMED, NOT REFERENCED, because several of these are declared further down the file than this line
- * and a direct reference would capture `undefined` at parse time. paintRail() resolves the name when it draws.
+ * and a direct reference would capture `undefined` at parse time. sideGo() resolves the name when it runs.
  */
 var TILL_OPS = [
   { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills' },
@@ -2851,6 +2986,19 @@ function tillOp(id){ for (var i = 0; i < TILL_OPS.length; i++) if (TILL_OPS[i].i
  * part of the design, not a default — §2 rule 2: it never changes from phone to terminal, so muscle memory carries.
  */
 var TILL_MENU = [
+  /**
+   * ⭐⭐⭐ FIRST, BECAUSE IT IS FIRST IN THE DAY (Athi, 2026-09-18: *"bring Pooja menu... many of the people are
+   * more towards prayers when they start the business, so bring that element as a first one in the menu"*).
+   *
+   * ⚠️⚠️ IT SHIPS NO FAITH. A counter is used by Hindu, Muslim, Christian, Jain and secular shopkeepers, and a
+   * lamp we chose would be someone else's faith on their first morning. So the shop supplies the image it
+   * already keeps AT the counter — a deity, a shrine, a guru, a cross, or just its own logo — and we supply the
+   * moment and the readiness check around it. The ritual is ours to make room for; the faith is theirs.
+   * ⚠️ AND IT DOES REAL WORK, or it is decoration that gets skipped by the second week: the same panel reads
+   * the shop for new prices, says whether this counter's numbering is ready, and whether anything is still
+   * unsent from yesterday. Bless the day and check the till in one place.
+   */
+  { id: 'day',     icon: '🪔', title: 'Start your day',  sum: 'your image · the day opened · what needs doing', day: true },
   { id: 'bills',   icon: '🧾', title: 'Bills',         sum: "today's bills · why one is stuck",      ops: ['bills', 'stuck'] },
   { id: 'shop',    icon: '🏷️', title: 'Shop & prices', sum: 'read the shop again · the TV sign',     ops: ['refresh', 'screen'] },
   { id: 'counter', icon: '🧑', title: 'This counter',  sum: 'a break · settings for this till',      ops: ['break-menu', 'settings', 'install'] },
@@ -2859,12 +3007,140 @@ var TILL_MENU = [
      stop billing for a moment and a person deserves to know that before they press, not after. */
   { id: 'care',    icon: '⚠',  title: 'Careful',       sum: 'close the counter · clear and reload',  ops: ['close', 'coldstart-menu'], careful: true },
 ];
-var MENU_OPEN_SEC = 'bills';   /* §4: "Bills opens by default; only one section open at a time" */
+/* ⭐ the day panel opens the menu until the day has been opened; after that Bills leads, as §4 says */
+var MENU_OPEN_SEC = null;
+function menuFirstSection(){
+  if (MENU_OPEN_SEC !== null) return MENU_OPEN_SEC;
+  return (ls.get(shopLs('cb_till_daystart'), '') === bizDay()) ? 'bills' : 'day';
+}
 function menuSection(id){
-  MENU_OPEN_SEC = (MENU_OPEN_SEC === id) ? '' : id;
+  MENU_OPEN_SEC = (menuFirstSection() === id) ? '' : id;
   paintMenu();
   var el = document.querySelector('[data-testid="till-msec-' + id + '"]');
   if (el && el.scrollIntoView) { try { el.scrollIntoView({ block: 'nearest' }); } catch (_) {} }
+  /* ⚠️ paintMenu() replaced the button that was pressed, so focus fell to <body> and the next scan went
+     nowhere at all (critic pass). Put it back on the heading the person just used. */
+  var b = document.querySelector('[data-testid="till-msec-btn-' + id + '"]');
+  if (b && b.focus) { try { b.focus(); } catch (_) {} }
+}
+/**
+ * ⭐⭐⭐ START YOUR DAY — the moment, and the readiness, in one panel.
+ *
+ * ⚠️ THE IMAGE IS THE SHOP'S OWN (cb_till_dayimg, kept per device as a data URL so it works with the line
+ * down). We ship none: see the note on TILL_MENU. With none chosen it says so plainly and still opens the day.
+ * ⚠️ EVERY LINE BELOW IS A FACT THIS COUNTER CAN CHECK, not a reassurance. "Nothing waiting to be sent" is read
+ * from the queue; the series line is read from what this counter has actually issued. A morning panel that
+ * said "all well" without looking would be the same lie as a label that cannot be defended.
+ */
+function dayOpened(){ return ls.get(shopLs('cb_till_daystart'), '') === bizDay(); }
+async function beginDay(){
+  ls.set(shopLs('cb_till_daystart'), bizDay());
+  todoSweep();          /* yesterday's finished items go; anything unfinished carries into today */
+  MENU_OPEN_SEC = 'day';
+  paintMenu();
+  /* the practical half: bring the shop's prices and products up to date, if the line is there */
+  try { if (navigator.onLine && HOST && HOST.refresh) await refresh(); } catch (_) {}
+  paintMenu();
+}
+function dayImg(){ return ls.get(shopLs('cb_till_dayimg'), ''); }
+function dayImgPick(){
+  var i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*';
+  i.onchange = function(){
+    var f = i.files && i.files[0]; if (!f) return;
+    /* ⚠️ 1.5 MB is plenty for a counter photo and keeps localStorage usable; bigger is refused with a reason */
+    if (f.size > 1500000) { toastLine('That picture is too big — about 1.5 MB is the most this can keep.'); return; }
+    var r = new FileReader();
+    r.onload = function(){ try { ls.set(shopLs('cb_till_dayimg'), String(r.result)); paintMenu(); } catch (_) {
+      toastLine('This device could not keep that picture.'); } };
+    r.readAsDataURL(f);
+  };
+  i.click();
+}
+function dayImgClear(){ ls.set(shopLs('cb_till_dayimg'), ''); paintMenu(); }
+function menuDayBody(){
+  var img = dayImg(), opened = dayOpened();
+  var when = new Date();
+  var day = when.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  /* the three checks, each read from something real */
+  var queued = (STATE && STATE.queued) || 0;
+  var items = ((S && S.items) || []).length;
+  var line = function(ok, text){
+    return '<div class="dayline"><span class="' + (ok ? 'yes' : 'no') + '">' + (ok ? '✓' : '•') + '</span>' + esc(text) + '</div>';
+  };
+  return '<div class="daypanel" data-testid="till-day-panel">'
+    + (img
+        ? '<img class="dayimg" data-testid="till-day-img" src="' + esc(img) + '" alt="">'
+        : '<button class="dayimg none" data-testid="till-day-img-add" onclick="dayImgPick()">'
+          + '<b>+</b><i>Put your own picture here</i></button>')
+    + '<div class="daywhen">' + esc(day) + '</div>'
+    + line(items > 0, items ? items + ' products on this counter' : 'No copy of the shop yet — press Read the shop again')
+    + line(queued === 0, queued === 0 ? 'Nothing waiting to be sent' : queued + ' still waiting to reach ChitBridge')
+    + line(!!(S && S.items), navigator.onLine ? 'The line is up' : 'Offline — billing still works')
+    + '<div class="daybtns">'
+    + (opened
+        ? '<span class="dayok" data-testid="till-day-open">Opened for today</span>'
+        : '<button class="daygo" data-testid="till-day-begin" onclick="beginDay()">Open the day</button>')
+    + (img ? '<button class="daylink" data-testid="till-day-img-change" onclick="dayImgPick()">Change picture</button>'
+           + '<button class="daylink" onclick="dayImgClear()">Remove</button>' : '')
+    + '</div>'
+    + menuTodoBody()
+    + '</div>';
+}
+/**
+ * ⭐⭐ THE DAY'S LIST (Athi, 2026-09-18: *"checklist, to do, and any other thing useful"*). A shopkeeper's own
+ * list — bank the cash, call the milk supplier, order gas — written here and ticked here, because the counter
+ * is the thing they are standing at all day and a note on paper is the thing they lose.
+ *
+ * ⚠️ IT IS THEIRS, NOT OURS. We put nothing in it: a list that arrives pre-filled with our suggestions is a
+ * list somebody clears once and never opens again.
+ * ⚠️ KEPT ON THIS DEVICE, per shop (shopLs), like the rest of the counter's own state. It never leaves, which
+ * also means it is not a task system — [[project-till]]'s tasks come from ChitBridge and are a different thing.
+ * ⭐ A DONE ITEM SURVIVES THE DAY AND IS SWEPT AT THE NEXT DAY-OPEN, so a person can see what they finished
+ * yesterday without it accumulating for ever.
+ */
+function todoRead(){
+  var raw = []; try { raw = JSON.parse(ls.get(shopLs('cb_till_todo'), '[]')) || []; } catch (_) {}
+  return Array.isArray(raw) ? raw.filter(function(x){ return x && typeof x.t === 'string'; }) : [];
+}
+function todoWrite(list){ try { ls.set(shopLs('cb_till_todo'), JSON.stringify(list.slice(0, 40))); } catch (_) {} }
+function todoAdd(el){
+  var t = String((el && el.value) || '').trim(); if (!t) return;
+  var list = todoRead(); list.push({ t: t.slice(0, 120), done: false, at: bizDay() });
+  todoWrite(list); if (el) el.value = '';
+  paintMenu();
+  var box = document.querySelector('[data-testid="till-todo-add"]'); if (box) box.focus();
+}
+function todoAddKey(e, el){ if (e && e.key === 'Enter') { e.preventDefault(); todoAdd(el); } }
+function todoTick(i){ var l = todoRead(); if (!l[i]) return; l[i].done = !l[i].done; todoWrite(l); paintMenu(); }
+function todoDrop(i){ var l = todoRead(); if (!l[i]) return; l.splice(i, 1); todoWrite(l); paintMenu(); }
+/** swept at the next day-open — yesterday's finished items go, anything unfinished carries over */
+function todoSweep(){ todoWrite(todoRead().filter(function(x){ return !x.done || x.at === bizDay(); })); }
+function menuTodoBody(){
+  var list = todoRead(), left = list.filter(function(x){ return !x.done; }).length;
+  return '<div class="todo" data-testid="till-todo">'
+    + '<div class="todohead"><b>To do</b>' + (list.length ? '<span>' + left + ' left</span>' : '') + '</div>'
+    + (list.length
+        ? '<div class="todolist">' + list.map(function(x, i){
+            return '<label class="todorow' + (x.done ? ' done' : '') + '" data-testid="till-todo-' + i + '">'
+              + '<input type="checkbox"' + (x.done ? ' checked' : '') + ' onchange="todoTick(' + i + ')">'
+              + '<span>' + esc(x.t) + '</span>'
+              + '<button class="todox" title="remove" aria-label="remove" onclick="event.preventDefault();todoDrop(' + i + ')">✕</button>'
+              + '</label>';
+          }).join('') + '</div>'
+        : '')
+    /**
+     * ⭐ SAY IT INSTEAD (Athi, 2026-09-18: *"to do, with mic"*). Hands are busy at a counter and a thought
+     * arrives mid-sale, so the list takes a voice the same way the search box does — the SAME listen(), so
+     * there is one speech path on this page, not two. ⚠️ It needs the line (the audio reaches a speech
+     * service) and listen() already says so plainly when it is down; the typing never stops working.
+     */
+    + '<div class="todoadd">'
+    + '<input id="todoin" class="todoin" data-testid="till-todo-add" placeholder="Add something to do…" maxlength="120"'
+    + ' onkeydown="todoAddKey(event,this)" onblur="todoAdd(this)">'
+    + '<button class="mic todomic" id="mictodo" data-testid="till-todo-mic" title="speak it"'
+    + ' aria-label="speak a to-do" onclick="listen(\'todoin\')">🎤</button>'
+    + '</div>'
+    + '</div>';
 }
 /** one action row, the same shape in every section */
 function menuOpRow(op){
@@ -2889,14 +3165,17 @@ function paintMenu(){
     + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
     + '</div>';
   var secs = TILL_MENU.map(function(sec){
-    var open = MENU_OPEN_SEC === sec.id;
-    var body = sec.look
+    var open = menuFirstSection() === sec.id;
+    var body = sec.day ? menuDayBody() : sec.look
       ? '<div class="menusec" data-testid="till-quick-settings">'
         + '<div class="mq">'
         + '<label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook(\'cb_till_fs\',this.value)">'
         + '<option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select></label>'
         + '<label title="Look">◐ <select id="mq_theme" data-testid="till-mq-theme" onchange="quickLook(\'cb_till_theme\',this.value)">'
         + '<option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select></label>'
+        /* ⭐ which edge the menu sits on — see applyHand(). Per device, like the two beside it. */
+        + '<label title="Which hand this counter is used with — moves the + on a row, the pay buttons and a key\'s controls">✋ <select id="mq_hand" data-testid="till-mq-hand" onchange="quickLook(\'cb_till_hand\',this.value)">'
+        + '<option value="right">Right hand</option><option value="left">Left hand</option></select></label>'
         + '<label title="What this counter shows">▦ <select id="mq_layout" data-testid="till-mq-layout" onchange="tillOptSet({layout:this.value});paintMenuQuick()">'
         + '<option value="full">Everything</option><option value="quick">Quick keys + bill</option><option value="cart">Search + bill</option>'
         + '<option value="custom" disabled>Custom</option></select></label>'
@@ -2953,9 +3232,12 @@ function toggleMenu(e){
   /* ⭐ ONE STATE FOR ONE MENU (2026-09-18): the panel's own `.on` decides it, and `hidden` follows so every
      existing check ("is the menu open?") keeps reading true. */
   var opening = !side.classList.contains('on');
-  side.classList.toggle('on', opening);
-  m.hidden = !opening;
   if (e) e.stopPropagation();
+  /* ⚠️ CLOSE THROUGH closeMenu(), which is what hands the caret back. Setting m.hidden here first made
+     closeMenu()'s own "already hidden" guard return immediately — a guaranteed no-op (critic pass). */
+  if (!opening) { closeMenu(); return; }
+  side.classList.add('on');
+  m.hidden = false;
   /**
    * ⚠️⚠️ THE CARET MOVES INTO THE MENU NOW, AND THAT IS A DELIBERATE REVERSAL (2026-09-18).
    *
@@ -2967,8 +3249,17 @@ function toggleMenu(e){
    * the menu before it runs (fromMenu), and closeMenu() hands the caret back to the search box — which is where
    * a scan must land the instant this is shut.
    */
-  if (!m.hidden) { paintMenu(); menuFocusFirst(); }
-  else closeMenu();
+  if (!m.hidden) {
+    paintMenu();
+    /**
+     * ⚠️⚠️ THE CARET ONLY MOVES WHERE THE MENU ACTUALLY COVERS THE PAGE. I took it away unconditionally when
+     * this became a modal sheet, and a critic pass showed what that costs at a terminal: the drawer is 348px
+     * and hides neither the search box nor the shelf, so a scan mid-menu went to the ✕ button — its digits
+     * nowhere and its trailing Enter closing the menu. The bill is short one item and nobody knows.
+     * On a phone the sheet IS the screen, so there the caret belongs inside it.
+     */
+    if (window.innerWidth <= 600) menuFocusFirst(); else { try { focusSearch(); } catch (_) {} }
+  }
 }
 /** the first thing a keyboard lands on when the sheet opens — its close button, per §4's "Esc closes" pairing */
 function menuFocusFirst(){
@@ -2984,6 +3275,8 @@ document.addEventListener('keydown', function(e){
   if (e.key !== 'Tab') return;
   var m = document.getElementById('tillmenu');
   if (!m || m.hidden) return;
+  /* ⚠️ only while it COVERS the page — on a terminal the keyboard must still be able to reach the shelf */
+  if (window.innerWidth > 600) return;
   var f = m.querySelectorAll('button, a[href], select, input, [tabindex]:not([tabindex="-1"])');
   if (!f.length) return;
   var first = f[0], last = f[f.length - 1];
@@ -2995,6 +3288,7 @@ function paintMenuQuick(){
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
   set('mq_fs', ls.get('cb_till_fs', '16px'));
   set('mq_theme', ls.get('cb_till_theme', 'light'));
+  set('mq_hand', ls.get('cb_till_hand', 'right'));
   set('mq_layout', (tillOpt().layout) || 'full');
   paintViewChips();
 }
@@ -3300,8 +3594,25 @@ async function quickSoldOut(id){
 }
 async function quickBringBack(id){
   ls.set(shopLs('cb_till_qsold'), JSON.stringify(quickSold().filter(function(x){ return x.id !== id; })));
+  /**
+   * ⚠️⚠️ THE SERVER ROW GOES FIRST, AND THE ITEM IS HELD BACK WHILE IT DOES. quickPushHide always writes THIS
+   * counter's own row too, so the row that made it sold out is still on the server the instant it is brought
+   * back locally — and quickSyncHidden(), which runs inside loadQuick(), would read that row, not find it in
+   * the local tray any more, and put it straight back. The shopkeeper taps "bring back" and it jumps into the
+   * sold-out tray in front of them (found by a critic pass, 2026-09-18).
+   * So: remember it as just-brought-back, tell the server, and only then repaint.
+   */
+  QUICK_JUST_BACK[String(id)] = Date.now();
+  if (HOST && HOST.tillPost) { try { await HOST.tillPost('/api/till/quick-keys/unhide', { product_id: id }, { noQueue: true }); } catch (_) {} }
   loadQuick();
-  if (HOST && HOST.tillPost) { try { await HOST.tillPost('/api/till/quick-keys/unhide', { product_id: id }); } catch (_) {} }
+}
+/** ids brought back in the last two minutes — a sync must not resurrect them while the write settles */
+var QUICK_JUST_BACK = {};
+function quickJustBack(id){
+  var at = QUICK_JUST_BACK[String(id)];
+  if (!at) return false;
+  if (Date.now() - at > 120000) { delete QUICK_JUST_BACK[String(id)]; return false; }
+  return true;
 }
 /**
  * ── ⭐⭐ QUICK KEYS, LEVEL 2 — SERVER SIDE (b262, 2026-09-18) ────────────────────────────────────────────────────
@@ -3318,7 +3629,9 @@ var QUICK_OTHER_COUNTERS = null;
  * that binding and returns it as `me`.
  */
 async function quickOtherCounters(){
-  if (QUICK_OTHER_COUNTERS) return QUICK_OTHER_COUNTERS;
+  /* ⚠️ [] IS TRUTHY. Caching it on a five-second outage meant the "also mark on…?" prompt was never offered
+     again for the life of the page (critic pass, 2026-09-18). Only a real answer is remembered. */
+  if (QUICK_OTHER_COUNTERS && QUICK_OTHER_COUNTERS.length) return QUICK_OTHER_COUNTERS;
   if (!HOST || !HOST.tillGet || !navigator.onLine) return [];
   try {
     var r = await HOST.tillGet('/api/till/counters');
@@ -3326,8 +3639,8 @@ async function quickOtherCounters(){
     var list = (r && r.ok && Array.isArray(r.counters)) ? r.counters : [];
     /* ⚠️ no `me` means we cannot tell ourselves apart — offer nobody rather than offer the wrong counter */
     QUICK_OTHER_COUNTERS = mine ? list.filter(function(c){ return c && c.id !== mine; }) : [];
-  } catch (_) { QUICK_OTHER_COUNTERS = []; }
-  return QUICK_OTHER_COUNTERS;
+  } catch (_) { QUICK_OTHER_COUNTERS = null; }
+  return QUICK_OTHER_COUNTERS || [];
 }
 /**
  * ⭐⭐ DECISION 3, 2026-09-18: ASK, DON'T AUTO-PUSH. A single-counter shop never sees this — there is nobody to
@@ -3347,7 +3660,21 @@ async function quickPushHide(id){
         also = others.map(function(c){ return c.id; });
     }
   } catch (_) {}
-  try { await HOST.tillPost('/api/till/quick-keys/hide', { product_id: id, also_counters: also }); } catch (_) {}
+  /**
+   * ⚠️⚠️ noQueue — THIS MUST NEVER ENTER THE BILL QUEUE. A critic pass (2026-09-18) traced the whole chain: a
+   * till key not holding a counter answers 403 here; without noQueue the row was PUT INTO THE SAME QUEUE THE
+   * BILLS RIDE; drain() treats any 403 on any row as "the shop refused this counter's key" and BREAKS the loop;
+   * and closeCounter() then refuses for ever with "1 bill(s) still waiting to send" — for a row that is not a
+   * bill. A sold-out mark is a courtesy to the other counters, not money, so it is best-effort and this
+   * counter's own tray is the truth either way.
+   * ⚠️ AND IT SAYS SO WHEN IT FAILS. The person pressed "Yes, everywhere"; if nothing reached the other
+   * counters they have to hear it, or they will price the last of something wrongly at counter two.
+   * [[feedback-silence-is-the-bug]]
+   */
+  var r = null;
+  try { r = await HOST.tillPost('/api/till/quick-keys/hide', { product_id: id, also_counters: also }, { noQueue: true }); } catch (_) {}
+  if (also.length && !(r && r.ok))
+    toastLine('Marked sold out here, but the other counters were not told' + ((r && r.why) ? ' — ' + r.why : '.'));
 }
 /**
  * ⭐⭐ PULLS IN WHAT ANOTHER COUNTER PUSHED HERE. Called from loadQuick(), at most once every 30 seconds — this is
@@ -3371,10 +3698,14 @@ async function quickSyncHidden(){
     var changed = false;
     r.hidden.forEach(function(row){
       if (!row || !row.product_id || known[row.product_id]) return;
+      if (quickJustBack(row.product_id)) return;      /* brought back a moment ago — see quickBringBack */
       if (row.hidden_at && new Date(row.hidden_at) < since) return;
       have.push({ id: row.product_id, day: today }); changed = true;
     });
-    if (changed) ls.set(shopLs('cb_till_qsold'), JSON.stringify(have.slice(-200)));
+    if (changed) {
+      ls.set(shopLs('cb_till_qsold'), JSON.stringify(have.slice(-200)));
+      try { paintQuick(); } catch (_) {}   /* it is no longer awaited, so it draws its own result */
+    }
   } catch (_) {}
 }
 /**
@@ -3715,7 +4046,13 @@ async function loadQuick(){
      skipped the evidence on every device that reports itself offline while being perfectly able to fetch. */
   try { if (HOST && HOST.history) { var h = await HOST.history(30); take((h && h.bills) || []); } } catch (_) {}
 
-  try { await quickSyncHidden(); } catch (_) {}   /* pulls in what another counter pushed here, before sold-out filters below read it */
+  /**
+   * ⚠️⚠️ NOT AWAITED. It was, and that put the whole repaint behind a 30-second fetch (and behind history()'s
+   * 120-second one above): a shopkeeper tapped ✕, the tile stayed put, so they tapped it again, and again on
+   * the wrong tile (critic pass, 2026-09-18). A courtesy sync must never be in front of the thing a person is
+   * waiting to see. It repaints itself when it finds something new.
+   */
+  try { quickSyncHidden(); } catch (_) {}
   var hidden = quickHidden(), pinned = quickPinned();
   /* ⭐ sold out today is off the keys too — it waits in the tray (paintQuick), and search and scan still bill it */
   var sold = quickSold().map(function(x){ return x.id; });
@@ -5113,12 +5450,15 @@ function listenServer(into, btn){
   }).catch(function(){ toastLine('The browser was not given permission to use the microphone.'); if (btn) btn.classList.remove('on'); });
 }
 var _rec = null;
+var MIC_FOR = { q: 'mic', cphone: 'micphone', cname: 'micname', todoin: 'mictodo' };
 function listen(into){
   var ear = whoListens();
   if (!ear) { say('This device cannot listen. Chrome on a phone, a tablet or Windows can — or turn speaking on in ⚙.'); return; }
   if (!navigator.onLine) { say('Speaking needs the internet — the audio has to reach a speech service. Type it for now; billing itself works offline.'); return; }
   var box = document.getElementById(into); if (!box) return;
-  var btn = document.getElementById(into === 'cphone' ? 'micphone' : 'mic');
+  /* ⭐ each box names its own mic, so the right button lights up. It used to be a two-way guess, which lit the
+     SEARCH mic while the to-do list was listening (2026-09-18, when the day's list gained a mic of its own). */
+  var btn = document.getElementById(MIC_FOR[into] || (into === 'cphone' ? 'micphone' : 'mic'));
   if (ear === 'server') return listenServer(into, btn);
   if (_rec) { try { _rec.stop(); } catch (_) {} _rec = null; if (btn) btn.classList.remove('on'); return; }
   var R = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -9019,6 +9359,34 @@ function applyLook(){
     }
   }
   root.style.setProperty('--fs', ls.get('cb_till_fs','16px'));
+  applyHand();
+}
+/**
+ * ⭐⭐ WHICH HAND THIS COUNTER IS FOR (Athi, 2026-09-18: *"do we have a left hander, right hander provision?"*).
+ *
+ * Today it decides ONE thing honestly: which edge the menu sits on. Left is the default because that is where
+ * navigation conventionally lives; a right-handed cashier who would rather have it under their hand sets it to
+ * right, which is also where the bill and the pay buttons already are.
+ *
+ * ⚠️ IT IS NOT A FULL MIRROR, AND MUST NOT PRETEND TO BE. A true handedness setting would also move the + on a
+ * shelf row, the step bar's primary action and the pay buttons — those are the controls a thumb actually
+ * repeats. Naming this "hand" while moving only the menu would promise a mirror nobody built, so the setting
+ * says what it does ("Menu side") and this note records the rest as the honest next step.
+ * ⚠️ PER DEVICE, like text size and theme: one shop can have a left-handed person on C1 and a right-handed one
+ * on C2, and neither should be able to move the other's furniture.
+ */
+function applyHand(){
+  var hand = ls.get('cb_till_hand', 'right') === 'left' ? 'left' : 'right';
+  if (!document.body) return;
+  /**
+   * ⭐ TWO STAMPS, ONE CHOICE. data-hand mirrors what a thumb touches every sale (see the CSS block); the menu
+   * follows the same hand by default, because a person who reaches with their left reaches for the menu with
+   * it too. ⚠️ RIGHT IS THE DEFAULT for the hand — about nine in ten people — while the MENU still defaults to
+   * the left edge, which is where navigation conventionally lives. They only part company for a left hander,
+   * who gets both on the left.
+   */
+  document.body.setAttribute('data-hand', hand);
+  document.body.setAttribute('data-menuside', hand === 'left' ? 'left' : ls.get('cb_till_menuside', 'left'));
 }
 /**
  * ⭐ THE PRINTER PANE, AND WHY IT IS SOMETIMES ABSENT. Only the program on a shop PC can send a bill straight to a printer; a browser
@@ -9291,14 +9659,25 @@ window.addEventListener('offline', function(){ load(); });
 
 /* a browser that will install this offers it once; we keep the offer and show a button rather than nagging */
 var _install = null;
-window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); _install = e; var b = document.getElementById('installbtn'); if (b) b.style.display = ''; });
-function installApp(){ if (!_install) return; _install.prompt(); _install = null; var b = document.getElementById('installbtn'); if (b) b.style.display = 'none'; }
+/**
+ * ⚠️ REPAINT THE STRIP WHEN IT ARRIVES. beforeinstallprompt fires AFTER boot, and paintSide() had already run —
+ * so "Install as an app" appeared in the open menu (painted each time it opens) and never on the icon strip
+ * (painted once). Found 2026-09-18 by walking every menu item and comparing the two halves. Anything the strip
+ * shows conditionally has to repaint when the condition changes, or the two halves disagree.
+ */
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); _install = e;
+  var b = document.getElementById('installbtn'); if (b) b.style.display = '';
+  try { paintSide(); } catch (_) {} });
+function installApp(){ if (!_install) return; _install.prompt(); _install = null;
+  var b = document.getElementById('installbtn'); if (b) b.style.display = 'none';
+  try { paintSide(); } catch (_) {}   /* it is spent — take it off the strip too */ }
 
 applyLook();
 whoLoad();
 breakLoad();
 parkedLoad();
-try { document.getElementById('cblink').href = cbHome(); } catch (_) {}
+/* #cblink is painted with the menu now (paintMenu sets its own href), so there is nothing to set at boot —
+   this threw on every load and the try/catch hid it. Kept as a note rather than a silent dead line. */
 load();
 gripInit();
 cartGripInit();
