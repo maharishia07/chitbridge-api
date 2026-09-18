@@ -191,6 +191,9 @@
    * ⚠️ AND IT IS SIDE-AGNOSTIC: the fade is drawn at the END of the row in the page's own direction, so it is
    * the right edge in English and the left in Arabic.
    */
+  /* the list's own settings, over the list — see paintListTools */
+  .listtools{display:flex;align-items:center;gap:10px;padding:8px 12px 0;flex-wrap:wrap}
+  .listtools .lt{display:inline-flex;align-items:center;gap:8px}
   .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;-webkit-overflow-scrolling:touch;
          scrollbar-width:thin;position:relative}
   .chips.more{-webkit-mask-image:linear-gradient(to var(--chip-fade,right),#000 calc(100% - 34px),transparent);
@@ -292,6 +295,40 @@
   body.shape-tall .right,body.shape-mobile .right{order:1}
   body.shape-tall .hits{max-height:52vh}
   body.shape-mobile .hits{max-height:40vh}
+  /* ── ⭐⭐⭐ MAINTENANCE ON A PHONE IS A BOTTOM SHEET (png/MaintV2Phone.png, [TILL-58c]) ──────────────── */
+  /* ⚠️ THE SHELF COMES FIRST HERE, not the pane. Selling puts the bill on top because a cashier is serving
+     somebody; maintaining starts with looking for a product, and the editor was taking the top half of the
+     screen to say "tap anything on the left" with nothing above it. */
+  body.op-maintain.shape-mobile .left,body.op-maintain.shape-tall .left{order:1;border-top:none}
+  body.op-maintain.shape-mobile .right,body.op-maintain.shape-tall .right{order:2}
+  body.op-maintain.shape-mobile .hits{max-height:none}
+  body.op-maintain.shape-mobile .right{
+    position:fixed;inset-inline:0;bottom:0;top:auto;max-height:86dvh;z-index:60;
+    background:var(--card);border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;
+    box-shadow:0 -10px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;
+    /* ⚠️ OFF THE SCREEN, not display:none — the pane keeps its layout so paintCard() measures the same on
+       both shapes, and the sheet can slide rather than appear. */
+    transform:translateY(102%);transition:transform .18s ease;
+    padding-bottom:env(safe-area-inset-bottom,0px)}
+  body.op-maintain.cardopen.shape-mobile .right{transform:translateY(0)}
+  /* the grab handle the render draws — it says "this can be pulled down" without a word */
+  body.op-maintain.shape-mobile .right::before{content:'';flex:none;width:44px;height:5px;border-radius:99px;
+    background:var(--line);margin:8px auto 4px}
+  /* ⚠️ the two panels stack on a phone — side by side they are two 150px columns of wrapped words */
+  body.shape-mobile .cardpair{grid-template-columns:1fr}
+  /* ⚠️ AND THE FOOT IS THE SHEET'S, so Save is reachable without scrolling to the end of the editor */
+  body.op-maintain.shape-mobile .cardfoot{position:sticky;bottom:0;background:var(--card)}
+  /* ⚠️ THE WORDS TAKE THE WHOLE LINE on a phone, so Undo and Save get a real half each — squeezed into a row
+     with a three-line sentence they were two narrow buttons with wrapped labels. */
+  body.op-maintain.shape-mobile .cardfoot .cfwords{flex:0 0 100%}
+  body.op-maintain.shape-mobile .cardfoot .pri,body.op-maintain.shape-mobile .cardfoot .sec{flex:1;min-height:48px}
+  .wideonly{display:inline}
+  body.shape-mobile .wideonly{display:none}
+  @media (prefers-reduced-motion:reduce){ body.op-maintain.shape-mobile .right{transition:none} }
+  /* ⚠️ the ✕ belongs to the sheet and nothing else — on a wide screen the editor is a pane with no lid */
+  .sheetx{display:none}
+  body.op-maintain.shape-mobile .sheetx{display:inline-flex;align-items:center;justify-content:center;
+    min-width:44px;min-height:44px;font-size:1.1em}
   /* ⚠️ the Phone shape's narrow bill is decided in cartCols(), not here — a cell hidden by CSS left its track empty */
   body.shape-mobile .quick{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
   /* wide forces the two-column counter back on, whatever the width says */
@@ -1532,6 +1569,8 @@
       <button class="qx" id="qkbd" data-testid="till-search-kbd" title="type on the screen" aria-label="show the on-screen keyboard" onclick="kbdToggle()" hidden>⌨</button>
       <button class="qx" id="qclear" data-testid="till-search-clear" title="clear the search" aria-label="clear the search" onclick="clearSearch()">✕</button>
     </div>
+    <!-- ⭐ the list's own settings, over the list — maintenance only (paintListTools) -->
+    <div class="listtools" id="listtools" style="display:none"></div>
     <div class="chips" id="chips"></div>
     <div class="quick" id="quick"></div>
     <!-- ⭐ the list asks for its own next page as it nears the bottom (showMore) — see hits() -->
@@ -3604,6 +3643,8 @@ var FILTER = { offer:false, cat:null, off:false, job:null }, OFFER_STAMP = null;
  */
 function thumbsOn(){ return ls.get(shopLs('cb_till_thumbs'), 'off') === 'on'; }
 function thumbsToggle(){
+  /* ⚠️ the row that HOLDS the switch has to repaint too, or the words beside it stay stale */
+  setTimeout(function(){ try { paintListTools(); } catch (_) {} }, 0);
   ls.set(shopLs('cb_till_thumbs'), thumbsOn() ? 'off' : 'on');
   paintCard(); paintHits();
 }
@@ -4861,6 +4902,19 @@ function setFilter(what, val){
      changed, only how much of it is on screen, and quickCompute() goes to the network. */
   SEL = 0; showAgain(); paintChips(); paintHits(); paintQuick();
 }
+/**
+ * ⭐ WHAT THE LIST ITSELF IS DOING — pictures on or off, as png/MaintV2.png puts it beside the search box.
+ * ⚠️ MAINTENANCE ONLY. On the selling screen the same switch lives in ⚙ Setup with the other look settings; a
+ * cashier does not change it mid-queue, and a row of settings above the shelf is a row to read past.
+ */
+function paintListTools(){
+  var el = document.getElementById('listtools'); if (!el) return;
+  if (MODE !== 'maintain') { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = '';
+  el.innerHTML = '<span class="lt">'
+    + cardSwitch(thumbsOn(), 'card-thumbs', 'thumbsToggle()', thumbsOn() ? 'Pictures' : 'No pictures')
+    + '</span>';
+}
 function paintChips(){
   var el = document.getElementById('chips'); if (!el || !S) return;
   var cats = {};
@@ -5822,6 +5876,19 @@ function applyTillOptions(){
  * On when the shop chose the Phone shape, a phone layout, or — shape Automatic — the screen is phone-narrow.
  */
 var STEPS = ['pick', 'bill', 'pay'];
+/**
+ * ⭐⭐ IS THIS A PHONE? The DEVICE question, with no opinion about what is on the screen — the shop's chosen
+ * shape first, then the screen-library layout, then the width. Every layout rule for a small screen keys off
+ * this, so they apply in every mode rather than only while selling.
+ */
+function phoneShape(){
+  var o = tillOpt();
+  if (o.shape === 'mobile') return true;
+  if (o.shape && o.shape !== 'auto') return false;
+  try { var L0 = screenCfg().layout; if (L0 === 'phone' || L0 === 'handheld' || L0 === 'vertical') return true; } catch (_) {}
+  return (window.innerWidth || 1024) < 600;
+}
+/** ⚠️ AND SHOULD SELLING BE THREE STEPS — the same device question, but only while there is a bill to build. */
 function stepsWanted(){
   if (typeof MODE !== 'undefined' && MODE !== 'sell') return false;
   var o = tillOpt();
@@ -5845,8 +5912,12 @@ function stepsApply(){
   /* the header pill reads the BILL in this shape and the DAY otherwise, so it settles when the shape does
      — on the first paint stepsApply() runs after paintStatus(), and the pill kept saying today. */
   try { paintDayPill(); } catch (_) {}
-  /* ⚠️ the bill's columns only fit a phone in the Phone shape — steps on a narrow 'Automatic' screen wear it too */
-  if (on) b.classList.add('shape-mobile');
+  /**
+   * ⚠️⚠️ THE SHAPE IS THE DEVICE, NOT THE MODE. This read `on` — the STEPS answer — which is false in every
+   * mode but selling. So the same phone wore shape-mobile at the till and lost it in Maintenance, and drew a
+   * two-pane desktop layout on a 390px screen. It asks phoneShape() now, which has no opinion about the mode.
+   */
+  if (phoneShape()) b.classList.add('shape-mobile');
   else if (tillOpt().shape !== 'mobile') b.classList.remove('shape-mobile');
   if (on && STEPS.indexOf(b.dataset.step) < 0) b.dataset.step = 'pick';
   paintStepBar();
@@ -7160,6 +7231,15 @@ function cardGroups(i){
     + '</div></div>';
 }
 /** ⚠ the group being edited must be the one tapped, or the toggle acts on whatever was last chosen */
+/**
+ * ⚠️ CLOSING IS NOT DISCARDING. It puts the sheet down and leaves whatever is staged exactly where it is, so
+ * tapping the product again brings the unsaved change back. cardDiscard() is the one that throws work away,
+ * and it says so on its own button. [[feedback-name-vs-behaviour]]
+ */
+function cardClose(){
+  CARD_ID = null;
+  paintCard(); paintHits();
+}
 function cardGroupTap(name){
   var i = cardItem(); if (!i) return;
   var o = tillOpt(); tillOptSet({ group: name });
@@ -7199,13 +7279,16 @@ function paintCard(){
   /* ⚠️ AN EMPTY STATE, so it goes once there is something in the pane. Above a filled editor it was telling
      somebody to do the thing they had just done. [[feedback-text-budget]] */
   var hint = document.getElementById('maintempty');
-  if (hint) hint.style.display = cardItem() ? 'none' : '';
-  /* ⭐ THE ONE SETTING ON THIS SCREEN, and it is about the SCREEN, not about a product — so it shows whether or not
-     something is selected, which is also the only way it can be found before anything has been tapped. */
-  var display = '<div class="cardrow"><label>Thumbnails</label><div class="swwrap">'
-    + cardSwitch(thumbsOn(), 'card-thumbs', 'thumbsToggle()',
-        thumbsOn() ? 'Pictures show in the product list' : 'No pictures — names and codes only')
-    + '</div></div>';
+  var open = !!cardItem();
+  if (hint) hint.style.display = open ? 'none' : '';
+  /* ⭐ and whether the phone's bottom sheet is up. On a wide screen the class does nothing at all. */
+  document.body.classList.toggle('cardopen', open);
+  /**
+   * ⭐ THE THUMBNAILS SWITCH USED TO BE HERE, and its own comment said why it should not be: it is about the
+   * SCREEN, not about a product. It is now in the list header where the render puts it (paintListTools), one
+   * tap from the list it changes rather than one pane away. [[feedback-ui-placement-standards]]
+   */
+  var display = '';
   var i = cardItem();
   if (!i) { el.innerHTML = display + worthBlock()
     + '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'
@@ -7236,8 +7319,13 @@ function paintCard(){
     /* ⚠ WHERE THE NAME CAME FROM, said on the screen — a counter that let somebody edit it would be a second
        place for it to be wrong, and the render answers the question before it is asked. */
     + '<i>' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '')
-    + ' · name and category come from ChitBridge</i></span>'
+    /* ⚠️ THE PROVENANCE CLAUSE IS A WIDE-SCREEN LUXURY. On 390px it wrapped the header onto three lines to say
+       something nobody is asking at that moment; the render's phone sheet shows the code and the category only. */
+    + '<span class="wideonly"> · name and category come from ChitBridge</span></i></span>'
     + '<button class="pill" data-testid="card-photo" onclick="cardPhoto()">Change photo</button>'
+    /* ⚠️ THE WAY OUT OF THE SHEET. On a wide screen the editor is simply a pane and there is nothing to close,
+       so this shows only where the sheet exists — a phone. Escape belongs to the bill on this counter. */
+    + '<button class="pill sheetx" data-testid="card-close" aria-label="close" onclick="cardClose()">\u2715</button>'
     + '</div>'
     + cardPrice(i)
     + '<div class="cardpair">' + cardForGood(i) + cardToday(i) + '</div>'
@@ -10496,6 +10584,11 @@ function setMode(m){
     var el = document.getElementById('pane_' + k); if (el) el.style.display = (k === MODE) ? 'flex' : 'none';
   });
   var sel = document.getElementById('modesel'); if (sel) sel.value = MODE;
+  /* ⭐ the OPERATION on the body, so layout rules can differ by it — the phone puts the bill first while
+     selling and the shelf first while maintaining, and that is a stylesheet's decision to make, not a
+     painter's. [[feedback-ui-replaceable-logic-in-engines]] */
+  OPS.forEach(function(k){ document.body.classList.remove('op-' + k); });
+  document.body.classList.add('op-' + MODE);
   var q = document.getElementById('q');
   if (q) q.placeholder = PLACEHOLDER[MODE] || PLACEHOLDER.sell;
   /* ⚠️ the chips and the quick keys belong to SELLING. On the other operations they are a second thing to read while somebody
@@ -10506,7 +10599,7 @@ function setMode(m){
   document.getElementById('quick').style.display = MODE === 'sell' ? '' : 'none';
   /* ⚠ THE CHIP ROW CHANGES WITH THE MODE NOW — the maintenance jobs are drawn only in maintain (paintChips),
      and without this the row kept whatever the last mode had put there. [[feedback-check-after-the-wire]] */
-  paintChips(); paintKeys(); paintHits(); stepsApply();
+  paintChips(); paintListTools(); paintKeys(); paintHits(); stepsApply();
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
   if (MODE === 'maintain') { CARD_ID = null; pendClear(); paintCard(); loadWorth(); }

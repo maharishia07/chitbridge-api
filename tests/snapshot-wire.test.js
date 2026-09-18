@@ -275,8 +275,23 @@ it('⭐⭐ the left row is product details only — nothing in it can be tapped 
   const cardEnd = page.indexOf('\nfunction ', cardAt + 10);
   const cardBody = page.slice(cardAt, cardEnd > cardAt ? cardEnd : undefined);
   assert.ok(cardBody.length > 200 && cardBody.length < 40000, 'the paintCard slice is not a function body');
-  assert.ok(cardBody.indexOf('thumbsToggle()') > 0,
+  /**
+   * ⚠️ MOVED, NOT DELETED (2026-09-18). It read cardBody, because the switch used to sit in the EDITOR — whose
+   * own comment said it should not: *"it is about the SCREEN, not about a product"*. png/MaintV2.png puts it in
+   * the list header, so the question stays and the region follows it. [[feedback-improvise-update-cases]]
+   */
+  const tools = page.slice(page.indexOf('function paintListTools(){'),
+                           page.indexOf('function paintChips(){'));
+  assert.ok(tools.length > 120, 'paintListTools has gone — the list header is where the switch lives now');
+  assert.ok(tools.indexOf('thumbsToggle()') > 0,
     'the switch is not on the Maintenance screen, which is where it was asked for');
+  /* ⭐ and it is a LIST setting shown over the LIST — one tap from the thing it changes, not one pane away */
+  assert.ok(page.indexOf("id=\"listtools\"") > 0, 'there is no list header for the list\'s own settings');
+  assert.ok(cardBody.indexOf('thumbsToggle()') < 0,
+    'the switch is back in the editor, one pane away from the list it changes');
+  /* ⚠️ MAINTENANCE ONLY. A cashier does not change it mid-queue; it lives in Setup for the selling screen. */
+  assert.ok(/MODE !== 'maintain'/.test(tools),
+    'the list settings would show while billing, where they are one more row to read past');
   /* what it MUST still say: the storefront's own fields */
   for (const [what, mark] of [['the name', 'esc(i.name)'], ['the unit', 'i.unit'], ['the code', 'i.code'],
                               ['the category', 'i.category'], ['its offers', 'offerNames(i)'], ['the price', 'priceBlock(i)']])
