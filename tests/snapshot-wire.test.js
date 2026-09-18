@@ -240,7 +240,19 @@ it('⭐⭐ the left row is product details only — nothing in it can be tapped 
   assert.ok(page.indexOf('function thumbsOn(){') > 0, 'there is no setting behind the thumbnail');
   assert.ok(page.indexOf("shopLs('cb_till_thumbs')") > 0,
     'the thumbnail choice is not namespaced per shop — two shops in one browser would share it');
-  assert.ok(page.slice(page.indexOf('function paintCard(){'), page.indexOf('function cardPrice(')).indexOf('thumbsToggle()') > 0,
+  /**
+   * ⚠⚠ THIS SLICE WAS TOOTHLESS AND NOBODY KNEW (found 2026-09-18). It ran from paintCard() to
+   * `indexOf('function cardPrice(')` — and no such function existed, so indexOf answered -1, slice(big, -1)
+   * returned nearly the WHOLE FILE, and the assertion passed on any occurrence of thumbsToggle() anywhere. The
+   * day a real cardPrice() was written, and written ABOVE paintCard, the slice inverted, came back empty, and
+   * the guard failed — which is the first honest thing it had done.
+   * ⭐ A BOUNDARY MUST BE SEARCHED FORWARD FROM THE START, never named and hoped for. [[feedback-whitelist-drops-silently]]
+   */
+  const cardAt = page.indexOf('function paintCard(){');
+  const cardEnd = page.indexOf('\nfunction ', cardAt + 10);
+  const cardBody = page.slice(cardAt, cardEnd > cardAt ? cardEnd : undefined);
+  assert.ok(cardBody.length > 200 && cardBody.length < 40000, 'the paintCard slice is not a function body');
+  assert.ok(cardBody.indexOf('thumbsToggle()') > 0,
     'the switch is not on the Maintenance screen, which is where it was asked for');
   /* what it MUST still say: the storefront's own fields */
   for (const [what, mark] of [['the name', 'esc(i.name)'], ['the unit', 'i.unit'], ['the code', 'i.code'],

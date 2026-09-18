@@ -338,14 +338,25 @@
   }
   @media (min-width:900px){
     /* the panel stops being a side sheet and becomes a card in the middle of the screen */
-    body[data-menuside] #tillside.on ~ .menu, .menu.asdialog{
-      position:fixed;inset:0;margin:auto;width:min(92vw,880px);max-height:92vh;height:max-content;
+    .menu.asdialog{
+      position:fixed;inset:0;margin:auto;width:min(94vw,1040px);height:min(92vh,900px);max-height:92vh;
       border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.28);z-index:60}
-    /* ⚠ two columns of SECTIONS — the look card is pulled to the right, Careful spans both. Order is unchanged;
-       only how they are packed changes, so muscle memory survives the resize. */
-    .menu.asdialog .msecs{display:grid;grid-template-columns:1.15fr .85fr;align-items:start;gap:10px 14px}
-    .menu.asdialog .msec[data-testid='till-msec-look']{grid-column:2;grid-row:1 / span 4}
-    .menu.asdialog .msec[data-testid='till-msec-care']{grid-column:1 / -1}
+    /**
+     * ⚠⚠⚠ COLUMNS, NOT A GRID — AND THE FIRST ATTEMPT IS WHY THIS NOTE EXISTS. I pinned the look card with
+     * `grid-column:2; grid-row:1 / span 4`, which fixes ONE card to four rows while every other section is
+     * auto-placed at whatever height its content happens to be. The rows then size to the tallest thing in
+     * them, the sections drifted apart, and Careful landed on top of the row above it. Athi’s word for it was
+     * "half cooked", and he was right: I had checked the computed width and never looked at the screen.
+     *
+     * ⭐ CSS COLUMNS ARE THE TOOL for variable-height cards that must keep their ORDER: the flow fills the left
+     * column then the right, nothing is placed by hand, and nothing can overlap. break-inside keeps a section
+     * whole instead of split down the middle.
+     */
+    /* ⭐ two stacks and a foot — the placement is in the markup (see paintMenu), so the CSS only has to hold them */
+    .menu.asdialog .msecs.two{display:grid;grid-template-columns:1.1fr .9fr;align-items:start;gap:0 14px;padding:10px 16px 6px}
+    .menu.asdialog .msecs.two .mcol{display:flex;flex-direction:column;gap:10px;min-width:0}
+    /* ⚠ across BOTH columns, at the bottom, which is where §4 puts it and where it cannot read as one more row */
+    .menu.asdialog .msecs.two .mcare{grid-column:1 / -1;padding-top:10px}
   }
   .msec{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
   /* §4: a closed row is icon square 36px, title, one-line summary, chevron — and at least 60px tall */
@@ -483,6 +494,29 @@
   .hubav{width:34px;height:34px;flex:0 0 auto;border-radius:999px;display:flex;align-items:center;justify-content:center;
          background:var(--ok-tint);color:var(--ok);font-weight:700;font-size:.85em}
   /* ── type to find anything ([TILL-57]) ───────────────────────────────────────── */
+  /* ── the hub head as HubWide draws it: one line, chips inline, the who-box on the right ──────────── */
+  .hubhead{position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+           padding:12px 56px 12px 16px;border-bottom:1px solid var(--line)}
+  .hubhead .mx{position:absolute;top:10px;inset-inline-end:12px}
+  .hubhead .hh1{display:flex;flex-direction:column;min-width:0}
+  .hubhead .hh1 b{font-size:1.45em;line-height:1.15}
+  .hubhead .hh1 i{font-style:normal;color:var(--dim);font-size:.85em}
+  .hubhead .hubchips{border:0;padding:0;flex:1 1 auto}
+  /* ⚠ PINK UNTIL SOMEBODY SIGNS IN — the render makes "nobody" the loud state, because a day's takings with no
+     name against them is the thing worth noticing before it has happened. */
+  .hubhead .hubwho{margin-inline-start:auto;display:flex;align-items:center;gap:10px;border:1px solid var(--warn);background:var(--warn-tint);
+                   border-radius:12px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--warn)}
+  .hubhead .hubwho.in{border-color:var(--ok);background:var(--ok-tint)}
+  .hubhead .hubwho .mt b{color:var(--warn)}
+  .hubhead .hubwho.in .mt b{color:var(--ok)}
+  .pri.sm{height:34px;padding:0 12px;font-size:.9em}
+  /* ── Careful as a strip across the foot, never a fold ────────────────────────────────── */
+  .hubcare{flex:0 0 auto;margin:0 16px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;
+           padding:12px 14px;border:1px solid var(--warn);background:var(--warn-tint);border-radius:14px}
+  .hubcare > span:first-child{flex:1;min-width:200px;color:var(--warn);font-size:.9em}
+  .hubcare b{letter-spacing:.06em;margin-inline-end:6px}
+  .hcacts{display:flex;gap:8px;flex-wrap:wrap}
+  .hubcare .pill{border-color:var(--warn);color:var(--warn);background:var(--paper);min-height:38px}
   .hubfind{padding:8px 12px;border-bottom:1px solid var(--line)}
   .hubfind input{width:100%;min-height:40px;padding:8px 12px;border:1px solid var(--edge);border-radius:10px;
                  background:var(--paper);color:var(--ink);font:inherit}
@@ -533,8 +567,13 @@
   /* ⭐ the view toggles, in the menu — a section of chips rather than another dialog to open */
   .menusec{padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
   .menusec>b{display:block;font-size:.78em;color:var(--dim);text-transform:uppercase;letter-spacing:.03em;padding-bottom:6px}
-  .viewchips{display:flex;flex-wrap:wrap;gap:6px}
-  .mq{display:flex;gap:8px;flex-wrap:wrap}
+  .viewchips{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:6px}
+  /* ⚠ a chip is a CONTROL, so it gets a touch target and a shared width rather than hugging its own words */
+  .viewchips button{width:100%;min-height:38px;text-align:start}
+  .mq{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 10px}
+  .mq label{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;gap:6px}
+  /* ⚠ the select fills its cell, so two side by side are the SAME width whatever their longest option is */
+  .mq select{width:100%;min-width:0;min-height:36px}
 
   /**
    * ⭐⭐⭐ ONE MENU, ON THE RIGHT (Athi, 2026-09-18: "why do we need two menu? can we merge both and bring a
@@ -4346,6 +4385,38 @@ function hubFindBox(){
         : '')
     + '</div>';
 }
+/**
+ * ── ⚠⚠⚠ REBUILT FROM THE RENDER ([TILL-59]) ────────────────────────────────────
+ *
+ * My first version read §2 of the spec as "row 0 who, row 0b chips" and built two pinned bands above the
+ * sections. png/HubWide.png shows neither: the counter's name is the heading, the chips sit INLINE beside it,
+ * and who-is-here is a pink box on the right of that same line with a green `Sign in · F7` in it. One band, not
+ * three — which is most of why the panel felt cramped.
+ *
+ * ⚠ ON A PHONE (png/HubPhone.png) IT STACKS INTO THREE, which is the same design reflowed and not a different
+ * one: title line, then the pink sign-in box full width, then the chips on their own scrolling row.
+ */
+function hubHead(){
+  var name = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
+  var since = (typeof WHO !== 'undefined' && WHO && WHO.since) ? new Date(WHO.since).toTimeString().slice(0, 5) : '';
+  var shop = (S && S.shop && S.shop.name) || (STATE && STATE.till && STATE.till.name) || '';
+  var place = (S && S.shop && S.shop.address) ? String(S.shop.address).split(',')[0] : '';
+  var when = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })
+           + ', ' + new Date().toTimeString().slice(0, 5);
+  /* ⚠ the pink box is the WHO control — pink when nobody is signed in, quiet green when somebody is */
+  var who = '<div class="hubwho' + (name ? ' in' : '') + '" data-testid="till-hub-who">'
+    + '<span class="mt"><b>' + (name ? esc(name) : 'Nobody signed in') + '</b>'
+    + '<i>' + (name ? ('at this counter' + (since ? ' since ' + esc(since) : '')) : 'bills will not carry a name') + '</i></span>'
+    + '<button class="pri sm" data-testid="till-hub-who-act" onclick="fromMenu(openWho)">'
+    + (name ? 'Hand over' : 'Sign in') + ' · F7</button></div>';
+  return '<div class="hubhead">'
+    + '<span class="hh1"><b data-testid="till-m-counter">' + esc(ls.get('cb_till_name', 'Counter')) + '</b>'
+    + '<i>' + esc([shop, place].filter(Boolean).join(' · ')) + (shop || place ? ' · ' : '') + esc(when) + '</i></span>'
+    + hubChips()
+    + who
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
+    + '</div>';
+}
 function hubWhoRow(){
   var name = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
   var since = (typeof WHO !== 'undefined' && WHO && WHO.at) ? new Date(WHO.at).toTimeString().slice(0, 5) : '';
@@ -4365,6 +4436,27 @@ function hubWhoRow(){
  * ⚠ The counts come from the SAME calls the sections use (queueWords, alertCount, S.items), so a chip and the
  * section behind it can never disagree. [[feedback-repaint-locally]]
  */
+/**
+ * ⚠⚠ CAREFUL IS A STRIP, NOT A SECTION (HubWide). It spans the foot, the sentence on the left and the three
+ * acts as BUTTONS on the right — no chevron, nothing to open. A row that folds away is a row somebody can leave
+ * closed and forget; these three stop billing, so the design refuses to hide them.
+ * ⚠ On a phone it goes back to being a section, in pink, last (HubPhone) — there is no room for three buttons
+ * and a sentence on one line.
+ */
+function hubCare(){
+  var act = function(id, label){
+    var op = tillOp(id); if (!op) return '';
+    return '<button class="pill" data-testid="till-care-' + id + '" onclick="fromMenu(' + op.fn + ')">' + esc(label) + '</button>';
+  };
+  return '<div class="hubcare" data-testid="till-hub-care">'
+    + '<span><b>CAREFUL</b> These stop billing for a moment. Everything is sent and checked first.</span>'
+    + '<span class="hcacts">'
+    + ((typeof WHO !== 'undefined' && WHO && WHO.name)
+        ? '<button class="pill" data-testid="till-care-signout" onclick="fromMenu(openWho)">Sign out</button>' : '')
+    + act('coldstart-menu', 'Clear and reload')
+    + act('close', 'Close this counter')
+    + '</span></div>';
+}
 function hubChips(){
   var chip = function(ok, label, test){
     return '<button class="hubchip ' + (ok ? 'ok' : 'bad') + '" data-testid="till-hub-chip-' + test + '"'
@@ -4384,15 +4476,20 @@ function hubChips(){
 function paintMenu(){
   var m = document.getElementById('tillmenu'); if (!m) return;
   var online = navigator.onLine, who = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
-  var head = '<div class="mhead">'
+  /* ⭐ WIDE TAKES THE RENDER'S ONE-LINE HEAD (hubHead); a phone keeps the stack HubPhone.png draws — title,
+     then the pink sign-in box full width, then the chips on their own row. */
+  /* ⚠ the finder is on BOTH shapes until Athi decides — no render has one, and MenuPalette (type-to-find) is
+     listed as NOT CHOSEN, so it may be removed. Having it on one shape and not the other is the worst of both. */
+  var head = menuRoomy() ? (hubHead() + hubFindBox()) : ('<div class="mhead">'
     + '<span class="mwho"><b data-testid="till-m-counter">' + esc(ls.get('cb_till_name', 'Counter')) + '</b>'
     + '<i>' + esc((S && S.entity_name) || (STATE && STATE.till && STATE.till.name) || '') + '</i></span>'
     + '<span class="mdot ' + (online ? 'on' : 'off') + '" title="' + (online ? 'online' : 'offline — billing continues') + '"></span>'
     + '<span class="mtime">' + esc(new Date().toTimeString().slice(0, 5)) + '</span>'
     + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
-    + '</div>'
+    + '</div>' + hubWhoRow() + hubChips())
     /* ⭐ pinned — see hubWhoRow() and hubChips(). They sit ABOVE the folding sections and never fold. */
-    + hubWhoRow() + hubChips() + hubFindBox();
+    + hubFindBox();
+  var secHtml = {};                       /* each section kept by id, so a wide screen can PLACE them */
   var secs = TILL_MENU.map(function(sec){
     var open = menuIsOpen(sec.id);
     var body = sec.day ? menuDayBody() : sec.today ? menuTodayBody()
@@ -4415,7 +4512,7 @@ function paintMenu(){
         + '</div></div>'
         + '<div class="menusec" data-testid="till-view-toggles"><b>Show on this counter</b><div class="viewchips" id="viewchips"></div></div>'
       : (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
-    return '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '" data-testid="till-msec-' + sec.id + '">'
+    var html = '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '" data-testid="till-msec-' + sec.id + '">'
       + '<button class="mrow" aria-expanded="' + (open ? 'true' : 'false') + '" data-testid="till-msec-btn-' + sec.id + '"'
       + ' onclick="menuSection(\'' + sec.id + '\')">'
       + '<span class="mi">' + sec.icon + '</span>'
@@ -4427,6 +4524,8 @@ function paintMenu(){
       + '<div class="mbody"' + (open ? '' : ' hidden') + '>'
       + (sec.careful ? '<p class="carenote">These two stop billing for a moment. Everything is sent and checked first.</p>' : '')
       + body + '</div></section>';
+    secHtml[sec.id] = html;
+    return html;
   }).join('');
   /* ⚠ who is at the counter is PINNED AT THE TOP now (hubWhoRow) — it was here as well, and the hub spec's §7 is
      exactly that: one field, one place. The footer keeps the door that is its own. */
@@ -4437,7 +4536,44 @@ function paintMenu(){
   /* ⭐ ONE WIDTH TEST, TWO READERS — menuRoomy() decides both how many sections open and which shape the panel
      takes, so the two can never disagree about what "there is room" means. */
   m.classList.toggle('asdialog', menuRoomy());
-  m.innerHTML = head + '<div class="msecs">' + secs + '</div>' + foot;
+  /**
+   * ── ⚠⚠⚠ TWO REAL COLUMNS IN THE MARKUP, AFTER TWO CLEVER CSS ATTEMPTS FAILED ────────────────
+   *
+   *   1. `grid-row: 1 / span 4` on the look card — it pinned ONE card across four rows while everything else
+   *      was auto-placed at its own height. Rows sized to their tallest member, sections drifted apart, and
+   *      Careful landed on top of the row above it.
+   *   2. `column-count: 2` — right for flowing cards in order, and WRONG inside a fixed-height box: the flow
+   *      just keeps making columns, so the rest of the hub went off to the right behind a horizontal scrollbar.
+   *
+   * Athi saw both, and called the first one what it was. The lesson is not about CSS: I checked the computed
+   * width and the column count and never once looked at the screen.
+   *
+   * ⭐ SO THE COLUMNS ARE DECLARED, NOT INFERRED. §4 says what goes where — sections left, How it looks right,
+   * Careful across the bottom — and saying that in the markup is shorter than any CSS that has to guess it, and
+   * cannot be surprised by a section growing. The list and its order are identical either way: a narrow screen
+   * pours it into one column, a wide one deals it into two.
+   */
+  /**
+   * ⚠ THE RENDER'S OWN SPLIT, counted off HubWide.png: the day and its money on the left; everything a person
+   * GOES to on the right. My first guess put five on the left and three on the right and it read as lopsided.
+   */
+  var LEFT = ['day', 'today', 'alerts'];
+  var RIGHT = ['bills', 'shop', 'look', 'shopdet', 'counter'];
+  var pick = function(ids){ return ids.map(function(id){ return secHtml[id] || ''; }).join(''); };
+  /* ⚠ ANY SECTION NOT NAMED ABOVE STILL APPEARS. A new one added to TILL_MENU tomorrow must not vanish on wide
+     screens because nobody remembered to list it here — it joins the left column, which is the reading order. */
+  var placed = LEFT.concat(RIGHT).concat(['care']);
+  var extra = TILL_MENU.filter(function(s){ return placed.indexOf(s.id) < 0; }).map(function(s){ return s.id; });
+  var inner = menuRoomy()
+    ? '<div class="msecs two">'
+      + '<div class="mcol">' + pick(LEFT.concat(extra)) + '</div>'
+      + '<div class="mcol">' + pick(RIGHT) + '</div>'
+      /* ⭐ the strip, not the section — see hubCare() */
+      + '</div>'
+      /* ⭐ OUTSIDE the scrolling sections — a foot, as the render pins it */
+      + hubCare()
+    : '<div class="msecs">' + secs + '</div>';
+  m.innerHTML = head + inner + foot;
   try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbHome(); } catch (_) {}
   paintMenuQuick();
 }
@@ -6610,6 +6746,99 @@ async function pickedDo(what){
   toastLine(done + ' of ' + items.length + ' done'
     + (queued ? ' · ' + queued + ' saved here, they will reach the shop' : '')
     + (failed.length ? ' · NOT done: ' + failed.join(', ') : ''));
+}
+/**
+ * ── ⭐⭐⭐ THE EDITOR, BUILT FROM png/MaintV2.png ([TILL-58]) ───────────────────────────
+ *
+ * ⚠⚠ I BUILT THE FIRST VERSION FROM THE PROSE AND NEVER OPENED THE PICTURE. The package's own index says
+ * *"images and PDFs are the visual truth; the Markdown files are the rules"* — so a design read only in words
+ * comes out as a list of rows that each satisfy a sentence and together look like nothing anybody drew. Athi's
+ * word was "junk", and he was right to send the render back.
+ *
+ * What the drawing says that the words did not:
+ *   · PRICE is the biggest thing on the pane, with what it WAS, the percentage, and who last changed it — a
+ *     price rise is the one edit here with a customer on the other end of it.
+ *   · FOR GOOD and JUST FOR TODAY are two LABELLED PANELS side by side. As plain rows the difference is a
+ *     sentence somebody has to read; as two boxes with headings it is the shape of the screen.
+ *   · the save state is a STICKY FOOT that names the change — not a button that goes quiet.
+ */
+function cardPrice(i){
+  var now = cardVal(i, 'price'), was = Number(i.price) || 0;
+  var moved = PEND.price !== undefined && Number(PEND.price) !== was;
+  var pct = (was > 0 && moved) ? Math.round(((Number(PEND.price) - was) / was) * 100) : 0;
+  var who = (i.price_by || (i.last_price && i.last_price.by) || '');
+  var when = (i.price_at || (i.last_price && i.last_price.at) || '');
+  var stamp = when ? ('last changed ' + new Date(when).toLocaleDateString() + (who ? ' by ' + esc(who) : '')) : '';
+  return '<div class="cardblock price' + (moved ? ' pending' : '') + '" data-testid="card-price-block">'
+    + '<div class="blabel">PRICE</div>'
+    + '<div class="prow">'
+    + '<span class="pfield"><i>' + esc(money(0).replace(/[\d.,\s]/g, '')) + '</i>'
+    + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(now)) + '"'
+    + ' oninput="pendPrice(this.value)" onkeydown="if(event.key===\'Enter\')cardSave()"></span>'
+    + '<span class="punit">per ' + esc(i.unit || 'piece') + '</span>'
+    + '<span class="pwas">' + (moved ? ('was ' + money(was) + (pct ? ' · ' + (pct > 0 ? '+' : '') + pct + '%' : '')) : '')
+    + (stamp ? '<i>' + stamp + '</i>' : '') + '</span>'
+    + '</div>'
+    /* ⚠ THE CONSEQUENCE, IN THE SENTENCE THE DESIGN WROTE. A price is not a setting; it is what a customer is
+       asked for at every counter the moment this is saved, and the screen should say so before it is. */
+    + (moved ? '<div class="pnote" data-testid="card-price-note">'
+        + (pct > 0 ? 'A ' + pct + '% rise. ' : (pct < 0 ? 'A ' + Math.abs(pct) + '% cut. ' : ''))
+        + 'It reaches every counter and the shop screen as soon as you save.</div>' : '')
+    + (Number(i.mrp) > 0 ? '<div class="u">MRP ' + money(i.mrp) + '</div>' : '')
+    + '</div>';
+}
+/** ⚠ TWO PANELS, NOT TWO ROWS — the heading is what makes the difference readable without reading a sentence */
+function cardForGood(i){
+  var off = cardVal(i, 'status') === 'unavailable', actualOff = statusOf(i) === 'unavailable';
+  var onScreen = cardVal(i, 'screen');
+  return '<div class="cardblock half" data-testid="card-forgood">'
+    + '<div class="blabel">FOR GOOD</div>'
+    + '<div class="prow2' + (PEND.status !== undefined ? ' pending' : '') + '">'
+    + '<span class="pt"><b>On the shelf</b><i>listed and sellable everywhere</i></span>'
+    + cardSwitch(!off, 'card-avail', "pendSet('status','" + (off ? 'available' : 'unavailable') + "','" + statusOf(i) + "')", '')
+    + '</div>'
+    + (PEND.status !== undefined ? '<div class="was">was ' + (actualOff ? 'off the shelf' : 'on the shelf') + '</div>' : '')
+    + '<div class="prow2' + (PEND.screen !== undefined ? ' pending' : '') + '">'
+    + '<span class="pt"><b>Pick for the shop screen</b><i>otherwise the screen chooses on its own</i></span>'
+    + cardSwitch(!!onScreen, 'card-screen', "pendSet('screen'," + (onScreen ? 'false' : 'true') + ',' + (!!i.on_screen) + ')', '')
+    + '</div>'
+    + '</div>';
+}
+function cardToday(i){
+  var outToday = quickSold().some(function(x){ return String(x.id) === String(i.item_id); });
+  return '<div class="cardblock half today" data-testid="card-today-block">'
+    + '<div class="blabel warn">JUST FOR TODAY</div>'
+    + '<div class="prow2">'
+    + '<span class="pt"><b>Sold out now</b><i>hides the key on this counter until shift close</i></span>'
+    + cardSwitch(outToday, 'card-today',
+        outToday ? "quickBringBack('" + esc(i.item_id) + "');paintCard()"
+                 : "quickSoldOut('" + esc(i.item_id) + "');paintCard()", '')
+    + '</div>'
+    /* ⚠ SAYS WHAT IT IS NOT, which is the whole point of putting it beside the permanent switch */
+    + '<div class="u">Cashiers can do this from the sell screen. It never changes the price or the shelf.</div>'
+    + '</div>';
+}
+/**
+ * ⚠⚠ THE SAVE STATE IS A FOOT THAT NAMES THE CHANGE. A Save button that merely enables tells somebody that
+ * something is unsaved; it does not tell them WHAT, and on a screen where four different things stage that is
+ * the difference between confidence and a guess. The design puts the sentence next to the button.
+ */
+function cardFoot(i){
+  var n = pendCount();
+  var what = [];
+  if (PEND.price !== undefined) what.push('price ' + money(Number(i.price) || 0) + ' → ' + money(PEND.price));
+  if (PEND.status !== undefined) what.push(PEND.status === 'unavailable' ? 'off the shelf' : 'back on the shelf');
+  if (PEND.screen !== undefined) what.push(PEND.screen ? 'onto the shop screen' : 'off the shop screen');
+  if (PEND.offers) what.push(Object.keys(PEND.offers).length + ' offer change(s)');
+  return '<div class="cardfoot' + (n ? ' live' : '') + '" data-testid="card-foot">'
+    + '<span class="cfwords">'
+    + (n ? '<b>' + n + ' change' + (n === 1 ? '' : 's') + ' not saved — ' + esc(what.join(' · ')) + '</b>'
+           + '<i>Saved here first, then sent. Nothing is lost if the line drops.</i>'
+         : '<i>Change anything above — it is only saved when you press Save.</i>')
+    + '</span>'
+    + '<button class="pill" data-testid="card-discard" onclick="cardDiscard()"' + (n ? '' : ' disabled') + '>Undo change</button>'
+    + '<button class="pri" id="cardsavebtn" data-testid="card-save" onclick="cardSave()"' + (n ? '' : ' disabled') + '>Save · Ctrl S</button>'
+    + '</div>';
 }
 function paintCard(){
   var el = document.getElementById('cardbox'); if (!el) return;
