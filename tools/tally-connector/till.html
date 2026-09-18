@@ -4318,6 +4318,20 @@ function unitWordsRe(){
  * the parser and the shelf cannot disagree about what a match is — capped at one, because the answer wanted is
  * yes or no and this runs on every keystroke.
  */
+/**
+ * ⚠⚠ A STRICTER QUESTION THAN shelfKnows(), AND THE TWO ARE NOT INTERCHANGEABLE. shelfKnows is the fuzzy
+ * search the list uses — it will happily answer yes to "upma 500 gm" because it can see "Upma" inside it. That
+ * is right for "has the remainder found anything" and quite wrong for "is the number part of the NAME", where a
+ * false yes would stop "upma 500 gm" parsing at all. This one is a plain substring test against real names:
+ * "aavin milk 500" is inside "Aavin milk 500 ml", and "upma 500 gm" is inside nothing.
+ */
+function shelfHasPhrase(text){
+  var w = String(text || '').toLowerCase().trim();
+  if (!w) return false;
+  return ((S && S.items) || []).some(function(i){
+    return String((i && i.name) || '').toLowerCase().indexOf(w) >= 0;
+  });
+}
 function shelfKnows(text){
   var items = (S && S.items) || [];
   if (!items.length || !text) return false;
@@ -4376,6 +4390,23 @@ function typed(){
   var m = /^\s*(\d+(?:\.\d+)?)\s*\*\s*([\s\S]*)$/.exec(raw) || /^\s*(\d+(?:\.\d+)?)\s*[xX]\s+([\s\S]*)$/.exec(raw);
   if (m) { var q0 = Number(m[1]); return { qty: (q0 > 0 ? q0 : 1), unit: null, text: String(m[2]).trim() }; }
   /**
+   * ── ⚠⚠⚠ A PRODUCT NAME BEATS EVERY GUESS, AND THIS HAS TO BE FIRST ───────────────────────
+   *
+   * If what was typed IS somebody's product — "Aavin milk 500 ml", "Set Dosa (3 pc)", "Idli (2 pc)" — the digits
+   * in it belong to the NAME and nothing may be taken out of it.
+   *
+   * ⚠⚠ I FIRST PUT THIS BELOW THE WEIGHT BRANCH AND THE TEST CAUGHT IT: "Aavin milk 500 ml" read as FIVE
+   * HUNDRED, because the branch immediately below had already matched "500 ml" and returned before the check
+   * ran. That fault is older than today — the comment below has warned about this exact product since the
+   * branch was written, and it was only ever saved by the ADD path refusing to convert ml into pieces and
+   * quietly billing one. A guard that works by accident downstream is not a guard.
+   * ⚠ The `3*` form above is deliberately still first: a star is somebody SAYING this is a quantity, and an
+   * explicit instruction outranks anything inferred from a name.
+   * ⚠ shelfHasPhrase is a plain substring test, NOT the fuzzy search — see its own note. Fuzzy here would
+   * answer yes to "upma 500 gm" and stop the weight branch working at all.
+   */
+  if (shelfHasPhrase(raw)) return { qty: 1, unit: null, text: orig.trim() };
+  /**
    * then a quantity WITH a unit, at either end: "thakkali 500 gm", "2 kg thakkali", "500g tomato".
    * ⚠️ Only when a UNIT is present. A bare number is part of the name far more often than it is a quantity — "500" belongs to
    * "Aavin milk 500 ml", and reading it as five hundred packets would be a spectacular way to be wrong.
@@ -4406,6 +4437,35 @@ function typed(){
     else uval = Number(unum);
     var urest = (raw.slice(0, uh.index) + ' ' + raw.slice(uh.index + uh[0].length)).replace(/\s+/g, ' ').trim();
     if (uval > 0 && urest && shelfKnows(urest)) return { qty: uval, unit: String(uh[3]).toLowerCase(), text: urest };
+  }
+  /**
+   * ── ⭐⭐⭐ A BARE COUNT, BEFORE OR AFTER THE NAME ([TILL-50], 2026-09-18) ────────────────────
+   *
+   * Athi: *"when the count comes first before an item or after an item, can it be considered as count, also
+   * tamil it is not picking up. oru, rendu etc?"*
+   *
+   * ⚠⚠ ONE ROOT CAUSE FOR BOTH HALVES OF THAT. digitsForWords() was working perfectly — "rendu upma" already
+   * became "2 upma", "oru tea" became "1 tea", "இரண்டு உப்புமா" became "2 உப்புமா". typed() then threw the
+   * result away, because a number with no unit after it was not a quantity — and fell back to searching the
+   * ORIGINAL words, so the counter looked for a product called "rendu upma" and found nothing. The Tamil was
+   * never the problem; the bare number was.
+   *
+   * ⚠ THE OLD REASON FOR REFUSING WAS A GOOD ONE: "500" belongs to "Aavin milk 500 ml" far more often than it
+   * means five hundred packets. What has changed is that the counter can now CHECK, which it could not before:
+   * the whole phrase is offered to the shelf first (above), and the remainder has to find a real product. Two
+   * readings, and the one the shop can actually sell wins.
+   * ⚠ EITHER END, NEVER THE MIDDLE. A number inside a phrase is part of a name ("2 in 1 coffee"); at an end it
+   * is how people count.
+   */
+  var lead = /^\s*(\d+(?:[./]\d+)?)\s+([\s\S]+)$/.exec(raw);
+  var tail = lead ? null : /^([\s\S]+?)\s+(\d+(?:[./]\d+)?)\s*$/.exec(raw);
+  if (lead || tail) {
+    var bnum = lead ? lead[1] : tail[2];
+    var brest = (lead ? lead[2] : tail[1]).trim();
+    var bval;
+    if (bnum.indexOf('/') > 0) { var bp = bnum.split('/'); bval = Number(bp[0]) / Number(bp[1]); }
+    else bval = Number(bnum);
+    if (bval > 0 && brest && shelfKnows(brest)) return { qty: bval, unit: null, text: brest };
   }
   /* ⚠️ orig, not raw — no unit and no multiplier were found, so any digit swapped in above belongs to the NAME */
   return { qty: 1, unit: null, text: orig.trim() };
