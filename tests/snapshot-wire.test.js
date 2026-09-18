@@ -329,10 +329,23 @@ it('⭐⭐ the cart carries the stepper and a shortcut, and a repeated add raise
   assert.ok(rowfn.indexOf('till-qty-') > 0, 'the cart line has no typeable quantity, so 24 would be 23 taps');
   assert.ok(page.indexOf("if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))") > 0,
     'there is no keyboard way to change a quantity');
-  /* the repeated add is what makes three of something ordinary — addItem merges by item_id */
-  const addItem = page.slice(page.indexOf('function addItem(i, qty){'), page.indexOf('function addItem(i, qty){') + 500);
+  /**
+   * the repeated add is what makes three of something ordinary.
+   * ⚠️ MATCHED WITHOUT THE CLOSING PAREN. This pinned 'function addItem(i, qty){' exactly, so the day addItem
+   * gained a third argument (modifiers, 2026-09-18) the slice found nothing and the case failed for a reason
+   * that had nothing to do with the behaviour it guards. What matters is that a second add RAISES THE COUNT,
+   * not how many arguments the function takes.
+   * ⚠️ AND IT MERGES ON THE LINE KEY NOW, not on item_id: a dosa with no onion and a plain dosa are two lines,
+   * while the same dish ordered the same way twice is still one line of two. Both halves are asserted, because
+   * losing either one is a wrong bill.
+   */
+  const at = page.indexOf('function addItem(i, qty');
+  assert.ok(at > 0, 'addItem is gone — the cart no longer has one way in');
+  const addItem = page.slice(at, at + 900);
   assert.ok(addItem.indexOf('have.qty = r2(have.qty + n)') > 0,
     'adding the same product again no longer increases the count on the bill');
+  assert.ok(addItem.indexOf('lineKey(') > 0,
+    'addItem no longer keys a line by what was chosen on it — two differently-modified lines would merge into one');
 });
 
 /**

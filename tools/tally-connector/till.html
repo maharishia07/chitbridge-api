@@ -410,6 +410,20 @@
   .todorow.done span{text-decoration:line-through;color:var(--dim)}
   .todox{border:0;background:transparent;color:var(--dim);cursor:pointer;font:inherit;padding:4px 6px;border-radius:8px}
   .todox:hover{background:var(--warn-tint);color:var(--warn)}
+  /* the choices, under the name on the bill — quiet, because the dish is what is being read */
+  .cmods{display:block;color:var(--dim);font-size:.8em;margin-top:1px}
+  /* the chooser */
+  .modg{padding:6px 0;border-bottom:1px solid var(--line)}
+  .modg:last-child{border-bottom:0}
+  .modg>b{display:block;font-size:.85em;margin-bottom:6px}
+  .modg .req{font-style:normal;color:var(--warn);font-weight:600;font-size:.85em}
+  .modg .upto{font-style:normal;color:var(--dim);font-weight:400;font-size:.85em}
+  .modo{display:flex;flex-wrap:wrap;gap:8px}
+  .modopt{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;border:1px solid var(--edge);
+          border-radius:999px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+  .modopt span{color:var(--dim);font-size:.85em}
+  .modopt.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
+  .modopt.on span{color:var(--ok)}
   .todoadd{display:flex;gap:6px;align-items:center}
   .todomic{flex:0 0 40px;min-height:40px;border:1px solid var(--edge);border-radius:10px;background:var(--card);cursor:pointer}
   .todomic.on{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
@@ -1090,6 +1104,15 @@
 <!-- ⭐⭐ THE IDLE SCREEN — the shop's own picture while nobody is billing. Painted by paintIdle(); shown by a
      timer; dismissed by ANY key, scan or touch (see idleWake). -->
 <div class="idle" id="tillidle" hidden aria-hidden="true"></div>
+<!-- ⭐ the modifier chooser — a native dialog like the counter's others, so Escape and the backdrop behave -->
+<dialog id="moddlg" class="dlg" data-testid="till-mod">
+  <h3 id="modtitle">Choose</h3>
+  <div id="modbody"></div>
+  <div class="dlgbtns">
+    <button onclick="modClose()">Cancel · Esc</button>
+    <button class="pri" id="modadd" data-testid="till-mod-add" onclick="modAddNow()">Add</button>
+  </div>
+</dialog>
 <div class="wrap">
   <section class="left">
     <header>
@@ -3777,10 +3800,84 @@ function hitsScrolled(box){
 }
 /** ⭐ A SCANNER IS NOT A TYPIST. An exact barcode or code match adds the item and clears the box, which is what the scanner's own
     Enter would otherwise have to do — and it is what makes a scan feel instant rather than like a search. */
+/**
+ * ── ⭐⭐⭐ THE LABEL A WEIGHING MACHINE PRINTS ([TILL-34], 2026-09-18) ────────────────────────────────────────
+ *
+ * Athi is taking this to a real shop with a weighing machine this week, and a veg market does not type weights:
+ * the scale weighs, prints a sticker, and the counter scans it. That sticker carries an EAN-13 whose digits
+ * ARE the weight or the price — a shop-local barcode, by long convention in the "2" range which GS1 reserves
+ * for exactly this (in-store use, never published).
+ *
+ * The shapes a machine is set to print, and the one the shop picks in ⚙ Setup:
+ *   2 IIIII PPPPP C   price-embedded  — five digits of item code, five of PRICE in paise/cents
+ *   2 IIIII WWWWW C   weight-embedded — five digits of item code, five of WEIGHT in grams
+ * The check digit is verified before any of it is believed, because a misread digit is a wrong price.
+ *
+ * ⚠️⚠️ PRICE-EMBEDDED WINS OVER OUR OWN ARITHMETIC. When the label says the price, that is the price the
+ * customer was shown on the scale and the sticker — recomputing it from our rate would put a different number
+ * on the bill than the one stuck to the bag, and the customer is holding the bag. Weight-embedded is the
+ * opposite: the label states a QUANTITY and the shop's own rate prices it.
+ * ⚠️ IT IS OFF UNLESS A SHOP TURNS IT ON. A prefix of 2 is also a perfectly ordinary barcode for a shop that
+ * does not weigh anything, and quietly re-reading those as prices would be a disaster in a hardware store.
+ */
+function weighCfg(){
+  var o = tillOpt().weigh || {};
+  return { on: !!o.on, prefix: String(o.prefix || '2'), kind: (o.kind === 'weight' ? 'weight' : 'price') };
+}
+/** EAN-13's own check digit — the label is not trusted until this agrees */
+function ean13ok(code){
+  if (!/^[0-9]{13}$/.test(code)) return false;
+  var sum = 0;
+  for (var i = 0; i < 12; i++) sum += Number(code[i]) * (i % 2 ? 3 : 1);
+  return ((10 - (sum % 10)) % 10) === Number(code[12]);
+}
+/**
+ * read a scale's label → { item, qty, price } or null.
+ * ⚠️ RETURNS null FOR ANYTHING IT IS NOT SURE OF — a bad check digit, an unknown code, a zero weight. A guess
+ * here is a wrong number on a bill somebody pays.
+ */
+function weighRead(raw){
+  var c = weighCfg(); if (!c.on) return null;
+  var code = String(raw || '').trim();
+  if (!ean13ok(code)) return null;
+  if (code.slice(0, c.prefix.length) !== c.prefix) return null;
+  /* ⚠️ THE FIELDS ARE COUNTED FROM THIRTEEN, not guessed: flag + item + five-digit value + check = 13.
+     A one-digit flag leaves six for the item, a two-digit flag leaves five — both are printed in the trade, so
+     the item field is whatever is left rather than a hardcoded five (which read one digit short and matched
+     nothing at all). */
+  var itemCode = code.slice(c.prefix.length, 7);
+  var value = Number(code.slice(7, 12));                  /* five digits of price (paise) or weight (grams) */
+  if (!(value > 0)) return null;
+  var items = (S && S.items) || [];
+  var hit = items.filter(function(i){
+    var k = String(i.code || '').replace(/^0+/, ''), b = String(i.barcode || '').replace(/^0+/, '');
+    var want = itemCode.replace(/^0+/, '');
+    return k === want || b === want;
+  });
+  if (hit.length !== 1) return null;
+  var i = hit[0];
+  if (c.kind === 'price') {
+    var paid = r2(value / 100);
+    var rate = Number(i.price) || 0;
+    /* ⚠️ THE LABEL'S PRICE IS THE TRUTH; the quantity is derived from it so the line still says how much it was */
+    var qty = rate > 0 ? r2(paid / rate) : 1;
+    return { item: i, qty: qty, price: paid, why: 'the label\'s price' };
+  }
+  return { item: i, qty: r2(value / 1000), price: null, why: 'the label\'s weight' };
+}
 function scanned(){
   var q = typed().text.toLowerCase();
   if (q.length < 4) return false;
   var items = (S && S.items) || [];
+  /* ⭐ a scale's label first — it is a longer, stricter match than an ordinary code, so it cannot be mistaken */
+  var w = weighRead(typed().text);
+  if (w) {
+    SCAN_AT = Date.now();
+    addWeighed(w);
+    clearSearch();
+    price(); focusSearch();
+    return true;
+  }
   var exact = items.filter(function(i){ return String(i.barcode||'').toLowerCase() === q || String(i.code||'').toLowerCase() === q; });
   if (exact.length !== 1) return false;
   var n = hits().indexOf(exact[0]);
@@ -4057,6 +4154,8 @@ function tillOptDefaults(){
            cols:{ disc:true, calc:true, value:true },
            /* ⭐ the bill-number scheme — defaults are today's behaviour exactly (docnumber DEFAULT_SCHEME) */
            series:{ dating:'fy', resets:'year', dayRollHour:0 },
+           /* ⭐ the weighing machine's labels — off until a shop that weighs turns it on (see weighRead) */
+           weigh:{ on:false, prefix:'2', kind:'price' },
            /* ⭐ which SECTIONS the counter shows — see tillShow() (observation 6, divisions A–C) */
            show:{ search:true, chips:true, quick:true, list:true, keys:true, cust:true } };
 }
@@ -4488,8 +4587,8 @@ function paintQuick(){
 function quickAdd(id){
   var i = ((S && S.items) || []).filter(function(x){ return x.item_id === id; })[0];
   if (!i) return;
-  addItem(i, typed().qty);
-  price(); focusSearch();
+  /* ⚠️ a product WITH choices asks before it is billed; one without is added exactly as it always was */
+  modOpen(i, typed().qty);
 }
 /**
  * ⭐⭐ HOW MANY THINGS ARE ON THIS COUNTER (Athi, 2026-09-09: *"how do i know the total number of products in tallytest, where does
@@ -5585,14 +5684,162 @@ async function add(n){
   paintHits(); paintCart(); focusSearch();
 }
 /** ONE way onto the bill — a row, a quick key, a scan. It was written out three times, and the quantity would have made it four. */
-function addItem(i, qty){
+/**
+ * ── ⭐⭐⭐ MODIFIERS — WHAT THE CUSTOMER ASKED FOR ON THIS ONE (2026-09-18, [TILL-33]) ─────────────────────────
+ *
+ * Athi, 2026-09-18, after benchmarking KFC, Domino's, Tesco and Walmart: modifiers were the first thing on the
+ * missing list, and a restaurant cannot take one real order without them. "No onion", "extra cheese", half or
+ * full, mild or hot.
+ *
+ * ⚠️⚠️ NO NEW TABLE, AND NO DDL. A product already carries a jsonb of its own (catalogue_items.item_data), so
+ * its choices live with it: item_data.modifiers = [{ name, required, max, options:[{ name, price }] }].
+ * A shop that has never set one is untouched — no modifiers, no dialog, the key bills exactly as it does today.
+ *
+ * ⚠️ A CHOICE THAT COSTS MONEY IS PRICED ON THE LINE, not bolted on at the end: modAdd() is added into the
+ * line's unit price at the moment of billing, so the tax, the offers and the printed rate all see one number.
+ * ⚠️ AND IT IS RECORDED, NOT RE-DERIVED — the chosen options ride the bill (see addItem), because a reprint a
+ * year later has to say what was asked for, not what today's menu would offer.
+ */
+function modsOf(i){
+  var m = (i && (i.modifiers || (i.item_data && i.item_data.modifiers))) || null;
+  return Array.isArray(m) ? m.filter(function(g){ return g && g.name && Array.isArray(g.options) && g.options.length; }) : [];
+}
+function modAdd(mods){
+  if (!mods || !mods.length) return 0;
+  return r2(mods.reduce(function(a, m){ return a + (Number(m.price) || 0); }, 0));
+}
+/** what the line says under its name — "no onion · extra cheese +₹20" */
+function modWords(mods){
+  if (!mods || !mods.length) return '';
+  return mods.map(function(m){ return m.option + (Number(m.price) ? ' +' + money(m.price) : ''); }).join(' · ');
+}
+/**
+ * ⭐ THE CHOOSER. One dialog, one pass down the groups, and nothing is added to the bill until it is answered —
+ * a half-chosen line is not a thing a kitchen can cook.
+ * ⚠️ REQUIRED MEANS REQUIRED: a group marked required cannot be left blank, and the Add button says so rather
+ * than failing silently when it is pressed.
+ * ⚠️ Escape cancels the whole thing and adds NOTHING, because the alternative — adding it unmodified — is a
+ * wrong order that reaches a kitchen.
+ */
+var MOD_FOR = null, MOD_PICK = null;
+function modOpen(i, qty){
+  var groups = modsOf(i);
+  if (!groups.length) { addItem(i, qty); price(); focusSearch(); return; }
+  MOD_FOR = { item: i, qty: qty, groups: groups };
+  MOD_PICK = {};
+  groups.forEach(function(g){ MOD_PICK[g.name] = []; });
+  modPaint();
+  var d = document.getElementById('moddlg');
+  if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+}
+function modToggle(gi, oi){
+  var g = MOD_FOR.groups[gi], o = g.options[oi];
+  var chosen = MOD_PICK[g.name] || [];
+  var at = chosen.map(function(x){ return x.option; }).indexOf(o.name);
+  var max = Number(g.max) || 1;
+  if (at >= 0) chosen.splice(at, 1);
+  else {
+    if (max === 1) chosen = [];                       /* one of these — the new answer replaces the old */
+    if (chosen.length >= max) chosen.shift();          /* many, but not more than the shop allows */
+    chosen.push({ group: g.name, option: o.name, price: Number(o.price) || 0 });
+  }
+  MOD_PICK[g.name] = chosen;
+  modPaint();
+}
+function modChosen(){
+  var out = [];
+  (MOD_FOR ? MOD_FOR.groups : []).forEach(function(g){ (MOD_PICK[g.name] || []).forEach(function(x){ out.push(x); }); });
+  return out;
+}
+function modMissing(){
+  return (MOD_FOR ? MOD_FOR.groups : []).filter(function(g){
+    return g.required && !(MOD_PICK[g.name] || []).length; }).map(function(g){ return g.name; });
+}
+function modPaint(){
+  var box = document.getElementById('modbody'); if (!box || !MOD_FOR) return;
+  var i = MOD_FOR.item;
+  box.innerHTML = MOD_FOR.groups.map(function(g, gi){
+    var chosen = (MOD_PICK[g.name] || []).map(function(x){ return x.option; });
+    var max = Number(g.max) || 1;
+    return '<div class="modg" data-testid="till-modg-' + gi + '">'
+      + '<b>' + esc(g.name) + (g.required ? ' <i class="req">must choose</i>' : '')
+        + (max > 1 ? ' <i class="upto">up to ' + max + '</i>' : '') + '</b>'
+      + '<div class="modo">' + g.options.map(function(o, oi){
+          var on = chosen.indexOf(o.name) >= 0;
+          return '<button type="button" class="modopt' + (on ? ' on' : '') + '"'
+            + ' data-testid="till-modopt-' + gi + '-' + oi + '" onclick="modToggle(' + gi + ',' + oi + ')">'
+            + esc(o.name) + (Number(o.price) ? '<span>+' + money(o.price) + '</span>' : '') + '</button>';
+        }).join('') + '</div></div>';
+  }).join('');
+  var miss = modMissing();
+  var add = document.getElementById('modadd');
+  if (add) {
+    add.disabled = miss.length > 0;
+    add.textContent = miss.length ? ('Choose ' + miss.join(' and '))
+      : ('Add' + (modAdd(modChosen()) ? ' · ' + money(r2((Number(i.price) || 0) + modAdd(modChosen()))) : ''));
+  }
+}
+function modAddNow(){
+  if (!MOD_FOR || modMissing().length) return;
+  /* ⚠️⚠️ READ THE ANSWER BEFORE CLOSING. modClose() nulls MOD_FOR and MOD_PICK, and modChosen() reads BOTH —
+     so closing first meant every order was added with no choices at all, and three differently-ordered dosas
+     merged into one line of three. Caught by testing the money rather than the dialog (2026-09-18). */
+  var f = MOD_FOR, chosen = modChosen();
+  modClose();
+  addItem(f.item, f.qty, chosen);
+  price(); focusSearch();
+}
+function modClose(){
+  var d = document.getElementById('moddlg');
+  if (d && d.open) { try { d.close(); } catch (_) {} }
+  MOD_FOR = null; MOD_PICK = null;
+}
+/**
+ * ⭐ A WEIGHED LINE. Each sticker is its own line — two bags of tomatoes are two weighings and two labels, and
+ * merging them would lose what was actually on each bag.
+ * ⚠️ WHEN THE LABEL CARRIES THE PRICE, that price is billed exactly, whatever our rate says (see weighRead).
+ */
+function addWeighed(w){
+  var i = w.item, n = Number(w.qty) || 0; if (!(n > 0)) return;
+  CART.push({ key: i.item_id + '|w' + Date.now() + Math.random().toString(36).slice(2, 6),
+              item_id: i.item_id, name: i.name, unit: i.unit || 'kg',
+              price: (w.price != null && n > 0) ? r2(w.price / n) : (Number(i.price) || 0),
+              qty: n, hsn: i.hsn || null, weighed: true,
+              mrp: (Number(i.mrp) > 0 ? Number(i.mrp) : null),
+              item_data: { name: i.name, tax_slab: i.tax_slab, hsn: i.hsn, category: i.category } });
+  toastLine(i.name + ' · ' + n + ' ' + (i.unit || 'kg') + ' — ' + w.why);
+}
+/**
+ * ⭐⭐⭐ A LINE'S OWN IDENTITY — item plus what was CHOSEN on it (2026-09-18, with modifiers).
+ *
+ * ⚠️⚠️ THIS IS A MONEY FIX, NOT A TIDY-UP. lineOf() keyed a line by item_id and price() read the engine's
+ * answer back with ev.line_net[c.item_id], and the comment beside it said so plainly: *"a cart holds one row
+ * per product (addItem merges by item_id), so item_id IS a unique key"*. The moment a dosa with no onion sits
+ * beside a plain dosa that invariant is false — two rows, one key — and an offer meant for one would be read
+ * onto both. So the key travels with the line and both places use it.
+ * ⚠️ AN ITEM WITH NO CHOICES KEEPS ITS OLD KEY (the bare item_id), so nothing about today's bills changes.
+ */
+function modSig(mods){
+  if (!mods || !mods.length) return '';
+  return mods.map(function(m){ return m.group + ':' + m.option; }).join(',');
+}
+function lineKey(item_id, mods){ var sig = modSig(mods); return sig ? (item_id + '|' + sig) : String(item_id); }
+function addItem(i, qty, mods){
   var n = Number(qty); if (!(n > 0)) n = 1;
-  var have = CART.filter(function(c){ return c.item_id === i.item_id; })[0];
+  var key = lineKey(i.item_id, mods);
+  /* ⚠️ MERGED ON THE KEY, not the product: two dosas ordered differently are two lines, and pressing the same
+     key twice with the same choices is still one line of two. */
+  var have = CART.filter(function(c){ return (c.key || c.item_id) === key; })[0];
   if (have) have.qty = r2(have.qty + n);
   /* ⚠️ mrp TRAVELS WITH THE LINE (2026-09-10). The printed bill has to show it beside the rate — an Indian retail
      invoice states MRP per item, and without it a customer cannot see what the price is a discount FROM. It is
      copied at the moment of billing rather than looked up later: a bill is what was true when it was made. */
-  else CART.push({ item_id:i.item_id, name:i.name, unit:i.unit||'piece', price:Number(i.price)||0, qty:n, hsn:i.hsn||null,
+  else CART.push({ key:key, item_id:i.item_id, name:i.name, unit:i.unit||'piece',
+                   /* ⚠️ THE CHOICES MOVE THE PRICE, and the moved price is what the line bills at — modAdd is
+                      added once here rather than being re-derived on every repaint, so a bill is what was true
+                      when it was made (the same rule mrp follows below). */
+                   price:r2((Number(i.price)||0) + modAdd(mods)), qty:n, hsn:i.hsn||null,
+                   mods:(mods && mods.length ? mods : null),
                    mrp:(Number(i.mrp) > 0 ? Number(i.mrp) : null),
                    item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
 }
@@ -5852,7 +6099,7 @@ function lineOf(c, n){
      so a tiered product billed at the list price here while the storefront re-priced it — the same goods at two
      prices depending which door the customer came through. */
   var pr = pricedAt(c, Number(c.qty) || 0);
-  return { key: (n == null ? c.item_id : String(n)), item_id: c.item_id, sku: c.code || d.code || null,
+  return { key: (n == null ? (c.key || c.item_id) : String(n)), item_id: c.item_id, sku: c.code || d.code || null,
            name: c.name, unit: c.unit, qty: Number(c.qty) || 0, unitPrice: Number(pr.amount) || 0,
            priced: pr,
            category: d.category || c.category || null,
@@ -5887,7 +6134,10 @@ function price(){
     var unit = pr ? (Number(pr.amount) || 0) : (Number(c.price) || 0);
     c.priced = pr; c.unitPrice = unit;
     var gross = r2(unit * c.qty), net = gross;
-    if (ev && ev.line_net && ev.line_net[c.item_id] != null) net = r2(ev.line_net[c.item_id]);
+    /* ⚠️ READ BACK UNDER THE SAME KEY IT WAS SENT WITH — see the note on lineKey(). Reading by item_id put one
+       line's offer onto every line of that product the moment modifiers made two of them. */
+    var lk = c.key || c.item_id;
+    if (ev && ev.line_net && ev.line_net[lk] != null) net = r2(ev.line_net[lk]);
     /**
      * ── ⭐⭐⭐ EVERY OFFER ON THE LINE, AND WHAT EARNED IT ──────────────────────────────────────────────────────
      *
@@ -6233,7 +6483,9 @@ function cartRowHTML(c, k){
     + '<span class="rn" data-testid="till-rn-' + k + '">' + (k + 1) + '</span>'
     /* ⚠️ THE NAME IS THE HANDLE, not the whole row: the quantity box, ± and × are all inside it and must keep
        doing their own jobs. Tapping the name is the one gesture that had no meaning here. */
-    + '<span onclick="pickLine(' + k + ')" style="cursor:pointer"><span class="nm">' + esc(c.name) + '</span><div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
+    + '<span onclick="pickLine(' + k + ')" style="cursor:pointer"><span class="nm">' + esc(c.name) + '</span>'
+    + (c.mods ? '<span class="cmods" data-testid="till-mods-' + k + '">' + esc(modWords(c.mods)) + '</span>' : '')
+    + '<div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
     /* ⭐ THE OFFER, under a heading of its own — see cartGrid() */
     + (v.offer ? '<span class="offc" data-testid="till-offer-' + k + '">' + CART_OFFER_CELL + '</span>' : '')
     /* ⭐ THE SAME NUMBER THE SHELF SHOWS — this is the column that lets a cart line be matched to its list row. */
