@@ -425,6 +425,18 @@
   .modopt.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   .modopt.on span{color:var(--ok)}
   .upibad{color:var(--warn);display:block;margin-bottom:4px}
+  /* where the order is going — one quiet row above the bill */
+  .obar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 12px 0}
+  .obar:empty{display:none}
+  .obar button{padding:6px 12px;border:1px solid var(--edge);border-radius:999px;background:var(--paper);
+               color:var(--dim);cursor:pointer;font:inherit;font-size:.85em;min-height:36px}
+  .obar button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
+  .obar input{width:86px;min-height:36px;padding:6px 10px;border:1px solid var(--edge);border-radius:10px;
+              background:var(--card);color:var(--ink);font:inherit}
+  .obar .kot{margin-inline-start:auto;border-color:var(--ink);color:var(--ink);font-weight:700}
+  .obar .kot b{background:var(--accent);color:#1D1B16;border-radius:999px;padding:0 6px;margin-inline-start:4px}
+  .ckot{display:inline-block;margin-top:1px;font-size:.72em;font-weight:700;color:var(--dim);
+        border:1px solid var(--line);border-radius:6px;padding:0 5px}
   .todoadd{display:flex;gap:6px;align-items:center}
   .todomic{flex:0 0 40px;min-height:40px;border:1px solid var(--edge);border-radius:10px;background:var(--card);cursor:pointer}
   .todomic.on{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
@@ -620,6 +632,23 @@
   body.steps[data-step="pay"] #pane_sell > :is(.cust,.rw,.cart,#parked){display:none}
   body.steps .cart{max-height:none;flex:none}
   body.steps #pane_sell{flex:none}
+  /**
+   * ⭐⭐ ON A BIG SCREEN THE SHELL STAYS PUT AND EACH REGION SCROLLS ITSELF (Athi, 2026-09-18: *"when i scroll,
+   * entire page is scrolling, each secion where the cursor is only that has to scroll, also the header panel
+   * has to be static"*). The ordinary counter already behaved this way; the kiosk did not, because steps mode
+   * was written for a PHONE — where scrolling the page IS the platform norm and a 100dvh shell fights the
+   * browser's own chrome. So the fixed shell applies from 601px up and a real phone is left alone.
+   * ⚠️ IT MUST COME AFTER THE STEPS RULES ABOVE. It first went in before them, where "height:auto" simply won
+   * on source order and nothing changed at all — a media query adds no specificity.
+   */
+  @media (min-width:601px){
+    body.steps .wrap{height:100dvh;min-height:0;padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px))}
+    body.steps .left{min-height:0;overflow:hidden}
+    body.steps #pane_sell{flex:1;min-height:0;overflow:auto}
+    /* the products are the thing that scrolls on a self-service screen; the header above them does not move */
+    body.steps[data-step="pick"] .quick{max-height:none;flex:1;overflow-y:auto;min-height:0}
+    body.steps .hits{max-height:none;flex:1;overflow:auto;min-height:0}
+  }
   .quick:empty{display:none}
   .hits{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
   /**
@@ -1218,6 +1247,8 @@
       <button class="pill" data-testid="till-split" onclick="addPart()" title="take part of this bill in this way, and the rest another">+ part</button>
       <span id="change" style="min-width:120px;text-align:right;font-weight:700"></span>
     </div>
+    <!-- ⭐ where this order is going — a kitchen ticket is meaningless without it -->
+    <div class="obar" id="obar"></div>
     <div class="parked" id="parts"></div>
     <div class="go">
       <button onclick="clearBill()">Clear · Esc</button>
@@ -1477,6 +1508,10 @@
   </section>
 
   <section class="settab" data-tab="keys">
+    <div class="srow" title="A hotel sends the order to the kitchen before it is paid. A shop with no kitchen leaves this off.">
+      <span>Kitchen tickets</span>
+      <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()"> send a KOT (F3), with dine-in · takeaway · delivery</label>
+    </div>
     <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
       <span>Keys from</span>
       <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
@@ -4076,7 +4111,8 @@ async function quickSyncHidden(){
     });
     if (changed) {
       ls.set(shopLs('cb_till_qsold'), JSON.stringify(have.slice(-200)));
-      try { paintQuick(); } catch (_) {}   /* it is no longer awaited, so it draws its own result */
+      try { paintQuick(); } catch (_) {}
+  try { paintOrderBar(); } catch (_) {}   /* it is no longer awaited, so it draws its own result */
     }
   } catch (_) {}
 }
@@ -5709,6 +5745,17 @@ function modAdd(mods){
   if (!mods || !mods.length) return 0;
   return r2(mods.reduce(function(a, m){ return a + (Number(m.price) || 0); }, 0));
 }
+/**
+ * what a KITCHEN needs of the choices: the words, and nothing else.
+ * ⚠️ BUILT WITHOUT MONEY rather than having money stripped back out of it. A guard forbids a screen printing
+ * its own currency symbol and it is right to — the regex that removed "+₹20" from a rendered string was a
+ * second, private opinion about how money is written, which is exactly how two renderers drift apart.
+ * ⚠️ And a cook does not need the price anyway: they need the dish, the count and what was asked for on it.
+ */
+function modWordsPlain(mods){
+  if (!mods || !mods.length) return '';
+  return mods.map(function(m){ return m.option; }).join(' \u00b7 ');
+}
 /** what the line says under its name — "no onion · extra cheese +₹20" */
 function modWords(mods){
   if (!mods || !mods.length) return '';
@@ -5880,7 +5927,8 @@ function bumpLast(d){
 }
 /* ⚠️ the indexes below k all shift up, so a held selection would silently point at a different product */
 function drop(k){ CART.splice(k,1); if (CARTSEL === k) CARTSEL = -1; else if (CARTSEL > k) CARTSEL--; repaint(); }
-function clearBill(){ CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch(); }
+function clearBill(){
+  KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch(); }
 /**
  * ⭐ PARKED BILLS live on the device and survive a reload — a customer who walked away must not cost the queue, and a browser that
  * refreshes must not cost the customer. They are NOT bills yet: no number is taken, nothing is queued, nothing has been sold.
@@ -6486,6 +6534,8 @@ function cartRowHTML(c, k){
        doing their own jobs. Tapping the name is the one gesture that had no meaning here. */
     + '<span onclick="pickLine(' + k + ')" style="cursor:pointer"><span class="nm">' + esc(c.name) + '</span>'
     + (c.mods ? '<span class="cmods" data-testid="till-mods-' + k + '">' + esc(modWords(c.mods)) + '</span>' : '')
+    /* ⭐ so a cashier can see at a glance what the kitchen already has */
+    + (c.kot ? '<span class="ckot" data-testid="till-kot-' + k + '">KOT ' + c.kot + '</span>' : '')
     + '<div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
     /* ⭐ THE OFFER, under a heading of its own — see cartGrid() */
     + (v.offer ? '<span class="offc" data-testid="till-offer-' + k + '">' + CART_OFFER_CELL + '</span>' : '')
@@ -7309,6 +7359,24 @@ function addPart(){
 }
 function dropPart(n){ PARTS.splice(n, 1); paintParts(); paintTotals(); }
 /* paintTotals already sends; addPart and dropPart both go through it, so the amount due on the screen follows */
+/** ⭐ dine-in · takeaway · delivery, and a table when it is dine-in. Three words, not a form. */
+function paintOrderBar(){
+  var el = document.getElementById('obar'); if (!el) return;
+  if (MODE !== 'sell' || !kotOn()) { el.innerHTML = ''; return; }
+  var k = orderKind();
+  el.innerHTML = ORDER_KINDS.map(function(x){
+      return '<button class="' + (k === x[0] ? 'on' : '') + '" data-testid="till-otype-' + x[0] + '"'
+        + ' onclick="setOrderKind(\'' + x[0] + '\')">' + x[1] + '</button>';
+    }).join('')
+    + (k === 'dine'
+        ? '<input id="otable" data-testid="till-table" placeholder="Table" value="' + esc(orderTable()) + '"'
+          + ' onchange="setOrderTable(this.value)" onblur="setOrderTable(this.value)">'
+        : '')
+    + '<button class="kot" data-testid="till-kot" onclick="sendKOT()" title="send the new items to the kitchen (F3)">'
+    + 'Kitchen · F3' + (kotPending().length ? ' <b>' + kotPending().length + '</b>' : '') + '</button>';
+}
+/** ⭐ a kitchen is a hotel's thing — a grocer has none, so the bar only appears where a shop asked for it */
+function kotOn(){ return (tillOpt().kot === true); }
 function paintParts(){
   var el = document.getElementById('parts'); if (!el) return;
   el.innerHTML = PARTS.map(function(p, n){
@@ -7333,6 +7401,71 @@ function upiShapeOk(v){
   if (!a) return false;
   /* name@handle — the local part allows . - _ and digits, the handle is letters (okicici, ybl, paytm, upi …) */
   return /^[a-zA-Z0-9][a-zA-Z0-9._-]{1,60}@[a-zA-Z][a-zA-Z0-9.]{1,30}$/.test(a) && a.indexOf(' ') < 0;
+}
+/**
+ * ── ⭐⭐⭐ THE KITCHEN ORDER TICKET ([TILL-35], 2026-09-18) ─────────────────────────────────────────────────────
+ *
+ * The one thing a hotel cannot run without, and the counter had nothing: an order reached the bill and the
+ * kitchen never heard of it.
+ *
+ * ⚠️⚠️ A KOT IS NOT A BILL, AND THE DIFFERENCE IS THE POINT. It goes when the order is PLACED, not when it is
+ * paid — a table eats first and pays later — so this is its own action (F3) and its own ticket. It carries no
+ * money: a cook needs the dish, the count and what was asked for on it, and a price on a kitchen ticket is
+ * noise at best and a wrong number to argue about at worst.
+ * ⚠️ SENT ONCE. Each line remembers which ticket took it (c.kot), so a second F3 after two more dishes prints
+ * KOT 2 with ONLY those two. Re-sending the whole table would have the kitchen cook it twice, which is the
+ * classic way this feature is got wrong.
+ * ⚠️ AND THE MODIFIERS TRAVEL. "No onion" that reaches the bill but not the kitchen is worse than no modifier
+ * at all, because everyone believes it was passed on.
+ */
+var KOT_N = 0;
+function orderKind(){ return ls.get(shopLs('cb_till_otype'), 'dine'); }
+function orderTable(){ return ls.get(shopLs('cb_till_table'), ''); }
+function setOrderKind(v){ ls.set(shopLs('cb_till_otype'), v); paintOrderBar(); }
+function setOrderTable(v){ ls.set(shopLs('cb_till_table'), String(v || '').slice(0, 12)); paintOrderBar(); }
+var ORDER_KINDS = [['dine', 'Dine-in'], ['take', 'Takeaway'], ['deliver', 'Delivery']];
+function orderWords(){
+  var k = orderKind(), nm = (ORDER_KINDS.filter(function(x){ return x[0] === k; })[0] || ORDER_KINDS[0])[1];
+  return nm + (k === 'dine' && orderTable() ? ' · Table ' + orderTable() : '');
+}
+/** the lines a kitchen has not been told about yet */
+function kotPending(){ return CART.filter(function(c){ return !c.kot; }); }
+/**
+ * ⭐ SEND IT. Prints through the same path a bill uses, so a shop PC with a printer needs no new plumbing and a
+ * browser still shows the ticket to print by hand.
+ */
+function sendKOT(){
+  if (MODE !== 'sell') return;
+  var pending = kotPending();
+  if (!pending.length) { toastLine(CART.length ? 'The kitchen already has everything on this bill.' : 'Nothing on the bill yet.'); return; }
+  KOT_N++;
+  var n = KOT_N, at = new Date();
+  pending.forEach(function(c){ c.kot = n; });
+  var html = kotHTML(pending, n, at);
+  var box = document.getElementById('slipbox');
+  if (box) { box.className = 'slipbox'; box.innerHTML = html; }
+  var t = document.getElementById('sliptitle');
+  if (t) t.textContent = 'KOT ' + n + ' · ' + orderWords();
+  var d = document.getElementById('slipdlg'); if (d && d.showModal && !d.open) d.showModal();
+  autoPrint(html);
+  paintCart();
+  toastLine('KOT ' + n + ' — ' + pending.length + ' to the kitchen');
+}
+/** ⚠️ NO PRICES. A cook is not settling a bill. */
+function kotHTML(lines, n, at){
+  return '<div style="font:13px/1.45 ui-monospace,monospace">'
+    + '<div style="font-size:18px;font-weight:800">KOT ' + n + '</div>'
+    + '<div style="font-size:15px;font-weight:700">' + esc(orderWords()) + '</div>'
+    + '<div>' + esc(at.toTimeString().slice(0, 5)) + ' · ' + esc(ls.get('cb_till_name', 'Counter'))
+    + (WHO && WHO.name ? ' · ' + esc(WHO.name) : '') + '</div>'
+    + '<hr>'
+    + lines.map(function(c){
+        return '<div style="margin:6px 0"><span style="font-size:17px;font-weight:800">' + c.qty + ' × </span>'
+          + '<span style="font-size:16px;font-weight:700">' + esc(c.name) + '</span>'
+          + (c.mods ? '<div style="padding-inline-start:14px">— ' + esc(modWordsPlain(c.mods)) + '</div>' : '')
+          + '</div>';
+      }).join('')
+    + '<hr><div>' + lines.reduce(function(a, c){ return a + (Number(c.qty) || 0); }, 0) + ' items</div></div>';
 }
 function paintPays(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
@@ -7463,6 +7596,9 @@ async function finish(){
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
     by: WHO ? { id: WHO.id, name: WHO.name } : null,
     kind: shopTax().kind,
+    /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess */
+    order: kotOn() ? { type: orderKind(), table: orderTable() || null,
+                       kots: CART.map(function(c){ return c.kot || 0; }).filter(Boolean) } : null,
   };
   var r = null;
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
@@ -10035,6 +10171,7 @@ function setTab(name){
 function openSettings(tab){
   setTab(typeof tab === 'string' ? tab : null);
   document.getElementById('set_till').value = ls.get('cb_till_id','C1');
+  var kb = document.getElementById('set_kot'); if (kb) kb.checked = (tillOpt().kot === true);
   document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
   document.getElementById('set_rows').value = ls.get('cb_till_rows','compact');
   document.getElementById('set_lang').value = ls.get('cb_till_lang','en-IN');
@@ -10255,6 +10392,7 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
+  if (e.key === 'F3'){ sendKOT(); e.preventDefault(); return; }
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
   if (e.key === 'F8' && MODE === 'sell'){ openBills(); e.preventDefault(); }
