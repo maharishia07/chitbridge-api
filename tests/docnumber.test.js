@@ -28,11 +28,38 @@ it('⭐⭐ every document a counter issues fits inside 16 characters', () => {
    * anything unusual. The three-letter tag was the cost, and one letter buys it back without giving up the
    * separators, which are explicitly permitted and are what make the number splittable again.
    */
-  ['sale', 'receipt', 'despatch'].forEach((kind) => {
+  ['sale', 'receipt', 'despatch', 'credit'].forEach((kind) => {
     const no = D.compose({ country: 'IN', prefix: 'C1', kind, at: AT, seq: 41 });
     const c = D.check(no, 'IN');
     assert.ok(c.ok, kind + ' → ' + no + ' (' + no.length + ') — ' + c.reason);
   });
+});
+
+it('⚠️⚠️ a credit note draws its OWN series, and an unknown kind must never draw the sale one', () => {
+  /**
+   * ⚠️⚠️ THE FAILURE THIS PINS DOWN. compose() reads KINDS[kind]; for a kind it does not know it gets
+   * undefined, skips the tag, and returns a PLAIN SALE NUMBER. So issuing a credit note before the engine
+   * learned the kind did not fail — it quietly took the next number out of the shop's sales series. Two
+   * documents in one series is not a cosmetic fault: GST §34 requires a return to be its own consecutive
+   * series referencing the original invoice, and a filed return built on this cannot be reconciled.
+   */
+  const sale = D.compose({ country: 'IN', prefix: 'C1', kind: 'sale', at: AT, seq: 7 });
+  const credit = D.compose({ country: 'IN', prefix: 'C1', kind: 'credit', at: AT, seq: 7 });
+  assert.notStrictEqual(credit, sale, 'a credit note and a sale at the same sequence produced the SAME number');
+  assert.ok(/^C\//.test(credit), 'a credit note is tagged C: ' + credit);
+  assert.ok(D.check(credit, 'IN').ok, credit + ' (' + credit.length + ') is over the limit');
+
+  /* ⚠️ AND THE TRAP ITSELF, ASSERTED. A kind nobody registered still silently becomes a sale number — so this
+     is the behaviour to know about, not a bug to be surprised by later. Register the kind. */
+  assert.strictEqual(D.compose({ country: 'IN', prefix: 'C1', kind: 'nonsense', at: AT, seq: 7 }), sale,
+    'an unregistered kind no longer falls back to the sale series — if that changed deliberately, move this line');
+});
+
+it('⚠️ a credit note spends one more character than a sale, so its till-id ceiling is one lower', () => {
+  /* not enforced anywhere today — maxPrefix is advisory — but it is true, and a shop told otherwise would
+     produce a number over India's limit at the seven-digit ceiling. */
+  assert.strictEqual(D.maxPrefix('IN', 'credit'), D.maxPrefix('IN', 'sale') - 1,
+    'the C tag costs a character and the ceiling should say so');
 });
 
 it('⭐⭐⭐ the series still fits at ten million bills', () => {

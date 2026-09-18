@@ -626,6 +626,26 @@
     .drt tr{break-inside:avoid}
     @page{margin:14mm}
   }
+  /* ⭐ taking something back — see retOpen() */
+  .retagainst{color:var(--dim);font-size:.9em;margin-bottom:8px}
+  .retlines{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .retrow{display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
+  .retrow:last-child{border-bottom:0}
+  .retrow.none{opacity:.5}
+  .retrow .rn{flex:1;display:flex;flex-direction:column}
+  .retrow .rn i{font-style:normal;font-size:.8em;color:var(--dim)}
+  .retrow .rq{display:flex;gap:4px;align-items:center}
+  .retrow .rq button{min-width:34px;min-height:34px;border:1px solid var(--edge);border-radius:8px;
+                     background:var(--paper);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+  .retrow .rq input{width:54px;min-height:34px;text-align:center;border:1px solid var(--edge);border-radius:8px;
+                    background:var(--card);color:var(--ink);font:inherit}
+  .retfoot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .retfoot label{display:flex;gap:6px;align-items:center;font-size:.9em;color:var(--dim)}
+  .retfoot select{min-height:36px;border:1px solid var(--edge);border-radius:8px;background:var(--card);
+                  color:var(--ink);font:inherit;padding:0 8px}
+  .rettotal{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:10px;
+            border-top:2px solid var(--ink);font-size:1.15em}
+  .rettotal b{font-weight:800}
   /* ⭐ arranging the keys by hand */
   .qarr{display:inline-flex;align-items:center;padding:3px 11px;min-height:32px;cursor:pointer;
         border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);font:inherit;font-size:.85em}
@@ -1424,6 +1444,13 @@
 
 <!-- ⭐⭐ THE DAY'S SALES, FULL SCREEN AND PRINTABLE — see dayReport() -->
 <dialog id="dayrep" class="dayrep" data-testid="till-dayreport"></dialog>
+<!-- ⭐⭐ TAKING SOMETHING BACK — see retOpen() -->
+<dialog id="retdlg" data-testid="till-return"><div class="dlg"><h3 id="rettitle">Take a return</h3>
+  <div id="retbody"></div>
+  <menu>
+    <button value="cancel" data-testid="till-return-cancel" onclick="retClose()">Cancel</button>
+    <button id="retgo" class="go" data-testid="till-return-go" onclick="retIssue()">Give it back</button>
+  </menu></div></dialog>
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <div class="slipbox" id="slipbox"></div>
@@ -2363,7 +2390,7 @@ var CloudHost = {
     } catch (e) { return { ok:false, why:e.message }; }
   },
   async doc(d){
-    var no = await nextNumber((d.kind === 'receipt') ? 'GRN' : 'DC');
+    var no = await nextNumber(docTagOf(d.kind));
     var doc = Object.assign({}, d, { no: no, at: d.at || new Date().toISOString(), catalogue_version: S && S.version });
     await DB.put('bills', Object.assign({}, doc, { doc: true }));
     await DB.put('queue', { no: no, at: doc.at, chitBody: chitOfDoc(doc) });
@@ -2371,6 +2398,25 @@ var CloudHost = {
     if (moves) await DB.put('queue', { no: no + '/moved', at: doc.at, deliver: moves });
     this.drain();
     return { ok: true, doc: doc };
+  },
+  /**
+   * ⭐⭐ A CREDIT NOTE GOES THE WAY A BILL GOES — same store, same queue, same drain. It is a document the shop
+   * has issued, so it must survive the line being down exactly as a sale does.
+   * ⚠️⚠️ IT MUST NOT TOUCH LAST_SERIES. That is the SALES high-water mark the cloud keeps per counter
+   * (routes/counters.noteBill); feeding it a credit note's sequence would advance the sales run by one and
+   * leave a hole in the invoice numbers that nobody could account for. nextNumber('CN') leaves it null because
+   * the series is tagged — stated here so the next person does not "fix" it.
+   */
+  async creditNote(cn){
+    LAST_SERIES = null;
+    var no = await nextNumber('CN');
+    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1'),
+                              catalogue_version: S && S.version }, cn, { no: no });
+    doc.chitBody = chitOfCN(doc);
+    await DB.put('bills', doc);
+    await DB.put('queue', doc);
+    this.drain();
+    return { ok: true, bill: doc };
   },
   async bill(b){
     LAST_SERIES = null;
@@ -2725,7 +2771,7 @@ async function nextNumber(kind){
    * back the repeating `001` tail that julian dating was chosen to avoid.
    * ⚠️ A MONTHLY RESET DOES REPEAT THE TAIL, 12 times a year rather than never. Said out loud in the setting.
    */
-  var _box0 = ((kind === 'GRN' || kind === 'DC') ? ('series-' + kind) : 'series');
+  var _box0 = (DOC_TAGS[kind] ? ('series-' + kind) : 'series');
   var _had0 = await DB.get(_box0);
   /**
    * ⚠️⚠️ A SERIES THAT HAS ISSUED NUMBERS KEEPS ITS SHAPE UNTIL THE PERIOD ROLLS. This is the same rule the tag
@@ -2739,7 +2785,7 @@ async function nextNumber(kind){
 
   /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. Sharing a run would put a hole in the sales series, which is
      the one thing the numbering exists to prove. The box keys are unchanged from the first version. */
-  var tag = (kind === 'GRN' || kind === 'DC') ? kind : '';
+  var tag = DOC_TAGS[kind] ? kind : '';
   var box = tag ? ('series-' + tag) : 'series';
   var had = await DB.get(box);
 
@@ -2793,9 +2839,66 @@ async function nextNumber(kind){
   if (!tag) return body;
   if (s.tagStyle === 'long') return tag + '/' + body;
   return D.compose({ country: country, prefix: s.prefix, at: now, seq: seq, scheme: sch,
-                     kind: kind === 'GRN' ? 'receipt' : 'despatch' });
+                     kind: docKindOf(kind) });
 }
 
+/**
+ * ── ⭐⭐⭐ THE COUNTER'S SHORT TAG ↔ THE ENGINE'S DOCUMENT KIND ────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ THIS WAS THREE SEPARATE TERNARIES, AND EACH ONE WAS BINARY. "kind === 'GRN' ? 'receipt' : 'despatch'"
+ * does not mean "receipt or despatch" — it means "receipt, or ELSE despatch", so a third tag became a despatch
+ * note, silently, with a despatch number out of the despatch run. A credit note issued that way would have been
+ * filed as a delivery. One map, read in every place that used to decide for itself.
+ * ⚠️ AND AN UNKNOWN TAG IS A SALE, which is what the engine already does — stated here rather than discovered.
+ * [[feedback-no-duplicate-functions]] [[feedback-name-vs-behaviour]]
+ */
+var DOC_TAGS = { GRN: 'receipt', DC: 'despatch', CN: 'credit' };
+function docKindOf(tag){ return DOC_TAGS[tag] || 'sale'; }
+/** and back the other way, for a caller that holds the engine's word and needs the counter's */
+function docTagOf(kind){
+  var found = Object.keys(DOC_TAGS).filter(function(t){ return DOC_TAGS[t] === kind; })[0];
+  return found || '';
+}
+/**
+ * ⭐⭐ A CREDIT NOTE, AS A CHIT. Our own record, like every other document a counter issues.
+ *
+ * ⚠️⚠️ THE QUANTITY ON THE WIRE IS POSITIVE. The local record holds −2, so that every bare "+" adding up a day
+ * nets it; but lib/stock-from-chit refuses any line with 'qty <= 0' outright, so a negative on the wire would
+ * move NO stock and say nothing about it. The rule lib/inventory already states settles which is right: the
+ * caller gives a POSITIVE quantity and the REASON decides the direction. 'sale_return' is an inbound reason.
+ * ⚠️ 'bill_no' is carried because GET /api/till/bills filters on business_json ? 'bill_no' — without it the
+ * credit note is stored correctly and is invisible in the day's list, which is the worst of both.
+ * ⚠️ NO series KEY. That is the sales run's high-water mark and a credit note has a run of its own.
+ */
+function chitOfCN(cn){
+  return {
+    recipients: [{ self: true, name: 'self' }],
+    purpose: 'credit_note',
+    subject: 'Credit note ' + cn.no, manual_subject: 'Credit note ' + cn.no,
+    client_ref: cn.no,
+    business_json: {
+      customer: cn.customer || { name: 'Walk-in' },
+      till: { id: cn.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: cn.by || null },
+      doc: 'credit_note', slip: 'credit_note',
+      bill_no: cn.no, billed_at: cn.at,
+      catalogue_version: cn.catalogue_version || null,
+      against: cn.against || null,
+      reason: cn.reason || null, reason_words: cn.reason_words || null,
+      /* ⭐ money OUT, named as its own thing — every reader of business_json.payment assumes money taken */
+      refund: { parts: cn.refunds || [], total: r2(Math.abs(Number(cn.total) || 0)) },
+      heads: cn.heads || null, supply: cn.supply || null, by_rate: cn.by_rate || {},
+      taxable: cn.taxable, tax: cn.tax,
+    },
+    line_items: (cn.lines || []).map(function(l){
+      var o = { particulars: l.name, quantity: Math.abs(Number(l.qty) || 0), unit: l.unit || 'piece',
+                price: l.price, total: l.net };
+      if (l.item_id) o.item_id = l.item_id;
+      if (l.hsn) o.hsn = l.hsn;
+      if (l.gst_rate != null) o.gst_rate = l.gst_rate;
+      return o;
+    }),
+  };
+}
 /**
  * ⭐⭐ A RECEIPT AND A DESPATCH NOTE, AS CHITS. Both are OUR OWN record — a till key may address nobody but itself, and that
  * guarantee is not worth trading for the convenience of naming the other party on the chit. The party is named INSIDE
@@ -3492,7 +3595,14 @@ async function todayBills(){
  * that is the shopkeeper's custom to keep or not, and a till that argued with them about it would be
  * insufferable by the second morning. It marks which bill was the bohni and leaves it there.
  */
-function bohniOf(bills){ return (bills && bills.length) ? bills[0] : null; }
+/**
+ * ⚠️ A RETURN IS NOT A BOHNI. The first sale of the day sets the day's luck; a credit note issued before the
+ * first sale is not a sale at all, and calling it the bohni would be a small daily insult to the custom this
+ * was built for.
+ */
+function bohniOf(bills){
+  return ((bills || []).filter(function(b){ return !isReturnRow(b); })[0]) || null;
+}
 function menuTodayBody(){
   /* painted synchronously from whatever the last read gave us, then repainted when the read lands */
   var bills = TODAY_BILLS;
@@ -3607,7 +3717,9 @@ function dayRepTable(title, cols, rows, foot){
     + '</table></section>';
 }
 function dayReportHTML(bills){
-  var n = bills.length;
+  /* ⚠️ THE COUNT IS OF SALES. The money nets by itself (a credit note is stored negative); the count does not. */
+  var back = (bills || []).filter(isReturnRow);
+  var n = (bills || []).length - back.length;
   var agg = dayRepRows(bills);
   var total = bills.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
   var taxable = bills.reduce(function(a, b){ return r2(a + (Number(b.taxable) || 0)); }, 0);
@@ -3668,7 +3780,7 @@ function dayReportHTML(bills){
     { label: 'Gross', num: true }, { label: 'Offers', num: true }, { label: 'Net', num: true }], sold,
     ['<b>' + dayRepCount(sold.length, 'product', 'products') + '</b>', '', '<b>' + qty + '</b>', '', '', '<b>' + money(total) + '</b>']);
 
-  var billRows = bills.map(function(b){
+  var billRows = (bills || []).filter(function(b){ return !isReturnRow(b); }).map(function(b){
     var ct = (b.lines || []).reduce(function(a, l){ return r2(a + (Number(l.qty) || 0)); }, 0);
     var how = (b.payments || []).map(function(x){ return x.how; }).filter(Boolean).join(' + ') || '\u2014';
     return [esc(String(b.no || '')), esc(hhmm(b.at)), esc(((b.customer || {}).name) || 'Walk-in'),
@@ -3677,6 +3789,16 @@ function dayReportHTML(bills){
   var billsT = dayRepTable('Every bill', [{ label: 'No' }, { label: 'Time' }, { label: 'Customer' },
     { label: 'Items', num: true }, { label: 'Paid', num: true }, { label: 'Total', num: true }], billRows,
     ['<b>' + dayRepCount(n, 'bill', 'bills') + '</b>', '', '', '<b>' + qty + '</b>', '', '<b>' + money(total) + '</b>']);
+
+  var returned = back.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
+  var backT = dayRepTable('Returns', [{ label: 'Credit note' }, { label: 'Against' }, { label: 'Why' },
+    { label: 'Given back', num: true }],
+    back.map(function(b){
+      return [esc(String(b.no || '')), esc(((b.against || {}).bill_no) || ''),
+              esc(b.reason_words || b.reason || ''), money(Math.abs(Number(b.total) || 0))];
+    }),
+    back.length ? ['<b>' + dayRepCount(back.length, 'credit note', 'credit notes') + '</b>', '', '',
+                   '<b>' + money(returned) + '</b>'] : null);
 
   var notes = '<footer class="drfoot">'
     + '<div><b>Bohni</b> \u2014 ' + (bohni
@@ -3687,7 +3809,7 @@ function dayReportHTML(bills){
     + '<div class="drwarn">This counter counts what was SOLD; it does not hold stock figures.</div>'
     + '</footer>';
 
-  return head + '<div class="drbody">' + summary + pay + rate + items + billsT + notes + '</div>';
+  return head + '<div class="drbody">' + summary + pay + rate + items + billsT + backT + notes + '</div>';
 }
 async function dayReport(){
   var d = document.getElementById('dayrep'); if (!d) return;
@@ -8274,12 +8396,34 @@ async function finish(){
  * ⚠️ It counts the bills THIS COUNTER took today, and says so on the sheet. A shop with two counters closes each of them; adding
  * them up is ChitBridge's job, not a device's, and a sheet that quietly implied otherwise would be worse than no sheet at all.
  */
+/** a document this counter issued that takes money back, rather than one that takes money */
+function isReturnRow(b){ return !!(b && b.kind === 'credit_note'); }
 function dayCloseSheet(rows){
-  var d = { bills:(rows||[]).length, first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
-            rate:{}, modes:{}, people:{}, items:{}, taxed:false };
+  /**
+   * ⚠️⚠️ A RETURN IS NOT A BILL, AND THE COUNT MUST NOT SAY IT IS (2026-09-18). Every accumulator below is a
+   * bare "+", so a credit note stored with negative figures nets the MONEY by itself — which is exactly why the
+   * sign convention was chosen. But four things do not net, and each one would have lied:
+   *   · d.bills was rows.length, so a return counted as a sale made
+   *   · d.first / d.last are the invoice RUN, and a credit note has a run of its own to jump between
+   *   · people[who].bills++ counted a refund as a sale by that person
+   *   · expected_cash: cash handed BACK leaves the drawer, and no accumulator produced a negative Cash mode
+   * So returns are separated here, netted where netting is right, and stated on their own line.
+   */
+  var back = (rows || []).filter(isReturnRow);
+  var sales = (rows || []).filter(function(b){ return !isReturnRow(b); });
+  var d = { bills: sales.length, first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
+            rate:{}, modes:{}, people:{}, items:{}, taxed:false,
+            /* ⭐ said out loud, never folded away — a day with returns in it is a different day */
+            returns: back.length, returned: 0, refunded: {} };
+  back.forEach(function(b){
+    d.returned = r2(d.returned + Math.abs(Number(b.total) || 0));
+    ((b.refunds) || []).forEach(function(x){
+      d.refunded[x.how] = r2((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
+    });
+  });
   (rows||[]).slice().sort(function(a,b){ return String(a.at).localeCompare(String(b.at)); }).forEach(function(b){
-    if (!d.first) d.first = b.no;
-    d.last = b.no;
+    /* ⚠️ the numbers below are the SALES run; a credit note's number belongs to its own series */
+    if (!isReturnRow(b)) { if (!d.first) d.first = b.no; d.last = b.no; }
     d.total = r2(d.total + (b.total||0)); d.saved = r2(d.saved + (b.saved||0));
     d.gross = r2(d.gross + (b.total||0) + (b.saved||0));
     d.taxable = r2(d.taxable + (b.taxable||0)); d.tax = r2(d.tax + (b.tax||0));
@@ -8289,7 +8433,9 @@ function dayCloseSheet(rows){
     if (b.payment_asked === false) { d.unasked = (d.unasked || 0) + 1; d.unasked_total = r2((d.unasked_total || 0) + (b.total || 0)); }
     var who = (b.by && b.by.name) || 'the shop';
     d.people[who] = d.people[who] || { bills:0, total:0 };
-    d.people[who].bills++; d.people[who].total = r2(d.people[who].total + (b.total||0));
+    /* ⚠️ a refund is not a sale that person made; the money nets, the COUNT does not */
+    if (!isReturnRow(b)) d.people[who].bills++;
+    d.people[who].total = r2(d.people[who].total + (b.total||0));
     (b.lines||[]).forEach(function(l){
       var k = l.name || l.item_id;
       d.items[k] = d.items[k] || { qty:0, net:0, unit:l.unit||'' };
@@ -8308,10 +8454,25 @@ function dayCloseSheet(rows){
   });
   d.cash = r2(d.modes.Cash || 0);
   d.float = (WHO && WHO.float) || 0;
-  d.expected_cash = r2(d.cash + d.float);
+  /**
+   * ⚠️⚠️ CASH HANDED BACK HAS LEFT THE DRAWER. Nothing here produces a negative Cash mode — a refund is recorded
+   * in its own 'refunds' array, precisely because every reader of 'payments' assumes money taken — so the drawer
+   * has to be told separately or the count at the end of the day would be short by exactly the refunds and
+   * somebody would be accused of it.
+   */
+  d.cash_back = r2(d.refunded.Cash || 0);
+  d.expected_cash = r2(d.cash + d.float - d.cash_back);
   return d;
 }
 function dayCloseHTML(d){
+  /* ⭐ a returns block, only when there were returns — a line of zeroes every day trains people to skip it */
+  var backBlock = d.returns
+    ? '<hr><div><b>RETURNS</b></div>'
+      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(d.returned) + '</span></div>'
+      + Object.keys(d.refunded).sort().map(function(how){
+          return '<div>back in ' + esc(how) + '<span style="float:right">' + money(d.refunded[how]) + '</span></div>';
+        }).join('')
+    : '';
   var shop = (S && S.shop) || {};
   var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
@@ -8324,6 +8485,9 @@ function dayCloseHTML(d){
     + t('Bills', String(d.bills))
     + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
     + (d.saved > 0 ? t('Before offers', money(d.gross)) + t('Given away', '-' + money(d.saved)) : '')
+    + backBlock
+    /* ⚠️ TAKEN IS ALREADY NET OF RETURNS, because a credit note is stored negative and this is a bare sum.
+       The returns block above says how much of the day that was, so the figure can be explained. */
     + solid + t('TAKEN', money(d.total), true) + solid
     + (d.taxed ? dash + '<div style="font-weight:700">Tax</div>'
         + Object.keys(d.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
@@ -8338,6 +8502,7 @@ function dayCloseHTML(d){
         : '')
     + dash + '<div style="font-weight:700">In the drawer</div>'
     + t('Float at the start', money(d.float)) + t('Cash taken', money(d.cash))
+    + (d.cash_back ? t('Cash given back', '-' + money(d.cash_back)) : '')
     + t('Should be there', money(d.expected_cash), true)
     + '<div style="font-size:.85em">Count it and hand over (F7) to record the difference.</div>'
     + dash + '<div style="font-weight:700">Who billed</div>'
@@ -9331,10 +9496,15 @@ async function resendBill(no){
  * device — which the server settles, because both copies carry the same `billed_at` — and never leaves it nowhere.
  * ⚠️ BOUNDED. A counter still sharing its prefix could be handed another taken number; after twenty attempts the
  * bill stops and says so, rather than burning numbers for ever.
- * ⚠️ ONLY SALES. A receipt or despatch note has a series of its own and belongs to a person to settle.
+ * ⚠️ ONLY SALES. A receipt, a despatch note or a credit note has a series of its own and belongs to a person
+ * to settle.
+ * ⚠️⚠️ AN ALLOW-LIST, NOT A DENY-LIST (2026-09-18). This read 'not a receipt and not a despatch', so ANY kind
+ * invented later was a sale by default — a credit note would have been renumbered out of the SALES series on a
+ * 409 and re-sent by closeCounter() as though it were a bill. A list of what this IS cannot be wrong that way;
+ * a list of what it is NOT is wrong the moment anything new exists. [[feedback-whitelist-drops-silently]]
  */
 function isSaleRow(b){
-  return !!(b && !b.tillPost && Array.isArray(b.lines) && b.kind !== 'receipt' && b.kind !== 'despatch');
+  return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
 async function renumberBill(bill, why){
   var tries = Number(bill._renum) || 0;
@@ -10311,11 +10481,245 @@ async function openBills(keepOpen){
             + '<div class="u">' + esc(new Date(b.at).toTimeString().slice(0,5)) + ' · '
           + esc((b.customer && b.customer.name) || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + ' · ' + ((b.lines||[]).length) + ' item(s)</div></span>'
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
-          + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button></div>';
+          + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button>'
+          /* ⭐ a return starts from the bill it undoes — there is nowhere else it could sensibly start */
+          + (b.kind === 'credit_note' ? ''
+              : '<button class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
+                + ' onclick="retOpen(\'' + esc(b.no) + '\')">return</button>') + '</div>';
       }).join('')
       : '<div style="color:var(--dim)">No bills yet today.</div>');
   if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
   try { document.getElementById('tab_today').className = 'pill on'; document.getElementById('tab_earlier').className = 'pill'; } catch (_) {}
+}
+/**
+ * ── ⭐⭐⭐ TAKING SOMETHING BACK — A GST §34 CREDIT NOTE ([TILL-42], 2026-09-18) ───────────────────────────────
+ *
+ * Athi: *"refund are also can be taken care of."* And from the gap list: *"there is NO path. A shop cannot take
+ * anything back. This blocks every retail use."*
+ *
+ * ⚠️⚠️ A RETURN IS NOT A NEGATIVE SALE, AND THAT IS THE WHOLE DESIGN. Under GST §34 a return is its OWN
+ * document — a credit note, in its own consecutive series, naming the invoice it reverses and the reason. It is
+ * not an edit of the original bill: the original was issued, printed, possibly filed, and nothing may go back
+ * and change it. So this writes a new document and leaves the sale exactly as it was.
+ *
+ * ⚠️⚠️ THE FIGURES COME OFF THE ORIGINAL, NEVER RECOMPUTED. The rate, the taxable value, the offer that applied
+ * — all of it is read from the stored bill and scaled by the quantity coming back. Recomputing against today's
+ * slabs would quietly restate a filed return, which is the same rule the reprint already follows.
+ *
+ * ⚠️ THE SIGN: authored POSITIVE, stored NEGATIVE. You say "two came back", and the document holds −2. This is
+ * the rule lib/inventory already settled for stock — the caller gives a positive quantity, the REASON decides
+ * the direction, and the log holds the signed figure — and following it means every bare "+" that adds up a
+ * day nets the return without being taught anything. [[feedback-adopt-dont-reinvent]]
+ */
+var RET_FOR = null, RET_QTY = null, RET_WHY = '', RET_HOW = '';
+/* the reasons GST recognises for a credit note, in the words a shopkeeper would use */
+var RET_WHYS = [
+  ['returned', 'Brought back'],
+  ['damaged', 'Damaged or spoilt'],
+  ['wrong', 'Wrong item'],
+  ['short', 'Short delivered'],
+  ['rate', 'Priced wrong'],
+];
+/** how much of this line has NOT already come back on an earlier credit note */
+function retLeft(bill, n){
+  var l = (bill.lines || [])[n] || {};
+  var had = Number(l.qty) || 0;
+  var back = 0;
+  ((RET_PRIOR && RET_PRIOR[bill.no]) || []).forEach(function(cn){
+    /* ⚠️ MATCHED ON from_line, NEVER ON POSITION — see retMoney(). A credit note carries only what came back. */
+    (cn.lines || []).forEach(function(cl){
+      if (cl && Number(cl.from_line) === n) back = r2(back + Math.abs(Number(cl.qty) || 0));
+    });
+  });
+  return r2(Math.max(0, had - back));
+}
+var RET_PRIOR = null;
+/** every credit note already issued against this bill — so a shop cannot refund the same goods twice */
+async function retPriorFor(no){
+  var out = {};
+  try {
+    var all = (HOST && HOST.bills) ? (await HOST.bills()) : [];
+    all.forEach(function(b){
+      if (b && b.kind === 'credit_note' && b.against && b.against.bill_no) {
+        (out[b.against.bill_no] = out[b.against.bill_no] || []).push(b);
+      }
+    });
+  } catch (_) {}
+  return out;
+}
+async function retOpen(no){
+  var rows = [];
+  try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) {}
+  var bill = rows.filter(function(b){ return String(b.no) === String(no); })[0];
+  if (!bill) { toastLine('That bill is not on this counter any more.'); return; }
+  if (bill.kind === 'credit_note') { toastLine('That is already a credit note.'); return; }
+  RET_PRIOR = await retPriorFor(no);
+  RET_FOR = bill; RET_QTY = {}; RET_WHY = 'returned';
+  RET_HOW = ((bill.payments || [])[0] || {}).how || 'Cash';
+  try { document.getElementById('billsdlg').close(); } catch (_) {}
+  retPaint();
+  var d = document.getElementById('retdlg'); if (d && d.showModal && !d.open) d.showModal();
+}
+function retSet(n, v){
+  var left = retLeft(RET_FOR, n);
+  RET_QTY[n] = Math.max(0, Math.min(left, r2(Number(v) || 0)));
+  retPaint();
+}
+function retStep(n, d){ retSet(n, (Number(RET_QTY[n]) || 0) + d); }
+function retAll(){
+  (RET_FOR.lines || []).forEach(function(l, n){ RET_QTY[n] = retLeft(RET_FOR, n); });
+  retPaint();
+}
+function retWhy(v){ RET_WHY = v; retPaint(); }
+function retHow(v){ RET_HOW = v; retPaint(); }
+/**
+ * ⭐ WHAT THE SHOP OWES BACK. Every figure is the ORIGINAL line's own, scaled by the share coming back — so a
+ * line that was sold at an offer is refunded at what was actually charged for it, not at today's price.
+ */
+function retMoney(){
+  var out = { lines: [], total: 0, taxable: 0, tax: 0, saved: 0, byRate: {}, count: 0 };
+  (RET_FOR ? (RET_FOR.lines || []) : []).forEach(function(l, n) {
+    var q = Number(RET_QTY[n]) || 0;
+    if (!(q > 0)) return;
+    var had = Number(l.qty) || 0;
+    var share = had > 0 ? (q / had) : 0;              /* ⭐ the SHARE, so a part return refunds a part of the line */
+    var net = r2((Number(l.net) || 0) * share);
+    var taxable = r2((Number(l.taxable) || 0) * share);
+    var tax = r2((Number(l.tax) || 0) * share);
+    var save = r2((Number(l.save) || 0) * share);
+    /**
+     * ⚠️⚠️ from_line IS NOT DECORATION. A credit note holds only the lines actually coming back, so its line 0
+     * may be the original's line 3. retLeft() first matched prior credit notes BY ARRAY INDEX and would have
+     * charged a return of line 3 against line 0 — leaving line 3 fully returnable a second time and line 0
+     * unreturnable. A shop could have refunded the same goods twice. Found before it shipped, by asking what
+     * "already returned" means when two lines are returned separately.
+     */
+    out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net,
+                                          gross: r2(-(Number(l.gross) || 0) * share),
+                                          taxable: -taxable, tax: -tax, save: -save }));
+    out.total = r2(out.total + net); out.taxable = r2(out.taxable + taxable);
+    out.tax = r2(out.tax + tax); out.saved = r2(out.saved + save);
+    out.count = r2(out.count + q);
+    var rt = Number(l.gst_rate) || 0;
+    if (rt) {
+      out.byRate[rt] = out.byRate[rt] || { taxable: 0, tax: 0 };
+      out.byRate[rt].taxable = r2(out.byRate[rt].taxable + taxable);
+      out.byRate[rt].tax = r2(out.byRate[rt].tax + tax);
+    }
+  });
+  return out;
+}
+function retPaint(){
+  var box = document.getElementById('retbody'); if (!box || !RET_FOR) return;
+  var m = retMoney();
+  var ways = {};
+  (RET_FOR.payments || []).forEach(function(x){ ways[x.how] = true; });
+  ways.Cash = true;                                  /* a shop can always hand back cash */
+  box.innerHTML =
+    '<div class="retagainst">Against <b>' + esc(RET_FOR.no) + '</b> · '
+      + esc(new Date(RET_FOR.at).toTimeString().slice(0, 5)) + ' · ' + money(Number(RET_FOR.total) || 0) + '</div>'
+    + '<div class="retlines">' + (RET_FOR.lines || []).map(function(l, n){
+        var left = retLeft(RET_FOR, n), q = Number(RET_QTY[n]) || 0;
+        return '<div class="retrow' + (left > 0 ? '' : ' none') + '" data-testid="till-ret-' + n + '">'
+          + '<span class="rn"><b>' + esc(l.name) + '</b>'
+            + '<i>' + (left > 0 ? ('sold ' + (Number(l.qty) || 0) + ' · ' + left + ' can come back')
+                                : 'already fully returned') + '</i></span>'
+          + (left > 0
+              ? '<span class="rq">'
+                + '<button data-testid="till-ret-less-' + n + '" onclick="retStep(' + n + ',-1)">−</button>'
+                + '<input data-testid="till-ret-qty-' + n + '" value="' + q + '" inputmode="decimal"'
+                + ' onchange="retSet(' + n + ',this.value)">'
+                + '<button data-testid="till-ret-more-' + n + '" onclick="retStep(' + n + ',1)">+</button></span>'
+              : '<span class="rq"></span>')
+          + '</div>';
+      }).join('') + '</div>'
+    + '<div class="retfoot">'
+      + '<button class="pill" data-testid="till-ret-all" onclick="retAll()">All of it</button>'
+      + '<label>Why <select data-testid="till-ret-why" onchange="retWhy(this.value)">'
+        + RET_WHYS.map(function(w){ return '<option value="' + w[0] + '"' + (RET_WHY === w[0] ? ' selected' : '')
+            + '>' + w[1] + '</option>'; }).join('') + '</select></label>'
+      + '<label>Back as <select data-testid="till-ret-how" onchange="retHow(this.value)">'
+        + Object.keys(ways).map(function(w){ return '<option value="' + esc(w) + '"' + (RET_HOW === w ? ' selected' : '')
+            + '>' + esc(w) + '</option>'; }).join('') + '</select></label>'
+    + '</div>'
+    + '<div class="rettotal"><span>To give back</span><b data-testid="till-ret-total">' + money(m.total) + '</b></div>';
+  var go = document.getElementById('retgo');
+  if (go) { go.disabled = !(m.total > 0); go.textContent = m.total > 0 ? ('Give back ' + money(m.total)) : 'Nothing chosen'; }
+}
+function retClose(){
+  var d = document.getElementById('retdlg'); if (d && d.open) { try { d.close(); } catch (_) {} }
+  RET_FOR = null; RET_QTY = null; RET_PRIOR = null;
+}
+/**
+ * ⭐⭐ ISSUE IT. A credit note is a document, so it goes through the same queue a bill does and is as safe
+ * offline — it is written locally, numbered from its OWN series, and sent when the line is there.
+ * ⚠️ THE ANSWER IS READ BEFORE THE SHEET CLOSES. retClose() nulls RET_FOR and retMoney() reads it — the same
+ * mistake that once added every modified order with no modifiers at all.
+ */
+async function retIssue(){
+  if (!RET_FOR) return;
+  var m = retMoney();
+  if (!(m.total > 0)) return;
+  var against = RET_FOR, why = RET_WHY, how = RET_HOW;
+  var words = (RET_WHYS.filter(function(w){ return w[0] === why; })[0] || RET_WHYS[0])[1];
+  if (!(await sure('Give back ' + money(m.total) + ' in ' + how + ' against ' + against.no + '?',
+                   'Yes, give it back', 'Take a return'))) return;
+  retClose();
+  var body = {
+    /* ⚠️ THE DISCRIMINATOR. isSaleRow() is an allow-list of sale kinds, so this keeps a credit note out of the
+       renumber-and-resend path that belongs to bills. */
+    kind: 'credit_note',
+    against: { bill_no: against.no, billed_at: against.at, chit_id: (against._sent && against._sent.chit_id) || null },
+    reason: why, reason_words: words,
+    lines: m.lines,
+    /* ⚠️ NEGATIVE, so every accumulator that adds up a day nets this without being taught about returns */
+    total: -m.total, taxable: -m.taxable, tax: -m.tax, saved: -m.saved,
+    by_rate: (function(){ var o = {}; Object.keys(m.byRate).forEach(function(k){
+        o[k] = { taxable: -m.byRate[k].taxable, tax: -m.byRate[k].tax }; }); return o; })(),
+    /* ⚠️ THE HEADS AS ISSUED. A shop's registration can change; a credit note states what the ORIGINAL bill
+       was issued under, or it would reverse a tax under a head nobody charged. */
+    heads: against.heads || null, supply: against.supply || null,
+    /* ⭐⭐ MONEY OUT — the counter's first. Recorded as its own array rather than a negative payment, because a
+       payment is money TAKEN and every reader of 'payments' assumes that. */
+    refunds: [{ how: how, amount: m.total }],
+    customer: against.customer || { name: 'Walk-in' },
+    by: WHO ? { id: WHO.id, name: WHO.name } : null,
+  };
+  var r = { ok: false };
+  try { r = await HOST.creditNote(body); } catch (e) { r = { ok: false, error: e && e.message }; }
+  if (!r || !r.ok) { toastLine('The return was not recorded: ' + ((r && (r.why || r.error)) || 'unknown')); return; }
+  var cn = r.bill || body;
+  var html = retSlipHTML(cn);
+  var boxEl = document.getElementById('slipbox');
+  if (boxEl) { boxEl.className = 'slipbox'; boxEl.innerHTML = html; }
+  var t = document.getElementById('sliptitle'); if (t) t.textContent = 'Credit note ' + (cn.no || '');
+  var sd = document.getElementById('slipdlg'); if (sd && sd.showModal && !sd.open) sd.showModal();
+  autoPrint(html);
+  toastLine('Credit note ' + (cn.no || '') + ' — ' + money(m.total) + ' back in ' + how);
+  try { TODAY_BILLS = null; paintStatus(); } catch (_) {}
+}
+/**
+ * ⭐ THE PAPER. §34 wants the original invoice named on it, the reason, and the tax being reversed — a customer
+ * and an inspector are both entitled to see which sale this undoes.
+ */
+function retSlipHTML(cn){
+  var shop = ls.get(shopLs('cb_till_shop'), '') || ls.get('cb_till_name', 'Counter');
+  return '<div style="font:13px/1.45 ui-monospace,monospace">'
+    + '<div style="font-size:17px;font-weight:800">CREDIT NOTE</div>'
+    + '<div>' + esc(shop) + '</div>'
+    + '<div style="font-size:15px;font-weight:700">' + esc(cn.no || '') + '</div>'
+    + '<div>' + esc(new Date(cn.at || Date.now()).toLocaleString('en-IN')) + '</div>'
+    + '<div>Against bill ' + esc((cn.against && cn.against.bill_no) || '') + '</div>'
+    + '<div>Reason: ' + esc(cn.reason_words || cn.reason || '') + '</div><hr>'
+    + (cn.lines || []).map(function(l){
+        return '<div>' + Math.abs(Number(l.qty) || 0) + ' × ' + esc(l.name)
+          + ' <span style="float:right">' + money(Math.abs(Number(l.net) || 0)) + '</span></div>';
+      }).join('')
+    + '<hr><div style="font-weight:800">Given back'
+    + '<span style="float:right">' + money(Math.abs(Number(cn.total) || 0)) + '</span></div>'
+    + (Number(cn.tax) ? '<div>of which tax <span style="float:right">' + money(Math.abs(Number(cn.tax))) + '</span></div>' : '')
+    + '<div>in ' + esc(((cn.refunds || [])[0] || {}).how || 'Cash') + '</div>'
+    + '</div>';
 }
 /**
  * ⭐ THE SHOP'S SCREEN, FROM WHERE THE SHOPKEEPER IS STANDING. Athi, 2026-09-09: *"in the counter screen I couldn't see the 'put it

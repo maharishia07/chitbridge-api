@@ -67,11 +67,30 @@ t('every fallback copy sits directly beside a CBTax.splitLineTax() call it falls
   });
 });
 
+/**
+ * ⚠️⚠️ THE WHOLE FUNCTION, NOT THE FIRST 2400 CHARACTERS. This guard used a fixed window, and on 2026-09-18 a
+ * comment block added to dayCloseSheet() pushed its CBTax.splitLineTax() call past the cut — so the guard
+ * reported that the function had started doing its own tax arithmetic again, which it had not. A guard that
+ * fails for a reason that is not the reason it exists trains people to ignore it, which is how the real
+ * regression gets through. Reading to the closing brace says exactly what was meant all along.
+ * ⚠️ Braces inside strings and comments are not discounted — they balance out in practice here, and a real
+ * parser for one assertion is a worse trade than a guard that is one brace too generous.
+ */
+function bodyOf(at) {
+  let depth = 0, started = false;
+  for (let i = at; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '{') { depth++; started = true; }
+    else if (ch === '}') { depth--; if (started && depth === 0) return src.slice(at, i + 1); }
+  }
+  return src.slice(at);
+}
+
 t('billMoney(), dayCloseSheet() and rcvLineTax() each call CBTax.splitLineTax(), not their own arithmetic', () => {
   ['function billMoney(', 'function dayCloseSheet(', 'function rcvLineTax('].forEach((sig) => {
     const at = src.indexOf(sig);
     if (at < 0) throw new Error(sig + ' not found — this guard is stale, or the function was renamed');
-    const body = src.slice(at, at + 2400);
+    const body = bodyOf(at);
     if (!/CBTax\.splitLineTax\(/.test(body)) {
       throw new Error(sig + ' no longer calls CBTax.splitLineTax() — it is computing the split itself again');
     }

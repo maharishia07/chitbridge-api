@@ -109,6 +109,7 @@ const generateAutoSubject = (purpose, senderName, date) => {
     receipt: 'Receipt',
     inquiry: 'Inquiry',
     delivery_note: 'Delivery Note',
+    credit_note: 'Credit Note',
     general: 'Message'
   };
   const label = purposes[purpose] || 'Chit';
@@ -250,7 +251,9 @@ router.post('/send',
     body('purpose')
       .optional()
       .trim()
-      .isIn(['order','invoice','receipt','inquiry','delivery_note','general'])
+      /* ⭐ 'credit_note' — a GST §34 return from the counter. This allow-list refuses at the door, and a 4xx is
+         FINAL at the counter (never queued, never retried) — so a purpose missing from here is a return lost. */
+      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note'])
       .withMessage('Invalid purpose'),
     body('manual_subject').optional().trim().isLength({ max: 500 }),
     // Per-send copy choice — honoured ONLY on a pure self-chit (see the pureSelfChit branch); ignored elsewhere.

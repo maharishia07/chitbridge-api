@@ -1448,7 +1448,9 @@ router.get('/bills', auth, async (req, res) => {
         * The identity of a bill is the entity, the purpose, and the fact that it carries a bill_no. Direction is a fact about
         * who the counterparty was, and for a shop billing itself it is not the question being asked.
         */
-        WHERE h.entity_id = $1 AND h.purpose IN ('order','offer')
+        /* ⭐ credit notes belong in the day's list. Left out, the counter would show a day's sales that the
+           books disagree with, and the one document a shopkeeper most needs to find again would be invisible. */
+        WHERE h.entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
         ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit]));
