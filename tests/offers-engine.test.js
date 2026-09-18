@@ -26,6 +26,38 @@ const skippedWhy = (res, label) => (res.skipped.find((s) => s.label === label) |
 
 console.log('\n══ OFFER ENGINE · the matrix ══\n');
 
+console.log('— ⭐ the reference basket (NOW-reliability-usability §R3, and every render) —');
+/**
+ * ⚠️⚠️ THE ONE SUM ATHI CAN CHECK AGAINST A PICTURE. FullDesktop, FullTabletPay, FullPhonePay and
+ * PanelSizing all print ₹2,750.25 with "Saved ₹144.75"; §R3 writes the same basket out by hand. If this
+ * test ever disagrees with those four renders, one of them is lying to a shopkeeper about money.
+ * ⚠️ The figures below are FROM THE RULE, not from a run. A failure here is the engine to fix or the rule to
+ * correct — never a number to adjust. [[feedback-critic-review-method]]
+ */
+it('⭐⭐⭐ 5×64 + 5×163 + 5×352 = ₹2,895.00, 5% off → saved ₹144.75, total ₹2,750.25', () => {
+  const basket = [L('tea', 64, 5), L('health', 163, 5), L('coffee', 352, 5)];
+  /* the list value, before anything comes off — 5 × (64 + 163 + 352) = 5 × 579 */
+  const listValue = basket.reduce((t, l) => t + l.unitPrice * l.qty, 0);
+  assert.strictEqual(listValue, 2895);
+  const r = ev(basket, [{ id: 'g', label: 'Basket 5%', kind: 'percent_off', percent: 5, scope: 'cart' }]);
+  assert.strictEqual(sum(r), -144.75, 'the saving is not the ₹144.75 every render prints');
+  assert.strictEqual(r.total, 2750.25, 'the total is not the ₹2,750.25 every render prints');
+});
+/**
+ * ⚠️ AND IT MUST BE EXACT, not near. 0.05 × 2895 is one of the sums that comes back 144.75000000000003 if it
+ * is done in floats and rounded late. §R3: *"integer minor units, no floats"*. A test that accepts "close"
+ * cannot tell a rounding rule from a rounding bug.
+ */
+it('⚠️ and it is EXACT — the total in paise is an integer, with no float dust', () => {
+  const r = ev([L('tea', 64, 5), L('health', 163, 5), L('coffee', 352, 5)],
+    [{ id: 'g', label: 'Basket 5%', kind: 'percent_off', percent: 5, scope: 'cart' }]);
+  const paise = r.total * 100;
+  assert.strictEqual(Math.round(paise), 275025);
+  assert.ok(Math.abs(paise - 275025) < 1e-9, 'the total carries float dust: ' + paise);
+  /* ⚠️ the parts must add up to the whole — a saving that does not reconcile is the bug §R3 exists to catch */
+  assert.strictEqual(Math.round((2895 + sum(r)) * 100) / 100, r.total);
+});
+
 console.log('— kinds, alone —');
 it('percent off a line: 2 × 200 at 10% → −40, total 360', () => {
   const r = ev([L('a', 200, 2)], [{ id: 'p', label: 'Flat 10%', kind: 'percent_off', percent: 10, scope: 'line' }]);
