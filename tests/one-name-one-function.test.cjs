@@ -40,14 +40,40 @@ function scriptOf(file) {
  * Column 0 is the whole test: everything in this file that means to be callable from an onclick is written flush
  * left, and anything indented is inside something else.
  */
+/**
+ * ⚠⚠ AND `var` IS THE SAME FAULT WITH A DIFFERENT KEYWORD (2026-09-18, the second one in a day). Building
+ * MaintV2's "changed-today with undo" I declared `var CHANGED = []` — and the counter has had
+ * `var CHANGED = { stock: [], price: [] }` since the Price-change screen was folded into Maintenance. Two
+ * declarations in one scope: the second assignment wins, `CHANGED.price` becomes undefined, and the pane that
+ * already worked throws on `.length`. Caught by reading the file, which is not a method.
+ *
+ * ⚠ A `var` redeclaration is legal JavaScript and silent — exactly like the function case above — so the only
+ * thing that can see it is something that COUNTS the names. [[feedback-duplicate-function-hoisting]]
+ * ⚠ Multiple names per statement are read (`var a = 1, b = 2;`), because that is how this file declares most
+ * of its state and a reader that missed them would pass while the fault sat in front of it.
+ */
 function topLevelNames(src) {
   const seen = new Map();
+  const note = (name, n) => { const at = seen.get(name) || []; at.push(n + 1); seen.set(name, at); };
   src.split('\n').forEach((line, n) => {
-    const m = /^function\s+([A-Za-z_$][\w$]*)\s*\(/.exec(line);
-    if (!m) return;
-    const at = seen.get(m[1]) || [];
-    at.push(n + 1);
-    seen.set(m[1], at);
+    const fn = /^function\s+([A-Za-z_$][\w$]*)\s*\(/.exec(line);
+    if (fn) { note(fn[1], n); return; }
+    /* ⚠ column 0 only — an indented var is inside something, and shadowing there is ordinary and correct */
+    const v = /^var\s+(.+)$/.exec(line);
+    if (!v) return;
+    /* take the declared NAMES only: split on commas that are not inside brackets, then the identifier before = */
+    let depth = 0, buf = '', parts = [];
+    for (const ch of v[1]) {
+      if ('([{'.includes(ch)) depth++;
+      else if (')]}'.includes(ch)) depth--;
+      if (ch === ',' && depth === 0) { parts.push(buf); buf = ''; continue; }
+      buf += ch;
+    }
+    parts.push(buf);
+    parts.forEach((p) => {
+      const id = /^\s*([A-Za-z_$][\w$]*)/.exec(p);
+      if (id) note(id[1], n);
+    });
   });
   return seen;
 }
@@ -76,13 +102,20 @@ FILES.forEach(([label, file]) => {
     const planted = topLevelNames('function a(){}\nfunction b(){}\n  function a(){}\nfunction a(){}\n');
     assert.deepStrictEqual(planted.get('a'), [1, 4], 'the indented one must NOT count — it is nested');
     assert.strictEqual(planted.get('b').length, 1);
+    /* ⚠ the var half, planted the same way — including the real shape that caused it */
+    const vars = topLevelNames('var CHANGED = { stock: [], price: [] };\nvar x = 1, y = 2;\n  var x = 9;\nvar CHANGED = [];\n');
+    assert.deepStrictEqual(vars.get('CHANGED'), [1, 4], 'the two CHANGED declarations must both be counted');
+    assert.deepStrictEqual(vars.get('y'), [2], 'a second name in one statement must be seen');
+    assert.deepStrictEqual(vars.get('x'), [2], 'the indented var must NOT count — it is nested');
   });
 });
 
 it('⭐ and it is looking at a real file with real functions in it', () => {
   const names = topLevelNames(scriptOf(FILES[0][1]));
-  assert.ok(names.size > 200, 'only ' + names.size + ' top-level functions found — the reader is probably broken');
+  assert.ok(names.size > 200, 'only ' + names.size + ' top-level names found — the reader is probably broken');
   assert.ok(names.has('paintCart'), 'paintCart not seen — the reader is not reading the counter');
+  assert.ok(names.has('CHANGED'), 'CHANGED not seen — the var half of the reader is not working');
+  assert.ok(names.has('CART'), 'CART not seen — a var declared alongside others on one line is being missed');
 });
 
 console.log('  ' + pass + ' checks');

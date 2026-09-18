@@ -1145,6 +1145,9 @@
   .eg b{color:var(--ok);font-weight:800}
   .swline.pending .eg b{color:var(--warn)}
   .swtxt{color:var(--dim);font-size:.85em;min-width:0}
+  /* ⭐ a changed-today row carries its undo on the same line — see changedUndo() */
+  .swtxt.chg{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;color:var(--ink)}
+  .swtxt.chg .pill{flex:0 0 auto}
   /* ⭐ a switch, not a checkbox — it is a STATE of the product, and it takes effect the moment it is moved.
      38px of height keeps the NN/g touch target the row's stepper already follows. */
   .sw{width:52px;height:30px;border-radius:999px;border:1px solid var(--edge);background:var(--tint);
@@ -3243,7 +3246,11 @@ async function load(){
      * so they looked under the fallback name and found nothing. A break vanished on reload ([TILL-25] caught it) — and so,
      * for longer, did the cashier signed in at the counter, which read "nobody signed in" after every refresh.
      */
-    try { whoLoad(); breakLoad(); } catch (_) {}
+    /* ⚠⚠ AND SO IS WHAT CHANGED TODAY — the THIRD list to be caught by this exact timing ([TILL-53]). It is
+       stored under shopLs(), the boot call at the bottom of the file runs before pickHost has learned the key,
+       so it looked under the fallback name, found nothing, and the morning's changes vanished on every reload.
+       The comment above has warned about this since [TILL-25] and I still walked into it. */
+    try { whoLoad(); breakLoad(); changedLoad(); } catch (_) {}
   }
   /**
    * ⚠️⚠️ NOT ONE LINE EARLIER THAN THIS. The owner and any refusal are read HERE, after pickHost, because pickHost is what learns
@@ -6314,6 +6321,53 @@ async function loadWorth(force){
   return WORTH;
 }
 /** ⭐ the reason is the whole value — "expires in 2 days · not sold for 9 days" is arguable; "buy this" is not */
+/**
+ * ⚠⚠ UNDO GOES THROUGH THE SAME WRITE THE CHANGE WENT THROUGH — priceWrite and stockWrite, never a second
+ * path. An undo that wrote differently from the thing it reverses is how two ways of setting one field come to
+ * disagree, and the disagreement shows up as a price nobody can account for.
+ * ⚠ IT IS A NEW CHANGE, NOT AN ERASURE. The write goes to the shop like any other, the shop's own audit trail
+ * records it, and the row is removed from THIS list because the morning's work no longer includes it. Nothing
+ * here pretends the first change did not happen.
+ */
+async function changedUndo(kind, id){
+  var list = (kind === 'price') ? CHANGED.price : CHANGED.stock;
+  var c = list.filter(function(x){ return String(x.item_id || x.name) === String(id); })[0];
+  if (!c) return;
+  var i = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(id); })[0];
+  if (!i) { toastLine('That product is no longer on this counter.'); return; }
+  var backTo = (kind === 'price') ? money(Number(c.was) || 0)
+                                  : (c.was === 'unavailable' ? 'off the shelf' : 'on the shelf');
+  if (!(await sure('Put ' + c.name + ' back to ' + backTo + '?', 'Yes, put it back', 'Undo a change'))) return;
+  var out = null;
+  try {
+    out = (kind === 'price') ? await priceWrite(i, Number(c.was) || 0)
+                            : await stockWrite(i, c.was || 'available');
+  } catch (e) { out = { ok: false, error: e && e.message }; }
+  if (!out || !(out.ok || out.queued)) { toastLine('It was not put back: ' + refusalWords(out)); return; }
+  /* ⚠ the write above has just added its OWN row for the reversal — drop both, or the list reads as two changes
+     when what happened is that nothing, in the end, changed. */
+  CHANGED.price = CHANGED.price.filter(function(x){ return String(x.item_id || x.name) !== String(id); });
+  CHANGED.stock = CHANGED.stock.filter(function(x){ return String(x.item_id || x.name) !== String(id); });
+  changedKeep();
+  toastLine(c.name + ' is back to ' + backTo + (out.queued ? ' — saved here, it will reach the shop.' : '.'));
+  paintCard(); paintHits();
+}
+/** the same rows the card shows, on their own, for when nothing is selected */
+function changedPane(){
+  if (!CHANGED.price.length && !CHANGED.stock.length) return '';
+  return '<div class="cardrow" style="border:0"><label>Changed today</label><div class="swwrap col">'
+    + CHANGED.price.slice(0, 6).map(function(c){
+        return '<span class="swtxt chg">' + esc(c.name) + ' — was ' + money(c.was) + ', now ' + money(c.now)
+          + (c.item_id ? '<button class="pill" data-testid="till-chgp-undo-' + esc(String(c.item_id)) + '"'
+              + ' onclick="changedUndo(\'price\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
+          + '</span>'; }).join('')
+    + CHANGED.stock.slice(0, 6).map(function(c){
+        return '<span class="swtxt chg">' + esc(c.name) + ' — ' + (c.status === 'unavailable' ? 'off the shelf' : 'back on')
+          + (c.item_id && c.was ? '<button class="pill" data-testid="till-chgs-undo-' + esc(String(c.item_id)) + '"'
+              + ' onclick="changedUndo(\'stock\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
+          + '</span>'; }).join('')
+    + '</div></div>';
+}
 function worthBlock(){
   if (!WORTH || !WORTH.length) return '';
   return '<div class="cardrow" style="border:0"><label>Worth an offer</label><div class="swwrap col">'
@@ -6360,7 +6414,10 @@ function paintCard(){
     + '</div></div>';
   var i = cardItem();
   if (!i) { el.innerHTML = display + worthBlock()
-    + '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'; return; }
+    + '<div style="padding:16px;color:var(--dim)">Tap something on the left to change it.</div>'
+    /* ⭐ WITH NOTHING SELECTED THIS IS THE MOST USEFUL THING ON THE PANE. It was only ever drawn beside a chosen
+       product, so the answer to "what have I changed this morning?" required first picking something. */
+    + changedPane(); return; }
   var off = cardVal(i, 'status') === 'unavailable';
   var actualOff = statusOf(i) === 'unavailable';
   var ex = Array.isArray(i.offers_excluded) ? i.offers_excluded.map(String) : [];
@@ -6465,10 +6522,21 @@ function paintCard(){
        is not somebody's memory. */
     + ((CHANGED.price.length || CHANGED.stock.length)
         ? '<div class="cardrow" style="border:0"><label>Changed today</label><div class="swwrap col">'
+          /* ⭐ every row carries its way back — see changedUndo(). A record you cannot act on is a receipt. */
           + CHANGED.price.slice(0, 6).map(function(c){
-              return '<span class="swtxt">' + esc(c.name) + ' — was ' + money(c.was) + ', now ' + money(c.now) + '</span>'; }).join('')
+              return '<span class="swtxt chg" data-testid="till-chg-price-' + esc(String(c.item_id || c.name)) + '">'
+                + esc(c.name) + ' — was ' + money(c.was) + ', now ' + money(c.now)
+                + (c.item_id ? '<button class="pill" data-testid="till-chg-undo-price-' + esc(String(c.item_id)) + '"'
+                    + ' onclick="changedUndo(\'price\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
+                + '</span>'; }).join('')
           + CHANGED.stock.slice(0, 6).map(function(c){
-              return '<span class="swtxt">' + esc(c.name) + ' — ' + (c.status === 'unavailable' ? 'off the shelf' : 'back on') + '</span>'; }).join('')
+              return '<span class="swtxt chg" data-testid="till-chg-stock-' + esc(String(c.item_id || c.name)) + '">'
+                + esc(c.name) + ' — ' + (c.status === 'unavailable' ? 'off the shelf' : 'back on')
+                /* ⚠ a row written before this shipped has no item_id and no `was`; it is still shown, because it is
+                   still true, and simply cannot offer the button. Silently dropping it would lose the record. */
+                + (c.item_id && c.was ? '<button class="pill" data-testid="till-chg-undo-stock-' + esc(String(c.item_id)) + '"'
+                    + ' onclick="changedUndo(\'stock\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
+                + '</span>'; }).join('')
           + '</div></div>'
         : '');
 }
@@ -6941,7 +7009,35 @@ function searchKey(e){
  * ⚠️ AND IF THE LINE IS DOWN IT IS QUEUED, not refused — the same queue the bills ride. A shop whose internet is out still knows
  * the rice has run out, and the counter must not go on selling it for the rest of the afternoon.
  */
+/**
+ * ── ⭐⭐ WHAT THIS COUNTER CHANGED TODAY — NOW KEPT, AND WITH A WAY BACK ([TILL-53], MaintV2) ────────
+ *
+ * ⚠⚠ I ALMOST BUILT A SECOND ONE OF THESE. This list has existed since the Price-change screen was folded into
+ * Maintenance, and my first attempt at MaintV2's "changed-today with undo" declared a fresh `var CHANGED` above
+ * it — two declarations in one scope, the later winning, and `CHANGED.price.length` throwing on the pane that
+ * already worked. The same shape as the offerWords collision earlier today. Search first; extend what is there.
+ * [[feedback-search-before-you-build]] [[feedback-duplicate-function-hoisting]]
+ *
+ * What it was missing, and now has:
+ *   · IT DIED ON RELOAD. It said "changed today" and lived in memory, so a refresh — or the browser update the
+ *     counter asks for — emptied the one record of the morning's work. Kept per shop, swept at the day roll.
+ *   · A STOCK ROW DID NOT SAY WHAT IT WAS, only what it became. Undo needs the other side.
+ *   · IT WAS KEYED BY NAME. Two products called the same thing were one row, and the wrong one would have been
+ *     put back. They carry item_id now.
+ */
 var CHANGED = { stock: [], price: [] };     /* what this counter changed today, newest first — the record on the right */
+function changedLoad(){
+  try {
+    var raw = JSON.parse(ls.get(shopLs('cb_till_changed'), 'null'));
+    /* ⚠ yesterday's work is not today's — swept on read, so a counter left open overnight is still right */
+    if (raw && raw.day === bizDay() && raw.v) CHANGED = { stock: raw.v.stock || [], price: raw.v.price || [] };
+    else CHANGED = { stock: [], price: [] };
+  } catch (_) { CHANGED = { stock: [], price: [] }; }
+}
+function changedKeep(){
+  /* ⚠ one bad row must not wedge the rail — parkedSave() paid for that lesson on 2026-09-16 */
+  try { ls.set(shopLs('cb_till_changed'), JSON.stringify({ day: bizDay(), v: CHANGED })); } catch (_) {}
+}
 
 /**
  * ⭐ WHAT IS IN THE QUEUE, IN WORDS. Read from the SHAPE each writer already puts there — a row that had to carry a
@@ -7009,10 +7105,14 @@ async function stockWrite(i, now){
   });
 }
 async function stockApply(i, now){
+  /* ⚠ read BEFORE it is overwritten, or the row records what it became as what it was */
+  i._wasStatus = statusOf(i);
   i.status = now;                                    /* the shelf changes under the finger that saved it */
   i._off = null; i._rate = undefined;
-  CHANGED.stock = [{ name: i.name, status: now, at: new Date() }].concat(
-    CHANGED.stock.filter(function(x){ return x.name !== i.name; })).slice(0, 40);
+  /* ⚠ `was` and `item_id` are what make it undoable — see changedUndo(). Matched on the ID, never the name. */
+  CHANGED.stock = [{ item_id: i.item_id, name: i.name, was: (i._wasStatus || 'available'), status: now, at: Date.now() }].concat(
+    CHANGED.stock.filter(function(x){ return String(x.item_id || x.name) !== String(i.item_id); })).slice(0, 40);
+  changedKeep();
   try { await DB.set('snapshot', S); } catch (_) {}
   /* ⚠️ THE CHIP CARRIES A COUNT, so it is part of what changed — marking something off used to leave it reading 0 while the
      row had already gone from the list, the one number whose whole job is to say where it went. */
@@ -7079,7 +7179,9 @@ async function priceWrite(i, v){
     path: '/api/till/price', body: { item_id: i.item_id, price: v, by: (WHO && WHO.name) || null },
     apply: async function(){
       i.price = v; i._off = null;
-      CHANGED.price = [{ name: i.name, was: was, now: v }].concat(CHANGED.price).slice(0, 40);
+      CHANGED.price = [{ item_id: i.item_id, name: i.name, was: was, now: v, at: Date.now() }]
+        .concat(CHANGED.price.filter(function(x){ return String(x.item_id || x.name) !== String(i.item_id); })).slice(0, 40);
+      changedKeep();
       try { await DB.set('snapshot', S); } catch (_) {}
       paintHits();
     },
@@ -12576,6 +12678,7 @@ applyLook();
 whoLoad();
 breakLoad();
 parkedLoad();
+/* ⚠ changedLoad() is NOT called here — it is shop-scoped and the key is not known yet. load() does it. */
 /* #cblink is painted with the menu now (paintMenu sets its own href), so there is nothing to set at boot —
    this threw on every load and the try/catch hid it. Kept as a note rather than a silent dead line. */
 load();
