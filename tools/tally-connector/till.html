@@ -627,6 +627,10 @@
     @page{margin:14mm}
   }
   /* ⭐ taking something back — see retOpen() */
+  /* what is in a combo, said above the choosing */
+  .combohead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;
+             border:1px solid var(--ok);background:var(--ok-tint);border-radius:10px;color:var(--ok);font-size:.9em}
+  .combohead b{margin-inline-start:auto;font-weight:800}
   .retagainst{color:var(--dim);font-size:.9em;margin-bottom:8px}
   .retlines{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px}
   .retrow{display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
@@ -5101,7 +5105,8 @@ function paintQuick(){
       name: i.name, price: money(i.price), unit: i.unit || 'piece', image: i.image || null, colour: colour,
       /* ⭐ THE SAME WORDS AS THE SHELF ROW, from the same rule — "₹11.00 under" is a standing fact about the
          product, never a saving, and a key that phrased it differently would be a second opinion about money. */
-      offer: mrpUnder(i),
+      /* ⭐ a combo's claim takes the line, because it is the more useful of the two on a meal deal */
+      offer: comboWords(i) || mrpUnder(i),
       qty: inBill[String(i.item_id)] || 0, showPhoto: !!cfg.photos, hotkey: n < 9 ? n + 1 : (n === 9 ? 0 : null),
       /**
        * ⚠️ WHILE ARRANGING, A KEY DOES NOT SELL. Same button, same place, a different job — which is the whole
@@ -6438,6 +6443,54 @@ async function add(n){
  * ⚠️ AND IT IS RECORDED, NOT RE-DERIVED — the chosen options ride the bill (see addItem), because a reprint a
  * year later has to say what was asked for, not what today's menu would offer.
  */
+/**
+ * ── ⭐⭐ COMBOS / MEAL DEALS ([TILL-43], 2026-09-18) ──────────────────────────────────────────────────────────
+ *
+ * ⭐⭐ MOST OF THIS WAS ALREADY BUILT, and saying so is the honest answer rather than writing a second engine.
+ * A QSR combo is "choose a main, choose a side, choose a drink, one price" — which is exactly a product with
+ * REQUIRED modifier groups whose options cost nothing, and the modifier engine has done that since [TILL-33]:
+ *   · required groups cannot be left blank, and the Add button says which are missing
+ *   · the line bills at the product's own price, because modAdd() of zero-priced options is zero
+ *   · an upgrade inside a slot ("large fries +₹20") is an option with a price, which already works
+ *   · the kitchen ticket already lists the chosen parts, which is what a cook needs
+ * Writing a parallel "combo engine" would have been a second path to the same place, and the two would have
+ * disagreed about money the first time either was edited. [[feedback-adopt-dont-reinvent]]
+ *
+ * ⚠️ SO WHAT WAS ACTUALLY MISSING IS THE CLAIM. A combo's whole reason to exist is that it costs less than the
+ * same things bought separately, and the counter could not say so — which is the one thing a customer asks.
+ * 'item_data.combo_of' names the parts; the counter prices them off its OWN shelf and states the gap.
+ *
+ * ⚠️⚠️ AND IT IS STATED AS A FACT, NOT AS A SAVING. "₹35 under separately" — the same discipline the MRP gap
+ * follows (see mrpUnder). "Save ₹35" is a claim about the customer's decision; the gap is a fact about two
+ * prices. The word "save" and the green it comes in belong to one place in this counter: a line where an offer
+ * actually took money off.
+ * ⚠️ A PART THIS SHOP DOES NOT SELL IS NOT PRICED, AND THEN NOTHING IS CLAIMED. A combo naming something the
+ * counter cannot find would otherwise understate the comparison and look like a smaller deal than it is —
+ * so an incomplete comparison is no comparison. [[feedback-silence-is-the-bug]]
+ */
+function comboOf(i){
+  var c = (i && (i.combo_of || (i.item_data && i.item_data.combo_of))) || null;
+  if (!Array.isArray(c) || !c.length) return null;
+  var shelf = (S && S.items) || [], by = {};
+  shelf.forEach(function(x){ if (x && x.name) by[String(x.name).toLowerCase()] = x; });
+  var apart = 0, missing = 0;
+  c.forEach(function(nm){
+    var found = by[String(nm || '').toLowerCase()];
+    if (found && Number(found.price) > 0) apart = r2(apart + Number(found.price));
+    else missing++;
+  });
+  var price = Number(i.price) || 0;
+  return { parts: c, missing: missing,
+           /* only a comparison this counter can stand behind */
+           apart: missing ? 0 : apart,
+           under: (!missing && apart > price) ? r2(apart - price) : 0 };
+}
+/** the words a key and a bill line both use — one phrasing, so the two can never differ */
+function comboWords(i){
+  var c = comboOf(i);
+  if (!c) return '';
+  return c.under ? ('Combo · ' + money(c.under) + ' under separately') : 'Combo';
+}
 function modsOf(i){
   var m = (i && (i.modifiers || (i.item_data && i.item_data.modifiers))) || null;
   return Array.isArray(m) ? m.filter(function(g){ return g && g.name && Array.isArray(g.options) && g.options.length; }) : [];
@@ -6549,7 +6602,13 @@ function modMissing(){
 function modPaint(){
   var box = document.getElementById('modbody'); if (!box || !MOD_FOR) return;
   var i = MOD_FOR.item;
-  box.innerHTML = MOD_FOR.groups.map(function(g, gi){
+  /* ⭐ what a combo contains, above the choosing — a cashier reading it out should not have to remember */
+  var cb = comboOf(i);
+  var head = cb
+    ? '<div class="combohead" data-testid="till-combo">' + esc(cb.parts.join(' + '))
+      + (cb.under ? '<b>' + money(cb.under) + ' under separately</b>' : '') + '</div>'
+    : '';
+  box.innerHTML = head + MOD_FOR.groups.map(function(g, gi){
     var chosen = (MOD_PICK[g.name] || []).map(function(x){ return x.option; });
     var max = Number(g.max) || 1;
     return '<div class="modg" data-testid="till-modg-' + gi + '">'
