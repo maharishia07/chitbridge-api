@@ -424,6 +424,7 @@
   .modopt span{color:var(--dim);font-size:.85em}
   .modopt.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   .modopt.on span{color:var(--ok)}
+  .upibad{color:var(--warn);display:block;margin-bottom:4px}
   .todoadd{display:flex;gap:6px;align-items:center}
   .todomic{flex:0 0 40px;min-height:40px;border:1px solid var(--edge);border-radius:10px;background:var(--card);cursor:pointer}
   .todomic.on{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
@@ -7314,6 +7315,25 @@ function paintParts(){
     return '<button data-testid="till-part-' + n + '" onclick="dropPart(' + n + ')" title="remove this part">' + esc(p.how) + ' ' + money(p.amount) + ' ×</button>';
   }).join('');
 }
+/**
+ * ── ⭐⭐ IS THIS A UPI ADDRESS AT ALL? (Athi, 2026-09-18: *"when i try to pay using UPI QR code, it says bank not
+ * connected"*) ────────────────────────────────────────────────────────────────────────────────────────────────
+ *
+ * It said that because the payee it was given was not a real one — and the counter had built a QR out of it
+ * anyway. That is the worst possible place for the fault to appear: in the CUSTOMER'S bank app, at the counter,
+ * with a queue behind them, where neither they nor the cashier can do anything about it.
+ *
+ * ⚠️ THE SHAPE IS ALL WE CAN CHECK, AND THE NOTE SAYS SO. NPCI's address is name@handle: no spaces, an @, a
+ * handle of letters. Whether that address is REGISTERED at a bank is something only the customer's app can
+ * discover — so this refuses what is obviously not an address, and never claims the rest is known-good.
+ * [[feedback-silence-is-the-bug]]
+ */
+function upiShapeOk(v){
+  var a = String(v || '').trim();
+  if (!a) return false;
+  /* name@handle — the local part allows . - _ and digits, the handle is letters (okicici, ybl, paytm, upi …) */
+  return /^[a-zA-Z0-9][a-zA-Z0-9._-]{1,60}@[a-zA-Z][a-zA-Z0-9.]{1,30}$/.test(a) && a.indexOf(' ') < 0;
+}
 function paintPays(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var left = r2(m.net - taken);
@@ -7330,6 +7350,9 @@ function paintPays(){
    * money the shop already told us where to send.
    */
   var own = tillOpt().upi;
+  /* ⚠️ A MALFORMED PAYEE IS NOT OFFERED. Drawing a QR from it hands the customer an error instead of a payment;
+     the Pay tab in ⚙ Setup says what is wrong, which is where somebody can actually fix it. */
+  if (own && own.payee && !upiShapeOk(own.payee)) own = null;
   if (own && own.payee && !ways.some(function(w){ return String(w.payee || '') === String(own.payee); })) {
     ways.push({ id:'upi-local', label:(own.label || 'UPI'), qr:'upi-deeplink', payee:own.payee });
   }
@@ -10121,9 +10144,24 @@ function paintSetup(){
   var note = document.getElementById('setupupi');
   if (note) {
     var fromShop = (S && S.shop && S.shop.pay || []).filter(function(w){ return w.payee; })[0];
-    note.innerHTML = fromShop
-      ? 'QR uses the shop payee <b>' + esc(fromShop.payee) + '</b> · a payee here is an extra way to pay at this counter'
-      : '⚠️ The shop has no UPI payee in ChitBridge — one typed here works on this counter only.';
+    var mine = (tillOpt().upi || {}).payee || '';
+    /**
+     * ⚠️ THE MOST USEFUL THING THIS CAN SAY IS WHAT IS WRONG. "Bank not connected" is what a customer's app says
+     * about an address that is not real; by then it is too late. So a typed payee is checked for shape here,
+     * and an unusable one is named as unusable BEFORE anybody scans anything.
+     */
+    var bad = mine && !upiShapeOk(mine);
+    note.innerHTML = (bad
+        ? '<b class="upibad">⚠️ “' + esc(mine) + '” is not a UPI address.</b> It should look like <b>name@bank</b>'
+          + ' — for example yourshop@okicici or 9876543210@ybl. A customer scanning a QR built from this will be'
+          + ' told their bank is not connected. No UPI button is offered until it is fixed.<br>'
+        : '')
+      + (fromShop
+          ? 'QR uses the shop payee <b>' + esc(fromShop.payee) + '</b> · a payee here is an extra way to pay at this counter'
+          : (mine && !bad
+              ? 'This counter takes UPI at <b>' + esc(mine) + '</b>. ⚠️ The shape is right; only your own bank app can'
+                + ' confirm the address is live, so send one rupee to it once before a customer does.'
+              : '⚠️ The shop has no UPI payee in ChitBridge — one typed here works on this counter only.'));
   }
 }
 async function saveSettings(){
