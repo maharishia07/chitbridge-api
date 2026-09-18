@@ -300,6 +300,21 @@ router.get('/snapshot', auth, async (req, res) => {
                   counter and the shop screen can draw it without a key and without a second round trip. Null for most rows and
                   that is fine — the screen falls back to the category emblem rather than leaving a hole. */
                image: d.image || null,
+               /**
+                * ⚠️⚠️ WHAT A COUNTER IS TOLD IS EXACTLY THIS LIST, AND NOTHING ELSE (2026-09-18). The projection is
+                * deliberately narrow — a shelf of ten thousand crosses the wire on every pairing — but that means a
+                * feature whose data lives in item_data and is NOT named here does not exist at the counter at all.
+                * Modifiers, combos and age checks were each built, tested against injected rows, and then found dead on
+                * a real shop: Mayur Bhavan carried choices on eighteen dishes and the counter saw none of them, because
+                * tillItem() never copied the field. The engine can be perfect and the shop still sees nothing.
+                * ⭐ SO: anything a counter must ACT on belongs here the moment it is built.
+                *   modifiers — the choices a dish has, and which are required (modsOf, modOpen)
+                *   combo_of  — the parts a meal deal replaces, so the counter prices them off its own shelf
+                *   age_check — the minimum age in years; COTPA §6 and the state excise ages (ageOf, ageAllow)
+                */
+               modifiers: Array.isArray(d.modifiers) ? d.modifiers : null,
+               combo_of: Array.isArray(d.combo_of) ? d.combo_of : null,
+               age_check: (Number(d.age_check) > 0 ? Math.floor(Number(d.age_check)) : null),
                barcode: d.barcode || d.ean || null, avail: d.avail || null,
                /**
                 * ⚠️⚠️ "avail" IS NOT THE STATUS, AND THE COUNTER WAS READING IT AS ONE. lib/itemstatus.js says so in as many

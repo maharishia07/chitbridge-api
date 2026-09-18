@@ -1174,4 +1174,59 @@ it('⚠️⚠️ the snapshot reads the shop\'s particulars from invoiceParty, n
   assert.ok(/name: party\.trade_name/.test(src), 'the counter\'s shop name does not come from the trade name');
 });
 
+/**
+ * ── ⚠️⚠️ A FEATURE THE COUNTER WAS NEVER TOLD ABOUT (2026-09-18) ──────────────────────────────────────────────
+ *
+ * tillItem() projects a deliberately NARROW set of fields — a shelf of ten thousand crosses the wire on every
+ * pairing, so it should be narrow. The consequence nobody had written down: a feature whose data lives in
+ * item_data and is not NAMED in that projection does not exist at the counter, however well it is built.
+ *
+ * Modifiers, combos and age checks were each built, each covered by a test, and each found dead on a real shop.
+ * The tests passed because they injected rows straight into the counter's own S.items; the shop's real products
+ * came through the snapshot, which dropped every one of those fields silently. Mayur Bhavan carried choices on
+ * eighteen dishes and the counter offered none of them.
+ *
+ * This is the same lesson as the Map above, one layer along: it is not enough for the value to be right in the
+ * database and right in the engine — it has to be NAMED at the boundary that copies it.
+ * [[feedback-silence-is-the-bug]] [[feedback-whitelist-drops-silently]]
+ */
+it('⚠️⚠️ every field the counter ACTS on is carried by the snapshot projection', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const at = src.indexOf('const tillItem = (item_id, d) =>');
+  assert.ok(at > 0, 'tillItem is gone or renamed — this guard is stale');
+  /* the projection object, to its closing brace */
+  let depth = 0, started = false, end = at;
+  for (let i = at; i < src.length; i++) {
+    if (src[i] === '{') { depth++; started = true; }
+    else if (src[i] === '}') { depth--; if (started && depth === 0) { end = i + 1; break; } }
+  }
+  const proj = src.slice(at, end);
+  /**
+   * Each of these is read by an engine in till.html and DECIDES something: whether a dish asks for choices,
+   * whether a key can be sold to whoever is standing there, what a meal deal is worth. A field added to this
+   * list without being added to the projection is a feature that silently does nothing on a real shop.
+   */
+  const MUST = {
+    image: 'the shop\'s own picture — picOf(), the photo tile',
+    modifiers: 'the choices a dish has — modsOf(), modOpen(), and REQUIRED means required',
+    combo_of: 'the parts a meal deal replaces — comboOf() prices them off this counter\'s shelf',
+    age_check: 'the minimum age in years — ageOf(), ageAllow(); COTPA §6 and the excise ages',
+    mrp: 'the MRP the bill must state beside the rate',
+    tax_slab: 'which slab this product is taxed at',
+  };
+  const missing = Object.keys(MUST).filter((f) => !new RegExp('(^|[^A-Za-z_])' + f + '\\s*:').test(proj));
+  assert.deepStrictEqual(missing, [],
+    'these are read by the counter and never reach it:\n      '
+    + missing.map((f) => f + ' — ' + MUST[f]).join('\n      '));
+});
+
+it('⭐ and the guard can see a field go missing', () => {
+  /* ⚠️ BREAK IT BEFORE TRUSTING IT — a checker that always passes is not a check. */
+  const fake = 'const tillItem = (item_id, d) => { return { item_id, name: d.name, image: d.image || null }; }';
+  const has = (f, src) => new RegExp('(^|[^A-Za-z_])' + f + '\\s*:').test(src);
+  assert.ok(has('image', fake), 'the matcher cannot see a field that IS there');
+  assert.ok(!has('modifiers', fake), 'the matcher claims to see a field that is NOT there');
+  assert.ok(!has('age_check', fake));
+});
+
 console.log(pass + ' checks');
