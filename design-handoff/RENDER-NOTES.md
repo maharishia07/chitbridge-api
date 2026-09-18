@@ -13,6 +13,102 @@ screenshot your own result and compare. All three steps. Two of them were skippe
 
 ---
 
+## ⚠️⚠️⚠️ FIRST: not every render is the design
+
+Forty-four PNGs, one folder, and nothing in a file name says whether a drawing is the direction or an option
+that was turned down. **Building a rejected design is the next version of building from prose.**
+`README-INDEX.md` §2 is the authority; this is it in one place.
+
+| | Screens | What that means when you open one |
+|---|---|---|
+| ⭐ **The direction** | `Main` · `FullDesktop` · `FullDesktopPhotos` · `Tiles` · `MaintV2` · `MaintV2Phone` · `HubPhone` (**chosen base**) · `HubWide` · `PanelSizing` · `DisplaySettings` · all `Full*` and `Device*` device views · `IdleShop` · `IdleReady` · `IdlePhone` | Build these. |
+| 🕐 **Earlier versions of a chosen thing** | `MenuPanel` · `MenuPhoneFold` · `MenuPhoneStack` | Same grouping, older shape. `HubPhone`/`HubWide` supersede them — read for copy, not for layout. |
+| 💭 **Alternatives, parked as backlog** | `SellDark` · `SellTimeline` · `SellRail` (layouts B/C/D, backlog E1) · `PopupDrawer` · `PopupFull` (pickers, backlog E2) | Do **not** build unasked. They are choices for Athi, not work. |
+| 🚫 **Not chosen** | `MenuDrawer` · `MenuPalette` | The index says so in as many words. ⚠️ The hub finder ([TILL-57]) duplicates `MenuPalette` — an open question for Athi. |
+| 📋 **A board, not a screen** | `DesignStatus` | The design workstream's own scorecard. See below. |
+
+---
+
+## The scorecard — `DesignStatus.png` and `status.json`
+
+`status.json` carries `{ id, route, design, state, notes }` for 35 screens, and the board renders it:
+**46 designed · 10 built · 6 partly · 30 not built**, as at 2026-09-18.
+
+⚠️ **It is the DESIGN SIDE'S VIEW, and it is not measured.** The board's footer claims *"the CLI runs
+`/design status` → screenshots every route → writes status.json"*, but only three rows carry a `route` at all
+(`Main`, `FullDesktop`, `FullDesktopPhotos`, plus `MenuPanel` and `MaintV2` as fragments). Every other state
+is hand-set. Several rows marked `not_built` — `FullPortrait`, `FullPhoneSell`, `FullHandheld` — are shapes
+this counter does have. **Reconcile before believing it; never quote it as our build state.**
+
+⭐ The board also carries a **"Missing from both (to design)"** column — seven things found by comparing this
+counter against other till applications, designed but not built anywhere yet:
+open/close till with a cash count · X/Z day report · refund, void, reprint with a reason · a parked-bills list ·
+discounts and offers on a line · a customer & points screen.
+Some exist here in another form (F6 parks a bill, F10 closes the day), so each needs checking rather than
+building. **This is counter backlog, and it did not come from Athi — it came from the comparison.**
+
+---
+
+## Paying — `FullTabletPay.png` and `FullPhonePay.png`
+
+### ⚠️⚠️⚠️ ON A TABLET, PAY IS A MODAL CARD — NOT A PANEL AT THE BOTTOM OF THE PAGE
+
+This is the answer to Athi's own observation (2026-09-18): *"the pay panel is at very bottom, so i was searching
+where it is, as my eyes are focusing on the top… can we introduce Pay button there also, i know it is
+duplicate."* **I talked him out of the duplicate button and left the panel where it was.** The render shows we
+were both solving the wrong problem: there is nothing to scroll to, because the whole screen dims and one card
+comes forward carrying everything paying needs.
+
+The card, top to bottom:
+- `←` back, then a quiet line: `3 products · 15 items · Saved ₹144.75 · ▸ tax & offer breakdown`
+- **`TOTAL ₹2,750.25`** — biggest thing on the card, on the same line as the back arrow
+- three tender buttons of equal weight — `Cash` `Card` `UPI · QR` — the chosen one filled
+- the QR **beside** its words, not above them: the amount again, *"Scan with any UPI app · pays [shop UPI ID]"*,
+  *"The shop marks it paid here once the money arrives."*, and `This bill will be recorded as **UPI**`
+- `Amount taken` with a `+ part` button beside it — part payment is one tap, not a mode
+- `Clear` · `Park` · **`Save & print`** (filled) across the foot
+
+⭐ Everything a cashier needs to finish a bill is on one card, and the bill behind it is dimmed but still there.
+
+### The phone — `FullPhonePay.png`
+Same content as **step 3 of 3**, not an overlay: `←` `Pay` as a title, `TOTAL · saved ₹144.75` above a very
+large total, the three tenders as a full-width row, the QR **centred above** its words, then `Amount taken` +
+`+ part`, and `Save & print` full-width pinned at the bottom.
+
+⚠️ So the same job takes two shapes and the difference is not decoration: a phone has three steps and can afford
+a whole screen, a tablet has one screen and borrows it. **A panel welded to the bottom of a long page is
+neither.**
+
+## Panel sizes — `PanelSizing.png` (opened from the hub's "How it looks")
+
+**NOT BUILT, and the gap is real.** The counter has one draggable split (`.grip`, `--split`) between the left
+pane and the right. The render has **two** bars — keys | list | bill — and, above them, five named presets:
+
+| Preset | For |
+|---|---|
+| **Keys first** | busy tiffin counter · few searches |
+| **Balanced** *(the default)* | — |
+| **Search first** | big catalogue, barcode shop |
+| **Bill first** | long bills, kirana baskets |
+| **No keys** | scanner only · all screen to list and bill |
+
+Each preset draws a little three-band diagram of the split it makes. The header states the live split in words —
+`Balanced · keys 44% · list 22% · bill 34%` — with **Reset to balanced** on the right.
+
+Below: **Density** (Comfortable / Compact) and **Also** — *Bill on the left (left hand)* and *Photos on keys*.
+
+⚠️ Two rules in the render's own words, both of which a build would otherwise get wrong:
+- *"The counter remembers it per device, and the presets are only starting points."* — a preset **seeds** the
+  drag, it does not lock it. Dragging afterwards must not snap back to the preset.
+- *"On a phone the parts stack instead, in this order: keys, list, bill. Presets then only change how many keys
+  fit per row."* — so the preset means something different on a phone rather than nothing.
+
+⚠️ **`PRESETS` in `lib/screen-kit.js` is a DIFFERENT AXIS.** Those (`counterClassic`, `kiosk`,
+`tabletWaiter`…) are device styles. These five are how the width divides. Two registries, two questions —
+do not fold one into the other. [[feedback-name-vs-behaviour]]
+
+---
+
 ## Maintenance — `MaintV2.png` (wide, 1600×900-ish)
 
 **Header strip:** `Mayur Bhavan` · `✎ Maintenance ▾` · `Counter 1` · `(RK) Ravi K · manager` ·
