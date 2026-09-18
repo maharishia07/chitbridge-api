@@ -768,6 +768,28 @@ router.post('/send',
         } else if (effSelfCopy === 'received') {  // TASK-only → drop the sender Order (sent) copy
           suppressSentCopy = true;
           copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: copySource };
+        } else if (client_ref) {
+          /**
+           * ── ⚠⚠⚠ A NUMBERED DOCUMENT IS ONE ROW PER ENTITY, WHATEVER THE COPY SETTING SAYS ──────────
+           *
+           * b263 puts a UNIQUE INDEX on (entity_id, client_ref). 'both' writes the sender copy AND the recipient
+           * copy — and on a pure self-chit those are the SAME entity — so a shop whose self_copy_pref is 'both'
+           * would have every counter bill refused with a 23505 and **be unable to sell**. The column defaults to
+           * 'received' so nothing is broken today; this is the trap the index arms for the day somebody changes
+           * it, and it is armed silently, which is the worst kind.
+           *
+           * ⭐ AND IT IS THE RIGHT ANSWER ON ITS OWN MERITS, not merely a way round the constraint. Two rows in
+           * one shop's books both claiming to BE invoice C1/26-27/0033 is not a copy, it is a second voucher —
+           * the exact thing the index exists to prevent. A self-copy is a useful idea for a message; for a
+           * numbered tax document it is a duplicate with a nicer name.
+           * ⚠ DECLARED, NEVER SILENT — copyPolicy is how this file records a suppression, and `source` says who
+           * decided it. A suppression that cannot be told apart from a gap is not governed (see the note above).
+           */
+          suppressSentCopy = true;
+          copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'],
+                         reason: 'Order copy suppressed — ' + client_ref + ' is a numbered document, and a number '
+                               + 'may appear once in a shop\'s books (b263). The setting asked for both.',
+                         source: 'numbered-document' };
         } else {                                  // BOTH → keep both copies, but STILL declare the self-chit identity
           copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource };
         }
