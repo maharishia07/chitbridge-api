@@ -25,6 +25,7 @@ const GUARDS = [
   'pages-parse.test.js',      // every inline script in app.html, till.html and promo.html parses
   'till-vendor.test.js',      // the counter and its vendored engines agree, byte for byte
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
+  'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs',// the bill number's shape: what the date says vs when the run restarts
   'bell-param.test.cjs',      // every page opens the bell with the name the stream reads (2026-09-17: counters never heard it)
   'network-storefront.test.cjs', // a member storefront shows its network's offers and its checkout charges them — one key

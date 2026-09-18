@@ -279,7 +279,7 @@
   body.shape-tall .hits{max-height:52vh}
   body.shape-mobile .hits{max-height:40vh}
   /* ⚠️ the Phone shape's narrow bill is decided in cartCols(), not here — a cell hidden by CSS left its track empty */
-  body.shape-mobile .quick{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  body.shape-mobile .quick{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
   /* wide forces the two-column counter back on, whatever the width says */
   body.shape-wide .wrap{grid-template-columns:minmax(0,var(--split,1.1fr)) 6px minmax(300px,.9fr);
         grid-template-rows:none;height:100vh;height:100dvh}
@@ -569,9 +569,57 @@
    * ⭐ 42vh leaves the shelf, the bill and the shortcuts their share of a terminal, and the keys scroll inside
    * their own panel — which is also what makes a long group usable at all.
    */
-  .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;
+  /* ⭐ AMPLE SPACE (Athi, 2026-09-18: *"images are clumsy, need to have ample space between images… the size
+     has to be decent enough to see"*). 14px between keys and a 168px floor: a key is aimed at with a thumb. */
+  .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;
          margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);
          max-height:42vh;overflow-y:auto;align-content:start}
+  /* ⭐ arranging the keys by hand */
+  .qarr{display:inline-flex;align-items:center;padding:3px 11px;min-height:32px;cursor:pointer;
+        border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);font:inherit;font-size:.85em}
+  .qarr.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+  .qarrnote{grid-column:1/-1;font-size:.82em;color:var(--ink);background:var(--accent);
+            border-radius:10px;padding:6px 10px}
+  .quick.arranging button{cursor:grab}
+  .quick.arranging button:active{cursor:grabbing}
+  /* the key that has been picked up — lifted, and obviously the one that will move */
+  .quick button[data-qkfrom]{outline:3px solid var(--ink);outline-offset:2px;opacity:.75}
+  /* ⭐ the cart chip — the count and the money always, the pictures on request */
+  .qcart{display:inline-flex;gap:6px;align-items:center;padding:3px 10px;min-height:32px;cursor:pointer;
+         border:1px solid var(--ok);border-radius:999px;background:var(--ok-tint);color:var(--ok);font:inherit;font-size:.85em}
+  .qcart b{background:var(--ok);color:#fff;border-radius:999px;padding:0 7px}
+  .qcart .qcartm{font-weight:700}
+  .qcart .qcarti{font-size:1.05em;line-height:1}
+  .qcart .qcartc{opacity:.7}
+  .qcart.on{background:var(--ok);color:#fff}
+  .qcart.on b{background:#fff;color:var(--ok)}
+  /* ⭐ the bill as pictures — the same cells as the strip, wrapped instead of scrolled */
+  .ibgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:12px;padding:10px 12px}
+  /* which face the bill is wearing — two words, beside the count that says what is on it */
+  .bvtog{display:inline-flex;gap:0;margin-inline-start:auto;border:1px solid var(--edge);border-radius:999px;overflow:hidden}
+  .bvtog button{padding:3px 11px;border:0;background:var(--paper);color:var(--dim);font:inherit;font-size:.82em;cursor:pointer;min-height:30px}
+  .bvtog button.on{background:var(--ok);color:#fff;font-weight:700}
+  .carthead{display:flex;align-items:center;gap:8px}
+  /* ⭐ what has been chosen, in pictures, right where the quantity gets adjusted */
+  .ibstrip{grid-column:1/-1;border:1px solid var(--ok);background:var(--ok-tint);border-radius:12px;padding:8px 10px}
+  .ibhead{font-size:.75em;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ok);
+          margin:0 0 6px;display:flex;gap:6px;align-items:center}
+  .ibhead span{background:var(--ok);color:#fff;border-radius:999px;padding:0 7px;font-size:.95em}
+  /* ⚠️ ONE ROW THAT SCROLLS SIDEWAYS, never a wrapping block — the strip must not grow and push the keys off screen */
+  .ibrow{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+  .ibcell{flex:0 0 auto;width:132px;background:var(--card);border:1px solid var(--line);border-radius:10px;
+          padding:6px;display:flex;flex-direction:column;gap:2px}
+  .ibcell img,.ibcell .ibinit{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:7px;display:block}
+  .ibcell .ibinit{background:var(--panel);color:var(--dim);font-weight:800;display:grid;place-items:center}
+  .ibcell b{font-size:.84em;line-height:1.2;overflow-wrap:anywhere}
+  .ibmods{font-size:.72em;color:var(--dim);line-height:1.15}
+  .ibmoney{font-size:.82em;font-weight:700}
+  .ibqty{display:flex;gap:3px;align-items:center;margin-top:2px}
+  .ibqty button{min-width:28px;min-height:28px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);
+                color:var(--ink);font:inherit;font-weight:700;cursor:pointer;padding:0}
+  .ibqty i{font-style:normal;font-weight:700;min-width:22px;text-align:center;font-size:.9em}
+  .ibqty .ibdrop{margin-inline-start:auto;border-color:var(--line);color:var(--dim)}
+  .ibqty .ibdrop:hover{border-color:var(--warn);color:var(--warn)}
   /* the bar stays put while the keys move under it — it says which list you are looking at */
   .quick .qbar{position:sticky;top:-12px;z-index:2;background:var(--panel);
                margin:-12px -12px 0;padding:12px 12px 6px}
@@ -586,7 +634,9 @@
    * ⚠️ vertical is the layout the kiosk preset uses (screen-kit PRESETS.kiosk), so keying on the layout covers
    * a shop that built its own kiosk-ish combination without naming it kiosk.
    */
-  body[data-sklayout="vertical"] .quick{max-height:none;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));--sk-ph:150px}
+  /* ⚠️ THE KIOSK NO LONGER FORCES A PHOTO HEIGHT. --sk-ph:150px inside a shorter tile clipped every name and
+     price away (see .sk-ph-big); a self-service screen gets WIDER columns instead, and the ratio does the rest. */
+  body[data-sklayout="vertical"] .quick{max-height:none;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
   body[data-sklayout="vertical"] .quick .sk-name{font-size:1.1em}
   .quick > button:not(.sk-tile){padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);
          cursor:pointer;text-align:left;min-height:92px;display:flex;flex-direction:column;gap:4px}
@@ -4117,6 +4167,62 @@ async function quickSyncHidden(){
   } catch (_) {}
 }
 /**
+ * ── ⭐⭐ THE GROUPS THE SHOP MADE ([TILL-36], 2026-09-18) ─────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ THE BACK OFFICE COULD AUTHOR A GROUP AND NO COUNTER WOULD EVER SEE IT. /api/quick-keys writes
+ * quick_key_group, both key allow-lists already pass GET /api/till/quick-keys/groups — and this page never
+ * called it. Groups drawn on the keys came only from this device's own cb_till_opt.groups, so a shop with ten
+ * counters had to build the same group ten times, by hand, on ten machines. That is the whole point of having
+ * authored them centrally, and it was silently missing. [[feedback-silence-is-the-bug]]
+ *
+ * ⭐ ONE GROUP STORE, WIDENED — NOT A SECOND ONE. groupsAll() is now the single thing every reader asks, and it
+ * answers with the shop's groups plus this counter's own. A counter's own name WINS on a clash, because
+ * quickGroupToggle copies the shop's list into cb_till_opt the moment somebody edits it here: the shop keeps
+ * publishing, this counter keeps its change, and neither overwrites the other. [[feedback-stay-in-the-construct]]
+ * ⚠️ CACHED, so the keys still draw with the line down — same as every other thing this counter reads.
+ */
+var SHOPG_AT = 0;
+function shopGroups(){
+  try { var o = JSON.parse(ls.get(shopLs('cb_till_shopgroups'), '{}')); return (o && typeof o === 'object') ? o : {}; }
+  catch (_) { return {}; }
+}
+/** shop first, this counter's own on top — one map of name → item ids, which is the shape every reader wants */
+function groupsAll(){
+  var out = {}, shop = shopGroups(), mine = tillOpt().groups || {};
+  Object.keys(shop).forEach(function(k){ out[k] = shop[k]; });
+  Object.keys(mine).forEach(function(k){ out[k] = mine[k]; });
+  return out;
+}
+/** a name this counter has not edited still belongs to the shop — said out loud, so "delete" is not a lie */
+function groupIsShop(name){ return !!shopGroups()[name] && !(tillOpt().groups || {})[name]; }
+async function quickSyncGroups(){
+  if (!HOST || !HOST.tillGet || !navigator.onLine) return;
+  if (Date.now() - SHOPG_AT < 60000) return;
+  SHOPG_AT = Date.now();
+  try {
+    var r = await HOST.tillGet('/api/till/quick-keys/groups');
+    if (!r || !r.ok || !Array.isArray(r.groups)) return;
+    var map = {};
+    r.groups.forEach(function(g){
+      if (!g || !g.name) return;
+      map[g.name] = (g.items || []).slice()
+        .sort(function(a, b){ return (a.position || 0) - (b.position || 0); })
+        .map(function(x){ return x.product_id; }).filter(Boolean);
+    });
+    var was = ls.get(shopLs('cb_till_shopgroups'), '{}'), now = JSON.stringify(map);
+    if (was === now) return;
+    ls.set(shopLs('cb_till_shopgroups'), now);
+    /**
+     * ⭐ A COUNTER WITH NO GROUP CHOSEN ADOPTS THE SHOP'S FIRST ONE. Otherwise a shop publishes its groups, the
+     * cashier sees the same learned keys as before and concludes nothing arrived. Only ever on a counter that
+     * has made no choice of its own — a chosen group is never moved out from under somebody mid-shift.
+     */
+    var o = tillOpt(), names = Object.keys(map);
+    if (!o.group && names.length) tillOptSet({ group: names[0], quickSource: o.quickSource === 'frequent' ? 'groups' : o.quickSource });
+    try { loadQuick(); } catch (_) { try { paintQuick(); } catch (_) {} }
+  } catch (_) {}
+}
+/**
  * ── ⭐⭐ THE SCREEN THIS COUNTER WEARS (lib/screen-kit → /engine/screen.js) ─────────────────────────────────────────
  * Athi: *"a library of different designs and colour schemes so people, or their system, can pick up the required
  * format."* A preset, a tile style, a colour scheme and photos on/off, chosen here (the device) — resolve() is where the
@@ -4371,8 +4477,8 @@ async function schemeTakesEffect(){
 }
 /** the active group's item ids — [] when no group is chosen, which is also what 'frequent' wants */
 function groupIds(){
-  var o = tillOpt();
-  var g = o.group && o.groups ? o.groups[o.group] : null;
+  var o = tillOpt(), all = groupsAll();
+  var g = o.group ? all[o.group] : null;
   return Array.isArray(g) ? g : [];
 }
 /**
@@ -4383,10 +4489,12 @@ function groupIds(){
 function quickGroupToggle(id){
   var o = tillOpt();
   if (!o.group) { toastLine('Choose or make a group first — Setup ▸ Quick keys.'); return; }
+  var wasShop = groupIsShop(o.group);
   var list = groupIds().slice(), at = list.indexOf(id);
   if (at >= 0) list.splice(at, 1); else list.push(id);
-  o.groups[o.group] = list;
+  o.groups[o.group] = list;                      /* copy-on-write: the shop's list is left exactly as published */
   tillOptSet({ groups: o.groups });
+  if (wasShop) toastLine('"' + o.group + '" is the shop’s group — this counter now keeps its own copy.');
 }
 /* quickGroupAddMarked() lived here until 2026-09-18 — "＋ marked row" on the sell panel, which is exactly the
    authoring Athi moved off the selling screen. Its job is done by the tick-list in ⚙ Setup ▸ Quick keys
@@ -4444,9 +4552,14 @@ function setupGroupItems(o){
 }
 async function quickGroupDrop(){
   var o = tillOpt(); if (!o.group) return;
-  var gone = o.group;
-  if (!(await sure('Remove the group “' + gone + '”? The products themselves are not touched.', 'Yes, remove it', 'Remove a group'))) return;
+  var gone = o.group, isShop = !!shopGroups()[gone];
+  var words = isShop
+    ? 'Remove the shop’s group “' + gone + '” from this counter? The shop keeps it, and it comes back if the shop republishes.'
+    : 'Remove the group “' + gone + '”? The products themselves are not touched.';
+  if (!(await sure(words, 'Yes, remove it', 'Remove a group'))) return;
   delete o.groups[gone];
+  /* ⭐ and the shop's copy goes with it, or the pull would simply put it back and nothing would appear to happen */
+  if (isShop) { var sg = shopGroups(); delete sg[gone]; ls.set(shopLs('cb_till_shopgroups'), JSON.stringify(sg)); }
   tillOptSet({ groups:o.groups, group:'' });
   paintSetup();
 }
@@ -4478,6 +4591,7 @@ async function loadQuick(){
    * waiting to see. It repaints itself when it finds something new.
    */
   try { quickSyncHidden(); } catch (_) {}
+  try { quickSyncGroups(); } catch (_) {}
   var hidden = quickHidden(), pinned = quickPinned();
   /* ⭐ sold out today is off the keys too — it waits in the tray (paintQuick), and search and scan still bill it */
   var sold = quickSold().map(function(x){ return x.id; });
@@ -4551,13 +4665,22 @@ function paintQuick(){
    * ⚠️ The source and group choosers STAY — [TILL-11] exists because the keys once gave no clue where they
    * came from, and choosing is not authoring.
    */
-  var names = Object.keys(o.groups || {}).sort();
+  var names = Object.keys(groupsAll()).sort();
   /* the screen config is read BEFORE the bar, because the bar now carries the Photos switch */
   var cfg = screenCfg(), K = window.CBScreen;
   var bar = '<div class="qbar" data-testid="till-quick-bar">'
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
     + '<span class="qbadge" data-testid="till-quick-badge">⊞ Quick keys'
     + (QUICK.length ? '<span class="n">' + QUICK.length + '</span>' : '') + '</span>'
+    /* ⭐ what is already on the bill, one tap from being looked at — see cartChip() */
+    + cartChip()
+    /* ⭐ set the order by hand — see qkArrangeToggle(). Only meaningful on a group, and it says so if not. */
+    + (QK_ARRANGE && o.group && shopGroups()[o.group] && (o.groups || {})[o.group]
+        ? '<button class="qarr" data-testid="till-quick-resetorder" title="back to the order the shop published"'
+          + ' onclick="qkResetOrder()">↺ Shop order</button>' : '')
+    + '<button class="qarr' + (QK_ARRANGE ? ' on' : '') + '" data-testid="till-quick-arrange"'
+    + ' title="drag the keys into the order you want" onclick="qkArrangeToggle()">'
+    + (QK_ARRANGE ? '\u2713 Done' : '\u21C4 Arrange') + '</button>'
     /**
      * ⭐ PHOTOS, WHERE THE DESIGNER PUT IT (png/FullDesktop.png has this switch on the quick-keys bar) and where
      * Athi asked for it: *"a radio button to on or off the images"*. Seeing the keys with and without pictures
@@ -4593,7 +4716,7 @@ function paintQuick(){
    */
   var colour = K ? K.groupColour(usesGroups && o.group ? o.group : 0) : null;
   var inBill = {}; CART.forEach(function(c){ inBill[String(c.item_id)] = (inBill[String(c.item_id)] || 0) + (Number(c.qty) || 0); });
-  el.className = 'quick sk-style-' + (cfg.tile || 'classic') + (cfg.photos ? ' sk-photos' : '');
+  el.className = 'quick sk-style-' + (cfg.tile || 'classic') + (cfg.photos ? ' sk-photos' : '') + (QK_ARRANGE ? ' arranging' : '');
   var keys = QUICK.map(function(i, n){
     var pin = pinned.indexOf(i.item_id) >= 0;
     var id = esc(i.item_id);
@@ -4605,8 +4728,26 @@ function paintQuick(){
     }
     return K.tile(cfg.tile, {
       name: i.name, price: money(i.price), unit: i.unit || 'piece', image: i.image || null, colour: colour,
+      /* ⭐ THE SAME WORDS AS THE SHELF ROW, from the same rule — "₹11.00 under" is a standing fact about the
+         product, never a saving, and a key that phrased it differently would be a second opinion about money. */
+      offer: mrpUnder(i),
       qty: inBill[String(i.item_id)] || 0, showPhoto: !!cfg.photos, hotkey: n < 9 ? n + 1 : (n === 9 ? 0 : null),
-      attrs: 'type="button" data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + id + '\')"',
+      /**
+       * ⚠️ WHILE ARRANGING, A KEY DOES NOT SELL. Same button, same place, a different job — which is the whole
+       * reason arranging is a mode: there is never a moment when a drag and a sale are both plausible.
+       * ⚠️ NOT class="…" HERE. The tile library already writes the button's class attribute; a second one in
+       * these attrs is silently ignored by every browser and the styling simply never arrives. The state rides
+       * on data- attributes, and .quick.arranging carries the rest.
+       */
+      attrs: 'type="button" data-testid="till-quick-' + n + '" data-qk="' + esc(id) + '"'
+        + (QK_ARRANGE
+            ? ' draggable="true"' + (QK_FROM === id ? ' data-qkfrom="1"' : '')
+              + ' ondragstart="qkPickUp(\'' + id + '\')" ondragover="event.preventDefault()"'
+              + ' ondrop="event.preventDefault();qkDropOn(\'' + id + '\')"'
+              /* ⭐ TAP ALSO WORKS — pick up, then tap the place. HTML5 drag events never fire on a touchscreen,
+                 and a till is a touchscreen; drag alone would have shipped as a mouse-only feature. */
+              + ' onclick="' + (QK_FROM ? 'qkDropOn(\'' + id + '\')' : 'qkPickUp(\'' + id + '\')') + '"'
+            : ' onclick="quickAdd(\'' + id + '\')"'),
       hideAttrs: 'title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')"',
       extra: extra });
   }).join('');
@@ -4619,7 +4760,180 @@ function paintQuick(){
       + sold.map(function(i, n){ return '<button class="sk-trayitem" data-testid="till-soldout-' + n + '" title="bring it back"'
           + ' onclick="quickBringBack(\'' + esc(i.item_id) + '\')">' + esc(i.name) + '</button>'; }).join('') + '</div>'
     : '';
-  el.innerHTML = bar + keys + tray;
+  /* ⚠️ A MODE THAT DOES NOT ANNOUNCE ITSELF IS A FAULT REPORT WAITING TO HAPPEN — the keys look the same and
+     stop selling, so the panel says why, for as long as it lasts. */
+  var arrNote = QK_ARRANGE
+    ? '<div class="qarrnote" data-testid="till-arrange-note">Arranging \u2014 drag a key where you want it'
+      + (QK_FROM ? ', then tap where it should go' : '') + '. Nothing is billed until you press Done.</div>'
+    : '';
+  el.innerHTML = bar + arrNote + inBillStrip() + keys + tray;
+}
+/**
+ * ── ⭐⭐ WHAT IS ALREADY ON THE BILL, IN PICTURES ([TILL-37], 2026-09-18) ────────────────────────────────────
+ *
+ * Athi: *"if they are going to adjust quantity, remove, then they will be doing to the selected item only, so
+ * possibly you need to have a sort order and the selected item has to come on top… or a cart image to show the
+ * selected items only in the image format."*
+ *
+ * ⚠️ A STRIP, NOT A RE-SORT. Moving a key to the front the moment it is tapped pulls the NEXT key out from
+ * under a finger already on its way down — on a busy counter that is a mis-tap and a wrong bill. So the chosen
+ * things gather in their own row at the top, the grid below never moves, and the two readings of "where is it"
+ * stay separate: the grid is where things live, this is what has been picked.
+ * ⭐ AND THE CONTROLS ARE HERE, on the thing they act on — −, the count, +, and away. That is the whole of the
+ * adjusting Athi describes, without a trip to the bill panel.
+ */
+/**
+ * ⭐ ONE PICTURE CELL FOR A BILL LINE, drawn by both surfaces that want one — the strip above the keys and the
+ * bill itself. Two renderers for one thing is two chances to disagree about what a line says.
+ * [[feedback-no-duplicate-functions]]
+ */
+function cartPicCell(c, n, byId, testid){
+  var i = byId[String(c.item_id)] || {};
+  return '<div class="ibcell" data-testid="' + testid + '-' + n + '">'
+    + (i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy" decoding="async">'
+               : '<span class="ibinit">' + esc(String(c.name || '?').slice(0, 2).toUpperCase()) + '</span>')
+    + '<b>' + esc(c.name) + '</b>'
+    + (c.mods && c.mods.length ? '<span class="ibmods">' + esc(modWordsPlain(c.mods)) + '</span>' : '')
+    + (c.kot ? '<span class="ibmods">KOT ' + esc(c.kot) + '</span>' : '')
+    + '<span class="ibmoney">' + money(r2((Number(c.price) || 0) * (Number(c.qty) || 0))) + '</span>'
+    + '<span class="ibqty">'
+      /* ⭐ THE BILL'S OWN HANDLERS, by cart index — the same two the bill table's steppers call, so a quantity
+         changed here and a quantity changed there cannot come out different. */
+      + '<button data-testid="' + testid + '-less-' + n + '" title="one fewer" onclick="bumpLine(' + n + ',-1)">−</button>'
+      + '<i>' + esc(c.qty) + '</i>'
+      + '<button data-testid="' + testid + '-more-' + n + '" title="one more" onclick="bumpLine(' + n + ',1)">+</button>'
+      + '<button class="ibdrop" data-testid="' + testid + '-drop-' + n + '" title="take it off the bill" onclick="setQty(' + n + ',0)">✕</button>'
+    + '</span></div>';
+}
+/**
+ * ⭐⭐ THE BILL, IN PICTURES ([TILL-38], Athi 2026-09-18: *"if the quick keys are active and the items are
+ * selected from quick keys, then can you show the next screen as quick keys, may be we can provide toggle to
+ * switch to names? need a way to see the data as pictures for correction also."*)
+ *
+ * Somebody who billed by looking at photographs should be able to CHECK by looking at photographs. Reading back
+ * a column of names is a different skill from the one they just used, and at a counter the check is the whole
+ * point of the second screen.
+ * ⚠️ SAME LINES, SAME HANDLERS — only the face differs. Nothing here can put a different number on the bill
+ * than the table would have, which is the only way two views of one thing are safe.
+ */
+function billView(){
+  var v = tillOpt().billView;
+  /* a counter that has never chosen follows the keys: photographs on the keys means photographs on the bill */
+  if (v !== 'pics' && v !== 'names') { try { return screenCfg().photos ? 'pics' : 'names'; } catch (_) { return 'names'; } }
+  return v;
+}
+function setBillView(v){ tillOptSet({ billView: v }); try { paintCart(); } catch (_) {} }
+function billViewToggle(){
+  return '<div class="bvtog" data-testid="till-billview">'
+    + [['pics', 'Pictures'], ['names', 'Names']].map(function(x){
+        return '<button class="' + (billView() === x[0] ? 'on' : '') + '" data-testid="till-billview-' + x[0] + '"'
+          + ' onclick="setBillView(&quot;' + x[0] + '&quot;)">' + x[1] + '</button>'; }).join('')
+    + '</div>';
+}
+function cartPicGrid(){
+  var byId = {}; ((S && S.items) || []).forEach(function(i){ byId[String(i.item_id)] = i; });
+  return '<div class="ibgrid" data-testid="till-cart-pics">'
+    + CART.map(function(c, n){ return cartPicCell(c, n, byId, 'till-pic'); }).join('') + '</div>';
+}
+/**
+ * ⚠️⚠️ SHUT UNTIL ASKED FOR (Athi, 2026-09-18: *"this way it occupies the space, and all the images going down,
+ * so this has to be brought based on a cart icon?"* — and he is right). A strip that is always open costs a
+ * row of products on every screen, permanently, to show something the cashier only looks at when they mean to
+ * correct it. The cart chip on the keys bar carries the count and the money — which is the part worth seeing
+ * all the time — and the pictures come only when it is tapped.
+ */
+/**
+ * ── ⭐⭐⭐ WHERE A KEY SITS IS THE SHOPKEEPER'S TO DECIDE ([TILL-39], 2026-09-18) ──────────────────────────────
+ *
+ * Athi: *"if you bring the selected items to the first in the queue, the order of the item changes, the human
+ * brain works the way that the attention goes to the usual places… it will create chaos. So the order by which
+ * the quick keys should be there, that also should be able to set… by just dragging the image to the preferred
+ * location."*
+ *
+ * ⚠️⚠️ THIS IS WHY THE BILL GOT A STRIP AND NOT A RE-SORT. A key that moves because of what was just sold
+ * destroys the one thing that makes a quick key quick: a cashier who reaches for the top-left without looking.
+ * Speed at a counter is muscle memory, and muscle memory is a FIXED position. So nothing here ever reorders
+ * itself — the order is set once, by hand, and then never moves again until it is set again.
+ *
+ * ⚠️ A MODE, NOT A GESTURE. Dragging is also how a finger behaves on a touchscreen when it slips, and a key
+ * that wandered off mid-rush because somebody's thumb dragged 4px would be worse than no reordering at all. So
+ * arranging is switched ON, the keys stop billing while it is on, and it is switched off again. While it is on
+ * a tap cannot sell anything, which is the whole safety of it.
+ */
+var QK_ARRANGE = false, QK_FROM = null;
+function qkArrangeOn(){ return QK_ARRANGE; }
+/**
+ * ⭐ PUT IT BACK THE WAY THE SHOP PUBLISHED IT. Only offered when there is a true original to return to — a
+ * group this counter invented has no "before", and a control that did nothing would be worse than no control.
+ */
+function qkResetOrder(){
+  var o = tillOpt(), nm = o.group;
+  if (!nm || !shopGroups()[nm]) { toastLine('This group is this counter’s own — there is no shop order to go back to.'); return; }
+  if (!(o.groups || {})[nm]) { toastLine('Already in the shop’s order.'); return; }
+  delete o.groups[nm];
+  tillOptSet({ groups: o.groups });
+  toastLine('Back to the order the shop published.');
+}
+function qkArrangeToggle(){
+  var o = tillOpt();
+  if (!QK_ARRANGE && !(o.quickSource === 'groups' || o.quickSource === 'both')) {
+    /* ⚠️ "What sells now" is LEARNED — there is no hand-made order to rearrange, and silently doing nothing
+       would look like a fault. Say which switch to move. [[feedback-silence-is-the-bug]] */
+    toastLine('These keys are learned from your own bills. Switch to "My group" to arrange them by hand.');
+    return;
+  }
+  if (!QK_ARRANGE && !o.group) { toastLine('Choose a group first — the order belongs to a group.'); return; }
+  QK_ARRANGE = !QK_ARRANGE;
+  QK_FROM = null;
+  toastLine(QK_ARRANGE ? 'Drag a key where you want it. Nothing is billed while you arrange.'
+                       : 'Order saved for "' + (o.group || '') + '".');
+  try { paintQuick(); } catch (_) {}
+}
+/** where the drag started, remembered on the counter rather than in the drag payload so touch works the same */
+function qkPickUp(id){ QK_FROM = id; try { paintQuick(); } catch (_) {} }
+/**
+ * ⭐ DROP IT HERE. The group's id list is reordered and written back — nothing about the product changes, and
+ * no other group is touched, exactly as adding one to a group already behaves.
+ * ⚠️ COPY-ON-WRITE for a shop group, the same rule quickGroupToggle follows: this counter arranges ITS copy and
+ * the shop keeps publishing its own. A counter must not silently re-order every other counter in the chain.
+ */
+function qkDropOn(id){
+  var o = tillOpt(), from = QK_FROM;
+  QK_FROM = null;
+  if (!from || !o.group || from === id) { try { paintQuick(); } catch (_) {} return; }
+  var wasShop = groupIsShop(o.group);
+  var list = groupIds().slice();
+  var a = list.indexOf(from), b = list.indexOf(id);
+  if (a < 0 || b < 0) { try { paintQuick(); } catch (_) {} return; }
+  list.splice(a, 1);
+  list.splice(b, 0, from);                       /* dropped ONTO a key means "take its place", not "swap with it" */
+  o.groups[o.group] = list;
+  tillOptSet({ groups: o.groups });
+  if (wasShop) toastLine('"' + o.group + '" is the shop’s group — this counter now keeps its own order.');
+}
+var IB_OPEN = false;
+function ibToggle(){ IB_OPEN = !IB_OPEN; try { paintQuick(); } catch (_) {} }
+/** the count and the money, always visible; the pictures, on request */
+function cartChip(){
+  if (!CART.length) { IB_OPEN = false; return ''; }
+  var n = CART.reduce(function(a, c){ return a + (Number(c.qty) || 0); }, 0);
+  var due = CART.reduce(function(a, c){ return r2(a + (Number(c.price) || 0) * (Number(c.qty) || 0)); }, 0);
+  return '<button class="qcart' + (IB_OPEN ? ' on' : '') + '" data-testid="till-cart-chip"'
+    + ' title="the things on this bill, in pictures" onclick="ibToggle()">'
+    + '<span class="qcarti" aria-hidden="true">\u{1F6D2}</span><b>' + n + '</b>'
+    + '<span class="qcartm">' + money(due) + '</span>'
+    + '<span class="qcartc" aria-hidden="true">' + (IB_OPEN ? '\u25B4' : '\u25BE') + '</span></button>';
+}
+function inBillStrip(){
+  /* ⚠️ NO CLEVERNESS ABOUT WHERE THE BILL ALREADY IS. A first try suppressed this whenever body carried
+     .steps — but .steps rides the body at every width and only BECOMES separate screens under 601px, so the
+     strip silently refused to open on a desktop counter. A tap asked for it; a tap gets it. */
+  if (!CART.length || !IB_OPEN) return '';
+  var byId = {}; ((S && S.items) || []).forEach(function(i){ byId[String(i.item_id)] = i; });
+  var rows = CART.map(function(c, n){ return cartPicCell(c, n, byId, 'till-inbill'); }).join('');
+  return '<div class="ibstrip" data-testid="till-inbill">'
+    + '<div class="ibhead">On this bill <span>' + CART.length + '</span></div>'
+    + '<div class="ibrow">' + rows + '</div></div>';
 }
 function quickAdd(id){
   var i = ((S && S.items) || []).filter(function(x){ return x.item_id === id; })[0];
@@ -4659,6 +4973,15 @@ function shelfLine(shown){
  * products must not fetch 10,441 pictures), otherwise the initial over a colour taken from the category name, so the eye can
  * tell a row of biscuits from a row of soap before it has read either.
  */
+/**
+ * ⭐ THE MRP GAP IN THREE WORDS, for a surface with no room for the struck-through form the shelf row uses.
+ * ⚠️ NOT "save". The gap between MRP and the selling price is a fact about the product; the word "save" and the
+ * green it comes in belong to a line where an offer actually took money off. One word, one meaning.
+ */
+function mrpUnder(i){
+  var mrp = Number(i && i.mrp) || 0, pay = Number(i && i.price) || 0;
+  return (mrp > pay && pay > 0) ? (money(r2(mrp - pay)) + ' under MRP') : '';
+}
 function picOf(i){
   if (i.image) return '<img class="pic" src="' + esc(i.image) + '" alt="' + esc(i.name || '') + '" loading="lazy" decoding="async"'
     + ' onerror="tileSwap(this)" data-tile="' + esc((i.category || i.name || '?') + '\u0001' + (i.name || '?')) + '">';
@@ -6563,6 +6886,8 @@ function cartRowHTML(c, k){
  */
 function paintCartRow(k){
   var c = CART[k]; if (!c) return false;
+  /* ⚠️ the picture face has none of the cells below — say so plainly and let the caller repaint the whole bill */
+  if (billView() === 'pics') return false;
   var amt = document.querySelector('[data-testid="till-amt-' + k + '"]');
   var note = document.querySelector('[data-testid="till-note-' + k + '"]');
   var qty = document.querySelector('[data-testid="till-qty-' + k + '"]');
@@ -6592,10 +6917,11 @@ function paintCartRow(k){
   return true;
 }
 function paintCart(){
+  var pics = billView() === 'pics';
   document.getElementById('cart').innerHTML = (CART.length
-    ? '<div class="carthead" data-testid="till-cart-count">' + countWords() + '</div>'
-      + cartHeadHTML()
-      + CART.map(function(c,k){ return cartRowHTML(c,k); }).join('')
+    ? '<div class="carthead" data-testid="till-cart-count">' + countWords() + billViewToggle() + '</div>'
+      + (pics ? cartPicGrid()
+              : cartHeadHTML() + CART.map(function(c,k){ return cartRowHTML(c,k); }).join(''))
     : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>');
   /* the keys show how many of each are on the bill — they follow it */
   try { paintQuick(); } catch (_) {}
@@ -10262,13 +10588,13 @@ function paintSetup(){
   /* ⭐ the groups, each with what it holds — and the one in hand can be renamed away or emptied from here */
   var box = document.getElementById('setupgroups');
   if (box) {
-    var names = Object.keys(o.groups || {}).sort();
+    var names = Object.keys(groupsAll()).sort();
     box.innerHTML = '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0 6px">'
       + '<select data-testid="till-set-group" onchange="tillOptSet({group:this.value});paintSetup()">'
       + '<option value="">— no group —</option>'
       + names.map(function(nm){
           return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>'
-            + esc(nm) + ' (' + ((o.groups[nm] || []).length) + ')</option>'; }).join('')
+            + esc(nm) + ' (' + ((groupsAll()[nm] || []).length) + ')</option>'; }).join('')
       + '</select>'
       + '<button class="pill" data-testid="till-set-group-new" onclick="quickGroupNew()" title="A list you make — Morning, Noon, Night…">＋ New</button>'
       + (o.group ? '<button class="pill" data-testid="till-set-group-drop" onclick="quickGroupDrop()">Remove</button>' : '')
@@ -10389,6 +10715,20 @@ window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
 document.addEventListener('keydown', function(e){
   /* ⚠️ BEFORE Escape reaches the basket: a person pressing Escape at an open menu means "shut this", never "throw the sale away" */
   if (e.key === 'Escape'){ var mm = document.getElementById('tillmenu'); if (mm && !mm.hidden) { closeMenu(); e.preventDefault(); return; } }
+  /**
+   * ⚠️⚠️ BEFORE ESCAPE REACHES THE BASKET. Escape clears the bill, and [TILL-30] is already the scar from
+   * exactly this — somebody pressed it to back out of something they had opened and lost the sale instead.
+   * Arranging is something you back out of, so it claims Escape first: one press puts down the key being
+   * carried, the next leaves the mode, and neither goes anywhere near the bill.
+   */
+  if (e.key === 'Escape' && QK_ARRANGE){
+    if (QK_FROM) { QK_FROM = null; toastLine('Put back. Nothing moved.'); }
+    else { QK_ARRANGE = false; toastLine('Done arranging.'); }
+    try { paintQuick(); } catch (_) {}
+    e.preventDefault(); return;
+  }
+  /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
+  if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
