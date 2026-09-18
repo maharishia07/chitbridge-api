@@ -4445,16 +4445,26 @@ async function quickSyncGroups(){
         .map(function(x){ return x.product_id; }).filter(Boolean);
     });
     var was = ls.get(shopLs('cb_till_shopgroups'), '{}'), now = JSON.stringify(map);
-    if (was === now) return;
     ls.set(shopLs('cb_till_shopgroups'), now);
+    /**
+     * ⚠️⚠️ THE ADOPT MUST NOT HIDE BEHIND "has it changed". It did, and a counter whose cached copy already
+     * matched the shop sat on 'frequent' with four published groups it never offered — the groups were THERE,
+     * the keys were learned, and nothing said why. Whether the list changed and whether this counter has
+     * chosen one are two different questions. [[feedback-silence-is-the-bug]]
+     */
     /**
      * ⭐ A COUNTER WITH NO GROUP CHOSEN ADOPTS THE SHOP'S FIRST ONE. Otherwise a shop publishes its groups, the
      * cashier sees the same learned keys as before and concludes nothing arrived. Only ever on a counter that
      * has made no choice of its own — a chosen group is never moved out from under somebody mid-shift.
      */
-    var o = tillOpt(), names = Object.keys(map);
-    if (!o.group && names.length) tillOptSet({ group: names[0], quickSource: o.quickSource === 'frequent' ? 'groups' : o.quickSource });
-    try { loadQuick(); } catch (_) { try { paintQuick(); } catch (_) {} }
+    var o = tillOpt(), names = Object.keys(map), adopted = false;
+    if (!o.group && names.length) {
+      tillOptSet({ group: names[0], quickSource: o.quickSource === 'frequent' ? 'groups' : o.quickSource });
+      adopted = true;
+    }
+    /* ⚠️ repaint only when something actually moved — this runs every minute, and a grid that rebuilds under a
+       cashier's hand for no reason is its own small fault */
+    if (was !== now || adopted) { try { loadQuick(); } catch (_) { try { paintQuick(); } catch (_) {} } }
   } catch (_) {}
 }
 /**
