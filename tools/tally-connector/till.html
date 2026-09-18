@@ -4266,6 +4266,67 @@ function chipsOverflow(){
  */
 var QTY_UNITS = { g:['w',1], gm:['w',1], gms:['w',1], gram:['w',1], grams:['w',1], kg:['w',1000], kgs:['w',1000], kilo:['w',1000], kilos:['w',1000],
                   ml:['v',1], l:['v',1000], lt:['v',1000], ltr:['v',1000], litre:['v',1000], litres:['v',1000], liter:['v',1000] };
+/**
+ * ── ⭐⭐⭐ EVERY WORD THIS SHOP COULD MEAN AS A QUANTITY ([TILL-49], 2026-09-18) ─────────────────
+ *
+ * Athi: *"when i say upma 5 plate, it is typing all, instead, upma and qty should be 5?"* — and, on where the
+ * fix belongs: *"we have to add those in the overall unit items."*
+ *
+ * ⚠⚠ QTY_UNITS ABOVE IS A CONVERSION TABLE, NOT A VOCABULARY, and it had been doing both jobs. It holds g, kg,
+ * ml and l because those are the ones with FACTORS — 500 gm of something sold by the kg is 0.5. Using the same
+ * table to decide what counts as a unit WORD meant a grocer's vocabulary was built in and a hotel's was not:
+ * "upma 500 gm" parsed and "upma 5 plate" did not parse at all, so a restaurant counter got an empty list for
+ * the most ordinary sentence anybody says in it.
+ *
+ * ⭐ SO THE VOCABULARY IS THE PLATFORM'S (lib/units.js — CBUnits), which already carries every spelling in
+ * English, Tamil and Hindi with its UN/ECE and GST codes, and which plate, cup, glass and bowl were added to
+ * rather than listed here. One table, so a unit spelt one way on the counter and another in the catalogue is
+ * still one unit. [[feedback-adopt-dont-reinvent]] [[project-js-unification]]
+ * ⚠ THE SHELF IS THE FALLBACK, not the source: a shop that prices something per 'bundle' — a word the platform
+ * has not heard of — still gets it, because it is on its own products. The platform first, then the shop.
+ * ⚠ A number must come FIRST, exactly as for kg. A bare word is part of a name far more often than a unit.
+ */
+var UNIT_WORDS_AT = null, UNIT_WORDS_RE = null;
+function unitWordsRe(){
+  var items = (S && S.items) || [];
+  var stamp = items.length + '|' + (window.CBUnits ? 1 : 0);
+  if (UNIT_WORDS_RE !== null && UNIT_WORDS_AT === stamp) return UNIT_WORDS_RE;
+  var seen = {}, words = [];
+  var take = function(w){
+    var u = String(w || '').toLowerCase().trim();
+    /* ⚠ one letter is not a unit word here — 'l' and 'g' are handled by QTY_UNITS, which also knows their factors */
+    if (!u || u.length < 2 || seen[u]) return;
+    seen[u] = 1;
+    /* ⚠ ESCAPED — these are shop data and platform data; an unescaped '(' would throw on every keystroke */
+    words.push(u.replace(/[.*+?^${}()|[\]\\]/g, function(ch){ return '\\' + ch; }));
+  };
+  try {
+    var T = window.CBUnits && CBUnits.UNITS;
+    if (T) Object.keys(T).forEach(function(k){ (T[k].names || []).forEach(take); take(k); });
+  } catch (_) {}
+  items.forEach(function(i){ take(i && i.unit); });
+  UNIT_WORDS_AT = stamp;
+  /* longest first, so 'plates' is not matched as 'plate' with a stray s, and 'sq ft' beats 'ft' */
+  words.sort(function(a, b){ return b.length - a.length; });
+  UNIT_WORDS_RE = words.length
+    ? new RegExp('(^|\\s)(\\d+(?:[./]\\d+)?)\\s*(' + words.join('|') + ')(?:e?s)?(?=\\s|$)', 'i')
+    : null;
+  return UNIT_WORDS_RE;
+}
+/**
+ * ⚠ ONE CHEAP QUESTION: does this shop sell anything by this name? Asked of the SAME engine the list uses, so
+ * the parser and the shelf cannot disagree about what a match is — capped at one, because the answer wanted is
+ * yes or no and this runs on every keystroke.
+ */
+function shelfKnows(text){
+  var items = (S && S.items) || [];
+  if (!items.length || !text) return false;
+  try {
+    if (window.CBSearch && CBSearch.search) return (CBSearch.search(items, text, { limit: 1 }) || []).length > 0;
+  } catch (_) {}
+  var w = String(text).toLowerCase();
+  return items.some(function(i){ return String((i && i.name) || '').toLowerCase().indexOf(w) >= 0; });
+}
 /** what one of the product's own units is worth, in the smallest unit of its family — or null when it is not a measured thing */
 function unitBase(u){ var k = QTY_UNITS[String(u || '').toLowerCase().trim()]; return k || null; }
 /**
@@ -4328,6 +4389,23 @@ function typed(){
     else val = Number(num);
     var rest = (raw.slice(0, hit.index) + ' ' + raw.slice(hit.index + hit[0].length)).replace(/\s+/g, ' ').trim();
     if (val > 0 && rest) return { qty: val, unit: String(hit[3]).toLowerCase(), text: rest };
+  }
+  /**
+   * then every other unit word this shop could mean — "upma 5 plate", "3 cup tea", "2 bottle". See unitWordsRe().
+   * ⚠⚠ AND ONLY IF A PRODUCT ANSWERS TO WHAT IS LEFT. This is the guard the weight branch gets for free and this
+   * one does not: a countable unit is an ordinary word that turns up inside product NAMES — "Set Dosa 3 pc",
+   * "Idli 2 piece" — and stripping it blindly would search for something nobody sells and offer to bill five of
+   * nothing. So the remainder is put to the shelf first, and if the shelf does not know it the phrase stands as
+   * typed. A parse that cannot be confirmed is not a parse.
+   */
+  var ure = unitWordsRe();
+  var uh = ure ? ure.exec(raw) : null;
+  if (uh) {
+    var unum = uh[2], uval;
+    if (unum.indexOf('/') > 0) { var up = unum.split('/'); uval = Number(up[0]) / Number(up[1]); }
+    else uval = Number(unum);
+    var urest = (raw.slice(0, uh.index) + ' ' + raw.slice(uh.index + uh[0].length)).replace(/\s+/g, ' ').trim();
+    if (uval > 0 && urest && shelfKnows(urest)) return { qty: uval, unit: String(uh[3]).toLowerCase(), text: urest };
   }
   /* ⚠️ orig, not raw — no unit and no multiplier were found, so any digit swapped in above belongs to the NAME */
   return { qty: 1, unit: null, text: orig.trim() };
@@ -6727,7 +6805,23 @@ async function add(n){
   var t = typed(), q = t.qty;
   if (t.unit) {
     var c = qtyInUnit(t.qty, t.unit, i.unit);
+    /**
+     * ⚠⚠ "NOT CONVERTED" IS TWO DIFFERENT ANSWERS AND THIS TREATED THEM AS ONE ([TILL-49], 2026-09-18).
+     * qtyInUnit only converts within a family that has FACTORS — weight and volume. A plate has no factor, so
+     * "upma 5 plate" of something sold BY THE PLATE came back converted:false and was billed as ONE, while the
+     * hint above the list said "Adding 5 plate". The screen and the bill disagreed, and the bill was wrong.
+     * ⭐ The same unit needs no conversion. Asked of the platform (CBUnits.sameUnit), so 'plate', 'plates' and
+     * 'ப்லேட்' are one unit here exactly as they are everywhere else.
+     * ⚠ A genuinely different unit still means one — see below; that case is the pack size in a name.
+     */
+    var sameU = false;
+    try {
+      sameU = (window.CBUnits && CBUnits.sameUnit)
+        ? CBUnits.sameUnit(t.unit, i.unit)
+        : String(t.unit).toLowerCase() === String(i.unit || '').toLowerCase();
+    } catch (_) { sameU = String(t.unit).toLowerCase() === String(i.unit || '').toLowerCase(); }
     if (c.converted) q = c.qty;
+    else if (sameU) q = t.qty;
     else {
       /**
        * ⚠️⚠️ A PACK SIZE IN A NAME IS NOT AN ORDER. "Aavin milk 500 ml" is one packet, not five hundred — and the words 500 ml sit

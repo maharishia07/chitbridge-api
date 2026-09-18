@@ -57,7 +57,14 @@ for (const f of files) {
     }
   }
 
-  for (const m of code.matchAll(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?!IF\s+NOT\s+EXISTS)([a-z0-9_]+)/gi)) {
+  /**
+   * ⚠️ CONCURRENTLY SITS BETWEEN 'INDEX' AND 'IF NOT EXISTS', and this pattern did not allow for it — so a
+   * perfectly re-runnable `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS ux_…` was read as an index NAMED
+   * 'CONCURRENTLY' with no guard, and failed (b263, 2026-09-18). The assertion is unchanged — an index must be
+   * re-runnable — only its expression learned a keyword. [[feedback-improvise-update-cases]]
+   * ⚠️ It still catches `CREATE INDEX CONCURRENTLY foo` with no IF NOT EXISTS, which is the real fault.
+   */
+  for (const m of code.matchAll(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?!(?:CONCURRENTLY\s+)?IF\s+NOT\s+EXISTS\b)(?:CONCURRENTLY\s+)?([a-z0-9_]+)/gi)) {
     checks++;
     fail(f, 'CREATE INDEX ' + m[1] + ' without IF NOT EXISTS', 'Re-running errors 42P07.');
   }
