@@ -232,9 +232,7 @@
   .qbar select,.qbar button{font:inherit;font-size:.82em;padding:6px 10px;border:1px solid var(--edge);
         border-radius:999px;background:var(--paper);cursor:pointer}
   .qbar .qwhy{grid-column:auto;padding:0;margin-inline-start:auto}
-  .quick .qadd{position:absolute;inset-inline-start:2px;top:2px;font-style:normal;font-size:.8em;opacity:.35;
         padding:2px 5px;border-radius:6px}
-  .quick button:hover .qadd{opacity:.9;background:var(--ok-tint);color:var(--ok)}
   /**
    * ── ⭐⭐⭐ WHAT THIS COUNTER SHOWS, AND WHAT SHAPE IT IS ──────────────────────────────────────────────────
    *
@@ -985,7 +983,6 @@
   .save{color:var(--ok)}
   /* ⭐ the stacked line note (2026-09-16): the unit price on its own line, each offer below as name / −value */
   .u .lp{display:block;font-weight:600}
-  .u .lo{display:flex;justify-content:space-between;gap:8px;font-size:.92em;padding-top:1px}
   /* ⭐ the offer's TERMS per product, on the right of its name — never the money, which is the Discount column */
   .u .lo .rate{white-space:nowrap;font-weight:600}
   /**
@@ -2168,10 +2165,28 @@ var CloudHost = {
     var bills = (await DB.all('bills')) || [], queue = (await DB.all('queue')) || [];
     var day = new Date().toISOString().slice(0,10);
     var mine = bills.filter(function(b){ return String(b.at||'').slice(0,10) === day; });
-    var by = {}; var total = 0;
-    mine.forEach(function(b){ total = r2(total + (b.total||0)); (b.payments||[]).forEach(function(p){ by[p.how] = r2((by[p.how]||0) + (p.amount||0)); }); });
+    /**
+     * ⚠️⚠️ FOUR FIGURES ON FOUR SCREENS, AND THREE OF THEM DISAGREED (2026-09-18). A credit note is stored
+     * negative, so the total netted by itself — but count was mine.length, which called a refund a bill, and
+     * by was built from payments alone, which a credit note never has (its money-out is in refunds,
+     * deliberately, because every reader of payments assumes money TAKEN). So one ₹1,000 cash sale and one
+     * ₹400 cash return read "2 bills · ₹600" on the pill and "Cash ₹1,000" in the bills dialog, while the day
+     * close said 1 bill and the drawer held ₹600.
+     * ⭐ The money nets; the COUNT does not; and a refund comes off the tender it was given back in.
+     */
+    var by = {}; var total = 0, count = 0, back = 0;
+    mine.forEach(function(b){
+      total = r2(total + (b.total||0));
+      if (b.kind === 'credit_note') {
+        back = r2(back + Math.abs(Number(b.total)||0));
+        (b.refunds||[]).forEach(function(x){ by[x.how] = r2((by[x.how]||0) - (Number(x.amount)||0)); });
+      } else {
+        count++;
+        (b.payments||[]).forEach(function(p){ by[p.how] = r2((by[p.how]||0) + (p.amount||0)); });
+      }
+    });
     return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
-             today: { count: mine.length, total: total, by: by },
+             today: { count: count, total: total, by: by, returns: r2(back) },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
              engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums, rewards: !!window.CBRewards } };
   },
@@ -3238,11 +3253,6 @@ function statusOf(i){
  * availability test in hits() at all, and the snapshot had simply never sent an unavailable row for it to fail on.
  */
 function taxIncluded(){ return !(S && S.policy && S.policy.price_includes_tax === 'no'); }
-function payPrice(i){
-  var p = Number(i.price) || 0;
-  var r = (i.tax_rate === undefined ? rateOf(i) : i.tax_rate);
-  return (!taxIncluded() && r) ? r2(p * (1 + Number(r) / 100)) : p;
-}
 /** how many offer start/end moments have already passed — changes exactly when some offer switches on or off */
 function offerEpoch(){
   var now = Date.now(), n = 0;
@@ -3612,13 +3622,20 @@ function menuTodayBody(){
   var bills = TODAY_BILLS;
   if (!bills) { todayBills().then(function(){ try { paintMenu(); } catch (_) {} }); }
   bills = bills || [];
-  var n = bills.length;
+  /* ⚠️ THE SAME THREE RULES AS THE HEADER — see CloudHost.state(). Written twice, so they must agree twice. */
+  var back = bills.filter(isReturnRow);
+  var n = bills.length - back.length;
   var total = bills.reduce(function(a, b){ return a + (Number(b.total) || 0); }, 0);
   var saved = bills.reduce(function(a, b){ return a + (Number(b.saved) || 0); }, 0);
-  /* how the money came in — recorded on each bill, never re-derived */
+  var returned = back.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
+  /* how the money came in, less what went back out in the same tender */
   var by = {};
-  bills.forEach(function(b){ (b.payments || []).forEach(function(pmt){
-    var how = String(pmt.how || 'cash'); by[how] = r2((by[how] || 0) + (Number(pmt.amount) || 0)); }); });
+  bills.forEach(function(b){
+    if (isReturnRow(b)) { (b.refunds || []).forEach(function(x){
+      var how = String(x.how || 'Cash'); by[how] = r2((by[how] || 0) - (Number(x.amount) || 0)); }); return; }
+    (b.payments || []).forEach(function(pmt){
+      var how = String(pmt.how || 'cash'); by[how] = r2((by[how] || 0) + (Number(pmt.amount) || 0)); });
+  });
   /* what moved: quantity per product across today's lines */
   var moved = {};
   bills.forEach(function(b){ (b.lines || []).forEach(function(l){
@@ -3637,6 +3654,7 @@ function menuTodayBody(){
   var out = '<div class="today" data-testid="till-today">'
     + row("Today's sale", money(total), true)
     + row('Bills', String(n))
+    + (returned ? row('Given back', '−' + money(returned)) : '')
     + (n ? row('Average bill', money(r2(total / n))) : '')
     + (saved ? row('Taken off by offers', money(saved)) : '');
   Object.keys(by).sort().forEach(function(how){ out += row(how.charAt(0).toUpperCase() + how.slice(1), money(by[how])); });
@@ -4039,13 +4057,6 @@ function chipsOverflow(){
   var el = document.getElementById('chips'); if (!el) return;
   el.classList.toggle('more', el.scrollWidth > el.clientWidth + 2);
 }
-/**
- * ⭐⭐ FINDING A PRODUCT IS NOT THE COUNTER'S OWN IDEA (2026-09-08). Every rule about what "ac co" means lives in ONE file,
- * app/search.js, loaded here as /engine/search.js and used unchanged by the app's Catalogue screen. What stays here is what is
- * genuinely the counter's: the chips have already narrowed the shelf, and a till shows sixty rows.
- * ⚠️ If the engine failed to load the box must still find things, so there is a plain fallback — never an empty shelf mid-sale.
- */
-function searchText(i){ return window.CBSearch ? CBSearch.textOf(i) : ' ' + String(i.name || '').toLowerCase() + ' '; }
 /**
  * ⭐ THE QUANTITY GOES IN FRONT OF THE NAME — "3*rice", "0.75 x tomato" (2026-09-08). It is how a counter has always entered three of
  * something, and it is how a weight read off the scale reaches the bill without going back to the quantity box afterwards.
@@ -4536,7 +4547,10 @@ async function quickSyncScreen(){
     var cfg = r && r.ok && (r.config || (r.screen_config && r.screen_config.config));
     if (!cfg || typeof cfg !== 'object') return;
     var o = tillOpt(), mine = o.screen || {}, next = {}, changed = false;
+    /* ⚠️ THE SHOP'S OWN KEY IS NOT A DEVICE SETTING. It was being copied into o.screen as well, which both
+       bled one namespace into another and made the screen write fire on every single sync. */
     Object.keys(cfg).forEach(function(k){
+      if (k === 'till') return;
       if (mine[k] === undefined) { next[k] = cfg[k]; changed = true; }
     });
     Object.keys(mine).forEach(function(k){ next[k] = mine[k]; });   /* the device's own choices win */
@@ -4549,14 +4563,19 @@ async function quickSyncScreen(){
      */
     var tillDefaults = cfg.till && typeof cfg.till === "object" ? cfg.till : null;
     if (tillDefaults) {
-      var raw = {};
-      try { raw = JSON.parse(ls.get(shopLs("cb_till_opt"), "{}")) || {}; } catch (_) {}
+      /* ⚠️ ASK WHAT WAS CHOSEN, not what happens to be in the file — see tillOptSet(). */
+      var chose = Array.isArray(tillOpt()._set) ? tillOpt()._set : [];
       var patch = {};
-      Object.keys(tillDefaults).forEach(function(k){ if (raw[k] === undefined) { patch[k] = tillDefaults[k]; changed = true; } });
-      if (Object.keys(patch).length) tillOptSet(patch);
+      Object.keys(tillDefaults).forEach(function(k){
+        if (chose.indexOf(k) < 0) { patch[k] = tillDefaults[k]; changed = true; }
+      });
+      /* ⚠️ applied as a DEFAULT, so a later change by the shop still reaches this counter */
+      if (Object.keys(patch).length) tillOptSet(patch, { chosen: false });
     }
     if (!changed) return;
-    tillOptSet({ screen: next });
+    /* ⚠️ likewise a default, not a decision — otherwise the shop's FIRST screen config would freeze for ever
+       and nothing it published afterwards would ever arrive. */
+    tillOptSet({ screen: next }, { chosen: false });
     try { applyLook(); loadQuick(); paintOrderBar(); } catch (_) {}
   } catch (_) {}
 }
@@ -4702,9 +4721,28 @@ function tillOpt(){
   if (!o.upi || typeof o.upi !== 'object') o.upi = { payee:'', label:'UPI' };
   TILLOPT = o; TILLOPT_AT = at; return o;
 }
-function tillOptSet(patch){
+/**
+ * ⚠️⚠️ "A KEY THIS DEVICE HAS NEVER SET" CANNOT BE READ OFF THE STORED JSON (2026-09-18). This function writes
+ * the WHOLE options object, defaults included — so the first write for any reason serialises every key in
+ * tillOptDefaults(), and from then on raw.weigh is defined for ever. A shop's central
+ * config.till.weigh could therefore never reach a counter that had once picked a theme or synced a group,
+ * while config.till.kot worked purely because kot is not in the defaults. Half a feature working for a
+ * reason nothing on screen would reveal.
+ *
+ * ⭐ SO THE CHOICE IS RECORDED, NOT INFERRED. _set is the list of keys something actually patched. A shop's
+ * default is applied with { chosen: false } so that applying it does NOT make it look like the cashier's
+ * decision — otherwise the shop's own first value would freeze, and no later change would ever arrive.
+ */
+function tillOptSet(patch, opts){
   var o = tillOpt();
-  Object.keys(patch || {}).forEach(function(k){ o[k] = patch[k]; });
+  var chosen = !(opts && opts.chosen === false);
+  var keys = Object.keys(patch || {});
+  if (chosen) {
+    var was = Array.isArray(o._set) ? o._set.slice() : [];
+    keys.forEach(function(k){ if (was.indexOf(k) < 0) was.push(k); });
+    o._set = was;
+  }
+  keys.forEach(function(k){ o[k] = patch[k]; });
   /**
    * ⭐ CHOOSING A LAYOUT WRITES THE TICKS — it does not become a second rule beside them. So after picking
    * "the bill and a search" the Setup panel shows exactly which sections that turned off, and the shopkeeper can
@@ -5252,7 +5290,6 @@ function cartPicGrid(){
  * a tap cannot sell anything, which is the whole safety of it.
  */
 var QK_ARRANGE = false, QK_FROM = null;
-function qkArrangeOn(){ return QK_ARRANGE; }
 /**
  * ⭐ PUT IT BACK THE WAY THE SHOP PUBLISHED IT. Only offered when there is a true original to return to — a
  * group this counter invented has no "before", and a control that did nothing would be worse than no control.
@@ -5886,13 +5923,6 @@ function flashItem(id){
   all.forEach(function(el){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); });
   clearTimeout(_flashT);
   _flashT = setTimeout(function(){ all.forEach(function(el){ el.classList.remove('flash'); }); }, 1400);
-}
-/** ⭐ the one control that was just used, flashed where the finger is */
-function flashRow(el){
-  if (!el) return;
-  var row = el.closest ? el.closest('.cardrow') : null; if (!row) return;
-  row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
-  setTimeout(function(){ row.classList.remove('flash'); }, 1400);
 }
 function priceBlock(i){
   /**
@@ -6664,13 +6694,22 @@ function modClose(){
  * merging them would lose what was actually on each bag.
  * ⚠️ WHEN THE LABEL CARRIES THE PRICE, that price is billed exactly, whatever our rate says (see weighRead).
  */
-function addWeighed(w){
+async function addWeighed(w){
   var i = w.item, n = Number(w.qty) || 0; if (!(n > 0)) return;
+  /**
+   * ⚠️⚠️ A SCALE LABEL IS STILL A SALE. This pushed straight onto CART, so loose tobacco weighed and labelled
+   * at a paan counter went on the bill with no prompt AND with no age on the line — and the stored bill's
+   * age_checks then said, correctly, that nobody had checked. The gate belongs on every path that adds, not
+   * on the two that were convenient. [[feedback-silence-is-the-bug]]
+   */
+  if (MODE === 'sell' && !(await ageAllow(i))) return;
   CART.push({ key: i.item_id + '|w' + Date.now() + Math.random().toString(36).slice(2, 6),
               item_id: i.item_id, name: i.name, unit: i.unit || 'kg',
               price: (w.price != null && n > 0) ? r2(w.price / n) : (Number(i.price) || 0),
               qty: n, hsn: i.hsn || null, weighed: true,
               mrp: (Number(i.mrp) > 0 ? Number(i.mrp) : null),
+              /* ⭐ the same stamp addItem() puts on a line — a reprint must show which item needed checking */
+              age: ageOf(i) || null,
               item_data: { name: i.name, tax_slab: i.tax_slab, hsn: i.hsn, category: i.category } });
   toastLine(i.name + ' · ' + n + ' ' + (i.unit || 'kg') + ' — ' + w.why);
 }
@@ -6785,8 +6824,15 @@ function parkedSave(){
 function parkBill(){
   if (!CART.length) return;
   var who = (document.getElementById('cname').value || '').trim();
+  /**
+   * ⚠️⚠️ THE CHECK IS PARKED WITH THE BILL. ageClear() below wipes AGE_OK, and unpark() restores the CART —
+   * which still holds the 18+ lines — but the check only ever runs on ADD, so nothing re-asked and the finished
+   * bill recorded age_checks: null. An inspection would have seen a tobacco line with no check against it, on a
+   * sale where a check HAD been made. Park what was answered, and bring it back with the bill.
+   */
   PARKED.push({ at: new Date().toISOString(), name: who || ('Bill ' + (PARKED.length + 1)),
-                phone: (document.getElementById('cphone').value || '').trim(), cart: JSON.parse(JSON.stringify(CART)) });
+                phone: (document.getElementById('cphone').value || '').trim(),
+                ages: ageRecord(), cart: JSON.parse(JSON.stringify(CART)) });
   parkedSave();
   ageClear(); CART = []; document.getElementById('cname').value = ''; document.getElementById('cphone').value = ''; document.getElementById('tendered').value = '';
   price(); focusSearch();
@@ -6795,6 +6841,14 @@ function unpark(n){
   var p = PARKED[n]; if (!p) return;
   if (CART.length) { parkBill(); }                       /* never lose what is on the screen to bring one back */
   CART = p.cart || [];
+  /**
+   * ⚠️ AND BRINGS IT BACK. A parked bill carries the checks that were made on it; without this the resumed bill
+   * would finish with age_checks: null on lines that plainly needed one.
+   * ⚠️ A bill parked BEFORE this shipped has no ages of its own, and its 18+ lines are re-asked on the next add rather
+   * than silently passing — the safe direction.
+   */
+  AGE_OK = {};
+  (p.ages || []).forEach(function(a){ if (a && a.age) AGE_OK[a.age] = { at: a.at, by: a.by }; });
   document.getElementById('cname').value = (p.name && p.name.indexOf('Bill ') !== 0) ? p.name : '';
   document.getElementById('cphone').value = p.phone || '';
   PARKED.splice(n, 1); parkedSave(); price(); focusSearch();
@@ -8703,36 +8757,6 @@ function lineFor(lines, item){
  * receipt and travels on the movement, and why the counter never writes it onto the catalogue.
  */
 /**
- * ⭐⭐ WHAT THE SUPPLIER CALLS IT. Their line says "SUNFL OIL 1L RB"; ours says "Sunflower oil 1 L". Somebody pairs them ONCE at the
- * door and the counter never asks again — the difference between a vendor's first delivery and their fortieth.
- * ⚠️ AND THEIR PACK IS NOT OUR PACK. 1 carton = 24 pieces, so the alias carries a conversion; without it a perfectly correct
- * delivery reads as a 23-unit shortage, which is where most "mismatches" actually come from.
- */
-function aliasesOf(i){ return (i && Array.isArray(i.aliases)) ? i.aliases : []; }
-function aliasFor(i, vendor){
-  var v = String(vendor || '').trim().toLowerCase();
-  var all = aliasesOf(i);
-  return all.filter(function(a){ return v && String(a.by || '').trim().toLowerCase() === v; })[0]
-      || all.filter(function(a){ return !a.by; })[0] || null;
-}
-/** an item whose alias text matches what the supplier's paper calls it */
-function itemByAlias(text, vendor){
-  if (!text || !S || !Array.isArray(S.items)) return null;
-  var norm = function(t){ return window.CBSearch ? CBSearch.normalise(t).replace(/\s+/g, ' ').trim() : String(t || '').toLowerCase().trim(); };
-  var want = norm(text); if (!want) return null;
-  var v = String(vendor || '').trim().toLowerCase();
-  var hit = null;
-  for (var n = 0; n < S.items.length && !hit; n++){
-    var al = aliasesOf(S.items[n]);
-    for (var k = 0; k < al.length; k++){
-      if (norm(al[k].text) !== want) continue;
-      if (v && al[k].by && String(al[k].by).trim().toLowerCase() !== v) continue;
-      hit = S.items[n]; break;
-    }
-  }
-  return hit;
-}
-/**
  * ⭐ REMEMBERED ONCE. The counter offers this after a product is counted against a task line whose wording differs — the moment
  * somebody has just proved they know the answer.
  * ⚠️ It writes through the narrowest endpoint we have (POST /api/till/alias): a counter may append an alias and nothing else.
@@ -10557,7 +10581,8 @@ async function openBills(keepOpen){
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
           + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button>'
           /* ⭐ a return starts from the bill it undoes — there is nowhere else it could sensibly start */
-          + (b.kind === 'credit_note' ? ''
+          /* ⭐ only offered where it can actually be carried through — see retCanIssue() */
+          + ((b.kind === 'credit_note' || !retCanIssue()) ? ''
               : '<button class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
                 + ' onclick="retOpen(\'' + esc(b.no) + '\')">return</button>') + '</div>';
       }).join('')
@@ -10586,6 +10611,16 @@ async function openBills(keepOpen){
  * day nets the return without being taught anything. [[feedback-adopt-dont-reinvent]]
  */
 var RET_FOR = null, RET_QTY = null, RET_WHY = '', RET_HOW = '';
+/**
+ * ⚠️⚠️ NOT EVERY HOST CAN ISSUE A CREDIT NOTE YET. The desktop kit (AgentHost + tools/tally-connector/till.js)
+ * has its own numbering and its own chit builders, and neither knows the credit-note series — so it has no
+ * creditNote() at all. Offering the button there let a cashier pick quantities, confirm "Give back ₹500", and
+ * then meet "HOST.creditNote is not a function" with the sheet already wiped.
+ * ⭐ A LIMITATION SAID OUT LOUD BEATS A BUTTON THAT LOSES WORK. The pill is not drawn on a host that cannot do
+ * it, and if it is reached another way the refusal comes BEFORE the confirmation, naming the reason.
+ */
+var RET_WHYNOT = 'This counter cannot issue a credit note yet — returns are on the browser counter only.';
+function retCanIssue(){ return !!(HOST && typeof HOST.creditNote === 'function'); }
 /* the reasons GST recognises for a credit note, in the words a shopkeeper would use */
 var RET_WHYS = [
   ['returned', 'Brought back'],
@@ -10599,7 +10634,19 @@ function retLeft(bill, n){
   var l = (bill.lines || [])[n] || {};
   var had = Number(l.qty) || 0;
   var back = 0;
-  ((RET_PRIOR && RET_PRIOR[bill.no]) || []).forEach(function(cn){
+  /**
+   * ⚠️⚠️ A RENUMBERED BILL KEEPS ITS OLD NUMBER TOO. renumberBill() rewrites bill.no on a 409 collision and
+   * DELETES the old row; a credit note already issued names the old number in against.bill_no, so looking
+   * prior returns up by today's number alone found none and offered the whole bill back a second time. ₹1,500
+   * refunded against a ₹1,000 sale. printed_as is the number the customer was given, and renumbered.from is
+   * where the books moved it from — both are checked, so a return follows the bill through a renumber.
+   */
+  var names = [bill.no, bill.printed_as, (bill.renumbered && (bill.renumbered.from || bill.renumbered.was))]
+    .filter(Boolean).map(String);
+  var prior = [];
+  names.forEach(function(nm){ ((RET_PRIOR && RET_PRIOR[nm]) || []).forEach(function(cn){
+    if (prior.indexOf(cn) < 0) prior.push(cn); }); });
+  prior.forEach(function(cn){
     /* ⚠️ MATCHED ON from_line, NEVER ON POSITION — see retMoney(). A credit note carries only what came back. */
     (cn.lines || []).forEach(function(cl){
       if (cl && Number(cl.from_line) === n) back = r2(back + Math.abs(Number(cl.qty) || 0));
@@ -10734,11 +10781,20 @@ async function retIssue(){
   if (!RET_FOR) return;
   var m = retMoney();
   if (!(m.total > 0)) return;
+  /**
+   * ⚠️⚠️ THE SAME GATE EVERY OTHER DOCUMENT TAKES. finish(), the goods receipt and the despatch note all ask
+   * tillStopped() before they mint a number; this did not. A counter STOPPED because it shares a series with
+   * another PC would still have issued C/C1/…/0001 — and a credit note is the one document whose 409 the
+   * renumber path deliberately does not handle (isSaleRow is false for it), so the row would retry for ever,
+   * the money already out of the drawer, and closeCounter() could never succeed.
+   */
+  if (await tillStopped()) return;
+  /* ⚠️ AND THE HOST MUST BE ABLE TO ISSUE ONE. Asked BEFORE the confirmation, not after — see retCanIssue(). */
+  if (!retCanIssue()) { toastLine(RET_WHYNOT); return; }
   var against = RET_FOR, why = RET_WHY, how = RET_HOW;
   var words = (RET_WHYS.filter(function(w){ return w[0] === why; })[0] || RET_WHYS[0])[1];
   if (!(await sure('Give back ' + money(m.total) + ' in ' + how + ' against ' + against.no + '?',
                    'Yes, give it back', 'Take a return'))) return;
-  retClose();
   var body = {
     /* ⚠️ THE DISCRIMINATOR. isSaleRow() is an allow-list of sale kinds, so this keeps a credit note out of the
        renumber-and-resend path that belongs to bills. */
@@ -10761,7 +10817,13 @@ async function retIssue(){
   };
   var r = { ok: false };
   try { r = await HOST.creditNote(body); } catch (e) { r = { ok: false, error: e && e.message }; }
-  if (!r || !r.ok) { toastLine('The return was not recorded: ' + ((r && (r.why || r.error)) || 'unknown')); return; }
+  if (!r || !r.ok) {
+    /* ⚠️ THE SHEET STAYS OPEN. Everything the cashier chose is still there to try again or write down. */
+    toastLine('The return was NOT recorded, and nothing has been given back: '
+      + ((r && (r.why || r.error)) || 'the counter could not write it'));
+    return;
+  }
+  retClose();
   var cn = r.bill || body;
   var html = retSlipHTML(cn);
   var boxEl = document.getElementById('slipbox');
