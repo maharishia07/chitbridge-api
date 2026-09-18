@@ -110,7 +110,16 @@
   /* ⚠️ THE ONLY PROOF OF WHICH SHOP YOU ARE BILLING FOR, so it must never be the thing that gets clipped. A long unbroken
      entity id (e2eco-mts0e88b673) overflowed this flex row and pushed itself off the left edge — the one word a cashier needs. */
   .shop{font-weight:700;min-width:0;overflow-wrap:anywhere}
-  .pill{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim);white-space:nowrap;background:transparent;cursor:default}
+  /**
+   * ⭐ THE STATUS CHIPS (Athi, 2026-09-18: *"see what is there in the top panel, how do we optimise the look?"*).
+   * The header carries the SAME facts the mockups do — shop, mode, counter, who, the line, how old the prices
+   * are, today's takings, health — so nothing was dropped; what it lacked was their calm. One height, one
+   * radius, the design's soft line, and tabular digits so a time and a total do not jitter as they tick.
+   * ⚠️ THE FACTS THEMSELVES ARE NOT NEGOTIABLE. Each of these answers a question a cashier is entitled to ask
+   * without opening anything, and the health dot in particular has to be able to interrupt (see the note below).
+   */
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim);
+        white-space:nowrap;background:transparent;cursor:default;line-height:1.5;font-variant-numeric:tabular-nums}
   /* ⚠️ A LABEL IS QUIET; A BUTTON IS NOT. Everything below is one selector because the difference is what the element IS. */
   button.pill{color:var(--ink);cursor:pointer;background:var(--paper)}
   button.pill:hover{border-color:var(--ok);color:var(--ok)}
@@ -265,7 +274,7 @@
    * base (<600) a full-height sheet · sm unfolded · md a centred card (720) · lg a two-column panel (880).
    * Every size shows the SAME five sections in the SAME order; the narrow ones fold, they never drop a row.
    */
-  .menu{position:fixed;inset:0;z-index:60;background:var(--card);border:0;border-radius:0;
+  .menu{position:static;background:var(--card);border:0;border-radius:0;
         display:flex;flex-direction:column;padding:0;
         padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   .menu[hidden]{display:none}
@@ -305,15 +314,15 @@
   /* sm — the same sheet, sections unfolded (§4) */
   @media (min-width:600px){ .msec .mbody[hidden]{display:flex} .msec .mch{opacity:.4} }
   /* md — a centred card, max 720 (§4) */
-  @media (min-width:900px){
-    .menu{inset:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(720px,94vw);max-height:88vh;
-          border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.28)}
-    .menu::before{display:none}
-    .msecs{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
-    .msec.care{grid-column:1 / -1}
-  }
-  /* lg — the wide panel, max 880, look card beside the actions (§4) */
-  @media (min-width:1200px){ .menu{width:min(880px,94vw)} .msecs{grid-template-columns:1.1fr .9fr} }
+  /**
+   * ⚠️ THE CENTRED-CARD BREAKPOINTS WERE REMOVED HERE (2026-09-18). §4 describes the menu as a sheet that
+   * becomes a centred dialog at md and a two-column panel at lg — right for a menu that opens over the middle
+   * of the screen, wrong for the one Athi asked for: *"combine both and give the style in the right handside."*
+   * A 348px drawer cannot carry two columns, and forcing it produced "Shop & prices" wrapped over three lines.
+   * So the drawer is ONE column at every width, and the phone case is the same drawer gone full-screen.
+   * ⚠️ Nothing is dropped by that — §2 rule 1 is about CONTENT, and every section is still here at every size.
+   */
+  .side .msecs{display:flex;flex-direction:column;gap:10px}
   .menu button,.menu a{color:var(--ink);font:inherit;text-decoration:none}
   /* ⭐ the view toggles, in the menu — a section of chips rather than another dialog to open */
   .menusec{padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:4px}
@@ -322,35 +331,45 @@
   .mq{display:flex;gap:8px;flex-wrap:wrap}
 
   /**
-   * ⭐⭐ THE OPERATIONS RAIL (Athi, 2026-09-18: "a simple menu bar in the left hand side for the till
-   * application, mostly hidden so it will be good to manage the operations nicely").
+   * ⭐⭐⭐ ONE MENU, ON THE RIGHT (Athi, 2026-09-18: "why do we need two menu? can we merge both and bring a
+   * single menu in a much stylish way? combine both and give the style in the right handside").
    *
-   * MOSTLY HIDDEN IS THE DESIGN, not a compromise: a strip of icons at the edge, out of the way of the shelf
-   * and the bill, that widens into labels when somebody reaches for it. Selling never moves — the rail
-   * OVERLAYS when open rather than pushing the page, so a shelf a cashier is reading does not jump sideways.
-   * ⚠️ IT IS THE SAME OPERATIONS AS ☰, RENDERED FROM THE SAME LIST (TILL_OPS). Two menus with two hardcoded
-   * lists is how one of them quietly loses an item. [[feedback-stay-in-the-construct]]
-   * ⚠️ AND IT NEVER TRAPS FOCUS. The same rule the ☰ menu follows: a barcode scan must still land while it is
-   * open, so nothing here steals the caret from the search box.
+   * He is right, and it is the rule this codebase already has: no second path. A rail down one edge and a ☰
+   * sheet at the other were two doors onto the same room, which is how one of them quietly loses a row — I
+   * built the second one anyway and it lasted an hour. So there is ONE object now: an edge strip on the right
+   * that widens into the full menu. Collapsed it is icons; reached for, it is the five sections with their
+   * labels; on a phone it is the full-height sheet the design asks for.
+   * ⚠️ RIGHT EDGE, on purpose: the bill and its pay buttons live on that side, so the hand is already there.
    */
-  .rail{position:fixed;inset-block:0;inset-inline-start:0;z-index:45;width:var(--rail,38px);
-        background:var(--card);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;gap:2px;
-        padding:calc(env(safe-area-inset-top,0px) + 6px) 4px calc(env(safe-area-inset-bottom,0px) + 6px);
-        overflow:hidden;transition:width .12s ease}
-  .rail:hover,.rail.on{width:212px;box-shadow:6px 0 24px rgba(0,0,0,.16)}
-  .rail button,.rail a{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--ink);
-        cursor:pointer;padding:8px 6px;border-radius:9px;font:inherit;text-decoration:none;white-space:nowrap;text-align:start}
-  .rail button:hover,.rail a:hover{background:var(--panel)}
-  .rail .ic{flex:0 0 26px;text-align:center;font-size:16px}
-  /* the label exists at every width so a screen reader always has it; it is the RAIL that is narrow, not the name */
-  .rail .lb{opacity:0;transition:opacity .12s ease;overflow:hidden}
-  .rail:hover .lb,.rail.on .lb{opacity:1}
-  .rail .sp{flex:1}
-  .rail .pin{color:var(--dim);font-size:12px}
-  /* the page keeps clear of the collapsed strip; opening the rail overlays, so this never changes while selling */
-  body{padding-inline-start:var(--rail,38px)}
-  /* ⚠️ NOT ON A PHONE. 38px of a 360px screen is the bill's width, and ☰ is already at the thumb there. */
-  @media (max-width:600px){ .rail{display:none} body{padding-inline-start:0} }
+  .side{position:fixed;inset-block:0;inset-inline-end:0;z-index:60;width:var(--side,44px);
+        background:var(--card);border-inline-start:1px solid var(--line);display:flex;flex-direction:column;
+        padding:calc(env(safe-area-inset-top,0px) + 6px) 5px calc(env(safe-area-inset-bottom,0px) + 6px);
+        overflow:hidden;transition:width .14s ease;box-shadow:none}
+  .side.on{width:min(348px,92vw);box-shadow:-10px 0 34px rgba(0,0,0,.18);overflow:auto;padding:0}
+  /* collapsed: the icon strip. Each one is a real operation, and its title says which. */
+  .side .sicons{display:flex;flex-direction:column;gap:2px}
+  .side.on .sicons{display:none}
+  .side .sicons button{display:flex;align-items:center;justify-content:center;min-height:40px;border:0;
+        background:transparent;color:var(--ink);cursor:pointer;border-radius:10px;font:inherit;font-size:16px}
+  .side .sicons button:hover{background:var(--panel)}
+  .side .sicons .top{background:var(--ink);color:var(--card);margin-bottom:6px}
+  /* open: the menu itself, the same five sections the sheet shows */
+  /* the page keeps clear of the collapsed strip; opening OVERLAYS, so nothing reflows while selling */
+  body{padding-inline-end:44px}
+  @media (max-width:600px){ body{padding-inline-end:0} }
+  /* ⚠️ ONE WAY IN PER SIZE. The strip is always there on a terminal, so the header ☰ would be a second door to
+     the same menu; on a phone the strip is gone and the header ☰ is the ONLY door. So each size shows exactly one. */
+  @media (min-width:601px){ #menubtn{display:none} }
+  .side .sfull{display:none}
+  .side.on .sfull{display:flex;flex-direction:column;min-height:100%}
+  /* ⚠️ [hidden] must still win — the panel keeps `hidden` in step with `.on` so every "is it open?" check agrees */
+  .side .sfull[hidden]{display:none}
+  @media (max-width:600px){
+    /* a 44px strip is the bill's width on a phone — the menu is the sheet there, opened from ☰ */
+    .side{width:0;border:0}
+    .side.on{position:fixed;inset:0;width:100%;max-width:none}
+    .side .sicons{display:none}
+  }
   .menu .mq label{display:flex;align-items:center;gap:4px;font-size:.85em;color:var(--dim)}
   .menu .mq select{padding:4px 6px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);font:inherit;font-size:.95em}
   /* ⚠️ these sit INSIDE .menu, whose button rule is display:block — so they restate what a chip is */
@@ -839,9 +858,12 @@
 </style>
 </head>
 <body>
-<!-- ⭐⭐ THE OPERATIONS RAIL — mostly hidden, widens on reach. Filled by paintRail() from TILL_OPS, the same
-     list ☰ renders, so the two doors always open onto the same room. -->
-<nav class="rail" id="tillrail" data-testid="till-rail" aria-label="Counter operations"></nav>
+<!-- ⭐⭐⭐ THE ONE MENU, on the right edge: an icon strip that widens into the five sections.
+     Filled by paintSide() + paintMenu() from TILL_OPS / TILL_MENU — one list, one door. -->
+<aside class="side" id="tillside" data-testid="till-side" aria-label="Counter menu">
+  <div class="sicons" id="tillsideicons"></div>
+  <div class="sfull" id="tillmenu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
+</aside>
 <div class="wrap">
   <section class="left">
     <header>
@@ -890,18 +912,6 @@
       -->
       <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="Health check — what would go wrong today">✓</button>
       <button class="pill" id="menubtn" data-testid="till-menu" onclick="toggleMenu(event)" title="bills, the shop screen, settings">☰</button>
-      <!--
-        ⭐⭐⭐ THE COUNTER MENU, PHONE FIRST (Athi, 2026-09-18, mobile-first-instructions.md §4: the menu style he
-        supplied so it fits a phone as well as a terminal).
-
-        Five folded sections, ALWAYS IN THIS ORDER — Bills · Shop & prices · This counter · How it looks · Careful.
-        A sheet on a phone, a centred card at md, a two-column panel at lg. Nothing is dropped at any width: the
-        narrow sizes FOLD, they never remove an action (§2 rule 1).
-
-        ⚠️ IT IS PAINTED, NOT WRITTEN OUT. paintMenu() builds it from TILL_MENU + TILL_OPS — the same list the
-        left rail renders, so an operation added once appears in both and neither can quietly lose it.
-      -->
-      <div id="tillmenu" class="menu" hidden role="dialog" aria-modal="true" aria-label="Counter menu"></div>
     </header>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
@@ -2813,9 +2823,10 @@ function stopWrongShop(bad){
   paintStatus();
 }
 /**
- * ⭐⭐ THE COUNTER'S OPERATIONS, DECLARED ONCE (2026-09-18). ☰ at the top and the rail down the left side are two
- * doors onto the same room, and a room with two doors is exactly where an item gets added to one and forgotten
- * in the other. So the list lives here and both render it. [[feedback-stay-in-the-construct]]
+ * ⭐⭐ THE COUNTER'S OPERATIONS, DECLARED ONCE (2026-09-18). The menu has a closed half (the icon strip) and an
+ * open half (the five sections); both read this list, so an operation cannot appear in one and be missing from
+ * the other. It began as two separate menus and Athi cut that down to one the same day: *"why do we need two
+ * menu? can we merge both."* [[feedback-stay-in-the-construct]]
  *
  * ⚠️ `fn` IS NAMED, NOT REFERENCED, because several of these are declared further down the file than this line
  * and a direct reference would capture `undefined` at parse time. paintRail() resolves the name when it draws.
@@ -2911,47 +2922,39 @@ function paintMenu(){
   paintMenuQuick();
 }
 /**
- * ⭐ THE RAIL. Icons at the edge; labels when somebody reaches for it. A click on the ☰ at its head PINS it open
- * (`.on`) for anyone who would rather not hover — a touch screen has no hover at all.
- * ⚠️ IT DOES NOT TAKE THE CARET. Same rule as the menu: a scan must still land while this is open, so choosing
- * an item hands focus straight back to the search box.
+ * ⭐ THE COLLAPSED STRIP — the closed half of the one menu. The same operations as the open half, as icons, so
+ * the everyday ones are a single press away without opening anything. paintMenu() draws the open half and this
+ * draws the closed half, both from TILL_OPS, so neither can carry a row the other lacks.
  */
-function paintRail(){
-  var el = document.getElementById('tillrail'); if (!el) return;
-  el.innerHTML =
-    '<button data-testid="till-rail-pin" title="keep this open" onclick="railPin(event)">'
-      + '<span class="ic">☰</span><span class="lb">Operations</span></button>'
-    + TILL_OPS.map(function(op){
-        if (op.when === 'install' && !_install) return '';
-        return '<button data-testid="till-rail-' + op.id + '" title="' + esc(op.label + ' — ' + op.hint) + '"'
-          + ' onclick="railGo(\'' + op.fn + '\')">'
-          + '<span class="ic">' + op.icon + '</span><span class="lb">' + esc(op.label) + '</span></button>';
-      }).join('')
-    + '<span class="sp"></span>'
-    + '<a data-testid="till-rail-cb" id="raillink" href="#" target="_blank" rel="noopener" title="ChitBridge — orders, suppliers, the books">'
-      + '<span class="ic">↗</span><span class="lb">ChitBridge</span></a>';
-  try { var a = document.getElementById('raillink'); if (a) a.href = cbHome(); } catch (_) {}
+function paintSide(){
+  var el = document.getElementById('tillsideicons'); if (!el) return;
+  var b = [];
+  b.push('<button class="top" data-testid="till-side-open" title="Menu" aria-label="Menu" onclick="toggleMenu(event)">\u2630</button>');
+  TILL_OPS.forEach(function(op){
+    if (op.when === 'install' && !_install) return;
+    b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + op.hint) + '"'
+      + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;)">' + op.icon + '</button>');
+  });
+  el.innerHTML = b.join('');
 }
-function railPin(e){
-  if (e) e.stopPropagation();
-  var el = document.getElementById('tillrail'); if (!el) return;
-  el.classList.toggle('on');
-  focusSearch();
-}
-/** run one operation by name — the rail holds names, not functions, so nothing here depends on declaration order */
-function railGo(name){
-  var el = document.getElementById('tillrail'); if (el) el.classList.remove('on');
+/** run one operation from the strip — names, not functions, so nothing depends on declaration order */
+function sideGo(name){
+  closeMenu();
   var f = window[name];
   if (typeof f === 'function') { try { f(); } catch (_) {} }
-  focusSearch();
 }
 /**
  * ⭐ THE MENU CLOSES ON ANYTHING. A menu left open over the search box is a menu that swallows the next barcode, and a scanner
  * fires faster than anyone can reach for Escape — so it shuts on a click anywhere, on Escape, and on choosing anything in it.
  */
 function toggleMenu(e){
-  var m = document.getElementById('tillmenu'); if (!m) return;
-  m.hidden = !m.hidden;
+  var side = document.getElementById('tillside'), m = document.getElementById('tillmenu');
+  if (!side || !m) return;
+  /* ⭐ ONE STATE FOR ONE MENU (2026-09-18): the panel's own `.on` decides it, and `hidden` follows so every
+     existing check ("is the menu open?") keeps reading true. */
+  var opening = !side.classList.contains('on');
+  side.classList.toggle('on', opening);
+  m.hidden = !opening;
   if (e) e.stopPropagation();
   /**
    * ⚠️⚠️ THE CARET MOVES INTO THE MENU NOW, AND THAT IS A DELIBERATE REVERSAL (2026-09-18).
@@ -3018,12 +3021,14 @@ function paintViewChips(){
 function closeMenu(){
   var m = document.getElementById('tillmenu'); if (!m || m.hidden) return;
   m.hidden = true;
+  var side = document.getElementById('tillside'); if (side) side.classList.remove('on');
   try { focusSearch(); } catch (_) {}
 }
 function fromMenu(fn){ closeMenu(); try { fn(); } catch (_) {} }
 document.addEventListener('click', function(e){
-  var m = document.getElementById('tillmenu');
-  if (m && !m.hidden && !m.contains(e.target) && e.target.id !== 'menubtn') closeMenu();
+  var side = document.getElementById('tillside'), m = document.getElementById('tillmenu');
+  /* ⚠️ the whole PANEL is the menu now, strip included — a press on an icon must not be read as "clicked away" */
+  if (m && !m.hidden && side && !side.contains(e.target) && e.target.id !== 'menubtn') closeMenu();
 });
 function setFilter(what, val){
   if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; FILTER.off = false; }
@@ -9305,8 +9310,8 @@ window.addEventListener('resize', function(){ try { paintCart(); } catch (_) {} 
 setMode(ls.get('cb_till_mode', 'sell'));
 /* ⭐ the counter opens in the shape and layout this shop chose — before the first paint anybody looks at */
 try { applyTillOptions(); } catch (_) {}
-/* ⭐ the operations rail, drawn once from TILL_OPS (2026-09-18) */
-try { paintRail(); } catch (_) {}
+/* ⭐ the menu's collapsed strip, drawn once from TILL_OPS (2026-09-18) */
+try { paintSide(); } catch (_) {}
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
