@@ -1861,6 +1861,84 @@ var ls = { last:null,
  */
 function shopLs(k){ var st = tillStore(); return st === 'cb-till' ? k : (k + '@' + st.slice(8)); }
 
+/**
+ * ── ⭐⭐⭐ R2 · THE RETRY LADDER ([TILL-47], 2026-09-18) ─────────────────────────────────
+ *
+ * The design package: *"Retry with backoff (2s → 4s → … → 5 min), forever, resuming after restart."*
+ *
+ * ⚠⚠ IT WAS A FLAT TWENTY SECONDS FOR EVERY ROW, FOR EVER. A bill the shop will never accept — a 400 on a
+ * payload no retry can fix — was posted three times a minute for the life of the counter, and forty of them
+ * meant a hundred and twenty pointless requests a minute from one till on a 2G line that a real sale then had
+ * to share. The ladder is not politeness; on a bad line it is what leaves room for the bill that CAN go.
+ *
+ * ⚠⚠ AND "FOREVER" IS THE OTHER HALF, WHICH IS WHY THE CAP IS FIVE MINUTES AND NOT GIVING UP. A bill is
+ * somebody's money. Nothing here ever parks a row, drops one, or stops trying — the wait only ever grows to
+ * five minutes and stays there. [[project-offline-resilience]]
+ *
+ * ⚠ IT SURVIVES A RESTART because it rides ON the queue row in IndexedDB (`_nextAt`), not in a timer. A
+ * ladder held in memory resets to zero on every reload, which on a counter that is reopened all day is no
+ * ladder at all.
+ */
+var Q_FLOOR = 2000, Q_CEIL = 300000;                  /* 2 s → 5 min, the package's own numbers */
+function qBackoff(tries){
+  var n = Math.max(1, Number(tries) || 1);
+  return Math.min(Q_CEIL, Q_FLOOR * Math.pow(2, n - 1));
+}
+/** is this row allowed to be tried yet? a row that has never failed is always due */
+function qDue(row, at){
+  var t = Number(row && row._nextAt) || 0;
+  return !t || t <= (at || Date.now());
+}
+/** when the earliest waiting row comes due, or 0 when nothing is waiting */
+function qSoonest(rows, at){
+  var now = at || Date.now(), best = 0;
+  (rows || []).forEach(function(r){
+    var t = Number(r && r._nextAt) || 0;
+    if (t > now && (!best || t < best)) best = t;
+  });
+  return best;
+}
+/** in the words a person uses — a wait nobody can read is a wait that looks like a wedge */
+function qWaitWords(row, at){
+  var t = Number(row && row._nextAt) || 0, now = at || Date.now();
+  if (!t || t <= now) return '';
+  var s2 = Math.round((t - now) / 1000);
+  return s2 < 60 ? ('next try in ' + s2 + 's') : ('next try in ' + Math.round(s2 / 60) + 'm');
+}
+/**
+ * ⚠⚠ A CHANGED WORLD CLEARS THE WAIT. The ladder answers "this keeps failing for the same reason"; the
+ * moment the reason can have changed — the line came back, the counter was re-paired, a person pressed Send
+ * now — the wait is stale and holding forty reconnected bills back for five minutes each would be the fault
+ * this was meant to prevent. [[feedback-check-after-the-wire]]
+ */
+async function qReady(why){
+  try {
+    var rows = (await DB.all('queue')) || [], n = 0;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] && rows[i]._nextAt) { delete rows[i]._nextAt; await DB.put('queue', rows[i]); n++; }
+    }
+    /* ⚠ NOT A console.log — there is no console on a shop counter. It goes where the shopkeeper already looks
+       when a number will not go down: HOST.last, which is what ☰ → 🩺 Why is a bill stuck? reads. */
+    if (n && typeof HOST !== 'undefined' && HOST) {
+      HOST.last = { at: Date.now(), tried: 0, sent: 0,
+                    why: n + ' waiting row(s) may go at once — ' + (why || 'something changed') + '.' };
+    }
+    return n;
+  } catch (_) { return 0; }
+}
+/**
+ * ⭐ THE SAMPLER IS EVERY TWENTY SECONDS, so a two-second step would otherwise be a twenty-second one. This
+ * books the exact moment the earliest row comes due. One timer, replaced each time — never one per row.
+ */
+var Q_SOON = null;
+function drainSoon(rows){
+  var at = qSoonest(rows);
+  if (!at) return;
+  clearTimeout(Q_SOON);
+  Q_SOON = setTimeout(function(){ try { if (HOST && HOST.drain) HOST.drain(); } catch (_) {} },
+                      Math.max(250, Math.min(Q_CEIL, at - Date.now())));
+}
+
 /* ═══ 1 · the two hosts, behind one door ═════════════════════════════════════════════════════════════════════
    Everything above and below talks to HOST. `agent` is the little program on a shop PC (files, a printer, a
    scheduled restart); `cloud` is this page on its own, holding the shop and the bills in IndexedDB. Neither is a
@@ -2489,7 +2567,7 @@ var CloudHost = {
    * somebody's money. What changes is that it is now VISIBLE while it retries.
    */
   last: null,
-  async drain(){
+  async drain(opts){
     /**
      * ── ⚠️⚠️⚠️ THE ROOT CAUSE OF THE STUCK BILLS ────────────────────────────────────────────────────────────
      *
@@ -2507,6 +2585,27 @@ var CloudHost = {
      *
      * ⭐ Two fixes, and both are needed: every request now has a deadline (fetchBy), and the flag itself cannot
      * outlive one. A deadline stops the ordinary case; the watchdog stops whatever a deadline cannot.
+     */
+    /**
+     * ── ⚠⚠⚠ THE WATCHDOG TIMES THE REQUEST, NOT THE RUN ([TILL-48], 2026-09-18) ──────────────────
+     *
+     * Found by running R2's own test: forty bills rung with the line down, then reconnect. **Twenty-nine of the
+     * forty were recorded TWICE on the server, under two different chit_ids.** Two vouchers for one sale, in a
+     * shop's books, from the single scenario this whole queue exists to survive.
+     *
+     * ⚠⚠ THE FLAG WAS RIGHT AND THE CLOCK WAS WRONG. `_busyAt` was stamped once, when the run STARTED, and the
+     * watchdog fired at DEADLINE + 15 s — forty-five seconds. A run of forty bills takes longer than that
+     * legitimately, so the watchdog concluded a healthy run was hung, cleared the flag, and let a SECOND drain
+     * start on top of the first. Both then posted the rows the first had not yet deleted.
+     *
+     * ⭐ A WATCHDOG EXISTS TO CATCH A HUNG RUN, NOT A LONG ONE. So the stamp is refreshed before every request:
+     * it now measures time since the run last made progress, which is the only thing that can distinguish the
+     * two. A queue of four hundred is as safe as a queue of one.
+     *
+     * ⚠ The other half of this is the SERVER's, and it is not ours to fix from here: its client_ref dedupe is a
+     * SELECT then an INSERT with no unique index behind it, so two requests that arrive together both find
+     * nothing and both write. One counter can no longer send them together — two counters still can.
+     * See C:\dev\BACKLOG.md, 🔴 gated on Athi because it is DDL.
      */
     if (this._busy) {
       if (this._busyAt && (Date.now() - this._busyAt) > DEADLINE + 15000) {
@@ -2533,8 +2632,16 @@ var CloudHost = {
        * sales would break the one thing the numbering exists to prove.
        */
       rows.sort(function(a, b){ return (Number(b && b.priority) || 0) - (Number(a && a.priority) || 0); });
+      /**
+       * ⚠⚠ A HAND ON THE BUTTON BEATS THE LADDER. "Send now" that silently did nothing because every row was
+       * in a five-minute wait is the exact wedge shape this file has already paid for twice — a button with no
+       * request behind it and nothing on screen. force skips the wait; it never skips anything else.
+       */
+      var force = !!(opts && opts.force), nowMs = Date.now(), held = 0;
       for (var i = 0; i < rows.length; i++) {
         var bill = rows[i];
+        /* ⭐ not due yet — counted so the screen can say so; a skipped row that says nothing IS the wedge */
+        if (!force && !qDue(bill, nowMs)) { held++; continue; }
         /* ⚠️⚠️ THE LAST GATE, AND THE ONE THAT COSTS MONEY. DB.all has already dropped foreign rows, but this is where a bill
            leaves the building under a key — so it is checked again here, against the key actually being used. A sale posted into
            another business's books is not a display bug, it is a wrong entry in somebody's accounts. */
@@ -2553,6 +2660,9 @@ var CloudHost = {
           else if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: bill.deliver.rows }; }
           else payload = bill.shiftBody ? bill.shiftBody : (bill.chitBody ? bill.chitBody : chitOf(bill));
           tried++;
+          /* ⭐⭐ PROGRESS, NOT START — see the note on the watchdog above. Without this line a long queue looks
+             identical to a hung one, and the cure for a hung one is a second drain over the top of this one. */
+          this._busyAt = Date.now();
           var r = await fetchBy(url, { method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
           if (r.ok) {
@@ -2626,12 +2736,23 @@ var CloudHost = {
             }
             bill._status = r.status; bill._why = said || ('the shop answered ' + r.status);
             bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
+            /* ⭐ R2's ladder — 2s, 4s, 8s … to five minutes, then five minutes for ever. See qBackoff(). */
+            bill._nextAt = bill._at + qBackoff(bill._tries);
             try { await DB.put('queue', bill); } catch (_) {}
             if (!why) why = 'Bill ' + bill.no + ': ' + bill._why;
           }
         } catch (e) {
           /* the line went mid-request; the queue keeps everything. Say WHICH failure it was. */
           why = 'The line dropped while sending' + (bill && bill.no ? ' bill ' + bill.no : '') + '.';
+          /**
+           * ⚠ A DROPPED LINE IS A FAILED ATTEMPT TOO. Without this the row kept _tries at zero and was retried
+           * flat-out every twenty seconds on exactly the connection that had just proved it could not carry it.
+           */
+          try {
+            if (bill) { bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
+                        bill._why = bill._why || 'the line dropped while sending';
+                        bill._nextAt = bill._at + qBackoff(bill._tries); await DB.put('queue', bill); }
+          } catch (_) {}
           break;
         }
       }
@@ -2643,8 +2764,20 @@ var CloudHost = {
        * file has had, and it left no trace: no request, no error, no reason. If it happens again it now says so
        * in those words, which is the difference between a bug somebody can report and one they cannot.
        */
+      /**
+       * ⚠⚠ "NOTHING WAS EVEN ATTEMPTED" MUST NOT FIRE FOR A ROW THAT IS SIMPLY WAITING. It is the alarm for a
+       * wedge, and an alarm that cries wolf every twenty seconds during a normal backoff is one nobody reads.
+       * A held row has its own, true sentence instead.
+       */
+      if (!why && tried === 0 && held > 0) {
+        var soon = qSoonest(rows);
+        why = held + ' waiting a moment before the next try'
+            + (soon ? ' · ' + qWaitWords({ _nextAt: soon }) : '') + '. Press Send now to try at once.';
+      }
       if (!why && tried === 0 && (STATE && STATE.queued > 0))
         why = 'Nothing was even attempted — tell us this, it is not normal.';
+      /* ⭐ and the exact moment the earliest one comes due is booked — see drainSoon() */
+      try { drainSoon(rows); } catch (_) {}
       this.last = { at: Date.now(), tried: tried, sent: sent, why: why };
       /**
        * ⚠️⚠️ THE BAR MUST NOT LIE ABOUT MONEY. drain() sent the bills and never told the screen, so the counter went on saying
@@ -9960,7 +10093,9 @@ async function resendBill(no){
     await DB.put('queue', b);
     await queueTally(); paintStatus();
     toastLine('Bill ' + no + ' is back in the queue — sending it now.');
-    if (HOST && HOST.drain) await HOST.drain();
+    /* ⚠ a new key is a changed world — whatever the old one was refused for cannot be the reason any more */
+    try { await qReady('this counter was paired again'); } catch (_) {}
+    if (HOST && HOST.drain) await HOST.drain({ force: true });
     openBills(true);
   } catch (e) { toastLine('Could not queue bill ' + no + ': ' + ((e && e.message) || 'unknown')); }
 }
@@ -10351,7 +10486,11 @@ async function openStuck(){
     h += '<div class="sec">Waiting, oldest first</div>';
     qMine.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
       .slice(0, 12).forEach(function(q){
-        var why = (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted');
+        /* ⭐ R2: a row that is WAITING is not a row that is stuck, and the difference is the whole question this
+           panel answers. Without the wait on screen a backoff is indistinguishable from a wedge. */
+        var waitW = qWaitWords(q);
+        var why = (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted')
+                + (waitW ? ' · ' + waitW : '');
         h += '<div class="t' + (q._why ? ' warnrow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
           + '<span>' + esc(why)
           + ' <button class="pill" style="margin-inline-start:8px" data-testid="till-stuck-aside-' + esc(q.no)
@@ -10428,7 +10567,8 @@ async function stuckReport(){
   qM.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
     .slice(0, 20).forEach(function(q){
       L.push('  ' + (q.no || '(unnumbered)') + '  tries=' + (q._tries || 0)
-        + '  status=' + (q._status || '—') + '  ' + (q._why || 'not refused — not yet attempted'));
+        + '  status=' + (q._status || '—') + '  ' + (qWaitWords(q) || 'due now') + '  '
+        + (q._why || 'not refused — not yet attempted'));
     });
   return L.join('\n');
 }
@@ -11325,8 +11465,15 @@ async function sendNow(){
     toastLine('This counter cannot send from here — the counter program does that by itself.'); return;
   }
   var before = ((await DB.all('queue')) || []).length;
+  /**
+   * ⚠⚠ A HAND ON THE BUTTON BEATS THE LADDER — see drain(). A person pressing Send now has almost always
+   * just changed something (re-paired the counter, fixed the line, called the shop), so the reason every row
+   * was waiting may be gone. The wait is cleared AND the run is forced: a button that did nothing because of
+   * an invisible backoff is the wedge this file has paid for twice.
+   */
+  try { await qReady('Send now was pressed'); } catch (_) {}
   /* ⚠️ on the agent host the queue is the AGENT'S file, not this page's IndexedDB, so read the count it reports */
-  var r = await HOST.drain();
+  var r = await HOST.drain({ force: true });
   if (HOST.mode === 'agent') {
     await load(); await openBills(true);
     var q = (r && r.queued != null) ? r.queued : null;
@@ -11981,7 +12128,15 @@ document.addEventListener('keydown', function(e){
  */
 window.addEventListener('pagehide', function(){ try { draftSave(); } catch (_) {} });
 document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') { try { draftSave(); } catch (_) {} } });
-window.addEventListener('online', function(){ if (HOST && HOST.drain) HOST.drain(); load(); });
+/**
+ * ⚠⚠ THE LINE RETURNING IS A CHANGED WORLD. Forty bills queued through an outage must go the moment it is
+ * back — not each wait out its own five minutes because of failures that happened before the line died.
+ * The package's own test is exactly this: two hours offline, forty bills, reconnect, all forty arrive.
+ */
+window.addEventListener('online', function(){
+  qReady('the line came back').then(function(){ if (HOST && HOST.drain) HOST.drain(); }).catch(function(){});
+  load();
+});
 window.addEventListener('offline', function(){ load(); });
 
 /* a browser that will install this offers it once; we keep the offer and show a button rather than nagging */
