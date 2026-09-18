@@ -206,6 +206,14 @@
    * that anything was hidden. Keeping their natural width makes the overflow real, which is what makes both
    * the scrolling and the .more fade above honest. (Found in a screenshot review, 2026-09-18.)
    */
+  /* ── the maintenance worklist ([TILL-52]) — a job is not a category, so it does not look like one ────── */
+  .chips .chipsep{flex:0 0 auto;align-self:center;padding:0 8px 0 4px;color:var(--dim);font-size:.78em;
+                  text-transform:uppercase;letter-spacing:.04em;border-inline-start:1px solid var(--line);margin-inline-start:4px}
+  .chips button.job{border-color:var(--warn);color:var(--warn);background:var(--warn-tint)}
+  .chips button.job.on{background:var(--warn);color:var(--paper)}
+  /* ⚠ A JOB WITH NOTHING IN IT IS NOT A WARNING — it is the answer "nothing to do", and must not wear the
+     colour that means somebody is needed. It stays pressable, so the answer can be checked. */
+  .chips button.job.none{border-color:var(--line);color:var(--dim);background:var(--paper);font-weight:400}
   .chips button{flex:0 0 auto;white-space:nowrap;padding:6px 11px;border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);cursor:pointer;font-size:.82em}
   .chips button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   /* the consignment's own facts — shown only when this trade asks for them */
@@ -3402,7 +3410,7 @@ function paintCustomers(){
  * ⚠️ THE SNAPSHOT STILL CARRIES THEM. That part was a real fix and it stands: an item that left the snapshot entirely could
  * never be put back from the counter. It travels; it is simply not listed until asked for.
  */
-var FILTER = { offer:false, cat:null, off:false }, OFFER_STAMP = null;
+var FILTER = { offer:false, cat:null, off:false, job:null }, OFFER_STAMP = null;
 /**
  * ⭐⭐ WHAT THE CUSTOMER ACTUALLY PAYS FOR ONE. Athi, 2026-09-09: *"the price being showcased in the counter app — it is supposed to
  * be the final price after discount and including tax? … the price here is confusing."*
@@ -4405,12 +4413,58 @@ document.addEventListener('click', function(e){
   /* ⚠️ the whole PANEL is the menu now, strip included — a press on an icon must not be read as "clicked away" */
   if (m && !m.hidden && side && !side.contains(e.target) && e.target.id !== 'menubtn') closeMenu();
 });
+/**
+ * ── ⭐⭐⭐ FILTERS THAT FIND WORK ([TILL-52], MaintV2) ───────────────────────────────
+ *
+ * ⚠⚠ MAINTENANCE WAS A BROWSER. The chips above it are the SELLING chips — categories, on offer, off the shelf
+ * — which answer "where is the thing I want". That is the wrong question on this screen. A shopkeeper opens
+ * maintenance because something is WRONG somewhere in ten thousand products, and had no way to ask which.
+ *
+ * ⭐ EACH ONE IS A JOB, AND CARRIES ITS COUNT. A chip reading "No price 4" is a morning's work stated in three
+ * words; the same chip reading 0 is the answer to "is anything missing?", which is why the count shows even
+ * when it is nothing. [[project-list-controls]]
+ *
+ * ⚠ THEY ARE FACTS ABOUT THE PRODUCT, not guesses about the shop. Nothing here says "this looks wrong" — each
+ * one is a field that is empty and a consequence that follows from it, which is why each has a `why` a person
+ * can read before they act on it.
+ */
+var MAINT_JOBS = [
+  { id: 'noprice', label: 'No price',
+    why: 'these add nothing to a bill — they are sellable and free',
+    hit: function(i){ return !(Number(i && i.price) > 0); } },
+  { id: 'nopic', label: 'No picture',
+    why: 'their keys and rows fall back to initials on a colour',
+    hit: function(i){ return !(i && i.image); } },
+  { id: 'nocat', label: 'No category',
+    why: 'they cannot be found by a category chip, here or on the selling screen',
+    hit: function(i){ return !String((i && i.category) || '').trim(); } },
+  { id: 'nocode', label: 'No code',
+    why: 'nothing to scan — they can only be reached by typing the name',
+    hit: function(i){ return !String((i && i.code) || '').trim(); } },
+  /* ⚠ ONLY WHERE IT IS A REAL PROBLEM. A shop that charges no GST has nothing to answer for here, and a chip
+     nagging it about a field it must not fill is the kind that gets learned as noise. */
+  { id: 'noslab', label: 'No tax rate',
+    why: 'the bill falls back to the shop default, and the invoice cannot say why',
+    when: function(){ try { return shopTax().charges; } catch (_) { return false; } },
+    hit: function(i){ return !String((i && i.tax_slab) || '').trim() && !String((i && i.hsn) || '').trim(); } },
+];
+function maintJobs(){ return MAINT_JOBS.filter(function(j){ return !j.when || j.when(); }); }
+function maintJob(id){ return maintJobs().filter(function(j){ return j.id === id; })[0] || null; }
+/** how many products this job would find — counted over the WHOLE shelf, never the page */
+function maintJobCount(j){
+  var all = (S && S.items) || [];
+  var n = 0;
+  for (var k = 0; k < all.length; k++) if (j.hit(all[k])) n++;
+  return n;
+}
 function setFilter(what, val){
   if (what === 'offer') { FILTER.offer = !FILTER.offer; FILTER.cat = null; FILTER.off = false; }
   else if (what === 'cat') { FILTER.cat = (FILTER.cat === val) ? null : val; FILTER.off = false; }
   /* ⚠️ off-the-shelf is a WHOLE OTHER SHELF, not a narrowing of this one — it replaces the other filters rather than stacking */
-  else if (what === 'off') { FILTER = { offer:false, cat:null, off: !FILTER.off }; }
-  else { FILTER = { offer:false, cat:null, off:false }; }
+  else if (what === 'off') { FILTER = { offer:false, cat:null, off: !FILTER.off, job:null }; }
+  /* ⭐ a job is a whole other question — it replaces the other filters rather than stacking, exactly as 'off' does */
+  else if (what === 'job') { FILTER = { offer:false, cat:null, off:false, job: (FILTER.job === val) ? null : val }; }
+  else { FILTER = { offer:false, cat:null, off:false, job:null }; }
   /* ⚠️ a new question, so a new first page — otherwise a two-letter search inherits the depth of the last one */
   /* ⭐ THE KEYS FOLLOW THE CHIP TOO — see quickShown(). paintQuick(), never quickCompute(): the group has not
      changed, only how much of it is on screen, and quickCompute() goes to the network. */
@@ -4428,7 +4482,23 @@ function paintChips(){
   el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything</button>'
     + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer</button>'
     + '<button class="' + (FILTER.off ? 'on' : '') + '" data-testid="till-chip-off" onclick="setFilter(\'off\')">Off the shelf <span class="u">' + offN + '</span></button>'
-    + list.map(function(c){ return '<button class="' + (FILTER.cat === c ? 'on' : '') + '" data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '" onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">' + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'; }).join('');
+    + list.map(function(c){ return '<button class="' + (FILTER.cat === c ? 'on' : '') + '" data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '" onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">' + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'; }).join('')
+    /**
+     * ⭐⭐ AND, IN MAINTENANCE ONLY, THE JOBS — see MAINT_JOBS. Not on the selling screen: a cashier with a
+     * customer waiting has no use for "no picture", and every chip there is one more thing to read past.
+     * ⚠ THE COUNT SHOWS EVEN WHEN IT IS ZERO, because "is anything missing a price?" is a question whose answer
+     * is most often no, and a chip that vanishes when the answer is no is one nobody can ask.
+     */
+    + (MODE === 'maintain'
+        ? '<span class="chipsep" data-testid="till-chip-jobs">needs doing</span>'
+          + maintJobs().map(function(j){
+              var n = maintJobCount(j);
+              return '<button class="job' + (FILTER.job === j.id ? ' on' : '') + (n ? '' : ' none') + '"'
+                + ' data-testid="till-job-' + j.id + '" title="' + esc(j.why) + '"'
+                + ' onclick="setFilter(\'job\',\'' + j.id + '\')">' + esc(j.label)
+                + ' <span class="u">' + n + '</span></button>';
+            }).join('')
+        : '');
   chipsOverflow();
 }
 /** does the chip row actually run past its own edge? measured, never assumed — see the note on .chips */
@@ -4669,6 +4739,8 @@ function hits(){
   items = FILTER.off ? items.filter(function(i){ return statusOf(i) === 'unavailable'; })
         : (seeAll ? items : items.filter(function(i){ return statusOf(i) !== 'unavailable'; }));
   if (FILTER.cat) items = items.filter(function(i){ return i.category === FILTER.cat; });
+  /* ⭐ the worklist — see MAINT_JOBS. It narrows the shelf like any other chip, so search still works inside it. */
+  if (FILTER.job) { var _j = maintJob(FILTER.job); if (_j) items = items.filter(_j.hit); }
   if (FILTER.offer) items = items.filter(function(i){ return offersFor(i).length > 0; });
   /**
    * ── ⭐⭐⭐ THE LIST GROWS AS IT IS SCROLLED ─────────────────────────────────────────────────────────────────
@@ -6035,6 +6107,9 @@ function shelfLine(shown){
   var txt;
   if (FILTER.off)        txt = shown ? (n(shown) + ' off the shelf right now — tap one to put it back')
                                      : 'Nothing is off the shelf. Everything on this counter can be sold.';
+  /* ⭐ a worklist says what the work IS, not just how much of it there is — the chip's own `why`, in full */
+  else if (FILTER.job) { var jb = maintJob(FILTER.job);
+    txt = jb ? (n(shown) + ' with ' + jb.label.toLowerCase() + ' — ' + jb.why) : (n(shown) + ' of ' + n(total)); }
   else if (FILTER.cat)   txt = n(shown) + ' in ' + esc(FILTER.cat) + ' — of ' + n(total) + ' on this counter';
   else if (FILTER.offer) txt = n(shown) + ' carrying an offer — of ' + n(total) + ' on this counter';
   else if (typed().text) txt = shown ? ('showing ' + n(shown) + ' of ' + n(total) + ' — keep typing to narrow it')
@@ -6763,7 +6838,7 @@ function findOnShelf(c){
    */
   var box = document.getElementById('q');
   if (box) box.value = String(c.name || '');
-  FILTER = { cat: null, offer: false, off: false };
+  FILTER = { cat: null, offer: false, off: false, job: null };
   showAgain(); paintChips();
   list = hits();
   for (n = 0; n < list.length; n++)
@@ -9550,7 +9625,9 @@ function setMode(m){
      because a hot-item tap while maintaining would change a price nobody asked to change. */
   document.getElementById('chips').style.display = (MODE === 'sell' || MODE === 'maintain') ? '' : 'none';
   document.getElementById('quick').style.display = MODE === 'sell' ? '' : 'none';
-  paintKeys(); paintHits(); stepsApply();
+  /* ⚠ THE CHIP ROW CHANGES WITH THE MODE NOW — the maintenance jobs are drawn only in maintain (paintChips),
+     and without this the row kept whatever the last mode had put there. [[feedback-check-after-the-wire]] */
+  paintChips(); paintKeys(); paintHits(); stepsApply();
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
   if (MODE === 'maintain') { CARD_ID = null; pendClear(); paintCard(); loadWorth(); }
