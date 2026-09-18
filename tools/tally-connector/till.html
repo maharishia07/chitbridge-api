@@ -1222,6 +1222,54 @@
   .cardhead{display:flex;gap:12px;align-items:center;padding:0 0 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
   .cardhead .pic{width:44px;height:44px;border-radius:9px;object-fit:cover;display:flex;align-items:center;
                  justify-content:center;font-weight:800;color:#fff;flex:none;overflow:hidden}
+  /* ── the editor as MaintV2 draws it ([TILL-58]) ──────────────────────────────────── */
+  .cardhd{display:flex;align-items:center;gap:12px;padding:12px 0 14px}
+  .cardhd .chn{flex:1;min-width:0;display:flex;flex-direction:column}
+  .cardhd .chn b{font-size:1.5em;line-height:1.15}
+  .cardhd .chn i{font-style:normal;color:var(--dim);font-size:.84em}
+  .cardblock{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--paper)}
+  .cardblock.quiet{color:var(--dim);font-size:.9em;background:var(--panel)}
+  .cardblock.pending{border-color:var(--warn);background:var(--warn-tint)}
+  .blabel{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--dim);font-size:.76em;
+          font-weight:700;letter-spacing:.07em;margin-bottom:8px}
+  .blabel.warn{color:var(--warn)}
+  /* ⚠ PRICE IS THE BIGGEST THING ON THE PANE — that is the render's whole point about this screen */
+  .price .prow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .pfield{display:flex;align-items:center;gap:6px;border:2px solid var(--ok);border-radius:12px;padding:6px 14px;background:var(--card)}
+  .pfield i{font-style:normal;color:var(--dim);font-size:1.1em}
+  .pfield input{border:0;background:transparent;font:inherit;font-size:1.7em;font-weight:700;width:5ch;min-width:0;color:var(--ink)}
+  .pfield input:focus{outline:none}
+  .punit{color:var(--dim)}
+  .pwas{margin-inline-start:auto;text-align:end;color:var(--warn);font-weight:700;font-size:.85em;display:flex;flex-direction:column}
+  .pwas i{font-style:normal;color:var(--dim);font-weight:400}
+  .pstruct{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--panel);font-size:.9em}
+  .pnote{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--warn-tint);color:var(--warn);font-size:.88em}
+  .cardpair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cardpair .cardblock{margin:0}
+  .cardblock.today{border-color:var(--warn)}
+  .prow2{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+  .prow2:first-of-type{border-top:0}
+  .prow2 .pt{flex:1;min-width:0;display:flex;flex-direction:column}
+  .prow2 .pt i{font-style:normal;color:var(--dim);font-size:.82em}
+  .gchips{display:flex;flex-wrap:wrap;gap:6px}
+  .gchip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;
+         padding:7px 14px;min-height:38px;cursor:pointer;font:inherit}
+  .gchip.on{border-color:var(--ok);background:var(--ok);color:var(--on-accent);font-weight:700}
+  .chgrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:.9em}
+  .chgrow .cn{flex:1;min-width:0;font-weight:700}
+  .chgrow .cw{color:var(--dim)}
+  /* ⚠ SENT, OR ONLY SAVED HERE — the render's own badge, and the difference between the shop having a change
+     and this device still holding it */
+  .chgrow .cb{border-radius:999px;padding:2px 8px;font-size:.8em;font-weight:700}
+  .chgrow .cb.sent{background:var(--ok-tint);color:var(--ok)}
+  .chgrow .cb.here{background:var(--warn-tint);color:var(--warn)}
+  /* ⚠ THE FOOT NAMES THE CHANGE. A Save that merely enables says something is unsaved, not WHAT. */
+  .cardfoot{position:sticky;bottom:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;
+            padding:10px 0;border-top:1px solid var(--line);background:var(--card)}
+  .cardfoot .cfwords{flex:1;min-width:180px;display:flex;flex-direction:column}
+  .cardfoot .cfwords b{color:var(--warn)}
+  .cardfoot .cfwords i{font-style:normal;color:var(--dim);font-size:.84em}
+  .cardfoot.live{border-top-color:var(--warn)}
   .cardrow{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:start;padding:11px 0;
            border-bottom:1px solid var(--line)}
   .cardrow>label{color:var(--dim);font-size:.85em;font-weight:700;padding-top:9px}
@@ -6634,6 +6682,49 @@ async function changedUndo(kind, id){
   toastLine(c.name + ' is back to ' + backTo + (out.queued ? ' — saved here, it will reach the shop.' : '.'));
   paintCard(); paintHits();
 }
+/**
+ * ⚠ THE OFFERS BLOCK KEEPS ITS SWITCHES — the render draws only the empty state (*"this shop has no live
+ * offers"*) because the shop in the picture has none, and reading that as "offers are a note" would delete four
+ * working controls. Athi's rule: the design is a benchmark, not a replacement. Empty reads as the render; with
+ * offers it is the list this counter already had.
+ */
+function cardOffersBlock(i){
+  var mine = ((S && S.offers) || []).filter(function(o){ return !o.network; });
+  var net = ((S && S.offers) || []).filter(function(o){ return o.network; });
+  if (!mine.length && !net.length) {
+    return '<div class="cardblock quiet" data-testid="card-offers">'
+      + '<b>Offers</b> — this shop has no live offers. Declare them in ChitBridge; they appear here to be turned on.'
+      + '</div>';
+  }
+  return '<div class="cardblock" data-testid="card-offers">'
+    + '<div class="blabel">OFFERS</div>'
+    + mine.map(function(o){
+        var st = offerState(i, o), on = offerShown(i, o);
+        return '<div class="prow2' + ((PEND.offers && PEND.offers[String(o.id)] !== undefined) ? ' pending' : '') + '">'
+          + '<span class="pt"><b>' + esc(o.label || o.name || 'offer') + '</b>'
+          + '<i>' + esc(st.why || '') + '</i></span>'
+          + cardSwitch(!!on, 'card-offer-' + esc(String(o.id)),
+              "pendOffer('" + esc(String(o.id)) + "'," + (on ? 'false' : 'true') + ')', '')
+          + '</div>'
+          /* ⚠ WHAT IT DOES IN MONEY, at the quantity where it starts to bite — kept from the old panel. A switch
+             whose effect you cannot see is one nobody dares touch. */
+          + (function(){ var eg = offerExample(i, o);
+              return eg ? '<div class="u" data-testid="card-eg-' + esc(String(o.id)) + '">' + esc(eg) + '</div>' : ''; })();
+      }).join('')
+    /* ⚠ A NETWORK OFFER IS NOT THIS SHOP'S TO SWITCH — shown, read-only, and the ones that start later are named
+       so a shopkeeper is not surprised by one appearing. Kept from the old panel. */
+    + net.filter(function(o){ return (offersFor(i) || []).some(function(x){ return String(x.id) === String(o.id); }); })
+        .map(function(o){ return '<div class="u" data-testid="card-netoffer-' + esc(String(o.id)) + '">'
+          + esc(o.label || o.name || 'offer') + ' · from the brand, not switched here</div>'; }).join('')
+    + net.filter(function(o){ return o.valid_from && new Date(o.valid_from) > new Date(); })
+        .map(function(o){ return '<div class="u" data-testid="card-netlater-' + esc(String(o.id)) + '">'
+          + esc(o.label || o.name || 'offer') + ' · starts ' + esc(new Date(o.valid_from).toLocaleString()) + '</div>'; }).join('')
+    + '</div>';
+}
+/** ⚠ the counter cannot upload yet — it says so rather than offering a button that does nothing */
+function cardPhoto(){
+  toastLine('Photos are set in ChitBridge — the counter shows what the shop publishes.');
+}
 /** the same rows the card shows, on their own, for when nothing is selected */
 function changedPane(){
   if (!CHANGED.price.length && !CHANGED.stock.length) return '';
@@ -6785,6 +6876,30 @@ function cardPrice(i){
         + (pct > 0 ? 'A ' + pct + '% rise. ' : (pct < 0 ? 'A ' + Math.abs(pct) + '% cut. ' : ''))
         + 'It reaches every counter and the shop screen as soon as you save.</div>' : '')
     + (Number(i.mrp) > 0 ? '<div class="u">MRP ' + money(i.mrp) + '</div>' : '')
+    /**
+     * ⚠⚠ THE STRUCTURE THE PRICE COMES FROM — kept from the panel this replaced. `price` is the price the
+     * structure works from, not necessarily what is charged, and a tiered product charges less at six than at
+     * one. READ-ONLY: a structure is a definition, and changing it changes every product that cites it, which
+     * is not a decision anybody makes standing at a till.
+     * ⚠ The render shows none of this because the shop in the picture prices flat. Absence of a thing in a
+     * drawing is not an instruction to delete it.
+     */
+    + (i.pricing_kind ? '<div class="pstruct" data-testid="card-priced-by">'
+        + '<b>Priced by ' + esc(pricingWords(i)) + '</b>'
+        + (function(){
+            var pr1 = pricedAt(i, 1);
+            var rows = ['<div class="u">1 ' + esc(i.unit || 'piece') + ' → ' + money(pr1.amount)
+                        + ' (' + esc(pr1.why) + ')</div>'];
+            (Array.isArray(i.pricing_tiers) ? i.pricing_tiers : []).forEach(function(t){
+              var q = Number(t && t.qty) || 0; if (!q) return;
+              var pr = pricedAt(i, q);
+              rows.push('<div class="u">' + q + ' ' + esc(i.unit || 'piece') + ' → ' + money(pr.amount)
+                + ' each · ' + money(r2(pr.amount * q)) + ' the lot</div>');
+            });
+            if (pr1.violation) rows.push('<div class="was">⚠️ ' + esc(pr1.violation) + '</div>');
+            return rows.join('');
+          })()
+        + '</div>' : '')
     + '</div>';
 }
 /** ⚠ TWO PANELS, NOT TWO ROWS — the heading is what makes the difference readable without reading a sentence */
@@ -6840,6 +6955,65 @@ function cardFoot(i){
     + '<button class="pri" id="cardsavebtn" data-testid="card-save" onclick="cardSave()"' + (n ? '' : ' disabled') + '>Save · Ctrl S</button>'
     + '</div>';
 }
+/**
+ * ⚠⚠ WHICH QUICK-KEY GROUPS THIS PRODUCT IS ON — the render puts it in the editor and the counter had it only
+ * in ⚙ Setup, a screen away from the product it is about. "Not on any key" is one of the list's own filters, so
+ * the answer to it belongs beside the thing being fixed.
+ * ⭐ A TAP JOINS OR LEAVES, through quickGroupToggle() — the same call ⚙ Setup makes, so a group edited from
+ * either place is the same group and copy-on-write still protects the shop's published list.
+ */
+function cardGroups(i){
+  var all = groupsAll(), names = Object.keys(all).sort();
+  if (!names.length) return '';
+  var o = tillOpt();
+  return '<div class="cardblock" data-testid="card-groups">'
+    + '<div class="blabel">QUICK KEY GROUPS'
+    + '<button class="lnk" data-testid="card-arrange" onclick="fromCard(qkArrangeToggle)">Arrange the groups</button>'
+    + '</div><div class="gchips">'
+    + names.map(function(nm){
+        var ids = all[nm] || [], on = ids.map(String).indexOf(String(i.item_id)) >= 0;
+        return '<button class="gchip' + (on ? ' on' : '') + '" data-testid="card-group-'
+          + esc(nm.replace(/[^a-z0-9]+/gi, '-').toLowerCase()) + '"'
+          + ' onclick="cardGroupTap(\'' + esc(nm.replace(/'/g, '')) + '\')">'
+          + (on ? '✓ ' : '') + esc(nm) + ' <span class="u">' + ids.length + '</span></button>';
+      }).join('')
+    + '</div></div>';
+}
+/** ⚠ the group being edited must be the one tapped, or the toggle acts on whatever was last chosen */
+function cardGroupTap(name){
+  var i = cardItem(); if (!i) return;
+  var o = tillOpt(); tillOptSet({ group: name });
+  quickGroupToggle(i.item_id);
+  paintCard(); paintHits();
+}
+function fromCard(fn){ try { fn(); } catch (_) {} }
+/**
+ * ⚠⚠ SENT, OR ONLY SAVED HERE — the render draws that badge and it is the difference between a change the shop
+ * has and one this device is still holding. The counter already knows: a queued write answers { queued: true }.
+ */
+function cardChanged(){
+  var rows = CHANGED.price.map(function(c){ return { c: c, kind: 'price' }; })
+    .concat(CHANGED.stock.map(function(c){ return { c: c, kind: 'stock' }; }))
+    .sort(function(a, b){ return (b.c.at || 0) - (a.c.at || 0); }).slice(0, 6);
+  if (!rows.length) return '';
+  return '<div class="cardblock" data-testid="card-changed">'
+    + '<div class="blabel">CHANGED TODAY · ' + (CHANGED.price.length + CHANGED.stock.length) + '</div>'
+    + rows.map(function(r){
+        var c = r.c;
+        var what = r.kind === 'price' ? (money(c.was) + ' → ' + money(c.now))
+                                      : (c.status === 'unavailable' ? 'taken off the shelf' : 'put back on the shelf');
+        return '<div class="chgrow" data-testid="card-chg-' + esc(String(c.item_id || c.name)) + '">'
+          + '<span class="cn">' + esc(c.name) + '</span>'
+          + '<span class="cw">' + esc(what) + '</span>'
+          + '<span class="cb ' + (c.queued ? 'here' : 'sent') + '">' + (c.queued ? 'saved here' : 'sent') + '</span>'
+          + (c.item_id && (r.kind === 'price' || c.was)
+              ? '<button class="pill" data-testid="card-undo-' + esc(String(c.item_id)) + '"'
+                + ' onclick="changedUndo(\'' + r.kind + '\',\'' + esc(String(c.item_id)) + '\')">Undo</button>'
+              : '<span class="u">—</span>')
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
 function paintCard(){
   var el = document.getElementById('cardbox'); if (!el) return;
   /* ⭐ THE ONE SETTING ON THIS SCREEN, and it is about the SCREEN, not about a product — so it shows whether or not
@@ -6863,148 +7037,32 @@ function paintCard(){
   var mine = (S.offers || []).filter(function(o){ return !o.network; });
   var fromNet = (S.offers || []).filter(function(o){ return o.network && (offersFor(i) || []).some(function(x){ return String(x.id) === String(o.id); }); });
   var netLater = (S.offers || []).filter(function(o){ return o.network && o.valid_from && new Date(o.valid_from) > new Date(); });
+  /**
+   * ── ⭐⭐⭐ THE EDITOR AS png/MaintV2.png DRAWS IT ([TILL-58]) ─────────────────────────
+   *
+   * The old body was a column of `label + control` rows, each one satisfying a sentence in the prose. The
+   * drawing is not that: it is a HEADER with the photo and where the name came from, then PRICE as the biggest
+   * thing on the pane, then two labelled panels side by side, then the groups, then what changed today, over a
+   * sticky foot that names the unsaved change. Order matters as much as content — a shopkeeper opens this to
+   * change a price, and the price is what the eye should land on.
+   */
   el.innerHTML = display
-    + '<div class="cardhead">' + picOf(i) + '<span><b>' + esc(i.name) + '</b>'
-    + '<div class="u">' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '') + '</div></span></div>'
-
-    /* ⚠️ EVERY CONTROL STAGES. Nothing below leaves this device until Save, and a row that differs from the shop is marked. */
-    + '<div class="cardrow' + (PEND.status !== undefined ? ' pending' : '') + '"><label>On the shelf</label><div class="swwrap">'
-    + cardSwitch(!off, 'card-avail', "pendSet('status','" + (off ? 'available' : 'unavailable') + "','" + statusOf(i) + "')",
-        off ? 'Off the shelf — it will not be listed for selling' : 'Listed and sellable')
-    + (PEND.status !== undefined ? '<span class="was">was ' + (actualOff ? 'off the shelf' : 'on the shelf') + '</span>' : '')
-    + '</div></div>'
-
-    /**
-     * ── ⭐⭐⭐ FOR GOOD, OR JUST FOR TODAY ([TILL-54], MaintV2) ────────────────────────────
-     *
-     * ⚠⚠ THE COUNTER HAS ALWAYS HAD BOTH AND MAINTENANCE ONLY EVER OFFERED ONE. "Off the shelf" is a fact about
-     * the PRODUCT — it goes to the shop, it stays until somebody changes it back, and every counter sees it. What
-     * a cook actually means at nine in the morning is "the idli is finished", which is a fact about TODAY and
-     * about THIS counter. Told only the permanent switch, a shopkeeper records a batch running out as a product
-     * being discontinued, and next week wonders why nobody is selling idli.
-     *
-     * ⭐ IT IS THE SAME MACHINERY AS THE ✕ ON A QUICK KEY — quickSoldOut/quickBringBack, stored per shop, keyed to
-     * the business day, pushed to the other counters. Nothing new is invented here; the choice is simply put
-     * where somebody making it would look. [[feedback-stay-in-the-construct]]
-     *
-     * ⚠ AND IT ACTS AT ONCE, while everything above it stages. That is deliberate and is the reason the rows look
-     * different: a today-only hide undoes itself tomorrow, has a way back on this very row, and is the same
-     * one-tap act the sell screen already offers. The staging rule exists because a mis-tapped PERMANENT switch
-     * reached the shop with no undo — which is not this.
-     */
-    + (function(){
-        var outToday = quickSold().some(function(x){ return String(x.id) === String(i.item_id); });
-        return '<div class="cardrow today"><label>Run out today</label><div class="swwrap">'
-          + cardSwitch(outToday, 'card-today',
-              outToday ? "quickBringBack('" + esc(i.item_id) + "');paintCard()"
-                       : "quickSoldOut('" + esc(i.item_id) + "');paintCard()",
-              outToday ? 'Finished for today — it comes back by itself tomorrow'
-                       : 'Say it has run out, without changing the product')
-          + '<span class="swtxt">this counter, today only · the switch above is for good</span>'
-          + '</div></div>';
-      }())
-
-    + '<div class="cardrow' + (PEND.price !== undefined ? ' pending' : '') + '"><label>Price</label><div class="swwrap">'
-    + '<input id="cardprice" data-testid="card-price" inputmode="decimal" value="' + esc(String(cardVal(i, 'price'))) + '"'
-    + ' oninput="pendPrice(this.value)" onkeydown="if(event.key===\'Enter\')cardSave()">'
-    + '<span class="swtxt">per ' + esc(i.unit || 'piece') + (Number(i.mrp) > 0 ? ' · MRP ' + money(i.mrp) : '') + '</span>'
-    + (PEND.price !== undefined ? '<span class="was">was ' + money(i.price) + '</span>' : '')
-    + '</div></div>'
-
-    /**
-     * ⭐⭐ WHAT PRICES THIS PRODUCT, and what the counter would actually charge at each break. A tier is invisible
-     * until somebody buys ten, which is the worst moment to discover it — and the price typed above is the LIST
-     * price the structure works from, not necessarily what is charged.
-     * ⚠️ READ-ONLY. The structure is a definition; changing it changes every product that cites it, which is not a
-     * decision anybody makes standing at a till. The counter shows it and uses it.
-     */
-    + (i.pricing_kind ? '<div class="cardrow"><label>Priced by</label><div class="swwrap col">'
-        + '<span class="swtxt"><b>' + esc(pricingWords(i)) + '</b>'
-          + (i.pricing_def_name ? ' · ' + esc(i.pricing_def_name) : '') + '</span>'
-        + (function(){
-            var pr1 = pricedAt(i, 1);
-            var rows = ['<span class="swtxt">1 ' + esc(i.unit || 'piece') + ' → ' + money(pr1.amount)
-                        + ' <span style="opacity:.75">(' + esc(pr1.why) + ')</span></span>'];
-            (Array.isArray(i.pricing_tiers) ? i.pricing_tiers : []).forEach(function(t){
-              var q = Number(t && t.qty) || 0; if (!q) return;
-              var pr = pricedAt(i, q);
-              rows.push('<span class="swtxt">' + q + ' ' + esc(i.unit || 'piece') + ' → ' + money(pr.amount)
-                + ' each <span style="opacity:.75">· ' + money(r2(pr.amount * q)) + ' the lot</span></span>');
-            });
-            if (pr1.violation) rows.push('<span class="was">⚠️ ' + esc(pr1.violation) + '</span>');
-            return rows.join('');
-          })()
-        + '</div></div>' : '')
-
-    + '<div class="cardrow"><label>Offers</label><div class="swwrap col">'
-    + (mine.length ? mine.map(function(o){
-        var st = offerState(i, o), shown = offerShown(i, o);
-        var eg = offerExample(i, o);
-        return '<div class="swline' + (shown !== st.on ? ' pending' : '') + '">'
-          + cardSwitch(shown, 'card-offer-' + esc(st.id),
-              "pendOffer('" + esc(st.id) + "'," + (shown ? 'false' : 'true') + ',' + (st.on ? 'true' : 'false') + ')',
-              (o.label || o.name || 'Offer') + ' — ' + offerWords(st, shown))
-          /* ⭐ THE WORKED EXAMPLE, from the same engine that will price the bill */
-          + (eg ? '<div class="eg" data-testid="card-eg-' + esc(st.id) + '">' + eg + '</div>' : '')
-          + '</div>';
-      }).join('')
-      : '<span class="swtxt">This shop has no live offers. Declare them in ChitBridge — they appear here to be turned on.</span>')
-    /* ⭐ from the network — applied, named, and not switchable here */
-    + fromNet.map(function(o){
-        return '<div class="swline" data-testid="card-netoffer-' + esc(o.id) + '"><span class="swtxt">🏷 <b>' + esc(o.label || o.name || 'Offer') + '</b>'
-          + ' — from ' + esc((o.network && o.network.brand_name) || 'the network') + '</span></div>';
-      }).join('')
-    + netLater.map(function(o){
-        return '<div class="swline" data-testid="card-netlater-' + esc(o.id) + '"><span class="swtxt">⏳ ' + esc(o.label || o.name || 'Offer')
-          + ' — from ' + esc((o.network && o.network.brand_name) || 'the network') + ', starts '
-          + esc(new Date(o.valid_from).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</span></div>';
-      }).join('')
-    + '</div></div>'
-
-    + '<div class="cardrow' + (PEND.screen !== undefined ? ' pending' : '') + '"><label>Shop screen</label><div class="swwrap">'
-    + cardSwitch(cardVal(i, 'screen'), 'card-screen',
-        "pendSet('screen'," + (cardVal(i, 'screen') ? 'false' : 'true') + ',' + (i.screen === true ? 'true' : 'false') + ')',
-        cardVal(i, 'screen') ? 'Picked for the screen' : 'Not picked — the screen chooses on its own')
-    + '</div></div>'
-
-    /**
-     * ⭐⭐ ONE SAVE FOR THE WHOLE PANEL. Athi: *"one save button for any change in the screen, and get the confirmation
-     * that THIS is changed, but not others."*
-     * ⚠️ Dead until something is actually pending, and it says how many — a button that is always live teaches people to
-     * press it out of habit, and then "did that save?" has no answer but pressing it again.
-     */
-    + '<div class="cardsave">'
-      + '<button class="pri" id="cardsavebtn" data-testid="card-save"' + (pendCount() ? '' : ' disabled')
-        + ' onclick="cardSave()">' + (pendCount() ? 'Save ' + pendCount() + ' change' + (pendCount() === 1 ? '' : 's') : 'Nothing to save') + '</button>'
-      + (pendCount() ? '<button id="carddiscard" data-testid="card-discard" onclick="cardDiscard()">Discard</button>' : '')
-      + '<span class="swtxt">' + (pendCount()
-          ? 'Nothing has left this counter yet.'
-          : 'Change anything above — it is only saved when you press Save.') + '</span>'
+    + '<div class="cardhd">' + picOf(i)
+    + '<span class="chn"><b>' + esc(i.name) + '</b>'
+    /* ⚠ WHERE THE NAME CAME FROM, said on the screen — a counter that let somebody edit it would be a second
+       place for it to be wrong, and the render answers the question before it is asked. */
+    + '<i>' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '')
+    + ' · name and category come from ChitBridge</i></span>'
+    + '<button class="pill" data-testid="card-photo" onclick="cardPhoto()">Change photo</button>'
     + '</div>'
-    + worthBlock()
+    + cardPrice(i)
+    + '<div class="cardpair">' + cardForGood(i) + cardToday(i) + '</div>'
+    + cardGroups(i)
+    + cardOffersBlock(i)
+    + cardChanged()
+    + worthBlock()          /* ⚠ kept — it was on the old panel and the render simply does not draw it */
     + '<div class="cardnote" id="cardnote"></div>'
-    /* ⭐ WHAT THIS COUNTER CHANGED TODAY. It was the one genuinely useful half of the old Price-change screen: a shopkeeper
-       who has just put three prices up wants to see the three, and "you charged me more than yesterday" gets an answer that
-       is not somebody's memory. */
-    + ((CHANGED.price.length || CHANGED.stock.length)
-        ? '<div class="cardrow" style="border:0"><label>Changed today</label><div class="swwrap col">'
-          /* ⭐ every row carries its way back — see changedUndo(). A record you cannot act on is a receipt. */
-          + CHANGED.price.slice(0, 6).map(function(c){
-              return '<span class="swtxt chg" data-testid="till-chg-price-' + esc(String(c.item_id || c.name)) + '">'
-                + esc(c.name) + ' — was ' + money(c.was) + ', now ' + money(c.now)
-                + (c.item_id ? '<button class="pill" data-testid="till-chg-undo-price-' + esc(String(c.item_id)) + '"'
-                    + ' onclick="changedUndo(\'price\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
-                + '</span>'; }).join('')
-          + CHANGED.stock.slice(0, 6).map(function(c){
-              return '<span class="swtxt chg" data-testid="till-chg-stock-' + esc(String(c.item_id || c.name)) + '">'
-                + esc(c.name) + ' — ' + (c.status === 'unavailable' ? 'off the shelf' : 'back on')
-                /* ⚠ a row written before this shipped has no item_id and no `was`; it is still shown, because it is
-                   still true, and simply cannot offer the button. Silently dropping it would lose the record. */
-                + (c.item_id && c.was ? '<button class="pill" data-testid="till-chg-undo-stock-' + esc(String(c.item_id)) + '"'
-                    + ' onclick="changedUndo(\'stock\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
-                + '</span>'; }).join('')
-          + '</div></div>'
-        : '');
+    + cardFoot(i);
 }
 /** ⚠️ typed, not committed — the price stages like everything else on this panel now */
 function pendPrice(v){

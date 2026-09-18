@@ -16,6 +16,29 @@ const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 const taxSlab = require(path.join(API, 'lib', 'tax-slab.js'));
 
+/**
+ * ⚠️ THE MAINTENANCE EDITOR, as a SET OF FUNCTIONS. The right-hand pane used to be one long string, so both
+ * guards sliced it from paintCard to pendPrice. It is now assembled from named builders — and they are NOT in
+ * one stretch of the file: cardOffersBlock sits above cardPrice. Any single start/end pair therefore crops part
+ * of the editor out, which is how "the panel cannot stage offers" came to be reported about a panel that does.
+ * ⚠️ So the region is every top-level card* builder plus paintCard, joined. It FAILS LOUDLY when the set comes
+ * back implausibly small, rather than quietly narrowing the way the thumbnails guard did for months.
+ * [[feedback-whitelist-drops-silently]]
+ */
+function editorRegion(page) {
+  const parts = [];
+  const re = /^function (card[A-Za-z]*|paintCard)\(/gm;
+  let m;
+  while ((m = re.exec(page))) {
+    /* ⚠️ the END OF THIS FUNCTION, not the start of the next plain one — an `async function` in between used
+       to be swallowed whole, dragging cardSave() into a region that forbids what cardSave exists to do */
+    const b = page.indexOf('\n}', m.index);
+    parts.push(page.slice(m.index, b < 0 ? page.length : b + 2));
+  }
+  if (parts.length < 8) throw new Error('the editor region found only ' + parts.length
+    + ' builders — the panel has been renamed out from under this guard');
+  return parts.join('\n');
+}
 let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
 
@@ -297,7 +320,8 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
  */
 it('⭐⭐ the maintenance panel holds the four decisions and writes each through one path', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function pendPrice('));
+  /* the editor is its builders plus the assembly — see editorRegion() */
+  const card = editorRegion(page);
   /**
    * ⭐⭐ EVERY CONTROL STAGES; ONE SAVE COMMITS. Athi: *"one save button for any change in the screen, and get the
    * confirmation that THIS is changed, but not others."* Three switches that wrote instantly and one price that waited
@@ -643,7 +667,8 @@ it('⭐⭐ turning an offer off knows whether to opt the product out or remove t
   assert.ok(save.indexOf('st.excluded ? await offerWrite(i, id, false) : await offerItemWrite(i, id, true)') > 0,
     'turning an offer ON does not choose between lifting the opt-out and ticking the product on');
   /* every live offer must be listed, or you cannot turn on what you cannot see */
-  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function pendPrice('));
+  /* the editor is its builders plus the assembly — see editorRegion() */
+  const card = editorRegion(page);
   /* ⚠️ MOVED, NOT DROPPED (2026-09-17): the list is now every live offer OF THIS SHOP — a network offer is read-only here,
      because the store takes it or not in ChitBridge. What must never return is a list narrowed to the offers that already
      reach the product, which is the fault this guards. */
@@ -687,7 +712,8 @@ it('⭐ the price reference is shown, described by the engine that applies it', 
   assert.ok(page.indexOf('CBPricing.describe(') > 0,
     'the counter phrases the structure itself instead of using the engine one-liner — two descriptions of one thing');
   assert.ok(page.indexOf('till-priceref-') > 0, 'the shelf row never shows what prices the product');
-  const card = page.slice(page.indexOf('function paintCard(){'), page.indexOf('function pendPrice('));
+  /* the editor is its builders plus the assembly — see editorRegion() */
+  const card = editorRegion(page);
   assert.ok(card.indexOf('Priced by') > 0, 'the maintenance panel does not show the structure');
   /* ⚠️ read-only there: a structure is a definition, and changing it changes every product that cites it */
   assert.ok(card.indexOf('pricing_kind ?') > 0, 'the structure block shows for products that cite nothing — noise on ten thousand rows');
