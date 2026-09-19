@@ -483,6 +483,7 @@ const ENGINE_OTHER = [
      "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
   'numerals.browser.js',
   'units.browser.js',
+  'profile-map.browser.js',
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
@@ -580,7 +581,10 @@ const TILL_SHIPPABLE = {
   'money.js':     'money.js',          // { amount, currency } — the counter's arithmetic floor
   'docnumber.js': 'docnumber.js',      // what a bill number may look like, per country: numbered OFFLINE, so it is here
   'nums.js':      'numerals.js',
-  'units.js':     'units.js',          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
+  'units.js':     'units.js',
+  'profilemap.js': 'profile-map.js',
+  'jurisdiction.js': 'jurisdiction.js',
+  'govcontext.js': 'web:app/govcontext.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter
   'lots.js':      'lotfields.js',      // a lot's fields travel with the goods, not with the server
 

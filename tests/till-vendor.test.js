@@ -698,9 +698,18 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     /* ⭐ the NINTH engine (2026-09-11): an amount is never a bare number, and the browser did not
                        have this module — so the rule was written out five times instead. */
                     'money.js': 'CBMoney', 'docnumber.js': 'CBDoc',
-                    /* ⭐ the governance context — what we can know about a shop without asking it anything.
-                       Registration loads it; the counter does not, so it is absent from KEEP. */
+                    /**
+                     * ⭐ the governance context — what we can know about a shop without asking it anything.
+                     * ⚠️ THE COUNTER LOADS IT NOW ([TILL-105], 2026-09-19) and it IS in KEEP. This comment said the
+                     * opposite for one commit. Athi: *"the country is identified from device details, so that can
+                     * anchor the questions"* — an UNPAIRED counter has no shop, so no country from anywhere else.
+                     */
                     'govcontext.js': 'CBGov',
+                    /**
+                     * ⭐⭐ THE JURISDICTION LAYER AND THE IDENTITY SHAPES ([TILL-105]). A GSTIN checked where it is
+                     * typed, and what a country requires of a shop before it must register at all.
+                     */
+                    'jurisdiction.js': 'CBJurisdiction', 'profilemap.js': 'CBProfileMap',
                     'variant.js': 'CBVariant',
                     /* ⭐ the conversion engine and the unit table it stands on (2026-09-15) */
                     'units.js': 'CBUnits', 'convert.js': 'CBConvert',

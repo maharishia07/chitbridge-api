@@ -793,8 +793,54 @@ it('⭐ the till shows the shop tax identity, and only what decides something', 
     assert.ok(fn.indexOf(need) > 0, 'the till does not say ' + need);
   for (const noise of ['Address', 'Phone', 'Currency', 'Legal name'])
     assert.ok(fn.indexOf('<span>' + noise + '</span>') < 0, noise + ' is back — it decides nothing and is slip header text');
-  /* ⚠️ read-only: a GSTIN is changed in ChitBridge where it is checked, never typed at a till */
-  assert.ok(fn.indexOf('<input') < 0, 'the till lets somebody type a GSTIN — it is changed in ChitBridge, where it is checked');
+  /**
+   * ⭐⭐ AN UNREGISTERED SHOP IS TOLD WHAT IT IS ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN
+   * shop"* — *"service tax not registered."* It read `not set`, the wording of an unfinished form, at a shop
+   * that is correctly below the threshold.
+   */
+  assert.ok(fn.indexOf('Not registered') > 0, 'a shop with no GSTIN is told a field is missing rather than that it is not registered');
+});
+
+/**
+ * ── ⭐⭐⭐ THE COUNTER MAY NOW TYPE A GSTIN — AND IS THE FIRST THING THAT CHECKS ONE ([TILL-105]) ───────
+ *
+ * This case REPLACES `assert.ok(fn.indexOf('<input') < 0)` — *"a GSTIN is changed in ChitBridge where it is
+ * checked, never typed at a till"* — which Athi reversed on 2026-09-19: *"counter has no password, use the
+ * till key alone for the time being"*, the counter having no second factor to ask for.
+ *
+ * ⚠⚠⚠ THE OLD RULE'S SECOND HALF WAS NOT TRUE. "Where it is checked" turned out to mean
+ * lib/profile-map.gstinChecksum, whose only caller is assess() — which REPORTS issues and refuses nothing. No
+ * save path anywhere validated a GSTIN. So widening the counter's authority is paired with actually closing
+ * that: POST /api/till/shop refuses one, and the page checks before it sends.
+ *
+ * Athi: *"if the gstn is given, we can call the validation module from till application and confirm"* and
+ * *"if the information is validated and then we can sync to backoffice."*
+ */
+it('⭐⭐⭐ a GSTIN typed at the counter is checked there AND refused by the server', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+
+  /* 1 · the page checks with the SAME module, lifted onto it — never a second regex */
+  assert.ok(page.indexOf('/engine/profilemap.js') > 0, 'the counter no longer loads the validation module');
+  assert.ok(page.indexOf('CBProfileMap.gstinChecksum(') > 0, 'the counter does not check a GSTIN where it is typed');
+  assert.ok(!/gstin[\s\S]{0,80}\/\^\[0-9\]\{2\}/i.test(page), 'the page has grown its own GSTIN regex — there must be one definition');
+
+  /* 2 · validated, THEN synced — the save refuses to send one the module rejected */
+  const save = page.slice(page.indexOf('async function shopEditSave()'), page.indexOf('async function shopEditSave()') + 2200);
+  assert.ok(save.indexOf('if (!shopCheck()) return;') > 0,
+    'the counter sends the shop profile without checking it first — Athi: "if the information is validated and then we can sync"');
+
+  /* 3 · ⚠️ AND THE SERVER REFUSES ANYWAY. A page is not a place a rule can be enforced. */
+  const route = src.slice(src.indexOf("router.post('/shop'"), src.indexOf("router.get('/bills'"));
+  assert.ok(route.length > 200, 'POST /api/till/shop is gone');
+  assert.ok(route.indexOf("gstinChecksum(") > 0, 'the server takes a GSTIN from a counter without checking it');
+  assert.ok(route.indexOf("status(400)") > 0, 'a bad GSTIN is not refused, only noted');
+
+  /* 4 · ⚠⚠ the two a counter may never set, because each changes what a bill CHARGES rather than what it says */
+  assert.ok(src.indexOf('const TILL_SHOP_FIELDS = [') > 0, 'the whitelist is gone — it is the security boundary');
+  const list = src.slice(src.indexOf('const TILL_SHOP_FIELDS = ['), src.indexOf('];', src.indexOf('const TILL_SHOP_FIELDS = [')));
+  for (const never of ['currency', 'reg_type'])
+    assert.ok(list.indexOf("'" + never + "'") < 0, never + ' is settable from a counter — it decides what every future bill charges');
   /* ⚠️ painted when the dialog OPENS, not once at boot — the shop is re-read all day and a stale GSTIN here is worse than none */
   /* ⚠️ slice to where the function actually ENDS. A fixed character window stopped short of the call and reported it
      missing — a guard that fails on a function growing longer is a guard nobody will trust for long. */
@@ -1613,9 +1659,34 @@ it('⚠⚠ no dialog rule sets display without [open]', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   /* the class every dialog on this page carries, and the classes its own children use */
   const dlgClasses = ['dlg', 'studio'];
+  /**
+   * ⚠️⚠️⚠️ AND EVERY DIALOG'S ID, READ OFF THE PAGE. This guard was written after `.dlg.studio` covered the
+   * counter while closed — and it checked CLASS tokens only, so when the same defect returned as
+   * `#shopdlg{display:flex}` it saw nothing and till-modedit.cjs timed out instead. The targets are now found
+   * rather than listed, so the next dialog is covered the day it is written and nobody has to remember.
+   */
+  const dlgIds = [...page.matchAll(/<dialog[^>]*\sid="([A-Za-z0-9_-]+)"/g)].map((m) => m[1]);
   const css = page.slice(page.indexOf('<style>'), page.indexOf('</style>'));
   /* ⚠️ comments carry the word display: while EXPLAINING this rule — strip them or the guard reports itself */
-  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  let bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  /**
+   * ⚠️⚠️ AND @media print IS A DIFFERENT WORLD. On paper there is no page for a closed dialog to cover, and
+   * the day report MUST leave its box or the browser prints the whole counter behind the sheet. The first run
+   * of the widened guard reported #dayrep for doing exactly the right thing — and had I obeyed it, printing
+   * would have broken in the way that rule exists to prevent.
+   */
+  bare = (function stripPrint(t){
+    let out = t, at;
+    while ((at = out.search(/@media\s+print\s*\{/)) >= 0) {
+      let i = out.indexOf('{', at), depth = 0, j = i;
+      for (; j < out.length; j++) {
+        if (out[j] === '{') depth++;
+        else if (out[j] === '}') { depth--; if (depth === 0) break; }
+      }
+      out = out.slice(0, at) + out.slice(j + 1);
+    }
+    return out;
+  })(bare);
   const bad = [];
   bare.replace(/([^{}]+)\{([^}]*)\}/g, (m, sel, body) => {
     if (!/(^|[^-\w])display\s*:/.test(body)) return m;
@@ -1626,6 +1697,9 @@ it('⚠⚠ no dialog rule sets display without [open]', () => {
       /* ⚠️ WHOLE TOKENS. indexOf('.dlg') also matches '.dlgbtns', which is a CHILD of a dialog and entitled
          to any display it likes — the first cut of this guard reported the button row. */
       const classes = (last.match(/\.[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+      /* ⚠️ an id naming a real <dialog> counts exactly as much as the .dlg class does */
+      const ids = (last.match(/#[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+      if (ids.some((i) => dlgIds.indexOf(i) >= 0) && !/\[open\]/.test(t)) { bad.push(t); return; }
       if (!dlgClasses.some((c) => classes.indexOf(c) >= 0)) return;
       if (last.indexOf('[open]') < 0) bad.push(t);
     });
@@ -1635,8 +1709,17 @@ it('⚠⚠ no dialog rule sets display without [open]', () => {
     'these rules give a dialog a display without [open], so it covers the page while CLOSED: ' + bad.join(' | '));
 });
 
+it('⚠⚠ the shop form is hidden while it is closed', () => {
+  /* the exact regression: `#shopdlg{display:flex}` with no [open] beats dialog:not([open]){display:none} */
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('#shopdlg[open]{') > 0, 'the shop dialog no longer guards its display on [open]');
+  assert.ok(!/#shopdlg\s*\{/.test(page), 'a bare #shopdlg rule is back — the closed form will cover the counter');
+});
+
 it('⭐ and the guard can see it when it is wrong', () => {
-  /* ⚠️ BREAK IT BEFORE TRUSTING IT — [[feedback-whitelist-drops-silently]] */
+  /* ⚠️ BREAK IT BEFORE TRUSTING IT — [[feedback-whitelist-drops-silently]]
+     ⚠⚠ AND BREAK IT IN BOTH SPELLINGS. A dialog can be selected by class OR by id, and the real guard knew
+     only the first until 2026-09-19, when the id form put a closed form over the whole counter. */
   const look = (css) => {
     const bad = [];
     css.replace(/([^{}]+)\{([^}]*)\}/g, (m, sel, body) => {
@@ -1644,7 +1727,11 @@ it('⭐ and the guard can see it when it is wrong', () => {
       sel.split(',').forEach((one) => {
         const last = (one.trim().split(/[\s>]+/).pop() || '');
         const classes = (last.match(/\.[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
-        if (classes.indexOf('dlg') < 0) return;
+        /* ⚠️ ids too — `#shopdlg{display:flex}` is the spelling that got past the first version of the real
+           guard and covered the counter with a closed form until till-modedit timed out. */
+        const ids = (last.match(/#[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+        const isDlg = classes.indexOf('dlg') >= 0 || ids.indexOf('shopdlg') >= 0;
+        if (!isDlg) return;
         if (last.indexOf('[open]') < 0) bad.push(one.trim());
       });
       return m;

@@ -459,6 +459,21 @@ router.get('/snapshot', auth, async (req, res) => {
         address: [party.address, party.city, party.state, party.pincode].filter(Boolean).join(', ') || null,
         phone: party.phone || null,
         /**
+         * ⭐ THE PARTS, BESIDE THE JOINED LINE ([TILL-105]). `address` above is what a bill header prints; these are
+         * what POST /api/till/shop actually stores, so the counter's edit form can offer one box per stored field
+         * instead of asking a shopkeeper to re-type a comma-separated line to fix a PIN code.
+         * ⚠️ `email` is here to be SHOWN and edited into the vault — it is never the identities sign-in column,
+         * which applyProfileMap refuses to touch for exactly the reason recorded there ([PRO-01]).
+         */
+        street: party.address || null,
+        city: party.city || null,
+        state: party.state || null,
+        pincode: party.pincode || null,
+        email: party.email || null,
+        /* ⚠️ WHAT IS STILL MISSING, decided by lib/profile rather than by the page — the counter shows the same
+           gaps the back office does, instead of holding a second opinion about what a complete shop is. */
+        missing: Array.isArray(party.missing) ? party.missing : [],
+        /**
          * ⚠️⚠️ ONE GSTIN, READ ONCE. These two lines disagreed: gstin fell back to the PROFILE, state_code did not. A shop
          * whose GSTIN is recorded in the profile rather than on the identity row therefore came through as registered — so
          * the counter charged GST — with no state code, so CBTax.supplyType answered 'unknown' and the tax could not be
@@ -1439,6 +1454,132 @@ router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
+/**
+ * ── ⭐⭐⭐ POST /api/till/shop — THE COUNTER FILLS IN ITS OWN SHOP ([TILL-105]) ─────────────────
+ *
+ * Athi, 2026-09-19: *"yes, counter can edit the shop profile, if not there at all then allow, if already
+ * there, then ask for user id and password again to edit"* — and then, told the counter HAS no password to ask
+ * for (Sign in is a name-picker; the credential is the till key): *"yes, counter has no password, use the till
+ * key alone for the time being."*
+ *
+ * ⚠️⚠️⚠️ THIS WIDENS THE BLAST RADIUS OF A STOLEN COUNTER KEY. The rule stated above /flags — *"the blast
+ * radius of a stolen counter key is exactly the list above"* — now includes the shop's header and its GSTIN.
+ * That is Athi's call and a reasonable one (a second factor that does not exist cannot guard anything, and the
+ * counter is meant to be self-sustaining for a small shop). The narrowness below is what buys "the time being".
+ *
+ * ⭐ WHAT MAY BE SET, AND WHY THE LINE IS THERE:
+ *   identity + contact — header text on a slip. Wrong means a misprinted bill, not a wrong charge.
+ *   gstin — allowed, and the one with legal weight. It is the field most often missing, and the shop panel
+ *     already says what missing costs: no GSTIN, no GST. Withholding it would make the feature pointless.
+ * ⚠️ WHAT MAY NOT:
+ *   currency — it converts nothing, it RELABELS. ₹40 silently becomes $40 across the whole catalogue. That is
+ *     a consequence a counter cannot see, which is exactly the test /flags applies to a product patch.
+ *   reg_type — regular charges tax, composition does not. A status held with the tax authority, not a
+ *     preference; mistyped, the shop either charges tax it must not or omits tax it must collect.
+ *
+ * ⭐⭐ EVERY CHANGE SIGNS ITSELF, with a mechanism that already existed: applyProfileMap records per-field
+ * provenance in policy_flags.profile_provenance, so `source: 'counter C1'` tells the back office that the
+ * GSTIN came from a counter and when. It is also what makes "for the time being" reversible — the day a real
+ * second factor exists, every row written without one can be found.
+ *
+ * ⚠️ RLS: WITHOUT — applyProfileMap writes through the bare `query` handle scoped by entity_id, the same
+ * posture as the back office's PUT /api/governance/profile/vault. Inherited, not introduced here.
+ */
+/** ⚠️ THE WHITELIST IS THE SECURITY BOUNDARY, so it is a constant and not an inline list in the handler. */
+const TILL_SHOP_FIELDS = ['trade_name', 'legal_name', 'address', 'city', 'state', 'pincode', 'phone', 'email', 'gstin'];
+/** ⚠⚠ named so the refusal can SAY WHY rather than silently dropping the field — a quiet drop is the bug. */
+const TILL_SHOP_REFUSED = {
+  /**
+   * ⚠️⚠️ THE WRONG LAYER — which is the stronger reason than "it is dangerous". lib/govresolve's cascade:
+   * universe (allowed bounds) → constitution → INSTALLATION (picks currency/tz/region, tighten-only) → entity.
+   * A counter works at the entity layer and cannot reach past it.
+   * ⭐ AND THERE IS A GOVERNED PATH, so this is a redirection rather than a wall: govresolve.currencyRefusal(
+   * entity_id, want) checks a wanted currency against the constitution's allowed set. It is simply not here.
+   */
+  currency: 'the currency belongs to the whole installation, not to a counter — changing it here would relabel every price rather than convert it',
+  reg_type: 'regular or composition is a registration held with the tax authority, and it decides whether tax is charged at all',
+};
+router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const cbProfile = require('../lib/profile');
+
+    /* ⚠️ WHAT IT IS NOW, READ BEFORE THE WRITE — so the reply can say what actually changed, and so a field
+       that was already correct is not re-stamped with a counter's provenance for no reason. */
+    const before = (await cbProfile.invoiceParty(entity_id)) || {};
+
+    const refused = [];
+    for (const k of Object.keys(b)) {
+      if (TILL_SHOP_REFUSED[k]) refused.push({ field: k, why: TILL_SHOP_REFUSED[k] });
+    }
+
+    /* ⭐ WHO IS WRITING. counterOfReq reads it off the key's own register row — the page cannot be trusted to
+       say which counter it is, and it does not have to. */
+    let who = null;
+    try { who = await counterOfReq(req); } catch (_) {}
+    const source = 'counter' + (who ? ' ' + who : '');
+    const as_of = new Date().toISOString();
+
+    /**
+     * ⚠️⚠️⚠️ A GSTIN IS CHECKED HERE, AND THIS IS THE FIRST PLACE ANYTHING CHECKS ONE ON SAVE.
+     * lib/profile-map.gstinChecksum has always existed — format, the PAN holder-type letter Tally itself
+     * rejects, and the mod-36 check digit — but its only caller is assess(), which REPORTS issues rather than
+     * refusing them. snapshot-wire's old rule ("changed in ChitBridge, where it is checked") was therefore
+     * half true, and widening the counter's authority without closing that would have been the worst version
+     * of this change: a wrong GSTIN, typed at a counter, printed on a TAX INVOICE a customer claims against.
+     * ⚠️ REFUSED, NOT WARNED. Everything else here is header text where a typo misprints a line; this one
+     * decides what is charged and what a buyer can reclaim.
+     */
+    if (typeof b.gstin === 'string' && b.gstin.trim()) {
+      const g = b.gstin.trim().toUpperCase();
+      const chk = require('../lib/profile-map').gstinChecksum(g);
+      if (!chk.ok) {
+        return res.status(400).json({ error: 'validation', field: 'gstin',
+          message: chk.reason === 'format'
+            ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
+            : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.' });
+      }
+      b.gstin = g;   /* stored upper-cased, the one form every reader already assumes */
+    }
+
+    const values = {}, changed = [];
+    for (const k of TILL_SHOP_FIELDS) {
+      if (!(k in b)) continue;
+      const v = String(b[k] == null ? '' : b[k]).trim();
+      /**
+       * ⚠️⚠️ A BLANK DOES NOT CLEAR A FIELD, and this is deliberate. applyProfileMap skips empty values, so
+       * an empty box would be a silent no-op — and a counter form that posts every field on every save would
+       * otherwise LOOK like it had wiped the ones it left alone. Clearing the shop's GSTIN from a counter is
+       * not a thing anybody needs; leaving it out of the request is how you leave it alone.
+       */
+      if (!v) continue;
+      if (v === String(before[k] == null ? '' : before[k])) continue;   /* unchanged — do not re-stamp it */
+      values[k] = { value: v.slice(0, 200), source: source, as_of: as_of, rung: 'declared' };
+      changed.push({ field: k, from: before[k] || null, to: v.slice(0, 200) });
+    }
+
+    if (!changed.length) {
+      return res.json({ ok: true, changed: [], refused: refused, shop: before,
+        message: refused.length ? 'nothing changed — and ' + refused.length + ' field(s) a counter may not set were ignored'
+                                : 'nothing to change — every field already reads that way' });
+    }
+
+    await cbProfile.applyProfileMap(entity_id, values, { by: source, at: as_of });
+
+    /* ⭐ the bill header just changed, so every open counter and the shop screen hear it on the same bell a
+       price change rides — rather than each discovering it whenever it next happens to re-read the shop. */
+    try { shopChanged(entity_id, 'shop profile'); } catch (_) {}
+
+    /* ⚠️ THE REPLY IS THE SERVER'S TRUTH, RE-READ — never the page's own optimism echoed back. A counter that
+       painted what it SENT would show a GSTIN the vault had normalised differently. [[feedback-check-after-the-wire]] */
+    const after = (await cbProfile.invoiceParty(entity_id)) || {};
+    res.json({ ok: true, changed: changed, refused: refused, shop: after, by: source, at: as_of });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+  }
+});
+
 router.get('/bills', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1798,6 +1939,11 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   variant: '../lib/variant.browser.js',
                   /* ⭐ counted or measured — what stops a bill reading '0.25 items' ([TILL-104]) */
                   units: '../lib/units.browser.js',
+                  /* ⭐ the GSTIN / PAN / state table, so a shop PC confirms one offline too ([TILL-105]) */
+                  profilemap: '../lib/profile-map.browser.js',
+                  /* ⚠️ THE MASTER ITSELF — already a classic script that assigns its own global, like rewards */
+                  jurisdiction: '../lib/jurisdiction.js',
+                  govcontext: '../lib/govcontext.browser.js',
                   qr: '../node_modules/qrcode-generator/qrcode.js' };
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];

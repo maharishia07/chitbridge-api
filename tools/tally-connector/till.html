@@ -1932,6 +1932,33 @@
          background:var(--card);color:var(--ink);box-shadow:0 18px 50px rgba(0,0,0,.35)}
   dialog::backdrop{background:rgba(0,0,0,.55)}
   .dlg{padding:16px}
+  /**
+   * ⚠️⚠️⚠️ THE SAVE BUTTON MAY NEVER BE BELOW THE FOLD. Nine fields made this dialog taller than a 900px
+   * screen and "Save to ChitBridge" simply was not on it. The counter already holds this rule for the sell
+   * screen (till-fits: *"Save & print must be on the screen, not below it"*) and a dialog does not escape it.
+   * ⚠️ Bounded to the VIEWPORT with the form scrolling inside, so another five fields would change nothing.
+   */
+  /* ⚠️ [open] IS LOAD-BEARING — without it this beats `dialog:not([open]){display:none}` and the CLOSED
+     form covers the counter and swallows every click. It did exactly that, and till-modedit timed out. */
+  #shopdlg[open]{display:flex;flex-direction:column;max-height:88vh;max-width:min(680px,94vw)}
+  #shopdlg h3{flex:none}
+  #shopdlg .dlgbtns{flex:none}
+  /* ⭐ one row per stored field, label above the box — a counter is often touched, not typed on */
+  .shopform{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin:4px 0 12px;
+            overflow-y:auto;min-height:0;align-content:start}
+  .shopform label{display:flex;flex-direction:column;gap:3px;font-size:.85em;color:var(--dim);min-width:0}
+  .shopform label.wide{grid-column:1/-1}
+  .shopform input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+                  background:var(--paper);color:var(--ink);min-width:0}
+  .shopform input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  /* ⚠️ a field the shop is MISSING is marked, because the panel already tells them it costs something */
+  .shopform label.gap>span:first-child:after{content:' · not set yet';color:var(--warn,#a8410f)}
+  .shopform .note{grid-column:1/-1;font-size:.85em;color:var(--dim);margin:0}
+  /* ⚠️ quiet on purpose — it is reassurance, and reassurance printed loudly reads as a warning */
+  .shopreg{font-size:.85em;color:var(--dim);margin-top:6px;line-height:1.45}
+  .shopsay{font-size:.9em;margin:0 0 10px;min-height:1.2em}
+  .shopsay.bad{color:var(--warn,#a8410f)}
+  @media (max-width:560px){ .shopform{grid-template-columns:1fr} }
   /* ── the product panel: four decisions, laid out as label / control / plain words about what it means ── */
   .cardhead{display:flex;gap:12px;align-items:center;padding:0 0 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
   .cardhead .pic{width:44px;height:44px;border-radius:9px;object-fit:cover;display:flex;align-items:center;
@@ -2251,6 +2278,17 @@
   <div class="dlgbtns">
     <button onclick="dayImgClose()">Close · Esc</button>
     <button data-testid="till-day-img-replace" onclick="dayImgClose();dayImgPick()">Change it</button>
+  </div>
+</dialog>
+<!-- ⭐⭐ THE SHOP'S OWN DETAILS, EDITED HERE ([TILL-105]). What a bill is headed with, plus the GSTIN that
+     decides whether there is tax on it at all. -->
+<dialog id="shopdlg" class="dlg" data-testid="till-shop-dlg">
+  <h3>Your shop <span class="u">what every bill is headed with · kept by ChitBridge, so every counter and your storefront agree</span></h3>
+  <div id="shopform" class="shopform"></div>
+  <div id="shopsay" class="shopsay"></div>
+  <div class="dlgbtns">
+    <button onclick="shopEditClose()">Cancel · Esc</button>
+    <button class="pri" data-testid="till-shop-save" onclick="shopEditSave()">Save to ChitBridge</button>
   </div>
 </dialog>
 <dialog id="catdlg" class="dlg" data-testid="till-catorder-dlg">
@@ -2728,6 +2766,16 @@
      ⚠️ Loading it rather than writing a list of weighed units into this page: a second list would have
      disagreed with lib/units.js the first time somebody added a unit. -->
 <script src="/engine/units.js" onerror="engineMissed('units')"></script>
+<!-- ⭐⭐ WHAT A GSTIN, A PAN AND A PIN CODE LOOK LIKE ([TILL-105]). So the counter can confirm one while it is
+     being typed, with the line down, using the SAME module the server checks it with. -->
+<script src="/engine/profilemap.js" onerror="engineMissed('profilemap')"></script>
+<!-- ⭐⭐ WHAT A COUNTRY REQUIRES ([TILL-105]) — when a shop must register for tax, so the counter can tell a
+     small shop it does not have to yet. The country anchors it, and the country comes from the device. -->
+<script src="/engine/jurisdiction.js" onerror="engineMissed('jurisdiction')"></script>
+<!-- ⭐⭐ WHAT THE DEVICE ALREADY KNOWS ([TILL-105]). Athi: *'the country is identified from device details, so
+     that can anchor the questions.'* It derives and never prompts — no geolocation, no permission dialog — and
+     it is here for the UNPAIRED counter, which has no shop yet and so no country from anywhere else. -->
+<script src="/engine/govcontext.js" onerror="engineMissed('govcontext')"></script>
 <!-- ⭐ REWARDS. The counter has to say what a customer just earned while they are still standing there, so the
      arithmetic runs here with the line down; the server runs the same file again and its answer is written. -->
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
@@ -12871,15 +12919,241 @@ function paintShop(){
    */
   el.innerHTML = '<div class="shopfacts">'
     + '<h4>' + esc(sh.name || 'This shop') + '</h4>'
-    + '<div class="f"><span>GSTIN</span>' + miss(sh.gstin, 'so no GST is charged') + '</div>'
+    /**
+     * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
+     * *"service tax not registered."* It used to read `not set · so no GST is charged`, which is the wording
+     * of an unfinished form. A shop below the threshold is correctly unregistered, and the row now says so.
+     */
+    + '<div class="f"><span>GSTIN</span>'
+    + (sh.gstin ? '<b>' + esc(String(sh.gstin)) + '</b>'
+                : '<b>Not registered</b> <span>this shop does not charge GST</span>') + '</div>'
+    /* ⭐ the reassurance is on the PANEL too, for a shop that never opens the form ([TILL-105]) */
+    + (!sh.gstin && regWords() ? '<div class="shopreg">' + esc(regWords()) + '</div>' : '')
     + '<div class="f"><span>Registration</span><b>' + esc(sh.reg_type || 'regular') + '</b></div>'
     + '<div class="f"><span>Every bill is</span><b>' + doc + '</b></div>'
     + (tx.charges ? '<div class="f"><span>Tax shown as</span>'
         + (sh.state_code ? '<b>' + esc(split) + '</b>'
                          : '<b class="miss">cannot be split</b> <span>no state on the GSTIN</span>') + '</div>' : '')
-    + '<div class="src" title="Kept here so bills stay headed correctly with the line down. Change it in ChitBridge.">From ChitBridge'
-    + (S.at ? ' · ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '') + '</div>'
+    /**
+     * ⭐ IT USED TO SAY "Change it in ChitBridge" ([TILL-105]). For a shop whose only screen is this one, that
+     * sent them to a back office they do not use — to fill in the very field this panel was calling missing.
+     */
+    + '<div class="src" title="Kept by ChitBridge so every counter and your storefront show the same thing.">From ChitBridge'
+    + (S.at ? ' · ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '')
+    + ' · <button class="daylink" data-testid="till-shop-edit" onclick="shopEditOpen()">Change these</button></div>'
     + '</div>';
+}
+/**
+ * ── ⭐⭐⭐ EDITING THE SHOP FROM THE COUNTER ([TILL-105]) ───────────────────────────────
+ *
+ * ⚠️⚠️ THE AUTHORITY IS THE TILL KEY AND NOTHING ELSE. Athi, 2026-09-19: *"counter has no password, use the
+ * till key alone for the time being."* That is true of the counter — Sign in is a name-picker, not a
+ * credential — so there is nothing further to ask for. The server holds the whitelist; this form only offers
+ * what the server will accept, so a shopkeeper is never refused for a field we drew them a box for.
+ *
+ * ⚠️ CURRENCY AND REGISTRATION TYPE ARE SHOWN AND NOT EDITABLE, with the reason beside them. Hiding them
+ * would leave a shopkeeper hunting for a control that is absent; showing them greyed with no reason is worse.
+ */
+/** ⚠️ ONE LIST, matching routes/till.js TILL_SHOP_FIELDS — a box the server refuses is a lie to the user. */
+var SHOP_FIELDS = [
+  ['trade_name', 'Shop name',   'what every bill is headed with', 'wide'],
+  ['legal_name', 'Legal name',  'if it differs from the shop name', 'wide'],
+  ['gstin',      'GSTIN',       'without it, no GST is charged on any bill', 'wide'],
+  ['street',     'Address',     '', 'wide'],
+  ['city',       'City',        '', ''],
+  ['pincode',    'PIN code',    '', ''],
+  ['state',      'State',       '', ''],
+  ['phone',      'Phone',       '', ''],
+  ['email',      'Email',       '', 'wide'],
+];
+/** ⚠️ the server names `trade_name` and `address`; the snapshot sends `name` and `street`. Mapped ONCE, here. */
+function shopFieldValue(sh, k){
+  if (k === 'trade_name') return sh.name || '';
+  return sh[k] || '';
+}
+function shopEditOpen(){
+  var d = document.getElementById('shopdlg'); if (!d) return;
+  var sh = (S && S.shop) || {};
+  var missing = Array.isArray(sh.missing) ? sh.missing : [];
+  var body = SHOP_FIELDS.map(function(f){
+    var k = f[0], val = shopFieldValue(sh, k);
+    /* ⚠️ 'not set yet' comes from the SERVER's idea of missing (lib/profile), not from an empty box here */
+    var gap = !val && (missing.indexOf(k) >= 0 || missing.indexOf(k === 'trade_name' ? 'name' : k) >= 0);
+    return '<label class="' + (f[3] || '') + (gap ? ' gap' : '') + '"' + (gap ? ' data-gap="1"' : '') + '>'
+      + '<span>' + esc(f[1]) + '</span>'
+      + '<input data-shop="' + k + '" data-testid="till-shop-' + k + '" value="' + esc(val) + '"'
+      + (f[2] ? ' title="' + esc(f[2]) + '"' : '') + '>'
+      + (f[2] ? '<span>' + esc(f[2]) + '</span>' : '')
+      + '</label>';
+  }).join('');
+  /* ⚠⚠ the two the counter may NOT set, shown with the reason rather than hidden */
+  body += '<p class="note">Money is <b>' + esc(sh.currency || 'INR') + '</b> and registration is <b>'
+        + esc(sh.reg_type || 'regular') + '</b>. Those two are changed in ChitBridge, not here — each one changes'
+        + ' what every future bill charges, not just what it says.</p>';
+  document.getElementById('shopform').innerHTML = body;
+  /* ⭐ CHECK AS IT IS TYPED. 'input' rather than 'change' so the state name appears while the shopkeeper is
+     still looking at the box, not after they have moved on. */
+  Array.prototype.forEach.call(document.querySelectorAll('#shopform input[data-shop]'), function(i){
+    i.addEventListener('input', shopCheck);
+  });
+  shopCheck();
+  d.showModal();
+}
+/**
+ * ⭐⭐ WHEN THIS SHOP WOULD HAVE TO REGISTER — information, not a warning ([TILL-105]).
+ *
+ * Athi: *"GSTN registration is required only if your sale crosses so and so… not a threat."*
+ * ⚠️ The COUNTRY decides, and it is never asked for: the snapshot carries one derived server-side, and
+ * CBGov derives one from the device before a shop exists. ⚠️ A country nobody has studied gets NO figure —
+ * registrationRule() says `verified:false` and this returns '' rather than showing India's numbers to Brazil.
+ */
+function regWords(){
+  if (!window.CBJurisdiction || !CBJurisdiction.registrationRule) return '';
+  /**
+   * ⚠️ THE SHOP'S OWN COUNTRY FIRST, the device only when there is no shop yet — a paired counter must never
+   * let the machine's timezone overrule what ChitBridge holds about the shop.
+   * ⚠⚠ countryOf(sense()), not guess(): the first draft of this line called a function that does not exist,
+   * behind a truthiness guard that would have hidden it for ever.
+   */
+  var c = (S && S.shop && S.shop.country) || '';
+  if (!c && window.CBGov && CBGov.countryOf && CBGov.sense) {
+    try { c = (CBGov.countryOf(CBGov.sense()) || {}).value || ''; } catch (_) { c = ''; }
+  }
+  if (!c) return '';
+  var r = CBJurisdiction.registrationRule(c);
+  if (!r || !r.verified || !r.bands || !r.bands.length) return '';
+  /* ⚠️ THE CAVEAT TRAVELS WITH THE FIGURE, never under it — the hill states are half, and a shop there
+     reading only the headline would be wrong by a factor of two. */
+  return 'You only need to register once your sales pass '
+    + r.bands.map(function(b){ return b.words + ' a year for ' + b.what; }).join(', or ')
+    + (r.caveat ? ' (' + r.caveat + ')' : '') + '.';
+}
+/** the boxes, by their server field name */
+function shopBox(k){ return document.querySelector('#shopform input[data-shop="' + k + '"]'); }
+/**
+ * ⚠️⚠️ CONFIRMATION, NOT A VERDICT. Athi: *"if the gstn is given, we can call the validation module from till
+ * application and confirm."* CBProfileMap is lib/profile-map lifted onto the page — the SAME module the server
+ * checks with, so the counter can never say yes to something the server will refuse.
+ * ⭐ It names the state, because that is what a person can actually confirm. A check digit is not.
+ * @returns true when it is safe to send
+ */
+function shopCheck(){
+  /* ⚠️ THE "not set yet" MARK IS LIVE, not a snapshot of when the form opened. It sat beside a box the
+     shopkeeper had just filled, which reads as the form arguing with itself. */
+  Array.prototype.forEach.call(document.querySelectorAll('#shopform label.gap, #shopform label'), function(l){
+    var i = l.querySelector('input[data-shop]'); if (!i) return;
+    if (String(i.value || '').trim()) l.classList.remove('gap');
+    else if (l.getAttribute('data-gap') === '1') l.classList.add('gap');
+  });
+  var g = shopBox('gstin'), pin = shopBox('pincode');
+  var v = g ? String(g.value || '').trim().toUpperCase() : '';
+  /**
+   * ⭐⭐ NO GSTIN IS AN ANSWER, NOT A BLANK. Athi: *"if no gstn, say this shop is not GSTN shop"* — *"service
+   * tax not registered."* A small shop below the threshold is LEGITIMATELY unregistered, and a counter that
+   * calls that field missing is nagging a shopkeeper about a decision the law already made for them.
+   */
+  if (!v) {
+    shopSay('This shop is not registered for GST — no tax goes on any bill, and each one is headed '
+      + ((window.CBTax && S && S.shop && shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY. ' : 'a cash memo. ')
+      + regWords(), false);
+    return true;
+  }
+  if (!window.CBProfileMap || !CBProfileMap.gstinChecksum) {
+    /* ⚠️ THE ENGINE DID NOT LOAD. Say so rather than silently letting it through — the server will still
+       refuse a bad one, so this is a lost confirmation, not a lost rule. [[feedback-silence-is-the-bug]] */
+    shopSay('The checker did not load, so this GSTIN cannot be confirmed here — ChitBridge will still check it.', false);
+    return true;
+  }
+  var chk = CBProfileMap.gstinChecksum(v);
+  if (!chk.ok) {
+    shopSay(chk.reason === 'format'
+      ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
+      : 'One character of that GSTIN is mistyped — its last character does not match the rest.', true);
+    return false;
+  }
+  /* ⭐ WHAT IT IS, IN WORDS THE SHOPKEEPER OWNS */
+  var code = CBProfileMap.stateOfGstin(v);
+  var name = (CBProfileMap.STATE_NAMES || {})[code] || null;
+  var said = 'GSTIN checks out · ' + (name ? code + ' · ' + name : 'state ' + code)
+           + ' · PAN ' + CBProfileMap.panOfGstin(v);
+  /**
+   * ⚠⚠ AND THE ONE A CHECKSUM CANNOT CATCH: a valid GSTIN for one state beside a PIN code in another. Both
+   * fields are individually correct and the pair is wrong, which is exactly the shape of a real typo.
+   */
+  var pv = pin ? String(pin.value || '').trim() : '';
+  if (pv && CBProfileMap.stateOfPin) {
+    var pc = CBProfileMap.stateOfPin(pv);
+    if (pc && code && String(pc) !== String(code)) {
+      said += ' — but the PIN code ' + pv + ' is in '
+            + ((CBProfileMap.STATE_NAMES || {})[pc] || ('state ' + pc)) + '. One of the two is wrong.';
+      shopSay(said, true);
+      return true;   /* ⚠️ worth saying, not worth blocking — a shop may genuinely be registered elsewhere */
+    }
+  }
+  shopSay(said, false);
+  return true;
+}
+function shopEditClose(){ var d = document.getElementById('shopdlg'); if (d && d.open) d.close(); }
+function shopSay(t, bad){
+  var el = document.getElementById('shopsay'); if (!el) return;
+  el.textContent = t || ''; el.className = 'shopsay' + (bad ? ' bad' : '');
+}
+/**
+ * ⚠️⚠️⚠️ THIS ONE REQUIRES THE LINE, and it is the only counter write that does. cloudFirst() offers "change
+ * it here anyway" because a shop must keep selling with the line down — right for a price, wrong for a GSTIN.
+ * A counter that set one locally would head a TAX INVOICE with a number ChitBridge cannot back, on a document
+ * a customer claims credit against, and there is no urgency here to buy that with: an address can wait.
+ */
+async function shopEditSave(){
+  var boxes = document.querySelectorAll('#shopform input[data-shop]');
+  var body = {}, n = 0;
+  Array.prototype.forEach.call(boxes, function(i){
+    var k = i.getAttribute('data-shop'), v = String(i.value || '').trim();
+    /* ⚠️ THE SERVER CALLS IT `address`; only this line knows that, and it is the same line that read it out */
+    if (v) { body[k === 'street' ? 'address' : k] = v; n++; }
+  });
+  if (!n) { shopSay('Nothing filled in yet.', true); return; }
+  /**
+   * ⚠️⚠️ VALIDATED, THEN SYNCED — in that order, which is Athi's: *"if the information is validated and
+   * then we can sync to backoffice."* The server checks again and refuses; this is so a shopkeeper is told at
+   * the box rather than after a round trip.
+   */
+  if (!shopCheck()) return;
+  shopSay('Sending to ChitBridge…', false);
+  var r = null;
+  try { r = await HOST.tillPost('/api/till/shop', body, { noQueue: true }); } catch (e) { r = null; }
+  if (!r || !r.ok || r.queued) {
+    /* ⭐ SAY WHAT DID NOT HAPPEN, not just that something failed. [[feedback-write-for-the-shopkeeper]] */
+    shopSay('ChitBridge has not been told — ' + ((r && r.why) || 'the line could not be reached')
+      + '. Nothing has changed. Your shop\u2019s details are kept there so every counter and your storefront agree,'
+      + ' so this one needs the line. Try again when it is back.', true);
+    return;
+  }
+  /**
+   * ⚠️ REPAINT FROM THE SERVER'S ANSWER, never from what was typed. tillPost returns
+   * Object.assign({ ok:true }, json), so the reply's own fields sit directly on `r`.
+   */
+  if (r.shop && S) {
+    S.shop = Object.assign({}, S.shop, r.shop, { name: r.shop.trade_name || r.shop.name || (S.shop && S.shop.name) });
+    /* ⚠⚠ the stored copy too, or the counter shows the new header until the next reload and the old one after
+       it — the same DB.set every other cloudFirst apply() does. */
+    try { await DB.set('snapshot', S); } catch (_) {}
+  }
+  try { paintShop(); } catch (_) {}
+  try { paintTotals(); } catch (_) {}
+
+  /**
+   * ⚠️ A REFUSED FIELD KEEPS THE DIALOG OPEN AND SAYS WHY. The server refuses currency and registration type;
+   * closing on a half-applied save would let a shopkeeper believe both went through. A quiet drop is the bug.
+   */
+  var no = r.refused || [];
+  if (no.length) {
+    shopSay('Saved, except: ' + no.map(function(x){ return x.field + ' — ' + x.why; }).join('; '), true);
+    return;
+  }
+  /* ⭐ THE REPAINTED PANEL IS THE OUTCOME. A settings dialog that closes onto the changed values has said what
+     happened; a message on top of that is one more thing to dismiss. [[feedback-attach-shows-outcome]] */
+  shopEditClose();
 }
 /**
  * ── ⭐⭐⭐ "Saved" SHOWN AS A SUM, WITH EVERY PART NAMED ───────────────────────────────────────────────────────

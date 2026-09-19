@@ -230,6 +230,10 @@ const KEY_ROUTES = {
               ['GET', /^\/api\/till\/counters$/],
               ['GET', /^\/api\/till\/quick-keys\/(groups|state|hidden|screen-config)$/],
               ['POST', /^\/api\/till\/quick-keys\/(state|hide|unhide|screen-config)$/],
+              /* ⚠️⚠️ THE SHOP'S OWN HEADER, FROM THE COUNTER ([TILL-105], 2026-09-19). Athi: *'counter has no
+                 password, use the till key alone for the time being.'* The route holds the whitelist — identity, contact
+                 and GSTIN — and refuses currency and registration type, the two that decide what a bill CHARGES. */
+              ['POST', /^\/api\/till\/shop$/],
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */

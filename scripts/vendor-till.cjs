@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -186,6 +186,23 @@ const COPIES = () => [
    * with the line down, and a conversion is not that. A cupboard that holds everything stops being a cupboard.
    */
   [null, path.join(WEB, 'engine', 'units.js'), wrapForBrowser('units.js', 'CBUnits')],
+  /**
+   * ⭐⭐ THE VALIDATION MODULE, ON THE COUNTER ([TILL-105]). Athi: *"if the gstn is given, we can call the
+   * validation module from till application and confirm."* lib/profile-map is DB-free with zero requires, so it
+   * lifts as a file — and it carries the state table and the PAN reader too, which is what lets the counter
+   * answer "33 · Tamil Nadu" instead of merely "valid".
+   * ⚠️ Confirmation at the point of typing. routes/till.js POST /shop still refuses a bad one; a page is not
+   * a place a rule can be enforced.
+   */
+  [null, path.join(WEB, 'engine', 'profilemap.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
+  /**
+   * ⭐⭐ THE JURISDICTION LAYER, ON THE COUNTER ([TILL-105]). lib/jurisdiction.js has said since 2026-09-11 that
+   * its *"shape is right and the wiring is missing"*; this is the wiring. It answers what a country REQUIRES —
+   * when a shop must register for tax — which is what lets the front door reassure a small shop instead of
+   * telling it a field is blank.
+   * ⚠️ It is already a classic script that assigns root.CBJurisdiction itself, so the wrapper only isolates it.
+   */
+  [path.join(API, 'lib', 'jurisdiction.js'), path.join(WEB, 'engine', 'jurisdiction.js'), 'copy'],
   [null, path.join(WEB, 'engine', 'convert.js'),
     wrapForBrowser('convert.js', 'CBConvert', { './money': 'CBMoney', './units': 'CBUnits' })],
   [null, path.join(WEB, 'engine', 'lots.js'), wrapForBrowser('lotfields.js', 'CBLots')],
@@ -231,6 +248,8 @@ const COPIES = () => [
      counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor
      caught this the moment the script tag went in — which is what it is for. */
   [null, path.join(API, 'lib', 'units.browser.js'), wrapForBrowser('units.js', 'CBUnits')],
+  /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
+  [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],

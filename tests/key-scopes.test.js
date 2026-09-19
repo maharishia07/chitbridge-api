@@ -65,7 +65,9 @@ const EXPECT = {
              allow: ['GET /api/till/snapshot', 'POST /api/events/ticket'] },
   till:    { why: 'a counter: it bills for its own shop, and can say what ran out and what a price is now',
              allow: ['GET /api/till/snapshot', 'GET /api/till/bills', 'POST /api/chits/send',
-                     'POST /api/till/price', 'POST /api/till/stock', 'POST /api/events/ticket'] },
+                     'POST /api/till/price', 'POST /api/till/stock', 'POST /api/events/ticket',
+                     /* ⚠️ the shop's own header and GSTIN — till key alone, by Athi's decision of 2026-09-19 */
+                     'POST /api/till/shop'] },
   connector: { why: 'a program on a shop PC: products up, orders down, the bell',
              allow: ['GET /api/products', 'PATCH /api/products/abc', 'GET /api/chits/inbox', 'POST /api/events/ticket'] },
   offers:  { why: 'the offers engine as a service', allow: [] },
