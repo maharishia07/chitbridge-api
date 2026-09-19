@@ -4331,7 +4331,8 @@ async function load(){
           REJECTED = (await DB.get('rejected')) || null; } catch (_) {}
   }
   var st = await HOST.state().catch(function(){ return STATE; });
-  STATE = st || STATE; S = (st && st.snapshot) || S;
+  /* ⚠️ the master decides the name — see catRestamp ([TILL-114]) */
+  STATE = st || STATE; S = catRestamp((st && st.snapshot) || S);
   /* ⚠️ the stored count is a memory; the queue is the fact. Re-count on every load, never trust the number back. */
   try { await queueTally(); } catch (_) {}
   var bad = wrongShop();
@@ -4585,6 +4586,29 @@ function byCatToggle(){ ls.set('cb_till_bycat', byCatOn() ? '' : '1'); paintQuic
  * ⚠️ FIRST SEEN, FIRST SHOWN: categories come out in the order their first key appears, so the category that
  * matters most to this counter leads rather than the alphabet deciding.
  */
+/**
+ * ── ⭐⭐⭐ THE CATEGORY MASTER IS THE TRUTH; THE NAME ON A PRODUCT IS A CACHE ([TILL-114]) ───────────
+ *
+ * Athi: *"they can always in sync?"* — they can, but only if the id is what is trusted. The snapshot sends the
+ * master in full every time, while a DELTA leaves unchanged products alone — so a renamed category would stick
+ * on every product that happened not to change. Resolving here makes a rename take effect the moment the
+ * counter next reads the shop, with the line down or not.
+ *
+ * ⚠️ ONLY WHEN IT RESOLVES. A product citing an id the master does not have keeps the name it already had —
+ * a legacy key or a counterparty's copy — because replacing a name with nothing is not an improvement.
+ */
+function catRestamp(snap){
+  var sn = snap || S;
+  if (!sn || !Array.isArray(sn.items) || !Array.isArray(sn.categories) || !sn.categories.length) return sn;
+  var by = {};
+  sn.categories.forEach(function(c){ if (c && c.id) by[String(c.id)] = c.name; });
+  sn.items.forEach(function(i){
+    if (!i || !i.category_id) return;
+    var n = by[String(i.category_id)];
+    if (n) i.category = n;
+  });
+  return sn;
+}
 function byCatOf(i){ return String((i && i.category) || '').trim() || '\u2014'; }
 /**
  * ── ⭐⭐⭐ ONE CATEGORY ORDER, READ BY EVERY SURFACE ([TILL-87]) ────────────────────────
@@ -17243,7 +17267,7 @@ setMode(ls.get('cb_till_mode', 'sell'));
 try { applyTillOptions(); } catch (_) {}
 /* ⭐ the menu's collapsed strip, drawn once from TILL_OPS (2026-09-18) */
 try { paintSide(); } catch (_) {}
-setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = st.snapshot; paintStatus(); }).catch(function(){}); }, 15000);
+setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = catRestamp(st.snapshot); paintStatus(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
   navigator.serviceWorker.register('/till-sw.js').catch(function(){});

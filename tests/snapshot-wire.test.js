@@ -922,8 +922,13 @@ it('⭐⭐ nothing holds a product across a shop read — the panel resolves it 
     const body = page.slice(at, at + 300);
     assert.ok(body.indexOf('cardItem()') > 0, fn + ' works on a cached object rather than the live one');
   }
-  /* ⚠️ and load() really does replace them — this is why the rule exists, so the guard names it */
-  assert.ok(page.indexOf('S = (st && st.snapshot) || S;') > 0,
+  /**
+   * ⚠️ AND load() REALLY DOES REPLACE THEM — which is WHY the id-not-object rule exists, so the guard names it.
+   * ⚠⚠ MATCHED ON THE SHAPE, not the exact spelling. This asserted the literal `S = (st && st.snapshot) || S;`
+   * and broke the day that expression was wrapped ([TILL-114] resolves the category master into it), although
+   * the rule was untouched. A guard that fails on a wrapper is a guard nobody keeps.
+   */
+  assert.ok(/\bS = [^;\n]*st(?:\s|&|\.)[^;\n]*snapshot/.test(page),
     'load() no longer replaces S from storage; re-check whether the id-not-object rule still has teeth');
 });
 
