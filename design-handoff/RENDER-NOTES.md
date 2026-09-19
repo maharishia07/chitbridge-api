@@ -13,6 +13,23 @@ screenshot your own result and compare. All three steps. Two of them were skippe
 
 ---
 
+## ⭐⭐ READ THE SOURCE FOR COPY, THE PNG FOR LAYOUT
+
+`source/<ScreenId>.dc.html` is **plain text**. The index warns *"Reference only — never ship these"*, and
+that is about the code — but as a way to recover **exact wording** it beats reading a picture, and it costs
+almost nothing:
+
+```bash
+node -e "const h=require('fs').readFileSync('source/Flow.dc.html','utf8');
+         console.log(h.replace(/<[^>]+>/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean).join(' | '))"
+```
+
+Three of `Flow.png`'s acceptance checks run off the bottom edge of the image at any readable scale. All three
+came back from the source in one command. **The PNG is the visual truth; the source is the textual one.** Use
+the render to learn what is biggest and what sits beside what, and the source to get a sentence right.
+
+---
+
 ## ⚠️⚠️⚠️ FIRST: not every render is the design
 
 Forty-four PNGs, one folder, and nothing in a file name says whether a drawing is the direction or an option
@@ -135,6 +152,97 @@ What a small desktop gives up, and what it must not:
 
 ⚠️ Note the compact screen keeps `Save & print · F9` rather than the tablet's `Pay →`. **A keyboard terminal
 finishes the bill; a touch tablet goes to a pay card.** The difference is the input device, not the width.
+
+---
+
+## ⭐⭐⭐⭐ `Flow.png` — READ THIS BEFORE TOUCHING QUICK KEYS. IT IS THE WHOLE SPEC.
+
+Not a screen. It is *"DESIGN FLOW · HANDOFF FOR BUILD"* — the two levels of control, the screen flow, the data
+model, eight rules and the acceptance checks, on one page. **Nothing else in the package carries this much
+decided detail, and I built quick-key groups twice without opening it.**
+
+> *"The business decides which keys exist, and that change is permanent. The counter decides what shows right
+> now, and that change is temporary."*
+
+### The two levels
+
+| | **Level 1 · PERMANENT** | **Level 2 · TEMPORARY** |
+|---|---|---|
+| Screen | Maintenance | Sell |
+| Who | Manager / owner — permission `quickkeys.manage` | Cashier at the counter |
+| Where | Back office › Menu › Quick keys | Sell › Quick keys button (popup), and `✕` on each key |
+| Does | Create, rename, **colour**, order and delete groups; **set the time window**; add, remove and reorder items | Choose which groups show now; hide or bring back items that are sold out |
+| Scope | **All counters of the outlet**, after save and sync | **This counter only** |
+| Lifetime | Until changed again. **Audited** (who, when, what) | **Until shift close.** Never changes Level 1 data |
+
+⚠️ **This is the part our build does not have at all.** Our groups are a per-device
+`tillOpt().groups` map with copy-on-write. The design has an **outlet-level, audited, versioned** Level 1 and
+a **per-counter, per-shift** Level 2 that can never write to it.
+
+### Screen flow
+
+**Maintenance:** `M1 Groups list` (pick a group or "New group") → `M2 Group details` (name, window from–to,
+colour, *"suggest when window starts"*) → `M3 Keys in group` (add from menu · remove **(confirm)** · move
+up/down) → `M4 Save` (write + **audit log**, bump `version`) → **Sync to counters**: *"Counters reload groups
+on next sync; their temporary choices are kept where the group/item still exists."*
+
+**Sell:** `S1 Sell opens` — *restore this shift's choice, or default to groups whose window contains now* →
+`S2 Quick keys grid` — one section per ticked group, in group order, `✕` on every key → `S3 Popup: groups` —
+checkbox per group (tick 1, 2 or more), group name is a link, *"x / 10 available"* → `S4 Popup: items` — all
+items in the group with a checkbox, `Show all` / `Hide all` / `Back` → **Done**: popup closes, grid redraws at
+once, saved locally **and** to the server as this counter's shift state.
+
+### Three shortcuts, spelled out
+
+- **`✕` on a key** — hides that item now (sold out). It moves to the **"Sold out" tray under the grid**;
+  tapping it there brings it back. *Same state as unticking it in S4* — one state, two doors.
+- **chip `✕`** — the group chips beside the Quick keys button untick a group **without opening the popup**.
+- **Time nudge** — when a group's window starts and the group is not ticked, a banner offers *"Show Afternoon"*
+  / *"Not now"*. ⚠️ **"It never switches groups automatically."** The counter suggests; the cashier decides.
+
+### Data model (five tables)
+
+```
+quick_key_group        id, outlet_id, name, color, sort_order, window_from, window_to,
+                       suggest_on_start, is_deleted, version, updated_by, updated_at
+quick_key_group_item   group_id, product_id, position · unique (group_id, product_id)
+counter_quick_key_state   counter_id, business_date, shift_id, active_group_ids[], updated_at   · LEVEL 2
+counter_hidden_item       counter_id, shift_id, group_id, product_id, hidden_at, hidden_by      · LEVEL 2
+quick_key_audit        who, when, action (add / remove / move / rename / delete), before, after
+```
+
+### The eight rules
+
+1. Removing a key on the maintenance screen **never deletes the product from the menu**.
+2. **Level 2 actions never write Level 1 tables.**
+3. **A hidden item can still be billed through search or barcode.** Hiding is about the grid, not the shelf.
+4. Temporary state **resets at shift close**; a new shift starts from the time-window default.
+5. Several groups ticked: sections show in **group sort order**, items in **position order**.
+6. An item in two groups is hidden **per group** — hiding it in Morning does not hide it in Afternoon.
+   🟡 **Marked *"Decision to confirm"* in the render itself — this one is genuinely open, for Athi.**
+7. If a group is deleted in back office, counters **drop it from their ticked list on sync**.
+8. No limit on keys per group in the model; **the UI is laid out for 10 per group**.
+
+### Acceptance checks (Given / When / Then, written for us)
+
+- *Given* Morning ticked at 09:00 · *When* the cashier ticks Afternoon and taps Done · *Then* **20 keys show,
+  Morning first**.
+- *Given* Ven Pongal is showing · *When* the cashier taps its `✕` · *Then* it leaves the grid, **appears in
+  Sold out**, and S4 shows it unticked.
+- *Given* the manager removes Rava Dosa from Morning and saves · *When* counters sync · *Then* no counter shows
+  it in Morning, **and it is still in the menu**.
+- *Given* 3 items are hidden · *When* **the shift closes and a new one opens** · *Then* all items show again.
+- *Given* it is 11:30 and Afternoon is not ticked · *When* the sell screen is open · *Then* **the banner appears
+  once**; *"Not now"* hides it **for that window**.
+- *Given* **the counter is offline** · *When* the cashier changes groups or hides items · *Then* it works
+  locally and syncs later.
+
+### What this means for us
+
+Our quick keys satisfy the *shape* of Level 2 and none of Level 1. Before building any of it, note that the
+pieces interlock: the **time window** produces the nudge banner, the **colour** makes several-groups-at-once
+legible, `sort_order`/`position` produce rule 5, and `version` + the audit table are what make "the business
+decides, permanently" true. Half of it is worse than none — a group with a colour and no window is decoration.
 
 ---
 
