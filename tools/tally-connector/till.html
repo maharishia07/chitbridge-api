@@ -4820,8 +4820,8 @@ var MENU_HUE = {
   bills:   '43,95,153',     /* paper blue                                         */
   shop:    '122,79,168',    /* the catalogue                                      */
   look:    '20,124,130',    /* teal — appearance, and nothing that moves money    */
-  shopdet: '96,104,120',    /* slate — facts about the shop                       */
-  counter: '96,104,120',    /* slate — facts about this till                      */
+  upkeep:  '43,95,153',     /* blue — keeping the till current                    */
+  show:    '122,79,168',    /* the catalogue violet — showing it to customers     */
   care:    '178,52,38',     /* the Careful red, already in the box below it       */
   /* ⚠️ two ops that are their own door and sit in no section — named here so the strip is never grey by
      accident. Anything else falls back to slate, which is a legible default and not a bug. */
@@ -4855,7 +4855,10 @@ var TILL_MENU = [
    * the shop for new prices, says whether this counter's numbering is ready, and whether anything is still
    * unsent from yesterday. Bless the day and check the till in one place.
    */
-  { id: 'day',     icon: '🪔', title: 'Start your day',  sum: 'your image · the day opened · what needs doing', day: true },
+  /* ⭐ THE DAY, AND WHO THIS SHOP IS ([TILL-99]). Athi: *"Shop details and start your day can be grouped."*
+     The address, the GSTIN and when the shop was last read are the things somebody checks while opening. */
+  { id: 'day',     icon: '🪔', title: 'Start your day',  sum: 'your image · the day opened · the shop\u2019s particulars',
+    day: true, shopdet: true },
   /**
    * ⭐⭐ WHAT TODAY HAS DONE (Athi, 2026-09-18: *"need to think MIS for the day etc in the menu, total sale and a
    * small inventory and so on, self sustaining, possible?"*).
@@ -4868,15 +4871,34 @@ var TILL_MENU = [
    * out — and never a quantity on hand. A number a shopkeeper cannot defend is the one injury this counter has
    * already been taught not to repeat.
    */
-  { id: 'today',   icon: '📊', title: 'Today',         sum: 'the sale so far · what moved · bohni',  today: true },
+  /**
+   * ⭐⭐ MIS — THE MONEY, AND THE TWO REPORTS UNDER IT ([TILL-99]). Athi: *"what moved is MIS."* The day's
+   * takings, the bills that made them and the printable table are one question asked three ways; they used
+   * to be split across two sections by the noun 'bill'.
+   * ⭐ AND "Today's sales" WAS AN ORPHAN — in TILL_OPS and in no section at all, so the hub could not reach
+   * the day's report. [[feedback-whitelist-drops-silently]]
+   */
+  { id: 'today',   icon: '📊', title: 'How today is going', sum: 'the sale so far · what moved · the bills · the day\u2019s table',
+    today: true, ops: ['bills', 'dayreport'] },
   /**
    * ⭐⭐ ALERTS SITS THIRD, BETWEEN WHAT THE DAY HAS DONE AND THE DOCUMENTS IT PRODUCED (hub spec §2). The order
    * of these sections is fixed and is not a matter of taste: a cashier learns where things are by position, and
    * a list that reorders itself is one they have to read every time.
    */
-  { id: 'alerts',  icon: '⚡', title: 'Alerts',        sum: 'what needs you',                        alerts: true },
-  { id: 'bills',   icon: '🧾', title: 'Bills',         sum: "today's bills · why one is stuck",      ops: ['bills', 'stuck'] },
-  { id: 'shop',    icon: '🏷️', title: 'Shop & prices', sum: 'read the shop again · the TV sign',     ops: ['refresh', 'screen'] },
+  /* ⭐ DIAGNOSIS — Athi: *"why is a bill stuck is diagnosis."* What is wrong, and how to look into it. */
+  { id: 'alerts',  icon: '🩺', title: 'Check',         sum: 'what needs you · why a bill is stuck',
+    alerts: true, ops: ['stuck'] },
+  /* ⭐ MAINTENANCE — Athi: *"reload the shop is maintenance."* Everything that keeps this till current. */
+  { id: 'upkeep',  icon: '🔄', title: 'Keep it running', sum: 'read the shop again · settings · a break',
+    ops: ['refresh', 'settings', 'break-menu', 'install'] },
+  /**
+   * ⭐ MARKETING — Athi: *"shop screen is marketing, what other marketing we have?"* Today: exactly one, the
+   * TV sign. ⚠️ A GROUP OF ONE, DELIBERATELY: the storefront link and rewards are what would join it and
+   * neither is on this page yet. A named home for the second is worth more than filing the first under a noun.
+   */
+  /* ⚠️ THE HEADING MUST NOT REPEAT ITS ONLY ROW. Both said 'your offers as a sign for a TV' — in a group
+     of one that is the same sentence twice, and the reader has to check whether they are different. */
+  { id: 'show',    icon: '📣', title: 'Show the shop', sum: 'what a customer sees',                  ops: ['screen'] },
   /**
    * ⭐ "SCREEN", NOT "HOW IT LOOKS" ([TILL-88]). Athi: *"instead of how it looks, can we change to screen,
    * with screen icon, also state Preview as hyperlink there itself."* The section is named after the THING
@@ -4885,8 +4907,8 @@ var TILL_MENU = [
    */
   { id: 'look',    icon: '🖥️', title: 'Screen',        sum: 'size · colours · room · what shows',
     look: true, link: { label: 'Preview', fn: 'styleOpen', why: 'see the whole screen before anything changes' } },
-  { id: 'shopdet', icon: '🏪', title: 'Shop details',  sum: 'address · GSTIN · money · last read',     shopdet: true },
-  { id: 'counter', icon: '🧑', title: 'This counter',  sum: 'a break · settings for this till',      ops: ['break-menu', 'settings', 'install'] },
+  /* ⚠️ 'shopdet' and 'counter' are gone ([TILL-99]): the shop's particulars fold into the morning panel,
+     where somebody opening the day is already looking, and the counter's own upkeep is 'Keep it running'. */
   /* ⚠️ LAST, AND IT LOOKS LIKE IT. §4: a warm-red bordered box, and this exact sentence, because both of these
      stop billing for a moment and a person deserves to know that before they press, not after. */
   { id: 'care',    icon: '⚠',  title: 'Careful',       sum: 'close the counter · clear and reload',  ops: ['close', 'coldstart-menu'], careful: true },
@@ -5734,9 +5756,18 @@ function paintMenu(){
   var secHtml = {};                       /* each section kept by id, so a wide screen can PLACE them */
   var secs = TILL_MENU.map(function(sec){
     var open = menuIsOpen(sec.id);
-    var body = sec.day ? menuDayBody() : sec.today ? menuTodayBody()
-      : sec.alerts ? menuAlertsBody() : sec.shopdet ? menuShopBody() : sec.look
-      ? '<div class="menusec" data-testid="till-quick-settings">'
+    /**
+     * ⚠️⚠️ IT WAS AN EITHER/OR CHAIN, WHICH IS WHY A SECTION COULD HOLD ONLY ONE KIND OF THING ([TILL-99]).
+     * A section is now whatever its flags say PLUS its ops, in that order — so "the day" can carry both the
+     * morning panel and the shop's particulars, and "how it is going" can carry the figures and the two
+     * reports under them. The old shape forced the split Athi found: one noun per section.
+     */
+    var body = '';
+    if (sec.day) body += menuDayBody();
+    if (sec.today) body += menuTodayBody();
+    if (sec.alerts) body += menuAlertsBody();
+    if (sec.shopdet) body += menuShopBody();
+    body += !sec.look ? '' : ('<div class="menusec" data-testid="till-quick-settings">'
         + '<div class="mq">'
         + '<label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook(\'cb_till_fs\',this.value)">'
         + '<option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select></label>'
@@ -5789,8 +5820,9 @@ function paintMenu(){
           + '<option value="quick">Quick keys + bill</option>'
           + '<option value="cart">Search + bill</option>'
           + '<option value="custom" disabled>Custom</option></select>'
-          + '<div class="viewchips" id="viewchips"></div></div>'
-      : (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
+          + '<div class="viewchips" id="viewchips"></div></div>');
+    /* ⭐ and every section may ALSO carry operations — they follow whatever panel it has */
+    body += (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
     var html = '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '"'
       /* ⭐ the hue is set ONCE, here, and every rule under .msec is an alpha of it ([TILL-85]) */
       + ' style="--mh:' + menuHue(sec.id) + '" data-testid="till-msec-' + sec.id + '">'
@@ -5847,8 +5879,9 @@ function paintMenu(){
    * ⚠ THE RENDER'S OWN SPLIT, counted off HubWide.png: the day and its money on the left; everything a person
    * GOES to on the right. My first guess put five on the left and three on the right and it read as lopsided.
    */
-  var LEFT = ['day', 'today', 'alerts'];
-  var RIGHT = ['bills', 'shop', 'look', 'shopdet', 'counter'];
+  /* ⭐ the day and the money on the left; everything you GO somewhere to do on the right ([TILL-99]) */
+  var LEFT = ['day', 'today'];
+  var RIGHT = ['alerts', 'upkeep', 'show', 'look'];
   var pick = function(ids){ return ids.map(function(id){ return secHtml[id] || ''; }).join(''); };
   /* ⚠ ANY SECTION NOT NAMED ABOVE STILL APPEARS. A new one added to TILL_MENU tomorrow must not vanish on wide
      screens because nobody remembered to list it here — it joins the left column, which is the reading order. */
