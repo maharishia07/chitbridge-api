@@ -1038,6 +1038,41 @@
   /* ⭐ `--cartmax` is set by the drag handle below; unset, the bill takes whatever room is left, as before */
   .cart{overflow:auto;flex:1;min-height:120px;max-height:var(--cartmax,none)}
   /* ⭐ the handle itself: a thin rule with a wide grab area, the same idea as the left/right .grip */
+  /* ── ⭐⭐⭐ PAY AS A CARD ([TILL-59], png/FullTabletPay.png) ─────────────────────────────────────────── */
+  /* ⚠️ OFF by default. On a keyboard terminal the pay zone is simply the blocks in the flow, as it always was;
+     only a layout whose `pay` slot is a step turns any of this on. */
+  .paygo{display:none;padding:10px 12px 0}
+  /* ⚠️ .pri is only styled as `.go button.pri`, so this needed its own fill — see the note above. It is the
+     control that replaces a scroll, so it is the most prominent thing on the bill foot or it has not worked. */
+  .paybtn{width:100%;min-height:56px;font-size:1.15em;font-weight:800;cursor:pointer;
+          border-radius:var(--radius);border:1px solid var(--ok);background:var(--ok);color:var(--on-accent)}
+  .paybtn:disabled{opacity:.45;cursor:not-allowed}
+  .payhd{display:none}
+  body.paying{overflow:hidden}
+  /* the card itself — only ever built when the layout asked for it, and only shown while paying */
+  body.paying .payzone{position:fixed;z-index:80;inset-block-end:auto;inset-inline:50%;top:50%;
+    transform:translate(-50%,-50%);width:min(680px,calc(100vw - 32px));max-height:min(88dvh,900px);overflow:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;
+    box-shadow:0 24px 70px rgba(0,0,0,.38)}
+  /* ⚠️⚠️ ON THE BODY, NOT ON THE CARD. As .payzone::before it lived inside the card's own stacking context
+     (z-index:80), so it tinted the card and left the page bright — a scrim that dimmed the wrong thing. */
+  body.paying::after{content:'';position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.45)}
+  body.paying .payhd{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  body.paying .payhd .pill{min-width:44px;min-height:44px;font-size:1.1em}
+  body.paying .payhd span{flex:1;min-width:0;display:flex;flex-direction:column}
+  body.paying .payhd i{font-style:normal;color:var(--dim);font-size:.86em}
+  body.paying .payhd b{font-size:1.9em;line-height:1.1;letter-spacing:-.01em}
+  body.paying .paygo{display:none}
+  /**
+   * ⚠️⚠️ WITH THE CARD CLOSED, THE FOOT IS `Clear` · `Park` · `Pay →` AND NOTHING ELSE (png/FullTablet.png).
+   * Leaving the tenders and Save & print in the flow made Pay a SECOND way to take money rather than the way —
+   * the duplicate-button design I argued against, built by accident.
+   * ⚠️ Clear and Park stay, because the render keeps them on the foot as well as on the card.
+   */
+  body.paycard:not(.paying) #pay,
+  body.paycard:not(.paying) .take,
+  body.paycard:not(.paying) #obar,
+  body.paycard:not(.paying) #save{display:none}
   .cartgrip{height:6px;cursor:row-resize;background:var(--line);position:relative;flex:none}
   .cartgrip::after{content:'';position:absolute;inset-inline:0;top:-5px;height:16px}
   .cartgrip:hover,.cartgrip.on{background:var(--ok)}
@@ -1614,6 +1649,16 @@
     <div class="cartgrip" id="cartgrip" data-testid="till-cart-grip" title="drag to resize the bill"
          role="separator" aria-label="drag to resize the bill"></div>
     <div class="totals" id="totals"></div>
+    <!-- ⭐ the one control that replaces a scroll on a touch counter — see payGo() -->
+    <div class="paygo" id="paygo"></div>
+    <!--
+      ⭐⭐ THE PAY ZONE. Everything needed to finish a bill, in ONE container, so a touch layout can bring it
+      forward as a card (png/FullTabletPay.png) without a second copy of any control existing anywhere.
+      On a keyboard terminal the zone is just these blocks in the flow, exactly as before.
+    -->
+    <div class="payzone" id="payzone">
+    <div class="payhd"><button class="pill" data-testid="till-pay-back" aria-label="back to the bill"
+         onclick="payClose()">←</button><span id="payhdsum"></span></div>
     <div class="pay" id="pay"></div>
     <div class="take">
       <input id="tendered" type="number" min="0" step="1" inputmode="decimal" placeholder="Amount taken" oninput="paintTotals();draftSave()">
@@ -1628,6 +1673,7 @@
       <button id="parkbtn" data-testid="till-park" onclick="parkBill()">Park · F6</button>
       <button class="pri" id="save" onclick="finish()">Save &amp; print · F9</button>
     </div>
+    </div><!-- /payzone -->
     <div class="parked" id="parked"></div>
    </div>
 
@@ -5688,6 +5734,65 @@ function screenCfg(){
   var theme = (t === 'light') ? 'lightCream' : t;
   /* ⚠️ the device's look LAST: choosing a preset writes its theme there (screenSet), and a later change in ☰ must win */
   return CBScreen.resolve(s, { theme: theme });
+}
+/**
+ * ⭐⭐ WHERE A LAYOUT PUTS A SLOT — 'inline', 'tab', 'step' or 'sheet'. lib/screen-kit.js has declared this for
+ * every layout since the library was written and this page never asked. Reading it is how 'the pay surface is
+ * set by the input device' stays one decision in one file. [[feedback-adopt-dont-reinvent]]
+ */
+function slotAt(name){
+  try {
+    var L = window.CBScreen && CBScreen.LAYOUTS && CBScreen.LAYOUTS[screenCfg().layout];
+    return (L && L.slots && L.slots[name]) || 'inline';
+  } catch (_) { return 'inline'; }
+}
+/**
+ * ⭐ PAY AS A CARD: the layout asks for the pay slot on its own surface, and the three-step phone flow is not
+ * already providing one. A tablet is the case this exists for — its layout says `pay: 'step'` while its shape
+ * stays 'wide', so stepsWanted() is false and the step never happened.
+ * ⚠️ NEVER WHILE THE STEPS ARE RUNNING, or a phone would get a card on top of its own pay step.
+ */
+function payAsCard(){
+  if (MODE !== 'sell') return false;
+  if (document.body.classList.contains('steps')) return false;
+  return slotAt('pay') === 'step';
+}
+function payOpen(){
+  if (!payAsCard() || !CART.length) return;
+  document.body.classList.add('paying');
+  try { paintTotals(); } catch (_) {}
+}
+/** ⚠️ closing is not clearing — the bill, the tender and any part payment are exactly as they were */
+function payClose(){
+  document.body.classList.remove('paying');
+  try { paintTotals(); } catch (_) {}
+}
+/**
+ * ⭐ THE BUTTON CARRIES THE AMOUNT, as the render draws it: `Pay ₹2,750.25 →`. The eye lands on the money and
+ * the action in one glance, which is the whole point of replacing a scroll with a control.
+ */
+function payGo(){
+  var el = document.getElementById('paygo'); if (!el) return;
+  /* ⭐ the body carries the ANSWER, so the stylesheet decides what is on the foot and no painter has to.
+     [[feedback-ui-replaceable-logic-in-engines]] */
+  document.body.classList.toggle('paycard', payAsCard());
+  if (!payAsCard()) { el.style.display = 'none'; el.innerHTML = ''; document.body.classList.remove('paying'); return; }
+  /* ⚠️ AN EXPLICIT VALUE. '' only removes the inline style, and .paygo{display:none} then applies again —
+     the button was in the DOM, correct, and invisible. [[feedback-silence-is-the-bug]] */
+  el.style.display = 'block';
+  var due = 0;
+  try { due = billMoney().net; } catch (_) { due = 0; }
+  el.innerHTML = '<button class="pri paybtn" data-testid="till-paygo"' + (CART.length ? '' : ' disabled')
+    + ' onclick="payOpen()">Pay ' + money(due) + ' \u2192</button>';
+  /**
+   * ⭐ THE CARD LEADS WITH THE AMOUNT, as png/FullTabletPay.png draws it: the quiet line of particulars, then
+   * TOTAL as the biggest thing on the card. The figure is READ from billMoney() the same as everywhere else —
+   * a displayed number, not a second control. [[feedback-ui-replaceable-logic-in-engines]]
+   */
+  var sum = document.getElementById('payhdsum');
+  if (sum) sum.innerHTML = CART.length
+    ? '<i>' + esc(countWords()) + '</i><b>TOTAL ' + money(due) + '</b>'
+    : '';
 }
 function screenSet(patch){
   var o = tillOpt(), s = Object.assign({}, o.screen || {}, patch || {});
@@ -10033,6 +10138,8 @@ function toggleSum(){ SUMFOLD = !SUMFOLD; try { localStorage.setItem('till_sumfo
 function paintTotals(){
   var m = billMoney();
   try { paintStepBar(); } catch (_) {}
+  /* ⭐ the Pay button carries the amount, so it has to move when the amount does */
+  try { payGo(); } catch (_) {}
   /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
      concatenated cannot be told about a footnote that has not been worked out yet. */
   var brk = savedBreakdown();
@@ -13483,6 +13590,14 @@ document.addEventListener('keydown', function(e){
    * Arranging is something you back out of, so it claims Escape first: one press puts down the key being
    * carried, the next leaves the mode, and neither goes anywhere near the bill.
    */
+  /**
+   * ⚠️⚠️ BEFORE ESCAPE REACHES THE BASKET — [TILL-30] again. The pay card is something you back out of, so it
+   * claims Escape the way the menu and the arrange mode do. Backing out of the card must never be the gesture
+   * that throws the sale away.
+   */
+  if (e.key === 'Escape' && document.body.classList.contains('paying')){
+    payClose(); e.preventDefault(); return;
+  }
   if (e.key === 'Escape' && QK_ARRANGE){
     if (QK_FROM) { QK_FROM = null; toastLine('Put back. Nothing moved.'); }
     else { QK_ARRANGE = false; toastLine('Done arranging.'); }

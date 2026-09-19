@@ -330,6 +330,47 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
 });
 
 /**
+ * ⭐⭐⭐ PAY IS A CARD THAT COMES TO YOU ([TILL-59], png/FullTabletPay.png) — the answer to Athi's *"the pay
+ * panel is at very bottom, so i was searching where it is"*, which I first answered by talking him out of it.
+ */
+it('⭐⭐⭐ a touch layout takes payment on a card, and there is still only one way to take money', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⭐ THE PREDICATE IS THE SCREEN LIBRARY'S, not a second one invented here. lib/screen-kit.js has declared
+     `pay: 'step'` for tablet/phone/handheld since it was written, and this page never read `slots` at all. */
+  assert.ok(page.indexOf('function slotAt(') > 0, 'the page no longer reads the layout\'s slot placement');
+  const slot = page.slice(page.indexOf('function slotAt('), page.indexOf('function payAsCard('));
+  assert.ok(/CBScreen\.LAYOUTS/.test(slot), 'slotAt invents a placement instead of reading the screen library');
+  const pac = page.slice(page.indexOf('function payAsCard('), page.indexOf('function payOpen('));
+  assert.ok(/slotAt\('pay'\) === 'step'/.test(pac), 'the pay card is no longer driven by the pay slot');
+  /* ⚠️ never on top of the phone's own pay STEP — that flow already provides the surface */
+  assert.ok(/contains\('steps'\)/.test(pac), 'a phone would get a card on top of its own pay step');
+
+  /* ⚠️⚠️ ONE SET OF CONTROLS. A second Save & print, or a second tender row, is how two ways of taking money
+     come to disagree about what was taken. The card is the SAME zone, moved by CSS. */
+  assert.strictEqual(page.split('id="save"').length - 1, 1, 'there is more than one Save & print in the page');
+  assert.strictEqual(page.split('id="pay"').length - 1, 1, 'there is more than one tender row in the page');
+  const zone = page.slice(page.indexOf('<div class="payzone"'), page.indexOf('<!-- /payzone -->'));
+  for (const part of ['id="pay"', 'class="take"', 'class="go"'])
+    assert.ok(zone.indexOf(part) > 0, 'the pay zone does not contain ' + part + ' — the card would be missing it');
+
+  /* ⚠️⚠️ WITH THE CARD CLOSED THE FOOT IS Clear · Park · Pay AND NOTHING ELSE (png/FullTablet.png). Leaving the
+     tenders and Save & print in the flow makes Pay a SECOND route — the duplicate button I argued against. */
+  /* ⚠️ EACH MEMBER BY NAME. Dropping any one of them puts that control back on the closed foot, which is
+     exactly how Pay becomes a second way to take money rather than the way. */
+  const flat = page.replace(/\s+/g, ' ');
+  for (const part of ['#pay', '.take', '#obar', '#save'])
+    assert.ok(flat.indexOf('body.paycard:not(.paying) ' + part) > 0,
+      'the closed foot still shows ' + part + ', so Pay is a duplicate way to take money');
+
+  /* ⚠️⚠️⚠️ [TILL-30]: Escape clears the bill. Anything you can back out of must claim Escape FIRST. */
+  const keys = page.slice(page.indexOf("document.addEventListener('keydown'"));
+  const payEsc = keys.indexOf("classList.contains('paying')");
+  const clearEsc = keys.indexOf("!document.querySelector('dialog[open]')");
+  assert.ok(payEsc > 0, 'the pay card does not claim Escape — backing out of it would throw the sale away');
+  assert.ok(payEsc < clearEsc, 'Escape reaches the basket before the pay card closes — [TILL-30] again');
+});
+
+/**
  * ⭐⭐ THE MAINTENANCE LIST, AS png/MaintV2.png DRAWS IT ([TILL-58b], 2026-09-18).
  * Every one of these describes something the screenshot caught and the other 781 checks did not.
  */
