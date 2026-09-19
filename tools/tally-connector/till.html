@@ -560,11 +560,22 @@
   .modopt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:58px}
   .modopt .mn{font-weight:700}
   .modopt .mw{font-size:.8em;color:var(--dim)}
-  .modopt.on .mw{color:var(--on-accent);opacity:.85}
+  /**
+   * ⚠️⚠️ NOT --on-accent. The picked card's ground is --ok-tint, a PALE green, not the accent — so white text
+   * put "+₹15.00" at near-zero contrast, and the money is the one thing on this card that must always read.
+   * Caught by looking at the render, not by any assertion. [[feedback-open-the-render-first]]
+   */
+  .modopt.on .mw{color:var(--ok);opacity:1;font-weight:600}
   /* ⚠⚠ SOLD OUT IS SHOWN, NOT HIDDEN — struck through and unpickable, so staff know why it is missing */
   .modopt.out{opacity:.55;cursor:not-allowed;border-style:dashed}
   .modopt.out .mn{text-decoration:line-through}
   .modopt .mk{position:absolute;top:4px;inset-inline-end:6px;font-style:normal;font-size:.7em;color:var(--dim)}
+  /**
+   * ⭐ THE HOTKEY LANDED. A key press leaves no pointer behind, so the card says so itself for 700ms.
+   * ⚠️ NOT .hit — that class is the SEARCH RESULT ROW and carries a global display:grid, which would have
+   * re-laid this button out into three columns the instant a number was pressed.
+   */
+  .modopt.keyhit{outline:2px solid var(--ok);outline-offset:2px}
   /* ⚠️ AMBER MEANS 'not yet, and here is what is missing' — never a dead control (spec §3) */
   .dlgbtns button.pri.want{background:var(--warn-tint);border-color:var(--warn);color:var(--warn)}
   .modg .req{font-style:normal;color:var(--warn);font-weight:600;font-size:.85em}
@@ -9330,6 +9341,45 @@ async function modOpen(i, qty){
   var d = document.getElementById('moddlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
 }
+/**
+ * ⭐⭐ 1–9 PICKS THE OPTION WEARING THAT NUMBER (spec §5.6). One counter across the whole sheet, so a cashier
+ * reads the number off the card and never counts within a group.
+ * ⚠️ NOT WHILE SOMEBODY IS TYPING. A quantity box or a note field inside the sheet owns its own digits; a
+ * hotkey that steals them would make the field impossible to fill.
+ * ⚠️ AND A MODIFIER MEANS THE BROWSER'S SHORTCUT, NOT OURS — Ctrl+1 switches tabs and must keep doing so.
+ */
+function modKey(e){
+  /* ⚠️ THE SHEET MUST BE OPEN — this listens on the document, so without the gate 1–9 would fire against a
+     chooser that is not on screen at all. */
+  var d = document.getElementById('moddlg');
+  if (!d || !d.open) return;
+  if (!e || e.ctrlKey || e.metaKey || e.altKey) return;
+  var t = e.target && e.target.tagName;
+  /* ⚠️ NOT WHILE SOMEBODY IS TYPING — a quantity box or a note owns its own digits */
+  if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+  if (e.target && e.target.isContentEditable) return;
+  if (!/^[1-9]$/.test(e.key)) return;
+  var b = document.querySelector('#modbody [data-hk="' + e.key + '"]');
+  if (!b || b.disabled) return;
+  e.preventDefault();
+  var id = b.getAttribute('data-testid');
+  b.click();
+  /**
+   * ⭐ SAY IT LANDED, AT THE CARD. A key press leaves no pointer behind, so the only other feedback is a colour
+   * change somewhere the eye may not be.
+   * ⚠️⚠️ ON THE ELEMENT THE REPAINT PRODUCED. modToggle() ends in modPaint(), which replaces #modbody whole —
+   * decorating the button that was clicked decorates a detached node and shows nothing at all.
+   * ⚠️ AND THE FOCUS RING WENT WITH IT, so Tab would restart from the top of the sheet. Put it back.
+   */
+  var now = id && document.querySelector('#modbody [data-testid="' + id + '"]');
+  if (!now) return;
+  try { now.focus({ preventScroll: true }); } catch (_) {}
+  now.classList.add('keyhit');
+  setTimeout(function(){ try { now.classList.remove('keyhit'); } catch (_) {} }, 700);
+}
+/* ⚠️⚠️ ON THE DOCUMENT, NOT THE DIALOG. modPaint() replaces #modbody whole and focus falls out to <body>, so a
+   listener bound to the dialog hears nothing after the first press (caught by e2e/till-combo.cjs). */
+document.addEventListener('keydown', modKey);
 function modToggle(gi, oi){
   var g = MOD_FOR.groups[gi], o = g.options[oi];
   var chosen = MOD_PICK[g.name] || [];
@@ -9458,7 +9508,13 @@ function modPaint(){
       + '</div>'
     : '';
   var ttl = document.getElementById('modtitle');
-  if (ttl) ttl.textContent = (MOD_EDIT !== null) ? ('Change ' + (MOD_FOR.item ? MOD_FOR.item.name : 'the choices')) : 'Choose';
+  /**
+   * ⭐ THE SHEET IS HEADED BY THE PRODUCT, not by the verb. "Choose" was the last place still telling the
+   * cashier to do something the button already says — and the product's name is what they read back to the
+   * customer standing there.
+   */
+  var nm = (MOD_FOR && MOD_FOR.item && MOD_FOR.item.name) || 'the choices';
+  if (ttl) ttl.textContent = (MOD_EDIT !== null) ? ('Change ' + nm) : nm;
   /* ⚠️ the hotkey runs across the WHOLE sheet, 1–9, so a cashier never counts within a group (spec §5.6) */
   var hk = 0;
   box.innerHTML = head + MOD_FOR.groups.map(function(g, gi){
