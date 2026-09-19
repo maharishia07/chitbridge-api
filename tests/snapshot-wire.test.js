@@ -1648,4 +1648,88 @@ it('⭐ and the guard can see it when it is wrong', () => {
   assert.deepStrictEqual(look('.dlgbtns{display:flex}'), [], 'a class that merely STARTS with dlg is not a dialog');
 });
 
+/**
+ * ⚠️⚠️ A LITERAL COLOUR ON A THEMED BACKGROUND IS INVISIBLE IN ONE OF THE THEMES ([TILL-98], 2026-09-19).
+ *
+ * Athi: *"in the dark theme one chip is having white bg and white letter."* `--ink` is the theme's TEXT
+ * colour — near-black on light cream, near-WHITE on dark — so `background:var(--ink); color:#fff` is white
+ * on near-black in one theme and white on near-white in the other. Nine rules on the page paired it with
+ * var(--card) correctly; two used a literal. The eleventh will be written by somebody in a hurry.
+ */
+/**
+ * ⚠️ NO REGEX LITERALS IN THIS CHECK, ON PURPOSE. It was first written with them and every backslash was eaten
+ * on the way into the file, leaving patterns that could never match — the same hazard the `total:` guard above
+ * records. Splitting on braces says the same thing and cannot be damaged in transit.
+ */
+/**
+ * ⭐⭐ MEASURED, NOT GUESSED. The first cut flagged any literal on any themed background, and reported two rules
+ * that are perfectly fine: `--accent` is amber in BOTH themes, so near-black on it reads in both. The real rule
+ * is not "is the background a variable" — it is "does this pair fall below 4.5:1 in ANY theme the shop can
+ * choose". So it resolves the token per theme and measures. A heuristic would have had me weakening it.
+ */
+const SK = require(path.join(API, 'lib', 'screen-kit.js'));
+const THEMED = ['--ink', '--ok', '--warn', '--accent', '--edge', '--dim', '--paper', '--card', '--panel'];
+function lumOf(hex) {
+  /**
+   * ⚠️⚠️ THREE-DIGIT HEX TOO. This required six digits, so it returned null for `#fff` — the single most common
+   * literal on the page — and the guard silently passed every rule it was written to catch. A check that
+   * cannot parse its most likely input is a check that always agrees with you.
+   * [[feedback-whitelist-drops-silently]]
+   */
+  let h = String(hex).trim().replace('#', '');
+  if (/^[0-9a-f]{3}$/i.test(h)) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (!/^[0-9a-f]{6}$/i.test(h)) return null;
+  const v = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)));
+  return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+}
+function ratio(a, b) {
+  const x = lumOf(a), y = lumOf(b);
+  if (x === null || y === null) return null;
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+function litOnThemed(css) {
+  const out = [];
+  for (const chunk of css.split('}')) {
+    if (chunk.indexOf('{') < 0) continue;
+    const block = chunk.slice(chunk.indexOf('{') + 1);
+    const tok = THEMED.find((v) => block.indexOf('background:var(' + v + ')') >= 0
+      || block.indexOf('background-color:var(' + v + ')') >= 0);
+    if (!tok) continue;
+    const at = (';' + block).indexOf(';color:#');
+    if (at < 0) continue;
+    const lit = (';' + block).slice(at + 7).split(';')[0].split('}')[0].trim();
+    /* ⚠️ EVERY THEME A SHOP CAN CHOOSE, not only the one the page was written in */
+    for (const t of Object.keys(SK.THEMES)) {
+      const bg = (SK.THEMES[t].vars || {})[tok];
+      const r = bg ? ratio(bg, lit) : null;
+      if (r !== null && r < 4.5) {
+        out.push(chunk.slice(0, 54).replace(/\s+/g, ' ').trim() + '  [' + t + ' ' + r.toFixed(2) + ':1]');
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+it('⚠⚠ nothing puts a literal colour on a themed background', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️ comments stripped: the note explaining this bug quotes the bug */
+  const css = page.slice(page.indexOf('<style>'), page.indexOf('</style>'))
+    .split('/*').map((part, n) => (n === 0 ? part : part.slice(part.indexOf('*/') + 2))).join(' ');
+  assert.deepStrictEqual(litOnThemed(css), [],
+    'these pair a themed background with a literal text colour, so one theme cannot read them');
+});
+
+it('⭐ and that guard can see it when it is wrong', () => {
+  /* ⚠️ BREAK IT BEFORE TRUSTING IT — [[feedback-whitelist-drops-silently]] */
+  assert.strictEqual(litOnThemed('.a{background:var(--ink);color:#fff}').length, 1, 'white on --ink is invisible in the dark theme');
+  assert.strictEqual(litOnThemed('.a{background:var(--ink);color:var(--card)}').length, 0, 'the correct pairing must pass');
+  assert.strictEqual(litOnThemed('.a{background:#1D1B16;color:#fff}').length, 0, 'two literals agree with each other');
+  /* ⚠️ THIS ONE CORRECTED MY ASSUMPTION: --accent is a deep RED on the paper theme, not an amber, so
+     near-black on it is 3.18:1. The measurement was right and I was wrong. */
+  assert.strictEqual(litOnThemed('.a{background:var(--accent);color:#1D1B16}').length, 1, 'near-black fails on the paper theme red accent');
+  assert.strictEqual(litOnThemed('.a{background:var(--ok);color:#fff}').length, 1, 'white on --ok is 1.56:1 on navy');
+});
+
 console.log(pass + ' checks');

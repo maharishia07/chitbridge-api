@@ -71,7 +71,7 @@
     --panel:#F3EFE6;
     --ok:#16693F; --ok-tint:#E8F4ED; --warn:#8E3517; --warn-tint:#FBEAE3; --blue:#1b4f8a;
     --accent:#F2B544;
-    --on-accent:#ffffff;
+    --on-accent:#ffffff; --accent-ink:#1D1B16;
     --fs:16px; --pad:10px; --radius:12px;
   }
   /**
@@ -85,7 +85,7 @@
     --panel:#14171B;
     --ok:#4cc38a; --ok-tint:#173226; --warn:#f2a37a; --warn-tint:#3a2318; --blue:#7cb0e8;
     --accent:#F2A93B;
-    --on-accent:#0c1a14;
+    --on-accent:#0c1a14; --accent-ink:#1D1B16;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -246,7 +246,7 @@
   /* the Photos switch reads as a control, not a label — same height as the selects beside it */
   .qphotos{display:inline-flex;align-items:center;gap:6px;font-size:.82em;padding:6px 10px;border:1px solid var(--edge);border-radius:10px;background:var(--card);cursor:pointer;white-space:nowrap}
   .qphotos input{margin:0;cursor:pointer}
-  .qbadge .n{background:var(--accent);color:#1D1B16;border-radius:999px;min-width:18px;height:18px;
+  .qbadge .n{background:var(--accent);color:var(--accent-ink,#1D1B16);border-radius:999px;min-width:18px;height:18px;
           display:inline-grid;place-items:center;font-size:.82em;padding:0 5px}
   .qbar select,.qbar button{font:inherit;font-size:.82em;padding:6px 10px;border:1px solid var(--edge);
         border-radius:999px;background:var(--paper);cursor:pointer}
@@ -301,12 +301,66 @@
         height:100vh;height:100dvh;min-height:0}
   body.shape-tall .grip{display:none}
   /* ⭐ the keys FIRST and filling — 'see a good amount of product' is what this shape is for */
-  body.shape-tall .left{order:1;border-right:none;border-bottom:1px solid var(--line);min-height:0}
+  /* ⚠️⚠️ AND THE PANE CLIPS. min-height:0 lets a flex child shrink; it does not stop one OVERFLOWING, and
+     an overflowing child of a grid cell paints over the cell below it — which is what put quick keys on top
+     of the payment box. A pane that lets its children escape is a pane that will. */
+  body.shape-tall .left{order:1;border-right:none;border-bottom:1px solid var(--line);min-height:0;overflow:hidden}
   /**
    * ⚠️ THE BILL IS BOUNDED, NOT AUTO. Left to size itself a ten-line bill would eat the screen and the keys
    * would vanish upward — the same fault in the other direction. It takes at most 40% and scrolls inside.
    */
-  body.shape-tall .right{order:2;min-height:0;max-height:40dvh;overflow:auto}
+  /**
+   * ⚠️⚠️ A PIXEL FLOOR, NOT ONLY A PERCENTAGE ([TILL-96]). The bill's fixed parts — customer, totals and
+   * the pay block — come to ~374px before a single line, so 40% of a 1000px screen put Save & print below the
+   * bottom edge. min-height beats max-height, so the floor wins on a short screen and the keys give way:
+   * you can always finish a sale, you cannot always see every key.
+   * ⚠️ 60dvh caps the floor itself, or a very short screen would leave no keys at all.
+   */
+  /**
+   * ⚠️⚠️ SIZED BY ITS CONTENT, CAPPED SO IT CANNOT RUN AWAY ([TILL-96]). A percentage was the wrong kind
+   * of bound: the bill's fixed parts — customer, totals, the pay block — are a fixed number of pixels, so a
+   * fraction of a short screen kept hiding Save & print and I kept tuning the fraction. The grid row is
+   * already `auto`; the bill takes what it needs and the keys take the rest, which on a tall screen is
+   * plenty. The cap stops a forty-line bill eating the keys — the cart list inside it scrolls, as ever.
+   */
+  /**
+   * ⚠️ A CAP NEEDS A FLOOR. At 700px tall, 50dvh is 350 — less than the bill’s fixed parts (~374 plus the
+   * foot), so the pane overflowed and painted over the foot again. clamp() keeps the percentage where there
+   * is room and stops it going under what the pay block actually needs. Measured: 60 of 64 shapes were clean
+   * without this; the four that were not were all vertical on a short screen.
+   */
+  body.shape-tall .right{order:2;min-height:0;max-height:clamp(420px,50dvh,80dvh);overflow:auto}
+  /**
+   * ⚠️⚠️ WHAT MUST NOT SHRINK, MUST SAY SO. header, search and the chip row are `flex:0 1 auto` by
+   * default, so a short pane squeezed them instead of the list — the chip row measured EIGHT PIXELS and the
+   * shelf list zero. The list is the thing that should absorb a shortage; it is the only one that scrolls.
+   */
+  body.shape-tall .left>header,body.shape-tall .left>.search,body.shape-tall .left>.chips{flex:none}
+  /**
+   * ⚠️⚠️ AND NOTHING IN THE BILL PANE SHRINKS EITHER ([TILL-96]). A flex child that is squeezed while its
+   * CONTENT is not — .cart has a 120px floor, the pay block is a fixed 224px — overflows visibly and paints
+   * over whatever follows it. That is how the GST note came to be printed under "Clear · Esc". Let the pane
+   * scroll instead: the foot is then always after the pay row, wherever that is.
+   */
+  /* ── the bill pane's own shape, out of the markup and into the cascade ([TILL-96]) ───────────── */
+  .sellpane{display:flex;flex-direction:column;flex:1;min-height:0}
+  /**
+   * ⚠️⚠️ AND NOTHING IN THE BILL PANE SHRINKS ON A TALL SCREEN. A flex child squeezed while its CONTENT is
+   * not — .cart has a 120px floor, the pay block is a fixed 224px — overflows visibly and paints over
+   * whatever follows it. That is how the GST note came to be printed under "Clear · Esc". The pane scrolls
+   * instead, so the foot is always after the pay row wherever that is.
+   */
+  body.shape-tall .right>*{flex:0 0 auto}
+  /* ⭐ the pane itself still takes the room it is given — it is the CHILDREN that must not be squeezed */
+  body.shape-tall .sellpane{flex:1 1 auto;min-height:0}
+  body.shape-tall .sellpane>*{flex:0 0 auto}
+  /**
+   * ⭐⭐ AND THE LIST OF LINES ABSORBS THE WHOLE SHORTAGE. It is the only part of a bill that can honestly
+   * give way — it scrolls, and a line pushed out of view is still reachable. The customer box, the totals
+   * and the pay block cannot: a pay button you have to scroll to find is the fault Athi reported twice.
+   * ⚠️ The 120px floor is right on a wide screen and wrong here, where this is the only thing that yields.
+   */
+  body.shape-tall .cart{flex:1 1 auto;min-height:0}
   /* ⚠️ and the shelf stops carrying a viewport-height cap: it is a flex child of a box that already fits */
   body.shape-tall .hits{max-height:none}
   /* ── the phone keeps what it had: it sells in three steps, where the bill is its own screen ──────── */
@@ -666,7 +720,7 @@
   .obar input{width:86px;min-height:36px;padding:6px 10px;border:1px solid var(--edge);border-radius:10px;
               background:var(--card);color:var(--ink);font:inherit}
   .obar .kot{margin-inline-start:auto;border-color:var(--ink);color:var(--ink);font-weight:700}
-  .obar .kot b{background:var(--accent);color:#1D1B16;border-radius:999px;padding:0 6px;margin-inline-start:4px}
+  .obar .kot b{background:var(--accent);color:var(--accent-ink,#1D1B16);border-radius:999px;padding:0 6px;margin-inline-start:4px}
   .ckot{display:inline-block;margin-top:1px;font-size:.72em;font-weight:700;color:var(--dim);
         border:1px solid var(--line);border-radius:6px;padding:0 5px}
   /* an age-restricted line, marked where the cashier and anyone reading the bill will see it */
@@ -964,7 +1018,8 @@
   .dracts{margin-inline-start:auto;display:flex;gap:8px}
   .dracts button{min-height:40px;padding:0 18px;border:1px solid var(--edge);border-radius:10px;
                  background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
-  .dracts button:first-child{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+  /* ⚠️ same pairing, same fix ([TILL-98]) — white on --ink is white on white in the dark theme */
+  .dracts button:first-child{background:var(--ink);border-color:var(--ink);color:var(--card);font-weight:700}
   .drbody{padding:16px 20px 40px;max-width:1100px}
   .drnone{padding:28px 20px;color:var(--dim)}
   .drsec{margin:0 0 22px}
@@ -1026,7 +1081,9 @@
   /* ⭐ arranging the keys by hand */
   .qarr{display:inline-flex;align-items:center;padding:3px 11px;min-height:32px;cursor:pointer;
         border:1px solid var(--edge);border-radius:999px;background:var(--paper);color:var(--dim);font:inherit;font-size:.85em}
-  .qarr.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+  /* ⚠️⚠️ color:var(--card), NOT #fff ([TILL-98]). --ink is the theme's TEXT colour — near-black on light
+     cream, near-WHITE on dark — so a literal white here was invisible in the dark theme. */
+  .qarr.on{background:var(--ink);border-color:var(--ink);color:var(--card);font-weight:700}
   .qarrnote{grid-column:1/-1;font-size:.82em;color:var(--ink);background:var(--accent);
             border-radius:10px;padding:6px 10px}
   .quick.arranging button{cursor:grab}
@@ -1036,24 +1093,24 @@
   /* ⭐ the cart chip — the count and the money always, the pictures on request */
   .qcart{display:inline-flex;gap:6px;align-items:center;padding:3px 10px;min-height:32px;cursor:pointer;
          border:1px solid var(--ok);border-radius:999px;background:var(--ok-tint);color:var(--ok);font:inherit;font-size:.85em}
-  .qcart b{background:var(--ok);color:#fff;border-radius:999px;padding:0 7px}
+  .qcart b{background:var(--ok);color:var(--on-accent);border-radius:999px;padding:0 7px}
   .qcart .qcartm{font-weight:700}
   .qcart .qcarti{font-size:1.05em;line-height:1}
   .qcart .qcartc{opacity:.7}
-  .qcart.on{background:var(--ok);color:#fff}
+  .qcart.on{background:var(--ok);color:var(--on-accent)}
   .qcart.on b{background:#fff;color:var(--ok)}
   /* ⭐ the bill as pictures — the same cells as the strip, wrapped instead of scrolled */
   .ibgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:12px;padding:10px 12px}
   /* which face the bill is wearing — two words, beside the count that says what is on it */
   .bvtog{display:inline-flex;gap:0;margin-inline-start:auto;border:1px solid var(--edge);border-radius:999px;overflow:hidden}
   .bvtog button{padding:3px 11px;border:0;background:var(--paper);color:var(--dim);font:inherit;font-size:.82em;cursor:pointer;min-height:30px}
-  .bvtog button.on{background:var(--ok);color:#fff;font-weight:700}
+  .bvtog button.on{background:var(--ok);color:var(--on-accent);font-weight:700}
   .carthead{display:flex;align-items:center;gap:8px}
   /* ⭐ what has been chosen, in pictures, right where the quantity gets adjusted */
   .ibstrip{grid-column:1/-1;border:1px solid var(--ok);background:var(--ok-tint);border-radius:12px;padding:8px 10px}
   .ibhead{font-size:.75em;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ok);
           margin:0 0 6px;display:flex;gap:6px;align-items:center}
-  .ibhead span{background:var(--ok);color:#fff;border-radius:999px;padding:0 7px;font-size:.95em}
+  .ibhead span{background:var(--ok);color:var(--on-accent);border-radius:999px;padding:0 7px;font-size:.95em}
   /* ⚠️ ONE ROW THAT SCROLLS SIDEWAYS, never a wrapping block — the strip must not grow and push the keys off screen */
   .ibrow{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
   .ibcell{flex:0 0 auto;width:132px;background:var(--card);border:1px solid var(--line);border-radius:10px;
@@ -1086,7 +1143,13 @@
   /* ⚠️ THE KIOSK NO LONGER FORCES A PHOTO HEIGHT. --sk-ph:150px inside a shorter tile clipped every name and
      price away (see .sk-ph-big); a self-service screen gets WIDER columns instead, and the ratio does the rest. */
   /* ⚠️ same — a tall kiosk gets 200px from Automatic, and a shopkeeper can now say otherwise ([TILL-93]) */
-  body[data-sklayout="vertical"] .quick{max-height:none;gap:18px}
+  /**
+   * ⚠️⚠️ A CEILING, NOT `none` ([TILL-96]). This read `max-height:none`, and on a `flex:none` box that is
+   * not "scroll when full" — it is "grow for ever". Forty-five keys grew past the pane and were painted over
+   * the cart and the payment box. --keysh is the lever Room already writes, so a kiosk that wants more keys
+   * turns Room up; 58vh by default because a tall screen has the height to spend.
+   */
+  body[data-sklayout="vertical"] .quick{max-height:var(--keysh,58vh);min-height:0;overflow-y:auto;gap:18px}
   body[data-sklayout="vertical"] .quick .sk-name{font-size:1.1em}
   .quick > button:not(.sk-tile){padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);
          cursor:pointer;text-align:left;min-height:92px;display:flex;flex-direction:column;gap:4px}
@@ -1509,7 +1572,7 @@
   #stcanvas .m-pays{display:flex;gap:7px}
   #stcanvas .m-pays i{flex:1;text-align:center;font-style:normal;border:1px solid var(--edge);border-radius:8px;
                       padding:8px 0;font-size:.82em;font-weight:700;color:var(--ok)}
-  #stcanvas .m-save{background:var(--ok);color:#fff;border-radius:9px;text-align:center;padding:11px 0;font-weight:800}
+  #stcanvas .m-save{background:var(--ok);color:var(--on-accent);border-radius:9px;text-align:center;padding:11px 0;font-weight:800}
   #stcanvas .m-sync{color:var(--dim);font-size:.74em;text-align:center}
   /* ⭐ THE PICKER, MADE VISIBLE — the whole reason four settings were invisible before. Each one draws where
      it actually appears: a rail down the side, a strip across the top, a sheet at the bottom, a card floating. */
@@ -1558,7 +1621,7 @@
           box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:.9em}
   .trybar .tt{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;opacity:.85}
   .trybar button{border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;min-height:40px}
-  .trybar .keep{background:var(--ok);color:#fff}
+  .trybar .keep{background:var(--ok);color:var(--on-accent)}
   .trybar .back{background:rgba(255,255,255,.18);color:var(--card)}
   /* ── the desk: two columns once there is room for both ──────────────────────────────── */
   @media (min-width:1000px){
@@ -2278,7 +2341,10 @@
       <div class="lines" id="cardbox"></div>
       <div class="bar"><span id="pricenote">Nothing changed yet today.</span></div>
     </div>
-   <div id="pane_sell" style="display:flex;flex-direction:column;flex:1;min-height:0">
+   <!-- ⚠️ THE STYLE MOVED TO .sellpane ([TILL-96]). Inline, it beat every stylesheet rule, so the tall
+     layout could not stop this pane being squeezed while its content was not — and the overflow was
+     painted over the GST note at the bottom of the screen. -->
+   <div id="pane_sell" class="sellpane">
     <div class="cust">
       <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist" oninput="rwTyped()">
       <!-- ⭐ A NAME IS HARDER TO TYPE THAN A NUMBER, NOT EASIER. Athi, 2026-09-09: *"customer name can listen."* The phone box had
@@ -8074,7 +8140,17 @@ function stepsWanted(){
    * ⚠️ 'vertical' is the layout the kiosk preset carries (screen-kit PRESETS.kiosk), and the CSS keys the big
    * photos off the same attribute — one choice, one behaviour. [[feedback-stay-in-the-construct]]
    */
-  try { var L = screenCfg().layout; if (L === 'phone' || L === 'handheld' || L === 'vertical') return true; } catch (_) {}
+  /**
+   * ⚠️⚠️ 'vertical' IS NO LONGER HERE ([TILL-97]). Athi: *"vertical may have to go in one step."* A tall
+   * COUNTER has the height to show the keys, the shelf and the bill at once, which is the reason to turn a
+   * monitor upright — stepping through them throws that away. It also removes a contradiction: since
+   * [TILL-81] the shape follows the layout, so the `shape && shape !== auto` line above already returned
+   * false for a stored vertical, and this line only won when no shape had been stored. One question, two
+   * answers, decided by which path last wrote a setting.
+   * ⚠️ THE SELF-SERVICE KIOSK still wants steps — that is a different INTENT, not a different layout, and a
+   * layout cannot carry two. It needs its own switch: see C:devBACKLOG.md.
+   */
+  try { var L = screenCfg().layout; if (L === 'phone' || L === 'handheld') return true; } catch (_) {}
   return (window.innerWidth || 1024) < 600;
 }
 function stepsApply(){
