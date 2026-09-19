@@ -330,6 +330,47 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
 });
 
 /**
+ * ⭐⭐⭐ CHANGING THE CHOICES ON A LINE ALREADY ON THE BILL ([TILL-70]). Athi: *"once you added, you do not
+ * have a way of edit the choice, you have to remove and then add it back."*
+ */
+it('⭐⭐⭐ the choices on a bill line can be changed, and the money follows them', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function modEdit(') > 0,
+    'the choices on a bill line cannot be changed once it is added');
+  /* ⭐ THE SAME CHOOSER, SEEDED — not a second dialog with its own idea of required groups and maximums */
+  const ed = page.slice(page.indexOf('function modEdit('), page.indexOf('function modToggle('));
+  assert.ok(ed.indexOf('modPaint()') > 0 && ed.indexOf('moddlg') > 0,
+    'editing opens something other than the chooser that already exists');
+  assert.ok(ed.indexOf('MOD_PICK[m.group]') > 0,
+    'the chooser is not seeded from the choices already on the line');
+  /**
+   * ⚠️⚠️⚠️ THE MONEY MUST FOLLOW THE CHOICES. addItem() bakes the modifier cost onto the line on purpose, so
+   * an edit that moves the words and not the price leaves a row reading "Paneer +20" over a line billing the
+   * plain price — a number a shopkeeper cannot defend. This shipped broken once and the harness caught it by
+   * asserting the TOTAL rather than the label.
+   */
+  const now = page.slice(page.indexOf('function modAddNow('), page.indexOf('function modClose('));
+  assert.ok(now.indexOf('c.price = r2((Number(base.price)') > 0,
+    'an edited line keeps its old price — the choices would change and the bill would not');
+  /* ⚠️ re-keyed, and merged when the new key is one another line already has */
+  assert.ok(now.indexOf('lineKey(c.item_id') > 0,
+    'an edited line is not re-keyed, so two lines can hold one key');
+  assert.ok(now.indexOf('CART.splice(k, 1)') > 0,
+    'two lines with the same choices are left as two rows — a kitchen would make it twice');
+  /* ⚠️ cancel keeps the line exactly as it was */
+  const cl = page.slice(page.indexOf('function modClose('), page.indexOf('function modClose(') + 400);
+  assert.ok(cl.indexOf('MOD_EDIT = null') > 0, 'closing the dialog leaves an edit half-applied');
+  /* ⚠️⚠️ ONE WRITER FOR THE BUTTON LABEL. Two of them meant the dialog said "Change Masala Dosa" over a
+     button reading "Add": the later writer wins and neither knows about the other. */
+  const paint = page.slice(page.indexOf('function modPaint('), page.indexOf('function modAddNow('));
+  assert.strictEqual(paint.split('add.textContent').length - 1, 1,
+    'the mod button label has more than one writer');
+  assert.ok(paint.indexOf('okb.textContent') < 0, 'a second writer for the mod button label is back');
+  assert.ok(paint.indexOf("MOD_EDIT !== null) ? 'Update'") > 0,
+    'the button does not say which job it is doing');
+});
+
+/**
  * ⭐⭐⭐ PAY IS A CARD THAT COMES TO YOU ([TILL-59], png/FullTabletPay.png) — the answer to Athi's *"the pay
  * panel is at very bottom, so i was searching where it is"*, which I first answered by talking him out of it.
  */

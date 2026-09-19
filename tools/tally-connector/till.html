@@ -499,7 +499,14 @@
   .todox{border:0;background:transparent;color:var(--dim);cursor:pointer;font:inherit;padding:4px 6px;border-radius:8px}
   .todox:hover{background:var(--warn-tint);color:var(--warn)}
   /* the choices, under the name on the bill — quiet, because the dish is what is being read */
-  .cmods{display:block;color:var(--dim);font-size:.8em;margin-top:1px}
+  /* ⭐ the choices, under the name on the bill — quiet, because the dish is what is being read, but it is a
+     CONTROL now: tapping it reopens the chooser ([TILL-70]) */
+  .cmods{display:inline-flex;align-items:center;gap:6px;color:var(--dim);font-size:.8em;margin-top:1px;
+         border:1px dashed var(--line);border-radius:8px;padding:1px 8px;background:transparent;
+         font-family:inherit;cursor:pointer;text-align:start}
+  .cmods:hover{border-color:var(--ok);color:var(--ok)}
+  .cmods .cmodedit{font-style:normal;font-weight:700;opacity:.8}
+  .cmods.none{color:var(--warn);border-color:var(--warn)}
   /* the chooser */
   .modg{padding:6px 0;border-bottom:1px solid var(--line)}
   .modg:last-child{border-bottom:0}
@@ -8638,6 +8645,12 @@ function comboWords(i){
   if (!c) return '';
   return c.under ? ('Combo · ' + money(c.under) + ' under separately') : 'Combo';
 }
+/** ⭐ does this CART LINE's product have choices to make? — so a line with none chosen can still offer them */
+function cartHasMods(c){
+  if (!c) return false;
+  var i = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
+  return !!(i && modsOf(i).length);
+}
 function modsOf(i){
   var m = (i && (i.modifiers || (i.item_data && i.item_data.modifiers))) || null;
   return Array.isArray(m) ? m.filter(function(g){ return g && g.name && Array.isArray(g.options) && g.options.length; }) : [];
@@ -8711,6 +8724,32 @@ function ageRecord(){
   return out.length ? out : null;
 }
 var MOD_FOR = null, MOD_PICK = null;
+/** ⭐ which cart line is being edited, or null when the dialog is adding something new ([TILL-70]) */
+var MOD_EDIT = null;
+/**
+ * ⭐⭐ CHANGE THE CHOICES ON A LINE ALREADY ON THE BILL. Athi: *"once you added, you do not have a way of edit
+ * the choice, you have to remove and then add it back."*
+ * ⚠️ NO AGE GATE HERE. modOpen() asks ageAllow() because that is the moment the thing joins the bill; this
+ * line was already allowed on, and asking again would make changing 'mild' to 'hot' a second ID check.
+ */
+function modEdit(k){
+  var c = CART[k]; if (!c) return;
+  var i = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
+  var groups = i ? modsOf(i) : [];
+  if (!groups.length) { toastLine('There is nothing to choose on ' + c.name + '.'); return; }
+  MOD_FOR = { item: i, qty: c.qty, groups: groups };
+  MOD_EDIT = k;
+  /* ⭐ SEEDED FROM THE LINE'S OWN CHOICES — each stored mod carries its group, so this is a regrouping, not a
+     guess. An unknown group (the shop changed its menu since the line was added) is simply dropped. */
+  MOD_PICK = {};
+  groups.forEach(function(g){ MOD_PICK[g.name] = []; });
+  (Array.isArray(c.mods) ? c.mods : []).forEach(function(m){
+    if (m && MOD_PICK[m.group]) MOD_PICK[m.group].push({ group: m.group, option: m.option, price: Number(m.price) || 0 });
+  });
+  modPaint();
+  var d = document.getElementById('moddlg');
+  if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+}
 async function modOpen(i, qty){
   /* ⚠️ THE GATE IS HERE because this is the one funnel both the keys and the search box now come through */
   if (MODE === 'sell' && !(await ageAllow(i))) { focusSearch(); return; }
@@ -8755,6 +8794,8 @@ function modPaint(){
     ? '<div class="combohead" data-testid="till-combo">' + esc(cb.parts.join(' + '))
       + (cb.under ? '<b>' + money(cb.under) + ' under separately</b>' : '') + '</div>'
     : '';
+  var ttl = document.getElementById('modtitle');
+  if (ttl) ttl.textContent = (MOD_EDIT !== null) ? ('Change ' + (MOD_FOR.item ? MOD_FOR.item.name : 'the choices')) : 'Choose';
   box.innerHTML = head + MOD_FOR.groups.map(function(g, gi){
     var chosen = (MOD_PICK[g.name] || []).map(function(x){ return x.option; });
     var max = Number(g.max) || 1;
@@ -8772,12 +8813,53 @@ function modPaint(){
   var add = document.getElementById('modadd');
   if (add) {
     add.disabled = miss.length > 0;
+    /* ⭐ THE VERB SAYS WHICH JOB IT IS DOING — "Add" puts a new line on the bill, "Update" changes one already
+       on it, and a cashier must never have to guess which. ONE writer for this label: setting it anywhere else
+       in this function is overwritten here. [[feedback-no-duplicate-functions]] */
+    var verb = (MOD_EDIT !== null) ? 'Update' : 'Add';
     add.textContent = miss.length ? ('Choose ' + miss.join(' and '))
-      : ('Add' + (modAdd(modChosen()) ? ' · ' + money(r2((Number(i.price) || 0) + modAdd(modChosen()))) : ''));
+      : (verb + (modAdd(modChosen()) ? ' · ' + money(r2((Number(i.price) || 0) + modAdd(modChosen()))) : ''));
   }
 }
 function modAddNow(){
   if (!MOD_FOR || modMissing().length) return;
+  /**
+   * ⭐⭐ EDITING RE-KEYS THE LINE ([TILL-70]). The key IS the choices (lineKey = item_id|signature), so changing
+   * them changes which line this is.
+   * ⚠️⚠️ AND IF THE NEW KEY IS ONE ANOTHER LINE ALREADY HAS, THEY MERGE — two dosas, one edited to match the
+   * other, is two of that dosa, not two identical rows. Two identical rows is how a kitchen makes two of
+   * something ordered once.
+   */
+  if (MOD_EDIT !== null) {
+    var k = MOD_EDIT, c = CART[k];
+    var chosenNow = modChosen();
+    modClose();
+    if (!c) { price(); focusSearch(); return; }
+    var key = lineKey(c.item_id, chosenNow);
+    var twin = null;
+    for (var t = 0; t < CART.length; t++) {
+      if (t !== k && (CART[t].key || CART[t].item_id) === key) { twin = t; break; }
+    }
+    if (twin !== null) {
+      CART[twin].qty = r2((Number(CART[twin].qty) || 0) + (Number(c.qty) || 0));
+      CART.splice(k, 1);
+      /* ⚠️ the selection follows the line that survived, or it points at whatever slid into the gap */
+      CARTSEL = (twin > k) ? twin - 1 : twin;
+      toastLine('Same choices as another line — they are one line of ' + CART[CARTSEL].qty + ' now.');
+    } else {
+      c.mods = chosenNow.length ? chosenNow : null;
+      c.key = key;
+      /**
+       * ⚠️⚠️⚠️ AND THE PRICE. addItem() bakes the modifier cost onto the line on purpose — a bill is what was
+       * true when it was made — so an edit that moves the choices and not the money leaves the row saying
+       * "Hot · Paneer +₹20" over a line still charging the plain price. Same figure, same call as addItem.
+       */
+      var base = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
+      if (base) c.price = r2((Number(base.price) || 0) + modAdd(chosenNow));
+    }
+    price(); focusSearch();
+    return;
+  }
   /* ⚠️⚠️ READ THE ANSWER BEFORE CLOSING. modClose() nulls MOD_FOR and MOD_PICK, and modChosen() reads BOTH —
      so closing first meant every order was added with no choices at all, and three differently-ordered dosas
      merged into one line of three. Caught by testing the money rather than the dialog (2026-09-18). */
@@ -8789,7 +8871,8 @@ function modAddNow(){
 function modClose(){
   var d = document.getElementById('moddlg');
   if (d && d.open) { try { d.close(); } catch (_) {} }
-  MOD_FOR = null; MOD_PICK = null;
+  /* ⚠️ CANCEL KEEPS THE LINE EXACTLY AS IT WAS. Backing out of an edit must never be a way to lose a line. */
+  MOD_FOR = null; MOD_PICK = null; MOD_EDIT = null;
 }
 /**
  * ⭐ A WEIGHED LINE. Each sticker is its own line — two bags of tomatoes are two weighings and two labels, and
@@ -9695,7 +9778,21 @@ function cartRowHTML(c, k){
     /* ⚠️ THE NAME IS THE HANDLE, not the whole row: the quantity box, ± and × are all inside it and must keep
        doing their own jobs. Tapping the name is the one gesture that had no meaning here. */
     + '<span onclick="pickLine(' + k + ')" style="cursor:pointer"><span class="nm">' + esc(c.name) + '</span>'
-    + (c.mods ? '<span class="cmods" data-testid="till-mods-' + k + '">' + esc(modWords(c.mods)) + '</span>' : '')
+    /**
+     * ⭐⭐ THE CHOICES ARE THE WAY BACK TO THE CHOOSER ([TILL-70]). They were printed and dead; tapping them now
+     * reopens the same dialog, seeded. The button is OUTSIDE the name's span because that span is pickLine's
+     * — one gesture, one meaning. [[feedback-probe-through-the-gate]]
+     * ⚠️ IT SHOWS EVEN WITH NOTHING CHOSEN, when the product HAS choices to make: a dosa added by barcode with
+     * no spice picked still needs a way to pick one.
+     */
+    + ((c.mods && c.mods.length)
+        ? '<button class="cmods" data-testid="till-mods-' + k + '" title="change the choices"'
+          + ' onclick="event.stopPropagation();modEdit(' + k + ')">' + esc(modWords(c.mods))
+          + '<i class="cmodedit">Change</i></button>'
+        : (cartHasMods(c)
+            ? '<button class="cmods none" data-testid="till-mods-' + k + '" title="choose"'
+              + ' onclick="event.stopPropagation();modEdit(' + k + ')">Choose\u2026</button>'
+            : ''))
     /* ⭐ so a cashier can see at a glance what the kitchen already has */
     + (c.kot ? '<span class="ckot" data-testid="till-kot-' + k + '">KOT ' + c.kot + '</span>' : '')
     /* ⭐ and that this line was one that needed checking — visible on a bill somebody may be asked about */
