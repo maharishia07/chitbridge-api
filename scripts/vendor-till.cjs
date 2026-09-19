@@ -106,6 +106,11 @@ const wrapForBrowser = (file, global, deps) => {
 
 const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
+  /* ⭐⭐ THE ROLLUP RULE GOES INTO THE KIT, because the program on the shop PC requires it directly — the day,
+     week and month summaries are computed with the line down. Unlike the engines below it is not fetched at
+     runtime: till.js needs it at `require` time, before it has ever spoken to a server. The vendor guard holds
+     this copy byte-equal to lib/rollup.js, which is the point — one rule for the counter and the server. */
+  [path.join(API, 'lib', 'rollup.js'), path.join(API, 'tools', 'tally-connector', 'rollup.js'), 'copy'],
   /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
      snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
   [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],

@@ -155,6 +155,10 @@ it('⭐⭐ every route in routes/till.js is reachable by a till key, or is a nam
   const SHUT = {
     'POST /api/till/pair': 'a key may not mint a key — pairing is gated on !req.api_key inside the route itself',
     'POST /api/till/pair/claim': 'the device claiming a code has no key yet, so it carries no scope at all',
+    /* ⚠️⚠️ CLOSED ON PURPOSE, AND IT IS THE WHOLE POINT OF THE ROUTE ([TILL-121]). /enrol is how a counter turns a
+       person's sign-in into a till key. A till key reaching it would let any counter mint itself more counters —
+       the same escalation /pair is gated against, which is why the route tests !req.api_key itself. */
+    'POST /api/till/enrol': 'a key may not mint a key — enrolling is gated on !req.api_key inside the route itself',
     /* ⚠️ found BY this guard on the day it was written: built for the three-way match and wired to no caller. Left closed
        on purpose — a key should not reach a route nothing calls. Open it in KEY_ROUTES when something actually asks. */
     'GET /api/till/match': 'built, not yet called by anything — the key stays narrow until it is',

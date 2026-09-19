@@ -442,9 +442,17 @@ async function kitUpdate({ cb, dir, log, live, staged }) {
   return out;
 }
 
-function loadConfig(file) {
+/**
+ * ⚠️⚠️ `opts.keyless` EXISTS FOR THE COUNTER ALONE ([TILL-121]). Without it this threw on a PC that had never
+ * been paired — so till.js died before its HTTP server existed, and the sign-in screen that server is supposed
+ * to offer could never be reached. The only way to get a key was to already have one.
+ * ⚠️ THE CONNECTOR STILL REFUSES. index.js syncs in the background with nobody watching: it has no way to ask
+ * for a key and nothing to show, so for it a keyless config remains a hard stop. A counter has a screen.
+ */
+function loadConfig(file, opts) {
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!cfg.api || !cfg.key) throw new Error('config needs api and key (mint one under Settings › Integrations, scope connector)');
+  if (!cfg.api) throw new Error('config needs api');
+  if (!cfg.key && !(opts && opts.keyless)) throw new Error('config needs api and key (mint one under Settings › Integrations, scope connector)');
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }

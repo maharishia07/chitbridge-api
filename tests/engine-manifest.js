@@ -349,6 +349,11 @@ const ENGINE_OTHER = [
      product into a catalogue. catalogue-write is CB's own sequence of decisions (declare → validate → stamp
      → insert → meter), extracted from routes/products.js when the counter became a second caller. */
   'catalogue-blueprint.js', 'catalogue-write.js',
+  /* ⭐⭐ [TILL-122] — the day/week/month rollup. CB's own rule about what a return does to a day's figures,
+     extracted for the same reason catalogue-write was: the counter became a second caller. Athi: *"this can be
+     kept in local and also in server."* It is vendored byte-equal into the kit, so the shop PC folds its own
+     months with the line down and the server will fold the same way. */
+  'rollup.js',
   /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
      CITES a category by id, and `category` is the legacy key nothing may write again. */
   'categories.js',

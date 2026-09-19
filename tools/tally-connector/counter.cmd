@@ -33,12 +33,18 @@ if not exist "%~dp0till.js" (
   exit /b 1
 )
 
-rem The config carries the key. Without one the counter still opens and says what
-rem it needs - a counter that will not open cannot tell anybody why.
+rem THE COUNTER OPENS EVEN ON A PC NOBODY HAS SET UP (TILL-121). It used to stop
+rem here and send the person to start.cmd, which is the CONNECTOR - a different
+rem program, that asks for a key on a command line. But the counter now has a
+rem sign-in screen of its own: open it, type the email you use for ChitBridge,
+rem type the code, and it writes its own key. So all that is needed to get that
+rem far is a config naming the server, and we can write that ourselves.
+rem
+rem A counter that will not open cannot tell anybody why.
 if not exist connector.json (
-  echo No connector.json yet. Double-click start.cmd once to set the key up, then come back here.
-  pause
-  exit /b 1
+  echo First run on this PC - creating connector.json so the counter can open.
+  echo {"api":"https://chitbridge-api-production.up.railway.app"}> connector.json
+  echo Done. The counter will ask you to sign in.
 )
 
 rem ALREADY UP? Then this is not a failure - open it. The scheduled task fires

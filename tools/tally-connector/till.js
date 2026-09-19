@@ -60,17 +60,90 @@ const http = require('http');
 })();
 
 const core = require('./core');
-const printer = require('./printer');   /* the slip, on paper — raw ESC/POS through the Windows spooler */
+const printer = require('./printer');
+/**
+ * ⭐⭐ ONE ROLLUP RULE FOR THE COUNTER AND THE SERVER ([TILL-122]). Byte-equal to lib/rollup.js, held so by
+ * scripts/vendor-till.cjs — Athi: *"this can be kept in local and also in server."* Requiring it means the
+ * day's figures are computed with the line down, which is when a shop closes its till.
+ */
+const rollup = require('./rollup');   /* the slip, on paper — raw ESC/POS through the Windows spooler */
 
 const argv = process.argv.slice(2);
 const flag = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? (argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true) : d; };
 const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + '] ' + m);
 
 const cfgFile = path.resolve(flag('config', 'connector.json'));
-const cfg = core.loadConfig(cfgFile);
+/**
+ * ⚠️⚠️⚠️ KEYLESS, BECAUSE A COUNTER WITH NO KEY MUST STILL OPEN ([TILL-121]). This threw until
+ * 2026-09-19: an unpaired PC could not start the counter at all, so the sign-in screen the counter serves was
+ * unreachable and the only way to get a key was to already have one. A program that cannot start cannot tell
+ * anybody why — the same argument counter.cmd makes about opening the page before the key is checked.
+ */
+const cfg = core.loadConfig(cfgFile, { keyless: true });
 const tillCfg = Object.assign({ port: 7071, id: 'C1', name: 'Counter 1', refreshMinutes: 15, drainSeconds: 20 }, cfg.till || {});
 const PORT = Number(flag('port', tillCfg.port)) || 7071;
-const DIR = path.join(path.dirname(cfgFile), 'till-data');
+/**
+ * ── ⭐⭐⭐ ONE FOLDER PER SHOP ([TILL-120]) ──────────────────────────────────────────────────────────────
+ *
+ * Athi: *"for each shop there can be a folder in the name of entity id or bridge id, in that way we can
+ * distinguish, this cannot be mixed?"*
+ *
+ * ⚠️⚠️ THEY COULD BE MIXED. This was ONE `till-data/` beside connector.json, for whatever key was in it.
+ * Re-point the kit at a second shop and that shop opened the FIRST one's snapshot, bill series and day's
+ * bills — and its unsent queue, which would then have been posted under the new shop's key. The browser half
+ * has been namespaced by key since [ISO-01]; the desktop half, which is the one holding the money, was not.
+ *
+ * ⭐ THE NAME COMES OFF THE KEY, NOT OFF THE NETWORK. A minted key is a JWT and routes/keys.js:88 puts
+ * `bridge_id` in its payload, so the folder can be named at boot, offline, before a single call — which is
+ * the only timing that works on a counter that may not see the internet for a day.
+ * ⚠️ READING IS NOT TRUSTING. The payload is read as a LABEL to pick a folder by. Nothing is authorised on
+ * the strength of it; the server verifies the signature on every call, as it always did.
+ */
+/**
+ * ⭐ ONE READER FOR WHAT THE KEY SAYS ABOUT ITSELF. The folder name and the shop the page displays come from
+ * the same parse, so they can never disagree — and both work with the line down.
+ * ⚠️ READING IS NOT TRUSTING: this is a LABEL. Nothing is authorised on it; the server checks the signature
+ * on every call, as it always did.
+ */
+function keyShop(key) {
+  if (!key) return null;
+  try {
+    const mid = String(key).split('.')[1];
+    const pay = JSON.parse(Buffer.from(mid.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+    return { bridge_id: pay.bridge_id || null, entity_id: pay.identity_id || null,
+             name: pay.display_name || null, scopes: Array.isArray(pay.scopes) ? pay.scopes : [],
+             expires_at: pay.exp ? new Date(pay.exp * 1000).toISOString() : null };
+  } catch (_) { return null; }
+}
+function shopFolder(key) {
+  if (!key) return '_unpaired';   /* a counter with no key still boots, and still has somewhere to write */
+  {
+    const pay = keyShop(key);
+    const id = pay && (pay.bridge_id || pay.entity_id);
+    /* ⚠️ A FOLDER NAME IS NOT FREE TEXT. Whatever the payload says, only these characters reach the disk. */
+    const safe = String(id || '').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 64);
+    if (safe) return safe;
+  }   /* not a JWT, or not ours — fall through to the hash, which still separates shops */
+  /* ⚠️ STILL SEPARATE, JUST NOT READABLE. djb2 of the key, same shape the page uses — a name, never a secret. */
+  let h = 5381;
+  for (let i = 0; i < String(key).length; i++) h = (((h * 33) ^ String(key).charCodeAt(i)) >>> 0);
+  return 'key-' + h.toString(36);
+}
+/**
+ * ⭐⭐⭐ WHICH SERVER, AS PART OF THE ADDRESS ([TILL-120]). Athi: *"each should sit separately in the system
+ * irrespective of the sandbox environment — you may be doing in the test, i would have created shop in live."*
+ * ⚠️⚠️ THE SHOP ID ALONE IS NOT ENOUGH: the same shop tried on test and then created on live carries the
+ * same name, and a test bill in the live day's takings — or a live bill posted into a sandbox that discards it
+ * — is silent either way. Two servers are two worlds. The host is the one thing that always tells them apart.
+ */
+function serverFolder(api) {
+  let h = String(api || 'no-server');
+  try { h = new URL(h).host; } catch (_) { /* not a URL — use it as written, sanitised below */ }
+  const safe = h.replace(/[^A-Za-z0-9._-]/g, '-').replace(/^-+|-+$/g, '').slice(0, 64);
+  return safe || 'no-server';
+}
+const SHOP_DIR = path.join(serverFolder(cfg.api), shopFolder(cfg.key));
+const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /**
  * ⭐ EVERY ENGINE THE COUNTER PAGE LOADS, in its order (till.html <script src="/engine/…">). The program fetches each from
  * GET /api/till/engine/:name and serves it at /engine/<name>.js; tests/till-vendor.test.js holds the three lists equal.
@@ -88,12 +161,53 @@ const F = {
   bills: (day) => path.join(DIR, 'bills-' + day + '.jsonl'),
   docs: (day) => path.join(DIR, 'docs-' + day + '.jsonl'),      /* receipts and despatch notes — the other two doors of a shop */
   engine: (n) => path.join(DIR, 'engine-' + n + '.js'),
+  /**
+   * ⭐⭐⭐ THE SUMMARY FOLDER ([TILL-122]). Athi: *"we have to have other folder called summary, so we keep
+   * one chit for every day as a summary chit."* 365 day files a year, 52 or 53 week files, 12 month files — and
+   * the daily BILLS can eventually go, because the summary is folded from them and proven equal
+   * (tests/rollup.test.js). This folder is the shop's long record; bills-*.jsonl is its working detail.
+   */
+  summary: (period, key) => path.join(DIR, 'summary', period + '-' + key + '.json'),
+  summaryDir: () => path.join(DIR, 'summary'),
 };
+const NEW_SHOP_DIR = !fs.existsSync(DIR);
 for (const d of [DIR]) if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+/* ⭐ summary/ is created up front, so an empty one reads as "nothing summarised yet" rather than as a fault */
+if (!fs.existsSync(path.join(DIR, 'summary'))) fs.mkdirSync(path.join(DIR, 'summary'), { recursive: true });
+/**
+ * ⚠️⚠️ THE UPGRADE MUST NOT STRAND A DAY'S TAKINGS ([TILL-120]). An install that has been billing has its
+ * queue — sales taken and NOT YET SENT — in the old flat `till-data/`. Ship the per-shop folder without moving
+ * them and those sales are still on the disk, still unsent, and now in a folder nothing reads: money that
+ * silently stops existing. So the first boot after the upgrade MOVES the flat layout into this shop's folder.
+ *
+ * ⚠️ ONCE, AND ONLY INTO AN EMPTY FOLDER. If this shop's folder already exists it has its own history and the
+ * flat files are some OTHER shop's — the exact mixing this change exists to stop. Then they are left alone and
+ * said out loud, because a folder of another shop's bills is a thing a person must decide about, not a thing a
+ * program should quietly delete. [[feedback-question-is-not-an-instruction]]
+ */
+const flatDir = path.join(path.dirname(cfgFile), 'till-data');
+try {
+  /* ⚠️ isFile() IS LOAD-BEARING: till-data/ now holds one DIRECTORY per server, and those are not strays. */
+  const strays = fs.existsSync(flatDir)
+    ? fs.readdirSync(flatDir).filter((n) => fs.statSync(path.join(flatDir, n)).isFile())
+    : [];
+  if (strays.length && NEW_SHOP_DIR) {
+    for (const n of strays) fs.renameSync(path.join(flatDir, n), path.join(DIR, n));
+    log('moved ' + strays.length + ' file(s) from till-data/ into till-data/' + SHOP_DIR + '/ — one folder per shop from now on');
+  } else if (strays.length) {
+    log('NOTE: till-data/ still holds ' + strays.length + ' loose file(s) from an earlier install, and this shop (' + SHOP_DIR
+      + ') already has its own folder. They have been LEFT ALONE — they may belong to a different shop. Nothing reads them.');
+  }
+} catch (e) { log('could not tidy the old till-data folder: ' + e.message + ' — billing is unaffected'); }
 
 /* what the last refresh found about the kit itself — the page tells the person at the counter, in their words */
 const UPDATE = { version: null, page_at: null, program_ready: false };
 
+/**
+ * ⚠️ AN UNPAIRED COUNTER SAYS SO ON THE CONSOLE TOO. The page will say it, but whoever is setting the PC up
+ * is looking at this window — and a boot that looks entirely normal, then sells nothing, is the confusing one.
+ */
+if (!cfg.key) log('not connected to a shop yet — open http://127.0.0.1:' + PORT + ' and sign in to connect this counter');
 const cb = new core.CB({ api: cfg.api, key: cfg.key, log });
 cb.name = tillCfg.name || 'Till';
 
@@ -249,6 +363,23 @@ async function drain() {
          * ⚠️ A movement goes to b144's deliver-lines, which writes into EVERY party's copy. That is the shared half of the claim;
          * the chit above is our own record of it. Either half may wait for the line without the other.
          */
+        /**
+         * ⭐⭐ A FOURTH KIND ON THE ONE QUEUE ([TILL-122]): the day, week and month summaries. Same send, same
+         * retry, same backoff as a bill — and on success the LOCAL copy is stamped, which is what turns
+         * "summarised" into "summarised and safely at ChitBridge" for whoever reads the folder.
+         * ⚠️ THE STAMP IS WRITTEN ONLY AFTER THE SERVER ANSWERED. A record that claims to have arrived when it
+         * has not is the exact failure this rollup exists to make visible. [[feedback-check-after-the-wire]]
+         */
+        if (bill.summary) {
+          const rs = await cb.call('POST', '/api/chits/send', rollup.chitOf(bill.summary));
+          const cur = readSummary(bill.summary.period, bill.summary.key) || bill.summary;
+          cur.synced_at = new Date().toISOString();
+          cur.chit_ref = (rs && (rs.chit_id || (rs.chit && rs.chit.chit_id))) || cur.chit_ref || null;
+          writeSummary(cur);
+          log('summary ' + bill.no + ' → ' + (rs && rs.duplicate ? 'already recorded' : 'recorded'));
+          online = true;
+          continue;
+        }
         if (bill.doc) {
           const r0 = await cb.call('POST', '/api/chits/send', chitOfDoc(bill.doc));
           log((bill.doc.kind === 'receipt' ? 'receipt ' : 'despatch ') + bill.no + ' → ' + (r0 && r0.duplicate ? 'already recorded' : 'recorded'));
@@ -390,16 +521,158 @@ function movesOfDoc(d) {
 }
 
 /* ── the screen ────────────────────────────────────────────────────────────────────────────────────────────── */
+/**
+ * ⭐ A CALL WITH NO KEY — the only kind that can be made before there is one ([TILL-121]). core.CB always
+ * sends X-Api-Key, which is right for every other call in this program and wrong for exactly these three.
+ */
+async function noKey(method, p, body, bearer) {
+  const ac = new AbortController();
+  const t = setTimeout(function () { ac.abort(); }, 20000);
+  try {
+    const h = { 'Content-Type': 'application/json' };
+    if (bearer) h.Authorization = 'Bearer ' + bearer;
+    const r = await fetch(String(cfg.api).replace(/\/$/, '') + p,
+      { method: method, signal: ac.signal, headers: h, body: body ? JSON.stringify(body) : undefined });
+    const txt = await r.text();
+    let out = null; try { out = JSON.parse(txt); } catch (_) { out = { message: txt.slice(0, 200) }; }
+    if (!r.ok) throw Object.assign(new Error((out && out.message) || ('HTTP ' + r.status)), { status: r.status });
+    return out;
+  } finally { clearTimeout(t); }
+}
+/**
+ * ⚠️⚠️ SAY WHICH WALL IT HIT. 'fetch failed' on a sign-in screen reads as "wrong password" to the person
+ * typing, who then tries it three more times — when the real answer is that this PC has no internet and there
+ * is nothing to retry. Same discipline as whyNot(). [[feedback-silence-is-the-bug]]
+ */
+function signinWhy(e) {
+  const m = String((e && e.message) || e || '');
+  if (e && e.name === 'AbortError') return 'ChitBridge did not answer in twenty seconds. The line may be very slow — try once more.';
+  if (/ENOTFOUND|EAI_AGAIN|dns/i.test(m)) return 'This PC cannot find ' + cfg.api + '. It looks to be offline.';
+  if (/ECONNREFUSED|ECONNRESET|fetch failed|network/i.test(m)) return 'This PC could not reach ChitBridge. Check the internet, then try again.';
+  if (e && e.status === 429) return 'Too many tries. Wait a minute, then ask for a new code.';
+  if (e && e.status === 403) return m || 'That account is not allowed to connect a counter.';
+  return m || 'Could not sign in.';
+}
+
 const PAGE = path.join(__dirname, 'till.html');
 const send = (res, code, type, body) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body); };
 const json = (res, code, obj) => send(res, code, 'application/json; charset=utf-8', JSON.stringify(obj));
 
+/**
+ * ⚠️⚠️⚠️ THIS COUNTED A REFUND AS A SALE, AND KEPT ITS MONEY IN THE DRAWER ([TILL-122]).
+ *
+ * It was `count: rows.length` — so a credit note counted as a sale made — and `by` only ever ADDED payments,
+ * so the drawer figure was over by exactly the day's refunds. till.html was fixed for precisely this on
+ * 2026-09-18 ("four figures on four screens, and three of them disagreed") and the program on the shop's PC
+ * was not, so the desktop counter and the browser counter reported different takings for the same day.
+ *
+ * ⭐ NOW THERE IS ONE RULE, in lib/rollup.js, and the summary is folded with the same one.
+ */
 function todayTotals() {
-  const rows = readLines(F.bills(today()));
-  const by = {};
-  let total = 0;
-  for (const b of rows) { total += Number(b.total) || 0; for (const p of (b.payments || [])) by[p.how] = Math.round(((by[p.how] || 0) + Number(p.amount || 0)) * 100) / 100; }
-  return { count: rows.length, total: Math.round(total * 100) / 100, by: by };
+  const t = rollup.totals(readLines(F.bills(today())));
+  /* ⚠️ the page reads `returns` as an amount — same word, same meaning, both hosts */
+  return { count: t.count, total: t.total, by: t.by, returns: t.refunds, gross: t.gross };
+}
+
+/**
+ * ── ⭐⭐⭐ THE ROLLUP: DAY → WEEK → MONTH ([TILL-122]) ───────────────────────────────
+ *
+ * Athi: *"assuming we are summarising once per day, we have to set the status that summarised … each week
+ * summarise day chit to week chit. summarise, summarise month chit, so we will have 365 chit per year, if we
+ * want to check trend on weekly basis we have 52 chit, monthly trend we can look at 12 chit, that is all."*
+ *
+ * ⚠️⚠️ ONLY A CLOSED PERIOD IS EVER SUMMARISED. A summary of today would change after it was published, and
+ * once the bills behind it are gone nobody could correct it. rollup.isClosed decides, against a clock passed
+ * in, so the boundary is testable rather than whatever the machine believes at the time.
+ *
+ * ⚠️ AND IT IS FOLDED, NOT RE-READ. A week is built from its seven DAY summaries, which is the whole reason
+ * the daily detail can eventually go — tests/rollup.test.js holds fold() equal to summarising the bills
+ * directly, and that equality is the only thing that makes purging safe.
+ */
+function daysOnDisk() {
+  try {
+    return fs.readdirSync(DIR).map((n) => (/^bills-(\d{4}-\d{2}-\d{2})\.jsonl$/.exec(n) || [])[1]).filter(Boolean).sort();
+  } catch (_) { return []; }
+}
+function readSummary(period, key) {
+  try { return JSON.parse(fs.readFileSync(F.summary(period, key), 'utf8')); } catch (_) { return null; }
+}
+function writeSummary(sum) { writeJSON(F.summary(sum.period, sum.key), sum); return sum; }
+
+/**
+ * ⚠️ ONE PASS, AND IT SAYS WHAT IT DID. Called on boot and on every refresh tick — so a shop that leaves the
+ * counter on for a week still gets its days closed, and one that opens it once a month gets all of them.
+ * ⚠️⚠️ IT NEVER DELETES A BILL. Purging the daily detail is a separate decision with its own floor; this
+ * only ever WRITES. [[project-retention-lifecycle]]
+ */
+function rollUp(now) {
+  const made = [];
+  const till = { id: tillCfg.id, name: tillCfg.name, host: os.hostname() };
+  const days = daysOnDisk();
+
+  /* ── days, from the bills themselves ── */
+  for (const d of days) {
+    if (!rollup.isClosed('day', d, now)) continue;          /* today is still being billed */
+    if (readSummary('day', d)) continue;                     /* already done — and it is never redone */
+    const rows = readLines(F.bills(d));
+    const nos = rows.map((b) => b.no).filter(Boolean);
+    const sum = rollup.summary('day', d, rollup.totals(rows), {
+      till, bills_from: nos[0] || null, bills_to: nos[nos.length - 1] || null });
+    writeSummary(sum); queueSummary(sum); made.push('day ' + d);
+  }
+
+  /* ── weeks and months, FOLDED from what is already summarised ── */
+  for (const period of ['week', 'month']) {
+    const keys = Array.from(new Set(days.map((d) => rollup.keyOf(period, d))));
+    for (const key of keys) {
+      if (!rollup.isClosed(period, key, now)) continue;
+      if (readSummary(period, key)) continue;
+      const mine = rollup.daysIn(period, key, days);
+      const parts = mine.map((d) => readSummary('day', d)).filter(Boolean);
+      /**
+       * ⚠️⚠️ A WEEK IS NOT WRITTEN UNTIL EVERY ONE OF ITS DAYS IS. A partial fold would be published as the
+       * week's figure and then never corrected — and because a summary is written ONCE, the missing day would
+       * be silently absent from the shop's permanent record. It simply waits for the next pass.
+       */
+      if (parts.length !== mine.length) continue;
+      const sum = rollup.summary(period, key, rollup.fold(parts), { till, source: mine });
+      writeSummary(sum); queueSummary(sum); made.push(period + ' ' + key);
+    }
+  }
+  /* ⭐ ONE DRAIN, once everything is written — see the note in queueSummary */
+  if (made.length) { log('summarised: ' + made.join(', ')); drain().catch(() => {}); }
+  return made;
+}
+
+/**
+ * ⚠️ THE SAME QUEUE AS A BILL, deliberately. Athi: *"the same format as in the server."* A summary is a chit,
+ * it waits out an outage exactly as a sale does, and it is retried by the same drain with the same backoff.
+ * A second rail for summaries would be a second thing to go wrong on the day the line is bad.
+ * [[feedback-stay-in-the-construct]]
+ */
+function queueSummary(sum) {
+  /**
+   * ⚠️⚠️ IT DOES NOT DRAIN HERE, AND THAT IS DELIBERATE. It used to, and drain() is guarded by a `draining`
+   * flag while reading the queue ONCE at the top — so queueing eight summaries in a loop sent the first and
+   * left seven waiting for the twenty-second tick. rollUp() drains once when it has written them all.
+   */
+  appendLine(F.queue, { no: rollup.refOf(sum), at: sum.summarised_at, summary: sum });
+}
+
+/** ⭐ what is summarised and what has reached ChitBridge — the status Athi asked to be able to see */
+function summaryState() {
+  let files = [];
+  try { files = fs.readdirSync(F.summaryDir()); } catch (_) { files = []; }
+  const out = { day: 0, week: 0, month: 0, unsent: 0, last: null };
+  for (const f of files) {
+    const m = /^(day|week|month)-(.+)\.json$/.exec(f);
+    if (!m) continue;
+    out[m[1]]++;
+    const sum = readSummary(m[1], m[2]);
+    if (sum && !sum.synced_at) out.unsent++;
+    if (m[1] === 'day' && (!out.last || m[2] > out.last)) out.last = m[2];
+  }
+  return out;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -445,6 +718,75 @@ const server = http.createServer(async (req, res) => {
      * ⚠️ A USB thermal printer with no driver installed does not appear in the list, however well the cable is plugged in — so the
      * screen can tell the shopkeeper which of the two problems they actually have.
      */
+    /**
+     * ── ⭐⭐⭐ SIGNING IN, WHICH IS HOW A COUNTER GETS ITS KEY ([TILL-121]) ─────────────────
+     *
+     * Athi: *"we should be able to login to a shop using this desktop app?"* — and *"if we tie each app with
+     * the user id then they should be able to login using the same user id / password combination / OTP?"*
+     *
+     * ⭐ THE SAME SIGN-IN AS THE WEB: /api/entities/register sends the OTP, /verify returns a session. The
+     * session is then spent immediately on POST /api/till/enrol and never kept — what is kept is the key.
+     * ⚠️⚠️ WHICH IS THE WHOLE POINT. A session expires and needs the network to renew; a counter that must
+     * reach ChitBridge to open cannot bill on a morning the line is down, and billing with the line down is
+     * what this application is FOR. Sign in once, hold a key for a year, never sign in again.
+     *
+     * ⚠️ THESE TWO ROUTES CARRY NO KEY, deliberately — they run before there is one. All they can do is ask
+     * ChitBridge to send a code to an address, and hand a code back. Neither reads shop data.
+     */
+    if (req.method === 'POST' && url.pathname === '/api/signin/start') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      const who = String(b.email || b.user_id || '').trim();
+      if (!who) return json(res, 400, { ok: false, message: 'Type the email address or User ID you use for ChitBridge.' });
+      try {
+        const out = await noKey('POST', '/api/entities/register',
+          who.indexOf('@') > 0 ? { email: who } : { user_id: who });
+        /**
+         * ⚠️ THE SERVER DECIDES WHETHER A CODE WAS SENT, not this program. `dev_otp` comes back only from a
+         * test server — lib/dev-otp.js refuses to leak it anywhere else — and passing it through is what lets
+         * a counter be set up end to end against test without a mailbox.
+         */
+        return json(res, 200, { ok: true, sent: true, dev_otp: (out && out.dev_otp) ? String(out.dev_otp) : null,
+          message: 'ChitBridge has sent a 6-digit code to ' + who + '.' });
+      } catch (e) { return json(res, 200, { ok: false, message: signinWhy(e) }); }
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/signin/finish') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      const who = String(b.email || b.user_id || '').trim();
+      const otp = String(b.otp || '').replace(/[^0-9]/g, '');
+      if (otp.length !== 6) return json(res, 400, { ok: false, message: 'The code is six digits.' });
+      try {
+        const vr = await noKey('POST', '/api/entities/verify',
+          Object.assign({ otp: otp }, who.indexOf('@') > 0 ? { email: who } : { user_id: who }));
+        const token = vr && (vr.token || vr.access_token);
+        if (!token) return json(res, 200, { ok: false, message: 'That code was not accepted. Ask for a new one.' });
+        /* ⭐ the session is spent HERE and kept nowhere — one call, and the counter holds a key instead */
+        const en = await noKey('POST', '/api/till/enrol', { name: require('os').hostname() }, token);
+        if (!en || !en.key) return json(res, 200, { ok: false, message: 'Signed in, but ChitBridge did not issue a counter key.' });
+        /**
+         * ⚠️⚠️ MERGE, NEVER REWRITE. connector.json is this PC's whole configuration — the Tally paths, the
+         * printer, the counter id. Writing a fresh object here would take the shop online and quietly lose
+         * everything else the kit was set up with. [[feedback-partial-writes-merge-patch]]
+         */
+        const cfgNow = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+        cfgNow.key = en.key;
+        writeJSON(cfgFile, cfgNow);
+        log('signed in to ' + ((en.shop && (en.shop.name || en.shop.bridge_id)) || 'the shop') + ' — counter key saved');
+        /**
+         * ⚠️⚠️ AND NOW IT MUST RESTART, WHICH IS NOT OPTIONAL. DIR was computed at boot from the OLD key
+         * ([TILL-120]), so this process is still writing into the previous shop's folder — or into `_unpaired`.
+         * Carrying on would put the new shop's first bills exactly where this change exists to stop them going.
+         * The reply goes out FIRST so the page can say what happened; the exit follows a beat later, and
+         * counter.cmd / the scheduled task bring it back up.
+         */
+        json(res, 200, { ok: true, shop: en.shop || null, restarting: true });
+        setTimeout(function () { log('restarting to open this shop\u2019s own folder'); process.exit(0); }, 400);
+        return;
+      } catch (e) { return json(res, 200, { ok: false, message: signinWhy(e) }); }
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/printers')
       return printer.list((_e, out) => json(res, 200, Object.assign({ chosen: tillCfg.printer || null, mm: tillCfg.paper_mm || 80, drawer: !!tillCfg.drawer }, out)));
 
@@ -477,7 +819,18 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/state')
+      /**
+       * ⚠️⚠️ `paired` AND `shop` ARE NOT DECORATION ([TILL-121]). Without them the page cannot tell a blank
+       * desktop counter from a working one — its only pairing test is CloudHost.key, which AgentHost has never
+       * had — so it showed a paired counter the unpaired wording and an unpaired one the reassuring wording.
+       * ⭐ BOTH COME OFF THE KEY ITSELF, so they are right with the line down, which is when they are read.
+       * ⚠️ THE KEY NEVER CROSSES THIS WIRE. The page gets the shop's NAME, never the credential — same rule
+       * the /api/op proxy keeps.
+       */
       return json(res, 200, { snapshot: snapshot, online: online, queued: readLines(F.queue).length, today: todayTotals(),
+                              paired: !!cfg.key, shop: keyShop(cfg.key), folder: SHOP_DIR,
+                              /* ⭐ what is summarised and what of it has reached ChitBridge ([TILL-122]) */
+                              summary: summaryState(),
                               till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
                               engines: Object.fromEntries(ENGINE_NAMES.map((n) => [n, fs.existsSync(F.engine(n))])),
                               printer: { chosen: tillCfg.printer || null, mm: tillCfg.paper_mm || 80, drawer: !!tillCfg.drawer },
@@ -583,6 +936,32 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true });
     }
 
+    /**
+     * ⭐⭐ GET /api/summary — THE SHOP'S OWN TREND, WITH NO LINE AT ALL ([TILL-122]).
+     *
+     * Athi: *"if we want to check trend on weekly basis we have 52 chit, monthly trend we can look at 12 chit,
+     * that is all."* /api/history asks the SERVER and returns nothing when the line is down; this reads the
+     * folder, so a shopkeeper can see their own months on a morning the internet is out.
+     */
+    if (req.method === 'GET' && url.pathname === '/api/summary') {
+      const period = ['day', 'week', 'month'].indexOf(url.searchParams.get('period')) >= 0 ? url.searchParams.get('period') : 'day';
+      const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 60, 1), 400);
+      let files = [];
+      try { files = fs.readdirSync(F.summaryDir()); } catch (_) { files = []; }
+      const rows = files.map((f) => (new RegExp('^' + period + '-(.+)\\.json$').exec(f) || [])[1]).filter(Boolean)
+        .sort().slice(-limit).map((k) => readSummary(period, k)).filter(Boolean).reverse();
+      /* ⚠️ `today` is NOT in there — it is not summarised yet, and saying so is the honest shape */
+      return json(res, 200, { period, rows, today: period === 'day' ? { key: today(), totals: rollup.totals(readLines(F.bills(today()))), open: true } : null,
+                              state: summaryState() });
+    }
+
+    /* ⚠️ a way to ask for the rollup now, rather than waiting out the tick — used by the day-close and by tests */
+    if (req.method === 'POST' && url.pathname === '/api/summarise') {
+      let made = [];
+      try { made = rollUp(Date.now()); } catch (e) { return json(res, 200, { ok: false, why: e.message }); }
+      return json(res, 200, { ok: true, made, state: summaryState() });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/bills')
       return json(res, 200, { day: today(), bills: readLines(F.bills(today())).slice(-50).reverse(), totals: todayTotals() });
 
@@ -607,7 +986,17 @@ const server = http.createServer(async (req, res) => {
   log('till ' + tillCfg.id + ' starting · data in ' + DIR);
   await refresh();
   if (!snapshot) log('⚠ no copy of the shop yet — connect once, then this till bills with the line down');
+  /**
+   * ⭐⭐ THE ROLLUP RUNS ON BOOT AND ON EVERY TICK ([TILL-122]) — never on a schedule of its own.
+   * ⚠️ A SHOP DOES NOT LEAVE THE COUNTER ON OVERNIGHT, and one that does may leave it on for a month. Either
+   * way this catches up: every CLOSED day it has bills for and no summary of is summarised, in order, however
+   * long ago it was. A nightly timer would have missed exactly the shops that switch the PC off at closing.
+   * ⚠️ It never throws into the boot path — a counter that would not open because a summary failed would be
+   * the worst possible trade.
+   */
+  try { rollUp(Date.now()); } catch (e) { log('the rollup could not run: ' + e.message + ' — billing is unaffected'); }
   setInterval(() => refresh().catch(() => {}), Math.max(1, Number(tillCfg.refreshMinutes) || 15) * 60 * 1000).unref();
+  setInterval(() => { try { rollUp(Date.now()); } catch (_) {} }, Math.max(1, Number(tillCfg.refreshMinutes) || 15) * 60 * 1000).unref();
   setInterval(() => drain().catch(() => {}), Math.max(5, Number(tillCfg.drainSeconds) || 20) * 1000).unref();
   /**
    * ⚠️⚠️ ALREADY RUNNING IS NOT AN ERROR ([TILL-117]). The scheduled task `install` registers fires every

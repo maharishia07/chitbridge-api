@@ -1389,6 +1389,54 @@ router.post('/pair', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
+/**
+ * ── ⭐⭐⭐ POST /api/till/enrol — A COUNTER SIGNS IN ONCE AND KEEPS A KEY ([TILL-121]) ───────────
+ *
+ * Athi: *"what is the difference between counter app and to the main engine? if we tie each app with the user
+ * id then they should be able to login using the same user id / password combination / OTP?"*
+ *
+ * ⭐ THE SAME FRONT DOOR, A DIFFERENT THING BEHIND IT. The person signs in exactly as they do on the web —
+ * POST /api/entities/register then /verify, email or user_id, one OTP — and lands here holding a session. This
+ * route trades that session, once, for a till key.
+ *
+ * ⚠️⚠️⚠️ WHY NOT JUST KEEP THE SESSION, which is the obvious thing and the wrong one: a session expires and
+ * needs the network to renew. A counter that must reach ChitBridge to open is a counter that cannot bill at 7am
+ * on a morning the line is down — and billing with the line down is the entire premise of this application
+ * ([[project-till]]). The key does not expire for a year and is checked by nobody to open the drawer.
+ *
+ * ⚠️ A KEY MAY NOT MINT A KEY — the same rule /pair holds, for the same reason: this route hands out
+ * authority, so it takes a signed-in person and refuses a request that arrived bearing a key.
+ *
+ * ⚠️ THE IDENTITY IS PASSED TO mint(), AND THAT MATTERS. /pair/claim passes null, so a screen key carries
+ * `bridge_id: null`. The counter names its own data folder from the bridge_id inside its key ([TILL-120]) so it
+ * can tell one shop from another with no network at all — a key without one falls back to an unreadable hash.
+ */
+router.post('/enrol', auth, async (req, res) => {
+  try {
+    if (!req.identity || req.api_key)
+      return res.status(403).json({ error: 'Forbidden', message: 'Sign in to connect a counter.' });
+    const entity_id = auth.entityOf(req);
+    const me = await query('SELECT display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
+    const id = me.rows[0] || {};
+    /* ⚠️ THE NAME IS WHAT THE OWNER WILL REVOKE BY, on Settings › Integrations › Keys — so it says which PC. */
+    const label = String((req.body && req.body.name) || '').trim().slice(0, 40);
+    const minted = await keys.mint(entity_id, id, {
+      name: 'counter' + (label ? ' · ' + label : '') + ' · ' + new Date().toISOString().slice(0, 10),
+      scopes: ['till'], days: 365,
+    });
+    res.json({
+      key: minted.key,
+      /**
+       * ⚠️ THE SHOP COMES BACK NAMED. The counter shows it before it writes anything, so a person who signed
+       * into the wrong account sees the wrong shop's name on screen rather than discovering it in the books.
+       */
+      shop: { entity_id, bridge_id: id.bridge_id || null, name: id.display_name || null },
+    });
+  } catch (e) {
+    res.status(e && e.status === 400 ? 400 : 500).json({ error: 'Failed', message: String(e && e.message) });
+  }
+});
+
 /** the screen exchanges it — no key, because it does not have one yet; that is the entire point */
 router.post('/pair/claim', async (req, res) => {
   try {

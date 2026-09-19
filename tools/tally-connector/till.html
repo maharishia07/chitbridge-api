@@ -2350,6 +2350,12 @@
   <div id="startsay" class="shopsay"></div>
   <div class="dlgbtns"><button onclick="startClose()">Not now · Esc</button></div>
 </dialog>
+<dialog id="signindlg" class="dlg" data-testid="till-signin-dlg">
+  <h3>Connect this counter <span class="u">sign in once with your ChitBridge email — afterwards this counter bills with or without the internet</span></h3>
+  <div id="signinbody" class="startbody"></div>
+  <div id="signinsay" class="shopsay"></div>
+  <div class="dlgbtns"><button onclick="signinClose()">Not now · Esc</button></div>
+</dialog>
 <dialog id="shopdlg" class="dlg" data-testid="till-shop-dlg">
   <h3>Your shop <span class="u">what every bill is headed with · kept by ChitBridge, so every counter and your storefront agree</span></h3>
   <div id="shopform" class="shopform"></div>
@@ -9269,7 +9275,16 @@ function quickAdd(id){
  * learn a second phrasing in the other.
  */
 function shelfLine(shown){
-  if (!S) return '';
+  /**
+   * ⚠️⚠️ A COUNTER WITH NO SHOP SAID NOTHING HERE ([TILL-119]) — `return ''`. The deliberate part was not
+   * offering "Start your shop" to an unpaired counter, which is right: it is not an empty shop, it is not a
+   * shop yet, and asking it to pick a trade answers a question nobody asked. But saying NOTHING left the one
+   * line that should explain the blank screen blank as well. It now says which of the two emptinesses it is,
+   * and offers the step that actually works.
+   */
+  if (!S) return '<div class="shelfline" data-testid="till-shelf-count">' + esc(blankWords())
+    + (paired() ? '' : ' <button class="daylink" data-testid="till-connect" onclick="signinOpen()">Connect it</button>')
+    + '</div>';
   /**
    * ⚠️⚠️ MAINTENANCE COUNTS EVERYTHING. This line counted only what could be sold — on the one screen whose
    * whole purpose is reaching a row that is OFF. A shop with 113 products and 4 off the shelf was told it had
@@ -10425,7 +10440,7 @@ function paintHits(){
           ? '<button class="addbtn" data-testid="till-add-' + n + '" title="put this on the bill"'
             + ' aria-label="put this on the bill" onclick="event.stopPropagation();add(' + n + ')">+</button>' : '')
       + '</div>';
-  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : 'No copy of the shop yet — press ↻ once, while online.') + '</div>')
+  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : esc(blankWords())) + '</div>')
     /* ⚠️ AFTER THE ROWS, not before them. Sticky-to-the-bottom only works for an element the scroll would
        otherwise reach at the end; drawn first it was pushed out of view immediately, so it was stuck to the
        TOP instead and every tick shoved the shelf down by its height. */
@@ -10762,8 +10777,50 @@ async function queueTally(){
   STATE.queued = rows.length;
   return t;
 }
+/**
+ * ── ⭐⭐⭐ IS THIS COUNTER CONNECTED TO A SHOP? ([TILL-121]) ───────────────────────────
+ *
+ * ⚠️⚠️ THERE WAS NO ANSWER TO THIS, AND EVERY CALLER GUESSED. The page's only pairing test was
+ * `CloudHost.key` — and AgentHost, the desktop program, has never had a `.key` at all: it holds the key on
+ * its own side so the page never sees it. So `HOST && HOST.key` reads FALSE on a desktop counter whether it
+ * is paired or not, and a test that cannot tell apart the two states it exists for is not a test.
+ * [[feedback-name-vs-behaviour]] [[feedback-probe-the-right-scope]]
+ *
+ * ⭐ ONE FUNCTION, BOTH HOSTS. The desktop answers through /api/state.paired ([TILL-121] added it); the
+ * browser answers from the key it holds itself.
+ */
+function paired(){
+  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return !!(STATE && STATE.paired);
+  return !!(typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key);
+}
+/** the shop this counter belongs to, as far as it can tell OFFLINE — name and bridge id, never the key */
+function pairedShop(){
+  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return (STATE && STATE.shop) || null;
+  if (S && S.shop) return { name: S.shop.name || null, bridge_id: (S.shop && S.shop.bridge_id) || null };
+  return null;
+}
+/**
+ * ── ⭐⭐ WHAT AN EMPTY COUNTER SHOULD SAY ([TILL-119]) ──────────────────────────────
+ *
+ * Athi: *"if i give clear and reload it should say, you are not connected, no store id exists etc?"*
+ *
+ * ⚠️ THE ADVICE MUST MATCH THE STATE. It said *"press ↻ once, while online"* to a counter with no key — and
+ * ↻ has nothing to ask without one, so the person presses a button that cannot work and says nothing back.
+ * Two different emptinesses, two different next steps.
+ */
+function blankWords(){
+  return paired() ? 'No copy of the shop yet — press ↻ once, while online.'
+                  : 'This counter is not connected to a shop yet, so there is nothing to sell.';
+}
 /** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
 function queueWords(){
+  /**
+   * ⚠️⚠️⚠️ NOTHING WAITING IS NOT THE SAME AS EVERYTHING ARRIVED ([TILL-119]). A counter with no key has an
+   * empty queue because it has never taken a sale — and it was answering "everything has reached ChitBridge",
+   * which is the line a shopkeeper reads before closing the shutters. A false all-clear, on the one screen
+   * where the question is whether the day's money is safe. [[feedback-silence-is-the-bug]]
+   */
+  if (!paired()) return 'this counter is not connected to a shop yet';
   if (!STATE.queued) return 'everything has reached ChitBridge';
   var bits = [];
   var n = function(c, one, many){ if (c) bits.push(c + ' ' + (c === 1 ? one : many)); };
@@ -13539,6 +13596,114 @@ async function upCommit(){
   upClose();
   try { paintChips(); paintQuick(); paintHits(); } catch (_) {}
 }
+/**
+ * ── ⭐⭐⭐ CONNECTING A COUNTER TO A SHOP ([TILL-121]) ────────────────────────────
+ *
+ * Athi: *"this is the blank engine. it is not connected to any shop, nothing, we should be able to login to a
+ * shop using this desktop app?"* — and *"if we tie each app with the user id then they should be able to
+ * login using the same user id / password combination / OTP?"*
+ *
+ * ⭐ THE SAME SIGN-IN AS THE WEB — email or User ID, one emailed code. What is different is what it LEAVES
+ * BEHIND: not a session, which expires and needs the network to renew, but this shop's counter key, written
+ * to this PC. A counter that had to reach ChitBridge to open could not bill on a morning the line is down,
+ * and billing with the line down is what this application is for.
+ *
+ * ⚠️ THE BROWSER COUNTER CANNOT DO THIS, and says so rather than failing. /api/signin/* lives in the
+ * program on the PC; a page served from the cloud has no config file to write a key into, so it pairs the
+ * other way — ChitBridge › Settings › Integrations › Keys, pasted into ⚙.
+ */
+function signinSay(m, bad){
+  var e = document.getElementById('signinsay'); if (!e) return;
+  e.textContent = m || ''; e.className = 'shopsay' + (bad ? ' bad' : '');
+}
+function signinClose(){ var d = document.getElementById('signindlg'); if (d && d.open) d.close(); }
+/* the settings dialog has no close function of its own — every caller inlined .close(). One name, one place. */
+function setClose(){ var d = document.getElementById('setdlg'); if (d && d.open) d.close(); }
+function signinOpen(){
+  var d = document.getElementById('signindlg'); if (!d) return;
+  signinSay('', false);
+  var body = document.getElementById('signinbody');
+  if (!(typeof AgentHost !== 'undefined' && HOST === AgentHost)) {
+    /* ⚠️ SAY WHAT TO DO INSTEAD — a dead end with an explanation is still a dead end */
+    body.innerHTML = '<p class="note">This counter is running in a browser, so it is connected by key rather'
+      + ' than by signing in. Open ChitBridge › Settings › Integrations › Keys, make a key with scope'
+      + ' “till”, and paste it into ⚙ on this page.</p>';
+    d.showModal(); return;
+  }
+  body.innerHTML = '<p class="note">Sign in with the email address or User ID you use for ChitBridge. This is'
+    + ' asked once — afterwards this counter bills whether or not there is internet.</p>'
+    + '<div class="shoprow"><span>Email or User ID</span>'
+    + '<input id="signin_who" data-testid="till-signin-who" autocomplete="username" placeholder="you@example.com"></div>'
+    + '<div class="dlgbtns"><button class="pri" data-testid="till-signin-send" onclick="signinSend()">Send me a code</button></div>';
+  d.showModal();
+  var i = document.getElementById('signin_who'); if (i) i.focus();
+}
+async function signinSend(){
+  var who = (document.getElementById('signin_who') || {}).value || '';
+  who = String(who).trim();
+  if (!who) { signinSay('Type the email address or User ID you use for ChitBridge.', true); return; }
+  signinSay('Asking ChitBridge for a code…', false);
+  var r = null;
+  try {
+    r = await fetch('/api/signin/start', { method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ email: who }) }).then(function(x){ return x.json(); });
+  } catch (e) { signinSay('This PC could not reach the counter program. Is it still running?', true); return; }
+  if (!r || !r.ok) { signinSay((r && r.message) || 'Could not ask for a code.', true); return; }
+  document.getElementById('signinbody').innerHTML =
+    '<p class="note">' + esc(r.message || ('A code has gone to ' + who + '.')) + '</p>'
+    + '<div class="shoprow"><span>The 6-digit code</span>'
+    + '<input id="signin_otp" data-testid="till-signin-otp" inputmode="numeric" maxlength="6" placeholder="000000"'
+    /**
+     * ⚠️ A TEST SERVER HANDS THE CODE BACK (lib/dev-otp.js refuses to anywhere else) and it is filled in, so a
+     * counter can be set up end to end against test without a mailbox. On live this is simply absent.
+     */
+    + (r.dev_otp ? ' value="' + esc(r.dev_otp) + '"' : '') + '></div>'
+    + (r.dev_otp ? '<p class="note">This is a test server, so the code is filled in for you.</p>' : '')
+    + '<div class="dlgbtns"><button data-testid="till-signin-again" onclick="signinOpen()">Use a different account</button>'
+    + '<button class="pri" data-testid="till-signin-go" onclick="signinDo(' + JSON.stringify(who).replace(/"/g, '&quot;') + ')">Connect this counter</button></div>';
+  signinSay('', false);
+  var i = document.getElementById('signin_otp'); if (i) i.focus();
+}
+async function signinDo(who){
+  var otp = ((document.getElementById('signin_otp') || {}).value || '').replace(/[^0-9]/g, '');
+  if (otp.length !== 6) { signinSay('The code is six digits.', true); return; }
+  signinSay('Connecting…', false);
+  var r = null;
+  try {
+    r = await fetch('/api/signin/finish', { method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ email: who, otp: otp }) }).then(function(x){ return x.json(); });
+  } catch (e) { signinSay('This PC could not reach the counter program. Is it still running?', true); return; }
+  if (!r || !r.ok) { signinSay((r && r.message) || 'Could not connect this counter.', true); return; }
+  /**
+   * ⭐⭐ THE SHOP IS NAMED BEFORE ANYTHING ELSE HAPPENS. Somebody who signed into the wrong account sees the
+   * wrong shop's name here, rather than finding it in the books a week later.
+   * ⚠️⚠️ AND THE PROGRAM IS RESTARTING — it must, because its data folder is named after the key it booted
+   * with ([TILL-120]). The page says so and waits, instead of showing a dead counter for ten seconds.
+   */
+  var nm = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
+  document.getElementById('signinbody').innerHTML =
+    '<p class="note"><b>Connected to ' + esc(nm) + '.</b>'
+    + (r.shop && r.shop.bridge_id ? ' <span class="u">' + esc(r.shop.bridge_id) + '</span>' : '') + '</p>'
+    + '<p class="note">This counter is restarting so it opens this shop’s own folder. It will come back in a'
+    + ' few seconds — this page reloads itself.</p>';
+  signinSay('', false);
+  /**
+   * ⚠️ WAIT FOR IT TO ANSWER, then reload. Reloading straight away shows “cannot reach this page” on a PC
+   * where nothing is wrong — the same mistake counter.cmd was written to avoid.
+   */
+  var tries = 0;
+  (function again(){
+    tries++;
+    fetch('/api/state', { cache:'no-store' }).then(function(x){
+      if (x.ok) { location.reload(); return; }
+      throw new Error('not yet');
+    }).catch(function(){
+      if (tries < 30) setTimeout(again, 700);
+      else signinSay('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.', true);
+    });
+  })();
+}
+
 async function startOpen(){
   var d = document.getElementById('startdlg'); if (!d) return;
   document.getElementById('startbody').innerHTML = '<p class="note">Asking ChitBridge what you can start from…</p>';
@@ -17114,8 +17279,30 @@ function openSettings(tab){
       + '<span>Counter key</span><input id="set_key" placeholder="paste the key once" value="' + esc(CloudHost.key ? '••••••••' + String(CloudHost.key).slice(-6) : '') + '"></div>'
       + '<div class="srow"><span>ChitBridge</span><input id="set_api" value="' + esc(CloudHost.api||'') + '"></div>';
   } else {
-    pair.innerHTML = '<div class="srow" title="This counter runs beside the ChitBridge program on this PC — its key is in connector.json.">'
-      + '<span>Counter key</span><span>on this PC</span></div>';
+    /**
+     * ⚠️⚠️ IT USED TO SAY ONLY 'on this PC' ([TILL-121]), which is true and useless. A counter holding the
+     * WRONG KIND of key — a connector key, which cannot read a snapshot — looked identical here to one holding
+     * the right one, and the only symptom was a 403 in a log nobody opens. Now it names the shop and the scope,
+     * both read off the key itself, so the wrong key is visible rather than deduced. [[feedback-silence-is-the-bug]]
+     */
+    var sh = (STATE && STATE.shop) || null;
+    var scopes = (sh && sh.scopes) || [];
+    var isTill = scopes.indexOf('till') >= 0;
+    pair.innerHTML = '<div class="srow" title="The key lives in connector.json beside the program on this PC — it never reaches this page.">'
+      + '<span>This counter</span><span>' + (STATE && STATE.paired
+          ? esc((sh && (sh.name || sh.bridge_id)) || 'connected')
+          : 'not connected to a shop') + '</span></div>'
+      + (sh && sh.bridge_id ? '<div class="srow"><span>Shop</span><span>' + esc(sh.bridge_id) + '</span></div>' : '')
+      /* ⚠️ THE SCOPE, SAID PLAINLY. A connector key here is the whole of [TILL-117] in one line. */
+      + (STATE && STATE.paired
+          ? '<div class="srow"><span>Key is for</span><span>' + (isTill ? 'billing (till)'
+              : (scopes.length ? esc(scopes.join(', ')) + ' — not billing' : 'unknown')) + '</span></div>' : '')
+      + (STATE && STATE.paired && !isTill
+          ? '<div class="srow"><span></span><span class="u">This key cannot read your shop. Sign in to get a till key.</span></div>' : '')
+      + '<div class="srow" title="Sign in with your ChitBridge email. This counter writes its own key and keeps it.">'
+      + '<span>' + (STATE && STATE.paired ? 'Connect to another shop' : 'Connect this counter') + '</span>'
+      + '<button class="pill" data-testid="till-set-signin" onclick="setClose();signinOpen()">Sign in</button></div>'
+      + '<div class="srow"><span>Data folder</span><span class="u">' + esc((STATE && STATE.folder) || 'till-data') + '</span></div>';
   }
   document.getElementById('setnote').textContent = 'Kept on this device.';
   /* ⚠️ in ⚙ rather than on the counter itself: it is a maintenance act, and it should take a deliberate walk to reach */
