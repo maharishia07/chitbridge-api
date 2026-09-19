@@ -728,6 +728,12 @@
    */
   /* ⭐ AMPLE SPACE (Athi, 2026-09-18: *"images are clumsy, need to have ample space between images… the size
      has to be decent enough to see"*). 14px between keys and a 168px floor: a key is aimed at with a thumb. */
+  /* ⭐ THREE SIZES ([TILL-66]) — how much room ONE tile gets. The tile STYLE is a separate setting. */
+  body.tiles-sm .quick{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;--sk-ph:56px}
+  body.tiles-md .quick{grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;--sk-ph:96px}
+  body.tiles-lg .quick{grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;--sk-ph:150px}
+  body.tiles-sm .quick .sk-tile{padding:6px 8px;font-size:.92em}
+  body.tiles-lg .quick .sk-tile{padding:14px 16px;font-size:1.06em}
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;
          margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);
          /* ⚠️⚠️ flex:none — WITHOUT IT a long product list shrinks this box to a ~30px strip with a scrollbar,
@@ -955,6 +961,10 @@
   .hit{display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto;gap:14px;align-items:center;
        padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer}
   .hit:hover{background:var(--ok-tint)}
+  /* ⚠️⚠️ SELLING, WITH PHOTOS: four children — photo · name · price · add — so four columns. Without this the
+     + dropped onto a second line the moment Photos was switched on, which is the same fault the note below
+     records for the tick. A child with no column goes wherever the browser has room. */
+  .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto) auto}
   /* ── choosing several in maintenance ([TILL-55]) ───────────────────────────────────── */
   .hit.picking{grid-template-columns:24px minmax(0,1fr) minmax(92px,auto) auto}
   .hit.picking.pics{grid-template-columns:24px 42px minmax(0,1fr) minmax(92px,auto)}
@@ -976,9 +986,14 @@
   /* ⭐ Clear is the way OUT of the mode, so it is the one filled control — the render gives it the accent */
   .pickbar [data-testid="till-pick-none"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
   /* ⭐ §8 / mobile-first §2 rule 3: a touch target is ≥44px. It was 34, which is a mouse's button, not a thumb's. */
-  .hit .addbtn{width:44px;height:44px;border:1px solid var(--edge);background:var(--card);color:var(--ok);
-       border-radius:10px;font-size:1.35em;font-weight:800;line-height:1;cursor:pointer;flex:none}
-  .hit .addbtn:hover{background:var(--ok);color:var(--on-accent);border-color:var(--ok)}
+  /* ⚠️⚠️ THE + IS THE ONLY WAY TO ADD WITH A MOUSE, so it is FILLED, not outlined. 44px is the smallest a thumb
+     can hit; it is not the same as the most obvious thing on the row, and Athi could not find it. */
+  .hit .addbtn{width:56px;height:56px;border:1px solid var(--ok);background:var(--ok);color:var(--on-accent);
+       border-radius:14px;font-size:1.8em;font-weight:800;line-height:1;cursor:pointer;flex:none;
+       box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .hit .addbtn:hover{filter:brightness(1.08)}
+  /* ⭐ and the row you are ON gets the biggest one — the keyboard and the mouse agree about which row is next */
+  .hit.sel .addbtn{width:64px;height:64px;font-size:2em}
   .hit.sel{position:relative;z-index:2;background:var(--card);border-radius:10px;
            box-shadow:0 0 0 2px var(--ok), 0 6px 18px rgba(0,0,0,.20), inset 4px 0 0 var(--ok)}
   /* the product open in the Maintenance panel — lit by IDENTITY, so it survives a search that moves it */
@@ -1362,6 +1377,9 @@
   .cardhd .chn i{font-style:normal;color:var(--dim);font-size:.84em}
   .cardblock{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--paper)}
   .cardblock.quiet{color:var(--dim);font-size:.9em;background:var(--panel)}
+  /* ⚠️ a row whose control is not a choice right now — it still READS, it just cannot be pressed */
+  .prow2.quiet{opacity:.6}
+  .prow2.quiet .sw{pointer-events:none}
   .cardblock.pending{border-color:var(--warn);background:var(--warn-tint)}
   .blabel{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--dim);font-size:.76em;
           font-weight:700;letter-spacing:.07em;margin-bottom:8px}
@@ -3727,6 +3745,20 @@ var FILTER = { offer:false, cat:null, off:false, job:null }, OFFER_STAMP = null;
  * visible."* One reading of it, used by the row, the toggle, the Stock-out list and the warning on the bill.
  * ⚠️ AN ABSENT STATUS MEANS AVAILABLE — every row that predates the field is a normal row (lib/itemstatus.js).
  */
+/**
+ * ⭐⭐ THREE TILE SIZES ([TILL-66]). Athi: *"can we provide 3 different sizes for the product in the quick
+ * keys, like thumbnail, next size and large, so people can choose the size depends on the preference."*
+ * ⚠️ IT IS A SIZE, NOT A STYLE. The tile STYLE (classic, block, photo…) is the screen library's and stays
+ * where it is; this only says how much room one tile gets. Two settings, two questions.
+ */
+var TILE_SIZES = [['sm', 'Small'], ['md', 'Medium'], ['lg', 'Large']];
+function tileSize(){ var v = ls.get('cb_till_tilesize', 'md'); return /^(sm|md|lg)$/.test(v) ? v : 'md'; }
+function tileSizeSet(v){ ls.set('cb_till_tilesize', v); tileSizeApply(); paintQuick(); }
+function tileSizeApply(){
+  var b = document.body; if (!b) return;
+  TILE_SIZES.forEach(function(p){ b.classList.remove('tiles-' + p[0]); });
+  b.classList.add('tiles-' + tileSize());
+}
 function thumbsOn(){ return ls.get(shopLs('cb_till_thumbs'), 'off') === 'on'; }
 function thumbsToggle(){
   /* ⚠️ the row that HOLDS the switch has to repaint too, or the words beside it stay stale */
@@ -6163,6 +6195,7 @@ function applyTillOptions(){
   try { panelPaint(); } catch (_) {}
   try { densityApply(); } catch (_) {}
   try { keysGripWire(); } catch (_) {}
+  try { tileSizeApply(); } catch (_) {}
   try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
   try { paintHits(); } catch (_) {}
   /* ⚠️ THE CHIPS REPAINT WITH EVERYTHING ELSE. applyTillOptions() redrew the keys and the shelf but not the
@@ -7056,6 +7089,19 @@ function offerWords(st, shown){
 /** ⚠️ a value set back to what the shop already holds is NOT a change — it is removed, so Save cannot report a no-op */
 function pendSet(key, value, actual){
   if (String(value) === String(actual)) delete PEND[key]; else PEND[key] = value;
+  /**
+   * ⚠️⚠️ OFF THE SHELF TAKES IT OFF THE SCREEN ([TILL-67]). A shop screen advertising something nobody can buy
+   * sends a customer to the counter to be told no — so the two cannot disagree in that direction.
+   * ⚠️ ONE WAY ONLY. Putting a product back on the shelf says nothing about the screen; most things are
+   * sellable and not advertised, and quietly promoting something because it came back would be a decision
+   * nobody made.
+   * ⚠️ STAGED like everything else here — the foot names it and Discard undoes it. It is not a second write.
+   */
+  if (key === 'status' && value === 'unavailable') {
+    var it = cardItem();
+    var wasOn = it ? !!cardVal(it, 'screen') : false;
+    if (wasOn) PEND.screen = false;
+  }
   paintCard(); paintHits();
 }
 function pendOffer(id, out, actual){
@@ -7464,9 +7510,18 @@ function cardForGood(i){
     + cardSwitch(!off, 'card-avail', "pendSet('status','" + (off ? 'available' : 'unavailable') + "','" + statusOf(i) + "')", '')
     + '</div>'
     + (PEND.status !== undefined ? '<div class="was">was ' + (actualOff ? 'off the shelf' : 'on the shelf') + '</div>' : '')
-    + '<div class="prow2' + (PEND.screen !== undefined ? ' pending' : '') + '">'
-    + '<span class="pt"><b>Pick for the shop screen</b><i>otherwise the screen chooses on its own</i></span>'
-    + cardSwitch(!!onScreen, 'card-screen', "pendSet('screen'," + (onScreen ? 'false' : 'true') + ',' + (!!i.on_screen) + ')', '')
+    /**
+     * ⚠️ WHILE IT IS OFF THE SHELF THE SCREEN SWITCH IS NOT A CHOICE ([TILL-67]). It reads off, it says why, and
+     * it cannot be turned on — a control that looks live and refuses to hold its value is worse than one that
+     * explains itself. It comes back the moment the product is on the shelf again.
+     */
+    + '<div class="prow2' + (PEND.screen !== undefined ? ' pending' : '') + (off ? ' quiet' : '') + '">'
+    + '<span class="pt"><b>Pick for the shop screen</b><i>'
+    + (off ? 'off the shelf \u2014 it cannot be on the shop screen' : 'otherwise the screen chooses on its own')
+    + '</i></span>'
+    + (off
+        ? cardSwitch(false, 'card-screen', 'void 0', '')
+        : cardSwitch(!!onScreen, 'card-screen', "pendSet('screen'," + (onScreen ? 'false' : 'true') + ',' + (!!i.on_screen) + ')', ''))
     + '</div>'
     + '</div>';
 }
@@ -8382,6 +8437,13 @@ function pick(n){
   if (MODE === 'maintain') return add(n);
   var list = hits(); if (!list[n]) return;
   SEL = n; paintHits();
+  /**
+   * ⚠️⚠️ THE CARET GOES BACK TO THE SEARCH BOX. Enter is handled by searchKey(), which lives ON that box — so
+   * without this, arriving at a row by mouse left focus on <body> and Enter did nothing, while the shortcut
+   * bar went on promising "Enter or double-click add". It also means the next barcode still lands, which is
+   * why the caret belongs there on this counter anyway. [[feedback-silence-is-the-bug]]
+   */
+  try { focusSearch(); } catch (_) {}
 }
 async function add(n){
   var i = hits()[n]; if (!i) return;
@@ -13806,6 +13868,19 @@ document.addEventListener('keydown', function(e){
   }
   /* ⚠️ AND THE NUMBER KEYS. 1–9 fire a quick key; while arranging they would sell the very thing being moved. */
   if (QK_ARRANGE && /^[0-9]$/.test(e.key) && document.activeElement !== document.getElementById('q')){ e.preventDefault(); return; }
+  /**
+   * ⚠️ A NARROW FALLBACK FOR ENTER. pick() hands the caret back, so searchKey() normally gets this — but focus
+   * can be lost other ways (a click on the pane, a repaint under the pointer), and then the shortcut bar's
+   * promise fails silently again.
+   * ⚠️⚠️ ONLY WHEN NOTHING IS FOCUSED. If the caret is in ANY field this must not fire, or Enter would add the
+   * line twice — once here and once in searchKey(). And never over an open dialog.
+   */
+  if (e.key === 'Enter' && MODE === 'sell' && !e.ctrlKey && !e.metaKey && !e.altKey
+      && (!document.activeElement || document.activeElement === document.body)
+      && !document.querySelector('dialog[open]')
+      && hits().length) {
+    add(SEL); e.preventDefault(); return;
+  }
   if (e.key === 'F2'){ focusSearch(); e.preventDefault(); }
   /* ⭐ Ctrl+↑ / Ctrl+↓ — raise or lower the line just added, without reaching for the mouse */
   if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){ bumpLast(e.key === 'ArrowUp' ? 1 : -1); e.preventDefault(); return; }
