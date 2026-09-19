@@ -1434,6 +1434,17 @@
                      flex-direction:column;gap:6px}
   #stcanvas .m-ghost b{font-size:.8em;color:var(--dim);font-weight:700}
   #stcanvas .m-ghost i{font-style:normal;border-radius:7px;padding:7px 10px;font-size:.82em;font-weight:700}
+  /* ── ⭐ ordering the categories ([TILL-87]) ─────────────────────────────────── */
+  .catrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--line)}
+  .catrow:first-child{border-top:0}
+  .catrow .cn{flex:0 0 26px;color:var(--dim);font-size:.82em;font-variant-numeric:tabular-nums}
+  .catrow .ct{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .catrow .cq{color:var(--dim);font-size:.84em;white-space:nowrap}
+  /* ⚠️ 40px targets: this is pressed with one finger on a counter, often more than once in a row */
+  .catrow button{min-width:40px;min-height:40px;border:1px solid var(--line);background:var(--paper);
+                 color:var(--ink);border-radius:9px;font:inherit;cursor:pointer}
+  .catrow button:disabled{opacity:.3;cursor:default}
+  .catnote{color:var(--dim);font-size:.85em;line-height:1.5;margin:10px 0 0}
   .stgal .gn{font-weight:700;font-size:1.01em}
   .stgal .gd{color:var(--dim);font-size:.845em;line-height:1.45}
   .stgal .gt{display:flex;flex-wrap:wrap;gap:5px}
@@ -2045,6 +2056,17 @@
   </div>
 </dialog>
 <!-- ⭐⭐ THE NINE, AS PICTURES (png/StylePresets.png) — "Kiosk · vertical" means nothing as text -->
+<!-- ⭐⭐ THE ORDER A MENU IS READ IN ([TILL-87]) — starters, then drinks, then the main course. Ours to make
+     settable; never ours to guess, because a grocery reads nothing like a restaurant. -->
+<dialog id="catdlg" class="dlg" data-testid="till-catorder-dlg">
+  <h3>Order the categories <span class="u">the order they are listed in — on the chips, on the keys and in maintenance</span></h3>
+  <div id="catbody"></div>
+  <div class="dlgbtns">
+    <button data-testid="till-catorder-reset" onclick="catOrderReset()">Back to most-used first</button>
+    <button onclick="catOrderClose()">Cancel · Esc</button>
+    <button class="pri" data-testid="till-catorder-save" onclick="catOrderSave()">Save the order</button>
+  </div>
+</dialog>
 <dialog id="stylegal" class="dlg wide" data-testid="till-style-gallery">
   <h3>Pick a starting style <span class="u">Each one is a whole screen, not a colour — and you can change any part of it afterwards.</span></h3>
   <div class="stgal" id="stygal"></div>
@@ -4178,6 +4200,74 @@ var FILTER = { offer:false, cat:null, off:false, job:null }, OFFER_STAMP = null;
  * where it is; this only says how much room one tile gets. Two settings, two questions.
  */
 /** ⭐ gather the keys under their category — a choice per device, like the other things that change the look */
+/**
+ * ── ⭐⭐ SETTING THE ORDER ([TILL-87]) ───────────────────────────────────────
+ * ⚠️ A DRAFT UNTIL SAVED, like every other setting on this counter: moving a row changes the list in the
+ * dialog and nothing on the screen behind it. Cancel really cancels.
+ */
+var CATDRAFT = null;
+function catOrderOpen(){
+  CATDRAFT = catsRanked().map(function(c){ return c.name; });
+  catOrderPaint();
+  var d = document.getElementById('catdlg');
+  if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+}
+function catOrderClose(){
+  CATDRAFT = null;
+  var d = document.getElementById('catdlg');
+  if (d && d.open) { try { d.close(); } catch (_) {} }
+}
+function catMove(i, by){
+  if (!CATDRAFT) return;
+  var j = i + by;
+  if (j < 0 || j >= CATDRAFT.length) return;
+  var t = CATDRAFT[i]; CATDRAFT[i] = CATDRAFT[j]; CATDRAFT[j] = t;
+  catOrderPaint();
+}
+/** ⚠️ RESET MEANS "STOP HAVING AN ORDER", not "order it alphabetically" — the fallback is most-used first */
+function catOrderReset(){
+  catOrderSet([]);
+  catOrderClose();
+  try { paintChips(); paintQuick(); } catch (_) {}
+  toastLine('Back to most-used first.');
+}
+function catOrderSave(){
+  var d = CATDRAFT || [];
+  catOrderSet(d);
+  catOrderClose();
+  /* ⭐ REPAINT EVERY SURFACE THAT READS IT — the chips, the keys and the shelf all list categories */
+  try { paintChips(); paintQuick(); paintList(); } catch (_) {}
+  toastLine(d.length ? ('Categories now start with ' + d[0] + '.') : 'Order cleared.');
+}
+function catOrderPaint(){
+  var box = document.getElementById('catbody'); if (!box || !CATDRAFT) return;
+  var n = {};
+  catsRanked().forEach(function(c){ n[c.name] = c.n; });
+  if (!CATDRAFT.length) {
+    box.innerHTML = '<p class="catnote">This counter has no categories yet — they come from the shop with the'
+      + ' products. Read the shop again once its products carry a category.</p>';
+    return;
+  }
+  box.innerHTML = CATDRAFT.map(function(c, i){
+    return '<div class="catrow" data-testid="till-catrow-' + i + '">'
+      + '<span class="cn">' + (i + 1) + '</span>'
+      + '<span class="ct">' + esc(c) + '</span>'
+      + '<span class="cq">' + (n[c] || 0) + '</span>'
+      + '<button data-testid="till-catup-' + i + '" aria-label="Move ' + esc(c) + ' up"'
+      + (i === 0 ? ' disabled' : '') + ' onclick="catMove(' + i + ',-1)">\u2191</button>'
+      + '<button data-testid="till-catdown-' + i + '" aria-label="Move ' + esc(c) + ' down"'
+      + (i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="catMove(' + i + ',1)">\u2193</button>'
+      + '</div>';
+  }).join('')
+    /**
+     * ⚠️⚠️ SAY WHERE IT IS KEPT, UNPROMPTED. The order belongs to the MENU and ought to reach every
+     * counter; it needs a catalogue field to do that. Until then it is this device's copy, and a shopkeeper
+     * who sets it here and finds counter 2 unchanged deserves to have been told, not surprised.
+     * [[feedback-state-rls-status]]
+     */
+    + '<p class="catnote">Kept on this counter. A second counter keeps its own order until you set it there'
+    + ' too — the shop-wide one needs a field in the catalogue, which is not built yet.</p>';
+}
 function byCatOn(){ return ls.get('cb_till_bycat', '') === '1'; }
 function byCatToggle(){ ls.set('cb_till_bycat', byCatOn() ? '' : '1'); paintQuick(); }
 /**
@@ -4190,15 +4280,49 @@ function byCatToggle(){ ls.set('cb_till_bycat', byCatOn() ? '' : '1'); paintQuic
  * matters most to this counter leads rather than the alphabet deciding.
  */
 function byCatOf(i){ return String((i && i.category) || '').trim() || '\u2014'; }
+/**
+ * ── ⭐⭐⭐ ONE CATEGORY ORDER, READ BY EVERY SURFACE ([TILL-87]) ────────────────────────
+ * Athi: *"first starters, Drinks, main course and so on, so it has to be in that order."*
+ * ⚠️ THE SHOP SAYS; WE DO NOT GUESS. A restaurant's order is nothing like a grocery's, so there is no
+ * default list worth shipping — only a way to state one, and a defensible fallback until it is stated.
+ */
+function catOrder(){
+  try { var a = JSON.parse(ls.get(shopLs('cb_till_catorder'), '[]')); return Array.isArray(a) ? a : []; }
+  catch (_) { return []; }
+}
+function catOrderSet(list){ ls.set(shopLs('cb_till_catorder'), JSON.stringify(list || [])); }
+/**
+ * ⭐ EVERY CATEGORY ON THIS COUNTER, IN THE ONE ORDER, with its count. The saved order leads; anything the
+ * shop has not placed yet follows by the old rule (most products first), so a new category that arrives
+ * overnight appears at the end rather than silently jumping into the middle of a set menu.
+ * ⚠️ A SAVED NAME THAT NO LONGER EXISTS IS DROPPED, not kept as an empty chip — a category the shop
+ * retired must not go on being listed because somebody once ordered it.
+ */
+function catsRanked(items){
+  var list = items || (S && S.items) || [];
+  var count = {};
+  list.forEach(function(i){ var c = byCatOf(i); if (c !== '\u2014') count[c] = (count[c] || 0) + 1; });
+  var saved = catOrder(), at = {};
+  saved.forEach(function(c, n){ at[c] = n; });
+  return Object.keys(count).sort(function(a, b){
+    var ia = (at[a] === undefined) ? 1e6 : at[a], ib = (at[b] === undefined) ? 1e6 : at[b];
+    if (ia !== ib) return ia - ib;
+    return count[b] - count[a];                 /* the fallback, unchanged: most products first */
+  }).map(function(c){ return { name: c, n: count[c], placed: at[c] !== undefined }; });
+}
+/**
+ * ⚠️⚠️ IT USED TO BE FIRST-SEEN, i.e. whatever order the shop's snapshot happened to arrive in, while the
+ * CHIP ROW above it sorted by count — two orders for one set of categories, on one screen ([TILL-87]).
+ * Both now read catsRanked(), so they cannot disagree.
+ */
 function byCatOrder(list){
-  var seen = [], bucket = {};
-  list.forEach(function(i){
-    var c = byCatOf(i);
-    if (!bucket[c]) { bucket[c] = []; seen.push(c); }
-    bucket[c].push(i);
-  });
+  var bucket = {};
+  list.forEach(function(i){ var c = byCatOf(i); (bucket[c] = bucket[c] || []).push(i); });
+  var seen = catsRanked(list).map(function(c){ return c.name; });
+  /* ⚠️ the unnamed bucket is LAST and is never reordered — "Everything else" is not a category */
+  if (bucket['\u2014']) seen.push('\u2014');
   var out = [];
-  seen.forEach(function(c){ bucket[c].forEach(function(x){ out.push(x); }); });
+  seen.forEach(function(c){ (bucket[c] || []).forEach(function(x){ out.push(x); }); });
   return { list: out, order: seen, count: function(c){ return (bucket[c] || []).length; } };
 }
 /**
@@ -5803,9 +5927,12 @@ function paintListTools(){
 }
 function paintChips(){
   var el = document.getElementById('chips'); if (!el || !S) return;
+  /* ⚠️ THE SAME RANKING THE GROUPED KEYS USE ([TILL-87]). This row used to sort by count while the keys
+     below it used first-seen — one screen, two orders for the same categories. */
+  var ranked = catsRanked();
   var cats = {};
-  (S.items || []).forEach(function(i){ if (i.category) cats[i.category] = (cats[i.category] || 0) + 1; });
-  var list = Object.keys(cats).sort(function(a,b){ return cats[b] - cats[a]; }).slice(0, 14);
+  ranked.forEach(function(c){ cats[c.name] = c.n; });
+  var list = ranked.map(function(c){ return c.name; }).slice(0, 14);
   var none = !FILTER.offer && !FILTER.cat && !FILTER.off;
   /* ⚠️ THE COUNT IS SHOWN EVEN WHEN IT IS ZERO. A chip that appears only when something is out of stock is a chip nobody can
      find when they want to check — and "0" is itself the answer to "is anything off today?" */
@@ -7896,6 +8023,14 @@ function paintQuick(){
     + '<button class="qarr' + (byCatOn() ? ' on' : '') + '" data-testid="till-bycat"'
     + ' title="gather the keys under their category, with a break between"'
     + ' onclick="byCatToggle()">\u2261 By category</button>'
+    /**
+     * ⭐ BESIDE THE CONTROL THAT SHOWS THE ORDER ([TILL-87]). Athi: *"first starters, Drinks, main course
+     * and so on."* A setting is easiest to find next to the thing it changes, and this is the one somebody
+     * reaches for the instant they see their menu come out in the wrong order.
+     */
+    + '<button class="qarr" data-testid="till-catorder"'
+    + ' title="the order the categories are listed in, everywhere on this counter"'
+    + ' onclick="catOrderOpen()">\u2195 Order them</button>'
     /* ⚠️ A SHORTCUT, NOT A SECOND ANSWER ([TILL-80]) — the same store Screen style writes, kept here because
        judging photos on keys is done while LOOKING at the keys. The title now says which surface it is. */
     + '<label class="qphotos" data-testid="till-quick-photos"'

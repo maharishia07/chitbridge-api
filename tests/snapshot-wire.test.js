@@ -344,7 +344,28 @@ it('⭐⭐ the keys gather under their category, and a category chip can carry a
    * and nobody could say why a key had moved. [[feedback-name-vs-behaviour]]
    */
   assert.ok(ord.indexOf('.sort(') < 0, 'gathering by category sorts the keys and loses the order inside each');
-  assert.ok(ord.indexOf('seen.push(c)') > 0, 'the categories do not come out in the order their first key appears');
+  /**
+   * ⚠️⚠️ MOVED, NOT DELETED ([TILL-87]). This used to assert `seen.push(c)` — FIRST-SEEN order, i.e.
+   * whatever order the shop's snapshot happened to arrive in. Athi: *"it is coming here in alphabetic or
+   * something"*. The rule being protected has not changed (the alphabet must not decide, and the order
+   * INSIDE a category must survive); the answer has: the shop states the order, and catsRanked() is the one
+   * place that knows it.
+   */
+  assert.ok(ord.indexOf('catsRanked(') > 0,
+    'the grouped keys no longer read the one category order — they have an order of their own again');
+  /**
+   * ⚠️⚠️ AND THE FAULT THAT CAUSED THIS: TWO SURFACES, TWO ORDERS. paintChips() sorted by count while
+   * byCatOrder() used first-seen, so one screen could list the same categories two ways. Both must read the
+   * SAME function or they will drift again. [[feedback-no-duplicate-functions]]
+   */
+  const chipsFn = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
+  assert.ok(chipsFn.indexOf('catsRanked(') > 0,
+    'the chip row has gone back to its own sort — it must rank categories the same way the keys do');
+  assert.ok(!/Object\.keys\(cats\)\s*\.sort/.test(chipsFn),
+    'the chip row sorts categories itself again, which is how it came to disagree with the keys');
+  /* ⭐ and the shop's own order is kept where the shop's things are kept, not on the device */
+  assert.ok(page.indexOf("shopLs('cb_till_catorder')") > 0,
+    'the category order is no longer shop-scoped — two shops on one counter would share one menu order');
   /* ⭐ the break is a grid property: a full-row heading ENDS the row, so the next category starts fresh */
   assert.ok(page.indexOf('.qcat{grid-column:1/-1') > 0,
     'the category heading no longer spans the row, so it cannot break the line');
