@@ -1956,6 +1956,15 @@
   .shopform .note{grid-column:1/-1;font-size:.85em;color:var(--dim);margin:0}
   /* ⚠️ quiet on purpose — it is reassurance, and reassurance printed loudly reads as a warning */
   .shopreg{font-size:.85em;color:var(--dim);margin-top:6px;line-height:1.45}
+  /* ⭐ one card per trade — big enough to touch, and each one says what it will DO, not what it contains */
+  .startbody{display:grid;gap:12px;margin:6px 0 12px}
+  .trade{display:block;width:100%;text-align:start;padding:14px 16px;border:1px solid var(--line);
+         border-radius:12px;background:var(--panel);color:var(--ink);cursor:pointer;font:inherit}
+  .trade:hover,.trade:focus-visible{border-color:var(--accent);outline:none}
+  .trade b{display:block;font-size:1.1em;margin-bottom:3px}
+  .trade .out{display:block;color:var(--dim);font-size:.9em;margin-bottom:6px}
+  .trade .eg{display:block;color:var(--dim);font-size:.85em}
+  .trade[disabled]{opacity:.55;cursor:default}
   .shopsay{font-size:.9em;margin:0 0 10px;min-height:1.2em}
   .shopsay.bad{color:var(--warn,#a8410f)}
   @media (max-width:560px){ .shopform{grid-template-columns:1fr} }
@@ -2282,6 +2291,14 @@
 </dialog>
 <!-- ⭐⭐ THE SHOP'S OWN DETAILS, EDITED HERE ([TILL-105]). What a bill is headed with, plus the GSTIN that
      decides whether there is tax on it at all. -->
+<!-- ⭐⭐⭐ THE FRONT DOOR ([TILL-107]). Two trades, each one a blueprint with a stated outcome; choosing one
+     mints a starter catalogue and the shop can sell within the minute. -->
+<dialog id="startdlg" class="dlg" data-testid="till-start-dlg">
+  <h3>Start your shop <span class="u">pick what you sell — you can change every price and name afterwards</span></h3>
+  <div id="startbody" class="startbody"></div>
+  <div id="startsay" class="shopsay"></div>
+  <div class="dlgbtns"><button onclick="startClose()">Not now · Esc</button></div>
+</dialog>
 <dialog id="shopdlg" class="dlg" data-testid="till-shop-dlg">
   <h3>Your shop <span class="u">what every bill is headed with · kept by ChitBridge, so every counter and your storefront agree</span></h3>
   <div id="shopform" class="shopform"></div>
@@ -9084,7 +9101,17 @@ function shelfLine(shown){
   var seeAll = (MODE === 'maintain');
   var total = seeAll ? ((S && S.items) || []).length
     : ((S && S.items) || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
-  if (!total) return '';
+  /**
+   * ⭐⭐⭐ A COUNTER WITH NOTHING TO SELL OFFERS TO OPEN THE SHOP ([TILL-107]). This line used to be
+   * `if (!total) return '';` — the shelf simply said nothing, and the only way forward was a back office the
+   * shopkeeper does not use. Athi: *"so we can start the store in no time."*
+   * ⚠️ Not when there is no snapshot at all (handled above): that counter is not empty, it is unpaired, and
+   * telling it to pick a trade would be answering a question nobody asked.
+   */
+  if (!total) {
+    return '<div class="shelfline" data-testid="till-shelf-count">Nothing to sell yet · '
+      + '<button class="daylink" data-testid="till-start-shop" onclick="startOpen()">Start your shop</button></div>';
+  }
   var when = S.at ? new Date(S.at).toTimeString().slice(0, 5) : null;
   var n = function(v){ return Number(v).toLocaleString('en-IN'); };
   var txt;
@@ -13027,6 +13054,71 @@ function regWords(){
   return 'You only need to register once your sales pass '
     + r.bands.map(function(b){ return b.words + ' a year for ' + b.what; }).join(', or ')
     + (r.caveat ? ' (' + r.caveat + ')' : '') + '.';
+}
+/**
+ * ── ⭐⭐⭐ STARTING A SHOP FROM THE COUNTER ([TILL-107]) ───────────────────────────────
+ *
+ * ⚠️ THE TRADES ARE ASKED FOR, NEVER LISTED HERE. The server answers with each blueprint's label, its
+ * OUTCOME and a few sample products — and the package is versioned, so the day a starter list is improved this
+ * page shows the new one without being touched.
+ */
+var TRADES = null;
+async function startOpen(){
+  var d = document.getElementById('startdlg'); if (!d) return;
+  document.getElementById('startbody').innerHTML = '<p class="note">Asking ChitBridge what you can start from…</p>';
+  startSay('', false);
+  d.showModal();
+  var r = null;
+  try { r = await HOST.tillGet('/api/till/catalogue/blueprints'); } catch (_) { r = null; }
+  if (!r || !r.blueprints) {
+    /* ⚠️ SETUP MAY ASK FOR THE LINE, and must say so plainly rather than showing an empty list */
+    document.getElementById('startbody').innerHTML = '';
+    startSay('ChitBridge could not be reached, so the starter shops cannot be listed. Setting up a shop needs the'
+      + ' line once — selling afterwards does not. Try again when it is back.', true);
+    return;
+  }
+  TRADES = r;
+  document.getElementById('startbody').innerHTML = (r.blueprints || []).map(function(b){
+    /* ⚠️ the OUTCOME is the headline, because that is what a blueprint is: [[project-blueprint-lifecycle-feature]] */
+    return '<button class="trade" data-testid="till-trade-' + esc(b.key) + '" onclick="startMint(\'' + esc(b.key) + '\')">'
+      + '<b>' + esc(b.label) + '</b>'
+      + '<span class="out">' + esc(b.outcome) + '</span>'
+      + '<span class="eg">' + b.products + ' products to begin with · ' + esc((b.sample || []).join(', ')) + '…</span>'
+      + '</button>';
+  }).join('');
+  /* ⚠️ AND WHAT IS ACTUALLY REQUIRED, said once. A shopkeeper should know the bar is two fields. */
+  if (r.axiom) document.getElementById('startbody').insertAdjacentHTML('beforeend',
+    '<p class="note">Every product needs only a <b>' + r.axiom.join('</b> and a <b>') + '</b>.'
+    + ' Everything else can come later, or never.</p>');
+}
+function startClose(){ var d = document.getElementById('startdlg'); if (d && d.open) d.close(); }
+function startSay(t, bad){
+  var el = document.getElementById('startsay'); if (!el) return;
+  el.textContent = t || ''; el.className = 'shopsay' + (bad ? ' bad' : '');
+}
+/**
+ * ⚠️⚠️ THE SERVER MINTS IT, not this page. It numbers the products against what the shop already holds — a
+ * sequence allocated in the browser could hand two counters the same code, which is the bill-series incident
+ * in the catalogue. [[project-till-series-prefix]]
+ */
+async function startMint(key){
+  Array.prototype.forEach.call(document.querySelectorAll('.trade'), function(b){ b.setAttribute('disabled',''); });
+  startSay('Setting up your shop…', false);
+  var r = null;
+  try { r = await HOST.tillPost('/api/till/catalogue', { blueprint: key }, { noQueue: true }); } catch (_) { r = null; }
+  if (!r || !r.ok) {
+    Array.prototype.forEach.call(document.querySelectorAll('.trade'), function(b){ b.removeAttribute('disabled'); });
+    startSay(((r && r.why) || 'ChitBridge could not be reached') + '. Nothing has been added.', true);
+    return;
+  }
+  startSay((r.message || 'Added') + ' · reading them onto this counter…', false);
+  /* ⭐ the products exist on the server now; the counter reads its shop again so they arrive the usual way */
+  try { await refresh(); } catch (_) {}
+  startClose();
+  /* ⚠️ paintHits is the one that redraws the product list — the first cut of this line called paintShelf(),
+     which does not exist, inside a try/catch that would have swallowed it. The shop would have been minted
+     and the shelf would have looked empty until the next keystroke. [[feedback-silence-is-the-bug]] */
+  try { paintChips(); paintQuick(); paintHits(); } catch (_) {}
 }
 /** the boxes, by their server field name */
 function shopBox(k){ return document.querySelector('#shopform input[data-shop="' + k + '"]'); }

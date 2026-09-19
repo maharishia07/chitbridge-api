@@ -17,6 +17,7 @@ const regional = require('../lib/regional');    // the currency comes from the E
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
+const catwrite = require('../lib/catalogue-write');   /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
 /* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
 const defaults = require('../lib/defaults');
@@ -231,55 +232,16 @@ router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, asyn
       return res.status(400).json({ error: 'Invalid product', message: 'Every item must be an object.' });
     }
 
-    /* Resolved ONCE for the whole request — this is most of what the per-item version was paying for. */
-    const schema_id = await defaultSchemaId(entity_id);
-    const currency = await regional.currencyFor(entity_id);
-
     /**
-     * ⚠️ THE RULES WERE STILL BEING READ ONCE PER ITEM. `validateItem` queries `schema_fields` on every call, so a
-     * 200-item paste fired 200 identical queries for a rule set that cannot change mid-request — the exact cost
-     * the header above says was fixed for the import, in a route written afterwards to be fast. Read once, judge
-     * in memory, the way the import already does.
+     * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
+     * rules once, validate EVERY row before writing ANY, declare the columns, stamp the money, insert, meter —
+     * in that order. It moved out of this route unchanged when the counter became a second caller, because a
+     * seven-step sequence copied into two files is seven decisions that will disagree later.
+     * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    let ruleRows = await schemaFieldsOf(schema_id);
-    const bad = [];
-    for (let i = 0; i < items.length; i++) {
-      const verr = validateAgainst(ruleRows, items[i]);
-      if (verr) bad.push({ index: i, message: verr });
-    }
-    if (bad.length) {
-      return res.status(400).json({ error: 'Invalid product',
-        message: bad.length + ' item(s) were refused and nothing was written.', invalid: bad });
-    }
-
-    /**
-     * ⭐ DECLARE FIRST, FOR THE WHOLE BATCH — same rule as the single add, and it must be the same rule or the two
-     * doors disagree again. Validation has already passed above, so nothing is declared for a batch that was
-     * refused; the declaration is committed once, in order, before any row is written.
-     */
-    const decl = await catcols.ensureDeclaredMany({
-      query, entity_id, schema_id, items,
-      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
-    });
-    const sid = decl.schema_id || schema_id;
-
-    /* STAMP after validation, on the raw shape, so the schema still sees the number a person typed. */
-    const stamped = decl.items.map((it) => JSON.stringify(money.stampItem(it, currency)));
-
-    const r = await withEntity(entity_id, (db) => db.query(
-      `INSERT INTO catalogue_items (entity_id, schema_id, item_data)
-       SELECT $1, $2, x FROM unnest($3::jsonb[]) AS x
-       RETURNING *`,
-      [entity_id, sid, stamped]));
-
-    /* ⭐ Metered after the write, best-effort, never blocking — one event per item, same as the single add. */
-    try {
-      const meter = require('../lib/meter').meter;
-      for (const row of r.rows) {
-        meter(entity_id, 'catalogue.item', { detail: row.item_id, rid: req.id }).catch(() => {});
-      }
-    } catch (_) {}
-
+    const w = await catwrite.writeItems({ entity_id, items });
+    if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
+    const r = { rows: w.rows }, decl = w.declared || { declared: [], warnings: [] };   /* ⚠️ the same two fields the response has always carried */
     shopChanged(entity_id, 'products bulk');
     res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows,
       declared: decl.declared, warnings: decl.warnings });

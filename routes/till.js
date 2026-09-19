@@ -1580,6 +1580,109 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
   }
 });
 
+/**
+ * ── ⭐⭐⭐ POST /api/till/catalogue — A SHOP OPEN FOR BUSINESS, FROM THE COUNTER ([TILL-107]) ────────
+ *
+ * Athi, 2026-09-19: *"can we have a proper two catalogue, one for Veg Store and another one for Hotel… how do
+ * we bring the axiom out of the lot? so we can start the store in no time."*
+ *
+ *   { blueprint: 'veg' | 'hotel' }              mint that trade's starter catalogue
+ *   { products: [ {name, price, …}, … ] }      commit rows a person already approved in the preflight report
+ *
+ * ⭐ THE AXIOM IS name + price, MEASURED. lib/catalogue-blueprint records how: the counter was driven with
+ * products stripped field by field and it sells on those two alone. So this route asks for nothing more, and a
+ * shop is never made to supply an HSN code before it may sell a tomato.
+ *
+ * ⚠️ IT WRITES THROUGH lib/catalogue-write, the same path POST /api/products/bulk uses — schema resolved
+ * once, rules read once, every row validated before any is written, columns declared, money stamped. Athi:
+ * *"ensure that we are not writing anything new."*
+ *
+ * ⚠⚠ SETUP IS ONLINE AND THAT IS DELIBERATE. Authoring a product offline would create a LOCAL product needing
+ * a merge rule against a back-office one; Athi settled it — *"while setting up the store… we can still
+ * connect."* The counter's offline job stays what [TILL-106] proved: selling what it already holds.
+ */
+router.post('/catalogue', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const BP = require('../lib/catalogue-blueprint');
+    const catwrite = require('../lib/catalogue-write');
+    const units = require('../lib/units');
+
+    /**
+     * ⚠️⚠️ MINTING TWICE DOUBLES A CATALOGUE, and the copies carry different codes — two Tomatoes that are
+     * not the same Tomato. The refusal says what is already there rather than a bare 409.
+     */
+    const have = await catwrite.countItems(entity_id);
+    if (have > 0 && b.replace !== true) {
+      return res.status(409).json({ error: 'not empty',
+        message: 'This shop already has ' + have + ' product' + (have === 1 ? '' : 's') + '.'
+          + ' Starting a catalogue again would add a second copy of each one.',
+        have: have });
+    }
+
+    const existing = await catwrite.codesInUse(entity_id);
+    let items = [], from = null, refused = [];
+
+    if (Array.isArray(b.products) && b.products.length) {
+      /* ⚠️ ROWS A PERSON HAS ALREADY APPROVED. The header reconciliation is csv-preflight's job and it
+         produces a report somebody agrees to; this is the step after that, never a second guess at it. */
+      const out = BP.rowsToProducts(b.products, b.blueprint, existing, { unitOf: units.unitOf });
+      items = out.products; refused = out.refused; from = 'file';
+      if (!items.length) {
+        return res.status(400).json({ error: 'nothing to add',
+          message: 'Not one row had both a name and a price.', refused: refused });
+      }
+    } else {
+      const bp = BP.blueprint(b.blueprint);
+      if (bp.key === 'general' && b.blueprint) {
+        return res.status(400).json({ error: 'unknown trade',
+          message: 'There is no starter catalogue for "' + String(b.blueprint).slice(0, 40) + '".',
+          choices: Object.keys(BP.BLUEPRINTS) });
+      }
+      if (!bp.starter.length) {
+        return res.status(400).json({ error: 'nothing to mint',
+          message: 'Choose a trade, or send the products you want added.', choices: Object.keys(BP.BLUEPRINTS) });
+      }
+      items = BP.mint(bp.key, existing);
+      from = 'blueprint:' + BP.pin(bp);
+    }
+
+    const w = await catwrite.writeItems({ entity_id, items: items });
+    if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
+
+    /* ⭐ the shop screen and every open counter hear it on the same bell a price change rides */
+    try { shopChanged(entity_id, 'catalogue started'); } catch (_) {}
+
+    res.json({ ok: true, added: w.rows.length, from: from,
+      /* ⚠️ REFUSALS TRAVEL BACK WITH THEIR ROW NUMBERS. An upload that quietly loses eleven of four hundred
+         products is the worst outcome here — nobody finds out until a customer asks for one. */
+      refused: refused,
+      message: w.rows.length + ' product' + (w.rows.length === 1 ? '' : 's') + ' added'
+        + (refused.length ? ', and ' + refused.length + ' row' + (refused.length === 1 ? '' : 's') + ' could not be' : '') });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+  }
+});
+
+/** ⭐ what a counter may start from — the trades, their outcomes, and what the axiom actually is */
+router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const BP = require('../lib/catalogue-blueprint');
+    const catwrite = require('../lib/catalogue-write');
+    let have = 0; try { have = await catwrite.countItems(auth.entityOf(req)); } catch (_) {}
+    res.json({
+      version: BP.VERSION, axiom: BP.AXIOM, enrich: BP.ENRICH, have: have,
+      blueprints: Object.keys(BP.BLUEPRINTS).map((k) => {
+        const bp = BP.blueprint(k);
+        return { key: bp.key, label: bp.label, outcome: bp.outcome, pin: BP.pin(bp),
+                 products: bp.starter.length, units: bp.units, categories: bp.categories,
+                 sample: bp.starter.slice(0, 4).map((p) => p.name) };
+      }),
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
 router.get('/bills', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

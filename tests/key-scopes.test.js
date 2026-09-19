@@ -67,7 +67,9 @@ const EXPECT = {
              allow: ['GET /api/till/snapshot', 'GET /api/till/bills', 'POST /api/chits/send',
                      'POST /api/till/price', 'POST /api/till/stock', 'POST /api/events/ticket',
                      /* ⚠️ the shop's own header and GSTIN — till key alone, by Athi's decision of 2026-09-19 */
-                     'POST /api/till/shop'] },
+                     'POST /api/till/shop',
+                     /* ⭐ the starter catalogue — a shop open for business on the day it registers */
+                     'POST /api/till/catalogue', 'GET /api/till/catalogue/blueprints'] },
   connector: { why: 'a program on a shop PC: products up, orders down, the bell',
              allow: ['GET /api/products', 'PATCH /api/products/abc', 'GET /api/chits/inbox', 'POST /api/events/ticket'] },
   offers:  { why: 'the offers engine as a service', allow: [] },

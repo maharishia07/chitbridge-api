@@ -345,6 +345,10 @@ const INFRA_LIBS = [
   'whatsapp-templates.js', // provider template shapes
 ];
 const ENGINE_OTHER = [
+  /* ⭐⭐ [TILL-107] — the two trade blueprints and their product-code sequence, and the ONE path that writes a
+     product into a catalogue. catalogue-write is CB's own sequence of decisions (declare → validate → stamp
+     → insert → meter), extracted from routes/products.js when the counter became a second caller. */
+  'catalogue-blueprint.js', 'catalogue-write.js',
   'offers-engine.js',
   /* ⚠️ NOT infra, and the difference matters. testnews.js ANNOUNCES; this one DECIDES — what state a finding
      is in, from its own history. That is a rule, and a rule is an engine: swap it and the board, the screen

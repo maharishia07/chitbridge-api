@@ -234,6 +234,11 @@ const KEY_ROUTES = {
                  password, use the till key alone for the time being.'* The route holds the whitelist — identity, contact
                  and GSTIN — and refuses currency and registration type, the two that decide what a bill CHARGES. */
               ['POST', /^\/api\/till\/shop$/],
+              /* ⭐⭐ STARTING THE STORE ([TILL-107]). A trade's starter catalogue, or rows a person approved in
+                 the preflight report. Setup is an ONLINE act (Athi: *"while setting up the store… we can still
+                 connect"*), so the server mints and the counter never authors a product locally. */
+              ['POST', /^\/api\/till\/catalogue$/],
+              ['GET', /^\/api\/till\/catalogue\/blueprints$/],
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */

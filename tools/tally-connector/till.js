@@ -464,6 +464,8 @@ const server = http.createServer(async (req, res) => {
       var want = url.searchParams.get('get') || '';
       var READ = ['/api/till/worth-an-offer', '/api/till/reward',
                   /* ⭐⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) */
+                  /* ⭐ what a shop can start from ([TILL-107]) — the trades, their outcomes and the axiom */
+                  '/api/till/catalogue/blueprints',
                   '/api/till/counters', '/api/till/quick-keys/groups', '/api/till/quick-keys/hidden',
                   '/api/till/quick-keys/screen-config'];
       var base = want.split('?')[0];
@@ -489,6 +491,9 @@ const server = http.createServer(async (req, res) => {
                    /* ⚠️⚠️ the shop's own header and GSTIN, till key alone ([TILL-105], Athi 2026-09-19). A shop PC is
                       exactly the machine whose owner has no back office open, so the agent must forward this one too. */
                    '/api/till/shop',
+                   /* ⭐⭐ starting the shop ([TILL-107]) — a desktop counter is exactly the machine whose owner
+                      has no back office open, so the agent must forward the mint as well. */
+                   '/api/till/catalogue',
                    /* ⭐ a counter finishing, deliberately and online */
                    '/api/till/close',
                    /* ⭐ on break, or billing — for the shop's Counters screen */
