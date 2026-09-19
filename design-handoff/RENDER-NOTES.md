@@ -49,6 +49,170 @@ building. **This is counter backlog, and it did not come from Athi — it came f
 
 ---
 
+## The sell screen, layout A — `Main.png`
+
+The one `status.json` calls **built**. Most of it is, but five things in the drawing are not on our counter.
+
+**Left.** Header on one line: shop · `Sell ⌄` · `Counter 1` · `nobody signed in` · `● online` ·
+`today 0 · ₹0.00` · ☰. Then a dark **`▦ Quick keys 1`** pill, the live group as a dismissible amber chip
+(`● Morning ✕`), and **`+ marked row`** at the right.
+
+⭐ **A TIME-BAND BANNER, which we do not have.** A tinted strip across the keys:
+> 🕐 **Afternoon** starts at 11:30 · 3 Morning keys are sold out.   `Not now`   **`Show Afternoon`**
+
+The counter notices the shift is about to turn over and offers the swap. `Not now` dismisses it; **Show
+Afternoon** switches group. This is the design being *helpful about time*, and nothing in our build does it.
+
+Group header: `MORNING  06:00 – 11:30 · 7 of 10 showing` ————— `Choose items` (a link, right-aligned).
+So a group states **its hours**, **how many of its keys are showing**, and offers a way to pick.
+
+**Tiles**: a short coloured bar top-left, the name, `₹40.00 / plate`, an **`✕` top-right that takes the
+product off the group inline**, and a green count badge when it is on the bill.
+
+⭐ **A `SOLD OUT · 3` STRIP PINNED AT THE FOOT**: `Ven Pongal ↺` `Poori Masala ↺` `Rava Dosa ↺` — struck
+through, each with an undo arrow to put it back. We hide sold-out keys; the render *keeps them visible and
+reversible*, which is the difference between "gone" and "gone until I say otherwise".
+
+**Right — the bill is a TABLE with column headings**: `# | ITEM | PRICE | QTY | QTY × PRICE | DISC. | VALUE`
+and an `✕` per row. QTY is a `− 5 +` stepper; `per plate · GST 5%` sits under the name; **DISC. shows `—`
+when there is none** rather than being blank. Foot: `Includes GST 5% · ₹29.76` with `▸ tax & offer breakdown`
+on the right, `TOTAL ₹625.00`, the three tenders, the QR block, `Amount taken` + `+ part`, then
+`Clear · Esc` `Park · F6` **`Save & print · F9`**. Very bottom: `everything has reached ChitBridge` ·
+`10,441 products, up to date.`
+
+---
+
+## ⭐⭐⭐ The tablet sell screen — `FullTablet.png` · **this is the real answer to the Pay question**
+
+**There are no tender buttons on the tablet sell screen at all.** The bill foot is:
+
+> `Saved · ▸ tax & offer breakdown`  −₹144.75
+> **TOTAL  ₹2,750.25**
+> `Clear`  `Park`
+> **`Pay ₹2,750.25 →`** — full width, filled, **the amount is on the button**
+
+That is it. One control, impossible to miss, and it carries the number so the eye lands on the money and the
+action in the same glance. Tapping it opens the overlay card in `FullTabletPay.png`.
+
+⚠️ So Athi's *"I was searching where it is"* was not a request for a second button — it was the absence of
+**this** one. Our tablet/desktop screen puts three tenders and a QR at the bottom of a scrolling column; the
+design replaces all of that with a single `Pay <amount> →` and moves the tenders into the card.
+
+**The rest of the tablet screen.** The search row carries a **scan button** (⛶) at its right end. The quick
+keys sit in their own boxed panel with a dark `▦ Quick keys · 2` label, group chips that state their fill —
+`Morning 9/10 ✕`, `Afternoon 10/10 ✕` — and `+ marked row`.
+
+⭐ **THE COLOURED BAR ON A TILE IS ITS GROUP.** Amber for the Morning row, orange for the Afternoon row. Two
+groups are on screen at once and the bar is how you tell which key came from which — not a stock level, not a
+margin. (`FullCompact` uses a coloured **dot** before the price for the same thing.)
+
+Under the keys, the ordinary product list: name + unit word, `BEV-01613 · Beverages`, the price large, and
+`MRP ₹358.00 ₹67.00 under` — the struck MRP with the gap **named as a fact, never as a saving**, which is
+what we already do. A `+` button per row.
+
+Right pane: `Customer (optional)` and `Phone`, **each with its own mic**; then a green strip —
+`Shop points · 1 point per ₹100.00 · name or phone holds them` — so rewards are stated at the top of the bill
+before anything is totalled.
+
+---
+
+## The compact terminal — `FullCompact.png` (1024×768)
+
+What a small desktop gives up, and what it must not:
+
+- The header collapses to one line with `·` separators.
+- ⭐ **Quick keys and search results become TABS**, not two stacked areas: `Quick keys 2` | `Results · 4`
+  with an underline on the active one. At 768px tall there is no room for both, so they share the space.
+  Group chips (`Morning ✕` `Afternoon ✕`) and a `Groups…` overflow sit on the same row.
+- Tiles lose their photo and their coloured bar becomes **a dot before the price**; the `✕` and the count
+  badge stay.
+- The bill rows **lose the column headings** that `Main` has — name, `₹64.00 · GST 5%`, stepper, value, ✕.
+- ⭐ **The QR shrinks to a square tile sitting beside the tender buttons**, instead of a block under them, and
+  the words move to one line underneath: `Recorded as UPI · pays [shop UPI ID]`.
+- `Saved · ▸ breakdown  −₹144.75` above `TOTAL ₹2,750.25`.
+- A full shortcut bar across the foot: `F2 search · Enter add · 3* qty · F9 save · F6 park · F8 bills ·
+  F10 day close · F7 who · F4 re-read · Esc clear`.
+
+⚠️ Note the compact screen keeps `Save & print · F9` rather than the tablet's `Pay →`. **A keyboard terminal
+finishes the bill; a touch tablet goes to a pay card.** The difference is the input device, not the width.
+
+---
+
+## ⭐⭐⭐ A QUICK-KEY GROUP HAS HOURS AND A COLOUR, AND SEVERAL CAN BE ON AT ONCE
+
+This is the biggest thing the renders say that our model does not have, and it is spread across four of them,
+which is why reading any one of them alone missed it. `DevicePhoneSheet.png` states it outright:
+
+> **Quick keys** — *Tick groups. Tap a name for its items.*
+> ☑ ▍**Morning**   06:00–11:30 · 7/10 on    ›
+> ☑ ▍**Afternoon** 11:30–15:30 · 10/10 on   ›
+> ☐ ▍**Evening**   15:30–19:00 · 10/10 on   ›
+> ☐ ▍**Night**     19:00–23:00 · 10/10 on   ›
+> **`Done`**
+
+Four facts, none of which we implement:
+
+1. **A group owns a time band.** `06:00–11:30`. It is not decoration — it drives the banner in `Main.png`:
+   *"🕐 **Afternoon** starts at 11:30 · 3 Morning keys are sold out."* with `Not now` / **`Show Afternoon`**.
+2. **A group owns a colour**: Morning amber, Afternoon orange, Evening purple, Night blue. That colour is the
+   bar on a tile in `FullTablet.png` and the dot before the price in `FullCompact.png` — it is how you tell,
+   with two groups on screen at once, which key came from which. It is **not** a stock level or a margin.
+3. **Several groups are on at the same time** — a tick per group, not one active group. `FullTablet.png` shows
+   `Morning 9/10 ✕` and `Afternoon 10/10 ✕` side by side, each dismissible, with a `Groups…` overflow.
+4. **A group states how full it is**: `7/10 on`, `9/10`. So a shopkeeper can see a group is half switched off
+   without opening it.
+
+⚠️ **Our model is `tillOpt().group` — one name, no hours, no colour, no multi-select.** Everything above is a
+change to that shape, not a coat of paint on it. It is also *coherent*: the hours produce the banner, the
+colour makes multi-select legible, and the fill count makes "Choose items" worth opening. Building any one
+piece alone would be building a third of an idea.
+
+Two actions per row and they are different: **the tick shows or hides the group on the keys; the name drills
+into its items** (`›`).
+
+---
+
+## The phone, step 2 — `FullPhoneBill.png`
+
+`← Bill` with `3 products · 15 items` at the right. `Customer (optional)` and `Phone`, each with its own
+mic. The green `Shop points · 1 point for every ₹100.00 spent · a name or phone holds them` strip.
+
+Rows are **numbered** and carry their meta on one line: `₹64.00 / pkt · GST 5% · disc —` then the stepper,
+the value, and an `✕`. ⭐ Note `disc —`: the DISC column that `Main.png` gives a whole table column collapses
+into the meta line here rather than disappearing. **A column that vanishes on a small screen teaches the eye
+that discounts are sometimes not shown.**
+
+Foot: `Saved · ▸ tax & offer breakdown` −₹144.75 · `TOTAL ₹2,750.25` · `Clear` `Park` **`Pay →`**.
+The Pay button carries no amount here because the total is directly above it; on `FullTablet` it does, because
+there the eye has further to travel.
+
+---
+
+## The handheld — `FullHandheldPay.png` (360×720)
+
+⭐ **A handheld is TWO steps, not three**: the screen is titled `← Bill & pay` on a **dark bar**, and the bill
+and the payment share it. A waiter at a table cannot afford a third screen.
+
+Rows are stripped right down — name, stepper, value, no meta line, no numbering. Then a hard rule, and:
+`Saved −₹144.75 · ▸ breakdown` with **₹2,750.25** on the same line, the three tenders, the QR beside its words
+(*"Scan with any UPI app · pays [shop UPI ID]. Marked paid once money arrives. Recorded as **UPI**."*),
+`Amount taken` + `+ part`, and `Clear` `Park` **`Save & print`**.
+
+### ⭐⭐ The rule the five device renders add up to
+
+| Device | Steps | How the bill is finished |
+|---|---|---|
+| Desktop / compact terminal | one screen | tenders inline · **`Save & print · F9`** |
+| Tablet | one screen | a single **`Pay ₹2,750.25 →`** → a modal pay **card** |
+| Phone | **three** — pick · bill · pay | `Pay →` → a whole pay **screen** |
+| Handheld | **two** — pick · bill & pay | tenders inline · **`Save & print`** |
+
+⚠️ **It is the input device that decides, not the width.** A compact 1024×768 terminal keeps `Save & print`
+because it has a keyboard; a tablet of similar width goes to a pay card because it has a thumb. Anything that
+keys this off screen size alone will get the handheld and the tablet the wrong way round.
+
+---
+
 ## Paying — `FullTabletPay.png` and `FullPhonePay.png`
 
 ### ⚠️⚠️⚠️ ON A TABLET, PAY IS A MODAL CARD — NOT A PANEL AT THE BOTTOM OF THE PAGE
