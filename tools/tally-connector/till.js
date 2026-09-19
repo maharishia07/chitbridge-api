@@ -140,6 +140,36 @@ function nextNumber() {
 /* ── the copy of the shop ──────────────────────────────────────────────────────────────────────────────────── */
 let snapshot = readJSON(F.snapshot, null);
 let online = false;
+/* ⚠️ said ONCE per spell of failure — a wrong key would otherwise fill the log every drain */
+let QUEUE_SAID = false;
+
+/**
+ * ── ⭐⭐⭐ WHY A CALL DID NOT WORK, AND WHETHER THE LINE IS THE REASON ([TILL-117]) ──────────────
+ *
+ * A counter said *"offline (… 403 This key is not scoped…)"* and a person went looking at their network. The
+ * server had answered in a fifth of a second to say the key was the wrong kind.
+ *
+ * ⚠️ THE TEST IS WHETHER AN ANSWER CAME BACK. `e.status` means the server replied — so the line is UP, and
+ * the counter must not mark itself offline, because that is what makes the pill, the page and the queue all
+ * behave as though there were no network.
+ * ⚠⚠ AND A 401/403 NEVER FIXES ITSELF. Retrying a wrong key for ever is the silent version of this bug, so
+ * it is named with the thing to do, not merely reported.
+ */
+function whyNot(e) {
+  const msg = (e && e.message) || 'it did not work';
+  const st = e && e.status;
+  if (st === 401 || st === 403) {
+    return { online: true, fatal: true,
+      say: 'this key is not allowed to read the shop (' + st + '). Mint a key with scope "till" in ChitBridge › '
+         + 'Settings › Integrations › Keys, put it in the config, and start the counter again. '
+         + 'The connector\'s own key will not do — they are different scopes.' };
+  }
+  if (st >= 400 && st < 500) return { online: true, fatal: false, say: 'ChitBridge refused it — ' + msg };
+  if (st >= 500) return { online: true, fatal: false, say: 'ChitBridge is having trouble — ' + msg + '. Billing continues from the copy on disk.' };
+  if (e && e.timeout) return { online: false, fatal: false, say: 'no answer in time — ' + msg + '. Billing continues from the copy on disk.' };
+  /* ⚠️ nothing came back at all: this is the only case that is really offline */
+  return { online: false, fatal: false, say: 'offline (' + msg + ') — billing continues from the copy on disk' };
+}
 
 async function refresh() {
   try {
@@ -178,7 +208,13 @@ async function refresh() {
       }
     } catch (_) { /* an update is never worth a sale */ }
     return true;
-  } catch (e) { online = false; log('offline (' + e.message + ') — billing continues from the copy on disk'); return false; }
+  } catch (e) {
+    /* ⚠️ THE SERVER ANSWERING IS NOT AN OUTAGE — see whyNot(). A 403 arriving proves the line is up. */
+    const w = whyNot(e);
+    online = w.online;
+    log(w.say);
+    return false;
+  }
 }
 
 /* ── the queue: every bill leaves exactly once ─────────────────────────────────────────────────────────────── */
@@ -251,8 +287,17 @@ async function drain() {
           } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
         }
         online = true;
+        QUEUE_SAID = false;   /* ⭐ it worked — say it again if it stops working */
       } catch (e) {
-        online = false;
+        /**
+         * ⚠️⚠️ A REFUSED BILL IS NOT A DEAD LINE. Marking the counter offline on a 403 told the shopkeeper
+         * their internet was down while their bills piled up behind a credential nobody had mentioned.
+         * ⚠⚠ AND A WRONG KEY NEVER COMES RIGHT BY WAITING, so it is said out loud once rather than retried in
+         * silence for ever. The bill is still kept — nothing is ever dropped.
+         */
+        const w = whyNot(e);
+        online = w.online;
+        if (w.fatal && !QUEUE_SAID) { QUEUE_SAID = true; log('the queue cannot be sent: ' + w.say); }
         left.push(bill);                                    /* keep it; the next tick tries again */
       }
     }
@@ -564,6 +609,26 @@ const server = http.createServer(async (req, res) => {
   if (!snapshot) log('⚠ no copy of the shop yet — connect once, then this till bills with the line down');
   setInterval(() => refresh().catch(() => {}), Math.max(1, Number(tillCfg.refreshMinutes) || 15) * 60 * 1000).unref();
   setInterval(() => drain().catch(() => {}), Math.max(5, Number(tillCfg.drainSeconds) || 20) * 1000).unref();
+  /**
+   * ⚠️⚠️ ALREADY RUNNING IS NOT AN ERROR ([TILL-117]). The scheduled task `install` registers fires every
+   * five minutes whenever the counter is not running — and if it IS running, this is the path that used to
+   * throw an unhandled EADDRINUSE and print a stack trace. The counter that is already up is the right one.
+   * ⚠️ Exit 0, not 1: nothing failed. A non-zero exit would have Task Scheduler reporting a fault every five
+   * minutes for a counter that is working perfectly.
+   */
+  server.on('error', (e) => {
+    if (e && e.code === 'EADDRINUSE') {
+      log('the counter is already running — open http://127.0.0.1:' + PORT + ' (nothing needed to be started)');
+      /* ⚠️ LET THE IN-FLIGHT READ SETTLE FIRST. Exiting while the shop request is still open trips a libuv
+         assertion on Windows — a crash dump printed straight after a friendly sentence, which undoes it. */
+      setTimeout(function(){ process.exit(0); }, 250);
+      /* ⚠️⚠️ RETURN. process.exit(0) used to end the handler by itself; deferring it left the code falling
+         through to 'could not start' and exit(1) — the friendly sentence printed, then the crash anyway. */
+      return;
+    }
+    log('the counter could not start: ' + ((e && e.message) || e));
+    process.exit(1);
+  });
   server.listen(PORT, '127.0.0.1', () => {
     log('counter ready → http://127.0.0.1:' + PORT);
     log('bills are kept in ' + DIR + ' and sent when the line is up');
