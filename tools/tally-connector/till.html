@@ -730,7 +730,14 @@
      has to be decent enough to see"*). 14px between keys and a 168px floor: a key is aimed at with a thumb. */
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;
          margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);
-         max-height:42vh;overflow-y:auto;align-content:start}
+         /* ⚠️⚠️ flex:none — WITHOUT IT a long product list shrinks this box to a ~30px strip with a scrollbar,
+            because a flex item defaults to flex-shrink:1. max-height was never the constraint that bit. */
+         flex:none;max-height:var(--keysh,42vh);
+         overflow-y:auto;align-content:start}
+  /* ⚠️ 'No keys' really means none — the floor above must not put the box back on screen */
+  body.hide-quick .quick,.quick[hidden]{display:none}
+  /* ⚠️ nothing to size, nothing to drag — the bar goes with the box */
+  .quick:empty,.quick:empty + .keysgrip{display:none}
   /**
    * ⭐⭐ THE DAY REPORT — full screen, and the SAME markup is what prints. No second template for paper: a
    * report that is typeset twice is a report whose two versions eventually disagree about a number.
@@ -1073,6 +1080,32 @@
   body.paycard:not(.paying) .take,
   body.paycard:not(.paying) #obar,
   body.paycard:not(.paying) #save{display:none}
+  /* ── ⭐ PANEL SIZES (png/PanelSizing.png, [TILL-60]) ─────────────────────────────────────────────── */
+  .panelnow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;color:var(--dim);font-size:.9em}
+  .panelnow span{flex:1;min-width:140px}
+  .panelpicks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+  .panelpicks button{display:flex;align-items:center;gap:10px;text-align:start;padding:8px 10px;font:inherit;
+    border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);cursor:pointer}
+  .panelpicks button.on{border-color:var(--ok);background:var(--ok-tint)}
+  /* the render's little three-band diagram — keys, list, bill, in the proportions the preset makes */
+  .pband{display:flex;flex:none;width:52px;height:34px;gap:2px;border-radius:6px;overflow:hidden}
+  .pband i{background:var(--warn);opacity:.75}
+  .pband i.l{background:var(--line)}
+  .pband i.b{background:var(--ok)}
+  .panelpicks .pt{display:flex;flex-direction:column;min-width:0}
+  .panelpicks .pt i{font-style:normal;color:var(--dim);font-size:.8em}
+  .panelrow{display:flex;align-items:center;gap:8px;margin-top:10px}
+  .panelrow span{color:var(--dim);font-size:.9em}
+  .panelrow .pill.on{border-color:var(--ok);background:var(--ok);color:var(--on-accent);font-weight:700}
+  /* ⚠️ Compact tightens SPACING ONLY — never the type size, which is its own setting and a person's eyesight */
+  body.dense .quick{gap:8px;padding:8px;margin:6px 12px}
+  body.dense .hit{padding:8px 16px}
+  body.dense .row{padding:6px 10px}
+  /* the bar between the keys and the list — same look and feel as the pane split and the bill grip */
+  .keysgrip{height:6px;margin:0 12px;cursor:row-resize;background:var(--line);border-radius:99px;flex:none;position:relative}
+  .keysgrip::after{content:'';position:absolute;inset-inline:0;top:-6px;height:18px}
+  .keysgrip:hover,.keysgrip.on{background:var(--ok)}
+  body.hide-quick .keysgrip{display:none}
   .cartgrip{height:6px;cursor:row-resize;background:var(--line);position:relative;flex:none}
   .cartgrip::after{content:'';position:absolute;inset-inline:0;top:-5px;height:16px}
   .cartgrip:hover,.cartgrip.on{background:var(--ok)}
@@ -1608,6 +1641,13 @@
     <div class="listtools" id="listtools" style="display:none"></div>
     <div class="chips" id="chips"></div>
     <div class="quick" id="quick"></div>
+    <!--
+      ⭐⭐ DRAG TO SIZE THE QUICK KEYS ([TILL-61]). Athi: *"need to have a control to adjust the sizing, drag
+      and keep so it will be under user control."* Same gesture as the pane split and the bill grip, and it
+      writes the same store the panel presets write, so the two can never disagree.
+    -->
+    <div class="keysgrip" id="keysgrip" data-testid="till-keys-grip" role="separator"
+         aria-label="drag to size the quick keys" title="drag to size the quick keys · double-click to reset"></div>
     <!-- ⭐ the list asks for its own next page as it nears the bottom (showMore) — see hits() -->
     <div class="hits" id="hits" onscroll="hitsScrolled(this)"></div>
     <div class="keys" id="keys">
@@ -4675,6 +4715,35 @@ function paintMenu(){
         + '<option value="full">Everything</option><option value="quick">Quick keys + bill</option><option value="cart">Search + bill</option>'
         + '<option value="custom" disabled>Custom</option></select></label>'
         + '</div></div>'
+        /**
+         * ⭐⭐ GIVE EACH PART THE ROOM YOU WANT (png/PanelSizing.png). Five named starting points and a
+         * sentence saying what is in force now. The drag bar still works and still wins.
+         */
+        + '<div class="menusec" data-testid="till-panels">'
+          + '<b>Give each part the room you want</b>'
+          + '<div class="panelnow"><span id="panelwords"></span>'
+          + '<button class="pill" data-testid="till-panel-reset" onclick="panelReset()">Reset to balanced</button></div>'
+          + '<div class="panelpicks" id="panelpicks">'
+          + PANEL_ORDER.map(function(k){ var p = PANELS[k];
+              return '<button data-panel="' + k + '" data-testid="till-panel-' + k + '"'
+                + ' onclick="panelApply(\'' + k + '\')">'
+                /* ⭐ the render draws a little three-band diagram per preset — the bands are the proportions */
+                + '<span class="pband"><i style="flex:' + (p.cart ? 0 : p.keysh) + '"></i>'
+                + '<i class="l" style="flex:' + Math.max(6, 100 - p.keysh) + '"></i>'
+                + '<i class="b" style="flex:' + Math.round((0.9 / (p.split + 0.9)) * 100) + '"></i></span>'
+                + '<span class="pt"><b>' + esc(p.label) + '</b><i>' + esc(p.why) + '</i></span>'
+                + '</button>'; }).join('')
+          + '</div>'
+          + '<div class="panelrow"><span>Density</span>'
+          + ['comfortable', 'compact'].map(function(d){
+              return '<button class="pill' + (densityNow() === d ? ' on' : '') + '" data-testid="till-density-' + d + '"'
+                + ' onclick="densitySet(\'' + d + '\')">' + (d === 'compact' ? 'Compact' : 'Comfortable') + '</button>'; }).join('')
+          + '</div>'
+          /* ⚠️ "Bill on the left (left hand)" IS the hand setting two rows above — said here as the render
+             words it, and pointing at the one control rather than growing a second. */
+          + '<p class="u">Bill on the left is the <b>hand</b> setting above. Photos on keys is <b>Pictures</b>,'
+          + ' on the maintenance screen and in the quick-keys bar.</p>'
+          + '</div>'
         + '<div class="menusec" data-testid="till-view-toggles"><b>Show on this counter</b><div class="viewchips" id="viewchips"></div></div>'
       : (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
     var html = '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '" data-testid="till-msec-' + sec.id + '">'
@@ -4751,7 +4820,15 @@ function paintSide(){
   var el = document.getElementById('tillsideicons'); if (!el) return;
   var b = [];
   b.push('<button class="top" data-testid="till-side-open" title="Menu" aria-label="Menu" onclick="toggleMenu(event)">\u2630</button>');
+  /**
+   * ⚠️⚠️ THE TWO THAT STOP BILLING ARE NOT IN THE STRIP. They live in the hub's CAREFUL box, behind the
+   * sentence that warns about them. 'Clear and reload' (↺) sat one tap from 'Read the shop again' (↻) and
+   * two characters apart in the font — Athi read the strip as having two reloads, which is exactly the
+   * mistake the arrangement invites. [[feedback-ui-placement-standards]]
+   */
+  var CARE_OPS = ['close', 'coldstart-menu'];
   TILL_OPS.forEach(function(op){
+    if (CARE_OPS.indexOf(op.id) >= 0) return;
     if (op.when === 'install' && !_install) return;
     b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + op.hint) + '"'
       + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;)">' + op.icon + '</button>');
@@ -4833,6 +4910,10 @@ function paintMenuQuick(){
   set('mq_hand', ls.get('cb_till_hand', 'right'));
   set('mq_idle', ls.get(shopLs('cb_till_idle'), '0'));
   set('mq_layout', (tillOpt().layout) || 'full');
+  /* ⚠️ THE PANEL SIZES ARE FILLED IN HERE TOO. Their markup is built by the hub, so it does not exist at
+     boot when applyTillOptions() calls panelPaint() — without this the sentence is blank and no preset is
+     lit, every time the hub is opened. [[feedback-check-after-the-wire]] */
+  try { panelPaint(); } catch (_) {}
   paintViewChips();
 }
 /** text size or look, from the menu — stored where ⚙ keeps them, applied at once */
@@ -4862,10 +4943,23 @@ function closeMenu(){
   try { focusSearch(); } catch (_) {}
 }
 function fromMenu(fn){ closeMenu(); try { fn(); } catch (_) {} }
+/**
+ * ⚠️⚠️ WHERE THE CLICK STARTED, DECIDED BEFORE ANYTHING CAN REPAINT. Every section header in the hub calls
+ * paintMenu(), which replaces the menu's innerHTML — so by the time the listener below runs, e.target has been
+ * DETACHED and side.contains(e.target) is false for a click that happened squarely inside the panel. The hub
+ * closed every time somebody opened a section, at every width.
+ * ⭐ A capture-phase listener sees the event on its way DOWN, while the node is still attached, so it can
+ * record the answer the bubbling listener needs. [[feedback-check-after-the-wire]]
+ */
+var MENU_CLICK_INSIDE = false;
 document.addEventListener('click', function(e){
-  var side = document.getElementById('tillside'), m = document.getElementById('tillmenu');
-  /* ⚠️ the whole PANEL is the menu now, strip included — a press on an icon must not be read as "clicked away" */
-  if (m && !m.hidden && side && !side.contains(e.target) && e.target.id !== 'menubtn') closeMenu();
+  var side = document.getElementById('tillside');
+  MENU_CLICK_INSIDE = !!(side && side.contains(e.target));
+}, true);
+document.addEventListener('click', function(e){
+  var m = document.getElementById('tillmenu');
+  /* ⚠️ the whole PANEL is the menu, strip included — a press on an icon must not be read as "clicked away" */
+  if (m && !m.hidden && !MENU_CLICK_INSIDE && e.target.id !== 'menubtn') closeMenu();
 });
 /**
  * ── ⭐⭐⭐ FILTERS THAT FIND WORK ([TILL-52], MaintV2) ───────────────────────────────
@@ -5794,6 +5888,106 @@ function payGo(){
     ? '<i>' + esc(countWords()) + '</i><b>TOTAL ' + money(due) + '</b>'
     : '';
 }
+/**
+ * ⭐⭐ THE FIVE SPLITS png/PanelSizing.png NAMES, with the render's own descriptions. `split` is the left/right
+ * fr the drag bar already writes; `keysh` is how much height the quick keys may take inside the left pane.
+ * ⚠️ 'No keys' is the layout we already had as 'cart' — it is reused, not reimplemented.
+ */
+var PANELS = {
+  keys:     { label: 'Keys first',   why: 'busy tiffin counter \u00b7 few searches',            split: 1.45, keysh: 58, cart: false },
+  balanced: { label: 'Balanced',     why: 'the default',                                    split: 1.10, keysh: 42, cart: false },
+  search:   { label: 'Search first', why: 'big catalogue, barcode shop',                    split: 1.10, keysh: 16, cart: false },
+  bill:     { label: 'Bill first',   why: 'long bills, kirana baskets',                     split: 0.72, keysh: 34, cart: false },
+  nokeys:   { label: 'No keys',      why: 'scanner only \u00b7 all screen to list and bill',     split: 1.00, keysh: 0,  cart: true },
+};
+var PANEL_ORDER = ['keys', 'balanced', 'search', 'bill', 'nokeys'];
+function panelNow(){ return ls.get('cb_till_panel', 'balanced'); }
+/**
+ * ⭐ WHAT THE SPLIT IS, IN WORDS. The render puts the live figures beside the preset name so the panel states
+ * the thing it is about. Computed from the values actually in force, never from the preset's table — drag the
+ * bar and the sentence has to follow, because the preset is only where you started.
+ */
+function panelWords(){
+  var wrap = document.querySelector('.wrap');
+  var fr = Number(ls.get('cb_till_split', '')) || 1.1;
+  var bill = Math.round((0.9 / (fr + 0.9)) * 100);
+  /* ⚠️ EMPTY FIRST, THEN CONVERT. Number('') is 0 and 0 is a legitimate keys height ('No keys'), so a
+     numeric test cannot tell 'unset' from 'none'. [[feedback-silence-is-the-bug]] */
+  var khRaw = ls.get('cb_till_keysh', '');
+  var kh = (khRaw === '' || khRaw == null) ? 42 : Number(khRaw);
+  if (!(kh >= 0)) kh = 42;
+  var p = PANELS[panelNow()] || PANELS.balanced;
+  /* ⚠️ 'custom' the moment the live values stop matching the preset — a label that keeps saying Balanced over a
+     dragged split is the kind of lie that makes a settings screen untrustworthy. [[feedback-name-vs-behaviour]] */
+  var same = Math.abs(fr - p.split) < 0.02 && Math.abs(kh - p.keysh) < 1;
+  return (same ? p.label : 'Custom')
+    + ' \u00b7 bill ' + bill + '% of the width'
+    + (kh > 0 ? ' \u00b7 keys up to ' + kh + '% of the height' : ' \u00b7 no quick keys');
+}
+/** ⚠️ writes the SAME stores the drag bar and the section switches write — one place per setting */
+function panelApply(id){
+  var p = PANELS[id]; if (!p) return;
+  ls.set('cb_till_panel', id);
+  ls.set('cb_till_split', String(p.split));
+  ls.set('cb_till_keysh', String(p.keysh));
+  tillOptSet({ layout: p.cart ? 'cart' : 'full' });
+  panelPaint();
+  paintMenuQuick();
+}
+/** ⭐ the render's own control: back to the default, without having to remember which one it was */
+function panelReset(){ panelApply('balanced'); toastLine('Back to Balanced.'); }
+/**
+ * ⭐⭐ DRAG THE QUICK KEYS TALLER OR SHORTER ([TILL-61]) — the control Athi asked for, in the gesture this
+ * counter already uses twice (the pane split, the bill grip).
+ * ⚠️ IT WRITES cb_till_keysh, the SAME store the presets write. A second store would let the panel say
+ * "Balanced" over a bar somebody had dragged. [[feedback-stay-in-the-construct]]
+ */
+function keysGripWire(){
+  var g = document.getElementById('keysgrip'), q = document.getElementById('quick');
+  if (!g || !q) return;
+  var drag = false;
+  var setFrom = function(clientY){
+    var top = q.getBoundingClientRect().top;
+    var vh = window.innerHeight || 900;
+    /* ⚠️ a floor and a ceiling in the same units the presets use, so neither door can produce a sliver */
+    var pct = Math.max(12, Math.min(72, Math.round(((clientY - top) / vh) * 100)));
+    ls.set('cb_till_keysh', String(pct));
+    try { panelPaint(); } catch (_) {}
+  };
+  var move = function(ev){ if (!drag) return; ev.preventDefault();
+    setFrom(ev.touches ? ev.touches[0].clientY : ev.clientY); };
+  var up = function(){ if (!drag) return; drag = false; g.classList.remove('on'); };
+  var down = function(ev){ drag = true; g.classList.add('on'); ev.preventDefault(); };
+  g.addEventListener('mousedown', down);
+  g.addEventListener('touchstart', down, { passive: false });
+  document.addEventListener('mousemove', move);
+  document.addEventListener('touchmove', move, { passive: false });
+  document.addEventListener('mouseup', up);
+  document.addEventListener('touchend', up);
+  /* ⭐ double-click resets, the same as the pane split */
+  g.addEventListener('dblclick', function(){ ls.set('cb_till_keysh', '42'); try { panelPaint(); } catch (_) {} });
+}
+/** the live values onto the page — called at boot, after a preset, and after a drag */
+function panelPaint(){
+  var wrap = document.querySelector('.wrap'); if (!wrap) return;
+  var fr = Number(ls.get('cb_till_split', '')) || 1.1;
+  wrap.style.setProperty('--split', fr + 'fr');
+  /* ⚠️ EMPTY FIRST, THEN CONVERT. Number('') is 0 and 0 is a legitimate keys height ('No keys'), so a
+     numeric test cannot tell 'unset' from 'none'. [[feedback-silence-is-the-bug]] */
+  var khRaw = ls.get('cb_till_keysh', '');
+  var kh = (khRaw === '' || khRaw == null) ? 42 : Number(khRaw);
+  if (!(kh >= 0)) kh = 42;
+  document.documentElement.style.setProperty('--keysh', kh + 'vh');
+  var w = document.getElementById('panelwords'); if (w) w.textContent = panelWords();
+  var box = document.getElementById('panelpicks');
+  if (box) Array.prototype.forEach.call(box.querySelectorAll('button[data-panel]'), function(b){
+    b.classList.toggle('on', b.getAttribute('data-panel') === panelNow());
+  });
+}
+/** ⭐ Comfortable or Compact — a taste, so a pair of buttons rather than a number */
+function densityNow(){ return ls.get('cb_till_density', 'comfortable'); }
+function densitySet(v){ ls.set('cb_till_density', v); densityApply(); paintMenuQuick(); }
+function densityApply(){ document.body.classList.toggle('dense', densityNow() === 'compact'); }
 function screenSet(patch){
   var o = tillOpt(), s = Object.assign({}, o.screen || {}, patch || {});
   /* a preset carries its own theme — the device's look follows it, so ☰ and ⚙ keep saying the same thing */
@@ -5965,6 +6159,10 @@ function applyTillOptions(){
   try { b.setAttribute('data-sklayout', (screenCfg().layout) || 'auto'); } catch (_) {}
   /* ⭐ the shape decides where the on-screen keyboard starts, so it is settled with the rest of the look */
   try { kbdApply(); } catch (_) {}
+  /* ⭐ the split, the keys height and the density are part of the look, so they settle with it */
+  try { panelPaint(); } catch (_) {}
+  try { densityApply(); } catch (_) {}
+  try { keysGripWire(); } catch (_) {}
   try { loadQuick(); } catch (_) { try { paintQuick(); } catch (e) {} }
   try { paintHits(); } catch (_) {}
   /* ⚠️ THE CHIPS REPAINT WITH EVERYTHING ELSE. applyTillOptions() redrew the keys and the shelf but not the
@@ -13225,6 +13423,8 @@ function gripInit(){
     var left = Math.max(w * 0.25, Math.min(w * 0.75, x));
     var fr = Math.round((left / Math.max(1, w - left)) * 100) / 100;
     apply(fr); ls.set('cb_till_split', String(fr));
+    /* ⭐ the preset was a STARTING POINT — dragging makes the readout say Custom rather than keep its name */
+    try { panelPaint(); } catch (_) {}
   };
   var stop = function(){ g.classList.remove('on'); document.body.style.userSelect = '';
     window.removeEventListener('mousemove', drag); window.removeEventListener('touchmove', drag);
