@@ -330,6 +330,55 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
 });
 
 /**
+ * ⭐⭐ THE CATEGORY, SHOWN LIKE A QUICK KEY ([TILL-71]). Athi: *"category also to be showcased like quick key
+ * format… with images if the option chosen… first Idli variety, give a break as a line break, then show all
+ * dosa variety."*
+ */
+it('⭐⭐ the keys gather under their category, and a category chip can carry a picture', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function byCatOrder(') > 0, 'the keys can no longer be gathered by category');
+  const ord = page.slice(page.indexOf('function byCatOrder('), page.indexOf('function catPic('));
+  /**
+   * ⚠️⚠️ A STABLE PARTITION, NOT A SORT. Whatever decided the order of the keys — a group's own positions, or
+   * what sells most — still decides it INSIDE a category. A .sort() over the whole list would throw that away
+   * and nobody could say why a key had moved. [[feedback-name-vs-behaviour]]
+   */
+  assert.ok(ord.indexOf('.sort(') < 0, 'gathering by category sorts the keys and loses the order inside each');
+  assert.ok(ord.indexOf('seen.push(c)') > 0, 'the categories do not come out in the order their first key appears');
+  /* ⭐ the break is a grid property: a full-row heading ENDS the row, so the next category starts fresh */
+  assert.ok(page.indexOf('.qcat{grid-column:1/-1') > 0,
+    'the category heading no longer spans the row, so it cannot break the line');
+  /* ⭐ a category's picture is one of its own products' — nothing invented, no new field */
+  const pic = page.slice(page.indexOf('function catPic('), page.indexOf('var TILE_SIZES'));
+  assert.ok(pic.indexOf('items[k].image') > 0, 'a category picture is not taken from a real product');
+  assert.ok(pic.indexOf('tileHTML(') > 0, 'a category with no photographed product has no fallback');
+  /* ⚠️ only when pictures are on — the same switch that puts them on the keys */
+  const chips = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
+  assert.ok(chips.indexOf('screenCfg().photos') > 0, 'the category chips show pictures whether or not they are wanted');
+});
+
+/**
+ * ⚠️⚠️⚠️ --sk-ph IS A TRAP AND THE LIBRARY SAYS SO ([TILL-66]). screen-kit.js: *"AN ASPECT RATIO, NOT A PIXEL
+ * HEIGHT … a kiosk turned --sk-ph up to 150px inside a tile the grid had sized to 137px … every key became a
+ * wordless photograph, which is exactly what Athi photographed."* It was fixed once by giving the photo an
+ * aspect ratio and widening the COLUMN instead — and then reintroduced, with the same 150px, by the three
+ * tile sizes. This guard exists so the third time is caught by a test rather than by Athi.
+ */
+it('⚠️⚠️ nothing on the counter forces a pixel photo height — the column width is the lever', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️ COMMENTS STRIPPED FIRST. The historical note that RECORDS this bug quotes '--sk-ph:150px', so a plain
+     text search fails on the very comment warning about it — a guard that cannot tell prose from a
+     declaration reports the documentation as the fault. */
+  const css = page.split('/*').map((part, n) => n === 0 ? part : part.slice(part.indexOf('*/') + 2)).join(' ');
+  assert.ok(css.indexOf('--sk-ph:') < 0,
+    'the counter sets --sk-ph again — a pixel photo height clips the name and price out of the tile');
+  /* ⭐ and the three sizes still DO something: each turns the column width */
+  for (const size of ['sm', 'md', 'lg'])
+    assert.ok(page.indexOf('body.tiles-' + size + ' .quick{grid-template-columns') > 0,
+      'tile size ' + size + ' no longer changes the column width, so it changes nothing');
+});
+
+/**
  * ⭐⭐⭐ CHANGING THE CHOICES ON A LINE ALREADY ON THE BILL ([TILL-70]). Athi: *"once you added, you do not
  * have a way of edit the choice, you have to remove and then add it back."*
  */

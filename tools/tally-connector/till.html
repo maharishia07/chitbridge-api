@@ -735,10 +735,30 @@
    */
   /* ⭐ AMPLE SPACE (Athi, 2026-09-18: *"images are clumsy, need to have ample space between images… the size
      has to be decent enough to see"*). 14px between keys and a 168px floor: a key is aimed at with a thumb. */
+  /**
+   * ⭐⭐ THE CATEGORY BREAK ([TILL-71]). grid-column:1/-1 makes the heading take a whole row, which ENDS the row
+   * it is on — so the next category always starts fresh. That is the "line break" Athi asked for, and it is a
+   * property of the grid rather than a second list to keep in step with the first.
+   */
+  .qcat{grid-column:1/-1;display:flex;align-items:baseline;gap:8px;margin:2px 0 0;
+        color:var(--dim);font-size:.78em;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+  .qcat::after{content:'';flex:1;height:1px;background:var(--line)}
+  .qcat .u{font-weight:400}
+  /* ⚠️ the first heading must not push the keys down — only the ones that follow need the gap */
+  .qcat + *{margin-top:0}
+  .quick > .qcat ~ .qcat{margin-top:10px}
+  /* ⭐ a category chip with its picture — the chip row starts to look like the keys, which is the point */
+  .chips button.haspic{padding-inline-start:4px;gap:6px;display:inline-flex;align-items:center}
+  .cpic{display:inline-flex;width:26px;height:26px;border-radius:7px;overflow:hidden;flex:none}
+  .cpic .pic{width:26px;height:26px;border-radius:7px;font-size:.8em;display:flex;align-items:center;
+             justify-content:center;color:#fff;object-fit:cover}
   /* ⭐ THREE SIZES ([TILL-66]) — how much room ONE tile gets. The tile STYLE is a separate setting. */
-  body.tiles-sm .quick{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;--sk-ph:56px}
-  body.tiles-md .quick{grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;--sk-ph:96px}
-  body.tiles-lg .quick{grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;--sk-ph:150px}
+  /* ⚠️⚠️ THE COLUMN WIDTH IS THE LEVER, NEVER --sk-ph. A pixel photo height inside a tile the grid sized
+     smaller clips the name and price straight out of the button — screen-kit.js carries the whole story and
+     the ratio that replaced it. Wider columns, and .sk-ph-big's aspect-ratio does the rest. */
+  body.tiles-sm .quick{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+  body.tiles-md .quick{grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+  body.tiles-lg .quick{grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px}
   body.tiles-sm .quick .sk-tile{padding:6px 8px;font-size:.92em}
   body.tiles-lg .quick .sk-tile{padding:14px 16px;font-size:1.06em}
   .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;
@@ -3780,6 +3800,42 @@ var FILTER = { offer:false, cat:null, off:false, job:null }, OFFER_STAMP = null;
  * ⚠️ IT IS A SIZE, NOT A STYLE. The tile STYLE (classic, block, photo…) is the screen library's and stays
  * where it is; this only says how much room one tile gets. Two settings, two questions.
  */
+/** ⭐ gather the keys under their category — a choice per device, like the other things that change the look */
+function byCatOn(){ return ls.get('cb_till_bycat', '') === '1'; }
+function byCatToggle(){ ls.set('cb_till_bycat', byCatOn() ? '' : '1'); paintQuick(); }
+/**
+ * ⭐⭐ THE KEYS IN CATEGORY ORDER, without disturbing the order INSIDE a category. Athi's example is the whole
+ * specification: *"first Idli variety, give a break as a line break, then show all dosa variety"*.
+ * ⚠️ A STABLE PARTITION, NOT A SORT. Whatever decided the order of the keys — a group's own positions, or what
+ * sells most — still decides it within each category. A .sort() over the whole list would throw that away and
+ * nobody could say why a key had moved. [[feedback-name-vs-behaviour]]
+ * ⚠️ FIRST SEEN, FIRST SHOWN: categories come out in the order their first key appears, so the category that
+ * matters most to this counter leads rather than the alphabet deciding.
+ */
+function byCatOf(i){ return String((i && i.category) || '').trim() || '\u2014'; }
+function byCatOrder(list){
+  var seen = [], bucket = {};
+  list.forEach(function(i){
+    var c = byCatOf(i);
+    if (!bucket[c]) { bucket[c] = []; seen.push(c); }
+    bucket[c].push(i);
+  });
+  var out = [];
+  seen.forEach(function(c){ bucket[c].forEach(function(x){ out.push(x); }); });
+  return { list: out, order: seen, count: function(c){ return (bucket[c] || []).length; } };
+}
+/**
+ * ⭐ A CATEGORY'S PICTURE IS ONE OF ITS PRODUCTS'. Nothing is invented and no new field is needed — the first
+ * item in the category that has an image lends it. A category whose products have no photos falls back to the
+ * same initial-on-a-colour the keys use, so a row of chips never has holes in it.
+ */
+function catPic(c){
+  var items = (S && S.items) || [];
+  for (var k = 0; k < items.length; k++) {
+    if (byCatOf(items[k]) === c && items[k].image) return picOf(items[k]);
+  }
+  return tileHTML({ category: c, name: c });
+}
 var TILE_SIZES = [['sm', 'Small'], ['md', 'Medium'], ['lg', 'Large']];
 function tileSize(){ var v = ls.get('cb_till_tilesize', 'md'); return /^(sm|md|lg)$/.test(v) ? v : 'md'; }
 function tileSizeSet(v){ ls.set('cb_till_tilesize', v); tileSizeApply(); paintQuick(); }
@@ -5151,7 +5207,19 @@ function paintChips(){
     + jobChips
     + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer</button>'
     + '<button class="' + (FILTER.off ? 'on' : '') + '" data-testid="till-chip-off" onclick="setFilter(\'off\')">Off the shelf <span class="u">' + offN + '</span></button>'
-    + list.map(function(c){ return '<button class="' + (FILTER.cat === c ? 'on' : '') + '" data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '" onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">' + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'; }).join('')
+    /**
+     * ⭐⭐ A CATEGORY CHIP CARRIES A PICTURE ([TILL-71]) when pictures are on — Athi: *"category also to be
+     * showcased like quick key format… with images if the option chosen"*. The same switch that puts photos on
+     * the keys puts them here, because it is the same judgement about the same shop.
+     */
+    + list.map(function(c){
+        var pic = '';
+        try { if (screenCfg().photos) pic = '<span class="cpic">' + catPic(c) + '</span>'; } catch (_) {}
+        return '<button class="' + (FILTER.cat === c ? 'on' : '') + (pic ? ' haspic' : '') + '"'
+          + ' data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
+          + ' onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">'
+          + pic + esc(c) + ' <span class="u">' + cats[c] + '</span></button>';
+      }).join('')
     ;
   chipsOverflow();
 }
@@ -6656,6 +6724,10 @@ function paintQuick(){
      * ⚠️ This is the KEYS' photos. Thumbnails on the shelf list are their own switch (cb_till_thumbs) because
      * they are a different surface with a different cost — a row is read, a key is aimed at.
      */
+    /* ⭐ beside Photos, because both change how the KEYS look rather than what is on them ([TILL-71]) */
+    + '<button class="qarr' + (byCatOn() ? ' on' : '') + '" data-testid="till-bycat"'
+    + ' title="gather the keys under their category, with a break between"'
+    + ' onclick="byCatToggle()">\u2261 By category</button>'
     + '<label class="qphotos" data-testid="till-quick-photos" title="pictures on the keys">'
     + '<input type="checkbox"' + (cfg.photos ? ' checked' : '') + ' onchange="screenSet({photos:this.checked})">'
     + '<span>Photos</span></label>'
@@ -6684,16 +6756,35 @@ function paintQuick(){
   var colour = K ? K.groupColour(usesGroups && o.group ? o.group : 0) : null;
   var inBill = {}; CART.forEach(function(c){ inBill[String(c.item_id)] = (inBill[String(c.item_id)] || 0) + (Number(c.qty) || 0); });
   el.className = 'quick sk-style-' + (cfg.tile || 'classic') + (cfg.photos ? ' sk-photos' : '') + (QK_ARRANGE ? ' arranging' : '');
+  /**
+   * ⭐⭐ GATHERED, WITH THE CATEGORY NAME AS THE BREAK ([TILL-71]). The heading spans the whole grid row, so the
+   * next category always starts on a fresh line — which is exactly the "line break" Athi described, and it
+   * costs one CSS rule rather than a second rendering path.
+   */
+  var grouped = byCatOn() ? byCatOrder(shown) : null;
+  if (grouped) shown = grouped.list;
+  var lastCat = null;
   var keys = shown.map(function(i, n){
+    var head = '';
+    if (grouped) {
+      var gc = byCatOf(i);
+      if (gc !== lastCat) {
+        lastCat = gc;
+        head = '<div class="qcat" data-testid="till-quick-cat-'
+          + esc(gc.replace(/[^a-z0-9]+/gi, '-').toLowerCase()) + '">'
+          + esc(gc === '\u2014' ? 'Everything else' : gc)
+          + '<span class="u">' + grouped.count(gc) + '</span></div>';
+      }
+    }
     var pin = pinned.indexOf(i.item_id) >= 0;
     var id = esc(i.item_id);
     var extra = '<i class="qpin' + (pin ? ' on' : '') + '" title="' + (pin ? 'unpin' : 'keep it here all day') + '" data-testid="till-quick-pin-' + n + '" onclick="event.stopPropagation();quickPin(\'' + id + '\')">📌</i>';
     if (!K) {
-      return '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + id + '\')"><b>' + esc(i.name) + '</b>'
+      return head + '<button data-testid="till-quick-' + n + '" onclick="quickAdd(\'' + id + '\')"><b>' + esc(i.name) + '</b>'
         + '<span>' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
         + '<i class="qx" title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')">✕</i>' + extra + '</button>';
     }
-    return K.tile(cfg.tile, {
+    return head + K.tile(cfg.tile, {
       name: i.name, price: money(i.price), unit: i.unit || 'piece', image: i.image || null, colour: colour,
       /* ⭐ THE SAME WORDS AS THE SHELF ROW, from the same rule — "₹11.00 under" is a standing fact about the
          product, never a saving, and a key that phrased it differently would be a second opinion about money. */
