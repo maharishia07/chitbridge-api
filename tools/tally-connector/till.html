@@ -355,7 +355,7 @@
   body.shape-tall .sellpane{flex:1 1 auto;min-height:0}
   body.shape-tall .sellpane>*{flex:0 0 auto}
   /**
-   * ⭐⭐ AND THE LIST OF LINES ABSORBS THE WHOLE SHORTAGE. It is the only part of a bill that can honestly
+   * ⭐⭐ AND THE LIST OF NETS ABSORBS THE WHOLE SHORTAGE. It is the only part of a bill that can honestly
    * give way — it scrolls, and a line pushed out of view is still reachable. The customer box, the totals
    * and the pay block cannot: a pay button you have to scroll to find is the fault Athi reported twice.
    * ⚠️ The 120px floor is right on a wide screen and wrong here, where this is the only thing that yields.
@@ -1959,6 +1959,16 @@
   /* ⭐ one card per trade — big enough to touch, and each one says what it will DO, not what it contains */
   .startbody{display:grid;gap:12px;margin:6px 0 12px}
   /* ⭐ the report: a headline you can act on, then the columns, then the rows that cannot come in */
+  /* ⚠️⚠️ LOUD ON PURPOSE. This is a test mode; the cost of it being missed is somebody debugging a counter
+     that was never broken. Fixed to the top so it survives every screen and layout. */
+  .netbar{position:fixed;inset:0 0 auto 0;z-index:9500;background:#a8410f;color:#fff;
+           padding:6px 14px;font-size:.88em;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .netbar b{font-weight:800}
+  .netbar button{font:inherit;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.6);
+                  background:transparent;color:#fff;cursor:pointer}
+  .netbar button:hover{background:rgba(255,255,255,.18)}
+  /* ⚠️ the shell moves down so the banner never covers the first row of the counter */
+  body.neton .wrap{padding-top:30px}
   .upbody{margin:6px 0 12px;max-height:60vh;overflow-y:auto;min-height:0}
   .uphead{font-size:1.05em;margin-bottom:10px}
   .uphead b{font-size:1.25em}
@@ -2322,6 +2332,9 @@
      mints a starter catalogue and the shop can sell within the minute. -->
 <!-- ⭐⭐⭐ A PRODUCT LIST, READ BEFORE IT BECOMES DATA ([TILL-108]). The report is shown and approved; nothing
      is written until somebody says so. -->
+<!-- ⚠️⚠️ THE SIMULATOR IS ANNOUNCED ([TILL-116]). A counter quietly left on a fake dead line is
+     indistinguishable from a broken one. Hidden until it is on; impossible to miss when it is. -->
+<div id="netbar" class="netbar" data-testid="till-netbar" hidden></div>
 <dialog id="updlg" class="dlg wide" data-testid="till-upload-dlg">
   <h3>Your product list <span class="u">we read it first and show you what we found — nothing is added until you say so</span></h3>
   <div id="upbody" class="upbody"></div>
@@ -3293,7 +3306,104 @@ var DEADLINE = 30000;
 /* ⚠️ A BIG READ IS NOT A SLOW WRITE. A 10,000-item snapshot legitimately takes longer than a bill does, and a
    deadline that strangled the catalogue refresh would be a new fault dressed as a fix. */
 var SLOW = 120000;
-function fetchBy(url, opts, ms){
+/**
+ * ── ⭐⭐⭐ THE SIMULATED LINE ([TILL-116]) ───────────────────────────────────────
+ *
+ * Athi: *"switch off network, reduce the speed to 2g and so on, so we can see how it works."*
+ *
+ * ⚠️ THE NUMBERS ARE ROUND-TRIP LATENCY, not bandwidth. A counter's calls are small — a bill, a snapshot
+ * delta — so what a bad line costs them is the trip, not the bytes. 2G is ~2s, 3G ~600ms, measured against
+ * what those networks actually deliver on a first byte.
+ * ⚠⚠ `lossy` FAILS ONE CALL IN THREE, which is the case nothing else tests: not a dead line, which the page
+ * handles, but a line that works often enough to look fine and drops the one request that mattered.
+ */
+var NETS = {
+  full:  { label: 'Full speed',        ms: 0,    drop: 0,    off: false },
+  g3:    { label: 'Slow · 3G',         ms: 600,  drop: 0,    off: false },
+  g2:    { label: 'Very slow · 2G',    ms: 2000, drop: 0,    off: false },
+  lossy: { label: 'Flaky · 1 in 3 fail', ms: 800, drop: 0.34, off: false },
+  off:   { label: 'No network',        ms: 0,    drop: 1,    off: true  },
+};
+/* ⚠️ PER DEVICE, not per shop — it is a fact about this machine being tested, like the screen settings */
+function netKey(){ return 'cb_till_line'; }
+function netNow(){ var k = ls.get(netKey(), 'full'); return NETS[k] ? k : 'full'; }
+function netIs(){ return NETS[netNow()]; }
+
+/**
+ * ⚠️⚠️ navigator.onLine IS OVERRIDDEN, and that is what makes this faithful. The page asks it in 34 places
+ * — whether to queue a bill, whether to offer Send now, whether to try at all. Slowing fetch alone would leave
+ * every one of them believing the line was fine, and produce behaviour no real outage causes.
+ * ⚠️ Installed ONCE and only when needed; the original is kept so full speed is genuinely the browser's own.
+ */
+var NET_REAL_ONLINE = null;
+function netApplyOnline(){
+  if (typeof navigator === 'undefined') return;
+  if (NET_REAL_ONLINE === null) {
+    NET_REAL_ONLINE = Object.getOwnPropertyDescriptor(Navigator.prototype, 'onLine') || false;
+    try {
+      Object.defineProperty(navigator, 'onLine', {
+        configurable: true,
+        get: function(){
+          if (netIs().off) return false;
+          return NET_REAL_ONLINE && NET_REAL_ONLINE.get ? NET_REAL_ONLINE.get.call(navigator) : true;
+        },
+      });
+    } catch (_) { /* a browser that refuses is simply not simulable; the banner still says what was asked */ }
+  }
+}
+
+/**
+ * ⚠️ THE GATE. Delays, then fails when it should. It throws the SAME shape a real failure throws — a rejected
+ * fetch — so every caller's existing catch does what it would really do. A simulator that failed in a new way
+ * would be testing the simulator.
+ */
+/**
+ * ⭐ SET IT, SHOW IT, AND TELL THE PAGE. Changing the line fires the same `online`/`offline` events the
+ * browser fires, so every listener the counter already has reacts exactly as it would to a real outage —
+ * rather than to a thing only the simulator knows about.
+ */
+function netSet(k){
+  if (!NETS[k]) return;
+  ls.set(netKey(), k);
+  netApplyOnline();
+  netPaint();
+  try { window.dispatchEvent(new Event(NETS[k].off ? 'offline' : 'online')); } catch (_) {}
+  try { paintStatus(); } catch (_) {}
+}
+
+/** ⚠️ drawn on every load, so a setting that survived a restart announces itself immediately */
+function netPaint(){
+  var el = document.getElementById('netbar'); if (!el) return;
+  var k = netNow(), L = NETS[k];
+  if (k === 'full') { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('neton'); return; }
+  el.hidden = false;
+  document.body.classList.add('neton');
+  el.innerHTML = '📶 <b>Network simulator: ' + esc(L.label) + '</b>'
+    + '<span>this counter is pretending — nothing is wrong with your connection</span>'
+    + '<button data-testid="till-net-off" onclick="netSet(\'full\')">Back to full speed</button>';
+}
+
+function netGate(){
+  var L = netIs();
+  if (!L.ms && !L.drop) return Promise.resolve();
+  return new Promise(function(resolve, reject){
+    setTimeout(function(){
+      if (L.drop && Math.random() < L.drop) {
+        var e = new Error(L.off ? 'Failed to fetch' : 'network error');
+        e.name = 'TypeError';          /* what a real dropped fetch rejects with */
+        return reject(e);
+      }
+      resolve();
+    }, L.ms);
+  });
+}
+
+/**
+ * ⚠️⚠️ EVERY REQUEST THE COUNTER MAKES GOES THROUGH HERE. snapshot-wire already forces that — *"a counter
+ * request that can hang for ever"* — so one gate covers all of them and no call site can forget.
+ */
+async function fetchBy(url, opts, ms){
+  await netGate();
   var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
   var to = ac ? setTimeout(function(){ try { ac.abort(); } catch (_) {} }, ms || DEADLINE) : null;
   var o = Object.assign({}, opts || {});
@@ -3670,7 +3780,7 @@ var CloudHost = {
      * ⭐ That is precisely what Athi saw: four bills waiting, the button doing nothing, and the server log showing
      * no POST at all — because none was ever attempted. Not a rejection. A wedged flag.
      *
-     * ⚠️⚠️ AND THE COUNTER HAD NO DEADLINES ANYWHERE. Not one AbortController in the file. The app's own api()
+     * ⚠️⚠️ AND THE COUNTER HAD NO DEADNETS ANYWHERE. Not one AbortController in the file. The app's own api()
      * learned this on 2026-09-04 — *"a request that never answers must fail, not freeze"* — after a hung PATCH
      * left an overlay up for ever. The counter is the surface most likely to be on a bad line, and it was the
      * one without the lesson.
@@ -4305,6 +4415,12 @@ function wrongShop(){
 }
 async function load(){
   if (!HOST) {
+    /**
+     * ⚠️⚠️ THE SIMULATOR ANNOUNCES ITSELF ON EVERY LOAD ([TILL-116]). It persists on purpose — testing
+     * whether an offline bill survives a restart is the point — so a counter that comes up on a fake dead
+     * line MUST say so before anything else, or it is indistinguishable from a broken one.
+     */
+    try { netApplyOnline(); netPaint(); } catch (_) {}
     HOST = await pickHost();
     /**
      * ⚠️⚠️ WHO IS SIGNED IN, AND ANY BREAK, ARE READ AGAIN HERE — once the key is known. Both are stored under shopLs(),
@@ -9012,7 +9128,7 @@ function cartPicCell(c, n, byId, testid){
  * Somebody who billed by looking at photographs should be able to CHECK by looking at photographs. Reading back
  * a column of names is a different skill from the one they just used, and at a counter the check is the whole
  * point of the second screen.
- * ⚠️ SAME LINES, SAME HANDLERS — only the face differs. Nothing here can put a different number on the bill
+ * ⚠️ SAME NETS, SAME HANDLERS — only the face differs. Nothing here can put a different number on the bill
  * than the table would have, which is the only way two views of one thing are safe.
  */
 function billView(){
@@ -11411,7 +11527,7 @@ async function addWeighed(w){
  * ⚠️ AN ITEM WITH NO CHOICES KEEPS ITS OLD KEY (the bare item_id), so nothing about today's bills changes.
  */
 /* ⭐ the signature lives in CBVariant now — see public/app/variant.js and docs/VARIANTS.md. The last
-   caller here was lineKey(), which delegates, so keeping a second copy would only be a copy to drift. */
+   caller here was netKey(), which delegates, so keeping a second copy would only be a copy to drift. */
 function lineKey(item_id, mods){ return CBVariant.keyOf(item_id, mods); }
 function addItem(i, qty, mods){
   var n = Number(qty); if (!(n > 0)) n = 1;
@@ -11920,7 +12036,7 @@ function price(){
     var unit = pr ? (Number(pr.amount) || 0) : (Number(c.price) || 0);
     c.priced = pr; c.unitPrice = unit;
     var gross = r2(unit * c.qty), net = gross;
-    /* ⚠️ READ BACK UNDER THE SAME KEY IT WAS SENT WITH — see the note on lineKey(). Reading by item_id put one
+    /* ⚠️ READ BACK UNDER THE SAME KEY IT WAS SENT WITH — see the note on netKey(). Reading by item_id put one
        line's offer onto every line of that product the moment modifiers made two of them. */
     var lk = c.key || c.item_id;
     if (ev && ev.line_net && ev.line_net[lk] != null) net = r2(ev.line_net[lk]);
@@ -11966,7 +12082,7 @@ function price(){
         c.gst_rate = (r && r.rate != null) ? r.rate : null; } catch(_){ c.gst_rate = null; }
     } else c.gst_rate = null;
   });
-  /* ⭐ THE SET OF LINES DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
+  /* ⭐ THE SET OF NETS DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
      A line added or removed → the container, because the rows themselves are different rows now. */
   var rows = document.querySelectorAll('#cart .row').length;
   var inPlace = (rows === CART.length && CART.length > 0);
@@ -12273,7 +12389,7 @@ function cartHeadHTML(){
 }
 function cartRowHTML(c, k){
   var f = lineFigures(c), v = cartCols();
-  return '<div class="row' + (k === CARTSEL ? ' sel' : '') + '" data-testid="till-line-' + k + '"'
+  return '<div class="row' + (k === CARTSEL ? ' sel' : '') + '" data-testid="till-net-' + k + '"'
     + ' style="grid-template-columns:' + cartGrid() + '">'
     /* ⭐ THE COUNT. Athi: *"Count, 1, 2, 3 etc, which is not there now — possibly we can bring it."* A line a
        shopkeeper can point at by number is a line they can talk about across a counter. */
@@ -13645,7 +13761,7 @@ async function shopEditSave(){
  * footnote marked * — his own suggestion, and the right one: a total that wraps onto three lines is harder to
  * read than the lump it replaced, which would put us back where we started.
  *
- * ⚠️ Read from EV, the evaluation the LINES were priced from — never recomputed. Two calculations of one figure
+ * ⚠️ Read from EV, the evaluation the NETS were priced from — never recomputed. Two calculations of one figure
  * is how a bill ends up arguing with itself.
  */
 function savedParts(){
@@ -13718,7 +13834,7 @@ function paintTotals(){
   var lineSum  = r2(CART.reduce(function(t, c){ return t + lineFigures(c).value; }, 0));
   var billWide = r2(CART.reduce(function(t, c){ return t + (Number(c.save_unnamed) || 0); }, 0));
   var wideRows = (billWide > 0.004)
-    ? '<div class="t" data-testid="till-lines-total"><span>Lines total</span><span>' + money(lineSum) + '</span></div>'
+    ? '<div class="t" data-testid="till-nets-total"><span>Lines total</span><span>' + money(lineSum) + '</span></div>'
       + '<div class="t save" data-testid="till-billwide"><span>Offer on the whole bill</span><span>−' + money(billWide) + '</span></div>'
     : '';
   /**
@@ -15560,6 +15676,18 @@ async function openStuck(){
     + '<button class="pill" data-testid="till-stuck-save" onclick="stuckSave()">💾 Save it as a file</button>'
     + '<button class="pill" data-testid="till-storage" onclick="openStorage()">🗄 What is being kept</button>'
     + '<button class="pill" data-testid="till-check-sent" onclick="checkAbsorbedNow()">🔎 Check sent bills really arrived</button>'
+    /**
+     * ⭐⭐⭐ THE LINE SIMULATOR ([TILL-116]). Athi: *"switch off network, reduce the speed to 2g and so on, so
+     * we can see how it works."* Here rather than on the sell screen, because it is a TEST control and a
+     * shopkeeper must not meet it by accident — and here specifically, because this is the panel a person
+     * already opens when they are asking what the line is doing.
+     */
+    + '<label class="pill" style="display:inline-flex;gap:6px;align-items:center">📶 Line'
+    + '<select data-testid="till-net" onchange="netSet(this.value)">'
+    + Object.keys(NETS).map(function(k){
+        return '<option value="' + k + '"' + (k === netNow() ? ' selected' : '') + '>' + esc(NETS[k].label) + '</option>';
+      }).join('')
+    + '</select></label>'
     + '<span class="qwhy">support code ' + esc(stuckCode()) + '</span>'
     + '</div>' + h;
 
