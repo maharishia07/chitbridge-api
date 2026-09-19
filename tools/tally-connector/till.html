@@ -790,11 +790,40 @@
   @media (min-width:601px){ #menubtn{display:none} }
   .side .sfull{display:none}
   .side.on .sfull{display:flex;flex-direction:column;min-height:100%}
+  /**
+   * ── ⚠️⚠️⚠️ THE RAIL STAYS A RAIL WHEN THE MENU IS A CARD ([TILL-86]) ───────────────────
+   * Above 900px the menu is a centred dialog (§4) — it leaves the rail entirely. The rail was still swelling
+   * to 348px to hold it and hiding its own icons to make room, so what a shopkeeper saw was an EMPTY white
+   * panel on the left and an unattached card in the middle. Athi: *"two different css mixed up"*, and he was
+   * right. Below 900 the drawer IS the menu and none of this applies.
+   */
+  @media (min-width:900px){
+    .side.on{width:var(--side,44px);box-shadow:none;overflow:hidden;
+             padding:calc(env(safe-area-inset-top,0px) + 6px) 5px calc(env(safe-area-inset-bottom,0px) + 6px)}
+    /* ⭐ and the strip stays — it is the CLOSED half of the same menu, not something the open half replaces */
+    .side.on .sicons{display:flex}
+  }
+  /**
+   * ⚠️⚠️ A CENTRED CARD NEEDS A SCRIM, or the counter behind it stays live: a press aimed at the card that
+   * lands two pixels outside it hits a quick key and puts an item on somebody's bill. It sits UNDER the card
+   * (the rail is z-60) and is a SIBLING of the rail, so the existing "clicked away" listener already reads a
+   * press on it as outside and closes — no second way to close the menu. [[feedback-no-duplicate-functions]]
+   */
+  .scrim{position:fixed;inset:0;z-index:59;background:rgba(20,18,14,.34);border:0;padding:0;
+         -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px)}
+  .scrim[hidden]{display:none}
+  @media (prefers-reduced-motion:no-preference){ .scrim{animation:scrimin .14s ease} }
+  @keyframes scrimin{from{opacity:0}to{opacity:1}}
   /* ⚠️ [hidden] must still win — the panel keeps `hidden` in step with `.on` so every "is it open?" check agrees */
   .side .sfull[hidden]{display:none}
   @media (max-width:600px){
     /* a 44px strip is the bill's width on a phone — the menu is the sheet there, opened from ☰ */
-    .side{width:0;border:0}
+    /**
+     * ⚠️⚠️ padding:0 IS PART OF THE HIDING. width:0 with 5px of padding either side is still a 10px box,
+     * fixed at z-60 and painted in --card — a white bar down the left edge of every phone, over content that
+     * runs full width under it, swallowing every touch that lands on the edge people swipe from.
+     */
+    .side{width:0;border:0;padding:0}
     .side.on{position:fixed;inset:0;width:100%;max-width:none}
     .side .sicons{display:none}
   }
@@ -1938,6 +1967,9 @@
 <body>
 <!-- ⭐⭐⭐ THE ONE MENU, on the right edge: an icon strip that widens into the five sections.
      Filled by paintSide() + paintMenu() from TILL_OPS / TILL_MENU — one list, one door. -->
+<!-- ⚠️ A SIBLING of the rail, deliberately: the "clicked away" listener asks whether the press was inside
+     #tillside, so a scrim placed INSIDE it would be read as a press on the menu and would never close. -->
+<div class="scrim" id="tillscrim" data-testid="till-scrim" hidden></div>
 <aside class="side" id="tillside" data-testid="till-side" aria-label="Counter menu">
   <div class="sicons" id="tillsideicons"></div>
   <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
@@ -5563,6 +5595,8 @@ function toggleMenu(e){
   if (!opening) { closeMenu(); return; }
   side.classList.add('on');
   m.hidden = false;
+  /* ⭐ ONE STATE, TWO ELEMENTS — the scrim is never toggled anywhere but beside the panel it belongs to */
+  var sc = document.getElementById('tillscrim'); if (sc) sc.hidden = false;
   /**
    * ⚠️⚠️ THE CARET MOVES INTO THE MENU NOW, AND THAT IS A DELIBERATE REVERSAL (2026-09-18).
    *
@@ -5644,6 +5678,11 @@ function paintViewChips(){
 }
 /** ⚠️ shutting it hands the caret straight back to the search box — the next scan has to land on the bill */
 function closeMenu(){
+  /* ⚠️ BEFORE THE GUARD, DELIBERATELY. closeMenu() returns early when the menu is already hidden, so a
+     scrim put away AFTER it would survive any path that left the two out of step — an invisible sheet over a
+     counter nobody can press, which is the worst outage this page can have. It costs nothing to put away
+     something that is already away. [[feedback-silence-is-the-bug]] */
+  var sc = document.getElementById('tillscrim'); if (sc) sc.hidden = true;
   var m = document.getElementById('tillmenu'); if (!m || m.hidden) return;
   m.hidden = true;
   var side = document.getElementById('tillside'); if (side) side.classList.remove('on');
