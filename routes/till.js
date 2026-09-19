@@ -1793,6 +1793,9 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   screen: '../lib/screen-kit.js',     /* the screen library — a UMD, the master itself */
                   money: '../lib/money.browser.js', docnumber: '../lib/docnumber.browser.js',
                   locale: '../lib/locale.browser.js', pricing: '../lib/pricing.browser.js',
+                  /* ⭐ VARIANTS — what makes two combinations the SAME thing to sell. A shop PC bills
+                     combinations with the line down, so it needs the rule locally like every other engine. */
+                  variant: '../lib/variant.browser.js',
                   qr: '../node_modules/qrcode-generator/qrcode.js' };
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];

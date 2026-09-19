@@ -701,6 +701,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     /* ⭐ the governance context — what we can know about a shop without asking it anything.
                        Registration loads it; the counter does not, so it is absent from KEEP. */
                     'govcontext.js': 'CBGov',
+                    'variant.js': 'CBVariant',
                     /* ⭐ the conversion engine and the unit table it stands on (2026-09-15) */
                     'units.js': 'CBUnits', 'convert.js': 'CBConvert',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null };

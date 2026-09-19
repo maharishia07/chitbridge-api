@@ -76,7 +76,10 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data');
  * GET /api/till/engine/:name and serves it at /engine/<name>.js; tests/till-vendor.test.js holds the three lists equal.
  * ⚠️ It was four of thirteen until 2026-09-17 — on a shop PC money, the bill-number rules, pricing and the QR were absent.
  */
-const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'gs1', 'lots', 'nums', 'rewards', 'screen'];
+/* ⭐ 'variant' joined on 2026-09-19: one product, many combinations, and what makes two of them the same
+   thing to sell. A shop PC bills combinations with the line down, so it keeps the rule locally too.
+   ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
+const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),

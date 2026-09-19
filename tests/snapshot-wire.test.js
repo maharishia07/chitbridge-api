@@ -379,6 +379,36 @@ it('⚠️⚠️ nothing on the counter forces a pixel photo height — the colu
 });
 
 /**
+ * ⭐⭐⭐ THE SAME COMBINATION IS ONE LINE, HOWEVER IT WAS CHOSEN ([TILL-76]).
+ * Athi, 2026-09-19: *"in the cart, it has to be identified as a separate item, possibly product code with
+ * some other field to distinguish it differently. if the same choice is chosen again, it has to be added to
+ * the existing cart."* The first half was already true; the second was not, and his sentence found it.
+ */
+it('⭐⭐⭐ the counter asks CBVariant what a combination is — it keeps no copy of the rule', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /**
+   * ⚠️⚠️ THE RULE LIVES IN ONE FILE. Athi, 2026-09-19: *"these are all should be as a module and we should be
+   * able to re-use."* The counter, the storefront and order capture must all get the same answer to "are these
+   * two the same thing to sell", and the only way that stays true is that none of them keeps its own copy.
+   * The arithmetic itself is tested twenty ways in tests/variant.test.js; what is defended HERE is the seam.
+   */
+  assert.ok(page.indexOf('CBVariant.keyOf(') > 0, 'the counter no longer asks the engine for a line key');
+  assert.ok(page.indexOf('function modSig(') < 0,
+    'the counter has grown its own choice signature again — that is the copy that will drift');
+  for (const [what, call] of [['the options a product offers', 'CBVariant.groupsOf('],
+                              ['what the choices add', 'CBVariant.addedPrice('],
+                              ['how to say them', 'CBVariant.words('],
+                              ['which required group is unanswered', 'CBVariant.missing(']])
+    assert.ok(page.indexOf(call) > 0, 'the counter decides ' + what + ' for itself instead of asking the engine');
+  /* ⚠️ and the engine is actually ON the page, or every one of those calls is a ReferenceError at the till */
+  assert.ok(page.indexOf('/engine/variant.js') > 0, 'the variant engine is not loaded — the calls above would throw');
+  /* ⭐ adding still merges on that key, or choosing the same thing twice would make two rows */
+  const add = page.slice(page.indexOf('function addItem('), page.indexOf('function addItem(') + 900);
+  assert.ok(add.indexOf('(c.key || c.item_id) === key') > 0,
+    'adding no longer merges on the line key, so the same choice twice makes two rows');
+});
+
+/**
  * ⭐⭐⭐ CHANGING THE CHOICES ON A LINE ALREADY ON THE BILL ([TILL-70]). Athi: *"once you added, you do not
  * have a way of edit the choice, you have to remove and then add it back."*
  */
@@ -407,7 +437,13 @@ it('⭐⭐⭐ the choices on a bill line can be changed, and the money follows t
   assert.ok(now.indexOf('CART.splice(k, 1)') > 0,
     'two lines with the same choices are left as two rows — a kitchen would make it twice');
   /* ⚠️ cancel keeps the line exactly as it was */
-  const cl = page.slice(page.indexOf('function modClose('), page.indexOf('function modClose(') + 400);
+  /* ⚠️ TO THE END OF THE FUNCTION, not a fixed 400 characters. A comment added at the top of modClose pushed
+     the line this looks for out of the window, and the guard reported an edit left half-applied when nothing
+     had changed. A slice measured in characters is a slice that breaks when somebody writes a sentence. */
+  const clAt = page.indexOf('function modClose(');
+  /* ⚠️ String.fromCharCode(10) rather than a newline escape: this file is edited by shell scripts that eat
+     backslashes, and a broken escape here takes the whole 60-check guard file dark. */
+  const cl = page.slice(clAt, page.indexOf(String.fromCharCode(10) + '}', clAt) + 2);
   assert.ok(cl.indexOf('MOD_EDIT = null') > 0, 'closing the dialog leaves an edit half-applied');
   /* ⚠️⚠️ ONE WRITER FOR THE BUTTON LABEL. Two of them meant the dialog said "Change Masala Dosa" over a
      button reading "Add": the later writer wins and neither knows about the other. */

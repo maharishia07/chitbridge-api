@@ -507,6 +507,11 @@
   .cmods:hover{border-color:var(--ok);color:var(--ok)}
   .cmods .cmodedit{font-style:normal;font-weight:700;opacity:.8}
   .cmods.none{color:var(--warn);border-color:var(--warn)}
+  .csplit{margin-inline-start:6px;border:1px dashed var(--line);background:transparent;color:var(--dim);
+          border-radius:8px;padding:1px 8px;font:inherit;font-size:.8em;cursor:pointer}
+  .csplit:hover{border-color:var(--ok);color:var(--ok)}
+  /* ⭐ the key the bill is pointing at ([TILL-73]) — the same green the chosen shelf row wears */
+  .quick [data-picked="1"]{outline:3px solid var(--ok);outline-offset:2px}
   /* the chooser */
   .modg{padding:6px 0;border-bottom:1px solid var(--line)}
   .modg:last-child{border-bottom:0}
@@ -1640,6 +1645,11 @@
   <div id="modbody"></div>
   <div class="dlgbtns">
     <button onclick="modClose()">Cancel · Esc</button>
+    <!--
+      ⭐ ADD, THEN ANOTHER ([TILL-75]) — a table of four ordering four different combinations is this button
+      three times, with no trip back to the shelf in between. Hidden when the product has nothing to choose.
+    -->
+    <button id="modmore" data-testid="till-mod-another" onclick="modAddAnother()">Add, then another</button>
     <button class="pri" id="modadd" data-testid="till-mod-add" onclick="modAddNow()">Add</button>
   </div>
 </dialog>
@@ -2123,6 +2133,9 @@
 <script src="/engine/offers.js" onerror="engineMissed('offers')"></script>
 <script src="/engine/tax.js" onerror="engineMissed('tax')"></script>
 <script src="/engine/search.js" onerror="engineMissed('search')"></script>
+<!-- ⭐ VARIANTS. One product, many combinations: what makes two of them the same, what the choices add, and
+     how to say them. Extracted so the storefront and order capture ask the same question the till does. -->
+<script src="/engine/variant.js" onerror="engineMissed('variant')"></script>
 <script src="/engine/gs1.js" onerror="engineMissed('gs1')"></script>
 <script src="/engine/lots.js" onerror="engineMissed('lots')"></script>
 <script src="/engine/nums.js" onerror="engineMissed('nums')"></script>
@@ -6761,6 +6774,8 @@ function paintQuick(){
    * next category always starts on a fresh line — which is exactly the "line break" Athi described, and it
    * costs one CSS rule rather than a second rendering path.
    */
+  /* ⭐ which line the bill is pointing at, so the keys can point at the same product ([TILL-73]) */
+  var pickedLine = (CARTSEL >= 0 && CARTSEL < CART.length) ? CART[CARTSEL] : null;
   var grouped = byCatOn() ? byCatOrder(shown) : null;
   if (grouped) shown = grouped.list;
   var lastCat = null;
@@ -6798,7 +6813,13 @@ function paintQuick(){
        * these attrs is silently ignored by every browser and the styling simply never arrives. The state rides
        * on data- attributes, and .quick.arranging carries the rest.
        */
+      /**
+       * ⭐⭐ THE KEY WEARS THE CART'S SELECTION ([TILL-73]). data-, not class: the tile library writes the
+       * button's class attribute itself and a second one is silently ignored — the note on the arrange
+       * attributes below records that the hard way.
+       */
       attrs: 'type="button" data-testid="till-quick-' + n + '" data-qk="' + esc(id) + '"'
+        + (pickedLine && String(pickedLine.item_id) === String(i.item_id) ? ' data-picked="1"' : '')
         + (QK_ARRANGE
             ? ' draggable="true"' + (QK_FROM === id ? ' data-qkfrom="1"' : '')
               + ' ondragstart="qkPickUp(\'' + id + '\')" ondragover="event.preventDefault()"'
@@ -8208,10 +8229,57 @@ function clearSearch(){
  * rearranging the screen under someone's hands.
  */
 var CARTSEL = -1;
+/**
+ * ── ⭐⭐⭐ ONE OF THEM WANTS COLA ([TILL-74]) ───────────────────────────────────────────────────────────────
+ *
+ * Athi: *"if one combo is medium and another combo is hot, does it make it two? is there a chance to ask
+ * options, that is possible in the table, each one will prefer their choice. someone wants pizza with pepsi
+ * and another one wants it with cola?"*
+ *
+ * ⭐ YES TO BOTH, and the first answer is already true: the choices ARE the line's identity (lineKey is
+ * item_id|signature), so a medium and a hot have always been two lines. What was missing is the way to GET
+ * there from a line of two without deleting it and adding two.
+ *
+ * ⚠️ SPLIT TAKES ONE OFF, it does not halve. A line of five becomes four and one — because the person asking
+ * is one customer at a table of five, and making it 1+1+1+1+1 would be tidying somebody else's bill.
+ * ⚠️⚠️ AND IF THEY CHANGE NOTHING, IT REJOINS. Two identical lines on a bill is a kitchen making two of
+ * something ordered once; cancelling the chooser must leave the bill exactly as it was found.
+ */
+var MOD_SPLIT = null;
+function cartSplit(k){
+  var c = CART[k]; if (!c || (Number(c.qty) || 0) < 2) return;
+  var copy = null;
+  try { copy = JSON.parse(JSON.stringify(c)); } catch (_) { return; }
+  copy.qty = 1;
+  c.qty = r2((Number(c.qty) || 0) - 1);
+  CART.splice(k + 1, 0, copy);
+  CARTSEL = k + 1;
+  MOD_SPLIT = { at: k + 1, from: k };
+  price();
+  /* ⭐ splitting is only ever done to change one of them, so the chooser opens on the one just made */
+  if (cartHasMods(copy)) modEdit(k + 1);
+  else { MOD_SPLIT = null; toastLine('Split off one ' + c.name + '. It has no choices to make.'); }
+}
+/** ⚠️ the split is undone if the chooser was closed without choosing anything different */
+function splitRejoin(){
+  var sp = MOD_SPLIT; MOD_SPLIT = null;
+  if (!sp) return;
+  var a = CART[sp.from], b = CART[sp.at];
+  if (!a || !b) return;
+  if ((a.key || a.item_id) !== (b.key || b.item_id)) return;   /* they differ now — that was the point */
+  a.qty = r2((Number(a.qty) || 0) + (Number(b.qty) || 0));
+  CART.splice(sp.at, 1);
+  CARTSEL = sp.from;
+  price();
+}
 function pickLine(k){
   var c = CART[k]; if (!c) return;
   CARTSEL = (CARTSEL === k) ? -1 : k;          /* tapping the same line again lets go of it */
   if (CARTSEL >= 0) findOnShelf(c);
+  /* ⚠️⚠️ AND THE KEYS. findOnShelf repaints the shelf; on a counter showing big photographs the shelf may be
+     scrolled out of sight, so without this the selection lands where nobody is looking and the whole feature
+     reads as broken. Athi found it in "pictures mode". [[feedback-repaint-locally]] */
+  try { paintQuick(); } catch (_) {}
   paintCart();
 }
 /**
@@ -8290,6 +8358,17 @@ function searchKey(e){
    */
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === 'Enter' && SCAN_AT && Date.now() - SCAN_AT < SCAN_ENTER_MS) { SCAN_AT = 0; e.preventDefault(); return; }
+  /**
+   * ⭐⭐ ENTER OPENS THE CHOSEN LINE'S CHOICES ([TILL-73]). Athi: *"if i press enter for the item in the cart,
+   * if it has the combo menu, the combo box to open."*
+   * ⚠️⚠️ ONLY WITH AN EMPTY BOX. Enter after typing means "add what I typed" — the reflex built over thousands
+   * of bills, and the one key this counter must never take away. Empty box, a line chosen, and that line has
+   * choices to make: only then does Enter mean the cart. The row says so on itself.
+   */
+  if (e.key === 'Enter' && MODE === 'sell' && !String(this.value || '').trim()
+      && CARTSEL >= 0 && CARTSEL < CART.length && cartHasMods(CART[CARTSEL])) {
+    modEdit(CARTSEL); e.preventDefault(); return;
+  }
   /**
    * ── ⭐⭐⭐ THE NEXT THING YOU TYPE STARTS A NEW SEARCH ──────────────────────────────────────────────────────
    *
@@ -8742,14 +8821,9 @@ function cartHasMods(c){
   var i = ((S && S.items) || []).filter(function(x){ return String(x.item_id) === String(c.item_id); })[0];
   return !!(i && modsOf(i).length);
 }
-function modsOf(i){
-  var m = (i && (i.modifiers || (i.item_data && i.item_data.modifiers))) || null;
-  return Array.isArray(m) ? m.filter(function(g){ return g && g.name && Array.isArray(g.options) && g.options.length; }) : [];
-}
-function modAdd(mods){
-  if (!mods || !mods.length) return 0;
-  return r2(mods.reduce(function(a, m){ return a + (Number(m.price) || 0); }, 0));
-}
+/* ⭐ CBVariant owns every rule about combinations — see public/app/variant.js and docs/VARIANTS.md */
+function modsOf(i){ return CBVariant.groupsOf(i); }
+function modAdd(mods){ return CBVariant.addedPrice(mods); }
 /**
  * what a KITCHEN needs of the choices: the words, and nothing else.
  * ⚠️ BUILT WITHOUT MONEY rather than having money stripped back out of it. A guard forbids a screen printing
@@ -8757,15 +8831,10 @@ function modAdd(mods){
  * second, private opinion about how money is written, which is exactly how two renderers drift apart.
  * ⚠️ And a cook does not need the price anyway: they need the dish, the count and what was asked for on it.
  */
-function modWordsPlain(mods){
-  if (!mods || !mods.length) return '';
-  return mods.map(function(m){ return m.option; }).join(' \u00b7 ');
-}
+function modWordsPlain(mods){ return CBVariant.wordsPlain(mods); }
 /** what the line says under its name — "no onion · extra cheese +₹20" */
-function modWords(mods){
-  if (!mods || !mods.length) return '';
-  return mods.map(function(m){ return m.option + (Number(m.price) ? ' +' + money(m.price) : ''); }).join(' · ');
-}
+/* ⚠️ money is handed IN — the engine never writes a currency, so one screen cannot disagree with another */
+function modWords(mods){ return CBVariant.words(mods, money); }
 /**
  * ⭐ THE CHOOSER. One dialog, one pass down the groups, and nothing is added to the bill until it is answered —
  * a half-chosen line is not a thing a kitchen can cook.
@@ -8872,10 +8941,7 @@ function modChosen(){
   (MOD_FOR ? MOD_FOR.groups : []).forEach(function(g){ (MOD_PICK[g.name] || []).forEach(function(x){ out.push(x); }); });
   return out;
 }
-function modMissing(){
-  return (MOD_FOR ? MOD_FOR.groups : []).filter(function(g){
-    return g.required && !(MOD_PICK[g.name] || []).length; }).map(function(g){ return g.name; });
-}
+function modMissing(){ return CBVariant.missing(MOD_FOR ? MOD_FOR.groups : [], modChosen()); }
 function modPaint(){
   var box = document.getElementById('modbody'); if (!box || !MOD_FOR) return;
   var i = MOD_FOR.item;
@@ -8908,6 +8974,13 @@ function modPaint(){
        on it, and a cashier must never have to guess which. ONE writer for this label: setting it anywhere else
        in this function is overwritten here. [[feedback-no-duplicate-functions]] */
     var verb = (MOD_EDIT !== null) ? 'Update' : 'Add';
+    /* ⭐ the second button follows the first's verb, and goes away when there is nothing to vary */
+    var more = document.getElementById('modmore');
+    if (more) {
+      var canVary = (MOD_FOR.groups || []).length > 0;
+      more.hidden = !canVary || miss.length > 0;
+      more.textContent = (MOD_EDIT !== null) ? 'Update, then add another' : 'Add, then another';
+    }
     add.textContent = miss.length ? ('Choose ' + miss.join(' and '))
       : (verb + (modAdd(modChosen()) ? ' · ' + money(r2((Number(i.price) || 0) + modAdd(modChosen()))) : ''));
   }
@@ -8921,6 +8994,8 @@ function modAddNow(){
    * other, is two of that dosa, not two identical rows. Two identical rows is how a kitchen makes two of
    * something ordered once.
    */
+  /* ⚠️ THE CHOICE WAS MADE, whatever it is — the split stands and must not be rejoined behind them */
+  MOD_SPLIT = null;
   if (MOD_EDIT !== null) {
     var k = MOD_EDIT, c = CART[k];
     var chosenNow = modChosen();
@@ -8959,7 +9034,24 @@ function modAddNow(){
   addItem(f.item, f.qty, chosen);
   price(); focusSearch();
 }
+/**
+ * ⭐⭐ COMMIT WHAT IS ON SCREEN, THEN OPEN A FRESH CHOOSER FOR ANOTHER ONE ([TILL-75]).
+ * ⚠️ IT GOES THROUGH modAddNow(), the one place a line is added or updated — never a second commit path.
+ * ⚠️ THE ITEM IS READ BEFORE THE COMMIT, because modAddNow() closes the dialog and modClose() nulls MOD_FOR.
+ * The same trap the original Add hit in September: read the answer before closing. 
+ */
+async function modAddAnother(){
+  if (!MOD_FOR || modMissing().length) return;
+  var item = MOD_FOR.item;
+  modAddNow();
+  /* ⚠️ A FRESH CHOOSER, NOTHING CARRIED OVER — "another combination" means another one, and repeating the last
+     answers is what the plain Add button already does. */
+  try { await modOpen(item, 1); } catch (_) {}
+}
 function modClose(){
+  /* ⚠️ a split that chose nothing is undone — see splitRejoin(). modAddNow clears MOD_SPLIT first, so this
+     only ever fires on a cancel. */
+  try { splitRejoin(); } catch (_) {}
   var d = document.getElementById('moddlg');
   if (d && d.open) { try { d.close(); } catch (_) {} }
   /* ⚠️ CANCEL KEEPS THE LINE EXACTLY AS IT WAS. Backing out of an edit must never be a way to lose a line. */
@@ -8999,11 +9091,9 @@ async function addWeighed(w){
  * onto both. So the key travels with the line and both places use it.
  * ⚠️ AN ITEM WITH NO CHOICES KEEPS ITS OLD KEY (the bare item_id), so nothing about today's bills changes.
  */
-function modSig(mods){
-  if (!mods || !mods.length) return '';
-  return mods.map(function(m){ return m.group + ':' + m.option; }).join(',');
-}
-function lineKey(item_id, mods){ var sig = modSig(mods); return sig ? (item_id + '|' + sig) : String(item_id); }
+/* ⭐ the signature lives in CBVariant now — see public/app/variant.js and docs/VARIANTS.md. The last
+   caller here was lineKey(), which delegates, so keeping a second copy would only be a copy to drift. */
+function lineKey(item_id, mods){ return CBVariant.keyOf(item_id, mods); }
 function addItem(i, qty, mods){
   var n = Number(qty); if (!(n > 0)) n = 1;
   var key = lineKey(i.item_id, mods);
@@ -9876,6 +9966,10 @@ function cartRowHTML(c, k){
      * ⚠️ IT SHOWS EVEN WITH NOTHING CHOSEN, when the product HAS choices to make: a dosa added by barcode with
      * no spice picked still needs a way to pick one.
      */
+    /* ⭐ ONE OF THEM WANTS COLA — split a line of two or more so one can be chosen for separately ([TILL-74]) */
+    + (((Number(c.qty) || 0) >= 2 && cartHasMods(c))
+        ? '<button class="csplit" data-testid="till-split-' + k + '" title="take one off, to choose for it separately"'
+          + ' onclick="event.stopPropagation();cartSplit(' + k + ')">Split one</button>' : '')
     + ((c.mods && c.mods.length)
         ? '<button class="cmods" data-testid="till-mods-' + k + '" title="change the choices"'
           + ' onclick="event.stopPropagation();modEdit(' + k + ')">' + esc(modWords(c.mods))

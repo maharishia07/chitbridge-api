@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -123,6 +123,12 @@ const COPIES = () => [
    * country→money and country→language maps rather than keeping a second opinion about either.
    */
   [path.join(WEB, 'app', 'govcontext.js'), path.join(WEB, 'engine', 'govcontext.js'), 'copy'],
+  /**
+   * ⭐ VARIANTS — one product, many combinations. What makes two of them the SAME (a canonical, sorted
+   * signature), what the choices add, and how to say them. On the till because a bill line is a variant, and
+   * extracted so the storefront and order capture ask the same question rather than each having a view.
+   */
+  [path.join(WEB, 'app', 'variant.js'), path.join(WEB, 'engine', 'variant.js'), 'copy'],
   /**
    * ⚠️ THE ONE THIRD-PARTY FILE ON THE TILL. qrcode-generator 1.4.4 (MIT), the same build shop.html loads from a
    * CDN — but a counter cannot reach a CDN with the line down, and a UPI QR is most needed exactly then. Copied
@@ -218,6 +224,7 @@ const COPIES = () => [
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
   [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'govcontext.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'govcontext.js'), 'utf8'))],
+  [null, path.join(API, 'lib', 'variant.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'variant.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'pricing.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'pricing.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],

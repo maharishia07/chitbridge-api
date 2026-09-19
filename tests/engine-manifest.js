@@ -492,6 +492,12 @@ const ENGINE_OTHER = [
    * itself a rule. (Registration, 2026-09-19 — vendored from public/app/govcontext.js.)
    */
   'govcontext.browser.js',
+  /**
+   * ⭐ ENGINE. It decides when two things being sold are the SAME thing — the canonical name for a set of
+   * choices. Swap it and a bill merges differently, a kitchen makes a different number of pizzas and a picker
+   * pulls different stock. That is a rule, and a rule is an engine. (2026-09-19)
+   */
+  'variant.browser.js',
   /* ENGINE: what somebody SAID, as text — a seam with a provider behind it (lib/speech.js). It decides nothing about money, but it
      is the one place a second AI vendor enters the platform, which makes it a boundary rather than a helper. */
   'speech.js',

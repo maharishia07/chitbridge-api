@@ -36,6 +36,9 @@ const GUARDS = [
   /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
      format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
+  /* ⚠️ the same set of choices must always make the same line, and a different set never the same one —
+     both failures are silent, and the bill stays arithmetically correct while being wrong */
+  'variant.test.js',
   'rewards.test.js',          // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js',     // the SEQUENCE: earn, come back, encash, expire, register — against the real store
   'sql-runner.test.js',       // a tool that runs SQL at production: its WITH/WITHOUT RLS line must be true
