@@ -553,6 +553,24 @@
    * ship none (see TILL_MENU), so the empty state INVITES rather than showing a faith nobody chose.
    */
   .daypanel{display:flex;flex-direction:column;gap:8px;padding:10px 8px 6px}
+  /**
+   * ⚠️ THE PICTURE IS NO LONGER A BANNER ([TILL-100]). A 190px-tall photograph pushed the three morning
+   * checks and Open the day below the fold — the panel is about READINESS and the picture is a mark beside
+   * it. .dayimg is kept for anything still drawing the old way; .dayico is the icon.
+   */
+  .dayhead{display:flex;gap:11px;align-items:center;margin-bottom:10px}
+  .dayheadt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .dayheadt>b{font-size:1.05em}
+  .dayheadt>span{display:flex;gap:10px;flex-wrap:wrap}
+  .dayico{flex:none;width:52px;height:52px;padding:0;border-radius:12px;border:1px solid var(--line);
+          overflow:hidden;background:var(--panel);cursor:pointer;display:grid;place-items:center}
+  .dayico img{width:100%;height:100%;object-fit:cover;display:block}
+  .dayico.none{border-style:dashed;color:var(--dim);font-size:1.5em;line-height:1}
+  .dayico:hover{border-color:var(--edge)}
+  /* ⚠️ THE BIG ONE IS BOUNDED BY THE VIEWPORT, not by the picture: a tall photograph must not make a
+     dialog taller than the screen, which is the one thing a dialog may never be. */
+  .dayimgbig{display:grid;place-items:center;max-height:70vh;overflow:auto}
+  .dayimgbig img{max-width:100%;max-height:70vh;object-fit:contain;border-radius:10px;display:block}
   .dayimg{width:100%;max-height:190px;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:block}
   button.dayimg.none{min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
         background:var(--panel);border:1px dashed var(--edge);color:var(--dim);cursor:pointer;font:inherit}
@@ -2225,6 +2243,16 @@
 <!-- ⭐⭐ THE NINE, AS PICTURES (png/StylePresets.png) — "Kiosk · vertical" means nothing as text -->
 <!-- ⭐⭐ THE ORDER A MENU IS READ IN ([TILL-87]) — starters, then drinks, then the main course. Ours to make
      settable; never ours to guess, because a grocery reads nothing like a restaurant. -->
+<!-- ⭐ THE SHOP'S OWN PICTURE, FULL SIZE ([TILL-100]). The morning panel shows a 128px icon; this is what
+     opens when it is pressed. Nothing else on the counter needs the big one. -->
+<dialog id="dayimgdlg" class="dlg" data-testid="till-day-img-dlg">
+  <h3>Your picture <span class="u">kept on this counter</span></h3>
+  <div id="dayimgbig" class="dayimgbig"></div>
+  <div class="dlgbtns">
+    <button onclick="dayImgClose()">Close · Esc</button>
+    <button data-testid="till-day-img-replace" onclick="dayImgClose();dayImgPick()">Change it</button>
+  </div>
+</dialog>
 <dialog id="catdlg" class="dlg" data-testid="till-catorder-dlg">
   <h3>Order the categories <span class="u">the order they are listed in — on the chips, on the keys and in maintenance</span></h3>
   <div id="catbody"></div>
@@ -5060,20 +5088,87 @@ function idlePoke(){
   document.addEventListener(t, idleWake, true);
 });
 setInterval(function(){ var c = document.getElementById('idleclock'); if (c) c.textContent = new Date().toTimeString().slice(0, 5); }, 20000);
+/**
+ * ── ⭐⭐ THE PICTURE IS RESIZED BEFORE IT IS KEPT ([TILL-100]) ──────────────────────────
+ * A phone photograph is 3–8 MB and becomes a third bigger again as a data URL. Nothing on this counter needs
+ * that: the panel draws an icon and the popup draws a picture, so those are the two sizes it keeps.
+ * ⚠️ ONE LONG EDGE, ASPECT KEPT — a shop's photograph squeezed into a square is somebody's shrine distorted.
+ */
+function dayImgShrink(file, edge, square){
+  return new Promise(function(done, fail){
+    var fr = new FileReader();
+    fr.onerror = function(){ fail(new Error('the file could not be read')); };
+    fr.onload = function(){
+      var im = new Image();
+      im.onerror = function(){ fail(new Error('that file is not a picture this browser can open')); };
+      im.onload = function(){
+        var w = im.naturalWidth || 1, h = im.naturalHeight || 1;
+        var c = document.createElement('canvas'), x;
+        if (square) {
+          /* the icon is a centre crop, so a tall photo and a wide one both fill it */
+          var side = Math.min(w, h);
+          c.width = c.height = edge;
+          x = c.getContext('2d');
+          x.drawImage(im, (w - side) / 2, (h - side) / 2, side, side, 0, 0, edge, edge);
+        } else {
+          var k = Math.min(1, edge / Math.max(w, h));
+          c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+          x = c.getContext('2d');
+          x.drawImage(im, 0, 0, c.width, c.height);
+        }
+        /* ⚠️ JPEG, not PNG: a photograph as PNG is several times bigger for no gain a counter can see */
+        try { done(c.toDataURL('image/jpeg', 0.82)); }
+        catch (e) { fail(new Error('the picture could not be prepared')); }
+      };
+      im.src = String(fr.result);
+    };
+    fr.readAsDataURL(file);
+  });
+}
 function dayImgPick(){
   var i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*';
-  i.onchange = function(){
+  i.onchange = async function(){
     var f = i.files && i.files[0]; if (!f) return;
-    /* ⚠️ 1.5 MB is plenty for a counter photo and keeps localStorage usable; bigger is refused with a reason */
-    if (f.size > 1500000) { toastLine('That picture is too big — about 1.5 MB is the most this can keep.'); return; }
-    var r = new FileReader();
-    r.onload = function(){ try { ls.set(shopLs('cb_till_dayimg'), String(r.result)); paintMenu(); } catch (_) {
-      toastLine('This device could not keep that picture.'); } };
-    r.readAsDataURL(f);
+    toastLine('Preparing the picture…');
+    var big, icon;
+    try {
+      big = await dayImgShrink(f, 1280, false);
+      icon = await dayImgShrink(f, 128, true);
+    } catch (e) { toastLine((e && e.message) || 'That picture could not be read.'); return; }
+    /**
+     * ⚠️⚠️ ls.set() DOES NOT THROW — it returns false and records why in ls.last. The old code wrapped it in
+     * a try/catch that could never fire, so a refused picture was dropped in total silence. THE RETURN VALUE
+     * IS THE REPORT. [[feedback-silence-is-the-bug]]
+     */
+    var okBig = ls.set(shopLs('cb_till_dayimg'), big);
+    var okIcon = ls.set(shopLs('cb_till_dayicon'), icon);
+    if (!okBig || !okIcon) {
+      /* put back whatever half landed, so the panel never shows an icon with no picture behind it */
+      ls.set(shopLs('cb_till_dayimg'), ''); ls.set(shopLs('cb_till_dayicon'), '');
+      var why = (ls.last && ls.last.why) || 'refused';
+      toastLine('This device would not keep the picture (' + why + '). Everything else still works.');
+      return;
+    }
+    paintMenu();
+    toastLine('Picture saved on this counter.');
   };
   i.click();
 }
-function dayImgClear(){ ls.set(shopLs('cb_till_dayimg'), ''); paintMenu(); }
+function dayImgClear(){
+  ls.set(shopLs('cb_till_dayimg'), ''); ls.set(shopLs('cb_till_dayicon'), '');
+  paintMenu(); toastLine('Picture removed.');
+}
+/** ⭐ the small one for the panel, falling back to the big one for a picture saved before [TILL-100] */
+function dayIcon(){ return ls.get(shopLs('cb_till_dayicon'), '') || dayImg(); }
+/** ⭐ Athi: *"on click the image can popup"* — the picture at the size it was kept, over the counter */
+function dayImgOpen(){
+  var src = dayImg(); if (!src) return dayImgPick();
+  var d = document.getElementById('dayimgdlg'); if (!d) return;
+  var box = document.getElementById('dayimgbig');
+  if (box) box.innerHTML = '<img src="' + esc(src) + '" alt="">';
+  if (d.showModal) { try { d.showModal(); } catch (_) {} }
+}
+function dayImgClose(){ var d = document.getElementById('dayimgdlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
 function menuDayBody(){
   var img = dayImg(), opened = dayOpened();
   var when = new Date();
@@ -5085,11 +5180,24 @@ function menuDayBody(){
     return '<div class="dayline"><span class="' + (ok ? 'yes' : 'no') + '">' + (ok ? '✓' : '•') + '</span>' + esc(text) + '</div>';
   };
   return '<div class="daypanel" data-testid="till-day-panel">'
+    /**
+     * ⭐⭐ AN ICON, NOT A BANNER ([TILL-100]). Athi: *"Image can be an icon, and add image or edit image can
+     * be shown, on click the image can popup."* A 190px-tall photograph pushed the three morning checks and
+     * the Open the day button below the fold — the panel is about READINESS, and the picture is the shop's
+     * own mark beside it, not the subject.
+     */
+    + '<div class="dayhead">'
     + (img
-        ? '<img class="dayimg" data-testid="till-day-img" src="' + esc(img) + '" alt="">'
-        : '<button class="dayimg none" data-testid="till-day-img-add" onclick="dayImgPick()">'
-          + '<b>+</b><i>Put your own picture here</i></button>')
-    + '<div class="daywhen">' + esc(day) + '</div>'
+        ? '<button class="dayico" data-testid="till-day-img" title="see it bigger" onclick="dayImgOpen()">'
+          + '<img src="' + esc(dayIcon()) + '" alt=""></button>'
+        : '<button class="dayico none" data-testid="till-day-img-add" title="add your own picture"'
+          + ' onclick="dayImgPick()">+</button>')
+    + '<div class="dayheadt"><b>' + esc(day) + '</b>'
+    + '<span>' + (img ? '<button class="daylink" data-testid="till-day-img-change" onclick="dayImgPick()">Change picture</button>'
+                        + '<button class="daylink" data-testid="till-day-img-clear" onclick="dayImgClear()">Remove</button>'
+                      : '<button class="daylink" data-testid="till-day-img-add2" onclick="dayImgPick()">Add a picture</button>')
+    + '</span></div></div>'
+    /* ⚠️ the date moved INTO the head row beside the icon ([TILL-100]) — two lines saying when it is was one
     + line(items > 0, items ? items + ' products on this counter' : 'No copy of the shop yet — press Read the shop again')
     + line(queued === 0, queued === 0 ? 'Nothing waiting to be sent' : queued + ' still waiting to reach ChitBridge')
     + line(!!(S && S.items), navigator.onLine ? 'The line is up' : 'Offline — billing still works')
@@ -5097,8 +5205,6 @@ function menuDayBody(){
     + (opened
         ? '<span class="dayok" data-testid="till-day-open">Opened for today</span>'
         : '<button class="daygo" data-testid="till-day-begin" onclick="beginDay()">Open the day</button>')
-    + (img ? '<button class="daylink" data-testid="till-day-img-change" onclick="dayImgPick()">Change picture</button>'
-           + '<button class="daylink" onclick="dayImgClear()">Remove</button>' : '')
     + '</div>'
     /* ⚠️ A COUNT AND A DOOR, NOT THE LIST ([TILL-79]). The list and the editing are in the popup now; a
        section that redraws the whole list is the content Athi asked to have taken out of the menu. */
@@ -5422,10 +5528,14 @@ function dayRepRows(bills){
     (b.lines || []).forEach(function(l){
       if (!l || !l.name) return;
       var k = l.name;
-      var r = items[k] || (items[k] = { name: l.name, unit: l.unit || '', qty: 0, gross: 0, off: 0, net: 0 });
+      var r = items[k] || (items[k] = { name: l.name, unit: l.unit || '', qty: 0, gross: 0, off: 0, tax: 0, net: 0 });
       r.qty = r2(r.qty + (Number(l.qty) || 0));
       r.gross = r2(r.gross + (Number(l.gross) || 0));
       r.off = r2(r.off + (Number(l.save) || 0));
+      /* ⭐ THE LINE'S OWN TAX, as it was issued ([TILL-101]). Stored at sale time precisely so a reprint does
+         not recompute against today's slabs — and for the same reason this report must not either. A bill
+         from before that field existed contributes 0 rather than a guess. */
+      r.tax = r2(r.tax + (Number(l.tax) || 0));
       r.net = r2(r.net + (Number(l.net) || 0));
     });
     /* ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
@@ -5450,8 +5560,11 @@ function dayRepTable(title, cols, rows, foot){
   return '<section class="drsec"><h3>' + esc(title) + '</h3><table class="drt"><thead><tr>'
     + cols.map(function(c){ return '<th' + (c.num ? ' class="num"' : '') + '>' + esc(c.label) + '</th>'; }).join('')
     + '</tr></thead><tbody>'
+    /* ⭐ data-h is the column's own name, used ONLY when a 72mm slip folds the row ([TILL-101]). On screen it
+       costs nothing; on paper it is the difference between four figures and four LABELLED figures. */
     + rows.map(function(r){ return '<tr>' + r.map(function(cell, n){
-        return '<td' + (cols[n] && cols[n].num ? ' class="num"' : '') + '>' + cell + '</td>'; }).join('') + '</tr>'; }).join('')
+        return '<td' + (cols[n] && cols[n].num ? ' class="num"' : '')
+          + ' data-h="' + esc((cols[n] && cols[n].label) || '') + '">' + cell + '</td>'; }).join('') + '</tr>'; }).join('')
     + '</tbody>'
     + (foot ? '<tfoot><tr>' + foot.map(function(cell, n){
         return '<td' + (cols[n] && cols[n].num ? ' class="num"' : '') + '>' + cell + '</td>'; }).join('') + '</tr></tfoot>' : '')
@@ -5482,7 +5595,13 @@ function dayReportHTML(bills){
     + ' \u00b7 printed ' + esc(hhmm(Date.now())) + '</div></div>'
     /* ⚠️ THE CONTROLS ARE MARKED norip SO THEY DO NOT APPEAR ON THE PAPER */
     + '<div class="dracts norip">'
-    + '<button data-testid="till-dayreport-print" onclick="window.print()">Print</button>'
+    /**
+     * ⭐ ONE COUNTER, ONE PRINTER — the slip is the default because it is the one plugged in ([TILL-101]).
+     * A4 stays for the shopkeeper who wants a sheet, and says which way up.
+     */
+    + '<button class="pri" data-testid="till-dayreport-print" onclick="dayRepPrint(\'slip\')">Print · 72mm slip</button>'
+    + '<button data-testid="till-dayreport-print-a4" onclick="dayRepPrint(\'portrait\')">A4 portrait</button>'
+    + '<button data-testid="till-dayreport-print-land" onclick="dayRepPrint(\'landscape\')">A4 landscape</button>'
     + '<button data-testid="till-dayreport-close" onclick="dayReportClose()">Close</button>'
     + '</div></header>';
 
@@ -5513,13 +5632,21 @@ function dayReportHTML(bills){
     { label: 'CGST', num: true }, { label: 'SGST', num: true }, { label: 'Tax', num: true }], rateRows,
     rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '', '', '<b>' + money(tax) + '</b>'] : null);
 
-  var sold = Object.keys(agg.items).map(function(k){ return agg.items[k]; })
-    .sort(function(a, b){ return b.net - a.net; })
-    .map(function(r){ return [esc(r.name), esc(r.unit), String(r.qty), money(r.gross),
-                              r.off ? '\u2212' + money(r.off) : '', money(r.net)]; });
+  /* ⭐ GROSS · OFFERS · TAX · NET, in that order ([TILL-101]) — Athi named the four, and they read left to
+     right as the arithmetic happens: what it listed at, what came off, what the state takes, what is left. */
+  var soldRows = Object.keys(agg.items).map(function(k){ return agg.items[k]; })
+    .sort(function(a, b){ return b.net - a.net; });          /* by VALUE, top to bottom */
+  var taxSold = soldRows.reduce(function(a, r){ return r2(a + r.tax); }, 0);
+  var offSold = soldRows.reduce(function(a, r){ return r2(a + r.off); }, 0);
+  var grossSold = soldRows.reduce(function(a, r){ return r2(a + r.gross); }, 0);
+  var sold = soldRows.map(function(r){ return [esc(r.name), esc(r.unit), String(r.qty), money(r.gross),
+                              r.off ? '\u2212' + money(r.off) : '', r.tax ? money(r.tax) : '', money(r.net)]; });
   var items = dayRepTable('Everything sold', [{ label: 'Item' }, { label: 'Unit' }, { label: 'Qty', num: true },
-    { label: 'Gross', num: true }, { label: 'Offers', num: true }, { label: 'Net', num: true }], sold,
-    ['<b>' + dayRepCount(sold.length, 'product', 'products') + '</b>', '', '<b>' + qty + '</b>', '', '', '<b>' + money(total) + '</b>']);
+    { label: 'Gross', num: true }, { label: 'Offers', num: true }, { label: 'Tax', num: true },
+    { label: 'Net', num: true }], sold,
+    ['<b>' + dayRepCount(sold.length, 'product', 'products') + '</b>', '', '<b>' + qty + '</b>',
+     '<b>' + money(grossSold) + '</b>', offSold ? '<b>\u2212' + money(offSold) + '</b>' : '',
+     taxSold ? '<b>' + money(taxSold) + '</b>' : '', '<b>' + money(total) + '</b>']);
 
   var billRows = (bills || []).filter(function(b){ return !isReturnRow(b); }).map(function(b){
     var ct = (b.lines || []).reduce(function(a, l){ return r2(a + (Number(l.qty) || 0)); }, 0);
@@ -14182,6 +14309,54 @@ function autoPrint(doc){
     var n = document.getElementById('lastnote');
     if (n && r && r.why && r.why !== 'no printer chosen yet') n.textContent = 'not printed — ' + r.why;
   }).catch(function(){});
+}
+/**
+ * ── ⭐⭐ THE DAY'S REPORT, ON THE COUNTER'S OWN PRINTER ([TILL-101]) ───────────────────────
+ *
+ * Three sizes, one report. The slip FOLDS every row rather than dropping a column — a printed figure that is
+ * missing is worse than one that took a second line.
+ * ⚠️ A BLOCKED POP-UP MUST NOT LOSE THE REPORT, the same guard printSlip() carries: fall back to the page's
+ * own print rather than silently doing nothing.
+ */
+function dayRepPrint(how){
+  var src = document.getElementById('dayrep');
+  if (!src) { window.print(); return; }
+  var w = window.open('', 'dayrep', 'width=460,height=700');
+  if (!w) { window.print(); return; }
+  var slip = (how === 'slip');
+  var page = slip ? '@page{size:72mm auto;margin:0}'
+                  : '@page{size:A4 ' + (how === 'landscape' ? 'landscape' : 'portrait') + ';margin:12mm}';
+  /**
+   * ⚠️⚠️ ON 72mm A TABLE OF SEVEN COLUMNS IS UNREADABLE, so each row becomes two: what was sold, then what
+   * it came to. `display:block` on the cells does the folding — no second renderer, so the slip can never
+   * show different figures from the screen.
+   */
+  var fold = !slip ? '' : [
+    'table,thead,tbody,tr,th,td{display:block;width:auto}',
+    'thead{display:none}',                                  /* the labels move onto each cell instead */
+    'tr{border-bottom:1px dashed #999;padding:1.5mm 0}',
+    'td{padding:0;text-align:left!important}',
+    'td:before{content:attr(data-h) " ";color:#555;font-size:.85em}',
+    'td:first-child:before{content:""}',
+    'td:first-child{font-weight:700}',
+  ].join('');
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'
+    + esc((S && S.shop && S.shop.name) || 'Today') + ' — today</title><style>'
+    + page
+    + 'body{margin:0;padding:' + (slip ? '2mm' : '0') + ';font:' + (slip ? '11px' : '12px')
+    + ' ui-monospace,SFMono-Regular,Menlo,monospace;color:#000}'
+    + 'table{border-collapse:collapse;width:100%}'
+    + 'th,td{padding:2px 4px;border-bottom:1px solid #ccc}'
+    + 'th{text-align:left;font-size:.9em}'
+    + '.num,td.num{text-align:right;font-variant-numeric:tabular-nums}'
+    + 'h3{margin:6px 0 3px;font-size:1em}'
+    /* ⭐ THE REPORT ALREADY MARKS ITS OWN CONTROLS. `norip` is this page's existing word for "not on the
+       paper" — honouring it here means the buttons cannot end up printed, and there is one convention. */
+    + '.norip{display:none!important}'
+    + fold
+    + '</style></head><body>' + src.innerHTML + '</body></html>');
+  w.document.close(); w.focus(); w.print();
+  setTimeout(function(){ try { w.close(); } catch (_) {} }, 400);
 }
 function printSlip(){
   var w = window.open('', 'slip', 'width=420,height=640');
