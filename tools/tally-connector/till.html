@@ -403,7 +403,21 @@
     /* ⚠ across BOTH columns, at the bottom, which is where §4 puts it and where it cannot read as one more row */
     .menu.asdialog .msecs.two .mcare{grid-column:1 / -1;padding-top:10px}
   }
-  .msec{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+  /**
+   * ── ⭐⭐⭐ A SECTION HAS AN IDENTITY ([TILL-85]) ──────────────────────────────────
+   * --mh is the section's own hue, set once per <section> by paintMenu from MENU_HUE. Everything below is an
+   * alpha of it, so one number carries the tile, the rail and the strip icon — and all four themes get it
+   * right without a second palette. ⚠️ Never a baked pale colour: that only looks right on cream.
+   */
+  .msec{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--paper);
+        --mh:120,116,110;position:relative;
+        transition:border-color .14s ease,box-shadow .14s ease,transform .14s ease}
+  /* ⭐ THE OPEN ONE IS LIFTED AND WEARS ITS OWN COLOUR — in a list of ten, "which one did I just press?" must
+     never be a question. This is the other half of the jump fix ([TILL-83]): the answer is on the section. */
+  .msec.open{border-color:rgba(var(--mh),.55);box-shadow:0 2px 0 rgba(var(--mh),.18),0 10px 26px rgba(0,0,0,.07)}
+  .msec.open::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:3px;
+                     background:rgb(var(--mh));z-index:1}
+  @media (hover:hover){ .msec:not(.open):hover{border-color:rgba(var(--mh),.42)} }
   /* §4: a closed row is icon square 36px, title, one-line summary, chevron — and at least 60px tall */
   .mrow{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 12px;
         border:0;background:transparent;color:var(--ink);cursor:pointer;font:inherit;text-align:start}
@@ -422,6 +436,17 @@
    * actions are indented under it with a plain glyph, so the nesting is visible before anything is read.
    */
   .mrow{background:var(--panel)}
+  /* ⭐ the heading's tile carries the hue; the glyph inside it carries the same hue at full strength */
+  .mrow .mi{background:rgba(var(--mh),.14);color:rgb(var(--mh));transition:background .14s ease}
+  .msec.open .mrow{background:rgba(var(--mh),.09)}
+  .msec.open .mrow .mi{background:rgba(var(--mh),.22)}
+  .msec.open .mrow .mt b{color:rgb(var(--mh))}
+  /* ⚠️ A CHEVRON THAT TURNS IS A STATE YOU CAN SEE WITHOUT READING. One glyph, rotated — not two glyphs,
+     which is how › and ⌄ ended up different weights and sizes in the same column. */
+  .mch{display:inline-flex;transition:transform .16s ease;font-size:1.15em;line-height:1}
+  .msec.open .mch{transform:rotate(90deg)}
+  .mrow:focus-visible,.mact:focus-visible{outline:3px solid var(--ok);outline-offset:-3px;border-radius:11px}
+  @media (prefers-reduced-motion:reduce){ .msec,.mch,.mrow .mi{transition:none} }
   .msec.care .mrow{background:transparent}
   /* ⚠️ padding-inline-start, not a left pad — in Arabic the nesting indent would land on the wrong edge */
   .mact{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 6px;padding-inline-start:14px;border:0;
@@ -514,7 +539,18 @@
   .tododone{margin-top:10px}
   .tododone summary{color:var(--dim);font-size:.85em;cursor:pointer;padding:4px 0}
   .todohead .due{color:var(--warn);font-weight:700}
-  .pill.wide{width:100%;margin-top:8px;text-align:start}
+  /**
+   * ⚠️⚠️ A FULL-WIDTH DOOR IS NOT A STATUS PILL. `.pill` is white-space:nowrap — correct for a status,
+   * which looks broken when it wraps, and fatal for a button whose label has something to say: it clipped
+   * "…see it before you appl". A width of 100% and a refusal to wrap cannot both be right.
+   */
+  .pill.wide{width:100%;margin-top:8px;text-align:start;white-space:normal;line-height:1.35}
+  /* ⭐ the main door of its section wears the section's hue, so it reads as the way ON rather than as one more
+     grey outline in a panel of grey outlines ([TILL-85]) */
+  .msec .pill.wide.door{min-height:46px;padding:9px 14px;font-size:13px;font-weight:700;
+        border-color:rgba(var(--mh),.45);background:rgba(var(--mh),.10);color:rgb(var(--mh))}
+  .msec .pill.wide.door:hover{background:rgba(var(--mh),.18)}
+  .msec .pill.wide.door span{display:block;font-weight:400;font-size:.88em;opacity:.85}
   /* the strip's own count — the one number there that a shopkeeper put on it themselves */
   .side .sicons button{position:relative}
   .sbadge{position:absolute;top:2px;inset-inline-end:2px;min-width:16px;height:16px;border-radius:99px;
@@ -734,6 +770,15 @@
   .side .sicons button{display:flex;align-items:center;justify-content:center;min-height:40px;border:0;
         background:transparent;color:var(--ink);cursor:pointer;border-radius:10px;font:inherit;font-size:16px}
   .side .sicons button:hover{background:var(--panel)}
+  /**
+   * ⭐⭐ THE STRIP IS THE SAME MENU, SO IT WEARS THE SAME COLOURS ([TILL-85]). A shopkeeper who learns that
+   * the amber one is the morning has learned it in both halves at once — which is the whole argument for a
+   * colour: it is only worth a thing if it is the SAME thing everywhere.
+   */
+  .side .sicons button[data-mh]{color:rgb(var(--mh))}
+  .side .sicons button[data-mh]:hover{background:rgba(var(--mh),.14)}
+  /* ⚠️ the acknowledgement still wins — a press must read as a press whatever colour the icon is */
+  .side .sicons button.hit[data-mh]{background:var(--ok);color:var(--on-accent)}
   .side .sicons .top{background:var(--ink);color:var(--card);margin-bottom:6px}
   /* open: the menu itself, the same five sections the sheet shows */
   /* the page keeps clear of the collapsed strip; opening OVERLAYS, so nothing reflows while selling */
@@ -1192,29 +1237,204 @@
   /* ── ⭐ PANEL SIZES (png/PanelSizing.png, [TILL-60]) ─────────────────────────────────────────────── */
   /* ── ⭐ SCREEN STYLE ([TILL-77]) ─────────────────────────────────────────────────────────────────── */
   .dlg.wide{max-width:min(1040px,94vw);width:min(1040px,94vw)}
-  .stylewrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
-  @media (max-width:820px){ .stylewrap{grid-template-columns:1fr} }
-  .stylerow{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;align-items:start;
-            padding:8px 0;border-top:1px solid var(--line)}
-  .stylerow:first-child{border-top:0}
-  .stylerow .sl{color:var(--dim);font-size:.88em;padding-top:5px}
-  .stylerow .sc{display:flex;flex-wrap:wrap;gap:6px}
+  /**
+   * ── ⭐⭐ THE STUDIO ([TILL-84]) ───────────────────────────────────────────────────────────────────
+   * ⚠️ MOBILE FIRST, as the package asks: this is the PHONE layout — preview pinned at the top, settings
+   * scrolling under it — and the two-column desk is a min-width query at the bottom. Written in that order
+   * because the phone is the shape that cannot absorb a mistake.
+   */
+  /**
+   * ⚠️⚠️⚠️ [open] IS LOAD-BEARING. A <dialog> is hidden by the browser through the UA rule
+   * dialog:not([open]) { display:none } — so a plain display:flex on the class OVERRODE IT, and the CLOSED
+   * Screen style dialog sat over the whole page as an invisible block, swallowing every click on the counter
+   * behind it. Nothing looked wrong; the till simply stopped responding to the shelf and the cart.
+   * Caught by till-modedit.cjs, which could no longer press a cart row: "<div class=stfoot> from
+   * <dialog id=styledlg> subtree intercepts pointer events".
+   * ⚠️ ANY dialog given a display: must scope it to [open]. This is not a studio problem.
+   * [[feedback-silence-is-the-bug]] [[feedback-check-after-the-wire]]
+   */
+  .dlg.studio{max-width:min(1320px,96vw);width:min(1320px,96vw);padding:0;max-height:92vh;overflow:hidden}
+  .dlg.studio[open]{display:flex;flex-direction:column}
+  .sthead{display:flex;align-items:flex-start;gap:14px;padding:15px 18px 12px;border-bottom:1px solid var(--line);
+          background:var(--panel)}
+  .sthead h3{margin:0;font-size:1.3em;letter-spacing:-.01em}
+  .sthead .sub{display:block;color:var(--dim);font-size:.85em;margin-top:3px;line-height:1.45}
+  .sthead .sp{margin-inline-start:auto;display:flex;gap:8px;align-items:center;flex:none}
+  /* ⭐ THE COUNT OF WHAT HAS NOT LANDED YET — amber, because nothing here has happened to the counter */
+  .stpend{border:1px solid var(--warn);background:var(--warn-tint);color:var(--warn);border-radius:999px;
+          padding:6px 13px;font-size:.84em;font-weight:700;white-space:nowrap}
+  .stpend.none{border-color:var(--line);background:transparent;color:var(--dim);font-weight:400}
+  /* ⚠️⚠️ .stwrap, NOT .studio — .studio is also on the <dialog>, so this display:flex was overriding
+     dialog:not([open]){display:none} and leaving the CLOSED dialog over the page, eating every click. */
+  .stwrap{display:flex;flex-direction:column;min-height:0;overflow:auto;flex:1}
+  .stpv{padding:13px 18px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .stset{padding:14px 18px 22px}
+  .stbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .stbar .cap{font-size:.73em;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .stbar .sp{margin-inline-start:auto;display:flex;gap:8px}
+  .segs{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+  .segs button{border:0;background:transparent;color:var(--dim);font:inherit;font-size:.83em;font-weight:600;
+               padding:6px 13px;border-radius:999px;cursor:pointer;min-height:34px}
+  .segs button.on{background:var(--ink);color:var(--card)}
+  /**
+   * ⭐⭐⭐ THE MINIATURE IS A REAL SCREEN, SHRUNK. #stcanvas is sized in the DEVICE's own pixels and scaled
+   * with a transform, so 1600×900 stays 16:9 and the text inside shrinks with everything else — which is the
+   * whole point: you are judging whether a price is still readable at that size.
+   * ⚠️ transform does not shrink the BOX, so the clip carries the scaled height or the page grows a mile.
+   */
+  .stframe{background:#1B1A17;border-radius:14px;padding:10px 10px 0;overflow:hidden}
+  .stclip{position:relative;overflow:hidden;border-radius:5px}
+  #stcanvas{position:absolute;top:0;inset-inline-start:0;transform-origin:top left;
+            background:var(--paper);color:var(--ink);overflow:hidden;display:flex;flex-direction:column}
+  .stscale{color:#B9B2A6;font-size:.72em;text-align:center;padding:7px 0 8px;
+           font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em}
+  /* ⚠️ IT IS A PICTURE, NOT A PANEL — nothing inside it invites a press */
+  #stcanvas *{pointer-events:none}
+  #stcanvas .sk-x,#stcanvas .qpin,#stcanvas .sk-qty{display:none}
+  /* ── the two cards under it: the consequences, and the promise ───────────────────────── */
+  .stsays{display:grid;gap:10px;margin-top:12px}
+  @media (min-width:700px){ .stsays{grid-template-columns:1fr 1fr} }
+  .stcard{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:var(--card)}
+  .stcard>b{display:block;font-size:.73em;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+  .stcard ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+  .stcard li{display:flex;gap:9px;align-items:flex-start;font-size:.875em;line-height:1.45}
+  .stcard li i{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none;margin-top:6px}
+  .stcard p{margin:0;font-size:.875em;line-height:1.5;color:var(--dim)}
+  .stnote{margin-top:9px;border:1px solid var(--ok);background:var(--ok-tint);color:var(--ok);border-radius:9px;
+          padding:8px 11px;font-size:.85em;line-height:1.45}
+  .stnote.wait{border-color:var(--warn);background:var(--warn-tint);color:var(--warn)}
+  .stfrom{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;
+          padding:10px 12px;background:var(--panel);margin-bottom:4px}
+  .stfrom .wf{flex:none;width:74px;height:46px}
+  .stfrom .ft{flex:1;min-width:0}
+  .stfrom .ft span{display:block;font-size:.71em;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+  .stfrom .ft b{display:block;font-size:1.04em;margin-top:1px}
+  /* ⚠️ the old dialog's .stylewrap/.stylerow/.pvbox went with it ([TILL-84]) — dead CSS is an invitation to
+     believe there are two style screens. What replaced them is .studio / .strow / #stcanvas, above. */
   .schip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;
          padding:6px 13px;min-height:36px;font:inherit;font-size:.86em;cursor:pointer}
   .schip.on{background:var(--ink);color:var(--card);border-color:var(--ink);font-weight:700}
-  /* ⚠️ the preview carries the CANDIDATE theme's own variables, so the tiles inside it are drawn in the
-     colours being considered rather than the ones in force */
-  .stylepv b{display:block;margin-bottom:8px}
-  .pvbox{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--paper)}
-  /* ⚠️ IT IS A PICTURE, NOT A PANEL. The pin and the sold-out ✕ belong to keys somebody can press; on a
-     preview they invite a click that does nothing and make the miniature look busier than the real thing. */
-  .pvbox .sk-x,.pvbox .qpin,.pvbox .sk-qty{display:none}
-  .pvbox .sk-tile{pointer-events:none}
-  .pvgrid{display:grid;gap:8px}
-  .pvbar{height:26px;border-radius:8px;background:var(--ok);margin-top:10px}
-  .stylepv .u{display:block;margin-top:8px;line-height:1.45}
-  .styleu{margin:6px 0 0 140px;line-height:1.45}
+
+
   .schip.plain{border-style:dashed}
+  /**
+   * ⚠️⚠️ A LABEL AND A HINT, NOT A WORD OF JARGON ([TILL-84]). Athi: *"i didn't really understood, screen
+   * style, preset, tiles text in the menu."* "Tile style" and "Quick keys picker" are OUR words for OUR
+   * internals. Each row now says what a shopkeeper would say, with one line underneath saying what it does.
+   */
+  .strow{padding:11px 0;border-top:1px solid var(--line)}
+  .strow>b{display:block;font-size:.97em}
+  .strow>span.hint{display:block;color:var(--dim);font-size:.81em;margin:1px 0 8px}
+  .strow .sc{display:flex;flex-wrap:wrap;gap:6px}
+  /* ⭐ A ROW WHOSE ANSWER HAS CHANGED IS TINTED, so the diff reads without a compare mode (spec §4) */
+  .strow.changed{margin-inline:-11px;padding-inline:11px;border-radius:11px;background:var(--warn-tint);border-top-color:transparent}
+  .strow .sw{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.28);flex:none;
+             display:inline-block;margin-inline-end:7px;vertical-align:-2px}
+  .stcost{margin-top:14px;border:1px solid var(--line);border-radius:11px;padding:10px 12px;
+          background:var(--panel);font-size:.85em;line-height:1.5;color:var(--dim)}
+  .stcost b{color:var(--ink)}
+  /**
+   * ⭐⭐ A PRESET DRAWN AS A PICTURE, NOT A PILL (png/StylePresets.png). "Kiosk · vertical" means nothing as
+   * text and everything as a shape. The wireframe is built from the SAME registry the screen is — layout,
+   * picker, theme — so a preset cannot be drawn as something it is not. [[feedback-adopt-dont-reinvent]]
+   */
+  .wf{border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;
+      flex-direction:column;gap:2px;padding:3px}
+  .wf .wfh{height:6px;border-radius:2px;flex:none;opacity:.55}
+  .wf .wfb{flex:1;display:flex;gap:2px;min-height:0}
+  .wf .wfk{flex:1;display:grid;gap:2px;grid-auto-rows:1fr;min-width:0}
+  .wf .wfk i{border-radius:2px;display:block}
+  .wf .wfc{width:28%;border-radius:2px;display:flex;align-items:flex-end;padding:2px;flex:none}
+  .wf .wfc u{display:block;width:100%;height:5px;border-radius:2px;text-decoration:none}
+  .wf .wfr{width:13%;border-radius:2px;flex:none;opacity:.7}
+  .stgal{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+  .stgal button{text-align:start;border:1px solid var(--line);background:var(--card);border-radius:13px;
+                padding:10px;font:inherit;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:7px}
+  .stgal button:hover{border-color:var(--edge)}
+  .stgal button.on{border-color:var(--ok);background:var(--ok-tint);box-shadow:inset 0 0 0 1px var(--ok)}
+  .stgal .wf{height:100px}
+  /**
+   * ── ⭐⭐ THE MINIATURE'S OWN SKIN. Everything here is in the DEVICE's pixels — a 15px price is a real 15px
+   * price, shrunk by the transform with everything else, which is the only way the preview can answer "can I
+   * read that from the other side of the counter?" ─────────────────────────────────────
+   */
+  #stcanvas .m-top{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);flex:none}
+  #stcanvas .m-shop{font-weight:800;white-space:nowrap}
+  #stcanvas .m-q{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--card);
+                 padding:9px 12px;color:var(--dim);font-size:.9em;overflow:hidden;white-space:nowrap}
+  #stcanvas .m-pill{border-radius:999px;padding:5px 11px;font-size:.78em;font-weight:700;white-space:nowrap;
+                    background:var(--ok-tint);color:var(--ok)}
+  #stcanvas .m-pill.q{background:var(--panel);color:var(--dim);font-weight:400}
+  #stcanvas .m-body{flex:1;display:flex;min-height:0;overflow:hidden}
+  #stcanvas .m-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:12px 14px;gap:10px;overflow:hidden}
+  #stcanvas .m-chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center;flex:none}
+  /* ⚠️ inline-block so the vertical padding is load-bearing rather than depending on the line box. NOT the
+     bug that hid these chips — that was the colour object; I first misread a SCALED getBoundingClientRect as a
+     flattened chip. A rect inside #stcanvas is in transformed pixels: divide by the scale before believing it. */
+  #stcanvas .m-chip{display:inline-block;border-radius:999px;padding:5px 12px;font-size:.82em;
+                    font-weight:700;white-space:nowrap}
+  #stcanvas .m-open{margin-inline-start:auto;background:var(--ink);color:var(--card);border-radius:9px;
+                    padding:6px 12px;font-size:.82em;font-weight:700;white-space:nowrap}
+  #stcanvas .sk-grid{flex:1;align-content:start;min-height:0;overflow:hidden}
+  #stcanvas .m-short{flex:none;border-top:1px solid var(--line);padding-top:8px;color:var(--dim);font-size:.78em;
+                     white-space:nowrap;overflow:hidden}
+  #stcanvas .m-bill{flex:none;display:flex;flex-direction:column;gap:8px;padding:12px 14px;
+                    border-inline-start:1px solid var(--line);background:var(--panel);overflow:hidden}
+  #stcanvas .m-line{display:flex;gap:8px;align-items:baseline;font-size:.88em;white-space:nowrap}
+  #stcanvas .m-line b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+  #stcanvas .m-line u{text-decoration:none;color:var(--dim);font-size:.85em}
+  #stcanvas .m-tot{display:flex;align-items:baseline;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+  #stcanvas .m-tot span{color:var(--dim);font-size:.75em;letter-spacing:.08em;text-transform:uppercase}
+  #stcanvas .m-tot b{margin-inline-start:auto;font-size:1.7em;letter-spacing:-.02em}
+  #stcanvas .m-pays{display:flex;gap:7px}
+  #stcanvas .m-pays i{flex:1;text-align:center;font-style:normal;border:1px solid var(--edge);border-radius:8px;
+                      padding:8px 0;font-size:.82em;font-weight:700;color:var(--ok)}
+  #stcanvas .m-save{background:var(--ok);color:#fff;border-radius:9px;text-align:center;padding:11px 0;font-weight:800}
+  #stcanvas .m-sync{color:var(--dim);font-size:.74em;text-align:center}
+  /* ⭐ THE PICKER, MADE VISIBLE — the whole reason four settings were invisible before. Each one draws where
+     it actually appears: a rail down the side, a strip across the top, a sheet at the bottom, a card floating. */
+  #stcanvas .m-rail{width:104px;flex:none;border-inline-end:1px solid var(--line);background:var(--panel);
+                    padding:10px 8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+  #stcanvas .m-rail i{font-style:normal;border-radius:7px;padding:7px 9px;font-size:.8em;font-weight:700;white-space:nowrap}
+  #stcanvas .m-strip{flex:none;display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 14px;overflow:hidden}
+  #stcanvas .m-strip i{font-style:normal;padding:9px 13px;font-size:.82em;font-weight:700;white-space:nowrap;
+                       border-bottom:3px solid transparent;color:var(--dim)}
+  #stcanvas .m-strip i.on{border-bottom-color:var(--ok);color:var(--ink)}
+  #stcanvas .m-ghost{position:absolute;background:var(--card);border:1px solid var(--edge);
+                     box-shadow:0 10px 30px rgba(0,0,0,.22);overflow:hidden;padding:10px;display:flex;
+                     flex-direction:column;gap:6px}
+  #stcanvas .m-ghost b{font-size:.8em;color:var(--dim);font-weight:700}
+  #stcanvas .m-ghost i{font-style:normal;border-radius:7px;padding:7px 10px;font-size:.82em;font-weight:700}
+  .stgal .gn{font-weight:700;font-size:1.01em}
+  .stgal .gd{color:var(--dim);font-size:.845em;line-height:1.45}
+  .stgal .gt{display:flex;flex-wrap:wrap;gap:5px}
+  .stgal .gt i{font-style:normal;font-size:.73em;color:var(--dim);background:var(--panel);border-radius:5px;padding:2px 7px}
+  .stgal .gb{align-self:flex-start;font-size:.71em;font-weight:700;border-radius:999px;padding:2px 9px;
+             background:var(--ink);color:var(--card)}
+  .stfoot{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:12px 18px;
+          border-top:1px solid var(--line);background:var(--panel)}
+  .stfoot .sp{margin-inline-start:auto;display:flex;flex-wrap:wrap;gap:9px}
+  .stfoot button{min-height:46px}
+  .stfoot button.try{border-color:var(--warn);background:var(--warn-tint);color:var(--warn);font-weight:700}
+  /**
+   * ⭐⭐⭐ THE WAY OUT OF A BAD CHOICE, ON A COUNTER THAT IS SELLING. A style can be tried for ten minutes and
+   * puts ITSELF back — so a shopkeeper can look at dark mode on the real screen at four in the afternoon
+   * without betting the evening on it. Fixed to the screen, because it must be findable from anywhere.
+   */
+  .trybar{position:fixed;inset-inline:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));margin-inline:auto;
+          width:max-content;max-width:94vw;z-index:60;display:flex;gap:10px;align-items:center;
+          background:var(--ink);color:var(--card);border-radius:999px;padding:9px 10px 9px 18px;
+          box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:.9em}
+  .trybar .tt{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;opacity:.85}
+  .trybar button{border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;min-height:40px}
+  .trybar .keep{background:var(--ok);color:#fff}
+  .trybar .back{background:rgba(255,255,255,.18);color:var(--card)}
+  /* ── the desk: two columns once there is room for both ──────────────────────────────── */
+  @media (min-width:1000px){
+    .stwrap{flex-direction:row;overflow:hidden}
+    .stset{width:500px;flex:none;overflow:auto;border-inline-end:1px solid var(--line);order:-1}
+    .stpv{flex:1;min-width:0;overflow:auto;border-bottom:0}
+  }
   .whatshows{display:block;width:100%;margin:6px 0 8px;font:inherit;font-size:.86em;padding:7px 10px;
              border:1px solid var(--edge);border-radius:9px;background:var(--card);color:var(--ink)}
   .panelnow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;color:var(--dim);font-size:.9em}
@@ -1747,21 +1967,56 @@
   <div id="todobody"></div>
   <div class="dlgbtns"><button onclick="todoClose()">Close · Esc</button></div>
 </dialog>
-<dialog id="styledlg" class="dlg wide" data-testid="till-style">
-  <h3>Screen style <span class="u" id="styledev"></span></h3>
-  <div class="stylewrap">
-    <div class="stylecols" id="stylebody"></div>
-    <div class="stylepv">
-      <b>Preview</b>
-      <div class="pvbox" id="stylepreview"></div>
-      <div class="u" id="stylesays"></div>
+<!--
+  ⭐⭐⭐ SCREEN STYLE, ITS OWN ROOM ([TILL-84], design-style/png/StyleStudio.png). Athi: *"it has its own
+  content and deserves own panel."* Settings on one side, THE WHOLE SCREEN on the other — because the layout,
+  the group picker and the spacing cannot be judged in a grid of six tiles, and five of the seven settings
+  used to change nothing you could see.
+-->
+<dialog id="styledlg" class="dlg studio" data-testid="till-style">
+  <div class="sthead">
+    <div>
+      <h3>Screen style</h3>
+      <!-- ⭐ WHAT IS BEING CHANGED, IN PLAIN WORDS — including the scope, which must never be a guess -->
+      <span class="sub" id="stydev"></span>
+    </div>
+    <div class="sp">
+      <span class="stpend" id="stypend" data-testid="till-style-pending"></span>
+      <button onclick="styleClose()">Close · Esc</button>
     </div>
   </div>
-  <div class="dlgbtns">
-    <button onclick="styleClose()">Cancel · Esc</button>
-    <button data-testid="till-style-reset" onclick="styleReset()">Reset to counter</button>
-    <button class="pri" data-testid="till-style-apply" onclick="styleApply()">Apply</button>
+  <div class="stwrap">
+    <div class="stpv">
+      <div class="stbar">
+        <span class="cap">The whole screen, as it will look</span>
+        <span class="sp">
+          <!-- ⭐ ONE STYLE, CHECKED ON EVERY SIZE FROM ONE PLACE — the counter, the tablet and the phone -->
+          <span class="segs" id="stydevtabs"></span>
+          <span class="segs" id="stynowtabs"></span>
+        </span>
+      </div>
+      <div class="stframe">
+        <div class="stclip" id="styclip"><div id="stcanvas"></div></div>
+        <div class="stscale" id="styscale"></div>
+      </div>
+      <div class="stsays" id="stysays"></div>
+    </div>
+    <div class="stset" id="stylebody"></div>
   </div>
+  <div class="stfoot">
+    <button data-testid="till-style-reset" onclick="styleReset()">Reset to the shop's style</button>
+    <span class="sp">
+      <button onclick="styleClose()">Cancel · Esc</button>
+      <button class="try" data-testid="till-style-try" onclick="styleTry()">Try it for 10 minutes</button>
+      <button class="pri" data-testid="till-style-apply" id="styapply" onclick="styleApply()">Apply</button>
+    </span>
+  </div>
+</dialog>
+<!-- ⭐⭐ THE NINE, AS PICTURES (png/StylePresets.png) — "Kiosk · vertical" means nothing as text -->
+<dialog id="stylegal" class="dlg wide" data-testid="till-style-gallery">
+  <h3>Pick a starting style <span class="u">Each one is a whole screen, not a colour — and you can change any part of it afterwards.</span></h3>
+  <div class="stgal" id="stygal"></div>
+  <div class="dlgbtns"><button onclick="galClose()">Cancel · Esc</button></div>
 </dialog>
 <dialog id="moddlg" class="dlg" data-testid="till-mod">
   <h3 id="modtitle">Choose</h3>
@@ -4172,6 +4427,41 @@ function menuShopBody(){
     + ' · these come from ChitBridge and are changed there.</div>'
     + '</div>';
 }
+/**
+ * ⭐⭐⭐ ONE HUE PER SECTION ([TILL-85]) — read by the open hub, by the strip and by the section rail, so the
+ * three can never disagree. Chosen for MEANING, not variety: the morning is a lamp, money is green, anything
+ * that stops billing is the same red the Careful box already uses.
+ * ⚠️ RGB TRIPLES, not hex — every use is an alpha of the hue, and rgba() needs the parts.
+ */
+var MENU_HUE = {
+  day:     '201,138,42',    /* lamp amber — the first thing in the morning        */
+  today:   '29,107,63',     /* the money green the totals already use             */
+  alerts:  '199,92,26',     /* warm orange — wants you, is not yet a disaster     */
+  bills:   '43,95,153',     /* paper blue                                         */
+  shop:    '122,79,168',    /* the catalogue                                      */
+  look:    '20,124,130',    /* teal — appearance, and nothing that moves money    */
+  shopdet: '96,104,120',    /* slate — facts about the shop                       */
+  counter: '96,104,120',    /* slate — facts about this till                      */
+  care:    '178,52,38',     /* the Careful red, already in the box below it       */
+  /* ⚠️ two ops that are their own door and sit in no section — named here so the strip is never grey by
+     accident. Anything else falls back to slate, which is a legible default and not a bug. */
+  todo:      '176,110,20',  /* the list the shopkeeper wrote themselves            */
+  dayreport: '29,107,63'    /* the same money green as Today                       */
+};
+function menuHue(id){ return MENU_HUE[id] || '120,116,110'; }
+/**
+ * ⚠️⚠️ AN OP TAKES ITS SECTION'S HUE, IT DOES NOT GET ITS OWN. The strip and the hub are the two halves of
+ * ONE menu (see paintSide) — if the colour were listed twice, the halves would drift the first time somebody
+ * moved a row between sections. It is read from the section that actually holds the op.
+ * [[feedback-no-duplicate-functions]] [[feedback-shared-opponent-logic]]
+ */
+function opHue(opId){
+  if (MENU_HUE[opId]) return MENU_HUE[opId];
+  for (var i = 0; i < TILL_MENU.length; i++) {
+    if ((TILL_MENU[i].ops || []).indexOf(opId) >= 0) return menuHue(TILL_MENU[i].id);
+  }
+  return menuHue('');
+}
 var TILL_MENU = [
   /**
    * ⭐⭐⭐ FIRST, BECAUSE IT IS FIRST IN THE DAY (Athi, 2026-09-18: *"bring Pooja menu... many of the people are
@@ -5079,8 +5369,17 @@ function paintMenu(){
          * gets — and hands the rest to one dialog with a preview, instead of repeating half of it here and half
          * in ⚙ Settings. That repetition is what Athi found: *"settings has multiple item replicated."*
          */
-        + '<button class="pill wide" data-testid="till-open-style" onclick="fromMenu(styleOpen)">'
-        + '◐ Screen style — preset, tiles, colours, photos…</button>'
+        /**
+         * ⚠️⚠️ IT USED TO READ "Screen style — preset, tiles, colours, photos…" ([TILL-84]). Athi:
+         * *"i didn't really understood, screen style, preset, tiles text in the menu."* Three of those four
+         * words are OUR names for OUR registries. A door says where it goes and what you will be able to do
+         * when you get there — it does not list the variables behind it.
+         * [[feedback-write-for-the-shopkeeper]] [[feedback-text-budget]]
+         */
+        + '<button class="pill wide door" data-testid="till-open-style" onclick="fromMenu(styleOpen)">'
+        + '◐ Change how this counter looks'
+        /* ⭐ the reassurance is the HINT, the same shape every other row in the hub uses for its second line */
+        + '<span>the whole screen, previewed, before anything is applied</span></button>'
         + '</div>'
         /**
          * ⭐⭐ GIVE EACH PART THE ROOM YOU WANT (png/PanelSizing.png). Five named starting points and a
@@ -5125,7 +5424,9 @@ function paintMenu(){
           + '<option value="custom" disabled>Custom</option></select>'
           + '<div class="viewchips" id="viewchips"></div></div>'
       : (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
-    var html = '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '" data-testid="till-msec-' + sec.id + '">'
+    var html = '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '"'
+      /* ⭐ the hue is set ONCE, here, and every rule under .msec is an alpha of it ([TILL-85]) */
+      + ' style="--mh:' + menuHue(sec.id) + '" data-testid="till-msec-' + sec.id + '">'
       + '<button class="mrow" aria-expanded="' + (open ? 'true' : 'false') + '" data-testid="till-msec-btn-' + sec.id + '"'
       + ' onclick="menuSection(\'' + sec.id + '\')">'
       + '<span class="mi">' + sec.icon + '</span>'
@@ -5133,7 +5434,8 @@ function paintMenu(){
       /* ⭐ the badge equals the number of rows the section holds — alertCount() is the same call the body makes,
          so a badge saying 3 over a section showing 2 is not possible. */
       + (sec.alerts && alertCount() ? '<span class="mbadge" data-testid="till-msec-badge-alerts">' + alertCount() + '</span>' : '')
-      + '<span class="mch">' + (open ? '⌄' : '›') + '</span></button>'
+      /* ⚠️ ONE glyph, turned by CSS — two glyphs meant two weights and two sizes in one column ([TILL-85]) */
+      + '<span class="mch">\u203A</span></button>'
       + '<div class="mbody"' + (open ? '' : ' hidden') + '>'
       + (sec.careful ? '<p class="carenote">These two stop billing for a moment. Everything is sent and checked first.</p>' : '')
       + body + '</div></section>';
@@ -5217,6 +5519,9 @@ function paintSide(){
       if (left) badge = '<i class="sbadge' + (due ? ' due' : '') + '">' + left + '</i>';
     }
     b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + op.hint) + '"'
+      /* ⭐ THE SAME HUE THE HUB GIVES THIS ROW'S SECTION ([TILL-85]) — a colour is only worth having if it
+         means the same thing in both halves of the menu. */
+      + ' data-mh="1" style="--mh:' + opHue(op.id) + '"'
       + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;,&quot;' + op.id + '&quot;)">'
       + op.icon + badge + '</button>');
   });
@@ -6422,12 +6727,18 @@ function styleCfg(){
   var o = tillOpt();
   return K.resolve(o.screen || {}, STYLE_DRAFT || {});
 }
-function styleVal(k){ return styleCfg()[k]; }
+/* ⚠️ styleVal() went with the old paint ([TILL-84]) — it answered ONE key at a time, which is the habit that
+   took a preset apart and made the preview disagree with Apply. Read the whole config or none of it. */
 function styleOpen(){
   STYLE_DRAFT = {};
+  /* ⚠️ EVERY OPENING STARTS WHERE THE COUNTER IS: this screen's own size, and what is applied — not wherever
+     somebody left the tabs last time. A settings screen that remembers a VIEW misreports the state. */
+  STYLE_DEV = 'screen'; STYLE_SHOW = 'after';
   stylePaint();
   var d = document.getElementById('styledlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+  /* ⚠️ the miniature is scaled to the CLIP's width, which is zero until the dialog is actually laid out */
+  setTimeout(function(){ try { stylePaint(); } catch (_) {} }, 0);
 }
 function styleClose(){
   STYLE_DRAFT = null;
@@ -6450,11 +6761,24 @@ function stylePick(k, v){
   else { delete STYLE_DRAFT.preset; STYLE_DRAFT[k] = v; }
   stylePaint();
 }
-/** ⚠️ nothing has moved until here — one write, through the same screenSet the rest of the counter uses */
+/**
+ * ⚠️ nothing has moved until here — one write, through the same screenSet the rest of the counter uses.
+ *
+ * ⚠️⚠️⚠️ AND NEVER IN THE MIDDLE OF A BILL. Redrawing every key under a cashier's hand while a customer is
+ * waiting is the one way a purely cosmetic setting can cost real money — they lose their place, and the
+ * change looks like the counter crashed. The patch waits in STYLE_PEND and lands the moment that bill is
+ * saved, parked or cleared. clearBill() is the single funnel all three go through.
+ */
+var STYLE_PEND = null;
 function styleApply(){
   var d = STYLE_DRAFT || {};
   styleClose();
   if (!Object.keys(d).length) return;
+  if (typeof CART !== 'undefined' && CART.length) {
+    STYLE_PEND = d;
+    toastLine('Saved — the new style lands when this bill is finished.');
+    return;
+  }
   screenSet(d);
   /**
    * ⭐⭐ SHAPE FOLLOWS LAYOUT ([TILL-81]). The screen library already declares it — LAYOUTS.vertical.shape is
@@ -6467,45 +6791,436 @@ function styleApply(){
     if (L && L.shape) tillOptSet({ shape: L.shape });
   } catch (_) {}
   try { densityApply(); } catch (_) {}
-  toastLine('Screen style applied.');
+  toastLine('Screen style applied to ' + tillName() + '.');
 }
+/** ⚠️ called from clearBill() — the one place a bill stops being in hand, whichever way it ended */
+function stylePendFlush(){
+  var d = STYLE_PEND; if (!d) return;
+  STYLE_PEND = null;
+  screenSet(d);
+  try { densityApply(); } catch (_) {}
+  toastLine('The new screen style is on now.');
+}
+/** ⚠️ IT LOADS THE DEFAULT INTO THE PREVIEW, IT DOES NOT APPLY IT. A button called Reset that resets the
+    counter behind a dialog that has not been applied yet is two different promises at once. */
 function styleReset(){
   STYLE_DRAFT = { preset: 'counterClassic' };
   stylePaint();
+  toastLine('Loaded the shop\'s style into the preview — nothing has changed yet.');
 }
 /**
- * ⭐⭐ THE PREVIEW IS THE REAL RENDERER. CBScreen.tile() under the candidate theme's own variables — the same
- * call the keys make — so what is shown is what will be drawn. A hand-drawn mock of a tile is a promise; a
- * tile is the thing. [[feedback-adopt-dont-reinvent]]
+ * ── ⭐⭐⭐ THE SETTINGS, IN A SHOPKEEPER'S WORDS ([TILL-84]) ─────────────────────────────
+ *
+ * Athi: *"i didn't really understood, screen style, preset, tiles text in the menu."* ⚠️⚠️ "Tile style" and
+ * "Quick keys picker" are OUR names for OUR registries — a shopkeeper has never called anything a picker. Each
+ * row is now a thing they would say, with one line saying what it changes. The KEYS underneath are unchanged,
+ * so nothing stored moves; only the words do. [[feedback-write-for-the-shopkeeper]] [[feedback-name-vs-behaviour]]
+ */
+function styleRows(){
+  var K = window.CBScreen || {};
+  return [
+    ['layout',  'Layout',      'where things sit',        K.LAYOUTS],
+    ['tile',    'Quick keys',  'how a tile looks',        K.TILES],
+    ['picker',  'Groups open', 'how you switch between them', K.PICKERS],
+    ['theme',   'Colours',     'the whole screen',        K.THEMES],
+    ['density', 'Size',        'text and spacing',        K.DENSITIES]
+  ];
+}
+/** ⭐ which of the three sizes the miniature is being drawn at, and whether it shows Now or After */
+var STYLE_DEV = 'screen', STYLE_SHOW = 'after';
+/**
+ * ⚠️ THE TERMINAL TAB IS **THIS** SCREEN, not a number out of a spec. A counter previewing itself at somebody
+ * else's 1600×900 is answering a question nobody asked; the useful question is whether it reads HERE.
+ */
+function styleDevs(){
+  var w = Math.max(360, Math.round(window.innerWidth || 1440));
+  var h = Math.max(320, Math.round(window.innerHeight || 900));
+  return { screen: { label: 'This screen', w: w, h: h },
+           tablet: { label: 'Tablet', w: 1024, h: 768 },
+           phone:  { label: 'Phone',  w: 390,  h: 844 } };
+}
+function styleDev(){ var d = styleDevs(); return d[STYLE_DEV] || d.screen; }
+/** ⭐ the config the miniature is drawing — the pending one, or the applied one when Now is showing */
+function styleShown(){
+  var K = window.CBScreen; if (!K) return {};
+  var o = tillOpt();
+  return (STYLE_SHOW === 'now') ? K.resolve(o.screen || {}) : styleCfg();
+}
+/**
+ * ── ⭐⭐⭐ THE WHOLE SCREEN, SHRUNK ─────────────────────────────────────────────
+ *
+ * The old preview showed six tiles, so LAYOUT, the GROUP PICKER and the SPACING changed nothing you could see —
+ * five of seven settings previewing nothing at all. This draws the sell screen: header, search, groups, the key
+ * grid at the layout's real keysPerRow, the bill with a real basket, the pay row, the shortcut bar.
+ *
+ * ⭐ THE TILES ARE THE REAL ONES — CBScreen.tile(), the same call the keys make, under the candidate theme's own
+ * variables. A hand-drawn tile is a promise; a tile is the thing. [[feedback-adopt-dont-reinvent]]
+ * ⚠️ THE CHROME IS A FRAME, NOT THE LIVE PAGE. Rendering the counter inside itself would want an iframe and a
+ * second shop load; what is drawn here is honest about proportion, colour, spacing and tile, and is a drawing
+ * about everything else. [[feedback-document-status]]
+ */
+function styleScreen(cfg, dev){
+  var K = window.CBScreen; if (!K) return '';
+  var L = K.LAYOUTS[cfg.layout] || K.LAYOUTS.horizontal;
+  var shape = L.shape;
+  if (shape === 'auto') shape = dev.w < 560 ? 'mobile' : (dev.h > dev.w ? 'tall' : 'wide');
+  /* ⚠️ a phone cannot show a counter's six columns whatever the layout says — the device has the last word */
+  var per = Number(L.keysPerRow) || 6;
+  if (dev.w < 560) per = Math.min(per, 3);
+  else if (dev.w < 1100) per = Math.min(per, 5);
+  var tight = (cfg.density === 'compact');
+  var PK = K.PICKERS[cfg.picker] || {};
+  var GROUPS = [['Morning', 10], ['Afternoon', 10], ['Evening', 8], ['Night', 6]];
+  /**
+   * ⚠️⚠️ groupColour(i) IS AN OBJECT — { name, bar, tint, ink }. Interpolating it into a style attribute
+   * writes `[object Object]`, which every browser drops without a word, and the chip draws transparent. One
+   * helper unpacks it so the mistake cannot be made again three lines further down.
+   */
+  var gc = function(i){ var c = K.groupColour(i) || {}; return 'background:' + (c.tint || 'transparent')
+    + ';color:' + (c.ink || 'inherit'); };
+  var SAMPLE = [['Tata Filter coffee', 352], ['Health drink', 163], ['Green tea', 64], ['Bread 400 g', 45],
+                ['Rusk 300 g', 60], ['Butter 100 g', 58], ['Idli (2 pc)', 48], ['Masala Dosa', 90],
+                ['Ven Pongal', 70], ['Filter Coffee', 40], ['Tea', 25], ['Buttermilk', 30],
+                ['Sugar 1 kg', 52], ['Rice 5 kg', 410], ['Oil 1 L', 172], ['Dal 1 kg', 128],
+                ['Salt 1 kg', 22], ['Soap', 38]];
+  var rows = Math.max(2, Math.floor((shape === 'mobile' ? 4 : shape === 'tall' ? 5 : 3)));
+  var keys = SAMPLE.slice(0, Math.min(SAMPLE.length, per * rows)).map(function(p, i){
+    /* ⚠️ NO UNIT. The spec names this one: ₹352.00 / each is LIST styling on a TILE — a key is read from
+       across the counter, where the unit is noise. It belongs on the shelf row, which has room to be read. */
+    return K.tile(cfg.tile, { name: p[0], price: money(p[1]), image: null,
+      colour: K.groupColour(i), showPhoto: !!cfg.photos, qty: 0, attrs: 'tabindex="-1"' });
+  }).join('');
+  var grid = '<div class="sk-grid" style="--sk-per-row:' + per + ';gap:' + (tight ? 6 : 10) + 'px">' + keys + '</div>';
+  /* ── the picker, drawn WHERE IT ACTUALLY APPEARS ─────────────────────────────────── */
+  var chips = GROUPS.map(function(g, i){
+    return '<span class="m-chip" style="' + gc(i) + '">' + esc(g[0]) + ' ' + g[1] + '</span>';
+  }).join('');
+  var rail = '', strip = '', ghost = '', top = '';
+  if (cfg.picker === 'groupRail') {
+    rail = '<div class="m-rail">' + GROUPS.map(function(g, i){
+      return '<i style="' + gc(i) + '">' + esc(g[0]) + '</i>'; }).join('') + '</div>';
+  } else if (cfg.picker === 'tabStrip') {
+    strip = '<div class="m-strip">' + GROUPS.map(function(g, i){
+      return '<i' + (i === 0 ? ' class="on"' : '') + '>' + esc(g[0]) + '</i>'; }).join('') + '</div>';
+  } else if (cfg.picker === 'dayTimeline') {
+    strip = '<div class="m-strip" style="gap:0">' + GROUPS.map(function(g, i){
+      return '<i' + (i === 1 ? ' class="on"' : '') + ' style="flex:1;text-align:center;' + gc(i) + '">'
+        + esc(g[0]) + '</i>'; }).join('') + '</div>';
+  } else {
+    /* popup / side drawer / full screen / bottom sheet — a trigger, and a ghost of where it opens */
+    top = '<div class="m-open">' + esc((PK.label || 'Groups')) + ' ▾</div>';
+    /* ⚠️ THE GHOST SHOWS WHAT THE PICKER COVERS, so it must cover the KEYS — parked over the bill panel it
+       said the opposite of the truth, which for a popup is exactly the thing being judged. */
+    var box = { popup:       'inset-inline-start:22%;top:84px;width:280px;border-radius:12px',
+                sideDrawer:  'inset-inline-start:0;top:0;bottom:0;width:190px',
+                fullScreen:  'inset:0;border-radius:0',
+                bottomSheet: 'inset-inline:0;bottom:0;border-radius:16px 16px 0 0' }[cfg.picker];
+    if (box) ghost = '<div class="m-ghost" style="' + box + '"><b>' + esc(PK.label || '') + '</b>'
+      + GROUPS.map(function(g, i){ return '<i style="' + gc(i) + '">' + esc(g[0]) + '</i>'; }).join('')
+      + '</div>';
+  }
+  /* ── the bill ─────────────────────────────────────────────────────── */
+  var BASKET = [['Green tea', 5, 320], ['Health drink', 5, 815], ['Tata Filter coffee', 5, 1760]];
+  var lines = BASKET.map(function(b){
+    return '<div class="m-line"><b>' + esc(b[0]) + '</b><u>' + b[1] + ' ×</u><span>' + money(b[2]) + '</span></div>';
+  }).join('');
+  var bill = '<div class="m-bill" style="width:' + (shape === 'wide' ? '30%' : '100%')
+    + (shape === 'wide' ? '' : ';border-inline-start:0;border-top:1px solid var(--line)') + '">'
+    + (shape === 'mobile' ? '' : '<div class="m-line" style="color:var(--dim)"><b>Customer (optional)</b></div>')
+    + lines
+    + '<div class="m-tot"><span>Saved ' + money(144.75) + '</span><span>Total</span><b>' + money(2750.25) + '</b></div>'
+    + '<div class="m-pays"><i>Cash</i><i>Card</i><i>UPI</i></div>'
+    + '<div class="m-save">Save &amp; print · F9</div>'
+    + '<div class="m-sync">all bills sent · last at 3:41 pm</div>'
+    + '</div>';
+  var main = '<div class="m-main" style="gap:' + (tight ? 7 : 10) + 'px;padding:' + (tight ? '9px 11px' : '12px 14px') + '">'
+    + (rail || strip ? '' : '<div class="m-chips">' + chips + top + '</div>')
+    + grid
+    + '<div class="m-short">F2 search · F4 customer · F9 pay · Esc clear</div>'
+    + '</div>';
+  return '<div class="m-top"><span class="m-shop">' + esc((S && S.shop && S.shop.name) || 'Your shop') + '</span>'
+    + '<span class="m-q">Search or scan a product</span>'
+    + '<span class="m-pill">online</span>'
+    + (shape === 'mobile' ? '' : '<span class="m-pill q">' + esc(tillName()) + '</span>')
+    + '</div>'
+    + strip
+    + '<div class="m-body" style="flex-direction:' + (shape === 'wide' ? 'row' : 'column') + '">'
+    + (shape === 'wide' ? rail : '') + main + bill + '</div>'
+    + ghost;
+}
+/** ⚠️ the counter's own name, or a plain word — never a blank where a name should be */
+function tillName(){ return (STATE && STATE.till && STATE.till.name) || 'this counter'; }
+/**
+ * ── ⭐⭐ WHAT ACTUALLY CHANGES, IN CONSEQUENCES ────────────────────────────────────
+ * Not "picker: bottomSheet" but *"Groups open in a bottom sheet — the bill stays visible behind it."* A setting
+ * name tells you what was stored; a consequence tells you what tomorrow morning is like.
+ */
+function styleDiff(){
+  var K = window.CBScreen; if (!K) return [];
+  var now = K.resolve(tillOpt().screen || {}), next = styleCfg(), out = [];
+  if (now.layout !== next.layout) {
+    var a = K.LAYOUTS[now.layout] || {}, b = K.LAYOUTS[next.layout] || {};
+    out.push(['Things move — ' + (b.label || '').toLowerCase() + ' instead of ' + (a.label || '').toLowerCase(),
+      (b.keysPerRow && a.keysPerRow && b.keysPerRow !== a.keysPerRow)
+        ? (b.keysPerRow + ' keys in a row instead of ' + a.keysPerRow) : 'the same keys, in a different shape']);
+  }
+  if (now.tile !== next.tile) out.push(['Quick keys look different',
+    'a ' + ((K.TILES[next.tile] || {}).label || '').toLowerCase() + ' tile instead of '
+      + ((K.TILES[now.tile] || {}).label || '').toLowerCase()]);
+  if (now.picker !== next.picker) out.push(['Groups open in a ' + ((K.PICKERS[next.picker] || {}).label || '').toLowerCase(),
+    (K.PICKERS[next.picker] || {}).inline ? 'always on screen — one tap, nothing to close'
+                                          : 'it covers part of the screen until you choose']);
+  if (now.theme !== next.theme) out.push([((K.THEMES[next.theme] || {}).label || '') + ' everywhere',
+    (K.THEMES[next.theme] || {}).dark ? 'easier on the eyes in a dim shop or at night'
+                                      : 'the same colours as the back office']);
+  if (now.density !== next.density) out.push([((K.DENSITIES[next.density] || {}).label || '') + ' spacing',
+    next.density === 'compact' ? 'tighter rows — more on screen, smaller targets'
+                               : 'roomier rows — easier to hit, fewer on screen']);
+  if (!!now.photos !== !!next.photos) out.push([next.photos ? 'Photos on the quick keys' : 'No photos on the quick keys',
+    next.photos ? 'faster to aim at from a distance' : 'the names are the fastest thing to read']);
+  return out;
+}
+/** ⭐ a number a shopkeeper can act on: what the photos actually cost this counter */
+function stylePhotoCost(){
+  var n = 0;
+  try { n = ((S && S.items) || []).filter(function(i){ return i && i.image; }).length; } catch (_) {}
+  return { n: n, mb: Math.round(n * 0.06 * 10) / 10 };
+}
+/**
+ * ── ⭐⭐ THE NINE, AS PICTURES ───────────────────────────────────────────────
+ * A wireframe of that whole screen in that theme's own colours, built from the registry, so "Kiosk · vertical"
+ * is recognisable at a glance instead of being three words that mean nothing until you apply them.
+ */
+function styleWire(cfg){
+  var K = window.CBScreen; if (!K) return '';
+  var T = K.THEMES[cfg.theme] || K.THEMES.lightCream, v = T.vars || {};
+  var L = K.LAYOUTS[cfg.layout] || {}, per = Math.min(5, Math.max(1, Number(L.keysPerRow) || 4));
+  var tall = (L.shape === 'tall' || L.shape === 'mobile');
+  var cells = '';
+  for (var i = 0; i < per * (tall ? 4 : 3); i++) cells += '<i style="background:' + (v['--card'] || '#fff')
+    + ';border:1px solid ' + (v['--line'] || '#ddd') + '"></i>';
+  var railOn = (cfg.picker === 'groupRail');
+  var keys = '<div class="wfk" style="grid-template-columns:repeat(' + per + ',1fr)">' + cells + '</div>';
+  var bill = '<div class="wfc" style="background:' + (v['--panel'] || '#eee') + (tall ? ';width:100%;height:26%' : '')
+    + '"><u style="background:' + (v['--ok'] || '#1D6B3F') + '"></u></div>';
+  return '<div class="wf" style="background:' + (v['--paper'] || '#fff') + ';border-color:' + (v['--line'] || '#ddd') + '">'
+    + '<div class="wfh" style="background:' + (v['--edge'] || '#999') + '"></div>'
+    + '<div class="wfb" style="flex-direction:' + (tall ? 'column' : 'row') + '">'
+    + (railOn && !tall ? '<div class="wfr" style="background:' + (v['--panel'] || '#eee') + '"></div>' : '')
+    + keys + bill + '</div></div>';
+}
+function galOpen(){
+  galPaint();
+  var d = document.getElementById('stylegal');
+  if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+}
+function galClose(){ var d = document.getElementById('stylegal'); if (d && d.open) { try { d.close(); } catch (_) {} } }
+/** ⚠️ choosing a card LOADS it into the preview — nothing on the counter changes until Apply */
+function galPick(id){ galClose(); stylePick('preset', id); }
+function galPaint(){
+  var K = window.CBScreen, box = document.getElementById('stygal'); if (!K || !box) return;
+  /**
+   * ⚠️ "ON THIS COUNTER NOW" IS DERIVED, NOT READ. A counter that was styled setting-by-setting has no
+   * preset stored at all, so reading the key would leave every card unbadged on exactly the screens where
+   * a shopkeeper most wants to know where they are. A preset IS its six settings — so compare those.
+   */
+  var cur = K.resolve(tillOpt().screen || {});
+  var live = Object.keys(K.PRESETS).filter(function(id){
+    var c = K.resolve({ preset: id });
+    return ['layout','tile','picker','theme','density'].every(function(k){ return c[k] === cur[k]; });
+  })[0];
+  var draft = styleCfg().preset;
+  box.innerHTML = Object.keys(K.PRESETS).map(function(id){
+    var p = K.PRESETS[id];
+    var cfg = K.resolve({ preset: id });
+    return '<button type="button" class="' + (String(draft) === id ? 'on' : '') + '"'
+      + ' data-testid="till-gal-' + id + '" onclick="galPick(\'' + id + '\')">'
+      + styleWire(cfg)
+      + (id === live ? '<span class="gb">on this counter now</span>' : '')
+      + '<span class="gn">' + esc(p.label) + (p.note ? ' · ' + esc(p.note) : '') + '</span>'
+      + '<span class="gd">' + esc(PRESET_GOOD[id] || '') + '</span>'
+      + '<span class="gt"><i>' + esc(((K.LAYOUTS[cfg.layout] || {}).label || '')).toLowerCase() + '</i>'
+      + '<i>' + esc(((K.PICKERS[cfg.picker] || {}).label || '')).toLowerCase() + '</i>'
+      + '<i>' + esc(((K.THEMES[cfg.theme] || {}).label || '')).toLowerCase() + '</i></span>'
+      + '</button>';
+  }).join('');
+}
+/**
+ * ⭐ WHAT EACH ONE IS GOOD FOR — the design's own sentences (png/StylePresets.png). A preset's NAME is a label;
+ * this is the line that lets somebody choose without trying all nine.
+ */
+var PRESET_GOOD = {
+  counterClassic:  'Keys on the left, bill on the right. What most shops start with.',
+  counterDark:     'Same shape, easier on the eyes in a dim shop or at night.',
+  counterTimeline: 'A bar across the top follows the day — morning keys in the morning.',
+  counterRail:     'Groups stand in a rail down the side, always one tap away.',
+  compact:         'For a small terminal: tighter rows, fewer keys, nothing hidden.',
+  kiosk:           'Tall screen, big keys, made to be used standing up.',
+  tabletWaiter:    'Sell, then pay — two steps, one thumb, made for walking the floor.',
+  phoneOwner:      'Sell, bill, pay as three screens. The smallest thing that still works.',
+  handheldTable:   'A scanner with a screen: scan, list, pay. Keys only if you ask.'
+};
+/**
+ * ── ⭐⭐⭐ TRY IT FOR TEN MINUTES ─────────────────────────────────────────────
+ *
+ * ⚠️⚠️ THE REASON THIS EXISTS: a counter is SELLING. A preview answers "what does it look like"; only the real
+ * screen answers "can my evening staff use it". This applies the style for real and puts it back by itself —
+ * on the timer, on a reload, and on a crash, because the record of what to go back to is written BEFORE the
+ * style is applied, not after. A trial that needs the page to survive in order to end is not a safety net.
+ */
+var TRY_TIMER = null;
+function tryKey(){ return shopLs('cb_till_trystyle'); }
+function tryRead(){ try { return JSON.parse(ls.get(tryKey(), 'null')); } catch (_) { return null; } }
+function styleTry(){
+  var d = STYLE_DRAFT || {};
+  if (!Object.keys(d).length) { toastLine('Nothing to try — change something first.'); return; }
+  var o = tillOpt();
+  /* ⚠️ THE WAY BACK IS WRITTEN FIRST. If the page dies between here and the next line, the boot check reverts. */
+  ls.set(tryKey(), JSON.stringify({ endsAt: Date.now() + 10 * 60 * 1000,
+    back: { screen: o.screen || {}, theme: ls.get('cb_till_theme', 'light') } }));
+  styleClose();
+  screenSet(d);
+  try { densityApply(); } catch (_) {}
+  tryPaint();
+}
+function tryKeep(){
+  ls.del ? ls.del(tryKey()) : ls.set(tryKey(), 'null');
+  tryPaint();
+  toastLine('Kept — this is the counter\'s style now.');
+}
+function tryBack(){
+  var t = tryRead();
+  ls.del ? ls.del(tryKey()) : ls.set(tryKey(), 'null');
+  if (t && t.back) {
+    tillOptSet({ screen: t.back.screen || {} });
+    ls.set('cb_till_theme', t.back.theme || 'light');
+    applyLook(); loadQuick();
+    try { densityApply(); paintSetup(); paintMenuQuick(); } catch (_) {}
+  }
+  tryPaint();
+  toastLine('Put back.');
+}
+/** ⚠️ ON EVERY BOOT: a trial that survived a reload is over. See the note on styleTry. */
+function tryBoot(){
+  var t = tryRead();
+  if (t && t.back) tryBack();
+  else tryPaint();
+}
+function tryPaint(){
+  var bar = document.getElementById('trybar');
+  var t = tryRead();
+  if (!t || !t.endsAt) {
+    if (TRY_TIMER) { clearInterval(TRY_TIMER); TRY_TIMER = null; }
+    if (bar) bar.remove();
+    return;
+  }
+  var left = Math.max(0, Math.round((t.endsAt - Date.now()) / 1000));
+  if (left <= 0) { tryBack(); return; }
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'trybar'; bar.className = 'trybar'; bar.setAttribute('data-testid', 'till-trybar');
+    bar.innerHTML = '<span>Trying a new style</span><span class="tt" id="trytt"></span>'
+      + '<button class="back" data-testid="till-try-back" onclick="tryBack()">Put it back</button>'
+      + '<button class="keep" data-testid="till-try-keep" onclick="tryKeep()">Keep it</button>';
+    document.body.appendChild(bar);
+  }
+  var tt = document.getElementById('trytt');
+  if (tt) tt.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') + ' left';
+  if (!TRY_TIMER) TRY_TIMER = setInterval(tryPaint, 1000);
+}
+/**
+ * ── ⭐⭐ THE PAINT ───────────────────────────────────────────────────────
  */
 function stylePaint(){
   var K = window.CBScreen; if (!K) return;
   var body = document.getElementById('stylebody');
-  var pv = document.getElementById('stylepreview');
-  var says = document.getElementById('stylesays');
-  var dev = document.getElementById('styledev');
-  if (!body || !pv) return;
-  if (dev) dev.textContent = (STATE && STATE.till ? (STATE.till.name || 'this counter') : 'this counter');
-  /* ⚠️ every visual decision, in named subgroups — ONE group, as asked, and nothing of it left elsewhere */
-  var ROWS = [
-    ['preset',  'Preset',           K.PRESETS,   function(v){ return v.label + (v.note ? ' \u00b7 ' + v.note : ''); }],
-    ['layout',  'Layout',           K.LAYOUTS,   function(v){ return v.label; }],
-    ['tile',    'Tile style',       K.TILES,     function(v){ return v.label; }],
-    ['picker',  'Quick keys picker',K.PICKERS,   function(v){ return v.label; }],
-    ['theme',   'Theme',            K.THEMES,    function(v){ return v.label; }],
-    ['density', 'Density',          K.DENSITIES, function(v){ return v.label; }]
-  ];
-  body.innerHTML = ROWS.map(function(r){
-    var key = r[0], reg = r[2] || {};
-    return '<div class="stylerow" data-testid="till-style-' + key + '">'
-      + '<span class="sl">' + esc(r[1]) + '</span><span class="sc">'
-      + Object.keys(reg).map(function(id){
-          var on = String(styleVal(key)) === String(id);
-          return '<button class="schip' + (on ? ' on' : '') + '" data-testid="till-style-' + key + '-' + esc(id) + '"'
-            + ' onclick="stylePick(\'' + key + '\',\'' + esc(id) + '\')">' + esc(r[3](reg[id])) + '</button>';
-        }).join('')
-      + '</span></div>';
-  }).join('')
+  var canvas = document.getElementById('stcanvas');
+  if (!body || !canvas) return;
+  var cfg = styleCfg(), shown = styleShown(), dev = styleDev(), devs = styleDevs();
+  var applied = K.resolve(tillOpt().screen || {});
+  var diff = styleDiff();
+
+  /* ── the header ───────────────────────────────────────────────────── */
+  var hd = document.getElementById('stydev');
+  if (hd) hd.textContent = tillName() + ' · ' + ((K.LAYOUTS[applied.layout] || {}).label || '').toLowerCase()
+    + ' · ' + devs.screen.w + ' × ' + devs.screen.h + ' · you are changing only this counter';
+  var pend = document.getElementById('stypend');
+  if (pend) {
+    pend.className = 'stpend' + (diff.length ? '' : ' none');
+    pend.textContent = diff.length ? ('● ' + diff.length + ' change' + (diff.length === 1 ? '' : 's')
+      + ' not applied yet') : 'nothing changed yet';
+  }
+  var ap = document.getElementById('styapply');
+  /* ⭐ THE SCOPE IS ON THE BUTTON. "Apply" alone never says what it lands on. */
+  if (ap) ap.textContent = 'Apply to ' + tillName();
+
+  /* ── the two segmented switches ─────────────────────────────────────────── */
+  var dt = document.getElementById('stydevtabs');
+  if (dt) dt.innerHTML = Object.keys(devs).map(function(k){
+    return '<button type="button" class="' + (STYLE_DEV === k ? 'on' : '') + '"'
+      + ' data-testid="till-style-dev-' + k + '" onclick="styleDevPick(\'' + k + '\')">'
+      + esc(devs[k].label) + '</button>'; }).join('');
+  var nt = document.getElementById('stynowtabs');
+  if (nt) nt.innerHTML = ['now', 'after'].map(function(k){
+    return '<button type="button" class="' + (STYLE_SHOW === k ? 'on' : '') + '"'
+      + ' data-testid="till-style-show-' + k + '" onclick="styleShowPick(\'' + k + '\')">'
+      + (k === 'now' ? 'Now' : 'After') + '</button>'; }).join('');
+
+  /* ── the miniature ─────────────────────────────────────────────────── */
+  var clip = document.getElementById('styclip');
+  var vars = K.themeVars(shown.theme);
+  canvas.setAttribute('style', Object.keys(vars).map(function(v){ return v + ':' + vars[v]; }).join(';')
+    + ';width:' + dev.w + 'px;height:' + dev.h + 'px');
+  canvas.innerHTML = styleScreen(shown, dev);
+  /* ⚠️ transform does not shrink the BOX — the clip must carry the scaled height or the dialog grows a mile */
+  var avail = Math.max(240, (clip ? clip.clientWidth : 0) || 560);
+  var sc = Math.min(1, avail / dev.w);
+  canvas.style.transform = 'scale(' + sc + ')';
+  if (clip) clip.style.height = Math.round(dev.h * sc) + 'px';
+  var lab = document.getElementById('styscale');
+  if (lab) lab.textContent = 'real screen ' + dev.w + ' × ' + dev.h + ' · shown at ' + Math.round(sc * 100) + '%';
+
+  /* ── what changes, what does not ────────────────────────────────────────── */
+  var says = document.getElementById('stysays');
+  if (says) says.innerHTML =
+    '<div class="stcard" data-testid="till-style-changes"><b>What changes on ' + esc(tillName()) + '</b>'
+    + (diff.length
+        ? '<ul>' + diff.map(function(d){ return '<li><i></i><span><b>' + esc(d[0]) + '</b> — ' + esc(d[1]) + '</span></li>'; }).join('') + '</ul>'
+        : '<p>Nothing yet. Change a setting on the left and this says what it does.</p>')
+    + '</div>'
+    + '<div class="stcard"><b>Stays the same</b>'
+    + '<p>Every key, shortcut and button keeps its place and its name. Nothing in the bill, the prices or the'
+    + ' day is touched — style is only how it looks.</p>'
+    /* ⚠️⚠️ AND THE ONE THING THAT MAKES THIS DANGEROUS: somebody may be mid-sale RIGHT NOW */
+    + ((typeof CART !== 'undefined' && CART.length)
+        ? '<div class="stnote wait">Someone is selling on this counter — the change waits until the bill in hand'
+          + ' is saved or cleared.</div>'
+        : '<div class="stnote">No bill in hand — this lands the moment you apply it.</div>')
+    + '</div>';
+
+  /* ── the settings ─────────────────────────────────────────────────── */
+  var pre = K.PRESETS[cfg.preset] || {};
+  var cost = stylePhotoCost();
+  body.innerHTML = 
+    '<div class="stfrom">' + styleWire(cfg)
+    + '<span class="ft"><span>Starting from</span><b>' + esc(pre.label || 'Your own mix')
+    + (pre.note ? ' · ' + esc(pre.note) : '') + (STYLE_DRAFT && !STYLE_DRAFT.preset && Object.keys(STYLE_DRAFT).length ? ' · edited' : '') + '</b></span>'
+    + '<button class="schip" data-testid="till-style-seeall" onclick="galOpen()">See all 9 ▸</button></div>'
+    + styleRows().map(function(r){
+        var key = r[0], reg = r[3] || {};
+        var moved = String(applied[key]) !== String(cfg[key]);
+        return '<div class="strow' + (moved ? ' changed' : '') + '" data-testid="till-style-' + key + '">'
+          + '<b>' + esc(r[1]) + '</b><span class="hint">' + esc(r[2]) + '</span><span class="sc">'
+          + Object.keys(reg).map(function(id){
+              var on = String(cfg[key]) === String(id);
+              /* ⭐ a colour choice carries the colour — it is the one setting a word cannot describe */
+              var sw = (key === 'theme' && reg[id].vars)
+                ? '<span class="sw" style="background:' + (reg[id].vars['--paper'] || '#fff') + '"></span>' : '';
+              return '<button class="schip' + (on ? ' on' : '') + '" data-testid="till-style-' + key + '-' + esc(id) + '"'
+                + ' onclick="stylePick(\'' + key + '\',\'' + esc(id) + '\')">' + sw + esc(reg[id].label) + '</button>';
+            }).join('')
+          + '</span></div>';
+      }).join('')
     /**
      * ⭐⭐ PHOTOS, BY SURFACE ([TILL-80]). Athi: *"a popup window to check where."* A key is aimed at from a
      * distance, so a photograph is the fastest thing to aim at; a list row is read, and forty thumbnails down
@@ -6513,39 +7228,24 @@ function stylePaint(){
      * ⚠️ THE KEYS ANSWER IS THE DRAFT'S (nothing moves until Apply); the LIST answer writes at once, because it
      * is not part of the style being previewed and a draft nobody can see the effect of is just a delay.
      */
-    + '<div class="stylerow" data-testid="till-style-photos"><span class="sl">Photos</span><span class="sc">'
-    + '<button class="schip' + (styleVal('photos') ? ' on' : '') + '" data-testid="till-style-photos-keys"'
-    + ' onclick="stylePick(\'photos\',' + (!styleVal('photos')) + ')">On the quick keys</button>'
+    + '<div class="strow' + (!!applied.photos !== !!cfg.photos ? ' changed' : '') + '" data-testid="till-style-photos">'
+    + '<b>Photos</b><span class="hint">where pictures show</span><span class="sc">'
+    + '<button class="schip' + (cfg.photos ? ' on' : '') + '" data-testid="till-style-photos-keys"'
+    + ' onclick="stylePick(\'photos\',' + (!cfg.photos) + ')">On the quick keys</button>'
     + '<button class="schip' + (thumbsOn() ? ' on' : '') + '" data-testid="till-style-photos-list"'
     + ' onclick="stylePhotoList()">In the product list</button>'
     + '<button class="schip plain" data-testid="till-style-photos-none" onclick="stylePhotosOff()">Turn them all off</button>'
     + '</span></div>'
-    + '<p class="u styleu">The chips above the list show a picture whenever the list does.</p>';
-  /* ── the miniature ─────────────────────────────────────────────────────────────────────────────────── */
-  var cfg = styleCfg();
-  var vars = K.themeVars(cfg.theme);
-  pv.setAttribute('style', Object.keys(vars).map(function(v){ return v + ':' + vars[v]; }).join(';'));
-  var SAMPLE = [['Tata Filter coffee', 352], ['Health drink', 163], ['Green tea', 64],
-                ['Bread 400 g', 45], ['Rusk 300 g', 60], ['Butter 100 g', 58]];
-  /**
-   * ⚠️ A MINIATURE IS NOT A SCALE MODEL. Using the layout's real keysPerRow put four columns in a 260px box
-   * and "Tata Filter coffee" came out one letter per line — which says nothing true about the tile style, the
-   * thing the preview exists to show. Two columns, always: the point is what a KEY looks like.
-   */
-  var per = 2;
-  pv.innerHTML = '<div class="pvgrid" style="grid-template-columns:repeat(' + per + ',minmax(0,1fr))">'
-    + SAMPLE.map(function(p, i){
-        return K.tile(cfg.tile, { name: p[0], price: money(p[1]), unit: 'each', image: null,
-          colour: K.groupColour(i), showPhoto: !!cfg.photos, qty: 0, attrs: 'type="button" tabindex="-1"' });
-      }).join('')
-    + '</div><div class="pvbar"></div>';
-  if (says) {
-    says.textContent = [ (K.LAYOUTS[cfg.layout] || {}).label + ' layout',
-      (K.TILES[cfg.tile] || {}).label + ' tiles', (K.PICKERS[cfg.picker] || {}).label + ' picker',
-      (K.THEMES[cfg.theme] || {}).label, (K.DENSITIES[cfg.density] || {}).label,
-      (cfg.photos ? 'photos on' : 'photos off') ].join(' \u00b7 ');
-  }
+    /* ⭐ WHAT THE CHOICE COSTS, in numbers a shopkeeper can act on rather than a warning they cannot */
+    + '<div class="stcost">' + (cfg.photos && cost.n
+        ? 'Photos on the keys add about <b>' + cost.mb + ' MB</b> to keep offline (' + cost.n
+          + ' pictures) and a little to a cold start. '
+        : 'No pictures are being kept for the keys. ')
+      + 'Quick keys show <b>' + (Number((K.LAYOUTS[cfg.layout] || {}).keysPerRow) || 6) + ' in a row</b> at this layout.'
+      + ' The chips above the list show a picture whenever the list does.</div>';
 }
+function styleDevPick(k){ STYLE_DEV = k; stylePaint(); }
+function styleShowPick(k){ STYLE_SHOW = k; stylePaint(); }
 function screenSet(patch){
   var o = tillOpt(), s = Object.assign({}, o.screen || {}, patch || {});
   /* a preset carries its own theme — the device's look follows it, so ☰ and ⚙ keep saying the same thing */
@@ -9747,7 +10447,10 @@ function bumpLast(d){
 /* ⚠️ the indexes below k all shift up, so a held selection would silently point at a different product */
 function drop(k){ CART.splice(k,1); if (CARTSEL === k) CARTSEL = -1; else if (CARTSEL > k) CARTSEL--; repaint(); }
 function clearBill(){
-  KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ ageClear(); CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch(); }
+  KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ ageClear(); CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch();
+  /* ⭐ a screen style that was held back because a bill was in hand lands HERE ([TILL-84]) */
+  try { stylePendFlush(); } catch (_) {}
+}
 /**
  * ⭐ PARKED BILLS live on the device and survive a reload — a customer who walked away must not cost the queue, and a browser that
  * refreshes must not cost the customer. They are NOT bills yet: no number is taken, nothing is queued, nothing has been sold.
@@ -14847,6 +15550,12 @@ function installApp(){ if (!_install) return; _install.prompt(); _install = null
   try { paintSide(); } catch (_) {}   /* it is spent — take it off the strip too */ }
 
 applyLook();
+/**
+ * ⚠️⚠️ A TRIAL THAT SURVIVED A RELOAD IS OVER ([TILL-84]). "Try it for 10 minutes" is only safe if the way
+ * back does not depend on the page staying alive — a crash, a refresh or a closed lid must all end it. The
+ * record was written BEFORE the style was applied, so this can always find its way home.
+ */
+try { tryBoot(); } catch (_) {}
 whoLoad();
 breakLoad();
 parkedLoad();

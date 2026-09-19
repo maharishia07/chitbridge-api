@@ -1548,4 +1548,66 @@ it('⭐ and the guard can see a field go missing', () => {
   assert.ok(!has('age_check', fake));
 });
 
+/**
+ * ⚠️⚠️⚠️ A CLOSED DIALOG THAT STILL HAS A display: COVERS THE WHOLE PAGE ([TILL-84], 2026-09-19).
+ *
+ * The browser hides a <dialog> with `dialog:not([open]) { display:none }`. A class rule that sets display on
+ * the same element beats it, and the closed dialog keeps its box — an invisible sheet over the counter that
+ * eats every click on the shelf, the cart and the keys. Nothing throws and nothing is logged; the till just
+ * stops responding, which is the hardest kind of fault to report and the easiest to ship.
+ *
+ * ⚠️ IT HAPPENED TWICE IN ONE CHANGE: once on `.dlg.studio{display:flex}`, and again because the same class
+ * name was on the dialog AND on its inner container, so the container's rule re-broke the fix. Hence the rule
+ * is about the ELEMENT, not about one class: any selector that can match a .dlg must scope display to [open].
+ */
+it('⚠⚠ no dialog rule sets display without [open]', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* the class every dialog on this page carries, and the classes its own children use */
+  const dlgClasses = ['dlg', 'studio'];
+  const css = page.slice(page.indexOf('<style>'), page.indexOf('</style>'));
+  /* ⚠️ comments carry the word display: while EXPLAINING this rule — strip them or the guard reports itself */
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const bad = [];
+  bare.replace(/([^{}]+)\{([^}]*)\}/g, (m, sel, body) => {
+    if (!/(^|[^-\w])display\s*:/.test(body)) return m;
+    sel.split(',').forEach((one) => {
+      const t = one.trim();
+      /* only the element that IS a dialog matters — a descendant selector is somebody else's box */
+      const last = t.split(/[\s>]+/).pop() || '';
+      /* ⚠️ WHOLE TOKENS. indexOf('.dlg') also matches '.dlgbtns', which is a CHILD of a dialog and entitled
+         to any display it likes — the first cut of this guard reported the button row. */
+      const classes = (last.match(/\.[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+      if (!dlgClasses.some((c) => classes.indexOf(c) >= 0)) return;
+      if (last.indexOf('[open]') < 0) bad.push(t);
+    });
+    return m;
+  });
+  assert.deepStrictEqual(bad, [],
+    'these rules give a dialog a display without [open], so it covers the page while CLOSED: ' + bad.join(' | '));
+});
+
+it('⭐ and the guard can see it when it is wrong', () => {
+  /* ⚠️ BREAK IT BEFORE TRUSTING IT — [[feedback-whitelist-drops-silently]] */
+  const look = (css) => {
+    const bad = [];
+    css.replace(/([^{}]+)\{([^}]*)\}/g, (m, sel, body) => {
+      if (!/(^|[^-\w])display\s*:/.test(body)) return m;
+      sel.split(',').forEach((one) => {
+        const last = (one.trim().split(/[\s>]+/).pop() || '');
+        const classes = (last.match(/\.[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+        if (classes.indexOf('dlg') < 0) return;
+        if (last.indexOf('[open]') < 0) bad.push(one.trim());
+      });
+      return m;
+    });
+    return bad;
+  };
+  assert.deepStrictEqual(look('.dlg.studio[open]{display:flex}'), [], 'a scoped rule must pass');
+  assert.deepStrictEqual(look('.dlg.studio{display:flex}'), ['.dlg.studio'], 'an unscoped rule must fail');
+  assert.deepStrictEqual(look('.dlg .stfoot{display:flex}'), [], 'a rule for a CHILD of a dialog is fine');
+  assert.deepStrictEqual(look('.dlg{padding:16px}'), [], 'a rule with no display is fine');
+  /* ⚠️ THE CASE THAT CAUGHT THE GUARD ITSELF: .dlgbtns starts with .dlg and is not a dialog */
+  assert.deepStrictEqual(look('.dlgbtns{display:flex}'), [], 'a class that merely STARTS with dlg is not a dialog');
+});
+
 console.log(pass + ' checks');
