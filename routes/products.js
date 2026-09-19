@@ -53,9 +53,47 @@ function readUpload(body) {
       e.userMessage = e.message; throw e;
     }
     /* ⚠️ lib/xlsx-read throws with a sentence a shopkeeper can act on; it is passed through, not swallowed */
-    return xlsxRead.sheetRows(buf, { sheet: b.sheet || null });
+    return xlsxRead.sheetRows(buf, { sheet: b.sheet || null, headerRow: b.header_row });
   }
-  return csv.parseCSV(String(b.csv || ''));
+  return csvWithHead(csv.parseCSV(String(b.csv || '')), b.header_row);
+}
+
+/**
+ * ── ⭐⭐ "MY HEADINGS ARE ON ROW 3", FOR A .csv ([TILL-110]) ────────────────────────────
+ *
+ * ⚠️⚠️ POSITIONALLY, ON THE PARSED ROWS — never by slicing lines off the text. A CSV field may hold a
+ * newline inside quotes, so "drop the first two lines" corrupts precisely the files that are hardest to
+ * diagnose. parseCSV has already resolved the quoting; re-keying what it returned cannot.
+ *
+ * ⚠️ ROW NUMBERS ARE THE ONES A PERSON SEES: row 1 is the first line of the file, which parseCSV took as the
+ * headings. So header_row 3 means the SECOND of its data rows becomes the headings.
+ */
+function csvWithHead(parsed, headerRow) {
+  const preview = [{ row: 1, cells: parsed.headers.slice(0, 12) }].concat(
+    parsed.rows.slice(0, 7).map((r, i) => ({ row: i + 2, cells: parsed.headers.slice(0, 12).map((h) => String(r[h] == null ? '' : r[h])) })));
+  const want = Number(headerRow);
+  if (!Number.isInteger(want) || want <= 1) return Object.assign({}, parsed, { headerRow: 1, preview });
+
+  const at = want - 2;      /* row 2 is parsed.rows[0] */
+  if (at < 0 || at >= parsed.rows.length) {
+    const e = new Error('Row ' + headerRow + ' is past the end of that file — it has ' + (parsed.rows.length + 1) + ' rows.');
+    e.userMessage = e.message; throw e;
+  }
+  /* ⚠️ the VALUES of that row become the headings, in column order */
+  const headers = parsed.headers.map((h) => String(parsed.rows[at][h] == null ? '' : parsed.rows[at][h]).trim());
+  const seen = new Map();
+  const finalHeaders = headers.map((h, i) => {
+    let name = h || ('Column ' + String.fromCharCode(65 + (i % 26)));
+    if (seen.has(name)) { const n = seen.get(name) + 1; seen.set(name, n); name = name + ' (' + n + ')'; }
+    else seen.set(name, 1);
+    return name;
+  });
+  const rows = parsed.rows.slice(at + 1).map((r) => {
+    const o = {};
+    parsed.headers.forEach((h, i) => { o[finalHeaders[i]] = r[h] == null ? '' : r[h]; });
+    return o;
+  }).filter((o) => Object.keys(o).some((k) => String(o[k]).trim() !== ''));
+  return { headers: finalHeaders, rows, headerRow: want, preview };
 }
 const identity  = require('../lib/identity');       // which line is this, and which product does it belong to
 const starter   = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
@@ -642,7 +680,8 @@ router.get('/template', auth, async (req, res) => {
  */
 /* ⚠️ `csv` OR `xlsx` — optional individually, and the handler insists on one of them ([TILL-109]) */
 router.post('/import/preflight', auth,
-  [ body('csv').optional().isString(), body('xlsx').optional().isString() ], validate, async (req, res) => {
+  [ body('csv').optional().isString(), body('xlsx').optional().isString(),
+    body('header_row').optional().isInt({ min: 1, max: 1000 }) ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const hasFile = (req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim()));
@@ -662,7 +701,10 @@ router.post('/import/preflight', auth,
     res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset,
       identity: ident, identity_problems: identityProblems, dry_run: true,
       /* ⭐ which sheet was read, and what else was in the workbook — a person who meant a different one can say so */
-      sheet: parsed.sheet || null, sheets: parsed.sheets || null });
+      sheet: parsed.sheet || null, sheets: parsed.sheets || null,
+      /* ⭐⭐ and which ROW was taken as the headings, with the first few rows so a person can point at another
+         ([TILL-110]). A workbook that opens with the shop's name is the common case, not the exception. */
+      header_row: parsed.headerRow || 1, preview: parsed.preview || null });
   } catch (e) { fail(res, e, 'Could not read the file'); }
 });
 
@@ -686,7 +728,8 @@ const IMPORT_MAX_ROWS = 2000;
  * It re-runs the preflight server-side. The client's report is a display artifact and is never trusted.
  */
 router.post('/import', auth,
-  [ body('csv').optional().isString(), body('xlsx').optional().isString(), body('decisions').isArray() ],
+  [ body('csv').optional().isString(), body('xlsx').optional().isString(),
+    body('header_row').optional().isInt({ min: 1, max: 1000 }), body('decisions').isArray() ],
   validate, async (req, res) => {
   try {
     const entity_id = ctx(req);

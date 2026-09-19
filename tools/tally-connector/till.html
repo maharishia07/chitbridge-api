@@ -1962,6 +1962,10 @@
   .upbody{margin:6px 0 12px;max-height:60vh;overflow-y:auto;min-height:0}
   .uphead{font-size:1.05em;margin-bottom:10px}
   .uphead b{font-size:1.25em}
+  /* ⭐ quiet, above the columns — it is a correction most files will not need */
+  .uphead2{margin:0 0 12px;font-size:.92em;color:var(--dim)}
+  .uphead2 select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:8px;
+                  background:var(--paper);color:var(--ink);max-width:100%}
   .upcols{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;margin-bottom:12px}
   .upcols .inc{font-weight:600;min-width:0;overflow-wrap:anywhere}
   .upcols .inc span{display:block;font-weight:400;color:var(--dim);font-size:.85em}
@@ -13098,7 +13102,7 @@ function regWords(){
  */
 var TRADES = null;
 /* ── ⭐⭐⭐ THE UPLOAD, READ BEFORE IT BECOMES DATA ([TILL-108]) ────────────────────────── */
-var UP = { csv: '', xlsx: '', name: '', report: null, decisions: {} };
+var UP = { csv: '', xlsx: '', name: '', headerRow: null, report: null, decisions: {} };
 
 /**
  * ⭐ A SPREADSHEET OR A .csv ([TILL-109]). Athi: *"most shops will have excel files"* — and "save it as CSV
@@ -13115,7 +13119,8 @@ function upPick(){
 
 async function upRead(file){
   var d = document.getElementById('updlg'); if (!d) return;
-  UP = { csv: '', report: null, decisions: {} };
+  /* ⚠️ a NEW file starts clean — carrying the last file's heading row over would silently mis-read this one */
+  UP = { csv: '', xlsx: '', name: '', headerRow: null, report: null, decisions: {} };
   document.getElementById('upbody').innerHTML = '<p class="note">Reading ' + esc(file.name) + '…</p>';
   document.getElementById('upgo').disabled = true;
   upSay('', false);
@@ -13159,6 +13164,8 @@ async function upRead(file){
     return;
   }
   UP.report = r.report;
+  /* ⭐ the server decides which row it used; the page records it so the commit sends the same one */
+  UP.headerRow = Number(r.header_row || 1);
   upPaint(r);
 }
 
@@ -13181,6 +13188,26 @@ function upPaint(r){
     out.push('<p class="note" data-testid="till-upload-sheet">Read from the sheet <b>' + esc(r.sheet || '')
       + '</b>. That workbook also has: ' + esc(r.sheets.filter(function(n){ return n !== r.sheet; }).join(', '))
       + '. If the products are on one of those, say so and bring it again.</p>');
+  }
+
+  /**
+   * ⭐⭐⭐ WHICH ROW HOLDS THE HEADINGS ([TILL-110]). A real workbook opens with the shop's name, a date, or a
+   * merged title — and the reader takes the first row with anything in it, which is then wrong. The rows are
+   * offered AS THEY READ so a person recognises theirs; asking for a number means counting lines in a file
+   * that is not on the screen.
+   */
+  if (r.preview && r.preview.length > 1) {
+    var chosen = Number(r.header_row || 1);
+    out.push('<div class="uphead2" data-testid="till-upload-headrow">'
+      + '<label>Headings are on '
+      + '<select data-testid="till-headrow" onchange="upHeadRow(this.value)">'
+      + r.preview.map(function(p){
+          var txt = (p.cells || []).filter(function(c){ return String(c).trim(); }).slice(0, 5).join(', ');
+          if (txt.length > 64) txt = txt.slice(0, 64) + '…';
+          return '<option value="' + p.row + '"' + (p.row === chosen ? ' selected' : '') + '>'
+            + 'row ' + p.row + (txt ? ' — ' + esc(txt) : ' — (empty)') + '</option>';
+        }).join('')
+      + '</select></label></div>');
   }
 
   /* ⚠️ EVERY COLUMN IS SHOWN, including the ones that matched — a person checking an import checks the
@@ -13222,6 +13249,27 @@ function upPaint(r){
   upReady();
 }
 
+/**
+ * ⚠️⚠️ A DIFFERENT HEADING ROW MEANS A DIFFERENT FILE, so the column answers are thrown away rather than
+ * carried over: they were answers about columns that no longer exist under those names. Keeping them would
+ * map "Rate (INR)" onto whatever now sits in that position.
+ */
+async function upHeadRow(v){
+  var n = Number(v);
+  if (!n || n === (UP.headerRow || 1)) return;
+  UP.headerRow = n;
+  UP.decisions = {};
+  document.getElementById('upgo').disabled = true;
+  upSay('Reading it again from row ' + n + '…', false);
+  var r = null;
+  try { r = await HOST.tillPost('/api/products/import/preflight', upBody(), { noQueue: true }); } catch (_) { r = null; }
+  if (!r || !r.ok || !r.report) {
+    upSay(((r && r.why) || 'ChitBridge could not be reached') + '. Nothing has been added.', true);
+    return;
+  }
+  UP.report = r.report;
+  upPaint(r);
+}
 /** a person's answer for one column — the ONLY thing the commit acts on */
 function upDecide(sel){
   UP.decisions[sel.getAttribute('data-inc')] = sel.value;
@@ -13260,7 +13308,13 @@ function upReady(){
  * ⚠️ ONE BODY BUILDER, used by the preflight AND the commit. They must send the SAME file — the commit
  * re-reads it and re-runs the preflight, which only means anything if it is reading what was approved.
  */
-function upBody(){ return UP.xlsx ? { xlsx: UP.xlsx } : { csv: UP.csv }; }
+function upBody(){
+  var b = UP.xlsx ? { xlsx: UP.xlsx } : { csv: UP.csv };
+  /* ⚠️⚠️ THE COMMIT SENDS IT TOO. Without this the server would re-read the file from row 1 and import
+     against headings nobody approved — the report would have been about a different reading of the file. */
+  if (UP.headerRow && UP.headerRow > 1) b.header_row = UP.headerRow;
+  return b;
+}
 
 /**
  * ⚠️⚠️ NOT btoa(String.fromCharCode(...bytes)). Spreading a megabyte of bytes into apply() overflows the

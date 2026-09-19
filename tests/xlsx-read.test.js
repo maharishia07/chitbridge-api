@@ -215,4 +215,58 @@ it('⭐⭐ and the preflight reads both the same way', () => {
     'the two formats blame different rows');
 });
 
+/**
+ * ── ⭐⭐⭐ "MY HEADINGS ARE ON ROW 3" ([TILL-110]) ─────────────────────────────────
+ *
+ * The real workbook this was found on opens with "St. Joseph's College of Engineering ( An Autonomous
+ * Institution)" on row 1 and carries the actual headings further down. A shop's price list has the same
+ * shape — the shop's name, a date, then the columns.
+ */
+it('⭐⭐ a title above the headings can be stepped past', () => {
+  const b = book([
+    ['Anbu Vegetables — price list'],
+    ['as at 19 September'],
+    ['Name', 'Price', 'Unit'],
+    ['Tomato', 40, 'kg'],
+    ['Onion', 30, 'kg'],
+  ]);
+  /* left alone it takes row 1, which is the title — that is the defect the control exists for */
+  const bad = X.sheetRows(b);
+  assert.strictEqual(bad.headerRow, 1);
+  assert.ok(/Anbu/.test(bad.headers[0]), 'the first row was not taken as the headings after all');
+
+  /* told where they are, it reads properly */
+  const good = X.sheetRows(b, { headerRow: 3 });
+  assert.deepStrictEqual(good.headers, ['Name', 'Price', 'Unit']);
+  assert.strictEqual(good.headerRow, 3);
+  assert.strictEqual(good.rows.length, 2, 'the title rows were counted as products');
+  assert.deepStrictEqual(good.rows[0], { Name: 'Tomato', Price: '40', Unit: 'kg' });
+});
+
+/**
+ * ⭐⭐ THE ROWS ARE OFFERED AS THEY READ, so a person recognises their own headings instead of counting lines
+ * in a file that is not on the screen.
+ */
+it('⭐ the preview carries the first rows with their real numbers', () => {
+  const b = book([['A title'], [], ['Name', 'Price'], ['Tomato', 40]]);
+  const r = X.sheetRows(b);
+  assert.ok(r.preview.length >= 3, 'only ' + r.preview.length + ' rows offered');
+  /* ⚠️⚠️ THE NUMBERS ARE THE SPREADSHEET'S. Row 2 is blank and is not in the grid, so the third row a
+     person sees is row 3 — an index into what we kept would have called it 2 and pointed at the wrong line. */
+  assert.strictEqual(r.preview[0].row, 1);
+  assert.deepStrictEqual(r.preview[0].cells, ['A title']);
+  const head = r.preview.find((p) => p.cells[0] === 'Name');
+  assert.ok(head, 'the heading row is not among the rows offered');
+  assert.strictEqual(head.row, 3, 'the heading row is offered as row ' + head.row + ', not 3');
+});
+
+/** ⚠️ asked for a row that is not there, it says so — never falls back and claims the choice was honoured */
+it('⚠⚠ a heading row that is not there is refused, with the rows that are', () => {
+  const b = book([['Name', 'Price'], ['Tomato', 40]]);
+  let said = null;
+  try { X.sheetRows(b, { headerRow: 9 }); } catch (e) { said = e.userMessage || e.message; }
+  assert.ok(said, 'row 9 of a two-row sheet was accepted');
+  assert.ok(/empty/.test(said) && /1, 2/.test(said), 'the refusal does not list the rows that exist: ' + said);
+});
+
 console.log(pass + ' checks');
