@@ -1147,7 +1147,8 @@
   .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto) auto}
   /* ── choosing several in maintenance ([TILL-55]) ───────────────────────────────────── */
   .hit.picking{grid-template-columns:24px minmax(0,1fr) minmax(92px,auto) auto}
-  .hit.picking.pics{grid-template-columns:24px 42px minmax(0,1fr) minmax(92px,auto)}
+  /* ⚠️ FIVE: tick + picture + name + price + add. Same arithmetic, same failure if it is short. */
+  .hit.picking.pics{grid-template-columns:24px 42px minmax(0,1fr) minmax(92px,auto) auto}
   .hitpick{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;cursor:pointer;
            align-self:center;background:var(--paper);position:relative}
   .hitpick.on{border-color:var(--ok);background:var(--ok)}
@@ -1230,8 +1231,10 @@
   .facts{color:var(--dim);font-size:.78em;margin-top:2px;line-height:1.45}
   .facts b{color:var(--ink);font-weight:600}
   .hit .rate{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.75em;white-space:nowrap}
-  @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) auto;gap:9px}
-    .hit.pics{grid-template-columns:34px minmax(0,1fr) auto} .hit .pic{width:34px;height:34px} }
+  /* ⚠️⚠️ COUNT THE CHILDREN ([TILL-92]). A row is name + price + add, and with a picture it is four —
+     these were two and three, so the + wrapped and every phone row went from 91px to 154px. */
+  @media (max-width:520px){ .hit{grid-template-columns:minmax(0,1fr) minmax(72px,auto) auto;gap:9px}
+    .hit.pics{grid-template-columns:34px minmax(0,1fr) minmax(72px,auto) auto} .hit .pic{width:34px;height:34px} }
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
@@ -1344,6 +1347,39 @@
   .stnote{margin-top:9px;border:1px solid var(--ok);background:var(--ok-tint);color:var(--ok);border-radius:9px;
           padding:8px 11px;font-size:.85em;line-height:1.45}
   .stnote.wait{border-color:var(--warn);background:var(--warn-tint);color:var(--warn)}
+  /**
+   * ── ⭐⭐ THE PIECE THAT CHANGES, DRAWN TWICE ([TILL-91]) ─────────────────────────────
+   * ⚠️ Each sample carries the CANDIDATE theme's variables on itself, so the "after" of a colour change is
+   * actually in the new colours rather than described in the old ones.
+   */
+  /* ⚠️ STACKED, NOT SIDE BY SIDE. Half a narrow card is ~33px per tile at six in a row, and "Filter
+     Coffee" came out one letter per line — the column width is the lever, as the key grid already taught. */
+  .exwrap{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+  .exone{min-width:0;display:flex;flex-direction:column;gap:2px}
+  .exone>u{text-decoration:none;font-size:.68em;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+  .exar{display:none}
+  .ex{border:1px solid var(--line);border-radius:9px;padding:6px;background:var(--paper);color:var(--ink);
+      overflow:hidden;min-height:56px;display:flex;flex-direction:column;gap:3px;justify-content:center}
+  /* ⚠️ a sample is a PICTURE — the real tile renderer is used, but nothing in it may be pressed */
+  .ex *{pointer-events:none}
+  .ex .sk-tile{min-height:0;padding:5px 6px;font-size:.66em;border-radius:6px;gap:1px;overflow:hidden}
+  /* ⚠️ a name that cannot fit is TRUNCATED, never stacked into a column of letters */
+  .ex .sk-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal;width:100%}
+  .ex .sk-tile .sk-price{font-size:.9em}
+  .ex .sk-x,.ex .qpin,.ex .sk-qty{display:none}
+  .ex .exn{font-style:normal;font-size:.72em;color:var(--dim);text-align:center}
+  .exgroups{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+  .exgroups i{font-style:normal;font-size:.66em;font-weight:700;border-radius:999px;padding:3px 7px;white-space:nowrap}
+  .exgroups .exbtn{background:var(--ink);color:var(--card)}
+  .exscreen{display:flex;flex-direction:column;gap:3px;height:34px;background:var(--panel);border-radius:5px;padding:4px}
+  .exscreen u{display:block;height:5px;border-radius:2px;background:var(--edge);text-decoration:none}
+  .exscreen span{display:block;flex:1;border-radius:3px;background:var(--card);border:1px solid var(--line)}
+  .exrow{border-top:1px solid var(--line);font-size:.66em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .exrow:first-child{border-top:0}
+  .exsplit{display:flex;gap:3px;height:38px}
+  .exsplit .k{background:var(--panel);border-radius:4px;display:flex;align-items:flex-start;padding:3px}
+  .exsplit .k u{display:block;width:100%;background:var(--edge);border-radius:2px;text-decoration:none}
+  .exsplit .b{background:var(--card);border:1px solid var(--line);border-radius:4px}
   .stfrom{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;
           padding:10px 12px;background:var(--panel);margin-bottom:4px}
   .stfrom .wf{flex:none;width:74px;height:46px}
@@ -1737,7 +1773,10 @@
      narrow tablet widths, which is also where the step bar lives. */
   @media (min-width:901px) and (pointer:fine){
     body[data-hand="left"] .hit{grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto}
-    body[data-hand="left"] .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto)}
+    /* ⚠️⚠️ FOUR COLUMNS, NOT THREE ([TILL-92]). A .pics row is picture + name + price + add — four
+       children. This rule copied the three-column .hit above it and the + wrapped onto its own line, making
+       every shelf row 159px tall on a left-handed counter with pictures on. Measured, not read. */
+    body[data-hand="left"] .hit.pics{grid-template-columns:42px minmax(0,1fr) minmax(92px,auto) auto}
     body[data-hand="left"] .hit .addbtn{order:0}
     body[data-hand="left"] .pay,body[data-hand="left"] .go{flex-direction:row}
     /* ⚠️ THE STEP BAR TOO. It was left out of this exemption and stayed mirrored on a mouse-driven screen, so a
@@ -2050,7 +2089,12 @@
   <div class="stwrap">
     <div class="stpv">
       <div class="stbar">
-        <span class="cap">The whole screen, as it will look</span>
+        <!--
+          ⭐ "PRESENTATION" ([TILL-91]) — Athi's word, and the right one: this whole screen is the
+          presentation layer, and the caption below it says which of the two states is on show, because
+          *"what is now and after"* was a fair question about two unlabelled words.
+        -->
+        <span class="cap">Presentation <i id="stystate"></i></span>
         <span class="sp">
           <!-- ⭐ ONE STYLE, CHECKED ON EVERY SIZE FROM ONE PLACE — the counter, the tablet and the phone -->
           <span class="segs" id="stydevtabs"></span>
@@ -2069,7 +2113,9 @@
     <button data-testid="till-style-reset" onclick="styleReset()">Reset to the shop's style</button>
     <span class="sp">
       <button onclick="styleClose()">Cancel · Esc</button>
-      <button class="try" data-testid="till-style-try" onclick="styleTry()">Try it for 10 minutes</button>
+      <!-- ⚠️⚠️ "Try it for 10 minutes" WITHDRAWN ([TILL-90]). Athi, the first person to use it: *"now i
+           couldn't go back… the counter person will not know how to go back."* A safety net nobody can find
+           is a trap with a timer. tryBoot() stays, so anyone mid-trial is put back on the next load. -->
       <button class="pri" data-testid="till-style-apply" id="styapply" onclick="styleApply()">Apply</button>
     </span>
   </div>
@@ -7172,6 +7218,63 @@ function tillName(){ return (STATE && STATE.till && STATE.till.name) || 'this co
  * Not "picker: bottomSheet" but *"Groups open in a bottom sheet — the bill stays visible behind it."* A setting
  * name tells you what was stored; a consequence tells you what tomorrow morning is like.
  */
+/**
+ * ── ⭐⭐⭐ THE PIECE THAT CHANGES, DRAWN TWICE ([TILL-91]) ────────────────────────────
+ * Athi: *"if you can bring that section alone as an example here that will be good."* Each kind of change
+ * knows how to draw a small sample of ITSELF under a given config — a row of keys at that many columns, one
+ * tile in that style, the group picker where it opens, a row at that spacing.
+ * ⚠️ ALWAYS THE REAL RENDERER where one exists (CBScreen.tile), never a picture of one.
+ */
+function styleSample(kind, cfg, room){
+  var K = window.CBScreen; if (!K) return '';
+  var vars = K.themeVars(cfg.theme);
+  var style = Object.keys(vars).map(function(v){ return v + ':' + vars[v]; }).join(';');
+  var body = '';
+  if (kind === 'layout') {
+    /* ⭐ EXACTLY THE QUESTION HE ASKED — "5 keys in a row instead of 6, WHAT keys here" — so it is the real
+       products, at the real column count, not five grey boxes. */
+    var per = Number((K.LAYOUTS[cfg.layout] || {}).keysPerRow) || 6;
+    body = '<div class="sk-grid" style="--sk-per-row:' + per + ';gap:4px">'
+      + SAMPLE_KEYS.slice(0, per).map(function(p, i){
+          return K.tile('classic', { name: p[0], price: money(p[1]), image: null,
+            colour: K.groupColour(i), qty: 0, attrs: 'tabindex="-1"' }); }).join('')
+      + '</div><i class="exn">' + per + ' in a row</i>';
+  } else if (kind === 'tile' || kind === 'photos') {
+    body = '<div class="sk-grid" style="--sk-per-row:2;gap:4px">'
+      + SAMPLE_KEYS.slice(0, 2).map(function(p, i){
+          return K.tile(cfg.tile, { name: p[0], price: money(p[1]), image: null,
+            colour: K.groupColour(i), showPhoto: !!cfg.photos, qty: 0, attrs: 'tabindex="-1"' }); }).join('')
+      + '</div>';
+  } else if (kind === 'picker') {
+    var PK = K.PICKERS[cfg.picker] || {};
+    var g = ['Morning', 'Afternoon', 'Evening'];
+    body = PK.inline
+      ? '<div class="exgroups">' + g.map(function(n, i){ var c = K.groupColour(i);
+            return '<i style="background:' + c.tint + ';color:' + c.ink + '">' + n + '</i>'; }).join('') + '</div>'
+          + '<i class="exn">always on screen</i>'
+      : '<div class="exgroups"><i class="exbtn">' + esc(PK.label || 'Groups') + ' ▾</i></div>'
+          + '<i class="exn">opens over the screen</i>';
+  } else if (kind === 'theme') {
+    body = '<div class="exscreen"><u></u><span></span><span></span></div>'
+      + '<i class="exn">' + esc((K.THEMES[cfg.theme] || {}).label || '') + '</i>';
+  } else if (kind === 'density') {
+    var pad = cfg.density === 'compact' ? 4 : 9;
+    body = ['Filter Coffee', 'Masala Dosa', 'Gulab Jamun'].map(function(n){
+      return '<div class="exrow" style="padding:' + pad + 'px 8px">' + n + '</div>'; }).join('')
+      + '<i class="exn">' + (cfg.density === 'compact' ? 'tighter rows' : 'roomier rows') + '</i>';
+  } else if (kind === 'room') {
+    var p = PANELS[room] || PANELS.balanced;
+    var billPc = Math.round((0.9 / (p.split + 0.9)) * 100);
+    body = '<div class="exsplit">'
+      + '<span class="k" style="flex:' + (100 - billPc) + '"><u style="height:' + Math.max(8, p.keysh) + '%"></u></span>'
+      + '<span class="b" style="flex:' + billPc + '"></span></div>'
+      + '<i class="exn">bill ' + billPc + '% wide · keys ' + p.keysh + '% tall</i>';
+  }
+  return body ? '<div class="ex" style="' + style + '">' + body + '</div>' : '';
+}
+/* ⚠️ REAL PRODUCTS, because "what keys here" was the question. Five grey boxes answer a different one. */
+var SAMPLE_KEYS = [['Filter Coffee', 25], ['Masala Dosa', 90], ['Gulab Jamun', 45], ['Idli (2 pc)', 48],
+                   ['Ven Pongal', 70], ['Buttermilk', 30], ['Rice 5 kg', 410]];
 function styleDiff(){
   var K = window.CBScreen; if (!K) return [];
   var now = K.resolve(tillOpt().screen || {}), next = styleCfg(), out = [];
@@ -7179,30 +7282,31 @@ function styleDiff(){
     var a = K.LAYOUTS[now.layout] || {}, b = K.LAYOUTS[next.layout] || {};
     out.push(['Things move — ' + (b.label || '').toLowerCase() + ' instead of ' + (a.label || '').toLowerCase(),
       (b.keysPerRow && a.keysPerRow && b.keysPerRow !== a.keysPerRow)
-        ? (b.keysPerRow + ' keys in a row instead of ' + a.keysPerRow) : 'the same keys, in a different shape']);
+        ? (b.keysPerRow + ' keys in a row instead of ' + a.keysPerRow) : 'the same keys, in a different shape',
+      'layout']);
   }
   if (now.tile !== next.tile) out.push(['Quick keys look different',
     'a ' + ((K.TILES[next.tile] || {}).label || '').toLowerCase() + ' tile instead of '
-      + ((K.TILES[now.tile] || {}).label || '').toLowerCase()]);
+      + ((K.TILES[now.tile] || {}).label || '').toLowerCase(), 'tile']);
   if (now.picker !== next.picker) out.push(['Groups open in a ' + ((K.PICKERS[next.picker] || {}).label || '').toLowerCase(),
     (K.PICKERS[next.picker] || {}).inline ? 'always on screen — one tap, nothing to close'
-                                          : 'it covers part of the screen until you choose']);
+                                          : 'it covers part of the screen until you choose', 'picker']);
   if (now.theme !== next.theme) out.push([((K.THEMES[next.theme] || {}).label || '') + ' everywhere',
     (K.THEMES[next.theme] || {}).dark ? 'easier on the eyes in a dim shop or at night'
-                                      : 'the same colours as the back office']);
+                                      : 'the same colours as the back office', 'theme']);
   if (now.density !== next.density) out.push([((K.DENSITIES[next.density] || {}).label || '') + ' spacing',
     next.density === 'compact' ? 'tighter rows — more on screen, smaller targets'
-                               : 'roomier rows — easier to hit, fewer on screen']);
+                               : 'roomier rows — easier to hit, fewer on screen', 'density']);
   var rm = STYLE_DRAFT && STYLE_DRAFT.room;
   if (rm && rm !== panelNow()) {
     var pr = PANELS[rm] || {};
     out.push([(pr.label || '') + ' — ' + (pr.why || ''),
       pr.cart ? 'no quick keys at all; the list and the bill take the screen'
               : Math.round((0.9 / (pr.split + 0.9)) * 100) + '% of the width to the bill, '
-                + pr.keysh + '% of the height to the keys']);
+                + pr.keysh + '% of the height to the keys', 'room']);
   }
   if (!!now.photos !== !!next.photos) out.push([next.photos ? 'Photos on the quick keys' : 'No photos on the quick keys',
-    next.photos ? 'faster to aim at from a distance' : 'the names are the fastest thing to read']);
+    next.photos ? 'faster to aim at from a distance' : 'the names are the fastest thing to read', 'photos']);
   return out;
 }
 /** ⭐ a number a shopkeeper can act on: what the photos actually cost this counter */
@@ -7296,18 +7400,11 @@ var PRESET_GOOD = {
 var TRY_TIMER = null;
 function tryKey(){ return shopLs('cb_till_trystyle'); }
 function tryRead(){ try { return JSON.parse(ls.get(tryKey(), 'null')); } catch (_) { return null; } }
-function styleTry(){
-  var d = STYLE_DRAFT || {};
-  if (!Object.keys(d).length) { toastLine('Nothing to try — change something first.'); return; }
-  var o = tillOpt();
-  /* ⚠️ THE WAY BACK IS WRITTEN FIRST. If the page dies between here and the next line, the boot check reverts. */
-  ls.set(tryKey(), JSON.stringify({ endsAt: Date.now() + 10 * 60 * 1000,
-    back: { screen: o.screen || {}, theme: ls.get('cb_till_theme', 'light') } }));
-  styleClose();
-  screenSet(d);
-  try { densityApply(); } catch (_) {}
-  tryPaint();
-}
+/**
+ * ⚠️⚠️ styleTry() IS GONE ([TILL-90]) — nothing can start a trial any more. What is left below is the
+ * RECOVERY: tryBoot() runs on every load and puts back any trial that is still recorded, so the people this
+ * removal is for are not stranded by it. Removing the rescue with the feature would have done exactly that.
+ */
 function tryKeep(){
   ls.del ? ls.del(tryKey()) : ls.set(tryKey(), 'null');
   tryPaint();
@@ -7347,6 +7444,8 @@ function tryPaint(){
     bar.innerHTML = '<span>Trying a new style</span><span class="tt" id="trytt"></span>'
       + '<button class="back" data-testid="till-try-back" onclick="tryBack()">Put it back</button>'
       + '<button class="keep" data-testid="till-try-keep" onclick="tryKeep()">Keep it</button>';
+  /* ⚠️ this bar can only appear for a trial started BEFORE [TILL-90] removed the button. It is kept so those
+     counters have both answers, not just the automatic one. */
     document.body.appendChild(bar);
   }
   var tt = document.getElementById('trytt');
@@ -7385,6 +7484,12 @@ function stylePaint(){
     return '<button type="button" class="' + (STYLE_DEV === k ? 'on' : '') + '"'
       + ' data-testid="till-style-dev-' + k + '" onclick="styleDevPick(\'' + k + '\')">'
       + esc(devs[k].label) + '</button>'; }).join('');
+  /* ⭐ the caption answers "what is now and after" without anybody having to press one to find out */
+  var st = document.getElementById('stystate');
+  if (st) st.textContent = (STYLE_SHOW === 'now')
+    ? '— the counter as it is today'
+    : (diff.length ? '— with the ' + diff.length + ' change' + (diff.length === 1 ? '' : 's') + ' below'
+                   : '— nothing changed yet, so both look the same');
   var nt = document.getElementById('stynowtabs');
   if (nt) nt.innerHTML = ['now', 'after'].map(function(k){
     return '<button type="button" class="' + (STYLE_SHOW === k ? 'on' : '') + '"'
@@ -7406,21 +7511,37 @@ function stylePaint(){
   if (lab) lab.textContent = 'real screen ' + dev.w + ' × ' + dev.h + ' · shown at ' + Math.round(sc * 100) + '%';
 
   /* ── what changes, what does not ────────────────────────────────────────── */
+  /**
+   * ⚠️ "STAYS THE SAME" IS GONE ([TILL-91]). Athi: *"not required."* It was a paragraph of reassurance that
+   * read identically on every visit and never changed — the definition of something a tool should stop
+   * saying. The only line in it that DID change (a bill in hand waits) is kept, beside the changes it
+   * qualifies. [[feedback-text-budget]]
+   */
   var says = document.getElementById('stysays');
   if (says) says.innerHTML =
     '<div class="stcard" data-testid="till-style-changes"><b>What changes on ' + esc(tillName()) + '</b>'
     + (diff.length
-        ? '<ul>' + diff.map(function(d){ return '<li><i></i><span><b>' + esc(d[0]) + '</b> — ' + esc(d[1]) + '</span></li>'; }).join('') + '</ul>'
-        : '<p>Nothing yet. Change a setting on the left and this says what it does.</p>')
-    + '</div>'
-    + '<div class="stcard"><b>Stays the same</b>'
-    + '<p>Every key, shortcut and button keeps its place and its name. Nothing in the bill, the prices or the'
-    + ' day is touched — style is only how it looks.</p>'
-    /* ⚠️⚠️ AND THE ONE THING THAT MAKES THIS DANGEROUS: somebody may be mid-sale RIGHT NOW */
+        ? '<ul>' + diff.map(function(d){
+            /**
+             * ⭐⭐⭐ THE PIECE ITSELF, BEFORE AND AFTER ([TILL-91]). Athi: *"give example for 5 keys in a row
+             * instead of 6, what keys here. make it explicit."* A sentence states the fact; these two draw it.
+             */
+            var before = styleSample(d[2], applied, panelNow());
+            var after = styleSample(d[2], cfg, styleRoom());
+            return '<li><i></i><span><b>' + esc(d[0]) + '</b> — ' + esc(d[1])
+              + (before && after
+                  ? '<span class="exwrap"><span class="exone"><u>now</u>' + before + '</span>'
+                    + '<span class="exar">→</span>'
+                    + '<span class="exone"><u>after</u>' + after + '</span></span>'
+                  : '')
+              + '</span></li>';
+          }).join('') + '</ul>'
+        : '<p>Nothing yet. Change a setting on the left and this shows the difference, side by side.</p>')
+    /* ⚠️⚠️ THE ONE THING THAT MAKES THIS DANGEROUS: somebody may be mid-sale RIGHT NOW */
     + ((typeof CART !== 'undefined' && CART.length)
         ? '<div class="stnote wait">Someone is selling on this counter — the change waits until the bill in hand'
           + ' is saved or cleared.</div>'
-        : '<div class="stnote">No bill in hand — this lands the moment you apply it.</div>')
+        : '')
     + '</div>';
 
   /* ── the settings ─────────────────────────────────────────────────── */
