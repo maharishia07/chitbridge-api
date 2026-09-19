@@ -80,7 +80,12 @@ const cfgFile = path.resolve(flag('config', 'connector.json'));
  * anybody why — the same argument counter.cmd makes about opening the page before the key is checked.
  */
 const cfg = core.loadConfig(cfgFile, { keyless: true });
-const tillCfg = Object.assign({ port: 7071, id: 'C1', name: 'Counter 1', refreshMinutes: 15, drainSeconds: 20 }, cfg.till || {});
+/**
+ * ⚠️ `keepDays` IS THE PURGE FLOOR ([TILL-123]). Athi: *"do the purge with a floor of 90 days."* It is
+ * configuration rather than a constant because a shop's own rule may be longer — never shorter in practice,
+ * since lib/rollup refuses a floor of zero or less and falls back to 90.
+ */
+const tillCfg = Object.assign({ port: 7071, id: 'C1', name: 'Counter 1', refreshMinutes: 15, drainSeconds: 20, keepDays: 90 }, cfg.till || {});
 const PORT = Number(flag('port', tillCfg.port)) || 7071;
 /**
  * ── ⭐⭐⭐ ONE FOLDER PER SHOP ([TILL-120]) ──────────────────────────────────────────────────────────────
@@ -659,6 +664,69 @@ function queueSummary(sum) {
   appendLine(F.queue, { no: rollup.refOf(sum), at: sum.summarised_at, summary: sum });
 }
 
+/**
+ * ── ⚠️⚠️⚠️ THE PURGE — THE ONLY CODE IN THIS PROGRAM THAT DESTROYS A RECORD OF MONEY ([TILL-123]) ──
+ *
+ * Athi: *"after a certain days, we don't need to refer the daily chit data"* → *"do the purge with a floor of
+ * 90 days."*
+ *
+ * ⭐ THE DECISION IS NOT MADE HERE. lib/rollup.planPurge() decides, from inputs this function gathers, and it
+ * is a pure function with fifteen guarded cases behind it. This half only reads the folder and unlinks. That
+ * split is deliberate: the rule that decides whether a sale may be deleted should be testable without a disk.
+ *
+ * ⚠️ A DAY GOES ONLY IF ALL FIVE HOLD: past the floor · summarised · that summary synced · nothing of that
+ * day still queued · its week and month summarised and synced too. See planPurge for why each one is there.
+ */
+function queuedDays() {
+  /**
+   * ⚠️⚠️ WHICH DAYS STILL HAVE SOMETHING UNSENT. A bill is written to bills-<day>.jsonl AND to the queue;
+   * it leaves the queue only when ChitBridge has it. So a day named here is a day ChitBridge has not fully
+   * seen, and its detail must not be deleted whatever its age.
+   * ⚠️ SUMMARY ROWS ARE SKIPPED ON PURPOSE — their `at` is when they were folded, not the day they describe,
+   * so counting them would block the wrong day (and never the right one).
+   */
+  const out = new Set();
+  for (const row of readLines(F.queue)) {
+    if (row && row.summary) continue;
+    const at = row && row.at ? String(row.at).slice(0, 10) : null;
+    if (at) out.add(at);
+  }
+  return out;
+}
+
+/** ⭐ the DRY RUN — what would go, and for everything else, why not. Deletes nothing. */
+function purgePlan(now) {
+  return rollup.planPurge({
+    days: daysOnDisk(),
+    summaryOf: readSummary,
+    queuedDays: queuedDays(),
+    floorDays: tillCfg.keepDays,
+    now: now || Date.now(),
+  });
+}
+
+/**
+ * ⚠️⚠️ AND THE SWEEP. It runs after rollUp() on the same tick, so a day can never be deleted in the same
+ * pass that would have summarised it — the summary is written and SENT first, and only a later run, at least
+ * ninety days afterwards, can remove the detail behind it.
+ * ⚠️ EVERY DELETION IS NAMED IN THE LOG. This is the one place where being quiet would be indefensible.
+ */
+function purgeOld(now) {
+  const plan = purgePlan(now);
+  const gone = [];
+  for (const d of plan.due) {
+    try { fs.unlinkSync(F.bills(d)); gone.push(d); }
+    catch (e) { log('could not remove the bills of ' + d + ': ' + e.message); }
+    /* ⚠️ the day's DOCUMENTS go with it — same day, same floor, same proof; absent is not an error */
+    try { if (fs.existsSync(F.docs(d))) fs.unlinkSync(F.docs(d)); } catch (_) {}
+  }
+  if (gone.length) {
+    log('purged the detailed bills of ' + gone.length + ' day(s) older than ' + plan.floor + ' days ('
+      + gone[0] + (gone.length > 1 ? ' … ' + gone[gone.length - 1] : '') + ') — their summaries are kept and were sent');
+  }
+  return { purged: gone, kept: plan.kept, floor: plan.floor, cutoff: plan.cutoff };
+}
+
 /** ⭐ what is summarised and what has reached ChitBridge — the status Athi asked to be able to see */
 function summaryState() {
   let files = [];
@@ -831,6 +899,9 @@ const server = http.createServer(async (req, res) => {
                               paired: !!cfg.key, shop: keyShop(cfg.key), folder: SHOP_DIR,
                               /* ⭐ what is summarised and what of it has reached ChitBridge ([TILL-122]) */
                               summary: summaryState(),
+                              /* ⭐ the floor, stated — a shop should not have to read a config file to know
+                                 how long its detailed bills are kept ([TILL-123]) */
+                              keep_days: Number(tillCfg.keepDays) > 0 ? Number(tillCfg.keepDays) : 90,
                               till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
                               engines: Object.fromEntries(ENGINE_NAMES.map((n) => [n, fs.existsSync(F.engine(n))])),
                               printer: { chosen: tillCfg.printer || null, mm: tillCfg.paper_mm || 80, drawer: !!tillCfg.drawer },
@@ -955,6 +1026,18 @@ const server = http.createServer(async (req, res) => {
                               state: summaryState() });
     }
 
+    /**
+     * ⭐⭐ GET /api/purge — THE DRY RUN, WHICH DELETES NOTHING ([TILL-123]).
+     *
+     * A shopkeeper (or Athi) can see exactly which days would go and, for every day that stays, the reason.
+     * ⚠️ There is deliberately NO POST here. The purge is not a button: it happens on the tick, behind five
+     * conditions, and a control that made it happen sooner would only ever be used by mistake.
+     */
+    if (req.method === 'GET' && url.pathname === '/api/purge') {
+      const plan = purgePlan(Date.now());
+      return json(res, 200, { floor_days: plan.floor, cutoff: plan.cutoff, would_remove: plan.due, keeping: plan.kept });
+    }
+
     /* ⚠️ a way to ask for the rollup now, rather than waiting out the tick — used by the day-close and by tests */
     if (req.method === 'POST' && url.pathname === '/api/summarise') {
       let made = [];
@@ -995,8 +1078,11 @@ const server = http.createServer(async (req, res) => {
    * the worst possible trade.
    */
   try { rollUp(Date.now()); } catch (e) { log('the rollup could not run: ' + e.message + ' — billing is unaffected'); }
+  /* ⚠️ AFTER the rollup, never before — so a day is summarised and sent long before its detail can go */
+  try { purgeOld(Date.now()); } catch (e) { log('the purge could not run: ' + e.message + ' — nothing was removed'); }
   setInterval(() => refresh().catch(() => {}), Math.max(1, Number(tillCfg.refreshMinutes) || 15) * 60 * 1000).unref();
-  setInterval(() => { try { rollUp(Date.now()); } catch (_) {} }, Math.max(1, Number(tillCfg.refreshMinutes) || 15) * 60 * 1000).unref();
+  setInterval(() => { try { rollUp(Date.now()); } catch (_) {} try { purgeOld(Date.now()); } catch (_) {} },
+    Math.max(1, Number(tillCfg.refreshMinutes) || 15) * 60 * 1000).unref();
   setInterval(() => drain().catch(() => {}), Math.max(5, Number(tillCfg.drainSeconds) || 20) * 1000).unref();
   /**
    * ⚠️⚠️ ALREADY RUNNING IS NOT AN ERROR ([TILL-117]). The scheduled task `install` registers fires every

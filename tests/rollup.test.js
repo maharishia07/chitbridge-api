@@ -173,4 +173,115 @@ it('a fresh summary has NOT been synced, and does not pretend to be', () => {
   assert.strictEqual(s.synced_at, null, 'a summary claimed to have reached ChitBridge before it was sent');
 });
 
+console.log('\n\u26A0\uFE0F\u26A0\uFE0F\u26A0\uFE0F THE PURGE \u2014 THE ONLY CODE HERE THAT DESTROYS A RECORD OF MONEY\n');
+
+/**
+ * Athi: *"do the purge with a floor of 90 days."* Five things must be true before a day's bills are deleted, and
+ * each one below is a way of losing a sale for good if it were skipped.
+ */
+const dayAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+const SYNCED = { synced_at: '2026-01-01T00:00:00Z' };
+const plan = (days, over) => R.planPurge(Object.assign({
+  days, now: Date.now(), summaryOf: () => SYNCED, queuedDays: new Set(),
+}, over || {}));
+
+it('the floor is 90 days by default', () => {
+  assert.strictEqual(R.FLOOR_DAYS, 90);
+  assert.strictEqual(plan([]).floor, 90);
+});
+
+it('a day inside the floor is never purged, however tidy it is', () => {
+  const p = plan([dayAgo(89), dayAgo(30), dayAgo(0)]);
+  assert.deepStrictEqual(p.due, [], 'a day inside the floor was due for deletion');
+  assert.strictEqual(p.kept.length, 3);
+  assert.ok(/inside the 90-day floor/.test(p.kept[0].why));
+});
+
+/** ⚠️ the boundary itself: a day exactly ON the floor is still inside it */
+it('the boundary day is INSIDE the floor, not outside', () => {
+  assert.deepStrictEqual(plan([dayAgo(90)]).due, [], 'the day exactly on the floor was purged');
+  assert.deepStrictEqual(plan([dayAgo(91)]).due, [dayAgo(91)]);
+});
+
+it('an old, summarised, synced, settled day is purged', () => {
+  assert.deepStrictEqual(plan([dayAgo(200)]).due, [dayAgo(200)]);
+});
+
+console.log('\n\u26A0\uFE0F\u26A0\uFE0F AND THE FOUR REFUSALS\n');
+
+it('NOT SUMMARISED — its figures would vanish with its bills', () => {
+  const p = plan([dayAgo(200)], { summaryOf: () => null });
+  assert.deepStrictEqual(p.due, []);
+  assert.ok(/not summarised/.test(p.kept[0].why), p.kept[0].why);
+});
+
+it('NOT SYNCED — this disk is the shop\u2019s only record of it', () => {
+  const p = plan([dayAgo(200)], { summaryOf: () => ({ synced_at: null }) });
+  assert.deepStrictEqual(p.due, []);
+  assert.ok(/has not reached ChitBridge/.test(p.kept[0].why), p.kept[0].why);
+});
+
+/** ⚠️⚠️ the worst one to get wrong: a sale ChitBridge has never seen */
+it('A BILL STILL WAITING TO BE SENT stops the whole day', () => {
+  const d = dayAgo(200);
+  const p = plan([d], { queuedDays: new Set([d]) });
+  assert.deepStrictEqual(p.due, [], 'a day with an unsent bill was deleted');
+  assert.ok(/still waiting to be sent/.test(p.kept[0].why), p.kept[0].why);
+});
+
+/**
+ * ⚠⚠ THE HOLE THIS CLOSES. rollUp() enumerates days by listing bills-*.jsonl — so deleting a day's bills
+ * before its week is folded makes that day stop existing for the fold, and the week would be written from the
+ * survivors, be wrong, and be written ONCE.
+ */
+it('ITS WEEK MUST BE SUMMARISED FIRST, or the week would be folded without it', () => {
+  const d = dayAgo(200);
+  const p = plan([d], { summaryOf: (period) => (period === 'week' ? null : SYNCED) });
+  assert.deepStrictEqual(p.due, []);
+  assert.ok(/its week is not summarised/.test(p.kept[0].why), p.kept[0].why);
+});
+
+it('and its month too, synced', () => {
+  const d = dayAgo(200);
+  const a1 = plan([d], { summaryOf: (period) => (period === 'month' ? null : SYNCED) });
+  assert.ok(/its month is not summarised/.test(a1.kept[0].why), a1.kept[0].why);
+  const a2 = plan([d], { summaryOf: (period) => (period === 'month' ? { synced_at: null } : SYNCED) });
+  assert.ok(/month summary has not reached/.test(a2.kept[0].why), a2.kept[0].why);
+});
+
+console.log('\n\u26A0\uFE0F A RUNAWAY SWEEP IS REFUSED, NOT PERFORMED\n');
+
+it('at most MAX_PER_RUN in one go, oldest first', () => {
+  const many = [];
+  for (let i = 100; i < 400; i++) many.push(dayAgo(i));
+  const p = plan(many, { max: 5 });
+  assert.strictEqual(p.due.length, 5, 'the cap did not hold');
+  /* ⚠️ OLDEST FIRST, so a catch-up run makes progress in date order rather than nibbling at random */
+  assert.deepStrictEqual(p.due, p.due.slice().sort(), 'the due list is not in date order');
+  assert.strictEqual(p.due[0], dayAgo(399), 'the oldest day was not taken first');
+  assert.ok(p.kept.some((k) => /over the 5-per-run limit/.test(k.why)), 'the skipped days did not say why');
+});
+
+it('the default cap is a real number, not unlimited', () => {
+  assert.ok(R.MAX_PER_RUN > 0 && R.MAX_PER_RUN <= 1000, 'MAX_PER_RUN is ' + R.MAX_PER_RUN);
+});
+
+/** ⚠️ EVERY day it did not purge says why — a silent skip reads the same as a silent delete */
+it('every kept day carries a reason', () => {
+  const p = plan([dayAgo(10), dayAgo(200), dayAgo(300)], { summaryOf: (pd) => (pd === 'day' ? null : SYNCED) });
+  assert.ok(p.kept.every((k) => k.day && k.why && k.why.length > 8), JSON.stringify(p.kept));
+});
+
+it('a floor can be set, and a silly one falls back to the default', () => {
+  assert.strictEqual(plan([], { floorDays: 365 }).floor, 365);
+  assert.strictEqual(plan([], { floorDays: 0 }).floor, 90, 'a zero floor would purge yesterday');
+  assert.strictEqual(plan([], { floorDays: -5 }).floor, 90);
+  assert.strictEqual(plan([], { floorDays: 'soon' }).floor, 90);
+});
+
+it('nothing on disk is not an error', () => {
+  const p = plan([]);
+  assert.deepStrictEqual(p.due, []); assert.deepStrictEqual(p.kept, []);
+});
+
 console.log('\n' + pass + ' checks passed\n');
