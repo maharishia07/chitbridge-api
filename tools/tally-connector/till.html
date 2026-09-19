@@ -1128,6 +1128,29 @@
   body.paycard:not(.paying) #obar,
   body.paycard:not(.paying) #save{display:none}
   /* ── ⭐ PANEL SIZES (png/PanelSizing.png, [TILL-60]) ─────────────────────────────────────────────── */
+  /* ── ⭐ SCREEN STYLE ([TILL-77]) ─────────────────────────────────────────────────────────────────── */
+  .dlg.wide{max-width:min(1040px,94vw);width:min(1040px,94vw)}
+  .stylewrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+  @media (max-width:820px){ .stylewrap{grid-template-columns:1fr} }
+  .stylerow{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;align-items:start;
+            padding:8px 0;border-top:1px solid var(--line)}
+  .stylerow:first-child{border-top:0}
+  .stylerow .sl{color:var(--dim);font-size:.88em;padding-top:5px}
+  .stylerow .sc{display:flex;flex-wrap:wrap;gap:6px}
+  .schip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;
+         padding:6px 13px;min-height:36px;font:inherit;font-size:.86em;cursor:pointer}
+  .schip.on{background:var(--ink);color:var(--card);border-color:var(--ink);font-weight:700}
+  /* ⚠️ the preview carries the CANDIDATE theme's own variables, so the tiles inside it are drawn in the
+     colours being considered rather than the ones in force */
+  .stylepv b{display:block;margin-bottom:8px}
+  .pvbox{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--paper)}
+  /* ⚠️ IT IS A PICTURE, NOT A PANEL. The pin and the sold-out ✕ belong to keys somebody can press; on a
+     preview they invite a click that does nothing and make the miniature look busier than the real thing. */
+  .pvbox .sk-x,.pvbox .qpin,.pvbox .sk-qty{display:none}
+  .pvbox .sk-tile{pointer-events:none}
+  .pvgrid{display:grid;gap:8px}
+  .pvbar{height:26px;border-radius:8px;background:var(--ok);margin-top:10px}
+  .stylepv .u{display:block;margin-top:8px;line-height:1.45}
   .panelnow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;color:var(--dim);font-size:.9em}
   .panelnow span{flex:1;min-width:140px}
   .panelpicks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
@@ -1640,6 +1663,26 @@
      timer; dismissed by ANY key, scan or touch (see idleWake). -->
 <div class="idle" id="tillidle" hidden aria-hidden="true"></div>
 <!-- ⭐ the modifier chooser — a native dialog like the counter's others, so Escape and the backdrop behave -->
+<!--
+  ⭐⭐⭐ SCREEN STYLE ([TILL-77], png/DisplaySettings.png). Every visual decision in one place, with a preview
+  drawn by the real tile renderer and an Apply that means nothing changed until you pressed it.
+-->
+<dialog id="styledlg" class="dlg wide" data-testid="till-style">
+  <h3>Screen style <span class="u" id="styledev"></span></h3>
+  <div class="stylewrap">
+    <div class="stylecols" id="stylebody"></div>
+    <div class="stylepv">
+      <b>Preview</b>
+      <div class="pvbox" id="stylepreview"></div>
+      <div class="u" id="stylesays"></div>
+    </div>
+  </div>
+  <div class="dlgbtns">
+    <button onclick="styleClose()">Cancel · Esc</button>
+    <button data-testid="till-style-reset" onclick="styleReset()">Reset to counter</button>
+    <button class="pri" data-testid="till-style-apply" onclick="styleApply()">Apply</button>
+  </div>
+</dialog>
 <dialog id="moddlg" class="dlg" data-testid="till-mod">
   <h3 id="modtitle">Choose</h3>
   <div id="modbody"></div>
@@ -4833,18 +4876,25 @@ function paintMenu(){
         + '<div class="mq">'
         + '<label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook(\'cb_till_fs\',this.value)">'
         + '<option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select></label>'
-        + '<label title="Look">◐ <select id="mq_theme" data-testid="till-mq-theme" onchange="quickLook(\'cb_till_theme\',this.value)">'
-        + '<option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select></label>'
+        /* ⚠️ THE THEME MOVED TO SCREEN STYLE ([TILL-78]). It was here AND in ⚙ Settings — two controls over one
+           store, in two places that could show different answers. It is now in the one group, with a preview. */
         /* ⭐ which edge the menu sits on — see applyHand(). Per device, like the two beside it. */
         /* ⭐ the idle screen — OFF by default; a till that blanks itself unasked is one a shopkeeper distrusts */
         + '<label title="Show the shop picture after a quiet spell">🖼 <select id="mq_idle" data-testid="till-mq-idle" onchange="idleSet(this.value)">'
         + '<option value="0">No idle screen</option><option value="3">After 3 min</option><option value="5">After 5 min</option><option value="10">After 10 min</option></select></label>'
         + '<label title="Which hand this counter is used with — moves the + on a row, the pay buttons and a key\'s controls">✋ <select id="mq_hand" data-testid="till-mq-hand" onchange="quickLook(\'cb_till_hand\',this.value)">'
         + '<option value="right">Right hand</option><option value="left">Left hand</option></select></label>'
-        + '<label title="What this counter shows">▦ <select id="mq_layout" data-testid="till-mq-layout" onchange="tillOptSet({layout:this.value});paintMenuQuick()">'
-        + '<option value="full">Everything</option><option value="quick">Quick keys + bill</option><option value="cart">Search + bill</option>'
-        + '<option value="custom" disabled>Custom</option></select></label>'
-        + '</div></div>'
+        /* ⚠️ AND THE LAYOUT. Same reason — it lives in Screen style now, where you can see it before it lands. */
+        + '</div>'
+        /**
+         * ⭐⭐ ONE DOOR TO EVERYTHING VISUAL ([TILL-78], png/DisplaySettings.png). The hub keeps the comforts a
+         * person changes often — text size, the idle screen, which hand, what shows, how much room each part
+         * gets — and hands the rest to one dialog with a preview, instead of repeating half of it here and half
+         * in ⚙ Settings. That repetition is what Athi found: *"settings has multiple item replicated."*
+         */
+        + '<button class="pill wide" data-testid="till-open-style" onclick="fromMenu(styleOpen)">'
+        + '◐ Screen style — preset, tiles, colours, photos…</button>'
+        + '</div>'
         /**
          * ⭐⭐ GIVE EACH PART THE ROOM YOU WANT (png/PanelSizing.png). Five named starting points and a
          * sentence saying what is in force now. The drag bar still works and still wins.
@@ -6130,6 +6180,122 @@ function panelPaint(){
 function densityNow(){ return ls.get('cb_till_density', 'comfortable'); }
 function densitySet(v){ ls.set('cb_till_density', v); densityApply(); paintMenuQuick(); }
 function densityApply(){ document.body.classList.toggle('dense', densityNow() === 'compact'); }
+/**
+ * ⭐⭐ THE CANDIDATE, kept apart from what is in force. Athi: *"without changing i am not able to check."* So
+ * STYLE_DRAFT holds what the person is trying and the counter keeps drawing as it was until Apply.
+ */
+var STYLE_DRAFT = null;
+/**
+ * ⭐⭐ ONE RESOLVED CONFIG DRIVES EVERYTHING — the chips, the miniature and the sentence. The stored settings
+ * are one level and the draft layers over them, which is what CBScreen.resolve(levels…) is for.
+ * ⚠️⚠️ ASKING KEY BY KEY TAKES A PRESET APART. An earlier version read each setting separately and fell back to
+ * the live value, so a draft of {preset:'kiosk'} still handed resolve() the live layout as an explicit
+ * override — and the preview said Horizontal while Apply produced Vertical. A preview that disagrees with
+ * Apply is worse than none: it is a promise not kept on the screen whose only job is keeping it.
+ */
+function styleCfg(){
+  var K = window.CBScreen; if (!K) return {};
+  var o = tillOpt();
+  return K.resolve(o.screen || {}, STYLE_DRAFT || {});
+}
+function styleVal(k){ return styleCfg()[k]; }
+function styleOpen(){
+  STYLE_DRAFT = {};
+  stylePaint();
+  var d = document.getElementById('styledlg');
+  if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+}
+function styleClose(){
+  STYLE_DRAFT = null;
+  var d = document.getElementById('styledlg');
+  if (d && d.open) { try { d.close(); } catch (_) {} }
+}
+function stylePick(k, v){
+  STYLE_DRAFT = STYLE_DRAFT || {};
+  /* ⭐ a PRESET is a whole combination, so choosing one clears the individual answers it would contradict */
+  if (k === 'preset') STYLE_DRAFT = { preset: v };
+  else { delete STYLE_DRAFT.preset; STYLE_DRAFT[k] = v; }
+  stylePaint();
+}
+/** ⚠️ nothing has moved until here — one write, through the same screenSet the rest of the counter uses */
+function styleApply(){
+  var d = STYLE_DRAFT || {};
+  styleClose();
+  if (!Object.keys(d).length) return;
+  screenSet(d);
+  try { densityApply(); } catch (_) {}
+  toastLine('Screen style applied.');
+}
+function styleReset(){
+  STYLE_DRAFT = { preset: 'counterClassic' };
+  stylePaint();
+}
+/**
+ * ⭐⭐ THE PREVIEW IS THE REAL RENDERER. CBScreen.tile() under the candidate theme's own variables — the same
+ * call the keys make — so what is shown is what will be drawn. A hand-drawn mock of a tile is a promise; a
+ * tile is the thing. [[feedback-adopt-dont-reinvent]]
+ */
+function stylePaint(){
+  var K = window.CBScreen; if (!K) return;
+  var body = document.getElementById('stylebody');
+  var pv = document.getElementById('stylepreview');
+  var says = document.getElementById('stylesays');
+  var dev = document.getElementById('styledev');
+  if (!body || !pv) return;
+  if (dev) dev.textContent = (STATE && STATE.till ? (STATE.till.name || 'this counter') : 'this counter');
+  /* ⚠️ every visual decision, in named subgroups — ONE group, as asked, and nothing of it left elsewhere */
+  var ROWS = [
+    ['preset',  'Preset',           K.PRESETS,   function(v){ return v.label + (v.note ? ' \u00b7 ' + v.note : ''); }],
+    ['layout',  'Layout',           K.LAYOUTS,   function(v){ return v.label; }],
+    ['tile',    'Tile style',       K.TILES,     function(v){ return v.label; }],
+    ['picker',  'Quick keys picker',K.PICKERS,   function(v){ return v.label; }],
+    ['theme',   'Theme',            K.THEMES,    function(v){ return v.label; }],
+    ['density', 'Density',          K.DENSITIES, function(v){ return v.label; }]
+  ];
+  body.innerHTML = ROWS.map(function(r){
+    var key = r[0], reg = r[2] || {};
+    return '<div class="stylerow" data-testid="till-style-' + key + '">'
+      + '<span class="sl">' + esc(r[1]) + '</span><span class="sc">'
+      + Object.keys(reg).map(function(id){
+          var on = String(styleVal(key)) === String(id);
+          return '<button class="schip' + (on ? ' on' : '') + '" data-testid="till-style-' + key + '-' + esc(id) + '"'
+            + ' onclick="stylePick(\'' + key + '\',\'' + esc(id) + '\')">' + esc(r[3](reg[id])) + '</button>';
+        }).join('')
+      + '</span></div>';
+  }).join('')
+    + '<div class="stylerow"><span class="sl">Photos on keys</span><span class="sc">'
+    + ['on', 'off'].map(function(w){
+        var want = (w === 'on');
+        return '<button class="schip' + (!!styleVal('photos') === want ? ' on' : '') + '"'
+          + ' data-testid="till-style-photos-' + w + '" onclick="stylePick(\'photos\',' + want + ')">'
+          + (want ? 'On' : 'Off') + '</button>';
+      }).join('')
+    + '</span></div>';
+  /* ── the miniature ─────────────────────────────────────────────────────────────────────────────────── */
+  var cfg = styleCfg();
+  var vars = K.themeVars(cfg.theme);
+  pv.setAttribute('style', Object.keys(vars).map(function(v){ return v + ':' + vars[v]; }).join(';'));
+  var SAMPLE = [['Tata Filter coffee', 352], ['Health drink', 163], ['Green tea', 64],
+                ['Bread 400 g', 45], ['Rusk 300 g', 60], ['Butter 100 g', 58]];
+  /**
+   * ⚠️ A MINIATURE IS NOT A SCALE MODEL. Using the layout's real keysPerRow put four columns in a 260px box
+   * and "Tata Filter coffee" came out one letter per line — which says nothing true about the tile style, the
+   * thing the preview exists to show. Two columns, always: the point is what a KEY looks like.
+   */
+  var per = 2;
+  pv.innerHTML = '<div class="pvgrid" style="grid-template-columns:repeat(' + per + ',minmax(0,1fr))">'
+    + SAMPLE.map(function(p, i){
+        return K.tile(cfg.tile, { name: p[0], price: money(p[1]), unit: 'each', image: null,
+          colour: K.groupColour(i), showPhoto: !!cfg.photos, qty: 0, attrs: 'type="button" tabindex="-1"' });
+      }).join('')
+    + '</div><div class="pvbar"></div>';
+  if (says) {
+    says.textContent = [ (K.LAYOUTS[cfg.layout] || {}).label + ' layout',
+      (K.TILES[cfg.tile] || {}).label + ' tiles', (K.PICKERS[cfg.picker] || {}).label + ' picker',
+      (K.THEMES[cfg.theme] || {}).label, (K.DENSITIES[cfg.density] || {}).label,
+      (cfg.photos ? 'photos on' : 'photos off') ].join(' \u00b7 ');
+  }
+}
 function screenSet(patch){
   var o = tillOpt(), s = Object.assign({}, o.screen || {}, patch || {});
   /* a preset carries its own theme — the device's look follows it, so ☰ and ⚙ keep saying the same thing */
