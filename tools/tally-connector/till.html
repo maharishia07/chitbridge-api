@@ -1177,6 +1177,8 @@
   .stylepv .u{display:block;margin-top:8px;line-height:1.45}
   .styleu{margin:6px 0 0 140px;line-height:1.45}
   .schip.plain{border-style:dashed}
+  .whatshows{display:block;width:100%;margin:6px 0 8px;font:inherit;font-size:.86em;padding:7px 10px;
+             border:1px solid var(--edge);border-radius:9px;background:var(--card);color:var(--ink)}
   .panelnow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;color:var(--dim);font-size:.9em}
   .panelnow span{flex:1;min-width:140px}
   .panelpicks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
@@ -2020,7 +2022,6 @@
   </div>
   <div class="settabs" role="tablist" id="settabs">
     <button role="tab" data-tab="counter" onclick="setTab('counter')">Counter</button>
-    <button role="tab" data-tab="screen" onclick="setTab('screen')">Screen</button>
     <button role="tab" data-tab="bill" onclick="setTab('bill')">Bill</button>
     <button role="tab" data-tab="keys" onclick="setTab('keys')">Quick keys</button>
     <button role="tab" data-tab="pay" onclick="setTab('pay')">Pay</button>
@@ -2067,59 +2068,14 @@
     <div id="seriesnote" data-testid="till-series-note" class="snote"></div>
   </section>
 
-  <section class="settab" data-tab="screen">
-    <!-- ⭐⭐⭐ THE COUNTER IS SET UP FROM THE COUNTER (Athi, 2026-09-16). -->
-    <div class="srow" title="A tiffin shop and a ten-thousand-line kirana are not the same counter.">
-      <span>Layout</span>
-      <select id="set_layout" data-testid="till-set-layout" onchange="tillOptSet({layout:this.value})">
-        <option value="full">Everything</option>
-        <option value="quick">Quick keys + bill</option>
-        <option value="cart">Search + bill</option>
-        <!-- ⚠️ not choosable, only REPORTED: what the ticks below say when they match no preset -->
-        <option value="custom" disabled>Custom</option>
-      </select>
-    </div>
-    <!-- ⭐⭐ AND EACH SECTION ON ITS OWN (observation 6, division A) — the header, the bill and the totals are always shown -->
-    <div class="srow top" title="The header, the bill and the totals are always shown.">
-      <span>Show</span>
-      <div id="setupshow" data-testid="till-set-show" class="schips"></div>
-    </div>
-    <div class="srow" title="For a screen the browser cannot guess — a vertical screen, a phone.">
-      <span>Shape</span>
-      <select id="set_shape" data-testid="till-set-shape" onchange="tillOptSet({shape:this.value})">
-        <option value="auto">Automatic</option>
-        <option value="wide">Wide</option>
-        <option value="tall">Tall</option>
-        <option value="mobile">Phone</option>
-      </select>
-    </div>
-    <div class="srow" title="Full adds brand, MRP and what you declared — a pharmacy wants the composition on the row.">
-      <span>Rows</span>
-      <select id="set_rows"><option value="compact">Compact</option><option value="full">Full</option></select>
-    </div>
-    <div class="srow">
-      <span>Text</span>
-      <select id="set_fs"><option value="15px">Small</option><option value="16px">Normal</option><option value="18px">Large</option><option value="21px">Very large</option></select>
-    </div>
-    <div class="srow">
-      <span>Colours</span>
-      <select id="set_theme" data-testid="till-set-theme" onchange="screenSet({theme:this.value==='light'?'lightCream':this.value})"><option value="light">Light cream</option><option value="dark">Dark</option><option value="paper">Paper</option><option value="navy">Navy</option></select>
-    </div>
-    <!-- ⭐ THE SCREEN LIBRARY (lib/screen-kit): a named style, then its parts — the options are filled from the library itself -->
-    <div class="srow" title="A named combination of layout, keys and colours. The parts below can still be changed after.">
-      <span>Style</span>
-      <select id="set_preset" data-testid="till-set-preset" onchange="screenSet({preset:this.value})"></select>
-    </div>
-    <div class="srow">
-      <span>Keys</span>
-      <select id="set_tile" data-testid="till-set-tile" onchange="screenSet({tile:this.value})"></select>
-    </div>
-    <div class="srow" title="Items with no photo show their initials. Fewer keys fit on the screen.">
-      <span>Photos</span>
-      <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_photos" data-testid="till-set-photos" onchange="screenSet({photos:this.checked})"> on keys</label>
-    </div>
-  </section>
-
+  <!--
+    ⚠️⚠️ THE "SCREEN" TAB IS GONE ([TILL-81]), NOT MOVED PIECE BY PIECE. Seven of its nine rows were a second
+    control over a store Screen style already owns (Rows/Density, Text, Colours/Theme, Style/Preset,
+    Keys/Tile, Photos, Shape) and the eighth — Show — is the hub's SHOW ON THIS COUNTER chips. The ninth was
+    a name collision: its "Layout" chose which SECTIONS appear, while Screen style's "Layout" chooses the
+    counter's SHAPE. That one is renamed "What shows" and now sits in the hub beside the chips it is a
+    shortcut for. Everything visual has one door: ☰ → How it looks → Screen style.
+  -->
   <section class="settab" data-tab="bill">
     <!-- ⭐ WHICH COLUMNS THE BILL SHOWS (observation 6, division E). The number, item, price and Qty are always shown. -->
     <div class="srow top" title="The number, the item, its price and Qty are always shown.">
@@ -5090,7 +5046,19 @@ function paintMenu(){
           + '<p class="u">Bill on the left is the <b>hand</b> setting above. Photos on keys is <b>Pictures</b>,'
           + ' on the maintenance screen and in the quick-keys bar.</p>'
           + '</div>'
-        + '<div class="menusec" data-testid="till-view-toggles"><b>Show on this counter</b><div class="viewchips" id="viewchips"></div></div>'
+        + '<div class="menusec" data-testid="till-view-toggles"><b>Show on this counter</b>'
+          /**
+           * ⭐ A SHORTCUT FOR THE CHIPS BELOW IT ([TILL-81]). It used to be called "Layout" in ⚙ Settings, two
+           * clicks from a different "Layout" that meant the counter's SHAPE — one word, two axes. It is named
+           * for what it does now, and it lives beside the switches it sets.
+           */
+          + '<select class="whatshows" id="mq_shows" data-testid="till-mq-shows"'
+          + ' onchange="tillOptSet({layout:this.value});paintMenuQuick()">'
+          + '<option value="full">Everything</option>'
+          + '<option value="quick">Quick keys + bill</option>'
+          + '<option value="cart">Search + bill</option>'
+          + '<option value="custom" disabled>Custom</option></select>'
+          + '<div class="viewchips" id="viewchips"></div></div>'
       : (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
     var html = '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '" data-testid="till-msec-' + sec.id + '">'
       + '<button class="mrow" aria-expanded="' + (open ? 'true' : 'false') + '" data-testid="till-msec-btn-' + sec.id + '"'
@@ -5262,6 +5230,7 @@ function paintMenuQuick(){
   set('mq_theme', ls.get('cb_till_theme', 'light'));
   set('mq_hand', ls.get('cb_till_hand', 'right'));
   set('mq_idle', ls.get(shopLs('cb_till_idle'), '0'));
+  set('mq_shows', (tillOpt().layout) || 'full');
   set('mq_layout', (tillOpt().layout) || 'full');
   /* ⚠️ THE PANEL SIZES ARE FILLED IN HERE TOO. Their markup is built by the hub, so it does not exist at
      boot when applyTillOptions() calls panelPaint() — without this the sentence is blank and no preset is
@@ -6407,6 +6376,16 @@ function styleApply(){
   styleClose();
   if (!Object.keys(d).length) return;
   screenSet(d);
+  /**
+   * ⭐⭐ SHAPE FOLLOWS LAYOUT ([TILL-81]). The screen library already declares it — LAYOUTS.vertical.shape is
+   * 'tall', phone is 'mobile', horizontal is 'wide' — so a separate Shape control was two answers to one
+   * question with one of them already known. Choosing a layout now settles both.
+   * ⚠️ 'auto' IS A REAL ANSWER and is written as such, so the Automatic layout still means "decide by width".
+   */
+  try {
+    var L = window.CBScreen && CBScreen.LAYOUTS[styleCfg().layout];
+    if (L && L.shape) tillOptSet({ shape: L.shape });
+  } catch (_) {}
   try { densityApply(); } catch (_) {}
   toastLine('Screen style applied.');
 }
@@ -14304,14 +14283,14 @@ function openSettings(tab){
   setTab(typeof tab === 'string' ? tab : null);
   document.getElementById('set_till').value = ls.get('cb_till_id','C1');
   var kb = document.getElementById('set_kot'); if (kb) kb.checked = (tillOpt().kot === true);
-  document.getElementById('set_fs').value = ls.get('cb_till_fs','16px');
-  document.getElementById('set_rows').value = ls.get('cb_till_rows','compact');
+  /* ⚠️ set_fs and set_rows went with the Screen tab ([TILL-81]) — text size lives in the hub, density in
+     Screen style. Reading them here would be a third place that thinks it owns them. */
   document.getElementById('set_lang').value = ls.get('cb_till_lang','en-IN');
   document.getElementById('set_speech').value = ls.get('cb_till_speech','auto');
   var canHear = speechOK() || recordOK();
   ['mic','micphone','micname'].forEach(function(id){
     var b = document.getElementById(id); if (b) b.style.display = canHear ? '' : 'none'; });
-  document.getElementById('set_theme').value = ls.get('cb_till_theme','light');
+  /* ⚠️ and the theme, which Screen style owns and previews before it is applied */
   var pair = document.getElementById('pairbox');
   if (HOST && HOST.mode === 'cloud') {
     pair.innerHTML = '<div class="srow" title="ChitBridge › Settings › Integrations › Counters — open a counter there to get its key.">'
@@ -14340,7 +14319,9 @@ function openSettings(tab){
 function paintSetup(){
   var o = tillOpt();
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
-  set('set_layout', o.layout || 'full');
+  /* ⚠️ set_layout / set_shape / set_theme / set_preset / set_tile / set_photos and the Show chips went with the
+     Screen tab ([TILL-81]). Filling elements that are not on the page is harmless and misleading — it reads
+     as if the controls are still there. What remains below is the non-visual settings only. */
   /* ⭐ the screen library's choices, filled from its registries — a style added there appears here with no edit */
   var K = window.CBScreen, sc0 = screenCfg();
   var fill = function(id, reg, v){ var el = document.getElementById(id); if (!el || !K) return;
@@ -14454,8 +14435,8 @@ async function saveSettings(){
    * ⚠️ The India length cap that used to be enforced here is enforced where the prefix is MADE: routes/keys.js
    * hands out two-character prefixes only (TILL_IDS), which is inside the sixteen.
    */
-  ls.set('cb_till_fs', document.getElementById('set_fs').value);
-  ls.set('cb_till_theme', document.getElementById('set_theme').value);
+  /* ⚠️⚠️ NOT WRITTEN FROM HERE ANY MORE ([TILL-81]). Both controls left with the Screen tab, and an unguarded
+     .value on a missing element does not fail quietly — ⚙ Settings would have refused to open and to save. */
   var k = document.getElementById('set_key');
   if (k && k.value && k.value.indexOf('•') < 0 && k.value.trim() !== CloudHost.key) {
     ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); DB.reopen();
