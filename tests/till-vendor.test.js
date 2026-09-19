@@ -698,6 +698,9 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     /* ⭐ the NINTH engine (2026-09-11): an amount is never a bare number, and the browser did not
                        have this module — so the rule was written out five times instead. */
                     'money.js': 'CBMoney', 'docnumber.js': 'CBDoc',
+                    /* ⭐ the governance context — what we can know about a shop without asking it anything.
+                       Registration loads it; the counter does not, so it is absent from KEEP. */
+                    'govcontext.js': 'CBGov',
                     /* ⭐ the conversion engine and the unit table it stands on (2026-09-15) */
                     'units.js': 'CBUnits', 'convert.js': 'CBConvert',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null };

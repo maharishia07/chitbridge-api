@@ -118,6 +118,12 @@ const COPIES = () => [
      an Arabic locale inserts are all decisions, and CB already made them once in locale.js. */
   [path.join(WEB, 'app', 'locale.js'), path.join(WEB, 'engine', 'locale.js'), 'copy'],
   /**
+   * ⭐ THE GOVERNANCE CONTEXT — what the application can work out about a shop without asking it anything.
+   * Registration reads it; the counter does not, so it is NOT in KEEP. It leans on CBLocale.REGIONS for the
+   * country→money and country→language maps rather than keeping a second opinion about either.
+   */
+  [path.join(WEB, 'app', 'govcontext.js'), path.join(WEB, 'engine', 'govcontext.js'), 'copy'],
+  /**
    * ⚠️ THE ONE THIRD-PARTY FILE ON THE TILL. qrcode-generator 1.4.4 (MIT), the same build shop.html loads from a
    * CDN — but a counter cannot reach a CDN with the line down, and a UPI QR is most needed exactly then. Copied
    * from node_modules so the version is pinned in package.json and an upgrade is visible in a diff.
@@ -211,6 +217,7 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'docnumber.browser.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
   [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],
+  [null, path.join(API, 'lib', 'govcontext.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'govcontext.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'pricing.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'pricing.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],

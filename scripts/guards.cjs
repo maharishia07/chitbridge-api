@@ -33,6 +33,9 @@ const GUARDS = [
   'screen-kit.test.cjs',        // the screen library: every layout places every part; presets resolve; tiles fall back
   'no-tax-reformula.test.cjs',  // the counter calls CBTax.splitLineTax() — no page re-derives the tax split itself
   'network-authority.test.cjs',  // who may act on a network edge — from the token, never the body (ATH-86)
+  /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
+     format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
+  'govcontext.test.js',
   'rewards.test.js',          // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js',     // the SEQUENCE: earn, come back, encash, expire, register — against the real store
   'sql-runner.test.js',       // a tool that runs SQL at production: its WITH/WITHOUT RLS line must be true
