@@ -27,6 +27,74 @@ const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + ']
   /* ⭐ RESTART WITH NOBODY THERE (Athi, 2026-09-06: "if the connector fails or stops running, how will that be restarted? no one will be there").
      Adopt the operating system: a Task Scheduler task starts the watcher every 5 minutes; Task Scheduler's default (do not start a new
      instance) means it only ever starts when the watcher is NOT running — a crash, a reboot, a closed window all heal within 5 minutes. */
+  /**
+   * ── ⭐⭐⭐ AN ICON THE SHOPKEEPER DID NOT HAVE TO MAKE ([TILL-118]) ─────────────────────
+   *
+   * Athi: *"no you should not create, how a user will do?"* — asked when I offered to make him one by hand,
+   * and it is the right question. The kit created no shortcut at ALL; docs/till.md told the user to make one
+   * themselves, which is the product asking the shopkeeper to do the installer's job.
+   *
+   * ⚠️ IT POINTS AT counter.cmd, NOT AT till.js. A .lnk straight to node would open a black window the
+   * shopkeeper must not close, and would not open the browser. counter.cmd starts it, waits for it to answer,
+   * and opens the page — and if it is already running, just opens the page.
+   * ⚠⚠ RUN AGAIN, IT REPLACES. Setup calls this every time, and a second icon beside the first would be the
+   * shopkeeper's problem to work out.
+   */
+  if (cmd === 'shortcut' || cmd === 'unshortcut') {
+    if (process.platform !== 'win32') {
+      console.log('A desktop shortcut is a Windows thing. On macOS or Linux, open ' + __dirname + ' and run: node till.js');
+      return;
+    }
+    const sp = require('child_process').spawnSync;
+    const target = path.join(__dirname, 'counter.cmd');
+    if (cmd === 'shortcut' && !fs.existsSync(target)) { console.log('counter.cmd is not beside index.js — the kit is incomplete'); return; }
+    /* ⚠️ BOTH PLACES a person looks: the Desktop they see, and the Start menu they search. */
+    const spots = [
+      { dir: path.join(process.env.USERPROFILE || '', 'Desktop'), why: 'Desktop' },
+      { dir: path.join(process.env.USERPROFILE || '', 'OneDrive', 'Desktop'), why: 'OneDrive Desktop' },
+      { dir: path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs'), why: 'Start menu' },
+    ].filter((x) => x.dir && fs.existsSync(x.dir));
+    if (!spots.length) { console.log('Could not find a Desktop or Start menu folder on this PC'); return; }
+
+    const made = [];
+    for (const spot of spots) {
+      const lnk = path.join(spot.dir, 'ChitBridge counter.lnk');
+      if (cmd === 'unshortcut') {
+        try { if (fs.existsSync(lnk)) { fs.unlinkSync(lnk); made.push(spot.why); } } catch (_) {}
+        continue;
+      }
+      /**
+       * ⚠️ A .lnk IS A BINARY FORMAT, so Windows is asked to write it — WScript.Shell is the same thing
+       * Explorer uses for "Create shortcut". Hand-assembling the bytes would be a second implementation of a
+       * format nobody here owns.
+       */
+      /**
+       * ⚠️⚠️ A POWERSHELL LITERAL, NOT JSON. JSON.stringify turns `C:\dev` into `C:\\dev`, and PowerShell
+       * does not treat a backslash as an escape — so the doubling went straight into the .lnk. Windows
+       * normalised TargetPath and stored WorkingDirectory as given, so half of it looked correct.
+       * Single quotes, with '' for an embedded quote, is the one that leaves a path alone.
+       */
+      const q = (v) => "'" + String(v).replace(/'/g, "''") + "'";
+      const ps = [
+        '$s = (New-Object -ComObject WScript.Shell).CreateShortcut(' + q(lnk) + ')',
+        '$s.TargetPath = ' + q(target),
+        '$s.WorkingDirectory = ' + q(__dirname),
+        '$s.Description = ' + q('The ChitBridge counter — bill here, with or without the internet'),
+        /* ⚠️ minimised: counter.cmd opens the browser, and the console behind it is not the app */
+        '$s.WindowStyle = 7',
+        '$s.Save()',
+      ].join('; ');
+      const r = sp('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { encoding: 'utf8' });
+      if (r.status === 0 && fs.existsSync(lnk)) made.push(spot.why);
+    }
+
+    if (cmd === 'unshortcut') { console.log(made.length ? 'Removed the counter shortcut from: ' + made.join(', ') : 'No counter shortcut to remove'); return; }
+    console.log(made.length
+      ? 'Put "ChitBridge counter" on your ' + made.join(' and your ') + '. Double-click it to bill.'
+      : 'Could not create the shortcut. You can still start the counter by double-clicking counter.cmd in ' + __dirname);
+    return;
+  }
+
   if (cmd === 'install' || cmd === 'uninstall') {
     const base = path.basename(cfgFile, '.json');
     /* ⚠️ one name per CONFIG FILE, not per file NAME: every kit ships connector.json, and a shared name made the second

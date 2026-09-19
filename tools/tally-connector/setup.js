@@ -122,6 +122,17 @@ const cfgFile = path.join(here, 'connector.json');
       if (typeof ad.readProfile === 'function') { const p = await core.syncProfile({ cb, adapter: ad, receipts, log: (m) => console.log('  · ' + m) }); if (p) console.log('  Profile: ' + (p.written || []).length + ' field(s) copied · ' + p.filled + '/' + p.total + ' filled'); }
     } catch (e) { console.log('  first sync failed: ' + e.message + ' — fix and run: node index.js sync-products --config connector.json'); }
   }
+  /**
+   * ⭐⭐⭐ THE ICON, MADE BY THE INSTALLER ([TILL-118]). Athi, having deleted his: *"i couldnt find desktop app
+   * as i deleted the shortcut icon"* — and, offered one by hand: *"no you should not create, how a user will
+   * do?"* A shopkeeper has nobody to run a command for them, so setup does it, the way any installer does.
+   * ⚠️ BEST EFFORT — a PC that refuses still has a working counter, and is told how to open it.
+   */
+  try {
+    const sc = require('child_process').spawnSync(process.execPath, [path.join(here, 'index.js'), 'shortcut'], { encoding: 'utf8' });
+    console.log('\n' + ((sc.stdout || '').trim() || ('To open the counter: double-click counter.cmd in ' + here)));
+  } catch (_) { console.log('\nTo open the counter: double-click counter.cmd in ' + here); }
+
   console.log('\nCheck: ChitBridge › Catalogue shows your items; Settings › Integrations shows this connector as live.');
   console.log('\nIf you came here from start.cmd it now registers the background task and starts watching. By hand: node index.js install --config connector.json');
   console.log('\nNext:\n  node index.js watch --config connector.json' + (out.syncMinutes ? ' --sync-minutes ' + out.syncMinutes : '') + (out.stockMinutes ? ' --stock-minutes ' + out.stockMinutes : '') + '\n    (leave it running — orders land in ' + adapter + ' as they arrive; Settings › Integrations shows it checking in)\n  node index.js once --config connector.json --dry     (see the first voucher before it is posted)\n');
