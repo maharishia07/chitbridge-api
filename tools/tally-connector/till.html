@@ -1348,6 +1348,16 @@
   }
   .go{display:flex;gap:8px;padding:0 12px 10px}
   .go button{flex:1;padding:16px;font-size:1.1em;font-weight:700;border-radius:var(--radius);border:1px solid var(--edge);background:var(--paper);cursor:pointer}
+  /**
+   * ⭐⭐ ONE DEFINITION OF THE PRIMARY ACTION ([TILL-68]). This fill used to be written out separately inside
+   * .go, .cardrow, .cardsave and .dlgbtns, so a primary button anywhere ELSE drew as a pale outline — which is
+   * what happened to the maintenance Save ("it looks like a text box") and to the Pay button.
+   * ⚠️ The container rules below are more specific and still win on size and shape; this only guarantees that
+   * a button marked primary LOOKS primary wherever it is put. [[feedback-no-duplicate-functions]]
+   */
+  .pri{background:var(--ok);border:1px solid var(--ok);color:var(--on-accent);font-weight:700;
+       border-radius:var(--radius);cursor:pointer;font:inherit;font-weight:700}
+  .pri:disabled{opacity:.45;cursor:not-allowed}
   .go button.pri{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
   .go button:disabled{opacity:.45;cursor:not-allowed}
   /* bills set aside — one line, always visible while any are waiting, so nobody forgets a customer standing at the side */
@@ -1423,6 +1433,10 @@
   .cardfoot .cfwords b{color:var(--warn)}
   .cardfoot .cfwords i{font-style:normal;color:var(--dim);font-size:.84em}
   .cardfoot.live{border-top-color:var(--warn)}
+  /* ⚠️ THE SAVE ON THIS PANEL IS THE POINT OF THE PANEL — it gets the size to match the fill it now has */
+  .cardfoot .pri{min-height:48px;padding:0 22px;font-size:1.05em}
+  .cardfoot .sec{min-height:48px;padding:0 18px;border:1px solid var(--edge);border-radius:var(--radius);
+                 background:var(--paper);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
   .cardrow{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:start;padding:11px 0;
            border-bottom:1px solid var(--line)}
   .cardrow>label{color:var(--dim);font-size:.85em;font-weight:700;padding-top:9px}
@@ -1458,6 +1472,14 @@
   .cardrow .pri:hover{filter:brightness(1.08)}
   .cardrow .pri:active{filter:brightness(.94)}
   .cardrow .pri:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  /* ⚠️ THE ANSWER AT A GLANCE ([TILL-69]) — the same two colours the Changed-today rows use, so "sent" means
+     the same thing wherever it is said on this screen. */
+  .nb{border-radius:999px;padding:2px 10px;font-size:.8em;font-weight:700;white-space:nowrap}
+  .nb.sent{background:var(--ok-tint);color:var(--ok)}
+  .nb.here{background:var(--warn-tint);color:var(--warn)}
+  .nb.bad{background:var(--warn-tint);color:var(--warn)}
+  .cardnote.sent{border-inline-start:3px solid var(--ok);padding-inline-start:10px}
+  .cardnote.here,.cardnote.bad{border-inline-start:3px solid var(--warn);padding-inline-start:10px}
   .cardnote{padding-top:10px;color:var(--dim);font-size:.85em;min-height:1.2em}
   /* ⭐ a row that differs from the shop carries a bar and its old value, so Save is never a leap of faith */
   .cardrow.pending, .swline.pending{box-shadow:inset 3px 0 0 var(--warn);border-radius:6px}
@@ -7555,7 +7577,8 @@ function cardFoot(i){
     + '<span class="cfwords">'
     + (n ? '<b>' + n + ' change' + (n === 1 ? '' : 's') + ' not saved — ' + esc(what.join(' · ')) + '</b>'
            + '<i>Saved here first, then sent. Nothing is lost if the line drops.</i>'
-         : '<i>Change anything above — it is only saved when you press Save.</i>')
+         : '<i>Change anything above — nothing moves until you press Save. It is written here first,'
+           + ' then sent to ChitBridge for every counter and the shop screen.</i>')
     + '</span>'
     + '<button class="pill" data-testid="card-discard" onclick="cardDiscard()"' + (n ? '' : ' disabled') + '>Undo change</button>'
     + '<button class="pri" id="cardsavebtn" data-testid="card-save" onclick="cardSave()"' + (n ? '' : ' disabled') + '>Save · Ctrl S</button>'
@@ -7768,11 +7791,21 @@ async function cardSave(){
   paintCard(); paintHits(); paintChips();
   var el = document.getElementById('cardnote');
   if (el) {
-    /* ⚠️ THE PRODUCT IS NAMED. A confirmation that says "saved" is a confirmation you cannot check. */
-    el.textContent = (done.length ? i.name + ': ' + done.join(', ') + '.' : '')
-      + (queued ? ' Waiting for the internet — it reaches ChitBridge when the line is back.'
-                : (done.length ? ' Everywhere now.' : ''))
-      + (failed.length ? (done.length ? ' ' : '') + 'Not saved: ' + failed.join(' ') : '');
+    /**
+     * ⚠️ THE PRODUCT IS NAMED. A confirmation that says "saved" is a confirmation you cannot check.
+     * ⚠️⚠️ AND SO IS THE DESTINATION ([TILL-69]). Athi: *"does it applied local copy or in the central server,
+     * not able to distinguish."* The counter knew — a write answers {ok} or {queued} — and said it as
+     * "Everywhere now." in grey. It now NAMES ChitBridge and wears the same badge the Changed-today rows use.
+     */
+    el.className = 'cardnote' + (failed.length ? ' bad' : (queued ? ' here' : (done.length ? ' sent' : '')));
+    el.innerHTML = (done.length
+        ? (queued ? '<b class="nb here">On this counter only</b>' : '<b class="nb sent">Sent to ChitBridge</b>')
+        : '')
+      + (done.length ? ' ' + esc(i.name) + ': ' + esc(done.join(', ')) + '.' : '')
+      + (queued ? ' It is safe here and reaches ChitBridge when the line is back \u2014 every counter and the'
+                + ' shop screen get it then.'
+                : (done.length ? ' Every counter and the shop screen have it now.' : ''))
+      + (failed.length ? (done.length ? ' ' : '<b class="nb bad">Not saved</b> ') + esc(failed.join(' ')) : '');
   }
   flashItem(CARD_ID);
 }
