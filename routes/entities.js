@@ -282,6 +282,64 @@ router.post('/verify',
         [identity.identity_id]
       );
 
+      /**
+       * ⭐⭐ THE GOVERNANCE LAYER THE BROWSER WORKED OUT, and the person agreed to ([REG-2]/[REG-3]).
+       *
+       * ⚠️⚠️ COALESCE, NEVER OVERWRITE. This route runs on every owner sign-in, not only the first. A shop that
+       * has since set its country in Settings must not have a browser's guess written back over it tomorrow
+       * morning. A derived value fills a BLANK; it never corrects a choice. [[feedback-partial-writes-merge-patch]]
+       * ⚠️ BEST-EFFORT, like the mint below: nothing here may fail a verification. A shop that cannot sign in
+       * because its timezone would not store is a shop that cannot trade.
+       * ⚠️ The IP is read HERE because here is the only place it exists — the browser cannot see it, and the
+       * engine returns no `ip` field so there is no blank to mistake for a reading.
+       */
+      try {
+        const ctx = req.body.context && typeof req.body.context === 'object' ? req.body.context : null;
+        if (ctx) {
+          const cc = /^[A-Za-z]{2}$/.test(String(ctx.country || '')) ? String(ctx.country).toUpperCase() : null;
+          const cur = /^[A-Za-z]{3}$/.test(String(ctx.currency_code || '')) ? String(ctx.currency_code).toUpperCase() : null;
+          /* ⚠️ an IANA zone, not free text — anything else is somebody's typing and would break every date we print */
+          const tz = /^[A-Za-z][A-Za-z0-9_+\-]*(?:\/[A-Za-z0-9_+\-]+){1,2}$/.test(String(ctx.timezone || ''))
+            ? String(ctx.timezone) : null;
+          const langs = Array.isArray(ctx.languages)
+            ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
+          if (cc || cur || tz) {
+            await query(
+              `UPDATE identities
+                  SET country       = COALESCE(country, $2),
+                      currency_code = COALESCE(currency_code, $3),
+                      timezone      = COALESCE(timezone, $4)
+                WHERE identity_id = $1`,
+              [identity.identity_id, cc, cur, tz]
+            );
+          }
+          /* ⭐ the languages the browser declares, merged into locale_prefs without disturbing what is there */
+          if (langs.length) {
+            await query(
+              `UPDATE identities
+                  SET locale_prefs = COALESCE(locale_prefs, '{}'::jsonb) || jsonb_build_object('langs_seen', $2::jsonb)
+                WHERE identity_id = $1`,
+              [identity.identity_id, JSON.stringify(langs)]
+            );
+          }
+          /**
+           * ⚠️⚠️ THE EVIDENCE HAS NOWHERE TO GO YET, AND IT SAYS SO RATHER THAN VANISHING. The IP, the device and
+           * the moment of agreement are an AUDIT RECORD, not a preference — they do not belong on identities
+           * beside the settings, and they need migrations/b264_signup_context.sql, which is Athi's to run.
+           * Until then this logs, loudly, once per verification. A capture that quietly drops what it captured
+           * is the silence this codebase keeps paying for. [[feedback-silence-is-the-bug]]
+           */
+          const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
+          console.log('[signup-context] ' + identity.identity_id + ' country=' + (cc || '?')
+            + ' currency=' + (cur || '?') + ' tz=' + (tz || '?')
+            + ' device=' + JSON.stringify((ctx.device && ctx.device.type) || '?')
+            + ' ip=' + (ip || '?') + ' agreed_at=' + (req.body.agreed_at || '?')
+            + ' — NOT STORED: b264_signup_context.sql has not been run');
+        }
+      } catch (e) {
+        console.log('[signup-context] not stored: ' + (e && e.message));
+      }
+
       // AUTO-MINT the entity's governance stamp onto its CHOSEN vertical (else the default constitution). BEST-EFFORT —
       // wrapped so it can NEVER fail verification; an un-stamped entity safely defaults to base at resolve time.
       let mintedConstitution = null;
