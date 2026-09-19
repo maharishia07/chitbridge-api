@@ -46,6 +46,95 @@ that was turned down. **Building a rejected design is the next version of buildi
 
 ---
 
+## 💭 The three sell alternatives — `SellDark` · `SellTimeline` · `SellRail` (backlog E1)
+
+⭐⭐ **THE IMPORTANT FINDING: all three carry the SAME model as `Main`.** Every one of them has groups with
+time windows, an availability count (`{{g.avail}}`), a sold-out tray with undo, and the same nudge —
+*"Afternoon started at 11:30 · 3 Morning keys are sold out"* / `Not now` / `Show Afternoon`.
+
+**So choosing between them does not change the data model.** They are three chromes over `Flow.png`. That
+makes E1 a cheap decision to defer and a cheap one to take — which is worth knowing before anyone treats it as
+a fork in the build.
+
+| | What is different |
+|---|---|
+| **`SellDark`** | The dark theme. Header adds `Thu 17 Sep · 11:42`. The group picker is a popup: *"Tick what this counter shows now. Tap a name to pick its items."* and, at its foot, *"For this counter until shift close."* — Level 2's lifetime said on the control itself. |
+| **`SellTimeline`** | ⭐ Genuinely a different interaction: a **day rail from 06:00 to 23:00** with the groups as blocks along it, a `NOW 11:42` marker, and the instruction `TAP A BLOCK TO SHOW / HIDE ITS KEYS`. The empty state reads *"Tap a block on the day rail to show its keys."* Time is the navigation. |
+| **`SellRail`** | A `SHOWING NOW` rail down one side listing the live groups with their windows and counts, and `SOLD OUT · n` beneath with `Undo` per item (empty state: *"Nothing hidden."*). |
+
+---
+
+## The idle phone — `IdlePhone.png`
+
+Richer than `IdleShop`/`IdleReady`, and three lines in it are decisions:
+
+- `Mayur Bhavan` · `Counter 1 · resting` — **"resting"**, not "locked" or "idle".
+- A large clock (`3:42`) and `Friday 18 September · 31°C, rain after 5`. ⭐ **Weather, with a consequence**
+  — "rain after 5" is a thing a shopkeeper acts on, not an ornament.
+- The shop's own picture behind it.
+- `WAITING FOR YOU` — a list of work, each with a badge, a title and a detail.
+- ⚠️ **"Today's sale is hidden until you sign in."** The day's figure is private on a resting screen. We show
+  `today 0 · ₹0.00` in the header at all times.
+- Staff as initials + name, and `Tap to sell`.
+- ⚠️ **"Nothing is closed · the bill in hand is saved"** — the resting screen states R1 in six words.
+
+---
+
+## Photos on — `FullDesktopPhotos` · `FullTabletPhotos` · `FullPhonePhotos`
+
+Not separate screens: the same three with the **`Photos` switch in the quick-keys bar** (handoff §4), which
+is where the maintenance render also puts `Pictures` — over the thing it changes, never in a settings screen.
+
+- A tile with no photo falls back to `{{t.initials}}`, which is what we already do.
+- The desktop bar also carries **`+ group`** and `+ marked row`, and a
+  `{{hiddenCount}} sold out · bring back` link — the sold-out tray again.
+- ⭐ The phone abbreviates the label to **`▦ Keys · 2`** and writes the switch as **`Photos ● on`** — a state,
+  not a control, because there is no room for both.
+- ⭐ The phone also carries a **persistent bill bar at the foot**: `15` · `3 products · view bill` ·
+  `₹2,750.25`. On a phone the bill is never off screen, only folded.
+
+---
+
+## Quick-keys-only device views — `DeviceCompact` · `DevicePortrait` · `DeviceTablet` · `DevicePhone` · `DeviceHandheld`
+
+The keys and the bill with everything else stripped away, one per device. They exist to show the **key grid at
+each size**, and each one quietly fixes the verb for that device:
+
+| | Says |
+|---|---|
+| `DeviceCompact` | `Quick keys · 2`, a `SOLD OUT` tray (Ven Pongal, Poori Masala), `Clear` `Park` **`Save · F9`** |
+| `DevicePortrait` | `Park · Clear` on one control, **`Save & print`** |
+| `DeviceTablet` | ⭐ **`Long-press a group to pick items`** — the touch equivalent of "tap a name for its items" |
+| `DevicePhone` | `Keys` · `Morning 7` `Afternoon 10` · ⭐ **`+ Evening`** — a group not yet on is offered as an add, not hidden · `View bill ₹220.00` |
+| `DeviceHandheld` | `CB · Handheld 3` · ⭐ **`Table 7 · 11:42`** — a handheld is bound to a TABLE · `Bill · 5` · ⭐ **`Charge ₹220`** |
+
+⚠️ **`Charge`, not `Pay` and not `Save & print`.** A waiter charges a table; a cashier takes a payment. Three
+device renders, three verbs, and they are not interchangeable.
+
+---
+
+## The menu family — `MenuPanel` · `MenuPhoneFold` · `MenuPhoneStack` · `MenuDrawer` · `MenuPalette`
+
+🕐 Earlier versions of the hub (`HubPhone` is the chosen base, `HubWide` its wide form), plus two the index
+lists as **not chosen**. Read them for **copy**, not layout — the section names are settled and identical
+across all five:
+
+- **`HOW IT LOOKS`** — label/value rows
+- **`SHOW ON THIS COUNTER`** — the per-section switches
+- **`CAREFUL`** — and its exact wording, which is worth keeping verbatim:
+  > *"These two stop billing for a moment. Everything is sent and checked first."*
+  > `Clear and reload`   `Close this counter`
+- `Nobody signed in · ` **`Sign in · F7`**, and a version string (`v4.2.1`) in the phone forms.
+- `MenuPanel` adds: *"These settings are kept on this device only. The counter's own style is set in* **back
+  office**.*"* — the device/shop boundary, said on the screen.
+- `MenuPhoneFold` gives each folded section a `{{s.summary}}` line, so a closed section still says something.
+
+🚫 **`MenuPalette`** is the type-to-find command palette — `Ctrl K`, `↑↓ move`, `Enter run`, `Esc close`.
+**Not chosen.** ⚠️ Our hub finder ([TILL-57]) is this design, rebuilt from prose. Open question for Athi.
+🚫 **`MenuDrawer`** is the side-drawer form. Not chosen.
+
+---
+
 ## The scorecard — `DesignStatus.png` and `status.json`
 
 `status.json` carries `{ id, route, design, state, notes }` for 35 screens, and the board renders it:
