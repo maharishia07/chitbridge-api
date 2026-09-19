@@ -521,6 +521,12 @@
           background:var(--ok);color:var(--on-accent);font-style:normal;font-size:10px;font-weight:700;
           display:grid;place-items:center;padding:0 3px}
   .sbadge.due{background:var(--warn)}
+  /* ⚠️ "I heard you", said at the icon — see sideGo(). Brief, because it confirms a press and does not report
+     progress; a mark that outlasts its action is a lie about what is happening. */
+  .side .sicons button.hit{background:var(--ok);color:var(--on-accent)}
+  @media (prefers-reduced-motion:no-preference){
+    .side .sicons button.hit{transition:background .12s ease}
+  }
   .todox:hover{background:var(--warn-tint);color:var(--warn)}
   /* the choices, under the name on the bill — quiet, because the dish is what is being read */
   /* ⭐ the choices, under the name on the bill — quiet, because the dish is what is being read, but it is a
@@ -539,7 +545,28 @@
   /* the chooser */
   .modg{padding:6px 0;border-bottom:1px solid var(--line)}
   .modg:last-child{border-bottom:0}
-  .modg>b{display:block;font-size:.85em;margin-bottom:6px}
+  /* ── ⭐ THE COMBO CHOOSER, in the design's words ([TILL-82]) ─────────────────────── */
+  .modg>b{display:flex;align-items:baseline;gap:8px;font-size:.92em;margin-bottom:8px}
+  .modg .tag{font-style:normal;font-size:.78em;font-weight:600;color:var(--dim);
+             background:var(--panel);border-radius:999px;padding:2px 9px}
+  /* ⚠️ what the group is waiting for, on its right — in an all-visible chooser this is what replaces steps */
+  .modg .gstate{margin-inline-start:auto;font-weight:700;font-size:.85em;color:var(--dim)}
+  .modg .gstate.done{color:var(--ok)}
+  .modg .gstate.want{color:var(--warn)}
+  /* ⚠️ the group the amber button just named — a flash, so tapping it lands somewhere visible */
+  .modg.want{animation:modwant 1.1s ease}
+  @keyframes modwant{from{background:var(--warn-tint)}to{background:transparent}}
+  @media (prefers-reduced-motion:reduce){ .modg.want{animation:none;background:var(--warn-tint)} }
+  .modopt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:58px}
+  .modopt .mn{font-weight:700}
+  .modopt .mw{font-size:.8em;color:var(--dim)}
+  .modopt.on .mw{color:var(--on-accent);opacity:.85}
+  /* ⚠⚠ SOLD OUT IS SHOWN, NOT HIDDEN — struck through and unpickable, so staff know why it is missing */
+  .modopt.out{opacity:.55;cursor:not-allowed;border-style:dashed}
+  .modopt.out .mn{text-decoration:line-through}
+  .modopt .mk{position:absolute;top:4px;inset-inline-end:6px;font-style:normal;font-size:.7em;color:var(--dim)}
+  /* ⚠️ AMBER MEANS 'not yet, and here is what is missing' — never a dead control (spec §3) */
+  .dlgbtns button.pri.want{background:var(--warn-tint);border-color:var(--warn);color:var(--warn)}
   .modg .req{font-style:normal;color:var(--warn);font-weight:600;font-size:.85em}
   .modg .upto{font-style:normal;color:var(--dim);font-weight:400;font-size:.85em}
   .modo{display:flex;flex-wrap:wrap;gap:8px}
@@ -4202,6 +4229,13 @@ function menuFirstSection(){
   if (MENU_OPEN_SEC !== null) return MENU_OPEN_SEC;
   return (ls.get(shopLs('cb_till_daystart'), '') === bizDay()) ? 'bills' : 'day';
 }
+/**
+ * ⭐ WHICH ELEMENT ACTUALLY SCROLLS in the hub — the two-column list when there is room, the panel itself when
+ * there is not. Asked once, so the save and the restore can never disagree about what they are measuring.
+ */
+function menuScroller(){
+  return document.querySelector('#tillmenu .msecs') || document.getElementById('tillmenu');
+}
 function menuSection(id){
   var open = menuOpenSet();
   if (menuRoomy()) {
@@ -4211,13 +4245,33 @@ function menuSection(id){
     MENU_OPEN_MANY = (open.indexOf(id) >= 0 && open.length === 1) ? [] : [id];
   }
   MENU_OPEN_SEC = (MENU_OPEN_MANY[0] === undefined) ? '' : MENU_OPEN_MANY[0];
+  /**
+   * ⚠️⚠️ HOLD THE SCROLL ACROSS THE REPAINT ([TILL-83]). paintMenu() replaces every child of the scrolling
+   * element, so the browser resets scrollTop to 0 — and everything after it then measures from the top of a
+   * panel the reader was nowhere near. Measured: 300 in, 1367 out.
+   */
+  var box = menuScroller();
+  var keep = box ? box.scrollTop : 0;
   paintMenu();
+  box = menuScroller();
+  if (box) box.scrollTop = keep;
+  /**
+   * ⭐ AND ONLY MOVE IT IF IT IS ACTUALLY OUT OF SIGHT. You pressed a heading you could see, so in the ordinary
+   * case the right amount of scrolling is none. This is the minimum nudge the shelf list already uses, for the
+   * same reason: scrolling under somebody's eye on every press is what a list must not do.
+   */
   var el = document.querySelector('[data-testid="till-msec-' + id + '"]');
-  if (el && el.scrollIntoView) { try { el.scrollIntoView({ block: 'nearest' }); } catch (_) {} }
+  if (el && box) {
+    var r = el.getBoundingClientRect(), br = box.getBoundingClientRect();
+    if (r.top < br.top) box.scrollTop -= (br.top - r.top) + 6;
+    else if (r.top > br.bottom - 40) box.scrollTop += (r.top - br.bottom) + 120;
+  }
   /* ⚠️ paintMenu() replaced the button that was pressed, so focus fell to <body> and the next scan went
-     nowhere at all (critic pass). Put it back on the heading the person just used. */
+     nowhere at all (critic pass). Put it back on the heading the person just used.
+     ⚠️⚠️ preventScroll — focusing an element inside a scroller scrolls it into view, which is the SECOND thing
+     that was throwing the panel about. The caret fix is kept; the side effect it carried is not. */
   var b = document.querySelector('[data-testid="till-msec-btn-' + id + '"]');
-  if (b && b.focus) { try { b.focus(); } catch (_) {} }
+  if (b && b.focus) { try { b.focus({ preventScroll: true }); } catch (_) { try { b.focus(); } catch (e) {} } }
 }
 /**
  * ⭐⭐⭐ START YOUR DAY — the moment, and the readiness, in one panel.
@@ -5152,12 +5206,27 @@ function paintSide(){
       if (left) badge = '<i class="sbadge' + (due ? ' due' : '') + '">' + left + '</i>';
     }
     b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + op.hint) + '"'
-      + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;)">' + op.icon + badge + '</button>');
+      + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;,&quot;' + op.id + '&quot;)">'
+      + op.icon + badge + '</button>');
   });
   el.innerHTML = b.join('');
 }
 /** run one operation from the strip — names, not functions, so nothing depends on declaration order */
-function sideGo(name){
+/**
+ * ⭐⭐ THE PRESS IS ACKNOWLEDGED WHERE IT HAPPENED ([TILL-83]). Athi: *"when i click an icon, not sure where it
+ * is and what the response is."*
+ * ⚠️⚠️ SOME OF THESE OPEN A DIALOG AND SOME ONLY WRITE A LINE IN THE FOOTER — and the menu closes at the same
+ * instant either way, so the second kind is indistinguishable from a click that missed. The icon itself now
+ * says it was pressed, at the point of contact, before anything else has had time to happen.
+ * ⚠️ IT IS A CONFIRMATION, NOT A SPINNER: it says "I heard you", not "this is still going", so it must not
+ * outlast the action it is confirming.
+ */
+function sideGo(name, id){
+  var btn = id ? document.querySelector('[data-testid="till-side-' + id + '"]') : null;
+  if (btn) {
+    btn.classList.remove('hit'); void btn.offsetWidth; btn.classList.add('hit');
+    setTimeout(function(){ try { btn.classList.remove('hit'); } catch (_) {} }, 700);
+  }
   closeMenu();
   var f = window[name];
   if (typeof f === 'function') { try { f(); } catch (_) {} }
@@ -9281,34 +9350,157 @@ function modChosen(){
   return out;
 }
 function modMissing(){ return CBVariant.missing(MOD_FOR ? MOD_FOR.groups : [], modChosen()); }
+/**
+ * ⭐ THE GROUP'S NOUN — what the button calls the missing thing. The spec makes it a required field on the
+ * group ("tiffin", "drink", "sweet"); until a catalogue carries one we derive it, because a button that
+ * says "Pick a Spice to start" is still infinitely better than one that says "Choose Spice and Extra".
+ * ⚠️ NOT A SENTENCE. "The tiffin" and "Choose a tiffin" both become "tiffin".
+ */
+function comboNoun(g){
+  if (g && g.noun) return String(g.noun).toLowerCase();
+  var t = String((g && (g.title || g.name)) || 'choice').toLowerCase();
+  return t.replace(/^(choose|pick|select)\s+/, '').replace(/^(a|an|the)\s+/, '').trim() || 'choice';
+}
+/** ⭐ "a" or "an", so the button reads like a person wrote it */
+function comboArticle(w){ return /^[aeiou]/i.test(String(w || '')) ? 'an' : 'a'; }
+/**
+ * ⭐ HOW MANY, WITHOUT SCOLDING. The spec: *"'must choose' scolds. 'one of these' says how many."* min/max
+ * drive it — and our groups carry `required` rather than `min`, which is the same statement.
+ */
+function comboTag(g){
+  var max = Number(g && g.max) || 1;
+  var need = !!(g && g.required);
+  if (!need) return 'skip if not';
+  if (max <= 1) return 'one of these';
+  if (Number(g.min) > 1 && Number(g.min) === max) return 'any ' + max;
+  return 'up to ' + max;
+}
+/**
+ * ⚠️⚠️ SOLD OUT IS SHOWN, NOT HIDDEN (spec §5.3). *"Staff then know why a favourite is missing."* It reads the
+ * SAME per-counter list the quick keys use — quickSold() — so a thing marked out on the keys is out here, and
+ * marked out here is out on the keys. One list, or the two surfaces disagree about the same kitchen.
+ * ⚠️ MATCHED BY NAME, because an option carries a name and not a product id in this catalogue. A combo whose
+ * options are real products will match on the first try; one whose options are free text simply never matches,
+ * which is the safe direction to fail in.
+ */
+function comboOut(o){
+  try {
+    var nm = String((o && o.name) || '').toLowerCase();
+    if (!nm) return false;
+    var ids = quickSold().map(function(x){ return String(x.id); });
+    if (!ids.length) return false;
+    return ((S && S.items) || []).some(function(it){
+      return String(it.name || '').toLowerCase() === nm && ids.indexOf(String(it.item_id)) >= 0;
+    });
+  } catch (_) { return false; }
+}
+/**
+ * ⭐⭐ WHAT THE PICKS COST, THREE WAYS (spec §5.4). The payable total, what the same things would cost bought
+ * separately, and the saving between them — all recomputed from the PICKS, so upgrading to a ₹15-more drink
+ * moves all three before the tap rather than after it.
+ * ⚠️ THE SAVING IS HIDDEN WHEN IT IS NOT ONE. The spec: *"if it is ≤ 0, hide the saving line rather than
+ * showing a negative."* Same rule the shelf row already follows about MRP — a comparison we cannot stand
+ * behind is not shown at all.
+ */
+function comboMoney(){
+  var i = MOD_FOR && MOD_FOR.item; if (!i) return null;
+  var chosen = modChosen();
+  var pay = r2((Number(i.price) || 0) + modAdd(chosen));
+  /* the static parts this product declares (comboOf), plus whatever the picks themselves add */
+  var cb = comboOf(i);
+  var apart = cb && cb.apart ? r2(cb.apart + modAdd(chosen)) : 0;
+  return { pay: pay, apart: apart, save: (apart > pay) ? r2(apart - pay) : 0 };
+}
+/**
+ * ⭐⭐⭐ THE BUTTON, FIVE STATES, NEVER DEAD (spec §3). *"Never disabled. In the amber states the button is
+ * live; tapping it scrolls to the unfinished step and opens it."*
+ * ⚠️⚠️ AND THE LABEL IS A TEMPLATE, NEVER A JOIN. Joining group names is what produced "Choose Spice and
+ * Extra" — a label nobody wrote, that reads as a bug to the customer standing there. One missing thing is
+ * named, singular, whichever comes first.
+ */
+function comboBtn(){
+  var groups = (MOD_FOR && MOD_FOR.groups) || [];
+  var miss = groups.filter(function(g){ return g.required && !(MOD_PICK[g.name] || []).length; });
+  var m = comboMoney();
+  var verb = (MOD_EDIT !== null) ? 'Update' : 'Add to bill';
+  if (miss.length) {
+    var noun = comboNoun(miss[0]);
+    var anyPicked = groups.some(function(g){ return (MOD_PICK[g.name] || []).length; });
+    return { ready: false, group: miss[0].name,
+      label: 'Pick ' + comboArticle(noun) + ' ' + noun + ' to ' + (anyPicked ? 'finish' : 'start') };
+  }
+  return { ready: true, group: null, label: verb + (m ? ' \u00b7 ' + money(m.pay) : '') };
+}
+/** ⚠️ an amber button is LIVE: it takes you to the step it names rather than doing nothing */
+function comboJump(){
+  var b = comboBtn();
+  if (b.ready) return modAddNow();
+  var el = document.querySelector('[data-modg="' + String(b.group).replace(/"/g, '') + '"]');
+  if (el && el.scrollIntoView) { try { el.scrollIntoView({ block: 'center' }); } catch (_) {} }
+  if (el) { el.classList.remove('want'); void el.offsetWidth; el.classList.add('want'); }
+}
 function modPaint(){
   var box = document.getElementById('modbody'); if (!box || !MOD_FOR) return;
   var i = MOD_FOR.item;
   /* ⭐ what a combo contains, above the choosing — a cashier reading it out should not have to remember */
   var cb = comboOf(i);
+  /**
+   * ⭐ "Separately ₹205.00 · they save ₹25.00" — the spec's own wording, and it reads out loud to a customer.
+   * "₹25.00 under separately" read backwards: it gave the difference before the thing it differs from.
+   * ⚠️ THE SAVING IS HIDDEN WHEN THERE IS NONE, rather than shown as zero or negative — the same rule the shelf
+   * row follows about MRP. A comparison we cannot stand behind is not made.
+   */
+  var cm = comboMoney();
   var head = cb
     ? '<div class="combohead" data-testid="till-combo">' + esc(cb.parts.join(' + '))
-      + (cb.under ? '<b>' + money(cb.under) + ' under separately</b>' : '') + '</div>'
+      + (cm && cm.save
+          ? '<b>Separately ' + money(cm.apart) + ' \u00b7 they save ' + money(cm.save) + '</b>' : '')
+      + '</div>'
     : '';
   var ttl = document.getElementById('modtitle');
   if (ttl) ttl.textContent = (MOD_EDIT !== null) ? ('Change ' + (MOD_FOR.item ? MOD_FOR.item.name : 'the choices')) : 'Choose';
+  /* ⚠️ the hotkey runs across the WHOLE sheet, 1–9, so a cashier never counts within a group (spec §5.6) */
+  var hk = 0;
   box.innerHTML = head + MOD_FOR.groups.map(function(g, gi){
-    var chosen = (MOD_PICK[g.name] || []).map(function(x){ return x.option; });
+    var picks = MOD_PICK[g.name] || [];
+    var chosen = picks.map(function(x){ return x.option; });
     var max = Number(g.max) || 1;
-    return '<div class="modg" data-testid="till-modg-' + gi + '">'
-      + '<b>' + esc(g.name) + (g.required ? ' <i class="req">must choose</i>' : '')
-        + (max > 1 ? ' <i class="upto">up to ' + max + '</i>' : '') + '</b>'
+    /**
+     * ⭐ WHAT THIS GROUP IS WAITING FOR, on its right. In an all-visible chooser this is what replaces the
+     * stepper: the chosen name, or the fact that nothing is chosen yet, said differently for required and
+     * optional so nobody hunts for a pick that was never needed.
+     */
+    var state = picks.length
+      ? (max > 1 ? picks.length + ' of ' + max + ' picked' : esc(chosen[0]))
+      : (g.required ? 'waiting for a pick' : 'nothing yet');
+    return '<div class="modg' + (g.required && !picks.length ? ' need' : '') + '"'
+      + ' data-modg="' + esc(g.name) + '" data-testid="till-modg-' + gi + '">'
+      /* ⭐ "The tiffin", not "Choose a tiffin" — the step is a thing, the verb lives on the button */
+      + '<b>' + esc(g.title || g.name)
+        + ' <i class="tag">' + esc(comboTag(g)) + '</i>'
+        + '<span class="gstate' + (picks.length ? ' done' : (g.required ? ' want' : '')) + '">' + state + '</span>'
+        + '</b>'
       + '<div class="modo">' + g.options.map(function(o, oi){
           var on = chosen.indexOf(o.name) >= 0;
-          return '<button type="button" class="modopt' + (on ? ' on' : '') + '"'
-            + ' data-testid="till-modopt-' + gi + '-' + oi + '" onclick="modToggle(' + gi + ',' + oi + ')">'
-            + esc(o.name) + (Number(o.price) ? '<span>+' + money(o.price) + '</span>' : '') + '</button>';
+          /* ⚠️ SOLD OUT IS SHOWN, NOT HIDDEN — struck through and unpickable, so staff know why it is missing */
+          var out = comboOut(o);
+          var key = out ? 0 : (++hk);
+          return '<button type="button" class="modopt' + (on ? ' on' : '') + (out ? ' out' : '') + '"'
+            + (out ? ' disabled' : '')
+            + ' data-testid="till-modopt-' + gi + '-' + oi + '"'
+            + (key && key < 10 ? ' data-hk="' + key + '"' : '')
+            + ' onclick="modToggle(' + gi + ',' + oi + ')">'
+            + '<span class="mn">' + esc(o.name) + '</span>'
+            /* ⭐ "in the combo" / "+₹15.00" / "sold out today" — what this pick costs, in three words */
+            + '<span class="mw">' + (out ? 'sold out today'
+                : (Number(o.price) ? '+' + money(o.price) : 'in the combo')) + '</span>'
+            + (key && key < 10 ? '<i class="mk">' + key + '</i>' : '')
+            + '</button>';
         }).join('') + '</div></div>';
   }).join('');
   var miss = modMissing();
   var add = document.getElementById('modadd');
   if (add) {
-    add.disabled = miss.length > 0;
     /* ⭐ THE VERB SAYS WHICH JOB IT IS DOING — "Add" puts a new line on the bill, "Update" changes one already
        on it, and a cashier must never have to guess which. ONE writer for this label: setting it anywhere else
        in this function is overwritten here. [[feedback-no-duplicate-functions]] */
@@ -9320,8 +9512,16 @@ function modPaint(){
       more.hidden = !canVary || miss.length > 0;
       more.textContent = (MOD_EDIT !== null) ? 'Update, then add another' : 'Add, then another';
     }
-    add.textContent = miss.length ? ('Choose ' + miss.join(' and '))
-      : (verb + (modAdd(modChosen()) ? ' · ' + money(r2((Number(i.price) || 0) + modAdd(modChosen()))) : ''));
+    /**
+     * ⭐⭐⭐ NEVER A DEAD BUTTON (spec §3). It used to be greyed out saying "Choose Spice and Extra" — a label
+     * built by joining group names, which is the one thing the spec forbids, over a control that did nothing.
+     * Amber names the ONE next thing and takes you there; green means the tap really adds the line.
+     */
+    var st = comboBtn();
+    add.disabled = false;
+    add.className = 'pri' + (st.ready ? '' : ' want');
+    add.textContent = st.label;
+    add.setAttribute('onclick', 'comboJump()');
   }
 }
 function modAddNow(){
