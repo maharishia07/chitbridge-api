@@ -26,6 +26,44 @@ const sheet = require('../lib/sheet');
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
 const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
 const xlsxRead = require('../lib/xlsx-read');      // ⭐ and the same, from a workbook ([TILL-109])
+const rateLimit = require('express-rate-limit');
+
+/**
+ * ── ⚠️⚠️ THE IMPORT IS THE EXPENSIVE DOOR ([TILL-112]) ───────────────────────────────
+ *
+ * Athi: *"how do we control spam… how to control pollution."* The router now carries serviceLimiter() like
+ * its siblings, and these two are tighter again, because a request here is not the same size as a GET:
+ *
+ *   PREFLIGHT writes NOTHING — it reads a file and returns a report. Somebody correcting a heading row or
+ *     trying a second sheet does this several times over, and should not be punished for looking first.
+ *   THE COMMIT writes up to IMPORT_MAX_ROWS products. A 10,000-product catalogue is five files, so five
+ *     commits plus retries is a genuine setting-up session. Twenty in a quarter of an hour is not.
+ *
+ * ⚠️ KEYED THE WAY THE HOUSE KEYS THINGS — the API key first, the IP only as a fallback. Several counters of
+ * one shop are different keys; two shops behind one broadband line are not each other's problem.
+ * ⚠️ Both numbers are env-overridable, like every other limit in server.js, so a real shop that trips one
+ * can be let through without a deploy.
+ */
+const importKey = (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64);
+const preflightLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: parseInt(process.env.IMPORT_PREFLIGHT_MAX || '60'),
+  standardHeaders: true, legacyHeaders: false, keyGenerator: importKey,
+  message: { error: 'Too many requests',
+    message: 'That is a lot of files in a short time. Nothing has been changed — try again in a few minutes.' },
+});
+/* ⚠️ the paste-a-list door: smaller per request than the import, larger than a single add */
+const bulkLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: parseInt(process.env.PRODUCTS_BULK_MAX || '60'),
+  standardHeaders: true, legacyHeaders: false, keyGenerator: importKey,
+  message: { error: 'Too many requests',
+    message: 'That is a lot of products in a short time. Nothing has been changed — try again in a few minutes.' },
+});
+const importLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: parseInt(process.env.IMPORT_COMMIT_MAX || '20'),
+  standardHeaders: true, legacyHeaders: false, keyGenerator: importKey,
+  message: { error: 'Too many requests',
+    message: 'That is a lot of product lists in a short time. Nothing has been changed — try again in a few minutes.' },
+});
 
 /**
  * ── ⭐⭐⭐ THE FILE, WHATEVER KIND IT IS, AS { headers, rows } ([TILL-109]) ───────────────────
@@ -291,7 +329,8 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
  */
 const BULK_MAX = 200;
 
-router.post('/bulk', auth, [ body('items').isArray({ min: 1 }) ], validate, async (req, res) => {
+/* ⚠️ up to BULK_MAX products a request, so it is a bulk door like the import ([TILL-112]) */
+router.post('/bulk', auth, bulkLimiter, [ body('items').isArray({ min: 1 }) ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const items = req.body.items;
@@ -679,7 +718,7 @@ router.get('/template', auth, async (req, res) => {
  * `ready:false` means a person still has to look. It is never a soft warning the client may skip past.
  */
 /* ⚠️ `csv` OR `xlsx` — optional individually, and the handler insists on one of them ([TILL-109]) */
-router.post('/import/preflight', auth,
+router.post('/import/preflight', auth, preflightLimiter,
   [ body('csv').optional().isString(), body('xlsx').optional().isString(),
     body('header_row').optional().isInt({ min: 1, max: 1000 }) ], validate, async (req, res) => {
   try {
@@ -727,7 +766,7 @@ const IMPORT_MAX_ROWS = 2000;
  *
  * It re-runs the preflight server-side. The client's report is a display artifact and is never trusted.
  */
-router.post('/import', auth,
+router.post('/import', auth, importLimiter,
   [ body('csv').optional().isString(), body('xlsx').optional().isString(),
     body('header_row').optional().isInt({ min: 1, max: 1000 }), body('decisions').isArray() ],
   validate, async (req, res) => {

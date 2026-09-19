@@ -287,7 +287,13 @@ app.use('/api/connectors',  connectorsRouter);
 app.use('/api/folders',     foldersRouter);
 app.use('/api/relationships', relationshipsRouter);
 app.use('/api/catalogue',   catalogueRouter);
-app.use('/api/products',    productsRouter);
+/**
+ * ⚠️⚠️ THE ONLY ONE OF ITS SIBLINGS WITHOUT A LIMITER, until [TILL-112]. offers, pricing, invoice,
+ * integrations and till all carry serviceLimiter(); products carried only the global 500 per 15 min — on the
+ * router that holds the catalogue IMPORT, where one request writes up to 2000 products.
+ * ⭐ Keyed by the API key, not the IP, so one shop's counters are not lumped in with the next shop's.
+ */
+app.use('/api/products',    serviceLimiter(), productsRouter);
 app.use('/api/governance',  governanceRouter);
 app.use('/api/attachments', attachmentsRouter);
 app.use('/api/network-design', require('./routes/network-design'));   // b111 — per-entity design persistence (RLS)

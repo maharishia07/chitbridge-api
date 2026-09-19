@@ -27,7 +27,20 @@ const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
 const keys = require('./keys');
-const { shopChanged } = require('../lib/shopchanged');   /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
+const { shopChanged } = require('../lib/shopchanged');
+const rateLimit = require('express-rate-limit');
+/**
+ * ⚠️⚠️ STARTING A SHOP IS A ONCE-PER-SHOP ACT ([TILL-112]). The route already refuses a shop that has
+ * products, so the honest limit is low: a handful of attempts covers choosing the wrong trade and saying so.
+ * ⭐ Keyed by the API key the way every other limit here is, so one counter cannot spend another's allowance.
+ */
+const catalogueMintLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: parseInt(process.env.TILL_CATALOGUE_MAX || '20'),
+  standardHeaders: true, legacyHeaders: false,
+  keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64),
+  message: { error: 'Too many requests',
+    message: 'That is a lot of attempts in a short time. Nothing has been changed — try again in a few minutes.' },
+});   /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards');       /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
 const speech = require('../lib/speech');            /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */      /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
@@ -1601,7 +1614,8 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
  * a merge rule against a back-office one; Athi settled it — *"while setting up the store… we can still
  * connect."* The counter's offline job stays what [TILL-106] proved: selling what it already holds.
  */
-router.post('/catalogue', auth, auth.requireScope('till'), async (req, res) => {
+/* ⚠️ a whole starter catalogue, or a whole uploaded list — a bulk door, and limited as one ([TILL-112]) */
+router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = (req.body && typeof req.body === 'object') ? req.body : {};
