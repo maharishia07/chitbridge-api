@@ -26,6 +26,7 @@ const GUARDS = [
   'till-vendor.test.js',      // the counter and its vendored engines agree, byte for byte
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
+  'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs',// the bill number's shape: what the date says vs when the run restarts

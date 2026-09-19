@@ -13098,12 +13098,17 @@ function regWords(){
  */
 var TRADES = null;
 /* ── ⭐⭐⭐ THE UPLOAD, READ BEFORE IT BECOMES DATA ([TILL-108]) ────────────────────────── */
-var UP = { csv: '', report: null, decisions: {} };
+var UP = { csv: '', xlsx: '', name: '', report: null, decisions: {} };
 
-/** ⚠️ a .csv only — an .xlsx is a zip, and pretending to read one would fail in a way nobody could act on */
+/**
+ * ⭐ A SPREADSHEET OR A .csv ([TILL-109]). Athi: *"most shops will have excel files"* — and "save it as CSV
+ * first" is the instruction that stops a shop opening today.
+ * ⚠️ .xls (the 1997 format) is NOT a zip and is not offered; the server says so in words if one arrives.
+ */
 function upPick(){
   var i = document.createElement('input');
-  i.type = 'file'; i.accept = '.csv,text/csv,text/plain';
+  i.type = 'file';
+  i.accept = '.xlsx,.csv,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   i.onchange = function(){ var f = i.files && i.files[0]; if (f) upRead(f); };
   i.click();
 }
@@ -13116,13 +13121,29 @@ async function upRead(file){
   upSay('', false);
   if (!d.open) d.showModal();
 
-  var text = '';
-  try { text = await file.text(); } catch (_) { text = ''; }
-  if (!text.trim()) {
-    document.getElementById('upbody').innerHTML = '';
-    upSay('That file is empty, or it could not be read.', true); return;
+  /**
+   * ⚠️⚠️ A WORKBOOK IS BINARY. Reading it with .text() would mangle it beyond recognition and the server
+   * would report a damaged file — so it travels as base64 and the CSV keeps travelling as text.
+   */
+  UP.name = file.name || 'your list';
+  var isXlsx = /\.xlsx$/i.test(UP.name) || String(file.type || '').indexOf('spreadsheetml') >= 0;
+  if (isXlsx) {
+    var b64 = '';
+    try { b64 = await upBase64(file); } catch (_) { b64 = ''; }
+    if (!b64) {
+      document.getElementById('upbody').innerHTML = '';
+      upSay('That workbook could not be read from this machine.', true); return;
+    }
+    UP.xlsx = b64; UP.csv = '';
+  } else {
+    var text = '';
+    try { text = await file.text(); } catch (_) { text = ''; }
+    if (!text.trim()) {
+      document.getElementById('upbody').innerHTML = '';
+      upSay('That file is empty, or it could not be read.', true); return;
+    }
+    UP.csv = text; UP.xlsx = '';
   }
-  UP.csv = text;
 
   /**
    * ⚠️⚠️ THE SERVER READS IT. The page does not parse a catalogue and decide what the columns mean — that
@@ -13130,7 +13151,7 @@ async function upRead(file){
    * would show a report the import then contradicts.
    */
   var r = null;
-  try { r = await HOST.tillPost('/api/products/import/preflight', { csv: text }, { noQueue: true }); } catch (_) { r = null; }
+  try { r = await HOST.tillPost('/api/products/import/preflight', upBody(), { noQueue: true }); } catch (_) { r = null; }
   if (!r || !r.ok || !r.report) {
     document.getElementById('upbody').innerHTML = '';
     upSay(((r && r.why) || 'ChitBridge could not be reached') + '. Nothing has been added.'
@@ -13152,6 +13173,15 @@ function upPaint(r){
   out.push('<div class="uphead" data-testid="till-upload-head"><b>' + can + ' of ' + rows + '</b> row'
     + (rows === 1 ? '' : 's') + ' can be added'
     + (errs ? ' · ' + errs + ' cannot, and are listed below' : '') + '</div>');
+  /**
+   * ⚠️⚠️ WHICH SHEET WAS READ, when the workbook had more than one ([TILL-109]). A shop whose prices are
+   * on "Rates" and whose first sheet is "Notes" would otherwise see an odd report and no reason for it.
+   */
+  if (r.sheets && r.sheets.length > 1) {
+    out.push('<p class="note" data-testid="till-upload-sheet">Read from the sheet <b>' + esc(r.sheet || '')
+      + '</b>. That workbook also has: ' + esc(r.sheets.filter(function(n){ return n !== r.sheet; }).join(', '))
+      + '. If the products are on one of those, say so and bring it again.</p>');
+  }
 
   /* ⚠️ EVERY COLUMN IS SHOWN, including the ones that matched — a person checking an import checks the
      mapping, and hiding the confident ones is how a wrong confident match goes unnoticed. */
@@ -13226,6 +13256,31 @@ function upReady(){
   }
 }
 
+/**
+ * ⚠️ ONE BODY BUILDER, used by the preflight AND the commit. They must send the SAME file — the commit
+ * re-reads it and re-runs the preflight, which only means anything if it is reading what was approved.
+ */
+function upBody(){ return UP.xlsx ? { xlsx: UP.xlsx } : { csv: UP.csv }; }
+
+/**
+ * ⚠️⚠️ NOT btoa(String.fromCharCode(...bytes)). Spreading a megabyte of bytes into apply() overflows the
+ * call stack — the classic failure of this one-liner, and it fails on exactly the large files that matter.
+ * Chunked, and via FileReader where it is available because the browser does the encoding itself.
+ */
+function upBase64(file){
+  return new Promise(function(resolve, reject){
+    try {
+      var fr = new FileReader();
+      fr.onload = function(){
+        var s = String(fr.result || '');
+        var comma = s.indexOf(',');
+        resolve(comma >= 0 ? s.slice(comma + 1) : '');
+      };
+      fr.onerror = function(){ reject(new Error('unreadable')); };
+      fr.readAsDataURL(file);
+    } catch (e) { reject(e); }
+  });
+}
 function upClose(){ var d = document.getElementById('updlg'); if (d && d.open) d.close(); }
 function upSay(t, bad){
   var el = document.getElementById('upsay'); if (!el) return;
@@ -13237,7 +13292,7 @@ function upSay(t, bad){
  * report is a display artifact and is never trusted"* — so what travels is the file and what a person decided.
  */
 async function upCommit(){
-  if (!UP.report || !UP.csv) return;
+  if (!UP.report || !(UP.csv || UP.xlsx)) return;
   var decisions = (UP.report.mapping || []).map(function(m){
     var d = UP.decisions[m.incoming] !== undefined ? UP.decisions[m.incoming] : (m.canonical || '');
     return { incoming: m.incoming, action: d ? 'map' : 'ignore', field: d || undefined };
@@ -13245,7 +13300,8 @@ async function upCommit(){
   document.getElementById('upgo').disabled = true;
   upSay('Adding them…', false);
   var r = null;
-  try { r = await HOST.tillPost('/api/products/import', { csv: UP.csv, decisions: decisions, confirm: true }, { noQueue: true }); }
+  try { r = await HOST.tillPost('/api/products/import',
+    Object.assign(upBody(), { decisions: decisions, confirm: true }), { noQueue: true }); }
   catch (_) { r = null; }
   if (!r || !r.ok) {
     document.getElementById('upgo').disabled = false;

@@ -25,6 +25,38 @@ const defaults = require('../lib/defaults');
 const sheet = require('../lib/sheet');
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
 const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
+const xlsxRead = require('../lib/xlsx-read');      // ⭐ and the same, from a workbook ([TILL-109])
+
+/**
+ * ── ⭐⭐⭐ THE FILE, WHATEVER KIND IT IS, AS { headers, rows } ([TILL-109]) ───────────────────
+ *
+ * Athi: *"xlsx support, most shops will have excel files."* Telling a shop to re-save as CSV is exactly the
+ * instruction that stops it opening today.
+ *
+ * ⚠️ BOTH ROUTES READ THE FILE THEMSELVES and must read it the SAME WAY — the commit re-runs the preflight
+ * because *"the client's report is a display artifact and is never trusted"*, and that only holds if the two
+ * reads agree. One helper is what makes them agree.
+ *
+ * ⚠️⚠️ AND THE CAP IS STATED HERE. express.json allows 8mb and base64 costs a third more, so a large
+ * workbook would die in the body parser with a 413 that never mentions spreadsheets.
+ */
+const XLSX_MAX = 4 * 1024 * 1024;   /* the decoded workbook. A product list is a few hundred KB. */
+function readUpload(body) {
+  const b = body || {};
+  if (typeof b.xlsx === 'string' && b.xlsx.trim()) {
+    let buf;
+    try { buf = Buffer.from(b.xlsx, 'base64'); } catch (_) { buf = null; }
+    if (!buf || !buf.length) { const e = new Error('That file could not be read.'); e.userMessage = e.message; throw e; }
+    if (buf.length > XLSX_MAX) {
+      const e = new Error('That workbook is ' + Math.round(buf.length / 1048576) + ' MB. A product list should be'
+        + ' far smaller — send just the sheet with the products on it.');
+      e.userMessage = e.message; throw e;
+    }
+    /* ⚠️ lib/xlsx-read throws with a sentence a shopkeeper can act on; it is passed through, not swallowed */
+    return xlsxRead.sheetRows(buf, { sheet: b.sheet || null });
+  }
+  return csv.parseCSV(String(b.csv || ''));
+}
 const identity  = require('../lib/identity');       // which line is this, and which product does it belong to
 const starter   = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
 
@@ -608,22 +640,29 @@ router.get('/template', auth, async (req, res) => {
  *
  * `ready:false` means a person still has to look. It is never a soft warning the client may skip past.
  */
-router.post('/import/preflight', auth, [ body('csv').isString() ], validate, async (req, res) => {
+/* ⚠️ `csv` OR `xlsx` — optional individually, and the handler insists on one of them ([TILL-109]) */
+router.post('/import/preflight', auth,
+  [ body('csv').optional().isString(), body('xlsx').optional().isString() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const text = String(req.body.csv || '');
-    if (!text.trim()) return res.status(400).json({ error: 'Nothing to read', message: 'The file is empty.' });
+    const hasFile = (req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim()));
+    if (!hasFile) return res.status(400).json({ error: 'Nothing to read', message: 'The file is empty.' });
 
     // The accepted format, built by the SAME function the download template uses — one definition, so a merchant
     // who fills our own sheet can never be told a column is unrecognised.
     const { template, labels, required, identity: ident, identityProblems, orderInput: oi } = await catalogueShape(entity_id);
-    const parsed = csv.parseCSV(text);
+    /* ⭐ a workbook and a .csv arrive at the same shape here, so everything below is unchanged ([TILL-109]) */
+    let parsed;
+    try { parsed = readUpload(req.body); }
+    catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
     // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
     const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
 
     res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset,
-      identity: ident, identity_problems: identityProblems, dry_run: true });
+      identity: ident, identity_problems: identityProblems, dry_run: true,
+      /* ⭐ which sheet was read, and what else was in the workbook — a person who meant a different one can say so */
+      sheet: parsed.sheet || null, sheets: parsed.sheets || null });
   } catch (e) { fail(res, e, 'Could not read the file'); }
 });
 
@@ -646,17 +685,23 @@ const IMPORT_MAX_ROWS = 2000;
  *
  * It re-runs the preflight server-side. The client's report is a display artifact and is never trusted.
  */
-router.post('/import', auth, [ body('csv').isString(), body('decisions').isArray() ], validate, async (req, res) => {
+router.post('/import', auth,
+  [ body('csv').optional().isString(), body('xlsx').optional().isString(), body('decisions').isArray() ],
+  validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (req.body.confirm !== true) {
       return res.status(400).json({ error: 'Not confirmed', message: 'Nothing was imported — this needs an explicit confirmation.' });
     }
-    const text = String(req.body.csv || '');
-    if (!text.trim()) return res.status(400).json({ error: 'Nothing to import', message: 'The file is empty.' });
+    const hasFile = (req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim()));
+    if (!hasFile) return res.status(400).json({ error: 'Nothing to import', message: 'The file is empty.' });
 
     const { schema_id, template, labels, required, identity: ident } = await catalogueShape(entity_id);
-    const parsed = csv.parseCSV(text);
+    /* ⚠️ THE SAME READER THE PREFLIGHT USED. The report a person approved was built from this file read this
+       way; a second way of reading it here would let the commit act on something else. */
+    let parsed;
+    try { parsed = readUpload(req.body); }
+    catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
     if (parsed.rows.length > IMPORT_MAX_ROWS) {
       return res.status(413).json({ error: 'Too many rows',
         message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.` });
