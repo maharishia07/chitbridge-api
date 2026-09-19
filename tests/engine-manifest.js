@@ -559,5 +559,76 @@ const ENGINE_OTHER = [
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [];
 
-module.exports = { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OTHER, PENDING_LIBS };
+/**
+ * ⚠️⚠️⚠️ THE KEY IS WHAT THE PAGE ASKS FOR; THE VALUE IS WHERE IT COMES FROM. Not decoration — the first
+ * version of this list was written as plain filenames and was wrong about FOUR of seventeen within the hour:
+ * it named points.js, which the counter does not load at all; units.js and convert.js, which are vendored for
+ * the conversion lab and which vendor-till.cjs deliberately keeps OFF the till's shelf; and lib/offers-engine.js
+ * and lib/pricing-engine.js, which are the COPIES — the masters live in chitbridge-web/public/app/.
+ *
+ * ⭐ SO THE LIST IS CHECKED AGAINST THE PAGE. till-shippable.test.cjs reads the <script src> lines out of
+ * till.html and asserts this key set is exactly equal to them. Add an engine to the counter without declaring
+ * it and the test fails; declare one the counter dropped and it fails the same way.
+ *
+ * ⚠️ THREE HOMES, AND THAT IS THE PACKAGING PROBLEM. `bare` = chitbridge-api/lib · `web:` =
+ * chitbridge-web/public · `vendor:` = node_modules. "The till's engines" is not a directory anybody can point
+ * at, which has to be solved before there is an installable till to download.
+ */
+const TILL_SHIPPABLE = {
+  /* wrapped out of lib/ by vendor-till.cjs — node modules made loadable by a browser */
+  'money.js':     'money.js',          // { amount, currency } — the counter's arithmetic floor
+  'docnumber.js': 'docnumber.js',      // what a bill number may look like, per country: numbered OFFLINE, so it is here
+  'nums.js':      'numerals.js',       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
+  'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter
+  'lots.js':      'lotfields.js',      // a lot's fields travel with the goods, not with the server
+
+  /* copied out of lib/ — already UMD, so they load as they are */
+  'rewards.js':   'rewards.js',        // a tender, computed while the customer is still standing there
+  'screen.js':    'screen-kit.js',     // how the counter looks — themes, tiles, layouts, key sizes
+
+  /* ⚠️ MASTERED IN chitbridge-web, copied INTO lib/ — the direction is the opposite of the five above, and
+     guarding the lib copy would be guarding the wrong file. */
+  'search.js':    'web:app/search.js', // finding a product cannot wait for a network
+  'offers.js':    'web:app/offers.js', // an offer must apply with the line down — this is why it is not a server call
+  'pricing.js':   'web:app/pricing.js',//   the same, for a price
+  'tax.js':       'web:app/tax-engine.js', // and for tax: a bill printed offline is still a legal document
+  'locale.js':    'web:app/locale.js', // region → language, currency, format
+  'variant.js':   'web:app/variant.js',// what makes two of the same product a different LINE
+
+  /* ⚠️ THE ONE THIRD-PARTY FILE ON THE COUNTER. qrcode-generator 1.4.4 (MIT), copied from node_modules so the
+     version is pinned in package.json and an upgrade shows up in a diff. A UPI QR is most needed with the line
+     down, which is exactly when a CDN cannot be reached. */
+  'qr.js':        'vendor:qrcode-generator',
+};
+
+/**
+ * ⭐ WANTED NEXT, AND WHY — measured DB-free, not yet carried. This is not a plan; it is the shortlist the
+ * plan would choose from, so the choosing is done against facts rather than memory.
+ * ⚠️ NOTHING IS ADDED TO TILL_SHIPPABLE UNTIL THE COUNTER ACTUALLY USES IT. A module vendored "ready for
+ * later" is bytes in a download and a dependency nobody is testing.
+ */
+/**
+ * ⚠️ AND TWO THAT ARE VENDORED WITHOUT BEING CARRIED: units.js and convert.js are built for the browser by
+ * vendor-till.cjs and loaded by the conversion lab, NOT by the counter — *"a cupboard that holds everything
+ * stops being a cupboard."* Being in /engine/ is not the same as being on the till, and the key set above is
+ * what tells them apart.
+ */
+const TILL_CANDIDATES = [
+  'points.js',           // ⚠️ declared shippable in the first draft of this list and NOT on the counter. A point
+                         //   is not money and the shapes refuse each other — wanted the day the till pays in them
+  'csv.js',              // ⭐⭐ a shopkeeper's product list is a spreadsheet. DB-free, so an installable till
+  'csv-preflight.js',    //     could load a catalogue with NO SERVER AT ALL — the shortest path to self-sustaining
+  'catalogue-columns.js',//     what columns a catalogue has, and what a file may not set
+  'column-rules.js',
+  'itemstatus.js',       // available / unavailable / retired — already the counter's own vocabulary
+  'availability.js',
+  'identity.js',         // zero requires. The counter could mint its own product ids offline
+  'handle.js',           // and know what a shop is called across networks
+  'customer-groups.js',  // 'only for' a segment — the offers the counter already shows
+  'quick-keys.js',       // hide-scope and offline-replay rules the counter half-reimplements today
+  'measure.js', 'match.js', 'inventory.js',
+];
+
+module.exports = { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OTHER, PENDING_LIBS,
+  TILL_SHIPPABLE, TILL_CANDIDATES };
 
