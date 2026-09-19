@@ -497,6 +497,30 @@
   .todorow span{flex:1;min-width:0;overflow-wrap:anywhere}
   .todorow.done span{text-decoration:line-through;color:var(--dim)}
   .todox{border:0;background:transparent;color:var(--dim);cursor:pointer;font:inherit;padding:4px 6px;border-radius:8px}
+  /* ── ⭐ TO DO ([TILL-79]) ─────────────────────────────────────────────────────────────────────────── */
+  /**
+   * ⚠⚠ `.dlg label` BEATS `.todorow` ON SPECIFICITY (0,1,1 against 0,1,0), so inside the popup the row was
+   * display:block and the ✕ fell to a line of its own under every item that had a due time. The rule was
+   * there and simply never applied — measured, not guessed. [[feedback-name-vs-behaviour]]
+   */
+  .dlg .todorow{display:flex;align-items:flex-start;gap:8px;min-height:40px;padding:4px 2px}
+  .dlg .todorow input[type=checkbox]{margin-top:5px;flex:none;width:18px;height:18px}
+  .dlg .todorow .todox{flex:none;margin-inline-start:auto}
+  .todorow .tt{flex:1;min-width:0;cursor:text}
+  .todorow .tw{display:block;font-style:normal;color:var(--dim);font-size:.8em}
+  /* ⚠️ OVERDUE IS AMBER, NOT RED. Nothing on a to-do list is an error; it is a thing not done yet. */
+  .todorow.due .tw{color:var(--warn);font-weight:700}
+  .todorow.editing{padding:4px 0}
+  .tododone{margin-top:10px}
+  .tododone summary{color:var(--dim);font-size:.85em;cursor:pointer;padding:4px 0}
+  .todohead .due{color:var(--warn);font-weight:700}
+  .pill.wide{width:100%;margin-top:8px;text-align:start}
+  /* the strip's own count — the one number there that a shopkeeper put on it themselves */
+  .side .sicons button{position:relative}
+  .sbadge{position:absolute;top:2px;inset-inline-end:2px;min-width:16px;height:16px;border-radius:99px;
+          background:var(--ok);color:var(--on-accent);font-style:normal;font-size:10px;font-weight:700;
+          display:grid;place-items:center;padding:0 3px}
+  .sbadge.due{background:var(--warn)}
   .todox:hover{background:var(--warn-tint);color:var(--warn)}
   /* the choices, under the name on the bill — quiet, because the dish is what is being read */
   /* ⭐ the choices, under the name on the bill — quiet, because the dish is what is being read, but it is a
@@ -1667,6 +1691,20 @@
   ⭐⭐⭐ SCREEN STYLE ([TILL-77], png/DisplaySettings.png). Every visual decision in one place, with a preview
   drawn by the real tile renderer and an Apply that means nothing changed until you pressed it.
 -->
+<!-- ⭐⭐ TO DO ([TILL-79]) — its own popup, its own menu item, list and edit in one place -->
+<dialog id="tododlg" class="dlg" data-testid="till-todo-dlg">
+  <h3>To do <span class="u" id="todocount"></span></h3>
+  <div class="todoadd">
+    <input id="todoin" class="todoin" data-testid="till-todo-add" maxlength="120"
+           placeholder="Add something to do… try &quot;bank the cash tomorrow 4pm&quot;"
+           onkeydown="todoAddKey(event,this)">
+    <button class="mic todomic" id="mictodo" data-testid="till-todo-mic" title="speak it"
+            aria-label="speak a to-do" onclick="listen('todoin')">🎤</button>
+    <button class="pri" data-testid="till-todo-save" onclick="todoAdd(document.getElementById('todoin'))">Add</button>
+  </div>
+  <div id="todobody"></div>
+  <div class="dlgbtns"><button onclick="todoClose()">Close · Esc</button></div>
+</dialog>
 <dialog id="styledlg" class="dlg wide" data-testid="till-style">
   <h3>Screen style <span class="u" id="styledev"></span></h3>
   <div class="stylewrap">
@@ -4005,6 +4043,12 @@ function stopWrongShop(bad){
  */
 var TILL_OPS = [
   { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills' },
+  /**
+   * ⭐ TO DO ([TILL-79]) — its own operation, so it appears on the icon strip AND in the hub's list from one
+   * declaration. It sits second because a shopkeeper opens it first thing and last thing, and because its
+   * badge is the only one here that counts something they themselves wrote down.
+   */
+  { id: 'todo',     icon: '☑',  label: 'To do',              hint: 'this counter\u2019s own list \u00b7 a day or time becomes a reminder', fn: 'todoOpen' },
   { id: 'dayreport', icon: '📊', label: "Today's sales",      hint: 'the whole day, in a table you can print',       fn: 'dayReport' },
   { id: 'screen',   icon: '📺', label: 'Shop screen',        hint: 'your offers as a sign for a TV',                fn: 'openScreen' },
   { id: 'refresh',  icon: '↻',  label: 'Read the shop again', hint: 'new prices and products · F4',                 fn: 'refresh' },
@@ -4230,6 +4274,9 @@ function dayOpened(){ return ls.get(shopLs('cb_till_daystart'), '') === bizDay()
 async function beginDay(){
   ls.set(shopLs('cb_till_daystart'), bizDay());
   todoSweep();          /* yesterday's finished items go; anything unfinished carries into today */
+  /* ⭐ THE REMINDER ([TILL-79]) — in the app, never a browser permission. A counter's page is open all day,
+     so a minute is often enough and costs nothing. */
+  try { todoNudge(); setInterval(todoNudge, 60000); } catch (_) {}
   MENU_OPEN_SEC = 'day';
   paintMenu();
   /* the practical half: bring the shop's prices and products up to date, if the line is there */
@@ -4331,7 +4378,9 @@ function menuDayBody(){
     + (img ? '<button class="daylink" data-testid="till-day-img-change" onclick="dayImgPick()">Change picture</button>'
            + '<button class="daylink" onclick="dayImgClear()">Remove</button>' : '')
     + '</div>'
-    + menuTodoBody()
+    /* ⚠️ A COUNT AND A DOOR, NOT THE LIST ([TILL-79]). The list and the editing are in the popup now; a
+       section that redraws the whole list is the content Athi asked to have taken out of the menu. */
+    + menuTodoSummary()
     + '</div>';
 }
 /**
@@ -4352,44 +4401,159 @@ function todoRead(){
 }
 function todoWrite(list){ try { ls.set(shopLs('cb_till_todo'), JSON.stringify(list.slice(0, 40))); } catch (_) {} }
 function todoAdd(el){
-  var t = String((el && el.value) || '').trim(); if (!t) return;
-  var list = todoRead(); list.push({ t: t.slice(0, 120), done: false, at: bizDay() });
+  var raw = String((el && el.value) || '').trim(); if (!raw) return;
+  /* ⭐ the sentence is read here — see todoParse(). The row then SHOWS what it took. */
+  var p = todoParse(raw);
+  var list = todoRead();
+  list.push({ t: p.t.slice(0, 120), done: false, at: bizDay(), due: p.due || null });
   todoWrite(list); if (el) el.value = '';
-  paintMenu();
-  var box = document.querySelector('[data-testid="till-todo-add"]'); if (box) box.focus();
+  todoPaint(); paintMenu(); try { paintSide(); } catch (_) {}
+  var box = document.getElementById('todoin'); if (box) box.focus();
 }
 function todoAddKey(e, el){ if (e && e.key === 'Enter') { e.preventDefault(); todoAdd(el); } }
-function todoTick(i){ var l = todoRead(); if (!l[i]) return; l[i].done = !l[i].done; todoWrite(l); paintMenu(); }
-function todoDrop(i){ var l = todoRead(); if (!l[i]) return; l.splice(i, 1); todoWrite(l); paintMenu(); }
+/* ⚠️ BOTH SURFACES REPAINT. The popup is where the work happens and the hub carries the count — a tick that
+   moved one and not the other is how a badge comes to disagree with its own list. */
+function todoTick(i){ var l = todoRead(); if (!l[i]) return; l[i].done = !l[i].done; todoWrite(l); todoPaint(); paintMenu(); try { paintSide(); } catch (_) {} }
+function todoDrop(i){ var l = todoRead(); if (!l[i]) return; l.splice(i, 1); todoWrite(l); todoPaint(); paintMenu(); try { paintSide(); } catch (_) {} }
 /** swept at the next day-open — yesterday's finished items go, anything unfinished carries over */
 function todoSweep(){ todoWrite(todoRead().filter(function(x){ return !x.done || x.at === bizDay(); })); }
-function menuTodoBody(){
-  var list = todoRead(), left = list.filter(function(x){ return !x.done; }).length;
-  return '<div class="todo" data-testid="till-todo">'
-    + '<div class="todohead"><b>To do</b>' + (list.length ? '<span>' + left + ' left</span>' : '') + '</div>'
-    + (list.length
-        ? '<div class="todolist">' + list.map(function(x, i){
-            return '<label class="todorow' + (x.done ? ' done' : '') + '" data-testid="till-todo-' + i + '">'
-              + '<input type="checkbox"' + (x.done ? ' checked' : '') + ' onchange="todoTick(' + i + ')">'
-              + '<span>' + esc(x.t) + '</span>'
-              + '<button class="todox" title="remove" aria-label="remove" onclick="event.preventDefault();todoDrop(' + i + ')">✕</button>'
-              + '</label>';
-          }).join('') + '</div>'
-        : '')
-    /**
-     * ⭐ SAY IT INSTEAD (Athi, 2026-09-18: *"to do, with mic"*). Hands are busy at a counter and a thought
-     * arrives mid-sale, so the list takes a voice the same way the search box does — the SAME listen(), so
-     * there is one speech path on this page, not two. ⚠️ It needs the line (the audio reaches a speech
-     * service) and listen() already says so plainly when it is down; the typing never stops working.
-     */
-    + '<div class="todoadd">'
-    + '<input id="todoin" class="todoin" data-testid="till-todo-add" placeholder="Add something to do…" maxlength="120"'
-    + ' onkeydown="todoAddKey(event,this)" onblur="todoAdd(this)">'
-    + '<button class="mic todomic" id="mictodo" data-testid="till-todo-mic" title="speak it"'
-    + ' aria-label="speak a to-do" onclick="listen(\'todoin\')">🎤</button>'
+/**
+ * ⭐⭐ QUICK ADD THAT READS THE SENTENCE — the one thing that decides whether a list gets kept.
+ * *"bank the cash tomorrow 4pm"* → "bank the cash", due tomorrow 16:00.
+ * ⚠️⚠️ IT ONLY EVER TAKES WORDS OFF THE END, and only words it is certain about: today / tomorrow / tonight,
+ * and a clock time. A parser that guesses at a date inside a sentence is worse than none — it silently
+ * rewrites what somebody wrote. Anything it does not recognise stays part of the text, and the row SHOWS the
+ * due time it took so a person can see it was read correctly. [[feedback-loose-until-stamped]]
+ */
+function todoParse(raw){
+  var t = String(raw || '').trim();
+  var day = null, hh = null, mm = 0;
+  /* a time at the very end: 4pm · 4:30pm · 16:00 */
+  var mt = /\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i.exec(t);
+  if (mt) {
+    var h = Number(mt[1]), ap = (mt[3] || '').toLowerCase();
+    var plausible = ap ? (h >= 1 && h <= 12) : (h >= 0 && h <= 23 && (mt[2] !== undefined));
+    if (plausible) {
+      hh = h; mm = Number(mt[2] || 0);
+      if (ap === 'pm' && hh < 12) hh += 12;
+      if (ap === 'am' && hh === 12) hh = 0;
+      t = t.slice(0, mt.index).trim();
+    }
+  }
+  /* then a day word, also only at the end */
+  var md = /\s+(today|tonight|tomorrow)$/i.exec(t);
+  if (md) { day = md[1].toLowerCase(); t = t.slice(0, md.index).trim(); }
+  if (!day && hh === null) return { t: String(raw || '').trim(), due: null };
+  /* ⚠️ a time with no day means TODAY, unless that is already past — then it is tomorrow, which is what a
+     person means at 6pm when they type "7am". */
+  var d = new Date();
+  if (day === 'tomorrow') d.setDate(d.getDate() + 1);
+  if (hh === null) { hh = (day === 'tonight') ? 20 : 9; mm = 0; }
+  d.setHours(hh, mm, 0, 0);
+  if (!day && d.getTime() < Date.now()) d.setDate(d.getDate() + 1);
+  return { t: t || String(raw || '').trim(), due: d.toISOString() };
+}
+/** the due time in the words a counter uses — "today 16:00", "tomorrow 07:00", "overdue" */
+function todoWhen(x){
+  if (!x || !x.due) return '';
+  var d = new Date(x.due); if (isNaN(d)) return '';
+  var hhmm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  var day0 = new Date(); day0.setHours(0, 0, 0, 0);
+  var days = Math.round((new Date(d).setHours(0, 0, 0, 0) - day0.getTime()) / 86400000);
+  var word = days === 0 ? 'today' : (days === 1 ? 'tomorrow' : (days < 0 ? 'was due' : 'in ' + days + ' days'));
+  return word + ' ' + hhmm;
+}
+function todoOverdue(x){ return !!(x && !x.done && x.due && new Date(x.due).getTime() < Date.now()); }
+function todoLeft(){ return todoRead().filter(function(x){ return !x.done; }).length; }
+function todoDueNow(){ return todoRead().filter(todoOverdue).length; }
+/**
+ * ⭐⭐ THE REMINDER, IN THE APP ([TILL-79]). Athi: *"Reminder can be added in the to do if possible."*
+ * ⚠️⚠️ NOT A BROWSER NOTIFICATION. Every one of those asks permission, and a permission dialog over a till
+ * mid-sale is a fault. A counter's page is open all day — so the item turns amber, the menu item carries the
+ * count, and a toast says it ONCE per item. Said twice it becomes noise and gets ignored.
+ */
+var TODO_TOLD = {};
+function todoNudge(){
+  var due = todoRead().filter(todoOverdue);
+  due.forEach(function(x){
+    var id = (x.at || '') + '|' + x.t;
+    if (TODO_TOLD[id]) return;
+    TODO_TOLD[id] = 1;
+    toastLine('To do \u2014 ' + x.t + ' (' + todoWhen(x) + ')');
+  });
+  try { paintSide(); } catch (_) {}
+}
+function todoOpen(){
+  todoPaint();
+  var d = document.getElementById('tododlg');
+  if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+  var box = document.getElementById('todoin'); if (box) setTimeout(function(){ box.focus(); }, 30);
+}
+function todoClose(){
+  TODO_EDIT = -1;
+  var d = document.getElementById('tododlg');
+  if (d && d.open) { try { d.close(); } catch (_) {} }
+}
+/** ⭐ EDIT IN PLACE — tap the words, change them, Enter. No second screen to change one line. */
+var TODO_EDIT = -1;
+function todoEdit(i){ TODO_EDIT = i; todoPaint();
+  var el = document.getElementById('todoedit'); if (el) { el.focus(); el.select(); } }
+function todoEditKey(e, i, el){
+  if (e.key === 'Escape') { e.preventDefault(); TODO_EDIT = -1; todoPaint(); return; }
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  var l = todoRead(); if (!l[i]) return;
+  var v = String(el.value || '').trim();
+  /* ⚠️ an emptied line is a DELETE, which is what emptying it means — and it is one undoable keystroke away */
+  if (!v) l.splice(i, 1);
+  else { var p = todoParse(v); l[i].t = p.t; if (p.due) l[i].due = p.due; }
+  todoWrite(l); TODO_EDIT = -1; todoPaint();
+}
+function todoPaint(){
+  var box = document.getElementById('todobody'); if (!box) return;
+  var list = todoRead();
+  var open = [], done = [];
+  list.forEach(function(x, i){ (x.done ? done : open).push({ x: x, i: i }); });
+  var cnt = document.getElementById('todocount');
+  if (cnt) cnt.textContent = list.length ? (todoLeft() + ' left'
+    + (todoDueNow() ? ' \u00b7 ' + todoDueNow() + ' due' : '')) : '';
+  var row = function(r){
+    var x = r.x, i = r.i;
+    if (i === TODO_EDIT) {
+      return '<div class="todorow editing"><input id="todoedit" class="todoin" maxlength="120"'
+        + ' data-testid="till-todo-edit" value="' + esc(x.t) + '"'
+        + ' onkeydown="todoEditKey(event,' + i + ',this)"></div>';
+    }
+    return '<label class="todorow' + (x.done ? ' done' : '') + (todoOverdue(x) ? ' due' : '') + '"'
+      + ' data-testid="till-todo-' + i + '">'
+      + '<input type="checkbox"' + (x.done ? ' checked' : '') + ' onchange="todoTick(' + i + ')">'
+      + '<span class="tt" onclick="event.preventDefault();todoEdit(' + i + ')" title="tap to change">'
+      + esc(x.t) + (x.due ? '<i class="tw">' + esc(todoWhen(x)) + '</i>' : '') + '</span>'
+      + '<button class="todox" title="remove" aria-label="remove" onclick="event.preventDefault();todoDrop(' + i + ')">\u2715</button>'
+      + '</label>';
+  };
+  box.innerHTML = (open.length ? '<div class="todolist">' + open.map(row).join('') + '</div>'
+      : '<p class="u" data-testid="till-todo-empty">Nothing to do. Type above \u2014 a day, or a time, at the end becomes a reminder.</p>')
+    /* ⭐ done is visible enough to feel finished and quiet enough to stay out of the way */
+    + (done.length ? '<details class="tododone"' + (done.length < 4 ? ' open' : '') + '>'
+        + '<summary>' + done.length + ' done</summary>'
+        + '<div class="todolist">' + done.map(row).join('') + '</div></details>' : '');
+}
+/** ⭐ how much is left, and the way in — everything else about the list is in the popup ([TILL-79]) */
+function menuTodoSummary(){
+  var left = todoLeft(), due = todoDueNow();
+  return '<div class="todo" data-testid="till-todo-summary">'
+    + '<div class="todohead"><b>To do</b>'
+    + (left ? '<span' + (due ? ' class="due"' : '') + '>' + left + ' left'
+              + (due ? ' \u00b7 ' + due + ' due' : '') + '</span>' : '<span>nothing</span>')
     + '</div>'
+    + '<button class="pill wide" data-testid="till-open-todo" onclick="fromMenu(todoOpen)">'
+    + (left ? '\u2611 Open the list' : '\u2611 Add something to do') + '</button>'
     + '</div>';
 }
+/* ⚠️ menuTodoBody() DREW THE LIST INSIDE THE HUB and is deleted, not parked: it is exactly the content
+   Athi asked to have taken out of the menu, and a second renderer of one list is a second thing to keep in
+   step. The popup (todoPaint) is the only place the list is drawn now. [[feedback-no-duplicate-functions]] */
 /**
  * ⭐⭐ TODAY, FROM THIS COUNTER'S OWN BILLS. Nothing here is fetched: the bills are already on the device
  * because that is how this counter bills at all, so the day reads the same with the line up or down.
@@ -5010,8 +5174,15 @@ function paintSide(){
   TILL_OPS.forEach(function(op){
     if (CARE_OPS.indexOf(op.id) >= 0) return;
     if (op.when === 'install' && !_install) return;
+    /* ⭐ a strip icon may carry a count — today only To do does, because it is the only thing here counting
+       something the shopkeeper wrote down themselves. Overdue turns it amber. */
+    var badge = '';
+    if (op.id === 'todo') {
+      var left = todoLeft(), due = todoDueNow();
+      if (left) badge = '<i class="sbadge' + (due ? ' due' : '') + '">' + left + '</i>';
+    }
     b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + op.hint) + '"'
-      + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;)">' + op.icon + '</button>');
+      + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;)">' + op.icon + badge + '</button>');
   });
   el.innerHTML = b.join('');
 }

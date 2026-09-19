@@ -456,6 +456,41 @@ it('⭐⭐⭐ the choices on a bill line can be changed, and the money follows t
 });
 
 /**
+ * ⭐⭐ TO DO, AS ITS OWN THING ([TILL-79]). Athi: *"a separate popup for list and edit… a separate item in the
+ * menu… Reminder can be added in the to do if possible."*
+ */
+it('⭐⭐ the to-do is one list in one place, and it never asks the browser for permission', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⭐ its own operation — one TILL_OPS entry puts it on the strip AND in the hub, with one set of words */
+  assert.ok(/id: 'todo',/.test(page), 'To do is no longer its own operation, so the strip and the hub disagree');
+  assert.ok(page.indexOf("fn: 'todoOpen'") > 0, 'the To do entry does not open the popup');
+  /**
+   * ⚠️⚠️ ONE RENDERER FOR ONE LIST. menuTodoBody() used to draw the whole list inside the hub — the content
+   * Athi asked to have removed — and leaving it behind would be a second renderer to drift from the popup.
+   */
+  assert.ok(page.indexOf('function menuTodoBody(') < 0,
+    'the hub draws the whole to-do list again — that is the content that was asked to be taken out');
+  assert.ok(page.indexOf('function todoPaint(') > 0, 'the popup has no renderer');
+  assert.ok(page.indexOf('function menuTodoSummary(') > 0, 'the hub no longer carries the count');
+  /**
+   * ⚠️⚠️⚠️ THE REMINDER IS IN THE APP. Every well-known to-do app asks for notification permission; a
+   * permission dialog over a till during a sale is a fault, not a feature — the same rule registration
+   * follows. A counter's page is open all day, so an amber row, a count and one toast are enough.
+   */
+  const code = page.split('/*').map((part, n) => (n === 0 ? part : part.slice(part.indexOf('*/') + 2))).join(' ');
+  for (const forbidden of ['Notification.requestPermission', 'new Notification(', 'showNotification('])
+    assert.ok(code.indexOf(forbidden) < 0, 'the to-do reaches for ' + forbidden + ' — a till must not prompt');
+  assert.ok(page.indexOf('function todoNudge(') > 0, 'nothing ever reminds anybody, so a due time means nothing');
+  /**
+   * ⚠️ THE QUICK ADD ONLY TAKES WORDS OFF THE END, and only ones it is sure of. A parser that guesses at a
+   * date inside a sentence silently rewrites what somebody wrote.
+   */
+  const parse = page.slice(page.indexOf('function todoParse('), page.indexOf('function todoWhen('));
+  assert.ok(parse.indexOf('today|tonight|tomorrow') > 0, 'the quick add no longer reads a day off the end');
+  assert.ok(parse.indexOf('$/i') > 0, 'the quick add matches mid-sentence — it would rewrite what was typed');
+});
+
+/**
  * ⭐⭐⭐ PAY IS A CARD THAT COMES TO YOU ([TILL-59], png/FullTabletPay.png) — the answer to Athi's *"the pay
  * panel is at very bottom, so i was searching where it is"*, which I first answered by talking him out of it.
  */
