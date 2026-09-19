@@ -444,6 +444,18 @@
   /* ⚠️ A CHEVRON THAT TURNS IS A STATE YOU CAN SEE WITHOUT READING. One glyph, rotated — not two glyphs,
      which is how › and ⌄ ended up different weights and sizes in the same column. */
   .mch{display:inline-flex;transition:transform .16s ease;font-size:1.15em;line-height:1}
+  /**
+   * ⭐ THE HEADING'S OWN LINK ([TILL-88]) — beside the name, because that is where Athi asked for it:
+   * *"Screen space Preview hyperlinked."* Anchored to the TOP of the section rather than its middle, so it
+   * stays beside the title when the section is open and tall.
+   * ⚠️ .msec is position:relative (set for the open rail, [TILL-85]) — this depends on that.
+   */
+  .msec .mlink{position:absolute;top:14px;inset-inline-end:40px;z-index:2;
+        border:1px solid rgba(var(--mh),.45);background:rgba(var(--mh),.10);color:rgb(var(--mh));
+        border-radius:999px;padding:6px 14px;min-height:34px;font:inherit;font-size:.84em;font-weight:700;
+        cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .msec .mlink:hover{background:rgba(var(--mh),.2)}
+  .msec .mlink:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
   .msec.open .mch{transform:rotate(90deg)}
   .mrow:focus-visible,.mact:focus-visible{outline:3px solid var(--ok);outline-offset:-3px;border-radius:11px}
   @media (prefers-reduced-motion:reduce){ .msec,.mch,.mrow .mi{transition:none} }
@@ -1405,6 +1417,13 @@
   #stcanvas .m-open{margin-inline-start:auto;background:var(--ink);color:var(--card);border-radius:9px;
                     padding:6px 12px;font-size:.82em;font-weight:700;white-space:nowrap}
   #stcanvas .sk-grid{flex:1;align-content:start;min-height:0;overflow:hidden}
+  /* ⭐ THE SHELF UNDER THE KEYS ([TILL-88]) — without it, a preset that shrinks the key grid would look like
+     a screen with a hole in it instead of a screen showing more products. */
+  #stcanvas .m-shelf{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+  #stcanvas .m-srow{display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-top:1px solid var(--line);
+                    font-size:.86em;white-space:nowrap}
+  #stcanvas .m-srow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+  #stcanvas .m-srow span{color:var(--dim)}
   #stcanvas .m-short{flex:none;border-top:1px solid var(--line);padding-top:8px;color:var(--dim);font-size:.78em;
                      white-space:nowrap;overflow:hidden}
   #stcanvas .m-bill{flex:none;display:flex;flex-direction:column;gap:8px;padding:12px 14px;
@@ -4653,7 +4672,14 @@ var TILL_MENU = [
   { id: 'alerts',  icon: '⚡', title: 'Alerts',        sum: 'what needs you',                        alerts: true },
   { id: 'bills',   icon: '🧾', title: 'Bills',         sum: "today's bills · why one is stuck",      ops: ['bills', 'stuck'] },
   { id: 'shop',    icon: '🏷️', title: 'Shop & prices', sum: 'read the shop again · the TV sign',     ops: ['refresh', 'screen'] },
-  { id: 'look',    icon: '◐',  title: 'How it looks',  sum: 'text size · colours · what shows',      look: true },
+  /**
+   * ⭐ "SCREEN", NOT "HOW IT LOOKS" ([TILL-88]). Athi: *"instead of how it looks, can we change to screen,
+   * with screen icon, also state Preview as hyperlink there itself."* The section is named after the THING
+   * it governs, the way every other section here is — Bills, Shop & prices, This counter — and the way
+   * straight to the preview sits in the heading rather than one fold further in.
+   */
+  { id: 'look',    icon: '🖥️', title: 'Screen',        sum: 'size · colours · room · what shows',
+    look: true, link: { label: 'Preview', fn: 'styleOpen', why: 'see the whole screen before anything changes' } },
   { id: 'shopdet', icon: '🏪', title: 'Shop details',  sum: 'address · GSTIN · money · last read',     shopdet: true },
   { id: 'counter', icon: '🧑', title: 'This counter',  sum: 'a break · settings for this till',      ops: ['break-menu', 'settings', 'install'] },
   /* ⚠️ LAST, AND IT LOOKS LIKE IT. §4: a warm-red bordered box, and this exact sentence, because both of these
@@ -5526,46 +5552,26 @@ function paintMenu(){
          * in ⚙ Settings. That repetition is what Athi found: *"settings has multiple item replicated."*
          */
         /**
-         * ⚠️⚠️ IT USED TO READ "Screen style — preset, tiles, colours, photos…" ([TILL-84]). Athi:
-         * *"i didn't really understood, screen style, preset, tiles text in the menu."* Three of those four
-         * words are OUR names for OUR registries. A door says where it goes and what you will be able to do
-         * when you get there — it does not list the variables behind it.
-         * [[feedback-write-for-the-shopkeeper]] [[feedback-text-budget]]
+         * ⚠️ THE DOOR MOVED TO THE HEADING ([TILL-88]). It was a full-width button here reading "Change how
+         * this counter looks", two inches under a "Preview" link that opened the same dialog — two ways in,
+         * which is not generosity but a question the reader has to answer. The heading's link wins because it
+         * is reachable WITHOUT unfolding the section. See TILL_MENU's `link` on the Screen section.
          */
-        + '<button class="pill wide door" data-testid="till-open-style" onclick="fromMenu(styleOpen)">'
-        + '◐ Change how this counter looks'
-        /* ⭐ the reassurance is the HINT, the same shape every other row in the hub uses for its second line */
-        + '<span>the whole screen, previewed, before anything is applied</span></button>'
         + '</div>'
         /**
          * ⭐⭐ GIVE EACH PART THE ROOM YOU WANT (png/PanelSizing.png). Five named starting points and a
          * sentence saying what is in force now. The drag bar still works and still wins.
          */
-        + '<div class="menusec" data-testid="till-panels">'
-          + '<b>Give each part the room you want</b>'
-          + '<div class="panelnow"><span id="panelwords"></span>'
-          + '<button class="pill" data-testid="till-panel-reset" onclick="panelReset()">Reset to balanced</button></div>'
-          + '<div class="panelpicks" id="panelpicks">'
-          + PANEL_ORDER.map(function(k){ var p = PANELS[k];
-              return '<button data-panel="' + k + '" data-testid="till-panel-' + k + '"'
-                + ' onclick="panelApply(\'' + k + '\')">'
-                /* ⭐ the render draws a little three-band diagram per preset — the bands are the proportions */
-                + '<span class="pband"><i style="flex:' + (p.cart ? 0 : p.keysh) + '"></i>'
-                + '<i class="l" style="flex:' + Math.max(6, 100 - p.keysh) + '"></i>'
-                + '<i class="b" style="flex:' + Math.round((0.9 / (p.split + 0.9)) * 100) + '"></i></span>'
-                + '<span class="pt"><b>' + esc(p.label) + '</b><i>' + esc(p.why) + '</i></span>'
-                + '</button>'; }).join('')
-          + '</div>'
-          + '<div class="panelrow"><span>Density</span>'
-          + ['comfortable', 'compact'].map(function(d){
-              return '<button class="pill' + (densityNow() === d ? ' on' : '') + '" data-testid="till-density-' + d + '"'
-                + ' onclick="densitySet(\'' + d + '\')">' + (d === 'compact' ? 'Compact' : 'Comfortable') + '</button>'; }).join('')
-          + '</div>'
-          /* ⚠️ "Bill on the left (left hand)" IS the hand setting two rows above — said here as the render
-             words it, and pointing at the one control rather than growing a second. */
-          + '<p class="u">Bill on the left is the <b>hand</b> setting above. Photos on keys is <b>Pictures</b>,'
-          + ' on the maintenance screen and in the quick-keys bar.</p>'
-          + '</div>'
+        /**
+         * ⚠️⚠️ THE ROOM PRESETS AND THE DENSITY ROW ARE GONE FROM HERE ([TILL-88]). Athi: *"didn't
+         * understand the meaning of balanced, bill first etc. if there a way to show case in preview, that
+         * can be good as well."* They were five ratios with a three-band diagram that plainly did not
+         * explain them — so they moved to ◍ Screen style, where they are drawn in the miniature at the
+         * real proportions like every other setting. Density went with them: it was a second copy of the
+         * studio's "Size", which is exactly the duplication Athi has twice asked to be merged.
+         * ⚠️ THE DRAG BAR ON THE REAL SCREEN STILL WORKS and still wins — see keysGripWire().
+         * [[feedback-no-duplicate-functions]] [[feedback-open-the-render-first]]
+         */
         + '<div class="menusec" data-testid="till-view-toggles"><b>Show on this counter</b>'
           /**
            * ⭐ A SHORTCUT FOR THE CHIPS BELOW IT ([TILL-81]). It used to be called "Layout" in ⚙ Settings, two
@@ -5592,6 +5598,14 @@ function paintMenu(){
       + (sec.alerts && alertCount() ? '<span class="mbadge" data-testid="till-msec-badge-alerts">' + alertCount() + '</span>' : '')
       /* ⚠️ ONE glyph, turned by CSS — two glyphs meant two weights and two sizes in one column ([TILL-85]) */
       + '<span class="mch">\u203A</span></button>'
+      /**
+       * ⭐ A WAY STRAIGHT IN, FROM THE HEADING ([TILL-88]). It is a sibling of the fold button, never inside
+       * it — a control nested in a button is both invalid and unreachable by keyboard, and pressing it would
+       * fold the section it was trying to open.
+       */
+      + (sec.link ? '<button class="mlink" data-testid="till-msec-link-' + sec.id + '"'
+          + ' title="' + esc(sec.link.why || '') + '" onclick="fromMenu(' + sec.link.fn + ')">'
+          + esc(sec.link.label) + '</button>' : '')
       + '<div class="mbody"' + (open ? '' : ' hidden') + '>'
       + (sec.careful ? '<p class="carenote">These two stop billing for a moment. Everything is sent and checked first.</p>' : '')
       + body + '</div></section>';
@@ -6937,9 +6951,13 @@ function stylePick(k, v){
  */
 var STYLE_PEND = null;
 function styleApply(){
-  var d = STYLE_DRAFT || {};
+  var d = Object.assign({}, STYLE_DRAFT || {});
+  /* ⚠️ ROOM IS NOT A SCREEN-CONFIG KEY — it goes to panelApply(), the one writer of the split and the keys
+     height, and never into the patch screenSet() stores. [[feedback-no-duplicate-functions]] */
+  var room = d.room; delete d.room;
   styleClose();
-  if (!Object.keys(d).length) return;
+  if (room) { try { panelApply(room); } catch (_) {} }
+  if (!Object.keys(d).length) { if (room) toastLine('Screen style applied to ' + tillName() + '.'); return; }
   if (typeof CART !== 'undefined' && CART.length) {
     STYLE_PEND = d;
     toastLine('Saved — the new style lands when this bill is finished.');
@@ -6992,6 +7010,17 @@ function styleRows(){
     ['density', 'Size',        'text and spacing',        K.DENSITIES]
   ];
 }
+/**
+ * ⭐⭐ ROOM IS A STYLE TOO ([TILL-88]). It does not live in the screen config — the split, the keys height
+ * and "no keys" are their own stores, written by panelApply() and by the drag bar on the real screen — so
+ * the studio carries it as its own draft key and hands it to panelApply() on Apply. One writer, still.
+ * ⚠️ IT IS STRIPPED OUT OF THE PATCH before screenSet() sees it, or the screen config grows a key that
+ * nothing resolves and the preset would come back as a stale override. [[feedback-stay-in-the-construct]]
+ */
+function styleRoom(){
+  if (STYLE_DRAFT && STYLE_DRAFT.room) return STYLE_DRAFT.room;
+  return (STYLE_SHOW === 'now') ? panelNow() : panelNow();
+}
 /** ⭐ which of the three sizes the miniature is being drawn at, and whether it shows Now or After */
 var STYLE_DEV = 'screen', STYLE_SHOW = 'after';
 /**
@@ -7035,6 +7064,14 @@ function styleScreen(cfg, dev){
   if (dev.w < 560) per = Math.min(per, 3);
   else if (dev.w < 1100) per = Math.min(per, 5);
   var tight = (cfg.density === 'compact');
+  /**
+   * ⭐⭐⭐ THE ROOM EACH PART GETS, DRAWN ([TILL-88]). Athi: *"didn't understand the meaning of balanced,
+   * bill first etc."* — and he was right not to: `split:1.10` is a ratio, and a ratio is not a screen. Here
+   * it is the actual width of the bill and the actual height of the key grid, at the real proportions.
+   */
+  var room = PANELS[(STYLE_SHOW === 'now') ? panelNow() : styleRoom()] || PANELS.balanced;
+  /* the same arithmetic panelWords() states in words: 0.9 parts of bill against `split` parts of everything else */
+  var billPc = Math.round((0.9 / (room.split + 0.9)) * 100);
   var PK = K.PICKERS[cfg.picker] || {};
   var GROUPS = [['Morning', 10], ['Afternoon', 10], ['Evening', 8], ['Night', 6]];
   /**
@@ -7049,14 +7086,27 @@ function styleScreen(cfg, dev){
                 ['Ven Pongal', 70], ['Filter Coffee', 40], ['Tea', 25], ['Buttermilk', 30],
                 ['Sugar 1 kg', 52], ['Rice 5 kg', 410], ['Oil 1 L', 172], ['Dal 1 kg', 128],
                 ['Salt 1 kg', 22], ['Soap', 38]];
+  /* ⚠️ 'No keys' IS NOT A SMALL GRID, IT IS NO GRID — a scanner shop's screen is the list and the bill */
   var rows = Math.max(2, Math.floor((shape === 'mobile' ? 4 : shape === 'tall' ? 5 : 3)));
+  if (room.cart) rows = 0;
   var keys = SAMPLE.slice(0, Math.min(SAMPLE.length, per * rows)).map(function(p, i){
     /* ⚠️ NO UNIT. The spec names this one: ₹352.00 / each is LIST styling on a TILE — a key is read from
        across the counter, where the unit is noise. It belongs on the shelf row, which has room to be read. */
     return K.tile(cfg.tile, { name: p[0], price: money(p[1]), image: null,
       colour: K.groupColour(i), showPhoto: !!cfg.photos, qty: 0, attrs: 'tabindex="-1"' });
   }).join('');
-  var grid = '<div class="sk-grid" style="--sk-per-row:' + per + ';gap:' + (tight ? 6 : 10) + 'px">' + keys + '</div>';
+  /**
+   * ⚠️ THE KEY GRID TAKES ITS SHARE OF THE HEIGHT, and the shelf list takes the rest — which is what
+   * `keysh` actually means and what "Search first" (16%) versus "Keys first" (58%) actually looks like.
+   */
+  var grid = room.cart ? ''
+    : '<div class="sk-grid" style="--sk-per-row:' + per + ';gap:' + (tight ? 6 : 10) + 'px'
+      + ';flex:0 0 ' + Math.max(12, Math.min(82, room.keysh)) + '%">' + keys + '</div>';
+  /* ⭐ and the shelf underneath it, which is the half "Search first" is about — without it the preset that
+     shrinks the keys would look like a screen with a hole in it rather than a screen full of products */
+  var shelf = '<div class="m-shelf">' + SAMPLE.slice(0, 7).map(function(p){
+      return '<div class="m-srow"><b>' + esc(p[0]) + '</b><span>' + money(p[1]) + '</span></div>'; }).join('')
+    + '</div>';
   /* ── the picker, drawn WHERE IT ACTUALLY APPEARS ─────────────────────────────────── */
   var chips = GROUPS.map(function(g, i){
     return '<span class="m-chip" style="' + gc(i) + '">' + esc(g[0]) + ' ' + g[1] + '</span>';
@@ -7090,7 +7140,7 @@ function styleScreen(cfg, dev){
   var lines = BASKET.map(function(b){
     return '<div class="m-line"><b>' + esc(b[0]) + '</b><u>' + b[1] + ' ×</u><span>' + money(b[2]) + '</span></div>';
   }).join('');
-  var bill = '<div class="m-bill" style="width:' + (shape === 'wide' ? '30%' : '100%')
+  var bill = '<div class="m-bill" style="width:' + (shape === 'wide' ? (billPc + '%') : '100%')
     + (shape === 'wide' ? '' : ';border-inline-start:0;border-top:1px solid var(--line)') + '">'
     + (shape === 'mobile' ? '' : '<div class="m-line" style="color:var(--dim)"><b>Customer (optional)</b></div>')
     + lines
@@ -7100,8 +7150,9 @@ function styleScreen(cfg, dev){
     + '<div class="m-sync">all bills sent · last at 3:41 pm</div>'
     + '</div>';
   var main = '<div class="m-main" style="gap:' + (tight ? 7 : 10) + 'px;padding:' + (tight ? '9px 11px' : '12px 14px') + '">'
-    + (rail || strip ? '' : '<div class="m-chips">' + chips + top + '</div>')
+    + (rail || strip || room.cart ? '' : '<div class="m-chips">' + chips + top + '</div>')
     + grid
+    + shelf
     + '<div class="m-short">F2 search · F4 customer · F9 pay · Esc clear</div>'
     + '</div>';
   return '<div class="m-top"><span class="m-shop">' + esc((S && S.shop && S.shop.name) || 'Your shop') + '</span>'
@@ -7142,6 +7193,14 @@ function styleDiff(){
   if (now.density !== next.density) out.push([((K.DENSITIES[next.density] || {}).label || '') + ' spacing',
     next.density === 'compact' ? 'tighter rows — more on screen, smaller targets'
                                : 'roomier rows — easier to hit, fewer on screen']);
+  var rm = STYLE_DRAFT && STYLE_DRAFT.room;
+  if (rm && rm !== panelNow()) {
+    var pr = PANELS[rm] || {};
+    out.push([(pr.label || '') + ' — ' + (pr.why || ''),
+      pr.cart ? 'no quick keys at all; the list and the bill take the screen'
+              : Math.round((0.9 / (pr.split + 0.9)) * 100) + '% of the width to the bill, '
+                + pr.keysh + '% of the height to the keys']);
+  }
   if (!!now.photos !== !!next.photos) out.push([next.photos ? 'Photos on the quick keys' : 'No photos on the quick keys',
     next.photos ? 'faster to aim at from a distance' : 'the names are the fastest thing to read']);
   return out;
@@ -7394,6 +7453,19 @@ function stylePaint(){
      * ⚠️ THE KEYS ANSWER IS THE DRAFT'S (nothing moves until Apply); the LIST answer writes at once, because it
      * is not part of the style being previewed and a draft nobody can see the effect of is just a delay.
      */
+    /**
+     * ⭐⭐ ROOM ([TILL-88]) — the five that used to sit in the hub with a three-band diagram nobody could
+     * read. The hint says what the setting IS; the preview says what each answer does, which is the only
+     * explanation that ever worked for this one.
+     */
+    + '<div class="strow' + (panelNow() !== styleRoom() ? ' changed' : '') + '" data-testid="till-style-room">'
+    + '<b>Room</b><span class="hint">how much of the screen each part gets</span><span class="sc">'
+    + PANEL_ORDER.map(function(k){
+        var p = PANELS[k];
+        return '<button class="schip' + (styleRoom() === k ? ' on' : '') + '" data-testid="till-style-room-' + k + '"'
+          + ' title="' + esc(p.why) + '" onclick="stylePick(\'room\',\'' + k + '\')">' + esc(p.label) + '</button>';
+      }).join('')
+    + '</span></div>'
     + '<div class="strow' + (!!applied.photos !== !!cfg.photos ? ' changed' : '') + '" data-testid="till-style-photos">'
     + '<b>Photos</b><span class="hint">where pictures show</span><span class="sc">'
     + '<button class="schip' + (cfg.photos ? ' on' : '') + '" data-testid="till-style-photos-keys"'
