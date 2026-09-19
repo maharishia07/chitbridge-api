@@ -27,6 +27,7 @@ const GUARDS = [
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
   'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
+  'xlsx-write.test.js',       // a workbook Excel will open — every part it needs, and a code keeps its leading zero
   'write-limits.test.js',     // a door that writes many records per request is rate-limited, and keyed by the key
   'categories.test.js',       // a product CITES its category; nothing writes the legacy single-category key
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax

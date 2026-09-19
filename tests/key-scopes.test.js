@@ -71,7 +71,9 @@ const EXPECT = {
                      /* ⭐ the starter catalogue — a shop open for business on the day it registers */
                      'POST /api/till/catalogue', 'GET /api/till/catalogue/blueprints',
                      /* ⭐ the upload, read then committed — the back office's own import, reached from a counter */
-                     'POST /api/products/import/preflight', 'POST /api/products/import'] },
+                     'POST /api/products/import/preflight', 'POST /api/products/import',
+                     /* ⭐ and the workbook it should start from */
+                     'GET /api/products/workbook.xlsx'] },
   connector: { why: 'a program on a shop PC: products up, orders down, the bell',
              allow: ['GET /api/products', 'PATCH /api/products/abc', 'GET /api/chits/inbox', 'POST /api/events/ticket'] },
   offers:  { why: 'the offers engine as a service', allow: [] },

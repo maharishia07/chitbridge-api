@@ -13133,6 +13133,38 @@ var UP = { csv: '', xlsx: '', name: '', headerRow: null, report: null, decisions
  * first" is the instruction that stops a shop opening today.
  * ⚠️ .xls (the 1997 format) is NOT a zip and is not offered; the server says so in words if one arrives.
  */
+/**
+ * ── ⭐⭐ THE WORKBOOK TO START FROM ([TILL-115]) ────────────────────────────────────
+ *
+ * The shop's own catalogue, its own categories WITH THEIR IDS, and the unit master — all generated from the
+ * database, which is what "download first" means: the database is the truth and the sheet is a round trip.
+ *
+ * ⚠️ IT NEEDS THE LINE, like the rest of setup, and says so rather than handing over an empty file.
+ * ⚠⚠ FETCHED AS A BLOB, never through tillGet — that helper parses JSON, and a workbook handed to JSON.parse
+ * is an error message where a file should be.
+ */
+async function workbookGet(){
+  var key = HOST && HOST.key;
+  var url = (HOST && HOST.api ? HOST.api : '') + '/api/products/workbook.xlsx';
+  try {
+    /* ⚠️⚠️ fetchBy, NEVER bare fetch — a counter request that can hang for ever is a dialog a shopkeeper
+       cannot get out of on a bad line. snapshot-wire enforces this across the whole page, and caught it here. */
+    var r = await fetchBy(url, key ? { headers: { 'X-Api-Key': key } } : {}, SLOW);
+    if (!r.ok) throw new Error('ChitBridge answered ' + r.status);
+    var blob = await r.blob();
+    var href = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = href;
+    link.download = 'catalogue-' + new Date().toISOString().slice(0, 10) + '.xlsx';
+    document.body.appendChild(link); link.click(); link.remove();
+    /* ⚠️ REVOKED — a counter left open all day would otherwise hold every download it ever made */
+    setTimeout(function(){ try { URL.revokeObjectURL(href); } catch (_) {} }, 10000);
+    startSay('Downloaded. Edit it, then choose “I already have a list” to bring it back.', false);
+  } catch (e) {
+    startSay('The sheet could not be downloaded — ' + ((e && e.message) || 'the line could not be reached')
+      + '. Setting up needs the line once; selling afterwards does not.', true);
+  }
+}
 function upPick(){
   var i = document.createElement('input');
   i.type = 'file';
@@ -13418,6 +13450,16 @@ async function startOpen(){
   if (r.axiom) document.getElementById('startbody').insertAdjacentHTML('beforeend',
     '<p class="note">Every product needs only a <b>' + r.axiom.join('</b> and a <b>') + '</b>.'
     + ' Everything else can come later, or never.</p>');
+  /**
+   * ⭐⭐⭐ DOWNLOAD FIRST ([TILL-115]). Athi: *"now do the masters into the workbook, download first."* A shop
+   * that starts from OUR sheet never meets a mapping question — the columns are already the ones we read, its
+   * categories are already in it with their ids, and the units sheet says what may be typed.
+   */
+  document.getElementById('startbody').insertAdjacentHTML('beforeend',
+    '<button class="bring" data-testid="till-workbook-get" onclick="workbookGet()">'
+    + '<b>Start from our sheet</b>'
+    + '<span class="out">download your shop as a spreadsheet — your products, your categories, and the units we accept</span>'
+    + '<span class="eg">edit it in Excel and bring it back; the columns will already match</span></button>');
   /* ⭐ AND THE OTHER WAY IN: a shop that already keeps a list brings it, rather than retyping it ([TILL-108]) */
   document.getElementById('startbody').insertAdjacentHTML('beforeend',
     /* ⚠️ `bring`, NOT `trade` — the trades are a SET that is read by that class, and this is a different

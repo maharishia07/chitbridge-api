@@ -248,6 +248,8 @@ const KEY_ROUTES = {
                */
               ['POST', /^\/api\/products\/import\/preflight$/],
               ['POST', /^\/api\/products\/import$/],
+              /* ⭐ download-first ([TILL-115]): the shop's own catalogue and masters, as a workbook to edit */
+              ['GET', /^\/api\/products\/workbook\.xlsx$/],
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */

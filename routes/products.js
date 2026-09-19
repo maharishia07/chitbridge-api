@@ -630,51 +630,126 @@ router.get('/', auth, async (req, res) => {
 //
 // A GET returning a file, so it works from a browser link, curl, or a spreadsheet's "import from URL" — no client
 // code required to be useful.
+/**
+ * ── ⭐⭐ WHAT IS IN THIS CATALOGUE, PROJECTED FOR A PERSON ([TILL-115]) ──────────────────────
+ *
+ * Extracted from export.csv when the workbook became a second caller. Every step is load-bearing and the notes
+ * say why; two copies would be two answers to "what is in my catalogue".
+ */
+async function catalogueRows(entity_id) {
+  const r = await withEntity(entity_id, (db) => db.query(
+    `SELECT item_data FROM catalogue_items
+     WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, [entity_id]));
+  /**
+   * ⭐⭐ RESOLVE, THEN PROJECT. A row that inherits its unit from the catalogue stores nothing in `unit`, so a
+   * merchant who set one catalogue-wide unit used to download a sheet with an EMPTY unit column.
+   * ⚠️ ORDER MATTERS: defaults first, then sheet — projecting first flattens a row that still has holes, and
+   * the holes are the columns the catalogue was about to fill.
+   */
+  const face = await faceOf(entity_id);
+  const resolved = r.rows.map((x) => defaults.effective(x.item_data || {}, face));
+  let schema = null;
+  try {
+    const sid = await defaultSchemaId(entity_id);
+    if (sid) {
+      const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
+      schema = { properties: Object.fromEntries(cols.columns.map((k) => [k, {}])) };
+    }
+  } catch (_) { /* no schema is fine — the columns then come from the items themselves */ }
+  /**
+   * ⭐⭐ PROJECTED. Athi, 2026-09-02: *"json is too much for the user and he will not understand."* See
+   * lib/sheet.js — available (yes/no) · qty · qty_as_of · qty_source, four plain cells, never one nested one.
+   */
+  const items = resolved.map(sheet.toSheet);
+  return { items, schema, columns: csv.columnsFor(items, schema) };
+}
+
+/**
+ * ── ⭐⭐⭐ GET /api/products/workbook.xlsx — THE CATALOGUE AND ITS MASTERS ([TILL-115]) ─────────────
+ *
+ * Athi, 2026-09-19: *"now do the masters into the workbook, download first"* — and the motive, earlier:
+ * *"upload should not be a primary motive, get it streamlined off the database is the motive."*
+ *
+ * ⭐⭐ THAT IS WHAT DOWNLOAD-FIRST MEANS. The database is the source of truth; this is generated FROM it. A
+ * shop gets its own catalogue with its OWN categories and the units we accept, edits it, and brings it back —
+ * so a category cell is a choice from its own list rather than free text somebody retypes. Free text is how
+ * one shop ends up with "Vegetables", "vegetables" and "Veg" as three categories, and a master is the answer.
+ *
+ * The sheets:
+ *   Products    — the same projection export.csv makes, via catalogueRows()
+ *   Categories  — this shop's own, from the master, with the ids so a row can cite one
+ *   Units       — ours, read-only reference: every spelling we accept, and whether it is counted or measured
+ *
+ * ⚠️ THE MASTERS ARE SHEETS, NOT A DROP-DOWN. A data-validation list would be friendlier and is a real
+ * feature of the format — it is also a part this writer does not produce, and claiming it in a comment while
+ * shipping a plain sheet is how a header comes to describe a thing that is not there. Recorded as wanted.
+ */
+router.get('/workbook.xlsx', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const xw = require('../lib/xlsx-write');
+    const cats = require('../lib/categories');
+    const units = require('../lib/units');
+
+    const { items, columns } = await catalogueRows(entity_id);
+
+    /* ⚠️ THE HEADER ROW IS THE COLUMN ORDER csv.columnsFor DECIDED — the same one the .csv gets, so a shop
+       that downloads both does not meet two different sheets. */
+    const products = [columns].concat(items.map((it) => columns.map((c) => {
+      const v = it[c];
+      if (v === null || v === undefined) return null;
+      /* ⚠️ a NUMBER stays a number so Excel can total it; everything else is text, which keeps a code's
+         leading zero and stops a barcode being rounded into uselessness. */
+      return typeof v === 'number' ? v : String(v);
+    })));
+
+    /**
+     * ⭐⭐ THE SHOP'S OWN CATEGORIES, WITH THEIR IDS. The id is what a product cites; the name is what a person
+     * reads. Both travel, for the same reason the counter now carries both — with only the name, a row coming
+     * back could be matched by string alone, which is the pollution this is meant to prevent.
+     */
+    let catRows = [['id', 'Category', 'Status']];
+    try {
+      const list = await cats.listCategories(entity_id, { withEntity });
+      catRows = catRows.concat(list.map((c) => [String(c.id), c.name, c.status || 'live']));
+      if (!list.length) catRows.push([null, '(none yet — add a name here and it will be created)', null]);
+    } catch (_) {
+      /* ⚠️ a shop whose definitions are not provisioned still gets a workbook, with the sheet saying so */
+      catRows.push([null, '(could not be read)', null]);
+    }
+
+    /**
+     * ⭐ THE UNIT MASTER IS OURS, NOT THE SHOP'S — so it is reference, not data to edit. Every spelling we
+     * accept is listed, because "which of these may I type" is the question a shopkeeper actually has, and
+     * measured-vs-counted is shown because it is the one fact that changes how a bill reads ([TILL-104]).
+     */
+    const unitRows = [['Unit', 'Also accepted', 'Counted or measured']].concat(
+      Object.keys(units.UNITS).map((k) => [
+        k,
+        (units.aliasesOf(k) || []).filter((a) => a !== k).slice(0, 8).join(', '),
+        units.isMeasured(k) ? 'measured (0.25 is ordinary)' : 'counted (whole things)',
+      ]));
+
+    const buf = xw.workbook([
+      { name: 'Products', rows: products },
+      { name: 'Categories', rows: catRows },
+      { name: 'Units', rows: unitRows },
+    ]);
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="catalogue-' + stamp + '.xlsx"');
+    res.setHeader('Content-Length', String(buf.length));
+    res.end(buf);
+  } catch (e) { fail(res, e, 'Workbook failed'); }
+});
+
 router.get('/export.csv', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT item_data FROM catalogue_items
-       WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, [entity_id]));
-    /**
-     * ⭐⭐ RESOLVE, THEN PROJECT. A row that inherits its unit from the catalogue stores nothing in `unit` — so
-     * before this, a merchant who set one catalogue-wide unit downloaded a sheet with an EMPTY unit column and
-     * reasonably concluded the data was lost. It was not: the row was silent on purpose, and nothing was
-     * answering for it on the way out.
-     *
-     * ⚠️ AND THE ORDER MATTERS: defaults first, then sheet. Projecting first would flatten a row that still had
-     * holes in it, and the holes would be the columns the catalogue was about to fill.
-     */
-    const face = await faceOf(entity_id);
-    const items = r.rows.map((x) => defaults.effective(x.item_data || {}, face));
-
-    /**
-     * The schema orders the columns where it can; anything an item carries beyond it is still exported, because a
-     * column dropped here is data lost on the way back in.
-     *
-     * ⭐ SAME RESOLVER AS THE TEMPLATE AND THE COLUMNS PANEL. It used to read `schema_fields` directly and then let
-     * csv.toCSV widen from the rows — defensible alone, and one of the three different answers to "what are my
-     * columns". Widening still happens; it now starts from the same list everything else starts from.
-     */
-    let schema = null;
-    try {
-      const sid = await defaultSchemaId(entity_id);
-      if (sid) {
-        const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
-        schema = { properties: Object.fromEntries(cols.columns.map((k) => [k, {}])) };
-      }
-    } catch (_) { /* no schema is fine — columns then come from the items themselves */ }
-
-    /**
-     * ⭐⭐ PROJECTED FIRST. Athi, 2026-09-02: *"in your download file, you have given availability as a json data,
-     * flag, when and who etc, in a csv file, json is too much for the user and he will not understand."*
-     *
-     * csv.cell() JSON-stringifies any object and the export widens its columns from the rows, so an availability
-     * record landed in a cell as {"qty":12,"source":"manual","as_of":"…"} next to the product names, and
-     * `categories` came out as raw UUIDs. Nobody can maintain that in Excel and nobody should have to. See
-     * lib/sheet.js: available (yes/no) · qty · qty_as_of · qty_source — four plain cells, never one nested one.
-     */
-    const body = csv.toCSV(items.map(sheet.toSheet), { schema });
+    /* ⭐ the projection lives in catalogueRows() — shared with the workbook, and every reason recorded there */
+    const { items, schema } = await catalogueRows(entity_id);
+    const body = csv.toCSV(items, { schema });
     const stamp = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="catalogue-${stamp}.csv"`);

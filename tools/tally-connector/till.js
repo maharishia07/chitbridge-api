@@ -466,6 +466,8 @@ const server = http.createServer(async (req, res) => {
                   /* ⭐⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) */
                   /* ⭐ what a shop can start from ([TILL-107]) — the trades, their outcomes and the axiom */
                   '/api/till/catalogue/blueprints',
+                  /* ⭐ the workbook to start from ([TILL-115]) — download first, then bring it back */
+                  '/api/products/workbook.xlsx',
                   '/api/till/counters', '/api/till/quick-keys/groups', '/api/till/quick-keys/hidden',
                   '/api/till/quick-keys/screen-config'];
       var base = want.split('?')[0];

@@ -355,6 +355,8 @@ const ENGINE_OTHER = [
   /* ⭐ [TILL-109] — an .xlsx read into the shape a CSV makes. Beside csv.js and gs1.js: reading somebody
      else's FORMAT is our own logic, and this one is ours because the npm readers were not safe to take. */
   'xlsx-read.js',
+  /* ⭐ [TILL-115] — and the writer: the catalogue and its masters, generated FROM the database */
+  'xlsx-write.js',
   'offers-engine.js',
   /* ⚠️ NOT infra, and the difference matters. testnews.js ANNOUNCES; this one DECIDES — what state a finding
      is in, from its own history. That is a rule, and a rule is an engine: swap it and the board, the screen
