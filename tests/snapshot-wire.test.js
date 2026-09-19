@@ -396,10 +396,27 @@ it('⚠️⚠️ nothing on the counter forces a pixel photo height — the colu
   const css = page.split('/*').map((part, n) => n === 0 ? part : part.slice(part.indexOf('*/') + 2)).join(' ');
   assert.ok(css.indexOf('--sk-ph:') < 0,
     'the counter sets --sk-ph again — a pixel photo height clips the name and price out of the tile');
-  /* ⭐ and the three sizes still DO something: each turns the column width */
-  for (const size of ['sm', 'md', 'lg'])
-    assert.ok(page.indexOf('body.tiles-' + size + ' .quick{grid-template-columns') > 0,
-      'tile size ' + size + ' no longer changes the column width, so it changes nothing');
+  /**
+   * ⚠️⚠️ MOVED, NOT DELETED ([TILL-93]). This asserted three `body.tiles-*` rules, each re-declaring
+   * grid-template-columns. The RULE is unchanged — a key size must turn the COLUMN WIDTH and never a photo
+   * height — but three class rules were three copies of one table, which is what the key-size spec means by
+   * "no per-device table to keep". One custom property now carries it.
+   */
+  assert.ok(css.indexOf('.quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--key-min') > 0,
+    'the key grid no longer reads --key-min, so the key size cannot turn the column width');
+  /* ⭐ and every size is a DIFFERENT width, or the control has stops that do the same thing */
+  const mins = [...page.matchAll(/min: (\d+), pic:/g)].map((m) => Number(m[1]));
+  assert.ok(mins.length >= 4, 'the key sizes are gone from KEY_SIZES');
+  assert.strictEqual(new Set(mins).size, mins.length, 'two key sizes share a width, so one of them does nothing');
+  /**
+   * ⚠️⚠️ AND NOTHING MAY HARD-CODE A KEY WIDTH BESIDE IT. `body.shape-mobile` and the vertical layout each
+   * re-declared the grid at 132px and 240px, which silently beat the setting — on a phone and on a kiosk the
+   * Key size control did nothing at all. Any new rule that does the same must fail here.
+   */
+  const rogue = [...css.matchAll(/.quick{[^}]*grid-template-columns[^}]*}/g)]
+    .filter((m) => m[0].indexOf('--key-min') < 0);
+  assert.deepStrictEqual(rogue.map((m) => m[0].slice(0, 60)), [],
+    'something re-declares the key grid without --key-min, so it overrides the key size');
 });
 
 /**

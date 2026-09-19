@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1020px; box-sizing: border-box; padding: 26px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 18px;">
+
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em;">Pick a starting style</span>
+      <span style="font-size: 15px; color: #5E594D;">Each one is a whole screen, not a colour. You can change any part of it afterwards.</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <span style="display: flex; padding: 3px; border-radius: 11px; background: #E6E0D2; gap: 3px;">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+        <span style="height: 34px; padding: 0 14px; border-radius: 9px; background: {{f.bg}}; color: {{f.ink}}; font-size: 14px; font-weight: 600; display: flex; align-items: center; cursor: pointer;">{{f.label}}</span>
+      </sc-for>
+    </span>
+    <button style="height: 42px; padding: 0 16px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 14px; font-weight: 600; cursor: pointer;">Close · Esc</button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 16px;">
+    <sc-for list="{{presets}}" as="p" hint-placeholder-count="9">
+      <div style="box-sizing: border-box; padding: 14px; border-radius: 18px; background: {{p.cardBg}}; border: {{p.cardBorder}}; display: flex; flex-direction: column; gap: 11px; cursor: pointer;">
+
+        <div style="position: relative; height: 158px; border-radius: 11px; background: {{p.page}}; border: 1px solid {{p.line}}; overflow: hidden;">
+          <sc-for list="{{p.blocks}}" as="b" hint-placeholder-count="12">
+            <span style="{{b.style}}"></span>
+          </sc-for>
+          <span style="{{p.badgeStyle}}">{{p.badge}}</span>
+        </div>
+
+        <div style="display: flex; align-items: flex-start; gap: 9px;">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 17px; font-weight: 700;">{{p.name}}</span>
+            <span style="font-size: 13px; color: #5E594D; line-height: 1.4;">{{p.good}}</span>
+          </span>
+          <span style="{{p.tickStyle}}">✓</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <sc-for list="{{p.tags}}" as="t" hint-placeholder-count="3">
+            <span style="height: 24px; padding: 0 9px; border-radius: 12px; background: #F3EFE6; color: #5E594D; font-size: 12px; font-weight: 600; display: flex; align-items: center;">{{t.label}}</span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <span style="font-size: 13px; color: #5E594D;">Tap a style to load it into the preview — nothing changes on the counter until you apply it there.</span>
+    <div style="flex-grow: 1;"></div>
+    <button style="height: 48px; padding: 0 20px; border-radius: 13px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button>
+    <button style="height: 48px; padding: 0 24px; border-radius: 13px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Preview “Counter dark”</button>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1020}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const box = (l, t, w, h, bg, r) => ({ style: `position: absolute; left: ${l}%; top: ${t}%; width: ${w}%; height: ${h}%; border-radius: ${r == null ? 2 : r}px; background: ${bg};` });
+    const grid = (cols, rows, l, t, w, h, bg, gap) => {
+      const g = gap == null ? 1.6 : gap;
+      const cw = (w - g * (cols - 1)) / cols, ch = (h - g * (rows - 1)) / rows, out = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) out.push(box(l + c * (cw + g), t + r * (ch + g), cw, ch, bg, 3));
+      return out;
+    };
+    // c = [page, panelBg, tileBg, accent, line]
+    const LIGHT = ['#FCFAF5', '#F0ECE2', '#FFFFFF', '#16693F', '#E6E0D2'];
+    const DARK = ['#1D1B16', '#2A2823', '#35322A', '#3FB06F', '#3A362D'];
+    const PAPER = ['#F5F1E7', '#E9E3D5', '#FFFDF7', '#8A3410', '#DDD6C6'];
+    const NAVY = ['#14213D', '#1E2E52', '#293B66', '#7FB2F0', '#2B3C63'];
+
+    const shapes = {
+      classic: (c) => [box(4, 5, 92, 9, c[1]), box(4, 18, 60, 8, c[1]), ...grid(4, 3, 4, 29, 60, 52, c[2]), box(68, 18, 28, 63, c[1]), box(70, 68, 24, 10, c[3], 3), box(4, 86, 92, 8, c[1])],
+      vertical: (c) => [box(6, 4, 88, 7, c[1]), box(6, 14, 88, 34, c[1]), ...grid(3, 4, 8, 52, 84, 40, c[2]), box(6, 94, 88, 4, c[3], 2)],
+      timeline: (c) => [box(4, 5, 92, 9, c[1]), box(4, 18, 92, 7, c[3]), ...grid(5, 3, 4, 29, 60, 52, c[2]), box(68, 18, 28, 63, c[1]), box(4, 86, 92, 8, c[1])],
+      rail: (c) => [box(4, 5, 92, 9, c[1]), box(4, 18, 12, 63, c[1]), ...grid(3, 3, 19, 18, 45, 63, c[2]), box(68, 18, 28, 63, c[1]), box(4, 86, 92, 8, c[1])],
+      compact: (c) => [box(4, 6, 92, 11, c[1]), ...grid(4, 2, 4, 22, 58, 52, c[2]), box(66, 22, 30, 52, c[1]), box(68, 60, 26, 11, c[3], 3), box(4, 80, 92, 12, c[1])],
+      tablet: (c) => [box(5, 5, 90, 10, c[1]), ...grid(3, 3, 5, 19, 56, 60, c[2]), box(65, 19, 30, 45, c[1]), box(65, 67, 30, 12, c[3], 3), box(5, 84, 90, 10, c[1])],
+      phone: (c) => [box(27, 0, 46, 100, c[4], 6), box(30, 3, 40, 6, c[1]), box(30, 11, 40, 8, c[1]), ...grid(2, 4, 30, 22, 40, 56, c[2]), box(30, 81, 40, 9, c[3], 3)],
+      handheld: (c) => [box(30, 0, 40, 100, c[4], 6), box(33, 4, 34, 7, c[1]), box(33, 13, 34, 26, c[1]), ...grid(1, 4, 33, 42, 34, 40, c[2]), box(33, 85, 34, 8, c[3], 3)],
+      kiosk: (c) => [box(17, 0, 66, 100, c[4], 6), box(20, 4, 60, 8, c[1]), ...grid(2, 5, 20, 15, 60, 66, c[2]), box(20, 84, 60, 10, c[3], 3)]
+    };
+
+    const mk = (name, good, shape, colours, tags, state) => {
+      const c = colours;
+      const chosen = state === 'chosen', inUse = state === 'inuse';
+      return {
+        name, good, page: c[0], line: c[4],
+        blocks: shapes[shape](c),
+        tags: tags.map((label) => ({ label })),
+        cardBg: chosen ? '#E8F4ED' : '#F3EFE6',
+        cardBorder: chosen ? '2px solid #16693F' : '1px solid #E6E0D2',
+        tickStyle: chosen
+          ? 'width: 26px; height: 26px; border-radius: 50%; background: #16693F; color: #FFFFFF; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;'
+          : 'display: none;',
+        badge: inUse ? 'on this counter now' : 'used by 2 counters',
+        badgeStyle: (inUse || state === 'used')
+          ? `position: absolute; left: 8px; bottom: 8px; height: 22px; padding: 0 9px; border-radius: 11px; background: ${inUse ? '#1D1B16' : 'rgba(29,27,22,0.55)'}; color: #FCFAF5; font-size: 11px; font-weight: 600; display: flex; align-items: center;`
+          : 'display: none;'
+      };
+    };
+
+    return {
+      filters: [
+        { label: 'All 9', bg: '#FFFFFF', ink: '#1D1B16' },
+        { label: 'For this device', bg: 'transparent', ink: '#5E594D' },
+        { label: 'Used in this shop', bg: 'transparent', ink: '#5E594D' },
+        { label: 'Easy to read', bg: 'transparent', ink: '#5E594D' }
+      ],
+      presets: [
+        mk('Counter classic · light', 'Keys on the left, bill on the right. What most shops start with.', 'classic', LIGHT, ['horizontal', 'popup', 'light cream'], 'inuse'),
+        mk('Counter dark', 'Same shape, easier on the eyes in a dim shop or at night.', 'classic', DARK, ['horizontal', 'popup', 'dark'], 'chosen'),
+        mk('Day timeline', 'A bar across the top follows the day — morning keys in the morning.', 'timeline', LIGHT, ['horizontal', 'timeline', 'light cream'], 'used'),
+        mk('Group rail', 'Groups stand in a rail down the side, always one tap away.', 'rail', PAPER, ['horizontal', 'rail', 'paper'], ''),
+        mk('Compact 15”', 'For a small terminal: tighter rows, fewer keys, nothing hidden.', 'compact', LIGHT, ['compact', 'tabs', 'tight'], 'used'),
+        mk('Kiosk · vertical', 'Tall screen, big keys, made to be used standing up.', 'kiosk', LIGHT, ['vertical', 'full screen', 'roomy'], ''),
+        mk('Tablet waiter', 'Sell, then pay — two steps, one thumb, made for walking the floor.', 'tablet', PAPER, ['tablet', 'bottom sheet', 'comfortable'], ''),
+        mk('Phone · three steps', 'Sell, bill, pay as three screens. The smallest thing that still works.', 'phone', LIGHT, ['phone', 'bottom sheet', 'big text'], ''),
+        mk('Handheld · scan first', 'A scanner with a screen: scan, list, pay. Keys only if you ask.', 'handheld', NAVY, ['handheld', 'list', 'navy'], '')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

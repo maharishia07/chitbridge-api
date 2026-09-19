@@ -330,7 +330,9 @@
   body.op-maintain.shape-mobile .sheetx{display:inline-flex;align-items:center;justify-content:center;
     min-width:44px;min-height:44px;font-size:1.1em}
   /* ⚠️ the Phone shape's narrow bill is decided in cartCols(), not here — a cell hidden by CSS left its track empty */
-  body.shape-mobile .quick{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
+  /* ⚠️ the key WIDTH is Key size's to set ([TILL-93]) — Automatic already gives a phone Medium. Only the
+     gap belongs to the shape. */
+  body.shape-mobile .quick{gap:12px}
   /* wide forces the two-column counter back on, whatever the width says */
   body.shape-wide .wrap{grid-template-columns:minmax(0,var(--split,1.1fr)) 6px minmax(300px,.9fr);
         grid-template-rows:none;height:100vh;height:100dvh}
@@ -909,12 +911,16 @@
   /* ⚠️⚠️ THE COLUMN WIDTH IS THE LEVER, NEVER --sk-ph. A pixel photo height inside a tile the grid sized
      smaller clips the name and price straight out of the button — screen-kit.js carries the whole story and
      the ratio that replaced it. Wider columns, and .sk-ph-big's aspect-ratio does the rest. */
-  body.tiles-sm .quick{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
-  body.tiles-md .quick{grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
-  body.tiles-lg .quick{grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px}
-  body.tiles-sm .quick .sk-tile{padding:6px 8px;font-size:.92em}
-  body.tiles-lg .quick .sk-tile{padding:14px 16px;font-size:1.06em}
-  .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;
+  /**
+   * ── ⭐⭐ THE KEY GRID READS ONE NUMBER ([TILL-93]) ────────────────────────────────
+   * `--key-min` is the smallest a key may be; the browser decides how many fit. Three body classes used to
+   * hard-code three widths — same idea, but a class per size means a fourth size needs a fourth rule.
+   */
+  /* ⚠️ the gap comes from KEY_SIZES via --key-gap ([TILL-93]) — three class rules were a second table */
+  body.keys-small .quick .sk-tile{padding:6px 8px;font-size:.88em}
+  body.keys-medium .quick .sk-tile{font-size:.96em}
+  body.keys-xlarge .quick .sk-tile{padding:14px 16px;font-size:1.06em}
+  .quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--key-min,168px),1fr));gap:var(--key-gap,14px);
          margin:10px 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);
          /* ⚠️⚠️ flex:none — WITHOUT IT a long product list shrinks this box to a ~30px strip with a scrollbar,
             because a flex item defaults to flex-shrink:1. max-height was never the constraint that bit. */
@@ -1059,7 +1065,8 @@
    */
   /* ⚠️ THE KIOSK NO LONGER FORCES A PHOTO HEIGHT. --sk-ph:150px inside a shorter tile clipped every name and
      price away (see .sk-ph-big); a self-service screen gets WIDER columns instead, and the ratio does the rest. */
-  body[data-sklayout="vertical"] .quick{max-height:none;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+  /* ⚠️ same — a tall kiosk gets 200px from Automatic, and a shopkeeper can now say otherwise ([TILL-93]) */
+  body[data-sklayout="vertical"] .quick{max-height:none;gap:18px}
   body[data-sklayout="vertical"] .quick .sk-name{font-size:1.1em}
   .quick > button:not(.sk-tile){padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);
          cursor:pointer;text-align:left;min-height:92px;display:flex;flex-direction:column;gap:4px}
@@ -1330,6 +1337,9 @@
   .stclip{position:relative;overflow:hidden;border-radius:5px}
   #stcanvas{position:absolute;top:0;inset-inline-start:0;transform-origin:top left;
             background:var(--paper);color:var(--ink);overflow:hidden;display:flex;flex-direction:column}
+  /* ⭐ the badge sits on the frame, under the screen it describes */
+  .stbadge{margin:8px auto 0;width:max-content;max-width:100%;background:rgba(255,255,255,.1);color:#F2EDE6;
+           border-radius:999px;padding:5px 14px;font-size:.78em;font-weight:700;text-align:center}
   .stscale{color:#B9B2A6;font-size:.72em;text-align:center;padding:7px 0 8px;
            font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em}
   /* ⚠️ IT IS A PICTURE, NOT A PANEL — nothing inside it invites a press */
@@ -1405,6 +1415,12 @@
   .strow .sc{display:flex;flex-wrap:wrap;gap:6px}
   /* ⭐ A ROW WHOSE ANSWER HAS CHANGED IS TINTED, so the diff reads without a compare mode (spec §4) */
   .strow.changed{margin-inline:-11px;padding-inline:11px;border-radius:11px;background:var(--warn-tint);border-top-color:transparent}
+  /* ⭐ THE SCREEN'S SUGGESTION, DASHED (spec §3) — visible even when somebody has chosen otherwise */
+  .schip.suggests{border-style:dashed;border-color:var(--ok);color:var(--ok);font-weight:600}
+  .keysays{margin:8px 0 0;font-size:.82em;line-height:1.5;color:var(--dim)}
+  .keysays b{color:var(--ink)}
+  .aslink{border:0;background:none;padding:0;font:inherit;color:var(--ok);text-decoration:underline;
+          text-underline-offset:2px;cursor:pointer}
   .strow .sw{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.28);flex:none;
              display:inline-block;margin-inline-end:7px;vertical-align:-2px}
   .stcost{margin-top:14px;border:1px solid var(--line);border-radius:11px;padding:10px 12px;
@@ -2103,6 +2119,9 @@
       </div>
       <div class="stframe">
         <div class="stclip" id="styclip"><div id="stcanvas"></div></div>
+        <!-- ⭐ THE BADGE ([TILL-93], spec §8.2) — the size, the key width, and how many fit, all from the
+             same arithmetic that draws the grid above it. -->
+        <div class="stbadge" id="stybadge"></div>
         <div class="stscale" id="styscale"></div>
       </div>
       <div class="stsays" id="stysays"></div>
@@ -4402,13 +4421,67 @@ function catPic(c){
   }
   return tileHTML({ category: c, name: c });
 }
-var TILE_SIZES = [['sm', 'Small'], ['md', 'Medium'], ['lg', 'Large']];
-function tileSize(){ var v = ls.get('cb_till_tilesize', 'md'); return /^(sm|md|lg)$/.test(v) ? v : 'md'; }
-function tileSizeSet(v){ ls.set('cb_till_tilesize', v); tileSizeApply(); paintQuick(); }
+/**
+ * ── ⭐⭐⭐ KEY SIZE ([TILL-93], design-style2/key-size-spec.md) ──────────────────────────
+ *
+ * ⭐ ONE NUMBER PER SIZE — the SMALLEST a key may be — and the browser works out the columns:
+ *   grid-template-columns: repeat(auto-fill, minmax(var(--key-min), 1fr))
+ * No per-device table, and nothing to change when a new screen appears. `pic` is the picture size that
+ * follows from the key; 0 means a picture would be too small to tell one packet from another.
+ * ⚠️ The spec's fifth size "List" is NOT here: Quick keys → Compact row already IS a one-line key, on the
+ * TILE STYLE axis. The same presentation on two controls is two controls that can contradict each other.
+ */
+var KEY_SIZES = {
+  xlarge: { label: 'Extra large', min: 200, pic: 120, gap: 16, why: 'kiosks and a busy tiffin counter, read from a step back' },
+  large:  { label: 'Large',       min: 168, pic: 96,  gap: 14, why: 'pictures still tell packets apart at arm\u2019s length' },
+  medium: { label: 'Medium',      min: 140, pic: 72,  gap: 12, why: 'photos readable, a good number on screen' },
+  small:  { label: 'Small',       min: 112, pic: 0,   gap: 8,  why: 'hundreds of keys — names and prices only' }
+};
+var KEY_ORDER = ['xlarge', 'large', 'medium', 'small'];
+/**
+ * ⭐⭐ AUTOMATIC — THE SCREEN SUGGESTS, THE SHOPKEEPER DECIDES (spec §3, png/KeySizeAuto.png). The default on a
+ * device nobody has touched, so a terminal plugged in tomorrow is right the first time.
+ * ⚠️ IT READS ONLY WHAT IS TRUE: width, height and shape. Physical inches are a guess in every browser, and
+ * how far away somebody stands cannot be read at all — which is exactly what the person's choice is for.
+ * ⭐ A TALL SCREEN GETS A BIGGER KEY than a wide one of the same width: it is stood at, not sat at.
+ */
+function keySizeAuto(){
+  var w = window.innerWidth || 1440, h = window.innerHeight || 900;
+  var tall = h > w;
+  if (tall && w >= 1000) return 'xlarge';        /* a standing kiosk: height to spend */
+  if (tall && w >= 700) return 'large';          /* vertical terminal, used standing   */
+  if (w >= 1100 && w <= 1400) return 'large';    /* tablet in the hand: finger targets */
+  if (w >= 1000) return 'medium';                /* a desk terminal wants many keys    */
+  if (w >= 700) return 'medium';                 /* compact terminal, close to the eye */
+  return 'medium';                               /* phone: thumb reach beats key size  */
+}
+/** ⚠️ 'auto' is never written back — it is resolved at paint time, so a moved screen re-decides by itself */
+function keySizeSet(v){ ls.set('cb_till_keysize', v); tileSizeApply(); paintQuick(); }
+function keySizeChosen(){
+  var v = ls.get('cb_till_keysize', '');
+  /* ⚠️ THE OLD KEY IS STILL READ. cb_till_tilesize held sm|md|lg on counters that set one before [TILL-93];
+     dropping it would silently reset those screens. md was 168px, which is Large on the new ladder. */
+  if (!v) { var old = ls.get('cb_till_tilesize', ''); v = { sm: 'small', md: 'large', lg: 'xlarge' }[old] || ''; }
+  return KEY_SIZES[v] ? v : '';
+}
+function keySizeNow(){ return keySizeChosen() || keySizeAuto(); }
+/**
+ * ⚠️⚠️ AT Small A PICTURE IS NOT WORTH ITS BYTES (spec §1). 112px of key is ~40px of photograph, which
+ * cannot tell one packet of dal from another — so it is a cost with no benefit. The switch is not silently
+ * ignored: it reports that the SIZE turned it off, so nobody hunts for a broken checkbox.
+ * ⭐ THE STORED ANSWER IS UNTOUCHED — go back to Medium and the pictures come back as they were.
+ */
+function keyPhotosOff(){ return !(KEY_SIZES[keySizeNow()] || {}).pic; }
 function tileSizeApply(){
   var b = document.body; if (!b) return;
-  TILE_SIZES.forEach(function(p){ b.classList.remove('tiles-' + p[0]); });
-  b.classList.add('tiles-' + tileSize());
+  KEY_ORDER.forEach(function(k){ b.classList.remove('keys-' + k); });
+  var k = keySizeNow();
+  b.classList.add('keys-' + k);
+  /* ⭐ ONE NUMBER DRIVES THE GRID, and the CSS reads it — there is no column count anywhere on the real screen */
+  b.style.setProperty('--key-min', KEY_SIZES[k].min + 'px');
+  b.style.setProperty('--key-pic', KEY_SIZES[k].pic + 'px');
+  /* ⭐ published, so the CSS and styleFit() read ONE number for the gap ([TILL-93]) */
+  b.style.setProperty('--key-gap', KEY_SIZES[k].gap + 'px');
 }
 function thumbsOn(){ return ls.get(shopLs('cb_till_thumbs'), 'off') === 'on'; }
 function thumbsToggle(){
@@ -7100,15 +7173,50 @@ function styleShown(){
  * second shop load; what is drawn here is honest about proportion, colour, spacing and tile, and is a drawing
  * about everything else. [[feedback-document-status]]
  */
+/**
+ * ⚠️⚠️ ONE ANSWER TO "HOW MANY FIT", asked by the drawing AND by the badge. Two computations of the same
+ * number is how a badge comes to say 6 over a grid of 5 — the exact class of fault this whole screen exists
+ * to prevent. [[feedback-no-duplicate-functions]]
+ */
+function styleFit(cfg, dev){
+  var K = window.CBScreen || {};
+  var L = K.LAYOUTS ? (K.LAYOUTS[cfg.layout] || {}) : {};
+  var shape = L.shape === 'auto' ? (dev.w < 560 ? 'mobile' : (dev.h > dev.w ? 'tall' : 'wide')) : L.shape;
+  /**
+   * ⚠️⚠️ THE DEVICE HAS THE LAST WORD, as it does on the real page: below 600px the counter collapses to
+   * one column through its own @media rule, whatever layout is chosen. Without this the preview kept a
+   * 45%-wide bill on a 390px phone and reported one key in a row where two fit.
+   */
+  if (dev.w < 600) shape = 'mobile';
+  var room = PANELS[(STYLE_SHOW === 'now') ? panelNow() : styleRoom()] || PANELS.balanced;
+  var billPc = Math.round((0.9 / (room.split + 0.9)) * 100);
+  var kmin = (KEY_SIZES[keySizeNow()] || KEY_SIZES.medium).min;
+  /* ⚠️ THE SIZE'S GAP, not the density's — at Extra large the real grid leaves 16px, and assuming 10 put a
+     three-key badge over a two-key grid. Compact tightens it; the size sets it. */
+  var ksz = KEY_SIZES[keySizeNow()] || KEY_SIZES.medium;
+  var gap = (cfg.density === 'compact') ? Math.max(6, ksz.gap - 4) : ksz.gap;
+  /* ⚠️ THE PICKER TAKES ITS ROOM TOO. A group rail parks 104px down the side of the keys, so the width they
+     actually get is what is left after the bill AND after the rail. Counting without it reads a few keys
+     too many, which is the one number this badge must never be wrong about. */
+  var railW = (cfg.picker === 'groupRail' && shape === 'wide') ? 104 : 0;
+  /**
+   * ⚠️⚠️ EVERYTHING THAT EATS WIDTH BEFORE A KEY GETS ANY. Measured against the real grid: the 44px icon
+   * strip down the side (body padding-inline-start, gone below 600px) and the key panel's own margin and
+   * padding, 12px each on both sides. Without them the badge read one key too many on a wide screen.
+   */
+  var stripW = dev.w > 600 ? 44 : 0;
+  var PANEL_CHROME = 52;   /* margin 24 + padding 24 + the pane border and split gap, measured */
+  var usable = Math.max(200, dev.w - stripW);
+  var mainW = Math.max(120, Math.round(usable * (shape === 'wide' ? (1 - billPc / 100) : 1)) - PANEL_CHROME - railW);
+  var per = Math.max(1, Math.floor((mainW + gap) / (kmin + gap)));
+  var rows = room.cart ? 0 : Math.max(2, (shape === 'mobile' ? 4 : shape === 'tall' ? 5 : 3));
+  /* ⭐ the drawing needs the same three numbers, so they are returned rather than worked out again */
+  /* ⭐ shape too — the drawing must not work it out a second time and get a different answer */
+  return { per: per, rows: rows, on: per * rows, kmin: kmin, gap: gap, billPc: billPc, shape: shape };
+}
 function styleScreen(cfg, dev){
   var K = window.CBScreen; if (!K) return '';
   var L = K.LAYOUTS[cfg.layout] || K.LAYOUTS.horizontal;
-  var shape = L.shape;
-  if (shape === 'auto') shape = dev.w < 560 ? 'mobile' : (dev.h > dev.w ? 'tall' : 'wide');
-  /* ⚠️ a phone cannot show a counter's six columns whatever the layout says — the device has the last word */
-  var per = Number(L.keysPerRow) || 6;
-  if (dev.w < 560) per = Math.min(per, 3);
-  else if (dev.w < 1100) per = Math.min(per, 5);
   var tight = (cfg.density === 'compact');
   /**
    * ⭐⭐⭐ THE ROOM EACH PART GETS, DRAWN ([TILL-88]). Athi: *"didn't understand the meaning of balanced,
@@ -7118,6 +7226,14 @@ function styleScreen(cfg, dev){
   var room = PANELS[(STYLE_SHOW === 'now') ? panelNow() : styleRoom()] || PANELS.balanced;
   /* the same arithmetic panelWords() states in words: 0.9 parts of bill against `split` parts of everything else */
   var billPc = Math.round((0.9 / (room.split + 0.9)) * 100);
+  /**
+   * ⭐⭐⭐ HOW MANY KEYS FIT — ASKED, NOT RECOMPUTED ([TILL-93]). styleFit() is the one place that knows, and
+   * the badge under the frame asks the same function, so the number printed and the number drawn are the
+   * same number. It uses the counter's own rule: repeat(auto-fill, minmax(--key-min,1fr)).
+   */
+  var fit = styleFit(cfg, dev);
+  /* ⭐ every number about SIZE comes from the one function, shape included ([TILL-93]) */
+  var kmin = fit.kmin, per = fit.per, gap = fit.gap, shape = fit.shape;
   var PK = K.PICKERS[cfg.picker] || {};
   var GROUPS = [['Morning', 10], ['Afternoon', 10], ['Evening', 8], ['Night', 6]];
   /**
@@ -7133,21 +7249,22 @@ function styleScreen(cfg, dev){
                 ['Sugar 1 kg', 52], ['Rice 5 kg', 410], ['Oil 1 L', 172], ['Dal 1 kg', 128],
                 ['Salt 1 kg', 22], ['Soap', 38]];
   /* ⚠️ 'No keys' IS NOT A SMALL GRID, IT IS NO GRID — a scanner shop's screen is the list and the bill */
-  var rows = Math.max(2, Math.floor((shape === 'mobile' ? 4 : shape === 'tall' ? 5 : 3)));
+  var rows = fit.rows || Math.max(2, (shape === 'mobile' ? 4 : shape === 'tall' ? 5 : 3));
   if (room.cart) rows = 0;
   var keys = SAMPLE.slice(0, Math.min(SAMPLE.length, per * rows)).map(function(p, i){
     /* ⚠️ NO UNIT. The spec names this one: ₹352.00 / each is LIST styling on a TILE — a key is read from
        across the counter, where the unit is noise. It belongs on the shelf row, which has room to be read. */
     return K.tile(cfg.tile, { name: p[0], price: money(p[1]), image: null,
-      colour: K.groupColour(i), showPhoto: !!cfg.photos, qty: 0, attrs: 'tabindex="-1"' });
+      colour: K.groupColour(i), showPhoto: !!cfg.photos && !keyPhotosOff(), qty: 0, attrs: 'tabindex="-1"' });
   }).join('');
   /**
    * ⚠️ THE KEY GRID TAKES ITS SHARE OF THE HEIGHT, and the shelf list takes the rest — which is what
    * `keysh` actually means and what "Search first" (16%) versus "Keys first" (58%) actually looks like.
    */
+  /* ⚠️ auto-fill VERBATIM — the same declaration the real grid carries, so the preview cannot drift from it */
   var grid = room.cart ? ''
-    : '<div class="sk-grid" style="--sk-per-row:' + per + ';gap:' + (tight ? 6 : 10) + 'px'
-      + ';flex:0 0 ' + Math.max(12, Math.min(82, room.keysh)) + '%">' + keys + '</div>';
+    : '<div class="sk-grid" style="grid-template-columns:repeat(auto-fill,minmax(' + kmin + 'px,1fr))'
+      + ';gap:' + gap + 'px;flex:0 0 ' + Math.max(12, Math.min(82, room.keysh)) + '%">' + keys + '</div>';
   /* ⭐ and the shelf underneath it, which is the half "Search first" is about — without it the preset that
      shrinks the keys would look like a screen with a hole in it rather than a screen full of products */
   var shelf = '<div class="m-shelf">' + SAMPLE.slice(0, 7).map(function(p){
@@ -7233,7 +7350,8 @@ function styleSample(kind, cfg, room){
   if (kind === 'layout') {
     /* ⭐ EXACTLY THE QUESTION HE ASKED — "5 keys in a row instead of 6, WHAT keys here" — so it is the real
        products, at the real column count, not five grey boxes. */
-    var per = Number((K.LAYOUTS[cfg.layout] || {}).keysPerRow) || 6;
+    /* ⚠️ the same answer the grid and the badge use — never the dead table ([TILL-93]) */
+    var per = Math.min(8, styleFit(cfg, styleDev()).per);
     body = '<div class="sk-grid" style="--sk-per-row:' + per + ';gap:4px">'
       + SAMPLE_KEYS.slice(0, per).map(function(p, i){
           return K.tile('classic', { name: p[0], price: money(p[1]), image: null,
@@ -7280,9 +7398,16 @@ function styleDiff(){
   var now = K.resolve(tillOpt().screen || {}), next = styleCfg(), out = [];
   if (now.layout !== next.layout) {
     var a = K.LAYOUTS[now.layout] || {}, b = K.LAYOUTS[next.layout] || {};
+    /**
+     * ⚠️⚠️ THE COUNT COMES FROM styleFit(), NOT FROM LAYOUTS[].keysPerRow ([TILL-93]). That table is a
+     * stored column count — the one thing the key-size spec says never to keep — and the real grid has
+     * never read it. This sentence was quoting a number the counter does not produce.
+     */
+    var dv = styleDev();
+    var fa = styleFit(now, dv), fb = styleFit(next, dv);
     out.push(['Things move — ' + (b.label || '').toLowerCase() + ' instead of ' + (a.label || '').toLowerCase(),
-      (b.keysPerRow && a.keysPerRow && b.keysPerRow !== a.keysPerRow)
-        ? (b.keysPerRow + ' keys in a row instead of ' + a.keysPerRow) : 'the same keys, in a different shape',
+      (fa.per !== fb.per) ? (fb.per + ' keys in a row instead of ' + fa.per + ' on this screen')
+                          : 'the same keys, in a different shape',
       'layout']);
   }
   if (now.tile !== next.tile) out.push(['Quick keys look different',
@@ -7297,6 +7422,8 @@ function styleDiff(){
   if (now.density !== next.density) out.push([((K.DENSITIES[next.density] || {}).label || '') + ' spacing',
     next.density === 'compact' ? 'tighter rows — more on screen, smaller targets'
                                : 'roomier rows — easier to hit, fewer on screen', 'density']);
+  /* ⭐ KEY SIZE IS APPLIED AT ONCE (see keySizePick), so it is never pending — but the cost line and the
+     badge both report it, and the sample below shows it. Nothing to add to the pending list. */
   var rm = STYLE_DRAFT && STYLE_DRAFT.room;
   if (rm && rm !== panelNow()) {
     var pr = PANELS[rm] || {};
@@ -7509,6 +7636,29 @@ function stylePaint(){
   if (clip) clip.style.height = Math.round(dev.h * sc) + 'px';
   var lab = document.getElementById('styscale');
   if (lab) lab.textContent = 'real screen ' + dev.w + ' × ' + dev.h + ' · shown at ' + Math.round(sc * 100) + '%';
+  /**
+   * ⭐⭐ THE BADGE, AND IT AGREES WITH THE GRID BECAUSE IT IS THE SAME ARITHMETIC (spec §8.2). Every number
+   * comes from styleFit(), which is also what draws the grid — so it cannot say 6 over a grid showing 5.
+   * ⚠️ It names BOTH when nobody has chosen: "Automatic · Large on this screen" (spec §3 rule 5).
+   */
+  var bdg = document.getElementById('stybadge');
+  if (bdg) {
+    var ks = KEY_SIZES[keySizeNow()] || KEY_SIZES.medium;
+    var fit = styleFit(shown, dev);
+    /**
+     * ⚠️⚠️ COUNT WHAT IS DRAWN, DO NOT PREDICT IT. The miniature's grid is laid out by the browser from the
+     * same auto-fill rule, so the tracks it actually made are the truth — and reading them is the only way
+     * the badge and the picture directly above it cannot differ by one. styleFit() remains the prediction
+     * for what is NOT on screen: the diff lines, the cost line, another device's tab.
+     */
+    var g = canvas.querySelector('.sk-grid');
+    if (g) {
+      var tracks = getComputedStyle(g).gridTemplateColumns.split(' ').filter(function(t){ return t && t !== 'none'; });
+      if (tracks.length) { fit = { per: tracks.length, rows: fit.rows, on: tracks.length * fit.rows }; }
+    }
+    bdg.textContent = (keySizeChosen() ? '' : 'Automatic · ') + ks.label
+      + ' · ' + ks.min + 'px key · ' + fit.per + ' in a row · ' + fit.on + ' on screen';
+  }
 
   /* ── what changes, what does not ────────────────────────────────────────── */
   /**
@@ -7587,6 +7737,38 @@ function stylePaint(){
           + ' title="' + esc(p.why) + '" onclick="stylePick(\'room\',\'' + k + '\')">' + esc(p.label) + '</button>';
       }).join('')
     + '</span></div>'
+    /**
+     * ⭐⭐⭐ KEY SIZE ([TILL-93]) — and it sits ABOVE Photos, because the picture follows the key and not the
+     * other way round. Athi asked for three sizes in [TILL-71]; they were built, they worked, and the
+     * control went with the Settings "Screen" tab. A setting with no door is a setting that does not exist.
+     */
+    + '<div class="strow' + (keySizeChosen() && keySizeChosen() !== keySizeNowApplied() ? ' changed' : '') + '"'
+    + ' data-testid="till-style-keysize">'
+    + '<b>Key size</b><span class="hint">how big each quick key is — Automatic fits the screen</span>'
+    + '<span class="sc">'
+    /* ⭐ AUTOMATIC IS A STOP ON THE CONTROL, not a checkbox beside it — it is one of the answers */
+    + '<button class="schip' + (keySizeChosen() ? '' : ' on') + '" data-testid="till-style-keysize-auto"'
+    + ' title="the screen decides, and re-decides when the screen changes"'
+    + ' onclick="keySizePick(\'\')">Automatic</button>'
+    + KEY_ORDER.map(function(k){
+        var on = keySizeChosen() === k;
+        /* ⚠️ THE SUGGESTION STAYS VISIBLE EVEN WHEN IGNORED (spec §3) — dashed, so a shopkeeper can see what
+           the screen would have picked and decide again without guessing. */
+        var sug = (!on && keySizeAuto() === k);
+        return '<button class="schip' + (on ? ' on' : '') + (sug ? ' suggests' : '') + '"'
+          + ' data-testid="till-style-keysize-' + k + '" title="' + esc(KEY_SIZES[k].why) + '"'
+          + ' onclick="keySizePick(\'' + k + '\')">' + esc(KEY_SIZES[k].label) + '</button>';
+      }).join('')
+    + '</span>'
+    /* ⭐ WHICH OF THE TWO IS IN CHARGE, in one line, always — never a state you have to infer from a chip */
+    + '<p class="keysays" data-testid="till-style-keysays">'
+    + (keySizeChosen()
+        ? 'Chosen on this counter. The screen suggests <b>' + esc(KEY_SIZES[keySizeAuto()].label)
+          + '</b> — <button class="aslink" data-testid="till-style-keysize-back" onclick="keySizePick(\'\')">'
+          + 'back to automatic</button>.'
+        : 'The screen is asking for <b>' + esc(KEY_SIZES[keySizeAuto()].label) + '</b> and will change its mind'
+          + ' if this counter moves to another screen.')
+    + '</p></div>'
     + '<div class="strow' + (!!applied.photos !== !!cfg.photos ? ' changed' : '') + '" data-testid="till-style-photos">'
     + '<b>Photos</b><span class="hint">where pictures show</span><span class="sc">'
     + '<button class="schip' + (cfg.photos ? ' on' : '') + '" data-testid="till-style-photos-keys"'
@@ -7596,13 +7778,40 @@ function stylePaint(){
     + '<button class="schip plain" data-testid="till-style-photos-none" onclick="stylePhotosOff()">Turn them all off</button>'
     + '</span></div>'
     /* ⭐ WHAT THE CHOICE COSTS, in numbers a shopkeeper can act on rather than a warning they cannot */
+    /**
+     * ⚠️⚠️ AND IT SAYS WHAT KEY SIZE DOES *NOT* DO YET. The spec's saving — a Small counter downloading
+     * none of the big pictures — needs the server to make 128/256/512 variants, which it does not. Key size
+     * changes how big a picture is DRAWN, not how many bytes arrive. Saying so here is the difference between
+     * a setting and a promise. [[feedback-document-status]] [[feedback-state-rls-status]]
+     */
+    + (keyPhotosOff()
+        ? '<div class="stcost">At <b>Small</b> a picture would be about 40px — too small to tell one packet'
+          + ' from another — so pictures are off on the keys at this size. Choose a bigger key to bring them'
+          + ' back; nothing you have set is lost.</div>'
+        : '')
     + '<div class="stcost">' + (cfg.photos && cost.n
         ? 'Photos on the keys add about <b>' + cost.mb + ' MB</b> to keep offline (' + cost.n
           + ' pictures) and a little to a cold start. '
         : 'No pictures are being kept for the keys. ')
-      + 'Quick keys show <b>' + (Number((K.LAYOUTS[cfg.layout] || {}).keysPerRow) || 6) + ' in a row</b> at this layout.'
+      + 'Quick keys show <b>' + styleFit(cfg, styleDev()).per + ' in a row</b> on this screen at this size.'
       + ' The chips above the list show a picture whenever the list does.</div>';
 }
+/**
+ * ⚠️⚠️ KEY SIZE APPLIES AT ONCE, unlike the rest of this dialog, and that is deliberate: it is the one
+ * setting whose answer you judge by looking at the REAL keys behind the dialog, not at a miniature. The
+ * preview follows too, so both agree. ⭐ '' means automatic — the chosen value is CLEARED, never set to a
+ * resolved size, or the counter would stop listening to its own screen.
+ */
+function keySizePick(k){
+  ls.set('cb_till_keysize', k || '');
+  /* ⚠️ the legacy key must go too, or keySizeChosen() keeps answering from it ([TILL-93]) */
+  if (!k) ls.set('cb_till_tilesize', '');
+  tileSizeApply();
+  try { paintQuick(); } catch (_) {}
+  stylePaint();
+}
+/** the size actually in force, whatever decided it — used to tell 'changed' from 'the same' */
+function keySizeNowApplied(){ return keySizeNow(); }
 function styleDevPick(k){ STYLE_DEV = k; stylePaint(); }
 function styleShowPick(k){ STYLE_SHOW = k; stylePaint(); }
 function screenSet(patch){
@@ -8286,7 +8495,7 @@ function paintQuick(){
         + '<i class="qx" title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')">✕</i>' + extra + '</button>';
     }
     return head + K.tile(cfg.tile, {
-      name: i.name, price: money(i.price), unit: i.unit || 'piece', image: i.image || null, colour: colour,
+      name: i.name, price: money(i.price), unit: i.unit || 'piece', image: picAsk(i.image, picPx()) || null, colour: colour,
       /* ⭐ THE SAME WORDS AS THE SHELF ROW, from the same rule — "₹11.00 under" is a standing fact about the
          product, never a saving, and a key that phrased it differently would be a second opinion about money. */
       /* ⭐ a combo's claim takes the line, because it is the more useful of the two on a meal deal */
@@ -8576,8 +8785,34 @@ function mrpUnder(i){
   var mrp = Number(i && i.mrp) || 0, pay = Number(i && i.price) || 0;
   return (mrp > pay && pay > 0) ? (money(r2(mrp - pay)) + ' under MRP') : '';
 }
+/**
+ * ── ⭐⭐⭐ THE ONE PLACE THAT ASKS FOR A PICTURE AT A SIZE ([TILL-93]) ──────────────────────
+ *
+ * Athi: *"my aim is to have different image sizes."* The counter knows what it will DRAW — a key is as wide
+ * as `--key-min` — so it knows what it should FETCH. What it cannot do yet is get a smaller file: products
+ * carry one image, stored whole in Supabase object storage, and nothing makes variants.
+ *
+ * ⚠️⚠️ SO THIS PASSES THROUGH, ON PURPOSE. A URL rewritten to ?width= against a server that does not serve
+ * transforms returns a 400, and every key on the counter becomes a broken picture — offline, mid-sale. The
+ * seam exists so the day the server can, ONE function changes and the shelf, the keys, the card and the
+ * preview all follow. It is not a placeholder: it is the single call site, which is the hard part.
+ *
+ * ⚠️ WHAT THIS MEANS TODAY, SAID PLAINLY: key size changes how big a picture is DRAWN. It does not yet
+ * change how many bytes are downloaded or kept offline. The Screen style cost line says so.
+ * WANTED, server side: one upload → 128 / 256 / 512 webp, square, centre-cropped (spec §5), and a counter
+ * keeps only the sizes it can show. See C:\dev\BACKLOG.md.
+ */
+function picAsk(url, px){
+  if (!url) return url;
+  /* the size this counter would actually draw, rounded up to the nearest stored step once steps exist */
+  PIC_WANT = Math.max(PIC_WANT || 0, Number(px) || 0);
+  return url;
+}
+var PIC_WANT = 0;
+/** ⭐ the picture width a key gets at the size in force — the key IS the picture's width */
+function picPx(){ return (KEY_SIZES[keySizeNow()] || KEY_SIZES.medium).min; }
 function picOf(i){
-  if (i.image) return '<img class="pic" src="' + esc(i.image) + '" alt="' + esc(i.name || '') + '" loading="lazy" decoding="async"'
+  if (i.image) return '<img class="pic" src="' + esc(picAsk(i.image, 128)) + '" alt="' + esc(i.name || '') + '" loading="lazy" decoding="async"'
     + ' onerror="tileSwap(this)" data-tile="' + esc((i.category || i.name || '?') + '\u0001' + (i.name || '?')) + '">';
   return tileHTML(i);
 }
