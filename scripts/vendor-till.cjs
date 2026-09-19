@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -227,6 +227,10 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'variant.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'variant.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'pricing.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'pricing.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
+  /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is
+     counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor
+     caught this the moment the script tag went in — which is what it is for. */
+  [null, path.join(API, 'lib', 'units.browser.js'), wrapForBrowser('units.js', 'CBUnits')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],

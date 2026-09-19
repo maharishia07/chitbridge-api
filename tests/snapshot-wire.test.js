@@ -702,7 +702,18 @@ it('⭐⭐ the cart carries the stepper and a shortcut, and a repeated add raise
  */
 it('⭐⭐ the bill says how many products and how many items, on screen and on paper', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  assert.ok(page.indexOf('function cartCount(){') > 0, 'nothing counts what is on the bill');
+  assert.ok(page.indexOf('function cartCount(lines){') > 0, 'nothing counts what is on the bill');
+  /**
+   * ⚠️⚠️⚠️ ONE SUM, ONE PLACE. Until [TILL-104] the counter added line quantities in FOUR places —
+   * countWords, cartChip, kotHTML and slipHTML — so a greengrocer's bill said "3 items" on the screen, "5.25"
+   * in the toolbar and "Items 5.25" on the paper handed to the customer. Each was found only by looking at
+   * the render after fixing the last. This forbids the shape rather than the four instances.
+   * ⚠️ A quantity is not always a count: 0.25 kg is ordinary, 0.25 plates is not, so adding across units is
+   * meaningless and cartCount() is the only thing allowed to decide how.
+   */
+  const sums = (page.match(/reduce\(function\s*\(\s*a\s*,\s*[cl]\s*\)\s*\{\s*return a \+ \(Number\([cl]\.qty\)/g) || []);
+  assert.deepStrictEqual(sums, [],
+    'something outside cartCount() is adding line quantities again — that is how "0.25 items" got onto a bill');
   assert.ok(page.indexOf('data-testid="till-count"') > 0, 'the count is not on the screen');
   const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));
   assert.ok(slip.indexOf("t('Products'") > 0 && slip.indexOf("t('Items'") > 0,

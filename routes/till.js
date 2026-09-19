@@ -1796,6 +1796,8 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   /* ⭐ VARIANTS — what makes two combinations the SAME thing to sell. A shop PC bills
                      combinations with the line down, so it needs the rule locally like every other engine. */
                   variant: '../lib/variant.browser.js',
+                  /* ⭐ counted or measured — what stops a bill reading '0.25 items' ([TILL-104]) */
+                  units: '../lib/units.browser.js',
                   qr: '../node_modules/qrcode-generator/qrcode.js' };
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];

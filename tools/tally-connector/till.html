@@ -2723,6 +2723,11 @@
 <script src="/engine/gs1.js" onerror="engineMissed('gs1')"></script>
 <script src="/engine/lots.js" onerror="engineMissed('lots')"></script>
 <script src="/engine/nums.js" onerror="engineMissed('nums')"></script>
+<!-- ⭐⭐ WHAT A UNIT IS ([TILL-104]). The counter needed to know that a kilo is MEASURED and a plate is
+     COUNTED, and the one table that knows was already vendored for the conversion lab and never loaded here.
+     ⚠️ Loading it rather than writing a list of weighed units into this page: a second list would have
+     disagreed with lib/units.js the first time somebody added a unit. -->
+<script src="/engine/units.js" onerror="engineMissed('units')"></script>
 <!-- ⭐ REWARDS. The counter has to say what a customer just earned while they are still standing there, so the
      arithmetic runs here with the line down; the server runs the same file again and its answer is written. -->
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
@@ -8982,7 +8987,9 @@ function ibToggle(){ IB_OPEN = !IB_OPEN; try { paintQuick(); } catch (_) {} }
 /** the count and the money, always visible; the pictures, on request */
 function cartChip(){
   if (!CART.length) { IB_OPEN = false; return ''; }
-  var n = CART.reduce(function(a, c){ return a + (Number(c.qty) || 0); }, 0);
+  /* ⚠️ ONE COUNT FOR THE WHOLE COUNTER. This used to sum every qty itself and showed "5.25" for a bill the
+     panel beside it described as "3 items · 2.25 kg". */
+  var n = countShort();
   var due = CART.reduce(function(a, c){ return r2(a + (Number(c.price) || 0) * (Number(c.qty) || 0)); }, 0);
   return '<button class="qcart' + (IB_OPEN ? ' on' : '') + '" data-testid="till-cart-chip"'
     + ' title="the things on this bill, in pictures" onclick="ibToggle()">'
@@ -12789,17 +12796,55 @@ function billMoney(){
   return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed, inclusive:inclusive,
            supply:supply, heads:heads, round:round };
 }
-function cartCount(){
-  var units = 0;
-  CART.forEach(function(c){ units = r2(units + (Number(c.qty) || 0)); });
-  return { products: CART.length, items: units };
+/**
+ * ── ⭐⭐⭐ WHAT IS ON THIS BILL, COUNTED THE WAY EACH LINE IS SOLD ([TILL-104]) ──────────────────
+ *
+ * ⚠⚠ THIS USED TO ADD EVERYTHING. `units + qty` over every line, called "items" — so a greengrocer's quarter
+ * kilo of tomato read "0.25 items", and a quarter kilo beside two pumpkins read "2.25 items". Correct
+ * arithmetic, meaningless number: you cannot add a magnitude to a count.
+ *
+ * ⭐ THE SPLIT IS BY UNIT, NOT BY TRADE, which is why a hotel bill comes out exactly as before — every unit a
+ * hotel sells in is counted, so the measured bucket stays empty and the sentence is unchanged. One rule serves
+ * both verticals; a shop-type switch here would have been two rules that have to be kept in agreement.
+ */
+function cartCount(lines){
+  var items = 0, measured = {};
+  (lines || CART).forEach(function(c){
+    var q = Number(c.qty) || 0;
+    var u = c.unit || (c.item && c.item.unit) || '';
+    /* ⚠️ NO LOCAL FALLBACK LIST. If the units engine did not load, everything counts — today's behaviour —
+       rather than this page holding a second opinion about which units are weighed. */
+    if (window.CBUnits && CBUnits.isMeasured && CBUnits.isMeasured(u)) {
+      var k = CBUnits.unitOf(u) || String(u).toLowerCase();
+      measured[k] = r2((measured[k] || 0) + q);
+    } else { items = r2(items + q); }
+  });
+  return { products: (lines || CART).length, items: items, measured: measured };
 }
 /** ⚠️ trims a whole number to "9" and keeps "3.5" — money() would print 9.00, which reads as rupees, not a count */
-function countWords(){
-  var n = cartCount();
+function countWords(lines){
+  var n = cartCount(lines);
   if (!n.products) return '';
+  var out = [n.products + ' product' + (n.products === 1 ? '' : 's')];
   var items = (Math.round(n.items * 100) / 100);
-  return n.products + ' product' + (n.products === 1 ? '' : 's') + ' · ' + items + ' item' + (items === 1 ? '' : 's');
+  if (items) out.push(items + ' item' + (items === 1 ? '' : 's'));
+  /* ⭐ each measured unit says its own total, in its own unit — "1.25 kg", never "1.25 items" */
+  Object.keys(n.measured).forEach(function(u){
+    var v = Math.round(n.measured[u] * 1000) / 1000;
+    out.push(v + ' ' + u);
+  });
+  return out.join(' · ');
+}
+/**
+ * ⭐ THE SAME COUNT, SHORT ENOUGH FOR A CHIP. No arithmetic of its own — a second reduce here is exactly what
+ * put "5.25" in the toolbar while the bill beside it said "3 items · 2.25 kg".
+ * A hotel gets "6", as it always did. A greengrocer gets "3 · 2.25 kg".
+ */
+function countShort(lines){
+  var n = cartCount(lines), out = [];
+  if (n.items) out.push(Math.round(n.items * 100) / 100);
+  Object.keys(n.measured).forEach(function(u){ out.push((Math.round(n.measured[u] * 1000) / 1000) + ' ' + u); });
+  return out.join(' · ') || '0';
 }
 /**
  * ⭐ WHAT THIS COUNTER KNOWS ABOUT THE SHOP. Every line here changes what gets printed on a bill, so each says what it is
@@ -13094,7 +13139,8 @@ function kotHTML(lines, n, at){
           + (c.mods ? '<div style="padding-inline-start:14px">— ' + esc(modWordsPlain(c.mods)) + '</div>' : '')
           + '</div>';
       }).join('')
-    + '<hr><div>' + lines.reduce(function(a, c){ return a + (Number(c.qty) || 0); }, 0) + ' items</div></div>';
+    /* ⚠⚠ A PRINTED SLIP MAY NOT SAY "5.25 items". Same count as the screen, by construction. */
+    + '<hr><div>' + countWords(lines) + '</div></div>';
 }
 function paintPays(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
@@ -14203,8 +14249,20 @@ function slipHTML(bill, m){
       }).join('') + dash
     /* ⭐ ON THE PAPER TOO. This is the line a customer runs their finger down when the bag does not look right, and the
        one a shopkeeper reads back at the door. It is printed for every bill, offer or no offer. */
+    /**
+     * ⚠️⚠️ THE COUNT A CUSTOMER CHECKS AGAINST THE BAG ([TILL-104]). This summed every quantity and called
+     * it "Items", so a bill for a quarter kilo of tomato, two kilos of onion and three coconuts printed
+     * "Items 5.25". One count for the whole counter — cartCount() — rendered here as rows.
+     */
     + t('Products', String((bill.lines||[]).length))
-    + t('Items', String(Math.round((bill.lines||[]).reduce(function(a,l){ return a + (Number(l.qty)||0); }, 0) * 100) / 100))
+    + (function(){
+        var n = cartCount(bill.lines || []);
+        var rows = n.items ? t('Items', String(Math.round(n.items * 100) / 100)) : '';
+        Object.keys(n.measured).forEach(function(u){
+          rows += t(u, String(Math.round(n.measured[u] * 1000) / 1000));
+        });
+        return rows;
+      })()
     + (bill.saved > 0 ? t('Before offers', money((m&&m.gross)||bill.total)) + t('You saved', '−' + money(bill.saved)) : '')
     /**
      * ── ⭐⭐ THE TAX SUMMARY, RATE BY RATE — THE STANDARD LAYOUT, NOT ONE OF OURS ─────────────────────────────

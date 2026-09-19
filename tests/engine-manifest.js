@@ -482,6 +482,7 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/numerals.js: the closed class — numerals in English and transliterated Tamil — so a counter that hears
      "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
   'numerals.browser.js',
+  'units.browser.js',
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
@@ -578,7 +579,8 @@ const TILL_SHIPPABLE = {
   /* wrapped out of lib/ by vendor-till.cjs — node modules made loadable by a browser */
   'money.js':     'money.js',          // { amount, currency } — the counter's arithmetic floor
   'docnumber.js': 'docnumber.js',      // what a bill number may look like, per country: numbered OFFLINE, so it is here
-  'nums.js':      'numerals.js',       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
+  'nums.js':      'numerals.js',
+  'units.js':     'units.js',          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter
   'lots.js':      'lotfields.js',      // a lot's fields travel with the goods, not with the server
 
