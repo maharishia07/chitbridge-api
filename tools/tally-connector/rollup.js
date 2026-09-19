@@ -30,13 +30,10 @@
  * It takes rows and returns figures. That is what lets the same file run on the shop's PC with the line down and
  * on the server, which is Athi's *"this can be kept in local and also in server"* — one rule, not two that drift.
  *
- * @stage tested
- *
- * ⚠️ `tested`, NOT `live`, AND THE DISTINCTION IS THE POINT. No server route reaches this yet — the only caller
- * today is tools/tally-connector/till.js, which the reachability scan cannot see. It is proven by
- * tests/rollup.test.js (the arithmetic, and fold ≡ summarise) and by e2e/till-summary.cjs (the real program,
- * writing the real folder and sending the real chits). The server half of Athi's *"local and also in server"*
- * is not built, and saying `live` would put a capability on the status report that nobody can call.
+ * ⚠️ THE @stage TAG IS GONE, and its removal is the record: GET /api/till/summary reaches this module as of
+ * 2026-09-20 ([TILL-124]), so it is LIVE and the tag would now be a lie on the status report. It said `tested`
+ * while the server half of Athi's *"local and also in server"* was unbuilt. tests/engine-boundary.js derives
+ * `live` from reachability, so nothing needs to be added in its place.
  */
 
 /** ⚠️ THE ONE PLACE that decides what a return is. `kind` is the counter's own marker (till.html isReturnRow). */
@@ -275,7 +272,46 @@ function planPurge(opts) {
   return { due: due.slice(0, max), kept, floor: floorDays, cutoff, max };
 }
 
-module.exports = { isReturn, totals, fold, dayKey, weekKey, monthKey, keyOf, daysIn, isClosed, summary, chitOf, refOf, PERIODS, planPurge, FLOOR_DAYS, MAX_PER_RUN };
+/**
+ * ── ⭐⭐⭐ ONE SHOP, MANY COUNTERS ([TILL-124]) ────────────────────────────────────
+ *
+ * Athi: *"this can be kept in local and also in server."* This is the half that has no home on a counter: a
+ * till can fold its OWN day, week and month, but it cannot see the till at the other end of the shop. Two
+ * counters each send `day-2026-09-16`, and the shop's takings for that day are the two folded together.
+ *
+ * Takes the summaries as stored (newest first) and returns one row per period key.
+ *
+ * ⚠️⚠️ ONE ROW PER COUNTER PER PERIOD, NEWEST WINS — AND THIS IS THE DANGEROUS PART. A counter re-sends a
+ * period only when its own copy was lost, so the newest is the corrected one; counting both would DOUBLE that
+ * day's takings, which is the worst thing this function could do. Input must be newest-first: the first
+ * sighting of a (key, counter) pair is kept and every later one is a superseded re-send.
+ *
+ * ⚠️ A SUMMARY WITH NO COUNTER IS STILL SOMEBODY'S. It is folded under 'C?' rather than dropped — losing a
+ * day's takings because a till id was missing would be the same silent hole in a different place.
+ */
+function acrossCounters(summaries) {
+  const seen = new Set(), byKey = new Map();
+  for (const sum of (summaries || [])) {
+    if (!sum || !sum.key || !sum.totals) continue;
+    const till = (sum.till && (sum.till.id || sum.till.name)) || 'C?';
+    const dedupe = sum.key + '\u0000' + till;
+    if (seen.has(dedupe)) continue;                 /* a superseded re-send of the same period by the same till */
+    seen.add(dedupe);
+    if (!byKey.has(sum.key)) byKey.set(sum.key, []);
+    byKey.get(sum.key).push({
+      till: { id: (sum.till && sum.till.id) || null, name: (sum.till && sum.till.name) || null },
+      totals: sum.totals, at: sum.summarised_at || null,
+    });
+  }
+  /* ⭐ newest period first, which is how every screen that reads this wants it */
+  return Array.from(byKey.keys()).sort().reverse().map((key) => ({
+    key,
+    totals: fold(byKey.get(key).map((p) => p.totals)),
+    counters: byKey.get(key),
+  }));
+}
+
+module.exports = { isReturn, totals, fold, dayKey, weekKey, monthKey, keyOf, daysIn, isClosed, summary, chitOf, refOf, PERIODS, planPurge, FLOOR_DAYS, MAX_PER_RUN, acrossCounters };
 
 /* ⭐ the counter loads its engines as browser globals; this one follows the same shape as lib/units.js et al. */
 if (typeof window !== 'undefined') window.CBRollup = module.exports;

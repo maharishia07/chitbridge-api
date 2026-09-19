@@ -223,7 +223,10 @@ const KEY_ROUTES = {
   /* ⚠️ NOT verify — that route calls requireScope('till') of its own, so listing it here promised a door the door itself
      refuses. A scope map that advertises what a route will not open is worse than not listing it. */
   screen:    [['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/], ['POST', /^\/api\/events\/ticket$/]],
-  till:      [['GET', /^\/api\/till\/(snapshot|bills|tasks|verify|worth-an-offer|reward|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
+  /* ⭐ `summary` joined 2026-09-20 ([TILL-124]): the shop's day/week/month trend folded across every counter.
+     A till key may READ it — a counter showing its shop's own months is the point — and cannot write one:
+     summaries arrive only as chits through POST /api/chits/send, which is already on this line. */
+  till:      [['GET', /^\/api\/till\/(snapshot|bills|summary|tasks|verify|worth-an-offer|reward|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
               /* ⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — a counter reads the groups it can choose from, and reads/writes
                  only ITS OWN active groups, hidden items and screen style. It cannot author a group (that's /api/quick-keys,
                  session-only, no scope grants it). */

@@ -1829,6 +1829,60 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
+/**
+ * ── ⭐⭐⭐ GET /api/till/summary — THE SHOP'S TREND, ACROSS EVERY COUNTER ([TILL-124]) ───────────
+ *
+ * Athi: *"this can be kept in local and also in server"* — the server half of the rollup ([TILL-122]).
+ *
+ * ⭐ THE ONE THING ONLY THE SERVER CAN DO. A counter can fold its OWN day, week and month; it cannot see the
+ * counter at the other end of the shop. Two tills each send `day-2026-09-16`, and the shop's actual takings for
+ * that day are the two folded together. That fold has no home on any single counter.
+ *
+ * ⚠️ IT FOLDS WITH THE SAME FUNCTION THE COUNTER USES — lib/rollup.fold(), the one held byte-equal in the kit
+ * by scripts/vendor-till.cjs. A server-side re-implementation would be the fourth copy of arithmetic that has
+ * already disagreed with itself three times, on the figures that become the shop's permanent record once the
+ * daily detail is purged. [[feedback-no-duplicate-functions]] [[project-js-unification]]
+ *
+ * ⚠️ WITH RLS. Every read goes through withEntity(), so the shop sees its own summaries and nothing else —
+ * chit_header is FORCE RLS and a query outside withEntity() would return an empty set rather than an error.
+ *
+ * ⚠️⚠️ PURPOSE ALONE IS NOT ENOUGH TO FIND THEM. A summary chit is purpose 'general' — and so is a SHIFT
+ * chit, which the counter has been sending since 2026-09-08. The test is `business_json ? 'summary'`; matching
+ * on purpose would have folded shift records into the day's takings.
+ *
+ * ⚠️ NO DIRECTION TEST, for the reason recorded on /bills below: a counter chit is one the shop sends to
+ * ITSELF, and a self chit lands as 'received'. Asking for 'sent' is what made "Earlier bills" empty for weeks.
+ */
+router.get('/summary', auth, async (req, res) => {
+  try {
+    const rollup = require('../lib/rollup');
+    const entity_id = auth.entityOf(req);
+    const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '60', 10) || 60, 1), 400);
+    const { withEntity } = require('../db');
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT h.chit_id, h.created_at, h.business_json
+         FROM chit_header h
+        WHERE h.entity_id = $1
+          AND h.purpose = 'general'
+          AND h.business_json -> 'summary' ->> 'period' = $2
+        ORDER BY h.business_json -> 'summary' ->> 'key' DESC, h.created_at DESC
+        LIMIT $3`, [entity_id, period, limit * 8]));
+
+    /**
+     * ⭐ THE FOLD LIVES IN THE ENGINE, not here — rollup.acrossCounters(). The risky part of it (one row per
+     * counter per period, newest wins, because counting a re-send twice would DOUBLE a day's takings) is then
+     * guarded by tests/rollup.test.js without needing a database to exercise it.
+     * ⚠️ The query is ordered newest-first, which acrossCounters() relies on.
+     */
+    const rows = rollup.acrossCounters(r.rows.map((x) => (x.business_json || {}).summary)).slice(0, limit);
+    res.json({ period, rows, counters: Array.from(new Set(r.rows
+      .map((x) => (((x.business_json || {}).summary || {}).till || {}).id).filter(Boolean))).sort() });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+  }
+});
+
 router.get('/bills', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

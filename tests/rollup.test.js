@@ -284,4 +284,145 @@ it('nothing on disk is not an error', () => {
   assert.deepStrictEqual(p.due, []); assert.deepStrictEqual(p.kept, []);
 });
 
+console.log('\n\u2B50\u2B50 ONE SHOP, MANY COUNTERS \u2014 THE SERVER HALF\n');
+
+/**
+ * Athi: *"this can be kept in local and also in server."* A counter folds its own periods; only the server can
+ * fold ACROSS counters. GET /api/till/summary calls this with the stored summaries, newest first.
+ */
+const sm = (key, tillId, totals, at) => ({ period: 'day', key, till: { id: tillId, name: tillId }, totals,
+  summarised_at: at || '2026-09-17T00:00:00Z' });
+const T = (n) => R.totals([sale('x', n)]);
+
+it('two counters on one day fold into one shop figure', () => {
+  const out = R.acrossCounters([sm('2026-09-16', 'C1', T(100)), sm('2026-09-16', 'C2', T(250))]);
+  assert.strictEqual(out.length, 1, 'the two counters did not land on one day');
+  assert.strictEqual(out[0].totals.total, 350);
+  assert.strictEqual(out[0].totals.count, 2);
+  assert.strictEqual(out[0].counters.length, 2, 'the per-counter breakdown was lost');
+});
+
+/**
+ * ⚠️⚠️ THE ONE THAT WOULD DOUBLE A SHOP'S TAKINGS. A counter re-sends a period only when its own copy was
+ * lost; the newest is the corrected one, and counting both would silently inflate the day.
+ */
+it('A RE-SEND BY THE SAME COUNTER IS NOT COUNTED TWICE', () => {
+  const out = R.acrossCounters([
+    sm('2026-09-16', 'C1', T(120), '2026-09-18T00:00:00Z'),   /* newest first — the corrected one */
+    sm('2026-09-16', 'C1', T(100), '2026-09-17T00:00:00Z'),   /* the superseded original */
+  ]);
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].totals.total, 120, 'a re-send was added instead of replacing');
+  assert.strictEqual(out[0].counters.length, 1, 'the superseded row is still in the breakdown');
+});
+
+it('but two different counters on the same day both count', () => {
+  const out = R.acrossCounters([sm('2026-09-16', 'C1', T(10)), sm('2026-09-16', 'C2', T(10))]);
+  assert.strictEqual(out[0].totals.total, 20, 'two counters were mistaken for a re-send');
+});
+
+it('periods come back newest first', () => {
+  const out = R.acrossCounters([sm('2026-09-14', 'C1', T(1)), sm('2026-09-16', 'C1', T(2)), sm('2026-09-15', 'C1', T(3))]);
+  assert.deepStrictEqual(out.map((x) => x.key), ['2026-09-16', '2026-09-15', '2026-09-14']);
+});
+
+/** ⚠️ losing a day because a till id was missing would be the same silent hole in a different place */
+it('a summary with no counter is folded, not dropped', () => {
+  const out = R.acrossCounters([{ period: 'day', key: '2026-09-16', totals: T(50) }]);
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].totals.total, 50);
+});
+
+it('rubbish rows are skipped without taking the good ones with them', () => {
+  const out = R.acrossCounters([null, {}, { key: 'x' }, sm('2026-09-16', 'C1', T(9)), undefined]);
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].totals.total, 9);
+});
+
+it('nothing stored is an empty list, not a throw', () => {
+  assert.deepStrictEqual(R.acrossCounters([]), []);
+  assert.deepStrictEqual(R.acrossCounters(null), []);
+});
+
+/** ⭐ the shop's month must equal its counters' months added up — the same property fold() has for days */
+it('the shop figure equals its counters added up', () => {
+  const parts = [T(100), T(250), T(33.33)];
+  const out = R.acrossCounters(parts.map((t, i) => sm('2026-09', 'C' + i, t)));
+  assert.deepStrictEqual(out[0].totals, R.fold(parts));
+});
+
+console.log('\n\u26A0\uFE0F\u26A0\uFE0F THE QUERY AND THE CHIT MUST AGREE\n');
+
+/**
+ * ── ⚠️⚠️⚠️ THE FAILURE THIS ROUTE HAS ALREADY SUFFERED ONCE ──────────────────────────
+ *
+ * GET /api/till/bills asked for direction 'sent' when a self chit lands as 'received'. It matched nothing,
+ * errored never, and "Earlier bills" was empty for weeks on a shop that had been billing all week. A JSON path
+ * that stops matching fails exactly the same way: silently, with an empty list.
+ *
+ * So this reads the ACTUAL SQL out of routes/till.js and checks every JSON path in it against the chit
+ * rollup.chitOf() really produces. It cannot prove the SQL runs — that needs a database, and this box has
+ * none — but it catches the one failure that would otherwise be invisible: the shape and the query drifting
+ * apart. [[feedback-silence-is-the-bug]] [[feedback-check-after-the-wire]]
+ */
+const TILL_SRC = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+const SUMMARY_SQL = (function () {
+  const at = TILL_SRC.indexOf("router.get('/summary'");
+  assert.ok(at > 0, 'GET /api/till/summary is gone — this guard is measuring nothing');
+  const sql = TILL_SRC.slice(at, TILL_SRC.indexOf('res.json(', at));
+  assert.ok(/FROM chit_header/.test(sql), 'the summary route no longer queries chit_header');
+  return sql;
+})();
+
+/** the chit as it is actually stored: POST /api/chits/send carries business_json through verbatim */
+const STORED = R.chitOf(R.summary('day', '2026-09-16', R.totals([sale('1', 100)]), { till: { id: 'C1', name: 'Counter 1' } }));
+
+it('the chit really does carry business_json.summary', () => {
+  assert.ok(STORED.business_json && STORED.business_json.summary,
+    'the summary rider is gone from the chit — the server route would match nothing');
+});
+
+/**
+ * ⚠️ EVERY `business_json -> 'a' ->> 'b'` IN THE SQL IS RESOLVED AGAINST THE REAL OBJECT. A rename anywhere in
+ * rollup.summary() breaks this test instead of quietly emptying a shopkeeper's trend screen.
+ */
+it('EVERY JSON PATH IN THE SQL RESOLVES ON A REAL CHIT', () => {
+  const re = /business_json\s*->\s*'([a-z_]+)'\s*->>\s*'([a-z_]+)'/g;
+  let m, checked = 0;
+  while ((m = re.exec(SUMMARY_SQL))) {
+    const got = STORED.business_json[m[1]] && STORED.business_json[m[1]][m[2]];
+    assert.ok(got !== undefined && got !== null,
+      "the SQL reads business_json -> '" + m[1] + "' ->> '" + m[2] + "' and a real chit has nothing there");
+    checked++;
+  }
+  assert.ok(checked >= 2, 'only ' + checked + ' JSON paths were found — the parser has stopped matching');
+});
+
+it('the period the SQL filters on is one the engine emits', () => {
+  assert.strictEqual(STORED.business_json.summary.period, 'day');
+  assert.ok(R.PERIODS.indexOf(STORED.business_json.summary.period) >= 0);
+});
+
+/**
+ * ⚠️⚠️ PURPOSE ALONE WOULD HAVE FOLDED SHIFT RECORDS INTO THE TAKINGS. A summary chit is 'general', and so
+ * is the shift chit the counter has sent since 2026-09-08. The query must also test for the summary rider.
+ */
+it('the query does not match on purpose alone', () => {
+  assert.ok(/purpose\s*=\s*'general'/.test(SUMMARY_SQL), 'the purpose filter is gone');
+  assert.ok(/business_json\s*->\s*'summary'/.test(SUMMARY_SQL),
+    "the query matches purpose 'general' without testing for the summary rider — shift chits would be folded");
+});
+
+/** ⚠️ acrossCounters() keeps the FIRST sighting of a (key, till) pair, so the query must be newest-first */
+it('the query is ordered newest-first, which the fold relies on', () => {
+  assert.ok(/ORDER BY[\s\S]*DESC/.test(SUMMARY_SQL),
+    'the ordering is gone — acrossCounters would keep a SUPERSEDED re-send instead of the corrected one');
+});
+
+/** ⚠️ RLS: chit_header is FORCE RLS, and a read outside withEntity() returns an empty set, not an error */
+it('the read goes through withEntity — RLS, not a bare query', () => {
+  assert.ok(/withEntity\(entity_id/.test(SUMMARY_SQL),
+    'the summary route reads chit_header without withEntity() — under FORCE RLS it would silently return nothing');
+});
+
 console.log('\n' + pass + ' checks passed\n');
