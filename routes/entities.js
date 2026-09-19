@@ -323,21 +323,34 @@ router.post('/verify',
             );
           }
           /**
-           * ⚠️⚠️ THE EVIDENCE HAS NOWHERE TO GO YET, AND IT SAYS SO RATHER THAN VANISHING. The IP, the device and
-           * the moment of agreement are an AUDIT RECORD, not a preference — they do not belong on identities
-           * beside the settings, and they need migrations/b264_signup_context.sql, which is Athi's to run.
-           * Until then this logs, loudly, once per verification. A capture that quietly drops what it captured
-           * is the silence this codebase keeps paying for. [[feedback-silence-is-the-bug]]
+           * ⭐⭐ THE EVIDENCE, AS AN AUDIT ROW (b264, run 2026-09-19). What the browser CLAIMED — before the
+           * COALESCE above decided whether to use it — plus the two things only the server can see, and the
+           * moment somebody agreed. Append-only: an owner verifies on every sign-in, and "what did this shop
+           * agree to on the day it signed up" is a different question from "last Tuesday".
+           * ⚠️ AN UNPARSEABLE IP IS NULL, NOT AN ERROR. A proxy chain can hand over anything at all, and a
+           * malformed header must never be the reason a shop cannot sign in.
            */
-          const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
-          console.log('[signup-context] ' + identity.identity_id + ' country=' + (cc || '?')
-            + ' currency=' + (cur || '?') + ' tz=' + (tz || '?')
-            + ' device=' + JSON.stringify((ctx.device && ctx.device.type) || '?')
-            + ' ip=' + (ip || '?') + ' agreed_at=' + (req.body.agreed_at || '?')
-            + ' — NOT STORED: b264_signup_context.sql has not been run');
+          const rawIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
+          const ip = /^[0-9a-fA-F:.]{3,45}$/.test(rawIp) ? rawIp : null;
+          const agreed = (typeof req.body.agreed_at === 'string' && !isNaN(Date.parse(req.body.agreed_at)))
+            ? req.body.agreed_at : null;
+          await query(
+            `INSERT INTO signup_context
+               (identity_id, claimed_country, claimed_currency, claimed_timezone, claimed_locale,
+                claimed_languages, device, ip, user_agent, agreed_at)
+             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10)`,
+            [identity.identity_id, cc, cur, tz,
+             (typeof ctx.locale === 'string' ? ctx.locale.slice(0, 40) : null),
+             JSON.stringify(langs),
+             JSON.stringify(ctx.device && typeof ctx.device === 'object' ? ctx.device : {}),
+             ip, String(req.headers['user-agent'] || '').slice(0, 400) || null, agreed]
+          );
         }
       } catch (e) {
-        console.log('[signup-context] not stored: ' + (e && e.message));
+        /* ⚠️ STILL LOUD ON FAILURE. The sign-in continues either way, but a capture that drops what it
+           captured must say so — that did not stop being true when the table appeared. */
+        console.log('[signup-context] NOT STORED for ' + (identity && identity.identity_id) + ': '
+          + (e && e.message));
       }
 
       // AUTO-MINT the entity's governance stamp onto its CHOSEN vertical (else the default constitution). BEST-EFFORT —

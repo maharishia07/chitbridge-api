@@ -36,6 +36,9 @@ const GUARDS = [
   /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
      format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
+  /* ⚠️ the INSERT and b264 must agree about the columns — a misspelt one is invisible offline and surfaces
+     on a real shop's first sign-up, as a failed audit row on the one event it exists to record */
+  'signup-context.test.js',
   /* ⚠️ the same set of choices must always make the same line, and a different set never the same one —
      both failures are silent, and the bill stays arithmetically correct while being wrong */
   'variant.test.js',

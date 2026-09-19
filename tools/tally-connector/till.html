@@ -1175,6 +1175,8 @@
   .pvgrid{display:grid;gap:8px}
   .pvbar{height:26px;border-radius:8px;background:var(--ok);margin-top:10px}
   .stylepv .u{display:block;margin-top:8px;line-height:1.45}
+  .styleu{margin:6px 0 0 140px;line-height:1.45}
+  .schip.plain{border-style:dashed}
   .panelnow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;color:var(--dim);font-size:.9em}
   .panelnow span{flex:1;min-width:140px}
   .panelpicks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
@@ -5448,7 +5450,9 @@ function paintChips(){
      */
     + list.map(function(c){
         var pic = '';
-        try { if (screenCfg().photos) pic = '<span class="cpic">' + catPic(c) + '</span>'; } catch (_) {}
+        /* ⚠️ THE LIST'S SWITCH, NOT THE KEYS' ([TILL-80]). A chip row is part of browsing the shelf and sits
+           directly above the list it filters; hanging it off the keys made it a hidden third surface. */
+        try { if (thumbsOn()) pic = '<span class="cpic">' + catPic(c) + '</span>'; } catch (_) {}
         return '<button class="' + (FILTER.cat === c ? 'on' : '') + (pic ? ' haspic' : '') + '"'
           + ' data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
           + ' onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">'
@@ -6381,6 +6385,15 @@ function styleClose(){
   var d = document.getElementById('styledlg');
   if (d && d.open) { try { d.close(); } catch (_) {} }
 }
+/** ⚠️ the list's thumbnails are their own store and their own surface — see the note on the Photos row */
+function stylePhotoList(){ thumbsToggle(); stylePaint(); }
+/** ⭐ the one Athi asked for by name: *"all the photos should be off"* — every surface, one press */
+function stylePhotosOff(){
+  STYLE_DRAFT = STYLE_DRAFT || {};
+  STYLE_DRAFT.photos = false;
+  if (thumbsOn()) thumbsToggle();
+  stylePaint();
+}
 function stylePick(k, v){
   STYLE_DRAFT = STYLE_DRAFT || {};
   /* ⭐ a PRESET is a whole combination, so choosing one clears the individual answers it would contradict */
@@ -6434,14 +6447,21 @@ function stylePaint(){
         }).join('')
       + '</span></div>';
   }).join('')
-    + '<div class="stylerow"><span class="sl">Photos on keys</span><span class="sc">'
-    + ['on', 'off'].map(function(w){
-        var want = (w === 'on');
-        return '<button class="schip' + (!!styleVal('photos') === want ? ' on' : '') + '"'
-          + ' data-testid="till-style-photos-' + w + '" onclick="stylePick(\'photos\',' + want + ')">'
-          + (want ? 'On' : 'Off') + '</button>';
-      }).join('')
-    + '</span></div>';
+    /**
+     * ⭐⭐ PHOTOS, BY SURFACE ([TILL-80]). Athi: *"a popup window to check where."* A key is aimed at from a
+     * distance, so a photograph is the fastest thing to aim at; a list row is read, and forty thumbnails down
+     * the side of a shelf make the names harder to scan. Different surfaces, one place to decide.
+     * ⚠️ THE KEYS ANSWER IS THE DRAFT'S (nothing moves until Apply); the LIST answer writes at once, because it
+     * is not part of the style being previewed and a draft nobody can see the effect of is just a delay.
+     */
+    + '<div class="stylerow" data-testid="till-style-photos"><span class="sl">Photos</span><span class="sc">'
+    + '<button class="schip' + (styleVal('photos') ? ' on' : '') + '" data-testid="till-style-photos-keys"'
+    + ' onclick="stylePick(\'photos\',' + (!styleVal('photos')) + ')">On the quick keys</button>'
+    + '<button class="schip' + (thumbsOn() ? ' on' : '') + '" data-testid="till-style-photos-list"'
+    + ' onclick="stylePhotoList()">In the product list</button>'
+    + '<button class="schip plain" data-testid="till-style-photos-none" onclick="stylePhotosOff()">Turn them all off</button>'
+    + '</span></div>'
+    + '<p class="u styleu">The chips above the list show a picture whenever the list does.</p>';
   /* ── the miniature ─────────────────────────────────────────────────────────────────────────────────── */
   var cfg = styleCfg();
   var vars = K.themeVars(cfg.theme);
@@ -7078,7 +7098,10 @@ function paintQuick(){
     + '<button class="qarr' + (byCatOn() ? ' on' : '') + '" data-testid="till-bycat"'
     + ' title="gather the keys under their category, with a break between"'
     + ' onclick="byCatToggle()">\u2261 By category</button>'
-    + '<label class="qphotos" data-testid="till-quick-photos" title="pictures on the keys">'
+    /* ⚠️ A SHORTCUT, NOT A SECOND ANSWER ([TILL-80]) — the same store Screen style writes, kept here because
+       judging photos on keys is done while LOOKING at the keys. The title now says which surface it is. */
+    + '<label class="qphotos" data-testid="till-quick-photos"'
+    + ' title="pictures on the QUICK KEYS \u2014 the product list has its own, in Screen style">'
     + '<input type="checkbox"' + (cfg.photos ? ' checked' : '') + ' onchange="screenSet({photos:this.checked})">'
     + '<span>Photos</span></label>'
     /* ⭐ WHERE THESE KEYS COME FROM, said by the control that changes it. The same three sources as ⚙ Setup —

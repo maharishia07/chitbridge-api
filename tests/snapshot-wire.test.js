@@ -354,7 +354,10 @@ it('⭐⭐ the keys gather under their category, and a category chip can carry a
   assert.ok(pic.indexOf('tileHTML(') > 0, 'a category with no photographed product has no fallback');
   /* ⚠️ only when pictures are on — the same switch that puts them on the keys */
   const chips = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
-  assert.ok(chips.indexOf('screenCfg().photos') > 0, 'the category chips show pictures whether or not they are wanted');
+  /* ⚠️ MOVED, NOT DELETED ([TILL-80]). The chips used to follow the KEYS' photo switch, which made them a
+     hidden third surface; they follow the LIST they sit above and filter. Same question, new reference. */
+  assert.ok(chips.indexOf('thumbsOn()') > 0,
+    'the category chips show pictures whether or not they are wanted');
 });
 
 /**
