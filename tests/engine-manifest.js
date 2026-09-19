@@ -349,6 +349,9 @@ const ENGINE_OTHER = [
      product into a catalogue. catalogue-write is CB's own sequence of decisions (declare → validate → stamp
      → insert → meter), extracted from routes/products.js when the counter became a second caller. */
   'catalogue-blueprint.js', 'catalogue-write.js',
+  /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
+     CITES a category by id, and `category` is the legacy key nothing may write again. */
+  'categories.js',
   /* ⭐ [TILL-109] — an .xlsx read into the shape a CSV makes. Beside csv.js and gs1.js: reading somebody
      else's FORMAT is our own logic, and this one is ours because the npm readers were not safe to take. */
   'xlsx-read.js',

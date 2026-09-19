@@ -22,6 +22,12 @@ const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
+/**
+ * ⭐⭐ THE CATEGORY MASTER, READ WITHOUT THE TAX GATE ([TILL-114]). taxShelf.readShelf() also returns
+ * categories — and answers NULL for a seller with no GSTIN, so an unregistered shop could not get its own
+ * category names for the same reason its tax is zero. A category is not a tax fact.
+ */
+const categories = require('../lib/categories');
 const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
@@ -303,12 +309,50 @@ router.get('/snapshot', auth, async (req, res) => {
     const cbCountry = cbProfile.countryOf({ country: row.country, gstin, profile });
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
+    /**
+     * ⭐⭐ THE CATEGORY MASTER, ONCE ([TILL-114]). id → name for every category this shop has, so tillItem can
+     * resolve what a product cites without a query per row.
+     * ⚠️ NOT THROUGH taxShelf. That read returns null for a seller with no GSTIN, which is most small shops —
+     * their categories would have been invisible for the same reason their tax is zero.
+     * ⚠⚠ A FAILURE HERE MUST NOT STOP A SHOP BILLING. An entity whose definitions table is not provisioned gets
+     * an empty Map and every product falls back to the legacy key, which is precisely today's behaviour — and
+     * the reason is said out loud rather than swallowed.
+     */
+    let catNames = new Map(), catList = [];
+    try {
+      /* ⚠️ ONE READ, BOTH SHAPES — the list travels to the counter, the Map resolves names here. Reading
+         twice would be two round trips for one small table. */
+      catList = await categories.listCategories(entity_id, { withEntity });
+      for (const c of catList) catNames.set(String(c.id), c.name);
+    }
+    catch (e) {
+      /* ⚠️ SAID OUT LOUD, the way this router already says it for sectors, rewards and customers — the shop
+         still bills, and every product falls back to its stored category, which is today's behaviour. */
+      try { require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) }); } catch (_) {}
+    }
+
     const tillItem = (item_id, d) => {
       return { item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
                /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
                   and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
                price: amountOf(d.price), mrp: amountOf(d.mrp),
-               hsn: d.hsn || d.hs_code || d.hsn_code || null, tax_slab: d.tax_slab || null, category: d.category || null,
+               hsn: d.hsn || d.hs_code || d.hsn_code || null, tax_slab: d.tax_slab || null,
+               /**
+                * ⚠️⚠️⚠️ THE NAME, RESOLVED — not the legacy key ([TILL-114]). This was `d.category || null`, and
+                * `category` is the key catalogue-columns calls *"legacy … read, never written again"*. A product
+                * that cites `categories: [id]`, which is the CORRECT way, arrived here with nothing — so it
+                * vanished from the chips and the By-category view with no error anywhere.
+                * ⭐ categories.nameOf tries the master first, then a counterparty's travelling copy, then the
+                * legacy key — one order, in one place, rather than the copy of it in lib/network-catalogue.
+                */
+               category: categories.nameOf(d, catNames),
+               /**
+                * ⭐⭐ AND THE RELATION, not only the answer ([TILL-114]). Athi: *"we need to have those relations
+                * in local systems as well, so mapping shouldn't be an issue."* With the name alone a counter
+                * could display a group and nothing more — it could not cite one back without sending a string
+                * and hoping the server matched it, which is how a master acquires a second "vegetables".
+                */
+               category_id: (Array.isArray(d.categories) && d.categories[0]) || null,
                /* ⭐ THE SHOP'S OWN PICTURE. Already a PUBLIC url (routes/products mediaUrl → /api/products/media/…), so the
                   counter and the shop screen can draw it without a key and without a second round trip. Null for most rows and
                   that is fine — the screen falls back to the category emblem rather than leaving a hole. */
@@ -512,6 +556,13 @@ router.get('/snapshot', auth, async (req, res) => {
         currency: party.currency || 'INR',
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
+      /**
+       * ⭐⭐⭐ THE CATEGORY MASTER, ON THE COUNTER ([TILL-114]). id → name for the shop's own categories, so the
+       * relation exists locally and mapping is not a problem with the line down.
+       * ⚠️ Small by nature — a shop has categories in the tens, not the thousands — so it rides every
+       * snapshot rather than needing a door of its own.
+       */
+      categories: catList.map((c) => ({ id: c.id, name: c.name, status: c.status })),
       /* how many sellable products the shop has right now — the counter checks its merged copy against this (see the note above) */
       /* ⚠️ INCLUDES THE NETWORK LINES, which ride on every read: the counter compares its merged copy against this, and a
          total that left them out would make every refresh look wrong and pull the whole shop again, for ever */
@@ -1661,6 +1712,39 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
       items = BP.mint(bp.key, existing);
       from = 'blueprint:' + BP.pin(bp);
     }
+
+    /**
+     * ⭐⭐⭐ NAMES BECOME CITATIONS ([TILL-114]). The blueprint and the upload both hand over a category NAME;
+     * the shop's own master turns it into an id, creating the ones it does not have. So a product written here
+     * cites `categories: [id]` like every properly-authored product, instead of the legacy `category` key that
+     * [TILL-107] was writing.
+     * ⚠️ MATCHED CASE-INSENSITIVELY by lib/categories, so a shop that already has "Vegetables" does not
+     * acquire "vegetables" beside it — which is the free-text pollution a master exists to prevent.
+     */
+    const wantCats = [...new Set(items.map((p) => p.categoryName).filter(Boolean))];
+    let catIds = new Map();
+    if (wantCats.length) {
+      /* ⚠️ THE SAME `created_by` routes/definitions.js writes — `req.identity.identity_id`. My first cut
+         called `auth.userOf`, which does not exist, behind a guard that would have written null for ever.
+         A counter authenticated by a KEY genuinely has no identity, so null here is honest, not a bug. */
+      try { catIds = await categories.ensureCategories(entity_id, wantCats,
+        { withEntity, by: (req.identity && req.identity.identity_id) || null }); }
+      catch (e) {
+        /* ⚠⚠ SAID, NOT SWALLOWED. Without ids the products would be written uncategorised, and a shop would
+           find a flat wall of goods with nothing to say why. */
+        return res.status(500).json({ error: 'Failed',
+          message: 'Your categories could not be set up, so nothing was added. ' + String(e && e.message).slice(0, 120) });
+      }
+    }
+    items = items.map((p) => {
+      const out = Object.assign({}, p);
+      const id = p.categoryName ? catIds.get(p.categoryName) : null;
+      delete out.categoryName;
+      /* ⚠️ CITED BY ID. `category_names` is NOT written: catalogue-columns reserves it as *"a positional copy
+         … for counterparties who cannot resolve our ids"*, and we can resolve our own. */
+      if (id) out.categories = [id];
+      return out;
+    });
 
     const w = await catwrite.writeItems({ entity_id, items: items });
     if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });

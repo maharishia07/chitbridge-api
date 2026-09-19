@@ -28,6 +28,7 @@ const GUARDS = [
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
   'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
   'write-limits.test.js',     // a door that writes many records per request is rate-limited, and keyed by the key
+  'categories.test.js',       // a product CITES its category; nothing writes the legacy single-category key
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs',// the bill number's shape: what the date says vs when the run restarts
