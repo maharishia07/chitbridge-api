@@ -239,6 +239,15 @@ const KEY_ROUTES = {
                  connect"*), so the server mints and the counter never authors a product locally. */
               ['POST', /^\/api\/till\/catalogue$/],
               ['GET', /^\/api\/till\/catalogue\/blueprints$/],
+              /**
+               * ⭐⭐ UPLOADING A PRODUCT LIST ([TILL-108]). The counter uses the import that already exists rather
+               * than a third copy of it. Narrow by the ROUTES' own contract: preflight writes nothing, and the
+               * commit never deletes, never renames a field, never changes a type, never acts on its own
+               * suggestions, and refuses while any row is in error. A counter key can add products from a file
+               * somebody confirmed; it cannot rewrite a catalogue.
+               */
+              ['POST', /^\/api\/products\/import\/preflight$/],
+              ['POST', /^\/api\/products\/import$/],
               ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
               /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */

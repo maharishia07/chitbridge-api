@@ -1958,6 +1958,21 @@
   .shopreg{font-size:.85em;color:var(--dim);margin-top:6px;line-height:1.45}
   /* ⭐ one card per trade — big enough to touch, and each one says what it will DO, not what it contains */
   .startbody{display:grid;gap:12px;margin:6px 0 12px}
+  /* ⭐ the report: a headline you can act on, then the columns, then the rows that cannot come in */
+  .upbody{margin:6px 0 12px;max-height:60vh;overflow-y:auto;min-height:0}
+  .uphead{font-size:1.05em;margin-bottom:10px}
+  .uphead b{font-size:1.25em}
+  .upcols{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;margin-bottom:12px}
+  .upcols .inc{font-weight:600;min-width:0;overflow-wrap:anywhere}
+  .upcols .inc span{display:block;font-weight:400;color:var(--dim);font-size:.85em}
+  .upcols select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+                 background:var(--paper);color:var(--ink)}
+  /* ⚠️ a column nobody has answered for is marked — it is a QUESTION, not a default */
+  .upcols select.ask{border-color:var(--warn,#a8410f)}
+  .uprows{border-top:1px solid var(--line);padding-top:10px}
+  .uprows h4{margin:0 0 6px;font-size:.95em}
+  .uprow{display:flex;gap:10px;font-size:.88em;padding:3px 0;color:var(--dim)}
+  .uprow b{flex:none;min-width:4.5em;color:var(--ink)}
   .trade{display:block;width:100%;text-align:start;padding:14px 16px;border:1px solid var(--line);
          border-radius:12px;background:var(--panel);color:var(--ink);cursor:pointer;font:inherit}
   .trade:hover,.trade:focus-visible{border-color:var(--accent);outline:none}
@@ -1965,6 +1980,14 @@
   .trade .out{display:block;color:var(--dim);font-size:.9em;margin-bottom:6px}
   .trade .eg{display:block;color:var(--dim);font-size:.85em}
   .trade[disabled]{opacity:.55;cursor:default}
+  /* ⚠️ the same card, deliberately — a different way in, not a lesser one. Only the CLASS differs, because
+     the class is how the set of trades is read. */
+  .bring{display:block;width:100%;text-align:start;padding:14px 16px;border:1px dashed var(--line);
+         border-radius:12px;background:var(--panel);color:var(--ink);cursor:pointer;font:inherit}
+  .bring:hover,.bring:focus-visible{border-color:var(--accent);outline:none}
+  .bring b{display:block;font-size:1.1em;margin-bottom:3px}
+  .bring .out{display:block;color:var(--dim);font-size:.9em;margin-bottom:6px}
+  .bring .eg{display:block;color:var(--dim);font-size:.85em}
   .shopsay{font-size:.9em;margin:0 0 10px;min-height:1.2em}
   .shopsay.bad{color:var(--warn,#a8410f)}
   @media (max-width:560px){ .shopform{grid-template-columns:1fr} }
@@ -2293,6 +2316,17 @@
      decides whether there is tax on it at all. -->
 <!-- ⭐⭐⭐ THE FRONT DOOR ([TILL-107]). Two trades, each one a blueprint with a stated outcome; choosing one
      mints a starter catalogue and the shop can sell within the minute. -->
+<!-- ⭐⭐⭐ A PRODUCT LIST, READ BEFORE IT BECOMES DATA ([TILL-108]). The report is shown and approved; nothing
+     is written until somebody says so. -->
+<dialog id="updlg" class="dlg wide" data-testid="till-upload-dlg">
+  <h3>Your product list <span class="u">we read it first and show you what we found — nothing is added until you say so</span></h3>
+  <div id="upbody" class="upbody"></div>
+  <div id="upsay" class="shopsay"></div>
+  <div class="dlgbtns">
+    <button onclick="upClose()">Cancel · Esc</button>
+    <button id="upgo" class="pri" data-testid="till-upload-go" onclick="upCommit()" disabled>Add these products</button>
+  </div>
+</dialog>
 <dialog id="startdlg" class="dlg" data-testid="till-start-dlg">
   <h3>Start your shop <span class="u">pick what you sell — you can change every price and name afterwards</span></h3>
   <div id="startbody" class="startbody"></div>
@@ -13063,6 +13097,166 @@ function regWords(){
  * page shows the new one without being touched.
  */
 var TRADES = null;
+/* ── ⭐⭐⭐ THE UPLOAD, READ BEFORE IT BECOMES DATA ([TILL-108]) ────────────────────────── */
+var UP = { csv: '', report: null, decisions: {} };
+
+/** ⚠️ a .csv only — an .xlsx is a zip, and pretending to read one would fail in a way nobody could act on */
+function upPick(){
+  var i = document.createElement('input');
+  i.type = 'file'; i.accept = '.csv,text/csv,text/plain';
+  i.onchange = function(){ var f = i.files && i.files[0]; if (f) upRead(f); };
+  i.click();
+}
+
+async function upRead(file){
+  var d = document.getElementById('updlg'); if (!d) return;
+  UP = { csv: '', report: null, decisions: {} };
+  document.getElementById('upbody').innerHTML = '<p class="note">Reading ' + esc(file.name) + '…</p>';
+  document.getElementById('upgo').disabled = true;
+  upSay('', false);
+  if (!d.open) d.showModal();
+
+  var text = '';
+  try { text = await file.text(); } catch (_) { text = ''; }
+  if (!text.trim()) {
+    document.getElementById('upbody').innerHTML = '';
+    upSay('That file is empty, or it could not be read.', true); return;
+  }
+  UP.csv = text;
+
+  /**
+   * ⚠️⚠️ THE SERVER READS IT. The page does not parse a catalogue and decide what the columns mean — that
+   * judgement is csv-preflight's, and it is the same one the commit will make again. A page that guessed
+   * would show a report the import then contradicts.
+   */
+  var r = null;
+  try { r = await HOST.tillPost('/api/products/import/preflight', { csv: text }, { noQueue: true }); } catch (_) { r = null; }
+  if (!r || !r.ok || !r.report) {
+    document.getElementById('upbody').innerHTML = '';
+    upSay(((r && r.why) || 'ChitBridge could not be reached') + '. Nothing has been added.'
+      + ' Reading a list needs the line once — selling afterwards does not.', true);
+    return;
+  }
+  UP.report = r.report;
+  upPaint(r);
+}
+
+/**
+ * ⭐ THE REPORT, IN A SHOPKEEPER'S WORDS. The headline is what will HAPPEN, not a status: "11 of 14 rows can
+ * be added". Then every column, with the ones we could not place asked as questions.
+ */
+function upPaint(r){
+  var rep = r.report, sum = rep.summary || {}, out = [];
+  var can = Number(sum.importable || 0), rows = Number(sum.rows || 0), errs = Number(sum.errors || 0);
+
+  out.push('<div class="uphead" data-testid="till-upload-head"><b>' + can + ' of ' + rows + '</b> row'
+    + (rows === 1 ? '' : 's') + ' can be added'
+    + (errs ? ' · ' + errs + ' cannot, and are listed below' : '') + '</div>');
+
+  /* ⚠️ EVERY COLUMN IS SHOWN, including the ones that matched — a person checking an import checks the
+     mapping, and hiding the confident ones is how a wrong confident match goes unnoticed. */
+  var fields = (r.accepted || []).slice();
+  out.push('<div class="upcols" data-testid="till-upload-cols">');
+  (rep.mapping || []).forEach(function(m, i){
+    var chosen = UP.decisions[m.incoming] !== undefined ? UP.decisions[m.incoming] : (m.canonical || '');
+    var ask = !m.canonical && chosen === '';
+    out.push('<div class="inc">' + esc(m.incoming)
+      + '<span>' + esc(m.why || '') + '</span></div>');
+    out.push('<select class="' + (ask ? 'ask' : '') + '" data-inc="' + esc(m.incoming) + '"'
+      + ' data-testid="till-upcol-' + i + '" onchange="upDecide(this)">'
+      + '<option value=""' + (chosen === '' ? ' selected' : '') + '>— leave it out —</option>'
+      + fields.map(function(f){
+          return '<option value="' + esc(f) + '"' + (chosen === f ? ' selected' : '') + '>' + esc(f) + '</option>';
+        }).join('')
+      + '</select>');
+  });
+  out.push('</div>');
+
+  /**
+   * ⚠️⚠️ THE ROWS THAT CANNOT COME IN, BY THEIR SPREADSHEET ROW NUMBER. The import refuses while any row
+   * is in error — deliberately, *"rather than importing 'the good ones' and leaving a person to work out which
+   * lines are missing."* So the screen has to make them fixable: the number is the one shown in the file.
+   */
+  var errsList = (rep.issues || []).filter(function(i){ return i.severity === 'error'; });
+  if (errsList.length) {
+    out.push('<div class="uprows" data-testid="till-upload-rows"><h4>Fix these ' + errsList.length
+      + ' row' + (errsList.length === 1 ? '' : 's') + ' in the file, then bring it again</h4>');
+    errsList.slice(0, 40).forEach(function(i){
+      out.push('<div class="uprow"><b>Row ' + i.row + '</b><span>' + esc(i.message) + '</span></div>');
+    });
+    if (errsList.length > 40) out.push('<div class="uprow"><b></b><span>… and ' + (errsList.length - 40) + ' more</span></div>');
+    out.push('</div>');
+  }
+
+  document.getElementById('upbody').innerHTML = out.join('');
+  upReady();
+}
+
+/** a person's answer for one column — the ONLY thing the commit acts on */
+function upDecide(sel){
+  UP.decisions[sel.getAttribute('data-inc')] = sel.value;
+  sel.classList.remove('ask');
+  upReady();
+}
+
+/**
+ * ⚠️⚠️ WHEN MAY THIS BE COMMITTED. Two conditions and they are different: the file must have no row errors
+ * (the route refuses otherwise) AND the axiom must be reachable — a file with no column mapped to name or
+ * price cannot produce a sellable product however clean its rows are.
+ */
+function upReady(){
+  var rep = UP.report; if (!rep) return;
+  var errs = (rep.issues || []).filter(function(i){ return i.severity === 'error'; }).length;
+  var mapped = {};
+  (rep.mapping || []).forEach(function(m){
+    var d = UP.decisions[m.incoming] !== undefined ? UP.decisions[m.incoming] : (m.canonical || '');
+    if (d) mapped[d] = true;
+  });
+  var need = ['name', 'price'].filter(function(k){ return !mapped[k]; });
+  var btn = document.getElementById('upgo');
+  if (errs) {
+    btn.disabled = true;
+    upSay('Nothing will be added while those rows have problems — the whole file goes in together, or none of it does.', true);
+  } else if (need.length) {
+    btn.disabled = true;
+    upSay('Say which column holds the ' + need.join(' and the ') + '. Without them a product cannot be sold.', true);
+  } else {
+    btn.disabled = false;
+    upSay('', false);
+  }
+}
+
+function upClose(){ var d = document.getElementById('updlg'); if (d && d.open) d.close(); }
+function upSay(t, bad){
+  var el = document.getElementById('upsay'); if (!el) return;
+  el.textContent = t || ''; el.className = 'shopsay' + (bad ? ' bad' : '');
+}
+
+/**
+ * ⚠️ THE DECISIONS ARE SENT, NEVER THE PARSED ROWS. The route re-reads the file itself — *"the client's
+ * report is a display artifact and is never trusted"* — so what travels is the file and what a person decided.
+ */
+async function upCommit(){
+  if (!UP.report || !UP.csv) return;
+  var decisions = (UP.report.mapping || []).map(function(m){
+    var d = UP.decisions[m.incoming] !== undefined ? UP.decisions[m.incoming] : (m.canonical || '');
+    return { incoming: m.incoming, action: d ? 'map' : 'ignore', field: d || undefined };
+  });
+  document.getElementById('upgo').disabled = true;
+  upSay('Adding them…', false);
+  var r = null;
+  try { r = await HOST.tillPost('/api/products/import', { csv: UP.csv, decisions: decisions, confirm: true }, { noQueue: true }); }
+  catch (_) { r = null; }
+  if (!r || !r.ok) {
+    document.getElementById('upgo').disabled = false;
+    upSay(((r && r.why) || 'ChitBridge could not be reached') + '. Nothing has been added.', true);
+    return;
+  }
+  upSay((r.message || 'Added') + ' · reading them onto this counter…', false);
+  try { await refresh(); } catch (_) {}
+  upClose();
+  try { paintChips(); paintQuick(); paintHits(); } catch (_) {}
+}
 async function startOpen(){
   var d = document.getElementById('startdlg'); if (!d) return;
   document.getElementById('startbody').innerHTML = '<p class="note">Asking ChitBridge what you can start from…</p>';
@@ -13090,6 +13284,14 @@ async function startOpen(){
   if (r.axiom) document.getElementById('startbody').insertAdjacentHTML('beforeend',
     '<p class="note">Every product needs only a <b>' + r.axiom.join('</b> and a <b>') + '</b>.'
     + ' Everything else can come later, or never.</p>');
+  /* ⭐ AND THE OTHER WAY IN: a shop that already keeps a list brings it, rather than retyping it ([TILL-108]) */
+  document.getElementById('startbody').insertAdjacentHTML('beforeend',
+    /* ⚠️ `bring`, NOT `trade` — the trades are a SET that is read by that class, and this is a different
+       way in, not a third blueprint. It has no outcome because it is not one. */
+    '<button class="bring" data-testid="till-upload-open" onclick="startClose();upPick()">'
+    + '<b>I already have a list</b>'
+    + '<span class="out">bring a spreadsheet — we read it first and show you what we found</span>'
+    + '<span class="eg">a .csv from Tally, from your books, or one you typed yourself</span></button>');
 }
 function startClose(){ var d = document.getElementById('startdlg'); if (d && d.open) d.close(); }
 function startSay(t, bad){

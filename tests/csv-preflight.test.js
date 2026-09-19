@@ -486,6 +486,26 @@ t('TIER A · zero dependencies', () => {
   assert.deepStrictEqual([...src.matchAll(/require\(/g)], []);
 });
 
+/**
+ * ⚠️⚠️ "Rs 30" IS A PRICE ON AN INDIAN SHEET ([TILL-108]). looseNumber stripped a symbol, grouping and a
+ * three-letter code, but not the word — so a file with one such cell was refused ENTIRELY, the import being
+ * all-or-nothing by design. Found by driving the counter's upload screen with a sheet written the usual way.
+ *
+ * ⚠️ THE NEGATIVE HALF IS THE IMPORTANT HALF. The fix is a NAMED list of currency words, never \b[A-Za-z]+\b:
+ * stripping any word would read "30 kg" as 30, a quantity silently taken for a price. A refusal a person can
+ * act on beats a number nobody checked.
+ */
+t('a price written the way a shop writes it — and only that', () => {
+  const val = (v) => P.looseNumber(v).value;
+  for (const [raw, want] of [['30', 30], ['Rs 30', 30], ['Rs. 30', 30], ['rs 30', 30], ['INR 30', 30],
+                             ['₹30', 30], ['30/-', 30], ['Rs. 1,200/-', 1200], ['30.50', 30.5]])
+    assert.strictEqual(val(raw), want, JSON.stringify(raw) + ' should read as ' + want);
+
+  /* ⚠️⚠️ AND THESE MUST STILL BE REFUSED. "30 kg" is the one that matters: it is a QUANTITY, and a parser
+     that stripped any letters would price the product at 30 without a word to anybody. */
+  for (const raw of ['30 kg', '2 dozen', 'abc', '', 'call for price', 'two', '-', '.'])
+    assert.strictEqual(val(raw), null, JSON.stringify(raw) + ' must not be read as a number');
+});
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
 

@@ -494,6 +494,8 @@ const server = http.createServer(async (req, res) => {
                    /* ⭐⭐ starting the shop ([TILL-107]) — a desktop counter is exactly the machine whose owner
                       has no back office open, so the agent must forward the mint as well. */
                    '/api/till/catalogue',
+                   /* ⭐ the upload, read then committed — the same two routes the back office uses ([TILL-108]) */
+                   '/api/products/import/preflight', '/api/products/import',
                    /* ⭐ a counter finishing, deliberately and online */
                    '/api/till/close',
                    /* ⭐ on break, or billing — for the shop's Counters screen */

@@ -69,7 +69,9 @@ const EXPECT = {
                      /* ⚠️ the shop's own header and GSTIN — till key alone, by Athi's decision of 2026-09-19 */
                      'POST /api/till/shop',
                      /* ⭐ the starter catalogue — a shop open for business on the day it registers */
-                     'POST /api/till/catalogue', 'GET /api/till/catalogue/blueprints'] },
+                     'POST /api/till/catalogue', 'GET /api/till/catalogue/blueprints',
+                     /* ⭐ the upload, read then committed — the back office's own import, reached from a counter */
+                     'POST /api/products/import/preflight', 'POST /api/products/import'] },
   connector: { why: 'a program on a shop PC: products up, orders down, the bell',
              allow: ['GET /api/products', 'PATCH /api/products/abc', 'GET /api/chits/inbox', 'POST /api/events/ticket'] },
   offers:  { why: 'the offers engine as a service', allow: [] },
@@ -205,7 +207,12 @@ it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well
    * ⭐ Both shapes are read, so a write cannot escape the lock by being wrapped in a helper.
    */
   const wants = new Set();
-  [/tillPost\(\s*'(\/api\/till\/[a-z/-]+)'/g, /path:\s*'(\/api\/till\/[a-z/-]+)'/g].forEach((re) => {
+  /**
+   * ⚠️⚠️ ANY /api PATH, NOT JUST /api/till ([TILL-108]). This read `\/api\/till\/` only, so the moment the
+   * counter posted to another router — the catalogue import, which is /api/products — the write was invisible
+   * to this guard, and a shop PC would have refused it with nothing failing here.
+   */
+  [/tillPost\(\s*'(\/api\/[a-z/-]+)'/g, /path:\s*'(\/api\/[a-z/-]+)'/g].forEach((re) => {
     let m; while ((m = re.exec(page))) wants.add(m[1]);
   });
   assert.ok(wants.size >= 4, 'only ' + wants.size + ' till writes were found in the page — the parser has stopped matching');
@@ -228,7 +235,7 @@ it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well
   const reads = new Set();
   /* ⚠️ the sub-path matters: /api/till/reward/claim is a different door from /api/till/reward, and a pattern that
      stopped at the first segment would pass a route the agent has never been told about. */
-  const rre = /tillGet\(\s*'(\/api\/till\/[a-z/-]+)/g;
+  const rre = /tillGet\(\s*'(\/api\/[a-z/-]+)/g;   /* ⚠️ any router, not only /api/till ([TILL-108]) */
   let rm; while ((rm = rre.exec(page))) reads.add(rm[1]);
   for (const p of reads) {
     assert.ok(agent.indexOf("'" + p + "'") > 0, 'the counter reads ' + p + ' but the agent will not forward it');
