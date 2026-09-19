@@ -289,11 +289,31 @@
   body.hide-list.hide-quick .left{border-right:1px solid var(--line)}
   /* ⚠️ a shape is a DELIBERATE override of the media query, for a screen the browser cannot guess — a vertical
      monitor reports plenty of width and would otherwise get the wide counter. */
-  body.shape-tall .wrap,body.shape-mobile .wrap{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}
-  body.shape-tall .grip,body.shape-mobile .grip{display:none}
-  body.shape-tall .left,body.shape-mobile .left{order:2;border-right:none;border-top:1px solid var(--line)}
-  body.shape-tall .right,body.shape-mobile .right{order:1}
-  body.shape-tall .hits{max-height:52vh}
+  /**
+   * ── ⚠️⚠️⚠️ A TALL COUNTER IS STILL A COUNTER ([TILL-94]) ────────────────────────────
+   *
+   * This used to read `height:auto; min-height:100dvh` with the BILL FIRST, and both were wrong for a kiosk:
+   * the whole page grew past the screen and scrolled as a document, and the keys — the entire reason to turn
+   * a monitor upright — were pushed below the fold by the bill.
+   * ⭐ THE KEYS TAKE THE ROOM, THE BILL SITS UNDER THEM, AND NOTHING BUT A PANE SCROLLS.
+   */
+  body.shape-tall .wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;
+        height:100vh;height:100dvh;min-height:0}
+  body.shape-tall .grip{display:none}
+  /* ⭐ the keys FIRST and filling — 'see a good amount of product' is what this shape is for */
+  body.shape-tall .left{order:1;border-right:none;border-bottom:1px solid var(--line);min-height:0}
+  /**
+   * ⚠️ THE BILL IS BOUNDED, NOT AUTO. Left to size itself a ten-line bill would eat the screen and the keys
+   * would vanish upward — the same fault in the other direction. It takes at most 40% and scrolls inside.
+   */
+  body.shape-tall .right{order:2;min-height:0;max-height:40dvh;overflow:auto}
+  /* ⚠️ and the shelf stops carrying a viewport-height cap: it is a flex child of a box that already fits */
+  body.shape-tall .hits{max-height:none}
+  /* ── the phone keeps what it had: it sells in three steps, where the bill is its own screen ──────── */
+  body.shape-mobile .wrap{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}
+  body.shape-mobile .grip{display:none}
+  body.shape-mobile .left{order:2;border-right:none;border-top:1px solid var(--line)}
+  body.shape-mobile .right{order:1}
   body.shape-mobile .hits{max-height:40vh}
   /* ── ⭐⭐⭐ MAINTENANCE ON A PHONE IS A BOTTOM SHEET (png/MaintV2Phone.png, [TILL-58c]) ──────────────── */
   /* ⚠️ THE SHELF COMES FIRST HERE, not the pane. Selling puts the bill on top because a cashier is serving
@@ -7068,20 +7088,27 @@ function stylePick(k, v){
  * change looks like the counter crashed. The patch waits in STYLE_PEND and lands the moment that bill is
  * saved, parked or cleared. clearBill() is the single funnel all three go through.
  */
-var STYLE_PEND = null;
+var STYLE_PEND = null, STYLE_PEND_ROOM = null;
 function styleApply(){
   var d = Object.assign({}, STYLE_DRAFT || {});
   /* ⚠️ ROOM IS NOT A SCREEN-CONFIG KEY — it goes to panelApply(), the one writer of the split and the keys
      height, and never into the patch screenSet() stores. [[feedback-no-duplicate-functions]] */
   var room = d.room; delete d.room;
+  /**
+   * ⚠️⚠️ THE BILL IS CHECKED BEFORE THE DIALOG CLOSES ([TILL-95]). It used to close first and then hold
+   * the change behind a toast — so pressing Apply made the dialog vanish and nothing happen, which reads as
+   * a broken button and was reported as one. A refusal has to be as visible as the action would have been.
+   */
+  if (typeof CART !== 'undefined' && CART.length && (Object.keys(d).length || room)) {
+    STYLE_PEND = Object.keys(d).length ? d : null;
+    STYLE_PEND_ROOM = room || null;
+    stylePaint();                       /* the button and the note now say what is waiting, and stay saying it */
+    toastLine('Held — it lands when this bill is finished.');
+    return;
+  }
   styleClose();
   if (room) { try { panelApply(room); } catch (_) {} }
   if (!Object.keys(d).length) { if (room) toastLine('Screen style applied to ' + tillName() + '.'); return; }
-  if (typeof CART !== 'undefined' && CART.length) {
-    STYLE_PEND = d;
-    toastLine('Saved — the new style lands when this bill is finished.');
-    return;
-  }
   screenSet(d);
   /**
    * ⭐⭐ SHAPE FOLLOWS LAYOUT ([TILL-81]). The screen library already declares it — LAYOUTS.vertical.shape is
@@ -7098,8 +7125,11 @@ function styleApply(){
 }
 /** ⚠️ called from clearBill() — the one place a bill stops being in hand, whichever way it ended */
 function stylePendFlush(){
-  var d = STYLE_PEND; if (!d) return;
-  STYLE_PEND = null;
+  var d = STYLE_PEND, rm = STYLE_PEND_ROOM;
+  if (!d && !rm) return;
+  STYLE_PEND = null; STYLE_PEND_ROOM = null;
+  if (rm) { try { panelApply(rm); } catch (_) {} }
+  if (!d) { try { densityApply(); } catch (_) {} toastLine('The new screen style is on now.'); return; }
   screenSet(d);
   try { densityApply(); } catch (_) {}
   toastLine('The new screen style is on now.');
@@ -7603,7 +7633,15 @@ function stylePaint(){
   }
   var ap = document.getElementById('styapply');
   /* ⭐ THE SCOPE IS ON THE BUTTON. "Apply" alone never says what it lands on. */
-  if (ap) ap.textContent = 'Apply to ' + tillName();
+  if (ap) {
+    /**
+     * ⭐⭐ THE BUTTON SAYS WHAT IS HAPPENING TO IT. Three states, and the middle one is the whole point:
+     * a change that is HELD must not look like a change that failed.
+     */
+    var waiting = !!(STYLE_PEND || STYLE_PEND_ROOM);
+    ap.textContent = waiting ? 'Waiting for the bill in hand…' : ('Apply to ' + tillName());
+    ap.className = 'pri' + (waiting ? ' want' : '');
+  }
 
   /* ── the two segmented switches ─────────────────────────────────────────── */
   var dt = document.getElementById('stydevtabs');
@@ -7688,10 +7726,14 @@ function stylePaint(){
           }).join('') + '</ul>'
         : '<p>Nothing yet. Change a setting on the left and this shows the difference, side by side.</p>')
     /* ⚠️⚠️ THE ONE THING THAT MAKES THIS DANGEROUS: somebody may be mid-sale RIGHT NOW */
-    + ((typeof CART !== 'undefined' && CART.length)
-        ? '<div class="stnote wait">Someone is selling on this counter — the change waits until the bill in hand'
-          + ' is saved or cleared.</div>'
-        : '')
+    + ((STYLE_PEND || STYLE_PEND_ROOM)
+        /* ⚠️ PAST TENSE, because it has already happened: the change is taken and held, not refused. */
+        ? '<div class="stnote wait" data-testid="till-style-held"><b>Held.</b> The bill in hand comes first —'
+          + ' this lands the moment it is saved, parked or cleared. You can close this; nothing is lost.</div>'
+        : (typeof CART !== 'undefined' && CART.length)
+          ? '<div class="stnote wait">Someone is selling on this counter — the change will wait until the bill'
+            + ' in hand is saved or cleared.</div>'
+          : '')
     + '</div>';
 
   /* ── the settings ─────────────────────────────────────────────────── */
