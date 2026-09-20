@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1140px; box-sizing: border-box; padding: 26px 30px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 16px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">COUNTER HUB · CHECK</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 31px; font-weight: 800; letter-spacing: -0.02em;">Three things need you — say which one stops a sale</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 540px 1fr 1fr; gap: 16px;">
+
+    <!-- the panel -->
+    <div style="min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE PANEL, AT ITS REAL WIDTH</span>
+
+      <div style="border-radius: 18px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+        <div style="padding: 14px 16px; background: #F3EFE6; display: flex; align-items: center; gap: 12px;">
+          <span style="width: 38px; height: 38px; border-radius: 11px; background: #FDF3DC; color: #7A5205; display: flex; align-items: center; justify-content: center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"></path><path d="M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>
+          </span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-size: 17px; font-weight: 800;">Needs you</span>
+            <span style="font-size: 13px; color: #5E594D;">3 things · none of them stops a sale</span>
+          </span>
+          <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 12px; font-weight: 700; display: flex; align-items: center;">3</span>
+        </div>
+
+        <sc-for list="{{items}}" as="i" hint-placeholder-count="3">
+          <div style="padding: 14px 16px; border-bottom: 1px solid #F0ECE2; display: flex; gap: 12px;">
+            <span style="width: 30px; height: 30px; border-radius: 9px; background: {{i.tint}}; color: {{i.ink}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{i.mark}}</span>
+            <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: baseline; gap: 9px;">
+                <span style="font-size: 16px; font-weight: 700; line-height: 1.25;">{{i.title}}</span>
+                <div style="flex-grow: 1;"></div>
+                <span style="{{i.tagStyle}}">{{i.tag}}</span>
+              </div>
+              <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">{{i.body}}</span>
+              <div style="display: flex; align-items: center; gap: 9px;">
+                <span style="{{i.btnStyle}}">{{i.btn}}</span>
+                <span style="{{i.altStyle}}">{{i.alt}}</span>
+              </div>
+            </span>
+          </div>
+        </sc-for>
+
+        <div style="padding: 13px 16px; display: flex; align-items: center; gap: 12px;">
+          <span style="width: 30px; height: 30px; border-radius: 9px; background: #E4EEFA; color: #174A87; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v7a5 5 0 0 0 10 0V3"></path><circle cx="18" cy="15" r="3"></circle><path d="M9 15v1a6 6 0 0 0 6 6"></path></svg>
+          </span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column;">
+            <span style="font-size: 15px; font-weight: 700;">Counter health</span>
+            <span style="font-size: 12px; color: #5E594D;">what is wrong, what is waiting, what to do</span>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A295" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+        </div>
+      </div>
+
+      <div style="padding: 13px 15px; border-radius: 16px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #3E6B52;">WHEN NOTHING NEEDS YOU</span>
+        <span style="font-size: 16px; font-weight: 700; color: #0D4A2B;">All clear — the day is open and everything has been sent</span>
+        <span style="font-size: 13px; color: #3E6B52; line-height: 1.45;">No badge, no colour, one line. The card stays in place so its absence is never confused with a broken panel.</span>
+      </div>
+
+      <div style="padding: 12px 14px; border-radius: 14px; background: #F3EFE6; font-size: 13px; color: #5E594D; line-height: 1.5;">
+        <b style="color: #1D1B16;">The badge counts things, not colours.</b> Red is only for something that has stopped a sale or risks losing work. Everything here is amber or grey.
+      </div>
+    </div>
+
+    <!-- what changed -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="padding: 17px 19px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">WHAT THE PANEL DOES TODAY</span>
+        <sc-for list="{{problems}}" as="p" hint-placeholder-count="5">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #6E2A0C; line-height: 1.4;">
+            <span style="width: 16px; height: 16px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+            <span>{{p.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+
+      <div style="flex-grow: 1; padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">EVERY CHECK IS ONE ROW IN A REGISTRY</span>
+        <div style="border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: 1.35fr 0.75fr 1.15fr; background: #F0ECE2;">
+            <sc-for list="{{regHead}}" as="h" hint-placeholder-count="3">
+              <span style="padding: 8px 11px; font-size: 12px; font-weight: 700; color: #5E594D;">{{h.label}}</span>
+            </sc-for>
+          </div>
+          <sc-for list="{{registry}}" as="r" hint-placeholder-count="7">
+            <div style="display: grid; grid-template-columns: 1.35fr 0.75fr 1.15fr; border-top: 1px solid #F0ECE2;">
+              <span style="padding: 9px 11px; font-size: 13px; font-weight: 600; line-height: 1.3;">{{r.what}}</span>
+              <span style="padding: 9px 11px; font-size: 12px; color: {{r.rankInk}}; font-weight: 700;">{{r.rank}}</span>
+              <span style="padding: 9px 11px; font-size: 12px; color: #5E594D; line-height: 1.3;">{{r.action}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="margin-top: auto; font-size: 13px; color: #5E594D; line-height: 1.5;">Ranked <b style="color: #8E3517;">stops a sale</b> → <b style="color: #7A5205;">costs money or time</b> → <b>tidy-up</b>. The same registry feeds the badge, so the count can never disagree with the list.</span>
+      </div>
+    </div>
+
+    <!-- GST item + rules -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE GST ITEM, IN DETAIL</span>
+
+        <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px dashed #E7B9A8; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8E3517;">TODAY</span>
+          <span style="font-size: 13px; font-weight: 700;">THIS SHOP IS REGISTERED BUT HAS NO GSTIN ON IT</span>
+          <span style="font-size: 13px; color: #5E594D; line-height: 1.4;">No GST is charged or shown until one is set (Settings ▸ Profile).</span>
+          <span style="font-size: 12px; color: #8E3517; line-height: 1.4;">Shouted, contradictory (“registered but has no GSTIN”), and the only instruction is a menu path the reader must walk themselves.</span>
+        </div>
+
+        <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 7px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #0D4A2B;">INSTEAD</span>
+          <span style="font-size: 15px; font-weight: 700;">This shop has no GST number yet</span>
+          <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">Bills go out with no GST on them. That is correct for a shop that is not registered — and wrong for one that is.</span>
+          <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+            <span style="height: 36px; padding: 0 13px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              Register for GST
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path><path d="M19 13v7H4V5h7"></path></svg>
+            </span>
+            <span style="height: 36px; padding: 0 13px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center;">I already have one</span>
+            <span style="font-size: 13px; color: #5E594D; text-decoration: underline;">We are not registered</span>
+          </div>
+        </div>
+
+        <span style="font-size: 13px; color: #5E594D; line-height: 1.5;"><b style="color: #1D1B16;">Three doors, because there are three shops.</b> “We are not registered” hides the item for good and writes that choice into the profile, so it never comes back to nag.</span>
+      </div>
+
+      <div style="flex-grow: 1; padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">RULES</span>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="7">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.45;">
+            <span style="width: 18px; height: 18px; margin-top: 1px; border-radius: 6px; background: #E8F4ED; color: #0D4A2B; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+            <span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const TAG = {
+      warn: 'height: 22px; padding: 0 8px; border-radius: 11px; background: #FDF3DC; color: #7A5205; font-size: 11px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;',
+      grey: 'height: 22px; padding: 0 8px; border-radius: 11px; background: #F0ECE2; color: #5E594D; font-size: 11px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;'
+    };
+    const item = (title, body, tag, tagKind, btn, alt, kind) => ({
+      title, body, tag, btn, alt: alt || '',
+      tagStyle: TAG[tagKind],
+      mark: kind === 'warn' ? '!' : '·',
+      tint: kind === 'warn' ? '#FDF3DC' : '#F0ECE2',
+      ink: kind === 'warn' ? '#7A5205' : '#5E594D',
+      btnStyle: kind === 'warn'
+        ? 'height: 38px; padding: 0 14px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;'
+        : 'height: 38px; padding: 0 14px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center; white-space: nowrap;',
+      altStyle: alt ? 'font-size: 13px; color: #5E594D; text-decoration: underline;' : 'display: none;'
+    });
+    const reg = (what, rank, action) => ({
+      what, rank, action,
+      rankInk: rank === 'stops a sale' ? '#8E3517' : rank === 'costs money' ? '#7A5205' : '#8A8374'
+    });
+    return {
+      items: [
+        item('The day has not been opened', 'Selling works without it, but the drawer is not counted and the day has no start time.', 'costs time', 'warn', 'Open the day', '', 'warn'),
+        item('Prices are 51 hours old', 'Anything changed at the shop since Friday evening is not here yet — including prices on 4 items.', 'costs money', 'warn', 'Read the shop again', 'See what would change', 'warn'),
+        item('This shop has no GST number yet', 'Bills go out with no GST on them. Correct if the shop is not registered.', 'set once', 'grey', 'Register for GST', 'We are not registered', '')
+      ],
+      problems: [
+        { text: 'All three items look equally urgent — nothing says which one, if any, stops a sale.' },
+        { text: '“THIS SHOP IS REGISTERED BUT HAS NO GSTIN ON IT” shouts, and contradicts itself.' },
+        { text: '“(Settings ▸ Profile)” is a path to walk, not a button to press.' },
+        { text: 'No item says what it costs to leave it — money, time, or nothing.' },
+        { text: 'Nothing can be put off or said no to, so a shop with no GST is nagged for ever.' }
+      ],
+      regHead: [{ label: 'Check' }, { label: 'Rank' }, { label: 'Action' }],
+      registry: [
+        reg('Nothing can reach the shop', 'stops a sale', 'Counter health ▸ Pair'),
+        reg('This counter is nearly out of space', 'stops a sale', 'Free up space'),
+        reg('Prices are more than a day old', 'costs money', 'Read the shop again'),
+        reg('The day has not been opened', 'costs time', 'Open the day'),
+        reg('Bills waiting longer than an hour', 'costs time', 'Counter health'),
+        reg('No GST number on the shop', 'set once', 'Register · I have one · Not registered'),
+        reg('No address or phone on bills', 'set once', 'Add it')
+      ],
+      rules: [
+        { n: '1', text: 'Rank by consequence, and say the consequence on the item: “costs money”, “costs time”, “set once”.' },
+        { n: '2', text: 'Every item carries a button. A menu path is not an action.' },
+        { n: '3', text: 'An item that may legitimately never apply carries a way to say so, once, for good.' },
+        { n: '4', text: 'Put off, do not dismiss: “not now” brings it back tomorrow; “we are not registered” writes the answer into the profile.' },
+        { n: '5', text: 'When it is fixed, the item leaves the list while the panel is open, and the badge falls.' },
+        { n: '6', text: 'The subtitle says whether any of it stops a sale — usually “none of them does”.' },
+        { n: '7', text: 'Never all caps. Never a red badge for something nobody can lose money over.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

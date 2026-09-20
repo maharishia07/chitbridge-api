@@ -2081,6 +2081,10 @@
   .gtry > div:nth-child(2){display:flex;gap:6px;flex-wrap:wrap}
   .gtry .pill{min-height:40px}
   .gtry .pill.on{background:#1d1b16;color:#fff;border-color:#1d1b16}
+  /* ⭐ the network symbol, crossed — drawn, so it is the same bars the counter shows when it HAS a line */
+  .noico{position:relative;display:inline-block;line-height:1}
+  .noico::after{content:"";position:absolute;left:-6%;right:-6%;top:46%;height:12%;background:#c0392b;
+    border-radius:2px;transform:rotate(-38deg);box-shadow:0 0 0 1.5px rgba(255,255,255,.75)}
   /* ⭐⭐ THE FLASH ([TILL-157]) — a symbol, three words and one button, where the eye already is. It does
      not fade on a timer: somebody who looked away must still find it. */
   .flash{position:fixed;left:50%;transform:translateX(-50%);top:14px;z-index:9600;display:flex;
@@ -4799,6 +4803,8 @@ function flash(ico, words, btn, act, tone){
   el.querySelector('.fx').onclick = flashHide;
   /* ⚠⚠ NO TIMER, EVER. It stays on the screen until somebody presses OK — see the note on the button. */
 }
+/** ⭐ the network symbol with a line through it — one drawing, used by the flash and by the grid ([TILL-158]) */
+function noNet(){ return '<span class="noico">📶</span>'; }
 function flashHide(){ var el = document.getElementById('flash'); if (el) { el.hidden = true; el.innerHTML = ''; } }
 
 /**
@@ -4811,7 +4817,13 @@ function refreshFailed(status){
   if (status === 401 || status === 403 || !sh)
     return flash('🔑', 'Not signed in', 'Sign in', function(){ signinOpen(); });
   if (!status)
-    return flash('🚫', 'No line to the shop', 'What still works', function(){ openLineGrid(); });
+    /**
+     * ⭐ A CROSSED NETWORK BAR, NOT A WORD ([TILL-158]). Athi: *"you have to change to No Network with the
+     * network symbol crossed — image as much as possible."* 🚫 is a generic prohibition and 📵 is a
+     * telephone; the only honest picture of no network is the network symbol with a line through it, so it
+     * is drawn — the same bars the counter uses everywhere, slashed.
+     */
+    return flash(noNet(), 'No network', 'What still works', function(){ openLineGrid(); });
   return flash('⚠', 'The shop did not answer', 'Try again', function(){ refresh(); });
 }
 
@@ -14582,7 +14594,8 @@ function lineTile(t){
 var LINE_STATES = [
   { k:'good',   ico:'📶', say:'Line' },
   { k:'patchy', ico:'∿',       say:'Weak' },
-  { k:'none',   ico:'🚫', say:'None' },
+  /* ⭐ the same slashed bars the flash uses — one picture for one thing ([TILL-158]) */
+  { k:'none',   ico:'<span class="noico">📶</span>', say:'None' },
 ];
 function lineMatrix(){
   var base = healthReading();
@@ -14610,7 +14623,20 @@ function paintGrid(into){
   var box = into || document.getElementById('linebody'); if (!box) return;
   var rows = lineMatrix(), now = lineState().state;
   box.innerHTML =
-      '<div class="lgrid" data-testid="till-line-grid">'
+      /**
+       * ⭐⭐⭐ AND YOU CAN TRY IT, RIGHT HERE ([TILL-156]). Athi: *"bring that panel with testing capability."*
+       * The simulator was a <select> buried in diagnostics; here it is five chips ABOVE the grid — Athi:
+       * *"the try panel should be on the top, otherwise it will not be visible"* — nineteen rows of scrolling
+       * to reach a switch is a switch nobody finds. Pressing one moves the highlighted column AND really
+       * puts the counter in that state, so the grid is a thing you operate rather than a table you read.
+       */
+        '<div class="gtry" data-testid="till-line-try-row"><div class="u">TRY IT ON THIS COUNTER</div><div>'
+      + Object.keys(NETS).map(function(k){
+          return '<button class="pill' + (k === netNow() ? ' on' : '') + '" data-testid="till-line-try-' + k + '"'
+            + ' onclick="netSet(\'' + k + '\')">' + esc(NETS[k].label) + '</button>';
+        }).join('')
+      + '</div><div class="u">the counter really behaves this way while it is set — nothing in the grid is pretend</div></div>'
+      + '<div class="lgrid" data-testid="till-line-grid">'
       + '<div class="ghead"><span></span>'
       + LINE_STATES.map(function(s){
           return '<b' + (s.k === now ? ' class="on"' : '') + '><span>' + s.ico + '</span>' + esc(s.say) + '</b>';
@@ -14626,18 +14652,6 @@ function paintGrid(into){
         }).join('')
       + '</div>'
       /* ⚠️ three marks, said once, at the bottom where it does not get in the way of the grid */
-      /**
-       * ⭐⭐⭐ AND YOU CAN TRY IT, RIGHT HERE ([TILL-156]). Athi: *"bring that panel with testing capability."*
-       * The simulator was a <select> buried in diagnostics; here it is five chips under the grid, and pressing
-       * one moves the highlighted column AND really puts the counter in that state. The grid stops being a
-       * table you read and becomes a thing you operate — which is the only way anyone believes it.
-       */
-      + '<div class="gtry" data-testid="till-line-try-row"><div class="u">TRY IT ON THIS COUNTER</div><div>'
-      + Object.keys(NETS).map(function(k){
-          return '<button class="pill' + (k === netNow() ? ' on' : '') + '" data-testid="till-line-try-' + k + '"'
-            + ' onclick="netSet(\'' + k + '\')">' + esc(NETS[k].label) + '</button>';
-        }).join('')
-      + '</div><div class="u">the counter really behaves this way while it is set — nothing below the switch is pretend</div></div>'
       + '<div class="gkey"><span><i class="m y">✓</i>works</span>'
       + '<span><i class="m w">⏳</i>waits here</span>'
       + '<span><i class="m n">✕</i>stops</span></div>';
