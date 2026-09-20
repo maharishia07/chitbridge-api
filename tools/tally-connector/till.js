@@ -157,7 +157,7 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /* ⭐ 'variant' joined on 2026-09-19: one product, many combinations, and what makes two of them the same
    thing to sell. A shop PC bills combinations with the line down, so it keeps the rule locally too.
    ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
-const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'rewards', 'screen'];
+const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),
@@ -578,7 +578,7 @@ function signinWhy(e) {
   /* ⚠️ NO URL. Athi: *"no technical details are required — keep it in diagnosis, offer the solution."* The
      address of the server is not a thing a shopkeeper can act on; being offline is. */
   if (/ENOTFOUND|EAI_AGAIN|dns/i.test(m)) return 'This PC is not online. Check the internet, then try again.';
-  if (/ECONNREFUSED|ECONNRESET|fetch failed|network/i.test(m)) return 'This PC could not reach ChitBridge. Check the internet, then try again.';
+  if (/ECONNREFUSED|ECONNRESET|fetch failed|network/i.test(m)) return 'This PC could not reach the server. Check the internet, then try again.';
   if (e && e.status === 429) return 'Too many tries. Wait a minute, then ask for a new code.';
   if (e && e.status === 403) return m || 'That account is not allowed to connect a counter.';
   return m || 'Could not sign in.';
@@ -752,7 +752,22 @@ function purgeOld(now) {
   return { purged: gone, kept: plan.kept, floor: plan.floor, cutoff: plan.cutoff };
 }
 
-/** ⭐ what is summarised and what has reached ChitBridge — the status Athi asked to be able to see */
+/**
+ * ⭐⭐ WHAT IS WAITING, BY KIND ([TILL-137]). One queue carries four different things and the count alone made
+ * the health page contradict itself. Each row says which it is; nothing here guesses.
+ */
+function queueKinds() {
+  const out = { bill: 0, document: 0, shift: 0, summary: 0 };
+  let oldest = null;
+  for (const r of readLines(F.queue)) {
+    const k = r && r.summary ? 'summary' : r && r.doc ? 'document' : r && r.shift ? 'shift' : 'bill';
+    out[k] = (out[k] || 0) + 1;
+    if (r && r.at && (!oldest || String(r.at) < oldest)) oldest = String(r.at);
+  }
+  return { by: out, oldest: oldest };
+}
+
+/** ⭐ what is summarised and what has reached the server — the status Athi asked to be able to see */
 function summaryState() {
   let files = [];
   try { files = fs.readdirSync(F.summaryDir()); } catch (_) { files = []; }
@@ -820,7 +835,7 @@ const server = http.createServer(async (req, res) => {
      * ⭐ THE SAME SIGN-IN AS THE WEB: /api/entities/register sends the OTP, /verify returns a session. The
      * session is then spent immediately on POST /api/till/enrol and never kept — what is kept is the key.
      * ⚠️⚠️ WHICH IS THE WHOLE POINT. A session expires and needs the network to renew; a counter that must
-     * reach ChitBridge to open cannot bill on a morning the line is down, and billing with the line down is
+     * reach the server to open cannot bill on a morning the line is down, and billing with the line down is
      * what this application is FOR. Sign in once, hold a key for a year, never sign in again.
      *
      * ⚠️ THESE TWO ROUTES CARRY NO KEY, deliberately — they run before there is one. All they can do is ask
@@ -862,7 +877,7 @@ const server = http.createServer(async (req, res) => {
          * need different actions from whoever is reading.
          */
         return json(res, 200, { ok: false, queued: left, online: online, shop: name,
-          message: left + ' bill(s) from this counter have not reached ChitBridge yet'
+          message: left + ' bill(s) from this counter have not reached the server yet'
             + (online ? ', and ChitBridge is refusing them' : ' because this PC is offline') + '.' });
       }
 
@@ -880,7 +895,7 @@ const server = http.createServer(async (req, res) => {
         message: left
           ? left + ' bill(s) are still waiting. They are kept in this shop\u2019s own folder — sign back in to '
             + name + ' on this PC and they will go.'
-          : 'Everything reached ChitBridge. This counter is signed out of ' + name + '.' });
+          : 'Everything reached the server. This counter is signed out of ' + name + '.' });
       /* ⚠️ restart for the same reason the sign-in does: DIR was chosen at boot from the key this no longer has */
       setTimeout(function () { log('restarting — this counter is no longer signed in to a shop'); process.exit(0); }, 400);
       return;
@@ -988,7 +1003,14 @@ const server = http.createServer(async (req, res) => {
                                * what happened and offer the one control that fixes it.
                                */
                               queue_why: QUEUE_WHY,
-                              /* ⭐ what is summarised and what of it has reached ChitBridge ([TILL-122]) */
+                              /**
+                               * ⭐⭐ WHAT IS WAITING, NOT JUST HOW MANY ([TILL-137]). The counter-health design
+                               * calls the bare count the page's first fault: "Bills 0, queued 0, then 10 rows
+                               * tried". A breakdown by kind is what reconciles it — and lets the page say in
+                               * words when none of the waiting things are bills.
+                               */
+                              queue_kinds: queueKinds(),
+                              /* ⭐ what is summarised and what of it has reached the server ([TILL-122]) */
                               summary: summaryState(),
                               /* ⭐ the floor, stated — a shop should not have to read a config file to know
                                  how long its detailed bills are kept ([TILL-123]) */
@@ -1014,7 +1036,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     /* ⭐ THE SMALL WRITES a counter makes on its feet — stock out, price change. Forwarded, so the page never cares which
-       host it is on; the agent already holds the key and already knows how to reach ChitBridge. */
+       host it is on; the agent already holds the key and already knows how to reach the server. */
     /**
      * ⭐ THE SMALL READS. Forwarded the same way and allow-listed the same way, so a shop PC and a browser answer a
      * question identically. ⚠️ Never queued: a read has nothing to replay, and a suggestion computed from last

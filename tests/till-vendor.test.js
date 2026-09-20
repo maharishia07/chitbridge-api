@@ -716,6 +716,8 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     /* ⭐⭐ what a day's takings are, and what a return does to them ([TILL-125]) — the page had
                        its own copy of this rule, which the counter program and the server already shared */
                     'rollup.js': 'CBRollup',
+                    /* ⭐⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
+                    'verdict.js': 'CBVerdict',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
