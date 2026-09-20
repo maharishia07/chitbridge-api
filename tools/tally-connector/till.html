@@ -835,6 +835,18 @@
         background:#eceae4;color:#5b564e}
   .rank-stop .rtag{background:#fdecea;color:#8c1d10}
   .rank-money .rtag{background:#fdf0d5;color:#7a5a10}
+  /* ⭐ HOW STALE, AT A GLANCE ([TILL-164]) — a left edge, so the colour is on the row and not on the tag,
+     which must keep meaning the CONSEQUENCE. green under a day, amber a day, red past two. */
+  .alertrow.age-green{box-shadow:inset 4px 0 0 #1b6b3a}
+  .alertrow.age-amber{box-shadow:inset 4px 0 0 #d09a1f}
+  .alertrow.age-red{box-shadow:inset 4px 0 0 #c0392b}
+  .alertrow.age-red .rtag{background:#fdecea;color:#8c1d10}
+  /* ⭐ the morning checklist: a mark, the thing, and its answer ([TILL-165]) */
+  .dayline{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .dayline b{flex:1;min-width:0;font-weight:600}
+  .dayline i{font-style:normal;color:var(--dim);font-size:.92em;text-align:right}
+  .dayline .yes{color:#1b6b3a;font-weight:700}
+  .dayline .no{color:#8a6a12;font-weight:700}
   .rank-time .rtag{background:#fdf0d5;color:#7a5a10}
   .linky{background:none;border:0;padding:0 4px;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
   /* ── ⭐⭐ THE SHOP CARD ([TILL-161], counter-hub §1) ────────────────────────────────────────────── */
@@ -853,7 +865,8 @@
   .shoprow .sact{flex:0 0 auto}
   .shoprow.sub{border-top:0;padding-top:0;margin-top:-6px}
   .shoprow.sub .sv{align-items:start}
-  .shoprow.sub .linky{text-align:left;font-size:.85em}
+  .shoprow.sub .sv{display:flex;gap:14px;flex-wrap:wrap}
+  .shoprow.sub .linky{text-align:left;font-size:.85em;padding:0}
   .shoprow.foot{border-bottom:0;align-items:center;gap:12px;flex-wrap:wrap}
   .shoprow.foot .u{flex:1;min-width:0;font-size:.85em}
   .alertrow .arow{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px}
@@ -5424,8 +5437,8 @@ var RANKS = { stop: { n: 0, say: 'stops a sale' }, money: { n: 1, say: 'costs mo
 
 function menuAlerts(){
   var out = [];
-  var add = function(kind, rank, title, detail, action){
-    out.push({ kind: kind, rank: rank, title: title, detail: detail, action: action || '' });
+  var add = function(kind, rank, title, detail, action, age){
+    out.push({ kind: kind, rank: rank, title: title, detail: detail, action: action || '', age: age || '' });
   };
 
   /* ══ stops a sale ═══════════════════════════════════════════════════════════════════════════════════ */
@@ -5445,9 +5458,16 @@ function menuAlerts(){
   try {
     if (S && S.at) {
       var hrs = (Date.now() - new Date(S.at).getTime()) / 3600000;
+      /**
+       * ⭐⭐ THE AGE CARRIES ITS OWN COLOUR ([TILL-164]). Athi: *"if it is less than 24 hour it is green, next
+       * day amber, if it is more than 48 hour make it red — so it gives some significance."* A number of hours
+       * is data; how bad it is is a judgement, and the judgement is what a glance needs.
+       * ⚠️ The RANK stays 'costs money' — stale prices cost money at every age. The colour says how much.
+       */
       if (hrs > 12) add('prices', 'money', 'Prices are ' + Math.round(hrs) + ' hours old',
         'Anything changed at the shop since then is not here yet.',
-        '<button class="pill" data-testid="till-alert-refresh" onclick="fromMenu(refresh)">Read the shop again</button>');
+        '<button class="pill" data-testid="till-alert-refresh" onclick="fromMenu(refresh)">Read the shop again</button>',
+        (hrs > 48 ? 'red' : (hrs > 24 ? 'amber' : 'green')));
     }
   } catch (_) {}
   try {
@@ -5472,30 +5492,18 @@ function menuAlerts(){
       '<button class="pill" data-testid="till-alert-open" onclick="menuSection(\'day\')">Open the day</button>');
   } catch (_) {}
 
-  /* ══ set once ═══════════════════════════════════════════════════════════════════════════════════════ */
   /**
-   * ⚠️⚠️⚠️ THREE DOORS, BECAUSE THERE ARE THREE SHOPS (§4). This used to shout "THIS SHOP IS REGISTERED BUT
-   * HAS NO GSTIN ON IT" — capitals, self-contradictory, and the only instruction a menu path. And it could
-   * never be answered: a shop that is simply not registered was nagged for ever.
-   * ⭐ "We are not registered" WRITES THAT ANSWER into the profile, and the check never fires again. That is
-   * different from "not now", which brings it back tomorrow.
-   */
-  try {
-    var tx = shopTax();
-    if (!tx.gstin && gstAsked() !== 'not_registered')
-      add('gstin', 'once', 'This shop has no GST number yet',
-        'Bills go out with no GST on them. That is correct for a shop that is not registered — and wrong for one that is.',
-        '<button class="pri sm" data-testid="till-alert-gst" onclick="fromMenu(openGst)">Register for GST ↗</button>'
-        + '<button class="pill" data-testid="till-alert-gst-have" onclick="fromMenu(openGst)">I already have one</button>'
-        + '<button class="linky" data-testid="till-alert-gst-no" onclick="gstNotRegistered()">We are not registered</button>');
-  } catch (_) {}
-  try {
-    var sh0 = (S && S.shop) || {};
-    if (paired() && !sh0.address && !sh0.phone)
-      add('addr', 'once', 'No address or phone on bills',
-        'Customers cannot see where the shop is or how to ring it.',
-        '<button class="pill" data-testid="till-alert-addr" onclick="fromMenu(openGst)">Add it ↗</button>');
-  } catch (_) {}
+   * ⚠⚠⚠ THE PROFILE GAPS ARE NOT CHECKS ([TILL-162]). Both were here — no GSTIN, no address on bills — and
+   * Athi, looking at the hub: *"it is already there in the shop, why are you repeating?"*
+   *
+   * He is right, and the duplication was created by a good change. The shop card now sits DIRECTLY ABOVE this
+   * panel with the same two rows, the same wording, the same buttons and a count of how many are left. Saying
+   * it twice does not make it twice as likely to be done — it makes Check look busy with things that are not
+   * today’s problem, which is the exact fault the ranking was meant to cure.
+   *
+   * ⭐ A CHECK IS ABOUT **NOW**: the line is down, the day is not open, bills are waiting. A field that has
+   * never been filled belongs on the card that owns it, beside the button that fills it. The three GST doors
+   * went with it — see menuShopBody().
 
   /* ⭐ THE ORDER IS THE MESSAGE — worst consequence first, and a stable sort inside each rank */
   return out.sort(function(a, b){ return (RANKS[a.rank] || RANKS.once).n - (RANKS[b.rank] || RANKS.once).n; });
@@ -5513,9 +5521,19 @@ function gstNotRegistered(){
   try { paintMenu(); } catch (_) {}
 }
 /** ⭐ the one place these are edited is the shop's profile, in ChitBridge — and the mark says it leaves (§2) */
+/**
+ * ⚠⚠⚠ IT OPENED A ROUTE THAT DOES NOT EXIST ([TILL-163]). Athi: *"add button opens in another window but
+ * erroring."* I invented '#profile/tax' from the spec's words "opens the shop's profile at Tax" — the app
+ * has exactly six hashes and that is not one of them, so every Add and Register opened an error page. Written
+ * from the design rather than read off the app, which is the same mistake as the three invented gate names.
+ *
+ * ⭐ A DEEP LINK THAT DOES NOT EXIST IS WORSE THAN NO DEEP LINK. It opens the app and says where to go. The
+ * real anchor needs a route on the app side and is a backlog item there, not something the counter invents.
+ */
 function openGst(){
-  var url = (CloudHost && CloudHost.api ? String(CloudHost.api).replace(/\/$/, '') : '') + '/app.html#profile/tax';
-  try { window.open(url, '_blank', 'noopener'); } catch (_) { toastLine('Open ChitBridge ▸ the shop ▸ Tax.'); }
+  var url = (CloudHost && CloudHost.api ? String(CloudHost.api).replace(/\/$/, '') : '') + '/app.html#/app';
+  try { window.open(url, '_blank', 'noopener'); } catch (_) {}
+  toastLine('ChitBridge is open in another tab — go to the shop, then its profile, to change this.');
 }
 
 /** the number on the closed row — read by the badge and by the health chip, so they cannot disagree */
@@ -5541,7 +5559,8 @@ function menuAlertsBody(){
   var head = '<div class="menusec alertsum" data-testid="till-alerts-sum">' + esc(alertWords()) + '</div>';
   return head + rows.map(function(a, n){
     var tag = (RANKS[a.rank] || RANKS.once);
-    return '<div class="menusec alertrow rank-' + esc(a.rank) + '" data-testid="till-alert-' + n + '">'
+    return '<div class="menusec alertrow rank-' + esc(a.rank) + (a.age ? ' age-' + esc(a.age) : '')
+      + '" data-testid="till-alert-' + n + '">'
       + '<div class="arhead"><b>' + esc(a.title) + '</b>'
       /* ⚠⚠ THE CONSEQUENCE, NAMED, ON EVERY ROW — nothing said what it cost to leave a thing undone */
       + '<span class="rtag" data-testid="till-alert-tag-' + n + '">' + esc(tag.say) + '</span></div>'
@@ -5587,8 +5606,10 @@ var SHOP_ROWS = [
 function menuShopBody(){
   var sh = (S && S.shop) || {}, tx = {};
   try { tx = shopTax(); } catch (_) { tx = {}; }
+  /* ⭐ a shop that has SAID it is not registered is answered, not unfinished ([TILL-162]) */
+  var noGst = (function(){ try { return gstAsked() === 'not_registered'; } catch (_) { return false; } })();
   var val = function(k){
-    if (k === 'gstin')    return tx.gstin || '';
+    if (k === 'gstin')    return tx.gstin || (noGst ? 'Not registered' : '');
     if (k === 'currency') return sh.currency || (S && S.currency) || 'INR';
     if (k === 'counter')  return (STATE && STATE.till && STATE.till.name) || ls.get('cb_till_name', '');
     return sh[k] || '';
@@ -5613,9 +5634,17 @@ function menuShopBody(){
       + '<span class="sv"><i class="warn">not set</i>'
       + (r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
       + '<span class="sact">' + act + '</span></div>'
+      /**
+       * ⭐⭐ THREE DOORS, BECAUSE THERE ARE THREE SHOPS ([TILL-162], §4). They were on the Check item until Athi
+       * pointed out that Check was repeating this row. They belong here, on the row they answer.
+       * ⚠️ "We are not registered" is not "not now": it WRITES the answer, and the row then states it as a
+       * fact rather than a gap. A shop that is simply not registered is not an unfinished shop.
+       */
       + (r.k === 'gstin'
-          ? '<div class="shoprow sub"><span></span><span class="sv"><button class="linky"'
-            + ' data-testid="till-shop-gst-have" onclick="fromMenu(openGst)">Already have one? Enter it</button></span></div>'
+          ? '<div class="shoprow sub"><span></span><span class="sv">'
+            + '<button class="linky" data-testid="till-shop-gst-have" onclick="fromMenu(openGst)">Already have one? Enter it</button>'
+            + '<button class="linky" data-testid="till-shop-gst-no" onclick="gstNotRegistered()">We are not registered</button>'
+            + '</span></div>'
           : '');
   };
 
@@ -6001,6 +6030,14 @@ function menuDayBody(){
   /* the three checks, each read from something real */
   var queued = (STATE && STATE.queued) || 0;
   var items = ((S && S.items) || []).length;
+  /**
+   * ⭐ A ROW WITH ITS ANSWER ON IT ([TILL-165]). The old helper ticked a sentence; the design puts the value
+   * on the right, because "Prices — 51 hours old" is the whole message and "✓ Prices" is not.
+   */
+  var dayLine = function(ok, label, value){
+    return '<div class="dayline"><span class="' + (ok ? 'yes' : 'no') + '">' + (ok ? '✓' : '·') + '</span>'
+      + '<b>' + esc(label) + '</b><i>' + esc(value || '') + '</i></div>';
+  };
   var line = function(ok, text){
     return '<div class="dayline"><span class="' + (ok ? 'yes' : 'no') + '">' + (ok ? '✓' : '•') + '</span>' + esc(text) + '</div>';
   };
@@ -6023,9 +6060,40 @@ function menuDayBody(){
                       : '<button class="daylink" data-testid="till-day-img-add2" onclick="dayImgPick()">Add a picture</button>')
     + '</span></div></div>'
     /* ⚠️ the date moved INTO the head row beside the icon ([TILL-100]) — two lines saying when it is was one
-    + line(items > 0, items ? items + ' products on this counter' : 'No copy of the shop yet — press Read the shop again')
-    + line(queued === 0, queued === 0 ? 'Nothing waiting to be sent' : queued + ' still waiting to reach the server')
-    + line(!!(S && S.items), navigator.onLine ? 'The line is up' : 'Offline — billing still works')
+    /**
+     * ── ⭐⭐⭐ THE MORNING CHECKLIST ([TILL-165], counter-hub png/HubStart.png) ────────────────────────
+     *
+     * Athi: *"Open the day, it is not having any significance here? The design has given certain things as
+     * start of the day, nothing is here."* He is right. The card was renamed "Start the day" and kept the old
+     * three lines — a product count, a queue count and whether the line is up. Every one of those is already
+     * a pill in the header or a row in Check. None of them is about STARTING.
+     *
+     * ⭐ THE DESIGN'S FOUR, each a thing the morning actually settles, and each with a VALUE on the right so
+     * the row answers itself rather than only being ticked:
+     *     who is on the counter · cash in the drawer to start · printer and drawer · how old the prices are
+     *
+     * ⚠️⚠️ EVERY ONE IS READ FROM SOMETHING THAT EXISTS. My first draft called printReady() and money(),
+     * neither of which is in this page — the same invented-name mistake the watch-list guard caught twice.
+     * The printer gate is the one autoPrint() actually uses; the float is what setWho() recorded.
+     */
+    + dayLine(!!(typeof WHO !== 'undefined' && WHO && WHO.name), 'Who is on the counter',
+        (typeof WHO !== 'undefined' && WHO && WHO.name)
+          ? (WHO.kind === 'entity' ? 'the shop itself' : WHO.name) : 'nobody yet')
+    /* ⚠️ the float is RECORDED by opening the day — nothing to fix beforehand, so it is never a fault */
+    + dayLine(true, 'Cash in the drawer to start',
+        (typeof WHO !== 'undefined' && WHO && Number(WHO.float))
+          ? (curSym() + Number(WHO.float).toLocaleString('en-IN')) : 'not counted')
+    /* ⭐ the gate autoPrint() itself uses: only the program on a shop PC can send paper straight to a printer */
+    + (function(){
+        var agent = !!(HOST && HOST.mode === 'agent' && HOST.print);
+        return dayLine(agent, 'Printer and drawer', agent ? 'ready on this PC' : 'prints through the browser');
+      })()
+    /* ⭐ the same judgement the Check row makes, so the two can never disagree about one number */
+    + (function(){
+        var h = (S && S.at) ? Math.round((Date.now() - new Date(S.at).getTime()) / 3600000) : null;
+        return dayLine(h !== null && h <= 24, 'Prices',
+          h === null ? 'no copy yet' : (h + ' hour' + (h === 1 ? '' : 's') + ' old'));
+      })()
     + '<div class="daybtns">'
     + (opened
         ? '<span class="dayok" data-testid="till-day-open">Opened for today</span>'
