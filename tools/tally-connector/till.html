@@ -399,9 +399,22 @@
   .wideonly{display:inline}
   body.shape-mobile .wideonly{display:none}
   @media (prefers-reduced-motion:reduce){ body.op-maintain.shape-mobile .right{transition:none} }
-  /* ⚠️ the ✕ belongs to the sheet and nothing else — on a wide screen the editor is a pane with no lid */
-  .sheetx{display:none}
-  body.op-maintain.shape-mobile .sheetx{display:inline-flex;align-items:center;justify-content:center;
+  /**
+   * ⭐⭐ THE LID, IN THE CORNER ([TILL-155]). Athi read a ✕ beside "Change photo" as "delete the photo" — a
+   * fair reading, and the reason a way OUT never shares a row with a way to CHANGE something. Pinned to the
+   * top-right of the pane it is unambiguous, and it is shown on every shape: on a wide screen the editor is
+   * still a thing you are inside, and having no lid there is what sent him looking for one.
+   */
+  .right{position:relative}
+  .sheetx{position:absolute;top:10px;right:10px;z-index:4;display:inline-flex;align-items:center;
+    justify-content:center;min-width:44px;min-height:44px;font-size:1.15em;border-radius:50%;cursor:pointer;
+    background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .sheetx:hover{background:var(--paper)}
+  /* ⚠️ and the header makes ROOM for it — pinned over the top of "Change photo" it clipped that button to
+     "Chang", which is the same confusion in a new place ([TILL-155]) */
+  body.cardopen .cardhd{padding-right:56px}
+  /* ⚠️ only while a product is open — an empty pane has nothing to close */
+  body:not(.cardopen) .sheetx{display:none}
     min-width:44px;min-height:44px;font-size:1.1em}
   /* ⚠️ the Phone shape's narrow bill is decided in cartCols(), not here — a cell hidden by CSS left its track empty */
   /* ⚠️ the key WIDTH is Key size's to set ([TILL-93]) — Automatic already gives a phone Medium. Only the
@@ -10415,8 +10428,17 @@ function paintCard(){
     + '<button class="pill" data-testid="card-photo" onclick="cardPhoto()">Change photo</button>'
     /* ⚠️ THE WAY OUT OF THE SHEET. On a wide screen the editor is simply a pane and there is nothing to close,
        so this shows only where the sheet exists — a phone. Escape belongs to the bill on this counter. */
-    + '<button class="pill sheetx" data-testid="card-close" aria-label="close" onclick="cardClose()">\u2715</button>'
     + '</div>'
+    /**
+     * ⚠️⚠️⚠️ THE WAY OUT DOES NOT STAND NEXT TO THE PHOTO CONTROL ([TILL-155]). Athi: *"there is a close
+     * button, but it was next to Change photo — I understood it will delete the photo."* He is right, and it
+     * was not his mistake: a ✕ touching a photo button reads as "remove the photo", and guessing wrong looks
+     * like losing the picture. A control means what its NEIGHBOURS suggest it means.
+     * ⭐ So the lid is pinned to the corner of the pane, apart from everything, where a lid lives — and it
+     * says in its own label that nothing is changed by pressing it.
+     */
+    + '<button class="sheetx" data-testid="card-close" aria-label="close without changing anything"'
+    + ' title="close — nothing is changed" onclick="cardClose()">✕</button>'
     + cardPrice(i)
     + '<div class="cardpair">' + cardForGood(i) + cardToday(i) + '</div>'
     + cardGroups(i)
