@@ -40,3 +40,4 @@ tools/seed/tallytest-10k.json
 
 # a run artefact, not a document: the JUnit the harness writes for the board (C:\dev ignores its own)
 test-results/
+.bak
