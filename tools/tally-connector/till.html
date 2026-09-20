@@ -821,6 +821,22 @@
   .hubchip.bad{border-color:var(--warn);background:var(--warn-tint);color:var(--warn);font-weight:700}
   .mbadge{flex:0 0 auto;min-width:20px;height:20px;border-radius:999px;background:var(--warn);color:var(--paper);
           display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:700;padding:0 6px}
+  /* ── ⭐⭐ CHECK, RANKED ([TILL-160], counter-hub §3) ──────────────────────────────────────────── */
+  /* ⚠⚠ THE BADGE COUNTS THINGS, NOT COLOURS. It is amber unless something has actually stopped a sale;
+     red for three set-up items is how red stops meaning anything. */
+  .mbadge{background:#e0b64e;color:#3d2c05}
+  .mbadge.stop{background:#c0392b;color:#fff}
+  .alertsum{color:var(--dim);font-size:.9em;padding-bottom:2px}
+  .allclear{color:#1b4f30}
+  .arhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .arhead b{flex:1;min-width:0}
+  /* ⭐ the consequence, named, on every row — the tag is the ranking made visible */
+  .rtag{flex:0 0 auto;font-size:.76em;font-weight:700;border-radius:999px;padding:2px 9px;
+        background:#eceae4;color:#5b564e}
+  .rank-stop .rtag{background:#fdecea;color:#8c1d10}
+  .rank-money .rtag{background:#fdf0d5;color:#7a5a10}
+  .rank-time .rtag{background:#fdf0d5;color:#7a5a10}
+  .linky{background:none;border:0;padding:0 4px;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
   .alertrow .arow{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px}
   .mfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
          padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);
@@ -2083,6 +2099,20 @@
   .gtry .pill.on{background:#1d1b16;color:#fff;border-color:#1d1b16}
   /* ⭐ the network symbol, crossed — drawn, so it is the same bars the counter shows when it HAS a line */
   .noico{position:relative;display:inline-block;line-height:1}
+  /* ── ⭐⭐ THE HEADER BAR ([TILL-159], design-handoff/counter-hub §5) ─────────────────────────────── */
+  /* ⚠️ "3 need you" is AMBER. Red is only for a stopped sale or work at risk; three set-up items are
+     neither, and a red badge nobody can lose money over is how red stops meaning anything. */
+  .hubchip.warn{background:#fdf0d5;border-color:#e0b64e;color:#5b4410}
+  .hubchip .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;background:#1b6b3a}
+  .hubchip.warn .dot{background:#c0392b}
+  /* ⭐ the avatar says WHICH KIND is at the counter: initials, the shop, or nobody at all */
+  .hubwho .hubav{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;flex:0 0 auto;
+    font-weight:700;font-size:.9em;background:rgba(0,0,0,.07)}
+  .hubwho.none .hubav{background:#eceae4;color:#6b6660}
+  .hubwho.entity .hubav{background:#e7f2ea}
+  .hubwho.person .hubav{background:#dfe9f5;color:#1f3f66}
+  /* ⚠️ the shortcut sits BESIDE the label, in mono — not inside it (§6.4) */
+  .hubwho kbd{font:600 .75em ui-monospace,Menlo,Consolas,monospace;opacity:.6;padding:0 2px}
   .noico::after{content:"";position:absolute;left:-6%;right:-6%;top:46%;height:12%;background:#c0392b;
     border-radius:2px;transform:rotate(-38deg);box-shadow:0 0 0 1.5px rgba(255,255,255,.75)}
   /* ⭐⭐ THE FLASH ([TILL-157]) — a symbol, three words and one button, where the eye already is. It does
@@ -5355,69 +5385,147 @@ function tillOp(id){ for (var i = 0; i < TILL_OPS.length; i++) if (TILL_OPS[i].i
  * ⭐ EACH ROW CARRIES ITS OWN WAY OUT. A warning with no action beside it is a worry, not an alert — the
  * competitive review's "cheapest big win" was one indicator a cashier learns instead of six they ignore.
  */
+/**
+ * ── ⭐⭐⭐ CHECK, RANKED BY CONSEQUENCE ([TILL-160], design-handoff/counter-hub §3) ────────────────────────
+ *
+ * The package, on what this panel did: *"all three items look equally urgent — nothing says which one, if
+ * any, stops a sale."* And: *"no item says what it costs to leave it — money, time, or nothing."*
+ *
+ * ⚠️⚠️ SO EVERY ROW NOW CARRIES ITS CONSEQUENCE, and the list is SORTED by it:
+ *        stops a sale  →  costs money  →  costs time  →  set once
+ * The subtitle then answers the only question worth asking at a glance: *3 things · none stops a sale*.
+ *
+ * ⚠️⚠️⚠️ AND EVERY ROW CARRIES A BUTTON. The GSTIN row's only instruction used to be "(Settings ▸ Profile)"
+ * — a path the reader has to walk themselves. A menu path is not an action.
+ *
+ * ⭐ THE SAME LIST FEEDS THE BADGE, so the count can never disagree with what is listed (§8.6).
+ */
+var RANKS = { stop: { n: 0, say: 'stops a sale' }, money: { n: 1, say: 'costs money' },
+              time: { n: 2, say: 'costs time' }, once: { n: 3, say: 'set once' } };
+
 function menuAlerts(){
   var out = [];
-  var add = function(kind, title, detail, action){ out.push({ kind: kind, title: title, detail: detail, action: action || '' }); };
-  /* the line, and what is waiting on it */
+  var add = function(kind, rank, title, detail, action){
+    out.push({ kind: kind, rank: rank, title: title, detail: detail, action: action || '' });
+  };
+
+  /* ══ stops a sale ═══════════════════════════════════════════════════════════════════════════════════ */
+  /** ⚠️⚠️ THE ONE THAT CAN LOSE WORK. A device that has refused a write is the only fault here that is red. */
+  try { if (typeof MEM !== 'undefined' && MEM && MEM.fail)
+    add('space', 'stop', 'This counter cannot save a bill',
+      'Stop billing on this counter and ring for help — this is the one fault that can lose work.',
+      '<button class="pill" data-testid="till-alert-health" onclick="fromMenu(openHealth)">Counter health</button>');
+  } catch (_) {}
+  try { if (!paired())
+    add('pair', 'stop', 'Nothing can reach the shop',
+      'This counter is not signed in, so nothing it rings can be sent.',
+      '<button class="pill" data-testid="till-alert-pair" onclick="fromMenu(signinOpen)">Sign in</button>');
+  } catch (_) {}
+
+  /* ══ costs money ════════════════════════════════════════════════════════════════════════════════════ */
+  try {
+    if (S && S.at) {
+      var hrs = (Date.now() - new Date(S.at).getTime()) / 3600000;
+      if (hrs > 12) add('prices', 'money', 'Prices are ' + Math.round(hrs) + ' hours old',
+        'Anything changed at the shop since then is not here yet.',
+        '<button class="pill" data-testid="till-alert-refresh" onclick="fromMenu(refresh)">Read the shop again</button>');
+    }
+  } catch (_) {}
+  try {
+    if (OUT_OF_SYNC && OUT_OF_SYNC.length)
+      add('changes', 'money', OUT_OF_SYNC.length + ' change' + (OUT_OF_SYNC.length === 1 ? '' : 's') + ' made here have not reached the shop',
+        OUT_OF_SYNC.join(' · '),
+        '<button class="pill" data-testid="till-alert-push" onclick="fromMenu(sendNow)">Send now</button>');
+  } catch (_) {}
+
+  /* ══ costs time ═════════════════════════════════════════════════════════════════════════════════════ */
   try {
     if (STATE && STATE.queued) {
       var why = (HOST && HOST.last && HOST.last.why) || '';
-      add('queue', queueWords(), why && why.indexOf('waiting a moment') < 0 ? why : '',
+      add('queue', 'time', queueWords(), why && why.indexOf('waiting a moment') < 0 ? why : '',
         '<button class="pill" data-testid="till-alert-send" onclick="fromMenu(sendNow)">Send now</button>'
         + '<button class="pill" data-testid="till-alert-stuck" onclick="fromMenu(openHealth)">Counter health</button>');
     }
   } catch (_) {}
-  /* a change made HERE that the shop has not got — a price or a shelf flag, which is money either way */
-  try {
-    if (OUT_OF_SYNC && OUT_OF_SYNC.length)
-      add('changes', OUT_OF_SYNC.length + ' change' + (OUT_OF_SYNC.length === 1 ? '' : 's') + ' made here have not reached the shop',
-        OUT_OF_SYNC.join(' · '),
-        '<button class="pill" data-testid="till-alert-push" onclick="fromMenu(sendNow)">Send now</button>');
-  } catch (_) {}
-  /* the day has not been opened — the bohni card, the readiness checks and the drawer float all hang off it */
   try { if (typeof dayOpened === 'function' && !dayOpened())
-    add('day', 'The day has not been opened', 'Opening it records the float and checks this counter is ready.',
-      '<button class="pill" data-testid="till-alert-open" onclick="menuSection(\'day\')">Start your day</button>');
+    add('day', 'time', 'The day has not been opened',
+      'Selling works without it, but the drawer is not counted and the day has no start time.',
+      '<button class="pill" data-testid="till-alert-open" onclick="menuSection(\'day\')">Open the day</button>');
   } catch (_) {}
-  /* how old the prices on this screen are — a counter selling from yesterday's prices says so */
-  try {
-    if (S && S.at) {
-      var hrs = (Date.now() - new Date(S.at).getTime()) / 3600000;
-      if (hrs > 12) add('prices', 'These prices are ' + Math.round(hrs) + ' hours old',
-        'Read the shop again to pick up anything that changed.',
-        '<button class="pill" data-testid="till-alert-refresh" onclick="fromMenu(refresh)">Read the shop again</button>');
-    }
-  } catch (_) {}
-  /* what somebody marked as run out today — it comes back by itself tomorrow, so this is a reminder not a fault */
-  try {
-    var sold = quickSold();
-    if (sold && sold.length) add('soldout', sold.length + ' item' + (sold.length === 1 ? '' : 's') + ' marked run out today',
-      /* ⚠⚠ quickSold() KEEPS IDS, NOT NAMES — it is a list of what was hidden, and the name lives on the shelf.
-         Printed raw it put a uuid in front of a shopkeeper, which is the one thing this panel exists not to do.
-         [[feedback-write-for-the-shopkeeper]] */
-      sold.slice(0, 6).map(function(x){
-        var hit = ((S && S.items) || []).filter(function(i){ return String(i.item_id) === String(x.id); })[0];
-        return (hit && hit.name) || x.name || 'one product';
-      }).join(' · '), '');
-  } catch (_) {}
-  /* ⚠ a registered shop with no GSTIN is a real problem; an unregistered one is not, and must not be nagged */
+
+  /* ══ set once ═══════════════════════════════════════════════════════════════════════════════════════ */
+  /**
+   * ⚠️⚠️⚠️ THREE DOORS, BECAUSE THERE ARE THREE SHOPS (§4). This used to shout "THIS SHOP IS REGISTERED BUT
+   * HAS NO GSTIN ON IT" — capitals, self-contradictory, and the only instruction a menu path. And it could
+   * never be answered: a shop that is simply not registered was nagged for ever.
+   * ⭐ "We are not registered" WRITES THAT ANSWER into the profile, and the check never fires again. That is
+   * different from "not now", which brings it back tomorrow.
+   */
   try {
     var tx = shopTax();
-    if (tx.reg === 'regular' && !tx.gstin)
-      add('gstin', 'This shop is registered but has no GSTIN on it',
-          'No GST is charged or shown until one is set (Settings ▸ Profile).', '');
+    if (!tx.gstin && gstAsked() !== 'not_registered')
+      add('gstin', 'once', 'This shop has no GST number yet',
+        'Bills go out with no GST on them. That is correct for a shop that is not registered — and wrong for one that is.',
+        '<button class="pri sm" data-testid="till-alert-gst" onclick="fromMenu(openGst)">Register for GST ↗</button>'
+        + '<button class="pill" data-testid="till-alert-gst-have" onclick="fromMenu(openGst)">I already have one</button>'
+        + '<button class="linky" data-testid="till-alert-gst-no" onclick="gstNotRegistered()">We are not registered</button>');
   } catch (_) {}
-  return out;
+  try {
+    var sh0 = (S && S.shop) || {};
+    if (paired() && !sh0.address && !sh0.phone)
+      add('addr', 'once', 'No address or phone on bills',
+        'Customers cannot see where the shop is or how to ring it.',
+        '<button class="pill" data-testid="till-alert-addr" onclick="fromMenu(openGst)">Add it ↗</button>');
+  } catch (_) {}
+
+  /* ⭐ THE ORDER IS THE MESSAGE — worst consequence first, and a stable sort inside each rank */
+  return out.sort(function(a, b){ return (RANKS[a.rank] || RANKS.once).n - (RANKS[b.rank] || RANKS.once).n; });
 }
+
+/**
+ * ⭐ "We are not registered", remembered ([TILL-160], §4). Written per shop, so it travels with the counter's
+ * copy and is not a per-device preference. A shop that later registers simply fills the number in and the row
+ * fills; this only silences the NAG.
+ */
+function gstAsked(){ try { return ls.get(shopLs('cb_till_gst_answer'), ''); } catch (_) { return ''; } }
+function gstNotRegistered(){
+  try { ls.set(shopLs('cb_till_gst_answer'), 'not_registered'); } catch (_) {}
+  toastLine('Noted — this shop is not registered for GST. It will not be asked again.');
+  try { paintMenu(); } catch (_) {}
+}
+/** ⭐ the one place these are edited is the shop's profile, in ChitBridge — and the mark says it leaves (§2) */
+function openGst(){
+  var url = (CloudHost && CloudHost.api ? String(CloudHost.api).replace(/\/$/, '') : '') + '/app.html#profile/tax';
+  try { window.open(url, '_blank', 'noopener'); } catch (_) { toastLine('Open ChitBridge ▸ the shop ▸ Tax.'); }
+}
+
 /** the number on the closed row — read by the badge and by the health chip, so they cannot disagree */
 function alertCount(){ try { return menuAlerts().length; } catch (_) { return 0; } }
+/** ⭐ the subtitle answers the only question that matters at a glance (§3) */
+function alertWords(){
+  var a = menuAlerts();
+  if (!a.length) return '';
+  var stops = a.filter(function(x){ return x.rank === 'stop'; }).length;
+  return a.length + ' thing' + (a.length === 1 ? '' : 's') + ' · '
+    + (stops ? (stops === 1 ? 'one stops a sale' : stops + ' stop a sale') : 'none of them stops a sale');
+}
 function menuAlertsBody(){
   var rows = menuAlerts();
-  /* ⭐ THE EMPTY STATE IS THE POINT OF THE SECTION. "nothing needs you" is the answer a shopkeeper opens it for. */
-  if (!rows.length) return '<div class="menusec" data-testid="till-alerts-none">Nothing needs you.</div>';
-  return rows.map(function(a, n){
-    return '<div class="menusec alertrow" data-testid="till-alert-' + n + '">'
-      + '<b>' + esc(a.title) + '</b>'
+  /**
+   * ⭐ THE EMPTY STATE IS THE POINT OF THE SECTION, and it is a SENTENCE, not a shrug (§3). The card stays
+   * in place so its absence is never read as a broken panel.
+   */
+  if (!rows.length) return '<div class="menusec allclear" data-testid="till-alerts-none">'
+    + 'All clear — ' + ((typeof dayOpened === 'function' && dayOpened()) ? 'the day is open and ' : '')
+    + 'everything has been sent.</div>';
+  /* ⭐ the subtitle answers the only question worth asking at a glance (§3) */
+  var head = '<div class="menusec alertsum" data-testid="till-alerts-sum">' + esc(alertWords()) + '</div>';
+  return head + rows.map(function(a, n){
+    var tag = (RANKS[a.rank] || RANKS.once);
+    return '<div class="menusec alertrow rank-' + esc(a.rank) + '" data-testid="till-alert-' + n + '">'
+      + '<div class="arhead"><b>' + esc(a.title) + '</b>'
+      /* ⚠⚠ THE CONSEQUENCE, NAMED, ON EVERY ROW — nothing said what it cost to leave a thing undone */
+      + '<span class="rtag" data-testid="till-alert-tag-' + n + '">' + esc(tag.say) + '</span></div>'
       + (a.detail ? '<div class="u">' + esc(a.detail) + '</div>' : '')
       + (a.action ? '<div class="arow">' + a.action + '</div>' : '')
       + '</div>';
@@ -6412,62 +6520,117 @@ function hubFindBox(){
     + '</div>';
 }
 /**
- * ── ⚠⚠⚠ REBUILT FROM THE RENDER ([TILL-59]) ────────────────────────────────────
+ * ── ⭐⭐⭐ WHO IS AT THIS COUNTER — THREE STATES, NOT TWO ([TILL-159]) ──────────────────────────────────────
  *
- * My first version read §2 of the spec as "row 0 who, row 0b chips" and built two pinned bands above the
- * sections. png/HubWide.png shows neither: the counter's name is the heading, the chips sit INLINE beside it,
- * and who-is-here is a pink box on the right of that same line with a green `Sign in · F7` in it. One band, not
- * three — which is most of why the panel felt cramped.
+ * design-handoff/counter-hub §6. The package: *"the header shows the person as Mayur Bhavan, the shop's name.
+ * On the bill list the same field showed desktop3. Both come from one hole: when nobody is signed in, the
+ * field is filled with whatever is nearest."*
  *
- * ⚠ ON A PHONE (png/HubPhone.png) IT STACKS INTO THREE, which is the same design reflowed and not a different
- * one: title line, then the pink sign-in box full width, then the chips on their own scrolling row.
+ * ⚠️⚠️ HALF RIGHT, AND THE HALF IT MISSES IS THE INTERESTING ONE. `desktop3` really was a fallback — the SHOP
+ * name fell through to the counter's device name (hubHead, below). But "Mayur Bhavan" was not: that counter
+ * had signed in as the ENTITY, and that option deliberately stores the shop's name as WHO.name. Nothing was
+ * substituted; a ROLE was simply rendered in a slot built for a PERSON, complete with initials.
+ *
+ * ⭐ So the slot has three states, which is one more than the package asked for:
+ *     nobody     "?"  ·  nobody signed in  ·  bills will say "no person recorded"  ·  Sign in
+ *     the shop   🏠  ·  The shop itself    ·  the owner is at the counter          ·  Hand over
+ *     a person   RK  ·  Ravi K             ·  since 9:41 pm · 2h 38m               ·  Hand over
+ * The shop's name never appears here. It lives in the subtitle, and only there.
  */
+function whoNow(){
+  var w = (typeof WHO !== 'undefined' && WHO) || null;
+  if (!w || !w.name) return { kind: 'none', av: '?', title: 'Nobody signed in',
+                              sub: 'bills will say “no person recorded”', act: 'Sign in' };
+  var since = w.since || w.at || null;
+  /* ⭐ how long they have been on — that is what a hand-over needs (§6.3) */
+  var sub = '';
+  if (since) {
+    var ms = Date.now() - new Date(since).getTime(), h = Math.floor(ms / 3600000), m = Math.round((ms % 3600000) / 60000);
+    sub = 'since ' + clock12(since) + (ms > 60000 ? ' · ' + (h ? h + 'h ' : '') + m + 'm' : '');
+  }
+  if (w.kind === 'entity') return { kind: 'entity', av: '🏠', title: 'The shop itself',
+                                    sub: sub || 'the owner is at the counter', act: 'Hand over' };
+  var ini = String(w.name).trim().split(/\s+/).slice(0, 2).map(function(x){ return x[0]; }).join('').toUpperCase();
+  return { kind: 'person', av: ini, title: w.name, sub: sub || 'at this counter', act: 'Hand over' };
+}
+
+/** ⭐ 12-hour, because that is how a shopkeeper reads a clock (§5, §8.10) */
+function clock12(d){
+  /* ⚠️ hour12 EXPLICITLY. Asking for hour:'numeric' is not asking for a 12-hour clock — the locale decides,
+     and en-GB/en-IN answer 22:55. The spec asks for a 12-hour clock, so it is stated rather than hoped for. */
+  try { return new Date(d || Date.now()).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(); }
+  catch (_) { return ''; }
+}
+
+/**
+ * ⚠️⚠️⚠️ THE SHOP'S NAME, AND NOTHING STANDING IN FOR IT ([TILL-159]). This used to read
+ *     (S.shop.name) || (STATE.till.name) || ''
+ * so before the catalogue had been read the subtitle showed the COUNTER'S DEVICE NAME — which is how a bill
+ * list came to be headed "desktop3". A device is not a shop and is not a person; when the shop is not known
+ * yet, the honest answer is to say nothing.
+ */
+function shopName(){ return (S && S.shop && S.shop.name) || ''; }
+
 function hubHead(){
-  var name = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
-  var since = (typeof WHO !== 'undefined' && WHO && WHO.since) ? new Date(WHO.since).toTimeString().slice(0, 5) : '';
-  var shop = (S && S.shop && S.shop.name) || (STATE && STATE.till && STATE.till.name) || '';
+  var w = whoNow();
+  var shop = shopName();
   var place = (S && S.shop && S.shop.address) ? String(S.shop.address).split(',')[0] : '';
-  var when = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })
-           + ', ' + new Date().toTimeString().slice(0, 5);
-  /* ⚠ the pink box is the WHO control — pink when nobody is signed in, quiet green when somebody is */
-  var who = '<div class="hubwho' + (name ? ' in' : '') + '" data-testid="till-hub-who">'
-    + '<span class="mt"><b>' + (name ? esc(name) : 'Nobody signed in') + '</b>'
-    + '<i>' + (name ? ('at this counter' + (since ? ' since ' + esc(since) : '')) : 'bills will not carry a name') + '</i></span>'
+  /* ⭐ short date and a 12-hour clock, where a glance is wanted (§5) */
+  var when = new Date().toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })
+           + ' · ' + clock12();
+  var who = '<div class="hubwho ' + w.kind + '" data-testid="till-hub-who">'
+    + '<span class="hubav" data-testid="till-hub-av">' + esc(w.av) + '</span>'
+    + '<span class="mt"><b>' + esc(w.title) + '</b><i>' + esc(w.sub) + '</i></span>'
+    /* ⚠️ the shortcut sits BESIDE the label, in mono, not inside it (§6.4) */
     + '<button class="pri sm" data-testid="till-hub-who-act" onclick="fromMenu(openWho)">'
-    + (name ? 'Hand over' : 'Sign in') + ' · F7</button></div>';
+    + esc(w.act) + '</button><kbd>F7</kbd></div>';
   return '<div class="hubhead">'
-    + '<span class="hh1"><b data-testid="till-m-counter">' + esc(ls.get('cb_till_name', 'Counter')) + '</b>'
+    + '<span class="hh1"><b data-testid="till-m-counter">' + esc(counterTitle()) + '</b>'
     + '<i>' + esc([shop, place].filter(Boolean).join(' · ')) + (shop || place ? ' · ' : '') + esc(when) + '</i></span>'
     + hubChips()
     + who
     + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
     + '</div>';
 }
+
+/**
+ * ⚠️ "Counter" NAMES NOTHING WHEN THERE ARE THREE (§5). The stored name is used when it has been set; the
+ * fallback is the counter's own id, never the bare word.
+ */
+/**
+ * ⚠️ RENAMED ([TILL-159]). This was written as tillName() and shadowed the one at the bottom of the file,
+ * which answers "this counter" for messages like "Apply to this counter". Only the LAST declaration runs, so
+ * one of the two would have silently lost — the guard caught it. They are different questions and now have
+ * different names. [[feedback-duplicate-function-hoisting]] [[feedback-no-duplicate-functions]]
+ */
+function counterTitle(){
+  var n = ls.get('cb_till_name', '');
+  if (n) return n;
+  var id = (STATE && STATE.till && STATE.till.id) || ls.get('cb_till_id', '');
+  return id ? ('Counter ' + String(id).replace(/^C/i, '')) : 'Counter';
+}
+
 function hubWhoRow(){
-  var name = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
-  var since = (typeof WHO !== 'undefined' && WHO && WHO.at) ? new Date(WHO.at).toTimeString().slice(0, 5) : '';
-  var initials = name ? name.trim().split(/\s+/).slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase() : '';
-  return '<div class="hubwho" data-testid="till-hub-who">'
-    + '<span class="hubav">' + (initials ? esc(initials) : '👤') + '</span>'
-    + '<span class="mt"><b>' + (name ? esc(name) : 'Nobody signed in') + '</b>'
-    + '<i>' + (name ? ('at this counter' + (since ? ' since ' + esc(since) : ''))
-                    : 'bills will not carry a name') + '</i></span>'
+  var w = whoNow();
+  return '<div class="hubwho ' + w.kind + '" data-testid="till-hub-who">'
+    + '<span class="hubav">' + esc(w.av) + '</span>'
+    + '<span class="mt"><b>' + esc(w.title) + '</b><i>' + esc(w.sub) + '</i></span>'
     + '<button class="pill" data-testid="till-hub-who-act" onclick="fromMenu(openWho)">'
-    + (name ? 'Hand over' : 'Who is here') + ' · F7</button>'
+    + esc(w.act) + '</button><kbd>F7</kbd>'
     + '</div>';
 }
-/**
- * ⚠⚠ ONE INDICATOR A CASHIER LEARNS, NOT SIX THEY IGNORE. Each chip is green or it is not, and tapping any of
- * them goes to the same place — Alerts — because "what is wrong" is one question however it was noticed.
- * ⚠ The counts come from the SAME calls the sections use (queueWords, alertCount, S.items), so a chip and the
- * section behind it can never disagree. [[feedback-repaint-locally]]
- */
+
 /**
  * ⚠⚠ CAREFUL IS A STRIP, NOT A SECTION (HubWide). It spans the foot, the sentence on the left and the three
  * acts as BUTTONS on the right — no chevron, nothing to open. A row that folds away is a row somebody can leave
  * closed and forget; these three stop billing, so the design refuses to hide them.
  * ⚠ On a phone it goes back to being a section, in pink, last (HubPhone) — there is no room for three buttons
  * and a sentence on one line.
+ *
+ * ⚠️⚠️ RESTORED ([TILL-159]). The header rewrite spliced from the hubHead comment to the end of hubChips and
+ * took this with it — it sat between them. Nothing failed at parse: the page loaded and paintMenu threw
+ * "hubCare is not defined" only when the hub was opened. A deletion that a syntax check cannot see is exactly
+ * what [[feedback-anchor-replace-drops-code]] is about.
  */
 function hubCare(){
   var act = function(id, label){
@@ -6483,21 +6646,33 @@ function hubCare(){
     + act('close', 'Close this counter')
     + '</span></div>';
 }
+/**
+ * ── ⭐⭐⭐ TWO PILLS, NOT FOUR ([TILL-159], §5) ────────────────────────────────────────────────────────────
+ *
+ * The package: *"four pills, four kinds of thing: a connection, a queue, a to-do count and an inventory
+ * statistic."* And the last of them, *113 products*, is not a status at all — it is trivia occupying the most
+ * valuable strip on the screen.
+ *
+ * ⭐ WHAT MAY BE A PILL: the line, waiting-to-send (only when it is not zero), and the Check count. Nothing a
+ * shopkeeper cannot act on — if pressing it does nothing, it is not a pill.
+ * ⚠️⚠️ AND "3 need you" IS AMBER. Red says a sale has stopped or work is at risk; three set-up items are
+ * neither, and a red badge for something nobody can lose money over is how red stops meaning anything.
+ * ⚠️ The order is fixed — line → waiting → needs you — so the eye learns where to look.
+ */
 function hubChips(){
-  var chip = function(ok, label, test){
-    return '<button class="hubchip ' + (ok ? 'ok' : 'bad') + '" data-testid="till-hub-chip-' + test + '"'
-      + ' onclick="menuSection(\'alerts\')">' + esc(label) + '</button>';
-  };
   var online = navigator.onLine !== false;
-  var queued = (STATE && STATE.queued) || 0;
-  var n = ((S && S.items) || []).length;
+  var queued = Number((STATE && STATE.queued) || 0);
   var alerts = alertCount();
-  return '<div class="hubchips" data-testid="till-hub-health">'
-    + chip(online, online ? 'online' : 'offline', 'line')
-    + chip(!queued, queued ? (queued + ' waiting') : 'all sent', 'queue')
-    + chip(!alerts, alerts ? (alerts + ' need' + (alerts === 1 ? 's' : '') + ' you') : 'nothing needs you', 'alerts')
-    + chip(n > 0, n ? (n + ' products') : 'no shop yet', 'shop')
-    + '</div>';
+  var out = '';
+  /* the line and the queue are one pill: a dot for the line, the words for what it means */
+  out += '<button class="hubchip ' + (online ? 'ok' : 'warn') + '" data-testid="till-hub-chip-line"'
+    + ' onclick="fromMenu(openLineGrid)"><i class="dot"></i>'
+    + esc(online ? 'online' : 'no network') + (queued ? '' : ' · all sent') + '</button>';
+  if (queued) out += '<button class="hubchip warn" data-testid="till-hub-chip-queue"'
+    + ' onclick="fromMenu(openHealth)">' + queued + ' waiting</button>';
+  if (alerts) out += '<button class="hubchip warn" data-testid="till-hub-chip-alerts"'
+    + ' onclick="menuSection(\'alerts\')">' + alerts + ' need' + (alerts === 1 ? 's' : '') + ' you</button>';
+  return '<div class="hubchips" data-testid="till-hub-health">' + out + '</div>';
 }
 function paintMenu(){
   var m = document.getElementById('tillmenu'); if (!m) return;
@@ -6594,7 +6769,10 @@ function paintMenu(){
       + '<span class="mt"><b>' + esc(sec.title) + '</b><i>' + esc(sec.sum) + '</i></span>'
       /* ⭐ the badge equals the number of rows the section holds — alertCount() is the same call the body makes,
          so a badge saying 3 over a section showing 2 is not possible. */
-      + (sec.alerts && alertCount() ? '<span class="mbadge" data-testid="till-msec-badge-alerts">' + alertCount() + '</span>' : '')
+      + (sec.alerts && alertCount()
+          /* ⚠⚠ red ONLY when something has stopped a sale (§8.7) — otherwise the badge is amber */
+          ? '<span class="mbadge' + (menuAlerts().some(function(x){ return x.rank === 'stop'; }) ? ' stop' : '')
+            + '" data-testid="till-msec-badge-alerts">' + alertCount() + '</span>' : '')
       /* ⚠️ ONE glyph, turned by CSS — two glyphs meant two weights and two sizes in one column ([TILL-85]) */
       + '<span class="mch">\u203A</span></button>'
       /**
