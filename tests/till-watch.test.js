@@ -195,4 +195,58 @@ it('and it does not claim billing is at risk, because it never is', () => {
     'billing is in the watch list — it does not depend on the line and must not look as if it does');
 });
 
+
+console.log('\n⭐⭐ WHAT WORKS WITH THE LINE AND WITHOUT IT ([TILL-154])\n');
+
+/**
+ * Athi: *"what capability is operational and what are stopped if network not there… can we showcase with a
+ * check box between network and no network?"* — a grid, one row per capability, one column per line state.
+ *
+ * ⚠️⚠️⚠️ THE CELLS MUST BE COMPUTED, NEVER WRITTEN. A hand-made table of what works offline is wrong within a
+ * month of the next change and nobody finds out, because nothing contradicts it. Running each row's own gate
+ * against each state means the grid IS the behaviour.
+ */
+it('⚠️⚠️⚠️ every cell is the row\'s own gate, run against that state', () => {
+  const at = PAGE.indexOf('function lineMatrix(){');
+  assert.ok(at > 0, 'the matrix is gone');
+  const body = PAGE.slice(at, PAGE.indexOf('\n}', at));
+  assert.ok(/w\.fn\(r\)/.test(body), 'the grid does not call the row gate — the cells are written down somewhere');
+  assert.ok(/WATCH\.map/.test(body), 'the grid does not read the registry');
+  assert.ok(/r\.line = s\.k/.test(body), 'it does not vary the line state, so every column would be identical');
+});
+
+/** ⚠️ only the LINE varies — a device fault has its own alarm and would make this answer wrong */
+it('⚠️ and only the line varies between the columns', () => {
+  const at = PAGE.indexOf('function lineMatrix(){');
+  const body = PAGE.slice(at, PAGE.indexOf('\n}', at));
+  assert.ok(/storage_bad = false/.test(body) && /queue_code = null/.test(body),
+    'a broken device would paint the whole grid red and answer a question nobody asked');
+});
+
+it('it covers the three states, and marks the one the counter is in', () => {
+  assert.ok(/var LINE_STATES = \[/.test(PAGE), 'the states are gone');
+  ['good', 'patchy', 'none'].forEach((k) => {
+    assert.ok(new RegExp("k:'" + k + "'").test(PAGE), 'the grid has no ' + k + ' column');
+  });
+  assert.ok(/s\.k === now/.test(PAGE), 'the column the counter is actually in is not marked');
+});
+
+/** ⭐ the two capabilities Athi named by hand, which is how this came up at all */
+it('⭐ it answers the two he asked about by name', () => {
+  const refresh = ROWS.find((r) => r.id === 'cat');
+  const offers = ROWS.find((r) => r.id === 'offer');
+  assert.ok(refresh, 'the product refresh is not a row');
+  assert.ok(offers, 'new offers from the shop is not a row — "new offer cannot be seen from the source"');
+  assert.ok(offers.fix, 'and it does not say when they will arrive');
+});
+
+/** ⚠️ three marks, and they must be told apart without reading — shape and colour, not words */
+it('⚠️ a cell is a mark, not a sentence', () => {
+  const at = PAGE.indexOf('function lineMark(');
+  assert.ok(at > 0, 'the mark is gone');
+  const body = PAGE.slice(at, PAGE.indexOf('\n}', at));
+  assert.ok(/class="m y"/.test(body) && /class="m w"/.test(body) && /class="m n"/.test(body),
+    'the three outcomes are not three distinct marks');
+});
+
 console.log('\n' + pass + ' checks passed\n');

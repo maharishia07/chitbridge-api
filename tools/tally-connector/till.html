@@ -2043,6 +2043,26 @@
        cursor:pointer}
   .lbody .lgo,.linein .lgo{background:#1d1b16;color:#fff;border:0;opacity:1}
   .lgo span{font-size:1.3em}
+  /* ── ⭐⭐ THE CAPABILITY GRID ([TILL-154]) — a row per thing, a column per line state ─────────────── */
+  .lviews{display:flex;gap:6px}
+  .lviews .pill.on{background:#1d1b16;color:#fff;border-color:#1d1b16}
+  .lgrid{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+  .ghead,.grow{display:grid;grid-template-columns:1fr 54px 54px 54px;align-items:center}
+  .ghead{background:#f1efe9;position:sticky;top:0}
+  .ghead b{display:grid;justify-items:center;gap:1px;padding:7px 0;font-size:.7em;font-weight:700;
+           letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
+  .ghead b span{font-size:1.5em;line-height:1}
+  /* ⚠️ the column the counter is actually in, marked — so the grid also answers "where am I?" */
+  .ghead b.on{background:#1d1b16;color:#fff}
+  .grow{border-top:1px solid var(--line)}
+  .grow > span{padding:9px 10px;font-size:.93em;line-height:1.3}
+  .grow b{display:grid;place-items:center;height:100%}
+  .grow b.on{background:rgba(0,0,0,.05)}
+  .m{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;font-style:normal;font-size:.95em}
+  .m.y{background:#e7f2ea;color:#1b6b3a} .m.w{background:#fdf0d5;color:#8a6a12}
+  .m.n{background:#eceae4;color:#6b6660}
+  .gkey{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:.85em;color:var(--dim)}
+  .gkey span{display:flex;align-items:center;gap:5px}
   /* ⭐ the same panel, in the flow of the diagnostics page rather than in the dialog ([TILL-153]) */
   .linein{border:2px solid var(--line);border-radius:16px;margin:10px 0 2px;max-height:none;padding:12px}
   @media (max-width:380px){ .ltiles{grid-template-columns:1fr} }
@@ -2450,7 +2470,12 @@
 <!-- ⭐⭐⭐ Working without the line ([TILL-151]) — design-handoff/without-the-line -->
 <dialog id="linedlg" data-testid="till-line-dlg">
   <!-- ⚠️ a title, not a sentence ([TILL-152]) — the panel is understood from its symbols, not its heading -->
-  <div class="lhead"><h3 style="flex:1">The line</h3>
+  <div class="lhead"><h3>The line</h3>
+    <!-- ⭐ two views of one registry ([TILL-154]) — what is happening, and what works without a line -->
+    <div class="lviews" style="flex:1">
+      <button class="pill on" id="lvnow" data-testid="till-line-view-now" onclick="lineView('now')">Now</button>
+      <button class="pill" id="lvgrid" data-testid="till-line-view-grid" onclick="lineView('grid')">⊞</button>
+    </div>
     <button class="pill" data-testid="till-line-health" onclick="lineClose();openHealth()" title="counter health">🩺</button>
     <button class="pill" data-testid="till-line-close" onclick="lineClose()">Close · Esc</button></div>
   <div class="lbody" id="linebody"></div>
@@ -14265,6 +14290,14 @@ var WATCH = [
     fn:function(r){ return r.line === 'good'; } },
   { id:'cust',  at:'CloudHost.alias',    bucket:'waits',  name:'New customers added here',
     costs:'Saved here, sent later', fn:function(r){ return r.line === 'good'; } },
+  /**
+   * ⭐ THE ONE ATHI NAMED ([TILL-154]): *"new offer cannot be seen from the source"*. An offer written at the
+   * shop reaches this counter only on a refresh, so with no line the counter sells on the offers it already
+   * holds — correct, and worth saying, because the shopkeeper who was told about a new offer will look for it.
+   */
+  { id:'offer', at:'CBOffers',           bucket:'waits',  name:'New offers from the shop',
+    costs:'The ones already here still apply',
+    fix:'They arrive on the next refresh', fn:function(r){ return r.line === 'good'; } },
   { id:'cat',   at:'CloudHost.refresh',  bucket:'waits',  name:'Prices and products',
     fix:'Refresh once the line is back', fn:function(r){ return r.line === 'good'; } },
   { id:'hist',  at:'CloudHost.history',  bucket:'waits',  name:'Today’s list',
@@ -14445,7 +14478,17 @@ function hhmm(d){ try { return new Date(d).toTimeString().slice(0, 5); } catch (
  *   · one button, and it is never needed — the counter fixes itself
  * ⚠️ Counts are digits, never words: a numeral is readable by someone who cannot read.
  */
-var LINE_OPEN = '';        /* which tile the person tapped open — nothing, by default */
+var LINE_OPEN = '';
+/** ⭐ which of the two views the panel is showing ([TILL-154]) */
+var LINE_VIEW = 'now';
+function lineView(v){
+  LINE_VIEW = v; LINE_OPEN = '';
+  var b1 = document.getElementById('lvnow'), b2 = document.getElementById('lvgrid');
+  if (b1) b1.className = 'pill' + (v === 'now' ? ' on' : '');
+  if (b2) b2.className = 'pill' + (v === 'grid' ? ' on' : '');
+  paintLine();
+  try { if (document.getElementById('netinline')) netInline(); } catch (_) {}
+}        /* which tile the person tapped open — nothing, by default */
 function lineTile(t){
   LINE_OPEN = (LINE_OPEN === t) ? '' : t;
   paintLine();
@@ -14453,9 +14496,78 @@ function lineTile(t){
   try { if (document.getElementById('netinline')) netInline(); } catch (_) {}
 }
 
+/**
+ * ── ⭐⭐⭐ WHAT WORKS WITH THE LINE AND WITHOUT IT ([TILL-154]) ────────────────────────────────────────────
+ *
+ * Athi: *"if the network is down we need to say that Product refresh will not work, new offer cannot be seen
+ * from the source, bill will continue — like that, in icon shape. What capability is operational and what is
+ * stopped if network not there… can we showcase with a check box between network and no network?"*
+ *
+ * ⚠️⚠️ THIS IS A DIFFERENT QUESTION FROM THE PANEL. The panel answers *what is happening now*; this answers
+ * *what does this counter do without a line* — a thing somebody wants to know BEFORE the line goes, and to be
+ * able to point at. One row per capability, one column per state, a mark in every cell.
+ *
+ * ⭐⭐⭐ AND THE CELLS ARE NOT WRITTEN DOWN. Each one is the row's own gate function run against that state,
+ * so the grid is the behaviour rather than a description of it. A hand-written table would be wrong within a
+ * month and nobody would find out. [[feedback-silence-is-the-bug]] [[feedback-stay-in-the-construct]]
+ */
+var LINE_STATES = [
+  { k:'good',   ico:'📶', say:'Line' },
+  { k:'patchy', ico:'∿',       say:'Weak' },
+  { k:'none',   ico:'🚫', say:'None' },
+];
+function lineMatrix(){
+  var base = healthReading();
+  return WATCH.map(function(w){
+    return {
+      name: w.name,
+      bucket: w.bucket,
+      cells: LINE_STATES.map(function(s){
+        /* ⚠️ only the line varies — the device faults have their own alarm and would muddy this answer */
+        var r = {}; for (var k in base) r[k] = base[k];
+        r.line = s.k; r.storage_bad = false; r.queue_code = null;
+        try { return !!w.fn(r); } catch (_) { return true; }
+      }),
+    };
+  });
+}
+
+/** ⭐ tick, wait or stop — three marks, no words needed to tell them apart */
+function lineMark(ok, bucket){
+  if (ok) return '<i class="m y">✓</i>';
+  return bucket === 'waits' ? '<i class="m w">⏳</i>' : '<i class="m n">✕</i>';
+}
+
+function paintGrid(into){
+  var box = into || document.getElementById('linebody'); if (!box) return;
+  var rows = lineMatrix(), now = lineState().state;
+  box.innerHTML =
+      '<div class="lgrid" data-testid="till-line-grid">'
+      + '<div class="ghead"><span></span>'
+      + LINE_STATES.map(function(s){
+          return '<b' + (s.k === now ? ' class="on"' : '') + '><span>' + s.ico + '</span>' + esc(s.say) + '</b>';
+        }).join('')
+      + '</div>'
+      + rows.map(function(r){
+          return '<div class="grow"><span>' + esc(r.name) + '</span>'
+            + r.cells.map(function(ok, i){
+                return '<b' + (LINE_STATES[i].k === now ? ' class="on"' : '') + '>'
+                  + lineMark(ok, r.bucket) + '</b>';
+              }).join('')
+            + '</div>';
+        }).join('')
+      + '</div>'
+      /* ⚠️ three marks, said once, at the bottom where it does not get in the way of the grid */
+      + '<div class="gkey"><span><i class="m y">✓</i>works</span>'
+      + '<span><i class="m w">⏳</i>waits here</span>'
+      + '<span><i class="m n">✕</i>stops</span></div>';
+}
+
 /** ⚠️ it paints wherever it is asked ([TILL-153]) — the dialog, or the slot under the line switch */
 async function paintLine(into){
   var box = into || document.getElementById('linebody'); if (!box) return;
+  /* ⭐ two views of one registry ([TILL-154]): what is happening now, or what works with and without a line */
+  if (LINE_VIEW === 'grid') return paintGrid(box);
   var r = healthReading(), L = lineState(), rows = watchNow(r), w = await waitingNow();
   var norm = rows.filter(function(x){ return x.bucket === 'normal'; });
   var need = rows.filter(function(x){ return x.bucket === 'needs_line' && !x.ok; });
