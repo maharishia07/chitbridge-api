@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -90,11 +90,20 @@ const wrapForBrowser = (file, global, deps) => {
   let src = norm(fs.readFileSync(path.join(API, 'lib', file), 'utf8'));
   for (const spec of Object.keys(deps || {})) {
     const call = "require('" + spec + "')";
-    if (src.indexOf(call) < 0) throw new Error(file + ' does not ' + call + ' — the dep map is stale');
+    /* ⚠️ and this one too: a dep named only in a comment would look satisfied when nothing imports it */
+    if (src.replace(/\/\*[\s\S]*?\*\//g, ' ').indexOf(call) < 0) throw new Error(file + ' does not ' + call + ' — the dep map is stale');
     src = src.split(call).join('window.' + deps[spec]);
   }
   const NL = String.fromCharCode(10);
-  const left = [...src.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]);
+  /**
+   * ⚠️⚠️ SCAN THE CODE, NOT THE COMMENTS. This read the raw source, so a header sentence that merely
+   * MENTIONED a require by name failed the wrap of a module which requires nothing — lib/rollup.js, whose note
+   * explains that the kit copy keeps working because it is copied rather than wrapped.
+   * ⚠️ The fourth time a guard here has read prose as code. Stripping both comment kinds first is the fix that
+   * worked the other three times; the EMITTED source is untouched, only what is scanned.
+   */
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  const left = [...code.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]);
   if (left.length) {
     throw new Error(file + ' still requires ' + JSON.stringify(left) + ' — a browser has no require(). '
       + 'Vendor that module too and name it in the dep map, or this engine is not liftable into a page.');
@@ -192,6 +201,14 @@ const COPIES = () => [
    */
   [null, path.join(WEB, 'engine', 'units.js'), wrapForBrowser('units.js', 'CBUnits')],
   /**
+   * ⭐⭐ THE DAY'S TAKINGS, AS AN ENGINE ([TILL-125]). The page had its OWN copy of what a return does to a
+   * day — correct, and the third place that rule lived. The counter program and the server already share
+   * lib/rollup.js; this puts the page on it too, so a change to the rule cannot leave one screen behind.
+   * ⚠️ ON THE TILL'S SHELF (the KEEP list below), unlike convert: closing the day is something a shop does
+   * with the shutters down and the line often off.
+   */
+  [null, path.join(WEB, 'engine', 'rollup.js'), wrapForBrowser('rollup.js', 'CBRollup')],
+  /**
    * ⭐⭐ THE VALIDATION MODULE, ON THE COUNTER ([TILL-105]). Athi: *"if the gstn is given, we can call the
    * validation module from till application and confirm."* lib/profile-map is DB-free with zero requires, so it
    * lifts as a file — and it carries the state table and the PAN reader too, which is what lets the counter
@@ -253,6 +270,8 @@ const COPIES = () => [
      counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor
      caught this the moment the script tag went in — which is what it is for. */
   [null, path.join(API, 'lib', 'units.browser.js'), wrapForBrowser('units.js', 'CBUnits')],
+  /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
+  [null, path.join(API, 'lib', 'rollup.browser.js'), wrapForBrowser('rollup.js', 'CBRollup')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],

@@ -157,7 +157,7 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /* ⭐ 'variant' joined on 2026-09-19: one product, many combinations, and what makes two of them the same
    thing to sell. A shop PC bills combinations with the line down, so it keeps the rule locally too.
    ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
-const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rewards', 'screen'];
+const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),
@@ -801,6 +801,66 @@ const server = http.createServer(async (req, res) => {
      * ⚠️ THESE TWO ROUTES CARRY NO KEY, deliberately — they run before there is one. All they can do is ask
      * ChitBridge to send a code to an address, and hand a code back. Neither reads shop data.
      */
+    /**
+     * ── ⚠️⚠️⚠️ SIGNING OUT — THE DAY'S MONEY GOES FIRST ([TILL-127]) ────────────────────
+     *
+     * Athi: *"if they are signing out, then that also has to be synced — or the couldn't sync due to network
+     * has to be informed, and close the shop."*
+     *
+     * ⚠️⚠️ A COUNTER SIGNED OUT WITH BILLS STILL WAITING IS THE WORST STATE THIS PROGRAM CAN REACH. The
+     * queue can only be sent with the key that took the sales, so forgetting the key strands them. That is the
+     * same shape as the re-pairing fault that once left five abandoned stores on one device — except deliberate.
+     *
+     * ⭐ SO IT DRAINS FIRST, AND REFUSES BY DEFAULT. Only an explicit `force` — which the page asks for in
+     * words, with the number in front of the person — signs out over unsent work.
+     *
+     * ⭐⭐ AND NOTHING IS DELETED, WHICH IS WHAT MAKES EVEN A FORCED SIGN-OUT RECOVERABLE. The key is removed
+     * from connector.json; the shop's folder stays exactly where it is. Because [TILL-120] names that folder
+     * after the shop rather than the key, signing back in to the SAME shop re-opens the SAME folder and the
+     * queue picks up where it left off. Say so, or a shopkeeper will think the sales are gone.
+     */
+    if (req.method === 'POST' && url.pathname === '/api/signout') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      if (!cfg.key) return json(res, 200, { ok: true, already: true, message: 'This counter was not signed in to a shop.' });
+      const shop = keyShop(cfg.key);
+      const name = (shop && (shop.name || shop.bridge_id)) || 'the shop';
+
+      /* ⚠️ ONE LAST ATTEMPT, ALWAYS — even when forcing, because the best outcome is that there is nothing left */
+      let left = readLines(F.queue).length;
+      if (left) { try { await drain(); } catch (_) {} left = readLines(F.queue).length; }
+
+      if (left && !b.force) {
+        /**
+         * ⚠️ IT SAYS WHAT IS WAITING AND WHY IT COULD NOT GO. `online` is set by the drain's own classifier
+         * (whyNot), so "the line is down" and "the key is refused" are not reported as the same thing — they
+         * need different actions from whoever is reading.
+         */
+        return json(res, 200, { ok: false, queued: left, online: online, shop: name,
+          message: left + ' bill(s) from this counter have not reached ChitBridge yet'
+            + (online ? ', and ChitBridge is refusing them' : ' because this PC is offline') + '.' });
+      }
+
+      /**
+       * ⚠️⚠️ MERGE-PATCH, and DELETE the key rather than blanking it. A `key: ""` would read as a key to
+       * every check that tests truthiness and as a config error to loadConfig. Everything else on this PC — the
+       * Tally paths, the printer, the counter id — survives untouched. [[feedback-partial-writes-merge-patch]]
+       */
+      const cfgNow = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+      delete cfgNow.key;
+      writeJSON(cfgFile, cfgNow);
+      log('signed out of ' + name + (left ? ' with ' + left + ' bill(s) still unsent — they stay in ' + SHOP_DIR : '')
+        + ' — the folder is kept, so signing back in resumes it');
+      json(res, 200, { ok: true, left: left, shop: name, folder: SHOP_DIR, restarting: true,
+        message: left
+          ? left + ' bill(s) are still waiting. They are kept in this shop\u2019s own folder — sign back in to '
+            + name + ' on this PC and they will go.'
+          : 'Everything reached ChitBridge. This counter is signed out of ' + name + '.' });
+      /* ⚠️ restart for the same reason the sign-in does: DIR was chosen at boot from the key this no longer has */
+      setTimeout(function () { log('restarting — this counter is no longer signed in to a shop'); process.exit(0); }, 400);
+      return;
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/signin/start') {
       let raw = ''; for await (const c of req) raw += c;
       const b = JSON.parse(raw || '{}');

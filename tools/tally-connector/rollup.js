@@ -313,5 +313,10 @@ function acrossCounters(summaries) {
 
 module.exports = { isReturn, totals, fold, dayKey, weekKey, monthKey, keyOf, daysIn, isClosed, summary, chitOf, refOf, PERIODS, planPurge, FLOOR_DAYS, MAX_PER_RUN, acrossCounters };
 
-/* ⭐ the counter loads its engines as browser globals; this one follows the same shape as lib/units.js et al. */
-if (typeof window !== 'undefined') window.CBRollup = module.exports;
+/**
+ * ⚠️ NO SELF-ASSIGNED GLOBAL HERE, DELIBERATELY ([TILL-125]). scripts/vendor-till.cjs wrapForBrowser() turns
+ * `module.exports =` into `var EXPORTS =` and assigns window.CBRollup itself. A module that also referenced
+ * `module.exports` on its last line would throw in a browser — which is exactly how jurisdiction.js failed
+ * with "EXPORTS is not defined" when it was wrapped instead of copied.
+ * ⚠️ The KIT copy is a plain copy, not a wrap, so `require('./rollup')` in till.js is unaffected.
+ */

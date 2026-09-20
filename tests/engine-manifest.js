@@ -501,6 +501,10 @@ const ENGINE_OTHER = [
   'numerals.browser.js',
   'units.browser.js',
   'profile-map.browser.js',
+  /* GENERATED beside lib/rollup.js ([TILL-125]): what a day's takings are, and what a return does to them. The page
+     had its own copy of this rule and the shop PC another; the two disagreed until 2026-09-20. One engine now,
+     wrapped for the browser by scripts/vendor-till.cjs. */
+  'rollup.browser.js',
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
@@ -600,6 +604,9 @@ const TILL_SHIPPABLE = {
   'nums.js':      'numerals.js',
   'units.js':     'units.js',
   'profilemap.js': 'profile-map.js',
+  /* ⭐⭐ [TILL-125] closing the day is done with the shutters down and the line often off, so the rule that
+     decides what a return does to a day ships with the counter rather than being asked for. */
+  'rollup.js':    'rollup.js',
   'jurisdiction.js': 'jurisdiction.js',
   'govcontext.js': 'web:app/govcontext.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter

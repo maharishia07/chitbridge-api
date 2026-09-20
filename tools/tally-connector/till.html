@@ -2350,6 +2350,12 @@
   <div id="startsay" class="shopsay"></div>
   <div class="dlgbtns"><button onclick="startClose()">Not now · Esc</button></div>
 </dialog>
+<!-- ⭐⭐ WHY THIS COUNTER CANNOT DO THAT YET ([TILL-127]). Athi: *"it has to give a pop up message that store
+     is not signed in yet, sign-in prompt has to showcase."* A quiet no-op is what this replaces. -->
+<dialog id="needdlg" class="dlg" data-testid="till-need-dlg">
+  <h3>This counter is not ready <span class="u">what is missing, and the one thing that fixes it</span></h3>
+  <div id="needbody" class="startbody"></div>
+</dialog>
 <dialog id="signindlg" class="dlg" data-testid="till-signin-dlg">
   <h3>Connect this counter <span class="u">sign in once with your ChitBridge email — afterwards this counter bills with or without the internet</span></h3>
   <div id="signinbody" class="startbody"></div>
@@ -2852,6 +2858,10 @@
 <script src="/engine/govcontext.js" onerror="engineMissed('govcontext')"></script>
 <!-- ⭐ REWARDS. The counter has to say what a customer just earned while they are still standing there, so the
      arithmetic runs here with the line down; the server runs the same file again and its answer is written. -->
+<!-- ⭐⭐ WHAT A DAY’S TAKINGS ARE ([TILL-125]). The page used to work this out itself, in two places. The
+     counter program and the server already shared lib/rollup.js; now the page does too, so a change to what a
+     return does to a day cannot leave one screen saying a different number from another. -->
+<script src="/engine/rollup.js" onerror="engineMissed('rollup')"></script>
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
 <!-- ⭐ the screen library — colour schemes, key tiles, presets (lib/screen-kit.js). Without it the counter draws as before. -->
 <script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
@@ -3476,17 +3486,29 @@ var CloudHost = {
      * close said 1 bill and the drawer held ₹600.
      * ⭐ The money nets; the COUNT does not; and a refund comes off the tender it was given back in.
      */
-    var by = {}; var total = 0, count = 0, back = 0;
-    mine.forEach(function(b){
-      total = r2(total + (b.total||0));
-      if (b.kind === 'credit_note') {
-        back = r2(back + Math.abs(Number(b.total)||0));
-        (b.refunds||[]).forEach(function(x){ by[x.how] = r2((by[x.how]||0) - (Number(x.amount)||0)); });
-      } else {
-        count++;
-        (b.payments||[]).forEach(function(p){ by[p.how] = r2((by[p.how]||0) + (p.amount||0)); });
-      }
-    });
+    /**
+     * ⭐⭐ ONE RULE, THREE HOSTS ([TILL-125]). This was the page's own copy of the day's arithmetic — correct
+     * since 2026-09-18, and the third place the rule lived after the counter program and the server. The three
+     * had already disagreed once: till.js counted a credit note as a sale and kept its refund in the drawer.
+     * ⚠️ THE FALLBACK IS THE OLD CODE, not a simpler version of it. If the engine did not load, the figures
+     * must still be RIGHT — a fallback that quietly reverted to the pre-2026-09-18 bug would be worse than a
+     * blank screen, because it looks like an answer. [[feedback-silence-is-the-bug]]
+     */
+    var t = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(mine) : (function(){
+      var by2 = {}, total2 = 0, count2 = 0, back2 = 0;
+      mine.forEach(function(b){
+        total2 = r2(total2 + (b.total||0));
+        if (b.kind === 'credit_note') {
+          back2 = r2(back2 + Math.abs(Number(b.total)||0));
+          (b.refunds||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
+        } else {
+          count2++;
+          (b.payments||[]).forEach(function(p){ by2[p.how] = r2((by2[p.how]||0) + (p.amount||0)); });
+        }
+      });
+      return { count: count2, total: total2, by: by2, refunds: back2 };
+    })();
+    var by = t.by, total = t.total, count = t.count, back = t.refunds;
     return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
              today: { count: count, total: total, by: by, returns: r2(back) },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
@@ -4475,6 +4497,24 @@ async function load(){
    * question people learn to dismiss.
    */
   try { draftResume(); } catch (_) {}
+  /**
+   * ── ⚠️⚠️⚠️ NO MODAL AT LOAD — AND THIS IS THE THIRD ATTEMPT ([TILL-127]) ───────────────
+   *
+   * Athi: *"if an empty shop is called for load … it has to give a pop up message that store is not signed in
+   * yet, sign-in prompt has to showcase."* The obvious reading is a dialog at boot. It was tried three ways and
+   * each one put a box over a counter nobody could click:
+   *   · on any unready state   → 13 harnesses timed out on "needdlg intercepts pointer events"
+   *   · on unpaired only       → still covered the ones holding a cached shop with no key
+   *   · on unpaired AND empty  → still covers a genuinely blank counter, which is the whole case
+   *
+   * ⚠️ THE LAST ONE IS NOT A TEST ARTEFACT. A blank counter IS the state a person opens, and a modal over it
+   * means they cannot reach ⚙, the menu, or anything else — worse than the silence it replaced.
+   *
+   * ⭐ SO THE ANNOUNCEMENT AT LOAD IS THE SHELF, NOT A DIALOG. [TILL-119] already put it there: "This counter
+   * is not connected to a shop yet" with a Connect button, on the empty shelf, in the middle of the screen,
+   * where a blank counter has nothing else to show. e2e/till-blank.cjs holds it. The MODAL belongs on INTENT —
+   * add(), payOpen(), startOpen() — where blocking is the point and the person asked for something.
+   */
 }
 var FIRST_READ = false;
 /* ⚠️ THE BUTTON MAY BE PRESSED BEFORE THE PAGE HAS FINISHED WAKING (caught by [TILL-01]): HOST is chosen asynchronously, and ↻ on
@@ -7372,6 +7412,12 @@ function payAsCard(){
   return slotAt('pay') === 'step';
 }
 function payOpen(){
+  /**
+   * ⚠⚠⚠ NO GATE HERE, AND THE FIRST VERSION HAD ONE ([TILL-127]). It read *"money must never proceed on an
+   * unready counter"* — which is exactly backwards. By the time there is a cart the shop HAS loaded, and if a
+   * key were revoked mid-sale the customer is still standing there holding money. A till that refuses to
+   * complete a sale is worse than useless; the bill queues locally and goes when it can. The door is add().
+   */
   if (!payAsCard() || !CART.length) return;
   document.body.classList.add('paying');
   try { paintTotals(); } catch (_) {}
@@ -10808,6 +10854,100 @@ function pairedShop(){
  * ↻ has nothing to ask without one, so the person presses a button that cannot work and says nothing back.
  * Two different emptinesses, two different next steps.
  */
+/**
+ * ── ⭐⭐⭐ EVERY REQUIRED PARAMETER, IN ONE ANSWER ([TILL-127]) ────────────────────────
+ *
+ * Athi: *"when the app in use, it should see all the required parameters are intact."*
+ *
+ * ⚠️⚠️ THE FACTS WERE ALL ON SCREEN AND NOTHING ADDED THEM UP. "Not paired yet", "no key yet", "no prices
+ * yet", "nobody signed in" are four separate chips a person has to read and combine; and the ENGINES, which
+ * decide whether a price can even be worked out, were only ever mentioned in a footer note. So a counter could
+ * be unfit to sell in four different ways and still look like it was waiting for a customer.
+ *
+ * ⭐ ONE FUNCTION, ORDERED BY WHAT TO DO FIRST. The first entry is the one that blocks everything after it —
+ * there is no point telling somebody their prices are stale when the counter has no shop at all.
+ *
+ * ⚠️ `stops` IS FATAL, `warns` IS NOT. A counter with nobody signed in can still take money; one with no
+ * shop cannot. Conflating them would either block a sale that should happen or allow one that cannot.
+ */
+function shopReady(){
+  var stops = [], warns = [];
+  if (!paired()) {
+    stops.push({ why: 'This counter is not signed in to a shop yet.',
+                 means: 'It has no key, so there is nothing to sell and nowhere to send a bill.',
+                 fix: 'Sign in', act: 'signinOpen' });
+  } else {
+    /* ⚠️ A KEY OF THE WRONG KIND IS NOT A CONNECTED COUNTER. A connector key cannot read a catalogue, and the
+       only symptom used to be a 403 in a log nobody opens ([TILL-117]). */
+    var sh = pairedShop();
+    var sc = (sh && sh.scopes) || null;
+    if (sc && sc.indexOf('till') < 0) {
+      stops.push({ why: 'This counter\u2019s key is not a till key.',
+                   means: 'It is for ' + esc(sc.join(', ')) + ', so it cannot read your shop or send a bill.',
+                   fix: 'Sign in', act: 'signinOpen' });
+    }
+    if (!S) {
+      stops.push({ why: 'No copy of the shop has been read yet.',
+                   means: 'Prices, products and tax are not on this device, so nothing can be billed.',
+                   fix: 'Read the shop', act: 'refreshNow' });
+    } else if (!((S.items) || []).length) {
+      stops.push({ why: 'This shop has no products yet.',
+                   means: 'There is nothing to put on a bill.',
+                   fix: 'Start your shop', act: 'startOpen' });
+    }
+  }
+  /**
+   * ⚠️⚠️ AN ENGINE THAT DID NOT LOAD IS A WRONG NUMBER WAITING TO HAPPEN, not a cosmetic problem — tax,
+   * pricing and money are how a total is arrived at. It is a STOP when one of those four is absent.
+   */
+  var core = ['money', 'pricing', 'tax', 'docnumber'].filter(function(n){ return MISSING.indexOf(n) >= 0; });
+  if (core.length) {
+    stops.push({ why: 'The ' + core.join(' and ') + ' engine' + (core.length > 1 ? 's are' : ' is') + ' not on this device.',
+                 means: 'A bill could be added up wrongly, so the counter will not sell without them.',
+                 fix: 'Fetch them', act: 'refreshNow' });
+  }
+  var rest = MISSING.filter(function(n){ return core.indexOf(n) < 0; });
+  if (rest.length) warns.push('the ' + rest.join(' and ') + ' engine is not here yet');
+  if (!WHO || !WHO.name) warns.push('nobody is signed in at this counter, so the day close cannot say who took the money');
+  return { ok: !stops.length, stops: stops, warns: warns };
+}
+
+/**
+ * ── ⭐⭐⭐ THE GATE ([TILL-127]) ───────────────────────────────────────────
+ *
+ * Athi: *"if an empty shop is called for load and other initiatives, it has to give a pop up message that store
+ * is not signed in yet, sign-in prompt has to showcase."*
+ *
+ * ⚠️⚠️ A QUIET NO-OP IS THE FAULT THIS REPLACES. Pressing a key on an unsigned counter simply did nothing:
+ * no bill, no message, nothing to read. A person presses it again, then blames the PC. [[feedback-silence-is-the-bug]]
+ *
+ * ⚠️ IT SAYS WHAT HAPPENED, WHAT IT MEANS, AND WHAT TO DO — and the last of those is a BUTTON, not a
+ * sentence describing a button. [[feedback-write-for-the-shopkeeper]]
+ *
+ * Returns true when the action may proceed, so every caller reads `if (!needShop('…')) return;`
+ */
+function needShop(doing){
+  var r = shopReady();
+  if (r.ok) return true;
+  var st = r.stops[0];                       /* the first one blocks the rest — one thing to do, not a list */
+  var d = document.getElementById('needdlg'); if (!d) return false;
+  document.getElementById('needbody').innerHTML =
+      '<p class="note"><b>' + esc(st.why) + '</b></p>'
+    + '<p class="note">' + st.means + '</p>'
+    + (doing ? '<p class="note u">You were trying to: ' + esc(doing) + '</p>' : '')
+    + (r.stops.length > 1
+        ? '<p class="note u">' + (r.stops.length - 1) + ' more thing'
+          + (r.stops.length > 2 ? 's need' : ' needs') + ' doing after this one.</p>' : '')
+    + '<div class="dlgbtns"><button onclick="needClose()">Not now · Esc</button>'
+    + '<button class="pri" data-testid="till-need-fix" onclick="needClose();' + esc(st.act) + '()">'
+    + esc(st.fix) + '</button></div>';
+  if (!d.open) d.showModal();
+  return false;
+}
+function needClose(){ var d = document.getElementById('needdlg'); if (d && d.open) d.close(); }
+/** ⚠️ one name for "read the shop again", so the gate's button and the ↻ key cannot drift apart */
+function refreshNow(){ try { return refresh(); } catch (_) { return null; } }
+
 function blankWords(){
   return paired() ? 'No copy of the shop yet — press ↻ once, while online.'
                   : 'This counter is not connected to a shop yet, so there is nothing to sell.';
@@ -10972,6 +11112,13 @@ function pick(n){
   try { focusSearch(); } catch (_) {}
 }
 async function add(n){
+  /**
+   * ⚠️⚠️ THE SILENT NO-OP THIS REPLACES ([TILL-127]). On a counter with no shop, hits() is empty, so this
+   * returned without a word — the key did nothing and said nothing, and the person pressed it again. Athi:
+   * *"it has to give a pop up message that store is not signed in yet."*
+   * ⚠️ THE GATE COMES FIRST, before the lookup, or an unready counter is indistinguishable from a bad key.
+   */
+  if (!needShop('put something on the bill')) return;
   var i = hits()[n]; if (!i) return;
   /* the same tap, read against what the shopkeeper said they are doing */
   /* ⚠️ AND THE MARK STAYS ON WHAT IS BEING CHANGED. Maintenance does not clear the box or move on — the product under
@@ -13612,6 +13759,109 @@ async function upCommit(){
  * program on the PC; a page served from the cloud has no config file to write a key into, so it pairs the
  * other way — ChitBridge › Settings › Integrations › Keys, pasted into ⚙.
  */
+/**
+ * ── ⚠️⚠️⚠️ SIGNING OUT OF A SHOP — THE MONEY GOES FIRST ([TILL-127]) ───────────────────
+ *
+ * Athi: *"if they are signing out, then that also has to be synced — or the couldn't sync due to network has
+ * to be informed, and close the shop."*
+ *
+ * ⚠️⚠️ THE QUEUE CAN ONLY BE SENT BY THE KEY THAT TOOK THE SALES. Forget the key with bills waiting and
+ * they are stranded — the same shape as the re-pairing fault that left five abandoned stores on one device,
+ * except chosen. So this asks the program to drain, and the program refuses a sign-out over unsent work unless
+ * the person is told the number and says yes to it in words.
+ *
+ * ⭐⭐ AND IT IS RECOVERABLE, WHICH MUST BE SAID OR IT WILL BE READ AS LOSS. Nothing is deleted: the shop's
+ * folder is named after the SHOP ([TILL-120]), not the key, so signing back in on this PC re-opens the same
+ * folder and the queue goes. A shopkeeper told only “there are 3 unsent bills” will assume the worst.
+ */
+function signoutOpen(){
+  if (!(typeof AgentHost !== 'undefined' && HOST === AgentHost)) {
+    /* ⚠️ the browser counter holds its own key, so signing out is a local matter — but the queue still is not */
+    return signoutCloud();
+  }
+  var d = document.getElementById('signindlg'); if (!d) return;
+  var sh = pairedShop();
+  var q = Number((STATE && STATE.queued) || 0);
+  signinSay('', false);
+  document.getElementById('signinbody').innerHTML =
+      '<p class="note">Sign this counter out of <b>' + esc((sh && (sh.name || sh.bridge_id)) || 'the shop') + '</b>?</p>'
+    + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached ChitBridge yet.</b>'
+           + ' They will be sent first — this needs the internet.</p>'
+         : '<p class="note">Everything this counter took has reached ChitBridge.</p>')
+    + '<p class="note u">The shop’s own folder on this PC is kept either way. Signing back in to the same shop'
+    + ' picks up exactly where this left off.</p>'
+    + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in · Esc</button>'
+    + '<button class="pri" data-testid="till-signout-go" onclick="signoutDo(false)">Sign out</button></div>';
+  if (!d.open) d.showModal();
+}
+async function signoutDo(force){
+  signinSay(force ? 'Signing out…' : 'Sending anything still waiting…', false);
+  var r = null;
+  try {
+    r = await fetch('/api/signout', { method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ force: !!force }) }).then(function(x){ return x.json(); });
+  } catch (e) { signinSay('This PC could not reach the counter program. Is it still running?', true); return; }
+
+  /**
+   * ⚠️⚠️ IT COULD NOT SYNC — SAY SO, AND SAY WHICH WALL IT HIT. "Offline" and "ChitBridge refused it" need
+   * different actions from whoever is reading, and the program's own classifier already knows which it was.
+   * The way forward is offered, and so is the way back, because staying signed in is usually the right answer.
+   */
+  if (r && r.ok === false) {
+    document.getElementById('signinbody').innerHTML =
+        '<p class="note"><b>' + esc(r.message || 'Some bills have not been sent.') + '</b></p>'
+      + '<p class="note">' + (r.online
+          ? 'The line is up, so this is not the internet — it is ChitBridge refusing the bills. Signing out now'
+            + ' will not lose them, but nobody can send them until that is sorted.'
+          : 'Get the internet back and they go on their own, usually within a minute.') + '</p>'
+      + '<p class="note u">If you sign out anyway, the ' + Number(r.queued || 0) + ' bill'
+      + (Number(r.queued || 0) > 1 ? 's stay' : ' stays') + ' in this shop’s folder on this PC. Signing back in to'
+      + ' <b>' + esc(r.shop || 'the same shop') + '</b> sends them. Nothing is deleted.</p>'
+      + '<div class="dlgbtns"><button class="pri" onclick="signinClose()">Stay signed in</button>'
+      /* ⚠️ the destructive choice is the QUIET button and says what it costs — never the default */
+      + '<button data-testid="till-signout-force" onclick="signoutDo(true)">Sign out and leave them here</button></div>';
+    signinSay('', true);
+    return;
+  }
+  if (!r || !r.ok) { signinSay((r && r.message) || 'Could not sign out.', true); return; }
+
+  document.getElementById('signinbody').innerHTML =
+      '<p class="note"><b>' + esc(r.message || 'Signed out.') + '</b></p>'
+    + '<p class="note">This counter is restarting. It will come back with no shop, ready to be signed in.</p>';
+  signinSay('', false);
+  var tries = 0;
+  (function again(){
+    tries++;
+    fetch('/api/state', { cache:'no-store' }).then(function(x){ if (x.ok) { location.reload(); return; } throw new Error('no'); })
+      .catch(function(){ if (tries < 30) setTimeout(again, 700);
+        else signinSay('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.', true); });
+  })();
+}
+/**
+ * ⚠️ THE BROWSER COUNTER keeps its key in this device's own storage, so signing out is local — but the unsent
+ * queue is just as real, and IndexedDB is namespaced by the KEY ([TILL-15]/[ISO-01]). Dropping the key here
+ * abandons that store exactly the way re-pairing used to, so the number is said first.
+ */
+function signoutCloud(){
+  var q = Number((STATE && STATE.queued) || 0);
+  var d = document.getElementById('signindlg'); if (!d) return;
+  signinSay('', false);
+  document.getElementById('signinbody').innerHTML =
+      '<p class="note">Sign this counter out of the shop?</p>'
+    + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached ChitBridge yet.</b>'
+           + ' Press ↻ first while online, or they stay on this device until the same key is pasted back in.</p>'
+         : '<p class="note">Everything this counter took has reached ChitBridge.</p>')
+    + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in · Esc</button>'
+    + '<button class="' + (q ? '' : 'pri') + '" data-testid="till-signout-cloud" onclick="signoutCloudDo()">'
+    + (q ? 'Sign out and leave them here' : 'Sign out') + '</button></div>';
+  if (!d.open) d.showModal();
+}
+function signoutCloudDo(){
+  try { ls.del ? ls.del('cb_till_key') : localStorage.removeItem('cb_till_key'); } catch (_) {}
+  try { localStorage.removeItem('cb_till_key'); } catch (_) {}
+  location.reload();
+}
+
 function signinSay(m, bad){
   var e = document.getElementById('signinsay'); if (!e) return;
   e.textContent = m || ''; e.className = 'shopsay' + (bad ? ' bad' : '');
@@ -13705,6 +13955,11 @@ async function signinDo(who){
 }
 
 async function startOpen(){
+  /**
+   * ⚠️ NO GATE HERE EITHER. A gate was added and removed: startOpen already fails WELL when it cannot reach
+   * ChitBridge — *"the starter shops cannot be listed … setting up a shop needs the line once"* ([TILL-107])
+   * — and replacing a working message with a different one only broke the harness that checks it.
+   */
   var d = document.getElementById('startdlg'); if (!d) return;
   document.getElementById('startbody').innerHTML = '<p class="note">Asking ChitBridge what you can start from…</p>';
   startSay('', false);
@@ -14348,8 +14603,17 @@ async function finish(){
  * ⚠️ It counts the bills THIS COUNTER took today, and says so on the sheet. A shop with two counters closes each of them; adding
  * them up is ChitBridge's job, not a device's, and a sheet that quietly implied otherwise would be worse than no sheet at all.
  */
-/** a document this counter issued that takes money back, rather than one that takes money */
-function isReturnRow(b){ return !!(b && b.kind === 'credit_note'); }
+/**
+ * a document this counter issued that takes money back, rather than one that takes money.
+ * ⭐ ONE DEFINITION ([TILL-125]) — CBRollup.isReturn is what the counter program and the server both use, so
+ * "what counts as a return" cannot mean one thing on this screen and another in the day's summary chit.
+ * ⚠️ The local test stays as the fallback: an engine that failed to load must not silently turn every credit
+ * note into a sale. Same shape as every other engine call on this page.
+ */
+function isReturnRow(b){
+  if (window.CBRollup && CBRollup.isReturn) return CBRollup.isReturn(b);
+  return !!(b && b.kind === 'credit_note');
+}
 function dayCloseSheet(rows){
   /**
    * ⚠️⚠️ A RETURN IS NOT A BILL, AND THE COUNT MUST NOT SAY IT IS (2026-09-18). Every accumulator below is a
@@ -14362,13 +14626,28 @@ function dayCloseSheet(rows){
    * So returns are separated here, netted where netting is right, and stated on their own line.
    */
   var back = (rows || []).filter(isReturnRow);
-  var sales = (rows || []).filter(function(b){ return !isReturnRow(b); });
-  var d = { bills: sales.length, first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
+  /**
+   * ⭐⭐ THE SHARED FIGURES COME FROM THE ENGINE ([TILL-125]): how many SALES, how many returns, and how much
+   * was handed back. Those three are the rule the counter program and the server also apply, and this screen
+   * used to work them out again.
+   *
+   * ⚠️⚠️ WHAT IS **NOT** TAKEN FROM IT, AND WHY — `gross` MEANS TWO DIFFERENT THINGS.
+   *   here            gross = total + savings  → what the goods would have cost BEFORE DISCOUNT
+   *   CBRollup.totals  gross = sales only       → what was sold BEFORE RETURNS
+   * Same word, different fact ([[feedback-name-vs-behaviour]]). Mapping one onto the other would have been a
+   * silent, plausible, wrong number on a cash sheet. So `gross` below stays this function's own, and so do
+   * `modes` — which counts money TAKEN per tender and leaves refunds to `cash_back`, deliberately, because a
+   * drawer count wants those two on separate lines.
+   */
+  var rt0 = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(rows || []) : null;
+  var d = { bills: rt0 ? rt0.count : (rows || []).filter(function(b){ return !isReturnRow(b); }).length,
+            first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
             rate:{}, modes:{}, people:{}, items:{}, taxed:false,
             /* ⭐ said out loud, never folded away — a day with returns in it is a different day */
-            returns: back.length, returned: 0, refunded: {} };
+            returns: rt0 ? rt0.returns : back.length, returned: rt0 ? rt0.refunds : 0, refunded: {} };
   back.forEach(function(b){
-    d.returned = r2(d.returned + Math.abs(Number(b.total) || 0));
+    if (!rt0) d.returned = r2(d.returned + Math.abs(Number(b.total) || 0));
+    /* ⚠️ per-tender refunds are this sheet's own — the engine nets them into `by`, and a drawer count must not */
     ((b.refunds) || []).forEach(function(x){
       d.refunded[x.how] = r2((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
     });
@@ -17301,7 +17580,10 @@ function openSettings(tab){
           ? '<div class="srow"><span></span><span class="u">This key cannot read your shop. Sign in to get a till key.</span></div>' : '')
       + '<div class="srow" title="Sign in with your ChitBridge email. This counter writes its own key and keeps it.">'
       + '<span>' + (STATE && STATE.paired ? 'Connect to another shop' : 'Connect this counter') + '</span>'
-      + '<button class="pill" data-testid="till-set-signin" onclick="setClose();signinOpen()">Sign in</button></div>'
+      + '<button class="pill" data-testid="till-set-signin" onclick="setClose();signinOpen()">Sign in</button></button>'
+      /* ⚠️ signing OUT lives beside signing in, and only when there is a shop to leave ([TILL-127]) */
+      + (STATE && STATE.paired ? ' <button class="pill" data-testid="till-set-signout" onclick="setClose();signoutOpen()">Sign out</button>' : '')
+      + '</div>'
       + '<div class="srow"><span>Data folder</span><span class="u">' + esc((STATE && STATE.folder) || 'till-data') + '</span></div>';
   }
   document.getElementById('setnote').textContent = 'Kept on this device.';

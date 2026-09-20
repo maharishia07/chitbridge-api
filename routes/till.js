@@ -2247,6 +2247,9 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   /* ⚠️ THE MASTER ITSELF — already a classic script that assigns its own global, like rewards */
                   jurisdiction: '../lib/jurisdiction.js',
                   govcontext: '../lib/govcontext.browser.js',
+                  /* ⭐ what a day's takings are, and what a return does to them — one rule for the page, the
+                     shop PC and this server ([TILL-125]) */
+                  rollup: '../lib/rollup.browser.js',
                   qr: '../node_modules/qrcode-generator/qrcode.js' };
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];

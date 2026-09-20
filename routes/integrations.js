@@ -81,7 +81,14 @@ const CATALOGUE = [
  * ⭐ ONE LIST OF WHAT A KIT IS. The zip is built from it, the update manifest is hashed from it, and a request for a file is checked
  * against it — so a kit can never be sent a file the zip would not have contained, and the three can never drift apart.
  */
-const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'printer.js', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
+/**
+ * ⚠️⚠️ EVERY FILE THE KIT'S PROGRAMS NEED, OR THEY DO NOT RUN ([TILL-126]). Two were missing and both were
+ * invisible from here, because the files sit in this repo whether or not the zip carries them:
+ *   · rollup.js   — till.js has required it since [TILL-122]; a fresh download died with "Cannot find module"
+ *   · counter.cmd — [TILL-118]'s double-click launcher, and what its desktop shortcut points AT
+ * tests/connector-kit.test.js now holds this list against what the programs actually require.
+ */
+const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'counter.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'printer.js', 'rollup.js', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
 function kitFiles(adapter) {
   const names = KIT_NAMES;
   const out = [];
