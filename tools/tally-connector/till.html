@@ -2076,6 +2076,25 @@
   .m.n{background:#eceae4;color:#6b6660}
   .gkey{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:.85em;color:var(--dim)}
   .gkey span{display:flex;align-items:center;gap:5px}
+  /* ⭐ the simulator, where the grid it changes can be watched ([TILL-156]) */
+  .gtry{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:7px}
+  .gtry > div:nth-child(2){display:flex;gap:6px;flex-wrap:wrap}
+  .gtry .pill{min-height:40px}
+  .gtry .pill.on{background:#1d1b16;color:#fff;border-color:#1d1b16}
+  /* ⭐⭐ THE FLASH ([TILL-157]) — a symbol, three words and one button, where the eye already is. It does
+     not fade on a timer: somebody who looked away must still find it. */
+  .flash{position:fixed;left:50%;transform:translateX(-50%);top:14px;z-index:9600;display:flex;
+    align-items:center;gap:12px;padding:12px 14px;border-radius:14px;max-width:min(560px,94vw);
+    box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  .flash[hidden]{display:none}
+  .flash.warn{background:#fdf0d5;border:2px solid #e0b64e;color:#5b4410}
+  .flash.bad{background:#fdecea;border:2px solid #e07a6c;color:#8c1d10}
+  .fico{font-size:1.9em;line-height:1}
+  .flash b{flex:1;font-size:1.12em}
+  .fgo{min-height:44px;padding:0 16px;border:0;border-radius:10px;background:#1d1b16;color:#fff;
+    font:inherit;font-weight:700;cursor:pointer}
+  .fx{min-height:44px;padding:0 18px;border:1px solid currentColor;border-radius:10px;background:transparent;
+    color:inherit;font:inherit;font-weight:700;cursor:pointer}
   /* ⭐ the same panel, in the flow of the diagnostics page rather than in the dialog ([TILL-153]) */
   .linein{border:2px solid var(--line);border-radius:16px;margin:10px 0 2px;max-height:none;padding:12px}
   @media (max-width:380px){ .ltiles{grid-template-columns:1fr} }
@@ -2480,6 +2499,8 @@
      indistinguishable from a broken one. Hidden until it is on; impossible to miss when it is. -->
 <div id="netbar" class="netbar" data-testid="till-netbar" hidden></div>
 <div id="netwhat" class="netwhat" data-testid="till-net-what-panel" hidden></div>
+<!-- ⭐ a failed action, seen rather than read ([TILL-157]) -->
+<div id="flash" class="flash" data-testid="till-flash" hidden></div>
 <!-- ⭐⭐⭐ Working without the line ([TILL-151]) — design-handoff/without-the-line -->
 <dialog id="linedlg" data-testid="till-line-dlg">
   <!-- ⚠️ a title, not a sentence ([TILL-152]) — the panel is understood from its symbols, not its heading -->
@@ -3547,6 +3568,8 @@ function netSet(k){
   netApplyOnline();
   netPaint();
   try { netInline(); } catch (_) {}   /* the consequences follow the switch ([TILL-149]) */
+  /* ⭐ and the grid under the chips moves with them ([TILL-156]) */
+  try { var dl = document.getElementById('linedlg'); if (dl && dl.open) paintLine(); } catch (_) {}
   try { window.dispatchEvent(new Event(NETS[k].off ? 'offline' : 'online')); } catch (_) {}
   try { paintStatus(); } catch (_) {}
 }
@@ -4748,35 +4771,48 @@ function busyAt(done, total, words){
 function busyDone(){ var el = document.getElementById('busy'); if (el) el.hidden = true; }
 
 /**
- * ⚠️⚠️⚠️ A REFRESH THAT FAILS HAS TO SAY SO ([TILL-143]). Athi, with the line simulator set to No network:
- * *"when i set the network speed to stop, and when i try to refresh the shop, what it is suppose to say?"*
+ * ── ⭐⭐⭐ A FAILED RELOAD IS SEEN, NOT READ ([TILL-157]) ──────────────────────────────────────────────────
  *
- * It said NOTHING. netGate() rejects with a TypeError, CloudHost.refresh() does not catch it, and refresh()
- * had try/finally with no catch — so "Reading your shop…" appeared, vanished, and the rejection went
- * unhandled. There is no window.onunhandledrejection either. [[feedback-silence-is-the-bug]]
+ * Athi: *"when the reload is not working, no message is appearing stating reload unsuccessful due to network,
+ * in icon format?"* — and then, the part that decides the design: *"depends on what the issue is: say not
+ * signed in, network issue, whatever it may be."*
  *
- * ⚠️⚠️ AND THE SERVER-ERROR PATH WAS WORSE THAN SILENT. {ok:false, status:500} was not checked at all, so a
- * refresh that fetched nothing fell through to load() and toasted "10,441 products, up to date." — a failed
- * read reporting success, which is the one answer that stops somebody looking.
+ * ⚠️⚠️ [TILL-143] DID MAKE IT SPEAK — into the footer line, in words, at the bottom of the screen. That is
+ * where a counter puts things nobody has to notice. A reload that did not happen is the opposite: the prices
+ * on the shelf are now older than the person thinks they are, and they pressed a button expecting otherwise.
  *
- * ⭐ WHAT IT SAYS: what failed, and then what still works. A refresh is a READ — no sale is at risk and the
- * counter bills on from the copy it holds — so this is a quiet line, never a dialog. [[feedback-text-budget]]
+ * ⭐ So it is a symbol, three words and one button, and the CAUSE picks all three.
+ * [[feedback-assume-they-cannot-read]]
+ */
+function flash(ico, words, btn, act, tone){
+  var el = document.getElementById('flash'); if (!el) return;
+  el.className = 'flash ' + (tone || 'warn');
+  el.innerHTML = '<span class="fico">' + ico + '</span><b>' + esc(words) + '</b>'
+    + (btn ? '<button class="fgo" data-testid="till-flash-go">' + esc(btn) + '</button>' : '')
+    /* ⚠⚠ IT STAYS UNTIL OK IS PRESSED ([TILL-157]). Athi: *"it has to stay until click ok."* A ✕ is a
+       thing to dismiss; OK is a thing to acknowledge. An unread warning that vanishes on its own is the
+       same as one that was never shown. There is no timer anywhere in this function. */
+    + '<button class="fx" data-testid="till-flash-x">OK</button>';
+  el.hidden = false;
+  var go = el.querySelector('.fgo');
+  if (go && act) go.onclick = function(){ flashHide(); try { act(); } catch (_) {} };
+  el.querySelector('.fx').onclick = flashHide;
+  /* ⚠⚠ NO TIMER, EVER. It stays on the screen until somebody presses OK — see the note on the button. */
+}
+function flashHide(){ var el = document.getElementById('flash'); if (el) { el.hidden = true; el.innerHTML = ''; } }
+
+/**
+ * ⚠️⚠️⚠️ THE CAUSE PICKS THE ICON AND THE BUTTON ([TILL-157]). One message for every failure would be the
+ * comfortable answer: it is never wrong, and it never helps. A key that has stopped working and a line that
+ * is down look identical from the footer and need completely different things done about them.
  */
 function refreshFailed(status){
-  var why = (status === 401 || status === 403) ? 'this counter is not signed in'
-          : status ? 'the shop answered with an error (' + status + ')'
-                   : 'no connection';
-  /* ⚠️ WHAT IT IS STILL BILLING ON — the age of the copy is the fact that decides whether this matters */
-  var on = (S && S.at)
-    ? 'Billing carries on with the prices from ' + new Date(S.at).toTimeString().slice(0, 5) + '.'
-    : 'There are no prices on this counter yet.';
-  /**
-   * ⚠️⚠️ AND IF THE LINE IS BEING FAKED, THAT IS THE ANSWER ([TILL-140]). Diagnosing an outage somebody chose
-   * sends them to check a router that is fine. The bar above says the simulator is on; this says it is why.
-   */
-  var sim = '';
-  try { if (netNow() !== 'full') sim = ' The network simulator is set to “' + netIs().label + '”.'; } catch (_) {}
-  toastLine('Could not read the shop — ' + why + '. ' + on + sim);
+  var sh = paired();
+  if (status === 401 || status === 403 || !sh)
+    return flash('🔑', 'Not signed in', 'Sign in', function(){ signinOpen(); });
+  if (!status)
+    return flash('🚫', 'No line to the shop', 'What still works', function(){ openLineGrid(); });
+  return flash('⚠', 'The shop did not answer', 'Try again', function(){ refresh(); });
 }
 
 async function refresh(){
@@ -5273,6 +5309,16 @@ var TILL_OPS = [
   { id: 'screen',   icon: '📺', label: 'Shop screen',        hint: 'your offers as a sign for a TV',                fn: 'openScreen' },
   { id: 'refresh',  icon: '↻',  label: 'Read the shop again', hint: 'new prices and products · F4',                 fn: 'refresh' },
   { id: 'stuck',    icon: '🩺', label: 'Counter health', hint: 'what is wrong, what is waiting, and what to do', fn: 'openHealth' },
+  /**
+   * ⭐⭐⭐ CAPABILITY HEALTH, BESIDE COUNTER HEALTH ([TILL-156]). Athi: *"the matrix is good, but the location
+   * of the presentation is bad — after Counter health, Network health, bring that panel with testing
+   * capability, so it is very visible."*
+   *
+   * ⚠️⚠️ IT WAS BURIED THREE LAYERS DOWN, inside the diagnostics dialog, behind a tab. A thing nobody can
+   * find does not exist — and this one answers the question a shopkeeper asks most often about a counter:
+   * *what still works when the line goes?* It belongs in the hub, one press from the front.
+   */
+  { id: 'line',     icon: '📶', label: 'Capability health', hint: 'what works with the line and without it · try it here', fn: 'openLineGrid' },
   { id: 'break-menu', icon: '☕', label: 'Take a break',      hint: 'the counter stays on this PC · nothing is closed', fn: 'takeBreak' },
   { id: 'close',    icon: '🔒', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeCounter' },
   { id: 'settings', icon: '⚙',  label: 'Settings',           hint: 'look, printer, this till',                      fn: 'openSettings' },
@@ -5476,7 +5522,7 @@ var TILL_MENU = [
    */
   /* ⭐ DIAGNOSIS — Athi: *"why is a bill stuck is diagnosis."* What is wrong, and how to look into it. */
   { id: 'alerts',  icon: '🩺', title: 'Check',         sum: 'what needs you · why a bill is stuck',
-    alerts: true, ops: ['stuck'] },
+    alerts: true, ops: ['stuck', 'line'] },
   /* ⭐ MAINTENANCE — Athi: *"reload the shop is maintenance."* Everything that keeps this till current. */
   { id: 'upkeep',  icon: '🔄', title: 'Keep it running', sum: 'read the shop again · settings · a break',
     ops: ['refresh', 'settings', 'break-menu', 'install'] },
@@ -14580,6 +14626,18 @@ function paintGrid(into){
         }).join('')
       + '</div>'
       /* ⚠️ three marks, said once, at the bottom where it does not get in the way of the grid */
+      /**
+       * ⭐⭐⭐ AND YOU CAN TRY IT, RIGHT HERE ([TILL-156]). Athi: *"bring that panel with testing capability."*
+       * The simulator was a <select> buried in diagnostics; here it is five chips under the grid, and pressing
+       * one moves the highlighted column AND really puts the counter in that state. The grid stops being a
+       * table you read and becomes a thing you operate — which is the only way anyone believes it.
+       */
+      + '<div class="gtry" data-testid="till-line-try-row"><div class="u">TRY IT ON THIS COUNTER</div><div>'
+      + Object.keys(NETS).map(function(k){
+          return '<button class="pill' + (k === netNow() ? ' on' : '') + '" data-testid="till-line-try-' + k + '"'
+            + ' onclick="netSet(\'' + k + '\')">' + esc(NETS[k].label) + '</button>';
+        }).join('')
+      + '</div><div class="u">the counter really behaves this way while it is set — nothing below the switch is pretend</div></div>'
       + '<div class="gkey"><span><i class="m y">✓</i>works</span>'
       + '<span><i class="m w">⏳</i>waits here</span>'
       + '<span><i class="m n">✕</i>stops</span></div>';
@@ -14653,6 +14711,12 @@ async function openLine(){
     else paintLine();
   }, 4000);
 }
+/**
+ * ⭐ the hub's Capability health row lands straight on the grid ([TILL-156]) — that is what it promises.
+ * ⚠️ Athi renamed it from 'Network health': the panel is about CAPABILITIES, and the line is only the axis
+ * they are measured along. A name that promises the axis hides the answer.
+ */
+function openLineGrid(){ LINE_VIEW = 'grid'; LINE_OPEN = ''; openLine(); }
 function lineClose(){ clearInterval(window.__lineTick); var d = document.getElementById('linedlg'); if (d && d.open) d.close(); }
 /** ⚠️ it is already trying by itself; this is here because people need to be able to ask, not because it helps */
 async function lineTry(){ try { if (HOST && HOST.drain) await HOST.drain(); } catch (_) {} try { await refresh(); } catch (_) {} paintLine(); }
