@@ -98,6 +98,8 @@ const GUARDS = [
      error. Three near-misses in one day, and one reached a commit message asserting a function was lying
      when the function was right and the check was blind. */
   'rls-context.test.cjs',
+  'rls-predicate.test.cjs',   // ⚠️ every policy reads a GUC something sets — written, never declared, so never run
+  'migration-rls.test.js',    // a new table closes itself; the default grant makes an open one readable
   /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that
      matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
      BEFORE any write rather than half a chit delivered. */

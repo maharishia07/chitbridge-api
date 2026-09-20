@@ -12,7 +12,9 @@
     "check:trips": "node tools/round-trips.cjs --check",
     "guards": "node scripts/guards.cjs",
     "sql": "node scripts/sql.cjs",
-    "db:role": "node scripts/check-db-role.js"
+    "db:role": "node scripts/check-db-role.js",
+    "rls:census": "node scripts/rls-census.cjs",
+    "rls:baseline": "node scripts/rls-census.cjs --save"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",

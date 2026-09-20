@@ -166,5 +166,13 @@ if (unscoped.length) {
   console.log(`✓ every statement naming one of the ${rlsTables.size} WITH-RLS tables is inside a scoping call`);
 }
 
+/**
+ * ⚠⚠ IT MUST SAY HOW MANY THINGS IT CHECKED. scripts/guards.cjs treats a guard that reports no count as a
+ * FAILURE, and it is right to: three guards once ended without one and read "ok · 0" while proving nothing.
+ * This file had never been declared in guards.cjs at all, so it had never run once — and the moment it was,
+ * it read as broken for exactly that reason. [[feedback-silence-is-the-bug]]
+ */
+const checked = rlsTables.size + brokenPolicy.length + unsetValue.length + noNullif.length + unscoped.length;
+console.log(String(checked) + ' checks');
 console.log(`\n══ ${fail ? 'FAILED' : 'PASSED'} · ${brokenPolicy.length} broken · ${unsetValue.length + noNullif.length + unscoped.length} warning(s) ══\n`);
 process.exit(fail ? 1 : 0);

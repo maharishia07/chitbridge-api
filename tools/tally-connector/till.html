@@ -847,6 +847,10 @@
   .dayline i{font-style:normal;color:var(--dim);font-size:.92em;text-align:right}
   .dayline .yes{color:#1b6b3a;font-weight:700}
   .dayline .no{color:#8a6a12;font-weight:700}
+  /* ⭐ the three limits, side by side, with their consequence under them ([TILL-166]) */
+  .keeprow{display:flex;gap:10px;flex-wrap:wrap;padding:6px 0}
+  .keeprow label{display:grid;gap:3px;font-size:.85em;color:var(--dim)}
+  .keeprow input{width:92px;padding:7px;min-height:40px}
   .rank-time .rtag{background:#fdf0d5;color:#7a5a10}
   .linky{background:none;border:0;padding:0 4px;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
   /* ── ⭐⭐ THE SHOP CARD ([TILL-161], counter-hub §1) ────────────────────────────────────────────── */
@@ -5514,6 +5518,133 @@ function menuAlerts(){
  * copy and is not a per-device preference. A shop that later registers simply fills the number in and the row
  * fills; this only silences the NAG.
  */
+/**
+ * ── ⭐⭐⭐ WHAT THIS COUNTER KEEPS ([TILL-166], BACKLOG TILL-134) ──────────────────────────────────────────
+ *
+ * Athi: *"any unsent copy and based on the retention period, only those data will be in the till, rest will not
+ * be here… retention period for a tea stall is just a day or two, for some other shops it may be certain
+ * number… set a hard limit. otherwise, you can always search from the backend. that should be the stand.
+ * retention period upto 30 days or say 2000 bills or say 200 mb."*
+ *
+ * ⚠️⚠️⚠️ THE BROWSER COUNTER HAD NO RETENTION AT ALL. The desktop program's folder is bounded ([TILL-123]);
+ * this one kept EVERY bill it had ever taken, for ever. The only deletions were a manual button for another
+ * shop's rows. A phone or tablet used daily grows until the browser refuses a write — and that arrives as
+ * "cannot save" with a customer standing at the counter. This is the one fault in the product that loses work.
+ *
+ * ⚠️⚠️ UNSENT IS NEVER PURGED, WHATEVER THE LIMITS SAY. A bill ChitBridge has not acknowledged is the shop's
+ * only copy of that money. The limits apply to what is SETTLED — a bill carrying `_sent`, stamped when the
+ * server acknowledged it. Everything else stays until it lands, however old it gets. Same rule as [TILL-123].
+ *
+ * ⭐ THREE LIMITS, WHICHEVER BINDS FIRST — and the counter says WHICH one bound, because "trimmed by size:
+ * 200 MB reached at 42 days" tells a shopkeeper something and three numbers do not.
+ */
+var RETAIN_DEF = { days: 30, bills: 2000, mb: 200 };
+function retainLimits(){
+  var g = function(k, d){ var v = Number(ls.get(shopLs('cb_till_keep_' + k), '')); return v > 0 ? v : d; };
+  return { days: g('days', RETAIN_DEF.days), bills: g('bills', RETAIN_DEF.bills), mb: g('mb', RETAIN_DEF.mb) };
+}
+function retainSet(k, v){ try { ls.set(shopLs('cb_till_keep_' + k), String(Math.max(0, Number(v) || 0))); } catch (_) {} }
+
+/** ⭐ a bill the server has acknowledged — the only kind that may ever be dropped */
+function retainSettled(b){ return !!(b && b._sent); }
+/** ⚠️ measured, not guessed: the bytes this row really costs in the store */
+function retainBytes(b){ try { return JSON.stringify(b).length; } catch (_) { return 0; } }
+
+/**
+ * ⭐⭐ THE PLAN, AND IT EXPLAINS ITSELF. Returns what would go and which limit decided it, without touching
+ * anything — so the settings pane can show the answer before a shopkeeper agrees to it.
+ */
+function retainPlan(bills, lim){
+  lim = lim || retainLimits();
+  var all = (bills || []).slice().sort(function(a, b){
+    return String(b.at || '').localeCompare(String(a.at || ''));      /* newest first */
+  });
+  var cut = Date.now() - lim.days * 86400000;
+  var keep = [], drop = [], bytes = 0, cap = lim.mb * 1048576, why = '';
+  for (var i = 0; i < all.length; i++) {
+    var b = all[i], n = retainBytes(b);
+    /* ⚠️⚠️ UNSENT SURVIVES EVERY LIMIT — it is counted against the size, but it is never dropped */
+    if (!retainSettled(b)) { keep.push(b); bytes += n; continue; }
+    var old  = b.at && new Date(b.at).getTime() < cut;
+    var many = keep.length >= lim.bills;
+    var big  = bytes + n > cap;
+    if (old || many || big) {
+      if (!why) why = big ? 'size' : (many ? 'count' : 'age');
+      drop.push(b);
+    } else { keep.push(b); bytes += n; }
+  }
+  return { keep: keep, drop: drop, bytes: bytes, binding: why,
+           say: retainSay(why, drop.length, keep.length, bytes, lim) };
+}
+
+/** ⭐ one sentence a shopkeeper can act on — which limit bound, and what it cost */
+function retainSay(why, dropped, kept, bytes, lim){
+  var mb = Math.round(bytes / 104857.6) / 10;
+  if (!dropped) return 'Everything this counter has taken is still here — ' + kept
+    + ' bill' + (kept === 1 ? '' : 's') + ', ' + mb + ' MB.';
+  var by = why === 'size'  ? 'it reached ' + lim.mb + ' MB'
+         : why === 'count' ? 'it reached ' + lim.bills + ' bills'
+         :                   'they were older than ' + lim.days + ' days';
+  return dropped + ' older bill' + (dropped === 1 ? '' : 's') + ' would leave this counter because '
+    + by + '. They stay on the server and can always be read back.';
+}
+
+/**
+ * ⚠️⚠️⚠️ NOTHING IS DROPPED UNTIL THE DAY IT BELONGS TO IS SUMMARISED. The money taken on a day is a fact the
+ * shop may be asked about years later; the BILLS are a working copy. So the day's totals are folded first,
+ * with the same engine the desktop program uses (CBRollup), and only then are the rows removed.
+ * ⭐ A summary that failed to write means nothing is deleted. Silence here would be losing money quietly.
+ */
+async function retainRun(){
+  var lim = retainLimits();
+  var bills = (await DB.all('bills')) || [];
+  var plan = retainPlan(bills, lim);
+  if (!plan.drop.length) return { ok: true, dropped: 0, say: plan.say };
+  var byDay = {};
+  plan.drop.forEach(function(b){
+    var d = String(b.at || '').slice(0, 10) || 'unknown';
+    (byDay[d] = byDay[d] || []).push(b);
+  });
+  var days = Object.keys(byDay), folded = 0;
+  for (var i = 0; i < days.length; i++) {
+    var d = days[i];
+    try {
+      /* ⭐ the same fold the program does — one rule, two hosts [[feedback-adopt-dont-reinvent]] */
+      /* ⚠️ summary(period, key, totals, opts) — read off lib/rollup.js, not guessed from the name */
+      var sum = (window.CBRollup && CBRollup.summary && CBRollup.totals)
+        ? CBRollup.summary('day', d, CBRollup.totals(byDay[d]),
+            { till: (STATE && STATE.till) || null, source: null })
+        : { period: 'day', key: d, totals: { count: byDay[d].length } };
+      var have = (await DB.get('sum:' + d)) || null;
+      await DB.set('sum:' + d, have ? Object.assign({}, have, sum) : sum);
+      folded++;
+    } catch (e) {
+      /* ⚠️ one day that would not fold stops the whole run. Better a full counter than a missing day. */
+      return { ok: false, dropped: 0, say: 'Nothing was removed — the day ' + d + ' could not be summarised first.' };
+    }
+  }
+  var gone = 0;
+  for (var j = 0; j < plan.drop.length; j++) {
+    try { await DB.del('bills', plan.drop[j].no); gone++; } catch (_) {}
+  }
+  return { ok: true, dropped: gone, folded: folded, say: plan.say };
+}
+
+/**
+ * ⭐ IT RUNS AT THE QUIET MOMENT, NOT MID-SALE. Day close is when a counter is already waiting on the server,
+ * and it is the one moment the shopkeeper expects the till to be doing bookkeeping.
+ * ⚠️ It is also the only place it runs: a trim that fires while somebody is billing is a trim that will one
+ * day fire while somebody is billing.
+ */
+async function retainAtClose(){
+  try {
+    var r = await retainRun();
+    if (r && r.dropped) toastLine(r.dropped + ' older bill' + (r.dropped === 1 ? '' : 's')
+      + ' moved off this counter — they are on the server.');
+    return r;
+  } catch (_) { return { ok: false, dropped: 0 }; }
+}
+
 function gstAsked(){ try { return ls.get(shopLs('cb_till_gst_answer'), ''); } catch (_) { return ''; } }
 function gstNotRegistered(){
   try { ls.set(shopLs('cb_till_gst_answer'), 'not_registered'); } catch (_) {}
@@ -14645,6 +14776,8 @@ function healthReading(){
      * one. Found by LOOKING at the render; no count or assertion would have shown it.
      */
     line: (function(){ try { return lineState().state; } catch (_) { return 'good'; } })(),
+    /* ⭐ whether the bell is DELIVERING — open is not the same as live ([TILL-167]) */
+    bell: (function(){ try { return bellLive(); } catch (_) { return true; } })(),
     /**
      * ⚠️⚠️ IS THE LINE BEING SIMULATED? ([TILL-140]) The netsim overrides navigator.onLine on purpose, so
      * every reading below it can be a CHOICE rather than a measurement. A diagnosis that cannot tell the
@@ -14736,9 +14869,16 @@ var WATCH = [
     fix:'Type the name — the sale is not affected', fn:function(r){ return r.line !== 'none'; } },
   { id:'say',   at:'listen',             bucket:'needs_line', name:'Speaking instead of typing',
     costs:'Speech needs the line', fix:'Type it in', fn:function(r){ return r.line !== 'none'; } },
-  { id:'bell',  at:'bellUp',             bucket:'needs_line', name:'Changes made by other counters',
+  /**
+   * ⚠⚠⚠ IT ASKS WHETHER THE BELL IS DELIVERING, NOT WHETHER THE LINE IS UP ([TILL-167]). Asking only about
+   * the line is exactly how every counter stayed deaf for weeks: the stream was OPEN the whole time and this
+   * row would have reported green throughout. [[project-bell-was-deaf]]
+   */
+  { id:'bell',  at:'bellLive',           bucket:'needs_line', name:'Changes made by other counters',
     costs:'Nothing arrives on its own',
-    fix:'Press Refresh to see what has changed', fn:function(r){ return r.line !== 'none'; } },
+    fix:'Press Refresh to see what has changed',
+    fn:function(r){ if (r.line === 'none') return false;
+                    try { return bellLive(); } catch (_) { return true; } } },
 ];
 
 /**
@@ -17348,6 +17488,12 @@ async function closeCounter(){
       for (var bi = 0; bi < bare.length; bi++) { if (bare[bi]._aside) delete bare[bi]._aside; await DB.put('bills', bare[bi]); await DB.put('queue', bare[bi]); }
     } catch (_) {}
     try { await HOST.drain(); } catch (_) {}
+    /**
+     * ⭐⭐ AND THEN THE COUNTER IS TRIMMED ([TILL-166]). This is the one honest moment: everything has just
+     * been sent and checked, so what is left to drop is genuinely settled. A trim anywhere else would one day
+     * fire while somebody is billing.
+     */
+    try { await retainAtClose(); } catch (_) {}
 
     /* ⚠️ PROVE it — every reason the books could still be short, each named */
     var why = [];
@@ -17909,6 +18055,27 @@ async function openStorage(){
     return '<div class="t' + (warn ? ' warnrow' : '') + '"><span>' + esc(k) + '</span><span>' + esc(String(v)) + '</span></div>';
   };
   var h = '<div style="max-height:56vh;overflow:auto">';
+  /**
+   * ⭐⭐⭐ WHAT THIS COUNTER KEEPS ([TILL-166]). Athi: *"it should be set in settings — retention period upto
+   * 30 days or say 2000 bills or say 200 mb."* Three numbers, and under them the ANSWER those numbers produce
+   * for this counter today: which one binds, and what it would cost. Three fields with no consequence shown
+   * is a form; a form nobody can predict the result of is a form nobody touches.
+   */
+  try {
+    var lim = retainLimits();
+    var plan = retainPlan((await DB.all('bills')) || [], lim);
+    h += '<div class="sec">What this counter keeps</div>'
+      + '<div class="keeprow">'
+      + ['days:Days:30', 'bills:Bills:2000', 'mb:Megabytes:200'].map(function(spec){
+          var p = spec.split(':');
+          return '<label>' + esc(p[1]) + '<input type="number" min="1" data-testid="till-keep-' + p[0] + '"'
+            + ' value="' + lim[p[0]] + '" onchange="retainSet(&quot;' + p[0] + '&quot;,this.value);openStorage()"></label>';
+        }).join('')
+      + '</div>'
+      /* ⚠️⚠️ and the sentence that makes the numbers mean something — WHICH limit binds, and what it costs */
+      + '<div class="u" data-testid="till-keep-say" style="padding:2px 0 8px">' + esc(plan.say) + '</div>'
+      + '<div class="u" style="padding-bottom:8px">Anything not yet sent stays here whatever these say — it is the shop’s only copy.</div>';
+  } catch (_) {}
   if (m.quota) {
     var pct = m.quota.granted ? Math.round(m.quota.used / m.quota.granted * 100) : 0;
     h += '<div class="sec">What the browser has given this counter</div>'
@@ -19332,6 +19499,39 @@ async function saveSettings(){
 }
 
 /**
+ * ── ⭐⭐⭐ THE BELL IS WATCHED FOR DELIVERY, NOT FOR CONNECTION ([TILL-167], BACKLOG TILL-146) ─────────────
+ *
+ * ⚠️⚠️⚠️ THIS IS THE EXACT SHAPE OF THE FAULT THAT LEFT EVERY COUNTER AND TV DEAF UNTIL 2026-09-17. An
+ * EventSource that is OPEN and delivering nothing looks identical, from the inside, to one that is open and
+ * has nothing to deliver — and the code only ever asked "is it connected?". [[project-bell-was-deaf]]
+ *
+ * A stream cannot be proved live by staring at it, so the SERVER sends a keep-alive and the counter records
+ * when it last heard ANYTHING. Past a threshold the bell is deaf whatever its readyState says, and the
+ * capability row says so instead of reporting green.
+ *
+ * ⭐ AND THE CURE IS THE SAME ONE A DROPPED LINE GETS: close it and let the 30s tick rebuild it. A stream
+ * that has gone quiet is not repaired by waiting longer.
+ */
+var BELL_HEARD = 0;            /* when anything last arrived on the stream — the only evidence of delivery */
+var BELL_DEAF_MS = 90000;      /* the server beats every 25s (lib/events.js HEARTBEAT_MS) — three missed beats */
+function bellHeard(){ BELL_HEARD = Date.now(); }
+/** ⭐ open is not the same as delivering — this is the question nothing was asking */
+function bellLive(){
+  if (!BELL) return false;
+  if (!BELL_HEARD) return true;                 /* just opened; it has not had time to be deaf yet */
+  return (Date.now() - BELL_HEARD) < BELL_DEAF_MS;
+}
+/**
+ * ⚠️ A DEAF BELL IS CLOSED, NOT NURSED. bellUp() refuses to reconnect while BELL is truthy, so a stream that
+ * has stopped delivering would be held open for ever by the very guard meant to stop thrashing.
+ */
+function bellWatch(){
+  try {
+    if (BELL && !bellLive()) { try { BELL.close(); } catch (_) {} BELL = null; BELL_AT = 0; bellUp(); }
+  } catch (_) {}
+}
+
+/**
  * ⭐⭐⭐ THE BELL. Athi, 2026-09-09: *"when the offers are updated, how to push to TV and every other outlet? The push should
  * happen and it should be visible right away."*
  *
@@ -19363,7 +19563,13 @@ async function bellUp(){
      * two faults that kept "the shop changed" from ever reaching a counter (the first: this page asked for the stream as
      * ?ticket= and was refused). The app has always listened this way (core.js).
      */
+      /* ⚠️⚠️ THE KEEP-ALIVE IS THE EVIDENCE. Real events are rare; without listening for the heartbeat the
+         counter could not tell a quiet bell from a dead one, which is how it stayed deaf for weeks. */
+      BELL.addEventListener('ping', bellHeard);
+      BELL.onopen = function(){ BELL_HEARD = Date.now(); };
     BELL.addEventListener('cb', function(ev){
+      /* ⭐ heard, whatever it said — delivery is the fact being measured, not relevance ([TILL-167]) */
+      bellHeard();
       var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
       /* ⚠️ only the kinds this screen actually holds a copy of; a chit arriving is the mailbox's business, not the counter's */
       if (d.kind === 'shop') { refresh().then(function(){ toastLine('The shop changed — this counter is up to date.'); }); }
@@ -19371,7 +19577,8 @@ async function bellUp(){
     BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };   /* it reconnects on the next tick */
   } catch (_) { BELL = null; }
 }
-setInterval(bellUp, 30000);
+/* ⭐ one tick: build it if it is gone, and replace it if it has stopped delivering ([TILL-167]) */
+setInterval(function(){ bellWatch(); bellUp(); }, 30000);
 /* ⭐ are the bills that say "sent" really in the books? — decoupled from drain so the two can never re-enter each other */
 if (typeof setTimeout === 'function') setTimeout(function(){ checkAbsorbed(false); }, 45000);
 setInterval(function(){ checkAbsorbed(false); }, 600000);

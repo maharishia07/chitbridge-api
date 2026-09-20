@@ -1,0 +1,755 @@
+{
+ "at": "2026-09-20T18:57:42.349Z",
+ "tables": {
+  "access_events": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "ai_skill": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "ai_usage": {
+   "rls": true,
+   "forced": false,
+   "policies": 1,
+   "app_reads": true
+  },
+  "assist_qa": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "blueprints": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "boilerplate": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "boilerplate_sources": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "capability": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "capture": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "catalogue_adoption": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "catalogue_face": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "catalogue_item_schedule": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "catalogue_item_version": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "catalogue_items": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "catalogue_source": {
+   "rls": false,
+   "forced": false,
+   "policies": 1,
+   "app_reads": true
+  },
+  "cb_attachment": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "cb_building": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_catalogue_category": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_catalogue_item": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_chit": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_chit_item": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_chit_log": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_city": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_consumer_traction": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_contact": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_currency": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_device": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_edge": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_entity": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_entity_employee": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_entity_supplier": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_external_reference": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_industry": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_task": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "cb_transaction_history": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "channel_binding": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "channel_outbound": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_detail": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_disputes": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_header": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_line": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_line_amendment": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_line_assignment": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_line_cost": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_line_delivery": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_messages": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_reads": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_sla": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_sla_pause": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_status": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "connections": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "connector_connection": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "connector_receipt": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "constitution": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "container_region_override": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "counter_hidden_item": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "counter_quick_key_state": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "customer_list": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "definition": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "definition_version": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "device_screen_config": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "dispute_participants": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "entity_actor_settings": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "entity_compliance": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "entity_governance": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "entity_profile": {
+   "rls": true,
+   "forced": false,
+   "policies": 1,
+   "app_reads": true
+  },
+  "entity_schemas": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "entity_wallet": {
+   "rls": true,
+   "forced": false,
+   "policies": 1,
+   "app_reads": true
+  },
+  "entity_work_routing": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "erp_handoff": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "folder": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "folder_rule": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "form_instance": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "governance_exceptions": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "idempotency_key": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "identities": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "identity_documents": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "installation": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "jurisdiction": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "kyb_field_cache": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "media_blobs": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "network_design": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "notif_dismissed": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "platform_constitution": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "platform_root": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "product_container": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "product_version": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "quick_key_audit": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "quick_key_group": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "quick_key_group_item": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "region_layer": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "register_acceptance": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "register_attachable": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "register_entry": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "register_entry_standard": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "register_subject": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "register_template": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "register_template_standard": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "resolved_blueprint": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "retention_config": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "reward_ledger": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "schema_fields": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "signup_context": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": false
+  },
+  "sim_compare": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "sim_feedback": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "sim_items": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "sim_layers": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "sim_leads": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "sim_rules": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "sim_shapes": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "sim_usps": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "source_penetration": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "standard_document": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "standard_source": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "state_log": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "stock_balance": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "stock_movement": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "supplier_list": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "supplier_readiness_acceptance": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "supply_item": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "test_result": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "usage_ledger": {
+   "rls": true,
+   "forced": false,
+   "policies": 1,
+   "app_reads": true
+  },
+  "vertical_category": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  },
+  "wholesaler_store": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "work_pattern": {
+   "rls": false,
+   "forced": false,
+   "policies": 0,
+   "app_reads": true
+  }
+ }
+}
