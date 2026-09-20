@@ -16832,7 +16832,8 @@ async function openBills(keepOpen){
     if (waiting[b.no]) return 'waiting';
     if (b && b._sent) return 'sent';
     /* ⚠️ a bill somebody deliberately set aside is KNOWN not to have been confirmed — it must never fall through
-       to the benign "left this counter", which is the wording for "this counter cannot tell". */
+       to "sent, not confirmed", which is the wording for "this counter cannot tell" ([TILL-133] — it used
+       to read "left this counter", which sounded like an all-clear and meant the opposite). */
     if (b && b._aside) return 'unconfirmed';
     return everAcked ? 'unconfirmed' : 'unknown';
   };
@@ -16851,10 +16852,23 @@ async function openBills(keepOpen){
       + '<b style="flex:1">' + (
           nLost ? (nLost + ' of ' + rows.length + ' bill(s) were never confirmed by ChitBridge')
         : nWait ? (nWait + ' of ' + rows.length + ' bill(s) have not reached ChitBridge yet')
+        /**
+         * ⚠️⚠️ "LEFT THIS COUNTER" SOUNDED LIKE AN ALL-CLEAR AND MEANT "I CANNOT TELL" ([TILL-133]).
+         * Athi: *"are we saying reached backoffice?"* — no, and that was the problem. This branch is the
+         * `unknown` state: the counter holds no receipt for anything, because these bills were written before
+         * it kept them. Not knowing is fine; sounding certain about it is not.
+         */
         : (rows.length ? (everAcked ? 'All ' + rows.length + ' bill(s) have reached ChitBridge'
-                                    : 'All ' + rows.length + ' bill(s) have left this counter')
+                                    : rows.length + ' bill(s) were sent — this counter cannot confirm the shop has them')
                        : 'Nothing to send')) + '</b>'
       + ((nWait || nLost) ? '<button class="pill" data-testid="till-send-now" onclick="sendNow()">Send now</button>' : '')
+      /**
+       * ⭐ AND THE WAY TO FIND OUT, beside the sentence that admits it does not know. A counter that says "I
+       * cannot tell" and offers nothing has handed the shopkeeper a worry instead of an answer.
+       * [[feedback-write-for-the-shopkeeper]]
+       */
+      + ((!nWait && !nLost && rows.length && !everAcked)
+          ? '<button class="pill" data-testid="till-confirm-arrived" onclick="sendNow()">Check with the shop</button>' : '')
     + '</div>'
     + (rows.length ? rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-bill-' + esc(b.no) + '">'
@@ -16870,7 +16884,9 @@ async function openBills(keepOpen){
                          : 'color:var(--warn);border-color:var(--warn)';
                 var word = (st === 'sent') ? '✓ sent'
                          : (st === 'waiting') ? '⏳ waiting'
-                         : (st === 'unconfirmed') ? '⚠ not confirmed' : '· left this counter';
+                         /* ⚠️ 'sent, not confirmed' is the honest short form of `unknown` ([TILL-133]) — it
+                            says the bill went AND that no receipt came back, which is exactly the state. */
+                         : (st === 'unconfirmed') ? '⚠ not confirmed' : '· sent, not confirmed';
                 return '<span data-testid="till-bill-sync-' + esc(b.no) + '" class="pill"'
                      + ' style="margin-inline-start:8px;' + look + '">' + word + '</span>'
                      /* ⚠️ a bill nobody can prove arrived is the one thing a shopkeeper must be able to act on */
