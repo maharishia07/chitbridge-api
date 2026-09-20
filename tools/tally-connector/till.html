@@ -837,6 +837,25 @@
   .rank-money .rtag{background:#fdf0d5;color:#7a5a10}
   .rank-time .rtag{background:#fdf0d5;color:#7a5a10}
   .linky{background:none;border:0;padding:0 4px;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
+  /* ── ⭐⭐ THE SHOP CARD ([TILL-161], counter-hub §1) ────────────────────────────────────────────── */
+  /* ⭐ a completeness COUNT beats a red dot: it says how much is left without calling the shop broken */
+  .sfill{display:inline-block;font-size:.78em;font-weight:700;border-radius:999px;padding:2px 10px;
+    background:#fdf0d5;color:#7a5a10;margin-bottom:6px}
+  /* ⚠️ nowrap: the action belongs ON the row it fills, not under it ([TILL-161]) */
+  /* ⚠️ NAMED shoprow, not srow ([TILL-161]). .srow already exists further down as a settings GRID, and
+     being later it won — which is why every Add button sat under its row instead of on it. One name,
+     one thing. [[feedback-name-vs-behaviour]] */
+  .shoprow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:nowrap}
+  .shoprow > span:first-child{flex:0 0 96px;color:var(--dim);font-size:.92em}
+  .shoprow .sv{flex:1;min-width:0;display:grid;gap:1px}
+  .shoprow .sv i{font-style:normal;font-size:.85em;color:var(--dim)}
+  .shoprow .sv i.warn{color:#8a6a12}
+  .shoprow .sact{flex:0 0 auto}
+  .shoprow.sub{border-top:0;padding-top:0;margin-top:-6px}
+  .shoprow.sub .sv{align-items:start}
+  .shoprow.sub .linky{text-align:left;font-size:.85em}
+  .shoprow.foot{border-bottom:0;align-items:center;gap:12px;flex-wrap:wrap}
+  .shoprow.foot .u{flex:1;min-width:0;font-size:.85em}
   .alertrow .arow{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px}
   .mfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
          padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);
@@ -5540,26 +5559,75 @@ function menuAlertsBody(){
  * ⚠ A MISSING VALUE IS AN ANSWER and is shown as one — "not set" in the warn colour with what it means beside
  * it, never a blank. [[feedback-write-for-the-shopkeeper]]
  */
+/**
+ * ── ⭐⭐⭐ THE SHOP — WHAT A BILL IS PRINTED FROM ([TILL-161], counter-hub §1) ──────────────────────────────
+ *
+ * One card used to carry *your image · the day opened · the shop's particulars*: a picture, a daily routine
+ * and seven fields of set-up. The package's rule is a good one — *if a card's subtitle needs three
+ * "·"-separated nouns, it is two cards* — and the consequence was real: the decoration opened the card and
+ * pushed the seven fields below the fold.
+ *
+ * ⭐ THE SHOP COMES FIRST, because it is what the bill is printed from: if it is wrong, every bill that day
+ * is wrong. Opening the day is something you do every morning, so it sits under it with its own button.
+ *
+ * ⚠️⚠️ "not set" IS NEVER A DEAD END (§1). Every empty row carries the one thing that fills it, and the
+ * action names what it does — Add, Register, Enter it. A row that states a gap and offers nothing is how the
+ * GSTIN sat unfilled for weeks while the panel mentioned it daily.
+ */
+var SHOP_ROWS = [
+  { k: 'name',       label: 'Name',       why: '' },
+  { k: 'legal_name', label: 'Legal name', why: 'the name that prints on a bill' },
+  { k: 'address',    label: 'Address',    why: 'prints on every bill' },
+  { k: 'phone',      label: 'Phone',      why: 'customers call this number' },
+  { k: 'gstin',      label: 'GSTIN',      why: 'bills show no GST — that is fine if the shop is not registered' },
+  { k: 'currency',   label: 'Money',      why: '' },
+  { k: 'counter',    label: 'Counter',    why: 'this device' },
+];
+
 function menuShopBody(){
   var sh = (S && S.shop) || {}, tx = {};
   try { tx = shopTax(); } catch (_) { tx = {}; }
-  var row = function(k, v, note){
-    return '<div class="srow"><span>' + esc(k) + '</span><span>'
-      + (v ? esc(v) : '<i class="warn">not set</i>')
-      + (note ? ' <span class="u">' + esc(note) + '</span>' : '') + '</span></div>';
+  var val = function(k){
+    if (k === 'gstin')    return tx.gstin || '';
+    if (k === 'currency') return sh.currency || (S && S.currency) || 'INR';
+    if (k === 'counter')  return (STATE && STATE.till && STATE.till.name) || ls.get('cb_till_name', '');
+    return sh[k] || '';
   };
+  var filled = SHOP_ROWS.filter(function(r){ return !!val(r.k); }).length;
+
+  var row = function(r){
+    var v = val(r.k);
+    /* ⭐ a filled row carries nothing — there is nothing to do about it (§1, four states) */
+    if (v) return '<div class="shoprow" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
+      + '<span class="sv"><b>' + esc(v) + '</b>'
+      + (r.k === 'counter' && r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span></div>';
+    /**
+     * ⚠️⚠️ GSTIN NEEDS SOMETHING OUTSIDE THE APP FIRST, so its action is Register and it leaves — and it says
+     * so before it is pressed, with the ↗ mark (§2). Under it, quietly, the door for a shop that HAS a number
+     * and has simply not typed it in.
+     */
+    var act = (r.k === 'gstin')
+      ? '<button class="pri sm" data-testid="till-shop-gst" onclick="fromMenu(openGst)">Register ↗</button>'
+      : '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenu(openGst)">Add</button>';
+    return '<div class="shoprow empty" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
+      + '<span class="sv"><i class="warn">not set</i>'
+      + (r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
+      + '<span class="sact">' + act + '</span></div>'
+      + (r.k === 'gstin'
+          ? '<div class="shoprow sub"><span></span><span class="sv"><button class="linky"'
+            + ' data-testid="till-shop-gst-have" onclick="fromMenu(openGst)">Already have one? Enter it</button></span></div>'
+          : '');
+  };
+
   var when = '';
-  try { if (S && S.at) when = 'last read ' + new Date(S.at).toTimeString().slice(0, 5); } catch (_) {}
+  try { if (S && S.at) when = 'Read from ChitBridge at ' + clock12(S.at); } catch (_) {}
   return '<div class="menusec" data-testid="till-shopdetails">'
-    + row('Name', sh.name)
-    + row('Legal name', sh.legal_name)
-    + row('Address', sh.address)
-    + row('Phone', sh.phone)
-    + row('GSTIN', tx.gstin ? (sh.gstin || 'set') : '', tx.gstin ? '' : 'no GST is charged or shown')
-    + row('Money', sh.currency || (S && S.currency) || 'INR')
-    + row('Counter', (STATE && STATE.till && STATE.till.name) || ls.get('cb_till_name', ''))
-    + '<div class="u" style="padding-top:6px">' + esc(when)
-    + ' · these come from ChitBridge and are changed there.</div>'
+    /* ⭐ a completeness COUNT, not a red dot — it says how much is left without calling the shop broken */
+    + '<div class="sfill" data-testid="till-shop-filled">' + filled + ' of ' + SHOP_ROWS.length + ' filled</div>'
+    + SHOP_ROWS.map(row).join('')
+    /* ⚠️ said ONCE, at the bottom, with the time it was read — not on every row */
+    + '<div class="shoprow foot"><span class="u">' + esc(when) + ' · changed there, not here</span>'
+    + '<button class="pill" data-testid="till-shop-profile" onclick="fromMenu(openGst)">Open the shop’s profile ↗</button></div>'
     + '</div>';
 }
 /**
@@ -5570,6 +5638,11 @@ function menuShopBody(){
  */
 var MENU_HUE = {
   day:     '201,138,42',    /* lamp amber — the first thing in the morning        */
+  /* ⭐ the shop's own particulars — the catalogue violet, because it is what the shop IS ([TILL-161]) */
+  /* ⚠️ ITS OWN HUE ([TILL-161]). It first borrowed the catalogue violet and collided with 'show' — the
+     hub guard counts DISTINCT hues, and two sections the same colour is two things the eye cannot tell apart.
+     Ink indigo: this card is what a bill is printed from. */
+  shopdet: '72,84,138',
   today:   '29,107,63',     /* the money green the totals already use             */
   alerts:  '199,92,26',     /* warm orange — wants you, is not yet a disaster     */
   bills:   '43,95,153',     /* paper blue                                         */
@@ -5610,10 +5683,19 @@ var TILL_MENU = [
    * the shop for new prices, says whether this counter's numbering is ready, and whether anything is still
    * unsent from yesterday. Bless the day and check the till in one place.
    */
-  /* ⭐ THE DAY, AND WHO THIS SHOP IS ([TILL-99]). Athi: *"Shop details and start your day can be grouped."*
-     The address, the GSTIN and when the shop was last read are the things somebody checks while opening. */
-  { id: 'day',     icon: '🪔', title: 'Start your day',  sum: 'your image · the day opened · the shop\u2019s particulars',
-    day: true, shopdet: true },
+  /**
+   * ⭐⭐⭐ ONE CARD, ONE JOB ([TILL-161], counter-hub §1). This was a single section carrying *your image ·
+   * the day opened · the shop’s particulars* — a picture, a daily routine and seven fields of set-up, with
+   * three different reasons to open it, three different people and three different frequencies.
+   *
+   * ⭐ THE SHOP COMES FIRST: it is what a bill is printed from, and if it is wrong every bill that day is
+   * wrong. It is checked once and rarely changes. Opening the day is a morning routine, so it sits under it
+   * with its own button. The picture left the head — decoration was pushing seven fields below the fold.
+   */
+  { id: 'shopdet', icon: '🏪', title: 'The shop',      sum: 'name · address · tax · what prints on a bill',
+    shopdet: true },
+  { id: 'day',     icon: '🪔', title: 'Start the day', sum: 'who is on · the float · the printer · how old the prices are',
+    day: true },
   /**
    * ⭐⭐ WHAT TODAY HAS DONE (Athi, 2026-09-18: *"need to think MIS for the day etc in the menu, total sale and a
    * small inventory and so on, self sustaining, possible?"*).
@@ -6820,7 +6902,14 @@ function paintMenu(){
    * GOES to on the right. My first guess put five on the left and three on the right and it read as lopsided.
    */
   /* ⭐ the day and the money on the left; everything you GO somewhere to do on the right ([TILL-99]) */
-  var LEFT = ['day', 'today'];
+  /**
+   * ⚠⚠ THE SHOP IS FIRST ([TILL-161], counter-hub §1): it is what a bill is printed from, so if it is wrong
+   * every bill that day is wrong. Opening the day is a morning routine and sits under it.
+   * ⚠️ It had to be NAMED here. Splitting the card gave the hub a new section, and an unnamed section falls
+   * into the catch-all below — which appends, so "The shop" rendered THIRD, under the day and the takings.
+   * The catch-all exists so nothing vanishes, not so order can be left to chance.
+   */
+  var LEFT = ['shopdet', 'day', 'today'];
   var RIGHT = ['alerts', 'upkeep', 'show', 'look'];
   var pick = function(ids){ return ids.map(function(id){ return secHtml[id] || ''; }).join(''); };
   /* ⚠ ANY SECTION NOT NAMED ABOVE STILL APPEARS. A new one added to TILL_MENU tomorrow must not vanish on wide
