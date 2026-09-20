@@ -1969,6 +1969,18 @@
   .netbar button:hover{background:rgba(255,255,255,.18)}
   /* ⚠️ the shell moves down so the banner never covers the first row of the counter */
   body.neton .wrap{padding-top:30px}
+  /* the affects list hangs off the bar and OVERLAYS - it is read once and dismissed, so it must not
+     reflow the counter underneath it ([TILL-144]) */
+  .netwhat{position:fixed;left:50%;transform:translateX(-50%);top:30px;z-index:9499;width:min(900px,95vw);
+           background:var(--card);color:var(--ink);border:2px solid #a8410f;border-top:0;
+           border-radius:0 0 12px 12px;box-shadow:0 12px 28px rgba(0,0,0,.22);padding:12px 18px 16px;
+           display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;max-height:66vh;overflow:auto}
+  .netwhat .full{grid-column:1/-1;margin-bottom:2px}
+  .netwhat .full.u{font-size:.85em;color:var(--dim);margin:4px 0 0}
+  .netwhat h4{margin:0 0 6px;font-size:.78em;letter-spacing:.07em;text-transform:uppercase}
+  .netwhat .stop h4{color:#a8410f} .netwhat .goes h4{color:#1b6b3a}
+  .netwhat ul{margin:0;padding-left:18px;display:grid;gap:5px;font-size:.92em}
+  @media (max-width:760px){ .netwhat{grid-template-columns:1fr} }
   .upbody{margin:6px 0 12px;max-height:60vh;overflow-y:auto;min-height:0}
   .uphead{font-size:1.05em;margin-bottom:10px}
   .uphead b{font-size:1.25em}
@@ -2356,6 +2368,7 @@
 <!-- ⚠️⚠️ THE SIMULATOR IS ANNOUNCED ([TILL-116]). A counter quietly left on a fake dead line is
      indistinguishable from a broken one. Hidden until it is on; impossible to miss when it is. -->
 <div id="netbar" class="netbar" data-testid="till-netbar" hidden></div>
+<div id="netwhat" class="netwhat" data-testid="till-net-what-panel" hidden></div>
 <dialog id="updlg" class="dlg wide" data-testid="till-upload-dlg">
   <h3>Your product list <span class="u">we read it first and show you what we found — nothing is added until you say so</span></h3>
   <div id="upbody" class="upbody"></div>
@@ -3413,15 +3426,73 @@ function netSet(k){
   try { paintStatus(); } catch (_) {}
 }
 
+/**
+ * ── ⭐⭐⭐ WHAT THE SIMULATION COSTS, AT THE PLACE YOU SWITCH IT ON ([TILL-144]) ──────────────────────────
+ *
+ * Athi: *"can you bring what are to be affected in the test location itself? bill will continue to progress
+ * but server catch up will stop and so on, what will be other issues to be listed? can we make it explicit?"*
+ *
+ * ⚠️⚠️ A SIMULATOR THAT WILL NOT SAY WHAT IT BREAKS IS A GUESSING GAME. Turning the line off changes
+ * behaviour in thirty-odd places, and a tester who cannot tell a simulated consequence from a real defect
+ * will do one of two things, both bad: raise a fault against a counter behaving exactly as designed, or wave
+ * a real one through as "that'll be the simulator".
+ *
+ * ⭐ IT IS NOT A WRITTEN LIST. Every row is read LIVE off WATCH — the same rows the watchdog reports — so
+ * what this panel promises will stop is measured, not remembered. [[feedback-silence-is-the-bug]]
+ */
+function netHead(k){
+  var L = NETS[k] || NETS.full;
+  if (k === 'full') return null;
+  if (!L.drop) return 'Nothing stops \u2014 every request simply waits ' + (L.ms / 1000).toFixed(1)
+    + 's longer. Billing never waits on the line, so it is untouched.';
+  if (L.drop < 1) return 'About one attempt in three fails and is retried. Nothing is lost \u2014 sends just take'
+    + ' several goes, so a waiting count that climbs is normal here.';
+  return 'The counter believes it has no internet. It keeps billing; everything that needs the server stops.';
+}
+
+/** ⭐ opened on demand \u2014 the bar stays one line, because it is on screen all day [[feedback-text-budget]] */
+function netMore(){
+  var el = document.getElementById('netwhat');
+  if (!el) return;
+  if (!el.hidden) { el.hidden = true; el.innerHTML = ''; return; }
+  var head = netHead(netNow());
+  if (!head) return;
+  var rows = watchNow();
+  /**
+   * ⚠️⚠️ THE CONSEQUENCE BELONGS TO THE ROW THAT STOPPED ([TILL-144]). Printing `costs` in BOTH columns put
+   * "⚠ the one fault that can LOSE work — stop billing and ring for help" under STILL WORKING: an alarm
+   * sitting in the reassuring column, which is exactly the fault [TILL-139] fixed on the health page and here
+   * it was again within the week. The row counts were right; only LOOKING at the render showed it.
+   * ⭐ A row that is fine needs no explanation. Its name is the whole message.
+   */
+  function col(cls, title, list, why){
+    if (!list.length) return '';
+    return '<div class="' + cls + '"><h4>' + title + '</h4><ul>'
+      + list.map(function(x){ return '<li><b>' + esc(x.name) + '</b>'
+          + (why ? ' — ' + esc(x.costs) : '') + '</li>'; }).join('')
+      + '</ul></div>';
+  }
+  el.innerHTML = '<div class="full"><b>' + esc(head) + '</b></div>'
+    + col('stop', 'Stopped right now', rows.filter(function(x){ return !x.ok; }), true)
+    + col('goes', 'Still working', rows.filter(function(x){ return x.ok; }))
+    + '<div class="full u">Billing, printing and taking money are not in this list because they never touch'
+    + ' the line \u2014 they work whatever it is set to. Every row is checked live; the same rows raise the'
+    + ' footer message when one of them stops for real.</div>';
+  el.hidden = false;
+}
+
 /** ⚠️ drawn on every load, so a setting that survived a restart announces itself immediately */
 function netPaint(){
   var el = document.getElementById('netbar'); if (!el) return;
+  var what = document.getElementById('netwhat');
+  if (what) { what.hidden = true; what.innerHTML = ''; }   /* the old list belongs to the old setting */
   var k = netNow(), L = NETS[k];
   if (k === 'full') { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('neton'); return; }
   el.hidden = false;
   document.body.classList.add('neton');
-  el.innerHTML = '📶 <b>Network simulator: ' + esc(L.label) + '</b>'
-    + '<span>this counter is pretending — nothing is wrong with your connection</span>'
+  el.innerHTML = '\ud83d\udcf6 <b>Network simulator: ' + esc(L.label) + '</b>'
+    + '<span>this counter is pretending \u2014 nothing is wrong with your connection</span>'
+    + '<button data-testid="till-net-what" onclick="netMore()">What this affects</button>'
     + '<button data-testid="till-net-off" onclick="netSet(\'full\')">Back to full speed</button>';
 }
 
@@ -4576,13 +4647,50 @@ function busyAt(done, total, words){
 }
 function busyDone(){ var el = document.getElementById('busy'); if (el) el.hidden = true; }
 
+/**
+ * ⚠️⚠️⚠️ A REFRESH THAT FAILS HAS TO SAY SO ([TILL-143]). Athi, with the line simulator set to No network:
+ * *"when i set the network speed to stop, and when i try to refresh the shop, what it is suppose to say?"*
+ *
+ * It said NOTHING. netGate() rejects with a TypeError, CloudHost.refresh() does not catch it, and refresh()
+ * had try/finally with no catch — so "Reading your shop…" appeared, vanished, and the rejection went
+ * unhandled. There is no window.onunhandledrejection either. [[feedback-silence-is-the-bug]]
+ *
+ * ⚠️⚠️ AND THE SERVER-ERROR PATH WAS WORSE THAN SILENT. {ok:false, status:500} was not checked at all, so a
+ * refresh that fetched nothing fell through to load() and toasted "10,441 products, up to date." — a failed
+ * read reporting success, which is the one answer that stops somebody looking.
+ *
+ * ⭐ WHAT IT SAYS: what failed, and then what still works. A refresh is a READ — no sale is at risk and the
+ * counter bills on from the copy it holds — so this is a quiet line, never a dialog. [[feedback-text-budget]]
+ */
+function refreshFailed(status){
+  var why = (status === 401 || status === 403) ? 'this counter is not signed in'
+          : status ? 'the shop answered with an error (' + status + ')'
+                   : 'no connection';
+  /* ⚠️ WHAT IT IS STILL BILLING ON — the age of the copy is the fact that decides whether this matters */
+  var on = (S && S.at)
+    ? 'Billing carries on with the prices from ' + new Date(S.at).toTimeString().slice(0, 5) + '.'
+    : 'There are no prices on this counter yet.';
+  /**
+   * ⚠️⚠️ AND IF THE LINE IS BEING FAKED, THAT IS THE ANSWER ([TILL-140]). Diagnosing an outage somebody chose
+   * sends them to check a router that is fine. The bar above says the simulator is on; this says it is why.
+   */
+  var sim = '';
+  try { if (netNow() !== 'full') sim = ' The network simulator is set to “' + netIs().label + '”.'; } catch (_) {}
+  toastLine('Could not read the shop — ' + why + '. ' + on + sim);
+}
+
 async function refresh(){
   if (!HOST) HOST = await pickHost();
   busyShow('Reading your shop…');
   try {
-    var r = await HOST.refresh();
+    var r;
+    /* ⚠️ THE THROW IS THE COMMON CASE, not the exotic one — an offline fetch rejects, it does not return */
+    try { r = await HOST.refresh(); }
+    catch (e) { return refreshFailed(0); }
     if (r && r.need === 'key') { busyDone(); return openSettings('device'); }
     if (r && r.rejected) { busyDone(); return; }        /* the refusal has already said its piece on the bar */
+    /* ⚠️ A REFUSAL FROM THE SERVER IS STILL A FAILED READ, and must never toast "up to date" */
+    if (r && r.ok === false) return refreshFailed(Number(r.status) || 0);
     busyAt(1, 1, 'Sorting it out…');
     await load();
     var n = ((S && S.items) || []).length;
@@ -13991,15 +14099,146 @@ function healthReading(){
      * restart a router. navigator.onLine is the device's own answer, and the netsim overrides it ([TILL-116])
      * so a simulated dead line still reads as dead here.
      */
-    online: (STATE && typeof STATE.online === 'boolean') ? STATE.online : (navigator.onLine !== false),
+    /**
+     * ⚠️⚠️⚠️ OFFLINE FROM EITHER SOURCE IS OFFLINE ([TILL-144]). Preferring STATE.online alone was wrong in
+     * one direction and the watch list found it: STATE.online is what the last ATTEMPT found, refreshed every
+     * fifteen seconds, so for up to fifteen seconds after the line drops it still says 'yes' — and every row
+     * that depends on it reported green on a counter that could not reach anything. Switching the simulator
+     * off and opening the panel showed 12 of 12 still working, which is the flattering answer again.
+     *
+     * ⭐ The two are not symmetrical. navigator.onLine === false is a DEFINITE no — the device has no usable
+     * interface, and the netsim sets it deliberately. navigator.onLine === true is only 'maybe', which is why
+     * the last attempt still decides that half.
+     */
+    online: (navigator.onLine === false) ? false
+          : ((STATE && typeof STATE.online === 'boolean') ? STATE.online : true),
     queued: Number((STATE && STATE.queued) || 0),
     queue_fatal: !!(qw && qw.fatal),
     queue_code: (qw && qw.code) || null,
     queue_say: (qw && qw.say) || null,
     /* ⚠️ a device that has REFUSED a write is the one case where work is genuinely at risk (MEM.fail) */
     storage_bad: !!(typeof MEM !== 'undefined' && MEM && MEM.fail),
-    till: (STATE && STATE.till && STATE.till.id) || 'C1'
+    till: (STATE && STATE.till && STATE.till.id) || 'C1',
+    /**
+     * ⚠️⚠️ IS THE LINE BEING SIMULATED? ([TILL-140]) The netsim overrides navigator.onLine on purpose, so
+     * every reading below it can be a CHOICE rather than a measurement. A diagnosis that cannot tell the
+     * difference will send somebody to restart a router that was never the problem.
+     */
+    sim: (function(){ try { var k = netNow(); return k === 'full' ? null : { key: k, label: netIs().label }; }
+                      catch (_) { return null; } })()
   };
+}
+
+/**
+ * ── ⭐⭐⭐ THE WATCH LIST ([TILL-144]) ────────────────────────────────────────────────────────────────────
+ *
+ * Athi, with the line simulator on: *"can you bring what are to be affected in the test location itself?
+ * bill will continue to progress but server catch up will stop and so on, what will be other issues to be
+ * listed? can we make it explicit?"* — and then: *"can we bring all those under watchdog?"*
+ *
+ * ⚠️⚠️ THIS IS ONE DECLARATION WITH THREE READERS, and that is the whole point. The simulator panel shows
+ * what WILL break, the watchdog reports what HAS broken, and both are the same rows — so a capability can
+ * never be listed as affected while nothing watches it, or watched while nobody was told it could stop.
+ * [[feedback-stay-in-the-construct]] [[feedback-no-duplicate-functions]]
+ *
+ * ⚠️⚠️⚠️ EVERY ROW NAMES THE REAL GATE. `at` is the line in this page that actually refuses, and `fn` asks
+ * the same question that gate asks. A watch list whose rows were written from memory would go on reporting
+ * green after the gate beneath it moved — which is the failure this whole file keeps paying for.
+ *
+ * ⭐ `costs` IS WHAT IT MEANS TO THE SHOP, not what the code does. A row that stops nothing worth telling
+ * anybody about does not belong here. [[feedback-write-for-the-shopkeeper]]
+ */
+var WATCH = [
+  { id:'shop',  at:'CloudHost.refresh',  name:'Reading the shop',
+    costs:'prices and products stay exactly as they are',
+    fn:function(r){ return r.online && r.paired; } },
+  { id:'send',  at:'CloudHost.drain',    name:'Bills leaving this counter',
+    costs:'they queue here and go on their own when the line is back',
+    fn:function(r){ return r.online && r.paired && !r.queue_fatal; } },
+  { id:'books', at:'checkAbsorbed',      name:'Checking bills reached the books',
+    costs:'a bill could say "sent" without being there, and nobody would know',
+    fn:function(r){ return r.online && r.paired; } },
+  { id:'hist',  at:'CloudHost.history',  name:'Today\u2019s bills from the server',
+    costs:'only the ones rung on THIS counter are shown',
+    fn:function(r){ return r.online && r.paired; } },
+  { id:'task',  at:'CloudHost.tasks',    name:'The work list and anything from Task',
+    costs:'nothing new arrives to be acted on',
+    fn:function(r){ return r.online && r.paired; } },
+  { id:'bell',  at:'bellUp',             name:'Live updates (the bell)',
+    costs:'nothing arrives on its own \u2014 press Refresh to see what has changed',
+    fn:function(r){ return r.online && r.paired; } },
+  { id:'close', at:'dayClose',           name:'Closing the counter',
+    costs:'REFUSED outright \u2014 every bill has to be checked first',
+    fn:function(r){ return r.online; } },
+  { id:'rept',  at:'stuckSend',          name:'Sending the day\u2019s report',
+    costs:'save it as a file instead',
+    fn:function(r){ return r.online; } },
+  { id:'who',   at:'CloudHost.alias',    name:'Looking a customer up',
+    costs:'type the name instead \u2014 the sale is not affected',
+    fn:function(r){ return r.online && r.paired; } },
+  { id:'say',   at:'listen',             name:'Speaking',
+    costs:'it needs a speech service, so type instead',
+    fn:function(r){ return r.online; } },
+  /**
+   * ⚠️⚠️⚠️ THE TWO THAT ARE NOT ABOUT THE LINE. They are here because a watch list that only knows about the
+   * internet is the comfortable one: it goes green on a counter that cannot save a bill, and green is the
+   * answer that stops somebody looking. Storage is the ONLY fault in this product that can lose work.
+   */
+  { id:'save',  at:'MEM.fail',           name:'Saving a bill on this device',
+    costs:'\u26a0 the one fault that can LOSE work \u2014 stop billing and ring for help',
+    fn:function(r){ return !r.storage_bad; } },
+  { id:'own',   at:'COUNTER_CLOSED',     name:'This counter still holds its number',
+    costs:'every send is refused \u2014 sign in again to take the counter back',
+    fn:function(r){ return !(r.queue_code === 'COUNTER_CLOSED'); } },
+];
+
+/**
+ * ⭐ ONE READING, EVERY ROW. Reuses healthReading() rather than asking the gates again — the health page and
+ * the watchdog must never be able to disagree about the same counter. [[feedback-adopt-dont-reinvent]]
+ */
+function watchNow(r){
+  r = r || healthReading();
+  return WATCH.map(function(w){
+    var ok;
+    try { ok = !!w.fn(r); } catch (_) { ok = true; }   /* a broken probe must not invent a fault */
+    return { id:w.id, name:w.name, at:w.at, costs:w.costs, ok:ok };
+  });
+}
+
+/**
+ * ── ⚠️⚠️⚠️ THE WATCHDOG ([TILL-144]) ──────────────────────────────────────────────────────────────────────
+ *
+ * Until now the counter had exactly two things that WATCHED rather than retried: the drain watchdog (a stuck
+ * _busy flag) and checkAbsorbed (are "sent" bills really in the books). Everything else on a timer — drain
+ * every 20s, the repaint every 15s, bellUp every 30s — only tries again. Nothing asked whether anything was
+ * wrong, so nothing could say so.
+ *
+ * ⚠️⚠️ AND THE HEALTH PAGE ONLY RAN WHEN SOMEBODY OPENED IT. That is how the counters went deaf for weeks:
+ * the fact was computable the whole time and nobody was computing it. [[project-bell-was-deaf]]
+ *
+ * ⚠️ IT SPEAKS ON THE CHANGE, NOT ON THE STATE. A line that repeats every fifteen seconds is wallpaper, and
+ * wallpaper is how the next real one gets missed. [[feedback-text-budget]]
+ */
+var WATCH_WAS = null;
+function watchTick(){
+  var rows;
+  try { rows = watchNow(); } catch (_) { return; }
+  var bad = rows.filter(function(x){ return !x.ok; });
+  var now = bad.map(function(x){ return x.id; }).sort().join(',');
+  if (now === WATCH_WAS) return;                       /* nothing changed — say nothing */
+  var was = WATCH_WAS; WATCH_WAS = now;
+  if (was === null) return;                            /* the first reading is a baseline, not news */
+  /* ⚠️ a fault the tester CHOSE is not news either — the simulator bar is already saying so ([TILL-140]) */
+  var sim = false; try { sim = netNow() !== 'full'; } catch (_) {}
+  if (!now) { toastLine(sim ? '' : 'Everything is working again.'); return; }
+  var fresh = bad.filter(function(x){ return (was || '').split(',').indexOf(x.id) < 0; });
+  if (!fresh.length) return;
+  /* ⭐ storage first, always — it is the only one that can lose work */
+  fresh.sort(function(a, b){ return (a.id === 'save' ? -1 : 0) - (b.id === 'save' ? -1 : 0); });
+  var one = fresh[0];
+  if (sim && one.id !== 'save') return;                /* simulated, and not the one that loses work */
+  toastLine(one.name + ' has stopped \u2014 ' + one.costs
+    + (fresh.length > 1 ? ' (and ' + (fresh.length - 1) + ' more \u2014 press \ud83e\ude7a)' : ''));
 }
 
 async function openHealth(){
@@ -14025,14 +14264,22 @@ function healthClose(){
   var d = document.getElementById('healthdlg'); if (d && d.open) d.close();
 }
 async function healthAgain(){ try { await refresh(); } catch (_) {} paintHealth(); }
+/** ⭐ the way out of the simulation, from the page that is being misled by it ([TILL-140]) */
+function healthUnsim(){ try { netSet('full'); } catch (_) {} paintHealth(); }
 function healthCopy(code){
   try { navigator.clipboard.writeText(code); toastLine('Copied ' + code); } catch (_) { toastLine(code); }
 }
 
-/** ⚠️ one check card — colour carries the state, the words carry what it means */
-function healthCheck(ok, label, big, small){
+/**
+ * ⚠️⚠️ A CHECK CARRIES BOTH WORDINGS ([TILL-139]). It used to take ONE `small` string, so a card that had
+ * PASSED still printed the sentence written for failing — "Mayur Bhavan" over "this counter does not know
+ * which shop it belongs to", the check contradicting itself on its own second line.
+ * ⭐ And the good wording is a positive statement of fact, not the absence of a problem.
+ */
+function healthCheck(ok, label, good, bad){
+  var row = ok ? good : bad;
   return '<div class="hc' + (ok ? '' : ' no') + '"><div class="u">' + esc(label) + '</div>'
-    + '<b>' + esc(big) + '</b><div class="u">' + esc(small || '') + '</div></div>';
+    + '<b>' + esc(row[0]) + '</b><div class="u">' + esc(row[1] || '') + '</div></div>';
 }
 
 /** what the four kinds on the queue are called in a shop, rather than in the code */
@@ -14056,8 +14303,9 @@ function paintHealth(){
   var kinds = (STATE && STATE.queue_kinds) || null;
   var by = (kinds && kinds.by) || null;
 
+  /* ⭐ Athi: *"this counter is servicing Mayur Bhavan and the counter name is C1"* — so say exactly that */
   var head = '<div class="hh"><h3>Counter health</h3><span class="u" style="flex:1">'
-    + esc(String(r.till) + (sh && sh.name ? ' · ' + sh.name : '')) + '</span>'
+    + esc('Counter ' + String(r.till) + (sh && sh.name ? ' · serving ' + sh.name : '')) + '</span>'
     + '<button class="pill" data-testid="till-health-again" onclick="healthAgain()">Check again</button>'
     + '<button class="pill" data-testid="till-health-close" onclick="healthClose()">Close · Esc</button></div>';
 
@@ -14080,17 +14328,45 @@ function paintHealth(){
     + '</div>';
 
   /* ⚠️ FOUR CHECKS, IN THE DESIGN'S ORDER — between them they cover every reason a counter cannot sync */
+  /**
+   * ⚠️⚠️ EACH CARD SAYS THE GOOD THING WHEN IT IS TRUE ([TILL-139]). Athi: *"what you are trying to say
+   * is, this counter is servicing Mayur Bhavan and the counter name is C1."* That is the sentence, so that is
+   * what it says — rather than a shop name over an explanation of not having one.
+   */
+  var shopName = (sh && (sh.name || sh.bridge_id)) || null;
+  /**
+   * ⚠️⚠️ OFFLINE IS NOT A FAULT WHEN NOTHING IS WAITING. A counter sitting idle with an empty queue and no
+   * internet has nothing held up — painting that card red made a page whose banner said everything was fine
+   * look like an emergency. It turns amber only when the line being down is actually costing something.
+   */
+  var lineMatters = !r.online && r.queued > 0;
   var checks = '<div class="hchecks">'
-    + healthCheck(!!(sh && (sh.name || sh.bridge_id)), 'WHICH SHOP',
-        (sh && (sh.name || sh.bridge_id)) || 'Not chosen yet',
-        (sh && sh.bridge_id) ? sh.bridge_id : 'this counter does not know which shop it belongs to')
-    + healthCheck(r.paired && (!r.scopes || r.scopes.indexOf('till') >= 0), 'PAIRING',
-        r.paired ? ((r.scopes && r.scopes.indexOf('till') < 0) ? 'Wrong kind of key' : 'Paired') : 'Not paired',
-        r.paired ? 'held by the program on this PC' : 'without it the server refuses everything')
-    + healthCheck(r.online, 'INTERNET', r.online ? 'Online' : 'Offline',
-        r.online ? 'the server is answering' : 'billing carries on from the copy here')
-    + healthCheck(!r.storage_bad, 'THIS DEVICE', r.storage_bad ? 'Cannot save' : 'Saving fine',
-        r.storage_bad ? 'this is the one fault that can lose work' : 'nothing is at risk here')
+    + healthCheck(!!shopName, 'WHICH SHOP',
+        [shopName || '', 'this counter sells for ' + (shopName || 'this shop')
+          + ((sh && sh.bridge_id && sh.name) ? ' \u00b7 ' + sh.bridge_id : '')],
+        ['Not chosen yet', 'this counter does not know which shop it belongs to'])
+    + healthCheck(r.paired && (!r.scopes || r.scopes.indexOf('till') >= 0), 'THIS COUNTER',
+        [String(r.till || 'C1'), 'signed in, and allowed to take money'],
+        [r.paired ? 'Wrong kind of key' : 'Not signed in',
+         r.paired ? 'this key cannot bill \u2014 sign in to get one that can' : 'without it the server refuses everything'])
+    /* ⚠️ WHEN IT IS SIMULATED THE CARD SAYS SO — it has measured nothing and must not imply it has */
+    + healthCheck(!lineMatters && !r.sim, 'INTERNET',
+        [r.online ? 'Online' : 'Offline',
+         r.online ? 'the server is answering' : 'nothing is waiting, so nothing is held up'],
+        r.sim
+          ? ['Simulated', 'set to \u201c' + r.sim.label + '\u201d on this device — not a real outage']
+          : ['Offline', r.queued + (r.queued === 1 ? ' thing is' : ' things are') + ' waiting for the line'])
+    /**
+     * ⚠⚠ "THIS DEVICE · SAVING FINE" WAS AN IMPLEMENTATION FACT ([TILL-141]). Athi: *"This device, Saving
+     * fine, who cares — does it SERVE well? so the message can be Service status: Good / bad, whatever."*
+     * Whether a write to the local store succeeded is our problem; whether the counter is doing its job is
+     * the shopkeeper's. The card now answers the second question.
+     * ⚠️ ONE INPUT TODAY, said honestly: a device that has refused a write is the only thing that currently
+     * makes this anything but Good. Speed and headroom belong here too and are not measured yet.
+     */
+    + healthCheck(!r.storage_bad, 'SERVICE',
+        ['Good', 'bills save and print without trouble'],
+        ['Not right', 'a bill may fail to save — the one fault that can lose work'])
     + '</div>';
 
   /**
@@ -14133,18 +14409,42 @@ function paintHealth(){
     + '</div>';
 
   /**
-   * ⭐ THE SUPPORT CODE — the same problem gives the same code every time, so it can be read down a phone and
-   * mean something at the other end. It carries the cause and the counter id, and nothing about the shop.
+   * ⚠️⚠️⚠️ THE SUPPORT CODE IS NOT FURNITURE ([TILL-142]). It used to sit at 30px under the words READ THIS OUT
+   * TO SUPPORT on EVERY counter, including one where nothing at all was wrong. Athi, reading exactly that page:
+   * *"read this out to support? what is that message?"* — and then the question that settled it: *"why is it
+   * required?"*
+   *
+   * ⭐ IT IS REQUIRED ON A FAULT, and only there. A code saves somebody relaying "the key was released somewhere
+   * else" in their own words down a phone, and the same problem always gives the same code so it means something
+   * at the other end. On a healthy counter it buys nothing and costs plenty: an instruction to ring about a
+   * problem they do not have. Anyone who wants the raw state already has Show technical detail.
    */
-  var footer = '<div class="hbox" style="margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">'
-    + '<div><div class="u">READ THIS OUT TO SUPPORT</div>'
-    + '<div class="hsup" data-testid="till-health-code">' + esc(v.support) + '</div></div>'
-    + '<button class="pill" data-testid="till-health-copy" onclick="healthCopy(\'' + esc(v.support) + '\')">Copy</button>'
-    + '<span class="u" style="flex:1">' + esc(String((STATE && STATE.folder) || '')) + '</span>'
+  var foot0 = '<div class="hbox" style="margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">';
+  var footTail = '<span class="u" style="flex:1">' + esc(String((STATE && STATE.folder) || '')) + '</span>'
     + '<button class="pill" data-testid="till-health-detail" onclick="healthClose();openStuck()">Show technical detail</button>'
     + '</div>';
+  var footer = v.ok
+    ? foot0 + footTail
+    : foot0
+      + '<div><div class="u">If you ring for help, read this out</div>'
+      + '<div class="hsup" data-testid="till-health-code">' + esc(v.support) + '</div></div>'
+      + '<button class="pill" data-testid="till-health-copy" onclick="healthCopy(\'' + esc(v.support) + '\')">Copy</button>'
+      + footTail;
 
-  box.innerHTML = head + verdict + checks
+  /**
+   * ⚠️⚠️ SAID BEFORE THE VERDICT, not after it. Athi: *"if you are in simulation, say so."* Whatever this
+   * page concludes while the line is being faked is a conclusion about the fake, and that has to be the first
+   * thing read — not a footnote under the thing it invalidates.
+   */
+  var simBar = r.sim
+    ? '<div class="hv" data-testid="till-health-sim" style="background:var(--warn-tint);color:var(--warn)">'
+      + '<div style="flex:1"><div class="hvl">The line is being simulated — \u201c' + esc(r.sim.label) + '\u201d</div>'
+      + '<div class="hvw">Whatever this page says about the internet was CHOSEN here, not measured. '
+      + 'Put it back to Full speed before trusting any of it.</div></div>'
+      + '<div class="hva"><button class="daygo" data-testid="till-health-unsim" onclick="healthUnsim()">Back to full speed</button></div>'
+      + '</div>'
+    : '';
+  box.innerHTML = head + simBar + verdict + checks
     + '<div class="hcols">' + waiting + last + '</div>' + footer;
 }
 
@@ -14200,15 +14500,41 @@ async function signinSend(){
   signinSay('', false);
   var i = document.getElementById('signin_otp'); if (i) i.focus();
 }
-async function signinDo(who){
+/** ⚠️ `takeover` is only ever true because somebody pressed the button that says what it does ([TILL-138]) */
+async function signinDo(who, takeover){
+  var who0 = who;
   var otp = ((document.getElementById('signin_otp') || {}).value || '').replace(/[^0-9]/g, '');
   if (otp.length !== 6) { signinSay('The code is six digits.', true); return; }
   signinSay('Connecting…', false);
   var r = null;
   try {
     r = await fetch('/api/signin/finish', { method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ email: who, otp: otp }) }).then(function(x){ return x.json(); });
+      body: JSON.stringify({ email: who, otp: otp, takeover: !!takeover }) }).then(function(x){ return x.json(); });
   } catch (e) { signinSay('This PC could not reach the counter program. Is it still running?', true); return; }
+  /**
+   * ── ⚠️⚠️ THIS COUNTER IS OPEN SOMEWHERE ELSE ([TILL-138]) ───────────────────────
+   *
+   * Athi: *"check that counter is active. if not active, offer to knock it off and then open here."* So the
+   * question is asked with the two facts a person needs to answer it — WHO has it and WHEN they were last
+   * seen — and with what taking it back costs them, before the button rather than after.
+   */
+  if (r && r.held) {
+    var who = r.held_by ? esc(r.held_by) : 'another device';
+    var when = r.seen ? (' · last seen ' + esc(new Date(r.seen).toTimeString().slice(0, 5))) : '';
+    document.getElementById('signinbody').innerHTML =
+        '<p class="note"><b>Counter ' + esc(r.counter || 'C1') + ' is already open on ' + who + '.</b>'
+      + '<span class="u">' + when + '</span></p>'
+      + '<p class="note">Two counters cannot share one number — their bills would end up with the same numbers'
+      + ' as yours. If that PC is still being used, close it there instead.</p>'
+      + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
+      + ' on it and goes when it signs in again — nothing is lost either way.</p>'
+      + '<div class="dlgbtns"><button class="pri" onclick="signinClose()">Leave it alone · Esc</button>'
+      /* ⚠️ the taking is the QUIET button and says what it does — never the default */
+      + '<button data-testid="till-signin-takeover" onclick="signinDo(' + JSON.stringify(who0).replace(/"/g, '&quot;')
+      + ', true)">Take counter ' + esc(r.counter || 'C1') + ' here</button></div>';
+    signinSay('', true);
+    return;
+  }
   if (!r || !r.ok) { signinSay((r && r.message) || 'Could not connect this counter.', true); return; }
   /**
    * ⭐⭐ THE SHOP IS NAMED BEFORE ANYTHING ELSE HAPPENS. Somebody who signed into the wrong account sees the
@@ -18337,7 +18663,8 @@ setMode(ls.get('cb_till_mode', 'sell'));
 try { applyTillOptions(); } catch (_) {}
 /* ⭐ the menu's collapsed strip, drawn once from TILL_OPS (2026-09-18) */
 try { paintSide(); } catch (_) {}
-setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = catRestamp(st.snapshot); paintStatus(); }).catch(function(){}); }, 15000);
+/* the watchdog rides the repaint that already runs - a second timer would be a second path ([TILL-144]) */
+setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = catRestamp(st.snapshot); paintStatus(); watchTick(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
   navigator.serviceWorker.register('/till-sw.js').catch(function(){});

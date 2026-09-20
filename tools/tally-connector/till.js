@@ -931,7 +931,22 @@ const server = http.createServer(async (req, res) => {
         const token = vr && (vr.token || vr.access_token);
         if (!token) return json(res, 200, { ok: false, message: 'That code was not accepted. Ask for a new one.' });
         /* ⭐ the session is spent HERE and kept nowhere — one call, and the counter holds a key instead */
-        const en = await noKey('POST', '/api/till/enrol', { name: require('os').hostname() }, token);
+        /**
+         * ⚠️⚠️ A HELD COUNTER IS A DECISION, NOT AN ERROR ([TILL-138]). The server refuses with 409
+         * COUNTER_HELD and names the device that has it. Flattening that into "could not sign in" would send
+         * somebody hunting for a fault when what they need is to choose whether to take it back.
+         */
+        let en;
+        try {
+          en = await noKey('POST', '/api/till/enrol',
+            { name: require('os').hostname(), counter: tillCfg.id || 'C1', takeover: !!b.takeover }, token);
+        } catch (e) {
+          if (e && e.status === 409 && e.body && e.body.code === 'COUNTER_HELD') {
+            return json(res, 200, { ok: false, held: true, counter: (e.body.counter && e.body.counter.id) || tillCfg.id,
+              held_by: e.body.held_by || null, seen: e.body.seen || null, message: e.body.message });
+          }
+          throw e;
+        }
         if (!en || !en.key) return json(res, 200, { ok: false, message: 'Signed in, but ChitBridge did not issue a counter key.' });
         /**
          * ⚠️⚠️ MERGE, NEVER REWRITE. connector.json is this PC's whole configuration — the Tally paths, the

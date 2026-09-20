@@ -1420,12 +1420,36 @@ router.post('/enrol', auth, async (req, res) => {
     const id = me.rows[0] || {};
     /* ⚠️ THE NAME IS WHAT THE OWNER WILL REVOKE BY, on Settings › Integrations › Keys — so it says which PC. */
     const label = String((req.body && req.body.name) || '').trim().slice(0, 40);
-    const minted = await keys.mint(entity_id, id, {
-      name: 'counter' + (label ? ' · ' + label : '') + ' · ' + new Date().toISOString().slice(0, 10),
-      scopes: ['till'], days: 365,
+
+    /**
+     * ── ⚠️⚠️⚠️ IT CLAIMS THE COUNTER, IT DOES NOT JUST MINT A KEY ([TILL-138]) ───────────────
+     *
+     * This route used to mint and register NOTHING, so a counter signed in through ⚙ was invisible to the
+     * shop's own registry — it held a key and billed while the shop still thought C1 was free. A browser then
+     * opened C1 legitimately, released the running counter, and ten bills were stranded with neither side told.
+     *
+     * ⚠️⚠️ AND THE BILL NUMBERS WOULD HAVE COLLIDED. The series is per counter id and the server only learns
+     * where a run stopped because the counter tells it; a stranded counter being 401'd tells it nothing. Two
+     * devices on C1 both start at 0001. That is the fault on record as the root cause of "sent but not in Task".
+     *
+     * ⭐ counters.claim() is the one path, shared with POST /api/counters/:id/open — same 409 COUNTER_HELD,
+     * same deliberate takeover. Athi: *"without knock of this counter, the other one should not open?"*
+     */
+    const counters = require('./counters');
+    const claimed = await counters.claim({
+      entity_id, identity: id,
+      id: String((req.body && req.body.counter) || 'C1'),
+      label,
+      /* ⚠️ ONLY WHEN ASKED IN WORDS. The counter shows who holds it and what taking it costs them first. */
+      takeover: !!(req.body && req.body.takeover),
     });
+    if (claimed.status !== 200) return res.status(claimed.status).json(claimed.body);
+    const minted = { key: claimed.key };
     res.json({
       key: minted.key,
+      /* ⭐ which counter this now IS, and whether signing in took it from another device ([TILL-138]) */
+      counter: claimed.counter,
+      took_over: !!claimed.released,
       /**
        * ⚠️ THE SHOP COMES BACK NAMED. The counter shows it before it writes anything, so a person who signed
        * into the wrong account sees the wrong shop's name on screen rather than discovering it in the books.

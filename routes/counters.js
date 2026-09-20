@@ -267,4 +267,86 @@ router.noteBill = async (entity_id, series, billedAt, no) => {
   });
 };
 
+/**
+ * ── ⭐⭐⭐ ONE PATH TO CLAIMING A COUNTER ([TILL-138]) ──────────────────────────────────────────────────────────
+ *
+ * Athi, after his browser silently took C1 from a counter that was mid-day: *"if the counter is taken somewhere
+ * else, and they would have forgotten, check that counter is active. if not active, offer to knock it off and
+ * then open here … without knock of this counter, the other one should not open?"*
+ *
+ * ⚠️⚠️⚠️ THE REGISTRY ALREADY REFUSED A SECOND HOLDER, AND /api/till/enrol WALKED AROUND IT.
+ * POST /api/counters/:id/open answers 409 COUNTER_HELD when a counter is already open — "close it there first,
+ * or, if that PC is gone, release it". But enrol ([TILL-121]) minted a till key and registered NOTHING, so a
+ * counter signed in through ⚙ was invisible: it held a key and billed while the shop still thought C1 was free.
+ * The browser then opened C1 legitimately and released the running counter. Ten bills stranded, neither side told.
+ *
+ * ⚠️⚠️ AND THE NUMBERS WOULD HAVE COLLIDED. The series is per counter id, and the server only learns where a run
+ * stopped because the counter TELLS it (`issued` rides the snapshot call). The stranded counter was being 401'd,
+ * so `resume_next` stayed null — a second device on C1 would have started at 0001 as well. This is the fault
+ * already on record as the root cause of "sent but not in Task": two PCs both C1.
+ *
+ * ⭐ SO THERE IS ONE CLAIM, AND BOTH DOORS USE IT. Extracted here because enrol became the second caller.
+ * [[feedback-no-duplicate-functions]] [[project-till-series-prefix]]
+ */
+router.claim = async ({ entity_id, identity, id, label, takeover }) => {
+  const { withTransaction } = require('../db');
+  const keys = require('./keys');
+  const want = String(id || 'C1').toUpperCase();
+
+  const got = await withTransaction(async (db) => {
+    const { counters, list } = await readLocked(db, entity_id);
+    const c = counters[want];
+    if (!c) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + want + ' in this shop.' } };
+    const v = view(c, list);
+
+    /**
+     * ⚠️⚠️ HELD MEANS HELD. A counter that is open somewhere is not available, and taking it must be a DECIDED
+     * act — Athi: *"without knock of this counter, the other one should not open?"* The refusal names who has it
+     * and when they were last seen, so the person choosing can tell a PC that is gone from one that is busy.
+     */
+    if (!takeover && (v.state === 'open' || v.state === 'break' || v.state === 'opening')) {
+      return { status: 409, body: {
+        error: 'Counter already open', code: 'COUNTER_HELD', counter: v,
+        held_by: (v.held_by && v.held_by.name) || null,
+        seen: (v.held_by && v.held_by.seen && v.held_by.seen.at) || null,
+        message: 'Counter ' + want + ' is already open'
+          + (v.held_by && v.held_by.name ? ' on ' + v.held_by.name : '')
+          + '. Close it there first — or, if that PC is gone, take it over from here.' } };
+    }
+
+    /**
+     * ⚠️ A TAKEOVER RELEASES THE HOLDER FIRST, in the same transaction. Two keys believing they hold one counter
+     * is precisely how two runs of bill numbers start, and a gap between the release and the claim is a window
+     * where exactly that can happen.
+     */
+    if (takeover && c.held_by && !isPending(c.held_by)) {
+      const holder = list.find((k) => k && String(k.jti) === String(c.held_by));
+      if (holder && !keys.isClosed(holder)) {
+        await keys.patchKeyWith(db, entity_id, holder.jti, {
+          till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true }) });
+        auth.forgetKey(holder.jti);
+      }
+    }
+    return { status: 200, counter: c, released: !!(takeover && c.held_by) };
+  });
+  if (got.status !== 200) return got;
+
+  const minted = await keys.mint(entity_id, identity, {
+    name: 'counter ' + want + (label ? ' · ' + label : '') + ' · ' + new Date().toISOString().slice(0, 10),
+    scopes: ['till'],
+  });
+
+  /* ⭐ the key and the counter are written together — the key knows its counter, the counter knows its key */
+  await withTransaction(async (db) => {
+    await keys.patchKeyWith(db, entity_id, minted.jti, {
+      counter: want,
+      till: { id: want, issued: Number(got.counter.next) > 1, at: new Date().toISOString() } });
+    await patchCounter(db, entity_id, want, {
+      held_by: minted.jti, held_at: new Date().toISOString(), opened_at: new Date().toISOString(),
+      closed_at: null, released: null });
+  });
+
+  return { status: 200, key: minted.key, counter: want, released: got.released };
+};
+
 module.exports = router;
