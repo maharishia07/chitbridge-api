@@ -4477,6 +4477,19 @@ async function load(){
   var st = await HOST.state().catch(function(){ return STATE; });
   /* ⚠️ the master decides the name — see catRestamp ([TILL-114]) */
   STATE = st || STATE; S = catRestamp((st && st.snapshot) || S);
+  /**
+   * ⚠️⚠️⚠️ THE COUNTER CLAIMS ITS NUMBER HERE, FOR BOTH HOSTS ([TILL-130]).
+   *
+   * This used to happen only inside CloudHost.refresh(), so a DESKTOP counter — which is AgentHost, with its
+   * own refresh() — never claimed anything: `cb_till_given` stayed empty, tillIssued() stayed false, and
+   * tillStopped() refused every single sale with "this counter has not been given its number yet". The web
+   * counter billed happily; the installable one could not take a rupee. Found by walking desktop3 through a
+   * day on a real shop.
+   *
+   * ⚠️ load() is where the snapshot ARRIVES for both hosts, which is the only place that can be right for
+   * both. It is idempotent — tillClaim() writes the same id again — and silent when there is no till block.
+   */
+  try { if (S && S.till) await tillClaim(S.till); } catch (_) {}
   /* ⚠️ the stored count is a memory; the queue is the fact. Re-count on every load, never trust the number back. */
   try { await queueTally(); } catch (_) {}
   var bad = wrongShop();
@@ -4582,6 +4595,17 @@ function paintStatus(){
    */
   paintDayPill(d);
   var note = queueWords();
+  /**
+   * ⭐⭐ THE FIX, BESIDE THE FACT ([TILL-132]). Athi: *"do we have a mechanism of showcasing 'please sign in to
+   * send'?"* — there was not one. Telling somebody their bills are refused and leaving them to find ⚙ is half
+   * an answer; the control goes where the sentence is. [[feedback-write-for-the-shopkeeper]]
+   */
+  /**
+   * ⭐⭐ THE CONTROL SITS WITH THE SENTENCE ([TILL-132]). Telling somebody their bills are refused and leaving
+   * them to find ⚙ is half an answer — and the footer is the one line that is always on screen, which is why
+   * the message belongs here rather than only behind 🩺, the menu or the start-of-day panel.
+   */
+  var stuckNow = queueStuck();
   /* ⚠️ THE ABSENCE OF TAX IS ALSO AN ANSWER, and it should not look like a fault. A shop that charges no GST is told why, once,
      rather than left wondering where the tax column went. */
   var tx0 = shopTax();
@@ -4598,7 +4622,16 @@ function paintStatus(){
    * would never have been seen. A report that something else can silently replace is not a report.
    */
   if (REJECTED) note = 'REFUSED a catalogue from another shop — this counter still holds its own. Nothing was changed.';
-  document.getElementById('queuenote').textContent = note;
+  /**
+   * ⚠️ textContent WHEN THERE IS NOTHING TO PRESS, innerHTML ONLY FOR THE BUTTON. A note is shop text and
+   * must never be parsed as markup; the one case that needs an element is built here, escaped, deliberately.
+   */
+  var qn = document.getElementById('queuenote');
+  if (stuckNow && STATE.queued) {
+    qn.innerHTML = esc(note)
+      + ' <button class="daylink" data-testid="till-queue-fix" onclick="' + esc(stuckNow.act) + '()">'
+      + esc(stuckNow.fix) + '</button>';
+  } else { qn.textContent = note; }
   paintUpdate();
   /* ⭐ ONE DOT, AND IT IS NOT A NAG. Green when there is nothing to say; it only asks for attention when something would actually
      go wrong, and it never interrupts a sale to do it. */
@@ -10908,7 +10941,18 @@ function shopReady(){
   }
   var rest = MISSING.filter(function(n){ return core.indexOf(n) < 0; });
   if (rest.length) warns.push('the ' + rest.join(' and ') + ' engine is not here yet');
-  if (!WHO || !WHO.name) warns.push('nobody is signed in at this counter, so the day close cannot say who took the money');
+  /**
+   * ⚠️⚠️ A STOP, NOT A WARNING, AS OF [TILL-128]. Athi: *"a counter without sign-in is not a right
+   * thing."* It was a warning only because a shop with no co-assists had no way to satisfy it — the dialog
+   * offered an explanation and no choice. The entity option removes that dead end, so the door can be shut:
+   * there is now always somebody to be, even on a shop that has added nobody.
+   * ⚠️ IT IS LISTED LAST. A counter with no shop has a bigger problem, and needShop shows the first stop only.
+   */
+  if (!WHO || !WHO.name) {
+    stops.push({ why: 'Nobody is signed in at this counter.',
+                 means: 'Every bill would be recorded with no one against it, and the day close could not say who took the money.',
+                 fix: 'Sign in', act: 'openWho' });
+  }
   return { ok: !stops.length, stops: stops, warns: warns };
 }
 
@@ -10952,8 +10996,38 @@ function blankWords(){
   return paired() ? 'No copy of the shop yet — press ↻ once, while online.'
                   : 'This counter is not connected to a shop yet, so there is nothing to sell.';
 }
+/**
+ * ── ⭐⭐ WHY THE QUEUE IS STUCK, IF IT IS ([TILL-132]) ────────────────────────────
+ *
+ * The program classifies every refusal and now reports it on /api/state as `queue_why`. Before that it only
+ * wrote it to its own console, so the screen could say the COUNT and never the REASON.
+ * ⚠️ `fatal` is the one that matters: a dead line clears itself, a closed counter or a wrong key never will.
+ */
+function queueStuck(){
+  var w = (STATE && STATE.queue_why) || null;
+  if (!w || !w.fatal) return null;
+  /**
+   * ⭐⭐ IT RETURNS A FIX, NOT A REASON. Athi: *"he doesn't need reason, he wants fix — no technical details
+   * are required, keep it in diagnosis."* `detail` is carried ONLY so 🩺 can show it; nothing on the counter
+   * prints it.
+   */
+  var signIn = /closed|not allowed|scope|key/i.test(String(w.say || '')) || w.code === 'COUNTER_CLOSED';
+  return signIn
+    ? { fix: 'Sign in to send them', act: 'signinOpen', detail: String(w.say || ''), code: w.code || null }
+    : { fix: 'See what is wrong',    act: 'openStuck',  detail: String(w.say || ''), code: w.code || null };
+}
 /** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
 function queueWords(){
+  /**
+   * ⚠️⚠️ A COUNT ON ITS OWN READS AS PATIENCE ([TILL-132]). "10 waiting to reach ChitBridge" is what a
+   * counter said for three hours while every one of them was being refused. When the reason is FATAL — it will
+   * not clear by waiting — the reason replaces the count, because the count is no longer the news.
+   */
+  var stuck = queueStuck();
+  if (stuck && STATE.queued) {
+    /* ⚠️ THE ACTION, NOT THE ACCOUNT. What went wrong is in 🩺; what to do is here. */
+    return STATE.queued + ' bill' + (STATE.queued === 1 ? '' : 's') + ' still to send · ' + stuck.fix;
+  }
   /**
    * ⚠️⚠️⚠️ NOTHING WAITING IS NOT THE SAME AS EVERYTHING ARRIVED ([TILL-119]). A counter with no key has an
    * empty queue because it has never taken a sale — and it was answering "everything has reached ChitBridge",
@@ -14549,7 +14623,8 @@ async function finish(){
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
     customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
-    by: WHO ? { id: WHO.id, name: WHO.name } : null,
+    /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
+    by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     kind: shopTax().kind,
     /* ⭐ WHO CHECKED WHAT, AND WHEN. A shop that is inspected must be able to show the check happened. */
     age_checks: ageRecord(),
@@ -15265,7 +15340,8 @@ async function rcvConfirm(){
   var landed = rcvLanded();
   var doc = {
     kind: 'receipt', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
-    by: WHO ? { id: WHO.id, name: WHO.name } : null,
+    /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
+    by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     vendor: { name: (RCV.vendor || '').trim() || 'Not named' },
     their_bill: { no: (RCV.bill_no || '').trim() || null, date: RCV.bill_date || null, total: RCV.bill_total },
     against: RCV.task ? { chit_id: RCV.task.chit_id, party: RCV.task.party, subject: RCV.task.subject } : null,
@@ -15420,7 +15496,8 @@ async function dspConfirm(){
   if (shortNoReason.length) { say('Say why ' + shortNoReason[0].name + ' is short. The customer should hear it today, not at delivery.'); return; }
   var doc = {
     kind: 'despatch', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
-    by: WHO ? { id: WHO.id, name: WHO.name } : null,
+    /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
+    by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     against: DSP.task ? { chit_id: DSP.task.chit_id, party: DSP.task.party, subject: DSP.task.subject } : null,
     ref: (DSP.ref || '').trim() || null, cartons: DSP.carton, weight: DSP.weight,
     lines: picked.map(function(l){
@@ -16029,7 +16106,20 @@ async function openStuck(){
   if (err) h += '<div class="t warnrow"><span>The local database would not open</span><span>' + esc(err) + '</span></div>';
 
   h += '<div class="sec">This counter</div>'
-    + line('Shop this database belongs to', owner || '(not set yet)')
+    /**
+     * ⚠️ ON A DESKTOP COUNTER THE SHOP IS NOT IN THIS DATABASE. The page's own IndexedDB is empty by design —
+     * the program keeps the snapshot, the bills and the queue in its own folder — so "(not set yet)" read as a
+     * fault on a counter where nothing was wrong. Say where it actually is.
+     */
+    + (function(){
+        if (HOST === AgentHost) {
+          var sh = pairedShop();
+          return line('Shop this counter belongs to',
+            (sh && (sh.name || sh.bridge_id)) ? (esc(sh.name || sh.bridge_id) + ' · kept by the program on this PC')
+                                              : 'not signed in to a shop yet', !sh);
+        }
+        return line('Shop this database belongs to', owner || '(not set yet)');
+      })()
     /* ⚠️ THE TWO COPIES OF THE OWNER MUST AGREE. The store holds one and the running page holds one; they are
        written together, so a difference means this page is reading rows under an identity the device never saved
        — which would hide every row from drain while the panel called the counter clean. */
@@ -16042,7 +16132,27 @@ async function openStuck(){
      * holds that very token, so the suffix matches the list exactly and a PC can be matched to its row by eye.
      * ⚠️ Four characters, never more — enough to find the row, useless to anyone reading over a shoulder.
      */
-    + line('Paired key', (HOST && HOST.key) ? ('yes · …' + String(HOST.key).slice(-4)) : 'NO — nothing can be sent', !(HOST && HOST.key))
+    /**
+     * ⚠️⚠️ ASK THE RIGHT HALF ([TILL-131]). `HOST.key` only exists on the BROWSER counter. On a desktop one
+     * the program holds the key and this read NO on a counter that was perfectly paired and had just taken ten
+     * bills — then contradicted itself further down with "the counter program still has 10 to send".
+     * ⭐ paired() already answers for both hosts; pairedShop() names the shop and its scope.
+     */
+    + (function(){
+        var ok = paired();
+        var sh = pairedShop();
+        var tail = (HOST && HOST.key) ? (' · …' + String(HOST.key).slice(-4))
+                 : (sh && sh.bridge_id ? (' · ' + sh.bridge_id) : '');
+        return line('Paired key', ok ? ('yes' + tail + (HOST === AgentHost ? ' (held by the program on this PC)' : ''))
+                                     : 'NO — nothing can be sent', !ok);
+      })()
+    /* ⚠️ and the SCOPE, because a connector key here is the whole of [TILL-117] in one line */
+    + (function(){
+        var sh = pairedShop(); var sc = (sh && sh.scopes) || null;
+        if (!sc) return '';
+        var till = sc.indexOf('till') >= 0;
+        return line('What the key may do', till ? 'billing (till)' : (esc(sc.join(', ')) + ' — NOT billing'), !till);
+      })()
     + line('Online', navigator.onLine ? 'yes' : 'NO', !navigator.onLine)
     /**
      * ⭐ CAN THIS DEVICE SAVE ANYTHING AT ALL. Athi, 2026-09-16, on two parked bills that would not go: *"this
@@ -16064,7 +16174,11 @@ async function openStuck(){
         MEM.fail.op + ' ' + MEM.fail.store + ' — ' + MEM.fail.why, true) : '');
 
   h += '<div class="sec">What is actually in the local database</div>'
-    + line('Bills stored', raw.bills.length + '  (this shop ' + bMine.length + (bForeign.length ? ', OTHER SHOP ' + bForeign.length : '') + ')', bForeign.length > 0)
+    /* ⚠️ 'this page holds none' is the TRUTH on a desktop counter, not a zero to worry about ([TILL-131]) */
+    + line('Bills stored', (HOST === AgentHost && !raw.bills.length)
+        ? 'none on this page — the program on this PC keeps them'
+        : (raw.bills.length + '  (this shop ' + bMine.length + (bForeign.length ? ', OTHER SHOP ' + bForeign.length : '') + ')'),
+        bForeign.length > 0)
     + line('Queued to send', raw.queue.length + '  (this shop ' + qMine.length + (qForeign.length ? ', OTHER SHOP ' + qForeign.length : '') + ')', qForeign.length > 0);
 
   /**
@@ -17005,7 +17119,8 @@ async function retIssue(){
        payment is money TAKEN and every reader of 'payments' assumes that. */
     refunds: [{ how: how, amount: m.total }],
     customer: against.customer || { name: 'Walk-in' },
-    by: WHO ? { id: WHO.id, name: WHO.name } : null,
+    /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
+    by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
   };
   var r = { ok: false };
   try { r = await HOST.creditNote(body); } catch (e) { r = { ok: false, error: e && e.message }; }
@@ -17239,7 +17354,27 @@ function openWho(){
           + (WHO.since ? '<div class="u">since ' + esc(new Date(WHO.since).toTimeString().slice(0, 5)) + '</div>' : '')
         : '<b>Nobody is signed in.</b><div class="u">Bills are being recorded as the shop itself, and the day close cannot say who took the money.</div>')
     + '</div>'
-    + (list.length ? '<label>Sign in as</label>' : '')
+    /**
+     * ── ⭐⭐⭐ THE SHOP ITSELF IS A CHOICE ([TILL-128]) ───────────────────────────
+     *
+     * Athi: *"at the entity level or at the coassist level — a counter without sign-in is not a right thing."*
+     *
+     * ⚠️⚠️ WITHOUT THIS THERE WAS A DEAD END. A shop with no co-assists (which every new shop is) had
+     * nothing to choose, so the only possible state was "nobody", and every bill recorded `by: null`. The
+     * dialog explained that and then offered no way out of it.
+     *
+     * ⭐ AND "NOBODY CHOSE" IS NOT "THE OWNER IS HERE". Those produce an identical bill today and mean
+     * completely different things the moment anyone asks who handled the cash. This makes the second one
+     * sayable, which is what then allows nobody-at-all to be refused.
+     */
+    + '<label>Sign in as</label>'
+    + (function(){
+        var nm = (S && S.shop && S.shop.name) || 'the shop';
+        var on = (WHO && WHO.kind === 'entity');
+        return '<button class="choice' + (on ? ' on' : '') + '" data-testid="till-who-entity"'
+          + ' onclick="setWho(\'entity\',' + JSON.stringify(nm).replace(/"/g, '&quot;') + ',\'entity\')">'
+          + esc(nm) + '<span class="u">the shop itself — the owner is at the counter</span></button>';
+      })()
     + (list.length
     ? list.map(function(a){
         var on = (WHO && String(WHO.id) === String(a.id));
@@ -17252,13 +17387,18 @@ function openWho(){
     + (WHO ? '<button class="choice" style="margin-top:6px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
   document.getElementById('whodlg').showModal();
 }
-async function setWho(id, name){
+async function setWho(id, name, kind){
   /* ⭐ THE FLOAT. What is in the drawer before a rupee is taken — without it, "expected" at the end means nothing. Skipping is
      allowed (a shop with no float, or a busy moment): it counts as zero and the close says so. */
   /* ⭐ the question a shift starts with — asked in our own words, in our own box */
   var float0 = await ask('Starting ' + name + " at this counter.\n\nHow much cash is in the drawer right now? Leave it blank if there is none.",
                          '', 'Cash in the drawer (' + curSym() + ')', 'Who is at this counter');
-  WHO = { id: id, name: name, since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
+  /**
+   * ⚠️ THE LEVEL IS PART OF THE RECORD ([TILL-128]). A day close that cannot tell "the owner ran the
+   * counter" from "Kumar ran the counter" is answering a different question from the one being asked.
+   */
+  WHO = { id: id, name: name, kind: (kind === 'entity' ? 'entity' : 'coassist'),
+          since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
   ls.set(shopLs('cb_till_who'), JSON.stringify(WHO));
   paintWho(); document.getElementById('whodlg').close(); focusSearch();
 }

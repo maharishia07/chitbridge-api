@@ -33,6 +33,7 @@ const GUARDS = [
   'till-agent-says.test.js',  // the desktop counter names a wrong key as a wrong key, never as an outage
   'till-shop-folder.test.js', // one folder per shop per server — a test bill never lands in the live takings
   'rollup.test.js',           // day/week/month: a return is not a sale, and folding equals summarising
+  'verdict.test.js',          // one cause, one sentence, one button — the message has a single home
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs',// the bill number's shape: what the date says vs when the run restarts

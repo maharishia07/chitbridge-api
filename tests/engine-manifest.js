@@ -354,6 +354,9 @@ const ENGINE_OTHER = [
      kept in local and also in server."* It is vendored byte-equal into the kit, so the shop PC folds its own
      months with the line down and the server will fold the same way. */
   'rollup.js',
+  /* ⭐⭐ one cause → one sentence → one button. CB's own rule about what a shopkeeper is told when something
+     is wrong, extracted because the SAME cause was being described four different ways on one screen. */
+  'verdict.js',
   /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
      CITES a category by id, and `category` is the legacy key nothing may write again. */
   'categories.js',
