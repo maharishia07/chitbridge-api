@@ -39,6 +39,9 @@ const ROWS = BODY.split(/\{\s*id:/).slice(1).map((chunk) => ({
   at:   (chunk.match(/at:'([^']+)'/) || [])[1],
   name: (chunk.match(/name:'([^']*)'/) || [])[1],
   costs:(chunk.match(/costs:'([^']*)'/) || [])[1],
+  /* ⚠️ MOVED ([TILL-151]): a row now carries a bucket, and a blocked row carries the way round it */
+  bucket:(chunk.match(/bucket:'([a-z_]+)'/) || [])[1],
+  fix:  (chunk.match(/fix:'([^']*)'/) || [])[1],
 }));
 
 console.log('\nTHE WATCH LIST\n');
@@ -62,27 +65,53 @@ it('⚠️⚠️⚠️ every row names a gate that exists in the page', () => {
     'these rows name something that is not in the page: ' + missing.map((r) => r.id + '->' + r.at).join(', '));
 });
 
-it('every row says what it costs the shop, not what the code does', () => {
-  const dumb = ROWS.filter((r) => !r.costs || r.costs.length < 12);
-  assert.strictEqual(dumb.length, 0, 'no consequence given for: ' + dumb.map((r) => r.id).join(', '));
-  const jargon = ROWS.filter((r) => /fetch|endpoint|api\b|promise|payload/i.test(r.costs || ''));
+it('every row says something a shopkeeper can use, not what the code does', () => {
+  /* ⚠️ MOVED ([TILL-151]): a row earns its place with a consequence OR a way round it. A 'waits' row often
+     needs neither — "Sold-out marks and price changes, 3 waiting" is complete — so the rule is that it must
+     never be written for US. That half is unchanged and is the half that matters. */
+  const jargon = ROWS.filter((r) => /fetch|endpoint|api\b|promise|payload/i.test((r.costs || '') + (r.fix || '')));
   assert.strictEqual(jargon.length, 0, 'written for us, not for the shop: ' + jargon.map((r) => r.id).join(', '));
+});
+
+/**
+ * ⭐⭐ THE ORDER IS THE MESSAGE ([TILL-151], design-handoff/without-the-line). Athi: *"ten 'stopped' bullets
+ * against two 'working' reads as a catastrophe."* The registry must contain what CARRIES ON, or the panel can
+ * only ever sound like bad news — that was the whole defect, and it is a property of the data, not the CSS.
+ */
+it('⭐⭐ it knows what carries on, not only what breaks', () => {
+  const normal = ROWS.filter((r) => r.bucket === 'normal');
+  assert.ok(normal.length >= 6, 'only ' + normal.length + ' rows carry on as normal — the panel will read as a disaster');
+  assert.ok(normal.some((r) => /Selling/i.test(r.name || '')), 'selling is not listed as carrying on');
+  assert.ok(normal.some((r) => /Printing/i.test(r.name || '')), 'printing is not listed as carrying on');
+  assert.ok(normal.some((r) => /Taking money/i.test(r.name || '')), 'taking money is not listed as carrying on');
+});
+
+/** ⚠️⚠️ EVERY BLOCKED THING CARRIES ITS WAY ROUND IT, ON ITS OWN CARD (spec §8.2) */
+it('⚠️⚠️ nothing is blocked without saying what to do instead', () => {
+  const need = ROWS.filter((r) => r.bucket === 'needs_line');
+  assert.ok(need.length >= 4, 'only ' + need.length + ' rows need the line');
+  const bare = need.filter((r) => !r.fix || r.fix.length < 6);
+  assert.strictEqual(bare.length, 0, 'blocked with no way round it: ' + bare.map((r) => r.id).join(', '));
 });
 
 /**
  * ⚠️⚠️ A WATCH LIST THAT ONLY KNOWS ABOUT THE INTERNET IS THE COMFORTABLE ONE. It goes green on a counter
  * that cannot save a bill — and green is the answer that stops somebody looking. Storage is the only fault
- * in this product that can LOSE work, so it must be watched and it must be said loudest.
+ * in this product that can LOSE work.
  */
 it('⚠️⚠️ it watches the one fault that can lose work', () => {
   const save = ROWS.find((r) => r.id === 'save');
   assert.ok(save, 'storage is not watched at all');
-  assert.ok(/lose work/i.test(save.costs), 'it does not say that this one loses work');
   assert.ok(/MEM\.fail/.test(BODY), 'it does not read the flag that a refused write actually sets');
+  /* ⚠️ MOVED ([TILL-152]): the row now reads positively because it sits in "carries on as normal", and the
+     alarm moved to lineFaults(), which lifts a broken 'normal' row out ABOVE everything else on the panel. */
+  assert.ok(/function lineFaults\(/.test(PAGE), 'a broken device row is no longer lifted out of the good news');
+  assert.ok(/till-line-fault/.test(PAGE), 'and it has nowhere on the panel to appear');
 });
 
 it('and it watches whether this counter still holds its number', () => {
-  const own = ROWS.find((r) => r.id === 'own');
+  /* ⚠️ MOVED ([TILL-151]): the row is 'nos' — bill numbers — which is what a lost counter actually costs */
+  const own = ROWS.find((r) => r.id === 'nos');
   assert.ok(own, 'a counter taken over elsewhere is still not watched');
   assert.ok(/COUNTER_CLOSED/.test(BODY), 'it does not read the code the server actually returns');
 });

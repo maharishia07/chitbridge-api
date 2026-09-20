@@ -1995,6 +1995,54 @@
      simulator or not. Athi saw it on a live page. The warning is already written twenty lines up in this same
      file and I still wrote the bug ([TILL-148]). */
   .netwhat[hidden]{display:none}
+  /**
+   * ── ⭐⭐⭐ A FACE, A NUMBER, A BUTTON ([TILL-152]) ────────────────────────────────────────────────────
+   * Athi: *"they can't read or write, they can only know to click."* So the symbols and the digits are the
+   * biggest things on the panel, every target is ≥ 56px, and no sentence is load-bearing.
+   */
+  #linedlg{border:0;border-radius:18px;padding:0;max-width:min(560px,94vw);width:94vw;
+           background:var(--paper);color:var(--ink)}
+  #linedlg::backdrop{background:rgba(0,0,0,.5)}
+  .lhead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .lhead h3{margin:0;font-size:1.05em}
+  .lbody{padding:14px;display:grid;gap:12px;max-height:80vh;overflow:auto}
+  /* the one fault that can lose work — loud, short, and above everything */
+  .lfault{display:flex;align-items:center;gap:10px;background:#fdecea;color:#8c1d10;border:2px solid #e07a6c;
+          border-radius:14px;padding:12px 14px}
+  .lfault span{font-size:1.7em} .lfault b{flex:1} .lfault i{font-style:normal;font-weight:700}
+  /* ⭐ THE FACE */
+  .lface{display:flex;align-items:center;gap:12px;border-radius:16px;padding:16px;flex-wrap:wrap}
+  .lface.warn{background:#fdf0d5;border:2px solid #e9c675;color:#5b4410}
+  .lface.ok{background:#e7f2ea;border:2px solid #9fcdb0;color:#1b4f30}
+  .lbig{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;font-size:2.1em;
+        background:rgba(0,0,0,.09);flex:0 0 auto}
+  .lface b{font-size:1.5em;flex:1;min-width:0}
+  /* ⚠️ the count is a DIGIT, and the biggest thing on the screen — a numeral needs no reading */
+  .lface em{font-style:normal;font-weight:800;font-size:2.6em;line-height:1;font-variant-numeric:tabular-nums}
+  .lface > span:not(.lbig){font-size:.95em}
+  .lface .u{width:100%;font-size:.85em}
+  /* ⭐ THREE TILES — symbol, count, one word */
+  .ltiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .ltile{display:grid;justify-items:center;gap:2px;min-height:96px;border-radius:14px;padding:10px 6px;
+         font:inherit;cursor:pointer;border:2px solid transparent}
+  .ltile .lico{font-size:1.6em;line-height:1}
+  .ltile b{font-size:1.9em;line-height:1;font-variant-numeric:tabular-nums}
+  .ltile span:last-child{font-size:.85em;opacity:.8}
+  .ltile.ok{background:#e7f2ea;color:#1b4f30}
+  .ltile.wait{background:#fdf0d5;color:#5b4410}
+  .ltile.need{background:#eceae4;color:#3b3833}
+  .ltile.on{border-color:currentColor}
+  .ltell{grid-column:1/-1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .ltell p{margin:0;font-size:.95em;line-height:1.5}
+  .ltell .lcard{border:0;padding:6px 0;background:none}
+  .ltell .lcard + .lcard{border-top:1px solid var(--line)}
+  .lfix{margin-top:4px;background:rgba(0,0,0,.055);border-radius:8px;padding:6px 8px;font-weight:600;font-size:.9em}
+  /* ⭐ ONE BUTTON, and it is never actually needed */
+  .lgo{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;
+       border:0;border-radius:14px;background:#1d1b16;color:#fff;font:inherit;font-weight:700;font-size:1.05em;
+       cursor:pointer}
+  .lgo span{font-size:1.3em}
+  @media (max-width:380px){ .ltiles{grid-template-columns:1fr} }
   /* ⭐ the same panel, in the flow of the diagnostics page instead of fixed over the counter ([TILL-149]) */
   .netwhat.inline{position:static;transform:none;width:auto;max-height:none;box-shadow:none;
                   border:1px solid var(--line);border-radius:10px;margin:8px 0 2px}
@@ -2396,6 +2444,14 @@
      indistinguishable from a broken one. Hidden until it is on; impossible to miss when it is. -->
 <div id="netbar" class="netbar" data-testid="till-netbar" hidden></div>
 <div id="netwhat" class="netwhat" data-testid="till-net-what-panel" hidden></div>
+<!-- ⭐⭐⭐ Working without the line ([TILL-151]) — design-handoff/without-the-line -->
+<dialog id="linedlg" data-testid="till-line-dlg">
+  <!-- ⚠️ a title, not a sentence ([TILL-152]) — the panel is understood from its symbols, not its heading -->
+  <div class="lhead"><h3 style="flex:1">The line</h3>
+    <button class="pill" data-testid="till-line-health" onclick="lineClose();openHealth()" title="counter health">🩺</button>
+    <button class="pill" data-testid="till-line-close" onclick="lineClose()">Close · Esc</button></div>
+  <div class="lbody" id="linebody"></div>
+</dialog>
 <dialog id="updlg" class="dlg wide" data-testid="till-upload-dlg">
   <h3>Your product list <span class="u">we read it first and show you what we found — nothing is added until you say so</span></h3>
   <div id="upbody" class="upbody"></div>
@@ -2487,7 +2543,7 @@
         going — was a dead <span> that merely LOOKED like the buttons beside it. The same fault the day total had until last night.
         It opens the diagnosis, and it says how many are waiting, so the answer to "is anything stuck?" is on the bar.
       -->
-      <button class="pill" id="netpill" data-testid="till-net" onclick="openHealth()" title="counter health — what is wrong, whether anything is lost, and what to do">…</button>
+      <button class="pill" id="netpill" data-testid="till-net" onclick="openLine()" title="what the line is doing — what carries on, what is waiting, and what needs it">…</button>
       <span class="pill" id="agepill"></span>
       <span style="flex:1"></span>
       <!--
@@ -3568,7 +3624,18 @@ function netGate(){
  * ⚠️⚠️ EVERY REQUEST THE COUNTER MAKES GOES THROUGH HERE. snapshot-wire already forces that — *"a counter
  * request that can hang for ever"* — so one gate covers all of them and no call site can forget.
  */
+/**
+ * ⚠️⚠️⚠️ EVERY ATTEMPT IS RECORDED HERE ([TILL-151]). The line state is computed from the last twenty
+ * attempts rather than navigator.onLine, because a counter can be "online" and still reach nothing — the
+ * design package is explicit about it. This is the one place every request already passes through.
+ */
 async function fetchBy(url, opts, ms){
+  if (String(url).indexOf('/api/') >= 0) return fetchBy_(url, opts, ms)
+    .then(function(r){ lineNote(r && r.ok !== false); return r; },
+          function(e){ lineNote(false); throw e; });
+  return fetchBy_(url, opts, ms);
+}
+async function fetchBy_(url, opts, ms){
   await netGate();
   var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
   var to = ac ? setTimeout(function(){ try { ac.abort(); } catch (_) {} }, ms || DEADLINE) : null;
@@ -14189,6 +14256,14 @@ function healthReading(){
     storage_bad: !!(typeof MEM !== 'undefined' && MEM && MEM.fail),
     till: (STATE && STATE.till && STATE.till.id) || 'C1',
     /**
+     * ⚠️⚠️⚠️ THE LINE STATE, MEASURED ([TILL-151]). Every WATCH row that says "needs the line" asks
+     * r.line, and on the first build this field did not exist — so "r.line !== 'none'" was "undefined !==
+     * 'none'", which is TRUE, and the panel reported "Needs the line: 0 · Nothing is blocked" on a counter
+     * with no line at all. The comforting answer again, arrived at by an absent field rather than a wrong
+     * one. Found by LOOKING at the render; no count or assertion would have shown it.
+     */
+    line: (function(){ try { return lineState().state; } catch (_) { return 'good'; } })(),
+    /**
      * ⚠️⚠️ IS THE LINE BEING SIMULATED? ([TILL-140]) The netsim overrides navigator.onLine on purpose, so
      * every reading below it can be a CHOICE rather than a measurement. A diagnosis that cannot tell the
      * difference will send somebody to restart a router that was never the problem.
@@ -14199,91 +14274,141 @@ function healthReading(){
 }
 
 /**
- * ── ⭐⭐⭐ THE WATCH LIST ([TILL-144]) ────────────────────────────────────────────────────────────────────
+ * ── ⭐⭐⭐ THE CAPABILITY REGISTRY ([TILL-151], design-handoff/without-the-line §7) ────────────────────────
  *
- * Athi, with the line simulator on: *"can you bring what are to be affected in the test location itself?
- * bill will continue to progress but server catch up will stop and so on, what will be other issues to be
- * listed? can we make it explicit?"* — and then: *"can we bring all those under watchdog?"*
+ * Athi's package, on what shipped yesterday: *"Ten 'stopped' bullets against two 'working' reads as a
+ * catastrophe, when the truth is that a shop can trade all day without the line."* He is right, and the fault
+ * was not the words — it was that the list only contained things that BREAK. Everything that carries on was a
+ * grey footnote, so the panel could only ever sound like bad news.
  *
- * ⚠️⚠️ THIS IS ONE DECLARATION WITH THREE READERS, and that is the whole point. The simulator panel shows
- * what WILL break, the watchdog reports what HAS broken, and both are the same rows — so a capability can
- * never be listed as affected while nothing watches it, or watched while nobody was told it could stop.
- * [[feedback-stay-in-the-construct]] [[feedback-no-duplicate-functions]]
+ * ⚠️⚠️ SO THE THINGS THAT KEEP WORKING ARE NOW ROWS TOO. Seven of them, named, counted and listed FIRST. A
+ * registry that only knows about failure produces a screen that only knows how to worry.
  *
- * ⚠️⚠️⚠️ EVERY ROW NAMES THE REAL GATE. `at` is the line in this page that actually refuses, and `fn` asks
- * the same question that gate asks. A watch list whose rows were written from memory would go on reporting
- * green after the gate beneath it moved — which is the failure this whole file keeps paying for.
+ * Each row: { id, at, bucket, name, costs?, fix?, fn }
+ *   bucket 'normal'     carries on as normal — never touched the line, cannot stop because of it
+ *   bucket 'waits'      done here now, sent by itself later — nothing is redone or remembered
+ *   bucket 'needs_line' cannot be done now, and `fix` is the way round it TODAY (§8.2: every one has one)
+ *   bucket 'device'     not about the line at all — the faults that can actually lose work
  *
- * ⭐ `costs` IS WHAT IT MEANS TO THE SHOP, not what the code does. A row that stops nothing worth telling
- * anybody about does not belong here. [[feedback-write-for-the-shopkeeper]]
+ * ⚠️⚠️⚠️ EVERY ROW NAMES THE REAL GATE. `at` is the thing in this page that refuses, and `fn` asks the same
+ * question that gate asks. Three rows of the first draft named functions that had never existed; the guard in
+ * tests/till-watch.test.js now checks every one against the source.
  */
 var WATCH = [
-  { id:'shop',  at:'CloudHost.refresh',  name:'Reading the shop',
-    costs:'prices and products stay exactly as they are',
-    fn:function(r){ return r.online && r.paired; } },
-  { id:'send',  at:'CloudHost.drain',    name:'Bills leaving this counter',
-    costs:'they queue here and go on their own when the line is back',
-    fn:function(r){ return r.online && r.paired && !r.queue_fatal; } },
-  { id:'books', at:'checkAbsorbed',      name:'Checking bills reached the books',
-    costs:'a bill could say "sent" without being there, and nobody would know',
-    fn:function(r){ return r.online && r.paired; } },
-  { id:'hist',  at:'CloudHost.history',  name:'Today\u2019s bills from the server',
-    costs:'only the ones rung on THIS counter are shown',
-    fn:function(r){ return r.online && r.paired; } },
-  { id:'task',  at:'CloudHost.tasks',    name:'The work list and anything from Task',
-    costs:'nothing new arrives to be acted on',
-    fn:function(r){ return r.online && r.paired; } },
-  { id:'bell',  at:'bellUp',             name:'Live updates (the bell)',
-    costs:'nothing arrives on its own \u2014 press Refresh to see what has changed',
-    fn:function(r){ return r.online && r.paired; } },
-  { id:'close', at:'dayClose',           name:'Closing the counter',
-    costs:'REFUSED outright \u2014 every bill has to be checked first',
-    fn:function(r){ return r.online; } },
-  { id:'rept',  at:'stuckSend',          name:'Sending the day\u2019s report',
-    costs:'save it as a file instead',
-    fn:function(r){ return r.online; } },
-  { id:'who',   at:'CloudHost.alias',    name:'Looking a customer up',
-    costs:'type the name instead \u2014 the sale is not affected',
-    fn:function(r){ return r.online && r.paired; } },
-  { id:'say',   at:'listen',             name:'Speaking',
-    costs:'it needs a speech service, so type instead',
-    fn:function(r){ return r.online; } },
-  /**
-   * ⚠️⚠️⚠️ THE TWO THAT ARE NOT ABOUT THE LINE. They are here because a watch list that only knows about the
-   * internet is the comfortable one: it goes green on a counter that cannot save a bill, and green is the
-   * answer that stops somebody looking. Storage is the ONLY fault in this product that can lose work.
-   */
-  { id:'save',  at:'MEM.fail',           name:'Saving a bill on this device',
-    costs:'\u26a0 the one fault that can LOSE work \u2014 stop billing and ring for help',
+  /* ── carries on as normal ──────────────────────────────────────────────────────────────────────────── */
+  { id:'sell',  at:'finish',             bucket:'normal', name:'Selling and billing',
+    costs:'Every key, every shortcut, the same speed', fn:function(){ return true; } },
+  { id:'print', at:'autoPrint',          bucket:'normal', name:'Printing',
+    costs:'The printer is on this counter, not at the shop', fn:function(){ return true; } },
+  { id:'money', at:'billMoney',          bucket:'normal', name:'Taking money',
+    costs:'Cash, card and the UPI QR all work', fn:function(){ return true; } },
+  { id:'save',  at:'MEM.fail',           bucket:'normal', name:'Saving a bill here',
+    costs:'Written to this device the moment you save it',
+    /* ⚠️⚠️ THE ONE THAT CAN LOSE WORK. It sits in 'carries on' because that is where it belongs on a good
+       day — and when it fails it is lifted out and said first. See lineFaults(). */
     fn:function(r){ return !r.storage_bad; } },
-  { id:'own',   at:'COUNTER_CLOSED',     name:'This counter still holds its number',
-    costs:'every send is refused \u2014 sign in again to take the counter back',
+  { id:'nos',   at:'tillStopped',       bucket:'normal', name:'Bill numbers',
+    costs:'This counter holds its own run — no gaps, no repeats',
     fn:function(r){ return !(r.queue_code === 'COUNTER_CLOSED'); } },
+  { id:'keys',  at:'paintChips',         bucket:'normal', name:'Quick keys and sold-out marks',
+    costs:'Changes made here apply here at once', fn:function(){ return true; } },
+  { id:'park',  at:'parkBill',           bucket:'normal', name:'Parking and taking a bill back up',
+    costs:'All of it is local', fn:function(){ return true; } },
+
+  /* ── works, and waits ──────────────────────────────────────────────────────────────────────────────── */
+  { id:'send',  at:'CloudHost.drain',    bucket:'waits',  name:'Bills reaching the shop',
+    fix:'They go on their own — do not re-ring them',
+    fn:function(r){ return r.line === 'good'; } },
+  { id:'marks', at:'tillPost',           bucket:'waits',  name:'Sold-out marks and price changes',
+    fn:function(r){ return r.line === 'good'; } },
+  { id:'cust',  at:'CloudHost.alias',    bucket:'waits',  name:'New customers added here',
+    costs:'Saved here, sent later', fn:function(r){ return r.line === 'good'; } },
+  { id:'cat',   at:'CloudHost.refresh',  bucket:'waits',  name:'Prices and products',
+    fix:'Refresh once the line is back', fn:function(r){ return r.line === 'good'; } },
+  { id:'hist',  at:'CloudHost.history',  bucket:'waits',  name:'Today’s list',
+    costs:'Shows bills rung on this counter only',
+    fix:'The shop’s side fills in when the line returns', fn:function(r){ return r.line === 'good'; } },
+
+  /* ── needs the line — and every one carries the way round it (§8.2) ────────────────────────────────── */
+  { id:'close', at:'dayClose',           bucket:'needs_line', name:'Closing the counter',
+    costs:'Every bill has to be checked against the shop first, and the shop cannot be asked',
+    fix:'Keep the counter open — we will tell you the moment it can close',
+    fn:function(r){ return r.line !== 'none'; } },
+  { id:'books', at:'checkAbsorbed',      bucket:'needs_line', name:'Checking a bill reached the shop',
+    costs:'The shop cannot confirm anything right now',
+    fix:'Wait — the check runs by itself when the line is back',
+    fn:function(r){ return r.line !== 'none'; } },
+  { id:'rept',  at:'stuckSend',          bucket:'needs_line', name:'Sending the day’s report',
+    costs:'It goes through the shop',
+    fix:'Save it as a file and send it yourself', fn:function(r){ return r.line !== 'none'; } },
+  { id:'who',   at:'CloudHost.alias',    bucket:'needs_line', name:'Looking a customer up',
+    costs:'The customer list lives at the shop',
+    fix:'Type the name — the sale is not affected', fn:function(r){ return r.line !== 'none'; } },
+  { id:'say',   at:'listen',             bucket:'needs_line', name:'Speaking instead of typing',
+    costs:'Speech needs the line', fix:'Type it in', fn:function(r){ return r.line !== 'none'; } },
+  { id:'bell',  at:'bellUp',             bucket:'needs_line', name:'Changes made by other counters',
+    costs:'Nothing arrives on its own',
+    fix:'Press Refresh to see what has changed', fn:function(r){ return r.line !== 'none'; } },
 ];
 
 /**
- * ⭐ ONE READING, EVERY ROW. Reuses healthReading() rather than asking the gates again — the health page and
- * the watchdog must never be able to disagree about the same counter. [[feedback-adopt-dont-reinvent]]
+ * ⭐ ONE READING, EVERY ROW. Reuses healthReading() rather than asking the gates again — the health page,
+ * this panel and the pill must never be able to disagree about the same counter (§6.3).
  */
 function watchNow(r){
   r = r || healthReading();
   return WATCH.map(function(w){
     var ok;
     try { ok = !!w.fn(r); } catch (_) { ok = true; }   /* a broken probe must not invent a fault */
-    return { id:w.id, name:w.name, at:w.at, costs:w.costs, ok:ok };
+    return { id:w.id, name:w.name, at:w.at, bucket:w.bucket, costs:w.costs || '', fix:w.fix || '', ok:ok };
   });
+}
+
+/**
+ * ── ⚠️⚠️⚠️ THE LINE IS JUDGED BY WHAT GOT THROUGH, NOT BY navigator.onLine ([TILL-151], §7) ──────────────
+ *
+ * The package is blunt about this: *"a counter can be 'online' and still reach nothing."* Every state in this
+ * product was being read off a flag the device sets from its network interface, which says whether there is a
+ * cable, not whether the shop answered. So the last twenty attempts are kept and the state is computed.
+ *
+ * ⭐ AND 'PATCHY' IS A STATE, NOT A FAILURE. A line where one send in three needs a second go is WORKING;
+ * calling that broken, in red, teaches people to ignore red. §3.
+ */
+var LINE_TRIES = [], LINE_WAS = null, LINE_SINCE = null;
+function lineNote(ok){
+  LINE_TRIES.push({ ok: !!ok, at: Date.now() });
+  if (LINE_TRIES.length > 20) LINE_TRIES.shift();
+  var now = lineState().state;
+  if (now !== LINE_WAS) { LINE_WAS = now; LINE_SINCE = Date.now(); }
+}
+function lineState(){
+  /* ⚠️ the device saying it has no interface is a definite no, and needs no evidence */
+  if (navigator.onLine === false) return { state:'none', rate:1, tries:LINE_TRIES.slice(), since:LINE_SINCE };
+  var n = LINE_TRIES.length;
+  if (!n) return { state:'good', rate:0, tries:[], since:LINE_SINCE };
+  var fails = 0; LINE_TRIES.forEach(function(t){ if (!t.ok) fails++; });
+  var rate = fails / n;
+  /* ⚠️ "nothing reaches the shop" — judged on the recent run, so one old failure is not an outage */
+  var last = LINE_TRIES.slice(-3), dead = last.length >= 3 && last.every(function(t){ return !t.ok; });
+  var st = dead ? 'none' : (rate < 0.05 ? 'good' : (rate < 0.5 ? 'patchy' : 'none'));
+  return { state:st, rate:rate, tries:LINE_TRIES.slice(), since:LINE_SINCE };
+}
+/** ⭐ how long the counter has been in the state it is in — the first thing a shopkeeper asks (§6.4) */
+function lineSince(){
+  if (!LINE_SINCE) return null;
+  var mins = Math.round((Date.now() - LINE_SINCE) / 60000);
+  return { at: new Date(LINE_SINCE), mins: mins };
 }
 
 /**
  * ── ⚠️⚠️⚠️ THE WATCHDOG ([TILL-144]) ──────────────────────────────────────────────────────────────────────
  *
- * Until now the counter had exactly two things that WATCHED rather than retried: the drain watchdog (a stuck
- * _busy flag) and checkAbsorbed (are "sent" bills really in the books). Everything else on a timer — drain
- * every 20s, the repaint every 15s, bellUp every 30s — only tries again. Nothing asked whether anything was
- * wrong, so nothing could say so.
+ * Until this, the counter had exactly two things that WATCHED rather than retried: the drain watchdog (a stuck
+ * _busy flag) and checkAbsorbed. Everything else on a timer — drain every 20s, the repaint every 15s,
+ * bellUp every 30s — only tries again. Nothing asked whether anything was wrong, so nothing could say so.
  *
- * ⚠️⚠️ AND THE HEALTH PAGE ONLY RAN WHEN SOMEBODY OPENED IT. That is how the counters went deaf for weeks:
- * the fact was computable the whole time and nobody was computing it. [[project-bell-was-deaf]]
+ * ⚠️⚠️ AND THE HEALTH PAGE ONLY RAN WHEN SOMEBODY OPENED IT. That is how the counters went deaf for weeks: the
+ * fact was computable the whole time and nobody was computing it. [[project-bell-was-deaf]]
  *
  * ⚠️ IT SPEAKS ON THE CHANGE, NOT ON THE STATE. A line that repeats every fifteen seconds is wallpaper, and
  * wallpaper is how the next real one gets missed. [[feedback-text-budget]]
@@ -14297,6 +14422,7 @@ function watchTick(){
   if (now === WATCH_WAS) return;                       /* nothing changed — say nothing */
   var was = WATCH_WAS; WATCH_WAS = now;
   if (was === null) return;                            /* the first reading is a baseline, not news */
+  try { if (document.getElementById('linedlg') && document.getElementById('linedlg').open) paintLine(); } catch (_) {}
   /* ⚠️ a fault the tester CHOSE is not news either — the simulator bar is already saying so ([TILL-140]) */
   var sim = false; try { sim = netNow() !== 'full'; } catch (_) {}
   if (!now) { toastLine(sim ? '' : 'Everything is working again.'); return; }
@@ -14306,9 +14432,233 @@ function watchTick(){
   fresh.sort(function(a, b){ return (a.id === 'save' ? -1 : 0) - (b.id === 'save' ? -1 : 0); });
   var one = fresh[0];
   if (sim && one.id !== 'save') return;                /* simulated, and not the one that loses work */
-  toastLine(one.name + ' has stopped \u2014 ' + one.costs
-    + (fresh.length > 1 ? ' (and ' + (fresh.length - 1) + ' more \u2014 press \ud83e\ude7a)' : ''));
+  /**
+   * ⚠️⚠️ A ROW IN 'carries on as normal' HOLDS ITS GOOD-DAY WORDING ([TILL-152]), so reading costs here
+   * produced "Saving a bill here has stopped — Written to this device the moment you save it": the
+   * reassuring sentence delivered as the fault. [TILL-139] again, in a third place. A broken normal row is
+   * the one that can lose work, and it gets the only words that matter.
+   */
+  var says = one.bucket === 'normal'
+    ? one.name + ' has stopped — stop billing on this counter and ring for help'
+    : one.name + ' has stopped — ' + (one.fix || one.costs);
+  toastLine(says
+    + (fresh.length > 1 ? ' (and ' + (fresh.length - 1) + ' more — press 🩺)' : ''));
 }
+
+/**
+ * ── ⭐⭐⭐ WORKING WITHOUT THE LINE ([TILL-151]) ───────────────────────────────────────────────────────────
+ *
+ * design-handoff/without-the-line — png/OfflineWide.png, png/OfflinePhone.png, png/OfflineStates.png.
+ *
+ * Athi, on the panel this replaces: *"the design PNG was something really appealing, but here it is not the
+ * case."* It was not: ten bullets of bad news in a narrow dialog, with the reassuring sentence last, small
+ * and grey. The order IS the message, so it runs: what carries on, what waits, what needs the line — and
+ * every blocked card carries its own way round it, on the card, not in a footnote.
+ *
+ * ⚠️ WRITTEN FOR THE PHONE FIRST and widened with one min-width query, because the counter that loses its
+ * line most often is the one on a handset (§5, README rule 2).
+ * ⚠️ IT NEVER BLOCKS A SALE. It is opened from the pill and from any message that says something could not be
+ * done; nothing about it disables anything (§6.1).
+ */
+/** ⭐ what is waiting, and since when — a list without counts reads as chaos (README rule 4) */
+async function waitingNow(){
+  try {
+    if (typeof DB !== 'undefined' && DB && DB.all) {
+      var q = (await DB.all('queue')) || [];
+      var at = q.map(function(r){ return r.at || (r.bill && r.bill.at) || null; })
+                .filter(Boolean).sort();
+      return { total:q.length, oldest:at[0] || null };
+    }
+  } catch (_) {}
+  var n = Number((STATE && STATE.queued) || 0);
+  return { total:n, oldest:null };
+}
+
+/**
+ * ⚠️⚠️ THE FAULTS THAT ARE NOT ABOUT THE LINE. A panel about the line that goes quiet when the device cannot
+ * save a bill would be the comfortable answer again — so a broken 'normal' row is lifted out and said first,
+ * above everything, because storage is the only thing here that can actually lose work.
+ */
+function lineFaults(rows){
+  return rows.filter(function(x){ return x.bucket === 'normal' && !x.ok; });
+}
+
+function hhmm(d){ try { return new Date(d).toTimeString().slice(0, 5); } catch (_) { return ''; } }
+
+async function paintLine(){
+  var box = document.getElementById('linebody'); if (!box) return;
+  var r = healthReading(), L = lineState(), rows = watchNow(r), w = await waitingNow();
+  var word = lineWord(L.state), since = lineSince();
+  var norm = rows.filter(function(x){ return x.bucket === 'normal'; });
+  var wait = rows.filter(function(x){ return x.bucket === 'waits'; });
+  var need = rows.filter(function(x){ return x.bucket === 'needs_line'; });
+  var faults = lineFaults(rows);
+
+  /* ── the banner: the time, the length and the count (§6.4, §6.5) ─────────────────────────────────── */
+  var when = (L.state === 'good' || !since)
+    ? ''
+    : 'No line to the shop since <b>' + hhmm(since.at) + '</b>, that is ' + since.mins
+      + ' minute' + (since.mins === 1 ? '' : 's') + '. ';
+  var body = L.state === 'good'
+    ? 'Nothing is waiting. Every bill this counter has rung is at the shop.'
+    : (L.state === 'patchy'
+        ? 'About one send in ' + Math.max(2, Math.round(1 / Math.max(L.rate, 0.01)))
+          + ' needs a second go. <b>Nothing is lost</b> — a send that fails is tried again by itself, so a '
+          + 'waiting count that rises and falls is normal here. It only matters if it climbs and never falls.'
+        : when + 'Billing, printing and taking money never needed the line, so they carry on exactly as '
+          + 'before. <b>' + w.total + ' thing' + (w.total === 1 ? '' : 's') + ' ' + (w.total === 1 ? 'is' : 'are')
+          + ' waiting here</b> and go by themselves the moment it returns.');
+
+  /**
+   * ⚠️ THE BARS BELONG TO THE PATCHY STATE, AND ONLY TO IT (§3). Drawn on a dead line they showed twenty
+   * amber bars under "0 went first time · 20 needed a second go" — which is not what a failed send is, and
+   * turned the one piece of evidence on the panel into a wall of alarm.
+   */
+  var bars = (L.state === 'patchy' && L.tries.length)
+    ? '<div class="lbars"><div class="u">THE LAST ' + L.tries.length + ' SENDS</div><div class="lbarrow">'
+      + L.tries.map(function(t){ return '<i class="' + (t.ok ? 'y' : 'n') + '"></i>'; }).join('')
+      + '</div><div class="u">' + L.tries.filter(function(t){ return t.ok; }).length + ' went first time · '
+      + L.tries.filter(function(t){ return !t.ok; }).length + ' needed a second go · <b>0 lost</b></div></div>'
+    : '';
+
+  function card(x, n){
+    return '<div class="lcard"><b>' + esc(x.name) + '</b>'
+      + (n ? '<div class="u">' + esc(n) + '</div>' : (x.costs ? '<div class="u">' + esc(x.costs) + '</div>' : ''))
+      + (x.fix ? '<div class="lfix">' + esc(x.fix) + '</div>' : '')
+      + '</div>';
+  }
+  function sec(cls, mark, title, count, lead, inner){
+    return '<section class="lsec ' + cls + '"><h4><span class="lmark">' + mark + '</span>' + esc(title)
+      + '<em>' + esc(count) + '</em></h4>'
+      + (lead ? '<p class="u">' + esc(lead) + '</p>' : '') + inner + '</section>';
+  }
+
+  /* ⭐ CARRIES ON FIRST, and folded to one line of names — nobody needs to read it, they need to know it
+     exists (§5). The long list is the third column, not the first (rule 3). */
+  var okN = norm.filter(function(x){ return x.ok; });
+  box.innerHTML =
+      faults.map(function(x){
+        return '<div class="lfault" data-testid="till-line-fault"><b>' + esc(x.name) + ' is not working</b>'
+          + '<div>' + esc(x.costs) + ' — this is the one thing here that can lose work. '
+          + 'Stop billing on this counter and ring for help.</div></div>';
+      }).join('')
+    + '<div class="lban ' + word.tone + '" data-testid="till-line-banner">'
+      + '<div><h3>' + esc(word.head) + '</h3><p>' + body + '</p></div>'
+      + '<div class="lact"><button class="pri" data-testid="till-line-try" onclick="lineTry()">Try the line again</button>'
+      + '<span class="u">it is already trying every 20 seconds</span></div></div>'
+    + bars
+    + '<div class="lcols">'
+    + sec('ok', '✓', 'Carries on as normal', okN.length + ' of ' + norm.length,
+        'None of these ever needed the line. They behave exactly as they do on a good day.',
+        '<p class="lnames" data-testid="till-line-normal">'
+        + okN.map(function(x){ return esc(x.name); }).join(' · ') + '</p>')
+    + sec('wait', '~', 'Works, and waits', w.total + ' waiting',
+        'Done here now, sent by themselves later. Nothing needs to be redone or remembered.',
+        wait.map(function(x){
+          return card(x, x.id === 'send'
+            ? w.total + ' waiting' + (w.oldest ? ', oldest ' + hhmm(w.oldest) : '')
+            : (x.id === 'cat' && S && S.at ? 'As they were at ' + hhmm(S.at) + ' — nothing has changed since' : ''));
+        }).join(''))
+    + sec('need', '!', 'Needs the line — do this instead', String(need.filter(function(x){ return !x.ok; }).length),
+        'Each one has a way round it today. None of them stops a sale.',
+        need.filter(function(x){ return !x.ok; }).map(function(x){ return card(x, ''); }).join('')
+        || '<p class="u">Nothing is blocked.</p>')
+    + '</div>'
+    + '<div class="lback"><div class="u">WHEN THE LINE COMES BACK<br><b>Nobody has to do anything</b></div>'
+      + ['The ' + w.total + ' waiting things go, oldest first', 'Prices and products refresh themselves',
+         'Every bill is checked against the shop', 'The counter can be closed — we say so']
+        .map(function(t, i){ return '<div class="lstep"><i>' + (i + 1) + '</i>' + esc(t) + '</div>'; }).join('')
+    + '</div>';
+}
+
+/**
+ * ── ⭐⭐⭐ FOR SOMEONE WHO CANNOT READ ([TILL-152]) ────────────────────────────────────────────────────────
+ *
+ * Athi, tired of saying it: *"we are building something for a very lay man, they can't read or write, they
+ * can only know to click — that should be your assumption."*
+ *
+ * ⚠️⚠️⚠️ THE PREVIOUS PANEL WAS A DOCUMENT. Three columns of sentences, a four-step footer, a paragraph in
+ * the banner. Every word of it was true and none of it was readable by the person it was for. A screen that
+ * has to be READ to be understood is a screen that will not be understood.
+ *
+ * ⭐ SO: a face, a number, and a button.
+ *   · one big symbol and one short line say the state
+ *   · three tiles, each a symbol and a COUNT — green working, amber waiting, grey locked
+ *   · a tile opens its own list, for the person who does want to read; shut by default
+ *   · one button, and it is never needed — the counter fixes itself
+ * ⚠️ Counts are digits, never words: a numeral is readable by someone who cannot read.
+ */
+var LINE_OPEN = '';        /* which tile the person tapped open — nothing, by default */
+function lineTile(t){ LINE_OPEN = (LINE_OPEN === t) ? '' : t; paintLine(); }
+
+async function paintLine(){
+  var box = document.getElementById('linebody'); if (!box) return;
+  var r = healthReading(), L = lineState(), rows = watchNow(r), w = await waitingNow();
+  var norm = rows.filter(function(x){ return x.bucket === 'normal'; });
+  var need = rows.filter(function(x){ return x.bucket === 'needs_line' && !x.ok; });
+  var okN = norm.filter(function(x){ return x.ok; });
+  var faults = lineFaults(rows);
+  var since = lineSince();
+
+  /* ⭐ THE FACE. One symbol, one line, and the line is four words or fewer. */
+  var face = L.state === 'good' ? { ico:'✓', tone:'ok',   say:'All sent' }
+           : L.state === 'patchy' ? { ico:'∿', tone:'warn', say:'Slow — nothing lost' }
+           :                        { ico:'✕', tone:'warn', say:'Keep selling' };
+
+  function tile(id, tone, ico, n, word, list){
+    var open = LINE_OPEN === id;
+    return '<button class="ltile ' + tone + (open ? ' on' : '') + '" data-testid="till-line-tile-' + id + '"'
+      + ' onclick="lineTile(\'' + id + '\')" aria-expanded="' + (open ? 'true' : 'false') + '">'
+      + '<span class="lico">' + ico + '</span><b>' + n + '</b><span>' + esc(word) + '</span></button>'
+      + (open ? '<div class="ltell" data-testid="till-line-tell-' + id + '">' + list + '</div>' : '');
+  }
+  function names(xs){ return '<p>' + xs.map(function(x){ return esc(x.name); }).join(' · ') + '</p>'; }
+  function cards(xs){
+    return xs.map(function(x){
+      return '<div class="lcard"><b>' + esc(x.name) + '</b>'
+        + (x.fix ? '<div class="lfix">' + esc(x.fix) + '</div>' : '') + '</div>';
+    }).join('') || '<p>—</p>';
+  }
+
+  box.innerHTML =
+      /* ⚠️⚠️ the one fault that can lose work is the only thing allowed above the face */
+      faults.map(function(x){
+        return '<div class="lfault" data-testid="till-line-fault"><span>⚠</span><b>' + esc(x.name)
+          + '</b><i>Stop. Ring for help.</i></div>';
+      }).join('')
+    + '<div class="lface ' + face.tone + '" data-testid="till-line-banner">'
+      + '<span class="lbig">' + face.ico + '</span>'
+      + '<b>' + esc(face.say) + '</b>'
+      /* ⭐ THE NUMBER, in digits, bigger than any word on the screen */
+      + (w.total ? '<em data-testid="till-line-count">' + w.total + '</em><span>waiting</span>' : '')
+      + (since && L.state !== 'good' ? '<span class="u">' + since.mins + ' min</span>' : '')
+      + '</div>'
+    + '<div class="ltiles">'
+      + tile('ok',   'ok',   '✓', okN.length, 'working', names(okN))
+      + tile('wait', 'wait', '⏳', w.total,    'waiting',
+             '<p>' + esc('They go on their own. Do not ring them again.') + '</p>')
+      + tile('need', 'need', '🔒', need.length, 'locked', cards(need))
+    + '</div>'
+    + '<button class="lgo" data-testid="till-line-try" onclick="lineTry()">'
+      + '<span>↻</span>' + (L.state === 'good' ? 'Check again' : 'Try now') + '</button>';
+}
+
+/** ⭐ it refreshes while it is open, so the counts fall and the banner turns green under the reader (§6.6) */
+async function openLine(){
+  var d = document.getElementById('linedlg'); if (!d) return;
+  await paintLine();
+  if (!d.open) d.showModal();
+  clearInterval(window.__lineTick);
+  window.__lineTick = setInterval(function(){
+    var el = document.getElementById('linedlg');
+    if (!el || !el.open) { clearInterval(window.__lineTick); return; }
+    if (HOST && HOST.state) HOST.state().then(function(st){ if (st) STATE = st; paintLine(); }).catch(function(){});
+    else paintLine();
+  }, 4000);
+}
+function lineClose(){ clearInterval(window.__lineTick); var d = document.getElementById('linedlg'); if (d && d.open) d.close(); }
+/** ⚠️ it is already trying by itself; this is here because people need to be able to ask, not because it helps */
+async function lineTry(){ try { if (HOST && HOST.drain) await HOST.drain(); } catch (_) {} try { await refresh(); } catch (_) {} paintLine(); }
 
 async function openHealth(){
   var d = document.getElementById('healthdlg'); if (!d) return;
@@ -16848,7 +17198,7 @@ async function openStuck(){
      * already opens when they are asking what the line is doing.
      */
     + '<label class="pill" style="display:inline-flex;gap:6px;align-items:center">📶 Line'
-    + '<select data-testid="till-net" onchange="netSet(this.value)">'
+    + '<select data-testid="till-net-sim" onchange="netSet(this.value)">'
     + Object.keys(NETS).map(function(k){
         return '<option value="' + k + '"' + (k === netNow() ? ' selected' : '') + '>' + esc(NETS[k].label) + '</option>';
       }).join('')
