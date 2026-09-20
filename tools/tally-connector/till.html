@@ -3077,7 +3077,7 @@
 <script src="/engine/qr.js" onerror="engineMissed('qr')"></script>
 <!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
 <script src="/engine/money.js" onerror="engineMissed('money')"></script>
-<!-- ⭐ what a document number may look like, per country. It is HERE and not only on the server because the
+<!-- ⭐ what a document number may look like, per country. It is HERE and not only on the shop because the
      counter numbers its own bills offline — the moment a number is issued is the moment there may be no server. -->
 <script src="/engine/docnumber.js" onerror="engineMissed('docnumber')"></script>
 <script src="/engine/locale.js" onerror="engineMissed('locale')"></script>
@@ -3098,7 +3098,7 @@
      disagreed with lib/units.js the first time somebody added a unit. -->
 <script src="/engine/units.js" onerror="engineMissed('units')"></script>
 <!-- ⭐⭐ WHAT A GSTIN, A PAN AND A PIN CODE LOOK LIKE ([TILL-105]). So the counter can confirm one while it is
-     being typed, with the line down, using the SAME module the server checks it with. -->
+     being typed, with the line down, using the SAME module the shop checks it with. -->
 <script src="/engine/profilemap.js" onerror="engineMissed('profilemap')"></script>
 <!-- ⭐⭐ WHAT A COUNTRY REQUIRES ([TILL-105]) — when a shop must register for tax, so the counter can tell a
      small shop it does not have to yet. The country anchors it, and the country comes from the device. -->
@@ -3108,9 +3108,9 @@
      it is here for the UNPAIRED counter, which has no shop yet and so no country from anywhere else. -->
 <script src="/engine/govcontext.js" onerror="engineMissed('govcontext')"></script>
 <!-- ⭐ REWARDS. The counter has to say what a customer just earned while they are still standing there, so the
-     arithmetic runs here with the line down; the server runs the same file again and its answer is written. -->
+     arithmetic runs here with the line down; the shop runs the same file again and its answer is written. -->
 <!-- ⭐⭐ WHAT A DAY’S TAKINGS ARE ([TILL-125]). The page used to work this out itself, in two places. The
-     counter program and the server already shared lib/rollup.js; now the page does too, so a change to what a
+     counter program and the shop already shared lib/rollup.js; now the page does too, so a change to what a
      return does to a day cannot leave one screen saying a different number from another. -->
 <script src="/engine/rollup.js" onerror="engineMissed('rollup')"></script>
 <!-- ⭐⭐ one cause → one sentence → one button ([TILL-132]/[TILL-137]). The health page renders it; the
@@ -3377,7 +3377,7 @@ var MEM = { on:false, fail:null, key:function(s,k){ return tillStore() + '-' + s
  * it silently to an installed app or a site the person uses often; a refusal is not an error, it is a fact the shop should be
  * told, so health() reports it rather than this failing quietly.
  * ⚠️ NOT A BACKUP. Persistent storage survives a crash and a reboot; it does not survive a dead disk or a reinstalled Windows.
- * What makes a bill safe is reaching the server, which is what the queue exists to do — this only stops the browser throwing the
+ * What makes a bill safe is reaching the shop, which is what the queue exists to do — this only stops the browser throwing the
  * queue away while it is still waiting.
  */
 var KEPT = { asked:false, granted:null, why:'' };
@@ -4066,7 +4066,7 @@ var CloudHost = {
    * ── ⚠️⚠️ EVERY WAY THIS COULD FAIL USED TO BE SILENT ─────────────────────────────────────────────────────────
    *
    * Athi, 2026-09-10, observation 5: *"offline and syncing back is not working. After I click the sync now button
-   * also, it is not working."* His screenshot: *"4 bills waiting to reach the server · Could not send them just
+   * also, it is not working."* His screenshot: *"4 bills waiting to reach the shop · Could not send them just
    * now. They are safe here and will go by themselves."*
    *
    * ⭐⭐⭐ AND THAT SENTENCE WAS EVERYTHING THE COUNTER COULD TELL HIM, because drain() had four exits and not one
@@ -4137,7 +4137,7 @@ var CloudHost = {
       why: 'This counter has no key yet — pair it from the shop, then the bills will go.' };
       try { await queueTally(); paintStatus(); } catch (_) {} return; }
     if (!navigator.onLine) { this.last = { at: Date.now(), tried: 0, sent: 0,
-      why: 'No internet. The bills are safe here and go as soon as it returns.' };
+      why: 'No line to the shop. The bills are safe here and go as soon as it returns.' };
       try { await queueTally(); paintStatus(); } catch (_) {} return; }
     this._busy = true;
     /* ⚠️ hoisted, because the finally below reports them and DB.all can throw before the loop begins */
@@ -4207,7 +4207,7 @@ var CloudHost = {
              *   2. it was never queued, because the write failed
              *   3. `DB.all` filtered it out, because the row is stamped for a different shop on this device
              * The counter could not tell them apart and showed the most flattering of the three. Three bills read
-             * "✓ sent · All 3 have reached the server" while ChitBridge had never heard of them.
+             * "✓ sent · All 3 have reached the shop" while ChitBridge had never heard of them.
              *
              * ⭐ SO THE PROOF IS KEPT, not deduced: the chit_id ChitBridge answered with, and when. A bill says
              * "sent" only if it carries one. Absence now reads as "not confirmed", which is the truth, and the
@@ -4648,7 +4648,7 @@ function chitOf(bill){
       customer: (bill.customer && bill.customer.name) ? bill.customer : { name:'Walk-in' },
       till: { id: bill.till, name: ls.get('cb_till_name','Counter 1'), host: 'browser', by: bill.by || null },
       bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
-      /* ⭐ the number on the customer's paper, when the books had to record the sale under another — see renumberBill */
+      /* ⭐ the number on the customer's paper, when the shop had to record the sale under another — see renumberBill */
       printed_as: bill.printed_as || null,
       /* ⭐ this bill's place in its counter's run — the cloud keeps the highest (routes/counters.js noteBill) */
       series: bill.series || null,
@@ -4687,7 +4687,7 @@ async function pickHost(){
     var k = hv('key');
     /**
      * ⭐⭐ WHO THIS COUNTER WAS OPENED FOR. ChitBridge puts the signed-in shop in the address beside the key, so the counter has
-     * something to CHECK the server's answer against. Without it a counter could only ever believe whatever a stored key returned.
+     * something to CHECK the shop's answer against. Without it a counter could only ever believe whatever a stored key returned.
      */
     var wantShop = hv('shop'), wantName = hv('as');
     /**
@@ -4721,7 +4721,7 @@ async function pickHost(){
  *   2 the shop ChitBridge opened it for  — carried in the address (#shop=…)
  *   3 the shop the SERVER answered with  — snapshot.entity_id, which no client can fake
  * If 2 and 3 disagree, this counter is holding another shop's copy and MUST NOT take money against it. It stops and says so in
- * words, with the way out — rather than quietly billing, which is what happened before and only showed up in the books.
+ * words, with the way out — rather than quietly billing, which is what happened before and only showed up in the shop.
  * ⚠️ Silent when the counter was opened cold (a bookmark, a shortcut, the desktop kit): nothing declared an expectation, so there
  * is nothing to contradict. A wrong answer is a fault; no answer is just a cold start.
  */
@@ -5586,7 +5586,7 @@ function retainSay(why, dropped, kept, bytes, lim){
          : why === 'count' ? 'it reached ' + lim.bills + ' bills'
          :                   'they were older than ' + lim.days + ' days';
   return dropped + ' older bill' + (dropped === 1 ? '' : 's') + ' would leave this counter because '
-    + by + '. They stay on the server and can always be read back.';
+    + by + '. They stay at the shop and can always be read back.';
 }
 
 /**
@@ -5631,7 +5631,7 @@ async function retainRun(){
 }
 
 /**
- * ⭐ IT RUNS AT THE QUIET MOMENT, NOT MID-SALE. Day close is when a counter is already waiting on the server,
+ * ⭐ IT RUNS AT THE QUIET MOMENT, NOT MID-SALE. Day close is when a counter is already waiting on the shop,
  * and it is the one moment the shopkeeper expects the till to be doing bookkeeping.
  * ⚠️ It is also the only place it runs: a trim that fires while somebody is billing is a trim that will one
  * day fire while somebody is billing.
@@ -5640,7 +5640,7 @@ async function retainAtClose(){
   try {
     var r = await retainRun();
     if (r && r.dropped) toastLine(r.dropped + ' older bill' + (r.dropped === 1 ? '' : 's')
-      + ' moved off this counter — they are on the server.');
+      + ' moved off this counter — they are at the shop.');
     return r;
   } catch (_) { return { ok: false, dropped: 0 }; }
 }
@@ -6001,7 +6001,7 @@ function menuSection(id){
  *
  * ⚠️ THE IMAGE IS THE SHOP'S OWN (cb_till_dayimg, kept per device as a data URL so it works with the line
  * down). We ship none: see the note on TILL_MENU. With none chosen it says so plainly and still opens the day.
- * ⚠️ EVERY LINE BELOW IS A FACT THIS COUNTER CAN CHECK, not a reassurance. "Nothing waiting to be sent" is read
+ * ⚠️ EVERY LINE BELOW IS A FACT THIS COUNTER CAN CHECK, not a reassurance. "Nothing waiting to go to the shop" is read
  * from the queue; the series line is read from what this counter has actually issued. A morning panel that
  * said "all well" without looking would be the same lie as a label that cannot be defended.
  */
@@ -7947,11 +7947,11 @@ async function quickBringBack(id){
   ls.set(shopLs('cb_till_qsold'), JSON.stringify(quickSold().filter(function(x){ return x.id !== id; })));
   /**
    * ⚠️⚠️ THE SERVER ROW GOES FIRST, AND THE ITEM IS HELD BACK WHILE IT DOES. quickPushHide always writes THIS
-   * counter's own row too, so the row that made it sold out is still on the server the instant it is brought
+   * counter's own row too, so the row that made it sold out is still on the shop the instant it is brought
    * back locally — and quickSyncHidden(), which runs inside loadQuick(), would read that row, not find it in
    * the local tray any more, and put it straight back. The shopkeeper taps "bring back" and it jumps into the
    * sold-out tray in front of them (found by a critic pass, 2026-09-18).
-   * So: remember it as just-brought-back, tell the server, and only then repaint.
+   * So: remember it as just-brought-back, tell the shop, and only then repaint.
    */
   QUICK_JUST_BACK[String(id)] = Date.now();
   if (HOST && HOST.tillPost) { try { await HOST.tillPost('/api/till/quick-keys/unhide', { product_id: id }, { noQueue: true }); } catch (_) {} }
@@ -10200,7 +10200,7 @@ function mrpUnder(i){
  *
  * ⚠️⚠️ SO THIS PASSES THROUGH, ON PURPOSE. A URL rewritten to ?width= against a server that does not serve
  * transforms returns a 400, and every key on the counter becomes a broken picture — offline, mid-sale. The
- * seam exists so the day the server can, ONE function changes and the shelf, the keys, the card and the
+ * seam exists so the day the shop can, ONE function changes and the shelf, the keys, the card and the
  * preview all follow. It is not a placeholder: it is the single call site, which is the hard part.
  *
  * ⚠️ WHAT THIS MEANS TODAY, SAID PLAINLY: key size changes how big a picture is DRAWN. It does not yet
@@ -10824,7 +10824,7 @@ function cardFoot(i){
     + (n ? '<b>' + n + ' change' + (n === 1 ? '' : 's') + ' not saved — ' + esc(what.join(' · ')) + '</b>'
            + '<i>Saved here first, then sent. Nothing is lost if the line drops.</i>'
          : '<i>Change anything above — nothing moves until you press Save. It is written here first,'
-           + ' then sent to the server for every counter and the shop screen.</i>')
+           + ' then sent to the shop for every counter and the shop screen.</i>')
     + '</span>'
     + '<button class="pill" data-testid="card-discard" onclick="cardDiscard()"' + (n ? '' : ' disabled') + '>Undo change</button>'
     + '<button class="pri" id="cardsavebtn" data-testid="card-save" onclick="cardSave()"' + (n ? '' : ' disabled') + '>Save · Ctrl S</button>'
@@ -11054,10 +11054,10 @@ async function cardSave(){
      */
     el.className = 'cardnote' + (failed.length ? ' bad' : (queued ? ' here' : (done.length ? ' sent' : '')));
     el.innerHTML = (done.length
-        ? (queued ? '<b class="nb here">On this counter only</b>' : '<b class="nb sent">Sent to the server</b>')
+        ? (queued ? '<b class="nb here">On this counter only</b>' : '<b class="nb sent">Sent to the shop</b>')
         : '')
       + (done.length ? ' ' + esc(i.name) + ': ' + esc(done.join(', ')) + '.' : '')
-      + (queued ? ' It is safe here and reaches the server when the line is back \u2014 every counter and the'
+      + (queued ? ' It is safe here and reaches the shop when the line is back \u2014 every counter and the'
                 + ' shop screen get it then.'
                 : (done.length ? ' Every counter and the shop screen have it now.' : ''))
       + (failed.length ? (done.length ? ' ' : '<b class="nb bad">Not saved</b> ') + esc(failed.join(' ')) : '');
@@ -11133,7 +11133,7 @@ function refusalWords(out){
 }
 function cardNote(out, said){
   var el = document.getElementById('cardnote'); if (!el) return;
-  el.textContent = out && out.queued ? 'Saved here — it reaches the server when the internet is back.'
+  el.textContent = out && out.queued ? 'Saved here — it reaches the shop when the line is back.'
     : (out && out.ok ? said : refusalWords(out));
   /* ⭐ and the change is SHOWN, not only described — the words are read second, if at all */
   flashItem(CARD_ID);
@@ -11573,7 +11573,7 @@ function searchKey(e){
  * run out must stop being offered before the next customer asks for it, and a new rate must reach the very next bill. That is
  * what earns them a place at the counter rather than on a form somewhere.
  *
- * ⚠️ THE LOCAL COPY IS UPDATED FIRST, then the server is told. The shelf must reflect what the shopkeeper just did while they are
+ * ⚠️ THE LOCAL COPY IS UPDATED FIRST, then the shop is told. The shelf must reflect what the shopkeeper just did while they are
  * still looking at it; waiting for a round trip across the Pacific to redraw a row is how a counter comes to feel broken.
  * ⚠️ AND IF THE LINE IS DOWN IT IS QUEUED, not refused — the same queue the bills ride. A shop whose internet is out still knows
  * the rice has run out, and the counter must not go on selling it for the rest of the afternoon.
@@ -11802,7 +11802,7 @@ function queueStuck(){
 /** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
 function queueWords(){
   /**
-   * ⚠️⚠️ A COUNT ON ITS OWN READS AS PATIENCE ([TILL-132]). "10 waiting to reach the server" is what a
+   * ⚠️⚠️ A COUNT ON ITS OWN READS AS PATIENCE ([TILL-132]). "10 waiting to reach the shop" is what a
    * counter said for three hours while every one of them was being refused. When the reason is FATAL — it will
    * not clear by waiting — the reason replaces the count, because the count is no longer the news.
    */
@@ -11818,7 +11818,7 @@ function queueWords(){
    * where the question is whether the day's money is safe. [[feedback-silence-is-the-bug]]
    */
   if (!paired()) return 'this counter is not connected to a shop yet';
-  if (!STATE.queued) return 'everything has reached the server';
+  if (!STATE.queued) return 'everything has reached the shop';
   var bits = [];
   var n = function(c, one, many){ if (c) bits.push(c + ' ' + (c === 1 ? one : many)); };
   n(QUEUED.bills, 'bill', 'bills');
@@ -11836,7 +11836,7 @@ function queueWords(){
    */
   var stuck = (typeof HOST !== 'undefined' && HOST && HOST.last && HOST.last.why) ? HOST.last.why : '';
   if (stuck.length > 90) stuck = stuck.slice(0, 88) + '…';
-  var tail = ' waiting to reach the server' + (stuck ? ' — ' + stuck : '');
+  var tail = ' waiting to reach the shop' + (stuck ? ' — ' + stuck : '');
   if (!bits.length) return STATE.queued + tail;
   return bits.join(' · ') + tail;
 }
@@ -13012,7 +13012,7 @@ function kbdToggle(){
 function focusSearch(){ var q = document.getElementById('q'); if (q) { q.focus(); q.select(); } }
 
 /**
- * ⭐ THE SAME PRICE THE CHIT WILL CARRY. Offers come from CBOffers and the rate from CBTax.slab — the engines the server runs, cached
+ * ⭐ THE SAME PRICE THE CHIT WILL CARRY. Offers come from CBOffers and the rate from CBTax.slab — the engines the shop runs, cached
  * here. If either is missing the bill still adds up, with no offer and no split, and the screen says so rather than inventing one.
  */
 /**
@@ -13692,12 +13692,12 @@ function health(){
    */
   if (KEPT.granted === false && (STATE.queued || 0) > 0)
     add('bad', 'This browser has not promised to keep your bills',
-      (STATE.queued || 0) + ' bill(s) are waiting here to reach the server, and this browser is allowed to clear its own storage if the disk runs low. A reboot is fine — losing them needs a disk clear-out or "clear browsing data".',
+      (STATE.queued || 0) + ' bill(s) are waiting here to reach the shop, and this browser is allowed to clear its own storage if the disk runs low. A reboot is fine — losing them needs a disk clear-out or "clear browsing data".',
       'Press ↻ while online to send them now. On a shop PC use the desktop counter, which keeps its bills in a file instead.');
   else if (KEPT.granted === false)
     add('note', 'This browser keeps counter data on a best-effort basis',
       'Bills survive a crash and a reboot — they are on disk, not in memory. But the browser may clear them if the disk runs very low, and "clear browsing data" removes them.',
-      'Nothing to do while bills are reaching the server. On a shop PC the desktop counter is the sturdier home.');
+      'Nothing to do while bills are reaching the shop. On a shop PC the desktop counter is the sturdier home.');
 
   /* ⚠️ THE ASSUMPTION THAT WAS NEVER ASKED: are shelf prices quoted with the tax in them, or without? */
   add('note', ((S.policy && S.policy.price_includes_tax) === 'no')
@@ -13751,7 +13751,7 @@ function health(){
         lastWhy + ' They are safe on this device and it keeps trying.',
         'If it says the key was refused, pair this counter again. Otherwise tell us what it says.');
     else
-      add('warn', STATE.queued + ' bills are waiting to reach the server',
+      add('warn', STATE.queued + ' bills are waiting to reach the shop',
         'They are safe on this device and go by themselves, once each. A queue this long usually means the line has been down a while.',
         'Nothing, unless it stays this way after the internet is back.');
   }
@@ -13772,7 +13772,7 @@ function health(){
  *   1 am I even looking at the right shop?      the entity the key answers for, against the one we were opened for
  *   2 do I have everything?                     our count against the shop's count, right now
  *   3 is what I have RIGHT?                     eight real rows spread across the whole shelf, compared name and price
- *   4 how old is it?                            the server's clock against the copy we hold
+ *   4 how old is it?                            the shop's clock against the copy we hold
  *
  * ⚠️ THE SAMPLE IS SPREAD ACROSS THE SHELF ON PURPOSE. Checking the first eight rows would pass on a counter that only ever
  * received page one, which is the exact fault being looked for.
@@ -13918,7 +13918,7 @@ function openHealth(){
  * So points pay for part of the bill instead, exactly as ₹500 in cash and the rest on UPI already does. The total,
  * the tax split and the slip are untouched; a tender called "Points" covers some of it.
  * ⚠️ AND THIS IS REUSE, NOT A PARALLEL PATH. It rides PARTS — the split-tender mechanism the counter already has —
- * so the day close counts it, the chit carries it in payment.parts, and the books see a real tender rather than a
+ * so the day close counts it, the chit carries it in payment.parts, and the shop see a real tender rather than a
  * discount that has to be explained.
  */
 var RW = { holder:null, points:0, worth:0, spend:0, says:null, seq:0 };
@@ -13943,8 +13943,8 @@ function rwHolder(){
 /** what THIS cart would earn, computed here so the customer hears it before they pay */
 function rwEarns(){
   var p = rwProg(); if (!p || !window.CBRewards) return 0;
-  /* ⚠️ walk_in_earns is the shop's declaration, and the server enforces it too — this only stops the counter
-     promising something the server will then decline to write. */
+  /* ⚠️ walk_in_earns is the shop's declaration, and the shop enforces it too — this only stops the counter
+     promising something the shop will then decline to write. */
   var h = RW.holder;
   if (!h || (h.scheme === 'phone' && p.walk_in_earns === false)) return 0;
   var m = billMoney();
@@ -13959,7 +13959,7 @@ function rwWorth(points){
 }
 
 /**
- * ⭐ THE LOOKUP. A balance lives on the server, so this needs the line — and a counter that is offline simply does
+ * ⭐ THE LOOKUP. A balance lives on the shop, so this needs the line — and a counter that is offline simply does
  * not offer encashment, which is honest: it cannot know what is left. Earning still works offline, because earning
  * is computed from the bill in front of us and reconciled when the queue drains.
  */
@@ -14308,7 +14308,7 @@ var UP = { csv: '', xlsx: '', name: '', headerRow: null, report: null, decisions
 /**
  * ⭐ A SPREADSHEET OR A .csv ([TILL-109]). Athi: *"most shops will have excel files"* — and "save it as CSV
  * first" is the instruction that stops a shop opening today.
- * ⚠️ .xls (the 1997 format) is NOT a zip and is not offered; the server says so in words if one arrives.
+ * ⚠️ .xls (the 1997 format) is NOT a zip and is not offered; the shop says so in words if one arrives.
  */
 /**
  * ── ⭐⭐ THE WORKBOOK TO START FROM ([TILL-115]) ────────────────────────────────────
@@ -14360,7 +14360,7 @@ async function upRead(file){
   if (!d.open) d.showModal();
 
   /**
-   * ⚠️⚠️ A WORKBOOK IS BINARY. Reading it with .text() would mangle it beyond recognition and the server
+   * ⚠️⚠️ A WORKBOOK IS BINARY. Reading it with .text() would mangle it beyond recognition and the shop
    * would report a damaged file — so it travels as base64 and the CSV keeps travelling as text.
    */
   UP.name = file.name || 'your list';
@@ -14543,7 +14543,7 @@ function upReady(){
  */
 function upBody(){
   var b = UP.xlsx ? { xlsx: UP.xlsx } : { csv: UP.csv };
-  /* ⚠️⚠️ THE COMMIT SENDS IT TOO. Without this the server would re-read the file from row 1 and import
+  /* ⚠️⚠️ THE COMMIT SENDS IT TOO. Without this the shop would re-read the file from row 1 and import
      against headings nobody approved — the report would have been about a different reading of the file. */
   if (UP.headerRow && UP.headerRow > 1) b.header_row = UP.headerRow;
   return b;
@@ -14609,7 +14609,7 @@ async function upCommit(){
  *
  * ⭐ THE SAME SIGN-IN AS THE WEB — email or User ID, one emailed code. What is different is what it LEAVES
  * BEHIND: not a session, which expires and needs the network to renew, but this shop's counter key, written
- * to this PC. A counter that had to reach the server to open could not bill on a morning the line is down,
+ * to this PC. A counter that had to reach the shop to open could not bill on a morning the line is down,
  * and billing with the line down is what this application is for.
  *
  * ⚠️ THE BROWSER COUNTER CANNOT DO THIS, and says so rather than failing. /api/signin/* lives in the
@@ -14642,9 +14642,9 @@ function signoutOpen(){
   signinSay('', false);
   document.getElementById('signinbody').innerHTML =
       '<p class="note">Sign this counter out of <b>' + esc((sh && (sh.name || sh.bridge_id)) || 'the shop') + '</b>?</p>'
-    + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached the server yet.</b>'
+    + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached the shop yet.</b>'
            + ' They will be sent first — this needs the internet.</p>'
-         : '<p class="note">Everything this counter took has reached the server.</p>')
+         : '<p class="note">Everything this counter took has reached the shop.</p>')
     + '<p class="note u">The shop’s own folder on this PC is kept either way. Signing back in to the same shop'
     + ' picks up exactly where this left off.</p>'
     + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in · Esc</button>'
@@ -14705,9 +14705,9 @@ function signoutCloud(){
   signinSay('', false);
   document.getElementById('signinbody').innerHTML =
       '<p class="note">Sign this counter out of the shop?</p>'
-    + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached the server yet.</b>'
+    + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached the shop yet.</b>'
            + ' Press ↻ first while online, or they stay on this device until the same key is pasted back in.</p>'
-         : '<p class="note">Everything this counter took has reached the server.</p>')
+         : '<p class="note">Everything this counter took has reached the shop.</p>')
     + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in · Esc</button>'
     + '<button class="' + (q ? '' : 'pri') + '" data-testid="till-signout-cloud" onclick="signoutCloudDo()">'
     + (q ? 'Sign out and leave them here' : 'Sign out') + '</button></div>';
@@ -14943,6 +14943,41 @@ function lineSince(){
  * ⚠️ IT SPEAKS ON THE CHANGE, NOT ON THE STATE. A line that repeats every fifteen seconds is wallpaper, and
  * wallpaper is how the next real one gets missed. [[feedback-text-budget]]
  */
+/**
+ * ── ⭐⭐ THE KEY IS ASKED ABOUT, NOT ASSUMED ([TILL-170], BACKLOG TILL-147) ────────────────────────────────
+ *
+ * `CloudHost.verify()` had exactly one caller: a button somebody presses. So a key revoked at the shop — or
+ * simply expired, since a counter key is minted for 365 days and never rotates — was discovered when the next
+ * SEND was refused. On a quiet afternoon that is hours, and the bills sit in the queue the whole time looking
+ * like an ordinary offline spell.
+ *
+ * ⚠️⚠️ THIS IS THE THIRD THING IN A WEEK THAT WAS COMPUTABLE AND NOT BEING COMPUTED: the bell's deafness, the
+ * line's real state, and now the key. Each one reported green because nobody asked the question.
+ *
+ * ⭐ IT IS CHEAP AND IT IS RARE. One small request every ten minutes, on the tick that already exists, and only
+ * when there is a key and a line to use it on. A counter that is offline does not nag itself about a key it
+ * could not check anyway.
+ */
+var KEY_OK = true, KEY_ASKED = 0, KEY_EVERY_MS = 600000;
+async function keyWatch(){
+  try {
+    if (!HOST || !HOST.verify || !HOST.key) return;
+    if (navigator.onLine === false) return;                 /* nothing to learn from a dead line */
+    if (Date.now() - KEY_ASKED < KEY_EVERY_MS) return;
+    KEY_ASKED = Date.now();
+    var v = await HOST.verify();
+    /**
+     * ⚠️⚠️ ONLY A CLEAR REFUSAL COUNTS. A timeout, a 500 or a dropped connection say nothing about the key —
+     * treating them as a bad key would put "sign in again" in front of a shopkeeper every time the line
+     * wobbled, which is how a real warning stops being read.
+     */
+    var refused = !!(v && !v.ok && /40[13]/.test(String(v.why || '')));
+    var was = KEY_OK;
+    KEY_OK = refused ? false : (v && v.ok ? true : KEY_OK);
+    if (was && !KEY_OK) flash('🔑', 'Signed out by the shop', 'Sign in', function(){ signinOpen(); });
+  } catch (_) { /* a check that cannot run is not a verdict */ }
+}
+
 var WATCH_WAS = null;
 function watchTick(){
   var rows;
@@ -15317,11 +15352,11 @@ function paintHealth(){
     + healthCheck(r.paired && (!r.scopes || r.scopes.indexOf('till') >= 0), 'THIS COUNTER',
         [String(r.till || 'C1'), 'signed in, and allowed to take money'],
         [r.paired ? 'Wrong kind of key' : 'Not signed in',
-         r.paired ? 'this key cannot bill \u2014 sign in to get one that can' : 'without it the server refuses everything'])
+         r.paired ? 'this key cannot bill \u2014 sign in to get one that can' : 'without it the shop refuses everything'])
     /* ⚠️ WHEN IT IS SIMULATED THE CARD SAYS SO — it has measured nothing and must not imply it has */
     + healthCheck(!lineMatters && !r.sim, 'INTERNET',
         [r.online ? 'Online' : 'Offline',
-         r.online ? 'the server is answering' : 'nothing is waiting, so nothing is held up'],
+         r.online ? 'the shop is answering' : 'nothing is waiting, so nothing is held up'],
         r.sim
           ? ['Simulated', 'set to \u201c' + r.sim.label + '\u201d on this device — not a real outage']
           : ['Offline', r.queued + (r.queued === 1 ? ' thing is' : ' things are') + ' waiting for the line'])
@@ -15357,7 +15392,7 @@ function paintHealth(){
       waitRows = '<div class="hrow"><span>Things</span><b>' + r.queued + '</b></div>';
     }
   } else {
-    waitRows = '<p class="note">Nothing is waiting. Everything this counter took has reached the server.</p>';
+    waitRows = '<p class="note">Nothing is waiting. Everything this counter took has reached the shop.</p>';
   }
   var waiting = '<div class="hbox"><h4>Waiting here to be sent</h4>' + waitRows
     + '<div class="dlgbtns"><button class="pill" data-testid="till-health-send" onclick="sendNow()">Try sending now</button>'
@@ -15879,7 +15914,7 @@ function paintTotals(){
 }
 /**
  * ⭐ A REAL SPLIT (2026-09-08). ₹500 in cash and the rest on UPI is the ordinary Indian counter; one mode per bill was a lie about what
- * happened, and the books inherit that lie. "+ part" takes what is typed in the way that is selected and leaves the remainder due.
+ * happened, and the shop inherit that lie. "+ part" takes what is typed in the way that is selected and leaves the remainder due.
  */
 var PARTS = [];
 function addPart(){
@@ -16107,7 +16142,7 @@ async function finish(){
                                           /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over
                                              a `save` that is the sum of all of them — tolerable on a screen you
                                              can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a
-                                             reprint, a dispute and the books all read a year later, and by then
+                                             reprint, a dispute and the shop all read a year later, and by then
                                              nobody can re-derive which offers applied. Kept beside off_label
                                              rather than replacing it, so every existing reader keeps working. */
                                           offers:(c.offs||[]).map(function(a){
@@ -16187,7 +16222,7 @@ async function finish(){
  */
 /**
  * a document this counter issued that takes money back, rather than one that takes money.
- * ⭐ ONE DEFINITION ([TILL-125]) — CBRollup.isReturn is what the counter program and the server both use, so
+ * ⭐ ONE DEFINITION ([TILL-125]) — CBRollup.isReturn is what the counter program and the shop both use, so
  * "what counts as a return" cannot mean one thing on this screen and another in the day's summary chit.
  * ⚠️ The local test stays as the fallback: an engine that failed to load must not silently turn every credit
  * note into a sale. Same shape as every other engine call on this page.
@@ -17176,7 +17211,7 @@ function slipHTML(bill, m){
      * ⭐⭐ POINTS ON THE PAPER. Athi, 2026-09-10: *"reward point can be showcased in the bill — reward points added,
      * and reward point encashed."* It is printed BELOW the total and below the tender, because that is what it is:
      * something that happened alongside the money, not part of it.
-     * ⚠️ IT PRINTS WHAT IS TRUE, INCLUDING WHEN NOTHING WAS RECORDED. A slip that showed points the server never
+     * ⚠️ IT PRINTS WHAT IS TRUE, INCLUDING WHEN NOTHING WAS RECORDED. A slip that showed points the shop never
      * wrote would be a promise the shop cannot honour on the next visit — so an unqueued failure says so on the
      * paper, in the customer's hands, where somebody can still do something about it.
      */
@@ -17350,7 +17385,7 @@ async function resendBill(no){
  * number per sale, and the customer's paper can still be traced to the sale it describes.
  *
  * ⚠️⚠️ THE NEW ROW IS WRITTEN BEFORE THE OLD ONE IS REMOVED. A crash in between leaves the sale twice on this
- * device — which the server settles, because both copies carry the same `billed_at` — and never leaves it nowhere.
+ * device — which the shop settles, because both copies carry the same `billed_at` — and never leaves it nowhere.
  * ⚠️ BOUNDED. A counter still sharing its prefix could be handed another taken number; after twenty attempts the
  * bill stops and says so, rather than burning numbers for ever.
  * ⚠️ ONLY SALES. A receipt, a despatch note or a credit note has a series of its own and belongs to a person
@@ -17387,7 +17422,7 @@ async function renumberBill(bill, why){
   return { from: from, to: to };
 }
 /**
- * ⭐⭐⭐ FIND THE SALES THAT SAY "SENT" AND WERE NOT. A bill absorbed before the server fix holds a real chit id —
+ * ⭐⭐⭐ FIND THE SALES THAT SAY "SENT" AND WERE NOT. A bill absorbed before the shop fix holds a real chit id —
  * somebody else's — so nothing on this device can tell it apart from a good one. The shop can: POST
  * /api/till/reconcile reads each chit back and compares the bill number AND the moment it was taken.
  *   absorbed → recorded under a new number, printed number kept
@@ -17440,7 +17475,7 @@ async function checkAbsorbedNow(){
   if (r.why) { toastLine('Could not check: ' + r.why); return; }
   say(!r.checked ? 'There are no sent bills to check.'
     : (!r.fixed ? ('All ' + r.checked + ' sent bill(s) are recorded correctly.')
-      : (r.fixed + ' of ' + r.checked + ' bill(s) had not really reached the server and are being sent now.'
+      : (r.fixed + ' of ' + r.checked + ' bill(s) had not really reached the shop and are being sent now.'
          + (r.renumbered.length ? '\n\nRecorded under new numbers (the printed number is kept on each):\n· '
              + r.renumbered.map(function(m){ return m.from + ' → ' + m.to; }).join('\n· ') : ''))));
   openStuck();
@@ -17478,7 +17513,7 @@ async function closeCounter(){
     try { await checkAbsorbed(true); } catch (_) {}
     /**
      * ⚠️ A BILL WITH NO RECEIPT AT ALL is sent again rather than taken on trust. Bills from before receipts were
-     * kept carry nothing to check, and would otherwise block closing for ever. A re-send is safe: the server knows a
+     * kept carry nothing to check, and would otherwise block closing for ever. A re-send is safe: the shop knows a
      * true repeat by its number AND the moment it was taken, answers with the chit it already holds (which becomes
      * the receipt), and refuses — then renumbers — anything that was really another counter's number.
      */
@@ -17716,7 +17751,7 @@ async function openStuck(){
       + 'the pairing, the settings and the parked bills cannot be written, so they come back or disappear. '
       + 'Usually the browser is out of space or is in a private window.';
   else if (!(HOST && HOST.key)) verdict = 'This counter has no key, so nothing can be sent. Pair it from the shop.';
-  else if (!navigator.onLine) verdict = 'No internet. The bills are safe here and go as soon as it returns.';
+  else if (!navigator.onLine) verdict = 'No line to the shop. The bills are safe here and go as soon as it returns.';
   else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
   /**
    * ⚠️⚠️ AN EMPTY QUEUE IN *THIS* COPY IS NOT AN EMPTY COUNTER. Pairing again starts a new database named after
@@ -17725,10 +17760,10 @@ async function openStuck(){
    */
   else if (stranded) verdict = '⚠️ ' + stranded + ' sale(s) of this shop are sitting in an EARLIER copy of this '
       + 'counter, left behind when it was paired again. This copy is empty and honest; those bills have still not '
-      + 'reached the server. Open “What is being kept” and bring them in.';
+      + 'reached the shop. Open “What is being kept” and bring them in.';
   else if (leftBills) verdict = '⚠️ An EARLIER copy of this counter still holds ' + leftBills + ' bill(s) of this shop, '
-      + 'left behind when it was paired again. Some may say "sent" without having reached the server. Open “What is '
-      + 'being kept”, bring them in, and they will be checked against the books.';
+      + 'left behind when it was paired again. Some may say "sent" without having reached the shop. Open “What is '
+      + 'being kept”, bring them in, and they will be checked against the shop.';
   else verdict = '✓ Nothing is queued. Every bill this counter holds has been sent.';
   /**
    * ⭐⭐ THE VERDICT, THEN THE WAY OUT, THEN THE DETAIL. A person who opened this panel wants the queue moving;
@@ -18022,7 +18057,7 @@ async function rescueOrphans(){
     }
     for (var k = 0; k < s.rows.queue.length; k++) {
       var q = s.rows.queue[k]; if (!q || !q.no) continue;
-      /* ⚠️ a row already acknowledged must not be queued again — it is in the books */
+      /* ⚠️ a row already acknowledged must not be queued again — it is in the shop */
       if (q._sent) continue;
       try { await DB.put('queue', q); queued++; } catch (_) {}
     }
@@ -18038,7 +18073,7 @@ async function rescueOrphans(){
   try { chk = await checkAbsorbed(true); } catch (_) {}
   var left = 0; try { left = ((await DB.all('queue')) || []).length; } catch (_) {}
   say('Brought in ' + moved + ' bill(s), ' + queued + ' of them still to send.\n\n'
-    + (chk && chk.fixed ? chk.fixed + ' bill(s) had said "sent" without reaching the server — they are being sent now'
+    + (chk && chk.fixed ? chk.fixed + ' bill(s) had said "sent" without reaching the shop — they are being sent now'
         + (chk.renumbered && chk.renumbered.length ? ', under new numbers (the printed number is kept on each)' : '') + '.\n\n' : '')
     + (left ? left + ' bill(s) are waiting now. Press "Get my bills moving" if they do not go.'
             : 'Everything has been sent.')
@@ -18105,7 +18140,7 @@ async function openStorage(){
     h += '<div style="color:var(--dim);font-size:.8em;padding:6px 0">Pairing this counter again starts a fresh '
       + 'copy and leaves the old one behind. ' + leftBills + ' bill(s) of this shop are in an earlier copy'
       + (stranded ? ', ' + stranded + ' of them never sent' : ', some of which may say "sent" without having arrived')
-      + '. Bringing them in checks every one against the books and sends whatever is missing.</div>'
+      + '. Bringing them in checks every one against the shop and sends whatever is missing.</div>'
       + '<button class="pill" data-testid="till-rescue" onclick="rescueOrphans()"><b>Bring ' + leftBills
       + ' bill(s) from the earlier copy into this counter</b></button>';
   }
@@ -18147,7 +18182,7 @@ async function wipeDevice(){
   var ok = await sure('Clear EVERYTHING this counter keeps on this device?\n\n'
     + 'Every shop\'s copy on this PC, all the settings, and the saved page.\n\n'
     + (unsent.length
-        ? unsent.length + ' bill(s) have not reached the server. They will be SAVED TO A FILE first, and the '
+        ? unsent.length + ' bill(s) have not reached the shop. They will be SAVED TO A FILE first, and the '
           + 'clearing will not happen unless that file is written.'
         : 'Nothing is waiting to be sent.')
     + '\n\nYou will have to pair this counter again afterwards.', 'Yes, clear it all', 'Clear this device');
@@ -18197,8 +18232,8 @@ async function wipeDevice(){
  * stay, and the refusal here says which of them is missing rather than "could not send".
  */
 async function stuckSend(){
-  if (!(HOST && HOST.key)) { toastLine('This counter has no key, so it cannot reach the server. Use 📋 Copy the report.'); return; }
-  if (!navigator.onLine) { toastLine('No internet, so it cannot be sent. Use 💾 Save it as a file.'); return; }
+  if (!(HOST && HOST.key)) { toastLine('This counter is not signed in, so nothing can reach the shop. Use 📋 Copy the report.'); return; }
+  if (!navigator.onLine) { toastLine('No line to the shop, so it cannot be sent. Use 💾 Save it as a file.'); return; }
   var owner = null, rawQ = [], rawB = [];
   try { owner = await DB.ownerRaw(); rawQ = await DB.allRaw('queue'); rawB = await DB.allRaw('bills'); } catch (_) {}
   var qF = rawQ.filter(function(r){ return !rowIsMine(r); });
@@ -18213,7 +18248,7 @@ async function stuckSend(){
   try {
     /* ⚠️ noQueue: a report about a blocked queue must never join it — it would be one more row that will not go */
     var r = await HOST.tillPost('/api/till/diagnostic', body, { noQueue: true });
-    toastLine(r && r.ok ? ('Sent to the server. Quote support code ' + stuckCode() + '.')
+    toastLine(r && r.ok ? ('Sent to the shop. Quote support code ' + stuckCode() + '.')
                         : 'ChitBridge did not accept the report. Use 📋 Copy the report.');
   } catch (e) { toastLine('Could not send it: ' + ((e && e.message) || 'unknown') + '. Use 📋 Copy the report.'); }
 }
@@ -18293,7 +18328,7 @@ async function releaseQueue(){
   /* 3 · and try, now, with the reason kept if it refuses */
   var before = ((await DB.all('queue')) || []).length;
   if (!(HOST && HOST.key)) did.push('this counter has no key, so nothing could be sent — pair it from the shop');
-  else if (!navigator.onLine) did.push('there is no internet, so nothing could be sent — it will go on its own when the line is back');
+  else if (!navigator.onLine) did.push('there is no line to the shop, so nothing could be sent — it will go on its own when the line is back');
   else { try { await HOST.drain(); } catch (_) {} }
   var after = ((await DB.all('queue')) || []).length;
   if (before && before > after) did.push('sent ' + (before - after) + ' bill(s)');
@@ -18391,18 +18426,18 @@ async function openBills(keepOpen){
     '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + (by || 'nothing taken yet') + '</div>'
     + '<div data-testid="till-sync-report" style="display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;margin-bottom:8px;'
       + ((nWait || nLost) ? 'background:var(--warn-tint);color:var(--warn)' : 'background:var(--ok-tint);color:var(--ok)') + '">'
-      /* ⚠️ THE HEADLINE NEVER CLAIMS MORE THAN IS PROVED. "All reached the server" is said only when every bill
+      /* ⚠️ THE HEADLINE NEVER CLAIMS MORE THAN IS PROVED. "All reached the shop" is said only when every bill
          carries an acknowledgement — never because the queue happens to be empty. */
       + '<b style="flex:1">' + (
           nLost ? (nLost + ' of ' + rows.length + ' bill(s) were never confirmed by ChitBridge')
-        : nWait ? (nWait + ' of ' + rows.length + ' bill(s) have not reached the server yet')
+        : nWait ? (nWait + ' of ' + rows.length + ' bill(s) have not reached the shop yet')
         /**
          * ⚠️⚠️ "LEFT THIS COUNTER" SOUNDED LIKE AN ALL-CLEAR AND MEANT "I CANNOT TELL" ([TILL-133]).
          * Athi: *"are we saying reached backoffice?"* — no, and that was the problem. This branch is the
          * `unknown` state: the counter holds no receipt for anything, because these bills were written before
          * it kept them. Not knowing is fine; sounding certain about it is not.
          */
-        : (rows.length ? (everAcked ? 'All ' + rows.length + ' bill(s) have reached the server'
+        : (rows.length ? (everAcked ? 'All ' + rows.length + ' bill(s) have reached the shop'
                                     : rows.length + ' bill(s) were sent — this counter cannot confirm the shop has them')
                        : 'Nothing to send')) + '</b>'
       + ((nWait || nLost) ? '<button class="pill" data-testid="till-send-now" onclick="sendNow()">Send now</button>' : '')
@@ -18452,7 +18487,7 @@ async function openBills(keepOpen){
             + g.rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-bill-' + esc(b.no) + '">'
           + '<span style="flex:1"><b>' + esc(b.no) + '</b>'
-            /* ⭐ a renumbered sale shows the number the customer was given, beside the one the books hold */
+            /* ⭐ a renumbered sale shows the number the customer was given, beside the one the shop hold */
             + (b.printed_as ? ' <span class="u" data-testid="till-bill-printed-' + esc(b.no) + '" title="'
                 + esc((b.renumbered && b.renumbered.why) || 'recorded under a new number') + '">printed as ' + esc(b.printed_as) + '</span>' : '')
             /* ⭐ the pill says which of the three this bill is, and only "✓ sent" is a promise */
@@ -18836,9 +18871,9 @@ async function coldStart(){
   if (left !== 0 || aside !== 0) {
     busyDone();
     say(left > 0
-      ? (left + ' bill(s) have not reached the server yet, so nothing was cleared.\n\nOpen 🧾 bills and press "Send now" while the internet is on, then try again.')
+      ? (left + ' bill(s) have not reached the shop yet, so nothing was cleared.\n\nOpen 🧾 bills and press "Send now" while the internet is on, then try again.')
       : aside > 0
-      ? (aside + ' bill(s) you set aside have still not reached the server, so nothing was cleared.\n\nOpen 🧾 bills and press "send it again" on each one — or, if those sales are genuinely not wanted, they must be cancelled properly rather than wiped.')
+      ? (aside + ' bill(s) you set aside have still not reached the shop, so nothing was cleared.\n\nOpen 🧾 bills and press "send it again" on each one — or, if those sales are genuinely not wanted, they must be cancelled properly rather than wiped.')
       : 'Could not read what is waiting, so nothing was cleared. Try again in a moment.');
     return;
   }
@@ -18864,7 +18899,7 @@ async function coldStart(){
  * asked for on purpose, and it reports back either way — a button that appears to do nothing is worse than no button.
  */
 async function sendNow(){
-  if (!navigator.onLine) { toastLine('Still no internet — the bills are safe here and will go as soon as it returns.'); return; }
+  if (!navigator.onLine) { toastLine('Still no line to the shop — the bills are safe here and will go as soon as it returns.'); return; }
   /* ⚠️ NEVER ASSUME THE HOST HAS ONE. It threw on the desktop counter for as long as this button has existed —
      an unhandled rejection, no toast, nothing on screen. A missing capability must be said, not thrown. */
   if (!HOST || typeof HOST.drain !== 'function') {
@@ -18883,7 +18918,7 @@ async function sendNow(){
   if (HOST.mode === 'agent') {
     await load(); await openBills(true);
     var q = (r && r.queued != null) ? r.queued : null;
-    if (q === 0) toastLine('Everything has reached the server.');
+    if (q === 0) toastLine('Everything has reached the shop.');
     else if (r && r.sent > 0) toastLine(r.sent + ' sent. ' + q + ' still waiting — it keeps trying.');
     else toastLine(((HOST.last && HOST.last.why) ? HOST.last.why + ' ' : '') + 'The bills are safe on this PC.');
     return;
@@ -18891,7 +18926,7 @@ async function sendNow(){
   var after = ((await DB.all('queue')) || []).length;
   await load();
   await openBills(true);
-  if (after === 0) toastLine(before === 1 ? 'The bill has reached the server.' : 'All ' + before + ' bills have reached the server.');
+  if (after === 0) toastLine(before === 1 ? 'The bill has reached the shop.' : 'All ' + before + ' bills have reached the shop.');
   else if (after < before) toastLine((before - after) + ' of ' + before + ' sent. ' + after + ' still waiting — it keeps trying.');
   /**
    * ⭐⭐ SAY WHY. This branch used to read "Could not send them just now" and stop — which is a shrug, not an
@@ -19133,7 +19168,7 @@ async function shiftClose(){
     + '<div style="display:flex;justify-content:space-between;font-weight:700"><span>Expected in the drawer</span><span>' + money(SHIFT.expected_cash) + '</span></div>'
     + '<div style="display:flex;justify-content:space-between"><span>Counted</span><span>' + money(SHIFT.counted_cash) + '</span></div>'
     + '<div style="display:flex;justify-content:space-between;font-weight:800;color:' + (SHIFT.difference === 0 ? 'var(--ok)' : 'var(--warn)') + '"><span>Difference</span><span>' + esc(word) + '</span></div></div>'
-    + '<div style="color:var(--dim);font-size:.8em;margin-top:10px">This is recorded against ' + esc(SHIFT.by.name) + ' and sent to the server, so it outlives this device.</div>';
+    + '<div style="color:var(--dim);font-size:.8em;margin-top:10px">This is recorded against ' + esc(SHIFT.by.name) + ' and sent to the shop, so it outlives this device.</div>';
   document.getElementById('shiftgo').textContent = 'Done — free the counter';
   document.getElementById('shiftgo').setAttribute('onclick', 'shiftDone()');
   /* the record leaves the device: a shift is a business fact, not a note on a laptop */
@@ -19513,11 +19548,18 @@ async function saveSettings(){
  * that has gone quiet is not repaired by waiting longer.
  */
 var BELL_HEARD = 0;            /* when anything last arrived on the stream — the only evidence of delivery */
-var BELL_DEAF_MS = 90000;      /* the server beats every 25s (lib/events.js HEARTBEAT_MS) — three missed beats */
+var BELL_DEAF_MS = 90000;      /* the shop beats every 25s (lib/events.js HEARTBEAT_MS) — three missed beats */
 function bellHeard(){ BELL_HEARD = Date.now(); }
 /** ⭐ open is not the same as delivering — this is the question nothing was asking */
 function bellLive(){
-  if (!BELL) return false;
+  /**
+   * ⚠️⚠️ ABSENCE OF A STREAM IS NOT EVIDENCE OF DEAFNESS. Returning false here reported "changes from other
+   * counters have stopped" on a counter that simply had no key, had never opened a bell, or was in the gap
+   * before the first 30s tick — two harnesses caught it within minutes. A counter with no bell at all is the
+   * pairing row's business and the line row's business; both already say so.
+   * ⭐ THIS FUNCTION ANSWERS ONE QUESTION: is a stream that IS open actually delivering. Nothing else.
+   */
+  if (!BELL) return true;
   if (!BELL_HEARD) return true;                 /* just opened; it has not had time to be deaf yet */
   return (Date.now() - BELL_HEARD) < BELL_DEAF_MS;
 }
@@ -19707,7 +19749,7 @@ try { applyTillOptions(); } catch (_) {}
 /* ⭐ the menu's collapsed strip, drawn once from TILL_OPS (2026-09-18) */
 try { paintSide(); } catch (_) {}
 /* the watchdog rides the repaint that already runs - a second timer would be a second path ([TILL-144]) */
-setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = catRestamp(st.snapshot); paintStatus(); watchTick(); }).catch(function(){}); }, 15000);
+setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = catRestamp(st.snapshot); paintStatus(); watchTick(); keyWatch(); }).catch(function(){}); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
   navigator.serviceWorker.register('/till-sw.js').catch(function(){});
