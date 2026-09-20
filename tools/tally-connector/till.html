@@ -2041,7 +2041,10 @@
   .lgo{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;
        border:0;border-radius:14px;background:#1d1b16;color:#fff;font:inherit;font-weight:700;font-size:1.05em;
        cursor:pointer}
+  .lbody .lgo,.linein .lgo{background:#1d1b16;color:#fff;border:0;opacity:1}
   .lgo span{font-size:1.3em}
+  /* ⭐ the same panel, in the flow of the diagnostics page rather than in the dialog ([TILL-153]) */
+  .linein{border:2px solid var(--line);border-radius:16px;margin:10px 0 2px;max-height:none;padding:12px}
   @media (max-width:380px){ .ltiles{grid-template-columns:1fr} }
   /* ⭐ the same panel, in the flow of the diagnostics page instead of fixed over the counter ([TILL-149]) */
   .netwhat.inline{position:static;transform:none;width:auto;max-height:none;box-shadow:none;
@@ -3510,84 +3513,23 @@ function netSet(k){
   try { paintStatus(); } catch (_) {}
 }
 
-/**
- * ── ⭐⭐⭐ WHAT THE SIMULATION COSTS, AT THE PLACE YOU SWITCH IT ON ([TILL-144]) ──────────────────────────
- *
- * Athi: *"can you bring what are to be affected in the test location itself? bill will continue to progress
- * but server catch up will stop and so on, what will be other issues to be listed? can we make it explicit?"*
- *
- * ⚠️⚠️ A SIMULATOR THAT WILL NOT SAY WHAT IT BREAKS IS A GUESSING GAME. Turning the line off changes
- * behaviour in thirty-odd places, and a tester who cannot tell a simulated consequence from a real defect
- * will do one of two things, both bad: raise a fault against a counter behaving exactly as designed, or wave
- * a real one through as "that'll be the simulator".
- *
- * ⭐ IT IS NOT A WRITTEN LIST. Every row is read LIVE off WATCH — the same rows the watchdog reports — so
- * what this panel promises will stop is measured, not remembered. [[feedback-silence-is-the-bug]]
- */
-function netHead(k){
-  var L = NETS[k] || NETS.full;
-  if (k === 'full') return null;
-  if (!L.drop) return 'Nothing stops \u2014 every request simply waits ' + (L.ms / 1000).toFixed(1)
-    + 's longer. Billing never waits on the line, so it is untouched.';
-  if (L.drop < 1) return 'About one attempt in three fails and is retried. Nothing is lost \u2014 sends just take'
-    + ' several goes, so a waiting count that climbs is normal here.';
-  return 'The counter believes it has no internet. It keeps billing; everything that needs the server stops.';
-}
 
 /** ⭐ opened on demand \u2014 the bar stays one line, because it is on screen all day [[feedback-text-budget]] */
-/**
- * ⭐⭐ ONE BUILDER, TWO PLACES ([TILL-149]). The banner opens this as an overlay; the diagnostics panel
- * renders it inline right under the switch that causes it. Athi: *"the effect should see where you are
- * simulating — can you open it there itself?"* Two copies of this markup would disagree within a month.
- */
-function netWhatHTML(){
-  var head = netHead(netNow());
-  if (!head) return;
-  var rows = watchNow();
-  /**
-   * ⚠️⚠️ THE CONSEQUENCE BELONGS TO THE ROW THAT STOPPED ([TILL-144]). Printing `costs` in BOTH columns put
-   * "⚠ the one fault that can LOSE work — stop billing and ring for help" under STILL WORKING: an alarm
-   * sitting in the reassuring column, which is exactly the fault [TILL-139] fixed on the health page and here
-   * it was again within the week. The row counts were right; only LOOKING at the render showed it.
-   * ⭐ A row that is fine needs no explanation. Its name is the whole message.
-   */
-  function col(cls, title, list, why){
-    if (!list.length) return '';
-    return '<div class="' + cls + '"><h4>' + title + '</h4><ul>'
-      + list.map(function(x){ return '<li><b>' + esc(x.name) + '</b>'
-          + (why ? ' — ' + esc(x.costs) : '') + '</li>'; }).join('')
-      + '</ul></div>';
-  }
-  return '<div class="full"><b>' + esc(head) + '</b></div>'
-    + col('stop', 'Stopped right now', rows.filter(function(x){ return !x.ok; }), true)
-    + col('goes', 'Still working', rows.filter(function(x){ return x.ok; }))
-    + '<div class="full u">Billing, printing and taking money are not in this list because they never touch'
-    + ' the line \u2014 they work whatever it is set to. Every row is checked live; the same rows raise the'
-    + ' footer message when one of them stops for real.</div>';
-
-}
-
-/** ⭐ the overlay, opened from the banner — the same words the panel below the switch shows */
-function netMore(){
-  var el = document.getElementById('netwhat');
-  if (!el) return;
-  if (!el.hidden) { el.hidden = true; el.innerHTML = ''; return; }
-  var h = netWhatHTML();
-  if (!h) return;
-  el.innerHTML = h;
-  el.hidden = false;
-}
 
 /**
- * ⭐⭐⭐ AND IT FOLLOWS THE SWITCH ([TILL-149]). Choosing a line setting repaints the list beneath it at once,
- * so the consequence of the choice is on screen before the person looks away from the control.
+ * ⭐⭐⭐ ONE PANEL, TWO DOORS ([TILL-153]). The banner button and the switch in diagnostics both open the
+ * SAME screen the pill opens. They used to render a second, older answer to the same question — Athi found
+ * the counter telling him two different stories about one line, and the one he opened was the stale one.
+ * [[feedback-no-duplicate-functions]] [[feedback-stay-in-the-construct]]
  */
+function netMore(){ openLine(); }
+
+/** ⭐ and under the switch itself, live — the consequence is on screen before you look away from it */
 function netInline(){
   var el = document.getElementById('netinline');
   if (!el) return;
-  var h = netWhatHTML();
-  el.innerHTML = h || '';
-  el.hidden = !h;
+  el.hidden = false;
+  paintLine(el);
 }
 
 /** ⚠️ drawn on every load, so a setting that survived a restart announces itself immediately */
@@ -14485,91 +14427,6 @@ function lineFaults(rows){
 
 function hhmm(d){ try { return new Date(d).toTimeString().slice(0, 5); } catch (_) { return ''; } }
 
-async function paintLine(){
-  var box = document.getElementById('linebody'); if (!box) return;
-  var r = healthReading(), L = lineState(), rows = watchNow(r), w = await waitingNow();
-  var word = lineWord(L.state), since = lineSince();
-  var norm = rows.filter(function(x){ return x.bucket === 'normal'; });
-  var wait = rows.filter(function(x){ return x.bucket === 'waits'; });
-  var need = rows.filter(function(x){ return x.bucket === 'needs_line'; });
-  var faults = lineFaults(rows);
-
-  /* ── the banner: the time, the length and the count (§6.4, §6.5) ─────────────────────────────────── */
-  var when = (L.state === 'good' || !since)
-    ? ''
-    : 'No line to the shop since <b>' + hhmm(since.at) + '</b>, that is ' + since.mins
-      + ' minute' + (since.mins === 1 ? '' : 's') + '. ';
-  var body = L.state === 'good'
-    ? 'Nothing is waiting. Every bill this counter has rung is at the shop.'
-    : (L.state === 'patchy'
-        ? 'About one send in ' + Math.max(2, Math.round(1 / Math.max(L.rate, 0.01)))
-          + ' needs a second go. <b>Nothing is lost</b> — a send that fails is tried again by itself, so a '
-          + 'waiting count that rises and falls is normal here. It only matters if it climbs and never falls.'
-        : when + 'Billing, printing and taking money never needed the line, so they carry on exactly as '
-          + 'before. <b>' + w.total + ' thing' + (w.total === 1 ? '' : 's') + ' ' + (w.total === 1 ? 'is' : 'are')
-          + ' waiting here</b> and go by themselves the moment it returns.');
-
-  /**
-   * ⚠️ THE BARS BELONG TO THE PATCHY STATE, AND ONLY TO IT (§3). Drawn on a dead line they showed twenty
-   * amber bars under "0 went first time · 20 needed a second go" — which is not what a failed send is, and
-   * turned the one piece of evidence on the panel into a wall of alarm.
-   */
-  var bars = (L.state === 'patchy' && L.tries.length)
-    ? '<div class="lbars"><div class="u">THE LAST ' + L.tries.length + ' SENDS</div><div class="lbarrow">'
-      + L.tries.map(function(t){ return '<i class="' + (t.ok ? 'y' : 'n') + '"></i>'; }).join('')
-      + '</div><div class="u">' + L.tries.filter(function(t){ return t.ok; }).length + ' went first time · '
-      + L.tries.filter(function(t){ return !t.ok; }).length + ' needed a second go · <b>0 lost</b></div></div>'
-    : '';
-
-  function card(x, n){
-    return '<div class="lcard"><b>' + esc(x.name) + '</b>'
-      + (n ? '<div class="u">' + esc(n) + '</div>' : (x.costs ? '<div class="u">' + esc(x.costs) + '</div>' : ''))
-      + (x.fix ? '<div class="lfix">' + esc(x.fix) + '</div>' : '')
-      + '</div>';
-  }
-  function sec(cls, mark, title, count, lead, inner){
-    return '<section class="lsec ' + cls + '"><h4><span class="lmark">' + mark + '</span>' + esc(title)
-      + '<em>' + esc(count) + '</em></h4>'
-      + (lead ? '<p class="u">' + esc(lead) + '</p>' : '') + inner + '</section>';
-  }
-
-  /* ⭐ CARRIES ON FIRST, and folded to one line of names — nobody needs to read it, they need to know it
-     exists (§5). The long list is the third column, not the first (rule 3). */
-  var okN = norm.filter(function(x){ return x.ok; });
-  box.innerHTML =
-      faults.map(function(x){
-        return '<div class="lfault" data-testid="till-line-fault"><b>' + esc(x.name) + ' is not working</b>'
-          + '<div>' + esc(x.costs) + ' — this is the one thing here that can lose work. '
-          + 'Stop billing on this counter and ring for help.</div></div>';
-      }).join('')
-    + '<div class="lban ' + word.tone + '" data-testid="till-line-banner">'
-      + '<div><h3>' + esc(word.head) + '</h3><p>' + body + '</p></div>'
-      + '<div class="lact"><button class="pri" data-testid="till-line-try" onclick="lineTry()">Try the line again</button>'
-      + '<span class="u">it is already trying every 20 seconds</span></div></div>'
-    + bars
-    + '<div class="lcols">'
-    + sec('ok', '✓', 'Carries on as normal', okN.length + ' of ' + norm.length,
-        'None of these ever needed the line. They behave exactly as they do on a good day.',
-        '<p class="lnames" data-testid="till-line-normal">'
-        + okN.map(function(x){ return esc(x.name); }).join(' · ') + '</p>')
-    + sec('wait', '~', 'Works, and waits', w.total + ' waiting',
-        'Done here now, sent by themselves later. Nothing needs to be redone or remembered.',
-        wait.map(function(x){
-          return card(x, x.id === 'send'
-            ? w.total + ' waiting' + (w.oldest ? ', oldest ' + hhmm(w.oldest) : '')
-            : (x.id === 'cat' && S && S.at ? 'As they were at ' + hhmm(S.at) + ' — nothing has changed since' : ''));
-        }).join(''))
-    + sec('need', '!', 'Needs the line — do this instead', String(need.filter(function(x){ return !x.ok; }).length),
-        'Each one has a way round it today. None of them stops a sale.',
-        need.filter(function(x){ return !x.ok; }).map(function(x){ return card(x, ''); }).join('')
-        || '<p class="u">Nothing is blocked.</p>')
-    + '</div>'
-    + '<div class="lback"><div class="u">WHEN THE LINE COMES BACK<br><b>Nobody has to do anything</b></div>'
-      + ['The ' + w.total + ' waiting things go, oldest first', 'Prices and products refresh themselves',
-         'Every bill is checked against the shop', 'The counter can be closed — we say so']
-        .map(function(t, i){ return '<div class="lstep"><i>' + (i + 1) + '</i>' + esc(t) + '</div>'; }).join('')
-    + '</div>';
-}
 
 /**
  * ── ⭐⭐⭐ FOR SOMEONE WHO CANNOT READ ([TILL-152]) ────────────────────────────────────────────────────────
@@ -14589,10 +14446,16 @@ async function paintLine(){
  * ⚠️ Counts are digits, never words: a numeral is readable by someone who cannot read.
  */
 var LINE_OPEN = '';        /* which tile the person tapped open — nothing, by default */
-function lineTile(t){ LINE_OPEN = (LINE_OPEN === t) ? '' : t; paintLine(); }
+function lineTile(t){
+  LINE_OPEN = (LINE_OPEN === t) ? '' : t;
+  paintLine();
+  /* the same panel may also be open under the line switch ([TILL-153]) */
+  try { if (document.getElementById('netinline')) netInline(); } catch (_) {}
+}
 
-async function paintLine(){
-  var box = document.getElementById('linebody'); if (!box) return;
+/** ⚠️ it paints wherever it is asked ([TILL-153]) — the dialog, or the slot under the line switch */
+async function paintLine(into){
+  var box = into || document.getElementById('linebody'); if (!box) return;
   var r = healthReading(), L = lineState(), rows = watchNow(r), w = await waitingNow();
   var norm = rows.filter(function(x){ return x.bucket === 'normal'; });
   var need = rows.filter(function(x){ return x.bucket === 'needs_line' && !x.ok; });
@@ -17204,10 +17067,12 @@ async function openStuck(){
       }).join('')
     + '</select></label>'
     /* ⭐ the consequences, under the control that causes them ([TILL-149]) — same builder as the overlay */
-    + '<div id="netinline" class="netwhat inline" data-testid="till-net-inline"'
-    + (netHead(netNow()) ? '' : ' hidden') + '>' + (netWhatHTML() || '') + '</div>'
     + '<span class="qwhy">support code ' + esc(stuckCode()) + '</span>'
-    + '</div>' + h;
+    + '</div>'
+    /* ⭐ OUTSIDE the button row ([TILL-153]) — inside it the panel was squeezed into a flex cell and its
+       button inherited the row's pill styling, which greyed it out. */
+    + '<div id="netinline" class="lbody linein" data-testid="till-net-inline"></div>'
+    + h;
 
   if (Object.keys(others).length) {
     h += '<div class="sec">Rows belonging to another shop</div>';
@@ -17249,6 +17114,8 @@ async function openStuck(){
 
   document.getElementById('billstitle').textContent = 'Why is a bill stuck?';
   document.getElementById('billsbody').innerHTML = h;
+  /* ⭐ fill the slot under the line switch with the one panel ([TILL-153]) */
+  try { netInline(); } catch (_) {}
   document.getElementById('billsdlg').showModal();
 }
 /**

@@ -168,17 +168,24 @@ it('the bar offers the list', () => {
 
 /** ⭐ the point of the whole change: the panel is MEASURED, not written down twice */
 it('⭐ the panel reads the watch list rather than a second copy of it', () => {
-  /* ⚠️ MOVED, NOT DELETED: the builder was split out of netMore so the diagnostics panel could render the
-     same list inline under the switch ([TILL-149]). The property is unchanged — ONE builder, no second list. */
-  const a = PAGE.indexOf('function netWhatHTML(){');
-  assert.ok(a > 0, 'the one builder is gone');
+  /**
+   * ⚠️⚠️ MOVED TWICE, NEVER DELETED. The builder came out of netMore ([TILL-149]); then [TILL-153] found the
+   * counter holding TWO panels — the rebuilt one on the pill and the old text wall still under the line
+   * switch — and Athi opened the stale one. Now there is one paintLine and every door leads to it.
+   */
+  const a = PAGE.indexOf('async function paintLine(into){');
+  assert.ok(a > 0, 'the one painter is gone');
   const body = PAGE.slice(a, PAGE.indexOf('\n}', a));
-  assert.ok(/watchNow\(\)/.test(body), 'the builder keeps its own list — it will drift from what is watched');
+  assert.ok(/watchNow\(/.test(body), 'the panel keeps its own list — it will drift from what is watched');
+  /* ⚠️⚠️⚠️ AND THERE IS EXACTLY ONE OF IT. A duplicate definition wins silently and the loser rots. */
+  assert.strictEqual((PAGE.match(/function paintLine\(/g) || []).length, 1,
+    'paintLine is defined more than once — one of them is dead code nobody will notice');
+  assert.ok(!/function netWhatHTML/.test(PAGE), 'the second panel builder is back');
   ['netMore', 'netInline'].forEach(function (f) {
     const at = PAGE.indexOf('function ' + f + '(){');
     assert.ok(at > 0, f + ' is gone');
-    assert.ok(/netWhatHTML\(\)/.test(PAGE.slice(at, PAGE.indexOf('\n}', at))),
-      f + ' builds its own markup instead of using the one builder');
+    assert.ok(/openLine\(\)|paintLine\(/.test(PAGE.slice(at, PAGE.indexOf('\n}', at))),
+      f + ' does not lead to the one panel');
   });
 });
 
