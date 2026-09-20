@@ -443,6 +443,14 @@
   .mx{flex:0 0 40px;height:40px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);cursor:pointer;font:inherit}
   .msecs{flex:1;overflow:auto;padding:8px 14px 4px;display:flex;flex-direction:column;gap:10px}
   /**
+   * ⚠️⚠️⚠️ TAIL ROOM, SO A COLLAPSE CANNOT YANK THE PANEL ([TILL-148]). Once [hidden] started winning, the
+   * hub became the accordion it was always written to be — and closing a section removed more height than
+   * there was room to scroll, so the browser clamped scrollTop and the heading under the reader’s finger
+   * dropped 280px. No amount of restoring a scroll position can fix that: the room has to exist.
+   * ⭐ So the list always carries a screen of slack after the last section. Nothing is drawn in it.
+   */
+  #tillmenu .msecs::after{content:"";display:block;height:70vh;flex:0 0 auto}
+  /**
    * ── ⭐⭐⭐ THE HUB TAKES FOUR SHAPES ([TILL-56], counter-hub-menu-spec §4) ──────────────────
    *   < 600    a full-height SHEET, one column, sections folded          (what it always was)
    *   600–899  the same sheet, with room for two action rows abreast
@@ -504,6 +512,9 @@
         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mch{color:var(--dim);flex:0 0 auto}
   .mbody{padding:2px 8px 8px;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line)}
+  /* ⚠️⚠️ [hidden] MUST WIN ([TILL-148]) — without this a COLLAPSED menu section still drew its body,
+     so every section looked open. Found by the guard, not by looking. */
+  .mbody[hidden]{display:none}
   /**
    * ⚠️ A SECTION HEADING MUST NOT LOOK LIKE A THING YOU CAN PRESS (Athi, 2026-09-18: *"what is the difference
    * between this counter and take a break in the menu?"*). They read alike because both were an icon tile, a
@@ -1963,6 +1974,14 @@
      that was never broken. Fixed to the top so it survives every screen and layout. */
   .netbar{position:fixed;inset:0 0 auto 0;z-index:9500;background:#a8410f;color:#fff;
            padding:6px 14px;font-size:.88em;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+  /**
+   * ⚠️⚠️⚠️ [hidden] MUST WIN ([TILL-148]). display:flex on a class beats the UA rule for [hidden], so
+   * this banner — position:fixed across the top — drew an EMPTY ORANGE STRIP on every counter in the
+   * product, simulator or not, since it was built. Athi found it in a screenshot of a live shop.
+   * ⚠️ The netsim harness asserted el.hidden === true and reported "banner gone". The property was right
+   * and the pixels were wrong, which is why a harness that never looks at the screen cannot be the last word.
+   */
+  .netbar[hidden]{display:none}
   .netbar b{font-weight:800}
   .netbar button{font:inherit;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.6);
                   background:transparent;color:#fff;cursor:pointer}
@@ -1971,6 +1990,14 @@
   body.neton .wrap{padding-top:30px}
   /* the affects list hangs off the bar and OVERLAYS - it is read once and dismissed, so it must not
      reflow the counter underneath it ([TILL-144]) */
+  /* ⚠️⚠️⚠️ [hidden] MUST WIN. A class that sets display beats the UA stylesheet rule for [hidden], so this
+     panel — position:fixed, at the top of every screen — sat there EMPTY over the header on every counter,
+     simulator or not. Athi saw it on a live page. The warning is already written twenty lines up in this same
+     file and I still wrote the bug ([TILL-148]). */
+  .netwhat[hidden]{display:none}
+  /* ⭐ the same panel, in the flow of the diagnostics page instead of fixed over the counter ([TILL-149]) */
+  .netwhat.inline{position:static;transform:none;width:auto;max-height:none;box-shadow:none;
+                  border:1px solid var(--line);border-radius:10px;margin:8px 0 2px}
   .netwhat{position:fixed;left:50%;transform:translateX(-50%);top:30px;z-index:9499;width:min(900px,95vw);
            background:var(--card);color:var(--ink);border:2px solid #a8410f;border-top:0;
            border-radius:0 0 12px 12px;box-shadow:0 12px 28px rgba(0,0,0,.22);padding:12px 18px 16px;
@@ -3422,6 +3449,7 @@ function netSet(k){
   ls.set(netKey(), k);
   netApplyOnline();
   netPaint();
+  try { netInline(); } catch (_) {}   /* the consequences follow the switch ([TILL-149]) */
   try { window.dispatchEvent(new Event(NETS[k].off ? 'offline' : 'online')); } catch (_) {}
   try { paintStatus(); } catch (_) {}
 }
@@ -3451,10 +3479,12 @@ function netHead(k){
 }
 
 /** ⭐ opened on demand \u2014 the bar stays one line, because it is on screen all day [[feedback-text-budget]] */
-function netMore(){
-  var el = document.getElementById('netwhat');
-  if (!el) return;
-  if (!el.hidden) { el.hidden = true; el.innerHTML = ''; return; }
+/**
+ * ⭐⭐ ONE BUILDER, TWO PLACES ([TILL-149]). The banner opens this as an overlay; the diagnostics panel
+ * renders it inline right under the switch that causes it. Athi: *"the effect should see where you are
+ * simulating — can you open it there itself?"* Two copies of this markup would disagree within a month.
+ */
+function netWhatHTML(){
   var head = netHead(netNow());
   if (!head) return;
   var rows = watchNow();
@@ -3472,13 +3502,36 @@ function netMore(){
           + (why ? ' — ' + esc(x.costs) : '') + '</li>'; }).join('')
       + '</ul></div>';
   }
-  el.innerHTML = '<div class="full"><b>' + esc(head) + '</b></div>'
+  return '<div class="full"><b>' + esc(head) + '</b></div>'
     + col('stop', 'Stopped right now', rows.filter(function(x){ return !x.ok; }), true)
     + col('goes', 'Still working', rows.filter(function(x){ return x.ok; }))
     + '<div class="full u">Billing, printing and taking money are not in this list because they never touch'
     + ' the line \u2014 they work whatever it is set to. Every row is checked live; the same rows raise the'
     + ' footer message when one of them stops for real.</div>';
+
+}
+
+/** ⭐ the overlay, opened from the banner — the same words the panel below the switch shows */
+function netMore(){
+  var el = document.getElementById('netwhat');
+  if (!el) return;
+  if (!el.hidden) { el.hidden = true; el.innerHTML = ''; return; }
+  var h = netWhatHTML();
+  if (!h) return;
+  el.innerHTML = h;
   el.hidden = false;
+}
+
+/**
+ * ⭐⭐⭐ AND IT FOLLOWS THE SWITCH ([TILL-149]). Choosing a line setting repaints the list beneath it at once,
+ * so the consequence of the choice is on screen before the person looks away from the control.
+ */
+function netInline(){
+  var el = document.getElementById('netinline');
+  if (!el) return;
+  var h = netWhatHTML();
+  el.innerHTML = h || '';
+  el.hidden = !h;
 }
 
 /** ⚠️ drawn on every load, so a setting that survived a restart announces itself immediately */
@@ -5445,21 +5498,37 @@ function menuSection(id){
   }
   MENU_OPEN_SEC = (MENU_OPEN_MANY[0] === undefined) ? '' : MENU_OPEN_MANY[0];
   /**
-   * ⚠️⚠️ HOLD THE SCROLL ACROSS THE REPAINT ([TILL-83]). paintMenu() replaces every child of the scrolling
-   * element, so the browser resets scrollTop to 0 — and everything after it then measures from the top of a
-   * panel the reader was nowhere near. Measured: 300 in, 1367 out.
+   * ⚠️⚠️⚠️ ANCHOR THE HEADING YOU PRESSED, NOT THE SCROLL NUMBER ([TILL-83], corrected [TILL-148]).
+   *
+   * paintMenu() replaces every child of the scroller, so the browser resets scrollTop to 0 and everything
+   * after it measures from a top the reader was nowhere near. Keeping the old scrollTop fixed that — while
+   * the panel was always the same height, which it was only because `.mbody` set display and so drew even a
+   * COLLAPSED section. With [hidden] finally winning, the hub became the accordion it was always written to
+   * be, the content genuinely shrank, and the browser clamped the restored scrollTop: 300 in, 20 out. The
+   * heading the person was looking at moved 280px.
+   *
+   * ⭐ SO THE THING HELD STILL IS THE HEADING, not a number. Measure where it sits inside the scroller
+   * before the repaint, put it back at the same place after, and the panel cannot move under the press
+   * however much the content above or below it changes.
    */
   var box = menuScroller();
+  var sel = '[data-testid="till-msec-' + id + '"]';
+  var el0 = document.querySelector(sel);
+  var was = (box && el0) ? (el0.getBoundingClientRect().top - box.getBoundingClientRect().top) : null;
   var keep = box ? box.scrollTop : 0;
   paintMenu();
   box = menuScroller();
   if (box) box.scrollTop = keep;
+  var el = document.querySelector(sel);
+  if (box && el && was !== null) {
+    var now = el.getBoundingClientRect().top - box.getBoundingClientRect().top;
+    box.scrollTop += (now - was);
+  }
   /**
    * ⭐ AND ONLY MOVE IT IF IT IS ACTUALLY OUT OF SIGHT. You pressed a heading you could see, so in the ordinary
    * case the right amount of scrolling is none. This is the minimum nudge the shelf list already uses, for the
    * same reason: scrolling under somebody's eye on every press is what a list must not do.
    */
-  var el = document.querySelector('[data-testid="till-msec-' + id + '"]');
   if (el && box) {
     var r = el.getBoundingClientRect(), br = box.getBoundingClientRect();
     if (r.top < br.top) box.scrollTop -= (br.top - r.top) + 6;
@@ -16784,6 +16853,9 @@ async function openStuck(){
         return '<option value="' + k + '"' + (k === netNow() ? ' selected' : '') + '>' + esc(NETS[k].label) + '</option>';
       }).join('')
     + '</select></label>'
+    /* ⭐ the consequences, under the control that causes them ([TILL-149]) — same builder as the overlay */
+    + '<div id="netinline" class="netwhat inline" data-testid="till-net-inline"'
+    + (netHead(netNow()) ? '' : ' hidden') + '>' + (netWhatHTML() || '') + '</div>'
     + '<span class="qwhy">support code ' + esc(stuckCode()) + '</span>'
     + '</div>' + h;
 

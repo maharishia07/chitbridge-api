@@ -139,10 +139,18 @@ it('the bar offers the list', () => {
 
 /** ⭐ the point of the whole change: the panel is MEASURED, not written down twice */
 it('⭐ the panel reads the watch list rather than a second copy of it', () => {
-  const a = PAGE.indexOf('function netMore(){');
-  assert.ok(a > 0, 'netMore is gone');
+  /* ⚠️ MOVED, NOT DELETED: the builder was split out of netMore so the diagnostics panel could render the
+     same list inline under the switch ([TILL-149]). The property is unchanged — ONE builder, no second list. */
+  const a = PAGE.indexOf('function netWhatHTML(){');
+  assert.ok(a > 0, 'the one builder is gone');
   const body = PAGE.slice(a, PAGE.indexOf('\n}', a));
-  assert.ok(/watchNow\(\)/.test(body), 'the panel keeps its own list — it will drift from what is watched');
+  assert.ok(/watchNow\(\)/.test(body), 'the builder keeps its own list — it will drift from what is watched');
+  ['netMore', 'netInline'].forEach(function (f) {
+    const at = PAGE.indexOf('function ' + f + '(){');
+    assert.ok(at > 0, f + ' is gone');
+    assert.ok(/netWhatHTML\(\)/.test(PAGE.slice(at, PAGE.indexOf('\n}', at))),
+      f + ' builds its own markup instead of using the one builder');
+  });
 });
 
 it('and it does not claim billing is at risk, because it never is', () => {
