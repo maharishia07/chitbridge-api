@@ -2975,7 +2975,7 @@
     <div style="font-size:3em;line-height:1">☕</div>
     <div style="font-size:1.4em;font-weight:700" id="breaktitle">On break</div>
     <div style="color:var(--dim)" id="breakwho"></div>
-    <div style="color:var(--dim);font-size:.85em">This counter is kept for this PC. Bills already taken keep going to ChitBridge. Nothing can be billed until the break ends.</div>
+    <div style="color:var(--dim);font-size:.85em">This counter stays with this PC. Bills already taken keep going. Nothing can be billed until the break ends.</div>
     <button class="pill" style="font-size:1.1em;padding:12px 18px" data-testid="till-break-end" onclick="endBreak()"><b>Back to billing</b></button>
   </div>
 </div>
@@ -2993,7 +2993,7 @@
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()">Close</button></div>
-  <div style="color:var(--dim);font-size:.8em;margin-top:10px">The name is recorded on every bill from now until somebody takes over. It says who was standing here — it is not a sign-in, and it does not change what this till may do.</div>
+  <div style="color:var(--dim);font-size:.8em;margin-top:10px">The name goes on every bill until somebody takes over. It is not a sign-in.</div>
 </div></dialog>
 
 <dialog id="shiftdlg"><div class="dlg">
@@ -5203,7 +5203,7 @@ function flashHide(){ var el = document.getElementById('flash'); if (el) { el.hi
 function refreshFailed(status){
   var sh = paired();
   if (status === 401 || status === 403 || !sh)
-    return flash('🔑', 'Not signed in', keyWord(), function(){ signinOpen(); });
+    return flash('🔑', 'Not signed in', keyWord(), function(){ pairAgain(); });
   if (!status)
     /**
      * ⭐ A CROSSED NETWORK BAR, NOT A WORD ([TILL-158]). Athi: *"you have to change to No Network with the
@@ -5777,7 +5777,7 @@ function menuAlerts(){
   try { if (!paired())
     add('pair', 'stop', 'Nothing can reach the shop',
       'This counter is not signed in, so nothing it rings can be sent.',
-      '<button class="pill" data-testid="till-alert-pair" onclick="fromMenu(signinOpen)">' + keyWord() + '</button>');
+      '<button class="pill" data-testid="till-alert-pair" onclick="fromMenu(pairAgain)">' + keyWord() + '</button>');
   } catch (_) {}
 
   /* ══ costs money ════════════════════════════════════════════════════════════════════════════════════ */
@@ -5790,7 +5790,9 @@ function menuAlerts(){
        * is data; how bad it is is a judgement, and the judgement is what a glance needs.
        * ⚠️ The RANK stays 'costs money' — stale prices cost money at every age. The colour says how much.
        */
-      if (hrs > 12) add('prices', 'money', 'Prices are ' + Math.round(hrs) + ' hours old',
+      /* ⭐ UNITS A SHOPKEEPER THINKS IN ([TILL-188]). "77 hours old" is a number nobody converts in their head. */
+      var oldWords = (hrs >= 48) ? (Math.round(hrs / 24) + ' days old') : (Math.round(hrs) + ' hours old');
+      if (hrs > 12) add('prices', 'money', 'Prices are ' + oldWords,
         'Anything changed at the shop since then is not here yet.',
         '<button class="pill" data-testid="till-alert-refresh" onclick="fromMenu(refresh)">Read the shop again</button>',
         (hrs > 48 ? 'red' : (hrs > 24 ? 'amber' : 'green')));
@@ -5806,8 +5808,21 @@ function menuAlerts(){
   /* ══ costs time ═════════════════════════════════════════════════════════════════════════════════════ */
   try {
     if (STATE && STATE.queued) {
-      var why = (HOST && HOST.last && HOST.last.why) || '';
-      add('queue', 'time', queueWords(), why && why.indexOf('waiting a moment') < 0 ? why : '',
+      /**
+       * ⚠️⚠️⚠️ THE FIX IS THE BUTTON, AND THE REASON IS NOT ON THE CARD ([TILL-188]). This row put the SERVER’S
+       * sentence in the TITLE, cut at 88 characters — "…pair th…" — and then the same sentence again, in
+       * full, in the detail beneath it. The two buttons were Send now, which cannot work while the key is
+       * refused, and Counter health. Nothing on the card could pair anything.
+       * Athi, 2026-09-21: *"even though it says pair the key, no way of pairing the key — Pair Key should be
+       * an action button and when you press it whatever authentication required it has to be performed."*
+       * ⭐ So: a line we own, a button that performs it, and the reason left in 🩺 where a reason belongs.
+       */
+      var b = queueBlock();
+      var nq = STATE.queued + ' bill' + (STATE.queued === 1 ? '' : 's') + ' waiting';
+      if (b) add('queue', 'time', b.line, nq + '. Nothing is lost.',
+        '<button class="pill" data-testid="till-alert-fix" onclick="fromMenu(' + b.act + ')"><b>' + esc(b.fix) + '</b></button>'
+        + '<button class="pill" data-testid="till-alert-stuck" onclick="fromMenu(openHealth)">Counter health</button>');
+      else add('queue', 'time', queueWords(), '',
         '<button class="pill" data-testid="till-alert-send" onclick="fromMenu(sendNow)">Send now</button>'
         + '<button class="pill" data-testid="till-alert-stuck" onclick="fromMenu(openHealth)">Counter health</button>');
     }
@@ -10948,7 +10963,7 @@ function shelfLine(shown){
    * and offers the step that actually works.
    */
   if (!S) return '<div class="shelfline" data-testid="till-shelf-count">' + esc(blankWords())
-    + (paired() ? '' : ' <button class="daylink" data-testid="till-connect" onclick="signinOpen()">Connect it</button>')
+    + (paired() ? '' : ' <button class="daylink" data-testid="till-connect" onclick="pairAgain()">Connect it</button>')
     + '</div>';
   /**
    * ⚠️⚠️ MAINTENANCE COUNTS EVERYTHING. This line counted only what could be sold — on the one screen whose
@@ -11934,19 +11949,39 @@ async function screenWrite(i, on){
  */
 function refusalWords(out){
   var code = out && (out.status || out.code);
-  if (code === 403) return 'This counter is not allowed to make that change. The change is saved here only —'
-    + ' ask for the counter key to be issued again from ChitBridge.';
-  if (code === 401) return 'This counter is no longer signed in to ChitBridge. The change is saved here only —'
-    + ' open the counter again from ChitBridge to get a fresh key.';
-  if (code === 404) return 'ChitBridge does not have this product any more. It may have been deleted there.'
-    + ' The change is saved here only.';
-  if (code >= 500) return 'ChitBridge could not be reached just now. The change is saved here and will be sent again.';
-  return 'Saved here. ' + ((out && out.why) || 'ChitBridge has not confirmed it yet.');
+  /**
+   * ⚠️⚠️⚠️ ONE FAULT, ONE SENTENCE, WHEREVER IT IS SAID ([TILL-188]). A 401 and a 403 are the same thing
+   * to a shopkeeper — the shop will not take this counter’s key — and both used to end by naming a menu in
+   * ChitBridge instead of offering the button. The button is refusalFix(); the words match Check and 🩺.
+   */
+  if (code === 401 || code === 403)
+    return 'The shop does not accept this counter’s key. The change is saved here only.';
+  if (code === 404) return 'ChitBridge does not have this product any more. The change is saved here only.';
+  if (code >= 500) return 'ChitBridge could not be reached. The change is saved here and goes again.';
+  /* ⚠️ never the server’s own sentence on a selling screen — see queueBlock() */
+  return 'Saved here. ChitBridge has not confirmed it yet.';
+}
+/** ⭐ THE BUTTON THAT CLEARS A REFUSAL, when there is one ([TILL-188]). A warning with no action is a worry. */
+function refusalFix(out){
+  var code = out && (out.status || out.code);
+  return (code === 401 || code === 403) ? { fix: 'Pair again', act: pairAgain } : null;
 }
 function cardNote(out, said){
   var el = document.getElementById('cardnote'); if (!el) return;
   el.textContent = out && out.queued ? 'Saved here — it reaches the shop when the line is back.'
     : (out && out.ok ? said : refusalWords(out));
+  /**
+   * ⭐⭐ AND THE WAY OUT, BESIDE THE WORDS ([TILL-188]). Built as a node rather than written into the
+   * markup: this line carries text from a refusal, and textContent + appendChild cannot be made to run it.
+   */
+  var fx = (out && !out.ok && !out.queued) ? refusalFix(out) : null;
+  if (fx) {
+    var fb = document.createElement('button');
+    fb.className = 'pill'; fb.style.marginInlineStart = '8px';
+    fb.setAttribute('data-testid', 'till-card-fix');
+    fb.textContent = fx.fix; fb.onclick = fx.act;
+    el.appendChild(fb);
+  }
   /* ⭐ and the change is SHOWN, not only described — the words are read second, if at all */
   flashItem(CARD_ID);
 }
@@ -12510,7 +12545,7 @@ function shopReady(){
   if (!paired()) {
     stops.push({ why: 'This counter is not signed in to a shop yet.',
                  means: 'It has no key, so there is nothing to sell and nowhere to send a bill.',
-                 fix: DOOR.label, act: 'signinOpen' });
+                 fix: DOOR.label, act: 'pairAgain' });
   } else {
     /* ⚠️ A KEY OF THE WRONG KIND IS NOT A CONNECTED COUNTER. A connector key cannot read a catalogue, and the
        only symptom used to be a 403 in a log nobody opens ([TILL-117]). */
@@ -12519,7 +12554,7 @@ function shopReady(){
     if (sc && sc.indexOf('till') < 0) {
       stops.push({ why: 'This counter\u2019s key is not a till key.',
                    means: 'It is for ' + esc(sc.join(', ')) + ', so it cannot read your shop or send a bill.',
-                   fix: DOOR.label, act: 'signinOpen' });
+                   fix: DOOR.label, act: 'pairAgain' });
     }
     if (!S) {
       stops.push({ why: 'No copy of the shop has been read yet.',
@@ -12617,8 +12652,53 @@ function queueStuck(){
    */
   var signIn = /closed|not allowed|scope|key/i.test(String(w.say || '')) || w.code === 'COUNTER_CLOSED';
   return signIn
-    ? { fix: 'Sign in to send them', act: 'signinOpen', detail: String(w.say || ''), code: w.code || null }
+    ? { fix: 'Pair again', act: 'pairAgain', detail: String(w.say || ''), code: w.code || null }
     : { fix: 'See what is wrong',    act: 'openStuck',  detail: String(w.say || ''), code: w.code || null };
+}
+/**
+ * ────────────────────────── ⭐⭐⭐ WHAT IS HOLDING THE QUEUE, IN WORDS WE OWN ([TILL-188]) ──────────────────────────
+ *
+ * Athi, 2026-09-21, looking at a Check card whose title was a truncated 401: *"i don’t understand the
+ * technicality — what i need is a simple text or action button to solve the issue, rather than the
+ * reason. Reason should be in the doctor, technical detail."*
+ *
+ * ⚠️⚠️ SO IT RETURNS A LINE AND A BUTTON, NEVER A REASON. It reads the server’s CLASSIFICATION to decide
+ * which fault this is, and then says none of the server’s words. Those are carried by queueStuck().detail
+ * and printed by 🩺 alone.
+ * ⚠️ IT RETURNS NULL WHEN IT CANNOT TELL. A card that guesses at a cause sends somebody to the wrong
+ * screen, which is worse than a card that only says how many are waiting. [[feedback-silence-is-the-bug]]
+ */
+function queueBlock(){
+  var w = (STATE && STATE.queue_why) || null;
+  var say = String((w && w.say) || (HOST && HOST.last && HOST.last.why) || '');
+  var code = (w && w.code) || null;
+  if (!say) return null;
+  if (code === 'COUNTER_CLOSED')
+    return { line: 'This counter was opened somewhere else', fix: 'Take it back', act: 'pairAgain' };
+  /* ⚠️ a 401, a revoked key and a key of the wrong kind are three causes and ONE thing to do about them */
+  if (/\b40[13]\b|refused this counter|not allowed|not scoped|scope|key/i.test(say))
+    return { line: 'The shop does not accept this counter’s key', fix: 'Pair again', act: 'pairAgain' };
+  return null;
+}
+/**
+ * ⭐⭐⭐ PAIR THIS COUNTER AGAIN — THE BUTTON THAT DOES IT, NOT THE SENTENCE THAT ASKS FOR IT ([TILL-188]).
+ *
+ * ⚠️⚠️ THE TWO HOSTS PAIR DIFFERENTLY AND ONLY ONE OF THEM CAN FINISH HERE. The shop PC asks for an
+ * email, sends a code and enrols — one press, end to end, which is what was asked for. A browser counter
+ * cannot mint its own key, so the nearest real action is to put the person ON the box that takes one.
+ * Printing the menu path and leaving them to walk it is what the old dialog did, and a path is not an action.
+ */
+function pairAgain(){
+  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return signinOpen();
+  try { setClose(); } catch (_) {}
+  openSettings('device');
+  /* ⚠️ the box is built by openSettings(), so it is focused after it exists, never before */
+  setTimeout(function(){
+    var k = document.getElementById('set_key');
+    if (!k) return;
+    k.value = ''; try { k.scrollIntoView({ block: 'center' }); } catch (_) {}
+    k.focus();
+  }, 260);
 }
 /** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
 function queueWords(){
@@ -12655,9 +12735,14 @@ function queueWords(){
    * that will not go down. A diagnosis nobody finds is the same as no diagnosis.
    * ⚠️ Trimmed: this line sits in a status bar, and the full sentence lives in the checks panel.
    */
-  var stuck = (typeof HOST !== 'undefined' && HOST && HOST.last && HOST.last.why) ? HOST.last.why : '';
-  if (stuck.length > 90) stuck = stuck.slice(0, 88) + '…';
-  var tail = ' waiting to reach the shop' + (stuck ? ' — ' + stuck : '');
+  /**
+   * ⚠️⚠️⚠️ THE SERVER’S SENTENCE NEVER REACHES THIS LINE ([TILL-188]). It was pasted here and cut at 88
+   * characters, so the one line meant to say what to DO ended "…pair th…". A sentence this counter did
+   * not write cannot be trimmed safely, because nothing here knows which half carried the point.
+   * ⭐ queueBlock() answers in words we own. The server’s own words stay in 🩺 — see queueStuck().detail.
+   */
+  var qb = queueBlock();
+  var tail = ' waiting to reach the shop' + (qb ? ' — ' + qb.line : '');
   if (!bits.length) return STATE.queued + tail;
   return bits.join(' · ') + tail;
 }
@@ -15804,7 +15889,7 @@ async function keyWatch(){
     var refused = !!(v && !v.ok && /40[13]/.test(String(v.why || '')));
     var was = KEY_OK;
     KEY_OK = refused ? false : (v && v.ok ? true : KEY_OK);
-    if (was && !KEY_OK) flash('🔑', 'Signed out by the shop', keyWord(), function(){ signinOpen(); });
+    if (was && !KEY_OK) flash('🔑', 'Signed out by the shop', keyWord(), function(){ pairAgain(); });
   } catch (_) { /* a check that cannot run is not a verdict */ }
 }
 
@@ -16302,10 +16387,15 @@ function signinOpen(){
   signinSay('', false);
   var body = document.getElementById('signinbody');
   if (!(typeof AgentHost !== 'undefined' && HOST === AgentHost)) {
-    /* ⚠️ SAY WHAT TO DO INSTEAD — a dead end with an explanation is still a dead end */
-    body.innerHTML = '<p class="note">This counter is running in a browser, so it is connected by key rather'
-      + ' than by signing in. Open ChitBridge › Settings › Integrations › Keys, make a key with scope'
-      + ' “till”, and paste it into ⚙ on this page.</p>';
+    /**
+     * ⚠️⚠️ A DEAD END WITH AN EXPLANATION IS STILL A DEAD END ([TILL-188]). This branch printed four
+     * menu steps and left the person to walk them. Athi: *"Pair Key should be an action button and when you
+     * press it whatever authentication required it has to be performed."* A browser counter cannot mint its
+     * own key — but it can put them on the box that takes one, which is the nearest thing to the press.
+     */
+    body.innerHTML = '<p class="note">This counter is connected by key, not by signing in.</p>'
+      + '<div class="dlgbtns"><button class="pri" data-testid="till-signin-key"'
+      + ' onclick="document.getElementById(\'signindlg\').close();pairAgain()">Paste a key</button></div>';
     d.showModal(); return;
   }
   body.innerHTML = '<p class="note">Sign in with the email address or User ID you use for ChitBridge. This is'
@@ -20382,7 +20472,7 @@ function signDoor(){
 }
 
 /**
- * ⭐⭐ THE WORD FOR THE **DEVICE** DOOR, wherever a control opens signinOpen() on purpose ([TILL-187]).
+ * ⭐⭐ THE WORD FOR THE **DEVICE** DOOR, wherever a control opens the device door on purpose ([TILL-187], routed via pairAgain since [TILL-188]).
  *
  * ⚠️ NOT signDoor().label. These call sites are about the KEY — a refused key, a missing key, ⚙ Settings —
  * and signDoor() answers about the counter as a whole, which on a paired counter is the PERSON door. Asking
@@ -20403,8 +20493,10 @@ function keyWord(){
  */
 function whoAct(){
   var d = signDoor();
-  if (d.act === 'connect') return signinOpen();
-  if (d.act === 'key')     return signinOpen();   /* the same dialog; it says "paste a key" in a browser */
+  /* ⚠️ BOTH DEVICE DOORS GO THROUGH pairAgain() ([TILL-188]) — it is the one that can finish the job
+     on either host. signinOpen() in a browser was a paragraph naming a menu, which is not an action. */
+  if (d.act === 'connect') return pairAgain();
+  if (d.act === 'key')     return pairAgain();
   if (d.act === 'signin')  return usignOpen();
   return openWho();                                /* handover — the picker's actual job, and always was */
 }
@@ -20447,7 +20539,7 @@ function openWho(){
           + ' onclick="setWho(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">'
           + esc(a.name) + (a.hat ? '<span class="u">' + esc(a.hat) + '</span>' : '') + '</button>';
       }).join('')
-    : '<div style="color:var(--dim)">This shop has no co-assists yet — add people in ChitBridge › Co-assists and they appear here. Until then bills are recorded as the shop itself.</div>')
+    : '<div style="color:var(--dim)">No co-assists yet — add them in ChitBridge › Co-assists. Bills are recorded as the shop.</div>')
     + '<button class="choice" style="margin-top:12px" data-testid="till-break" onclick="takeBreak()">☕ Take a break<span class="u">the counter stays yours — nothing is closed or counted</span></button>'
     + (WHO ? '<button class="choice" style="margin-top:6px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
   document.getElementById('whodlg').showModal();
@@ -20556,7 +20648,7 @@ async function handOver(){
     + ' · ' + SHIFT.bills + ' bill(s)</div>'
     + '<label>Count the cash in the drawer and type the total</label>'
     + '<input id="shift_counted" type="number" min="0" step="1" inputmode="decimal" placeholder="' + esc(curSym()) + '" autofocus>'
-    + '<div style="color:var(--dim);font-size:.8em;margin-top:8px">Count first — the expected figure is shown after, so the count means something. Cash only: UPI and card are not in the drawer.</div>';
+    + '<div style="color:var(--dim);font-size:.8em;margin-top:8px">Count first — the expected figure comes after. Cash only: UPI and card are not in the drawer.</div>';
   document.getElementById('shiftdlg').showModal();
   setTimeout(function(){ var i = document.getElementById('shift_counted'); if (i) i.focus(); }, 50);
 }
@@ -20785,7 +20877,7 @@ function openSettings(tab){
           ? '<div class="srow"><span></span><span class="u">This key cannot read your shop. Sign in to get a till key.</span></div>' : '')
       + '<div class="srow" title="Sign in with your ChitBridge email. This counter writes its own key and keeps it.">'
       + '<span>' + (STATE && STATE.paired ? 'Connect to another shop' : 'Connect this counter') + '</span>'
-      + '<button class="pill" data-testid="till-set-signin" onclick="setClose();signinOpen()">' + esc(keyWord()) + '</button></button>'
+      + '<button class="pill" data-testid="till-set-signin" onclick="pairAgain()">' + esc(keyWord()) + '</button></button>'
       /* ⚠️ signing OUT lives beside signing in, and only when there is a shop to leave ([TILL-127]) */
       + (STATE && STATE.paired ? ' <button class="pill" data-testid="till-set-signout" onclick="setClose();signoutOpen()">Sign out</button>' : '')
       + '</div>'
