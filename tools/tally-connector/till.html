@@ -6032,6 +6032,17 @@ async function beginDay(){
   paintMenu();
   /* the practical half: bring the shop's prices and products up to date, if the line is there */
   try { if (navigator.onLine && HOST && HOST.refresh) await refresh(); } catch (_) {}
+  /**
+   * ── ⚠️⚠️⚠️ THE MORNING TRIES THE KEY, IT DOES NOT MERELY FIND ONE ([TILL-176], BACKLOG item 4) ────────
+   *
+   * Athi: *"start of day must TRY the key, not just find one."* The readiness check asked whether a key was
+   * present. A key that is present and revoked looks identical — and the whole point of opening the day is to
+   * learn, at 9am with nobody waiting, what would otherwise be discovered at noon with a queue at the counter.
+   *
+   * ⭐ IT IS THE SAME CHECK keyWatch() RUNS, forced past its ten-minute gate. One question, one answer, one
+   * place it is implemented. [[feedback-no-duplicate-functions]]
+   */
+  try { KEY_ASKED = 0; await keyWatch(); } catch (_) {}
   paintMenu();
 }
 function dayImg(){ return ls.get(shopLs('cb_till_dayimg'), ''); }
