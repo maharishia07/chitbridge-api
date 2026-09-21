@@ -851,6 +851,22 @@
   .keeprow{display:flex;gap:10px;flex-wrap:wrap;padding:6px 0}
   .keeprow label{display:grid;gap:3px;font-size:.85em;color:var(--dim)}
   .keeprow input{width:92px;padding:7px;min-height:40px}
+  /* ⭐⭐ THE CONFIRM SHEET ([TILL-172]) — the caution at the moment of the act, with the numbers on it */
+  #suredlg{border:0;border-radius:16px;padding:0;max-width:min(460px,94vw);background:var(--paper);color:var(--ink)}
+  #suredlg::backdrop{background:rgba(0,0,0,.45)}
+  #surebody{padding:18px;display:grid;gap:12px}
+  #surebody h3{margin:0;font-size:1.3em}
+  .ssay{margin:0;line-height:1.5}
+  .ssay.warn{color:#8a6a12;font-weight:600}
+  .srows{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .srw{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card)}
+  .srw > span{color:#1b6b3a;font-weight:700}
+  .srw.no > span{color:#8a6a12}
+  .srw b{flex:1;min-width:0;font-weight:500}
+  .srw i{font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums}
+  /* ⚠️ the safe way out is FIRST and unfilled; the act is named with its verb, never OK */
+  .sbtns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  .sbtns .pill,.sbtns .pri{min-height:48px;padding:0 18px}
   .rank-time .rtag{background:#fdf0d5;color:#7a5a10}
   .linky{background:none;border:0;padding:0 4px;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
   /* ── ⭐⭐ THE SHOP CARD ([TILL-161], counter-hub §1) ────────────────────────────────────────────── */
@@ -2572,6 +2588,8 @@
 <!-- ⭐ a failed action, seen rather than read ([TILL-157]) -->
 <div id="flash" class="flash" data-testid="till-flash" hidden></div>
 <!-- ⭐⭐⭐ Working without the line ([TILL-151]) — design-handoff/without-the-line -->
+<!-- ⭐ the caution, at the moment of the act ([TILL-172]) — design-handoff/footer -->
+<dialog id="suredlg" data-testid="till-sure"><div class="dlg" id="surebody"></div></dialog>
 <dialog id="linedlg" data-testid="till-line-dlg">
   <!-- ⚠️ a title, not a sentence ([TILL-152]) — the panel is understood from its symbols, not its heading -->
   <div class="lhead"><h3>The line</h3>
@@ -6902,6 +6920,96 @@ function hubWhoRow(){
 }
 
 /**
+ * ── ⭐⭐⭐ THE WARNING MOVES TO THE MOMENT OF THE ACT ([TILL-172], design-handoff/footer) ──────────────────
+ *
+ * The CAREFUL strip has been pinned to the bottom of the hub since the hub existed:
+ *     CAREFUL · These stop billing for a moment. Everything is sent and checked first.
+ *
+ * ⚠️⚠️ FIVE THINGS WRONG WITH IT, and the package names them better than I would:
+ *   1. a red box that is always there stops being seen — by the second day it is wallpaper, so when something
+ *      is genuinely wrong the strip has already spent the shop's attention
+ *   2. the three actions share nothing but the warning. Sign out is hourly; close the counter is daily; clear
+ *      and reload is a repair nobody should ever need. They are grouped because they are all "scary", which
+ *      is not a category a shopkeeper thinks in
+ *   3. the warning is not even TRUE of all three — signing out does not stop billing
+ *   4. ⭐ "everything is sent and checked first" is a PROMISE MADE IN THE WRONG PLACE. Printed before the
+ *      press it is a claim; at the moment of the press it could be a NUMBER
+ *   5. the most dangerous one sits at the far right, where a hand lands by accident on a touch terminal
+ *
+ * ⭐ SO THE CAUTION TRAVELS WITH THE ACTION, as one sheet at the moment it is pressed — and it carries the
+ * live figures the promise rests on. A tick with a number behind it can be checked; an adjective cannot.
+ *
+ * ⚠️⚠️ AND A FAILING CHECK REORDERS THE WORK RATHER THAN BLOCKING IT (§3.6). Three bills still waiting does
+ * not mean "you may not close" — it means "send 3 first, then close", which is the thing the person wanted
+ * anyway. A refusal with no way forward is how people learn to press through warnings.
+ */
+async function sureSheet(kind){
+  var st = null;
+  try { st = (HOST && HOST.state) ? await HOST.state() : null; } catch (_) { st = null; }
+  var queued = Number((st && st.queued) || (STATE && STATE.queued) || 0);
+  var bills = [], inHand = 0, sent = 0;
+  try {
+    bills = (await DB.all('bills')) || [];
+    var sales = bills.filter(function(b){ return b && isSaleRow(b); });
+    sent = sales.filter(function(b){ return b && b._sent; }).length;
+    /* ⚠️ "in hand" is a bill rung and not yet saved anywhere — the cart, not the store */
+    inHand = (typeof CART !== 'undefined' && CART && CART.length) ? 1 : 0;
+    bills = sales;
+  } catch (_) {}
+
+  var who = (typeof WHO !== 'undefined' && WHO && WHO.name)
+    ? (WHO.kind === 'entity' ? 'the shop' : WHO.name) : '';
+  var SHEET = {
+    signout: { title: who ? ('Sign out, ' + who + '?') : 'Sign out?',
+               say: 'The counter stays open. The next person signs in to sell.',
+               go: 'Sign out', act: function(){ openWho(); } },
+    close:   { title: 'Close the day?',
+               say: 'Billing stops until someone opens it again. Nothing is lost.',
+               go: 'Close the counter', act: function(){ closeCounter(true); } },
+    repair:  { title: 'Repair this counter?',
+               say: 'The counter reloads and reads the shop again. Takes about 20 seconds. Anything waiting is kept.',
+               go: 'Repair this counter', act: function(){ coldStart(true); } },
+  }[kind];
+  if (!SHEET) return;
+
+  /* ⭐ THE NUMBERS THE PROMISE RESTS ON — measured now, not claimed in advance */
+  var rows = [
+    { ok: queued === 0, what: 'Bills sent to the shop', val: sent + ' of ' + bills.length },
+    { ok: queued === 0, what: 'Waiting to send', val: queued ? String(queued) : 'none' },
+    { ok: !inHand, what: 'Bills in hand', val: inHand ? 'one on the counter' : 'none' },
+  ];
+  var blocked = queued > 0;
+
+  var box = document.getElementById('surebody'); if (!box) return;
+  box.innerHTML = '<h3>' + esc(SHEET.title) + '</h3>'
+    + '<p class="ssay">' + esc(SHEET.say) + '</p>'
+    + '<div class="srows">' + rows.map(function(r){
+        return '<div class="srw' + (r.ok ? '' : ' no') + '"><span>' + (r.ok ? '✓' : '∿') + '</span>'
+          + '<b>' + esc(r.what) + '</b><i>' + esc(r.val) + '</i></div>';
+      }).join('') + '</div>'
+    /* ⚠️⚠️ REORDERED, NOT REFUSED (§3.6) */
+    + (blocked
+        ? '<p class="ssay warn" data-testid="till-sure-blocked">' + queued + ' bill'
+          + (queued === 1 ? ' has' : 's have') + ' not reached the shop yet.</p>'
+        : '')
+    + '<div class="sbtns">'
+    /* ⭐ the safe way out is FIRST and plain (§3.5) */
+    + '<button class="pill" data-testid="till-sure-no" onclick="sureClose()">Not now</button>'
+    + '<button class="pri" data-testid="till-sure-go">'
+    + esc(blocked ? ('Send ' + queued + ' first, then ' + SHEET.go.toLowerCase()) : SHEET.go) + '</button>'
+    + '</div>';
+
+  var d = document.getElementById('suredlg');
+  box.querySelector('[data-testid="till-sure-go"]').onclick = async function(){
+    sureClose();
+    if (blocked) { try { await HOST.drain(); } catch (_) {} }
+    try { SHEET.act(); } catch (_) {}
+  };
+  if (d && !d.open) d.showModal();
+}
+function sureClose(){ var d = document.getElementById('suredlg'); if (d && d.open) d.close(); }
+
+/**
  * ⚠⚠ CAREFUL IS A STRIP, NOT A SECTION (HubWide). It spans the foot, the sentence on the left and the three
  * acts as BUTTONS on the right — no chevron, nothing to open. A row that folds away is a row somebody can leave
  * closed and forget; these three stop billing, so the design refuses to hide them.
@@ -6922,9 +7030,15 @@ function hubCare(){
     + '<span><b>CAREFUL</b> These stop billing for a moment. Everything is sent and checked first.</span>'
     + '<span class="hcacts">'
     + ((typeof WHO !== 'undefined' && WHO && WHO.name)
-        ? '<button class="pill" data-testid="till-care-signout" onclick="fromMenu(openWho)">Sign out</button>' : '')
-    + act('coldstart-menu', 'Clear and reload')
-    + act('close', 'Close this counter')
+        ? '<button class="pill" data-testid="till-care-signout" onclick="fromMenu(function(){ sureSheet(&quot;signout&quot;); })">Sign out</button>' : '')
+    /**
+     * ⭐⭐ THE THREE NOW GO THROUGH THE CONFIRM SHEET ([TILL-172], step 1 of design-handoff/footer). Nothing has
+     * moved yet — the strip is still here — but the caution has left it and travels with each action, carrying
+     * the live figures the promise rests on. The package is explicit that this step ships on its own, and it
+     * is the half that makes the product safer; moving the actions to their homes is step 2.
+     */
+    + '<button class="pill" data-testid="till-care-coldstart-menu" onclick="fromMenu(function(){ sureSheet(\'repair\'); })">Repair this counter</button>'
+    + '<button class="pill" data-testid="till-care-close" onclick="fromMenu(function(){ sureSheet(\'close\'); })">Close the day</button>'
     + '</span></div>';
 }
 /**
@@ -17496,11 +17610,13 @@ async function checkAbsorbedNow(){
  * A close that loses a sale is not a close. The last number issued travels to ChitBridge, so the series can be shown
  * to have ended where it did.
  */
-async function closeCounter(){
+async function closeCounter(already){
   if (!(HOST && HOST.key)) { say('This counter is not paired, so there is nothing to close.'); return; }
   if (HOST === AgentHost) { say('This counter runs through the program on this PC. Close it from ChitBridge → Settings → Integrations → Counters.'); return; }
   if (!navigator.onLine) { say('Closing a counter needs the internet — ChitBridge has to be told, and every bill has to be checked first.\n\nNothing has changed. Try again when the line is back.'); return; }
-  if (!await sure('Close counter ' + tillId() + ' on this PC?\n\n'
+  /* ⭐ the confirm sheet has already asked, with the live figures on it ([TILL-172]) — asking twice teaches
+     people to press through dialogs, which is the habit the whole change exists to avoid */
+  if (already !== true && !await sure('Close counter ' + tillId() + ' on this PC?\n\n'
       + 'Every bill is sent and checked against ChitBridge first. If anything is still outstanding, nothing is closed.\n\n'
       + 'The counter itself is kept. It can be opened again — here or on another PC — and its bill numbers carry on from where they stopped.',
       'Yes, close it', 'Close this counter')) return;
@@ -18851,8 +18967,11 @@ function openScreen(){
  *
  * ⚠️ It deletes only THIS shop's database. Another shop's counter on the same PC keeps its own bills and its own queue.
  */
-async function coldStart(){
-  if (!await sure('Start this counter from scratch?\n\nEverything waiting is sent first, then the copy of your shop and today\'s bill list are cleared and read again from ChitBridge.\n\nNothing is sent anywhere else, and no sale is lost.')) return;
+async function coldStart(already){
+  /* ⭐ the confirm sheet has already asked, with the live numbers on it ([TILL-172]) — asking twice trains
+     people to press through dialogs, which is the habit this whole change exists to avoid */
+  if (already !== true) {
+  if (!await sure('Start this counter from scratch?\n\nEverything waiting is sent first, then the copy of your shop and today\'s bill list are cleared and read again from ChitBridge.\n\nNothing is sent anywhere else, and no sale is lost.')) return; }
 
   busyShow('Starting this counter from scratch…');
   /* 1 · send everything */
