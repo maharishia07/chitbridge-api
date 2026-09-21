@@ -849,6 +849,23 @@
   .keeprow{display:flex;gap:10px;flex-wrap:wrap;padding:6px 0}
   .keeprow label{display:grid;gap:3px;font-size:.85em;color:var(--dim)}
   .keeprow input{width:92px;padding:7px;min-height:40px}
+  /* ── ⭐⭐ THE ORDER PAD ([TILL-180]) — used walking, so thumb-sized and one-handed ───────── */
+  .orderpad{display:grid;gap:8px;padding:8px 0}
+  .orderpad[hidden]{display:none}
+  .opnew{display:flex;gap:8px}
+  .opnew input{flex:1;min-width:0;min-height:48px;font-size:1.15em;padding:8px 12px}
+  .opnew .pri{min-height:48px;padding:0 20px;font-weight:700}
+  .optiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+  /* ⭐ the subject is the biggest thing on the tile — it is what he is looking for */
+  .optile{display:grid;justify-items:start;gap:1px;min-height:82px;padding:9px 11px;border-radius:12px;
+    border:1px solid var(--line);background:var(--card);font:inherit;cursor:pointer;text-align:left}
+  .optile b{font-size:1.5em;line-height:1.1}
+  .optile i{font-style:normal;font-size:.85em}
+  .optile .opwait{color:#8a6a12;font-weight:700}
+  .optile .optot{font-weight:700;font-variant-numeric:tabular-nums}
+  .optile.on{border-color:#1b6b3a;box-shadow:inset 0 0 0 2px #1b6b3a}
+  /* ⚠️ somebody else’s table is dimmed, never hidden — a break has to be coverable */
+  .optile.theirs{opacity:.62}
   /* ⭐⭐ THE CONFIRM SHEET ([TILL-172]) — the caution at the moment of the act, with the numbers on it */
   #suredlg{border:0;border-radius:16px;padding:0;max-width:min(460px,94vw);background:var(--paper);color:var(--ink)}
   #suredlg::backdrop{background:rgba(0,0,0,.45)}
@@ -2445,6 +2462,9 @@
   .settab{display:none;min-height:240px}
   .settab.on{display:block}
   .srow{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+  /* ⚠️ [hidden] MUST WIN — .srow sets display:grid, so the word row would draw on a billing counter
+     ([TILL-148] again, caught by its own guard before it shipped) */
+  .srow[hidden]{display:none}
   .srow.top{align-items:start}
   .srow>span{color:var(--dim);font-size:.88em}
   .srow>input,.srow>select{padding:8px}
@@ -2738,6 +2758,13 @@
       <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="Health check — what would go wrong today">✓</button>
       <button class="pill" id="menubtn" data-testid="till-menu" onclick="toggleMenu(event)" title="bills, the shop screen, settings">☰</button>
     </header>
+    <!--
+      ⭐⭐⭐ THE ORDER PAD, ABOVE THE SEARCH ([TILL-180]). It was first put beside the pay zone, which on a
+      phone is behind the Bill tab — so a waiter opening the app saw a product list and had to go looking for
+      his own tables. The render said so immediately. [[feedback-open-the-render-first]]
+      ⚠️ Hidden entirely unless the shop holds orders open, so a billing counter is untouched.
+    -->
+    <div class="orderpad" id="orderpad" data-testid="till-orderpad" hidden></div>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
       <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="searchTyped()" onkeydown="searchKey(event)">
@@ -3046,6 +3073,14 @@
   </section>
 
   <section class="settab" data-tab="keys">
+    <div class="srow" title="Billing is a shop counter: one bill, taken and closed. An order pad holds orders open against a table or a token and bills at the end.">
+      <span>What this counter is for</span>
+      <select id="set_purpose" data-testid="till-set-purpose" onchange="purposeSet(this.value)"></select>
+    </div>
+    <div class="srow" id="row_words" hidden title="A restaurant says table; a sweet shop says token; a garage says job card. The word changes, nothing else does.">
+      <span>Held against a</span>
+      <input id="set_subject" data-testid="till-set-subject" placeholder="table">
+    </div>
     <div class="srow" title="A hotel sends the order to the kitchen before it is paid. A shop with no kitchen leaves this off.">
       <span>Kitchen tickets</span>
       <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()"> send a KOT (F3), with dine-in · takeaway · delivery</label>
@@ -9613,6 +9648,81 @@ function tillOptSet(patch, opts){
   try { paintSetup(); } catch (_) {}
 }
 /** ⭐ one part of the bill-number scheme, kept per shop like the rest of the counter's setup */
+/**
+ * ── ⭐⭐⭐ WHAT THIS COUNTER IS FOR ([TILL-179], BACKLOG TILL-178/178c) ────────────────────────────────────
+ *
+ * Athi: *"now the counter is behaving like a billing application. What if we have to turn it to an order
+ * placement application for the waiter? So possibly we have to bring a PURPOSE in the menu. Billing means the
+ * current application stays as it is."*
+ *
+ * ⚠️⚠️⚠️ AND IT IS NOT A RESTAURANT SWITCH. Strip the restaurant words out of "waiter" and nothing about food
+ * is left: an order held OPEN against a SUBJECT, captured AWAY FROM THE TILL, fulfilled IN PARTS by ROUTED
+ * STATIONS, settled ONCE at the end. A sweet shop with a token and three counters is the identical pattern and
+ * would never call itself a restaurant — which is why the shop declares two FACTS about itself rather than
+ * picking a trade. [[feedback-the-data-decides-not-the-trade]]
+ *
+ *   open_orders  — does an order stay open against a subject, and get added to over time?
+ *   route_lines  — does a line go to a station to be made, before anyone is billed?
+ *
+ * ⭐ THE VOCABULARY IS A TRANSLATION, NOT A BRANCH. "table" for a restaurant, "token" for a sweet shop, "job
+ * card" for a garage — one string, swapped. English is already the key ([[project-string-layer]]), so nothing
+ * here is a second code path. A vertical that needs a new word needs no new code at all.
+ *
+ * ⚠️ BILLING IS UNTOUCHED, and that is the requirement, not a courtesy. A veg store never meets any of this:
+ * every knob below is off, and `purposeIs('billing')` is the default for a counter that never opens the
+ * setting. If a shopkeeper who has never heard of this reads one new word on their screen, it is wrong.
+ */
+var PURPOSES = {
+  billing: {
+    label: 'Billing', hint: 'one bill, taken and closed — a shop counter',
+    open_orders: false, route_lines: false,
+  },
+  order: {
+    label: 'Order pad', hint: 'orders held open against a table or token, added to, billed at the end',
+    open_orders: true, route_lines: true,
+  },
+  /* ⭐ the station's own view of the same orders — the third participant, not a third product ([TILL-178b]) */
+  station: {
+    label: 'Station', hint: 'a kitchen, section or bay — the lines it has to make, and marking them ready',
+    open_orders: true, route_lines: true, makes_only: true,
+  },
+};
+
+/**
+ * ⭐ THE WORDS A VERTICAL USES. Defaults are the restaurant's because that is the shop in front of us; every
+ * one is overridable per shop, and a new vertical is a row here rather than a branch anywhere.
+ */
+var PURPOSE_WORDS = {
+  subject:  'table',      /* table · token · docket · chair · job card  */
+  subjects: 'tables',
+  station:  'kitchen',    /* kitchen · section · bay · bench            */
+  stations: 'kitchens',
+  round:    'round',      /* round · KOT · requisition                  */
+};
+
+function purposeNow(){
+  try { var p = (tillOpt().purpose || 'billing'); return PURPOSES[p] ? p : 'billing'; }
+  catch (_) { return 'billing'; }
+}
+function purposeIs(k){ return purposeNow() === k; }
+function purposeHas(flag){ var p = PURPOSES[purposeNow()]; return !!(p && p[flag]); }
+function purposeSet(k){
+  if (!PURPOSES[k]) return;
+  tillOptSet({ purpose: k });
+  /* ⚠️ THE WHOLE SCREEN CHANGES SHAPE, so everything that paints is asked again rather than patched */
+  try { setMode(MODE); paintMenu(); paintStatus(); paintChips(); } catch (_) {}
+  try { devPaint(); } catch (_) {}
+  toastLine('This counter is now set to ' + PURPOSES[k].label + '.');
+}
+
+/** ⭐ the shop's own word for a thing, so no screen hard-codes "table" */
+function says(k){
+  try { var w = (tillOpt().words || {}); return w[k] || PURPOSE_WORDS[k] || k; }
+  catch (_) { return PURPOSE_WORDS[k] || k; }
+}
+/** ⭐ and the same word with its first letter up, for a heading — one helper, not a sprinkling of slice(0,1) */
+function Says(k){ var s = says(k); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
 function tillSeriesSet(patch){
   var o = tillOpt(), s = {};
   Object.keys(o.series || {}).forEach(function(k){ s[k] = o.series[k]; });
@@ -16308,6 +16418,237 @@ function upiShapeOk(v){
  * at all, because everyone believes it was passed on.
  */
 var KOT_N = 0;
+/**
+ * ── ⭐⭐⭐ AN ORDER HELD OPEN AGAINST A SUBJECT ([TILL-180], BACKLOG TILL-178) ─────────────────────────────
+ *
+ * Athi: *"he has to feed table number for every order, and part order placement under the table number, so
+ * multiple part orders will be there; on completion the bill to be prepared for that table number… the same
+ * waiter can manage more than one table at any time."*
+ *
+ * ⚠️⚠️⚠️ THIS IS THE ONE PIECE THAT IS NOT A TWEAK, and everything else in the design is small once it is
+ * right. Billing makes one bill and closes it; the cart exists while a customer stands there. Order-taking
+ * keeps a chit OPEN against a subject, accretes rounds into it over an hour, and bills at the end.
+ *
+ * ⭐ THE SUBJECT IS THE CHIT, HELD OPEN — the same axiom as *the chit IS the cart*
+ * ([[feedback-chit-is-the-cart]]), taken one step further. Modelled as anything else — a parked bill, a local
+ * draft, a text field on the current sale — and the kitchen cannot see it, a flat battery loses it, and a
+ * second waiter cannot pick up table 7.
+ *
+ * ⚠️⚠️ SO IT IS THE SHOP'S, NOT THE DEVICE'S. [TILL-178b]: with multiple participants "offline" stops meaning
+ * *the internet is down* and starts meaning *can these two devices in the same building reach each other*.
+ * The order is held where both can read it. Until the hub is bound to the LAN the local store is the fallback,
+ * and the code below is deliberately written so that swap is a change of ONE function — `ordersSave`.
+ *
+ * ⚠️ AND "MANY TABLES AT ONCE" IS THEN FREE: it is a list, not a mode. That is the test of whether this piece
+ * is modelled right.
+ */
+var ORDERS = [];          /* every order this counter can see, open or just settled */
+var ORDER_ID = null;      /* the one the screen is showing, or null for the ordinary cart */
+
+function ordersKey(){ return shopLs('cb_till_orders'); }
+function ordersLoad(){
+  try { ORDERS = JSON.parse(ls.get(ordersKey(), '[]')) || []; } catch (_) { ORDERS = []; }
+  if (!Array.isArray(ORDERS)) ORDERS = [];
+  return ORDERS;
+}
+/**
+ * ⚠️ THE ONE FUNCTION THE HUB WILL REPLACE. Everything else reads ORDERS and calls this; when the shop PC
+ * serves the floor, only the body of these two changes. A design that spreads persistence across a dozen call
+ * sites cannot be moved later without finding all of them. [[feedback-stay-in-the-construct]]
+ */
+function ordersSave(){
+  try { ls.set(ordersKey(), JSON.stringify(ORDERS.slice(-200))); } catch (_) {}
+  /**
+   * ⚠⚠⚠ IT DOES NOT POST YET, AND SAYING SO IS THE POINT. The first draft sent this to /api/till/orders — a
+   * route that does not exist. key-scopes.test.js caught it: *"the counter posts /api/till/orders but the
+   * agent ALLOW list does not carry it — it works in a browser and is refused on a shop PC."*
+   *
+   * ⭐ The shop-held store is [TILL-178b] and is NOT BUILT. Until the hub is bound to the LAN and that route
+   * exists, an order lives on the device that took it — which is honest, and which the order pad already
+   * shows by dimming another waiter’s table rather than pretending it can be picked up.
+   */
+}
+
+function orderFind(id){ for (var i = 0; i < ORDERS.length; i++) if (ORDERS[i].id === id) return ORDERS[i]; return null; }
+function orderOpen(){ return ORDERS.filter(function(o){ return o.state === 'open'; }); }
+/** ⭐ mine first, but never mine ONLY — a table is the shop's, and somebody has to be able to cover a break */
+function orderMine(){
+  var me = (typeof WHO !== 'undefined' && WHO && WHO.id) || null;
+  return orderOpen().filter(function(o){ return !me || String(o.by && o.by.id) === String(me); });
+}
+
+/**
+ * ⭐ OPENING ONE. The subject is whatever this shop calls it — a table, a token, a docket — and it is the only
+ * thing asked for, because it is the only thing known at that moment.
+ * ⚠️ THE SAME SUBJECT CANNOT BE OPEN TWICE. Two orders on table 7 is two bills for one table, which is the
+ * same failure as two counters numbering as C1 ([[project-till-series-prefix]]) — so it returns the existing
+ * one instead of making a second.
+ */
+function orderStart(subject){
+  var s = String(subject == null ? '' : subject).trim();
+  if (!s) return null;
+  var had = orderOpen().filter(function(o){ return String(o.subject).toLowerCase() === s.toLowerCase(); })[0];
+  if (had) return had;
+  var o = {
+    id: 'O' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    subject: s, state: 'open', at: new Date().toISOString(),
+    by: (typeof WHO !== 'undefined' && WHO) ? { id: WHO.id, name: WHO.name, kind: WHO.kind } : null,
+    till: (STATE && STATE.till && STATE.till.id) || tillId(),
+    kind: (typeof orderKind === 'function' ? orderKind() : 'dine'),
+    lines: [],            /* every line ever added, each carrying the round it went out in */
+    rounds: 0,
+  };
+  ORDERS.push(o); ordersSave();
+  return o;
+}
+
+/** ⭐ what is on an order, and what it comes to — one reader, so no screen adds up its own version */
+function orderTotals(o){
+  var lines = (o && o.lines) || [];
+  var gross = 0, n = 0;
+  lines.forEach(function(l){ if (l.void) return; n++; gross = r2(gross + (Number(l.net) || 0)); });
+  return { lines: n, total: gross, rounds: o ? o.rounds : 0,
+           waiting: lines.filter(function(l){ return !l.void && l.round && !l.ready; }).length };
+}
+
+/** ⭐ how long it has been open — the first thing anybody asks about a table */
+function orderAge(o){
+  if (!o || !o.at) return '';
+  var m = Math.round((Date.now() - new Date(o.at).getTime()) / 60000);
+  return m < 60 ? (m + ' min') : (Math.floor(m / 60) + 'h ' + (m % 60) + 'm');
+}
+
+/**
+ * ⭐⭐ PUTTING THE CART ONTO AN ORDER — which is what "part order placement" is. The lines move from the cart
+ * to the order and the cart empties, because a line on both is a line that will be billed twice.
+ * ⚠️ THE ROUND IS STAMPED HERE and never re-stamped: a round is what went to the station together, and a
+ * number that can change is not a record of anything.
+ */
+function orderAddRound(o){
+  if (!o || !CART.length) return null;
+  o.rounds = (Number(o.rounds) || 0) + 1;
+  var n = o.rounds;
+  CART.forEach(function(c){
+    var l = {}; for (var k in c) l[k] = c[k];
+    l.round = n; l.at = new Date().toISOString();
+    o.lines.push(l);
+  });
+  CART.length = 0;
+  ordersSave();
+  try { price(); paintHits(); } catch (_) {}
+  return n;
+}
+
+/**
+ * ⭐ AND BILLING IT IS THE ORDINARY SALE, on the accumulated lines. Nothing about settlement is new — which is
+ * the point of holding the order as a chit rather than as a thing of its own.
+ * ⚠️ The order is marked settled BEFORE finish() so a second device cannot bill it in the gap; if the sale
+ * then fails the state goes back, because an order nobody can bill is worse than one billed twice by mistake.
+ */
+async function orderSettle(o){
+  if (!o || o.state !== 'open') return;
+  if (!o.lines.filter(function(l){ return !l.void; }).length) { toastLine('Nothing on this ' + says('subject') + ' yet.'); return; }
+  CART.length = 0;
+  o.lines.forEach(function(l){ if (!l.void) CART.push(l); });
+  o.state = 'settling'; ordersSave();
+  try {
+    price();
+    await finish();
+    o.state = 'settled'; o.settled_at = new Date().toISOString();
+  } catch (e) {
+    o.state = 'open';
+    toastLine('That ' + says('subject') + ' was not billed — nothing has changed.');
+  }
+  ordersSave();
+  ORDER_ID = null;
+  try { paintOrders(); paintHits(); } catch (_) {}
+}
+
+/**
+ * ── ⭐⭐⭐ THE ORDER PAD — a list of what is open, not a cart ([TILL-180]) ─────────────────────────────────
+ *
+ * Athi: *"the same waiter can manage more than one table at any time."* That sentence is the whole layout.
+ * A till's home screen is ONE bill, because a till serves one customer at a time. An order pad's home screen
+ * is EVERY open order, because a waiter is holding six at once and the question he asks the screen is not
+ * "what is on this bill" but "which table needs me next".
+ *
+ * ⚠️⚠️ MOBILE FIRST, and not as a courtesy: this screen is used walking. Tiles are thumb-sized, the subject is
+ * the biggest thing on each, and nothing needs two hands. [[feedback-assume-they-cannot-read]]
+ * ⭐ WHAT IS WAITING IN THE KITCHEN IS ON THE TILE, because that is the thing that decides where he walks.
+ */
+function paintOrders(){
+  var el = document.getElementById('orderpad');
+  if (!el) return;
+  if (!purposeHas('open_orders')) { el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  var open = orderOpen();
+  var here = ORDER_ID ? orderFind(ORDER_ID) : null;
+
+  /* ⭐ the way in: one field, and it is the only thing known when a waiter walks up to a table */
+  var head = '<div class="opnew">'
+    + '<input id="opsubj" data-testid="till-order-new" inputmode="text" autocomplete="off"'
+    + ' placeholder="' + esc(Says('subject')) + ' number" onkeydown="if(event.key===\'Enter\')orderGo()">'
+    + '<button class="pri" data-testid="till-order-go" onclick="orderGo()">Open</button></div>';
+
+  if (!open.length) {
+    el.innerHTML = head + '<p class="u" data-testid="till-order-none">No ' + esc(says('subjects'))
+      + ' open. Type a number to start one.</p>';
+    return;
+  }
+
+  /* ⚠️ THE ONE BEING SERVED IS MARKED, not hidden — a waiter must always see the others */
+  el.innerHTML = head + '<div class="optiles">' + open.map(function(o){
+    var t = orderTotals(o);
+    var mine = !(typeof WHO !== 'undefined' && WHO && WHO.id) || String(o.by && o.by.id) === String(WHO.id);
+    return '<button class="optile' + (here && here.id === o.id ? ' on' : '') + (mine ? '' : ' theirs') + '"'
+      + ' data-testid="till-order-tile" data-oid="' + esc(o.id) + '" onclick="orderPick(&quot;' + esc(o.id) + '&quot;)">'
+      + '<b>' + esc(o.subject) + '</b>'
+      + '<span class="u">' + esc(orderAge(o)) + '</span>'
+      /* ⭐ the two numbers that decide where he walks next */
+      + (t.waiting ? '<i class="opwait" title="still in the ' + esc(says('station')) + '">⏳ ' + t.waiting + '</i>' : '')
+      + (t.total ? '<i class="optot">' + esc(money(t.total)) + '</i>' : '')
+      /* ⚠️ somebody else's table is dimmed, never hidden — a break has to be coverable */
+      + (mine ? '' : '<i class="u">' + esc((o.by && o.by.name) || 'another') + '</i>')
+      + '</button>';
+  }).join('') + '</div>';
+}
+
+/** ⭐ open one, or jump to it if it is already open — same button, because a waiter should not have to know */
+function orderGo(){
+  var inp = document.getElementById('opsubj');
+  var v = inp ? inp.value : '';
+  if (!String(v).trim()) return;
+  var o = orderStart(v);
+  if (inp) inp.value = '';
+  if (o) orderPick(o.id);
+}
+function orderPick(id){
+  var o = orderFind(id); if (!o) return;
+  /**
+   * ⚠️⚠️ LEAVING A TABLE MUST NOT LOSE WHAT WAS TYPED ON IT. Anything in the cart belongs to the order being
+   * left, not to the one being opened — carrying it across would put a customer's dosa on somebody else's
+   * bill, which is the worst thing this screen could do.
+   */
+  if (ORDER_ID && ORDER_ID !== id && CART.length) {
+    var prev = orderFind(ORDER_ID);
+    if (prev) { orderAddRoundHold(prev); }
+  }
+  ORDER_ID = id;
+  CART.length = 0;
+  try { price(); paintOrders(); paintHits(); paintStatus(); } catch (_) {}
+}
+/** ⭐ lines typed but not yet sent are kept ON the order, unsent, so nothing is lost and nothing is fired */
+function orderAddRoundHold(o){
+  if (!o || !CART.length) return;
+  CART.forEach(function(c){
+    var l = {}; for (var k in c) l[k] = c[k];
+    l.round = 0; l.at = new Date().toISOString();       /* round 0 = typed, not sent */
+    o.lines.push(l);
+  });
+  CART.length = 0;
+  ordersSave();
+}
+
 function orderKind(){ return ls.get(shopLs('cb_till_otype'), 'dine'); }
 function orderTable(){ return ls.get(shopLs('cb_till_table'), ''); }
 function setOrderKind(v){ ls.set(shopLs('cb_till_otype'), v); paintOrderBar(); }
@@ -16746,6 +17087,8 @@ function setMode(m){
   /* ⚠ THE CHIP ROW CHANGES WITH THE MODE NOW — the maintenance jobs are drawn only in maintain (paintChips),
      and without this the row kept whatever the last mode had put there. [[feedback-check-after-the-wire]] */
   paintChips(); paintListTools(); paintKeys(); paintHits(); stepsApply();
+  /* ⭐ the order pad follows the PURPOSE, not the mode ([TILL-180]) */
+  try { ordersLoad(); paintOrders(); } catch (_) {}
   if (MODE === 'receive') { loadTasks('receive'); paintReceive(); }
   if (MODE === 'despatch') { loadTasks('despatch'); paintDespatch(); }
   if (MODE === 'maintain') { CARD_ID = null; pendClear(); paintCard(); loadWorth(); }
@@ -19721,7 +20064,29 @@ function openSettings(tab){
  * force — a settings panel that opens on its defaults while the counter runs on something else is how a shop
  * ends up changing a setting it never made.
  */
+/**
+ * ⭐ THE PURPOSE ROW, PAINTED FROM THE REGISTRY ([TILL-179]). A new purpose is a row in PURPOSES and appears
+ * here without anybody editing markup — the same rule the operations, the sections and the watch list keep.
+ * ⚠️ The word row is hidden for a billing counter: a veg store must never read "held against a" at all.
+ */
+function paintPurpose(){
+  var sel = document.getElementById('set_purpose');
+  if (sel) {
+    var now = purposeNow();
+    sel.innerHTML = Object.keys(PURPOSES).map(function(k){
+      return '<option value="' + k + '"' + (k === now ? ' selected' : '') + '>'
+        + esc(PURPOSES[k].label) + ' — ' + esc(PURPOSES[k].hint) + '</option>';
+    }).join('');
+  }
+  var row = document.getElementById('row_words');
+  if (row) row.hidden = !purposeHas('open_orders');
+  var inp = document.getElementById('set_subject');
+  if (inp && document.activeElement !== inp) inp.value = says('subject');
+}
+
 function paintSetup(){
+  /* ⭐ what this counter is for, painted from the registry ([TILL-179]) */
+  try { paintPurpose(); } catch (_) {}
   var o = tillOpt();
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
   /* ⚠️ set_layout / set_shape / set_theme / set_preset / set_tile / set_photos and the Show chips went with the
