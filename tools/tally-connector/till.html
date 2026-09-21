@@ -850,7 +850,11 @@
   .keeprow label{display:grid;gap:3px;font-size:.85em;color:var(--dim)}
   .keeprow input{width:92px;padding:7px;min-height:40px}
   /* ── ⭐⭐ THE ORDER PAD ([TILL-180]) — used walking, so thumb-sized and one-handed ───────── */
-  .orderpad{display:grid;gap:8px;padding:8px 0}
+  /* ⚠️ it has to be loud: this is the one state where a waiter's actions are going nowhere */
+.floorgone{display:block;margin:0 0 8px;padding:10px 12px;border-radius:10px;font-weight:600;
+  background:var(--warnbg,#fdecec);color:var(--warnink,#8a1c1c);border:1px solid var(--warnline,#f0b8b8)}
+.floorgone[hidden]{display:none}
+.orderpad{display:grid;gap:8px;padding:8px 0}
   .orderpad[hidden]{display:none}
   .opnew{display:flex;gap:8px}
   .opnew input{flex:1;min-width:0;min-height:48px;font-size:1.15em;padding:8px 12px}
@@ -2764,6 +2768,9 @@
       his own tables. The render said so immediately. [[feedback-open-the-render-first]]
       ⚠️ Hidden entirely unless the shop holds orders open, so a billing counter is untouched.
     -->
+    <!-- ⚠️⚠️ A FLOOR THAT HAS GONE QUIET SAYS SO ([TILL-178b]). The kitchen is the participant that notices
+         last — it is waiting for work, and no work looks exactly like a quiet evening. -->
+    <div class="floorgone" id="floorstate" data-testid="till-floor-gone" hidden></div>
     <div class="orderpad" id="orderpad" data-testid="till-orderpad" hidden></div>
     <div class="search">
       <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
@@ -3011,6 +3018,29 @@
   </div>
 
   <section class="settab" data-tab="counter">
+    <!-- ⭐⭐⭐ WHAT THIS COUNTER IS FOR LIVES ON THE *COUNTER* TAB ([TILL-178b]). It sat under Quick keys,
+         which is a list of buttons — so the one setting that changes what the whole screen IS was filed
+         behind the one that changes which products are on it. Athi found it by not finding it. -->
+    <div class="srow" title="Billing is a shop counter: one bill, taken and closed. An order pad holds orders open against a table or a token and bills at the end.">
+      <span>What this counter is for</span>
+      <select id="set_purpose" data-testid="till-set-purpose" onchange="purposeSet(this.value)"></select>
+    </div>
+    <div class="srow" id="row_words" hidden title="A restaurant says table; a sweet shop says token; a garage says job card. The word changes, nothing else does.">
+      <span>Held against a</span>
+      <input id="set_subject" data-testid="till-set-subject" placeholder="table">
+    </div>
+    <!-- ⭐⭐⭐ WHERE THE FLOOR LIVES ([TILL-178b]). Empty = this device alone, which is every shop today.
+         An address = the shop's own counter PC, which is how a waiter's phone, a kitchen screen and the till
+         come to agree about table 7 without an internet between them. -->
+    <div class="srow" id="row_floor" hidden title="Leave empty and this device keeps its own tables. Type the shop counter's address and every phone, screen and till in the shop shares one set of orders — over the shop's own wifi, with no internet needed.">
+      <span>Shared with</span>
+      <input id="set_floor" data-testid="till-set-floor" placeholder="this device only"
+             onchange="floorSet(this.value)" style="min-width:16ch">
+    </div>
+    <div class="srow" title="A hotel sends the order to the kitchen before it is paid. A shop with no kitchen leaves this off.">
+      <span>Kitchen tickets</span>
+      <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()"> send a KOT (F3), with dine-in · takeaway · delivery</label>
+    </div>
     <div id="shopbox" data-testid="till-shopbox"></div>
     <!--
       ⭐⭐⭐ THE PREFIX IS GIVEN, NOT TYPED (Athi, 2026-09-17) — the shop assigns it (routes/keys.js claimTill); this only SHOWS it.
@@ -3073,18 +3103,6 @@
   </section>
 
   <section class="settab" data-tab="keys">
-    <div class="srow" title="Billing is a shop counter: one bill, taken and closed. An order pad holds orders open against a table or a token and bills at the end.">
-      <span>What this counter is for</span>
-      <select id="set_purpose" data-testid="till-set-purpose" onchange="purposeSet(this.value)"></select>
-    </div>
-    <div class="srow" id="row_words" hidden title="A restaurant says table; a sweet shop says token; a garage says job card. The word changes, nothing else does.">
-      <span>Held against a</span>
-      <input id="set_subject" data-testid="till-set-subject" placeholder="table">
-    </div>
-    <div class="srow" title="A hotel sends the order to the kitchen before it is paid. A shop with no kitchen leaves this off.">
-      <span>Kitchen tickets</span>
-      <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()"> send a KOT (F3), with dine-in · takeaway · delivery</label>
-    </div>
     <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
       <span>Keys from</span>
       <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
@@ -3192,6 +3210,9 @@
      footer and the doctor read the same table, which is the whole reason it is an engine. -->
 <script src="/engine/verdict.js" onerror="engineMissed('verdict')"></script>
 <script src="/engine/orders.js" onerror="engineMissed('orders')"></script>
+<!-- ⚠️ AFTER orders.js, never before: the hub engine is wrapped with window.CBOrders substituted for its
+     require, so loading it first resolves the order rules to undefined and the floor throws on its first table. -->
+<script src="/engine/orderhub.js" onerror="engineMissed('orderhub')"></script>
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
 <!-- ⭐ the screen library — colour schemes, key tiles, presets (lib/screen-kit.js). Without it the counter draws as before. -->
 <script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
@@ -12965,6 +12986,15 @@ function addItem(i, qty, mods){
                    mrp:(Number(i.mrp) > 0 ? Number(i.mrp) : null),
                    /* ⭐ carried on the LINE as well as the bill: a reprint has to show which item needed it */
                    age:ageOf(i) || null,
+                   /**
+                    * ⭐⭐⭐ WHICH STATION MAKES IT, COPIED ONTO THE LINE ([TILL-178b]). The kitchen screen reads
+                    * lines, not products — and looking the product up later would be looking it up in a catalogue
+                    * that may have been refreshed since, which is the same argument mrp and age make above.
+                    * ⚠️ A shop with no stations leaves this null and nothing anywhere changes: one kitchen sees
+                    * everything, which is what a queue with no station filter already does.
+                    * [[feedback-the-data-decides-not-the-trade]]
+                    */
+                   station:i.station || null,
                    item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
 }
 /* ⚠️ NEVER REPAINT FROM INSIDE THE EVENT THAT CAUSED IT. Rebuilding the bill while the browser is still finishing the blur behind a
@@ -16378,23 +16408,116 @@ function O(){
   return window.CBOrders;
 }
 
-var ORDERS = [];          /* every order this counter can see */
+var ORDERS = [];          /* what this device can see of the floor — FLOOR.orders, kept under the old name */
 var ORDER_ID = null;      /* the one on screen, or null for the ordinary cart */
+var FLOOR = null;         /* this device's copy of the floor's memory, in the hub engine's own shape */
+var FLOOR_SEQ = 0;        /* the last change this device has heard about */
+var FLOOR_POLL = null;
+
+function HUB(){
+  if (!window.CBOrderHub) throw new Error('CBOrderHub is not loaded — /engine/orderhub.js is missing from this page');
+  return window.CBOrderHub;
+}
+
+/**
+ * ── ⭐⭐⭐ WHERE THE FLOOR LIVES ([TILL-178b]) ────────────────────────────────────────────────────────────
+ *
+ * Athi: *"does it work offline, when the network is off? …because it is multiple participants"* and
+ * *"how do we prove without internet the entire cycle works, as a local network?"*
+ *
+ * A counter on its own keeps the floor in its own memory. A SHOP — a waiter's phone, a kitchen screen and a
+ * till — keeps it on the shop PC, because three browsers share nothing and each would be certain it held the
+ * truth. So one setting decides, and it is an address in the shop, never a cloud one:
+ *
+ *   floor unset  → this device's own memory, saved to this device.        (a one-counter shop, unchanged)
+ *   floor set    → http://<the shop PC>:7071, over the shop's own wifi.   (a floor)
+ *
+ * ⚠️⚠️⚠️ THE CLOUD IS IN NEITHER PATH. Nothing above the shop hears about table 7 until the bill is rung, and
+ * the bill goes the way every bill has always gone — the queue, drained when the line returns. That is what
+ * makes "the whole cycle with the internet down" a fact rather than a hope: there is nothing to be down.
+ * [[feedback-never-migrate-offline-to-online]] [[project-counter-identity]]
+ */
+function floorUrl(){ var o = tillOpt(); var u = o && o.floor; return u ? String(u).replace(/\/+$/, '') : ''; }
+function floorOn(){ return !!floorUrl(); }
 
 function ordersKey(){ return shopLs('cb_till_orders'); }
 function ordersLoad(){
-  try { ORDERS = JSON.parse(ls.get(ordersKey(), '[]')) || []; } catch (_) { ORDERS = []; }
-  if (!Array.isArray(ORDERS)) ORDERS = [];
+  var m = null;
+  try { m = JSON.parse(ls.get(ordersKey(), 'null')); } catch (_) {}
+  /* ⚠️ an older counter saved a bare array. Read it rather than throwing away a shop's open tables. */
+  if (Array.isArray(m)) m = { orders: m, seq: m.length };
+  FLOOR = (m && Array.isArray(m.orders)) ? { orders: m.orders, seq: Number(m.seq) || 0 } : HUB().create();
+  ORDERS = FLOOR.orders;
+  FLOOR_SEQ = 0;
+  if (floorOn()) { ORDERS = FLOOR.orders = []; FLOOR.seq = 0; floorSync(); floorWatch(); }
   return ORDERS;
 }
+/** ⚠️ on a floor there is nothing to save: the shop PC holds it, and a second copy is a second truth */
+function ordersSave(){
+  if (floorOn()) return;
+  try { ls.set(ordersKey(), JSON.stringify({ orders: FLOOR.orders.slice(-200), seq: FLOOR.seq })); } catch (_) {}
+}
+
 /**
- * ⚠️ THE ONE FUNCTION THE HUB WILL REPLACE ([TILL-178b]). Everything else reads ORDERS and calls this, so when
- * the shop PC serves the floor only this body changes. Persistence spread across a dozen call sites cannot be
- * moved later without finding all of them. [[feedback-stay-in-the-construct]]
- * ⚠️⚠️ IT DOES NOT POST ANYWHERE YET. The first draft sent this to /api/till/orders — a route that does not
- * exist — and key-scopes.test.js caught it: it would have worked in a browser and been refused on a shop PC.
+ * ⭐⭐⭐ THE ONE DOOR. Every change to an order — open, round, hold, ready, settle — goes through here and
+ * nowhere else, which is why turning a counter into a floor is a setting and not a rewrite.
+ *
+ * ⚠️ THE RULES ARE THE SAME FILE EITHER WAY. Off a floor the page runs lib/orderhub.js in the browser; on a
+ * floor the shop PC runs lib/orderhub.js in node. One rule, two places to keep it — never two implementations.
+ * [[feedback-no-duplicate-functions]]
  */
-function ordersSave(){ try { ls.set(ordersKey(), JSON.stringify(ORDERS.slice(-200))); } catch (_) {} }
+async function floorDo(msg){
+  if (!floorOn()) { var r = HUB().apply(FLOOR, msg); if (r.ok) { ORDERS = FLOOR.orders; ordersSave(); } return r; }
+  try {
+    var res = await fetch(floorUrl() + '/floor/do', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                      body: JSON.stringify(msg) });
+    var out = await res.json();
+    /* ⭐ the hub's answer IS the order — this device never argues with it */
+    if (out && out.ok && out.order) floorMerge([out.order], out.seq);
+    return out || { ok: false, why: 'the shop hub said nothing' };
+  } catch (e) {
+    /**
+     * ⚠️⚠️ AND THIS IS THE SENTENCE THAT MATTERS ON A FLOOR. A waiter whose phone has wandered out of wifi
+     * range must be told that the round did not go, not left believing the kitchen has it.
+     * [[feedback-silence-is-the-bug]]
+     */
+    return { ok: false, why: 'the shop counter did not answer — that did not go through' };
+  }
+}
+
+/** ⭐ fold in what the hub sent, replacing by id, because an order changes while you are working it */
+function floorMerge(list, seq){
+  (list || []).forEach(function(n){
+    for (var i = 0; i < FLOOR.orders.length; i++) if (FLOOR.orders[i].id === n.id) { FLOOR.orders[i] = n; return; }
+    FLOOR.orders.push(n);
+  });
+  if (seq != null) FLOOR_SEQ = Math.max(FLOOR_SEQ, Number(seq) || 0);
+  ORDERS = FLOOR.orders;
+}
+
+/** ⭐ ask only for what this device has not seen. A kitchen phone must not re-read the evening every 2s. */
+async function floorSync(){
+  if (!floorOn()) return;
+  try {
+    var res = await fetch(floorUrl() + '/floor/since?seq=' + FLOOR_SEQ);
+    var d = await res.json();
+    if (!d || !Array.isArray(d.orders)) return;
+    if (d.orders.length) { floorMerge(d.orders, d.seq); try { paintOrders(); } catch (_) {} }
+    else if (d.seq != null) FLOOR_SEQ = Math.max(FLOOR_SEQ, Number(d.seq) || 0);
+    floorSaid(true);
+  } catch (e) { floorSaid(false); }
+}
+/**
+ * ⚠️ A FLOOR THAT HAS GONE QUIET MUST SAY SO ON THE SCREEN. The kitchen is the participant that notices last —
+ * it is waiting for work, and no work looks exactly like a quiet evening. [[feedback-silence-is-the-bug]]
+ */
+function floorSaid(ok){
+  var el = document.getElementById('floorstate');
+  if (!el) return;
+  el.hidden = !!ok;
+  if (!ok) el.textContent = 'Not connected to the shop counter — what you do here is not reaching the ' + says('station') + '.';
+}
+function floorWatch(){ if (FLOOR_POLL) clearInterval(FLOOR_POLL); FLOOR_POLL = setInterval(floorSync, 2000); }
 
 /* ── the seam. Each one hands the device's data to the engine and keeps nothing of its own. ──────────── */
 function purposeNow(){ try { return O().purposeOf(tillOpt()); } catch (_) { return 'billing'; } }
@@ -16402,6 +16525,34 @@ function purposeIs(k){ return purposeNow() === k; }
 function purposeHas(flag){ try { return O().purposeHas(tillOpt(), flag); } catch (_) { return false; } }
 function says(k){ try { return O().says(tillOpt(), k); } catch (_) { return k; } }
 function Says(k){ var s = says(k); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+/**
+ * ⭐⭐⭐ POINTING THIS DEVICE AT THE SHOP'S FLOOR ([TILL-178b]).
+ *
+ * Empty means what every counter does today: it keeps its own tables, on itself. An address means the shop
+ * counter holds them for everybody — a waiter's phone, a kitchen screen and the till all reading one set.
+ *
+ * ⚠️ IT IS A SHOP ADDRESS, NEVER A CLOUD ONE, and that is the whole point rather than a restriction: the
+ * floor is on the shop's own wifi, so an internet that is down is an internet nobody was using.
+ * ⚠️⚠️ AND SWITCHING IS NOT FREE. Tables this device is holding on its own do not travel to the floor —
+ * a silent merge would put one table's food on another's bill. It says so rather than guessing.
+ * [[feedback-never-migrate-offline-to-online]]
+ */
+function floorSet(v){
+  var was = floorUrl();
+  var now = String(v || '').trim().replace(/\/+$/, '');
+  /* ⭐ a shopkeeper types "192.168.1.9:7071", not a scheme. Ask for less and add the rest. */
+  if (now && !/^https?:\/\//i.test(now)) now = 'http://' + now;
+  var mine = (FLOOR && FLOOR.orders || []).filter(function(o){ return o.state === 'open'; }).length;
+  if (mine && now !== was) {
+    toastLine(mine + ' ' + says(mine === 1 ? 'subject' : 'subjects') + ' open here will stay on this device — bill them first.');
+  }
+  tillOptSet({ floor: now });
+  ordersLoad();
+  try { paintPurpose(); paintOrders(); paintStatus(); } catch (_) {}
+  toastLine(now ? ('Sharing with the shop counter at ' + now + '.')
+                : ('This device keeps its own ' + says('subjects') + ' now.'));
+}
 
 function purposeSet(k){
   if (!O().PURPOSES[k]) return;
@@ -16419,46 +16570,59 @@ function orderAge(o){ return O().age(o); }
 
 function orderStart(subject){
   var who = (typeof WHO !== 'undefined' && WHO) ? { id: WHO.id, name: WHO.name, kind: WHO.kind } : null;
-  var o = O().start(ORDERS, subject, who,
-    { till: (STATE && STATE.till && STATE.till.id) || tillId(), kind: orderKind() });
-  if (!o) return null;
-  if (ORDERS.indexOf(o) < 0) { ORDERS.push(o); ordersSave(); }
-  return o;
+  return floorDo({ do: 'open', subject: subject, by: who,
+                   till: (STATE && STATE.till && STATE.till.id) || tillId(), kind: orderKind() });
 }
 function orderAddRound(o){
-  var n = O().addRound(o, CART.slice());
-  if (n == null) return null;
-  CART.length = 0; ordersSave();
-  try { price(); paintHits(); } catch (_) {}
-  return n;
+  if (!o || !CART.length) return Promise.resolve({ ok: false, why: 'nothing is on it to send' });
+  var lines = CART.slice();
+  return floorDo({ do: 'round', id: o.id, lines: lines }).then(function(r){
+    /* ⚠️ THE CART IS EMPTIED ONLY ON A YES. Clearing it first and then failing is how a round is lost with
+       nobody the wiser — the waiter watched it go and the kitchen never had it. */
+    /* ⚠️ THE TILE IS REPAINTED HERE, not left to the next poll. A waiter who fires a round and sees the
+       table unchanged for two seconds fires it again. [[feedback-repaint-locally]] */
+    if (r.ok) { CART.length = 0; try { price(); paintHits(); paintOrders(); } catch (_) {} }
+    return r;
+  });
 }
 /** ⭐ lines typed but not sent stay on the order they were typed against, as round 0 */
 function orderAddRoundHold(o){
-  if (!O().hold(o, CART.slice())) return;
-  CART.length = 0; ordersSave();
+  if (!o || !CART.length) return Promise.resolve({ ok: false });
+  var lines = CART.slice();
+  return floorDo({ do: 'hold', id: o.id, lines: lines }).then(function(r){
+    if (r.ok) CART.length = 0;
+    return r;
+  });
+}
+/** ⭐⭐ THE STATION'S ONLY VERB — it marks work made, and it may do nothing else to an order */
+function orderReady(o, station){
+  return floorDo({ do: 'ready', id: o.id, all: true, station: station || null }).then(function(r){
+    try { paintOrders(); } catch (_) {}
+    return r;
+  });
 }
 
 /**
  * ⭐ SETTLING IS THE ORDINARY SALE, on the accumulated lines — which is the point of holding the order as a
- * chit rather than as a thing of its own. Whether it MAY be settled is the engine's judgement, not a button's.
- * ⚠️ Marked settling BEFORE finish() so a second device cannot bill it in the gap; if the sale fails the state
- * goes back, because an order nobody can bill is worse than one billed twice by mistake.
+ * chit rather than as a thing of its own. Whether it MAY be settled is the hub's judgement, not a button's.
+ * ⚠️⚠️ AND ON A FLOOR THAT JUDGEMENT HAS TO BE CENTRAL. Two devices can hold table 7 on screen at the same
+ * moment; only the shop PC can refuse the second one, because it is the only thing both of them talk to.
+ * If the sale then fails the table is put back, because one nobody can bill is worse than one billed twice.
  */
 async function orderSettle(o){
-  var may = O().canSettle(o);
-  if (!may.ok) { toastLine('This ' + says('subject') + ' cannot be billed — ' + may.why + '.'); return; }
+  var claim = await floorDo({ do: 'settle', id: o.id,
+                              by: (typeof WHO !== 'undefined' && WHO) ? { id: WHO.id } : null });
+  if (!claim.ok) { toastLine('This ' + says('subject') + ' cannot be billed — ' + claim.why + '.'); return claim; }
   CART.length = 0;
-  O().billable(o).forEach(function(l){ CART.push(l); });
-  o.state = 'settling'; ordersSave();
+  O().billable(orderFind(o.id) || o).forEach(function(l){ CART.push(l); });
   try {
     price();
     await finish();
-    o.state = 'settled'; o.settled_at = new Date().toISOString();
+    await floorDo({ do: 'settled', id: o.id, bill: (STATE && STATE.lastBill) || null });
   } catch (e) {
-    o.state = 'open';
+    await floorDo({ do: 'reopen', id: o.id });
     toastLine('That ' + says('subject') + ' was not billed — nothing has changed.');
   }
-  ordersSave();
   ORDER_ID = null;
   try { paintOrders(); paintHits(); } catch (_) {}
 }
@@ -16513,15 +16677,18 @@ function paintOrders(){
 }
 
 /** ⭐ open one, or jump to it if it is already open — same button, because a waiter should not have to know */
-function orderGo(){
+/** ⭐ open one, or jump to it if it is already open — same button, because a waiter should not have to know */
+async function orderGo(){
   var inp = document.getElementById('opsubj');
   var v = inp ? inp.value : '';
   if (!String(v).trim()) return;
-  var o = orderStart(v);
+  var r = await orderStart(v);
+  /* ⚠️ a refusal is SAID. On a floor this is where "the shop counter did not answer" reaches the waiter. */
+  if (!r || !r.ok) { toastLine('That ' + says('subject') + ' could not be opened — ' + ((r && r.why) || 'no answer') + '.'); return; }
   if (inp) inp.value = '';
-  if (o) orderPick(o.id);
+  await orderPick(r.order.id);
 }
-function orderPick(id){
+async function orderPick(id){
   var o = orderFind(id); if (!o) return;
   /**
    * ⚠️⚠️ LEAVING A TABLE MUST NOT LOSE WHAT WAS TYPED ON IT. Anything in the cart belongs to the order being
@@ -16530,7 +16697,8 @@ function orderPick(id){
    */
   if (ORDER_ID && ORDER_ID !== id && CART.length) {
     var prev = orderFind(ORDER_ID);
-    if (prev) { orderAddRoundHold(prev); }
+    /* ⚠️⚠️ AWAITED. On a floor the hold is a round trip, and moving on before it lands drops the line. */
+    if (prev) { await orderAddRoundHold(prev); }
   }
   ORDER_ID = id;
   CART.length = 0;
@@ -19974,6 +20142,11 @@ function paintPurpose(){
   }
   var row = document.getElementById('row_words');
   if (row) row.hidden = !purposeHas('open_orders');
+  /* ⭐ the floor address is only a question once a counter holds orders open ([TILL-178b]) */
+  var fr = document.getElementById('row_floor');
+  if (fr) fr.hidden = !purposeHas('open_orders');
+  var fi = document.getElementById('set_floor');
+  if (fi && document.activeElement !== fi) fi.value = floorUrl();
   var inp = document.getElementById('set_subject');
   if (inp && document.activeElement !== inp) inp.value = says('subject');
 }

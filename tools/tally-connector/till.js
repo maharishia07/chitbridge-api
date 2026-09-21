@@ -67,6 +67,12 @@ const printer = require('./printer');
  * day's figures are computed with the line down, which is when a shop closes its till.
  */
 const rollup = require('./rollup');   /* the slip, on paper — raw ESC/POS through the Windows spooler */
+/**
+ * ⭐⭐⭐ THE FLOOR'S SHARED MEMORY ([TILL-178b]). Required, not fetched — a shop PC that has never reached the
+ * internet must still be able to hold the floor's orders. The rules are byte-equal to lib/orderhub.js and
+ * lib/orders.js; this program only puts a socket in front of them. [[feedback-ui-replaceable-logic-in-engines]]
+ */
+const orderhub = require('./orderhub');
 
 const argv = process.argv.slice(2);
 const flag = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? (argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true) : d; };
@@ -157,7 +163,7 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /* ⭐ 'variant' joined on 2026-09-19: one product, many combinations, and what makes two of them the same
    thing to sell. A shop PC bills combinations with the line down, so it keeps the rule locally too.
    ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
-const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'rewards', 'screen'];
+const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'orderhub', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),
@@ -166,6 +172,8 @@ const F = {
   bills: (day) => path.join(DIR, 'bills-' + day + '.jsonl'),
   docs: (day) => path.join(DIR, 'docs-' + day + '.jsonl'),      /* receipts and despatch notes — the other two doors of a shop */
   engine: (n) => path.join(DIR, 'engine-' + n + '.js'),
+  /** ⚠️ THE FLOOR, ON DISK ([TILL-178b]). A shop PC restarted at 8pm must not lose six open tables. */
+  floor: path.join(DIR, 'floor.json'),
   /**
    * ⭐⭐⭐ THE SUMMARY FOLDER ([TILL-122]). Athi: *"we have to have other folder called summary, so we keep
    * one chit for every day as a summary chit."* 365 day files a year, 52 or 53 week files, 12 month files — and
@@ -585,6 +593,34 @@ function signinWhy(e) {
 }
 
 const PAGE = path.join(__dirname, 'till.html');
+/**
+ * ── ⭐⭐⭐ THE FLOOR'S MEMORY, ON THIS PC ([TILL-178b]) ──────────────────────────────────────────────────
+ *
+ * One set of orders for every device in the shop. It survives a restart because a counter rebooted at eight
+ * o'clock with six tables open is not a recoverable situation for the people carrying the plates.
+ *
+ * ⚠️ IT IS NOT A CACHE OF SOMETHING IN THE CLOUD. Nothing up there knows about table 7 until the bill is rung,
+ * which is the whole point: the cycle completes with the line down and the cloud learns afterwards, through the
+ * same queue every sale has always used. [[feedback-never-migrate-offline-to-online]]
+ */
+let HUB = orderhub.create();
+function floorLoad() {
+  try {
+    const d = JSON.parse(fs.readFileSync(F.floor, 'utf8'));
+    if (d && Array.isArray(d.orders)) HUB = { orders: d.orders, seq: Number(d.seq) || 0 };
+    const open = HUB.orders.filter((o) => o.state === 'open').length;
+    if (open) log('the floor came back with ' + open + ' ' + (open === 1 ? 'table' : 'tables') + ' still open');
+  } catch (_) { /* no floor yet is the ordinary first evening, not a fault */ }
+}
+/** ⚠️ settled orders are dropped on save — the BILL is the record, and the floor is only what is still working */
+function floorSave() {
+  try {
+    HUB.orders = HUB.orders.filter((o) => o.state !== 'settled').concat(
+      HUB.orders.filter((o) => o.state === 'settled').slice(-50));
+    writeJSON(F.floor, { orders: HUB.orders, seq: HUB.seq, at: new Date().toISOString() });
+  } catch (e) { log('the floor could not be written: ' + e.message); }
+}
+
 const send = (res, code, type, body) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body); };
 const json = (res, code, obj) => send(res, code, 'application/json; charset=utf-8', JSON.stringify(obj));
 
@@ -827,6 +863,43 @@ const server = http.createServer(async (req, res) => {
       const n = url.pathname.split('/')[2].replace('.js', '');
       if (!fs.existsSync(F.engine(n))) return send(res, 503, 'text/plain', '// the engine has not been fetched yet — press Refresh while online');
       return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(F.engine(n), 'utf8'));
+    }
+
+    /**
+     * ── ⭐⭐⭐ THE FLOOR ([TILL-178b]) ────────────────────────────────────────────────────────────────────
+     *
+     * Athi: *"how do we prove without internet the entire cycle works, as a local network?"*
+     *
+     * Four routes, and between them they are the whole answer. A waiter's phone, a kitchen screen and this PC
+     * all speak to these and to nothing else; the cloud is not in the path, which is why pulling the cable out
+     * changes nothing on the floor. What the cloud gets is the BILL, through the same queue every sale uses.
+     *
+     * ⚠️ NO KEY IS CHECKED HERE, DELIBERATELY. The shop's own wifi is the boundary, exactly as it is for the
+     * printer and the cash drawer — and a floor that stops working because a key expired at 9pm is worse than
+     * one a neighbour could theoretically reach. This is also why it stays OFF unless a shop turns it on.
+     */
+    if (url.pathname === '/floor/since' && req.method === 'GET') {
+      return json(res, 200, orderhub.since(HUB, url.searchParams.get('seq')));
+    }
+    if (url.pathname === '/floor/queue' && req.method === 'GET') {
+      return json(res, 200, { station: url.searchParams.get('station') || null,
+                              lines: orderhub.queue(HUB, url.searchParams.get('station')) });
+    }
+    if (url.pathname === '/floor/do' && req.method === 'POST') {
+      let raw = ''; for await (const c of req) raw += c;
+      let msg = null; try { msg = JSON.parse(raw || '{}'); } catch (_) { return json(res, 400, { ok: false, why: 'that was not readable' }); }
+      const out = orderhub.apply(HUB, msg);
+      /* ⚠️ WRITTEN BEFORE THE ANSWER GOES BACK. A device told "yes" about a round this PC then forgot on a
+         power cut is the one failure a kitchen can never reconcile. [[feedback-silence-is-the-bug]] */
+      if (out.ok) floorSave();
+      return json(res, out.ok ? 200 : 409, out);
+    }
+    /** ⭐ what a device asks before it trusts any of the above — and the counter's own health panel reads it too */
+    if (url.pathname === '/floor' && req.method === 'GET') {
+      return json(res, 200, { on: true, till: tillCfg.id, orders: HUB.orders.length, seq: HUB.seq,
+                              open: HUB.orders.filter((o) => o.state === 'open').length,
+                              /* ⭐ stated plainly, because this is the sentence the whole question turns on */
+                              cloud: 'not in the path — the floor is served by this PC' });
     }
 
     /* ⭐ the open orders, straight through — a device holds no copy, because an order changes while you are working it */
@@ -1266,6 +1339,22 @@ const server = http.createServer(async (req, res) => {
     log('the counter could not start: ' + ((e && e.message) || e));
     process.exit(1);
   });
+  floorLoad();
+  /**
+   * ── ⚠️⚠️⚠️ STILL LOOPBACK, AND THAT IS THE LAST OPEN DECISION ([TILL-178b]) ────────────────────────────
+   *
+   * Everything above this line makes the floor work: the rules, the shared memory, the four routes, and a
+   * harness that drives three devices through a whole evening with the cloud destroyed. All of it runs on one
+   * PC talking to itself over a real socket.
+   *
+   * What is NOT done is the last word on this line — the address this listens on. Opening it to the shop's
+   * wifi is one word, and it is not a word I should write by myself, because it changes what the shop is:
+   *   · the shop PC becomes a single point of failure for every waiter, not just for its own till
+   *   · an unauthenticated HTTP server appears on whatever wifi the shop happens to run, guest network included
+   *   · a phone that walks out of the door keeps the last floor it saw
+   * Those are answerable — a shop-chosen interface, a pairing code on first use, a floor that expires — and the
+   * answers are Athi's to pick. Until then the counter behaves exactly as it always has.
+   */
   server.listen(PORT, '127.0.0.1', () => {
     log('counter ready → http://127.0.0.1:' + PORT);
     log('bills are kept in ' + DIR + ' and sent when the line is up');

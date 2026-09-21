@@ -88,7 +88,7 @@ const CATALOGUE = [
  *   · counter.cmd — [TILL-118]'s double-click launcher, and what its desktop shortcut points AT
  * tests/connector-kit.test.js now holds this list against what the programs actually require.
  */
-const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'counter.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'printer.js', 'rollup.js', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
+const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'counter.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
 function kitFiles(adapter) {
   const names = KIT_NAMES;
   const out = [];

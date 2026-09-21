@@ -361,6 +361,10 @@ const ENGINE_OTHER = [
      business function should stay away from rendering always."* A table, a token, a docket or a job card is
      one word; the RULES beneath them are one engine, and the server can call the same file. */
   'orders.js',
+  /* ⭐⭐⭐ ONE FLOOR, SHARED BY EVERY DEVICE IN THE SHOP ([TILL-178b]). Athi: *"does it work offline
+     …because it is multiple participants"*. A waiter's phone, a kitchen screen and the till agree about
+     table 7 through the shop PC, not through the cloud — so these rules run in node AND in the page. */
+  'orderhub.js',
   /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
      CITES a category by id, and `category` is the legacy key nothing may write again. */
   'categories.js',
@@ -517,6 +521,8 @@ const ENGINE_OTHER = [
   'verdict.browser.js',
   /* GENERATED beside lib/orders.js ([TILL-181]) — the order rules for the page that paints them. */
   'orders.browser.js',
+  /* GENERATED beside lib/orderhub.js ([TILL-178b]) — the floor's rules, for a device that IS the floor. */
+  'orderhub.browser.js',
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
@@ -625,6 +631,9 @@ const TILL_SHIPPABLE = {
   /* ⭐⭐ [TILL-181] a waiter's phone holds tables open with the line down — the rules that say whether a
      table may open twice, what it comes to and when it may be billed must be ON the device, not fetched. */
   'orders.js':    'orders.js',
+  /* ⭐⭐⭐ [TILL-178b] and the floor itself. A shop PC with no line must still be able to hold the whole
+     evening for six devices — which it cannot do if the rules arrive over the line. */
+  'orderhub.js': 'orderhub.js',
   'jurisdiction.js': 'jurisdiction.js',
   'govcontext.js': 'web:app/govcontext.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter

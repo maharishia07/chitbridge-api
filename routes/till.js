@@ -2275,6 +2275,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                      shop PC and this server ([TILL-125]) */
                   rollup: '../lib/rollup.browser.js',
                   orders: '../lib/orders.browser.js',
+                  orderhub: '../lib/orderhub.browser.js',
                   /* ⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
                   verdict: '../lib/verdict.browser.js',
                   qr: '../node_modules/qrcode-generator/qrcode.js' };

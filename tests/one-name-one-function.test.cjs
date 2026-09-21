@@ -52,7 +52,26 @@ function scriptOf(file) {
  * ⚠ Multiple names per statement are read (`var a = 1, b = 2;`), because that is how this file declares most
  * of its state and a reader that missed them would pass while the fault sat in front of it.
  */
-function topLevelNames(src) {
+/**
+ * ⚠⚠⚠ STRIP THE COMMENTS BEFORE READING THE CODE — the FIFTH time a guard here has read prose as code
+ * (scripts/vendor-till.cjs carries the same note about the other four). One perfectly ordinary line —
+ * a `var` declaration whose trailing comment happened to contain a comma — was split ON THAT COMMA, and
+ * the words after it were read as a second declaration. The guard reported a name declared twice that
+ * exists nowhere in the file. It was right that something looked doubled; it was wrong about the universe.
+ *
+ * ⚠ LINE NUMBERS ARE PRESERVED: a stripped comment becomes spaces, never nothing, so the message this
+ * prints still points at the line a person can open. [[feedback-name-vs-behaviour]]
+ */
+function stripComments(src) {
+  const NL = String.fromCharCode(10);
+  const block = new RegExp('/\\*[\\s\\S]*?\\*/', 'g');
+  const line = new RegExp('([^:])//[^' + NL + ']*', 'g');
+  return src.replace(block, (m) => m.replace(new RegExp('[^' + NL + ']', 'g'), ' '))
+            .replace(line, '$1');
+}
+
+function topLevelNames(rawSrc) {
+  const src = stripComments(rawSrc);
   const seen = new Map();
   const note = (name, n) => { const at = seen.get(name) || []; at.push(n + 1); seen.set(name, at); };
   src.split('\n').forEach((line, n) => {
