@@ -5203,7 +5203,7 @@ function flashHide(){ var el = document.getElementById('flash'); if (el) { el.hi
 function refreshFailed(status){
   var sh = paired();
   if (status === 401 || status === 403 || !sh)
-    return flash('🔑', 'Not signed in', 'Sign in', function(){ signinOpen(); });
+    return flash('🔑', 'Not signed in', keyWord(), function(){ signinOpen(); });
   if (!status)
     /**
      * ⭐ A CROSSED NETWORK BAR, NOT A WORD ([TILL-158]). Athi: *"you have to change to No Network with the
@@ -5777,7 +5777,7 @@ function menuAlerts(){
   try { if (!paired())
     add('pair', 'stop', 'Nothing can reach the shop',
       'This counter is not signed in, so nothing it rings can be sent.',
-      '<button class="pill" data-testid="till-alert-pair" onclick="fromMenu(signinOpen)">Sign in</button>');
+      '<button class="pill" data-testid="till-alert-pair" onclick="fromMenu(signinOpen)">' + keyWord() + '</button>');
   } catch (_) {}
 
   /* ══ costs money ════════════════════════════════════════════════════════════════════════════════════ */
@@ -6458,9 +6458,15 @@ async function beginDay(){
 /** ⭐ ONE STEP'S REAL WORK. Everything here already existed; the morning only puts it in order. */
 async function dayStepRun(id){
   if (id === 'who') {
-    /* ⚠️ the person picks themselves off the shop's own list — a user id, never a password. That is the
-       principle: pairing is per DEVICE and happens once; who is on is per PERSON and happens every shift. */
-    if (!(typeof WHO !== 'undefined' && WHO && WHO.name)) openWho();
+    /**
+     * ⚠️⚠️ THROUGH THE SAME DOOR AS F7 ([TILL-187]). This called openWho() directly — the NAME PICKER — so
+     * the morning's own "who is at this counter" step was the one place in the application that could not
+     * reach the sign-in that TILL-183 built. A counter opened for the day by a person who had never signed
+     * in anywhere; the step went green and said so.
+     * Pairing is per DEVICE and happens once; who is on is per PERSON and happens every shift. whoAct()
+     * knows which of those this counter needs, and this step must not hold a second opinion.
+     */
+    if (!(typeof WHO !== 'undefined' && WHO && WHO.name)) whoAct();
     return;
   }
   if (id === 'products') {
@@ -7524,7 +7530,13 @@ async function sureSheet(kind){
   var SHEET = {
     signout: { title: who ? ('Sign out, ' + who + '?') : 'Sign out?',
                say: 'The counter stays open. The next person signs in to sell.',
-               go: 'Sign out', act: function(){ openWho(); } },
+               /**
+                * ⚠️⚠️ IT SIGNS THEM OUT NOW ([TILL-187]). This promised "the counter stays open, the next
+                * person signs in" and then opened the NAME PICKER — so pressing Sign out left the person
+                * still signed in, with a list of names on the screen. usignOut() is the act the sentence
+                * above describes, and it has existed since [TILL-183]; nothing was wired to it.
+                */
+               go: 'Sign out', act: function(){ usignOut(); } },
     close:   { title: 'Close the day?',
                say: 'Billing stops until someone opens it again. Nothing is lost.',
                go: 'Close the counter', act: function(){ closeCounter(true); } },
@@ -12488,10 +12500,17 @@ function pairedShop(){
  */
 function shopReady(){
   var stops = [], warns = [];
+  /**
+   * ⭐ THE WORD ON THE FIX COMES FROM THE ENGINE ([TILL-187]). It said "Sign in" for all three of these, and
+   * they are three different acts: a PC being given a key, a key of the wrong kind, and nobody standing at
+   * the counter. A shopkeeper reading three identical instructions for three different problems presses the
+   * same button three times and concludes the counter is broken. [[feedback-write-for-the-shopkeeper]]
+   */
+  var DOOR = signDoor();
   if (!paired()) {
     stops.push({ why: 'This counter is not signed in to a shop yet.',
                  means: 'It has no key, so there is nothing to sell and nowhere to send a bill.',
-                 fix: 'Sign in', act: 'signinOpen' });
+                 fix: DOOR.label, act: 'signinOpen' });
   } else {
     /* ⚠️ A KEY OF THE WRONG KIND IS NOT A CONNECTED COUNTER. A connector key cannot read a catalogue, and the
        only symptom used to be a 403 in a log nobody opens ([TILL-117]). */
@@ -12500,7 +12519,7 @@ function shopReady(){
     if (sc && sc.indexOf('till') < 0) {
       stops.push({ why: 'This counter\u2019s key is not a till key.',
                    means: 'It is for ' + esc(sc.join(', ')) + ', so it cannot read your shop or send a bill.',
-                   fix: 'Sign in', act: 'signinOpen' });
+                   fix: DOOR.label, act: 'signinOpen' });
     }
     if (!S) {
       stops.push({ why: 'No copy of the shop has been read yet.',
@@ -12532,9 +12551,11 @@ function shopReady(){
    * ⚠️ IT IS LISTED LAST. A counter with no shop has a bigger problem, and needShop shows the first stop only.
    */
   if (!WHO || !WHO.name) {
+    /* ⚠️ act is whoAct, not openWho — the picker cannot sign anybody in, and this stop exists because nobody
+       is signed in. It was offering the one screen that could not clear it. ([TILL-187]) */
     stops.push({ why: 'Nobody is signed in at this counter.',
                  means: 'Every bill would be recorded with no one against it, and the day close could not say who took the money.',
-                 fix: 'Sign in', act: 'openWho' });
+                 fix: 'Sign in', act: 'whoAct' });
   }
   return { ok: !stops.length, stops: stops, warns: warns };
 }
@@ -15783,7 +15804,7 @@ async function keyWatch(){
     var refused = !!(v && !v.ok && /40[13]/.test(String(v.why || '')));
     var was = KEY_OK;
     KEY_OK = refused ? false : (v && v.ok ? true : KEY_OK);
-    if (was && !KEY_OK) flash('🔑', 'Signed out by the shop', 'Sign in', function(){ signinOpen(); });
+    if (was && !KEY_OK) flash('🔑', 'Signed out by the shop', keyWord(), function(){ signinOpen(); });
   } catch (_) { /* a check that cannot run is not a verdict */ }
 }
 
@@ -20330,10 +20351,62 @@ function usignOut(){
  * ⭐ SOMEBODY IS ALREADY ON means HAND OVER, which is the picker's actual job and always was: a shift change
  * between people the shop already knows, with no code to wait for. The counter keeps its number either way.
  */
+/**
+ * ⭐⭐⭐ WHAT THIS COUNTER IS HOLDING, in the five plain facts lib/signin.js asks for ([TILL-187]).
+ *
+ * ⚠️ ONE READER. Every button that could be called "signing in" asks this and paints the answer — the
+ * alternative is what we had: three controls deciding for themselves, drifting apart, and ending up with the
+ * same two words over three different dialogs. [[feedback-no-duplicate-functions]]
+ */
+function signState(){
+  var sh = pairedShop(); var sc = (sh && sh.scopes) || null;
+  return { host: (typeof AgentHost !== 'undefined' && HOST === AgentHost) ? 'agent' : 'browser',
+           paired: paired(),
+           /* ⚠️ null scopes is "we cannot tell from here", which is NOT "the wrong kind of key" */
+           till: sc ? sc.indexOf('till') >= 0 : true,
+           person: !!(typeof WHO !== 'undefined' && WHO && WHO.name),
+           online: !!navigator.onLine };
+}
+
+/**
+ * ⭐ the one door, and the word that belongs on it right now — both from the engine, neither decided here.
+ *
+ * ⚠️ IT MUST NOT THROW. shopReady() is the screen that REPORTS a missing engine, so if this threw when
+ * signin.js had not loaded, the one report that would have named the problem is the one that would die. The
+ * fallback says the safest true thing and the engine list says the rest. [[feedback-silence-is-the-bug]]
+ */
+function signDoor(){
+  if (!window.CBSignin) return { act: 'signin', label: 'Sign in', subject: 'person', how: '',
+                                 why: '', blocked: false, stop: '' };
+  return CBSignin.door(signState());
+}
+
+/**
+ * ⭐⭐ THE WORD FOR THE **DEVICE** DOOR, wherever a control opens signinOpen() on purpose ([TILL-187]).
+ *
+ * ⚠️ NOT signDoor().label. These call sites are about the KEY — a refused key, a missing key, ⚙ Settings —
+ * and signDoor() answers about the counter as a whole, which on a paired counter is the PERSON door. Asking
+ * the wrong question politely still gets the wrong word onto the button.
+ */
+function keyWord(){
+  var browser = !(typeof AgentHost !== 'undefined' && HOST === AgentHost);
+  if (!window.CBSignin) return browser ? 'Paste a key' : 'Connect this counter';
+  return CBSignin.ACTS[browser ? 'key' : 'connect'].label;
+}
+
+/**
+ * ⭐⭐⭐ ONE DOOR, AND IT OPENS THE RIGHT THING ([TILL-183], widened [TILL-187]).
+ *
+ * ⚠️⚠️ THE PAGE NO LONGER DECIDES. It used to ask one question here — is somebody on? — which was right for
+ * two of the four cases and silently wrong for the other two: an unpaired counter and a counter holding a
+ * connector key both got offered a shift handover, which cannot help either of them.
+ */
 function whoAct(){
-  var on = (typeof WHO !== 'undefined' && WHO && WHO.name);
-  if (on) return openWho();
-  return usignOpen();
+  var d = signDoor();
+  if (d.act === 'connect') return signinOpen();
+  if (d.act === 'key')     return signinOpen();   /* the same dialog; it says "paste a key" in a browser */
+  if (d.act === 'signin')  return usignOpen();
+  return openWho();                                /* handover — the picker's actual job, and always was */
 }
 
 function openWho(){
@@ -20712,7 +20785,7 @@ function openSettings(tab){
           ? '<div class="srow"><span></span><span class="u">This key cannot read your shop. Sign in to get a till key.</span></div>' : '')
       + '<div class="srow" title="Sign in with your ChitBridge email. This counter writes its own key and keeps it.">'
       + '<span>' + (STATE && STATE.paired ? 'Connect to another shop' : 'Connect this counter') + '</span>'
-      + '<button class="pill" data-testid="till-set-signin" onclick="setClose();signinOpen()">Sign in</button></button>'
+      + '<button class="pill" data-testid="till-set-signin" onclick="setClose();signinOpen()">' + esc(keyWord()) + '</button></button>'
       /* ⚠️ signing OUT lives beside signing in, and only when there is a shop to leave ([TILL-127]) */
       + (STATE && STATE.paired ? ' <button class="pill" data-testid="till-set-signout" onclick="setClose();signoutOpen()">Sign out</button>' : '')
       + '</div>'

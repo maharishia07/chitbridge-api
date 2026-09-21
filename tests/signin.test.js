@@ -151,6 +151,94 @@ it('and every stage has a sentence', () => {
   assert.ok(/Bala is signed in/.test(S.say({ person: { id: 'bala', name: 'Bala' } })));
 });
 
+/* ══ ⭐⭐⭐ WHICH DOOR THE BUTTON OPENS ([TILL-187]) ══════════════════════════════════════════════════════════
+ *
+ * Athi: *"There is a real confusion in sign-in procedure in the counter application... can you bring it as a
+ * single module and create a flow chart, so it is well understood and can be tested."* This section is the
+ * "can be tested" half: every branch of the flow chart in docs/counter-signin.md is a check below, and it
+ * runs with no browser — which is the whole reason the rule was taken out of the page.
+ */
+console.log('\nWHICH DOOR THE BUTTON OPENS\n');
+
+const AT = (o) => Object.assign({ host: 'agent', paired: true, till: true, person: true, online: true }, o);
+
+/**
+ * ⚠️⚠️⚠️ THE ORDER OF THE QUESTIONS IS THE RULE. A counter with no key has a bigger problem than a counter
+ * with nobody on it — and the page used to ask only "is somebody on?", so an unpaired counter was offered a
+ * shift handover between people it had never heard of.
+ */
+it('⚠️⚠️⚠️ a counter with no key is not offered a handover', () => {
+  assert.strictEqual(S.door(AT({ paired: false, person: true })).act, 'connect');
+  assert.strictEqual(S.door(AT({ paired: false, person: false })).act, 'connect');
+});
+
+it('⭐ a browser counter is given the key door, because it cannot pair', () => {
+  assert.strictEqual(S.door(AT({ host: 'browser', paired: false })).act, 'key');
+  assert.strictEqual(S.door(AT({ host: 'agent', paired: false })).act, 'connect');
+});
+
+/** ⚠️ a connector key is not a counter key — the only symptom used to be a 403 in a log nobody opens */
+it('⚠️ a key of the wrong kind sends them back to the device door', () => {
+  assert.strictEqual(S.door(AT({ till: false })).act, 'connect');
+  assert.ok(/not a till key/.test(S.door(AT({ till: false })).why));
+});
+
+/** ⚠️⚠️ "we cannot tell from here" is not "the wrong kind of key" — offline, scopes are simply unknown */
+it('⚠️⚠️ an unknown scope does not accuse the key', () => {
+  assert.strictEqual(S.door(AT({ till: true, person: false })).act, 'signin');
+});
+
+it('⭐⭐ nobody on a working counter means SIGN IN, and somebody on means HAND OVER', () => {
+  assert.strictEqual(S.door(AT({ person: false })).act, 'signin');
+  assert.strictEqual(S.door(AT({ person: true })).act, 'handover');
+});
+
+/**
+ * ⭐⭐⭐ THE FOUR LABELS ARE FOUR DIFFERENT WORDS. This is the defect itself: three of these read "Sign in"
+ * on the screen, over three dialogs that do three unrelated things.
+ */
+it('⭐⭐⭐ no two doors carry the same word', () => {
+  const words = Object.keys(S.ACTS).map((k) => S.ACTS[k].label);
+  assert.strictEqual(new Set(words).size, words.length, words.join(' / '));
+});
+
+/**
+ * ⚠️⚠️ THE TWO THAT WORK WITH THE LINE DOWN ARE THE TWO A SHOP NEEDS MID-AFTERNOON. Not a coincidence — it
+ * is the counter-identity rule holding: an identity is fetched once, a shift changes all day.
+ */
+it('⚠️⚠️ handing over never needs the internet, and signing in does', () => {
+  assert.strictEqual(S.door(AT({ person: true, online: false })).blocked, false);
+  assert.strictEqual(S.door(AT({ person: false, online: false })).blocked, true);
+  assert.ok(/needs the internet/.test(S.door(AT({ person: false, online: false })).stop));
+});
+
+/** ⚠️ blocked is not hidden. A door that cannot be opened yet is still the right door to name. */
+it('⚠️ a blocked door still says which door it is', () => {
+  const d = S.door(AT({ paired: false, online: false }));
+  assert.strictEqual(d.act, 'connect');
+  assert.strictEqual(d.blocked, true);
+  assert.ok(d.label && d.why);
+});
+
+/** ⭐ and the way OUT was one word over two acts as well — one ends a shift, one stops the PC billing */
+it('⭐ signing a person out and signing the PC out are told apart', () => {
+  assert.strictEqual(S.leave({ subject: 'person' }).act, 'person');
+  assert.strictEqual(S.leave({ subject: 'device' }).act, 'device');
+  assert.notStrictEqual(S.leave({ subject: 'person' }).label, S.leave({ subject: 'device' }).label);
+  assert.ok(/stays open/.test(S.leave({ subject: 'person' }).costs));
+});
+
+it('and only the one that sends bills is stopped by a dead line', () => {
+  assert.strictEqual(S.leave({ subject: 'person', online: false }).blocked, false);
+  assert.strictEqual(S.leave({ subject: 'device', online: false }).blocked, true);
+});
+
+/** ⚠️ nothing handed in at all must still answer — a door is asked for before the page knows anything */
+it('⚠️ it answers for a counter that knows nothing about itself', () => {
+  assert.ok(S.door().act);
+  assert.ok(S.leave().act);
+});
+
 console.log('\nAND IT BELONGS TO NEITHER SURFACE\n');
 
 /**
