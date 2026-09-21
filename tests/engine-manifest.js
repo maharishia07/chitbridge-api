@@ -357,6 +357,10 @@ const ENGINE_OTHER = [
   /* ⭐⭐ one cause → one sentence → one button. CB's own rule about what a shopkeeper is told when something
      is wrong, extracted because the SAME cause was being described four different ways on one screen. */
   'verdict.js',
+  /* ⭐⭐ AN ORDER HELD OPEN AGAINST A SUBJECT ([TILL-181]). Written inside till.html first — Athi: *"the
+     business function should stay away from rendering always."* A table, a token, a docket or a job card is
+     one word; the RULES beneath them are one engine, and the server can call the same file. */
+  'orders.js',
   /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
      CITES a category by id, and `category` is the legacy key nothing may write again. */
   'categories.js',
@@ -511,6 +515,8 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/verdict.js ([TILL-137]): one cause → one sentence → one button, wrapped for the page
      that renders it. The counter-health screen IS this table with a layout. */
   'verdict.browser.js',
+  /* GENERATED beside lib/orders.js ([TILL-181]) — the order rules for the page that paints them. */
+  'orders.browser.js',
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
@@ -616,6 +622,9 @@ const TILL_SHIPPABLE = {
   /* ⭐⭐ [TILL-137] the health page is the one screen a shopkeeper reaches when nothing works — it has to be
      on the device, not fetched at the moment the device cannot fetch. */
   'verdict.js':   'verdict.js',
+  /* ⭐⭐ [TILL-181] a waiter's phone holds tables open with the line down — the rules that say whether a
+     table may open twice, what it comes to and when it may be billed must be ON the device, not fetched. */
+  'orders.js':    'orders.js',
   'jurisdiction.js': 'jurisdiction.js',
   'govcontext.js': 'web:app/govcontext.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter

@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -208,6 +208,8 @@ const COPIES = () => [
    * with the shutters down and the line often off.
    */
   [null, path.join(WEB, 'engine', 'rollup.js'), wrapForBrowser('rollup.js', 'CBRollup')],
+  /* ⭐ the order rules, off the page ([TILL-181]) — the same file the server can call */
+  [null, path.join(WEB, 'engine', 'orders.js'), wrapForBrowser('orders.js', 'CBOrders')],
   /* ⭐⭐ one cause → one sentence → one button ([TILL-132]). The health page RENDERS this; the footer and the
      doctor read the same table, which is the whole point of it being an engine. */
   [null, path.join(WEB, 'engine', 'verdict.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
@@ -275,6 +277,8 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'units.browser.js'), wrapForBrowser('units.js', 'CBUnits')],
   /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
   [null, path.join(API, 'lib', 'rollup.browser.js'), wrapForBrowser('rollup.js', 'CBRollup')],
+  /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
+  [null, path.join(API, 'lib', 'orders.browser.js'), wrapForBrowser('orders.js', 'CBOrders')],
   [null, path.join(API, 'lib', 'verdict.browser.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],

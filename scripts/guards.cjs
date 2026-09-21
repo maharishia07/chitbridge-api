@@ -36,6 +36,7 @@ const GUARDS = [
   'verdict.test.js',          // one cause, one sentence, one button — the message has a single home
   'counter-claim.test.js',    // one counter, one holder — two PCs on C1 fork the bill numbers
   'till-watch.test.js',       // the watch list names real gates — a row with no gate watches nothing
+  'orders.test.js',           // the order rules, run with no browser — the proof they left the page
   'till-hidden.test.js',      // [hidden] must win — a class that sets display draws a closed panel anyway
   'till-exits.test.js',       // every screen has a lid, and it never sits in a row of ways to CHANGE things
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax

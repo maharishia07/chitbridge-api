@@ -718,6 +718,8 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'rollup.js': 'CBRollup',
                     /* ⭐⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
                     'verdict.js': 'CBVerdict',
+                    /* ⭐ the order rules, off the page ([TILL-181]) */
+                    'orders.js': 'CBOrders',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order

@@ -3191,6 +3191,7 @@
 <!-- ⭐⭐ one cause → one sentence → one button ([TILL-132]/[TILL-137]). The health page renders it; the
      footer and the doctor read the same table, which is the whole reason it is an engine. -->
 <script src="/engine/verdict.js" onerror="engineMissed('verdict')"></script>
+<script src="/engine/orders.js" onerror="engineMissed('orders')"></script>
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
 <!-- ⭐ the screen library — colour schemes, key tiles, presets (lib/screen-kit.js). Without it the counter draws as before. -->
 <script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
@@ -9649,79 +9650,13 @@ function tillOptSet(patch, opts){
 }
 /** ⭐ one part of the bill-number scheme, kept per shop like the rest of the counter's setup */
 /**
- * ── ⭐⭐⭐ WHAT THIS COUNTER IS FOR ([TILL-179], BACKLOG TILL-178/178c) ────────────────────────────────────
- *
- * Athi: *"now the counter is behaving like a billing application. What if we have to turn it to an order
- * placement application for the waiter? So possibly we have to bring a PURPOSE in the menu. Billing means the
- * current application stays as it is."*
- *
- * ⚠️⚠️⚠️ AND IT IS NOT A RESTAURANT SWITCH. Strip the restaurant words out of "waiter" and nothing about food
- * is left: an order held OPEN against a SUBJECT, captured AWAY FROM THE TILL, fulfilled IN PARTS by ROUTED
- * STATIONS, settled ONCE at the end. A sweet shop with a token and three counters is the identical pattern and
- * would never call itself a restaurant — which is why the shop declares two FACTS about itself rather than
- * picking a trade. [[feedback-the-data-decides-not-the-trade]]
- *
- *   open_orders  — does an order stay open against a subject, and get added to over time?
- *   route_lines  — does a line go to a station to be made, before anyone is billed?
- *
- * ⭐ THE VOCABULARY IS A TRANSLATION, NOT A BRANCH. "table" for a restaurant, "token" for a sweet shop, "job
- * card" for a garage — one string, swapped. English is already the key ([[project-string-layer]]), so nothing
- * here is a second code path. A vertical that needs a new word needs no new code at all.
- *
- * ⚠️ BILLING IS UNTOUCHED, and that is the requirement, not a courtesy. A veg store never meets any of this:
- * every knob below is off, and `purposeIs('billing')` is the default for a counter that never opens the
- * setting. If a shopkeeper who has never heard of this reads one new word on their screen, it is wrong.
+ * ⚠⚠ THE PURPOSE REGISTRY AND THE VOCABULARY MOVED TO lib/orders.js ([TILL-181]). They were written HERE, in
+ * the rendering file — Athi: *"the business function should stay away from rendering always, never ever tightly
+ * bound."* They worked, and they were in the wrong file, which is the worse fault of the two: the next screen
+ * to need them would have copied them.
+ * ⭐ The seam that replaced them — two lines each, holding no rule of their own — sits beside the order
+ * functions further down this file. [[feedback-ui-replaceable-logic-in-engines]]
  */
-var PURPOSES = {
-  billing: {
-    label: 'Billing', hint: 'one bill, taken and closed — a shop counter',
-    open_orders: false, route_lines: false,
-  },
-  order: {
-    label: 'Order pad', hint: 'orders held open against a table or token, added to, billed at the end',
-    open_orders: true, route_lines: true,
-  },
-  /* ⭐ the station's own view of the same orders — the third participant, not a third product ([TILL-178b]) */
-  station: {
-    label: 'Station', hint: 'a kitchen, section or bay — the lines it has to make, and marking them ready',
-    open_orders: true, route_lines: true, makes_only: true,
-  },
-};
-
-/**
- * ⭐ THE WORDS A VERTICAL USES. Defaults are the restaurant's because that is the shop in front of us; every
- * one is overridable per shop, and a new vertical is a row here rather than a branch anywhere.
- */
-var PURPOSE_WORDS = {
-  subject:  'table',      /* table · token · docket · chair · job card  */
-  subjects: 'tables',
-  station:  'kitchen',    /* kitchen · section · bay · bench            */
-  stations: 'kitchens',
-  round:    'round',      /* round · KOT · requisition                  */
-};
-
-function purposeNow(){
-  try { var p = (tillOpt().purpose || 'billing'); return PURPOSES[p] ? p : 'billing'; }
-  catch (_) { return 'billing'; }
-}
-function purposeIs(k){ return purposeNow() === k; }
-function purposeHas(flag){ var p = PURPOSES[purposeNow()]; return !!(p && p[flag]); }
-function purposeSet(k){
-  if (!PURPOSES[k]) return;
-  tillOptSet({ purpose: k });
-  /* ⚠️ THE WHOLE SCREEN CHANGES SHAPE, so everything that paints is asked again rather than patched */
-  try { setMode(MODE); paintMenu(); paintStatus(); paintChips(); } catch (_) {}
-  try { devPaint(); } catch (_) {}
-  toastLine('This counter is now set to ' + PURPOSES[k].label + '.');
-}
-
-/** ⭐ the shop's own word for a thing, so no screen hard-codes "table" */
-function says(k){
-  try { var w = (tillOpt().words || {}); return w[k] || PURPOSE_WORDS[k] || k; }
-  catch (_) { return PURPOSE_WORDS[k] || k; }
-}
-/** ⭐ and the same word with its first letter up, for a heading — one helper, not a sprinkling of slice(0,1) */
-function Says(k){ var s = says(k); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 function tillSeriesSet(patch){
   var o = tillOpt(), s = {};
@@ -16419,31 +16354,32 @@ function upiShapeOk(v){
  */
 var KOT_N = 0;
 /**
- * ── ⭐⭐⭐ AN ORDER HELD OPEN AGAINST A SUBJECT ([TILL-180], BACKLOG TILL-178) ─────────────────────────────
+ * ── ⭐⭐⭐ THE PAGE ASKS THE ENGINE ([TILL-181]) ───────────────────────────────────────────────────────────
  *
- * Athi: *"he has to feed table number for every order, and part order placement under the table number, so
- * multiple part orders will be there; on completion the bill to be prepared for that table number… the same
- * waiter can manage more than one table at any time."*
+ * Athi: *"hope the changes are not tightly integrated to front end, ui — the business function should stay
+ * away from rendering always, never ever tightly bound."*
  *
- * ⚠️⚠️⚠️ THIS IS THE ONE PIECE THAT IS NOT A TWEAK, and everything else in the design is small once it is
- * right. Billing makes one bill and closes it; the cart exists while a customer stands there. Order-taking
- * keeps a chit OPEN against a subject, accretes rounds into it over an hour, and bills at the end.
+ * He was right, and I had done exactly what he was warning against: the PURPOSES registry, the vocabulary, and
+ * every rule about orders — may a table open twice, what does this come to, which round is a line in, may it
+ * be settled — were written inside till.html. They worked, and they were in the wrong file, which is a
+ * different fault and a worse one, because the next screen to need them would have copied them.
  *
- * ⭐ THE SUBJECT IS THE CHIT, HELD OPEN — the same axiom as *the chit IS the cart*
- * ([[feedback-chit-is-the-cart]]), taken one step further. Modelled as anything else — a parked bill, a local
- * draft, a text field on the current sale — and the kitchen cannot see it, a flat battery loses it, and a
- * second waiter cannot pick up table 7.
+ * ⭐ THE RULES NOW LIVE IN lib/orders.js, where the server can call the same file, and what is left below is
+ * the thinnest possible seam: read the device's store, hand it to the engine, write it back. Every function
+ * here is two lines or it is in the wrong place too.
+ * [[feedback-ui-replaceable-logic-in-engines]] [[feedback-adopt-dont-reinvent]]
  *
- * ⚠️⚠️ SO IT IS THE SHOP'S, NOT THE DEVICE'S. [TILL-178b]: with multiple participants "offline" stops meaning
- * *the internet is down* and starts meaning *can these two devices in the same building reach each other*.
- * The order is held where both can read it. Until the hub is bound to the LAN the local store is the fallback,
- * and the code below is deliberately written so that swap is a change of ONE function — `ordersSave`.
- *
- * ⚠️ AND "MANY TABLES AT ONCE" IS THEN FREE: it is a list, not a mode. That is the test of whether this piece
- * is modelled right.
+ * ⚠️ AND IT FAILS LOUDLY IF THE ENGINE IS ABSENT. A page that quietly re-implemented the rule when the script
+ * tag was missing would be the whole problem again, arriving silently — which is exactly how CBVerdict was
+ * once loaded on one screen and not another. [[feedback-silence-is-the-bug]]
  */
-var ORDERS = [];          /* every order this counter can see, open or just settled */
-var ORDER_ID = null;      /* the one the screen is showing, or null for the ordinary cart */
+function O(){
+  if (!window.CBOrders) throw new Error('CBOrders is not loaded — /engine/orders.js is missing from this page');
+  return window.CBOrders;
+}
+
+var ORDERS = [];          /* every order this counter can see */
+var ORDER_ID = null;      /* the one on screen, or null for the ordinary cart */
 
 function ordersKey(){ return shopLs('cb_till_orders'); }
 function ordersLoad(){
@@ -16452,104 +16388,67 @@ function ordersLoad(){
   return ORDERS;
 }
 /**
- * ⚠️ THE ONE FUNCTION THE HUB WILL REPLACE. Everything else reads ORDERS and calls this; when the shop PC
- * serves the floor, only the body of these two changes. A design that spreads persistence across a dozen call
- * sites cannot be moved later without finding all of them. [[feedback-stay-in-the-construct]]
+ * ⚠️ THE ONE FUNCTION THE HUB WILL REPLACE ([TILL-178b]). Everything else reads ORDERS and calls this, so when
+ * the shop PC serves the floor only this body changes. Persistence spread across a dozen call sites cannot be
+ * moved later without finding all of them. [[feedback-stay-in-the-construct]]
+ * ⚠️⚠️ IT DOES NOT POST ANYWHERE YET. The first draft sent this to /api/till/orders — a route that does not
+ * exist — and key-scopes.test.js caught it: it would have worked in a browser and been refused on a shop PC.
  */
-function ordersSave(){
-  try { ls.set(ordersKey(), JSON.stringify(ORDERS.slice(-200))); } catch (_) {}
-  /**
-   * ⚠⚠⚠ IT DOES NOT POST YET, AND SAYING SO IS THE POINT. The first draft sent this to /api/till/orders — a
-   * route that does not exist. key-scopes.test.js caught it: *"the counter posts /api/till/orders but the
-   * agent ALLOW list does not carry it — it works in a browser and is refused on a shop PC."*
-   *
-   * ⭐ The shop-held store is [TILL-178b] and is NOT BUILT. Until the hub is bound to the LAN and that route
-   * exists, an order lives on the device that took it — which is honest, and which the order pad already
-   * shows by dimming another waiter’s table rather than pretending it can be picked up.
-   */
+function ordersSave(){ try { ls.set(ordersKey(), JSON.stringify(ORDERS.slice(-200))); } catch (_) {} }
+
+/* ── the seam. Each one hands the device's data to the engine and keeps nothing of its own. ──────────── */
+function purposeNow(){ try { return O().purposeOf(tillOpt()); } catch (_) { return 'billing'; } }
+function purposeIs(k){ return purposeNow() === k; }
+function purposeHas(flag){ try { return O().purposeHas(tillOpt(), flag); } catch (_) { return false; } }
+function says(k){ try { return O().says(tillOpt(), k); } catch (_) { return k; } }
+function Says(k){ var s = says(k); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function purposeSet(k){
+  if (!O().PURPOSES[k]) return;
+  tillOptSet({ purpose: k });
+  /* ⚠️ the whole screen changes shape, so everything that paints is asked again rather than patched */
+  try { setMode(MODE); paintMenu(); paintStatus(); paintChips(); } catch (_) {}
+  try { devPaint(); } catch (_) {}
+  toastLine('This counter is now set to ' + O().PURPOSES[k].label + '.');
 }
 
 function orderFind(id){ for (var i = 0; i < ORDERS.length; i++) if (ORDERS[i].id === id) return ORDERS[i]; return null; }
-function orderOpen(){ return ORDERS.filter(function(o){ return o.state === 'open'; }); }
-/** ⭐ mine first, but never mine ONLY — a table is the shop's, and somebody has to be able to cover a break */
-function orderMine(){
-  var me = (typeof WHO !== 'undefined' && WHO && WHO.id) || null;
-  return orderOpen().filter(function(o){ return !me || String(o.by && o.by.id) === String(me); });
-}
+function orderOpen(){ return O().openOnly(ORDERS); }
+function orderTotals(o){ return O().totals(o); }
+function orderAge(o){ return O().age(o); }
 
-/**
- * ⭐ OPENING ONE. The subject is whatever this shop calls it — a table, a token, a docket — and it is the only
- * thing asked for, because it is the only thing known at that moment.
- * ⚠️ THE SAME SUBJECT CANNOT BE OPEN TWICE. Two orders on table 7 is two bills for one table, which is the
- * same failure as two counters numbering as C1 ([[project-till-series-prefix]]) — so it returns the existing
- * one instead of making a second.
- */
 function orderStart(subject){
-  var s = String(subject == null ? '' : subject).trim();
-  if (!s) return null;
-  var had = orderOpen().filter(function(o){ return String(o.subject).toLowerCase() === s.toLowerCase(); })[0];
-  if (had) return had;
-  var o = {
-    id: 'O' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    subject: s, state: 'open', at: new Date().toISOString(),
-    by: (typeof WHO !== 'undefined' && WHO) ? { id: WHO.id, name: WHO.name, kind: WHO.kind } : null,
-    till: (STATE && STATE.till && STATE.till.id) || tillId(),
-    kind: (typeof orderKind === 'function' ? orderKind() : 'dine'),
-    lines: [],            /* every line ever added, each carrying the round it went out in */
-    rounds: 0,
-  };
-  ORDERS.push(o); ordersSave();
+  var who = (typeof WHO !== 'undefined' && WHO) ? { id: WHO.id, name: WHO.name, kind: WHO.kind } : null;
+  var o = O().start(ORDERS, subject, who,
+    { till: (STATE && STATE.till && STATE.till.id) || tillId(), kind: orderKind() });
+  if (!o) return null;
+  if (ORDERS.indexOf(o) < 0) { ORDERS.push(o); ordersSave(); }
   return o;
 }
-
-/** ⭐ what is on an order, and what it comes to — one reader, so no screen adds up its own version */
-function orderTotals(o){
-  var lines = (o && o.lines) || [];
-  var gross = 0, n = 0;
-  lines.forEach(function(l){ if (l.void) return; n++; gross = r2(gross + (Number(l.net) || 0)); });
-  return { lines: n, total: gross, rounds: o ? o.rounds : 0,
-           waiting: lines.filter(function(l){ return !l.void && l.round && !l.ready; }).length };
-}
-
-/** ⭐ how long it has been open — the first thing anybody asks about a table */
-function orderAge(o){
-  if (!o || !o.at) return '';
-  var m = Math.round((Date.now() - new Date(o.at).getTime()) / 60000);
-  return m < 60 ? (m + ' min') : (Math.floor(m / 60) + 'h ' + (m % 60) + 'm');
-}
-
-/**
- * ⭐⭐ PUTTING THE CART ONTO AN ORDER — which is what "part order placement" is. The lines move from the cart
- * to the order and the cart empties, because a line on both is a line that will be billed twice.
- * ⚠️ THE ROUND IS STAMPED HERE and never re-stamped: a round is what went to the station together, and a
- * number that can change is not a record of anything.
- */
 function orderAddRound(o){
-  if (!o || !CART.length) return null;
-  o.rounds = (Number(o.rounds) || 0) + 1;
-  var n = o.rounds;
-  CART.forEach(function(c){
-    var l = {}; for (var k in c) l[k] = c[k];
-    l.round = n; l.at = new Date().toISOString();
-    o.lines.push(l);
-  });
-  CART.length = 0;
-  ordersSave();
+  var n = O().addRound(o, CART.slice());
+  if (n == null) return null;
+  CART.length = 0; ordersSave();
   try { price(); paintHits(); } catch (_) {}
   return n;
 }
+/** ⭐ lines typed but not sent stay on the order they were typed against, as round 0 */
+function orderAddRoundHold(o){
+  if (!O().hold(o, CART.slice())) return;
+  CART.length = 0; ordersSave();
+}
 
 /**
- * ⭐ AND BILLING IT IS THE ORDINARY SALE, on the accumulated lines. Nothing about settlement is new — which is
- * the point of holding the order as a chit rather than as a thing of its own.
- * ⚠️ The order is marked settled BEFORE finish() so a second device cannot bill it in the gap; if the sale
- * then fails the state goes back, because an order nobody can bill is worse than one billed twice by mistake.
+ * ⭐ SETTLING IS THE ORDINARY SALE, on the accumulated lines — which is the point of holding the order as a
+ * chit rather than as a thing of its own. Whether it MAY be settled is the engine's judgement, not a button's.
+ * ⚠️ Marked settling BEFORE finish() so a second device cannot bill it in the gap; if the sale fails the state
+ * goes back, because an order nobody can bill is worse than one billed twice by mistake.
  */
 async function orderSettle(o){
-  if (!o || o.state !== 'open') return;
-  if (!o.lines.filter(function(l){ return !l.void; }).length) { toastLine('Nothing on this ' + says('subject') + ' yet.'); return; }
+  var may = O().canSettle(o);
+  if (!may.ok) { toastLine('This ' + says('subject') + ' cannot be billed — ' + may.why + '.'); return; }
   CART.length = 0;
-  o.lines.forEach(function(l){ if (!l.void) CART.push(l); });
+  O().billable(o).forEach(function(l){ CART.push(l); });
   o.state = 'settling'; ordersSave();
   try {
     price();
@@ -16637,17 +16536,11 @@ function orderPick(id){
   CART.length = 0;
   try { price(); paintOrders(); paintHits(); paintStatus(); } catch (_) {}
 }
-/** ⭐ lines typed but not yet sent are kept ON the order, unsent, so nothing is lost and nothing is fired */
-function orderAddRoundHold(o){
-  if (!o || !CART.length) return;
-  CART.forEach(function(c){
-    var l = {}; for (var k in c) l[k] = c[k];
-    l.round = 0; l.at = new Date().toISOString();       /* round 0 = typed, not sent */
-    o.lines.push(l);
-  });
-  CART.length = 0;
-  ordersSave();
-}
+/**
+ * ⚠⚠ THE STALE COPY OF orderAddRoundHold IS GONE ([TILL-181]). It inlined the rule — stamping round 0 by
+ * hand — which is exactly what the extraction was for, and one-name-one-function caught it: two declarations,
+ * only the last one running. The live one is beside the other order seams and calls CBOrders.hold().
+ */
 
 function orderKind(){ return ls.get(shopLs('cb_till_otype'), 'dine'); }
 function orderTable(){ return ls.get(shopLs('cb_till_table'), ''); }
@@ -20073,9 +19966,10 @@ function paintPurpose(){
   var sel = document.getElementById('set_purpose');
   if (sel) {
     var now = purposeNow();
-    sel.innerHTML = Object.keys(PURPOSES).map(function(k){
+    var REG = O().PURPOSES;                 /* the registry is the engine's, not the page's ([TILL-181]) */
+    sel.innerHTML = Object.keys(REG).map(function(k){
       return '<option value="' + k + '"' + (k === now ? ' selected' : '') + '>'
-        + esc(PURPOSES[k].label) + ' — ' + esc(PURPOSES[k].hint) + '</option>';
+        + esc(REG[k].label) + ' — ' + esc(REG[k].hint) + '</option>';
     }).join('');
   }
   var row = document.getElementById('row_words');
