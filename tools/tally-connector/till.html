@@ -2061,6 +2061,28 @@
    * and the pixels were wrong, which is why a harness that never looks at the screen cannot be the last word.
    */
   .netbar[hidden]{display:none}
+  /* ── ⭐⭐ THE BUILD RIBBON ([TILL-177]) — quiet furniture, never an alarm ───────────────────────── */
+  .devbar{position:fixed;inset:0 0 auto 0;z-index:9700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:5px 12px;background:#1d1b16;color:#f2ede6;font-size:.8em}
+  .devbar[hidden]{display:none}
+  .devbar b{letter-spacing:.05em;opacity:.7}
+  .devhere{font-weight:700;background:rgba(255,255,255,.14);border-radius:6px;padding:2px 8px}
+  .devsw{display:flex;gap:4px}
+  .devsw button{font:inherit;padding:2px 9px;border-radius:6px;border:1px solid rgba(255,255,255,.28);
+    background:transparent;color:inherit;cursor:pointer}
+  .devsw button.on{background:#f2ede6;color:#1d1b16;border-color:#f2ede6;font-weight:700}
+  .devspeed{font-family:ui-monospace,Menlo,Consolas,monospace;opacity:.9}
+  .devlast{opacity:.55;font-family:ui-monospace,Menlo,Consolas,monospace;flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .devx{margin-inline-start:auto;font:inherit;border:0;background:transparent;color:inherit;cursor:pointer;padding:0 6px}
+  /* ⚠️ the shell moves down so the ribbon never covers the first row of the counter */
+  body.devon .wrap{padding-top:28px}
+  body.devon.neton .wrap{padding-top:58px}
+  /**
+   * ⭐ A SIZE IS A FRAME, NOT A LIE. The page really narrows, so every rule that keys off width behaves as
+   * it would on the device — a preview that only scales a screenshot would prove nothing.
+   */
+  body.devframed .wrap{max-width:var(--devw);margin-inline:auto;box-shadow:0 0 0 1px var(--line)}
   .netbar b{font-weight:800}
   .netbar button{font:inherit;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.6);
                   background:transparent;color:#fff;cursor:pointer}
@@ -2581,6 +2603,8 @@
      is written until somebody says so. -->
 <!-- ⚠️⚠️ THE SIMULATOR IS ANNOUNCED ([TILL-116]). A counter quietly left on a fake dead line is
      indistinguishable from a broken one. Hidden until it is on; impossible to miss when it is. -->
+<!-- ⭐ the build ribbon ([TILL-177]) — off unless somebody turns it on, never on for a shop -->
+<div id="devbar" class="devbar" data-testid="till-devbar" hidden></div>
 <div id="netbar" class="netbar" data-testid="till-netbar" hidden></div>
 <div id="netwhat" class="netwhat" data-testid="till-net-what-panel" hidden></div>
 <!-- ⭐ a failed action, seen rather than read ([TILL-157]) -->
@@ -3569,6 +3593,160 @@ var DB = (function(){
 })();
 
 /**
+ * ── ⭐⭐⭐ THE BUILD RIBBON, ON THE COUNTER ([TILL-177]) ───────────────────────────────────────────────────
+ *
+ * Athi, pointing at the app's dev ribbon: *"can you bring similar to this in counter app also — I couldn't
+ * check various sizes and can't trace for speed etc. also number the screens."*
+ *
+ * Three separate complaints, and each has a different answer:
+ *   · SIZES  — the counter reshapes itself by measuring the window, so the only way to see a phone was to
+ *              resize a desktop browser by hand. Now a button frames it at a real device width.
+ *   · SPEED  — every request already goes through fetchBy(), and nothing was timing it. A counter that feels
+ *              slow and a counter that IS slow are different problems and we could not tell them apart.
+ *   · NUMBERS — twenty-two screens and none of them says what it is called, so a fault report says "the page
+ *              with the prices" and a fix has to start by guessing which one.
+ *
+ * ⚠️⚠️ IT IS OFF UNLESS SOMEBODY TURNS IT ON, and it is never on for a shop. A ribbon a cashier can see is a
+ * row of controls that do nothing for them, on the most valuable strip of a working screen. Ctrl+Alt+D, or
+ * ?dev=1 — the same shape the app uses.
+ */
+var CTR_SCREENS = [
+  { id: 'sell',       code: 'CTR-01', name: 'Sell' },
+  { id: 'receive',    code: 'CTR-02', name: 'Receive' },
+  { id: 'despatch',   code: 'CTR-03', name: 'Despatch' },
+  { id: 'maintain',   code: 'CTR-04', name: 'Maintenance' },
+  { id: 'tillmenu',   code: 'CTR-05', name: 'The hub' },
+  { id: 'slipdlg',    code: 'CTR-06', name: 'The slip' },
+  { id: 'billsdlg',   code: 'CTR-07', name: "Today's bills" },
+  { id: 'dayrep',     code: 'CTR-08', name: "Today's sales" },
+  { id: 'startdlg',   code: 'CTR-09', name: 'Start the day' },
+  { id: 'shiftdlg',   code: 'CTR-10', name: 'Hand over' },
+  { id: 'whodlg',     code: 'CTR-11', name: 'Who is here' },
+  { id: 'signindlg',  code: 'CTR-12', name: 'Sign in' },
+  { id: 'healthdlg',  code: 'CTR-13', name: 'Counter health' },
+  { id: 'linedlg',    code: 'CTR-14', name: 'Capability health' },
+  { id: 'suredlg',    code: 'CTR-15', name: 'Confirm' },
+  { id: 'setdlg',     code: 'CTR-16', name: 'Settings' },
+  { id: 'styledlg',   code: 'CTR-17', name: 'Screen style' },
+  { id: 'stylegal',   code: 'CTR-18', name: 'Style gallery' },
+  { id: 'catdlg',     code: 'CTR-19', name: 'Catalogue upload' },
+  { id: 'moddlg',     code: 'CTR-20', name: 'Modifiers' },
+  { id: 'tododlg',    code: 'CTR-21', name: 'To do' },
+  { id: 'retdlg',     code: 'CTR-22', name: 'Returns' },
+  { id: 'shopdlg',    code: 'CTR-23', name: 'Shop set-up' },
+  { id: 'updlg',      code: 'CTR-24', name: 'Update' },
+  { id: 'needdlg',    code: 'CTR-25', name: 'What is needed' },
+  { id: 'dayimgdlg',  code: 'CTR-26', name: "The day's picture" },
+  { id: 'askdlg',     code: 'CTR-27', name: 'Ask' },
+];
+function ctrScreen(id){ for (var i = 0; i < CTR_SCREENS.length; i++) if (CTR_SCREENS[i].id === id) return CTR_SCREENS[i]; return null; }
+
+/* ── the flag ────────────────────────────────────────────────────────────────────────────────────────── */
+function devOn(){
+  try {
+    if (/[?&]dev=1/.test(location.search)) return true;
+    return ls.get('cb_till_dev', '') === '1';
+  } catch (_) { return false; }
+}
+function devSet(on){ try { ls.set('cb_till_dev', on ? '1' : ''); } catch (_) {} devPaint(); }
+
+/**
+ * ── ⭐⭐ SPEED, MEASURED WHERE EVERY REQUEST ALREADY PASSES ([TILL-177]) ──────────────────────────────────
+ *
+ * fetchBy() is the one gate every call goes through — the same property that let the line simulator work. So
+ * the timing is taken there and nowhere else: a second place to measure is a second answer.
+ *
+ * ⚠️ THE MEDIAN, NOT THE MEAN. One 8-second timeout drags an average into nonsense and hides the fact that
+ * forty calls were fine. The slowest is shown beside it, because that is the one a shopkeeper felt.
+ */
+var DEV_T = [];
+function devTimed(url, ms, ok){
+  DEV_T.push({ url: String(url).replace(/^https?:\/\/[^/]+/, '').split('?')[0], ms: ms, ok: !!ok, at: Date.now() });
+  if (DEV_T.length > 60) DEV_T.shift();
+  if (devOn()) devPaint();
+}
+function devStats(){
+  if (!DEV_T.length) return null;
+  var v = DEV_T.map(function(x){ return x.ms; }).sort(function(a, b){ return a - b; });
+  return { n: v.length, mid: v[Math.floor(v.length / 2)], worst: v[v.length - 1],
+           bad: DEV_T.filter(function(x){ return !x.ok; }).length,
+           last: DEV_T[DEV_T.length - 1] };
+}
+
+/**
+ * ⭐ A SIZE IS A FRAME, NOT A LIE. The counter decides its shape by measuring the window, so the preview
+ * really does narrow the page rather than pretending — every rule that keys off width behaves as it would on
+ * the device. [[feedback-ui-placement-standards]]
+ */
+var DEV_SIZES = { full: { w: 0, say: 'Full' }, lap: { w: 1280, say: '💻 Laptop' },
+                  tab: { w: 834, say: '🖥 Tablet' }, mob: { w: 390, say: '📱 Phone' } };
+function devSize(k){
+  try { ls.set('cb_till_devsize', DEV_SIZES[k] ? k : 'full'); } catch (_) {}
+  devApplySize(); devPaint();
+  try { applyLook(); paintHits(); paintKeys(); } catch (_) {}
+}
+function devApplySize(){
+  var k = 'full';
+  try { k = ls.get('cb_till_devsize', 'full'); } catch (_) {}
+  var s = DEV_SIZES[k] || DEV_SIZES.full;
+  var el = document.body;
+  el.classList.toggle('devframed', !!s.w);
+  el.style.setProperty('--devw', s.w ? (s.w + 'px') : '');
+}
+
+/** ⭐ the screen a person is looking at right now — the topmost open dialog, else the operation */
+function devHere(){
+  var d = Array.prototype.slice.call(document.querySelectorAll('dialog[open]')).pop();
+  if (d && d.id) { var s = ctrScreen(d.id); if (s) return s; }
+  var m = document.getElementById('tillmenu');
+  if (m && !m.hidden && m.classList.contains('on')) { var h = ctrScreen('tillmenu'); if (h) return h; }
+  return ctrScreen(typeof MODE !== 'undefined' ? MODE : 'sell') || CTR_SCREENS[0];
+}
+
+function devPaint(){
+  var el = document.getElementById('devbar'); if (!el) return;
+  if (!devOn()) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('devon'); return; }
+  el.hidden = false; document.body.classList.add('devon');
+  var here = devHere(), st = devStats(), size = 'full';
+  try { size = ls.get('cb_till_devsize', 'full'); } catch (_) {}
+  el.innerHTML = '<b>Build</b>'
+    /* ⭐ WHICH SCREEN THIS IS — the whole point of numbering them */
+    + '<span class="devhere" data-testid="till-dev-screen">' + esc(here.code) + ' · ' + esc(here.name) + '</span>'
+    + '<span class="devsw">'
+    + Object.keys(DEV_SIZES).map(function(k){
+        return '<button class="' + (k === size ? 'on' : '') + '" data-testid="till-dev-size-' + k + '"'
+          + ' onclick="devSize(&quot;' + k + '&quot;)">' + DEV_SIZES[k].say + '</button>';
+      }).join('')
+    + '</span>'
+    /* ⭐ SPEED — the median and the worst, because an average hides both */
+    + '<span class="devspeed" data-testid="till-dev-speed">'
+    + (st ? (st.n + ' calls · ' + st.mid + 'ms mid · ' + st.worst + 'ms worst'
+             + (st.bad ? ' · ' + st.bad + ' failed' : ''))
+          : 'no calls yet')
+    + '</span>'
+    + (st && st.last ? '<span class="devlast">' + esc(st.last.url) + ' ' + st.last.ms + 'ms</span>' : '')
+    + '<button class="devx" data-testid="till-dev-off" onclick="devSet(false)" title="hide this ribbon">✕</button>';
+}
+
+/**
+ * ⭐ IT FOLLOWS YOU BETWEEN SCREENS, without a timer. A dialog opening is always the result of a press or a
+ * key, so those two events are enough — and they cost nothing when the ribbon is off, which is always, in a
+ * shop. A 1s poll would be a second thing running all day to answer a question nobody is asking.
+ */
+try {
+  ['click', 'keyup'].forEach(function(ev){
+    document.addEventListener(ev, function(){ if (devOn()) setTimeout(devPaint, 0); }, true);
+  });
+} catch (_) {}
+
+/* ⚠️ Ctrl+Alt+D — a combination nobody presses by accident at a counter */
+try {
+  document.addEventListener('keydown', function(e){
+    if (e.ctrlKey && e.altKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); devSet(!devOn()); }
+  });
+} catch (_) {}
+
+/**
  * ── ⭐⭐⭐ EVERY REQUEST THIS COUNTER MAKES HAS A DEADLINE ─────────────────────────────────────────────────────
  *
  * ⚠️⚠️ THERE WAS NOT ONE IN THE WHOLE FILE, and on the offline-first surface of all things. A stalled connection
@@ -3719,9 +3897,14 @@ function netGate(){
  * design package is explicit about it. This is the one place every request already passes through.
  */
 async function fetchBy(url, opts, ms){
-  if (String(url).indexOf('/api/') >= 0) return fetchBy_(url, opts, ms)
-    .then(function(r){ lineNote(r && r.ok !== false); return r; },
-          function(e){ lineNote(false); throw e; });
+  if (String(url).indexOf('/api/') >= 0) {
+    /* ⭐ timed HERE and nowhere else ([TILL-177]) — one gate, one answer. A second place to measure is a
+       second answer, and the two would disagree the first time one of them was moved. */
+    var t0 = Date.now();
+    return fetchBy_(url, opts, ms)
+      .then(function(r){ lineNote(r && r.ok !== false); devTimed(url, Date.now() - t0, r && r.ok !== false); return r; },
+            function(e){ lineNote(false); devTimed(url, Date.now() - t0, false); throw e; });
+  }
   return fetchBy_(url, opts, ms);
 }
 async function fetchBy_(url, opts, ms){
@@ -19761,6 +19944,8 @@ async function bellUp(){
   } catch (_) { BELL = null; }
 }
 /* ⭐ one tick: build it if it is gone, and replace it if it has stopped delivering ([TILL-167]) */
+/* ⭐ the ribbon, restored on load — a size left on Phone must still be Phone after a reload ([TILL-177]) */
+try { devApplySize(); devPaint(); } catch (_) {}
 setInterval(function(){ bellWatch(); bellUp(); }, 30000);
 /* ⭐ are the bills that say "sent" really in the books? — decoupled from drain so the two can never re-enter each other */
 if (typeof setTimeout === 'function') setTimeout(function(){ checkAbsorbed(false); }, 45000);
