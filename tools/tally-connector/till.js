@@ -163,7 +163,7 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /* ⭐ 'variant' joined on 2026-09-19: one product, many combinations, and what makes two of them the same
    thing to sell. A shop PC bills combinations with the line down, so it keeps the rule locally too.
    ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
-const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'orderhub', 'rewards', 'screen'];
+const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'orderhub', 'dayopen', 'signin', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),

@@ -365,6 +365,14 @@ const ENGINE_OTHER = [
      …because it is multiple participants"*. A waiter's phone, a kitchen screen and the till agree about
      table 7 through the shop PC, not through the cloud — so these rules run in node AND in the page. */
   'orderhub.js',
+  /* ⭐⭐⭐ THE MORNING AS A SEQUENCE ([TILL-182]). Four correct things lived in four places — claimTill decided
+     the prefix, /api/counters refused a held one, setWho asked for the drawer, beginDay refreshed the
+     catalogue — and none of them ever said what it was doing. The ORDER is the rule this file holds. */
+  'dayopen.js',
+  /* ⭐⭐⭐ SIGNING A PERSON IN ([TILL-183]). It belongs to neither surface — Athi: *"it should be independent
+     and also can be called from the backoffice."* The counter had a DEVICE key and a NAME typed onto bills,
+     and no authenticated person anywhere between the two. This is the middle that was never built. */
+  'signin.js',
   /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
      CITES a category by id, and `category` is the legacy key nothing may write again. */
   'categories.js',
@@ -523,6 +531,10 @@ const ENGINE_OTHER = [
   'orders.browser.js',
   /* GENERATED beside lib/orderhub.js ([TILL-178b]) — the floor's rules, for a device that IS the floor. */
   'orderhub.browser.js',
+  /* GENERATED beside lib/dayopen.js ([TILL-182]) — the morning, for the page that narrates it. */
+  'dayopen.browser.js',
+  /* GENERATED beside lib/signin.js ([TILL-183]) — for the counter's own sign-in screen. */
+  'signin.browser.js',
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
@@ -634,6 +646,12 @@ const TILL_SHIPPABLE = {
   /* ⭐⭐⭐ [TILL-178b] and the floor itself. A shop PC with no line must still be able to hold the whole
      evening for six devices — which it cannot do if the rules arrive over the line. */
   'orderhub.js': 'orderhub.js',
+  /* ⭐⭐ [TILL-182] a counter with no line must still be able to OPEN — which is most of the point of opening
+     it: the morning is when a shop finds out what is wrong, and it cannot fetch the rules for that. */
+  'dayopen.js':  'dayopen.js',
+  /* ⭐ [TILL-183] the screen is on the device; only the CODE needs the line. A counter that had to fetch its
+     own sign-in rules could not tell anybody why they cannot sign in. */
+  'signin.js':   'signin.js',
   'jurisdiction.js': 'jurisdiction.js',
   'govcontext.js': 'web:app/govcontext.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter

@@ -721,6 +721,8 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     /* ⭐ the order rules, off the page ([TILL-181]) */
                     'orders.js': 'CBOrders',
                     'orderhub.js': 'CBOrderHub',
+                    'dayopen.js': 'CBDayOpen',
+                    'signin.js': 'CBSignin',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order

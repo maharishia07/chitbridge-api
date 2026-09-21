@@ -576,7 +576,17 @@
    * the date, three plain facts and one button. ⚠️ The picture is whatever the shop keeps at its counter; we
    * ship none (see TILL_MENU), so the empty state INVITES rather than showing a faith nobody chose.
    */
-  .daypanel{display:flex;flex-direction:column;gap:8px;padding:10px 8px 6px}
+  /* ⭐ a row that is RUNNING, one that is in the WAY, and the reason under it ([TILL-182]) */
+.dayline.doing b{color:var(--ink)}
+.dayline.bad{background:var(--warnbg,#fdecec);border-radius:8px}
+.dayline .stop{color:var(--bad,#a3261f);font-weight:700}
+.daywhy{margin:-2px 0 6px 26px;color:var(--dim);font-size:.9em;max-width:52ch}
+.spin[hidden]{display:none}    /* ⚠️ [TILL-148] again: a class that sets display beats [hidden] and renders anyway */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+  border-top-color:var(--ok,#1c7a4a);border-radius:50%;animation:dayspin .7s linear infinite}
+@keyframes dayspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.spin{animation:none;border-top-color:var(--ok,#1c7a4a)}}
+.daypanel{display:flex;flex-direction:column;gap:8px;padding:10px 8px 6px}
   /**
    * ⚠️ THE PICTURE IS NO LONGER A BANNER ([TILL-100]). A 190px-tall photograph pushed the three morning
    * checks and Open the day below the fold — the panel is about READINESS and the picture is a mark beside
@@ -2732,7 +2742,7 @@
         <option value="maintain">🛠️ Maintenance</option>
       </select>
       <span class="pill" id="tillpill">till</span>
-      <button class="pill" id="whopill" data-testid="till-who" onclick="openWho()" title="who is signed in at this counter (F7 to hand over)">…</button>
+      <button class="pill" id="whopill" data-testid="till-who" onclick="whoAct()" title="who is signed in at this counter (F7 to hand over)">…</button>
       <!--
         ⭐⭐ THE LINE PILL IS THE WAY IN TO "WHY IS A BILL STUCK?". Athi, 2026-09-17: *"do you have a chip called why is a bill
         stuck? I couldn't see that."* It lived only inside ☰, and this pill — the first place anyone looks when bills are not
@@ -2964,6 +2974,16 @@
     <button class="pill" style="font-size:1.1em;padding:12px 18px" data-testid="till-break-end" onclick="endBreak()"><b>Back to billing</b></button>
   </div>
 </div>
+<!-- ⭐⭐⭐ SIGNING A PERSON IN ([TILL-183]). Athi: *"what we need is a user id screen same as our back
+     office, much simpler, so someone can sign-in?"* One box that takes a user ID or an email, one emailed
+     code, and an authenticated person at the end. Owner or employee, same path.
+     ⚠️ NOT #signindlg, which pairs the DEVICE and fetches its key ([TILL-121]). Two different acts, and the
+     button that said "Sign in" used to open neither of them — it opened the name picker below. -->
+<dialog id="usigndlg" class="setdlg"><div class="dlg">
+  <h3>Sign in</h3>
+  <div id="usignbody" data-testid="till-usign-body"></div>
+</div></dialog>
+
 <dialog id="whodlg"><div class="dlg">
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
@@ -3213,6 +3233,8 @@
 <!-- ⚠️ AFTER orders.js, never before: the hub engine is wrapped with window.CBOrders substituted for its
      require, so loading it first resolves the order rules to undefined and the floor throws on its first table. -->
 <script src="/engine/orderhub.js" onerror="engineMissed('orderhub')"></script>
+<script src="/engine/dayopen.js" onerror="engineMissed('dayopen')"></script>
+<script src="/engine/signin.js" onerror="engineMissed('signin')"></script>
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
 <!-- ⭐ the screen library — colour schemes, key tiles, presets (lib/screen-kit.js). Without it the counter draws as before. -->
 <script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
@@ -4643,6 +4665,7 @@ async function tillClaimQuery(){
 }
 async function tillClaim(t){
   if (!t) return;
+  TILL_CLAIM = t;                      /* ⭐ kept for the morning ([TILL-182]) */
   TILL_CLASH = t.clash || null;
   if (TILL_CLASH) { try { paintStatus(); } catch (_) {} return; }
   var want = t.assigned_id || t.suggested_id;
@@ -6262,29 +6285,173 @@ function menuSection(id){
  * said "all well" without looking would be the same lie as a label that cannot be defended.
  */
 function dayOpened(){ return ls.get(shopLs('cb_till_daystart'), '') === bizDay(); }
+/**
+ * ── ⭐⭐⭐ THE MORNING, SAID OUT LOUD ([TILL-182]) ────────────────────────────────────────────────────────
+ *
+ * Athi: *"once you sign-in, set up begins, say 'Loading product data', once done say completed, assigning a
+ * counter, find which counter was already associated and provide that number, before that find if it is not
+ * used by someone, receive the money in hand, and anything else, so the counter is setting up for the day."*
+ *
+ * Every piece existed and none of it was in order or audible. This is the seam: it collects what the counter
+ * already knows, hands it to lib/dayopen.js, and paints the answer. Not one rule is decided here.
+ * [[feedback-ui-replaceable-logic-in-engines]]
+ */
+function DAY(){
+  if (!window.CBDayOpen) throw new Error('CBDayOpen is not loaded — /engine/dayopen.js is missing from this page');
+  return window.CBDayOpen;
+}
+
+/** what the last snapshot said about this counter — kept so the morning can read it without asking again */
+var TILL_CLAIM = null;
+
+/**
+ * ⭐ EVERYTHING THE MORNING NEEDS, READ FROM WHAT THIS COUNTER ALREADY HOLDS. No new call: the claim came down
+ * with the snapshot, WHO is on this device, and the rest is the page's own state.
+ * ⚠️ `device` IS THIS PAIRING, so "held by me since last night" can be told from "held by the back office".
+ * Without it every shop would be blocked every morning by its own key. [[project-till-store-per-key]]
+ */
+function dayState(){
+  var t = TILL_CLAIM || {};
+  var mine = tillId();
+  /**
+   * ⚠️⚠️ THE CLASH IS THE ONLY PLACE ANOTHER DEVICE IS VISIBLE. The counter holds a KEY, not a session, so it
+   * cannot list the shop's counters — /api/counters is sessionOnly, and rightly. What the cloud does tell a
+   * key, on every snapshot, is whether somebody else is numbering with its prefix and who. That is the answer
+   * to "find if it is not used by someone", and it arrives without a second call.
+   */
+  var others = [];
+  if (TILL_CLASH && TILL_CLASH.id) {
+    others.push({ id: String(TILL_CLASH.id).toUpperCase(),
+                  held_by: { name: TILL_CLASH.held_by || 'another counter', device: 'other' } });
+  }
+  if (mine && !others.filter(function(c){ return c.id === String(mine).toUpperCase(); }).length) {
+    others.push({ id: String(mine).toUpperCase(), held_by: null });
+  }
+  return {
+    now: Date.now(),
+    device: 'me',
+    currency_symbol: (typeof curSym === 'function') ? curSym() : '',
+    who: (typeof WHO !== 'undefined' && WHO) ? WHO : null,
+    items: ((S && S.items) || []).length,
+    prices_at: (S && S.at) || null,
+    counter: mine ? { id: mine, name: ls.get(shopLs('cb_till_counter_name'), '') || null,
+                      next: Number(t.resume_next) || null } : null,
+    counters: others,
+    /* ⭐ the gate autoPrint() itself uses, so the morning and the printing can never disagree */
+    agent_print: !!(HOST && HOST.mode === 'agent' && HOST.print),
+  };
+}
+
+/**
+ * ⭐⭐ ONE ROW OF THE MORNING. Reads like the design's day lines — a mark, what it is, and the ANSWER on the
+ * right, because "Prices · 51h old" is the whole message and a tick beside "Prices" is not.
+ * ⚠️ A row that is RUNNING says what it is doing. That is the whole of what Athi asked for: the person watches
+ * the counter set itself up instead of watching nothing.
+ */
+function dayRow(r, running){
+  var mark = running ? '<span class="spin" aria-hidden="true"></span>'
+           : '<span class="' + (r.done ? 'yes' : (r.blocks ? 'stop' : 'no')) + '">'
+             + (r.done ? '✓' : (r.blocks ? '⛔' : '·')) + '</span>';
+  return '<div class="dayline' + (running ? ' doing' : '') + (r.blocks && !r.done && !running ? ' bad' : '') + '"'
+    + ' data-testid="till-day-step" data-step="' + esc(r.id) + '"'
+    + ' data-state="' + (running ? 'doing' : (r.done ? 'done' : (r.blocks ? 'stop' : 'note'))) + '">'
+    + mark + '<b>' + esc(running ? r.doing : r.title) + '</b>'
+    + '<i>' + esc(running ? '' : (r.say || '')) + '</i></div>'
+    /* ⚠️ the WHY is only shown where it is needed — on the thing in the way. Everywhere else it is noise. */
+    + ((!running && r.blocks && !r.done) ? '<div class="daywhy" data-testid="till-day-why">' + esc(r.why) + '</div>' : '');
+}
+
+/** ⭐ the whole checklist, painted from the engine. It adds up nothing of its own. */
+function dayLines(runningId){
+  var rows = DAY().all(dayState());
+  return rows.map(function(r){ return dayRow(r, r.id === runningId); }).join('');
+}
+
+/**
+ * ── ⭐⭐⭐ OPENING THE DAY, STEP BY STEP AND VISIBLY ─────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ IT DOES NOT PRETEND. Each step is painted as RUNNING, then the real work is done, then the row is
+ * repainted from what the engine now reads. A progress bar that moves on a timer while nothing happens is the
+ * thing this replaces. [[feedback-silence-is-the-bug]]
+ * ⚠️ AND IT STOPS WHERE IT IS BLOCKED. A morning that ploughs past "another PC is numbering as C1" and opens
+ * anyway has told the person nothing they can act on.
+ */
+var DAY_RUNNING = null;
 async function beginDay(){
+  if (DAY_RUNNING) return;
+  var steps = DAY().STEPS;
+  for (var i = 0; i < steps.length; i++) {
+    var s = steps[i];
+    DAY_RUNNING = s.id;
+    try { paintMenu(); } catch (_) {}
+    /* ⭐ a beat, so a step that finishes instantly is still SEEN — the person is being told, not measured */
+    await new Promise(function(r){ setTimeout(r, 260); });
+    try { await dayStepRun(s.id); } catch (_) {}
+    DAY_RUNNING = null;
+    try { paintMenu(); } catch (_) {}
+    var may = DAY().canOpen(dayState());
+    if (!may.ok && may.step === s.id) {
+      /* ⚠️ the row already carries the reason; the toast is for somebody looking at another part of the screen */
+      toastLine(may.why);
+      return;
+    }
+  }
+  dayDone();
+}
+
+/** ⭐ ONE STEP'S REAL WORK. Everything here already existed; the morning only puts it in order. */
+async function dayStepRun(id){
+  if (id === 'who') {
+    /* ⚠️ the person picks themselves off the shop's own list — a user id, never a password. That is the
+       principle: pairing is per DEVICE and happens once; who is on is per PERSON and happens every shift. */
+    if (!(typeof WHO !== 'undefined' && WHO && WHO.name)) openWho();
+    return;
+  }
+  if (id === 'products') {
+    /* ⭐ the practical half of the old beginDay — bring the shop up to date if the line is there */
+    if (navigator.onLine && HOST && HOST.refresh) await refresh();
+    return;
+  }
+  if (id === 'counter') {
+    /**
+     * ⚠️⚠️ THE MORNING TRIES THE KEY, IT DOES NOT MERELY FIND ONE ([TILL-176]). A key that is present and
+     * revoked looks identical to a good one. The whole point of opening the day is to learn at nine, with
+     * nobody waiting, what would otherwise be found at noon with a queue at the counter.
+     * ⭐ It is the same check keyWatch() runs, forced past its ten-minute gate — one question, one answer,
+     * one place it is implemented. [[feedback-no-duplicate-functions]]
+     */
+    try { KEY_ASKED = 0; await keyWatch(); } catch (_) {}
+    return;
+  }
+  if (id === 'float') {
+    /* ⭐ setWho() asks for the drawer when somebody signs in. If they were already signed in from yesterday
+       the drawer has not been counted today, so it is asked here and nowhere else. */
+    if (typeof WHO !== 'undefined' && WHO && (WHO.float == null || WHO.float === '')) await dayFloatAsk();
+    return;
+  }
+  /* printer: nothing to do — it is read, not set */
+}
+
+/** ⭐ the drawer, counted. Skipping is allowed and is NOT the same as zero — the close has to tell them apart. */
+async function dayFloatAsk(){
+  var v = await ask('How much cash is in the drawer right now?\n\nLeave it blank if it has not been counted.',
+                    '', 'Cash in the drawer (' + curSym() + ')', 'Starting the day');
+  if (v === null || v === undefined || String(v).trim() === '') return;
+  WHO.float = Math.max(0, Number(v) || 0);
+  try { ls.set(shopLs('cb_till_who'), JSON.stringify(WHO)); } catch (_) {}
+  try { paintWho(); } catch (_) {}
+}
+
+/** ⭐ and the moment it is finished, said once — the counter is set up for the day */
+function dayDone(){
   ls.set(shopLs('cb_till_daystart'), bizDay());
   todoSweep();          /* yesterday's finished items go; anything unfinished carries into today */
-  /* ⭐ THE REMINDER ([TILL-79]) — in the app, never a browser permission. A counter's page is open all day,
-     so a minute is often enough and costs nothing. */
   try { todoNudge(); setInterval(todoNudge, 60000); } catch (_) {}
   MENU_OPEN_SEC = 'day';
-  paintMenu();
-  /* the practical half: bring the shop's prices and products up to date, if the line is there */
-  try { if (navigator.onLine && HOST && HOST.refresh) await refresh(); } catch (_) {}
-  /**
-   * ── ⚠️⚠️⚠️ THE MORNING TRIES THE KEY, IT DOES NOT MERELY FIND ONE ([TILL-176], BACKLOG item 4) ────────
-   *
-   * Athi: *"start of day must TRY the key, not just find one."* The readiness check asked whether a key was
-   * present. A key that is present and revoked looks identical — and the whole point of opening the day is to
-   * learn, at 9am with nobody waiting, what would otherwise be discovered at noon with a queue at the counter.
-   *
-   * ⭐ IT IS THE SAME CHECK keyWatch() RUNS, forced past its ten-minute gate. One question, one answer, one
-   * place it is implemented. [[feedback-no-duplicate-functions]]
-   */
-  try { KEY_ASKED = 0; await keyWatch(); } catch (_) {}
-  paintMenu();
+  try { paintMenu(); } catch (_) {}
+  toastLine(DAY().done(dayState()));
 }
+
 function dayImg(){ return ls.get(shopLs('cb_till_dayimg'), ''); }
 /**
  * ── ⭐⭐ THE IDLE SCREEN ──────────────────────────────────────────────────────────────────────────────────────
@@ -6474,24 +6641,12 @@ function menuDayBody(){
      * neither of which is in this page — the same invented-name mistake the watch-list guard caught twice.
      * The printer gate is the one autoPrint() actually uses; the float is what setWho() recorded.
      */
-    + dayLine(!!(typeof WHO !== 'undefined' && WHO && WHO.name), 'Who is on the counter',
-        (typeof WHO !== 'undefined' && WHO && WHO.name)
-          ? (WHO.kind === 'entity' ? 'the shop itself' : WHO.name) : 'nobody yet')
-    /* ⚠️ the float is RECORDED by opening the day — nothing to fix beforehand, so it is never a fault */
-    + dayLine(true, 'Cash in the drawer to start',
-        (typeof WHO !== 'undefined' && WHO && Number(WHO.float))
-          ? (curSym() + Number(WHO.float).toLocaleString('en-IN')) : 'not counted')
-    /* ⭐ the gate autoPrint() itself uses: only the program on a shop PC can send paper straight to a printer */
-    + (function(){
-        var agent = !!(HOST && HOST.mode === 'agent' && HOST.print);
-        return dayLine(agent, 'Printer and drawer', agent ? 'ready on this PC' : 'prints through the browser');
-      })()
-    /* ⭐ the same judgement the Check row makes, so the two can never disagree about one number */
-    + (function(){
-        var h = (S && S.at) ? Math.round((Date.now() - new Date(S.at).getTime()) / 3600000) : null;
-        return dayLine(h !== null && h <= 24, 'Prices',
-          h === null ? 'no copy yet' : (h + ' hour' + (h === 1 ? '' : 's') + ' old'));
-      })()
+    /**
+     * ⭐⭐⭐ THE FOUR HARD-CODED ROWS BECAME FIVE READ FROM AN ENGINE ([TILL-182]). They were right and they
+     * were written here, in the markup — so nothing could say what the morning was DOING, only what it had
+     * already settled. lib/dayopen.js holds the order now, and this paints whatever it returns.
+     */
+    + dayLines(DAY_RUNNING)
     + '<div class="daybtns">'
     /**
      * ⭐⭐ OPENING AND CLOSING A DAY ARE ONE JOB AT TWO ENDS ([TILL-173]). Once the day is open, this card's
@@ -7137,7 +7292,7 @@ function hubHead(){
     + '<span class="hubav" data-testid="till-hub-av">' + esc(w.av) + '</span>'
     + '<span class="mt"><b>' + esc(w.title) + '</b><i>' + esc(w.sub) + '</i></span>'
     /* ⚠️ the shortcut sits BESIDE the label, in mono, not inside it (§6.4) */
-    + '<button class="pri sm" data-testid="till-hub-who-act" onclick="fromMenu(openWho)">'
+    + '<button class="pri sm" data-testid="till-hub-who-act" onclick="fromMenu(whoAct)">'
     + esc(w.act) + '</button><kbd>F7</kbd>'
     /**
      * ⭐⭐ SIGN OUT BELONGS TO WHOEVER IS STANDING THERE ([TILL-173]). It was in the CAREFUL strip, grouped
@@ -7181,7 +7336,7 @@ function hubWhoRow(){
   return '<div class="hubwho ' + w.kind + '" data-testid="till-hub-who">'
     + '<span class="hubav">' + esc(w.av) + '</span>'
     + '<span class="mt"><b>' + esc(w.title) + '</b><i>' + esc(w.sub) + '</i></span>'
-    + '<button class="pill" data-testid="till-hub-who-act" onclick="fromMenu(openWho)">'
+    + '<button class="pill" data-testid="till-hub-who-act" onclick="fromMenu(whoAct)">'
     + esc(w.act) + '</button><kbd>F7</kbd>'
     + '</div>';
 }
@@ -19727,6 +19882,190 @@ function paintWho(){
   p.textContent = WHO && WHO.name ? ('👤 ' + WHO.name) : '👤 nobody signed in';
   p.className = 'pill' + (WHO && WHO.name ? '' : ' off');
 }
+/**
+ * ── ⭐⭐⭐ SIGNING A PERSON IN AT THE COUNTER ([TILL-183]) ────────────────────────────────────────────────
+ *
+ * Athi, having pressed the button that said Sign in: *"the counter is empty, now it has to allow the user and
+ * provide a counter number? the user could be entity or employee, what we need is a user id screen same as our
+ * back office, much simpler, so someone can sign-in? where is the problem here?"*
+ *
+ * ⚠️⚠️⚠️ THE PROBLEM WAS THAT THE BUTTON LIED. It opened openWho() — a picker of names off the shop's
+ * co-assist list, whose own last line admitted *"it is not a sign-in"* — and on a shop with no co-assists yet
+ * the only thing it could offer was "the shop", which is a dead end wearing the most prominent label on the
+ * screen. [[feedback-name-vs-behaviour]]
+ *
+ * ⭐ THIS IS THE REAL ONE: a user ID or an email, one emailed code, and an authenticated PERSON at the end of
+ * it. Owner or employee, same path, because both are identities with a user id. [[project-user-id-rule]]
+ *
+ * ⚠️ WHAT IT LEAVES BEHIND IS AN IDENTITY AND NO SESSION. lib/signin.js decides that, not this code: a token
+ * that expires at noon would stop a shop billing at noon. [[project-counter-identity]]
+ * ⚠️⚠️ AND IT IS NOT PAIRING. signinOpen() is the other thing entirely — it fetches this PC's KEY and restarts
+ * the program ([TILL-121]). A person arriving for a shift must never meet it.
+ */
+function SIGN(){
+  if (!window.CBSignin) throw new Error('CBSignin is not loaded — /engine/signin.js is missing from this page');
+  return window.CBSignin;
+}
+
+var USIGN = { sent: false, refused: '', person: null, who: '', busy: false };
+
+/**
+ * ⭐ WHERE THE SHOP IS. Same origin for a counter served by ChitBridge or by the shop PC, because both put the
+ * cloud behind /api. Nothing here holds a URL of its own — a second place to configure is a second place to be
+ * wrong. [[feedback-stay-in-the-construct]]
+ */
+async function usignPost(path, body){
+  try {
+    var r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(body) });
+    var j = null;
+    try { j = await r.json(); } catch (_) { j = {}; }
+    return { status: r.status, ok: r.ok, body: j || {} };
+  } catch (e) {
+    /* ⚠️ status 0 is "could not reach", which lib/signin.js turns into its own sentence */
+    return { status: 0, ok: false, body: {} };
+  }
+}
+
+function usignOpen(){
+  USIGN = { sent: false, refused: '', person: (typeof WHO !== 'undefined' && WHO && WHO.id) ? WHO : null,
+            who: '', busy: false };
+  usignPaint();
+  var d = document.getElementById('usigndlg');
+  if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
+}
+function usignClose(){ var d = document.getElementById('usigndlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
+
+/** ⭐ every stage painted from the engine's own verdict — the screen remembers nothing the engine can tell it */
+function usignPaint(){
+  var body = document.getElementById('usignbody');
+  if (!body) return;
+  var at = SIGN().stage(USIGN);
+  var h = '';
+
+  if (at === 'in') {
+    var p = USIGN.person || {};
+    h = '<div class="nowbox" data-testid="till-usign-in"><b>' + esc(p.name || p.id) + '</b> is signed in'
+      + '<div class="u">' + esc(p.kind === 'entity' ? 'the shop itself' : 'user ID ' + (p.id || '')) + '</div></div>'
+      /* ⭐ and what it means for this counter, which is the next question anybody has */
+      + '<p class="note">' + esc(usignCounterLine()) + '</p>'
+      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-done" onclick="usignClose()">Done</button>'
+      /**
+       * ⚠️⚠️ SIGNING OUT DOES NOT CLOSE THE COUNTER. Athi: *"the person sign-out and another person sign-in,
+       * continue the same counter number, it is like shift."* The counter keeps its number and its series; only
+       * the person changes. [[project-till-series-prefix]]
+       */
+      + '<button data-testid="till-usign-out" onclick="usignOut()">Sign out · the counter stays open</button></div>';
+  } else if (at === 'code' || at === 'refused') {
+    h = '<p class="note">' + esc(SIGN().say({ sent: true })) + '</p>'
+      + '<div class="srow"><span>Code</span>'
+      + '<input id="usign_otp" data-testid="till-usign-otp" inputmode="numeric" maxlength="6" placeholder="000000"'
+      + ' autocomplete="one-time-code" onkeydown="if(event.key===\'Enter\')usignVerify()"></div>'
+      + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
+      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-verify" onclick="usignVerify()">Sign in</button>'
+      + '<button data-testid="till-usign-again" onclick="usignAsk(true)">Send another code</button>'
+      + '<button onclick="usignClose()">Close</button></div>';
+  } else {
+    /* ⚠️ ONE BOX FOR BOTH. The person typing does not know whether they have a user ID or an email, and a
+       network-minted store is issued a user_id and no email at all. */
+    h = '<p class="note">' + esc(SIGN().say({})) + '</p>'
+      + '<div class="srow"><span>You are</span>'
+      + '<input id="usign_who" data-testid="till-usign-who" autocomplete="username" placeholder="user ID or email"'
+      + ' value="' + esc(USIGN.who || '') + '" onkeydown="if(event.key===\'Enter\')usignAsk()"></div>'
+      + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
+      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-ask" onclick="usignAsk()">Send me a code</button>'
+      + '<button onclick="usignClose()">Close</button></div>'
+      /* ⚠️ said once, at the bottom, because a person who cannot sign in needs to know it is the LINE and not them */
+      + '<p class="note u">Signing in needs the internet. Once this counter is set up it bills without it.</p>';
+  }
+  body.innerHTML = h;
+  var f = document.getElementById('usign_otp') || document.getElementById('usign_who');
+  if (f) { try { f.focus(); } catch (_) {} }
+}
+
+/** ⭐ what this sign-in means for the counter number — read from the engine, never worked out here */
+function usignCounterLine(){
+  try {
+    var a = DAY().assign(dayState());
+    return a.why || a.say || '';
+  } catch (_) { return ''; }
+}
+
+async function usignAsk(again){
+  if (USIGN.busy) return;
+  var typed = again ? USIGN.who : ((document.getElementById('usign_who') || {}).value || '');
+  var a = SIGN().ask(typed);
+  if (!a.ok) { USIGN.refused = a.why; usignPaint(); return; }
+  USIGN.who = String(typed).trim(); USIGN.busy = true; USIGN.refused = '';
+  var r = await usignPost('/api/entities/register', a.body);
+  USIGN.busy = false;
+  if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
+  USIGN.sent = true;
+  usignPaint();
+  /* ⚠️ A TEST SERVER HANDS THE CODE BACK (lib/dev-otp.js refuses to do it anywhere else), so it is filled in
+     rather than making somebody find it in a log. */
+  var dev = r.body && (r.body.dev_otp || r.body.otp);
+  if (dev) { var i = document.getElementById('usign_otp'); if (i) i.value = String(dev); }
+}
+
+async function usignVerify(){
+  if (USIGN.busy) return;
+  var otp = (document.getElementById('usign_otp') || {}).value || '';
+  var v = SIGN().verify(USIGN.who, otp);
+  if (!v.ok) { USIGN.refused = v.why; usignPaint(); return; }
+  USIGN.busy = true; USIGN.refused = '';
+  var r = await usignPost('/api/entities/verify', v.body);
+  USIGN.busy = false;
+  if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
+  /* ⭐⭐ THE ENGINE TAKES THE IDENTITY AND DROPS THE TOKEN. 'counter', not 'session' — deliberately. */
+  var k = SIGN().keep('counter', r.body);
+  if (!k.ok) { USIGN.refused = k.why; usignPaint(); return; }
+  USIGN.person = k.person;
+  usignAdopt(k.person);
+  usignPaint();
+}
+
+/**
+ * ⭐⭐ WHO IS ON THE COUNTER, NOW AUTHENTICATED. This writes the same WHO every bill has always carried, so
+ * nothing downstream changes — the difference is that it is now a person who proved who they are rather than a
+ * name somebody picked off a list.
+ * ⚠️ THE FLOAT IS NOT CARRIED OVER. A new person counts their own drawer; inheriting the last one's would hand
+ * them somebody else's shortfall. lib/dayopen.js says so and this obeys it.
+ */
+function usignAdopt(p){
+  var s = DAY().shiftChange(dayState(), p);
+  WHO = { id: p.id, name: p.name, kind: p.kind, since: new Date().toISOString(), float: s.float };
+  try { ls.set(shopLs('cb_till_who'), JSON.stringify(WHO)); } catch (_) {}
+  try { paintWho(); paintStatus(); paintMenu(); } catch (_) {}
+  toastLine(s.say);
+}
+
+/** ⚠️ a shift ends; the counter does not. Its number and its series stay exactly where they are. */
+function usignOut(){
+  var s = DAY().shiftChange(dayState(), null);
+  WHO = null;
+  try { ls.del ? ls.del(shopLs('cb_till_who')) : ls.set(shopLs('cb_till_who'), ''); } catch (_) {}
+  USIGN = { sent: false, refused: '', person: null, who: '', busy: false };
+  try { paintWho(); paintStatus(); paintMenu(); } catch (_) {}
+  usignPaint();
+  toastLine(s.say);
+}
+
+/**
+ * ⭐⭐⭐ ONE DOOR, AND IT OPENS THE RIGHT THING ([TILL-183]).
+ *
+ * ⚠️⚠️ NOBODY ON THE COUNTER MEANS SIGN IN, and it must mean the real one. The old wiring sent this to the
+ * name picker, which on a shop with no co-assists could only offer "the shop" — a dead end wearing the most
+ * prominent label on the screen. Athi pressed it and got exactly that.
+ * ⭐ SOMEBODY IS ALREADY ON means HAND OVER, which is the picker's actual job and always was: a shift change
+ * between people the shop already knows, with no code to wait for. The counter keeps its number either way.
+ */
+function whoAct(){
+  var on = (typeof WHO !== 'undefined' && WHO && WHO.name);
+  if (on) return openWho();
+  return usignOpen();
+}
+
 function openWho(){
   var list = (S && S.staff) || [];
   /* ⭐ who it is RIGHT NOW, said first — the list underneath is for changing it */
@@ -20430,7 +20769,7 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
   if (e.key === 'F8' && MODE === 'sell'){ openBills(); e.preventDefault(); }
-  if (e.key === 'F7'){ openWho(); e.preventDefault(); }
+  if (e.key === 'F7'){ whoAct(); e.preventDefault(); }
   if (e.key === 'F6' && MODE === 'sell'){ parkBill(); e.preventDefault(); }
   if (e.key === 'F10' && MODE === 'sell'){ dayClose(); e.preventDefault(); }
   if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }

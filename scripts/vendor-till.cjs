@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -221,6 +221,15 @@ const COPIES = () => [
      would slowly disagree about what a round is. So the page runs lib/orderhub.js against its own memory and
      the shop PC runs the same file against the floor's: one rule, two places to keep it. */
   [null, path.join(WEB, 'engine', 'orderhub.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
+  /* ⭐⭐⭐ THE MORNING ([TILL-182]). Athi: *"once you sign-in, set up begins… so the counter is setting up for
+     the day."* What comes first, what may be skipped and what stops the morning dead is a RULE, and it is read
+     by the page that narrates it — so it is wrapped like every other engine rather than written into the page. */
+  [null, path.join(WEB, 'engine', 'dayopen.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
+  /* ⭐⭐⭐ SIGNING A PERSON IN ([TILL-183]). Athi: *"we should not think backoffice engine, tightly coupled,
+     it should be independent and also can be called from the backoffice."* So it is neither surface's: the
+     rules are here, and each surface keeps a different half of the answer — a session for the back office,
+     an identity and no session for a counter, because a token that expires at noon stops a shop at noon. */
+  [null, path.join(WEB, 'engine', 'signin.js'), wrapForBrowser('signin.js', 'CBSignin')],
   /* ⭐⭐ one cause → one sentence → one button ([TILL-132]). The health page RENDERS this; the footer and the
      doctor read the same table, which is the whole point of it being an engine. */
   [null, path.join(WEB, 'engine', 'verdict.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
@@ -291,6 +300,8 @@ const COPIES = () => [
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
   [null, path.join(API, 'lib', 'orders.browser.js'), wrapForBrowser('orders.js', 'CBOrders')],
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
+  [null, path.join(API, 'lib', 'dayopen.browser.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
+  [null, path.join(API, 'lib', 'signin.browser.js'), wrapForBrowser('signin.js', 'CBSignin')],
   [null, path.join(API, 'lib', 'verdict.browser.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
