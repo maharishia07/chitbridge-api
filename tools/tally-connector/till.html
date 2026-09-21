@@ -796,12 +796,10 @@
   .hubhead .hubwho.in .mt b{color:var(--ok)}
   .pri.sm{height:34px;padding:0 12px;font-size:.9em}
   /* ── Careful as a strip across the foot, never a fold ────────────────────────────────── */
-  .hubcare{flex:0 0 auto;margin:0 16px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;
-           padding:12px 14px;border:1px solid var(--warn);background:var(--warn-tint);border-radius:14px}
-  .hubcare > span:first-child{flex:1;min-width:200px;color:var(--warn);font-size:.9em}
-  .hubcare b{letter-spacing:.06em;margin-inline-end:6px}
-  .hcacts{display:flex;gap:8px;flex-wrap:wrap}
-  .hubcare .pill{border-color:var(--warn);color:var(--warn);background:var(--paper);min-height:38px}
+  /* ⚠️ the CAREFUL strip's styles went with it ([TILL-173]) — nothing in the hub is red now unless a
+     sale has actually stopped. §5: red is for a stopped sale or work at risk, and for nothing else. */
+  /* ⭐ Sign out now sits in the person block, so it gets the block's own spacing and nothing louder */
+  .hubwho .pill{min-height:38px}
   .hubfind{padding:8px 12px;border-bottom:1px solid var(--line)}
   .hubfind input{width:100%;min-height:40px;padding:8px 12px;border:1px solid var(--edge);border-radius:10px;
                  background:var(--paper);color:var(--ink);font:inherit}
@@ -6244,8 +6242,15 @@ function menuDayBody(){
           h === null ? 'no copy yet' : (h + ' hour' + (h === 1 ? '' : 's') + ' old'));
       })()
     + '<div class="daybtns">'
+    /**
+     * ⭐⭐ OPENING AND CLOSING A DAY ARE ONE JOB AT TWO ENDS ([TILL-173]). Once the day is open, this card's
+     * button becomes Close the day — so the thing that ends the day lives where the thing that started it
+     * lives, and not in a red strip at the foot of the screen beside a repair tool.
+     */
     + (opened
         ? '<span class="dayok" data-testid="till-day-open">Opened for today</span>'
+          + '<button class="pill" data-testid="till-day-close"'
+          + ' onclick="fromMenu(function(){ sureSheet(&quot;close&quot;); })">Close the day</button>'
         : '<button class="daygo" data-testid="till-day-begin" onclick="beginDay()">Open the day</button>')
     + '</div>'
     /* ⚠️ A COUNT AND A DOOR, NOT THE LIST ([TILL-79]). The list and the editing are in the popup now; a
@@ -6882,7 +6887,18 @@ function hubHead(){
     + '<span class="mt"><b>' + esc(w.title) + '</b><i>' + esc(w.sub) + '</i></span>'
     /* ⚠️ the shortcut sits BESIDE the label, in mono, not inside it (§6.4) */
     + '<button class="pri sm" data-testid="till-hub-who-act" onclick="fromMenu(openWho)">'
-    + esc(w.act) + '</button><kbd>F7</kbd></div>';
+    + esc(w.act) + '</button><kbd>F7</kbd>'
+    /**
+     * ⭐⭐ SIGN OUT BELONGS TO WHOEVER IS STANDING THERE ([TILL-173]). It was in the CAREFUL strip, grouped
+     * with two things it has nothing in common with: signing out is hourly and harmless, closing the
+     * counter is daily and stops billing. They shared only the adjective.
+     * ⚠️ Not rendered when nobody is signed in — there is nothing to sign out of, and the block already
+     * offers Sign in (§6).
+     */
+    + (w.kind === 'none' ? ''
+        : '<button class="pill" data-testid="till-hub-signout"'
+          + ' onclick="fromMenu(function(){ sureSheet(&quot;signout&quot;); })">Sign out</button>')
+    + '</div>';
   return '<div class="hubhead">'
     + '<span class="hh1"><b data-testid="till-m-counter">' + esc(counterTitle()) + '</b>'
     + '<i>' + esc([shop, place].filter(Boolean).join(' · ')) + (shop || place ? ' · ' : '') + esc(when) + '</i></span>'
@@ -7010,37 +7026,11 @@ async function sureSheet(kind){
 function sureClose(){ var d = document.getElementById('suredlg'); if (d && d.open) d.close(); }
 
 /**
- * ⚠⚠ CAREFUL IS A STRIP, NOT A SECTION (HubWide). It spans the foot, the sentence on the left and the three
- * acts as BUTTONS on the right — no chevron, nothing to open. A row that folds away is a row somebody can leave
- * closed and forget; these three stop billing, so the design refuses to hide them.
- * ⚠ On a phone it goes back to being a section, in pink, last (HubPhone) — there is no room for three buttons
- * and a sentence on one line.
- *
- * ⚠️⚠️ RESTORED ([TILL-159]). The header rewrite spliced from the hubHead comment to the end of hubChips and
- * took this with it — it sat between them. Nothing failed at parse: the page loaded and paintMenu threw
- * "hubCare is not defined" only when the hub was opened. A deletion that a syntax check cannot see is exactly
- * what [[feedback-anchor-replace-drops-code]] is about.
+ * ⚠️ hubCare() IS DELETED ([TILL-173], design-handoff/footer step 3). Its three actions live in the places
+ * they belong — Sign out in the person block, Close the day on the day card, Repair this counter in Counter
+ * health — and its warning became a sheet at the moment of the act ([TILL-172]), carrying the figures the
+ * promise rests on instead of claiming them in advance.
  */
-function hubCare(){
-  var act = function(id, label){
-    var op = tillOp(id); if (!op) return '';
-    return '<button class="pill" data-testid="till-care-' + id + '" onclick="fromMenu(' + op.fn + ')">' + esc(label) + '</button>';
-  };
-  return '<div class="hubcare" data-testid="till-hub-care">'
-    + '<span><b>CAREFUL</b> These stop billing for a moment. Everything is sent and checked first.</span>'
-    + '<span class="hcacts">'
-    + ((typeof WHO !== 'undefined' && WHO && WHO.name)
-        ? '<button class="pill" data-testid="till-care-signout" onclick="fromMenu(function(){ sureSheet(&quot;signout&quot;); })">Sign out</button>' : '')
-    /**
-     * ⭐⭐ THE THREE NOW GO THROUGH THE CONFIRM SHEET ([TILL-172], step 1 of design-handoff/footer). Nothing has
-     * moved yet — the strip is still here — but the caution has left it and travels with each action, carrying
-     * the live figures the promise rests on. The package is explicit that this step ships on its own, and it
-     * is the half that makes the product safer; moving the actions to their homes is step 2.
-     */
-    + '<button class="pill" data-testid="till-care-coldstart-menu" onclick="fromMenu(function(){ sureSheet(\'repair\'); })">Repair this counter</button>'
-    + '<button class="pill" data-testid="till-care-close" onclick="fromMenu(function(){ sureSheet(\'close\'); })">Close the day</button>'
-    + '</span></div>';
-}
 /**
  * ── ⭐⭐⭐ TWO PILLS, NOT FOUR ([TILL-159], §5) ────────────────────────────────────────────────────────────
  *
@@ -7233,10 +7223,23 @@ function paintMenu(){
     ? '<div class="msecs two">'
       + '<div class="mcol">' + pick(LEFT.concat(extra)) + '</div>'
       + '<div class="mcol">' + pick(RIGHT) + '</div>'
-      /* ⭐ the strip, not the section — see hubCare() */
       + '</div>'
-      /* ⭐ OUTSIDE the scrolling sections — a foot, as the render pins it */
-      + hubCare()
+      /**
+       * ── ⭐⭐⭐ THE CAREFUL STRIP IS GONE ([TILL-173], design-handoff/footer step 3) ──────────────────
+       *
+       * *"A footer is not a home. It is where actions go when nobody decided where they belong."*
+       *
+       * ⚠️⚠️ A RED BOX THAT IS ALWAYS THERE STOPS BEING SEEN. It was the loudest thing on a calm screen every
+       * second of every day, so by the second morning it was wallpaper — and it had already spent the shop's
+       * attention before anything was actually wrong. Its three actions shared nothing but an adjective:
+       * signing out is hourly and harmless, closing the counter is daily and stops billing, and repairing it
+       * is a thing nobody should ever need. And its promise — "everything is sent and checked first" — was
+       * printed where it could not be measured.
+       *
+       * ⭐ Each action is now where it belongs, and the promise is a NUMBER on a sheet at the moment of the
+       * press ([TILL-172]). The word CAREFUL has left the product: red is for a stopped sale or work at risk,
+       * and nothing else.
+       */
     : '<div class="msecs">' + secs + '</div>';
   m.innerHTML = head + inner + foot;
   try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbHome(); } catch (_) {}
@@ -15540,6 +15543,14 @@ function paintHealth(){
   var foot0 = '<div class="hbox" style="margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">';
   var footTail = '<span class="u" style="flex:1">' + esc(String((STATE && STATE.folder) || '')) + '</span>'
     + '<button class="pill" data-testid="till-health-detail" onclick="healthClose();openStuck()">Show technical detail</button>'
+    /**
+     * ⭐ A REPAIR BELONGS BESIDE THE NUMBERS THAT SAY WHETHER IT IS NEEDED ([TILL-173]). It was "Clear and
+     * reload" in the CAREFUL strip, sitting between an hourly action and a daily one as though the three were
+     * a category. It is none of those things: it is a repair nobody should ever need, and this is the screen
+     * somebody is already on when they are deciding whether they need it.
+     */
+    + '<button class="pill" data-testid="till-health-repair"'
+    + ' onclick="healthClose();sureSheet(&quot;repair&quot;)">Repair this counter</button>'
     + '</div>';
   var footer = v.ok
     ? foot0 + footTail
