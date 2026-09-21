@@ -586,6 +586,11 @@
   border-top-color:var(--ok,#1c7a4a);border-radius:50%;animation:dayspin .7s linear infinite}
 @keyframes dayspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){.spin{animation:none;border-top-color:var(--ok,#1c7a4a)}}
+/* ⭐ a bar per period, so a trend is read at a glance rather than compared digit by digit ([TILL-184]) */
+.trendrows .dayline{align-items:center}
+.trendbar{flex:0 0 auto;height:8px;border-radius:4px;background:var(--ok,#1c7a4a);opacity:.35;
+  min-width:2px;max-width:45%;margin:0 8px}
+.trendrows .daywhy{margin-top:-4px}
 .daypanel{display:flex;flex-direction:column;gap:8px;padding:10px 8px 6px}
   /**
    * ⚠️ THE PICTURE IS NO LONGER A BANNER ([TILL-100]). A 190px-tall photograph pushed the three morning
@@ -3061,6 +3066,23 @@
       <span>Kitchen tickets</span>
       <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()"> send a KOT (F3), with dine-in · takeaway · delivery</label>
     </div>
+    <!-- ⭐⭐⭐ A WEIGHING SCALE ([TILL-185]). A vegetable shop weighs the tomatoes and the scale prints a
+         label whose barcode carries the ITEM and the WEIGHT. GS1 reserves the prefix and says nothing about
+         the rest, so every scale lays it out differently — the shop says which, and nothing is guessed. -->
+    <div class="srow" title="If your scale prints a barcode label with the weight or the price inside it, say which shape it prints. A shop with no scale leaves this off.">
+      <span>Weighing scale</span>
+      <select id="set_weigh" data-testid="till-set-weigh" onchange="weighSet(this.value)"></select>
+    </div>
+    <div class="srow" id="row_weighmask" hidden title="One character per digit: your scale's fixed starting digits, then I for the item code, W for weight or P for price, C for the last check digit, X for anything else.">
+      <span>Its pattern</span>
+      <input id="set_weighmask" data-testid="till-set-weighmask" placeholder="21IIIIIWWWWWC"
+             autocapitalize="characters" spellcheck="false" onchange="weighMaskSet(this.value)">
+    </div>
+    <!-- ⚠️ THE WORKED EXAMPLE IS THE WHOLE POINT OF THIS SCREEN. Somebody setting a scale up must see what
+         their own label would read as BEFORE a customer is standing there, not discover it at a till. -->
+    <div class="srow" id="row_weighex" hidden><span></span>
+      <div class="u" id="set_weighex" data-testid="till-set-weighex"></div>
+    </div>
     <div id="shopbox" data-testid="till-shopbox"></div>
     <!--
       ⭐⭐⭐ THE PREFIX IS GIVEN, NOT TYPED (Athi, 2026-09-17) — the shop assigns it (routes/keys.js claimTill); this only SHOWS it.
@@ -3235,6 +3257,8 @@
 <script src="/engine/orderhub.js" onerror="engineMissed('orderhub')"></script>
 <script src="/engine/dayopen.js" onerror="engineMissed('dayopen')"></script>
 <script src="/engine/signin.js" onerror="engineMissed('signin')"></script>
+<script src="/engine/qty.js" onerror="engineMissed('qty')"></script>
+<script src="/engine/scalecode.js" onerror="engineMissed('scalecode')"></script>
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
 <!-- ⭐ the screen library — colour schemes, key tiles, presets (lib/screen-kit.js). Without it the counter draws as before. -->
 <script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
@@ -4003,6 +4027,11 @@ var AgentHost = {
   refresh: function(){ return fetch('/api/refresh',{method:'POST'}).then(function(r){ return r.json(); }); },
   bill: function(b){ return fetch('/api/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }); },
   tasks: function(kind){ return fetch('/api/tasks?kind=' + encodeURIComponent(kind)).then(function(r){ return r.json(); }).catch(function(){ return { tasks: [], offline: true }; }); },
+  /* ⭐⭐ THE TREND, off this PC's own summary folder ([TILL-184]) — it answers with the line down, which is
+     when a shopkeeper actually closes a month. The cloud's /api/till/summary folds across counters and is a
+     different question; this one is "what has THIS counter done". */
+  summary: function(period, n){ return fetch('/api/summary?period=' + encodeURIComponent(period) + '&n=' + (n || 12))
+    .then(function(r){ return r.json(); }).catch(function(){ return { rows: [], offline: true }; }); },
   printers: function(){ return fetch('/api/printers').then(function(r){ return r.json(); }).catch(function(){ return { printers: [] }; }); },
   setPrinter: function(p){ return fetch('/api/printer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(function(r){ return r.json(); }); },
   print: function(b){ return fetch('/api/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
@@ -4040,6 +4069,20 @@ var AgentHost = {
 var CloudHost = {
   mode:'cloud',
   key: null, api: null,
+  /**
+   * ⚠️ A BROWSER COUNTER HAS NO SUMMARY FOLDER, so it asks the shop — and gets something BETTER: the server's
+   * fold is across every counter, which is the one thing no single till can compute. The two answers differ in
+   * scope and the screen says which it is showing rather than pretending they are the same.
+   */
+  summary: async function(period, n){
+    if (!this.key) return { rows: [], offline: true };
+    try {
+      var r = await fetchBy(this.api + '/api/till/summary?period=' + encodeURIComponent(period) + '&n=' + (n || 12),
+                            { headers: { 'X-Api-Key': this.key } });
+      var j = await r.json();
+      return { period: period, rows: (j && (j.rows || j.summaries)) || [], shopWide: true };
+    } catch (e) { return { rows: [], offline: true }; }
+  },
   async state(){
     var snap = await DB.get('snapshot');
     var bills = (await DB.all('bills')) || [], queue = (await DB.all('queue')) || [];
@@ -6084,6 +6127,10 @@ var MENU_HUE = {
   shopdet: '72,84,138',
   today:   '29,107,63',     /* the money green the totals already use             */
   alerts:  '199,92,26',     /* warm orange — wants you, is not yet a disaster     */
+  /* ⚠️ ITS OWN HUE ([TILL-184]). The hub guard counts DISTINCT hues and caught this card with none — two
+     sections the same colour is two things the eye cannot tell apart, and no colour at all is worse.
+     Slate-plum: a trend is money already taken, which is a quieter thing than the money on the counter now. */
+  trend:   '104,72,120',
   bills:   '43,95,153',     /* paper blue                                         */
   shop:    '122,79,168',    /* the catalogue                                      */
   look:    '20,124,130',    /* teal — appearance, and nothing that moves money    */
@@ -6162,6 +6209,15 @@ var TILL_MENU = [
    * a list that reorders itself is one they have to read every time.
    */
   /* ⭐ DIAGNOSIS — Athi: *"why is a bill stuck is diagnosis."* What is wrong, and how to look into it. */
+  /**
+   * ⭐⭐⭐ THE TREND ([TILL-184]). Athi: *"if we want to check trend on weekly basis we have 52 chit, monthly
+   * trend we can look at 12 chit, that is all."* The folding was built and nothing ever displayed it — a
+   * figure in a file nobody can open is a backup, not management information.
+   * ⚠️ IT SITS BESIDE "How today is going", not inside it: today is a thing you watch, and a trend is a thing
+   * you sit down with. One card, one job. [[feedback-more-panes-not-denser]]
+   */
+  { id: 'trend',   icon: '📈', title: 'Weeks and months', sum: 'what this counter has taken, folded up',
+    trend: true },
   { id: 'alerts',  icon: '🩺', title: 'Check',         sum: 'what needs you · why a bill is stuck',
     alerts: true, ops: ['stuck', 'line'] },
   /* ⭐ MAINTENANCE — Athi: *"reload the shop is maintenance."* Everything that keeps this till current. */
@@ -6588,6 +6644,90 @@ function dayImgOpen(){
   if (d.showModal) { try { d.showModal(); } catch (_) {} }
 }
 function dayImgClose(){ var d = document.getElementById('dayimgdlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
+/**
+ * ── ⭐⭐⭐ WHAT THIS COUNTER HAS TAKEN, FOLDED UP ([TILL-184]) ──────────────────────────────────────────
+ *
+ * Day → week → month → year, each one folded from the one below it and each answerable long after the bills
+ * behind it are gone. That is the whole reason lib/rollup.js exists, and until now nothing showed it.
+ *
+ * ⚠️ THE ROWS ARE NOT COMPUTED HERE. They are read whole from whichever host this is — the shop PC's own
+ * summary folder, or the server's fold across every counter — and painted. [[feedback-ui-replaceable-logic-in-engines]]
+ */
+var TREND_PERIOD = 'month', TREND_ROWS = null, TREND_WIDE = false, TREND_BUSY = false;
+
+function trendSet(p){ TREND_PERIOD = p; TREND_ROWS = null; trendLoad(); paintMenu(); }
+
+async function trendLoad(){
+  if (TREND_BUSY) return;
+  TREND_BUSY = true;
+  try {
+    var r = (HOST && HOST.summary) ? await HOST.summary(TREND_PERIOD, 12) : { rows: [] };
+    TREND_ROWS = (r && r.rows) || [];
+    TREND_WIDE = !!(r && r.shopWide);
+  } catch (_) { TREND_ROWS = []; }
+  TREND_BUSY = false;
+  try { paintMenu(); } catch (_) {}
+}
+
+function menuTrendBody(){
+  var P = ['day', 'week', 'month', 'year'];
+  var label = { day: 'Days', week: 'Weeks', month: 'Months', year: 'Years' };
+  var out = '<div class="daypanel" data-testid="till-trend">'
+    + '<div class="settabs" role="tablist">'
+    + P.map(function(p){
+        return '<button role="tab" data-testid="till-trend-' + p + '"'
+          + (p === TREND_PERIOD ? ' class="on"' : '') + ' onclick="trendSet(&quot;' + p + '&quot;)">'
+          + esc(label[p]) + '</button>';
+      }).join('')
+    + '</div>';
+
+  if (TREND_ROWS === null) { trendLoad(); return out + '<p class="u">Reading…</p></div>'; }
+  if (!TREND_ROWS.length) {
+    /**
+     * ⚠️⚠️ AN EMPTY TREND IS NOT A FAULT AND MUST NOT READ AS ONE. A period is summarised only once it is
+     * OVER — a shop in its first week has no week yet, and saying "nothing" without saying why is how a
+     * shopkeeper concludes the feature is broken. [[feedback-silence-is-the-bug]]
+     */
+    return out + '<p class="u" data-testid="till-trend-none">No ' + esc(label[TREND_PERIOD].toLowerCase())
+      + ' folded up yet. A ' + esc(TREND_PERIOD) + ' is summarised once it has finished'
+      + (TREND_PERIOD === 'year' ? ', which for a financial year is after 31 March.' : '.') + '</p></div>';
+  }
+
+  /* ⭐ the biggest number is the bar, so a trend can be READ rather than compared digit by digit */
+  var top = 0;
+  TREND_ROWS.forEach(function(r){ top = Math.max(top, Math.abs(Number((r.totals || {}).total) || 0)); });
+
+  out += '<div class="trendrows">' + TREND_ROWS.map(function(r){
+    var t = r.totals || {};
+    var w = top > 0 ? Math.round((Math.abs(Number(t.total) || 0) / top) * 100) : 0;
+    /**
+     * ⭐⭐⭐ A SHORT PERIOD SAYS SO ([TILL-184]). Athi: *"no we can say upto"*. A shop's first financial year
+     * starts whenever it opened, so it can never hold twelve months — and ₹1.2 lakh sitting under "2026-27"
+     * looking like a full year's trading is the kind of wrong figure that gets repeated in a meeting.
+     * ⚠️ THE ENGINE DECIDES WHETHER IT IS SHORT, not this code. lib/rollup.coverage() reads the `source` the
+     * summary already carries. [[feedback-ui-replaceable-logic-in-engines]]
+     */
+    var cov = { say: '' };
+    try { cov = (window.CBRollup && CBRollup.coverage) ? CBRollup.coverage(r) : cov; } catch (_) {}
+    return '<div class="dayline" data-testid="till-trend-row">'
+      + '<b>' + esc(r.key) + (cov.say ? ' <span class="u" data-testid="till-trend-upto">· ' + esc(cov.say) + '</span>' : '') + '</b>'
+      + '<span class="trendbar" style="width:' + w + '%"></span>'
+      + '<i>' + esc(money(Number(t.total) || 0)) + '</i>'
+      + '</div>'
+      /* ⚠️ THE COUNT AND THE RETURNS BELONG BESIDE THE MONEY. A month that took the same as last month on
+         half the bills is a different month, and the total alone hides it. */
+      + '<div class="daywhy">' + (Number(t.count) || 0) + ' bill' + ((Number(t.count) || 0) === 1 ? '' : 's')
+      + (Number(t.returns) ? (' · ' + t.returns + ' returned · ' + esc(money(Number(t.refunds) || 0)) + ' back') : '')
+      + '</div>';
+  }).join('') + '</div>';
+
+  /* ⚠️ WHOSE FIGURES THESE ARE, said plainly — one counter's and the whole shop's are different numbers */
+  out += '<p class="u">' + (TREND_WIDE
+      ? 'Every counter in the shop, folded by ChitBridge.'
+      : 'This counter only, folded on this PC — it works with the line down.') + '</p>';
+  return out + '</div>';
+}
+
 function menuDayBody(){
   var img = dayImg(), opened = dayOpened();
   var when = new Date();
@@ -7491,6 +7631,7 @@ function paintMenu(){
      * reports under them. The old shape forced the split Athi found: one noun per section.
      */
     var body = '';
+    if (sec.trend) body += menuTrendBody();
     if (sec.day) body += menuDayBody();
     if (sec.today) body += menuTodayBody();
     if (sec.alerts) body += menuAlertsBody();
@@ -8003,15 +8144,27 @@ function chipsOverflow(){
  * families where a conversion is unambiguous — weight and volume. A "box" is not a fixed number of anything, and guessing would put
  * an invented quantity on a bill.
  */
-var QTY_UNITS = { g:['w',1], gm:['w',1], gms:['w',1], gram:['w',1], grams:['w',1], kg:['w',1000], kgs:['w',1000], kilo:['w',1000], kilos:['w',1000],
-                  ml:['v',1], l:['v',1000], lt:['v',1000], ltr:['v',1000], litre:['v',1000], litres:['v',1000], liter:['v',1000] };
+/**
+ * ⚠️⚠️⚠️ THE FACTOR TABLE LEFT THIS FILE ([TILL-186]). Athi: *"no data should be tied tightly to the front
+ * end."* It was `QTY_UNITS` right here — g, kg, ml and l with their magnitudes — and the note beside it
+ * admitted the compromise in its own words: *"only the arithmetic is here."* Only the arithmetic, and the
+ * data with it, in the rendering file, where the server cannot read it and the next screen would copy it.
+ *
+ * ⭐ lib/qty.js holds it now, and NOT lib/units.js — that file says of itself *"never a conversion, only a
+ * rename"*, and a conversion changes the number. Magnitude stands on the vocabulary instead of editing it.
+ * tests/qty.test.js asserts this page never grows the table back. [[feedback-ui-replaceable-logic-in-engines]]
+ */
+function QTY(){
+  if (!window.CBQty) throw new Error('CBQty is not loaded — /engine/qty.js is missing from this page');
+  return window.CBQty;
+}
 /**
  * ── ⭐⭐⭐ EVERY WORD THIS SHOP COULD MEAN AS A QUANTITY ([TILL-49], 2026-09-18) ─────────────────
  *
  * Athi: *"when i say upma 5 plate, it is typing all, instead, upma and qty should be 5?"* — and, on where the
  * fix belongs: *"we have to add those in the overall unit items."*
  *
- * ⚠⚠ QTY_UNITS ABOVE IS A CONVERSION TABLE, NOT A VOCABULARY, and it had been doing both jobs. It holds g, kg,
+ * ⚠⚠ THE FACTOR TABLE (now lib/qty.js) IS A CONVERSION TABLE, NOT A VOCABULARY, and it had been doing both jobs. It holds g, kg,
  * ml and l because those are the ones with FACTORS — 500 gm of something sold by the kg is 0.5. Using the same
  * table to decide what counts as a unit WORD meant a grocer's vocabulary was built in and a hotel's was not:
  * "upma 500 gm" parsed and "upma 5 plate" did not parse at all, so a restaurant counter got an empty list for
@@ -8033,7 +8186,7 @@ function unitWordsRe(){
   var seen = {}, words = [];
   var take = function(w){
     var u = String(w || '').toLowerCase().trim();
-    /* ⚠ one letter is not a unit word here — 'l' and 'g' are handled by QTY_UNITS, which also knows their factors */
+    /* ⚠ one letter is not a unit word here — 'l' and 'g' are handled by lib/qty.js, which knows their factors */
     if (!u || u.length < 2 || seen[u]) return;
     seen[u] = 1;
     /* ⚠ ESCAPED — these are shop data and platform data; an unescaped '(' would throw on every keystroke */
@@ -8080,16 +8233,16 @@ function shelfKnows(text){
   var w = String(text).toLowerCase();
   return items.some(function(i){ return String((i && i.name) || '').toLowerCase().indexOf(w) >= 0; });
 }
-/** what one of the product's own units is worth, in the smallest unit of its family — or null when it is not a measured thing */
-function unitBase(u){ var k = QTY_UNITS[String(u || '').toLowerCase().trim()]; return k || null; }
+/** what one of the product's own units is worth, in the smallest unit of its family — or null when it is not measured */
+function unitBase(u){ try { return QTY().base(u, window.CBUnits) || null; } catch (_) { return null; } }
 /**
  * ⭐ 500 gm of something sold by the kg is 0.5. Same family only: asking for 500 gm of something sold by the PIECE is not a
  * conversion anybody can do, so the number is taken at face value and the screen says which unit it used.
  */
 function qtyInUnit(qty, from, to){
-  var a = unitBase(from), b = unitBase(to);
-  if (!a || !b || a[0] !== b[0]) return { qty: qty, converted: false };
-  return { qty: r2(qty * a[1] / b[1]), converted: true };
+  /* ⭐ THE ENGINE DECIDES, and it is handed the platform's vocabulary so 'கிலோ' resolves like 'kg' */
+  try { return QTY().convert(qty, from, to, window.CBUnits); }
+  catch (_) { return { qty: qty, converted: false }; }
 }
 /**
  * ⭐ "TWO KILO THAKKALI" IS 2 (2026-09-08). A person speaking says the number; a recogniser writes it as a word as often as a digit,
@@ -8150,7 +8303,9 @@ function typed(){
    * ⚠️ Only when a UNIT is present. A bare number is part of the name far more often than it is a quantity — "500" belongs to
    * "Aavin milk 500 ml", and reading it as five hundred packets would be a spectacular way to be wrong.
    */
-  var names = Object.keys(QTY_UNITS).join('|');
+  /* ⚠️ THE SAME TABLE THE CONVERSION USES, so a spelling this parser accepts is one that can be converted.
+     Two lists would let the box accept '2 quintal' and then bill it as two of something. */
+  var names = Object.keys(QTY().FAMILY).join('|');
   var re = new RegExp('(^|\\s)(\\d+(?:[./]\\d+)?)\\s*(' + names + ')(?=\\s|$)', 'i');
   var hit = re.exec(raw);
   if (hit) {
@@ -8321,9 +8476,88 @@ function hitsScrolled(box){
  * ⚠️ IT IS OFF UNLESS A SHOP TURNS IT ON. A prefix of 2 is also a perfectly ordinary barcode for a shop that
  * does not weigh anything, and quietly re-reading those as prices would be a disaster in a hardware store.
  */
+/**
+ * ── ⭐⭐ SAYING WHAT THE SCALE PRINTS ([TILL-185]) ───────────────────────────────────────────────────────
+ *
+ * ⚠️ NOTHING BELOW DECIDES ANYTHING. The list of shapes, whether a pattern is usable, and what a label would
+ * read as are all lib/scalecode.js; this fills a box and shows the answer.
+ */
+function paintWeigh(){
+  var sel = document.getElementById('set_weigh');
+  if (!sel) return;
+  var cfg = tillOpt().weigh || {};
+  /* ⚠️ THE CHOICE IS STORED, NOT RE-DERIVED. Reading it back from the mask meant picking "Something else"
+     and not yet typing a pattern re-read as a preset, and the box vanished under the person's cursor. */
+  var now = !cfg.on ? '' : (cfg.preset || (cfg.mask ? 'custom' : (cfg.kind === 'weight' ? 'weight_13' : 'price_13')));
+  var REG = SCALE().PRESETS;
+  var opts = [['', 'No scale — barcodes are product codes']];
+  Object.keys(REG).forEach(function(k){ opts.push([k, REG[k].label + ' — ' + REG[k].hint]); });
+  /* ⭐ and the way out for a scale that matches neither, which is why no vendor is hard-wired */
+  opts.push(['custom', 'Something else — I will type the pattern']);
+  sel.innerHTML = opts.map(function(o){
+    return '<option value="' + esc(o[0]) + '"' + (o[0] === now ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+  }).join('');
+
+  var row = document.getElementById('row_weighmask');
+  if (row) row.hidden = (now !== 'custom');
+  var inp = document.getElementById('set_weighmask');
+  if (inp && document.activeElement !== inp) inp.value = cfg.mask || '';
+  weighExample();
+}
+
+/** ⭐ what one of this shop's own labels would read as — shown before a customer is standing there */
+function weighExample(){
+  var box = document.getElementById('set_weighex');
+  var row = document.getElementById('row_weighex');
+  if (!box || !row) return;
+  var cfg = weighCfg();
+  var e = null;
+  try { e = cfg.on ? SCALE().example(cfg) : null; } catch (_) {}
+  if (!e) { row.hidden = true; box.textContent = ''; return; }
+  row.hidden = false;
+  if (!e.reads) { box.textContent = e.code + ' — this pattern reads nothing. Check it against a real label.'; return; }
+  var r = e.reads;
+  box.textContent = e.code + ' reads as item ' + r.item + ', '
+    + (r.amount != null ? (curSym() + r.amount) : (r.qty + ' ' + (r.unit || '')));
+}
+
+function weighSet(v){
+  if (!v) { tillOptSet({ weigh: { on: false } }); paintWeigh(); toastLine('Barcodes are read as product codes.'); return; }
+  if (v === 'custom') { tillOptSet({ weigh: { on: true, preset: 'custom', mask: (tillOpt().weigh || {}).mask || '' } }); paintWeigh(); return; }
+  tillOptSet({ weigh: { on: true, preset: v, mask: '' } });
+  paintWeigh();
+  toastLine('Scale labels will be read as ' + SCALE().PRESETS[v].label.toLowerCase() + '.');
+}
+
+/**
+ * ⚠️⚠️ THE PATTERN IS CHECKED WHERE IT IS TYPED. A mask nobody verified is a shop quietly selling the wrong
+ * weight — and it would be found at a till, by a cashier, with a queue. [[feedback-silence-is-the-bug]]
+ */
+function weighMaskSet(v){
+  var r = SCALE().checkMask(v);
+  if (!r.ok) { toastLine(r.why); weighExample(); return; }
+  tillOptSet({ weigh: { on: true, mask: r.mask, preset: 'custom' } });
+  paintWeigh();
+  toastLine('Saved. Scan one real label to be sure.');
+}
+
+/**
+ * ⚠️⚠️⚠️ IT HANDS OVER THE WHOLE SETTING ([TILL-185]). This used to return three fields and DROP the rest —
+ * so a shop that picked "weight in the barcode" had its choice silently thrown away on the way to the engine,
+ * which then fell back to the old prefix/kind default and decoded every produce label as a PRICE. The settings
+ * screen said one thing and the till did another, and the only symptom was a wrong number on a bill.
+ * ⚠️ A WHITELIST THAT SILENTLY DROPS FIELDS is the same fault mint.summary had when it ate two riders.
+ * [[feedback-whitelist-drops-silently]]
+ */
 function weighCfg(){
   var o = tillOpt().weigh || {};
-  return { on: !!o.on, prefix: String(o.prefix || '2'), kind: (o.kind === 'weight' ? 'weight' : 'price') };
+  return { on: o.on !== false && !!(o.on || o.preset || o.mask),
+           preset: o.preset || '', mask: o.mask || '',
+           weighs: o.weighs || '', divisor: o.divisor || 0, money_divisor: o.money_divisor || 0,
+           /* ⭐ kept so a counter configured before the engine existed keeps working — lib/scalecode.maskOf
+              translates it, rather than a migration nobody would run. */
+           prefix: o.prefix || (o.preset || o.mask ? '' : '2'),
+           kind: (o.kind === 'weight' ? 'weight' : 'price') };
 }
 /** EAN-13's own check digit — the label is not trusted until this agrees */
 function ean13ok(code){
@@ -8337,41 +8571,75 @@ function ean13ok(code){
  * ⚠️ RETURNS null FOR ANYTHING IT IS NOT SURE OF — a bad check digit, an unknown code, a zero weight. A guess
  * here is a wrong number on a bill somebody pays.
  */
-function weighRead(raw){
-  var c = weighCfg(); if (!c.on) return null;
-  var code = String(raw || '').trim();
-  if (!ean13ok(code)) return null;
-  if (code.slice(0, c.prefix.length) !== c.prefix) return null;
-  /* ⚠️ THE FIELDS ARE COUNTED FROM THIRTEEN, not guessed: flag + item + five-digit value + check = 13.
-     A one-digit flag leaves six for the item, a two-digit flag leaves five — both are printed in the trade, so
-     the item field is whatever is left rather than a hardcoded five (which read one digit short and matched
-     nothing at all). */
-  var itemCode = code.slice(c.prefix.length, 7);
-  var value = Number(code.slice(7, 12));                  /* five digits of price (paise) or weight (grams) */
-  if (!(value > 0)) return null;
-  var items = (S && S.items) || [];
-  var hit = items.filter(function(i){
-    var k = String(i.code || '').replace(/^0+/, ''), b = String(i.barcode || '').replace(/^0+/, '');
-    var want = itemCode.replace(/^0+/, '');
-    return k === want || b === want;
-  });
-  if (hit.length !== 1) return null;
-  var i = hit[0];
-  if (c.kind === 'price') {
-    var paid = r2(value / 100);
-    var rate = Number(i.price) || 0;
-    /* ⚠️ THE LABEL'S PRICE IS THE TRUTH; the quantity is derived from it so the line still says how much it was */
-    var qty = rate > 0 ? r2(paid / rate) : 1;
-    return { item: i, qty: qty, price: paid, why: 'the label\'s price' };
-  }
-  return { item: i, qty: r2(value / 1000), price: null, why: 'the label\'s weight' };
+/**
+ * ── ⭐⭐⭐ A SCALE'S LABEL, READ BY THE ENGINE ([TILL-185]) ───────────────────────────────────────────────
+ *
+ * The rule used to be here, and it read a thirteen-digit layout it worked out by hand. It was right for the
+ * scales it was written against and it was in the rendering file, which is the same fault the order rules had.
+ * lib/scalecode.js holds it now: a MASK the shop declares, so no scale vendor is hard-wired anywhere and a
+ * counter with an unusual scale is a setting rather than a release.
+ * [[feedback-ui-replaceable-logic-in-engines]] [[feedback-the-data-decides-not-the-trade]]
+ *
+ * ⚠️⚠️⚠️ AND IT NO LONGER FAILS IN SILENCE, which is the real fix. The old one returned null for a bad check
+ * digit and for an unknown item code — so a damaged label fell through to the ordinary product search, and a
+ * vegetable nobody could identify was simply not added, with nothing said. A weighed label that cannot be read
+ * has to STOP the person, because the alternative is the wrong thing at the wrong weight on somebody's bill.
+ * [[feedback-silence-is-the-bug]]
+ */
+function SCALE(){
+  if (!window.CBScaleCode) throw new Error('CBScaleCode is not loaded — /engine/scalecode.js is missing from this page');
+  return window.CBScaleCode;
 }
+function weighRead(raw){
+  var r;
+  try { r = SCALE().read(raw, weighCfg()); } catch (_) { return null; }
+  if (!r) return null;                       /* an ordinary barcode — the common case, and it costs nothing */
+  if (!r.ok) return { bad: r.why };          /* a label that IS ours and could not be read */
+
+  var items = (S && S.items) || [];
+  var want = String(r.item).replace(/^0+/, '');
+  var hit = items.filter(function(i){
+    return String(i.code || '').replace(/^0+/, '') === want
+        || String(i.barcode || '').replace(/^0+/, '') === want;
+  });
+  /* ⚠️ AN UNKNOWN CODE IS SAID, not swallowed. It means the scale and the catalogue disagree, and somebody
+     has to fix that today rather than discovering a week of unsold weighings at stock-take. */
+  if (!hit.length) return { bad: 'No product here has the code ' + want + '. Check the scale\'s item number.' };
+  if (hit.length > 1) return { bad: 'Two products share the code ' + want + '. Fix one of them first.' };
+  var i = hit[0];
+
+  if (r.amount != null) {
+    /* ⚠️ THE LABEL'S PRICE IS THE TRUTH; the quantity is derived from it so the line still says how much it
+       was. The scale already multiplied — multiplying again by our rate would charge twice over. */
+    var rate = Number(i.price) || 0;
+    return { item: i, qty: rate > 0 ? r2(r.amount / rate) : 1, price: r.amount, why: 'the label\'s price' };
+  }
+  /**
+   * ⭐⭐ THE LABEL SAYS GRAMS AND THE SHOP PRICES BY THE KILO. qtyInUnit() already holds that arithmetic for
+   * the typed "500 gm" path — a scale label is the same question arriving through a different door, so it asks
+   * the same function. [[feedback-no-duplicate-functions]] [[feedback-adopt-dont-reinvent]]
+   * ⚠️⚠️ MY FIRST DRAFT CALLED CBConvert.convert(qty, from, to), which does not exist — lib/convert.js is about
+   * MONEY. The invented-name mistake again, and only the harness caught it: 750 g went onto a bill as 750 KG,
+   * a thousandfold error that reads perfectly plausibly in a variable.
+   */
+  var conv = qtyInUnit(r.qty, r.unit, i.unit);
+  return { item: i, qty: conv.qty, price: null, why: 'the label\'s weight' };
+}
+
 function scanned(){
   var q = typed().text.toLowerCase();
   if (q.length < 4) return false;
   var items = (S && S.items) || [];
   /* ⭐ a scale's label first — it is a longer, stricter match than an ordinary code, so it cannot be mistaken */
   var w = weighRead(typed().text);
+  if (w && w.bad) {
+    /* ⚠️ IT STOPS HERE. Falling through to the ordinary product search with a half-read scale label is how a
+       counter sells the wrong vegetable at the wrong weight and nobody ever finds out. */
+    SCAN_AT = Date.now();
+    clearSearch(); focusSearch();
+    toastLine(w.bad);
+    return true;
+  }
   if (w) {
     SCAN_AT = Date.now();
     addWeighed(w);
@@ -16483,9 +16751,10 @@ function paintOrderBar(){
   var el = document.getElementById('obar'); if (!el) return;
   if (MODE !== 'sell' || !kotOn()) { el.innerHTML = ''; return; }
   var k = orderKind();
-  el.innerHTML = ORDER_KINDS.map(function(x){
-      return '<button class="' + (k === x[0] ? 'on' : '') + '" data-testid="till-otype-' + x[0] + '"'
-        + ' onclick="setOrderKind(\'' + x[0] + '\')">' + x[1] + '</button>';
+  /* ⚠️ the engine returns { k, label, seated } — it was a pair of strings when this table lived in the page */
+  el.innerHTML = O().KINDS.map(function(x){
+      return '<button class="' + (k === x.k ? 'on' : '') + '" data-testid="till-otype-' + x.k + '"'
+        + ' onclick="setOrderKind(\'' + x.k + '\')">' + esc(x.label) + '</button>';
     }).join('')
     + (k === 'dine'
         ? '<input id="otable" data-testid="till-table" placeholder="Table" value="' + esc(orderTable()) + '"'
@@ -16869,9 +17138,10 @@ function orderKind(){ return ls.get(shopLs('cb_till_otype'), 'dine'); }
 function orderTable(){ return ls.get(shopLs('cb_till_table'), ''); }
 function setOrderKind(v){ ls.set(shopLs('cb_till_otype'), v); paintOrderBar(); }
 function setOrderTable(v){ ls.set(shopLs('cb_till_table'), String(v || '').slice(0, 12)); paintOrderBar(); }
-var ORDER_KINDS = [['dine', 'Dine-in'], ['take', 'Takeaway'], ['deliver', 'Delivery']];
+/* ⚠️ ORDER_KINDS LEFT THIS FILE ([TILL-186]) — dine/takeaway/delivery is read by the KITCHEN, not just
+   drawn, so it lives in lib/orders.js beside the registry that moved out for the same reason. */
 function orderWords(){
-  var k = orderKind(), nm = (ORDER_KINDS.filter(function(x){ return x[0] === k; })[0] || ORDER_KINDS[0])[1];
+  var k = orderKind(), nm = O().kindLabel(k);
   return nm + (k === 'dine' && orderTable() ? ' · Table ' + orderTable() : '');
 }
 /** the lines a kitchen has not been told about yet */
@@ -20481,6 +20751,7 @@ function paintPurpose(){
   }
   var row = document.getElementById('row_words');
   if (row) row.hidden = !purposeHas('open_orders');
+  try { paintWeigh(); } catch (_) {}
   /* ⭐ the floor address is only a question once a counter holds orders open ([TILL-178b]) */
   var fr = document.getElementById('row_floor');
   if (fr) fr.hidden = !purposeHas('open_orders');

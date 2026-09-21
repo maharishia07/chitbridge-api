@@ -163,7 +163,7 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /* ⭐ 'variant' joined on 2026-09-19: one product, many combinations, and what makes two of them the same
    thing to sell. A shop PC bills combinations with the line down, so it keeps the rule locally too.
    ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
-const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'orderhub', 'dayopen', 'signin', 'rewards', 'screen'];
+const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'orderhub', 'dayopen', 'signin', 'qty', 'scalecode', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),
@@ -664,6 +664,19 @@ function readSummary(period, key) {
   try { return JSON.parse(fs.readFileSync(F.summary(period, key), 'utf8')); } catch (_) { return null; }
 }
 function writeSummary(sum) { writeJSON(F.summary(sum.period, sum.key), sum); return sum; }
+/**
+ * ⭐ WHICH PERIODS ARE ALREADY SUMMARISED ON DISK ([TILL-184]). daysOnDisk() reads the BILLS; a year is folded
+ * from months long after those bills are gone, so it has to read the summary folder instead — which is exactly
+ * what makes the record survive a purge.
+ */
+function summaryKeys(period) {
+  try {
+    const re = new RegExp('^' + period + '-(.+)\\.json$');
+    /* ⚠️ F.summaryDir(), not a second path.join of the same folder — the two would drift the day the folder moves */
+    return fs.readdirSync(F.summaryDir())
+      .map((n) => (re.exec(n) || [])[1]).filter(Boolean).sort();
+  } catch (_) { return []; }
+}
 
 /**
  * ⚠️ ONE PASS, AND IT SAYS WHAT IT DID. Called on boot and on every refresh tick — so a shop that leaves the
@@ -703,6 +716,43 @@ function rollUp(now) {
       if (parts.length !== mine.length) continue;
       const sum = rollup.summary(period, key, rollup.fold(parts), { till, source: mine });
       writeSummary(sum); queueSummary(sum); made.push(period + ' ' + key);
+    }
+  }
+
+  /**
+   * ── ⭐⭐⭐ AND THE YEAR, FOLDED FROM MONTHS ([TILL-184]) ────────────────────────────────────────────────
+   *
+   * Athi: *"please confirm that MIS I asked for has been completed, in the sense, summing weekly, monthly,
+   * yearly?"* — it was not. Day, week and month were built and proven; the year did not exist.
+   *
+   * ⚠️⚠️ IT FOLDS FROM MONTHS, NOT DAYS, and that is the only way it can work. A week and a month are both
+   * built from days because a week straddles month boundaries and could not be built from months. A YEAR
+   * cannot be built from days at all: by the time it closes, most of its days have been purged (FLOOR_DAYS),
+   * which is the entire point of keeping summaries. Twelve months compose it exactly.
+   *
+   * ⚠️ AND IT IS THE FINANCIAL YEAR — April to March, because every return an Indian shop files is against it.
+   * lib/rollup.yearKey() holds that, with fyStart for a shop whose year starts elsewhere.
+   */
+  {
+    const monthsOnDisk = summaryKeys('month');
+    const years = Array.from(new Set(monthsOnDisk.map((m) => rollup.keyOf('year', m + '-01'))));
+    for (const key of years) {
+      if (!rollup.isClosed('year', key, now)) continue;
+      if (readSummary('year', key)) continue;
+      const mine = monthsOnDisk.filter((m) => rollup.keyOf('year', m + '-01') === key).sort();
+      /**
+       * ⚠️⚠️⚠️ NOT "TWELVE OR IT WAITS", AND THE DIFFERENCE MATTERS. A week waits for all of its days because
+       * those days are still arriving. A CLOSED year is not waiting for anything: no further month can ever be
+       * filed under it, and the days behind any month that is missing have long since been purged. Insisting
+       * on twelve would mean a shop's first financial year — which starts whenever it opened, not in April —
+       * is never summarised at all, and its "Years" view stays empty for ever with nothing said.
+       * ⭐ So it folds what exists and RECORDS WHICH MONTHS in `source`, which is what makes a short year
+       * legible as a short year rather than as a wrong one.
+       */
+      const parts = mine.map((m) => readSummary('month', m)).filter(Boolean);
+      if (!parts.length) continue;
+      const sum = rollup.summary('year', key, rollup.fold(parts), { till, source: mine });
+      writeSummary(sum); queueSummary(sum); made.push('year ' + key);
     }
   }
   /* ⭐ ONE DRAIN, once everything is written — see the note in queueSummary */
@@ -841,9 +891,14 @@ function queueKinds() {
 function summaryState() {
   let files = [];
   try { files = fs.readdirSync(F.summaryDir()); } catch (_) { files = []; }
-  const out = { day: 0, week: 0, month: 0, unsent: 0, last: null };
+  /* ⚠️ THE PERIODS COME FROM THE ENGINE ([TILL-184]). This counted day, week and month from a hand-written
+     list, so the year was invisible here from the moment it existed — a summary sitting unsent on disk that
+     the status panel swore was not there. [[feedback-silence-is-the-bug]] */
+  const out = { unsent: 0, last: null };
+  rollup.PERIODS.forEach((p) => { out[p] = 0; });
+  const re = new RegExp('^(' + rollup.PERIODS.join('|') + ')-(.+)\\.json$');
   for (const f of files) {
-    const m = /^(day|week|month)-(.+)\.json$/.exec(f);
+    const m = re.exec(f);
     if (!m) continue;
     out[m[1]]++;
     const sum = readSummary(m[1], m[2]);
@@ -1006,6 +1061,36 @@ const server = http.createServer(async (req, res) => {
       /* ⚠️ restart for the same reason the sign-in does: DIR was chosen at boot from the key this no longer has */
       setTimeout(function () { log('restarting — this counter is no longer signed in to a shop'); process.exit(0); }, 400);
       return;
+    }
+
+    /**
+     * ── ⭐⭐⭐ A PERSON SIGNING IN, FORWARDED ([TILL-183]) ────────────────────────────────────────────────
+     *
+     * Athi: *"yes please, it has to work end to end."*
+     *
+     * The counter page signs a PERSON in against /api/entities/register and /verify. Served from the cloud
+     * those are same-origin and just work; served from this program they were nothing at all, so the sign-in
+     * screen opened on a shop PC and could never send a code. Two lines of forwarding, and the same screen
+     * works on both hosts — which is the whole point of there being one page.
+     *
+     * ⚠️ NOT THE SAME AS /api/signin/* BELOW. That pairs this DEVICE and walks away with a KEY ([TILL-121]).
+     * This carries a person's user id to the shop and brings back who they are. Different acts, different
+     * routes, and the counter must never confuse them — it did once, and the button lied for weeks.
+     * ⚠️⚠️ NO KEY IS ATTACHED, deliberately: signing in is what happens BEFORE anybody has one, and sending
+     * this counter's key with somebody's user id would tie the two together in a record neither asked for.
+     */
+    if (req.method === 'POST' && (url.pathname === '/api/entities/register' || url.pathname === '/api/entities/verify')) {
+      let raw = ''; for await (const c of req) raw += c;
+      let body = null;
+      try { body = JSON.parse(raw || '{}'); } catch (_) { return json(res, 400, { message: 'That was not readable.' }); }
+      try {
+        return json(res, 200, await noKey('POST', url.pathname, body));
+      } catch (e) {
+        /* ⚠️ THE SHOP'S OWN REFUSAL MUST SURVIVE THE TRIP. A wrong code and a dead line are different
+           problems, and collapsing both into one message is what lib/signin.js exists to prevent. */
+        const code = Number(e && e.status) || 0;
+        return json(res, code || 502, { message: (e && e.message) || 'Could not reach ChitBridge.' });
+      }
     }
 
     if (req.method === 'POST' && url.pathname === '/api/signin/start') {
@@ -1250,12 +1335,14 @@ const server = http.createServer(async (req, res) => {
      * folder, so a shopkeeper can see their own months on a morning the internet is out.
      */
     if (req.method === 'GET' && url.pathname === '/api/summary') {
-      const period = ['day', 'week', 'month'].indexOf(url.searchParams.get('period')) >= 0 ? url.searchParams.get('period') : 'day';
+      /* ⭐ THE ENGINE'S OWN LIST ([TILL-184]), so adding a period to lib/rollup adds it here — this was a
+         hand-written ['day','week','month'] and the year was invisible from the moment it existed. */
+      const period = rollup.PERIODS.indexOf(url.searchParams.get('period')) >= 0 ? url.searchParams.get('period') : 'day';
       const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 60, 1), 400);
-      let files = [];
-      try { files = fs.readdirSync(F.summaryDir()); } catch (_) { files = []; }
-      const rows = files.map((f) => (new RegExp('^' + period + '-(.+)\\.json$').exec(f) || [])[1]).filter(Boolean)
-        .sort().slice(-limit).map((k) => readSummary(period, k)).filter(Boolean).reverse();
+      /* ⚠️ ONE READER FOR THE FOLDER ([TILL-184]). This had its own readdir-and-regex and the year fold grew a
+         second one — two ways to list the same directory, which is how they stop agreeing about which periods
+         exist. summaryKeys() is the one. [[feedback-no-duplicate-functions]] */
+      const rows = summaryKeys(period).slice(-limit).map((k) => readSummary(period, k)).filter(Boolean).reverse();
       /* ⚠️ `today` is NOT in there — it is not summarised yet, and saying so is the honest shape */
       return json(res, 200, { period, rows, today: period === 'day' ? { key: today(), totals: rollup.totals(readLines(F.bills(today()))), open: true } : null,
                               state: summaryState() });

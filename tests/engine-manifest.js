@@ -373,6 +373,14 @@ const ENGINE_OTHER = [
      and also can be called from the backoffice."* The counter had a DEVICE key and a NAME typed onto bills,
      and no authenticated person anywhere between the two. This is the middle that was never built. */
   'signin.js',
+  /* ⭐⭐ A SCALE-PRINTED BARCODE ([TILL-185]). A vegetable shop's label is not a product code — it carries
+     the item AND the weight, and GS1 reserves the prefix and then says nothing about the rest. So the shop
+     declares its layout and this decodes it; a branch per scale vendor is wrong for the next shop. */
+  'scalecode.js',
+  /* ⭐⭐⭐ MAGNITUDE, as opposed to vocabulary ([TILL-186]). 500 gm of something sold by the kilo is 0.5, and
+     the factors for that lived in till.html. NOT in units.js, which says of itself *"never a conversion,
+     only a rename"* — a conversion changes the number, so it stands on that file rather than editing it. */
+  'qty.js',
   /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
      CITES a category by id, and `category` is the legacy key nothing may write again. */
   'categories.js',
@@ -535,6 +543,10 @@ const ENGINE_OTHER = [
   'dayopen.browser.js',
   /* GENERATED beside lib/signin.js ([TILL-183]) — for the counter's own sign-in screen. */
   'signin.browser.js',
+  /* GENERATED beside lib/scalecode.js ([TILL-185]) — read on the counter, where the scale is. */
+  'scalecode.browser.js',
+  /* GENERATED beside lib/qty.js ([TILL-186]) — every typed "500 gm" and every scale label asks it. */
+  'qty.browser.js',
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   'money.browser.js', 'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
@@ -652,6 +664,11 @@ const TILL_SHIPPABLE = {
   /* ⭐ [TILL-183] the screen is on the device; only the CODE needs the line. A counter that had to fetch its
      own sign-in rules could not tell anybody why they cannot sign in. */
   'signin.js':   'signin.js',
+  /* ⭐⭐ [TILL-185] a produce counter weighs and scans with the line down all day — the decoder cannot be
+     something it fetches. */
+  'scalecode.js': 'scalecode.js',
+  /* ⭐⭐ [TILL-186] a grocer types "500 gm" with the line down all day; the factors cannot be fetched. */
+  'qty.js':       'qty.js',
   'jurisdiction.js': 'jurisdiction.js',
   'govcontext.js': 'web:app/govcontext.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter

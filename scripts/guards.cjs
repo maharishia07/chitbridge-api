@@ -38,6 +38,8 @@ const GUARDS = [
   'till-watch.test.js',       // the watch list names real gates — a row with no gate watches nothing
   'orders.test.js',           // the order rules, run with no browser — the proof they left the page
   'dayopen.test.js',          // ⭐⭐ the morning: who, products, the counter number, the drawer — [TILL-182]
+  'qty.test.js',              // ⭐⭐⭐ the factor table LEFT the page — [TILL-186]
+  'scalecode.test.js',        // ⭐⭐ a scale's label: which vegetable, and how much of it — [TILL-185]
   'signin.test.js',           // ⭐⭐⭐ a PERSON signs in — user id or email, and no session at a counter
   'orderhub.test.js',         // ⭐⭐⭐ one floor, several devices, no internet — [TILL-178b]
   'till-hidden.test.js',      // [hidden] must win — a class that sets display draws a closed panel anyway

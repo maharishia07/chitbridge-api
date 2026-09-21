@@ -425,4 +425,155 @@ it('the read goes through withEntity — RLS, not a bare query', () => {
     'the summary route reads chit_header without withEntity() — under FORCE RLS it would silently return nothing');
 });
 
+
+/* ══ ⭐⭐⭐ THE YEAR ([TILL-184]) ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Athi: *"please confirm that MIS I asked for has been completed, in the sense, summing weekly, monthly,
+ * yearly?"* Day, week and month were built and proven. The year was not there at all — this is it.
+ */
+console.log('\nA YEAR, AND IT IS THE FINANCIAL ONE\n');
+
+/**
+ * ⚠️⚠️ APRIL IS A DECISION, NOT A DETAIL. India's financial year runs 1 April to 31 March and every return a
+ * shop files is against it; a January–December total is a number no Indian shopkeeper has a use for.
+ */
+it('⚠️⚠️ the year runs April to March by default', () => {
+  assert.strictEqual(R.yearKey('2026-04-01'), '2026-27', '1 April did not start the new year');
+  assert.strictEqual(R.yearKey('2027-03-31'), '2026-27', '31 March fell out of its own year');
+  assert.strictEqual(R.yearKey('2026-03-31'), '2025-26');
+  assert.strictEqual(R.yearKey('2026-12-31'), '2026-27', 'December was filed under the calendar year');
+});
+
+/** ⭐ and a shop whose year starts in January says so, and gets a key that LOOKS different */
+it('⭐ a calendar-year shop is told apart at a glance', () => {
+  assert.strictEqual(R.yearKey('2026-12-31', 1), '2026');
+  assert.strictEqual(R.yearKey('2026-01-01', 1), '2026');
+  /* ⚠️ a key that looked the same for both is how two shops' figures end up added together */
+  assert.notStrictEqual(R.yearKey('2026-12-31', 1), R.yearKey('2026-12-31', 4));
+});
+
+it('and another country\'s year works without a code change', () => {
+  /* ⭐ 1 July — Australia. The rule is a number, not a branch. */
+  assert.strictEqual(R.yearKey('2026-07-01', 7), '2026-27');
+  assert.strictEqual(R.yearKey('2026-06-30', 7), '2025-26');
+});
+
+it('the year is a period like any other', () => {
+  assert.ok(R.PERIODS.indexOf('year') >= 0, 'the server reads PERIODS to decide what it will serve');
+  assert.strictEqual(R.keyOf('year', '2026-05-02'), '2026-27');
+  assert.strictEqual(R.keyOf('year', '2026-05-02', { fyStart: 1 }), '2026');
+});
+
+/** ⚠️ a year still running must never be summarised — the figure would change after it was published */
+it('⚠️ a year that is still running is not closed', () => {
+  assert.strictEqual(R.isClosed('year', '2026-27', new Date('2026-09-21T00:00:00Z')), false);
+  assert.strictEqual(R.isClosed('year', '2025-26', new Date('2026-09-21T00:00:00Z')), true);
+  /* ⚠️⚠️ THE BOUNDARY: on 31 March the year is still open, and on 1 April it is not */
+  assert.strictEqual(R.isClosed('year', '2026-27', new Date('2027-03-31T00:00:00Z')), false);
+  assert.strictEqual(R.isClosed('year', '2026-27', new Date('2027-04-01T00:00:00Z')), true);
+});
+
+/**
+ * ⚠️⚠️⚠️ THE SAME EQUALITY THE WHOLE ROLLUP RESTS ON, now one level higher: a year folded from twelve months
+ * must equal the same bills summarised directly. If it does not, purging the months makes the year unprovable.
+ */
+it('⚠️⚠️⚠️ a year folded from months equals the bills themselves', () => {
+  const bill = (at, total, how) => ({ at, total, payments: [{ how: how || 'Cash', amount: total }] });
+  const all = [];
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const m = 4 + i;                                   /* April .. March */
+    const y = m <= 12 ? 2026 : 2027;
+    const mm = m <= 12 ? m : m - 12;
+    const day = y + '-' + String(mm).padStart(2, '0') + '-15';
+    const rows = [bill(day, 100 + i), bill(day, 50, 'UPI')];
+    all.push.apply(all, rows);
+    months.push(R.summary('month', R.monthKey(day), R.totals(rows), {}));
+  }
+  const folded = R.fold(months);
+  const direct = R.totals(all);
+  assert.deepStrictEqual(folded, direct, 'a year folded from months disagrees with its own bills');
+  assert.strictEqual(folded.count, 24);
+});
+
+/**
+ * ⚠️⚠️ AND THE REFERENCE MUST EXIST. 'SUM/undefined/C1/2026-27' is a perfectly valid string — a year sent under
+ * it could never be matched again, and re-sending would grow duplicates on the server for ever.
+ */
+it('⚠️⚠️ a year has its own reference letter', () => {
+  const sum = R.summary('year', '2026-27', R.totals([]), { till: { id: 'C2' } });
+  assert.strictEqual(R.refOf(sum), 'SUM/Y/C2/2026-27');
+  /* ⭐ break it before trusting it: a period with no letter must throw rather than emit 'undefined' */
+  assert.throws(() => R.refOf({ period: 'decade', key: 'x' }), /no reference letter/);
+});
+
+it('and it says what it is on the chit', () => {
+  const sum = R.summary('year', '2026-27', R.totals([]), { till: { id: 'C2', name: 'Front' } });
+  assert.ok(/Year summary — 2026-27/.test(R.chitOf(sum).subject), R.chitOf(sum).subject);
+});
+
+
+/* ══ ⭐⭐⭐ A SHORT PERIOD SAYS SO ([TILL-184]) ═══════════════════════════════════════════════════════════ */
+console.log('\nA SHORT PERIOD SAYS SO\n');
+
+/**
+ * Athi, on a financial year folded from fewer than twelve months: *"no we can say upto"*.
+ *
+ * ⚠️⚠️ THE TWO OBVIOUS ANSWERS ARE BOTH WRONG. A shop's first financial year starts whenever it opened, so it
+ * can never have twelve months: refusing to summarise it leaves the Years view empty for ever with nothing
+ * said, and summarising it silently puts a part-year's trading under "2026-27" looking like a full one.
+ */
+it('⭐⭐⭐ a part year is folded AND labelled', () => {
+  const c = R.coverage({ period: 'year', source: ['2026-06', '2026-07', '2026-08'] });
+  assert.strictEqual(c.partial, true);
+  assert.strictEqual(c.parts, 3);
+  assert.strictEqual(c.say, 'up to August 2026');
+});
+
+/** ⭐ '2026-08' reads as August to a person; the key does not */
+it('⭐ and it says the month in words', () => {
+  assert.ok(/January 2027/.test(R.coverage({ period: 'year', source: ['2026-04', '2027-01'] }).say));
+  assert.ok(/March 2027/.test(R.coverage({ period: 'year', source: ['2026-04', '2027-03'] }).say));
+});
+
+it('a full year says nothing, because there is nothing to say', () => {
+  const twelve = Array.from({ length: 12 }, (_, i) => '2026-' + String(i + 1).padStart(2, '0'));
+  const c = R.coverage({ period: 'year', source: twelve });
+  assert.strictEqual(c.partial, false);
+  assert.strictEqual(c.say, '');
+  assert.strictEqual(c.from, '2026-01');
+  assert.strictEqual(c.to, '2026-12');
+});
+
+/** ⚠️ a short WEEK is a real thing too — a shop that opened on Thursday has a four-day week */
+it('⚠️ a short week is labelled as well', () => {
+  const c = R.coverage({ period: 'week', source: ['2026-09-17', '2026-09-18', '2026-09-19'] });
+  assert.strictEqual(c.partial, true);
+  assert.ok(/up to 2026-09-19/.test(c.say), c.say);
+});
+
+/**
+ * ⚠️⚠️ A MONTH IS 28 TO 31 DAYS, so "full" cannot be an equality — February would be reported short every year,
+ * and a label that cries wolf annually is one nobody reads.
+ */
+it('⚠️⚠️ February is not a short month', () => {
+  const feb = Array.from({ length: 28 }, (_, i) => '2026-02-' + String(i + 1).padStart(2, '0'));
+  assert.strictEqual(R.coverage({ period: 'month', source: feb }).partial, false);
+  const half = feb.slice(0, 10);
+  assert.strictEqual(R.coverage({ period: 'month', source: half }).partial, true);
+});
+
+it('and a summary written before this existed still answers', () => {
+  /* ⚠️ `source` is null when a period was read straight from bills rather than folded — not an error */
+  const c = R.coverage({ period: 'year' });
+  assert.strictEqual(c.partial, false);
+  assert.strictEqual(c.say, '');
+  assert.strictEqual(R.coverage(null).say, '');
+});
+
+/** ⭐ a day is never partial — it is the smallest thing there is */
+it('⭐ a day cannot be short', () => {
+  assert.strictEqual(R.coverage({ period: 'day', source: ['2026-09-21'] }).partial, false);
+});
+
 console.log('\n' + pass + ' checks passed\n');

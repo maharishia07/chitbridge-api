@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -230,6 +230,14 @@ const COPIES = () => [
      rules are here, and each surface keeps a different half of the answer — a session for the back office,
      an identity and no session for a counter, because a token that expires at noon stops a shop at noon. */
   [null, path.join(WEB, 'engine', 'signin.js'), wrapForBrowser('signin.js', 'CBSignin')],
+  /* ⭐⭐⭐ A SCALE'S LABEL ([TILL-185]) — the grocery baseline the backlog has carried as a red blocker since
+     it was written. The rule was inside till.html and read a layout it had worked out by hand; it is a MASK
+     the shop declares now, so no scale vendor is hard-wired and an unusual scale is a setting, not a release. */
+  [null, path.join(WEB, 'engine', 'scalecode.js'), wrapForBrowser('scalecode.js', 'CBScaleCode')],
+  /* ⭐⭐⭐ MAGNITUDE ([TILL-186]). Athi: *"no data should be tied tightly to the front end."* The weight and
+     volume factors were a table in till.html — its own note said *"only the arithmetic is here"*, and the
+     data came with it. It is an engine now, and tests/qty.test.js asserts the page never grows it back. */
+  [null, path.join(WEB, 'engine', 'qty.js'), wrapForBrowser('qty.js', 'CBQty')],
   /* ⭐⭐ one cause → one sentence → one button ([TILL-132]). The health page RENDERS this; the footer and the
      doctor read the same table, which is the whole point of it being an engine. */
   [null, path.join(WEB, 'engine', 'verdict.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
@@ -302,6 +310,8 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   [null, path.join(API, 'lib', 'dayopen.browser.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
   [null, path.join(API, 'lib', 'signin.browser.js'), wrapForBrowser('signin.js', 'CBSignin')],
+  [null, path.join(API, 'lib', 'scalecode.browser.js'), wrapForBrowser('scalecode.js', 'CBScaleCode')],
+  [null, path.join(API, 'lib', 'qty.browser.js'), wrapForBrowser('qty.js', 'CBQty')],
   [null, path.join(API, 'lib', 'verdict.browser.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],

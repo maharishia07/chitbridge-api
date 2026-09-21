@@ -55,6 +55,20 @@ function load() {
     console,
   };
   sandbox.window = sandbox; vm.createContext(sandbox);
+  /**
+   * ⚠️⚠️⚠️ THE ENGINES THE PAGE'S OWN FUNCTIONS ASK FOR, LOADED FIRST ([TILL-186]). This sandbox used to be a
+   * bare window, which worked only for as long as the page carried its own data. The moment the weight and
+   * volume factors moved out — Athi: *"no data should be tied tightly to the front end"* — every typed
+   * "500 gm" check in this file died on "CBQty is not loaded", which is the test reporting its own missing
+   * import rather than a bug. The same trap units-alias.test.js fell into.
+   *
+   * ⚠️ ORDER: units before qty, because qty is HANDED the vocabulary and resolves 'கிலோ' through it.
+   */
+  for (const eng of ['units.browser.js', 'qty.browser.js']) {
+    const f = path.join(__dirname, '..', 'lib', eng);
+    if (!fs.existsSync(f)) throw new Error(eng + ' is missing — run scripts/vendor-till.cjs');
+    vm.runInContext(fs.readFileSync(f, 'utf8'), sandbox);
+  }
   vm.runInContext(js, sandbox);
   return sandbox;
 }
@@ -723,6 +737,8 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'orderhub.js': 'CBOrderHub',
                     'dayopen.js': 'CBDayOpen',
                     'signin.js': 'CBSignin',
+                    'scalecode.js': 'CBScaleCode',
+                    'qty.js': 'CBQty',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
