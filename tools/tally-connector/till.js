@@ -731,6 +731,37 @@ function purgePlan(now) {
 }
 
 /**
+ * ── ⭐⭐ shifts.jsonl IS BOUNDED, ON THE SAME FLOOR AS EVERYTHING ELSE ([TILL-174], BACKLOG TILL-134) ──────
+ *
+ * *"ALSO UNBOUNDED: `shifts.jsonl` appends forever and no purge touches it. A shift is a day-level fact —
+ * fold it into the day summary and let it go with the day."*
+ *
+ * It is small — one line per hand-over — so this is not about disk. It is about the rule being whole: a
+ * counter that bounds its bills and quietly keeps one file for ever has a rule with an exception in it, and
+ * the exception is the thing that is still growing on the oldest machine in the shop.
+ *
+ * ⚠️⚠️ THE SAME FLOOR, THE SAME REASON. purgePlan() already refuses to drop a day that has not been
+ * summarised AND sent; a shift line is trimmed only when the day it belongs to has passed that same test. A
+ * shift is who handled the cash, so it is never dropped on a looser rule than the bills it covers.
+ */
+function purgeShifts(cutoff) {
+  const f = path.join(DIR, 'shifts.jsonl');
+  let rows = [];
+  try { if (!fs.existsSync(f)) return { kept: 0, dropped: 0 }; rows = readLines(f); }
+  catch (_) { return { kept: 0, dropped: 0 }; }
+  /* ⚠️ a line we cannot read the date of is KEPT. Unparseable is not the same as old. */
+  const keep = rows.filter((r) => {
+    const d = String((r && (r.to || r.from)) || '').slice(0, 10);
+    return !d || d >= cutoff;
+  });
+  if (keep.length === rows.length) return { kept: keep.length, dropped: 0 };
+  try {
+    fs.writeFileSync(f, keep.map((r) => JSON.stringify(r)).join('\n') + (keep.length ? '\n' : ''));
+  } catch (e) { log('could not trim shifts.jsonl: ' + e.message); return { kept: rows.length, dropped: 0 }; }
+  return { kept: keep.length, dropped: rows.length - keep.length };
+}
+
+/**
  * ⚠️⚠️ AND THE SWEEP. It runs after rollUp() on the same tick, so a day can never be deleted in the same
  * pass that would have summarised it — the summary is written and SENT first, and only a later run, at least
  * ninety days afterwards, can remove the detail behind it.
@@ -749,7 +780,10 @@ function purgeOld(now) {
     log('purged the detailed bills of ' + gone.length + ' day(s) older than ' + plan.floor + ' days ('
       + gone[0] + (gone.length > 1 ? ' … ' + gone[gone.length - 1] : '') + ') — their summaries are kept and were sent');
   }
-  return { purged: gone, kept: plan.kept, floor: plan.floor, cutoff: plan.cutoff };
+  /* ⭐ the shift lines go with the days they describe — one floor, no exceptions ([TILL-174]) */
+  const sh = purgeShifts(plan.cutoff);
+  if (sh.dropped) log('trimmed ' + sh.dropped + ' shift line(s) older than ' + plan.floor + ' days; ' + sh.kept + ' kept');
+  return { purged: gone, kept: plan.kept, floor: plan.floor, cutoff: plan.cutoff, shifts: sh };
 }
 
 /**
