@@ -12,7 +12,9 @@
  */
 const assert = require('node:assert');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const IA = require('../lib/identity-auth');
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-not-real';
 
 let pass = 0, fail = 0;
 /** ⚠️ SEQUENTIAL, AWAITED — not fire-and-forget with a fixed setTimeout at the end. A DB-shaped fake still
@@ -61,6 +63,8 @@ function fakeDb(rows) {
       return { rows: table.filter((r) => String(r.user_id || '').toLowerCase() === params[0].toLowerCase()) };
     if (/WHERE actor_key = \$1 AND parent_entity_id = \$2/.test(s))
       return { rows: table.filter((r) => r.actor_key === params[0] && r.parent_entity_id === params[1] && r.identity_type === 'actor') };
+    if (/SELECT display_name, bridge_id FROM identities WHERE identity_id = \$1/.test(s))
+      return { rows: table.filter((r) => r.identity_id === params[0]).map((r) => ({ display_name: r.display_name, bridge_id: r.bridge_id })) };
     throw new Error('fakeDb: unhandled query — ' + s.slice(0, 80));
   };
 }
@@ -166,6 +170,41 @@ t('⚠️⚠️ five wrong PINs lock the account — the sixth correct one still
   assert.ok(row.pin_locked_at, 'locked after ' + IA.MAX_PIN_ATTEMPTS + ' wrong tries');
   const r = await IA.verifyCredential(q, row, { pin: '4321' }); // the RIGHT pin, after the lock
   assert.strictEqual(r.ok, false, 'locked means locked, even for the correct PIN');
+});
+
+/* ── issueToken — the ONE place a sign-in becomes a JWT ──────────────────────────────────────────────────── */
+
+t('⭐ an entity token carries no actor fields at all', async () => {
+  const q = fakeDb([{ identity_id: 'e1', bridge_id: 'CB1', display_name: 'Mayur Bhavan', email: 'o@s.com', identity_type: 'entity', owner_scope: 'entity' }]);
+  const token = await IA.issueToken(q, { identity_id: 'e1', bridge_id: 'CB1', display_name: 'Mayur Bhavan', email: 'o@s.com', identity_type: 'entity' });
+  const claims = jwt.decode(token);
+  assert.strictEqual(claims.identity_type, 'entity');
+  assert.strictEqual(claims.parent_entity_id, undefined, 'an entity is not acting for anyone');
+  assert.strictEqual(claims.actor_key, undefined);
+});
+
+t('⭐⭐⭐ AN ACTOR TOKEN CARRIES parent_entity_id — the exact bug this function exists to make impossible', async () => {
+  const q = fakeDb([{ identity_id: 'e1', display_name: 'Mayur Bhavan', bridge_id: 'CBSHOP1' }]);
+  const token = await IA.issueToken(q, {
+    identity_id: 'a1', bridge_id: 'CBACT1', display_name: 'Bala', identity_type: 'actor',
+    actor_key: 'bala', actor_role: 'cashier', actor_type: 'staff', parent_entity_id: 'e1',
+  });
+  const claims = jwt.decode(token);
+  // ⚠️ THIS is what middleware/auth.js's entityOf(req) reads: parent_entity_id || identity_id. Missing it
+  // here means every authed route after sign-in — starting with POST /api/till/enrol — resolves "whose data
+  // is this" to the COASSIST's own id instead of their employer's.
+  assert.strictEqual(claims.parent_entity_id, 'e1');
+  assert.strictEqual(claims.parent_entity_name, 'Mayur Bhavan', 'looked up, not left null, when the parent row exists');
+  assert.strictEqual(claims.parent_bridge_id, 'CBSHOP1');
+  assert.strictEqual(claims.actor_key, 'bala');
+});
+
+t('a missing parent row still issues a token — it just cannot NAME the shop yet', async () => {
+  const q = fakeDb([]); // the parent lookup finds nothing
+  const token = await IA.issueToken(q, { identity_id: 'a1', bridge_id: 'CBACT1', display_name: 'Bala', identity_type: 'actor', parent_entity_id: 'e-missing' });
+  const claims = jwt.decode(token);
+  assert.strictEqual(claims.parent_entity_id, 'e-missing', 'the id still travels even when the name lookup fails');
+  assert.strictEqual(claims.parent_entity_name, null);
 });
 
 /* ── personShape — the one shape both routes now hand a client ──────────────────────────────────────────── */

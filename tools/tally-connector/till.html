@@ -12713,24 +12713,20 @@ function queueBlock(){
   return null;
 }
 /**
- * ⭐⭐⭐ PAIR THIS COUNTER AGAIN — THE BUTTON THAT DOES IT, NOT THE SENTENCE THAT ASKS FOR IT ([TILL-188]).
+ * ⭐⭐⭐ PAIR THIS COUNTER AGAIN — THE BUTTON THAT DOES IT, NOT THE SENTENCE THAT ASKS FOR IT ([TILL-188/190]).
  *
- * ⚠️⚠️ THE TWO HOSTS PAIR DIFFERENTLY AND ONLY ONE OF THEM CAN FINISH HERE. The shop PC asks for an
- * email, sends a code and enrols — one press, end to end, which is what was asked for. A browser counter
- * cannot mint its own key, so the nearest real action is to put the person ON the box that takes one.
- * Printing the menu path and leaving them to walk it is what the old dialog did, and a path is not an action.
+ * ⚠️⚠️⚠️ BOTH HOSTS NOW FINISH THE SAME WAY ([TILL-190]). Athi, watching me chase "I still can't sign in":
+ * *"no one will be able to understand pair key etc — login credential and key mapping should happen in the
+ * background."* Until today a browser genuinely could not mint its own key, so the nearest real action was
+ * the ⚙ Settings paste box — a manual step nobody arriving with only a user ID and a code could complete on
+ * their own. `usignVerify()` now finishes it: sign in as a person, and if this browser has no key yet, the
+ * SAME verify hands back a session that is spent once, immediately, on POST /api/till/enrol — exactly what
+ * the shop PC's own connect flow has always done. The manual key box in ⚙ Settings still exists, for the one
+ * case that is not a person signing in at all: a kiosk an admin hands a specific pre-minted key to.
  */
 function pairAgain(){
   if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return signinOpen();
-  try { setClose(); } catch (_) {}
-  openSettings('device');
-  /* ⚠️ the box is built by openSettings(), so it is focused after it exists, never before */
-  setTimeout(function(){
-    var k = document.getElementById('set_key');
-    if (!k) return;
-    k.value = ''; try { k.scrollIntoView({ block: 'center' }); } catch (_) {}
-    k.focus();
-  }, 260);
+  return usignOpen();
 }
 /** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
 function queueWords(){
@@ -20316,10 +20312,15 @@ function paintWho(){
  * ⭐ THIS IS THE REAL ONE: a user ID or an email, one emailed code, and an authenticated PERSON at the end of
  * it. Owner or employee, same path, because both are identities with a user id. [[project-user-id-rule]]
  *
- * ⚠️ WHAT IT LEAVES BEHIND IS AN IDENTITY AND NO SESSION. lib/signin.js decides that, not this code: a token
- * that expires at noon would stop a shop billing at noon. [[project-counter-identity]]
- * ⚠️⚠️ AND IT IS NOT PAIRING. signinOpen() is the other thing entirely — it fetches this PC's KEY and restarts
- * the program ([TILL-121]). A person arriving for a shift must never meet it.
+ * ⚠️ WHAT IT LEAVES BEHIND IS AN IDENTITY AND NO SESSION — ON AN ALREADY-PAIRED COUNTER. lib/signin.js
+ * decides that, not this code: a token that expires at noon would stop a shop billing at noon.
+ * [[project-counter-identity]]
+ * ⚠️⚠️⚠️ EXCEPT THE FIRST TIME, ON A BROWSER ([TILL-190]). Athi: *"login credential and key mapping should
+ * happen in the background."* Until this, signing in and pairing were two things a person had to know were
+ * different — the header once said so outright. Now: a browser with no key AT ALL spends this same sign-in's
+ * session, once, on POST /api/till/enrol (usignEnrolIfNeeded()) — exactly what the shop PC's connect flow
+ * has always done — and keeps the key, not the session, after. A counter that already has a key never touches
+ * this path; every sign-in after the first is exactly as before, identity and no session.
  */
 function SIGN(){
   if (!window.CBSignin) throw new Error('CBSignin is not loaded — /engine/signin.js is missing from this page');
@@ -20450,12 +20451,76 @@ async function usignVerify(){
   var r = await usignPost('/api/entities/verify', v.body);
   USIGN.busy = false;
   if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
+  /**
+   * ⚠️⚠️⚠️ THE TOKEN IS SPENT HERE, ONCE, BEFORE THE ENGINE DROPS IT ([TILL-190]). SIGN().keep() takes the
+   * identity out of the answer and throws the rest away — deliberately, for a counter that already has a key,
+   * where a session is a liability, never a use. A browser with NO key yet needs that one use FIRST: the same
+   * session /api/till/enrol trades for a key, exactly as the shop PC's own connect flow already does.
+   * usignEnrolIfNeeded() no-ops instantly on an agent host or an already-paired browser, so this line changes
+   * nothing for the ordinary, every-shift sign-in — it only fires the one time this device has never met a key.
+   */
+  if (!(await usignEnrolIfNeeded(r.body.token))) { usignPaint(); return; }
   /* ⭐⭐ THE ENGINE TAKES THE IDENTITY AND DROPS THE TOKEN. 'counter', not 'session' — deliberately. */
   var k = SIGN().keep('counter', r.body);
   if (!k.ok) { USIGN.refused = k.why; usignPaint(); return; }
   USIGN.person = k.person;
   usignAdopt(k.person);
   usignPaint();
+}
+
+/**
+ * ── ⭐⭐⭐ SIGNING IN MINTS THE KEY, IN THE BACKGROUND ([TILL-190]) ────────────────────────────────────────────
+ *
+ * Athi, watching "I still can't sign in" turn out to be a browser stuck on "paste the key once": *"no one will
+ * be able to understand pair key etc — login credential and key mapping should happen in the background."*
+ *
+ * ⭐ THE SAME TWO CALLS THE SHOP PC HAS ALWAYS MADE (tools/tally-connector/till.js, /api/signin/finish): sign
+ * in, then spend that session ONCE on POST /api/till/enrol, which claims a counter number and hands back a
+ * key. Nobody types a key anywhere; nobody needs to know one exists.
+ * ⚠️ ONLY WHEN THIS DEVICE HAS NONE. paired() is the whole gate — a browser that already has a key from an
+ * earlier sign-in, a shared link, or the manual ⚙ box is untouched; every sign-in after the first is exactly
+ * the identity-only exchange it always was.
+ * ⚠️ THE DESKTOP NEVER REACHES HERE. AgentHost has its OWN connect flow (signinOpen → /api/signin/start+finish
+ * → till.js's own enrol call, then a process restart) — this is the equivalent for the host that never had one.
+ *
+ * Returns true when it is safe to carry on adopting the signed-in person; false when it stopped to ask
+ * something or report a refusal, in which case USIGN.refused is already set.
+ */
+async function usignEnrolIfNeeded(token){
+  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return true;
+  if (paired()) return true;
+  if (!token) { USIGN.refused = 'Signed in, but the shop did not send a session to pair with.'; return false; }
+  var body = { name: 'Browser counter', counter: tillId() };
+  var r = await fetch('/api/till/enrol', { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify(body) }).then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
+    .catch(function(){ return { status: 0, ok: false, body: {} }; });
+  /**
+   * ⚠️⚠️ COUNTER_HELD IS A DECISION, NOT AN ERROR ([TILL-138], the same rule the shop PC's own connect flow
+   * follows). Flattening it into "could not sign in" sends somebody hunting for a fault when what they need is
+   * to choose whether to take this counter number from whoever is holding it.
+   */
+  if (!r.ok && r.status === 409 && r.body && r.body.code === 'COUNTER_HELD') {
+    var heldBy = (r.body.counter && r.body.counter.held_by && r.body.counter.held_by.name) || 'another device';
+    var ok = await sure('Counter ' + tillId() + ' is already open on ' + heldBy + '.\n\nTaking it over stops '
+      + 'that device sending any more bills. Nothing already sent is affected.', 'Take it over', 'Counter ' + tillId());
+    if (!ok) { USIGN.refused = 'Kept ' + heldBy + ' on counter ' + tillId() + '. Nothing changed here.'; return false; }
+    r = await fetch('/api/till/enrol', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(Object.assign({}, body, { takeover: true })) })
+      .then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
+      .catch(function(){ return { status: 0, ok: false, body: {} }; });
+  }
+  if (!r.ok || !r.body || !r.body.key) {
+    USIGN.refused = 'Signed in, but the shop did not issue a counter key.' + (r.body && r.body.message ? ' ' + r.body.message : '');
+    return false;
+  }
+  /* ⭐ THE SAME TWO LINES THE MANUAL ⚙ PASTE BOX HAS ALWAYS RUN — a new key IS a different shop, a different
+     local copy, and S (the old shop's snapshot, if any) is stale the instant this key lands. */
+  ls.set('cb_till_key', r.body.key); CloudHost.key = r.body.key; DB.reopen();
+  S = null;
+  toastLine('Paired with ' + ((r.body.shop && r.body.shop.name) || 'the shop') + ' — counter ' + tillId() + '.');
+  return true;
 }
 
 /**

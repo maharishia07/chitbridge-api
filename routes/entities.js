@@ -4,7 +4,6 @@ const express = require('express');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
-const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const visibilityCap = require('../lib/visibility-cap');   // a choice, bounded by a cap
 const { query, withEntity } = require('../db');
@@ -312,11 +311,11 @@ router.post('/verify',
       const result = email
         ? await query(
             `SELECT identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope
+                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id
              FROM identities WHERE email = $1`, [email])
         : await query(
             `SELECT identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope
+                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id
              FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle]);
 
       if (result.rows.length === 0) {
@@ -460,13 +459,15 @@ router.post('/verify',
        * this claim before today because nothing but an entity ever reached this line — an actor got here for
        * the first time only once verifyCredential() above learned to accept one.
        */
-      const token = jwt.sign(
-        { identity_id: identity.identity_id, bridge_id: identity.bridge_id,
-          display_name: identity.display_name, email: identity.email, identity_type: identity.identity_type,
-          owner_scope: identity.owner_scope || identity.identity_type },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
+      /**
+       * ⚠️⚠️⚠️ [capability: sign-in] THE TOKEN IS BUILT BY identity-auth.js, NOT HERE. Athi: *"it has to be
+       * part of identity auth js."* The first version of this fix hand-built the JWT in this file and left
+       * `parent_entity_id` out for a coassist — harmless for an entity, but every authed route after sign-in
+       * (starting with POST /api/till/enrol) then resolves "whose data is this" to the COASSIST's own id
+       * instead of their employer's. issueToken() is the one place that can no longer happen, because it is
+       * the only place a token is ever built, for either identity_type.
+       */
+      const token = await identityAuth.issueToken(query, identity);
 
       console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.display_name}`);
 

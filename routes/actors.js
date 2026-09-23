@@ -5,6 +5,7 @@
 
 const express = require('express');
 const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on process.env.DEV_OTP directly
+const identityAuth = require('../lib/identity-auth');   // [capability: sign-in] the one token issuer, entity or coassist
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
 const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
 const router  = express.Router();
@@ -66,7 +67,6 @@ function splitLogin(username) {
 const mintuserid = require('../lib/mintuserid');   /* the ONE builder for an employee id */
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
-const jwt     = require('jsonwebtoken');
 const bcrypt  = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
@@ -875,23 +875,17 @@ router.post('/login',
         );
       }
 
-      // Issue JWT with actor details
-      const token = jwt.sign(
-        {
-          identity_id:      a.identity_id,
-          bridge_id:        a.bridge_id,
-          display_name:     a.display_name,
-          actor_key:        a.actor_key,
-          actor_role:       a.actor_role,
-          actor_type:       a.actor_type,
-          identity_type:    'actor',
-          parent_entity_id: parent_entity.identity_id,
-          parent_entity_name: parent_entity.display_name,
-          parent_bridge_id: parent_entity.bridge_id,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
+      /**
+       * ⚠️⚠️ [capability: sign-in] THE TOKEN IS BUILT BY identity-auth.js, NOT HERE — the one place a coassist
+       * or an entity ever gets a JWT, whichever door they came through (see lib/identity-auth.js's issueToken,
+       * built the same day this route's own inline jwt.sign() became the second copy of the same shape).
+       * `a` does not carry parent_entity_id from its own SELECT above (it is a WHERE clause, not a column) —
+       * set it here so issueToken's own parent lookup resolves the row this route already found, not a second
+       * query that could in principle disagree with it.
+       */
+      a.parent_entity_id = parent_entity.identity_id;
+      a.identity_type = 'actor';
+      const token = await identityAuth.issueToken(db, a);
 
       console.log(`Actor login: ${actor_key}@${entity_name}`);
 

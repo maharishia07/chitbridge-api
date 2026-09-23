@@ -1243,11 +1243,11 @@ router.post('/:bridge_id/order/confirm',
         }
       } catch (e) { /* b82 not applied → skip (self-healing) */ }
 
-      // customer token (for future order tracking — CJ-F1)
-      const token = jwt.sign(
+      // ⭐ [capability: sign-in] issueToken() — the one place a sign-in becomes a JWT, entity, coassist or
+      // customer alike (customer token, for future order tracking — CJ-F1).
+      const token = await require('../lib/identity-auth').issueToken(query,
         { identity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name,
-          email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id },
-        process.env.JWT_SECRET, { expiresIn: '7d' });
+          email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id });
 
       // T2.2 · the documents were written INSIDE the chit transaction above, so reaching here means they committed.
       // There is no `documents_stored:false` any more: a storage failure rolls the whole submission back and the
@@ -1280,10 +1280,11 @@ router.post('/:bridge_id/login/verify',
       const otpCheck = await verifyOtp(query, c, req.body.otp);
       if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Sign-in failed', message: otpCheck.message });
       await query(`UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
-      const token = jwt.sign(
+      // ⭐ [capability: sign-in] issueToken() — see the other call site in this file for why this stopped
+      // being a third hand-built jwt.sign().
+      const token = await require('../lib/identity-auth').issueToken(query,
         { identity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name,
-          email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id },
-        process.env.JWT_SECRET, { expiresIn: '7d' });
+          email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id });
       res.json({ message: 'Signed in', token, name: c.display_name });
     } catch (err) { res.status(500).json({ error: 'Sign-in failed', message: safeErr(err) }); }
   });
