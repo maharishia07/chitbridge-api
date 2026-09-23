@@ -51,10 +51,16 @@ it('and a two-letter user ID is not one', () => {
 
 console.log('\nWHAT IS SENT\n');
 
-/** ⭐ the shape /api/entities/register and /verify already take — no second vocabulary invented here */
-it('⭐ it sends the field the server already expects', () => {
-  assert.deepStrictEqual(S.ask('bala').body, { user_id: 'bala' });
-  assert.deepStrictEqual(S.ask('bala@mayur.in').body, { email: 'bala@mayur.in' });
+/**
+ * ⭐⭐⭐ [capability: sign-in] MOVED, NOT DELETED. Athi, 2026-09-23: *"even if i give the wrong id, it is not
+ * verifying the user id — it is not the same logic we have in the backend sign in procedure."* He was right:
+ * /register is REGISTER-OR-LOGIN, and a wrong id silently created a new business instead of being refused,
+ * because nothing ever asked for the login-only behaviour the route already has behind `mode:'login'`. This
+ * asserted the body BEFORE that flag existed; the shape is one field bigger now, on purpose, every time.
+ */
+it('⭐ it sends the field the server already expects, and mode:login so a wrong id is refused, never registered', () => {
+  assert.deepStrictEqual(S.ask('bala').body, { mode: 'login', user_id: 'bala' });
+  assert.deepStrictEqual(S.ask('bala@mayur.in').body, { mode: 'login', email: 'bala@mayur.in' });
 });
 
 it('and says where the code is going', () => {
@@ -88,8 +94,8 @@ it('⭐⭐ a PIN and a first-time code are told apart by length, not guessed', (
   assert.strictEqual(otp.ok, true); assert.strictEqual(otp.isPin, false);
 });
 
-it('and verify puts the two together', () => {
-  assert.deepStrictEqual(S.verify('bala', '123456').body, { user_id: 'bala', otp: '123456' });
+it('and verify puts the two together, mode:login included', () => {
+  assert.deepStrictEqual(S.verify('bala', '123456').body, { mode: 'login', user_id: 'bala', otp: '123456' });
   assert.strictEqual(S.verify('bala', '12').ok, false);
   assert.strictEqual(S.verify('', '123456').ok, false);
 });
@@ -98,7 +104,7 @@ it('and verify puts the two together', () => {
  *  the two apart by which key arrived, not by length a second time; this is the one place that decision is
  *  made, so it can never disagree with what usignPaint() drew on screen a moment earlier. */
 it('⭐⭐⭐ a PIN is sent as pin, never as otp', () => {
-  assert.deepStrictEqual(S.verify('bala', '1234').body, { user_id: 'bala', pin: '1234' });
+  assert.deepStrictEqual(S.verify('bala', '1234').body, { mode: 'login', user_id: 'bala', pin: '1234' });
 });
 
 /* ══ ⭐⭐⭐ THE PART THE TWO SURFACES DISAGREE ABOUT ═══════════════════════════════════════════════════════ */
