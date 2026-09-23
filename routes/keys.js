@@ -35,12 +35,17 @@ async function listOf(entity_id) {
 /**
  * ── ⚠️⚠️ ONE KEY AT A TIME, IN ONE STATEMENT ─────────────────────────────────────────────────────────────────
  *
- * save() below rewrites the WHOLE key list. That was fine while the only writers were a person minting or
- * revoking. It stopped being fine on 2026-09-16/17, when a sighting (setSeen), a diagnosis (setDiag) and a till
- * claim (claimTill) all began writing to it — two of them FROM THE SAME REQUEST, since the snapshot is both an
- * authenticated call and the place a counter claims its prefix. Read the list, change one key, write the list:
- * whichever finished second silently erased the other's change. A lost prefix claim is two counters on one
- * number again, which is the fault all of this exists to end.
+ * A plain "read the list, change one key, write the whole list back" rewrites every OTHER key too. That was
+ * fine while the only writer was a person minting or revoking. It stopped being fine on 2026-09-16/17, when a
+ * sighting (setSeen), a diagnosis (setDiag) and a till claim (claimTill) all began writing to it — two of them
+ * FROM THE SAME REQUEST, since the snapshot is both an authenticated call and the place a counter claims its
+ * prefix. Whichever whole-list write finished second silently erased the other's change. A lost prefix claim is
+ * two counters on one number again, which is the fault all of this exists to end.
+ * ⚠️⚠️ IT BIT MINT() TOO (2026-09-23): mint() read the list, then wrote the whole array back after generating a
+ * key — nothing stopped a SECOND enrolment (a retry, a re-sign-in) reading the list before the first one's
+ * write landed and then overwriting it away, taking a counter's live key down with it. A shopkeeper mid-sale
+ * was told "API key revoked or unknown" for a key nobody had actually revoked. mint(), setEnrol() and the
+ * DELETE route now all read with FOR UPDATE and write inside the same transaction instead. [[feedback-whitelist-drops-silently]]
  *
  * ⭐ So a per-key change is ONE UPDATE that merges into the matching element only. Postgres locks the row and
  * re-evaluates the expression against whatever committed before it, so concurrent writers stack instead of
@@ -56,9 +61,6 @@ async function patchKey(entity_id, jti, patch, db) {
                       FROM jsonb_array_elements(COALESCE(policy_flags->'api_keys', '[]'::jsonb)) k), '[]'::jsonb))
       WHERE identity_id = $1`,
     [entity_id, String(jti), JSON.stringify(patch)]);
-}
-async function save(entity_id, keys) {
-  await query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`, [JSON.stringify({ api_keys: keys }), entity_id]);
 }
 
 router.get('/', auth, sessionOnly, async (req, res) => {
@@ -78,25 +80,57 @@ async function mint(entity_id, identity, opts) {
   const scopes = (Array.isArray(opts.scopes) ? opts.scopes : ['offers']).map(String).filter((s) => SCOPES.includes(s));
   if (!scopes.length) throw Object.assign(new Error('scopes must include one of: ' + SCOPES.join(', ')), { status: 400 });
   const days = Math.min(Math.max(Number(opts.days) || 365, 1), 3650);
-  const keys = await listOf(entity_id);
-  /* ⚠️ a CLOSED counter is kept as history and must not use up a place — closing one is how a shop makes room */
-  if (keys.filter((k) => !(k && k.till && k.till.closed_at)).length >= 20)
-    throw Object.assign(new Error('Twenty keys at most — revoke one first.'), { status: 400 });
   const jti = crypto.randomBytes(12).toString('hex');
   const now = Math.floor(Date.now() / 1000), exp = now + days * 86400;
   const id = identity || {};
   const token = jwt.sign({ identity_id: entity_id, identity_type: 'entity', bridge_id: id.bridge_id || null, display_name: id.display_name || null,
                            kind: 'api_key', scopes, jti, iat: now, exp }, process.env.JWT_SECRET, { algorithm: 'HS256' });
   const rec = { jti, name, scopes, created_at: new Date().toISOString(), expires_at: new Date(exp * 1000).toISOString(), last4: token.slice(-4) };
-  await save(entity_id, keys.concat([rec]));
+  /**
+   * ⚠️⚠️ FOR UPDATE, THEN WRITE IN THE SAME TRANSACTION (2026-09-23). mint() used to read the list with listOf(),
+   * then save() the WHOLE array back — the exact read-modify-write shape the comment above patchKey() already
+   * warns about. Two enrolments close together (a retry after a slow reply, a counter re-signing in while an
+   * older request was still in flight) each read the list before the other's save() landed, and whichever
+   * save() finished last silently ERASED the other's key from policy_flags.api_keys — a counter mid-sale,
+   * still holding that very key in memory, was told on its next request "API key revoked or unknown" and
+   * flashed "Signed out by the shop" for a key nobody had actually revoked. [[feedback-whitelist-drops-silently]]
+   * ⭐ Locking the row for the read makes the count-and-append atomic, the same discipline claimTill already
+   * uses for exactly this class of race.
+   */
+  await withTransaction(async (db) => {
+    const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
+    const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
+    const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
+    /* ⚠️ a CLOSED counter is kept as history and must not use up a place — closing one is how a shop makes room */
+    if (keys.filter((k) => !(k && k.till && k.till.closed_at)).length >= 20)
+      throw Object.assign(new Error('Twenty keys at most — revoke one first.'), { status: 400 });
+    await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
+      [JSON.stringify({ api_keys: keys.concat([rec]) }), entity_id]);
+  });
   return Object.assign({ key: token }, rec);
 }
 router.mint = mint;
 router.listOf = listOf;
-/** setEnrol(entity_id, jti, patch) → the key's enrolment record after the patch (null if the key is not listed). Clears the auth cache. */
+/**
+ * setEnrol(entity_id, jti, patch) → the key's enrolment record after the patch (null if the key is not listed). Clears the auth cache.
+ * ⚠️ FOR UPDATE, same reason as mint() — an owner approving a connector while another request touches the same
+ * key list must not have the whole-array write silently drop the other one's change (2026-09-23).
+ */
 router.setEnrol = async (entity_id, jti, patch) => {
-  const keys = await listOf(entity_id); const k = keys.find((x) => x && String(x.jti) === String(jti)); if (!k) return null;
-  k.enrol = Object.assign({}, k.enrol || {}, patch || {}); await save(entity_id, keys); auth.forgetKey(jti); return k.enrol;
+  let out = null;
+  await withTransaction(async (db) => {
+    const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
+    const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
+    const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
+    const k = keys.find((x) => x && String(x.jti) === String(jti));
+    if (!k) return;
+    k.enrol = Object.assign({}, k.enrol || {}, patch || {});
+    out = k.enrol;
+    await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
+      [JSON.stringify({ api_keys: keys }), entity_id]);
+  });
+  if (out) auth.forgetKey(jti);
+  return out;
 };
 
 /**
@@ -275,13 +309,23 @@ router.post('/', auth, sessionOnly, async (req, res) => {
   } catch (e) { res.status(e && e.status ? e.status : 500).json({ error: e && e.status === 400 ? 'validation' : 'Failed', message: String(e && e.message) }); }
 });
 
+/* ⚠️ FOR UPDATE, same reason as mint() and setEnrol() — a revoke racing a mint on the same list must not have
+   whichever save() lands second resurrect the key the other request just removed, or drop the one it just added. */
 router.delete('/:jti', auth, sessionOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const keys = await listOf(entity_id);
-    const left = keys.filter((k) => String(k.jti) !== String(req.params.jti));
-    if (left.length === keys.length) return res.status(404).json({ error: 'Not found' });
-    await save(entity_id, left);
+    let found = false;
+    await withTransaction(async (db) => {
+      const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
+      const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
+      const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
+      const left = keys.filter((k) => String(k.jti) !== String(req.params.jti));
+      found = left.length !== keys.length;
+      if (found) await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
+        [JSON.stringify({ api_keys: left }), entity_id]);
+    });
+    if (!found) return res.status(404).json({ error: 'Not found' });
+    auth.forgetKey(req.params.jti);
     res.json({ message: 'Key revoked', jti: req.params.jti });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
