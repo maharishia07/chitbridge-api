@@ -20330,13 +20330,25 @@ function SIGN(){
 var USIGN = { sent: false, refused: '', person: null, who: '', busy: false, usePin: false };
 
 /**
- * ⭐ WHERE THE SHOP IS. Same origin for a counter served by ChitBridge or by the shop PC, because both put the
- * cloud behind /api. Nothing here holds a URL of its own — a second place to configure is a second place to be
- * wrong. [[feedback-stay-in-the-construct]]
+ * ⚠️⚠️⚠️ THIS WAS NEVER SAME-ORIGIN ON A BROWSER COUNTER — found live, 2026-09-23, the same session that
+ * built the fix. A relative fetch('/api/entities/register') from a page served by chitbridge-web.vercel.app
+ * goes to VERCEL, not to ChitBridge's API — Vercel has no route for it, only a catch-all SPA rewrite to
+ * index.html, and a POST against that 405s before it ever reaches a server that could answer. On the shop
+ * PC this was invisible: till.js serves till.html from ITS OWN local server and has explicit routes for
+ * exactly these two paths (till.js:1082) that proxy them to the cloud — so AgentHost was never affected, and
+ * nothing about testing there would have shown a browser counter's sign-in dialog had never actually reached
+ * ChitBridge at all.
+ * ⭐ EVERY OTHER FETCH IN THIS FILE ALREADY KNEW BETTER — CloudHost.api + '/api/events/ticket', + '/api/op',
+ * and so on. Only this one, and usignEnrolIfNeeded()'s new enrol call, were still bare paths.
  */
+async function usignApiBase(){
+  return (typeof AgentHost !== 'undefined' && HOST === AgentHost) ? '' : (CloudHost.api || '');
+}
 async function usignPost(path, body){
   try {
-    var r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    /* ⚠️ fetchBy, not fetch — a real cloud round-trip with no deadline is the exact fault
+       tests/snapshot-wire.test.js exists to catch; this call site predates that guard and this fix. */
+    var r = await fetchBy(usignApiBase() + path, { method: 'POST', headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(body) });
     var j = null;
     try { j = await r.json(); } catch (_) { j = {}; }
@@ -20490,8 +20502,11 @@ async function usignEnrolIfNeeded(token){
   if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return true;
   if (paired()) return true;
   if (!token) { USIGN.refused = 'Signed in, but the shop did not send a session to pair with.'; return false; }
+  /* ⚠️ CloudHost.api, NOT a bare path — see usignPost()'s own header for why a relative /api/... never
+     reaches ChitBridge from a browser counter at all. This function only ever runs on that host (AgentHost
+     returned above), so the prefix is unconditional here. */
   var body = { name: 'Browser counter', counter: tillId() };
-  var r = await fetch('/api/till/enrol', { method: 'POST',
+  var r = await fetchBy(CloudHost.api + '/api/till/enrol', { method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
     body: JSON.stringify(body) }).then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
     .catch(function(){ return { status: 0, ok: false, body: {} }; });
@@ -20505,7 +20520,7 @@ async function usignEnrolIfNeeded(token){
     var ok = await sure('Counter ' + tillId() + ' is already open on ' + heldBy + '.\n\nTaking it over stops '
       + 'that device sending any more bills. Nothing already sent is affected.', 'Take it over', 'Counter ' + tillId());
     if (!ok) { USIGN.refused = 'Kept ' + heldBy + ' on counter ' + tillId() + '. Nothing changed here.'; return false; }
-    r = await fetch('/api/till/enrol', { method: 'POST',
+    r = await fetchBy(CloudHost.api + '/api/till/enrol', { method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify(Object.assign({}, body, { takeover: true })) })
       .then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
