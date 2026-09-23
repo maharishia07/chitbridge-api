@@ -42,13 +42,27 @@ const identityAuth = require('../lib/identity-auth');
 router.post('/register',
   [
     body('display_name').optional().trim().isLength({ min: 2, max: 255 }),
-    body('user_id').optional().trim(),   // validated by handleLib.checkRoot — one rule, not a second regex
-    body('email').trim().isLength({ min: 2 }).withMessage('Username required'),
+    /**
+     * ⚠️⚠️⚠️ [capability: sign-in] REAL BUG, FOUND LIVE 2026-09-23 — Athi: *"even if i give the wrong id, it
+     * is not verifying the user id."* For a PLAIN user ID (no '@'), lib/signin.js's ask() correctly sends it
+     * as `{user_id: '...'}` — the field /verify has ALWAYS accepted — but `email` here was REQUIRED
+     * (`.trim().isLength(...)`, no `.optional()`), so express-validator refused the request with "Username
+     * required" before the handler ever ran, for every plain-user-ID login. Confirmed by sending the exact
+     * payload the client sends. Both optional now; the manual check below (same shape /verify already uses)
+     * refuses only when NEITHER arrived.
+     * ⚠️ `user_id` ALSO means "the desired handle of a BRAND NEW signup" later in this same handler — mode:
+     * 'login' never reaches that branch, so the two meanings never collide.
+     */
+    body('user_id').optional().trim(),
+    body('email').optional().trim(),
   ],
   validate,
   async (req, res) => {
     try {
-      const input = req.body.email.trim();
+      const input = String(req.body.email || req.body.user_id || '').trim();
+      if (!input) {
+        return res.status(400).json({ error: 'Validation failed', message: 'Send your email address or your User ID.' });
+      }
 
       /**
        * ⭐⭐⭐ [capability: sign-in] A COASSIST TYPED INTO THE SAME BOX ([design: lib/identity-auth.js]).
