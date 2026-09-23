@@ -20341,7 +20341,7 @@ var USIGN = { sent: false, refused: '', person: null, who: '', busy: false, useP
  * ⭐ EVERY OTHER FETCH IN THIS FILE ALREADY KNEW BETTER — CloudHost.api + '/api/events/ticket', + '/api/op',
  * and so on. Only this one, and usignEnrolIfNeeded()'s new enrol call, were still bare paths.
  */
-async function usignApiBase(){
+function usignApiBase(){
   return (typeof AgentHost !== 'undefined' && HOST === AgentHost) ? '' : (CloudHost.api || '');
 }
 async function usignPost(path, body){
