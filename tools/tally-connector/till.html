@@ -844,6 +844,12 @@
   .hubchip.bad{border-color:var(--warn);background:var(--warn-tint);color:var(--warn);font-weight:700}
   .mbadge{flex:0 0 auto;min-width:20px;height:20px;border-radius:999px;background:var(--warn);color:var(--paper);
           display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:700;padding:0 6px}
+  /**
+   * ⭐⭐ THE PLAIN FACT A CARD ENDS IN (§7.2) — never a badge (that colour is reserved for a count that needs
+   * you, §7.3), just the current state in the same tabular figures the rest of the till uses for a number.
+   */
+  .mfig{flex:0 0 auto;color:var(--dim);font-size:.85em;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .msec.open .mfig{color:rgb(var(--mh))}
   /* ── ⭐⭐ CHECK, RANKED ([TILL-160], counter-hub §3) ──────────────────────────────────────────── */
   /* ⚠⚠ THE BADGE COUNTS THINGS, NOT COLOURS. It is amber unless something has actually stopped a sale;
      red for three set-up items is how red stops meaning anything. */
@@ -1742,17 +1748,42 @@
                      flex-direction:column;gap:6px}
   #stcanvas .m-ghost b{font-size:.8em;color:var(--dim);font-weight:700}
   #stcanvas .m-ghost i{font-style:normal;border-radius:7px;padding:7px 10px;font-size:.82em;font-weight:700}
-  /* ── ⭐ ordering the categories ([TILL-87]) ─────────────────────────────────── */
+  /* ── ⭐ ordering the categories ([TILL-87], design-handoff/B-fine-tuning/02-category-order) ────── */
   .catrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--line)}
-  .catrow:first-child{border-top:0}
+  /* ⚠️ NOT :first-child any more — .cathead now sits before the first row, so the row right after IT is
+     the one that must not double a border, not literally the first child of #catbody. */
+  .cathead + .catrow{border-top:0}
   .catrow .cn{flex:0 0 26px;color:var(--dim);font-size:.82em;font-variant-numeric:tabular-nums}
   .catrow .ct{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .catrow .cq{color:var(--dim);font-size:.84em;white-space:nowrap}
-  /* ⚠️ 40px targets: this is pressed with one finger on a counter, often more than once in a row */
-  .catrow button{min-width:40px;min-height:40px;border:1px solid var(--line);background:var(--paper);
+  .catrow .cq{color:var(--dim);font-size:.84em;white-space:nowrap;font-variant-numeric:tabular-nums}
+  /**
+   * ⚠️⚠️ 44 PX, NOT 40 (§1.9: *"the arrows are ~32 px on a screen whose own rule is 44"* — this pair had
+   * already crept down from the product's own target once; 48 on a phone, per the shared rule.
+   */
+  .catrow button{min-width:44px;min-height:44px;border:1px solid var(--line);background:var(--paper);
                  color:var(--ink);border-radius:9px;font:inherit;cursor:pointer}
+  @media (max-width:600px){ .catrow button{min-width:48px;min-height:48px} }
   .catrow button:disabled{opacity:.3;cursor:default}
+  /* ⭐ THE moved CHIP (§2 "A row") — only on a row whose place differs from where this draft started */
+  .catmoved{font-style:normal;color:rgb(var(--mh,29 27 22));background:rgba(var(--mh,29 27 22),.12);
+            border-radius:999px;font-size:.72em;font-weight:700;padding:2px 8px;margin-inline-start:8px;white-space:nowrap}
   .catnote{color:var(--dim);font-size:.85em;line-height:1.5;margin:10px 0 0}
+  /* ⭐⭐ THE LIVE STRIP (§2 "The live strip") — the real chip row, quiet past the fold, above the list it edits */
+  .catfoldhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .catwidth{font-variant-numeric:tabular-nums;color:var(--dim)}
+  /* ⚠️ SCROLLS, NEVER CLIPS (§2 "The live strip": *"shown in the quiet style, not hidden"*) — the same
+     horizontal scroll the real sell screen gives these chips, so nothing past the fold disappears here. */
+  .catstrip{flex-wrap:nowrap;margin-bottom:4px}
+  .catstrip button{pointer-events:none}
+  .catstrip button.past{opacity:.45}
+  /* ⭐ PRODUCTS, SAID ONCE (§2 "A row": *"the unit is said once at the top, never on every row"*) */
+  .cathead{display:flex;align-items:center;gap:10px;padding:2px 4px 4px;margin-top:8px}
+  .cathead span:nth-child(1){flex:0 0 26px} .cathead span:nth-child(2){flex:1}
+  .cathead span:nth-child(3){min-width:44px;text-align:end;font-size:.72em;text-transform:uppercase;letter-spacing:.03em}
+  .cathead span:nth-child(4){flex:0 0 96px}
+  /* ⭐⭐ THE FOLD LINE (§2 "The fold, drawn in the list too") — moves with the rows, drawn after the last one it covers */
+  .catfold{border-top:2px dashed var(--accent);color:var(--dim);font-size:.78em;font-weight:600;
+           padding:6px 4px 2px;margin-top:2px}
   .stgal .gn{font-weight:700;font-size:1.01em}
   .stgal .gd{color:var(--dim);font-size:.845em;line-height:1.45}
   .stgal .gt{display:flex;flex-wrap:wrap;gap:5px}
@@ -2191,8 +2222,14 @@
   .lbody .lgo,.linein .lgo{background:#1d1b16;color:#fff;border:0;opacity:1}
   .lgo span{font-size:1.3em}
   /* ── ⭐⭐ THE CAPABILITY GRID ([TILL-154]) — a row per thing, a column per line state ─────────────── */
+  /**
+   * ⚠️⚠️ NO BLACK FILLS (design-handoff, shared rule 3) — every "on" state here used to be a solid
+   * `--ink` fill (#1d1b16 in light mode: a plain black pill). `--accent`/`--on-accent` is the app's own
+   * established selected-state pair (till-pick-none, qbadge, …) — this just puts these three where those
+   * already are, rather than adding a fourth colour to the product for the same idea.
+   */
   .lviews{display:flex;gap:6px}
-  .lviews .pill.on{background:#1d1b16;color:#fff;border-color:#1d1b16}
+  .lviews .pill.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
   .lgrid{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
   .ghead,.grow{display:grid;grid-template-columns:1fr 54px 54px 54px;align-items:center}
   .ghead{background:#f1efe9;position:sticky;top:0}
@@ -2200,21 +2237,28 @@
            letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
   .ghead b span{font-size:1.5em;line-height:1}
   /* ⚠️ the column the counter is actually in, marked — so the grid also answers "where am I?" */
-  .ghead b.on{background:#1d1b16;color:#fff}
+  .ghead b.on{background:var(--accent);color:var(--on-accent)}
+  .ghead b.on .showing{display:block;font-size:.85em;font-weight:600;letter-spacing:0;text-transform:none;opacity:.85}
   .grow{border-top:1px solid var(--line)}
   .grow > span{padding:9px 10px;font-size:.93em;line-height:1.3}
+  .grow .growname{display:flex;align-items:center;gap:8px}
+  .grow .gi{flex:0 0 auto;display:inline-flex;color:var(--dim)}
   .grow b{display:grid;place-items:center;height:100%}
-  .grow b.on{background:rgba(0,0,0,.05)}
+  .grow b.on{background:rgba(var(--mh,29 27 22),.07)}
   .m{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;font-style:normal;font-size:.95em}
   .m.y{background:#e7f2ea;color:#1b6b3a} .m.w{background:#fdf0d5;color:#8a6a12}
   .m.n{background:#eceae4;color:#6b6660}
   .gkey{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:.85em;color:var(--dim)}
   .gkey span{display:flex;align-items:center;gap:5px}
+  /* ⭐⭐ THE BAND HEAD (§5 "Bands") — a count that never repeats on the rows under it, and one line why */
+  .gband{padding:10px 10px 6px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;background:var(--panel)}
+  .gband b{font-size:.88em} .gband>span{color:var(--dim);font-size:.82em}
+  .gband i{flex:1 1 100%;font-style:normal;color:var(--dim);font-size:.82em}
   /* ⭐ the simulator, where the grid it changes can be watched ([TILL-156]) */
   .gtry{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:7px}
   .gtry > div:nth-child(2){display:flex;gap:6px;flex-wrap:wrap}
   .gtry .pill{min-height:40px}
-  .gtry .pill.on{background:#1d1b16;color:#fff;border-color:#1d1b16}
+  .gtry .pill.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
   /* ⭐ the network symbol, crossed — drawn, so it is the same bars the counter shows when it HAS a line */
   .noico{position:relative;display:inline-block;line-height:1}
   /* ── ⭐⭐ THE HEADER BAR ([TILL-159], design-handoff/counter-hub §5) ─────────────────────────────── */
@@ -2231,7 +2275,13 @@
   .hubwho.person .hubav{background:#dfe9f5;color:#1f3f66}
   /* ⚠️ the shortcut sits BESIDE the label, in mono — not inside it (§6.4) */
   .hubwho kbd{font:600 .75em ui-monospace,Menlo,Consolas,monospace;opacity:.6;padding:0 2px}
-  .noico::after{content:"";position:absolute;left:-6%;right:-6%;top:46%;height:12%;background:#c0392b;
+  /**
+   * ⚠️⚠️ GREY, NEVER RED (design-handoff corrections §9: *"a shop with no line is not a broken shop"*, and
+   * §1.9 names this exact strike as one of the two places the earlier drafts disagreed with themselves).
+   * The bars it crosses are already `--dim`, so the strike takes the same colour rather than becoming the
+   * one red mark on an otherwise calm symbol.
+   */
+  .noico::after{content:"";position:absolute;left:-6%;right:-6%;top:46%;height:12%;background:var(--dim);
     border-radius:2px;transform:rotate(-38deg);box-shadow:0 0 0 1.5px rgba(255,255,255,.75)}
   /* ⭐⭐ THE FLASH ([TILL-157]) — a symbol, three words and one button, where the eye already is. It does
      not fade on a timer: somebody who looked away must still find it. */
@@ -5388,16 +5438,48 @@ var FILTER = { offer:false, cat:null, off:false, job:null }, OFFER_STAMP = null;
  * dialog and nothing on the screen behind it. Cancel really cancels.
  */
 var CATDRAFT = null;
+/* ⭐ WHERE EACH ROW STOOD WHEN THE DIALOG OPENED (design-handoff §2 "moved" chip) — a row moved is a row
+   whose place today differs from its place when this draft started, never from some other list. */
+var CATDRAFT_BASE = null;
 function catOrderOpen(){
   CATDRAFT = catsRanked().map(function(c){ return c.name; });
+  CATDRAFT_BASE = CATDRAFT.slice();
   catOrderPaint();
   var d = document.getElementById('catdlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
 }
 function catOrderClose(){
   CATDRAFT = null;
+  CATDRAFT_BASE = null;
   var d = document.getElementById('catdlg');
   if (d && d.open) { try { d.close(); } catch (_) {} }
+}
+/**
+ * ── ⭐⭐ THE FOLD IS MEASURED, NEVER GUESSED (design-handoff §2 "The fold") ───────────────────────
+ *
+ * A hidden clone of the REAL chip strip, at the REAL window width — not the dialog's own (often narrower)
+ * width — one row tall, overflow hidden. Chips are appended one at a time and the count stops the moment
+ * the strip's scrollWidth exceeds what one row can show, which is exactly "what the hand reaches before a
+ * swipe" and nothing this function invents.
+ * ⚠️ IT COSTS ONE REFLOW, ONCE, RIGHT BEFORE THE PAINT THAT NEEDS IT — never on a timer, never per keystroke.
+ */
+function catFoldFit(names){
+  try {
+    var probe = document.createElement('div');
+    probe.className = 'chips';
+    probe.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;white-space:nowrap;'
+      + 'overflow:hidden;width:' + (window.innerWidth || 390) + 'px';
+    document.body.appendChild(probe);
+    var fits = names.length;
+    for (var i = 0; i < names.length; i++) {
+      var b = document.createElement('button');
+      b.textContent = names[i];
+      probe.appendChild(b);
+      if (probe.scrollWidth > probe.clientWidth) { fits = i; break; }
+    }
+    document.body.removeChild(probe);
+    return Math.max(0, fits);
+  } catch (_) { return names.length; }
 }
 function catMove(i, by){
   if (!CATDRAFT) return;
@@ -5413,6 +5495,11 @@ function catOrderReset(){
   try { paintChips(); paintQuick(); } catch (_) {}
   toastLine('Back to most-used first.');
 }
+function catMovedCount(){
+  if (!CATDRAFT || !CATDRAFT_BASE) return 0;
+  var was = {}; CATDRAFT_BASE.forEach(function(c, i){ was[c] = i; });
+  return CATDRAFT.filter(function(c, i){ return was[c] !== i; }).length;
+}
 function catOrderSave(){
   var d = CATDRAFT || [];
   catOrderSet(d);
@@ -5425,30 +5512,52 @@ function catOrderPaint(){
   var box = document.getElementById('catbody'); if (!box || !CATDRAFT) return;
   var n = {};
   catsRanked().forEach(function(c){ n[c.name] = c.n; });
+  /**
+   * ⭐ THE SAVE BUTTON SAYS HOW MUCH IT IS ABOUT TO SAVE (§2 "The buttons"): quiet with nothing changed,
+   * "· N moved" the moment a row's place differs from where this draft started.
+   */
+  var movedN = catMovedCount();
+  var saveBtn = document.querySelector('[data-testid="till-catorder-save"]');
+  if (saveBtn) saveBtn.textContent = 'Save the order' + (movedN ? ' · ' + movedN + ' moved' : '');
   if (!CATDRAFT.length) {
     box.innerHTML = '<p class="catnote">This counter has no categories yet — they come from the shop with the'
       + ' products. Read the shop again once its products carry a category.</p>';
     return;
   }
-  box.innerHTML = CATDRAFT.map(function(c, i){
-    return '<div class="catrow" data-testid="till-catrow-' + i + '">'
-      + '<span class="cn">' + (i + 1) + '</span>'
-      + '<span class="ct">' + esc(c) + '</span>'
-      + '<span class="cq">' + (n[c] || 0) + '</span>'
-      + '<button data-testid="till-catup-' + i + '" aria-label="Move ' + esc(c) + ' up"'
-      + (i === 0 ? ' disabled' : '') + ' onclick="catMove(' + i + ',-1)">\u2191</button>'
-      + '<button data-testid="till-catdown-' + i + '" aria-label="Move ' + esc(c) + ' down"'
-      + (i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="catMove(' + i + ',1)">\u2193</button>'
-      + '</div>';
-  }).join('')
+  var was = {}; (CATDRAFT_BASE || []).forEach(function(c, i){ was[c] = i; });
+  var fold = catFoldFit(CATDRAFT);
+  box.innerHTML =
+      /**
+       * ⭐⭐ THE LIVE STRIP (§2 "The live strip") — the real chip markup, at the real window width, so the
+       * effect of a move is seen here rather than found later at the counter. Chips past the fold keep the
+       * quiet style — not hidden, only later.
+       */
+      '<div class="u catfoldhead">On the sell screen <span class="catwidth">' + (window.innerWidth || 0) + ' px</span></div>'
+    + '<div class="chips catstrip" data-testid="till-catorder-strip">'
+      + CATDRAFT.map(function(c, i){ return '<button' + (i >= fold ? ' class="past"' : '') + '>' + esc(c) + '</button>'; }).join('')
+    + '</div>'
+    + '<div class="u">' + fold + ' reach without a swipe. Everything past the line is a scroll.</div>'
+    + '<div class="cathead" data-testid="till-catorder-head"><span></span><span></span><span class="u">Products</span><span></span></div>'
+    + CATDRAFT.map(function(c, i){
+        /* ⚠️ THE FOLD LINE MOVES WITH THE ROWS — drawn after the last row it covers, never a fixed row number. */
+        var foldLine = (i === fold && i > 0 && i < CATDRAFT.length)
+          ? '<div class="catfold" data-testid="till-catorder-fold">↑ These ' + fold + ' reach without a swipe</div>' : '';
+        var moved = was[c] !== undefined && was[c] !== i;
+        return foldLine + '<div class="catrow" data-testid="till-catrow-' + i + '">'
+          + '<span class="cn">' + (i + 1) + '</span>'
+          + '<span class="ct">' + esc(c) + (moved ? '<i class="catmoved" data-testid="till-catrow-moved-' + i + '">moved</i>' : '') + '</span>'
+          + '<span class="cq">' + (n[c] || 0) + '</span>'
+          + '<button data-testid="till-catup-' + i + '" aria-label="Move ' + esc(c) + ' up"'
+          + (i === 0 ? ' disabled' : '') + ' onclick="catMove(' + i + ',-1)">↑</button>'
+          + '<button data-testid="till-catdown-' + i + '" aria-label="Move ' + esc(c) + ' down"'
+          + (i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="catMove(' + i + ',1)">↓</button>'
+          + '</div>';
+      }).join('')
     /**
-     * ⚠️⚠️ SAY WHERE IT IS KEPT, UNPROMPTED. The order belongs to the MENU and ought to reach every
-     * counter; it needs a catalogue field to do that. Until then it is this device's copy, and a shopkeeper
-     * who sets it here and finds counter 2 unchanged deserves to have been told, not surprised.
-     * [[feedback-state-rls-status]]
+     * ⭐ NAMES THE COUNTERS, NOTHING ELSE (§3 "The footnote") — the old line explained an unbuilt catalogue
+     * field to a shopkeeper; §1.8 names that as one of the eight things wrong with this screen today.
      */
-    + '<p class="catnote">Kept on this counter. A second counter keeps its own order until you set it there'
-    + ' too — the shop-wide one needs a field in the catalogue, which is not built yet.</p>';
+    + '<p class="catnote">Counter 1 only. Counter 2 keeps its own order.</p>';
 }
 function byCatOn(){ return ls.get('cb_till_bycat', '') === '1'; }
 function byCatToggle(){ ls.set('cb_till_bycat', byCatOn() ? '' : '1'); paintQuick(); }
@@ -6213,9 +6322,16 @@ var TILL_MENU = [
    * wrong. It is checked once and rarely changes. Opening the day is a morning routine, so it sits under it
    * with its own button. The picture left the head — decoration was pushing seven fields below the fold.
    */
-  { id: 'shopdet', icon: '🏪', title: 'The shop',      sum: 'name · address · tax · what prints on a bill',
+  /**
+   * ⚠️ THREE NOUNS, NEVER FOUR (design-handoff §7.4). Both of these carried four — 'name · address · tax ·
+   * what prints on a bill' and 'who is on · the float · the printer · how old the prices are' — and the
+   * correction is explicit: "if it needs four, it is two cards." Neither actually needs a second card; each
+   * had one noun that was really a restatement of another (address is part of what prints; the printer is
+   * upkeep, not a start-of-day fact) and loses that one instead.
+   */
+  { id: 'shopdet', icon: '🏪', title: 'The shop',      sum: 'name · tax · what prints on a bill',
     shopdet: true },
-  { id: 'day',     icon: '🪔', title: 'Start the day', sum: 'who is on · the float · the printer · how old the prices are',
+  { id: 'day',     icon: '🪔', title: 'Start the day', sum: 'who is on · the float · how old the prices are',
     day: true },
   /**
    * ⭐⭐ WHAT TODAY HAS DONE (Athi, 2026-09-18: *"need to think MIS for the day etc in the menu, total sale and a
@@ -6236,7 +6352,8 @@ var TILL_MENU = [
    * ⭐ AND "Today's sales" WAS AN ORPHAN — in TILL_OPS and in no section at all, so the hub could not reach
    * the day's report. [[feedback-whitelist-drops-silently]]
    */
-  { id: 'today',   icon: '📊', title: 'How today is going', sum: 'the sale so far · what moved · the bills · the day\u2019s table',
+  /* ⚠️ THREE NOUNS (§7.4) — 'the day’s table' dropped: it is the same fact as 'the bills', one click deeper. */
+  { id: 'today',   icon: '📊', title: 'How today is going', sum: 'the sale so far · what moved · the bills',
     today: true, ops: ['bills', 'dayreport'] },
   /**
    * ⭐⭐ ALERTS SITS THIRD, BETWEEN WHAT THE DAY HAS DONE AND THE DOCUMENTS IT PRODUCED (hub spec §2). The order
@@ -6272,7 +6389,8 @@ var TILL_MENU = [
    * it governs, the way every other section here is — Bills, Shop & prices, This counter — and the way
    * straight to the preview sits in the heading rather than one fold further in.
    */
-  { id: 'look',    icon: '🖥️', title: 'Screen',        sum: 'size · colours · room · what shows',
+  /* ⚠️ THREE NOUNS (§7.4) — 'room' dropped: it is the panel-sizing preset, one tap into this same dialog. */
+  { id: 'look',    icon: '🖥️', title: 'Screen',        sum: 'size · colours · what shows',
     look: true, link: { label: 'Preview', fn: 'styleOpen', why: 'see the whole screen before anything changes' } },
   /* ⚠️ 'shopdet' and 'counter' are gone ([TILL-99]): the shop's particulars fold into the morning panel,
      where somebody opening the day is already looking, and the counter's own upkeep is 'Keep it running'. */
@@ -6284,6 +6402,52 @@ var TILL_MENU = [
    */
   { id: 'care',    icon: '🔧',  title: 'Repair and close', sum: 'close the counter · clear and reload',  ops: ['close', 'coldstart-menu'] },
 ];
+/**
+ * ── ⭐⭐ ONE ICON FAMILY FOR THE PANEL'S CARDS (design-handoff/B-fine-tuning/05-headers §7.1) ────────────
+ *
+ * ⚠️⚠️ NINE LITTLE PICTURES IN NINE STYLES was the actual state: 🏪🪔📊📈🩺🔄📣🖥️🔧 — an emoji font, so each
+ * one carries its own weight, its own colour and (on some platforms) its own art style, and none of it is
+ * `currentColor` so the open/closed tint (--mh) never reached them. §7.1 asks for one grid, one stroke, one
+ * weight, on a tinted square — which an emoji literally cannot be, whatever font renders it.
+ * ⭐ 24×24, stroke 1.8, round caps — drawn once here, coloured by CSS exactly like the tinted square already
+ * around them (.mrow .mi's background is rgba(var(--mh),…) — the icon just needs to inherit that same var
+ * through `currentColor`, which svg does for free).
+ */
+var MENU_ICON = {
+  shopdet: '<path d="M3 9l1-5h16l1 5"/><path d="M3 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 9v9a1 1 0 0 0 1 1h3v-5h6v5h3a1 1 0 0 0 1-1V9"/>',
+  day:     '<path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.2" y1="10.2" x2="5.6" y2="11.6"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.4" y1="11.6" x2="19.8" y2="10.2"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="8 6 12 2 16 6"/>',
+  today:   '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  trend:   '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  alerts:  '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  upkeep:  '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>',
+  show:    '<path d="M2 16.1A5 5 0 0 1 5.9 20"/><path d="M2 12.05A9 9 0 0 1 9.95 20"/><line x1="2" y1="20" x2="2.01" y2="20"/><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6"/>',
+  look:    '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+  care:    '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+};
+function menuIcon(id){
+  var d = MENU_ICON[id]; if (!d) return '';
+  return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"'
+       + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+}
+/**
+ * ── ⭐⭐ EVERY CARD ENDS IN A NUMBER (§7.2) ────────────────────────────────────────────────────────────
+ *
+ * ⚠️ "A menu of nouns tells you nothing you did not already know" — before this, every one of these nine
+ * rows named its own contents in words (the subtitle) and NOTHING said what state that content is actually
+ * in right now. The figure is that fact, read from the same store its own panel already reads: never a
+ * second guess of a number the section body computes some other way.
+ * ⚠️ NO NUMBER IS INVENTED for a section that has none — trend/upkeep/show/look/care answer with '' rather
+ * than force a count where the fact is a destination, not a status.
+ */
+function menuFig(id){
+  try {
+    if (id === 'shopdet') { var g = (S && S.shop && S.shop.gstin) || ''; return g ? 'GSTIN' : 'no GSTIN'; }
+    if (id === 'day')     { return (typeof WHO !== 'undefined' && WHO && WHO.name) ? 'open' : 'not open'; }
+    if (id === 'today')   { var bills = TODAY_BILLS || []; var t = bills.reduce(function(a, b){ return a + (Number(b.total) || 0); }, 0); return money(t); }
+    if (id === 'alerts')  { return String(alertCount()); }
+  } catch (_) {}
+  return '';
+}
 /* ⭐ the day panel opens the menu until the day has been opened; after that Bills leads, as §4 says */
 var MENU_OPEN_SEC = null;
 /**
@@ -7757,8 +7921,13 @@ function paintMenu(){
       + ' style="--mh:' + menuHue(sec.id) + '" data-testid="till-msec-' + sec.id + '">'
       + '<button class="mrow" aria-expanded="' + (open ? 'true' : 'false') + '" data-testid="till-msec-btn-' + sec.id + '"'
       + ' onclick="menuSection(\'' + sec.id + '\')">'
-      + '<span class="mi">' + sec.icon + '</span>'
+      + '<span class="mi">' + menuIcon(sec.id) + '</span>'
       + '<span class="mt"><b>' + esc(sec.title) + '</b><i>' + esc(sec.sum) + '</i></span>'
+      /**
+       * ⭐⭐ EVERY CARD ENDS IN A NUMBER (§7.2) — the plain fact this section is CURRENTLY in, never a second
+       * guess of the count a badge already carries (alerts keeps its badge below, not both).
+       */
+      + (!sec.alerts && menuFig(sec.id) ? '<span class="mfig" data-testid="till-msec-fig-' + sec.id + '">' + esc(menuFig(sec.id)) + '</span>' : '')
       /* ⭐ the badge equals the number of rows the section holds — alertCount() is the same call the body makes,
          so a badge saying 3 over a section showing 2 is not possible. */
       + (sec.alerts && alertCount()
@@ -16045,15 +16214,59 @@ function lineTile(t){
  * month and nobody would find out. [[feedback-silence-is-the-bug]] [[feedback-stay-in-the-construct]]
  */
 var LINE_STATES = [
-  { k:'good',   ico:'📶', say:'Line' },
-  { k:'patchy', ico:'∿',       say:'Weak' },
+  { k:'good',   ico:'📶', say:'Good line' },
+  { k:'patchy', ico:'∿',       say:'Weak line' },
   /* ⭐ the same slashed bars the flash uses — one picture for one thing ([TILL-158]) */
-  { k:'none',   ico:'<span class="noico">📶</span>', say:'None' },
+  { k:'none',   ico:'<span class="noico">📶</span>', say:'No line' },
+];
+/**
+ * ── ⭐⭐ ONE ICON PER ROW, THE SAME ONE THE REST OF THE TILL USES (design-handoff §5 "Rows and their icons")
+ * ─────────────────────────────────────────────────────────────────────────────────────────────
+ * 24×24, stroke 1.8, round caps, one weight, currentColor — the same family as menuIcon(). Nineteen plain
+ * text rows read one at a time; a picture is found before the word beside it is.
+ */
+var WATCH_ICON = {
+  sell:  '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+  print: '<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+  money: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
+  save:  '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+  nos:   '<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
+  keys:  '<circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6"/><path d="M15.5 7.5l3 3L22 7l-3-3"/>',
+  park:  '<circle cx="12" cy="12" r="10"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>',
+  send:  '<path d="M8 17l4-4 4 4"/><line x1="12" y1="13" x2="12" y2="21"/><path d="M20.4 18a4.5 4.5 0 0 0-1.9-8.6 6 6 0 0 0-11.6 2.1A4.5 4.5 0 0 0 7.5 20h11.9"/>',
+  marks: '<path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3.17H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.58a2 2 0 0 0 2.82 0l4.6-4.6a2 2 0 0 0 0-2.82z"/><line x1="7.5" y1="7.5" x2="7.51" y2="7.5"/>',
+  cust:  '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/>',
+  offer: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  cat:   '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+  hist:  '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  close: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  books: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  rept:  '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  who:   '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  say:   '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
+  bell:  '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+};
+function watchIcon(id){
+  var d = WATCH_ICON[id]; if (!d) return '';
+  return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"'
+       + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+}
+/**
+ * ── ⭐⭐ THREE BANDS, EACH WITH A COUNT AND A CONTEXT LINE (§5 "Bands") ────────────────────────────────
+ * Nineteen identical rows were the actual complaint (§1.4) — the WATCH registry already carries the right
+ * shape (7 normal / 6 waits / 6 needs_line, corrections §5), this just names each group once instead of
+ * making every row explain itself.
+ */
+var WATCH_BANDS = [
+  { bucket:'normal',     label:'Carries on, whatever happens', context:'The shop can trade all day on these alone.' },
+  { bucket:'waits',      label:'Works, and waits',             context:null /* built live from waitingNow() — see paintGrid */ },
+  { bucket:'needs_line', label:'Needs the line — do this instead', context:'Every one of these carries its own way round it.' },
 ];
 function lineMatrix(){
   var base = healthReading();
   return WATCH.map(function(w){
     return {
+      id: w.id,
       name: w.name,
       bucket: w.bucket,
       cells: LINE_STATES.map(function(s){
@@ -16066,15 +16279,27 @@ function lineMatrix(){
   });
 }
 
-/** ⭐ tick, wait or stop — three marks, no words needed to tell them apart */
+/**
+ * ⭐ THREE MARKS, NO WORDS NEEDED TO TELL THEM APART.
+ * ⚠️⚠️ NO HOURGLASS AND NO ✕ (§5 legend: *"Waiting is the designed behaviour and a cross reads as a fault"*)
+ * — an hourglass on 'waits' and a cross on 'needs_line' both said "something is wrong" about two things that
+ * are working exactly as designed. ◔ still reads as "partway, comes later"; – reads as "not this column",
+ * neither implies a fault.
+ */
 function lineMark(ok, bucket){
   if (ok) return '<i class="m y">✓</i>';
-  return bucket === 'waits' ? '<i class="m w">⏳</i>' : '<i class="m n">✕</i>';
+  return bucket === 'waits' ? '<i class="m w">◔</i>' : '<i class="m n">–</i>';
 }
 
-function paintGrid(into){
+async function paintGrid(into){
   var box = into || document.getElementById('linebody'); if (!box) return;
   var rows = lineMatrix(), now = lineState().state;
+  /* ⭐ the waits band's context line is live data, not a sample — the same call the line dialog's own face uses */
+  var w = await waitingNow();
+  var oldestMin = w.oldest ? Math.max(0, Math.round((Date.now() - new Date(w.oldest).getTime()) / 60000)) : null;
+  var waitCtx = w.total
+    ? (w.total + ' waiting here' + (oldestMin != null ? ' · oldest ' + oldestMin + ' min' : '') + ' · they go by themselves')
+    : 'Nothing waiting right now — they go by themselves the moment there is.';
   box.innerHTML =
       /**
        * ⭐⭐⭐ AND YOU CAN TRY IT, RIGHT HERE ([TILL-156]). Athi: *"bring that panel with testing capability."*
@@ -16089,25 +16314,48 @@ function paintGrid(into){
             + ' onclick="netSet(\'' + k + '\')">' + esc(NETS[k].label) + '</button>';
         }).join('')
       + '</div><div class="u">the counter really behaves this way while it is set — nothing in the grid is pretend</div></div>'
+      /**
+       * ⭐⭐ THE LEGEND GOES FIRST (design-handoff §5, §1.6: *"the legend is at the bottom, after the thing it
+       * explains"* — named there as one of the things wrong today). Three marks, read once, before the reader
+       * meets nineteen of them.
+       */
+      + '<div class="gkey" data-testid="till-line-legend"><span><i class="m y">✓</i>works</span>'
+      + '<span><i class="m w">◔</i>works, then waits here</span>'
+      + '<span><i class="m n">–</i>needs the line</span></div>'
       + '<div class="lgrid" data-testid="till-line-grid">'
+      /**
+       * ⭐ THE MATCHING HEAD IS RINGED *AND* SAYS SO (§5 "Column heads": *"ringed and carries a showing
+       * tag"*) — a ring alone is colour and position carrying the whole answer, which §4 rule 9 rules out.
+       */
       + '<div class="ghead"><span></span>'
       + LINE_STATES.map(function(s){
-          return '<b' + (s.k === now ? ' class="on"' : '') + '><span>' + s.ico + '</span>' + esc(s.say) + '</b>';
+          var on = s.k === now;
+          return '<b' + (on ? ' class="on"' : '') + '><span>' + s.ico + '</span>' + esc(s.say)
+               + (on ? '<i class="showing">showing</i>' : '') + '</b>';
         }).join('')
       + '</div>'
-      + rows.map(function(r){
-          return '<div class="grow"><span>' + esc(r.name) + '</span>'
-            + r.cells.map(function(ok, i){
-                return '<b' + (LINE_STATES[i].k === now ? ' class="on"' : '') + '>'
-                  + lineMark(ok, r.bucket) + '</b>';
-              }).join('')
-            + '</div>';
+      /**
+       * ⭐⭐ NINETEEN ROWS BECOME THREE BANDS (§5 "Bands") — each with its own count and one line of context,
+       * so the count lives on the band and is never repeated on the rows under it.
+       */
+      + WATCH_BANDS.map(function(band){
+          var here = rows.filter(function(r){ return r.bucket === band.bucket; });
+          if (!here.length) return '';
+          return '<div class="gband" data-testid="till-line-band-' + band.bucket + '">'
+              + '<b>' + esc(band.label) + '</b><span>' + here.length + ' thing' + (here.length === 1 ? '' : 's') + '</span>'
+              + '<i>' + esc(band.context || waitCtx) + '</i></div>'
+            + here.map(function(r){
+                /* ⚠️ icon + name share the ONE name column — .grow's grid is 1fr + three 54px state cells,
+                   so a second grid item here would shove every state cell one column out of place. */
+                return '<div class="grow"><span class="growname"><span class="gi">' + watchIcon(r.id) + '</span>' + esc(r.name) + '</span>'
+                  + r.cells.map(function(ok, i){
+                      return '<b' + (LINE_STATES[i].k === now ? ' class="on"' : '') + '>'
+                        + lineMark(ok, r.bucket) + '</b>';
+                    }).join('')
+                  + '</div>';
+              }).join('');
         }).join('')
-      + '</div>'
-      /* ⚠️ three marks, said once, at the bottom where it does not get in the way of the grid */
-      + '<div class="gkey"><span><i class="m y">✓</i>works</span>'
-      + '<span><i class="m w">⏳</i>waits here</span>'
-      + '<span><i class="m n">✕</i>stops</span></div>';
+      + '</div>';
 }
 
 /** ⚠️ it paints wherever it is asked ([TILL-153]) — the dialog, or the slot under the line switch */
