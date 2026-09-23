@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1080px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column;">
+
+  <!-- header -->
+  <div style="padding: 20px 28px 16px; border-bottom: 1px solid #E6E0D2; display: flex; align-items: center; gap: 14px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em;">Screen style</span>
+      <span style="font-size: 15px; color: #5E594D;">Counter 1 · horizontal terminal · 1600 × 900 · you are changing only this counter</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <span style="height: 34px; padding: 0 13px; border-radius: 17px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px;">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #E0A020;"></span>4 changes not applied yet
+    </span>
+    <button style="height: 40px; padding: 0 15px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 14px; font-weight: 600; cursor: pointer;">Close · Esc</button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 560px 1fr;">
+
+    <!-- settings -->
+    <div style="box-sizing: border-box; padding: 18px 24px; border-right: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
+
+      <!-- preset -->
+      <div style="padding: 14px 16px; border-radius: 16px; background: #F3EFE6; border: 1px solid #E6E0D2; display: flex; align-items: center; gap: 13px;">
+        <span style="width: 62px; height: 40px; border-radius: 7px; background: #FFFFFF; border: 1px solid #DDD6C6; position: relative; overflow: hidden; flex-shrink: 0;">
+          <span style="position: absolute; left: 3px; top: 3px; right: 3px; height: 6px; border-radius: 2px; background: #E6E0D2;"></span>
+          <span style="position: absolute; left: 3px; top: 12px; width: 34px; bottom: 3px; border-radius: 3px; background: #F0ECE2;"></span>
+          <span style="position: absolute; right: 3px; top: 12px; width: 20px; bottom: 3px; border-radius: 3px; background: #E8F4ED;"></span>
+        </span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">STARTING FROM</span>
+          <span style="font-size: 17px; font-weight: 700;">Counter classic · light</span>
+        </span>
+        <button style="height: 40px; padding: 0 15px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer;">See all 9 ▸</button>
+      </div>
+
+      <!-- setting rows -->
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="6">
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <span style="width: 96px; flex-shrink: 0; padding-top: 8px; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 14px; font-weight: 700;">{{g.name}}</span>
+            <span style="font-size: 12px; color: #8A8374; line-height: 1.3;">{{g.hint}}</span>
+          </span>
+          <span style="flex-grow: 1; display: flex; flex-wrap: wrap; gap: 7px;">
+            <sc-for list="{{g.options}}" as="o" hint-placeholder-count="5">
+              <span style="height: 36px; padding: 0 13px; border-radius: 10px; background: {{o.bg}}; border: {{o.border}}; color: {{o.ink}}; font-size: 14px; font-weight: {{o.weight}}; display: flex; align-items: center; gap: 7px; cursor: pointer;">
+                <span style="{{o.swStyle}}"></span>
+                {{o.label}}
+              </span>
+            </sc-for>
+          </span>
+        </div>
+      </sc-for>
+
+      <div style="margin-top: auto; padding: 13px 15px; border-radius: 13px; background: #FDF3EE; border: 1px solid #F1C7AE; color: #6E2A0C; font-size: 13px; line-height: 1.5;">
+        <b>Photos cost something.</b> On this counter they add about 18 MB of pictures to keep offline and roughly 0.4 s to a cold start. Quick keys drop from 8 to 6 in a row.
+      </div>
+    </div>
+
+    <!-- preview -->
+    <div style="box-sizing: border-box; padding: 18px 24px; background: #F3EFE6; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE WHOLE SCREEN, AS IT WILL LOOK</span>
+        <div style="flex-grow: 1;"></div>
+        <span style="display: flex; padding: 3px; border-radius: 11px; background: #E6E0D2; gap: 3px;">
+          <sc-for list="{{devices}}" as="d" hint-placeholder-count="3">
+            <span style="height: 32px; padding: 0 13px; border-radius: 9px; background: {{d.bg}}; color: {{d.ink}}; font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer;">{{d.label}}</span>
+          </sc-for>
+        </span>
+        <span style="display: flex; padding: 3px; border-radius: 11px; background: #E6E0D2; gap: 3px;">
+          <span style="height: 32px; padding: 0 13px; border-radius: 9px; background: transparent; color: #5E594D; font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer;">Now</span>
+          <span style="height: 32px; padding: 0 13px; border-radius: 9px; background: #FFFFFF; color: #1D1B16; font-size: 13px; font-weight: 700; display: flex; align-items: center; cursor: pointer;">After</span>
+        </span>
+        <button style="height: 38px; padding: 0 14px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 7px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-8 8"></path><path d="M3 21l8-8"></path></svg>
+          Full size
+        </button>
+      </div>
+
+      <!-- the miniature -->
+      <div style="border-radius: 16px; background: #1D1B16; padding: 12px 12px 26px; position: relative;">
+        <div style="border-radius: 8px; overflow: hidden; background: #FCFAF5; height: 560px; display: flex; flex-direction: column; font-size: 10px;">
+
+          <!-- mini header -->
+          <div style="padding: 8px 10px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid #E6E0D2;">
+            <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 13px; font-weight: 800;">Mayur Bhavan</span>
+            <span style="height: 22px; flex-grow: 1; border-radius: 6px; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; padding: 0 8px; color: #A8A295; font-size: 10px;">Search or scan a product</span>
+            <span style="height: 20px; padding: 0 8px; border-radius: 10px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 9px; font-weight: 700; display: flex; align-items: center;">online</span>
+            <span style="height: 20px; padding: 0 8px; border-radius: 10px; background: #F3EFE6; color: #5E594D; font-size: 9px; font-weight: 600; display: flex; align-items: center;">C1 · Ravi K</span>
+          </div>
+
+          <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1fr 300px;">
+
+            <!-- left: quick keys -->
+            <div style="padding: 9px 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <sc-for list="{{miniGroups}}" as="m" hint-placeholder-count="4">
+                  <span style="height: 22px; padding: 0 9px; border-radius: 11px; background: {{m.bg}}; border: 1px solid {{m.line}}; color: {{m.ink}}; font-size: 10px; font-weight: 600; display: flex; align-items: center; gap: 5px;">{{m.name}} <b style="font-size: 9px;">{{m.n}}</b></span>
+                </sc-for>
+                <div style="flex-grow: 1;"></div>
+                <span style="height: 22px; padding: 0 9px; border-radius: 7px; background: #1D1B16; color: #FCFAF5; font-size: 10px; font-weight: 600; display: flex; align-items: center;">Quick keys ▾</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px;">
+                <sc-for list="{{tiles}}" as="t" hint-placeholder-count="18">
+                  <span style="height: 92px; border-radius: 9px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; overflow: hidden;">
+                    <span style="height: 46px; background: {{t.photo}}; display: flex; align-items: center; justify-content: center; color: {{t.ink}}; font-size: 12px; font-weight: 800;">{{t.initials}}</span>
+                    <span style="flex-grow: 1; padding: 5px 6px; display: flex; flex-direction: column; gap: 2px;">
+                      <span style="font-size: 10px; font-weight: 600; line-height: 1.15;">{{t.name}}</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #5E594D;">{{t.price}}</span>
+                    </span>
+                  </span>
+                </sc-for>
+              </div>
+
+              <div style="margin-top: auto; height: 26px; border-radius: 7px; background: #F3EFE6; border: 1px solid #E6E0D2; display: flex; align-items: center; padding: 0 9px; gap: 12px; color: #5E594D; font-size: 9px;">
+                <span><b style="font-family: 'IBM Plex Mono', monospace;">F2</b> quick keys</span>
+                <span><b style="font-family: 'IBM Plex Mono', monospace;">F4</b> customer</span>
+                <span><b style="font-family: 'IBM Plex Mono', monospace;">F9</b> pay</span>
+                <span><b style="font-family: 'IBM Plex Mono', monospace;">Esc</b> clear</span>
+              </div>
+            </div>
+
+            <!-- right: bill -->
+            <div style="border-left: 1px solid #E6E0D2; background: #F5F1E7; padding: 9px 10px; display: flex; flex-direction: column; gap: 7px;">
+              <div style="display: flex; gap: 6px;">
+                <span style="flex-grow: 1; height: 22px; border-radius: 6px; background: #FFFFFF; border: 1px solid #CFC7B5; display: flex; align-items: center; padding: 0 7px; color: #A8A295; font-size: 9px;">Customer</span>
+                <span style="width: 86px; height: 22px; border-radius: 6px; background: #FFFFFF; border: 1px solid #CFC7B5; display: flex; align-items: center; padding: 0 7px; color: #A8A295; font-size: 9px;">Phone</span>
+              </div>
+              <div style="border-radius: 8px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+                <sc-for list="{{bill}}" as="b" hint-placeholder-count="3">
+                  <span style="height: 30px; padding: 0 8px; border-bottom: 1px solid #F0ECE2; display: flex; align-items: center; gap: 7px;">
+                    <span style="flex-grow: 1; font-size: 10px; font-weight: 600;">{{b.name}}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #8A8374;">{{b.qty}}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px;">{{b.amt}}</span>
+                  </span>
+                </sc-for>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 6px;">
+                <span style="font-size: 10px; color: #5E594D;">Saved ₹144.75</span>
+                <div style="flex-grow: 1;"></div>
+                <span style="font-size: 10px; color: #5E594D;">TOTAL</span>
+                <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800;">₹2,750.25</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">
+                <span style="height: 30px; border-radius: 7px; background: #FFFFFF; border: 1px solid #CFC7B5; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center;">Cash</span>
+                <span style="height: 30px; border-radius: 7px; background: #FFFFFF; border: 1px solid #CFC7B5; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center;">Card</span>
+                <span style="height: 30px; border-radius: 7px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">UPI</span>
+              </div>
+              <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px;">
+                <span style="height: 34px; border-radius: 8px; background: #16693F; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Save &amp; print · F9</span>
+                <span style="font-size: 9px; color: #8A8374; text-align: center;">all bills sent · last at 3:41 pm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span style="position: absolute; left: 0; right: 0; bottom: 7px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A8A295;">real screen 1600 × 900 · shown at 59%</span>
+      </div>
+
+      <!-- what changes -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="padding: 13px 15px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">WHAT CHANGES ON THIS COUNTER</span>
+          <sc-for list="{{changes}}" as="c" hint-placeholder-count="4">
+            <span style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.4;">
+              <span style="width: 16px; height: 16px; margin-top: 2px; border-radius: 50%; background: {{c.dot}}; flex-shrink: 0;"></span>
+              <span><b>{{c.what}}</b> {{c.detail}}</span>
+            </span>
+          </sc-for>
+        </div>
+        <div style="padding: 13px 15px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">STAYS THE SAME</span>
+          <span style="font-size: 13px; color: #5E594D; line-height: 1.5;">Every key, shortcut and button keeps its place and its name. Nothing in the bill, the prices or the day is touched. Style is only how it looks.</span>
+          <span style="margin-top: auto; padding: 9px 11px; border-radius: 10px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 13px;">Someone is selling on this counter — the change waits until the bill in hand is finished.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div style="padding: 14px 28px; border-top: 1px solid #E6E0D2; background: #FCFAF5; display: flex; align-items: center; gap: 12px;">
+    <button style="height: 48px; padding: 0 18px; border-radius: 13px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer;">Reset to the shop's style</button>
+    <div style="flex-grow: 1;"></div>
+    <button style="height: 48px; padding: 0 20px; border-radius: 13px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel · Esc</button>
+    <button style="height: 48px; padding: 0 20px; border-radius: 13px; border: 1px solid #E0A020; background: #FDF3DC; color: #7A5205; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 9px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      Try it for 10 minutes
+    </button>
+    <button style="height: 48px; padding: 0 24px; border-radius: 13px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+      Apply to Counter 1
+      <span style="width: 1px; height: 22px; background: rgba(255,255,255,0.3);"></span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sw = (c) => c ? `width: 14px; height: 14px; border-radius: 4px; background: ${c}; border: 1px solid rgba(0,0,0,0.18);` : 'display: none;';
+    const on = (label, swatch) => ({ label, swStyle: sw(swatch), bg: '#1D1B16', border: 'none', ink: '#FCFAF5', weight: '700' });
+    const off = (label, swatch) => ({ label, swStyle: sw(swatch), bg: '#FFFFFF', border: '1px solid #CFC7B5', ink: '#1D1B16', weight: '500' });
+    return {
+      groups: [
+        { name: 'Layout', hint: 'where things sit', options: [on('Horizontal'), off('Vertical'), off('Compact'), off('Tablet'), off('Phone'), off('Handheld'), off('Follows the device')] },
+        { name: 'Quick keys', hint: 'how a tile looks', options: [off('Name only'), off('Colour block'), off('Monogram'), off('One line'), off('Hotkey'), on('Photo')] },
+        { name: 'Groups open', hint: 'how you switch', options: [on('Popup'), off('Side drawer'), off('Full screen'), off('Bottom sheet'), off('Tabs'), off('Rail'), off('Day timeline')] },
+        { name: 'Colours', hint: 'the whole screen', options: [on('Light cream', '#FCFAF5'), off('Dark', '#1D1B16'), off('Paper', '#F5F1E7'), off('Navy', '#14213D'), off('High contrast', '#FFFFFF')] },
+        { name: 'Size', hint: 'text and spacing', options: [off('Roomy'), on('Comfortable'), off('Tight'), off('Big text')] },
+        { name: 'Photos', hint: 'where pictures show', options: [on('Quick keys'), off('Search results'), off('Both'), off('Nowhere')] }
+      ],
+      devices: [
+        { label: 'Terminal', bg: '#FFFFFF', ink: '#1D1B16' },
+        { label: 'Tablet', bg: 'transparent', ink: '#5E594D' },
+        { label: 'Phone', bg: 'transparent', ink: '#5E594D' }
+      ],
+      miniGroups: [
+        { name: 'Morning', n: '10', bg: '#FDF3DC', line: '#EFD39A', ink: '#7A5205' },
+        { name: 'Afternoon', n: '10', bg: '#FCE9DF', line: '#F1C7AE', ink: '#8A3410' },
+        { name: 'Evening', n: '8', bg: '#EEEAFB', line: '#D6CDF4', ink: '#44308F' },
+        { name: 'Night', n: '6', bg: '#E4EEFA', line: '#C6DAF2', ink: '#174A87' }
+      ],
+      tiles: [
+        ['Tata Filter coffee', '₹352.00', '#FDF3DC', '#7A5205', 'TF'], ['Health drink', '₹163.00', '#FCE9DF', '#8A3410', 'HD'],
+        ['Green tea', '₹64.00', '#EEEAFB', '#44308F', 'GT'], ['Bread 400 g', '₹45.00', '#E4EEFA', '#174A87', 'B4'],
+        ['Rusk 300 g', '₹60.00', '#EEEAFB', '#44308F', 'R3'], ['Butter 100 g', '₹58.00', '#FBEAE3', '#8E3517', 'B1'],
+        ['Idli (2 pc)', '₹48.00', '#E8F4ED', '#0D4A2B', 'ID'], ['Masala Dosa', '₹90.00', '#FDF3DC', '#7A5205', 'MD'],
+        ['Ven Pongal', '₹70.00', '#FCE9DF', '#8A3410', 'VP'], ['Filter Coffee', '₹40.00', '#F0ECE2', '#5E594D', 'FC'],
+        ['Tea', '₹25.00', '#E4EEFA', '#174A87', 'TE'], ['Buttermilk', '₹30.00', '#EEEAFB', '#44308F', 'BM'],
+        ['Sugar 1 kg', '₹52.00', '#FDF3DC', '#7A5205', 'S1'], ['Rice 5 kg', '₹410.00', '#E8F4ED', '#0D4A2B', 'R5'],
+        ['Oil 1 L', '₹172.00', '#FCE9DF', '#8A3410', 'O1'], ['Dal 1 kg', '₹128.00', '#F0ECE2', '#5E594D', 'D1'],
+        ['Salt 1 kg', '₹22.00', '#E4EEFA', '#174A87', 'SA'], ['Soap', '₹38.00', '#FBEAE3', '#8E3517', 'SO']
+      ].map(([name, price, photo, ink, initials]) => ({ name, price, photo, ink, initials })),
+      bill: [
+        { name: 'Green tea', qty: '5 ×', amt: '₹320.00' },
+        { name: 'Health drink', qty: '5 ×', amt: '₹815.00' },
+        { name: 'Tata Filter coffee', qty: '5 ×', amt: '₹1,760.00' }
+      ],
+      changes: [
+        { dot: '#E0A020', what: 'Quick keys show photos —', detail: '6 in a row instead of 8, so 12 keys fit on screen instead of 16.' },
+        { dot: '#2F74C9', what: 'Groups open in a popup —', detail: 'the bill stays visible behind it.' },
+        { dot: '#16693F', what: 'Light cream everywhere —', detail: 'the same colours as the back office.' },
+        { dot: '#8A8374', what: 'Comfortable spacing —', detail: 'rows 56 px, the same as your other counter.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

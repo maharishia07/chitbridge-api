@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1080px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 13px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">HEADERS · THE PARTS</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">The name on the bill, the pills you can act on, the voice both ways</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+
+    <!-- ===== COL 1 : IDENTITY + PERSON ===== -->
+    <div style="display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">1 · THE SHOP LEADS, THE COUNTER FOLLOWS</span>
+        <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 1px;">
+          <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.1;">Mayur Bhavan</span>
+          <span style="font-size: 12px; color: #5E594D;">Counter 1 · Sell · Mon 21 Sep · 2:14 pm</span>
+        </div>
+        <sc-for list="{{identity}}" as="i" hint-placeholder-count="5">
+          <span style="display: flex; gap: 8px; font-size: 12.5px; color: #0D4A2B; line-height: 1.4;">
+            <span style="color: #16693F; font-weight: 800;">·</span><span>{{i.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">2 · WHO IS ON — FOUR STATES</span>
+        <sc-for list="{{people}}" as="p" hint-placeholder-count="4">
+          <div style="{{p.box}}">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="{{p.avatar}}">{{p.initials}}</span>
+              <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 0; min-width: 0;">
+                <span style="{{p.nameStyle}}">{{p.name}}</span>
+                <span style="font-size: 11px; color: #5E594D;">{{p.sub}}</span>
+              </div>
+              <span style="{{p.btn}}">{{p.action}}</span>
+            </div>
+            <span style="font-size: 11px; color: #8A8374; line-height: 1.35;">{{p.note}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ===== COL 2 : PILLS ===== -->
+    <div style="display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">3 · WHAT MAY BE A PILL</span>
+        <span style="font-size: 13.5px; color: #6B4703; line-height: 1.45;">If pressing it does nothing, it is not a pill — it is a label, and labels belong in the body. Three at most, always in this order, so the eye learns where to look.</span>
+        <div style="padding: 11px 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid #F6E3B8; display: flex; flex-direction: column; gap: 7px;">
+          <sc-for list="{{pillRules}}" as="p" hint-placeholder-count="6">
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <span style="{{p.mark}}">{{p.glyph}}</span>
+              <span style="width: 118px; font-size: 12px; font-weight: 600; flex-shrink: 0;">{{p.what}}</span>
+              <span style="flex-grow: 1; font-size: 11.5px; color: #5E594D; line-height: 1.3;">{{p.why}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">4 · THE COLOUR LADDER</span>
+        <sc-for list="{{ladder}}" as="l" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="{{l.pill}}">{{l.label}}</span>
+            <span style="flex-grow: 1; font-size: 11.5px; color: #5E594D; line-height: 1.35;">{{l.when}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 11.5px; color: #8A8374; line-height: 1.4; padding-top: 4px; border-top: 1px solid #F0ECE2;">Red appears in the header only when a sale has actually stopped. “Nobody signed in” and “2 need you” are amber; they cost you later, not now.</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">5 · THE WORDS</span>
+        <sc-for list="{{words}}" as="w" hint-placeholder-count="7">
+          <div style="display: flex; align-items: flex-start; gap: 9px; padding-bottom: 6px; border-bottom: 1px solid #E6E0D2;">
+            <span style="width: 148px; font-size: 11.5px; color: #A8A295; text-decoration: line-through; flex-shrink: 0; line-height: 1.3;">{{w.old}}</span>
+            <span style="color: #CFC7B5; font-size: 11px;">→</span>
+            <span style="flex-grow: 1; font-size: 12px; font-weight: 600; line-height: 1.3;">{{w.new}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ===== COL 3 : VOICE + PANEL BODY ===== -->
+    <div style="display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #E4EEFA; border: 2px solid #2F74C9; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">6 · VOICE IS TWO SWITCHES, NOT ONE</span>
+        <span style="font-size: 13px; color: #174A87; line-height: 1.45;">Hearing you and speaking back are different jobs with different reasons to stop. A noisy kitchen wants to be heard and not answered; a counter whose eyes are on the customer wants the opposite.</span>
+
+        <div style="padding: 12px 13px; border-radius: 13px; background: #FFFFFF; border: 1px solid #CBDDF3; display: flex; flex-direction: column; gap: 9px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #A8A295;">HOLD THE MIC · OR F4</span>
+            <span style="flex-grow: 1;"></span>
+            <span style="height: 26px; padding: 0 9px; border-radius: 9px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; align-items: center; gap: 6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16693F" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"></path><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16693F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"></path><path d="M17 9a4 4 0 0 1 0 6"></path></svg>
+            </span>
+          </div>
+          <sc-for list="{{voice}}" as="v" hint-placeholder-count="2">
+            <div style="padding: 9px 11px; border-radius: 11px; background: #FCFAF5; border: 1px solid #E6E0D2; display: flex; align-items: center; gap: 10px;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#174A87" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <path d="{{v.d1}}"></path><path d="{{v.d2}}"></path>
+              </svg>
+              <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 0; min-width: 0;">
+                <span style="font-size: 12.5px; font-weight: 700;">{{v.name}}</span>
+                <span style="font-size: 11px; color: #5E594D;">{{v.state}}</span>
+              </div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A295; flex-shrink: 0;">{{v.key}}</span>
+              <span style="width: 38px; height: 22px; border-radius: 11px; padding: 3px; box-sizing: border-box; background: #16693F; display: flex; flex-shrink: 0;"><span style="width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; margin-left: auto;"></span></span>
+            </div>
+          </sc-for>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            <sc-for list="{{saysWhat}}" as="s" hint-placeholder-count="4">
+              <span style="{{s.style}}">{{s.label}}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-for list="{{voiceRules}}" as="r" hint-placeholder-count="6">
+          <span style="display: flex; gap: 8px; font-size: 12px; color: #174A87; line-height: 1.38;">
+            <span style="color: #2F74C9; font-weight: 800;">·</span><span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">7 · AND THE PANEL’S CARDS, WHILE WE ARE HERE</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
+          <sc-for list="{{cards}}" as="c" hint-placeholder-count="4">
+            <div style="padding: 9px 10px; border-radius: 12px; background: #FCFAF5; border: 1px solid #E6E0D2; display: flex; align-items: center; gap: 9px;">
+              <span style="{{c.iconBox}}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.stroke}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="{{c.d1}}"></path><path d="{{c.d2}}"></path>
+                </svg>
+              </span>
+              <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 0; min-width: 0;">
+                <span style="font-size: 12.5px; font-weight: 700;">{{c.name}}</span>
+                <span style="font-size: 10.5px; color: #8A8374; line-height: 1.3;">{{c.sub}}</span>
+              </div>
+              <span style="{{c.badgeStyle}}">{{c.badge}}</span>
+              <span style="color: #CFC7B5; font-size: 12px; flex-shrink: 0;">›</span>
+            </div>
+          </sc-for>
+        </div>
+        <sc-for list="{{cardRules}}" as="r" hint-placeholder-count="5">
+          <span style="display: flex; gap: 8px; font-size: 12px; color: #1D1B16; line-height: 1.38;">
+            <span style="color: #16693F; font-weight: 800;">·</span><span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const BOX = 'padding: 10px 12px; border-radius: 13px; display: flex; flex-direction: column; gap: 6px; ';
+    const AV = 'width: 34px; height: 34px; border-radius: 11px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const BTN = 'height: 30px; padding: 0 11px; border-radius: 10px; font-size: 12px; font-weight: 700; display: flex; align-items: center; flex-shrink: 0; white-space: nowrap; ';
+
+    const person = (o) => ({
+      initials: o.initials, name: o.name, sub: o.sub, action: o.action, note: o.note,
+      box: BOX + o.box,
+      avatar: AV + o.avatar,
+      nameStyle: 'font-size: 13.5px; font-weight: 700; color: ' + o.ink + ';',
+      btn: BTN + o.btn
+    });
+
+    const P = 'height: 28px; padding: 0 10px; border-radius: 10px; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; flex-shrink: 0; white-space: nowrap; ';
+    const MARK = 'width: 20px; height: 20px; border-radius: 6px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const yes = MARK + 'background: #E8F4ED; color: #16693F;';
+    const no  = MARK + 'background: #F3EFE6; color: #A8A295;';
+
+    const CH = 'height: 22px; padding: 0 8px; border-radius: 7px; font-size: 10.5px; font-weight: 600; display: flex; align-items: center; ';
+    const on  = CH + 'background: #E8F4ED; color: #0D4A2B; border: 1px solid #A9D3BC;';
+    const off = CH + 'background: #FFFFFF; color: #A8A295; border: 1px solid #E6E0D2;';
+
+    const IB = 'width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const BADGE = 'height: 20px; min-width: 20px; padding: 0 6px; border-radius: 7px; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+
+    return {
+      identity: [
+        { text: 'The shop’s name is what is printed on every bill and what the customer reads. It is the title, in the display face.' },
+        { text: 'Counter, mode, date and time are one quiet line under it — who and where, not what.' },
+        { text: 'The clock ticks and is 12-hour. The date is short: Mon 21 Sep, never “Sept”.' },
+        { text: 'The same block, the same order, in the sell header and in every panel. One component, not two.' },
+        { text: 'With one counter, “Counter 1 ·” drops out of the line by itself. Nobody should read a number that never varies.' }
+      ],
+      people: [
+        person({
+          initials: 'BA', name: 'Bala', sub: 'on since 9:41 am · 4h 33m', action: 'Hand over',
+          note: 'How long they have been on is what a hand-over needs, and nothing else shows it.',
+          box: 'background: #E8F4ED; border: 1px solid #A9D3BC;', avatar: 'background: #16693F; color: #FFFFFF;',
+          ink: '#0D4A2B', btn: 'background: #FFFFFF; border: 1px solid #A9D3BC; color: #0D4A2B;'
+        }),
+        person({
+          initials: '?', name: 'Nobody signed in', sub: 'bills say “no person recorded”', action: 'Sign in · F7',
+          note: 'Amber, never red — the sale still goes through, the record is what suffers.',
+          box: 'background: #FDF3DC; border: 1px solid #EFD39A;', avatar: 'background: #F6E3B8; color: #7A5205;',
+          ink: '#6B4703', btn: 'background: #16693F; color: #FFFFFF;'
+        }),
+        person({
+          initials: 'MB', name: 'Mayur Bhavan', sub: 'the shop’s name, shown as the person', action: 'bug',
+          note: 'What the header does today. The shop is never the person — the same hole that wrote “desktop3” onto five bills.',
+          box: 'background: #FBEAE3; border: 1px solid #E7B9A8;', avatar: 'background: #F3D3C6; color: #8E3517;',
+          ink: '#8E3517', btn: 'background: #FBEAE3; border: 1px solid #E7B9A8; color: #8E3517;'
+        }),
+        person({
+          initials: 'RA', name: 'Ravi', sub: 'signing in…', action: '',
+          note: 'A sign-in never blocks the till. It settles in the background and the bills before it keep their person.',
+          box: 'background: #F3EFE6; border: 1px solid #DDD6C6;', avatar: 'background: #E6E0D2; color: #5E594D;',
+          ink: '#5E594D', btn: 'display: none;'
+        })
+      ],
+      pillRules: [
+        { glyph: '✓', mark: yes, what: 'The line', why: 'you can press it and see what still works' },
+        { glyph: '✓', mark: yes, what: 'Waiting to send', why: 'only when it is not zero, and it opens the queue' },
+        { glyph: '✓', mark: yes, what: 'Needs you', why: 'the count, opening the Check list' },
+        { glyph: '✓', mark: yes, what: 'Stale prices', why: 'only past a day old, and it carries Re-read · F4' },
+        { glyph: '✕', mark: no,  what: '113 products', why: 'not a status and not actionable — it belongs on the products screen' },
+        { glyph: '✕', mark: no,  what: 'Counter 1', why: 'it is who you are, not how you are. It belongs in the subtitle' }
+      ],
+      ladder: [
+        { label: '● all sent', pill: P + 'background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B;', when: 'nothing to do — green, and quiet' },
+        { label: '3 waiting', pill: P + 'background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205;', when: 'working, and waiting. Normal, not a fault' },
+        { label: 'prices 3 days old', pill: P + 'background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205;', when: 'costs money if ignored — carries its own fix' },
+        { label: 'billing stopped', pill: P + 'background: #FBEAE3; border: 1px solid #E7B9A8; color: #8E3517;', when: 'a sale cannot be taken right now. Only this earns red' }
+      ],
+      words: [
+        { old: '74 h old', new: '3 days old' },
+        { old: 'prices as at 12:28', new: 'prices 3 days old · Re-read F4' },
+        { old: 'online', new: '● all sent  (the line and the queue in one)' },
+        { old: '⛔ check', new: '2 need you  (amber, and it says how many)' },
+        { old: 'today 0 · ₹0.00', new: '₹0.00 · no bills yet today' },
+        { old: 'Mon 21 Sept', new: 'Mon 21 Sep' },
+        { old: '113 products', new: '(leaves the header)' }
+      ],
+      voice: [
+        { name: 'Hearing you', state: 'on · English (India) · starts when the line is empty', key: 'F4',
+          d1: 'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z', d2: 'M5 11a7 7 0 0 0 14 0M12 18v3' },
+        { name: 'Speaking back', state: 'on · the total and the amount to collect', key: 'Sh F4',
+          d1: 'M4 9h4l5-4v14l-5-4H4z', d2: 'M17 9a4 4 0 0 1 0 6M20 6a8 8 0 0 1 0 12' }
+      ],
+      saysWhat: [
+        { label: '☑ each item added', style: on },
+        { label: '☑ the running total', style: on },
+        { label: '☑ amount to collect', style: on },
+        { label: '☐ every change', style: off },
+        { label: '☐ the bill number', style: off }
+      ],
+      voiceRules: [
+        { text: 'Speaking back stops the instant the mic starts hearing. It never talks over the person.' },
+        { text: 'It never reads a customer’s name, phone or address aloud — there is a queue standing there.' },
+        { text: 'Short form in a rush: “forty”, not “the total is forty rupees only”.' },
+        { text: 'One language choice serves both. Volume is remembered per counter.' },
+        { text: 'Muted is not off: muted still shows on screen what it would have said, so nothing is missed.' },
+        { text: 'The header icon carries both — a mic, and a small speaker beside it when it answers.' }
+      ],
+      cards: [
+        { name: 'How today is going', sub: 'the sale so far · the bills', badge: '₹8,450', badgeStyle: BADGE + 'background: #E8F4ED; color: #0D4A2B;',
+          iconBox: IB + 'background: #E8F4ED;', stroke: '#16693F', d1: 'M4 19V9M10 19V5M16 19v-7M22 19H2', d2: '' },
+        { name: 'Check', sub: 'what needs you · why a bill is stuck', badge: '2', badgeStyle: BADGE + 'background: #FDF3DC; color: #7A5205;',
+          iconBox: IB + 'background: #FDF3DC;', stroke: '#E0A020', d1: 'M12 3l9 16H3z', d2: 'M12 10v4M12 17h.01' },
+        { name: 'The shop', sub: 'name · address · what prints on a bill', badge: 'GSTIN', badgeStyle: BADGE + 'background: #E4EEFA; color: #174A87;',
+          iconBox: IB + 'background: #E4EEFA;', stroke: '#2F74C9', d1: 'M3 9l2-5h14l2 5', d2: 'M4 9v11h16V9M9 20v-6h6v6' },
+        { name: 'Start the day', sub: 'the float · the printer · the prices', badge: 'not open', badgeStyle: BADGE + 'background: #FDF3DC; color: #7A5205;',
+          iconBox: IB + 'background: #F3EFE6;', stroke: '#5E594D', d1: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18', d2: 'M12 7v5l3 3' }
+      ],
+      cardRules: [
+        { text: 'One icon family — 24 px grid, 1.8 stroke, one weight — on a tinted square, not eight little pictures in eight styles.' },
+        { text: 'Every card ends in a number: ₹8,450 · 2 · GSTIN · not open. A menu of nouns tells you nothing you did not know.' },
+        { text: 'A badge only when it is not zero, and its colour is the ladder’s, never decoration.' },
+        { text: 'Three nouns in a subtitle, never four. If it needs four, it is two cards.' },
+        { text: 'One inline action style or none — “Preview” cannot be the only teal thing in the product.' },
+        { text: 'The panel is as tall as its cards. Three hundred pixels of nothing reads as a screen that failed to load.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

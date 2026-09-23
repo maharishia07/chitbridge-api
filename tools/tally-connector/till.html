@@ -559,7 +559,6 @@
   .msec.open .mch{transform:rotate(90deg)}
   .mrow:focus-visible,.mact:focus-visible{outline:3px solid var(--ok);outline-offset:-3px;border-radius:11px}
   @media (prefers-reduced-motion:reduce){ .msec,.mch,.mrow .mi{transition:none} }
-  .msec.care .mrow{background:transparent}
   /* ⚠️ padding-inline-start, not a left pad — in Arabic the nesting indent would land on the wrong edge */
   .mact{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 6px;padding-inline-start:14px;border:0;
         background:transparent;color:var(--ink);cursor:pointer;font:inherit;text-align:start;border-radius:10px}
@@ -567,10 +566,15 @@
   /* the action's glyph is a mark, not a tile — the tile belongs to the heading above it */
   .mact .mi{background:transparent;width:22px;flex-basis:22px;height:auto;font-size:15px;justify-content:flex-start}
   .mact .mt b{font-weight:600}
-  /* §4: Careful is last, in a warm-red bordered box, and says what it costs before anybody presses */
-  .msec.care{border-color:var(--warn);background:var(--warn-tint)}
-  .msec.care .mrow .mi{background:var(--warn);color:var(--card)}
-  .carenote{margin:6px 6px 2px;color:var(--ink);font-size:.86em}
+  /**
+   * ⚠️⚠️⚠️ THE WARM-RED BOX AND ITS STANDING NOTE ARE GONE ([design-handoff/B-fine-tuning/01-footer §5, §7.1]).
+   * "Red only for a stopped sale or work at risk" — closing this counter or clearing its copy is neither; it is
+   * a deliberate, rare, structural action, so it reads as one: the section's own border and background, same as
+   * every other section, no colour standing in for a warning nobody is about to act on. The consequence itself
+   * was never deleted — closeCounter() and coldStart() already state it on the confirm sheet, at the moment of
+   * the press ([TILL-172]) — so a sentence repeating it here, before anybody has touched anything, said nothing
+   * the button's own confirm does not say better, closer to the act.
+   */
   /**
    * ⭐⭐ START YOUR DAY. Quiet on purpose — this is a moment, not a dashboard, so it is the shop's own picture,
    * the date, three plain facts and one button. ⚠️ The picture is whatever the shop keeps at its counter; we
@@ -802,13 +806,19 @@
   .hubhead .hh1 b{font-size:1.45em;line-height:1.15}
   .hubhead .hh1 i{font-style:normal;color:var(--dim);font-size:.85em}
   .hubhead .hubchips{border:0;padding:0;flex:1 1 auto}
-  /* ⚠ PINK UNTIL SOMEBODY SIGNS IN — the render makes "nobody" the loud state, because a day's takings with no
-     name against them is the thing worth noticing before it has happened. */
-  .hubhead .hubwho{margin-inline-start:auto;display:flex;align-items:center;gap:10px;border:1px solid var(--warn);background:var(--warn-tint);
-                   border-radius:12px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--warn)}
-  .hubhead .hubwho.in{border-color:var(--ok);background:var(--ok-tint)}
-  .hubhead .hubwho .mt b{color:var(--warn)}
-  .hubhead .hubwho.in .mt b{color:var(--ok)}
+  /**
+   * ⚠️⚠️⚠️ THIS WAS PINK FOR EVERY STATE, INCLUDING SIGNED IN ([design-handoff/B-fine-tuning/05-headers §4,
+   * §9.5], found 2026-09-23 by looking at the render, not the source). The rule below read `.hubwho.in` for
+   * the calm state — but whoNow() has emitted `.none` / `.entity` / `.person` since the three-state rewrite,
+   * never `.in`, so that selector matched nothing and EVERY state fell through to the warn border and tint
+   * meant only for "nobody signed in". A shop that had just signed a person in still looked like a warning.
+   * ⭐ Base state is neutral now — the calm case needs no colour at all — and only `.none` carries the amber
+   * this section's own old comment already promised: "nothing in the hub is red unless a sale has stopped."
+   */
+  .hubhead .hubwho{margin-inline-start:auto;display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+                   background:var(--card);border-radius:12px;padding:6px 8px 6px 12px}
+  .hubhead .hubwho.none{border-color:var(--warn);background:var(--warn-tint);border-bottom:1px solid var(--warn)}
+  .hubhead .hubwho.none .mt b{color:var(--warn)}
   .pri.sm{height:34px;padding:0 12px;font-size:.9em}
   /* ── Careful as a strip across the foot, never a fold ────────────────────────────────── */
   /* ⚠️ the CAREFUL strip's styles went with it ([TILL-173]) — nothing in the hub is red now unless a
@@ -5729,9 +5739,11 @@ var TILL_OPS = [
 ];
 function tillOp(id){ for (var i = 0; i < TILL_OPS.length; i++) if (TILL_OPS[i].id === id) return TILL_OPS[i]; return null; }
 /**
- * ⭐⭐⭐ THE FIVE SECTIONS, IN THE ORDER THE DESIGN FIXES THEM (mobile-first-instructions.md §4).
- * *"Groups, in this order, always: Bills · Shop & prices · This counter · How it looks · Careful."* The order is
- * part of the design, not a default — §2 rule 2: it never changes from phone to terminal, so muscle memory carries.
+ * ⭐⭐⭐ THE SECTIONS, IN THE ORDER THE DESIGN FIXES THEM (mobile-first-instructions.md §4, historical).
+ * *"Groups, in this order, always: Bills · Shop & prices · This counter · How it looks · Careful."* The ORDER is
+ * part of the design, not a default — §2 rule 2: it never changes from phone to terminal, so muscle memory
+ * carries. The last section's own name did not survive: [design-handoff/00-CORRECTIONS.md §15] found "Careful"
+ * stale across the package and struck it — the section is now 'Repair and close', same place in the list.
  */
 /**
  * ── ⭐⭐⭐ ALERTS — ONE PLACE FOR EVERYTHING THAT NEEDS SOMEBODY ([TILL-51], counter-hub-menu-spec §3) ───
@@ -5774,11 +5786,6 @@ function menuAlerts(){
       'Stop billing on this counter and ring for help — this is the one fault that can lose work.',
       '<button class="pill" data-testid="till-alert-health" onclick="fromMenu(openHealth)">Counter health</button>');
   } catch (_) {}
-  try { if (!paired())
-    add('pair', 'stop', 'Nothing can reach the shop',
-      'This counter is not signed in, so nothing it rings can be sent.',
-      '<button class="pill" data-testid="till-alert-pair" onclick="fromMenu(pairAgain)">' + keyWord() + '</button>');
-  } catch (_) {}
 
   /* ══ costs money ════════════════════════════════════════════════════════════════════════════════════ */
   try {
@@ -5806,6 +5813,17 @@ function menuAlerts(){
   } catch (_) {}
 
   /* ══ costs time ═════════════════════════════════════════════════════════════════════════════════════ */
+  /**
+   * ⚠️⚠️⚠️ MOVED OUT OF "STOPS A SALE" ([design-handoff/00-CORRECTIONS.md §10], applied here). That correction
+   * is written against the counter-health registry, but the mistake is the same one, in this file's own rank
+   * table two lines above its own comment: *"the ONLY fault here that is red."* A counter with no key still
+   * bills, prints and takes money — it just cannot SEND yet, which is exactly what 'costs time' means.
+   */
+  try { if (!paired())
+    add('pair', 'time', 'Nothing can reach the shop',
+      'This counter is not signed in, so nothing it rings can be sent.',
+      '<button class="pill" data-testid="till-alert-pair" onclick="fromMenu(pairAgain)">' + keyWord() + '</button>');
+  } catch (_) {}
   try {
     if (STATE && STATE.queued) {
       /**
@@ -6129,8 +6147,10 @@ function menuShopBody(){
 }
 /**
  * ⭐⭐⭐ ONE HUE PER SECTION ([TILL-85]) — read by the open hub, by the strip and by the section rail, so the
- * three can never disagree. Chosen for MEANING, not variety: the morning is a lamp, money is green, anything
- * that stops billing is the same red the Careful box already uses.
+ * three can never disagree. Chosen for MEANING, not variety: the morning is a lamp, money is green.
+ * ⚠️ 'care' was the Careful red until [design-handoff/B-fine-tuning/01-footer §5]: "red only for a stopped
+ * sale or work at risk" — closing this counter or clearing its copy is neither, so it is slate, structural,
+ * the same family as its own fallback but its own shade, never the alarm this rail used to sound all day.
  * ⚠️ RGB TRIPLES, not hex — every use is an alpha of the hue, and rgba() needs the parts.
  */
 var MENU_HUE = {
@@ -6151,7 +6171,7 @@ var MENU_HUE = {
   look:    '20,124,130',    /* teal — appearance, and nothing that moves money    */
   upkeep:  '43,95,153',     /* blue — keeping the till current                    */
   show:    '122,79,168',    /* the catalogue violet — showing it to customers     */
-  care:    '178,52,38',     /* the Careful red, already in the box below it       */
+  care:    '110,108,118',   /* structural slate — rare and deliberate, not a warning */
   /* ⚠️ two ops that are their own door and sit in no section — named here so the strip is never grey by
      accident. Anything else falls back to slate, which is a legible default and not a bug. */
   todo:      '176,110,20',  /* the list the shopkeeper wrote themselves            */
@@ -6258,7 +6278,11 @@ var TILL_MENU = [
      where somebody opening the day is already looking, and the counter's own upkeep is 'Keep it running'. */
   /* ⚠️ LAST, AND IT LOOKS LIKE IT. §4: a warm-red bordered box, and this exact sentence, because both of these
      stop billing for a moment and a person deserves to know that before they press, not after. */
-  { id: 'care',    icon: '⚠',  title: 'Careful',       sum: 'close the counter · clear and reload',  ops: ['close', 'coldstart-menu'], careful: true },
+  /**
+   * ⭐ NEITHER "CAREFUL" NOR RED ANY MORE ([design-handoff/B-fine-tuning/01-footer]). Same two rare actions,
+   * named for what they are rather than grouped under an adjective — a shopkeeper does not think in "scary".
+   */
+  { id: 'care',    icon: '🔧',  title: 'Repair and close', sum: 'close the counter · clear and reload',  ops: ['close', 'coldstart-menu'] },
 ];
 /* ⭐ the day panel opens the menu until the day has been opened; after that Bills leads, as §4 says */
 var MENU_OPEN_SEC = null;
@@ -7352,7 +7376,7 @@ function hubFind(v){ HUB_Q = String(v || ''); paintMenu();
 function hubRows(){
   var out = [];
   TILL_MENU.forEach(function(sec){
-    /* the section itself is findable — "alerts", "shop details", "careful" */
+    /* the section itself is findable — "Check", "Show the shop", "Repair and close" */
     out.push({ what: sec.title, hint: sec.sum, icon: sec.icon, sec: sec.id, go: "menuSection('" + sec.id + "')" });
     (sec.ops || []).forEach(function(id){
       var op = tillOp(id); if (!op) return;
@@ -7466,9 +7490,18 @@ function hubHead(){
         : '<button class="pill" data-testid="till-hub-signout"'
           + ' onclick="fromMenu(function(){ sureSheet(&quot;signout&quot;); })">Sign out</button>')
     + '</div>';
+  /**
+   * ⚠️⚠️⚠️ THE SHOP LEADS, THE COUNTER FOLLOWS ([design-handoff/B-fine-tuning/05-headers §2, §9.2]). This
+   * led with the COUNTER — `counterTitle()` in the bold slot, the shop reduced to 10px grey in the subtitle.
+   * The shop's name is the title, because it is what is printed on every bill and what the customer reads;
+   * "who and where" (counter · mode · date · time) is one quiet line under it, never the headline.
+   * ⚠️ Before the shop has loaded there is nothing to lead with — counterTitle() never returns empty, so it
+   * fills the slot rather than leaving the title blank.
+   */
   return '<div class="hubhead">'
-    + '<span class="hh1"><b data-testid="till-m-counter">' + esc(counterTitle()) + '</b>'
-    + '<i>' + esc([shop, place].filter(Boolean).join(' · ')) + (shop || place ? ' · ' : '') + esc(when) + '</i></span>'
+    + '<span class="hh1"><b data-testid="till-m-shop">' + esc(shop || counterTitle()) + '</b>'
+    + '<i data-testid="till-m-counter">' + esc([shop ? counterTitle() : '', place].filter(Boolean).join(' · '))
+      + (place || shop ? ' · ' : '') + esc(when) + '</i></span>'
     + hubChips()
     + who
     + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
@@ -7719,7 +7752,7 @@ function paintMenu(){
           + '<div class="viewchips" id="viewchips"></div></div>');
     /* ⭐ and every section may ALSO carry operations — they follow whatever panel it has */
     body += (sec.ops || []).map(function(id){ return menuOpRow(tillOp(id)); }).join('');
-    var html = '<section class="msec' + (sec.careful ? ' care' : '') + (open ? ' open' : '') + '"'
+    var html = '<section class="msec' + (open ? ' open' : '') + '"'
       /* ⭐ the hue is set ONCE, here, and every rule under .msec is an alpha of it ([TILL-85]) */
       + ' style="--mh:' + menuHue(sec.id) + '" data-testid="till-msec-' + sec.id + '">'
       + '<button class="mrow" aria-expanded="' + (open ? 'true' : 'false') + '" data-testid="till-msec-btn-' + sec.id + '"'
@@ -7743,7 +7776,6 @@ function paintMenu(){
           + ' title="' + esc(sec.link.why || '') + '" onclick="fromMenu(' + sec.link.fn + ')">'
           + esc(sec.link.label) + '</button>' : '')
       + '<div class="mbody"' + (open ? '' : ' hidden') + '>'
-      + (sec.careful ? '<p class="carenote">These two stop billing for a moment. Everything is sent and checked first.</p>' : '')
       + body + '</div></section>';
     secHtml[sec.id] = html;
     return html;
@@ -17536,7 +17568,13 @@ function dayCloseSheet(rows){
     (b.payments||[]).forEach(function(p){ d.modes[p.how] = r2((d.modes[p.how]||0) + (p.amount||0)); });
     /* ⭐ the habit, as a number. A drawer that is short by exactly these bills is not a mystery, it is a routine. */
     if (b.payment_asked === false) { d.unasked = (d.unasked || 0) + 1; d.unasked_total = r2((d.unasked_total || 0) + (b.total || 0)); }
-    var who = (b.by && b.by.name) || 'the shop';
+    /**
+     * ⚠️⚠️⚠️ NEVER FOLD "NOBODY" INTO SOMEBODY ([design-handoff/A-screens/04-todays-bills §6.3]). This used
+     * to name the bucket 'the shop' for a bill with no `by` at all — the exact hole the package's `desktop3`
+     * finding is about, just landing here instead: a bill nobody signed for, silently merged into a label
+     * that reads like an answer. `whoNow()` already fixed the header the same way ([TILL-159]).
+     */
+    var who = (b.by && b.by.name) || 'No person recorded';
     d.people[who] = d.people[who] || { bills:0, total:0 };
     /* ⚠️ a refund is not a sale that person made; the money nets, the COUNT does not */
     if (!isReturnRow(b)) d.people[who].bills++;
@@ -20288,7 +20326,7 @@ function SIGN(){
   return window.CBSignin;
 }
 
-var USIGN = { sent: false, refused: '', person: null, who: '', busy: false };
+var USIGN = { sent: false, refused: '', person: null, who: '', busy: false, usePin: false };
 
 /**
  * ⭐ WHERE THE SHOP IS. Same origin for a counter served by ChitBridge or by the shop PC, because both put the
@@ -20310,7 +20348,7 @@ async function usignPost(path, body){
 
 function usignOpen(){
   USIGN = { sent: false, refused: '', person: (typeof WHO !== 'undefined' && WHO && WHO.id) ? WHO : null,
-            who: '', busy: false };
+            who: '', busy: false, usePin: false };
   usignPaint();
   var d = document.getElementById('usigndlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
@@ -20338,14 +20376,22 @@ function usignPaint(){
        */
       + '<button data-testid="till-usign-out" onclick="usignOut()">Sign out · the counter stays open</button></div>';
   } else if (at === 'code' || at === 'refused') {
-    h = '<p class="note">' + esc(SIGN().say({ sent: true })) + '</p>'
-      + '<div class="srow"><span>Code</span>'
-      + '<input id="usign_otp" data-testid="till-usign-otp" inputmode="numeric" maxlength="6" placeholder="000000"'
+    /**
+     * ⚠️⚠️ [capability: sign-in] TWO CREDENTIALS, ONE BOX. USIGN.usePin is set by usignAsk() from the
+     * server's own answer (identityAuth.needsPin() decided it, not this page) — a coassist who already set
+     * a PIN never had a code "sent" to resend, so that branch says so rather than offering a dead button.
+     */
+    var pinMode = !!USIGN.usePin;
+    h = '<p class="note">' + esc(pinMode ? 'Enter your PIN.' : SIGN().say({ sent: true })) + '</p>'
+      + '<div class="srow"><span>' + (pinMode ? 'PIN' : 'Code') + '</span>'
+      + '<input id="usign_otp" data-testid="till-usign-otp" inputmode="numeric" maxlength="' + (pinMode ? 4 : 6)
+      + '" placeholder="' + (pinMode ? '0000' : '000000') + '"'
       + ' autocomplete="one-time-code" onkeydown="if(event.key===\'Enter\')usignVerify()"></div>'
       + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
       + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-verify" onclick="usignVerify()">Sign in</button>'
-      + '<button data-testid="till-usign-again" onclick="usignAsk(true)">Send another code</button>'
-      + '<button onclick="usignClose()">Close</button></div>';
+      + (pinMode ? '' : '<button data-testid="till-usign-again" onclick="usignAsk(true)">Send another code</button>')
+      + '<button onclick="usignClose()">Close</button></div>'
+      + (pinMode ? '<p class="note u">Forgotten it? Ask your admin to reset it in Co-assists.</p>' : '');
   } else {
     /* ⚠️ ONE BOX FOR BOTH. The person typing does not know whether they have a user ID or an email, and a
        network-minted store is issued a user_id and no email at all. */
@@ -20381,11 +20427,17 @@ async function usignAsk(again){
   var r = await usignPost('/api/entities/register', a.body);
   USIGN.busy = false;
   if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
+  /**
+   * ⚠️⚠️ [capability: sign-in] A COASSIST WITH A PIN ALREADY SET NEVER GOT A CODE — identityAuth.needsPin()
+   * decided that server-side and said so with use_pin, so USIGN.sent still moves to the credential screen
+   * (stage() only asks "was the identity step done"), but usePin decides which box usignPaint() draws.
+   */
   USIGN.sent = true;
+  USIGN.usePin = !!(r.body && r.body.use_pin);
   usignPaint();
   /* ⚠️ A TEST SERVER HANDS THE CODE BACK (lib/dev-otp.js refuses to do it anywhere else), so it is filled in
-     rather than making somebody find it in a log. */
-  var dev = r.body && (r.body.dev_otp || r.body.otp);
+     rather than making somebody find it in a log. Never for a PIN — nothing was issued to prefill. */
+  var dev = !USIGN.usePin && r.body && (r.body.dev_otp || r.body.otp);
   if (dev) { var i = document.getElementById('usign_otp'); if (i) i.value = String(dev); }
 }
 
@@ -20426,7 +20478,7 @@ function usignOut(){
   var s = DAY().shiftChange(dayState(), null);
   WHO = null;
   try { ls.del ? ls.del(shopLs('cb_till_who')) : ls.set(shopLs('cb_till_who'), ''); } catch (_) {}
-  USIGN = { sent: false, refused: '', person: null, who: '', busy: false };
+  USIGN = { sent: false, refused: '', person: null, who: '', busy: false, usePin: false };
   try { paintWho(); paintStatus(); paintMenu(); } catch (_) {}
   usignPaint();
   toastLine(s.say);

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="padding: 16px 16px 10px; display: flex; align-items: center; gap: 10px;">
+    <span style="display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 21px; font-weight: 800;">Today's bills</span>
+      <span style="font-size: 12px; color: #5E594D;">20 September · Counter 1</span>
+    </span>
+    <div style="flex-grow: 1;"></div>
+    <span style="width: 34px; height: 34px; border-radius: 17px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; display: flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+    </span>
+    <span style="width: 34px; height: 34px; border-radius: 17px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; display: flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </span>
+  </div>
+
+  <!-- day so far -->
+  <div style="margin: 0 16px; padding: 13px 15px; border-radius: 15px; background: #F3EFE6; display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: baseline; gap: 9px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800; line-height: 1;">₹550.00</span>
+      <span style="font-size: 13px; color: #5E594D;">10 bills</span>
+      <div style="flex-grow: 1;"></div>
+      <span style="height: 26px; padding: 0 9px; border-radius: 13px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 11px; font-weight: 700; display: flex; align-items: center;">all sent</span>
+    </div>
+    <div style="height: 10px; border-radius: 5px; background: #EFEBE1; display: flex; overflow: hidden;">
+      <span style="width: 75%; background: #16693F;"></span><span style="width: 9%; background: #2F74C9;"></span><span style="width: 16%; background: #E0A020;"></span>
+    </div>
+    <span style="font-size: 12px; color: #5E594D;">Cash ₹410 · UPI ₹50 · Card ₹90</span>
+  </div>
+
+  <!-- filters -->
+  <div style="padding: 11px 16px 9px; display: flex; gap: 7px; overflow: hidden;">
+    <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+      <span style="height: 34px; padding: 0 12px; border-radius: 10px; background: {{f.bg}}; border: {{f.border}}; color: {{f.ink}}; font-size: 13px; font-weight: {{f.weight}}; display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">{{f.label}} <span style="{{f.countStyle}}">{{f.count}}</span></span>
+    </sc-for>
+  </div>
+
+  <!-- list -->
+  <div style="flex-grow: 1; min-height: 0; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; overflow: hidden;">
+    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">1 PM — 2 PM · 6 BILLS · ₹315.00</span>
+    <sc-for list="{{bills}}" as="b" hint-placeholder-count="5">
+      <div style="min-height: 68px; box-sizing: border-box; padding: 11px 13px; border-radius: 14px; background: {{b.rowBg}}; border: 1px solid {{b.line}}; display: flex; align-items: center; gap: 11px;">
+        <span style="width: 34px; height: 34px; border-radius: 50%; background: {{b.avBg}}; color: {{b.avInk}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{b.initials}}</span>
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 15px; font-weight: 600;">{{b.items}}</span>
+          <span style="font-size: 12px; color: #8A8374;">{{b.time}} · {{b.who}}</span>
+          <span style="{{b.flagStyle}}">{{b.flag}}</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600;">{{b.amt}}</span>
+          <span style="font-size: 11px; color: #8A8374;">{{b.payName}}</span>
+        </span>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- footer -->
+  <div style="padding: 11px 16px 24px; border-top: 1px solid #E6E0D2; background: #F3EFE6; display: flex; gap: 9px;">
+    <button style="flex-grow: 1; height: 50px; border-radius: 13px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer;">Export</button>
+    <button style="flex-grow: 1; height: 50px; border-radius: 13px; border: none; background: #1D1B16; color: #FCFAF5; font-size: 15px; font-weight: 700; cursor: pointer;">Day close sheet</button>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const PEOPLE = { Anita: ['#FDF3DC', '#7A5205'], Bala: ['#E4EEFA', '#174A87'], '—': ['#F0ECE2', '#8A8374'] };
+    const bill = (time, items, who, amt, payName, state) => {
+      const c = PEOPLE[who] || PEOPLE['—'];
+      const flags = {
+        sent: ['display: none;', ''],
+        noname: ['margin-top: 3px; height: 22px; padding: 0 8px; border-radius: 11px; background: #FBEAE3; border: 1px solid #E7B9A8; color: #8E3517; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; align-self: flex-start;', 'no person recorded'],
+        waiting: ['margin-top: 3px; height: 22px; padding: 0 8px; border-radius: 11px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; align-self: flex-start;', 'waiting to send']
+      };
+      const f = flags[state] || flags.sent;
+      return {
+        time, items, amt, payName,
+        who: who === '—' ? 'nobody signed in' : who,
+        initials: who === '—' ? '?' : who.slice(0, 2).toUpperCase(),
+        avBg: c[0], avInk: c[1],
+        flagStyle: f[0], flag: f[1],
+        rowBg: state === 'noname' ? '#FDF9F6' : '#FFFFFF',
+        line: state === 'noname' ? '#F1D9CE' : '#E6E0D2'
+      };
+    };
+    const filter = (label, count, on) => ({
+      label, count,
+      bg: on ? '#1D1B16' : '#FFFFFF', border: on ? 'none' : '1px solid #CFC7B5',
+      ink: on ? '#FCFAF5' : '#1D1B16', weight: on ? '700' : '500',
+      countStyle: count === '' ? 'display: none;' : `font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: ${on ? '#C9C3B6' : '#8A8374'};`
+    });
+    return {
+      filters: [filter('Everyone', '', true), filter('No person', '4', false), filter('Cash', '8', false), filter('Not sent', '0', false)],
+      bills: [
+        bill('13:32', 'Filter coffee, Vada', '—', '₹65.00', 'cash', 'noname'),
+        bill('13:31', 'Tea', '—', '₹40.00', 'cash', 'noname'),
+        bill('13:31', 'Masala dosa', 'Bala', '₹50.00', 'UPI', 'sent'),
+        bill('13:31', 'Tea', 'Bala', '₹15.00', 'cash', 'sent'),
+        bill('13:31', 'Idli (2 pc), Filter coffee', 'Anita', '₹105.00', 'cash', 'sent')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1020px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column;">
+
+  <div style="padding: 18px 28px 14px; border-bottom: 1px solid #E6E0D2; display: flex; align-items: center; gap: 14px;">
+    <span style="height: 36px; padding: 0 13px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+      Back to Counter health
+    </span>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">Technical detail</span>
+      <span style="font-size: 14px; color: #5E594D;">For support. Nothing here is needed to run the shop.</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; letter-spacing: 0.08em;">T1O-080</span>
+    <button style="height: 40px; padding: 0 16px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer;">Copy all as text</button>
+    <button style="height: 40px; padding: 0 18px; border-radius: 11px; border: none; background: #1D1B16; color: #FCFAF5; font-size: 14px; font-weight: 700; cursor: pointer;">Send to support</button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 16px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+
+    <!-- left -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+
+      <div style="padding: 16px 18px; border-radius: 16px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THIS COUNTER</span>
+        <div style="border-radius: 12px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+          <sc-for list="{{identity}}" as="r" hint-placeholder-count="7">
+            <div style="min-height: 38px; box-sizing: border-box; padding: 7px 13px; border-bottom: 1px solid #F0ECE2; display: flex; align-items: center; gap: 12px;">
+              <span style="width: 190px; flex-shrink: 0; font-size: 13px; color: #5E594D;">{{r.k}}</span>
+              <span style="flex-grow: 1; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: {{r.ink}}; word-break: break-all;">{{r.v}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding: 16px 18px; border-radius: 16px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">WHAT IS IN THE LOCAL DATABASE</span>
+        <div style="border-radius: 12px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: 1.4fr 0.7fr 0.8fr 1.1fr; background: #F0ECE2;">
+            <sc-for list="{{tableHead}}" as="h" hint-placeholder-count="4">
+              <span style="padding: 8px 12px; font-size: 12px; font-weight: 700; color: #5E594D;">{{h.label}}</span>
+            </sc-for>
+          </div>
+          <sc-for list="{{tables}}" as="t" hint-placeholder-count="6">
+            <div style="display: grid; grid-template-columns: 1.4fr 0.7fr 0.8fr 1.1fr; border-top: 1px solid #F0ECE2;">
+              <span style="padding: 9px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{t.name}}</span>
+              <span style="padding: 9px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; text-align: right;">{{t.rows}}</span>
+              <span style="padding: 9px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; text-align: right; color: {{t.pendInk}};">{{t.pending}}</span>
+              <span style="padding: 9px 12px; font-size: 13px; color: #5E594D;">{{t.oldest}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: #8A8374; line-height: 1.45;">“Waiting” counts rows with <span style="font-family: 'IBM Plex Mono', monospace;">sync_state = pending</span>. The plain page adds these up into one number, which is why it says 10 while bills say 0.</span>
+      </div>
+
+      <div style="flex-grow: 1; padding: 16px 18px; border-radius: 16px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">RETRY SCHEDULE</span>
+        <div style="display: flex; align-items: flex-end; gap: 6px; height: 74px;">
+          <sc-for list="{{backoff}}" as="b" hint-placeholder-count="8">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+              <span style="width: 100%; height: {{b.h}}px; border-radius: 4px 4px 0 0; background: {{b.bg}};"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #8A8374;">{{b.label}}</span>
+            </span>
+          </sc-for>
+        </div>
+        <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">Doubling from 5 s, held at 2 minutes. It never gives up and never floods the shop. A tap on <b>Try sending now</b> resets it to 5 s.</span>
+      </div>
+    </div>
+
+    <!-- right -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+
+      <div style="padding: 16px 18px; border-radius: 16px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE LAST FIVE TRIES</span>
+        <div style="border-radius: 12px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+          <sc-for list="{{tries}}" as="t" hint-placeholder-count="5">
+            <div style="min-height: 46px; box-sizing: border-box; padding: 8px 13px; border-bottom: 1px solid #F0ECE2; display: flex; align-items: center; gap: 12px;">
+              <span style="width: 9px; height: 9px; border-radius: 50%; background: {{t.dot}}; flex-shrink: 0;"></span>
+              <span style="width: 96px; flex-shrink: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5E594D;">{{t.time}}</span>
+              <span style="width: 116px; flex-shrink: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{t.rows}}</span>
+              <span style="flex-grow: 1; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: {{t.ink}};">{{t.result}}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8374;">{{t.ms}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding: 16px 18px; border-radius: 16px; background: #1D1B16; display: flex; flex-direction: column; gap: 9px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #A8A295;">THE ANSWER, WORD FOR WORD</span>
+          <div style="flex-grow: 1;"></div>
+          <span style="height: 28px; padding: 0 11px; border-radius: 9px; border: 1px solid #3A362D; color: #C9C3B6; font-size: 12px; font-weight: 600; display: flex; align-items: center;">Copy</span>
+        </div>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #E6E0D2; line-height: 1.75; white-space: pre-wrap;">{{raw}}</span>
+      </div>
+
+      <div style="flex-grow: 1; padding: 16px 18px; border-radius: 16px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">CHECKED JUST NOW</span>
+        <sc-for list="{{probes}}" as="p" hint-placeholder-count="6">
+          <div style="display: flex; align-items: center; gap: 11px; min-height: 30px;">
+            <span style="width: 20px; height: 20px; border-radius: 6px; background: {{p.tint}}; color: {{p.ink}}; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{p.mark}}</span>
+            <span style="width: 200px; flex-shrink: 0; font-size: 13px; color: #1D1B16;">{{p.name}}</span>
+            <span style="flex-grow: 1; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5E594D;">{{p.value}}</span>
+          </div>
+        </sc-for>
+        <span style="margin-top: auto; padding: 11px 13px; border-radius: 11px; background: #FFFFFF; border: 1px solid #E6E0D2; font-size: 12px; color: #5E594D; line-height: 1.5;">The report carries this page, the last 200 log lines and the counts above. It carries <b>no</b> prices, customer names, phone numbers or bill contents.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1020}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const t = (name, rows, pending, oldest) => ({ name, rows, pending, oldest, pendInk: pending === '0' ? '#8A8374' : '#8E3517' });
+    const tryRow = (time, rows, result, ms, ok) => ({ time, rows, result, ms, dot: ok ? '#16693F' : '#8E3517', ink: ok ? '#0D4A2B' : '#8E3517' });
+    const probe = (name, value, kind) => ({
+      name, value,
+      mark: kind === 'ok' ? '✓' : kind === 'bad' ? '✕' : '!',
+      tint: kind === 'ok' ? '#E8F4ED' : kind === 'bad' ? '#FBEAE3' : '#FDF3DC',
+      ink: kind === 'ok' ? '#0D4A2B' : kind === 'bad' ? '#8E3517' : '#7A5205'
+    });
+    return {
+      identity: [
+        { k: 'Counter id', v: 'C1', ink: '#1D1B16' },
+        { k: 'Shop id', v: '(not set)', ink: '#8E3517' },
+        { k: 'Paired key', v: '(none) — never paired', ink: '#8E3517' },
+        { k: 'Sending to', v: 'https://api.chitbridge.app/v1/sync', ink: '#1D1B16' },
+        { k: 'App', v: '2.4.1 (build 1180) · Windows 11 · Edge 141', ink: '#1D1B16' },
+        { k: 'Local database', v: 'IndexedDB v37 · 4.1 MB used · 412 MB free', ink: '#1D1B16' },
+        { k: 'Clock', v: '3 s behind the shop — fine (limit 120 s)', ink: '#1D1B16' }
+      ],
+      tableHead: [{ label: 'Store' }, { label: 'Rows' }, { label: 'Waiting' }, { label: 'Oldest waiting' }],
+      tables: [
+        t('bills', '0', '0', '—'),
+        t('bill_lines', '0', '0', '—'),
+        t('price_changes', '412', '4', '18 Sep, 9:12 am'),
+        t('sold_out_marks', '31', '3', 'today, 10:40 am'),
+        t('customers', '128', '2', '19 Sep, 6:02 pm'),
+        t('day_close', '2', '1', '19 Sep, 11:04 pm')
+      ],
+      backoff: [
+        { label: '5s', h: 8, bg: '#CFC7B5' }, { label: '10s', h: 13, bg: '#CFC7B5' }, { label: '20s', h: 20, bg: '#CFC7B5' },
+        { label: '40s', h: 30, bg: '#CFC7B5' }, { label: '80s', h: 45, bg: '#CFC7B5' }, { label: '2m', h: 62, bg: '#E0A020' },
+        { label: '2m', h: 62, bg: '#E0A020' }, { label: '2m', h: 62, bg: '#E0A020' }
+      ],
+      tries: [
+        tryRow('3:41:52 pm', '10 → 0 sent', '401 unknown_counter_key', '240 ms', false),
+        tryRow('3:39:52 pm', '10 → 0 sent', '401 unknown_counter_key', '236 ms', false),
+        tryRow('3:37:52 pm', '10 → 0 sent', '401 unknown_counter_key', '251 ms', false),
+        tryRow('3:35:52 pm', '10 → 0 sent', '401 unknown_counter_key', '244 ms', false),
+        tryRow('3:33:51 pm', '10 → 0 sent', '401 unknown_counter_key', '239 ms', false)
+      ],
+      raw: 'POST /v1/sync  → 401\n{\n  "error": "unknown_counter_key",\n  "message": "No counter is registered with this key.",\n  "hint": "Pair the counter from the shop\'s back office.",\n  "request_id": "req_8f2c41a9",\n  "at": "2026-09-20T15:41:52+05:30"\n}',
+      probes: [
+        probe('Internet', 'reachable', 'ok'),
+        probe('Shop answers', '240 ms · api.chitbridge.app', 'ok'),
+        probe('Certificate', 'valid to 12 Feb 2027', 'ok'),
+        probe('Writes to this device', 'working · last write 2 s ago', 'ok'),
+        probe('Shop chosen', 'not set', 'bad'),
+        probe('Paired key', 'missing', 'bad')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

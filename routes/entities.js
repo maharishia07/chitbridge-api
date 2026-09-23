@@ -11,7 +11,6 @@ const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
 const { sendOtpEmail } = require('../lib/notify');   // shared OTP email sender (F2 — extracted from here)
 const { resolveEntityGovernance, currencyRefusal } = require('../lib/govresolve');   // resolve the entity's governance from attributes
 
@@ -28,6 +27,14 @@ const handleLib = require('../lib/handle');   // slug + check — the same rules
 // ⚠️ ONE generator (lib/otp.js, next to the verification). This copy was the only one of THREE that ever received
 //    the S4 CSPRNG fix; actors.js and connectors.js kept Math.random() for four weeks. Behaviour here is unchanged.
 const generateOTP = require('../lib/otp').generateOTP;
+const devOtp = require('../lib/dev-otp');
+/**
+ * ⭐⭐⭐ [capability: sign-in] ONE lookup and ONE verify for whoever types into this box, entity or coassist —
+ * see chitbridge-api/lib/identity-auth.js's header for the full story (Athi, 2026-09-23: "a single library
+ * for all user id definition and login process has been instantiated, do not reinvent" — the user-id HALF
+ * already existed in lib/resolveuserid.js; this is the login half that did not, until now).
+ */
+const identityAuth = require('../lib/identity-auth');
 
 // (F2) The OTP email sender now lives in lib/notify.js (`sendOtpEmail`), shared with the customer order flow.
 
@@ -43,6 +50,39 @@ router.post('/register',
   async (req, res) => {
     try {
       const input = req.body.email.trim();
+
+      /**
+       * ⭐⭐⭐ [capability: sign-in] A COASSIST TYPED INTO THE SAME BOX ([design: lib/identity-auth.js]).
+       *
+       * ⚠️⚠️⚠️ RETURNED EARLY, BEFORE isEmail EVEN EXISTS. A coassist's own user_id (`bala@mayurbhavan.br`,
+       * b260) contains '@' exactly like an email, and `input.includes('@')` below has no way to tell them
+       * apart — it would have sent every coassist down the entity email-login branch, found no matching
+       * `email` column, and on to REGISTERING A BRAND NEW ENTITY under a handle that already belongs to
+       * someone's coassist. identityAuth.findLoginIdentity() asks lib/resolveuserid.js's grammar instead of
+       * guessing from one character, so this can never happen.
+       * ⚠️ AMBIGUOUS is refused, never guessed — same rule the entity branch below already follows for a
+       * shared display name.
+       */
+      const found = await identityAuth.findLoginIdentity(query, input);
+      if (found.ambiguous) {
+        return res.status(409).json({
+          error: 'Ambiguous business', code: 'AMBIGUOUS_NAME',
+          message: 'More than one business matches that name. Ask your admin for the exact login.',
+        });
+      }
+      if (found.identity && found.identity.identity_type === 'actor') {
+        const a = found.identity;
+        if (identityAuth.needsPin(a)) {
+          return res.json({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id });
+        }
+        const otp = await identityAuth.issueOtp(query, a);
+        return res.json({
+          message: 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
+          user_id: a.user_id,
+          ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
+        });
+      }
+
       const isEmail = input.includes('@');
 
       let email, display_name, identity_id, bridge_id;
@@ -184,7 +224,14 @@ router.post('/register',
         console.log(`Display name login: ${display_name} → ${email}`);
       }
 
-      const otp = generateOTP();
+      /**
+       * ⚠️⚠️⚠️ [capability: sign-in] THIS WAS THE GAP ([lib/dev-otp.js]'s header, applied here 2026-09-23).
+       * generateOTP() reads process.env.DEV_OTP RAW, with no isSealed() check at all — if DEV_OTP were ever
+       * left set on a sealed (production) server by mistake, an entity's OTP would still be the predictable
+       * fixed value, with nothing to stop it. fixedOtp('entity') is the same 123456 in dev and unsealed, and
+       * genuinely null the moment the environment is sealed, so generateOTP()'s CSPRNG takes over instead.
+       */
+      const otp = devOtp.fixedOtp('entity') || generateOTP();
       const expires = new Date(Date.now() + 60 * 60 * 1000);
 
       await query(
@@ -223,7 +270,7 @@ router.post('/register',
                : sent.dev       ? 'Dev mode — verification code issued'
                :                  "We couldn't send your code — please try again.",
         email,
-        ...(require('../lib/dev-otp').mayExposeOtp() && { dev_otp: otp })
+        ...(devOtp.mayExposeOtp() && { dev_otp: otp })
       });
 
     } catch (err) {
@@ -241,26 +288,35 @@ router.post('/verify',
     // cannot log in. Either is accepted; exactly one is required (checked in the body, where the message is useful).
     body('email').optional().trim(),
     body('user_id').optional().trim(),
-    body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    // ⚠️ [capability: sign-in] OPTIONAL, not required — an actor with a PIN already set sends `pin`, never
+    // `otp`. identityAuth.verifyCredential() decides which one this identity actually needs.
+    body('otp').optional().trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be 4 digits'),
   ],
   validate,
   async (req, res) => {
     try {
-      const otp = req.body.otp.trim();
+      const otp = (req.body.otp || '').trim();
+      const pin = (req.body.pin || '').trim();
       const email  = (req.body.email  || '').toLowerCase().trim();
       const handle = (req.body.user_id || '').trim();
       if (!email && !handle) {
         return res.status(400).json({ error: 'Verification failed', message: 'Send your email address or your User ID.' });
       }
 
-      // The handle is UNIQUE (a unique index on lower(user_id)), so this lookup can never be ambiguous the way a
-      // display name can — which is the whole reason a minted store is given one.
+      /**
+       * ⚠️ [capability: sign-in] NO identity_type FILTER HERE, and none added — this already found a coassist
+       * by their b260 handle before today, since a handle carries a unique index whatever type it belongs to.
+       * The gap was never this lookup; it was that nothing after it knew what to do with an actor row.
+       */
       const result = email
         ? await query(
-            `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, otp_attempts, owner_scope
+            `SELECT identity_id, bridge_id, display_name, email, user_id, identity_type,
+                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope
              FROM identities WHERE email = $1`, [email])
         : await query(
-            `SELECT identity_id, bridge_id, display_name, email, otp_code, otp_expires_at, otp_attempts, owner_scope
+            `SELECT identity_id, bridge_id, display_name, email, user_id, identity_type,
+                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope
              FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle]);
 
       if (result.rows.length === 0) {
@@ -270,17 +326,26 @@ router.post('/verify',
 
       const identity = result.rows[0];
 
-      const otpCheck = await verifyOtp(query, identity, otp);
-      if (!otpCheck.ok) {
-        return res.status(otpCheck.status).json({ error: 'Verification failed', message: otpCheck.message });
+      // ⭐ [capability: sign-in] ONE verify, OTP or PIN — see lib/identity-auth.js. Replaces the OTP-only
+      // check and its manual cleanup UPDATE; verifyCredential does both, for either credential.
+      const check = await identityAuth.verifyCredential(query, identity, { otp, pin });
+      if (!check.ok) {
+        return res.status(check.status).json({
+          error: 'Verification failed', message: check.message, ...(check.use_pin ? { use_pin: true } : {}),
+        });
       }
 
-      await query(
-        `UPDATE identities SET email_verified = TRUE, status = 'active',
-         otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0, last_active_at = NOW()
-         WHERE identity_id = $1`,
-        [identity.identity_id]
-      );
+      /**
+       * ⚠️⚠️ [capability: sign-in] EVERYTHING BELOW, UP TO THE TOKEN, IS ENTITY ONBOARDING — email_verified,
+       * the governance-context write, the constitution auto-mint, the default schema bootstrap, the root
+       * link. A coassist is not "an entity #2"; it belongs to a parent_entity_id that has already been
+       * through all of this. Running it again on an actor's own identity_id would mint a SECOND, bogus
+       * governance stamp under the wrong row, at best wastefully, at worst wrongly.
+       */
+      // ⚠️ declared OUTSIDE the entity-only block below — an actor's response also reads this, always null.
+      let mintedConstitution = null;
+      if (identity.identity_type !== 'actor') {
+      await query(`UPDATE identities SET email_verified = TRUE WHERE identity_id = $1`, [identity.identity_id]);
 
       /**
        * ⭐⭐ THE GOVERNANCE LAYER THE BROWSER WORKED OUT, and the person agreed to ([REG-2]/[REG-3]).
@@ -355,7 +420,6 @@ router.post('/verify',
 
       // AUTO-MINT the entity's governance stamp onto its CHOSEN vertical (else the default constitution). BEST-EFFORT —
       // wrapped so it can NEVER fail verification; an un-stamped entity safely defaults to base at resolve time.
-      let mintedConstitution = null;
       try {
         const chosen = (req.body.constitution && String(req.body.constitution).trim()) || 'base';
         let c = (await query(`SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`, [chosen])).rows[0];
@@ -389,17 +453,22 @@ router.post('/verify',
       try {
         rootLink = await require('../lib/rootlink').connect(identity.identity_id, req.id);
       } catch (e) { console.warn('root link skipped:', (e && e.message) || e); }
+      } // ⚠️ [capability: sign-in] end of the entity-only onboarding block opened above
 
-      // 7 days JWT — longer session for testing
+      /**
+       * ⚠️ [capability: sign-in] identity_type IS THE REAL ONE NOW, not hardcoded 'entity'. Nothing consumed
+       * this claim before today because nothing but an entity ever reached this line — an actor got here for
+       * the first time only once verifyCredential() above learned to accept one.
+       */
       const token = jwt.sign(
         { identity_id: identity.identity_id, bridge_id: identity.bridge_id,
-          display_name: identity.display_name, email: identity.email, identity_type: 'entity',
-          owner_scope: identity.owner_scope || 'entity' },
+          display_name: identity.display_name, email: identity.email, identity_type: identity.identity_type,
+          owner_scope: identity.owner_scope || identity.identity_type },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
 
-      console.log(`Entity verified: ${identity.display_name}`);
+      console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.display_name}`);
 
       res.json({
         message: 'Verified successfully',
@@ -410,6 +479,9 @@ router.post('/verify',
           display_name: identity.display_name,
           email: identity.email
         },
+        // ⭐ [capability: sign-in] the ONE shape lib/signin.js's keep() actually reads (a.identity || a.user) —
+        // `entity:` above is kept for whatever else already reads it; this is additive, nothing removed.
+        identity: identityAuth.personShape(identity),
         constitution: mintedConstitution
       });
 

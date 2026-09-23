@@ -63,19 +63,42 @@ it('and says where the code is going', () => {
   assert.ok(/registered for bala/.test(S.ask('bala').say));
 });
 
-/** ⚠️ five digits is not a wrong code, it is an unfinished one, and saying "wrong" would send somebody hunting */
+/**
+ * ⚠️⚠️ [capability: sign-in] MOVED, NOT DELETED — the codebase's own rule when behaviour changes on purpose.
+ * These asserted the OLD wording, "six digits", as the only length code() would ever accept. Since
+ * lib/identity-auth.js learned to accept a coassist's own PIN in place of a first-time OTP (2026-09-23), one
+ * box now serves two lengths — four for a PIN, six for a code — and code() tells them apart by length alone,
+ * because that is all a shopkeeper types before the server ever says which one this identity needed.
+ * Five digits is still not a wrong code, it is an unfinished one either way, and saying "wrong" would send
+ * somebody hunting.
+ */
 it('⚠️ an unfinished code is told apart from a wrong one', () => {
   assert.strictEqual(S.code('12345').ok, false);
-  assert.ok(/six digits/.test(S.code('12345').why));
+  assert.ok(/four digits.*six/.test(S.code('12345').why));
   assert.strictEqual(S.code('123456').ok, true);
   assert.strictEqual(S.code('123 456').value, '123456', 'a space made a good code unusable');
-  assert.ok(/Type the six-digit code/.test(S.code('').why));
+  assert.ok(/PIN.*code/i.test(S.code('').why));
+});
+
+/** ⭐⭐ [capability: sign-in] THE NEW BRANCH — a 4-digit PIN is recognised as one, distinctly from a 6-digit
+ *  first-time code, and neither is mistaken for "an unfinished" other. */
+it('⭐⭐ a PIN and a first-time code are told apart by length, not guessed', () => {
+  const pin = S.code('1234'), otp = S.code('123456');
+  assert.strictEqual(pin.ok, true); assert.strictEqual(pin.isPin, true);
+  assert.strictEqual(otp.ok, true); assert.strictEqual(otp.isPin, false);
 });
 
 it('and verify puts the two together', () => {
   assert.deepStrictEqual(S.verify('bala', '123456').body, { user_id: 'bala', otp: '123456' });
   assert.strictEqual(S.verify('bala', '12').ok, false);
   assert.strictEqual(S.verify('', '123456').ok, false);
+});
+
+/** ⭐⭐⭐ [capability: sign-in] AND A PIN GOES IN UNDER ITS OWN NAME — `pin`, never `otp`. The server tells
+ *  the two apart by which key arrived, not by length a second time; this is the one place that decision is
+ *  made, so it can never disagree with what usignPaint() drew on screen a moment earlier. */
+it('⭐⭐⭐ a PIN is sent as pin, never as otp', () => {
+  assert.deepStrictEqual(S.verify('bala', '1234').body, { user_id: 'bala', pin: '1234' });
 });
 
 /* ══ ⭐⭐⭐ THE PART THE TWO SURFACES DISAGREE ABOUT ═══════════════════════════════════════════════════════ */

@@ -286,7 +286,9 @@ router.post('/',
       // Generate IDs
       const identity_id = uuidv4();
       const bridge_id   = generateBridgeId();
-      const otp         = generateOTP();
+      // ⭐ [capability: sign-in] fixedOtp('entity') closes the isSealed() gap generateOTP() never checked —
+      // see lib/identity-auth.js. Same 123456 in dev as an entity's own OTP; a real code once sealed.
+      const otp         = devOtp.fixedOtp('entity') || generateOTP();
       const otp_expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
       /**
@@ -667,7 +669,8 @@ router.delete('/:id/pin',
       }
       // Clear the PIN AND issue a fresh OTP. The actor's original OTP was consumed at first login, so without
       // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
-      const otp     = generateOTP();
+      // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
+      const otp     = devOtp.fixedOtp('entity') || generateOTP();
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await db(
         `UPDATE identities
@@ -1030,7 +1033,8 @@ router.post('/:id/otp',
         return res.status(404).json({ error: 'Not found', message: 'Actor not found' });
       }
 
-      const otp     = generateOTP();
+      // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
+      const otp     = devOtp.fixedOtp('entity') || generateOTP();
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
       await db(
@@ -1115,7 +1119,8 @@ router.put('/:id/status',
 
       // Reactivate is a single write (no task routing) — handle and return.
       if (action === 'reactivate') {
-        const otp     = generateOTP();
+        // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
+        const otp     = devOtp.fixedOtp('entity') || generateOTP();
         const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         await db(
           `UPDATE identities

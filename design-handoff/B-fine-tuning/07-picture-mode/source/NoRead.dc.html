@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1190px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 13px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">PICTURE MODE · FOR SOMEONE WHO CANNOT READ IT</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Digits, pictures, position and voice. Everything else is decoration.</span>
+  </div>
+
+  <!-- ===== FOUR THINGS THAT SURVIVE ===== -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+    <sc-for list="{{survive}}" as="s" hint-placeholder-count="4">
+      <div style="{{s.card}}">
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span style="{{s.badge}}">{{s.n}}</span>
+          <span style="{{s.title}}">{{s.name}}</span>
+        </div>
+        <span style="font-size: 12.5px; line-height: 1.42;">{{s.text}}</span>
+        <span style="{{s.flip}}">{{s.flipText}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 430px 1fr 1fr; gap: 14px;">
+
+    <!-- ===== THE SCREEN ===== -->
+    <div style="padding: 15px 16px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 9px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">1 · THE SELL SCREEN, WITHOUT WORDS</span>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 12px; border-radius: 15px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 10px;">
+
+        <!-- keys -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <sc-for list="{{keys}}" as="k" hint-placeholder-count="6">
+            <div style="{{k.card}}">
+              <div style="{{k.photo}}"><span style="{{k.inner}}">{{k.initials}}</span></div>
+              <div style="padding: 5px 6px; display: flex; flex-direction: column; gap: 1px;">
+                <span style="font-size: 10.5px; font-weight: 600; color: #5E594D; line-height: 1.1;">{{k.name}}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700;">{{k.price}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- the bill, in pictures -->
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #A8A295;">THE BILL — A PICTURE PER LINE</span>
+          <sc-for list="{{billLines}}" as="b" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 9px; padding: 6px 7px; border-radius: 10px; background: #FCFAF5; border: 1px solid #E6E0D2;">
+              <span style="{{b.thumb}}">{{b.initials}}</span>
+              <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                <sc-for list="{{b.pips}}" as="p" hint-placeholder-count="3">
+                  <span style="width: 9px; height: 9px; border-radius: 50%; background: #16693F;"></span>
+                </sc-for>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; margin-left: 3px;">{{b.qty}}</span>
+              </div>
+              <span style="flex-grow: 1;"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700;">{{b.amount}}</span>
+              <span style="width: 26px; height: 26px; border-radius: 8px; background: #FBEAE3; color: #8E3517; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">−</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- total -->
+        <div style="padding: 10px 12px; border-radius: 13px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; align-items: center; gap: 10px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16693F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"></path><path d="M17 9a4 4 0 0 1 0 6"></path></svg>
+          <span style="flex-grow: 1;"></span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; color: #0D4A2B; line-height: 1;">₹180</span>
+        </div>
+
+        <!-- pay -->
+        <div style="display: flex; gap: 8px;">
+          <sc-for list="{{payButtons}}" as="p" hint-placeholder-count="3">
+            <div style="{{p.style}}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{p.stroke}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{p.d1}}"></path><path d="{{p.d2}}"></path></svg>
+              <span style="{{p.labelStyle}}">{{p.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MECHANISMS ===== -->
+    <div style="display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+
+      <div style="padding: 14px 16px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">2 · CHANGE, AS NOTES AND COINS</span>
+        <span style="font-size: 12.5px; color: #6B4703; line-height: 1.42;">“₹320 change” asks for arithmetic. A picture of the notes to hand back does not — and the customer can check it at a glance too.</span>
+        <div style="padding: 11px 12px; border-radius: 13px; background: #FFFFFF; border: 1px solid #F6E3B8; display: flex; flex-direction: column; gap: 9px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-size: 11.5px; color: #5E594D;">taken</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700;">₹500</span>
+            <span style="flex-grow: 1;"></span>
+            <span style="font-size: 11.5px; color: #5E594D;">give back</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; color: #0D4A2B;">₹320</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px;">
+            <sc-for list="{{money}}" as="m" hint-placeholder-count="4">
+              <span style="{{m.style}}">{{m.label}}</span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 14px 16px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">3 · HOLD, INSTEAD OF A WARNING</span>
+        <span style="font-size: 12.5px; color: #5E594D; line-height: 1.42;">A sentence cannot stop a hand that cannot read it. A two-second hold can. The ring fills, the counter speaks the consequence, and letting go cancels.</span>
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <sc-for list="{{holds}}" as="h" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 5px; align-items: center;">
+              <div style="{{h.btn}}">
+                <span style="{{h.fill}}"></span>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{h.stroke}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: relative;"><path d="{{h.d1}}"></path><path d="{{h.d2}}"></path></svg>
+              </div>
+              <span style="font-size: 10.5px; color: #5E594D;">{{h.label}}</span>
+            </div>
+          </sc-for>
+          <div style="flex-grow: 1; padding: 10px 12px; border-radius: 12px; background: #F3EFE6; display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 11.5px; font-weight: 700;">What it says while you hold</span>
+            <span style="font-size: 11.5px; color: #5E594D; line-height: 1.35;">“Closing the counter. Ninety-six bills sent. Nothing waiting.”</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 14px 16px; border-radius: 18px; background: #E4EEFA; border: 2px solid #2F74C9; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">4 · HOLD ANYTHING TO HEAR WHAT IT IS</span>
+        <span style="font-size: 12.5px; color: #174A87; line-height: 1.42;">One gesture replaces every help screen, every tooltip and every label nobody can read. Hold a key for one second and it says its name and price. Hold a button and it says what it does — without doing it.</span>
+        <sc-for list="{{hear}}" as="h" hint-placeholder-count="4">
+          <div style="padding: 8px 10px; border-radius: 11px; background: #FFFFFF; border: 1px solid #CBDDF3; display: flex; align-items: center; gap: 9px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F74C9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M4 9h4l5-4v14l-5-4H4z"></path><path d="M17 9a4 4 0 0 1 0 6"></path></svg>
+            <span style="width: 92px; font-size: 11.5px; font-weight: 700; flex-shrink: 0;">{{h.what}}</span>
+            <span style="flex-grow: 1; font-size: 11.5px; color: #2F4A6B; line-height: 1.3;">{{h.says}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ===== LEARNING ===== -->
+    <div style="display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+      <div style="padding: 14px 16px; border-radius: 18px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">5 · HOW THEY LEARN IT</span>
+        <span style="font-size: 12.5px; color: #5E594D; line-height: 1.42;">Not from a manual, a tour or a tooltip. From doing one real sale beside someone who already knows, then from the screen never changing under them.</span>
+        <sc-for list="{{learn}}" as="l" hint-placeholder-count="6">
+          <div style="padding: 10px 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; align-items: flex-start; gap: 10px;">
+            <span style="width: 22px; height: 22px; border-radius: 7px; background: #E8F4ED; color: #0D4A2B; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">{{l.n}}</span>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span style="font-size: 12.5px; font-weight: 700;">{{l.title}}</span>
+              <span style="font-size: 11.5px; color: #5E594D; line-height: 1.38;">{{l.text}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 14px 16px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">6 · WHAT THIS OVERTURNS IN THE REST OF THE PACKAGE</span>
+        <sc-for list="{{overturns}}" as="o" hint-placeholder-count="5">
+          <div style="display: flex; align-items: flex-start; gap: 9px;">
+            <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 6px; background: #F3D3C6; color: #8E3517; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">!</span>
+            <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+              <span style="font-size: 12px; font-weight: 700; color: #8E3517;">{{o.was}}</span>
+              <span style="font-size: 11.5px; color: #6E2A0C; line-height: 1.35;">{{o.now}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const CARD = 'padding: 12px 14px; border-radius: 16px; display: flex; flex-direction: column; gap: 7px; min-width: 0; ';
+    const BADGE = 'width: 24px; height: 24px; border-radius: 8px; font-family: \'IBM Plex Mono\', monospace; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const TITLE = 'font-family: \'Bricolage Grotesque\', sans-serif; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; ';
+    const surv = (n, name, text, flipText, c) => ({
+      n, name, text, flipText,
+      card: CARD + c.card, badge: BADGE + c.badge, title: TITLE + c.title,
+      flip: 'font-size: 11.5px; font-weight: 700; color: ' + c.flipInk + '; line-height: 1.35;'
+    });
+
+    const K = 'border-radius: 13px; background: #FFFFFF; border: 1px solid #DDD6C6; overflow: hidden; display: flex; flex-direction: column; ';
+    const key = (name, price, initials, tint, ink) => ({
+      name, price, initials,
+      card: K,
+      photo: 'height: 66px; background: ' + tint + '; display: flex; align-items: center; justify-content: center;',
+      inner: 'font-family: \'Bricolage Grotesque\', sans-serif; font-size: 22px; font-weight: 800; color: ' + ink + ';'
+    });
+
+    const TH = 'width: 32px; height: 32px; border-radius: 10px; font-family: \'Bricolage Grotesque\', sans-serif; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const line = (initials, qty, amount, tint, ink) => ({
+      initials, qty: String(qty), amount,
+      pips: Array.from({ length: qty }, () => ({})),
+      thumb: TH + 'background: ' + tint + '; color: ' + ink + ';'
+    });
+
+    const PB = 'flex-grow: 1; height: 58px; border-radius: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; ';
+    const pay = (label, kind, d1, d2) => ({
+      label, d1, d2,
+      stroke: kind === 'green' ? '#FFFFFF' : '#1D1B16',
+      style: PB + (kind === 'green' ? 'background: #16693F;' : 'background: #FCFAF5; border: 1px solid #DDD6C6;'),
+      labelStyle: 'font-size: 10.5px; font-weight: 700; color: ' + (kind === 'green' ? '#FFFFFF' : '#5E594D') + ';'
+    });
+
+    const NOTE = 'height: 34px; border-radius: 7px; font-family: \'IBM Plex Mono\', monospace; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const COIN = 'width: 34px; height: 34px; border-radius: 50%; font-family: \'IBM Plex Mono\', monospace; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+
+    const HB = 'width: 62px; height: 62px; border-radius: 18px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; flex-shrink: 0; ';
+    const hold = (label, pct, kind, d1, d2) => ({
+      label, d1, d2,
+      stroke: pct > 55 ? '#FFFFFF' : (kind === 'danger' ? '#8E3517' : '#1D1B16'),
+      btn: HB + (kind === 'danger' ? 'background: #FBEAE3; border: 2px solid #E7B9A8;' : 'background: #F3EFE6; border: 2px solid #DDD6C6;'),
+      fill: 'position: absolute; left: 0; bottom: 0; width: 100%; height: ' + pct + '%; background: ' + (kind === 'danger' ? '#C4562F' : '#16693F') + ';'
+    });
+
+    return {
+      survive: [
+        surv('1', 'Digits', 'Numbers are learned long before letters and are the same in every script. Prices, quantities and totals are safe to show as numbers and nothing else.', 'So: the total is the biggest thing on the screen.',
+          { card: 'background: #E8F4ED; border: 2px solid #16693F;', badge: 'background: #16693F; color: #FFFFFF;', title: 'color: #0D4A2B;', flipInk: '#0D4A2B' }),
+        surv('2', 'Pictures', 'A photo of the dish is read instantly by anyone. Without one, a key is a word — and a word is nothing.', 'So: photos are not a setting here. They are on, and large.',
+          { card: 'background: #FDF3DC; border: 1px solid #EFD39A;', badge: 'background: #E0A020; color: #FFFFFF;', title: 'color: #7A5205;', flipInk: '#7A5205' }),
+        surv('3', 'Position', 'The hand learns that idli is top-left long before the eye learns the word. Position is the memory.', 'So: the keys must never move by themselves. Ever.',
+          { card: 'background: #E4EEFA; border: 1px solid #B9D2EF;', badge: 'background: #2F74C9; color: #FFFFFF;', title: 'color: #174A87;', flipInk: '#174A87' }),
+        surv('4', 'Voice', 'Speaking back is how a total is checked when it cannot be read. It is not an extra here — it is the confirmation channel.', 'So: voice out is on by default, and it reads the total.',
+          { card: 'background: #EEEAFB; border: 1px solid #CFC5F0;', badge: 'background: #44308F; color: #FFFFFF;', title: 'color: #44308F;', flipInk: '#44308F' })
+      ],
+      keys: [
+        key('Idli', '₹40', 'ID', '#EFE7D6', '#8A7A55'),
+        key('Dosa', '₹55', 'DO', '#E8F4ED', '#16693F'),
+        key('Vada', '₹30', 'VA', '#FDF3DC', '#7A5205'),
+        key('Pongal', '₹50', 'PO', '#E4EEFA', '#174A87'),
+        key('Coffee', '₹20', 'CO', '#EEEAFB', '#44308F'),
+        key('Tea', '₹15', 'TE', '#FBEAE3', '#8E3517')
+      ],
+      billLines: [
+        line('ID', 2, '₹80', '#EFE7D6', '#8A7A55'),
+        line('DO', 1, '₹55', '#E8F4ED', '#16693F'),
+        line('CO', 2, '₹40', '#EEEAFB', '#44308F')
+      ],
+      payButtons: [
+        pay('cash', 'green', 'M2 6h20v12H2z', 'M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5'),
+        pay('phone', 'plain', 'M7 2h10v20H7z', 'M11 18h2'),
+        pay('print', 'plain', 'M7 9V3h10v6M7 19H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2', 'M7 14h10v7H7z')
+      ],
+      money: [
+        { label: '₹200', style: NOTE + 'width: 70px; background: #FDF3DC; border: 1px solid #E0A020; color: #7A5205;' },
+        { label: '₹100', style: NOTE + 'width: 62px; background: #E4EEFA; border: 1px solid #2F74C9; color: #174A87;' },
+        { label: '₹10', style: COIN + 'background: #F3EFE6; border: 1px solid #A8A295; color: #5E594D;' },
+        { label: '₹10', style: COIN + 'background: #F3EFE6; border: 1px solid #A8A295; color: #5E594D;' }
+      ],
+      holds: [
+        hold('take money', 100, 'ok', 'M2 6h20v12H2z', 'M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5'),
+        hold('close the day', 62, 'ok', 'M6 11h12v10H6z', 'M9 11V8a3 3 0 0 1 6 0v3'),
+        hold('refund', 28, 'danger', 'M3 12a9 9 0 1 0 3-6.7', 'M3 4v5h5')
+      ],
+      hear: [
+        { what: 'a key', says: '“Idli, two pieces, forty rupees.”' },
+        { what: 'a bill line', says: '“Two idli, eighty rupees. Let go to keep it.”' },
+        { what: 'the total', says: '“One hundred and eighty rupees.”' },
+        { what: 'any button', says: 'what it does — and it does not do it.' }
+      ],
+      learn: [
+        { n: '1', title: 'Someone shows them, once', text: 'The realistic path. So every action must be visible and imitable — no hidden gesture, no long-press-only action, nothing that cannot be pointed at.' },
+        { n: '2', title: 'The first sale is the lesson', text: 'On a new counter the first bill runs with a finger outline on the next thing to press. It is a real sale, not a tour, and it ends when the bill is paid.' },
+        { n: '3', title: 'Holding asks, instead of a help screen', text: 'One gesture — hold to hear — answers “what is this?” anywhere, in their language, for ever. There is no other help.' },
+        { n: '4', title: 'Pressing is safe', text: 'They learn by pressing things. Nothing destructive happens on a first press; every screen has one big way back; the last action can be undone for ten seconds.' },
+        { n: '5', title: 'Nothing moves', text: 'Same key, same square, same colour, every morning. A grid that reorders itself overnight erases a week of learning in one night.' },
+        { n: '6', title: 'The owner sets it up, not the worker', text: 'Every screen that needs reading — settings, the shop, reports — sits behind the owner’s sign-in. The seller’s screen has none of it.' }
+      ],
+      overturns: [
+        { was: '“Most used first, recounted every night”', now: 'Off on a picture-mode counter. A grid that reorders itself is the single most damaging thing you can do to someone who navigates by position. Fixed order becomes the default.' },
+        { was: 'Photos as a switch in the tray', now: 'Not a switch here. On, and at the largest size that fits — the card shape from folder 06 is the default presentation, not an option.' },
+        { was: 'Confirm sheets with a sentence and live numbers', now: 'Hold-to-confirm with a filling ring, and the sentence spoken aloud instead of printed. Keep the numbers; nobody has to read them.' },
+        { was: 'Voice out as a new capability to plan separately', now: 'Core. Without it there is no way to check a total. It moves to the front of the queue.' },
+        { was: '“Find a setting” boxes, search by typing', now: 'Never on the seller’s screen. Typing is not available to this person — the grid, the categories and the microphone are the whole of navigation.' },
+        { was: 'Careful wording everywhere', now: 'Still worth doing — half these counters have a reader — but wording can never be the only thing carrying a meaning.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

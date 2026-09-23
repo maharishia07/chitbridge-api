@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 900px; box-sizing: border-box; padding: 34px 40px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 20px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">COMBO CHOOSER · THE WORDS AND THE STATES</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 34px; font-weight: 800; letter-spacing: -0.02em;">The button says what happens next — never a list of group names</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px;">
+
+    <!-- button states -->
+    <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">ONE BUTTON, FIVE STATES</span>
+      <sc-for list="{{states}}" as="s" hint-placeholder-count="5">
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <span style="font-size: 12px; font-weight: 700; color: #8A8374;">{{s.when}}</span>
+          <span style="height: 54px; padding: 0 18px; border-radius: 14px; background: {{s.bg}}; border: {{s.border}}; color: {{s.ink}}; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{s.label}}</span>
+          <span style="font-size: 13px; color: #5E594D;">{{s.note}}</span>
+        </div>
+      </sc-for>
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8E3517;">WHAT IT SAYS TODAY</span>
+        <span style="font-size: 16px; font-weight: 700; color: #8E3517; text-decoration: line-through;">Choose Choose a tiffin and Choose a drink</span>
+        <span style="font-size: 13px; color: #6E2A0C;">The label is glued together from group names, and the button is dead while it says it. Both go.</span>
+      </div>
+    </div>
+
+    <!-- wording -->
+    <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">SAY IT LIKE A PERSON AT THE COUNTER</span>
+      <sc-for list="{{words}}" as="w" hint-placeholder-count="7">
+        <div style="padding: 11px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 14px; color: #A8A295; text-decoration: line-through;">{{w.old}}</span>
+          <span style="font-size: 16px; font-weight: 700; color: #0D4A2B;">{{w.now}}</span>
+          <span style="font-size: 13px; color: #5E594D;">{{w.why}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- rules -->
+    <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">HOW IT BEHAVES</span>
+      <sc-for list="{{rules}}" as="r" hint-placeholder-count="8">
+        <div style="display: flex; gap: 10px; align-items: flex-start;">
+          <span style="width: 24px; height: 24px; border-radius: 8px; background: #E8F4ED; color: #0D4A2B; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+          <span style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 15px; font-weight: 700;">{{r.title}}</span>
+            <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">{{r.body}}</span>
+          </span>
+        </div>
+      </sc-for>
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #E8F4ED; border: 1px solid #A9D3BC; font-size: 14px; color: #0D4A2B; line-height: 1.5;">
+        Two ways to open it: <b>Build the plate</b> (every pick made on purpose) or <b>Ready to go</b> (pre-filled with the usual, swap only what they want). Same data, same words — pick one per shop in the back office.
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const amber = { bg: '#E0A020', border: 'none', ink: '#1D1B16' };
+    const green = { bg: '#16693F', border: 'none', ink: '#FFFFFF' };
+    const red = { bg: '#FBEAE3', border: '1px solid #E7B9A8', ink: '#8E3517' };
+    return {
+      states: [
+        Object.assign({ when: 'NOTHING PICKED YET', label: 'Pick a tiffin to start', note: 'Tapping it jumps to that step — it is never dead.' }, amber),
+        Object.assign({ when: 'ONE STEP LEFT', label: 'Pick a drink to finish', note: 'Names the one thing missing, in singular, plain words.' }, amber),
+        Object.assign({ when: 'READY', label: 'Add to bill · ₹180.00', note: 'Green only when the tap really adds the line.' }, green),
+        Object.assign({ when: 'READY, WITH EXTRAS', label: 'Add to bill · ₹195.00', note: 'The price moves as extras go on. No surprise at pay.' }, green),
+        Object.assign({ when: 'A PICK WENT SOLD OUT', label: 'Idli is sold out — pick another tiffin', note: 'The pick is cleared, the step reopens, the bill is untouched.' }, red)
+      ],
+      words: [
+        { old: 'Choose a tiffin', now: 'The tiffin', why: 'The step is a thing, not an order. The verb lives on the button.' },
+        { old: 'must choose', now: 'one of these', why: '"Must" scolds. "One of these" says how many.' },
+        { old: '(nothing)', now: 'skip if not', why: 'Optional steps say so, so nobody hunts for a required pick.' },
+        { old: 'With', now: 'Anything with it?', why: 'How the counter actually asks.' },
+        { old: '₹25.00 under separately', now: 'Separately ₹205.00 · they save ₹25.00', why: 'Show what it would have cost, then the saving. Reads out loud.' },
+        { old: 'Choose', now: 'Build the plate', why: 'A title that says what the customer walks away with.' },
+        { old: 'Cancel', now: 'Cancel · nothing is added', why: 'Says the consequence, so nobody fears losing the bill.' }
+      ],
+      rules: [
+        { n: '1', title: 'Never a dead button', body: 'While something is missing the button is amber and names it; tapping scrolls to that step and opens it.' },
+        { n: '2', title: 'Required vs optional is visible', body: '"one of these" and "as many as you like" on the step; "skip if not" on optional ones. No red asterisks.' },
+        { n: '3', title: 'The shop\'s usual is pre-picked', body: 'Optional per combo. Most bills then need one tap. Any pre-pick can be swapped or cleared.' },
+        { n: '4', title: 'Sold out is honest', body: 'Sold-out items show greyed with "sold out today", not hidden — staff know why a favourite is missing.' },
+        { n: '5', title: 'Price moves live', body: 'Upgrades (+₹15.00) and extras change the total on the button before the tap, never after.' },
+        { n: '6', title: 'Editable after it is on the bill', body: 'Tapping the combo line on the bill reopens it with the picks in place. Changing a pick edits the line, it does not add a second one.' },
+        { n: '7', title: 'Keyboard and scanner', body: '1–9 pick inside the open step, Tab moves on, Enter adds, Esc closes with nothing added. A scan inside the sheet picks that item if it belongs to the open step.' },
+        { n: '8', title: 'Offline the same', body: 'Combo definitions are cached with the products; picking, adding and editing work with no network.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

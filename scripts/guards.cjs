@@ -41,6 +41,7 @@ const GUARDS = [
   'qty.test.js',              // ⭐⭐⭐ the factor table LEFT the page — [TILL-186]
   'scalecode.test.js',        // ⭐⭐ a scale's label: which vegetable, and how much of it — [TILL-185]
   'signin.test.js',           // ⭐⭐⭐ a PERSON signs in — user id or email, and no session at a counter
+  'identity-auth.test.js',    // ⭐⭐⭐ [capability: sign-in] the ONE lookup and ONE verify — entity or coassist, OTP or PIN
   'orderhub.test.js',         // ⭐⭐⭐ one floor, several devices, no internet — [TILL-178b]
   'till-hidden.test.js',      // [hidden] must win — a class that sets display draws a closed panel anyway
   'till-exits.test.js',       // every screen has a lid, and it never sits in a row of ways to CHANGE things

@@ -345,6 +345,16 @@ const INFRA_LIBS = [
   'whatsapp-templates.js', // provider template shapes
 ];
 const ENGINE_OTHER = [
+  /**
+   * ⭐⭐⭐ [capability: sign-in] identity-auth.js — CB's own decision about who needs an OTP and who needs a
+   * PIN, extracted 2026-09-23 when routes/entities.js and routes/actors.js were found each answering that
+   * question a different way (one via lib/otp.js's raw DEV_OTP passthrough with no sealed-environment check
+   * at all, the other with its own inline attempt-lock). Not INFRA like lib/otp.js/lib/dev-otp.js it calls —
+   * those hold no rule and decide nothing (generate a code, compare a code); THIS decides which of the two an
+   * identity gets, which is exactly the business decision that was drifting. Athi: "always implemented in one
+   * go everywhere... a single library for all user id definition and login process."
+   */
+  'identity-auth.js',
   /* ⭐⭐ [TILL-107] — the two trade blueprints and their product-code sequence, and the ONE path that writes a
      product into a catalogue. catalogue-write is CB's own sequence of decisions (declare → validate → stamp
      → insert → meter), extracted from routes/products.js when the counter became a second caller. */

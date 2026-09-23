@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1040px; box-sizing: border-box; padding: 28px 32px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 18px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">COUNTER HEALTH · THE BUTTONS, THE TWO SIDES, THE SPEED</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -0.02em;">Six buttons of equal weight is no answer at all</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1.05fr 0.9fr; gap: 16px;">
+
+    <!-- actions -->
+    <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">TODAY — SIX CHIPS, NO RANK</span>
+      <div style="padding: 12px 13px; border-radius: 13px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-wrap: wrap; gap: 7px;">
+        <sc-for list="{{oldButtons}}" as="b" hint-placeholder-count="6">
+          <span style="height: 32px; padding: 0 11px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E0C3B6; color: #8E3517; font-size: 12px; font-weight: 600; display: flex; align-items: center;">{{b.label}}</span>
+        </sc-for>
+        <span style="width: 100%; font-size: 12px; color: #6E2A0C; line-height: 1.45;">All the same size, all outlined, three of them about a report, one of them the actual fix — and the fix is not among them.</span>
+      </div>
+
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">INSTEAD — ONE FIX, THEN CHECKS, THEN THE REPORT</span>
+
+      <div style="padding: 15px 16px; border-radius: 15px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.07em; color: #8A8374;">THE FIX FOR THIS CAUSE — ONE, ALWAYS GREEN</span>
+          <button style="height: 52px; border-radius: 13px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Pair this counter</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.07em; color: #8A8374;">CHECKS — SAFE TO PRESS, NOTHING CHANGES</span>
+          <div style="display: flex; gap: 8px;">
+            <sc-for list="{{checkButtons}}" as="b" hint-placeholder-count="2">
+              <span style="flex-grow: 1; height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid {{b.line}}; background: #FFFFFF; color: {{b.ink}}; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2;">{{b.label}}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.07em; color: #8A8374;">THE REPORT — ONE BUTTON, THREE WAYS INSIDE</span>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span style="height: 46px; padding: 0 16px; border-radius: 12px; background: #1D1B16; color: #FCFAF5; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 9px; white-space: nowrap; flex-shrink: 0;">
+              Send the report
+              <span style="width: 1px; height: 20px; background: rgba(252,250,245,0.3);"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+            </span>
+            <span style="flex-grow: 1; padding: 9px 12px; border-radius: 11px; background: #F3EFE6; font-size: 13px; color: #5E594D; line-height: 1.5;">Send to ChitBridge · Copy as text · Save as a file · Show technical detail</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; font-size: 13px; color: #5E594D; line-height: 1.5;">
+        <b style="color: #1D1B16;">“Day close sheet” does not belong here.</b> It is a different job, reached from the day's own screen. A page about a stuck bill offers nothing but the fix, the checks and the report.
+      </div>
+    </div>
+
+    <!-- two sides -->
+    <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">TWO SIDES — SAY WHOSE NUMBERS THESE ARE</span>
+
+      <div style="display: flex; gap: 9px;">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+          <div style="flex-grow: 1; padding: 13px 15px; border-radius: 14px; background: #FFFFFF; border: {{t.border}}; display: flex; flex-direction: column; gap: 5px;">
+            <span style="font-size: 15px; font-weight: 700; color: {{t.ink}};">{{t.title}}</span>
+            <span style="font-size: 12px; color: #8A8374;">{{t.was}}</span>
+            <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">{{t.body}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">“CHECK SENT BILLS REALLY ARRIVED”, SHOWN PROPERLY</span>
+      <div style="border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+        <div style="display: grid; grid-template-columns: 1.3fr 0.8fr 0.8fr 0.7fr; background: #F0ECE2;">
+          <sc-for list="{{recHead}}" as="h" hint-placeholder-count="4">
+            <span style="padding: 9px 12px; font-size: 12px; font-weight: 700; color: #5E594D;">{{h.label}}</span>
+          </sc-for>
+        </div>
+        <sc-for list="{{reconcile}}" as="r" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 1.3fr 0.8fr 0.8fr 0.7fr; border-top: 1px solid #F0ECE2; background: {{r.bg}};">
+            <span style="padding: 10px 12px; font-size: 14px; font-weight: 600;">{{r.what}}</span>
+            <span style="padding: 10px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{r.here}}</span>
+            <span style="padding: 10px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{r.there}}</span>
+            <span style="padding: 10px 12px; font-size: 13px; font-weight: 700; color: {{r.ink}};">{{r.verdict}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: 12px 14px; border-radius: 12px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 13px; line-height: 1.5; display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1;"><b>3 bills are here that the shop has never seen.</b> They are safe on this counter.</span>
+        <span style="height: 38px; padding: 0 14px; border-radius: 11px; background: #E0A020; color: #1D1B16; font-size: 14px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;">Send those 3</span>
+      </div>
+
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; font-size: 13px; color: #5E594D; line-height: 1.5;">
+        <b style="color: #1D1B16;">The title follows the verdict.</b> “Why is a bill stuck?” is the wrong question when no bill is stuck — here it should read <b>“Why can nothing be sent?”</b>. One title per cause, from the same table as the banner.
+      </div>
+    </div>
+
+    <!-- speed -->
+    <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+      <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 12px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">“LINE · FULL SPEED” — SAY WHAT IT IS</span>
+        <div style="padding: 11px 13px; border-radius: 12px; background: #FBEAE3; border: 1px solid #E7B9A8; color: #6E2A0C; font-size: 13px; line-height: 1.45;">
+          A chart icon, the word “Line” and a dropdown, in the middle of a failure page, explaining nothing. Nobody at a counter knows what it does or whether it caused this.
+        </div>
+        <div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-size: 15px; font-weight: 700;">Sending speed</span>
+            <span style="font-size: 12px; color: #8A8374;">how hard this counter tries</span>
+          </div>
+          <sc-for list="{{speeds}}" as="s" hint-placeholder-count="3">
+            <div style="padding: 11px 13px; border-radius: 12px; background: {{s.bg}}; border: {{s.border}}; display: flex; align-items: flex-start; gap: 10px;">
+              <span style="width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; background: {{s.dotBg}}; border: 1px solid {{s.dotLine}}; flex-shrink: 0;"></span>
+              <span style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 14px; font-weight: 700; color: {{s.ink}};">{{s.name}}</span>
+                <span style="font-size: 13px; color: {{s.sub}}; line-height: 1.4;">{{s.body}}</span>
+              </span>
+            </div>
+          </sc-for>
+          <span style="font-size: 12px; color: #8A8374; line-height: 1.45;">It lives in the technical view, not on the first screen — it is a knob for a bad line, not an answer to a failure.</span>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">ONE MORE CONTRADICTION TO KILL</span>
+        <div style="padding: 13px 15px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 13px; color: #8A8374; text-decoration: line-through;">Rows tried 0 · Rows sent 0 · What the shop said: nothing refused it</span>
+          <span style="font-size: 15px; font-weight: 700; color: #0D4A2B;">“Nothing was sent, so there was nothing to refuse.”</span>
+          <span style="font-size: 13px; color: #5E594D; line-height: 1.5;">“Nothing refused it” reads as good news on a page that is red. When zero rows were attempted, say <b>why</b> zero — no key, nothing waiting, or paused — never report the shop's silence as approval.</span>
+        </div>
+        <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 13px; line-height: 1.5;">
+          <b>The support code is a first-class thing:</b> labelled, 30 px, selectable, with Copy — not grey 11 px text floating beside a dropdown.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      oldButtons: ['▶ Get my bills moving', 'Tell ChitBridge', 'Copy the report', 'Save it as a file', 'What is being kept', 'Check sent bills really arrived'].map((label) => ({ label })),
+      checkButtons: [
+        { label: 'Try sending now', line: '#CFC7B5', ink: '#1D1B16' },
+        { label: 'Check the shop’s copy', line: '#CFC7B5', ink: '#1D1B16' }
+      ],
+      tabs: [
+        {
+          title: 'What is on this counter', was: 'was “Today · on this device”',
+          body: 'This counter’s own database. Always readable, even with no internet. Every number on the page comes from here unless it says otherwise.',
+          border: '2px solid #16693F', ink: '#0D4A2B'
+        },
+        {
+          title: 'What the shop has', was: 'was “Earlier · from ChitBridge”',
+          body: 'The shop’s record, fetched live. Needs pairing and a line. When it cannot be asked, the tab says “can’t ask” and why — it never shows blanks that look like zeroes.',
+          border: '1px solid #E6E0D2', ink: '#1D1B16'
+        }
+      ],
+      recHead: [{ label: 'Today' }, { label: 'Here' }, { label: 'The shop' }, { label: '' }],
+      reconcile: [
+        { what: 'Bills', here: '96', there: '93', verdict: '3 missing', ink: '#8E3517', bg: '#FDF3EE' },
+        { what: 'Money taken', here: '₹18,420', there: '₹17,905', verdict: '₹515 out', ink: '#8E3517', bg: '#FDF3EE' },
+        { what: 'Price changes', here: '4', there: '4', verdict: 'match', ink: '#0D4A2B', bg: 'transparent' },
+        { what: 'Sold-out marks', here: '3', there: '3', verdict: 'match', ink: '#0D4A2B', bg: 'transparent' }
+      ],
+      speeds: [
+        { name: 'Full speed', body: 'The normal way. Sends as soon as anything is ready.', bg: '#E8F4ED', border: '2px solid #16693F', ink: '#0D4A2B', sub: '#3E6B52', dotBg: '#16693F', dotLine: '#16693F' },
+        { name: 'Gentle — for a weak line', body: 'One at a time, a few seconds apart. Slower, but it gets through on a bad connection.', bg: '#FFFFFF', border: '1px solid #DDD6C6', ink: '#1D1B16', sub: '#5E594D', dotBg: 'transparent', dotLine: '#CFC7B5' },
+        { name: 'Paused', body: 'Stops sending until someone says otherwise. The page stays amber the whole time and says who paused it and when. It turns itself back on at day close.', bg: '#FFFFFF', border: '1px solid #DDD6C6', ink: '#1D1B16', sub: '#5E594D', dotBg: 'transparent', dotLine: '#CFC7B5' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

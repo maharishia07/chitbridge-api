@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="padding: 16px 16px 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E6E0D2;">
+    <span style="display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 21px; font-weight: 800;">Counter health</span>
+      <span style="font-size: 12px; color: #5E594D;">Counter 1 · checked 7s ago</span>
+    </span>
+    <div style="flex-grow: 1;"></div>
+    <span style="width: 34px; height: 34px; border-radius: 17px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; display: flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+
+    <div style="padding: 16px 17px; border-radius: 16px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 9px;">
+      <div style="display: flex; align-items: center; gap: 11px;">
+        <span style="width: 38px; height: 38px; border-radius: 12px; background: #8E3517; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"></path><path d="M12 17h.01"></path><path d="M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>
+        </span>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800; color: #6E2A0C; line-height: 1.2;">Nothing can reach the shop</span>
+      </div>
+      <span style="font-size: 14px; color: #6E2A0C; line-height: 1.5;">This counter was never paired. <b>Nothing is lost</b> — 10 things are waiting here and go the moment it is paired.</span>
+      <button style="height: 52px; border-radius: 13px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Pair this counter</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 9px;">
+      <sc-for list="{{checks}}" as="c" hint-placeholder-count="4">
+        <span style="min-height: 56px; box-sizing: border-box; padding: 9px 11px; border-radius: 12px; background: {{c.bg}}; border: 1px solid {{c.line}}; display: flex; align-items: center; gap: 9px;">
+          <span style="width: 22px; height: 22px; border-radius: 7px; background: {{c.iconBg}}; color: {{c.ink}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{c.mark}}</span>
+          <span style="display: flex; flex-direction: column;">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: {{c.sub}};">{{c.label}}</span>
+            <span style="font-size: 14px; font-weight: 700; color: {{c.ink}};">{{c.value}}</span>
+          </span>
+        </span>
+      </sc-for>
+    </div>
+
+    <div style="padding: 13px 15px; border-radius: 15px; background: #F3EFE6; display: flex; flex-direction: column; gap: 9px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">WAITING HERE</span>
+        <div style="flex-grow: 1;"></div>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800;">10</span>
+        <span style="font-size: 12px; color: #5E594D;">oldest 2 days</span>
+      </div>
+      <sc-for list="{{queue}}" as="q" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="width: 22px; height: 22px; border-radius: 7px; background: {{q.tint}}; color: {{q.ink}}; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{q.n}}</span>
+          <span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{q.name}}</span>
+          <span style="font-size: 12px; color: #8A8374;">{{q.oldest}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding: 13px 15px; border-radius: 15px; background: #F3EFE6; display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">THE LAST TRY · 7s AGO</span>
+      <span style="font-size: 14px; font-weight: 600; color: #8E3517;">“I do not know this counter.”</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A8374;">10 tried · 0 accepted · next try in 26 s</span>
+    </div>
+
+    <div style="padding: 13px 15px; border-radius: 15px; background: #F3EFE6; display: flex; align-items: center; gap: 12px;">
+      <span style="display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">SUPPORT CODE</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; letter-spacing: 0.08em;">T1O-080</span>
+      </span>
+      <div style="flex-grow: 1;"></div>
+      <span style="height: 40px; padding: 0 14px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center;">Copy</span>
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 24px; border-top: 1px solid #E6E0D2; background: #F3EFE6; display: flex; flex-direction: column; gap: 9px;">
+    <div style="display: flex; gap: 9px;">
+      <button style="flex-grow: 1; height: 48px; border-radius: 13px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer;">Try sending now</button>
+      <button style="flex-grow: 1; height: 48px; border-radius: 13px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer;">Detail</button>
+    </div>
+    <button style="height: 52px; border-radius: 13px; border: none; background: #1D1B16; color: #FCFAF5; font-size: 16px; font-weight: 700; cursor: pointer;">Send the report to support</button>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const P = {
+      bad: { bg: '#FBEAE3', line: '#E7B9A8', iconBg: '#F3D3C6', ink: '#8E3517', sub: '#A05B3C', mark: '✕' },
+      ok: { bg: '#E8F4ED', line: '#A9D3BC', iconBg: '#CFE9DA', ink: '#0D4A2B', sub: '#3E6B52', mark: '✓' }
+    };
+    const check = (label, value, kind) => Object.assign({ label, value }, P[kind]);
+    return {
+      checks: [
+        check('WHICH SHOP', 'Not chosen', 'bad'),
+        check('PAIRING', 'Not paired', 'bad'),
+        check('INTERNET', 'Online', 'ok'),
+        check('THIS PHONE', 'Saving fine', 'ok')
+      ],
+      queue: [
+        { name: 'Price changes', n: '4', oldest: '2 days', tint: '#FDF3DC', ink: '#7A5205' },
+        { name: 'Sold-out marks', n: '3', oldest: '5 hours', tint: '#FCE9DF', ink: '#8A3410' },
+        { name: 'New customers', n: '2', oldest: 'yesterday', tint: '#E4EEFA', ink: '#174A87' },
+        { name: 'Bills', n: '0', oldest: 'none yet', tint: '#F0ECE2', ink: '#5E594D' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
