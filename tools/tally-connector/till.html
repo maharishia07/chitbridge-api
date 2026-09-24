@@ -3232,8 +3232,9 @@
     ⭐ ONE ROW = A SHORT NAME, ITS CONTROL, AND A SCOPE WORD (§4). The explanation a row used to carry lives in
        its title (hover / long-press); the scope word replaces the one blanket "Kept on this device" that was
        wrong for the rows that are not (§1.5). [[feedback-text-budget]]
-    ⚠️ Every id below is UNCHANGED from the tabbed version — saveSettings(), paintSetup() and the specs still
-       read every one of them. Only the container around them moved.
+    ⚠️ Every id below is UNCHANGED from the tabbed version — paintSetup(), the per-row onchange handlers and
+       the specs still read every one of them. Only the container around them moved (Phase 4.2 also moved most
+       of what saveSettings() used to read onto each row's own onchange — see the comment there).
     ⚠️ The everyday three — text size, look, what the counter shows — are ALSO in ☰ (menu "quick" row), one press away.
   -->
   <div class="sethead">
@@ -3300,7 +3301,8 @@
     </div>
     <!--
       ⭐⭐⭐ THE PREFIX IS GIVEN, NOT TYPED (Athi, 2026-09-17) — the shop assigns it (routes/keys.js claimTill); this only SHOWS it.
-      ⚠️ Read-only, but still an input: saveSettings() reads its value and refuses to let it decide the series.
+      ⚠️ Read-only, and nothing reads it any more — readonly already stops it firing onchange, which is what
+      keeps it from ever becoming a second way to set the series.
     -->
     <div class="srow" title="Given by the shop so no two counters share a bill series. Pair again for a new one.">
       <span>Counter<i class="scope shop">the shop</i></span>
@@ -22139,11 +22141,11 @@ async function paintPrinters(){
   var r = PRINTERS || (PRINTERS = await HOST.printers());
   var list = (r && r.printers) || [];
   box.innerHTML = list.length
-      ? '<div class="srow" title="Slips print here by themselves."><span>Printer<i class="scope counter">this counter</i></span><select id="set_printer">' + '<option value="">Ask each time</option>'
+      ? '<div class="srow" title="Slips print here by themselves."><span>Printer<i class="scope counter">this counter</i></span><select id="set_printer" onchange="printerSettingsSave()">' + '<option value="">Ask each time</option>'
         + list.map(function(p){ return '<option value="' + esc(p.name) + '"' + (r.chosen === p.name ? ' selected' : '') + '>' + esc(p.name) + (p.thermal ? ' · till' : '') + '</option>'; }).join('')
         + '</select></div>'
-        + '<div class="srow"><span>Paper<i class="scope counter">this counter</i></span><select id="set_paper"><option value="80"' + (r.mm !== 58 ? ' selected' : '') + '>80 mm</option><option value="58"' + (r.mm === 58 ? ' selected' : '') + '>58 mm</option></select></div>'
-        + '<div class="srow"><span>Cash drawer<i class="scope counter">this counter</i></span><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_drawer"' + (r.drawer ? ' checked' : '') + '> open on a cash sale</label></div>'
+        + '<div class="srow"><span>Paper<i class="scope counter">this counter</i></span><select id="set_paper" onchange="printerSettingsSave()"><option value="80"' + (r.mm !== 58 ? ' selected' : '') + '>80 mm</option><option value="58"' + (r.mm === 58 ? ' selected' : '') + '>58 mm</option></select></div>'
+        + '<div class="srow"><span>Cash drawer<i class="scope counter">this counter</i></span><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_drawer" onchange="printerSettingsSave()"' + (r.drawer ? ' checked' : '') + '> open on a cash sale</label></div>'
         + '<div class="srow"><span></span><button class="pill" data-testid="till-testprint" onclick="testPrint()">Print a test slip</button></div>'
       : '<div class="srow" title="A USB till printer needs its driver installed once — the cable alone is not enough (Epson TM: Advanced Printer Driver). Then open ⚙ again.">'
         + '<span>Printer<i class="scope counter">this counter</i></span><span style="color:var(--warn)">none found on this PC</span></div>';
@@ -22274,10 +22276,10 @@ function openSettings(tab){
     var masked = CloudHost.key ? '••••••••' + String(CloudHost.key).slice(-6) : '';
     pair.innerHTML = '<div class="srow" title="ChitBridge › Settings › Integrations › Counters — open a counter there to get its key.">'
       + '<span>Counter key<i class="scope shop">the shop</i></span><span style="display:flex;gap:6px;align-items:center">'
-      + '<input id="set_key" placeholder="paste the key once" value="' + esc(masked) + '" style="flex:1">'
+      + '<input id="set_key" placeholder="paste the key once" value="' + esc(masked) + '" style="flex:1" onchange="settingsKeySave(this.value)">'
       + (CloudHost.key ? '<button class="pill" type="button" data-testid="till-set-keycopy" onclick="settingsCopyKey()">Copy</button>' : '')
       + '</span></div>'
-      + '<div class="srow"><span>ChitBridge<i class="scope shop">the shop</i></span><input id="set_api" value="' + esc(CloudHost.api||'') + '"></div>';
+      + '<div class="srow"><span>ChitBridge<i class="scope shop">the shop</i></span><input id="set_api" value="' + esc(CloudHost.api||'') + '" onchange="settingsApiSave(this.value)"></div>';
   } else {
     /**
      * ⚠️⚠️ IT USED TO SAY ONLY 'on this PC' ([TILL-121]), which is true and useless. A counter holding the
@@ -22475,42 +22477,52 @@ function paintSetup(){
               : '⚠️ The shop has no UPI payee in ChitBridge — one typed here works on this counter only.'));
   }
 }
-async function saveSettings(){
-  /* the printer belongs to THIS PC, so it is saved where that PC keeps its own settings, not in the shop's */
+/**
+ * ── ⭐⭐⭐ PER-ROW SAVING (design-handoff §4, Phase 4.2) ────────────────────────────────────────────────────
+ *
+ * "Everything saves as you change it. Nothing is lost by closing." Voice's rows already worked this way
+ * (§3.1 built them onchange from the start); the printer, the counter key and the ChitBridge address were
+ * the last three still staged until Close, in one batched saveSettings() that read five fields no matter
+ * which one had actually changed. Each now saves itself, below.
+ * ⚠️ THE KEY ROW STAYS onchange, NEVER oninput ([TILL-187] risk note: "breaks anything that needs a batch
+ * or atomic save"). It fires once, on blur or Enter, after a whole key has been pasted — a per-keystroke
+ * save would call DB.reopen() on every character of a key half-typed, which is not merely wasted work but a
+ * real one: this row's `S = null` throws away what is on screen the instant it runs.
+ */
+async function printerSettingsSave(){
+  if (!(HOST && HOST.mode === 'agent' && HOST.setPrinter)) return;
   var sel = document.getElementById('set_printer');
-  if (sel && HOST && HOST.mode === 'agent' && HOST.setPrinter){
-    try { await HOST.setPrinter({ printer: sel.value || null,
-                                  mm: Number((document.getElementById('set_paper') || {}).value) || 80,
-                                  drawer: !!(document.getElementById('set_drawer') || {}).checked });
-          PRINTERS = null; } catch (_) {}
-  }
-  /**
-   * ⚠️⚠️ THIS FIELD ACCEPTED SIX CHARACTERS, which puts even a plain sale at seventeen — over India's limit,
-   * with nothing anywhere saying so. The cap is now DERIVED from the country's rule, so a shop somewhere that
-   * caps nothing is not restricted for India's reasons.
-   */
-  /**
-   * ⚠️⚠️ THE PREFIX IS NO LONGER TAKEN FROM THIS FORM (2026-09-17). It used to be written straight from the text box,
-   * which is how two unrenamed PCs both became C1. The shop assigns it now (tillClaim), and saving Settings must
-   * never be a way round that — so the box is display-only and its value is simply not read here.
-   * ⚠️ The India length cap that used to be enforced here is enforced where the prefix is MADE: routes/keys.js
-   * hands out two-character prefixes only (TILL_IDS), which is inside the sixteen.
-   */
-  /* ⚠️⚠️ NOT WRITTEN FROM HERE ANY MORE ([TILL-81]). Both controls left with the Screen tab, and an unguarded
-     .value on a missing element does not fail quietly — ⚙ Settings would have refused to open and to save. */
-  var k = document.getElementById('set_key');
-  if (k && k.value && k.value.indexOf('•') < 0 && k.value.trim() !== CloudHost.key) {
-    ls.set('cb_till_key', k.value.trim()); CloudHost.key = k.value.trim(); DB.reopen();
-    S = null;                                     /* what is on screen belongs to the shop we just left */
-  }
-  var rowsSel = document.getElementById('set_rows'); if (rowsSel) ls.set('cb_till_rows', rowsSel.value);
-  var langSel = document.getElementById('set_lang'); if (langSel) ls.set('cb_till_lang', langSel.value);
-  var spSel = document.getElementById('set_speech'); if (spSel) ls.set('cb_till_speech', spSel.value);
-  var a = document.getElementById('set_api');
-  if (a && a.value) { ls.set('cb_till_api', a.value.trim()); CloudHost.api = a.value.trim(); }
+  try {
+    await HOST.setPrinter({ printer: (sel && sel.value) || null,
+                            mm: Number((document.getElementById('set_paper') || {}).value) || 80,
+                            drawer: !!(document.getElementById('set_drawer') || {}).checked });
+    PRINTERS = null;
+  } catch (_) {}
+  /* ⚠️ NOT #setnote — that line is the standing "everything saves as you change it" reassurance the spec
+     wants ALWAYS on screen, not a one-off toast that would permanently overwrite it the first time anything
+     saved. #lastnote (toastLine) is the file's own transient-confirmation surface. */
+  toastLine('Printer saved.');
+}
+function settingsKeySave(v){
+  var val = String(v || '').trim();
+  if (!val || val.indexOf('•') >= 0 || val === CloudHost.key) return;
+  ls.set('cb_till_key', val); CloudHost.key = val; DB.reopen();
+  S = null;                                       /* what is on screen belongs to the shop we just left */
+  toastLine('Counter key saved — reading this shop.');
+  (HOST && HOST.mode === 'cloud' ? refresh() : load()).catch(function(){});
+}
+function settingsApiSave(v){
+  var val = String(v || '').trim(); if (!val) return;
+  ls.set('cb_till_api', val); CloudHost.api = val;
+  toastLine('ChitBridge address saved.');
+  (HOST && HOST.mode === 'cloud' ? refresh() : load()).catch(function(){});
+}
+/** ⭐ THE FOOTER HOLDS ONLY CLOSE ([TILL-187], §4 acceptance check 3) — every row above saves itself the
+ * moment it changes, so this has nothing left to do but close the dialog. Left under its old name because
+ * the button in the markup and any existing test both call it by that name. */
+function saveSettings(){
   document.getElementById('setdlg').close();
   applyLook();
-  if (HOST && HOST.mode === 'cloud' && CloudHost.key) await refresh(); else await load();
 }
 
 /**
