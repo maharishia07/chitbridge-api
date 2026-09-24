@@ -4193,9 +4193,11 @@ function netNow(){ var k = ls.get(netKey(), 'full'); return NETS[k] ? k : 'full'
 function netIs(){ return NETS[netNow()]; }
 
 /**
- * ⚠️⚠️ navigator.onLine IS OVERRIDDEN, and that is what makes this faithful. The page asks it in 34 places
- * — whether to queue a bill, whether to offer Send now, whether to try at all. Slowing fetch alone would leave
- * every one of them believing the line was fine, and produce behaviour no real outage causes.
+ * ⚠️⚠️ navigator.onLine IS OVERRIDDEN, and that is what makes this faithful. Whether to queue a bill, whether
+ * to offer Send now, whether to try at all — almost every one of those now asks lineUp() (Phase 4.1), not this
+ * flag directly, but lineUp() and lineState() still bottom out on it as the hard "no interface" floor, so the
+ * override is exactly as load-bearing as before. Slowing fetch alone would leave every one of them believing
+ * the line was fine, and produce behaviour no real outage causes.
  * ⚠️ Installed ONCE and only when needed; the original is kept so full speed is genuinely the browser's own.
  */
 var NET_REAL_ONLINE = null;
@@ -4475,7 +4477,7 @@ var CloudHost = {
       return { count: count2, total: total2, by: by2, refunds: back2 };
     })();
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
-    return { snapshot: snap || null, online: navigator.onLine && !!this.key, queued: queue.length,
+    return { snapshot: snap || null, online: lineUp() && !!this.key, queued: queue.length,
              today: { count: count, total: total, by: by, returns: r2(back) },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
              engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums, rewards: !!window.CBRewards } };
@@ -4593,7 +4595,7 @@ var CloudHost = {
     return all.filter(function(b){ return String(b.at||'').slice(0,10) === day; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
   async history(days){
-    if (!this.key || !navigator.onLine) return { bills: [], offline: true };
+    if (!this.key || !lineUp()) return { bills: [], offline: true };
     try {
       var r = await fetchBy(this.api + '/api/till/bills?days=' + (days||30) + '&limit=200', { headers:{ 'X-Api-Key': this.key } }, SLOW);
       if (!r.ok) return { bills: [], offline: true, why: 'HTTP ' + r.status };
@@ -4616,7 +4618,7 @@ var CloudHost = {
   },
   /** the open orders, straight from ChitBridge — a device holds no copy of them, because an order changes while you are packing it */
   async tasks(kind){
-    if (!this.key || !navigator.onLine) return { tasks: [], offline: true };
+    if (!this.key || !lineUp()) return { tasks: [], offline: true };
     try {
       var r = await fetchBy(this.api + '/api/till/tasks?kind=' + encodeURIComponent(kind), { headers: { 'X-Api-Key': this.key } });
       if (!r.ok) return { tasks: [], offline: true, why: 'HTTP ' + r.status };
@@ -4631,7 +4633,7 @@ var CloudHost = {
    */
   /** remembering what a supplier calls a product needs the line — it is a fact about the shop, not about this device */
   async alias(a){
-    if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet — the count is not affected' };
+    if (!this.key || !lineUp()) return { ok:false, why:'this needs the internet — the count is not affected' };
     try {
       var r = await fetchBy(this.api + '/api/till/alias', { method:'POST',
         headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(a) });
@@ -4640,7 +4642,7 @@ var CloudHost = {
   },
   /** what was just said, as words — the audio goes up, nothing comes back but text, and nothing is kept anywhere */
   async listen(b){
-    if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet' };
+    if (!this.key || !lineUp()) return { ok:false, why:'this needs the internet' };
     try {
       var r = await fetchBy(this.api + '/api/till/listen', { method:'POST',
         headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(b) });
@@ -4656,7 +4658,7 @@ var CloudHost = {
    */
   /** ⚠️ NOT QUEUED. A read has nothing to replay, and a suggestion computed from last week is worse than none. */
   async tillGet(path){
-    if (!this.key || !navigator.onLine) return { ok:false, why:'offline' };
+    if (!this.key || !lineUp()) return { ok:false, why:'offline' };
     try {
       var r = await fetchBy(this.api + path, { headers:{ 'X-Api-Key': this.key } });
       if (!r.ok) return { ok:false, why:'ChitBridge refused it (' + r.status + ')', status:r.status };
@@ -4671,7 +4673,7 @@ var CloudHost = {
   async tillPost(path, body, opts){
     var noQueue = !!(opts && opts.noQueue);
     if (!this.key) return { ok:false, why:'this counter is not paired' };
-    if (navigator.onLine) {
+    if (lineUp()) {
       try {
         var r = await fetchBy(this.api + path, { method:'POST',
           headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(body) });
@@ -4692,7 +4694,7 @@ var CloudHost = {
     return { ok:true, queued:true };
   },
   async verify(){
-    if (!this.key || !navigator.onLine) return { ok:false, why:'this needs the internet' };
+    if (!this.key || !lineUp()) return { ok:false, why:'this needs the internet' };
     try {
       var r = await fetchBy(this.api + '/api/till/verify', { headers:{ 'X-Api-Key': this.key } });
       return r.ok ? Object.assign({ ok:true }, await r.json()) : { ok:false, why:'HTTP ' + r.status };
@@ -4812,7 +4814,7 @@ var CloudHost = {
     if (!this.key) { this.last = { at: Date.now(), tried: 0, sent: 0,
       why: 'This counter has no key yet — pair it from the shop, then the bills will go.' };
       try { await queueTally(); paintStatus(); } catch (_) {} return; }
-    if (!navigator.onLine) { this.last = { at: Date.now(), tried: 0, sent: 0,
+    if (!lineUp()) { this.last = { at: Date.now(), tried: 0, sent: 0,
       why: 'No line to the shop. The bills are safe here and go as soon as it returns.' };
       try { await queueTally(); paintStatus(); } catch (_) {} return; }
     this._busy = true;
@@ -5469,7 +5471,7 @@ async function load(){
   /* ⚠️ A NEW COUNTER READS ITS SHOP BY ITSELF (2026-09-17). A counter opened for the first time, online and keyed, used to sit on
      "No copy of the shop yet — press ↻" — a button to press for the one thing it obviously has to do. Once per page, so a shop
      that cannot be read does not loop; refresh() calls load() again. */
-  if (!S && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.key && navigator.onLine !== false) { FIRST_READ = true; refresh().catch(function(){}); }
+  if (!S && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.key && lineUp()) { FIRST_READ = true; refresh().catch(function(){}); }
   /**
    * ⭐⭐⭐ R1 · "YOU HAD A BILL OPEN…" — HERE, not at boot. load() is where the shop arrives, and the lines have
    * to be re-priced through the offers engine before anybody is shown a total. Once per page (DRAFT_ASKED):
@@ -7115,7 +7117,7 @@ async function dayStepRun(id){
   }
   if (id === 'products') {
     /* ⭐ the practical half of the old beginDay — bring the shop up to date if the line is there */
-    if (navigator.onLine && HOST && HOST.refresh) await refresh();
+    if (lineUp() && HOST && HOST.refresh) await refresh();
     return;
   }
   if (id === 'counter') {
@@ -8256,7 +8258,7 @@ function sureClose(){ var d = document.getElementById('suredlg'); if (d && d.ope
  * ⚠️ The order is fixed — line → waiting → needs you — so the eye learns where to look.
  */
 function hubChips(){
-  var online = navigator.onLine !== false;
+  var online = lineUp();
   var queued = Number((STATE && STATE.queued) || 0);
   var alerts = alertCount();
   var out = '';
@@ -8272,7 +8274,7 @@ function hubChips(){
 }
 function paintMenu(){
   var m = document.getElementById('tillmenu'); if (!m) return;
-  var online = navigator.onLine, who = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
+  var online = lineUp(), who = (typeof WHO !== 'undefined' && WHO && WHO.name) || '';
   /* ⭐ WIDE TAKES THE RENDER'S ONE-LINE HEAD (hubHead); a phone keeps the stack HubPhone.png draws — title,
      then the pink sign-in box full width, then the chips on their own row. */
   /* ⚠ the finder is on BOTH shapes until Athi decides — no render has one, and MenuPalette (type-to-find) is
@@ -9443,7 +9445,7 @@ async function quickOtherCounters(){
   /* ⚠️ [] IS TRUTHY. Caching it on a five-second outage meant the "also mark on…?" prompt was never offered
      again for the life of the page (critic pass, 2026-09-18). Only a real answer is remembered. */
   if (QUICK_OTHER_COUNTERS && QUICK_OTHER_COUNTERS.length) return QUICK_OTHER_COUNTERS;
-  if (!HOST || !HOST.tillGet || !navigator.onLine) return [];
+  if (!HOST || !HOST.tillGet || !lineUp()) return [];
   try {
     var r = await HOST.tillGet('/api/till/counters');
     var mine = (r && r.me) || '';
@@ -9498,7 +9500,7 @@ async function quickPushHide(id){
  */
 var QUICK_HIDDEN_SYNCED_AT = 0;
 async function quickSyncHidden(){
-  if (!HOST || !HOST.tillGet || !navigator.onLine) return;
+  if (!HOST || !HOST.tillGet || !lineUp()) return;
   if (Date.now() - QUICK_HIDDEN_SYNCED_AT < 30000) return;
   QUICK_HIDDEN_SYNCED_AT = Date.now();
   try {
@@ -9550,7 +9552,7 @@ async function quickSyncHidden(){
  */
 var SCREENC_AT = 0;
 async function quickSyncScreen(){
-  if (!HOST || !HOST.tillGet || !navigator.onLine) return;
+  if (!HOST || !HOST.tillGet || !lineUp()) return;
   if (Date.now() - SCREENC_AT < 60000) return;
   SCREENC_AT = Date.now();
   try {
@@ -9605,7 +9607,7 @@ function groupsAll(){
 /** a name this counter has not edited still belongs to the shop — said out loud, so "delete" is not a lie */
 function groupIsShop(name){ return !!shopGroups()[name] && !(tillOpt().groups || {})[name]; }
 async function quickSyncGroups(){
-  if (!HOST || !HOST.tillGet || !navigator.onLine) return;
+  if (!HOST || !HOST.tillGet || !lineUp()) return;
   if (Date.now() - SHOPG_AT < 60000) return;
   SHOPG_AT = Date.now();
   try {
@@ -14567,7 +14569,7 @@ var MIC_FOR = { q: 'mic', cphone: 'micphone', cname: 'micname', todoin: 'mictodo
 function listen(into){
   var ear = whoListens();
   if (!ear) { say('This device cannot listen. Chrome on a phone, a tablet or Windows can — or turn speaking on in ⚙.'); return; }
-  if (!navigator.onLine) { say('Speaking needs the internet — the audio has to reach a speech service. Type it for now; billing itself works offline.'); return; }
+  if (!lineUp()) { say('Speaking needs the internet — the audio has to reach a speech service. Type it for now; billing itself works offline.'); return; }
   /* ⭐ HEARING WINS (design-handoff §5.1: "speaking back stops the instant the mic starts hearing… it never
      talks over the person"). Cancelling here, not just in voiceSay(), means the till goes quiet the moment
      the mic is pressed, not on whatever sentence voiceSay() happens to be mid-way through next. */
@@ -16726,6 +16728,19 @@ function lineState(){
   return { state:st, rate:rate, tries:LINE_TRIES.slice(), since:LINE_SINCE };
 }
 /**
+ * ⭐⭐⭐ THE SINGLE "IS IT WORTH TRYING" ANSWER (Phase 4.1). Everywhere in this file that used to ask
+ * navigator.onLine before attempting a send, showing a badge, or deciding what queues now asks this instead —
+ * the same formula the WATCH panel already proved right ([TILL-144]): a definite no from the device beats
+ * everything, but short of that, "online" from the interface is only ever "maybe", and the last twenty real
+ * sends are what actually answers it.
+ * ⚠️ NOT EVERYWHERE. The probe that FEEDS lineState() (keyWatch's nag-guard aside), the WATCH snapshot's own
+ * already-reasoned online/line pair, and the raw forensic dumps a support person reads keep asking the device
+ * directly — this name is for belief and gating, not for recording evidence or reporting ground truth.
+ */
+function lineUp(){
+  return navigator.onLine === false ? false : (lineState().state !== 'none');
+}
+/**
  * ⭐⭐ §2 "RIGHT NOW" — 3.8 Mbps · 190 ms · 0 of the last 20 sends failed (Phase 3.4). Averaged over the
  * OK tries only — a failed one measures how long it waited to give up, not how fast the line is.
  * ⚠️ NO THROUGHPUT NUMBER — a counter's own calls are small (a bill, a snapshot delta), so what this page can
@@ -16776,7 +16791,7 @@ var KEY_OK = true, KEY_ASKED = 0, KEY_EVERY_MS = 600000;
 async function keyWatch(){
   try {
     if (!HOST || !HOST.verify || !HOST.key) return;
-    if (navigator.onLine === false) return;                 /* nothing to learn from a dead line */
+    if (!lineUp()) return;                 /* nothing to learn from a dead line */
     if (Date.now() - KEY_ASKED < KEY_EVERY_MS) return;
     KEY_ASKED = Date.now();
     var v = await HOST.verify();
@@ -19718,7 +19733,7 @@ async function renumberBill(bill, why){
  */
 var ABSORB_AT = 0;
 async function checkAbsorbed(force){
-  if (!(HOST && HOST.key) || !navigator.onLine || !HOST.tillPost) return null;
+  if (!(HOST && HOST.key) || !lineUp() || !HOST.tillPost) return null;
   if (!force && Date.now() - ABSORB_AT < 600000) return null;
   ABSORB_AT = Date.now();
   var cutoff = Date.now() - 30 * 86400000;
@@ -19796,7 +19811,7 @@ async function closeReadinessNow(){
 async function closeCounter(already){
   if (!(HOST && HOST.key)) { say('This counter is not paired, so there is nothing to close.'); return; }
   if (HOST === AgentHost) { say('This counter runs through the program on this PC. Close it from ChitBridge → Settings → Integrations → Counters.'); return; }
-  if (!navigator.onLine) { say('Closing a counter needs the internet — ChitBridge has to be told, and every bill has to be checked first.\n\nNothing has changed. Try again when the line is back.'); return; }
+  if (!lineUp()) { say('Closing a counter needs the internet — ChitBridge has to be told, and every bill has to be checked first.\n\nNothing has changed. Try again when the line is back.'); return; }
   /**
    * ⭐⭐⭐ THE CONFIRM SHEET SHOWS THE LIVE NUMBERS, NOT A CLAIM (§3) — "Billing stops until someone opens
    * it again. Nothing is lost." is the consequence line; the three rows under it are read at the moment the
@@ -20010,7 +20025,7 @@ async function openStuck(){
         var till = sc.indexOf('till') >= 0;
         return line('What the key may do', till ? 'billing (till)' : (esc(sc.join(', ')) + ' — NOT billing'), !till);
       })()
-    + line('Online', navigator.onLine ? 'yes' : 'NO', !navigator.onLine)
+    + line('Online', lineUp() ? 'yes' : 'NO', !lineUp())
     /**
      * ⭐ CAN THIS DEVICE SAVE ANYTHING AT ALL. Athi, 2026-09-16, on two parked bills that would not go: *"this
      * may be the reason for the sync not working."* A full or blocked localStorage fails every setting, the
@@ -20060,7 +20075,7 @@ async function openStuck(){
       + 'the pairing, the settings and the parked bills cannot be written, so they come back or disappear. '
       + 'Usually the browser is out of space or is in a private window.';
   else if (!(HOST && HOST.key)) verdict = 'This counter has no key, so nothing can be sent. Pair it from the shop.';
-  else if (!navigator.onLine) verdict = 'No line to the shop. The bills are safe here and go as soon as it returns.';
+  else if (!lineUp()) verdict = 'No line to the shop. The bills are safe here and go as soon as it returns.';
   else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
   /**
    * ⚠️⚠️ AN EMPTY QUEUE IN *THIS* COPY IS NOT AN EMPTY COUNTER. Pairing again starts a new database named after
@@ -20376,7 +20391,7 @@ async function rescueOrphans(){
     try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(take[m].name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); } catch (_) {}
   }
   try { await queueTally(); paintStatus(); } catch (_) {}
-  if (queued && HOST && HOST.key && navigator.onLine) { try { await HOST.drain(); } catch (_) {} }
+  if (queued && HOST && HOST.key && lineUp()) { try { await HOST.drain(); } catch (_) {} }
   /* ⭐ a brought-in bill that SAYS sent is checked now — an absorbed one is renumbered and sent (option a) */
   var chk = null;
   try { chk = await checkAbsorbed(true); } catch (_) {}
@@ -20542,7 +20557,7 @@ async function wipeDevice(){
  */
 async function stuckSend(){
   if (!(HOST && HOST.key)) { toastLine('This counter is not signed in, so nothing can reach the shop. Use 📋 Copy the report.'); return; }
-  if (!navigator.onLine) { toastLine('No line to the shop, so it cannot be sent. Use 💾 Save it as a file.'); return; }
+  if (!lineUp()) { toastLine('No line to the shop, so it cannot be sent. Use 💾 Save it as a file.'); return; }
   var owner = null, rawQ = [], rawB = [];
   try { owner = await DB.ownerRaw(); rawQ = await DB.allRaw('queue'); rawB = await DB.allRaw('bills'); } catch (_) {}
   var qF = rawQ.filter(function(r){ return !rowIsMine(r); });
@@ -20637,11 +20652,11 @@ async function releaseQueue(){
   /* 3 · and try, now, with the reason kept if it refuses */
   var before = ((await DB.all('queue')) || []).length;
   if (!(HOST && HOST.key)) did.push('this counter has no key, so nothing could be sent — pair it from the shop');
-  else if (!navigator.onLine) did.push('there is no line to the shop, so nothing could be sent — it will go on its own when the line is back');
+  else if (!lineUp()) did.push('there is no line to the shop, so nothing could be sent — it will go on its own when the line is back');
   else { try { await HOST.drain(); } catch (_) {} }
   var after = ((await DB.all('queue')) || []).length;
   if (before && before > after) did.push('sent ' + (before - after) + ' bill(s)');
-  else if (before && HOST && HOST.key && navigator.onLine) {
+  else if (before && HOST && HOST.key && lineUp()) {
     did.push('tried ' + before + ' bill(s) and none went — ' + ((HOST.last && HOST.last.why) || 'no reason was given'));
   }
   if (!before && !qF.length) did.push('there was nothing waiting');
@@ -21177,7 +21192,7 @@ async function coldStart(already){
   busyShow('Starting this counter from scratch…');
   /* 1 · send everything */
   busyAt(0, 0, 'Sending anything still waiting…');
-  if (navigator.onLine) { try { await HOST.drain(); } catch (_) {} }
+  if (lineUp()) { try { await HOST.drain(); } catch (_) {} }
 
   /**
    * 2 · and PROVE it went
@@ -21219,7 +21234,7 @@ async function coldStart(already){
  * asked for on purpose, and it reports back either way — a button that appears to do nothing is worse than no button.
  */
 async function sendNow(){
-  if (!navigator.onLine) { toastLine('Still no line to the shop — the bills are safe here and will go as soon as it returns.'); return; }
+  if (!lineUp()) { toastLine('Still no line to the shop — the bills are safe here and will go as soon as it returns.'); return; }
   /* ⚠️ NEVER ASSUME THE HOST HAS ONE. It threw on the desktop counter for as long as this button has existed —
      an unhandled rejection, no toast, nothing on screen. A missing capability must be said, not thrown. */
   if (!HOST || typeof HOST.drain !== 'function') {
@@ -21609,7 +21624,7 @@ function signState(){
            /* ⚠️ null scopes is "we cannot tell from here", which is NOT "the wrong kind of key" */
            till: sc ? sc.indexOf('till') >= 0 : true,
            person: !!(typeof WHO !== 'undefined' && WHO && WHO.name),
-           online: !!navigator.onLine };
+           online: lineUp() };
 }
 
 /**
@@ -21747,7 +21762,7 @@ function paintBreak(){
 /** tell ChitBridge, so the shop's Counters screen can say "on break" — best effort, a break never waits for the line */
 function breakTell(state){
   try {
-    if (HOST && HOST.tillPost && HOST.key && navigator.onLine)
+    if (HOST && HOST.tillPost && HOST.key && lineUp())
       HOST.tillPost('/api/till/state', { state: state, by: (WHO && WHO.name) || null,
                                          since: BREAK ? BREAK.since : new Date().toISOString() }, { noQueue: true });
   } catch (_) {}
@@ -22399,7 +22414,7 @@ function bellWatch(){
 var BELL = null, BELL_AT = 0;
 async function bellUp(){
   try {
-    if (BELL || !navigator.onLine) return;
+    if (BELL || !lineUp()) return;
     if (!(HOST && HOST.mode === 'cloud' && CloudHost.key)) return;   /* the desktop kit refreshes on its own schedule */
     if (Date.now() - BELL_AT < 20000) return;                        /* do not thrash a server that is refusing */
     BELL_AT = Date.now();
