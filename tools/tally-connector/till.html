@@ -919,6 +919,24 @@
   .optile.on{border-color:#1b6b3a;box-shadow:inset 0 0 0 2px #1b6b3a}
   /* ⚠️ somebody else’s table is dimmed, never hidden — a break has to be coverable */
   .optile.theirs{opacity:.62}
+  /* ⭐ REVIEW SITS BESIDE THE TILE, NOT INSIDE IT — a button cannot nest inside a button */
+  .optilewrap{position:relative}
+  .optilewrap .optile{width:100%}
+  .opreview{position:absolute;top:6px;right:6px;min-height:28px;min-width:28px;padding:0 6px;
+    border-radius:8px;border:1px solid var(--line);background:var(--paper);font-size:.95em;line-height:1;cursor:pointer}
+  /* ⭐⭐ THE REVIEW SHEET — what orderTotals() and canSettle() already know, before anybody commits to it */
+  #orderdlg{border:0;border-radius:16px;padding:0;max-width:min(420px,94vw);background:var(--paper);color:var(--ink)}
+  #orderdlg[open]{display:grid}
+  #orderdlgbody{padding:0 18px;max-height:52vh;overflow:auto}
+  .ordlines{display:grid;gap:8px;margin:6px 0}
+  .ordline{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .ordline b{font-size:1.02em;grid-column:1}
+  .ordline i{font-style:normal;font-weight:700;grid-column:2;font-variant-numeric:tabular-nums}
+  .ordline .u{grid-column:1}
+  .ordline.held .u{color:#8a6a12;font-weight:700}
+  .ordtotal{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 4px;font-size:1.15em;
+    border-top:2px solid var(--ink)}
+  .ordtotal i{font-style:normal;font-weight:800;font-variant-numeric:tabular-nums}
   /* ⭐⭐ THE CONFIRM SHEET ([TILL-172]) — the caution at the moment of the act, with the numbers on it */
   #suredlg{border:0;border-radius:16px;padding:0;max-width:min(460px,94vw);background:var(--paper);color:var(--ink)}
   #suredlg::backdrop{background:rgba(0,0,0,.45)}
@@ -3458,6 +3476,17 @@
     <button class="setx" onclick="document.getElementById('traydlg').close()" aria-label="Close" title="Close">✕</button></div>
   <div id="traybody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('traydlg').close()">Close · Esc</button></div>
+</dialog>
+
+<!-- ⭐⭐ REVIEW BEFORE CLOSE (Phase 4, the order pad) — what is on it, and the one button that bills it -->
+<dialog id="orderdlg" class="dlg" data-testid="till-order-dlg">
+  <div class="sethead"><h3 id="orderdlgtitle">Table</h3>
+    <button class="setx" onclick="document.getElementById('orderdlg').close()" aria-label="Close" title="Close">✕</button></div>
+  <div id="orderdlgbody"></div>
+  <div class="dlgbtns">
+    <button class="pri" data-testid="till-order-settle" onclick="orderReviewSettle()">Bill this table</button>
+    <button onclick="document.getElementById('orderdlg').close()">Not yet · Esc</button>
+  </div>
 </dialog>
 
 <div id="busy" hidden><div class="busybox">
@@ -17884,7 +17913,10 @@ function dropPart(n){ PARTS.splice(n, 1); paintParts(); paintTotals(); draftSave
 /** ⭐ dine-in · takeaway · delivery, and a table when it is dine-in. Three words, not a form. */
 function paintOrderBar(){
   var el = document.getElementById('obar'); if (!el) return;
-  if (MODE !== 'sell' || !kotOn()) { el.innerHTML = ''; return; }
+  /* ⚠️⚠️ AN ORDER PAD NEEDS THIS BAR EVEN IF "send a KOT" WAS NEVER TURNED ON ([TILL-187]) — a waiter managing
+     several tables needs a way to send a round to the order it belongs to; the kitchen-ticket print is a
+     separate courtesy on top of that, not the reason the bar exists. */
+  if (MODE !== 'sell' || (!kotOn() && !purposeHas('open_orders'))) { el.innerHTML = ''; return; }
   var k = orderKind();
   /* ⚠️ the engine returns { k, label, seated } — it was a pair of strings when this table lived in the page */
   el.innerHTML = O().KINDS.map(function(x){
@@ -17895,8 +17927,18 @@ function paintOrderBar(){
         ? '<input id="otable" data-testid="till-table" placeholder="Table" value="' + esc(orderTable()) + '"'
           + ' onchange="setOrderTable(this.value)" onblur="setOrderTable(this.value)">'
         : '')
-    + '<button class="kot" data-testid="till-kot" onclick="sendKOT()" title="send the new items to the kitchen (F3)">'
-    + 'Kitchen · F3' + (kotPending().length ? ' <b>' + kotPending().length + '</b>' : '') + '</button>';
+    + '<button class="kot" data-testid="till-kot" onclick="sendKOT()"'
+    + ' title="' + (ORDER_ID ? ('send the new lines to this ' + says('subject') + ' and the kitchen') : 'send the new items to the kitchen') + ' (F3)">'
+    + '➕ ' + (ORDER_ID ? 'Send round · F3' : 'Kitchen · F3') + (kotPending().length ? ' <b>' + kotPending().length + '</b>' : '') + '</button>'
+    /**
+     * ⭐⭐⭐ THE OTHER ICON, ON THE SAME TABLE ([TILL-187]). Athi: *"you add two or three icon, one is for
+     * adding say +, another one = for summarising and bring it to the cart… in the same table number."* +
+     * sends a round without leaving the table; = totals everything sent (and whatever is still typed) and
+     * opens the sheet that brings it into the cart and closes it — orderReview/orderReviewSettle, already
+     * built below, now reachable from right here instead of only from the tile in the pad.
+     */
+    + (ORDER_ID ? '<button class="kot" data-testid="till-order-bring" onclick="orderReview(&quot;' + esc(ORDER_ID) + '&quot;)"'
+        + ' title="See the whole bill for this ' + esc(says('subject')) + ', and close it">= Bill</button>' : '');
 }
 /** ⭐ a kitchen is a hotel's thing — a grocer has none, so the bar only appears where a shop asked for it */
 function kotOn(){ return (tillOpt().kot === true); }
@@ -18116,8 +18158,11 @@ function floorSet(v){
 function purposeSet(k){
   if (!O().PURPOSES[k]) return;
   tillOptSet({ purpose: k });
-  /* ⚠️ the whole screen changes shape, so everything that paints is asked again rather than patched */
-  try { setMode(MODE); paintMenu(); paintStatus(); paintChips(); } catch (_) {}
+  /* ⚠️⚠️ THE ORDER BAR WAS LEFT OUT OF "EVERYTHING THAT PAINTS" ([TILL-187]). Turning "order pad" on used to
+     leave #obar showing whatever it last drew — nothing, on a shop's first switch — until some unrelated
+     background sync happened to repaint it. A waiter who had just been told this counter now holds tables
+     saw no way to send one. */
+  try { setMode(MODE); paintMenu(); paintStatus(); paintChips(); paintOrderBar(); } catch (_) {}
   try { devPaint(); } catch (_) {}
   toastLine('This counter is now set to ' + O().PURPOSES[k].label + '.');
 }
@@ -18169,6 +18214,17 @@ function orderReady(o, station){
  * If the sale then fails the table is put back, because one nobody can bill is worse than one billed twice.
  */
 async function orderSettle(o){
+  /**
+   * ⚠️⚠️ SETTLING BUILDS THE BILL OUT OF CART, AND CART IS WHATEVER TABLE IS ON SCREEN ([TILL-187]). Before
+   * this guard, closing table 9 from the review sheet while table 7 was mid-round on screen would overwrite
+   * table 7's cart with table 9's lines and bill THOSE — table 7's typed lines vanish, never held, never
+   * billed. Protect the active table's unsent lines first, the same way orderPick already protects a table
+   * being walked away from.
+   */
+  if (ORDER_ID && ORDER_ID !== o.id && CART.length) {
+    var active = orderFind(ORDER_ID);
+    if (active) await orderAddRoundHold(active);
+  }
   var claim = await floorDo({ do: 'settle', id: o.id,
                               by: (typeof WHO !== 'undefined' && WHO) ? { id: WHO.id } : null });
   if (!claim.ok) { toastLine('This ' + says('subject') + ' cannot be billed — ' + claim.why + '.'); return claim; }
@@ -18177,13 +18233,84 @@ async function orderSettle(o){
   try {
     price();
     await finish();
-    await floorDo({ do: 'settled', id: o.id, bill: (STATE && STATE.lastBill) || null });
+    /* ⚠️ finish() leaves the just-saved bill in LAST, not on STATE — reading STATE.lastBill here always sent
+       null, so a settled order never carried its own bill number */
+    await floorDo({ do: 'settled', id: o.id, bill: (typeof LAST !== 'undefined' && LAST) || null });
   } catch (e) {
     await floorDo({ do: 'reopen', id: o.id });
     toastLine('That ' + says('subject') + ' was not billed — nothing has changed.');
   }
-  ORDER_ID = null;
-  try { paintOrders(); paintHits(); } catch (_) {}
+  /* ⚠️ ONLY IF IT WAS THE ONE ON SCREEN — settling a different table must not throw the current one back
+     to the ordinary cart. */
+  if (ORDER_ID === o.id) ORDER_ID = null;
+  try { paintOrders(); paintHits(); paintOrderBar(); } catch (_) {}
+}
+
+/**
+ * ── ⭐⭐⭐ REVIEW BEFORE CLOSE ([TILL-187]) ─────────────────────────────────────────────────────────────────
+ *
+ * Athi: *"i could add item to the tables, but not able to review or close the table."* Adding worked because
+ * orderPick + the product grid were wired; nothing else was. This is the missing half: a sheet that shows
+ * exactly what orderTotals() and canSettle() already compute — never a second reckoning of its own — and the
+ * one button that turns that into a bill.
+ */
+var ORDER_REVIEW_ID = null;
+function orderReview(id){
+  var o = orderFind(id); if (!o) return;
+  ORDER_REVIEW_ID = id;
+  orderReviewPaint();
+  var d = document.getElementById('orderdlg');
+  if (d && d.showModal && !d.open) d.showModal();
+}
+function orderReviewPaint(){
+  var o = orderFind(ORDER_REVIEW_ID);
+  var d = document.getElementById('orderdlg');
+  if (!o) { if (d && d.open) d.close(); return; }
+  var t = document.getElementById('orderdlgtitle');
+  if (t) t.textContent = Says('subject') + ' ' + o.subject;
+  var stored = O().billable(o);
+  /**
+   * ⭐⭐ IF THIS IS THE TABLE ON SCREEN, WHAT IS TYPED BUT NOT YET SENT BELONGS ON THE SHEET TOO. It is about
+   * to be held and billed the moment "Bill this table" is pressed (orderReviewSettle, below) — a review that
+   * left it off would show "nothing on it yet" while two dosas sat in the cart. [[feedback-silence-is-the-bug]]
+   */
+  var live = (ORDER_ID === o.id) ? CART : [];
+  var lines = stored.concat(live);
+  var liveTotal = live.reduce(function(a, c){ return r2(a + (c.net != null ? c.net : r2((Number(c.price)||0) * (Number(c.qty)||0)))); }, 0);
+  var total = r2(orderTotals(o).total + liveTotal);
+  var waiting = orderTotals(o).waiting;
+  var body = document.getElementById('orderdlgbody');
+  if (body) body.innerHTML =
+      (lines.length ? '<div class="ordlines" data-testid="till-order-dlg-lines">' + lines.map(function(l){
+        var sent = Number(l.round) > 0;
+        return '<div class="ordline' + (sent ? '' : ' held') + '">'
+          + '<b>' + esc(l.qty) + ' × ' + esc(l.name) + '</b>'
+          + '<span class="u">' + (!sent ? 'typed, not sent'
+              : (l.ready ? 'ready' : 'in the ' + esc(says('station')))) + '</span>'
+          + '<i>' + esc(money(l.net != null ? l.net : r2((Number(l.price)||0) * (Number(l.qty)||0)))) + '</i>'
+          + '</div>';
+      }).join('') + '</div>'
+      : '<p class="u" data-testid="till-order-dlg-none">Nothing on it yet.</p>')
+      + '<div class="ordtotal"><b>Total</b><i>' + esc(money(total)) + '</i></div>'
+      + (waiting ? '<p class="u">' + waiting + ' still in the ' + esc(says('station')) + '.</p>' : '');
+  /* ⚠️ NOT O().canSettle(o) ALONE — that reads o.lines only, and orderReviewSettle holds the live cart into
+     o.lines before it ever calls settle, so a table with two typed dosas and nothing sent yet must still show
+     BILLABLE here, or the one table this sheet exists for could never be closed from it. */
+  var btn = d ? d.querySelector('[data-testid="till-order-settle"]') : null;
+  if (btn) {
+    var okNow = o.state === 'open' && lines.length > 0;
+    btn.disabled = !okNow;
+    btn.textContent = okNow ? ('Bill this ' + says('subject'))
+      : (o.state !== 'open' ? ('Already ' + o.state) : 'Nothing on it yet');
+  }
+}
+async function orderReviewSettle(){
+  var o = orderFind(ORDER_REVIEW_ID); if (!o) return;
+  /* ⚠️ the same table, still on screen, still being typed on — hold it before it is billed, or the last
+     round is billed without it */
+  if (ORDER_ID === o.id && CART.length) { await orderAddRoundHold(o); }
+  var d = document.getElementById('orderdlg'); if (d && d.open) d.close();
+  await orderSettle(o);
 }
 
 /**
@@ -18222,7 +18349,10 @@ function paintOrders(){
   el.innerHTML = head + '<div class="optiles">' + open.map(function(o){
     var t = orderTotals(o);
     var mine = !(typeof WHO !== 'undefined' && WHO && WHO.id) || String(o.by && o.by.id) === String(WHO.id);
-    return '<button class="optile' + (here && here.id === o.id ? ' on' : '') + (mine ? '' : ' theirs') + '"'
+    /* ⭐⭐ REVIEW SITS BESIDE THE TILE ([TILL-187]) — a button cannot nest inside a button, so the tile that
+       picks it (unchanged) and the button that reviews it are siblings in their own small wrapper. */
+    return '<div class="optilewrap">'
+      + '<button class="optile' + (here && here.id === o.id ? ' on' : '') + (mine ? '' : ' theirs') + '"'
       + ' data-testid="till-order-tile" data-oid="' + esc(o.id) + '" onclick="orderPick(&quot;' + esc(o.id) + '&quot;)">'
       + '<b>' + esc(o.subject) + '</b>'
       + '<span class="u">' + esc(orderAge(o)) + '</span>'
@@ -18231,7 +18361,10 @@ function paintOrders(){
       + (t.total ? '<i class="optot">' + esc(money(t.total)) + '</i>' : '')
       /* ⚠️ somebody else's table is dimmed, never hidden — a break has to be coverable */
       + (mine ? '' : '<i class="u">' + esc((o.by && o.by.name) || 'another') + '</i>')
-      + '</button>';
+      + '</button>'
+      + '<button class="opreview" data-testid="till-order-review" title="See what is on it, and close it"'
+      + ' onclick="event.stopPropagation();orderReview(&quot;' + esc(o.id) + '&quot;)">👁</button>'
+      + '</div>';
   }).join('') + '</div>';
 }
 
@@ -18261,7 +18394,10 @@ async function orderPick(id){
   }
   ORDER_ID = id;
   CART.length = 0;
-  try { price(); paintOrders(); paintHits(); paintStatus(); } catch (_) {}
+  /* ⚠️ #obar READS ORDER_ID NOW ([TILL-187]) — the "+"/"=" labels and the "= Bill" button only belong to
+     whichever table is actually on screen, so picking one must repaint the bar or it still shows the last
+     table's, or none at all. */
+  try { price(); paintOrders(); paintHits(); paintStatus(); paintOrderBar(); } catch (_) {}
 }
 /**
  * ⚠⚠ THE STALE COPY OF orderAddRoundHold IS GONE ([TILL-181]). It inlined the rule — stamping round 0 by
@@ -18281,26 +18417,47 @@ function orderWords(){
 }
 /** the lines a kitchen has not been told about yet */
 function kotPending(){ return CART.filter(function(c){ return !c.kot; }); }
-/**
- * ⭐ SEND IT. Prints through the same path a bill uses, so a shop PC with a printer needs no new plumbing and a
- * browser still shows the ticket to print by hand.
- */
-function sendKOT(){
-  if (MODE !== 'sell') return;
-  var pending = kotPending();
-  if (!pending.length) { toastLine(CART.length ? 'The kitchen already has everything on this bill.' : 'Nothing on the bill yet.'); return; }
+/** ⭐ the slip alone — building it is common to both the ordinary bill and the order-pad round below */
+function kotPrint(lines){
   KOT_N++;
   var n = KOT_N, at = new Date();
-  pending.forEach(function(c){ c.kot = n; });
-  var html = kotHTML(pending, n, at);
+  lines.forEach(function(c){ c.kot = n; });
+  var html = kotHTML(lines, n, at);
   var box = document.getElementById('slipbox');
   if (box) { box.className = 'slipbox'; box.innerHTML = html; }
   var t = document.getElementById('sliptitle');
   if (t) t.textContent = 'KOT ' + n + ' · ' + orderWords();
   var d = document.getElementById('slipdlg'); if (d && d.showModal && !d.open) d.showModal();
   autoPrint(html);
+  return n;
+}
+/**
+ * ⭐ SEND IT. Prints through the same path a bill uses, so a shop PC with a printer needs no new plumbing and a
+ * browser still shows the ticket to print by hand.
+ * ⚠️⚠️⚠️ ON AN ORDER PAD, SENDING GOES TO THE ORDER FIRST ([TILL-187], Athi: *"i could add item to the
+ * tables, but not able to review or close the table"*). Before this, F3 only stamped the CART line and printed
+ * a slip — the order object itself, the one thing orderTotals/canSettle/orderSettle/the floor all read, never
+ * heard about it. A waiter could send ten rounds to ten tables all evening and every one would still say
+ * "nothing on it yet" the moment anybody tried to review or bill it.
+ */
+async function sendKOT(){
+  if (MODE !== 'sell') return;
+  var pending = kotPending();
+  if (!pending.length) { toastLine(CART.length ? 'The kitchen already has everything on this bill.' : 'Nothing on the bill yet.'); return; }
+  if (ORDER_ID) {
+    var o = orderFind(ORDER_ID);
+    if (!o) { toastLine('That ' + says('subject') + ' is not open any more.'); return; }
+    price();
+    var res = await orderAddRound(o);
+    if (!res || !res.ok) { toastLine('That round did not reach the ' + says('subject') + ' — ' + ((res && res.why) || 'no answer') + '.'); return; }
+    kotPrint(pending);   /* ⚠️ orderAddRound already cleared and repainted CART/paintOrders on success */
+    paintOrderBar();
+    toastLine('Round ' + res.round + ' — ' + pending.length + ' to the kitchen');
+    return;
+  }
+  kotPrint(pending);
   paintCart();
-  toastLine('KOT ' + n + ' — ' + pending.length + ' to the kitchen');
+  toastLine('KOT ' + KOT_N + ' — ' + pending.length + ' to the kitchen');
 }
 /** ⚠️ NO PRICES. A cook is not settling a bill. */
 function kotHTML(lines, n, at){
@@ -18451,8 +18608,9 @@ async function finish(){
     kind: shopTax().kind,
     /* ⭐ WHO CHECKED WHAT, AND WHEN. A shop that is inspected must be able to show the check happened. */
     age_checks: ageRecord(),
-    /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess */
-    order: kotOn() ? { type: orderKind(), table: orderTable() || null,
+    /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess
+       ⚠️ an order pad needs this even when "send a KOT" was never turned on ([TILL-187]) */
+    order: (kotOn() || purposeHas('open_orders')) ? { type: orderKind(), table: orderTable() || null,
                        kots: CART.map(function(c){ return c.kot || 0; }).filter(Boolean) } : null,
   };
   var r = null;
