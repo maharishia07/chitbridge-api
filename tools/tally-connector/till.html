@@ -140,10 +140,24 @@
               color:var(--dim);cursor:pointer;font-size:1em;line-height:1}
   .search .qx:hover{color:var(--warn);border-color:var(--warn)}
   /* ⭐ the microphone sits BESIDE the box, never inside it — a control on top of the text is a control that hides what was typed */
-  .mic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:1.2em;cursor:pointer}
+  .mic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:1.2em;cursor:pointer;position:relative}
   .mic.on{border-color:var(--ok);background:var(--ok-tint);animation:hear 1s ease-in-out infinite}
   @keyframes hear{50%{transform:scale(1.08)}}
   @media (prefers-reduced-motion:reduce){ .mic.on{animation:none} }
+  /* ⭐⭐ THE SPEAKER RIDES THE MIC (design-handoff §5.6) — lit only while voiceSay() has an utterance running */
+  .micspk{position:absolute;inset-block-start:-4px;inset-inline-end:-4px;font-size:.55em;font-style:normal;
+          background:var(--card);border-radius:50%;line-height:1;padding:2px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  /**
+   * ⭐ §5.5 "muted still shows on screen what it would have said" — the words, near the mic, whether or not
+   * they were actually spoken. Auto-clears after 4s (voiceCaption()'s own timeout).
+   * ⚠️ POSITIONED, NOT A THIRD FLEX ITEM — .search is mic+input in a row; a normal-flow span here would steal
+   * width from the search box every time it appeared, which is exactly the layout jump a transient caption
+   * must never cause. It floats under the mic instead. .search itself needs position:relative for this.
+   */
+  .search{position:relative}
+  .voicecap{position:absolute;inset-inline-start:12px;top:100%;z-index:3;font-size:.78em;color:var(--dim);
+            background:var(--card);padding:2px 8px 4px;max-width:calc(100% - 24px);overflow:hidden;
+            text-overflow:ellipsis;white-space:nowrap;border-radius:0 0 8px 8px}
   .search input{width:100%;font-size:1.25em;padding:12px 14px;border:2px solid var(--line);border-radius:var(--radius);background:var(--card)}
   .search input:focus{outline:none;border-color:var(--blue)}
   /* the dozen this shop sells all day — big targets, no reading, gone the moment somebody types */
@@ -1769,8 +1783,8 @@
   @media (max-width:600px){ .catrow button{min-width:48px;min-height:48px} }
   .catrow button:disabled{opacity:.3;cursor:default}
   /* ⭐ THE moved CHIP (§2 "A row") — only on a row whose place differs from where this draft started */
-  .catmoved{font-style:normal;color:rgb(var(--mh,29 27 22));background:rgba(var(--mh,29 27 22),.12);
-            border-radius:999px;font-size:.72em;font-weight:700;padding:2px 8px;margin-inline-start:8px;white-space:nowrap}
+  .catmoved{flex:0 0 auto;font-style:normal;color:rgb(var(--mh,29 27 22));background:rgba(var(--mh,29 27 22),.12);
+            border-radius:999px;font-size:.72em;font-weight:700;padding:2px 8px;white-space:nowrap}
   .catnote{color:var(--dim);font-size:.85em;line-height:1.5;margin:10px 0 0}
   /* ⭐⭐ THE LIVE STRIP (§2 "The live strip") — the real chip row, quiet past the fold, above the list it edits */
   .catfoldhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
@@ -2890,7 +2904,10 @@
     <div class="floorgone" id="floorstate" data-testid="till-floor-gone" hidden></div>
     <div class="orderpad" id="orderpad" data-testid="till-orderpad" hidden></div>
     <div class="search">
-      <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤</button>
+      <!-- ⭐ THE HEADER ICON CARRIES BOTH (design-handoff §5.6) — the mic for hearing, a small speaker beside
+           it lit only for as long as voiceSay() is actually talking (see its u.onstart/onend). -->
+      <button class="mic" id="mic" data-testid="till-mic" onclick="listen('q')" title="speak (the browser listens; needs the internet)">🎤<i class="micspk" id="micspk" data-testid="till-mic-speaker" hidden>🔊</i></button>
+      <span class="voicecap" id="voicecap" data-testid="till-voicecap" hidden></span>
       <input id="q" placeholder="Item name, code or barcode…   ↓↑ to choose, Enter to add" autocomplete="off" inputmode="search" oninput="searchTyped()" onkeydown="searchKey(event)">
       <!-- ⭐ the box's own clear. Escape clears the BILL on this counter, so it must never be the habit here. -->
       <!--
@@ -3281,6 +3298,26 @@
     <div class="srow" title="Off until you press 🎤 — billing never needs it.">
       <span>Language<i class="scope me">just me</i></span>
       <select id="set_lang" onchange="ls.set('cb_till_lang',this.value)"><option value="en-IN">English (India)</option><option value="ta-IN">தமிழ்</option><option value="hi-IN">हिन्दी</option><option value="en-GB">English (UK)</option></select>
+    </div>
+    <!--
+      ⭐⭐⭐ SPEAKING BACK (design-handoff §5, Phase 3.1) — the new half of "voice is two switches, not one".
+      Off by default: a fresh counter says nothing until this is turned on. F5 (sell screen) toggles hearing;
+      Shift F5 toggles this switch — see the keydown handler.
+    -->
+    <div class="srow" title="Reads a short phrase out loud after each of the things ticked below. On a counter nobody is watching, this is the only way to check a total.">
+      <span>Speaking back<i class="scope me">just me</i></span>
+      <label style="display:flex;gap:6px;align-items:center;margin:0">
+        <input type="checkbox" id="set_speakback" data-testid="till-set-speakback"
+               onchange="voiceSpeakSet(this.checked);paintSetup()"> on · Shift F5
+      </label>
+    </div>
+    <div class="srow top" id="row_speakwhat" hidden title="Each item added says its name; the running total and the amount to collect are both short numbers, never a full sentence.">
+      <span>Says<i class="scope me">just me</i></span>
+      <div class="schips" id="set_speakwhat">
+        <label><input type="checkbox" id="spk_add" data-testid="till-spk-add" onchange="voiceSpeakFlagSet('add',this.checked)"> each item added</label>
+        <label><input type="checkbox" id="spk_total" data-testid="till-spk-total" onchange="voiceSpeakFlagSet('total',this.checked)"> the running total</label>
+        <label><input type="checkbox" id="spk_collect" data-testid="till-spk-collect" onchange="voiceSpeakFlagSet('collect',this.checked)"> amount to collect</label>
+      </div>
     </div>
   </section>
 
@@ -5609,9 +5646,17 @@ function catOrderPaint(){
         var foldLine = (i === fold && i > 0 && i < CATDRAFT.length)
           ? '<div class="catfold" data-testid="till-catorder-fold">↑ These ' + fold + ' reach without a swipe</div>' : '';
         var moved = was[c] !== undefined && was[c] !== i;
+        /**
+         * ⚠️⚠️ THE BADGE SITS BESIDE .ct, NEVER INSIDE IT — till-catorder.cjs (and anything else) reads
+         * ".catrow .ct" for the bare category name; nesting "moved" inside that span made its own textContent
+         * "Specialsmoved", which broke a pre-existing, unrelated check the moment five rows all moved at once
+         * (found by e2e/till-all.cjs, not by looking). Always rendered, visibility toggled rather than the
+         * element appearing/disappearing, so every row reserves the same flex width whether it moved or not.
+         */
         return foldLine + '<div class="catrow" data-testid="till-catrow-' + i + '">'
           + '<span class="cn">' + (i + 1) + '</span>'
-          + '<span class="ct">' + esc(c) + (moved ? '<i class="catmoved" data-testid="till-catrow-moved-' + i + '">moved</i>' : '') + '</span>'
+          + '<span class="ct">' + esc(c) + '</span>'
+          + '<i class="catmoved" data-testid="till-catrow-moved-' + i + '"' + (moved ? '' : ' style="visibility:hidden"') + '>moved</i>'
           + '<span class="cq">' + (n[c] || 0) + '</span>'
           + '<button data-testid="till-catup-' + i + '" aria-label="Move ' + esc(c) + ' up"'
           + (i === 0 ? ' disabled' : '') + ' onclick="catMove(' + i + ',-1)">↑</button>'
@@ -13403,7 +13448,7 @@ async function modOpen(i, qty){
   /* ⚠️ THE GATE IS HERE because this is the one funnel both the keys and the search box now come through */
   if (MODE === 'sell' && !(await ageAllow(i))) { focusSearch(); return; }
   var groups = modsOf(i);
-  if (!groups.length) { addItem(i, qty); price(); focusSearch(); return; }
+  if (!groups.length) { addItem(i, qty); price(); voiceAnnounceAdd(i, qty); focusSearch(); return; }
   MOD_FOR = { item: i, qty: qty, groups: groups };
   MOD_PICK = {};
   groups.forEach(function(g){ MOD_PICK[g.name] = []; });
@@ -13697,7 +13742,7 @@ function modAddNow(){
   var f = MOD_FOR, chosen = modChosen();
   modClose();
   addItem(f.item, f.qty, chosen);
-  price(); focusSearch();
+  price(); voiceAnnounceAdd(f.item, f.qty); focusSearch();
 }
 /**
  * ⭐⭐ COMMIT WHAT IS ON SCREEN, THEN OPEN A FRESH CHOOSER FOR ANOTHER ONE ([TILL-75]).
@@ -13745,6 +13790,10 @@ async function addWeighed(w){
               age: ageOf(i) || null,
               item_data: { name: i.name, tax_slab: i.tax_slab, hsn: i.hsn, category: i.category } });
   toastLine(i.name + ' · ' + n + ' ' + (i.unit || 'kg') + ' — ' + w.why);
+  /* ⚠️ INSIDE, AFTER THE AWAIT — not at the call site. addWeighed() can return early (ageAllow() refused),
+     and the call site cannot know that without awaiting it; announcing from out there would speak an item
+     that was never actually added. */
+  try { voiceAnnounceAdd(i, n); } catch (_) {}
 }
 /**
  * ⭐⭐⭐ A LINE'S OWN IDENTITY — item plus what was CHOSEN on it (2026-09-18, with modifiers).
@@ -14108,6 +14157,10 @@ function listen(into){
   var ear = whoListens();
   if (!ear) { say('This device cannot listen. Chrome on a phone, a tablet or Windows can — or turn speaking on in ⚙.'); return; }
   if (!navigator.onLine) { say('Speaking needs the internet — the audio has to reach a speech service. Type it for now; billing itself works offline.'); return; }
+  /* ⭐ HEARING WINS (design-handoff §5.1: "speaking back stops the instant the mic starts hearing… it never
+     talks over the person"). Cancelling here, not just in voiceSay(), means the till goes quiet the moment
+     the mic is pressed, not on whatever sentence voiceSay() happens to be mid-way through next. */
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (_) {}
   var box = document.getElementById(into); if (!box) return;
   /* ⭐ each box names its own mic, so the right button lights up. It used to be a two-way guess, which lit the
      SEARCH mic while the to-do list was listening (2026-09-18, when the day's list gained a mic of its own). */
@@ -14138,6 +14191,85 @@ function listen(into){
   };
   _rec.onend = function(){ if (btn) btn.classList.remove('on'); _rec = null; focusSearch(); };
   try { _rec.start(); } catch (_) { if (btn) btn.classList.remove('on'); _rec = null; }
+}
+/**
+ * ── ⭐⭐⭐ VOICE OUT — SPEAKING BACK (design-handoff/B-fine-tuning/05-headers §5, Phase 3.1) ─────────────
+ *
+ * "Voice is two switches, not one." Hearing (above) reads a phrase INTO the search box and has existed for
+ * a while; speaking back reads figures OUT, and is entirely new — "on a picture-mode counter it is the only
+ * way to check a total," which is why HANDOVER.md asks for this one first in the whole phase.
+ *
+ * ⭐ ADDITIVE, THE WAY THE WHOLE PHASE IS ASKED TO BE. Off by default (a fresh install speaks nothing), and
+ * every call site below already worked with speech off — this only ever ADDS an utterance on top of what a
+ * bill already did, never changes what gets sold or charged.
+ * ⚠️⚠️ §5.1 SPEAKING NEVER TALKS OVER THE PERSON — enforced two ways: listen() above cancels any speech the
+ * instant hearing starts, and voiceSay() below refuses to start one while _rec/_mr is already running.
+ * ⚠️ §5.3 SHORT FORM — "forty", not "the total is forty rupees only". Paise are dropped (nobody at a counter
+ * needs to hear ninety-nine paise) and the browser's own speech engine reads a bare number as words, so no
+ * number-to-words table is built here; the phrase is just the smallest sentence that says what changed.
+ * ⚠️ §5.5 MUTED IS NOT OFF — no separate mute exists yet (the switch tray it would live in is Phase 3.6,
+ * not built), so today "off" is the only silence there is; the caption still fires whenever the switch is
+ * ON, which is the "nothing is missed" half of that rule with no tray to hold a second control yet.
+ */
+/** ⭐ THE MASTER SWITCH — off by default, "just me" scope (§3's own routing: voice is personal) */
+function voiceSpeakOn(){ return ls.get('cb_till_speakback','') === '1'; }
+function voiceSpeakSet(on){ ls.set('cb_till_speakback', on ? '1' : ''); }
+/** ⭐ WHICH OF THE THREE EVENTS SPEAK — all on by default, matching the tray mock-up in §5 */
+function voiceSpeakFlags(){
+  var out = { add:true, total:true, collect:true };
+  try { var f = JSON.parse(ls.get('cb_till_speakwhat','') || '{}'); if (f && typeof f === 'object') Object.assign(out, f); } catch (_) {}
+  return out;
+}
+function voiceSpeakFlagSet(k, on){
+  var f = voiceSpeakFlags(); f[k] = !!on; ls.set('cb_till_speakwhat', JSON.stringify(f));
+}
+function voiceSpeakWants(kind){ return voiceSpeakOn() && !!voiceSpeakFlags()[kind]; }
+/**
+ * ⭐⭐ SPEAKS ONE UTTERANCE, AND ALWAYS CAPTIONS IT — the caller has already decided (via voiceSpeakWants)
+ * whether this text belongs on screen at all; once it is here, the words appear as a caption unconditionally
+ * and are actually spoken only when the platform can and nobody is mid-listen.
+ */
+function voiceSay(text){
+  try { voiceCaption(text); } catch (_) {}
+  if (_rec || _mr) return;                                     /* hearing is running — never speak over it */
+  if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
+  try {
+    window.speechSynthesis.cancel();                            /* one voice at a time, never queued behind the last */
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = ls.get('cb_till_lang', 'en-IN');
+    /* ⭐ §5.6 "the header icon carries both" — the small speaker lights up for exactly as long as this utterance runs */
+    var badge = document.getElementById('micspk');
+    u.onstart = function(){ if (badge) badge.hidden = false; };
+    u.onend = u.onerror = function(){ if (badge) badge.hidden = true; };
+    window.speechSynthesis.speak(u);
+  } catch (_) {}
+}
+/** ⭐ the small caption near the mic — shown whenever speaking back is on, spoken or not (§5.5) */
+function voiceCaption(text){
+  var el = document.getElementById('voicecap'); if (!el) return;
+  el.textContent = text; el.hidden = false;
+  clearTimeout(voiceCaption._t);
+  voiceCaption._t = setTimeout(function(){ el.hidden = true; }, 4000);
+}
+/**
+ * ⭐ ONE ITEM LANDED, SAID IN ONE BREATH (§5 tray mock-up: "each item added" + "the running total" are two
+ * separate switches that can both be on at once — one utterance carries both rather than talking twice).
+ * ⚠️ billMoney() IS CALLED FRESH, not read off a stale total — the caller has already run price() first, so
+ * CART's .net figures are the ones this bill will actually charge, not the pre-offer gross.
+ */
+function voiceAnnounceAdd(item, qty){
+  if (!voiceSpeakOn() || !item) return;
+  try {
+    var parts = [];
+    if (voiceSpeakWants('add')) parts.push((Number(qty) > 1 ? Math.round(qty) + ' ' : '') + item.name);
+    if (voiceSpeakWants('total')) parts.push('Total ' + Math.round(billMoney().net));
+    if (parts.length) voiceSay(parts.join('. '));
+  } catch (_) {}
+}
+/** ⭐ A TENDER WAS PICKED — the moment "how much do I ask for" is answered (§5 tray: "amount to collect") */
+function voiceAnnounceCollect(){
+  if (!voiceSpeakWants('collect')) return;
+  try { voiceSay('Collect ' + Math.round(billMoney().net)); } catch (_) {}
 }
 /**
  * ── ⭐⭐ THE ON-SCREEN KEYBOARD, ON A PANEL THAT IS TOUCHED ([TILL-43], 2026-09-18) ────────────────
@@ -17718,7 +17850,7 @@ function payQr(link){
   } catch (_) { return ''; }
 }
 /** ⚠️ the choice repaints the LINE that states it, not the whole bill — and it is a statement, so it must be seen */
-function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); draftSave(); }   /* R1 · "tender picked" is a change to the bill */
+function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); draftSave(); voiceAnnounceCollect(); }   /* R1 · "tender picked" is a change to the bill */
 
 /* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
 async function finish(){
@@ -21443,6 +21575,15 @@ function paintSetup(){
   }
   set('set_theme', ls.get('cb_till_theme', 'light'));
   set('set_shape', o.shape || 'auto');
+  /* ⭐⭐ SPEAKING BACK (Phase 3.1) — the "Says" row only matters once the switch is on, so it stays out of the
+     way until then, the same rule row_weighmask already follows for the scale's pattern. */
+  var spkOn = voiceSpeakOn();
+  var spkBtn = document.getElementById('set_speakback'); if (spkBtn) spkBtn.checked = spkOn;
+  var spkRow = document.getElementById('row_speakwhat'); if (spkRow) spkRow.hidden = !spkOn;
+  var spkF = voiceSpeakFlags();
+  ['add', 'total', 'collect'].forEach(function(k){
+    var el = document.getElementById('spk_' + k); if (el) el.checked = !!spkF[k];
+  });
   /* ⚠️ the options come from QUICK_SRC, the same list the bar above the keys offers — see the note there */
   var qs = document.getElementById('set_qsrc');
   if (qs) qs.innerHTML = QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '">' + esc(s[2]) + '</option>'; }).join('');
@@ -21715,6 +21856,18 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F6' && MODE === 'sell'){ parkBill(); e.preventDefault(); }
   if (e.key === 'F10' && MODE === 'sell'){ dayClose(); e.preventDefault(); }
   if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }
+  /**
+   * ⭐⭐ VOICE, BY THE KEYBOARD (design-handoff corrections §1, §5.7: "F5 = hearing, Shift F5 = speaking" —
+   * new assignments, checked against the existing bar before being handed out). listen('q') already toggles
+   * on a second press, so F5 is simply a keyboard route to the same button; Shift F5 flips the master switch
+   * a mouse would otherwise reach only through Settings ▸ Voice.
+   */
+  if (e.key === 'F5' && MODE === 'sell' && !e.shiftKey){ listen('q'); e.preventDefault(); }
+  if (e.key === 'F5' && MODE === 'sell' && e.shiftKey){
+    voiceSpeakSet(!voiceSpeakOn());
+    toastLine(voiceSpeakOn() ? 'Speaking back is on.' : 'Speaking back is off.');
+    e.preventDefault();
+  }
   if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
   /* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
      Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
