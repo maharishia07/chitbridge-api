@@ -632,7 +632,11 @@ const ENGINE_OTHER = [
                           // not a borrowed format. Tier B in spirit (needs a db handle) but not curated-core.
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
-const PENDING_LIBS = [];
+const PENDING_LIBS = [
+  /* @stage tested (see the file's own header) — no route reaches it yet. Offer Lab's own catalogue-read
+     endpoint is the thing that will call it; that endpoint is designed and not built. (2026-09-24) */
+  'item-cost.js',
+];
 
 /**
  * ⚠️⚠️⚠️ THE KEY IS WHAT THE PAGE ASKS FOR; THE VALUE IS WHERE IT COMES FROM. Not decoration — the first
