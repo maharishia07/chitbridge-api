@@ -1302,6 +1302,20 @@
   .ibqty button{min-width:28px;min-height:28px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);
                 color:var(--ink);font:inherit;font-weight:700;cursor:pointer;padding:0}
   .ibqty i{font-style:normal;font-weight:700;min-width:22px;text-align:center;font-size:.9em}
+  /* ⭐ §2 "counting is available to everyone" (Phase 3.7) — dots beside the digit, never instead of it */
+  .ibpips{font-size:.55em;letter-spacing:1px;color:var(--ok)}
+  /**
+   * ⭐⭐ CHANGE, AS NOTES AND COINS (design-handoff/07-picture-mode §3, Phase 3.7) — "notes as rectangles,
+   * coins as circles". aria-hidden — the figure beside it already carries the number for anyone reading.
+   */
+  .changepics{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0}
+  /* ⚠️ [hidden] MUST WIN — same guard every display:-setting class in this file already carries */
+  .changepics[hidden]{display:none}
+  .chgnote,.chgcoin{display:inline-flex;align-items:center;justify-content:center;font-weight:800;
+                     font-size:.78em;font-variant-numeric:tabular-nums;background:var(--ok-tint);color:var(--ok);
+                     border:1px solid var(--ok)}
+  .chgnote{min-width:52px;height:32px;border-radius:6px;padding:0 6px}
+  .chgcoin{min-width:32px;height:32px;border-radius:50%}
   .ibqty .ibdrop{margin-inline-start:auto;border-color:var(--line);color:var(--dim)}
   .ibqty .ibdrop:hover{border-color:var(--warn);color:var(--warn)}
   /* the bar stays put while the keys move under it — it says which list you are looking at */
@@ -1796,9 +1810,23 @@
   .catstrip button.past{opacity:.45}
   /* ⭐ PRODUCTS, SAID ONCE (§2 "A row": *"the unit is said once at the top, never on every row"*) */
   .cathead{display:flex;align-items:center;gap:10px;padding:2px 4px 4px;margin-top:8px}
-  .cathead span:nth-child(1){flex:0 0 26px} .cathead span:nth-child(2){flex:1}
-  .cathead span:nth-child(3){min-width:44px;text-align:end;font-size:.72em;text-transform:uppercase;letter-spacing:.03em}
-  .cathead span:nth-child(4){flex:0 0 96px}
+  /* ⚠️ FIVE SPACERS NOW, NOT FOUR — Phase 3.5 added the drag handle as its own column between the rank box
+     and the name; this header row grew a matching (empty) one so "Products" still sits over the count. */
+  .cathead span:nth-child(1){flex:0 0 44px} .cathead span:nth-child(2){flex:0 0 28px} .cathead span:nth-child(3){flex:1}
+  .cathead span:nth-child(4){min-width:44px;text-align:end;font-size:.72em;text-transform:uppercase;letter-spacing:.03em}
+  .cathead span:nth-child(5){flex:0 0 96px}
+  /* ⭐⭐ THE RANK BOX IS TYPABLE (§2 "the fastest way to move something a long way") */
+  .catrank{flex:0 0 44px;min-height:44px;text-align:center;color:var(--ink);font:inherit;
+           font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+  @media (max-width:600px){ .catrank{min-height:48px} }
+  /* ⭐⭐ THE HANDLE — drags with a mouse, lifts-and-places with a tap (§2) */
+  .cathandle{flex:0 0 28px;min-width:28px;min-height:44px;display:flex;align-items:center;justify-content:center;
+             font-style:normal;font-size:1.1em;color:var(--dim);border-radius:8px;cursor:grab}
+  .cathandle.on{background:var(--accent);color:var(--on-accent);cursor:grabbing}
+  @media (max-width:600px){ .cathandle{min-height:48px} }
+  /* ⭐ THE LIFTED ROW CASTS A SHADOW (§2 "the lifted row casts a shadow, a gap opens where it will land") */
+  .catrow.lifted{box-shadow:0 4px 14px rgba(0,0,0,.18);background:var(--panel);border-radius:10px;opacity:.92}
+  .catrow:focus-visible{outline:3px solid var(--ok);outline-offset:-2px;border-radius:8px}
   /* ⭐⭐ THE FOLD LINE (§2 "The fold, drawn in the list too") — moves with the rows, drawn after the last one it covers */
   .catfold{border-top:2px dashed var(--accent);color:var(--dim);font-size:.78em;font-weight:600;
            padding:6px 4px 2px;margin-top:2px}
@@ -2274,9 +2302,26 @@
   .gband i{flex:1 1 100%;font-style:normal;color:var(--dim);font-size:.82em}
   /* ⭐ the simulator, where the grid it changes can be watched ([TILL-156]) */
   .gtry{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:7px}
-  .gtry > div:nth-child(2){display:flex;gap:6px;flex-wrap:wrap}
   .gtry .pill{min-height:40px}
   .gtry .pill.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  /**
+   * ⭐⭐⭐ THE LEVEL CARDS (design-handoff/03-the-line §3, Phase 3.4) — replaces the plain pill row above.
+   * minmax(150px,1fr): five cards on a wide counter, they wrap on a phone, never a stored column count.
+   */
+  .gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .gcard{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:start;font:inherit;
+         min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;
+         background:var(--card);color:var(--ink);cursor:pointer}
+  .gcard.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .gcico{font-size:1.1em;letter-spacing:1px;font-variant-numeric:tabular-nums}
+  .gcard b{font-size:.93em}
+  .gcfeel{font-size:.78em;color:var(--dim);line-height:1.3}
+  .gcard.on .gcfeel,.gcard.on .gcturn{color:inherit;opacity:.85}
+  .gcturn{font-size:.72em;color:var(--dim);text-transform:uppercase;letter-spacing:.03em}
+  .gcmult{font-size:.78em;font-weight:700;margin-top:2px}
+  /* ⭐ tone follows the LEVEL, never the selection — a warn-tinted card stays legible whether it is the one on */
+  .gcard.warn .gcmult{color:var(--warn)} .gcard.on.warn .gcmult{color:inherit}
+  .gcard.off{border-style:dashed}
   /* ⭐ the network symbol, crossed — drawn, so it is the same bars the counter shows when it HAS a line */
   .noico{position:relative;display:inline-block;line-height:1}
   /* ── ⭐⭐ THE HEADER BAR ([TILL-159], design-handoff/counter-hub §5) ─────────────────────────────── */
@@ -2597,6 +2642,22 @@
   .scope.counter{color:var(--dim)}
   .scope.shop{color:var(--blue)}
   .scope.me{color:var(--purple)}
+  /**
+   * ⭐⭐⭐ THE SWITCH TRAY (design-handoff/04-settings §5, Phase 3.6) — reuses .srow's own label/value layout
+   * (the tray IS a view of settings rows, per §6.1: "nothing is duplicated"), with its own state text, its
+   * own shortcut key and its own toggle rather than the value controls Settings rows use.
+   */
+  .traystate{font-style:normal;font-size:.78em;color:var(--dim)}
+  #traybody kbd{font:600 .72em ui-monospace,Menlo,Consolas,monospace;color:var(--dim);border:1px solid var(--line);
+                border-radius:5px;padding:2px 6px;white-space:nowrap}
+  /* ⭐ §5 "that it stuck" — the fill and the knob move together, in the same tick as the click, no line delay */
+  .traysw{flex:0 0 auto;width:46px;height:28px;border-radius:14px;border:1px solid var(--line);background:var(--panel);
+          position:relative;cursor:pointer;padding:0}
+  .traysw i{position:absolute;top:2px;inset-inline-start:2px;width:22px;height:22px;border-radius:50%;
+            background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:inset-inline-start .12s ease}
+  .traysw.on{background:var(--ok);border-color:var(--ok)}
+  .traysw.on i{inset-inline-start:20px;background:#fff}
+  @media (prefers-reduced-motion:reduce){ .traysw i{transition:none} }
   .srow>input,.srow>select{padding:8px}
   .schips{display:flex;flex-wrap:wrap;gap:6px 14px}
   .dlg .schips label{display:flex;gap:6px;align-items:center;margin:0;color:inherit;font-size:.9em}
@@ -2891,6 +2952,9 @@
         inside a closed menu interrupts nobody.
       -->
       <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="Health check — what would go wrong today">✓</button>
+      <!-- ⭐⭐ THE SWITCH TRAY (design-handoff/04-settings §5, Phase 3.6) — "everything else sits behind one
+           ⚡ (F12) in the header" — switches, not settings; each already carries its own shortcut. -->
+      <button class="pill" id="traybtn" data-testid="till-tray-btn" onclick="trayOpen()" title="Switches — ⚡ or F12">⚡</button>
       <button class="pill" id="menubtn" data-testid="till-menu" onclick="toggleMenu(event)" title="bills, the shop screen, settings">☰</button>
     </header>
     <!--
@@ -2989,6 +3053,8 @@
       <button class="pill" data-testid="till-split" onclick="addPart()" title="take part of this bill in this way, and the rest another">+ part</button>
       <span id="change" style="min-width:120px;text-align:right;font-weight:700"></span>
     </div>
+    <!-- ⭐ §3 "change, as notes and coins" (design-handoff/07-picture-mode, Phase 3.7) — filled by paintTotals() -->
+    <div id="changepicshost"></div>
     <!-- ⭐ where this order is going — a kitchen ticket is meaningless without it -->
     <div class="obar" id="obar"></div>
     <div class="parked" id="parts"></div>
@@ -3169,6 +3235,17 @@
     <div class="srow" title="Billing is a shop counter: one bill, taken and closed. An order pad holds orders open against a table or a token and bills at the end.">
       <span>What this counter is for<i class="scope counter">this counter</i></span>
       <select id="set_purpose" data-testid="till-set-purpose" onchange="purposeSet(this.value)"></select>
+    </div>
+    <!--
+      ⭐⭐⭐ PICTURE MODE (design-handoff/07-picture-mode, Phase 3.7) — "for a seller who cannot read the
+      screen. Not English, not the local script, not at all." The owner sets it up, not the worker (§6).
+    -->
+    <div class="srow" title="Large cards, pictures on every bill line, a spoken total after every sale, and every confirm sheet spoken aloud when it opens. For a counter run by someone who cannot read.">
+      <span>Picture mode<i class="scope counter">this counter</i></span>
+      <label style="display:flex;gap:6px;align-items:center;margin:0">
+        <input type="checkbox" id="set_picture" data-testid="till-set-picture"
+               onchange="pictureModeSet(this.checked)"> on · cards, pictures, voice, spoken confirms
+      </label>
     </div>
     <div class="srow" id="row_words" hidden title="A restaurant says table; a sweet shop says token; a garage says job card. The word changes, nothing else does.">
       <span>Held against a<i class="scope counter">this counter</i></span>
@@ -3364,6 +3441,24 @@
   </div>
   <div id="setnote" class="snote">Everything saves as you change it. Nothing is lost by closing.</div>
 </div></dialog>
+
+<!--
+  ⭐⭐⭐ THE SWITCH TRAY (design-handoff/04-settings §5, Phase 3.6) — "a switch is flipped with a customer
+  standing there; a setting is decided once. They need opposite homes." ⚡ or F12 opens it; Esc or tapping
+  outside closes it, same as any other dialog.
+  ⚠️ FOUR SWITCHES, FIXED — NOT THE FULL PIN SYSTEM (§6: a star on every settings row, most-used/chosen
+  modes, an owner-set default, permission-greying, six-max with a drop prompt). That is a retrofit onto
+  every row in Settings and a genuinely separate piece of work; this ships the tray itself, real and
+  working, with the closest the codebase has to the spec's own "starts with three" — Hearing you, Speaking
+  back and Photos on keys are exactly that; Kitchen tickets stands in for Printer, which has no clean
+  browser-side on/off to flip (only a picker dialog on the desktop kit).
+-->
+<dialog id="traydlg" class="dlg" data-testid="till-tray-dlg">
+  <div class="sethead"><h3>Switches</h3>
+    <button class="setx" onclick="document.getElementById('traydlg').close()" aria-label="Close" title="Close">✕</button></div>
+  <div id="traybody"></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('traydlg').close()">Close · Esc</button></div>
+</dialog>
 
 <div id="busy" hidden><div class="busybox">
   <b id="busytitle">Reading your shop…</b>
@@ -4047,13 +4142,51 @@ var SLOW = 120000;
  * ⚠⚠ `lossy` FAILS ONE CALL IN THREE, which is the case nothing else tests: not a dead line, which the page
  * handles, but a line that works often enough to look fine and drops the one request that mattered.
  */
+/**
+ * ⭐⭐ EACH LEVEL IS A CARD, NOT A PILL (design-handoff/03-the-line §3, Phase 3.4) — icon, numbers, what it
+ * feels like at the counter, and which grid column it turns on, so pressing one reads as a real answer
+ * rather than a coloured label. `bars`/`tone` are the one icon family §3 asks for — the same marks the
+ * legend, the pill and the till header would use if this ever grew a persistent indicator.
+ */
 var NETS = {
-  full:  { label: 'Full speed',        ms: 0,    drop: 0,    off: false },
-  g3:    { label: 'Slow · 3G',         ms: 600,  drop: 0,    off: false },
-  g2:    { label: 'Very slow · 2G',    ms: 2000, drop: 0,    off: false },
-  lossy: { label: 'Flaky · 1 in 3 fail', ms: 800, drop: 0.34, off: false },
-  off:   { label: 'No network',        ms: 0,    drop: 1,    off: true  },
+  full:  { label: 'Full speed',          ms: 0,    drop: 0,    off: false, bars: '▂▄▆█', tone: 'ok',
+           feel: 'A bill reaches the shop before you have looked up from the drawer.', turnsOn: 'LINE' },
+  g3:    { label: 'Slow · 3G',           ms: 600,  drop: 0,    off: false, bars: '▂▄▆', tone: 'ok',
+           feel: 'Three to five seconds a bill. Nobody at the counter notices.', turnsOn: 'LINE' },
+  g2:    { label: 'Very slow · 2G',      ms: 2000, drop: 0,    off: false, bars: '▂▄', tone: 'warn',
+           feel: 'Twenty seconds and more. The waiting count rises, then falls. Selling never stops.', turnsOn: 'WEAK' },
+  lossy: { label: 'Flaky · 1 in 3 fail', ms: 800,  drop: 0.34, off: false, bars: '▂▄▆', tone: 'warn',
+           feel: 'Most go first time, the rest go on the second try. Nothing is ever lost.', turnsOn: 'WEAK' },
+  off:   { label: 'No network',          ms: 0,    drop: 1,    off: true,  bars: '▂▄▆█', tone: 'off',
+           feel: 'Everything that needs the shop waits here and goes by itself when the line is back.', turnsOn: 'NONE' },
 };
+/**
+ * ⚠️⚠️ THE BASELINE IS FROZEN THE MOMENT A SIMULATION STARTS, never read live while one is running. Once
+ * netGate() is delaying every request, lineMeasuredMs() measures the FAKE latency, not the real one — asking
+ * it mid-simulation would compare the simulator against itself. netSet() captures this the instant it leaves
+ * 'full'; it is cleared again the instant it returns.
+ */
+var NET_BASELINE_MS = null;
+/**
+ * ⭐ THE MULTIPLIER IS COMPUTED, NOT TYPED (§3) — simulated ÷ measured, against the frozen real baseline
+ * while a level is active, or the live reading when nothing is being faked. 'you are here' for the level
+ * already in force ON THE CARDS (forBanner picks the actual number instead — the banner already knows which
+ * level is active and needs its distance from real, not a label saying so again).
+ */
+function netMultiplier(k, forBanner){
+  var L = NETS[k]; if (!L) return '';
+  if (!forBanner && k === netNow()) return 'you are here';
+  if (L.off) return 'total';
+  /* ⚠️ LOSSY IS NOT SLOWER, IT IS LESS RELIABLE (§3 table: "distance from real" is "33% fail", not a speed
+     multiple) — its own latency is close to g3's, so a ms÷ms comparison would call it "about the same as
+     now" and hide the one thing that actually defines this level. */
+  if (L.drop) return Math.round(L.drop * 100) + '% fail';
+  var measured = (netNow() !== 'full') ? NET_BASELINE_MS : lineMeasuredMs();
+  if (!measured || measured < 50) return null;             /* too little evidence yet to compare against */
+  var mult = Math.round((L.ms || measured) / measured);
+  if (mult <= 1) return 'about the same as now';
+  return mult + '× slower';
+}
 /* ⚠️ PER DEVICE, not per shop — it is a fact about this machine being tested, like the screen settings */
 function netKey(){ return 'cb_till_line'; }
 function netNow(){ var k = ls.get(netKey(), 'full'); return NETS[k] ? k : 'full'; }
@@ -4092,16 +4225,58 @@ function netApplyOnline(){
  * browser fires, so every listener the counter already has reacts exactly as it would to a real outage —
  * rather than to a thing only the simulator knows about.
  */
+/**
+ * ── ⭐⭐⭐ WHILE IT IS PRETENDING (design-handoff/03-the-line §4, Phase 3.4) ──────────────────────────────
+ *
+ * "the counter really behaves this way when it is set — nothing in the grid is pretend" — §4's own words for
+ * why this must be structural rather than a line of small print.
+ *   1 it really throttles — netGate()/fetchGate above already do that; unchanged here
+ *   2 it always counts down and always ends — NET_UNTIL + a timer, never a switch left on by habit
+ *   3 it says how far from real it is — netMultiplier(), already built for the level cards
+ *   5 it will not start while a bill is open — held in NET_PEND, applied by netPendFlush() at clearBill()
+ *   6 Full speed = Stop — netSet('full') already clears everything below
+ * ⚠️ NOT BUILT: the day-log line (§4.2's "Very slow · 2G was simulated on Counter 1 by Bala, 3:12–3:27 pm")
+ * and naming who started it on a shared counter (§4.7) — corrections §30 lists the day log itself as a gap
+ * "referenced but never specified... build nothing that depends on it."
+ */
+var NET_UNTIL = null, NET_TIMER = null, NET_PEND = null;
+var NET_MINUTES = 15;
+function netClearTimer(){ if (NET_TIMER) { clearTimeout(NET_TIMER); NET_TIMER = null; } NET_UNTIL = null; }
 function netSet(k){
   if (!NETS[k]) return;
+  /* ⭐ §4.5 "will not start while a bill is open... offers to wait" — Stop is never held; only a NEW
+     pretence is, and only while there is a bill in hand to protect. */
+  if (k !== 'full' && MODE === 'sell' && typeof CART !== 'undefined' && CART.length) {
+    NET_PEND = k;
+    toastLine('Held — ' + NETS[k].label + ' starts when this bill is done.');
+    return;
+  }
+  var wasFull = netNow() === 'full';
+  NET_PEND = null;
   ls.set(netKey(), k);
   netApplyOnline();
+  netClearTimer();
+  if (k !== 'full') {
+    /* ⭐ frozen HERE, once, before the gate below can touch a single request's timing */
+    if (wasFull) NET_BASELINE_MS = lineMeasuredMs();
+    NET_UNTIL = Date.now() + NET_MINUTES * 60000;
+    /* ⭐ §4.2 "it always counts down and always ends" — the timeout IS the promise, not just the label */
+    NET_TIMER = setTimeout(function(){ netSet('full'); toastLine(NETS[k].label + ' ended — back to full speed.'); }, NET_MINUTES * 60000);
+  } else {
+    NET_BASELINE_MS = null;
+  }
   netPaint();
   try { netInline(); } catch (_) {}   /* the consequences follow the switch ([TILL-149]) */
   /* ⭐ and the grid under the chips moves with them ([TILL-156]) */
   try { var dl = document.getElementById('linedlg'); if (dl && dl.open) paintLine(); } catch (_) {}
   try { window.dispatchEvent(new Event(NETS[k].off ? 'offline' : 'online')); } catch (_) {}
   try { paintStatus(); } catch (_) {}
+}
+/** ⭐ a simulation held back because a bill was in hand lands HERE — the same funnel stylePendFlush() uses */
+function netPendFlush(){
+  if (!NET_PEND) return;
+  var k = NET_PEND; NET_PEND = null;
+  netSet(k);
 }
 
 
@@ -4124,18 +4299,35 @@ function netInline(){
 }
 
 /** ⚠️ drawn on every load, so a setting that survived a restart announces itself immediately */
+/**
+ * \u2b50\u2b50 \u00a74.4 "THE BANNER SHOWS IN THE TILL HEADER TOO. Closing the modal does not stop it; only Stop does."
+ * \u2014 #netbar already is that header banner; it now also carries the countdown and the multiplier, and keeps
+ * itself current on a plain interval rather than freezing the minute it was drawn.
+ */
+var NET_PAINT_TICK = null;
 function netPaint(){
   var el = document.getElementById('netbar'); if (!el) return;
   var what = document.getElementById('netwhat');
   if (what) { what.hidden = true; what.innerHTML = ''; }   /* the old list belongs to the old setting */
   var k = netNow(), L = NETS[k];
+  clearInterval(NET_PAINT_TICK); NET_PAINT_TICK = null;
   if (k === 'full') { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('neton'); return; }
   el.hidden = false;
   document.body.classList.add('neton');
-  el.innerHTML = '\ud83d\udcf6 <b>Network simulator: ' + esc(L.label) + '</b>'
-    + '<span>this counter is pretending \u2014 nothing is wrong with your connection</span>'
+  var mult = netMultiplier(k, true);
+  var left = NET_UNTIL ? Math.max(0, Math.ceil((NET_UNTIL - Date.now()) / 60000)) : null;
+  el.innerHTML = '\ud83d\udcf6 <b>Pretending: ' + esc(L.label) + '</b>'
+    + (mult ? '<span>' + esc(mult) + ' than this counter really is</span>' : '')
+    + (left != null ? '<em data-testid="till-net-left">' + left + ' min left</em>' : '')
     + '<button data-testid="till-net-what" onclick="netMore()">What this affects</button>'
-    + '<button data-testid="till-net-off" onclick="netSet(\'full\')">Back to full speed</button>';
+    + '<button data-testid="till-net-off" onclick="netSet(\'full\')">Stop now</button>';
+  /* \u2b50 the minutes-left figure is only honest if it keeps counting down while the banner sits on screen */
+  NET_PAINT_TICK = setInterval(function(){
+    var em = document.querySelector('[data-testid="till-net-left"]');
+    if (!em || !NET_UNTIL) { clearInterval(NET_PAINT_TICK); NET_PAINT_TICK = null; return; }
+    var mins = Math.max(0, Math.ceil((NET_UNTIL - Date.now()) / 60000));
+    em.textContent = mins + ' min left';
+  }, 30000);
 }
 
 function netGate(){
@@ -4168,8 +4360,8 @@ async function fetchBy(url, opts, ms){
        second answer, and the two would disagree the first time one of them was moved. */
     var t0 = Date.now();
     return fetchBy_(url, opts, ms)
-      .then(function(r){ lineNote(r && r.ok !== false); devTimed(url, Date.now() - t0, r && r.ok !== false); return r; },
-            function(e){ lineNote(false); devTimed(url, Date.now() - t0, false); throw e; });
+      .then(function(r){ var ms = Date.now() - t0; lineNote(r && r.ok !== false, ms); devTimed(url, ms, r && r.ok !== false); return r; },
+            function(e){ var ms = Date.now() - t0; lineNote(false, ms); devTimed(url, ms, false); throw e; });
   }
   return fetchBy_(url, opts, ms);
 }
@@ -5591,6 +5783,55 @@ function catMove(i, by){
   var t = CATDRAFT[i]; CATDRAFT[i] = CATDRAFT[j]; CATDRAFT[j] = t;
   catOrderPaint();
 }
+/**
+ * ── ⭐⭐⭐ FOUR WAYS TO MOVE ONE ROW (design-handoff/02-category-order §2 "Four ways to move a row",
+ * Phase 3.5) — drag, tap-to-lift-tap-to-place and type-the-rank, alongside the arrows built in Phase 2.4.
+ * All four land in the same place: catMoveTo(from, to), a full reposition rather than an adjacent swap —
+ * catMove() above stays untouched, since the arrows still only ever move one place at a time.
+ */
+function catMoveTo(from, to){
+  if (!CATDRAFT) return;
+  to = Math.max(0, Math.min(CATDRAFT.length - 1, to));
+  if (from < 0 || from >= CATDRAFT.length || from === to) return;
+  var item = CATDRAFT.splice(from, 1)[0];
+  CATDRAFT.splice(to, 0, item);
+  catOrderPaint();
+}
+/** ⭐ THE FASTEST WAY TO MOVE SOMETHING A LONG WAY (§2 "Type the rank") — the box itself is typable */
+function catRankSet(i, v){
+  var n = parseInt(v, 10);
+  if (!n || !CATDRAFT) { catOrderPaint(); return; }             /* an empty or non-numeric box just repaints its own row back */
+  catMoveTo(i, n - 1);
+}
+/**
+ * ⭐ DRAG THE HANDLE (§2) — the lifted row casts a shadow, a gap opens where it will land. Native HTML5 drag,
+ * which never fires on a touchscreen — CAT_FROM below is the touch equivalent, sharing the same drop target.
+ */
+function catDragStart(i, ev){ if (ev && ev.dataTransfer) { try { ev.dataTransfer.effectAllowed = 'move'; } catch (_) {} } CAT_FROM = i; }
+function catDrop(i){ if (CAT_FROM == null) return; var from = CAT_FROM; CAT_FROM = null; catMoveTo(from, i); }
+/**
+ * ⭐⭐ TAP TO LIFT, TAP TO PLACE (§2) — "for terminals where a long drag is awkward". Tap the handle once to
+ * lift the row (CAT_FROM is set and the row marks itself), tap any OTHER row to place it there; tapping the
+ * same row again puts it back down without moving anything.
+ */
+var CAT_FROM = null;
+function catPickUp(i){
+  if (CAT_FROM === i) { CAT_FROM = null; catOrderPaint(); return; }        /* tap the same handle again: put it down */
+  if (CAT_FROM != null) { var from = CAT_FROM; CAT_FROM = null; catMoveTo(from, i); return; }
+  CAT_FROM = i;
+  catOrderPaint();
+}
+/**
+ * ⭐ ALT ↑ / ALT ↓ ON THE FOCUSED ROW (§2: "the only way that works from a keyboard alone") — kept at 44 px
+ * like the arrows they sit beside; this only widens how they are reached.
+ */
+function catRowKey(i, ev){
+  if (!ev.altKey || (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown')) return;
+  ev.preventDefault();
+  catMove(i, ev.key === 'ArrowUp' ? -1 : 1);
+  var el = document.querySelector('[data-testid="till-catrow-' + (ev.key === 'ArrowUp' ? i - 1 : i + 1) + '"]');
+  if (el) el.focus();
+}
 /** ⚠️ RESET MEANS "STOP HAVING AN ORDER", not "order it alphabetically" — the fallback is most-used first */
 function catOrderReset(){
   catOrderSet([]);
@@ -5640,7 +5881,7 @@ function catOrderPaint(){
       + CATDRAFT.map(function(c, i){ return '<button' + (i >= fold ? ' class="past"' : '') + '>' + esc(c) + '</button>'; }).join('')
     + '</div>'
     + '<div class="u">' + fold + ' reach without a swipe. Everything past the line is a scroll.</div>'
-    + '<div class="cathead" data-testid="till-catorder-head"><span></span><span></span><span class="u">Products</span><span></span></div>'
+    + '<div class="cathead" data-testid="till-catorder-head"><span></span><span></span><span></span><span class="u">Products</span><span></span></div>'
     + CATDRAFT.map(function(c, i){
         /* ⚠️ THE FOLD LINE MOVES WITH THE ROWS — drawn after the last row it covers, never a fixed row number. */
         var foldLine = (i === fold && i > 0 && i < CATDRAFT.length)
@@ -5653,15 +5894,33 @@ function catOrderPaint(){
          * (found by e2e/till-all.cjs, not by looking). Always rendered, visibility toggled rather than the
          * element appearing/disappearing, so every row reserves the same flex width whether it moved or not.
          */
-        return foldLine + '<div class="catrow" data-testid="till-catrow-' + i + '">'
-          + '<span class="cn">' + (i + 1) + '</span>'
+        /**
+         * ⭐⭐⭐ FOUR WAYS, ONE ROW (§2, Phase 3.5) — the rank box is typable (fastest for a long way), the
+         * handle drags (mouse) or lifts-and-places (tap), the row itself takes Alt ↑ / Alt ↓ when focused,
+         * and the arrows still work exactly as Phase 2.4 left them.
+         * ⚠️ event.stopPropagation() on every control INSIDE the row — the row's own onclick is the
+         * tap-to-place target while something is lifted, and a press on the rank box or an arrow must never
+         * also be read as "place it here".
+         */
+        return foldLine + '<div class="catrow' + (CAT_FROM === i ? ' lifted' : '') + '" data-testid="till-catrow-' + i + '"'
+          + ' tabindex="0" onkeydown="catRowKey(' + i + ',event)"'
+          + ' ondragover="event.preventDefault()" ondrop="event.preventDefault();catDrop(' + i + ')"'
+          + (CAT_FROM != null && CAT_FROM !== i ? ' onclick="catPickUp(' + i + ')"' : '') + '>'
+          + '<input class="catrank" type="number" min="1" max="' + CATDRAFT.length + '" value="' + (i + 1) + '"'
+          + ' data-testid="till-catrank-' + i + '" aria-label="Rank of ' + esc(c) + '"'
+          + ' onclick="event.stopPropagation()" onchange="event.stopPropagation();catRankSet(' + i + ',this.value)">'
+          + '<i class="cathandle' + (CAT_FROM === i ? ' on' : '') + '" data-testid="till-cathandle-' + i + '"'
+          + ' draggable="true" ondragstart="catDragStart(' + i + ',event)" role="button" tabindex="-1"'
+          + ' aria-label="Drag ' + esc(c) + ', or tap to lift and tap another row to place it"'
+          + ' title="Drag, or tap to lift and tap another row to place it"'
+          + ' onclick="event.stopPropagation();catPickUp(' + i + ')">⠷</i>'
           + '<span class="ct">' + esc(c) + '</span>'
           + '<i class="catmoved" data-testid="till-catrow-moved-' + i + '"' + (moved ? '' : ' style="visibility:hidden"') + '>moved</i>'
           + '<span class="cq">' + (n[c] || 0) + '</span>'
           + '<button data-testid="till-catup-' + i + '" aria-label="Move ' + esc(c) + ' up"'
-          + (i === 0 ? ' disabled' : '') + ' onclick="catMove(' + i + ',-1)">↑</button>'
+          + (i === 0 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',-1)">↑</button>'
           + '<button data-testid="till-catdown-' + i + '" aria-label="Move ' + esc(c) + ' down"'
-          + (i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="catMove(' + i + ',1)">↓</button>'
+          + (i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',1)">↓</button>'
           + '</div>';
       }).join('')
     /**
@@ -5778,6 +6037,63 @@ var KEY_SIZES = {
   medium: { label: 'Medium',      min: 140, pic: 72,  gap: 12, why: 'photos readable, a good number on screen' },
   small:  { label: 'Small',       min: 112, pic: 0,   gap: 8,  why: 'hundreds of keys — names and prices only' }
 };
+/**
+ * ── ⭐⭐ CARD SIZES (design-handoff/B-fine-tuning/06-card-shape §1, Phase 3.2) ──────────────────────────
+ *
+ * ⭐ A CARD IS A SHAPE, NOT ONE MORE TILE SIZE (corrections §4: "six tile styles · five key sizes · three
+ * shapes — never swap the words"). Its own ladder, because 150 on a 5:7 card and 150 on a square tile are
+ * not comparable — the card's number is a WIDTH the ratio then fixes the height from, never a size name
+ * shared with KEY_SIZES.
+ */
+var CARD_SIZES = {
+  customer: { label: 'Customer', min: 220, why: 'the screen turned round for the customer to pick' },
+  large:    { label: 'Large',    min: 180, why: 'a counter that wants the photo to carry' },
+  regular:  { label: 'Regular',  min: 150, why: 'the default on a vertical terminal' },
+  small:    { label: 'Small',    min: 120, why: 'phones, and a dense portrait grid' }
+};
+var CARD_ORDER = ['customer', 'large', 'regular', 'small'];
+/**
+ * ── ⭐⭐ THE SHAPE ROW (§5) — Tile · square, Card · 5:7, List row. ────────────────────────────────
+ *
+ * ⚠️ "LIST ROW" IS compactRow, NOT A FOURTH RENDERER. The key-size comment above already settled this for
+ * sizes ("the spec's fifth size 'List' is NOT here... the same presentation on two controls is two controls
+ * that can contradict each other") — the same reasoning applies to shape. Choosing List here sets the TILE
+ * STYLE to compactRow rather than adding a second one-line-key component beside it.
+ */
+var KEY_SHAPES = { tile: { label: 'Tile · square' }, card: { label: 'Card · 5:7' }, list: { label: 'List row' } };
+/**
+ * ⭐ AUTOMATIC (§6.5: "cards first on a portrait terminal, never on a handheld") — the same reasoning
+ * keySizeAuto() already uses (width, height, touch — never a physical inch nobody's browser can report).
+ */
+function keyShapeAuto(){
+  var w = window.innerWidth || 1440, h = window.innerHeight || 900;
+  var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (w && w <= 400 && touch) return 'tile';       /* a handheld — three cards would fit and nothing else would */
+  if (h > w && h >= 900) return 'card';            /* a portrait terminal — height to spare, width to save */
+  return 'tile';
+}
+function keyShapeChosen(){ var v = ls.get('cb_till_keyshape', ''); return KEY_SHAPES[v] ? v : ''; }
+function keyShapeNow(){ return keyShapeChosen() || keyShapeAuto(); }
+function keyShapePick(v){
+  ls.set('cb_till_keyshape', v || '');
+  /* ⭐ a size chosen under one shape rarely makes sense under another (150 card vs 150 tile name different
+     things) — clearing it lets the new shape's own Automatic suggest its own default, exactly as keySizePick
+     already does when a shape's ladder changes under it. */
+  ls.set('cb_till_keysize', '');
+  tileSizeApply();
+  try { paintQuick(); } catch (_) {}
+  try { stylePaint(); } catch (_) {}
+}
+/* ⭐ the size registry and order IN FORCE for the card shape specifically — keySizeChosen()/keySizeNow()
+   above still answer for tile sizes; these answer the same question for CARD_SIZES. */
+function cardSizeChosen(){ var v = ls.get('cb_till_keysize', ''); return CARD_SIZES[v] ? v : ''; }
+function cardSizeAuto(){
+  var w = window.innerWidth || 1440;
+  if (w <= 480) return 'small';
+  if (w >= 1600) return 'customer';
+  return 'regular';
+}
+function cardSizeNow(){ return cardSizeChosen() || cardSizeAuto(); }
 var KEY_ORDER = ['xlarge', 'large', 'medium', 'small'];
 /**
  * ⭐⭐ AUTOMATIC — THE SCREEN SUGGESTS, THE SHOPKEEPER DECIDES (spec §3, png/KeySizeAuto.png). The default on a
@@ -5816,6 +6132,20 @@ function keyPhotosOff(){ return !(KEY_SIZES[keySizeNow()] || {}).pic; }
 function tileSizeApply(){
   var b = document.body; if (!b) return;
   KEY_ORDER.forEach(function(k){ b.classList.remove('keys-' + k); });
+  b.classList.remove('shape-card');
+  /**
+   * ⭐⭐ THE CARD BRANCH (Phase 3.2) — its own size ladder (CARD_SIZES), its own --key-min, and the ratio comes
+   * from .sk-card's own CSS (aspect-ratio:5/7), never from a number set here. --key-pic is a TILE lever
+   * (screen-kit's photoBox height); the card ignores it entirely, so it is zeroed rather than left stale.
+   */
+  if (keyShapeNow() === 'card') {
+    b.classList.add('shape-card');
+    var c = CARD_SIZES[cardSizeNow()];
+    b.style.setProperty('--key-min', c.min + 'px');
+    b.style.setProperty('--key-pic', '0px');
+    b.style.setProperty('--key-gap', '10px');
+    return;
+  }
   var k = keySizeNow();
   b.classList.add('keys-' + k);
   /* ⭐ ONE NUMBER DRIVES THE GRID, and the CSS reads it — there is no column count anywhere on the real screen */
@@ -9683,10 +10013,17 @@ function styleFit(cfg, dev){
   if (dev.w < 600) shape = 'mobile';
   var room = PANELS[(STYLE_SHOW === 'now') ? panelNow() : styleRoom()] || PANELS.balanced;
   var billPc = Math.round((0.9 / (room.split + 0.9)) * 100);
-  var kmin = (KEY_SIZES[keySizeNow()] || KEY_SIZES.medium).min;
+  /**
+   * ⭐⭐ THE CARD LADDER, READ THE SAME WAY (Phase 3.2) — shape, like size, applies immediately and is read
+   * live (keyShapeNow()), never through the draft; the badge and the drawing below must agree with the real
+   * grid, which is exactly the discipline this whole function already existed to enforce for size alone.
+   */
+  var isCard = keyShapeNow() === 'card';
+  var kmin = isCard ? (CARD_SIZES[cardSizeNow()] || CARD_SIZES.regular).min
+                     : (KEY_SIZES[keySizeNow()] || KEY_SIZES.medium).min;
   /* ⚠️ THE SIZE'S GAP, not the density's — at Extra large the real grid leaves 16px, and assuming 10 put a
      three-key badge over a two-key grid. Compact tightens it; the size sets it. */
-  var ksz = KEY_SIZES[keySizeNow()] || KEY_SIZES.medium;
+  var ksz = isCard ? { gap: 10 } : (KEY_SIZES[keySizeNow()] || KEY_SIZES.medium);
   var gap = (cfg.density === 'compact') ? Math.max(6, ksz.gap - 4) : ksz.gap;
   /* ⚠️ THE PICKER TAKES ITS ROOM TOO. A group rail parks 104px down the side of the keys, so the width they
      actually get is what is left after the bill AND after the rail. Counting without it reads a few keys
@@ -9705,7 +10042,7 @@ function styleFit(cfg, dev){
   var rows = room.cart ? 0 : Math.max(2, (shape === 'mobile' ? 4 : shape === 'tall' ? 5 : 3));
   /* ⭐ the drawing needs the same three numbers, so they are returned rather than worked out again */
   /* ⭐ shape too — the drawing must not work it out a second time and get a different answer */
-  return { per: per, rows: rows, on: per * rows, kmin: kmin, gap: gap, billPc: billPc, shape: shape };
+  return { per: per, rows: rows, on: per * rows, kmin: kmin, gap: gap, billPc: billPc, shape: shape, keyShape: isCard ? 'card' : 'tile' };
 }
 function styleScreen(cfg, dev){
   var K = window.CBScreen; if (!K) return '';
@@ -9747,6 +10084,12 @@ function styleScreen(cfg, dev){
   var keys = SAMPLE.slice(0, Math.min(SAMPLE.length, per * rows)).map(function(p, i){
     /* ⚠️ NO UNIT. The spec names this one: ₹352.00 / each is LIST styling on a TILE — a key is read from
        across the counter, where the unit is noise. It belongs on the shelf row, which has room to be read. */
+    /* ⭐ §6.8 "the shape appears in the screen-style preview beside the tile sizes" (Phase 3.2) — the same
+       renderer choice paintQuick() makes, driven by the same fit.keyShape the badge and the grid already agree on. */
+    if (fit.keyShape === 'card') {
+      return K.card({ name: p[0], price: money(p[1]), image: null, hotkey: i + 1,
+        colour: K.groupColour(i), qty: 0, attrs: 'tabindex="-1"' });
+    }
     return K.tile(cfg.tile, { name: p[0], price: money(p[1]), image: null,
       colour: K.groupColour(i), showPhoto: !!cfg.photos && !keyPhotosOff(), qty: 0, attrs: 'tabindex="-1"' });
   }).join('');
@@ -10243,37 +10586,68 @@ function stylePaint(){
       }).join('')
     + '</span></div>'
     /**
-     * ⭐⭐⭐ KEY SIZE ([TILL-93]) — and it sits ABOVE Photos, because the picture follows the key and not the
-     * other way round. Athi asked for three sizes in [TILL-71]; they were built, they worked, and the
-     * control went with the Settings "Screen" tab. A setting with no door is a setting that does not exist.
+     * ⭐⭐⭐ SHAPE, THEN SIZE (design-handoff/06-card-shape §5, Phase 3.2) — "what shape, then how big",
+     * because a card is not a bigger tile, it is a different thing. Sits above Key size, which now reads
+     * whichever ladder the chosen shape owns (KEY_SIZES for tile/list, CARD_SIZES for card).
      */
-    + '<div class="strow' + (keySizeChosen() && keySizeChosen() !== keySizeNowApplied() ? ' changed' : '') + '"'
-    + ' data-testid="till-style-keysize">'
-    + '<b>Key size</b><span class="hint">how big each quick key is — Automatic fits the screen</span>'
+    + '<div class="strow" data-testid="till-style-keyshape">'
+    + '<b>Shape</b><span class="hint">tile, card or a one-line list — the same shape draws quick keys and the product list</span>'
     + '<span class="sc">'
-    /* ⭐ AUTOMATIC IS A STOP ON THE CONTROL, not a checkbox beside it — it is one of the answers */
-    + '<button class="schip' + (keySizeChosen() ? '' : ' on') + '" data-testid="till-style-keysize-auto"'
-    + ' title="the screen decides, and re-decides when the screen changes"'
-    + ' onclick="keySizePick(\'\')">Automatic</button>'
-    + KEY_ORDER.map(function(k){
-        var on = keySizeChosen() === k;
-        /* ⚠️ THE SUGGESTION STAYS VISIBLE EVEN WHEN IGNORED (spec §3) — dashed, so a shopkeeper can see what
-           the screen would have picked and decide again without guessing. */
-        var sug = (!on && keySizeAuto() === k);
+    + '<button class="schip' + (keyShapeChosen() ? '' : ' on') + '" data-testid="till-style-keyshape-auto"'
+    + ' title="cards on a portrait terminal, tiles everywhere else" onclick="keyShapePick(\'\')">Automatic</button>'
+    + ['tile', 'card', 'list'].map(function(sh){
+        var on = keyShapeChosen() === sh;
+        var sug = (!on && keyShapeAuto() === sh);
         return '<button class="schip' + (on ? ' on' : '') + (sug ? ' suggests' : '') + '"'
-          + ' data-testid="till-style-keysize-' + k + '" title="' + esc(KEY_SIZES[k].why) + '"'
-          + ' onclick="keySizePick(\'' + k + '\')">' + esc(KEY_SIZES[k].label) + '</button>';
+          + ' data-testid="till-style-keyshape-' + sh + '" onclick="keyShapePick(\'' + sh + '\')">'
+          + esc(KEY_SHAPES[sh].label) + '</button>';
       }).join('')
-    + '</span>'
-    /* ⭐ WHICH OF THE TWO IS IN CHARGE, in one line, always — never a state you have to infer from a chip */
-    + '<p class="keysays" data-testid="till-style-keysays">'
-    + (keySizeChosen()
-        ? 'Chosen on this counter. The screen suggests <b>' + esc(KEY_SIZES[keySizeAuto()].label)
-          + '</b> — <button class="aslink" data-testid="till-style-keysize-back" onclick="keySizePick(\'\')">'
-          + 'back to automatic</button>.'
-        : 'The screen is asking for <b>' + esc(KEY_SIZES[keySizeAuto()].label) + '</b> and will change its mind'
-          + ' if this counter moves to another screen.')
-    + '</p></div>'
+    + '</span></div>'
+    /**
+     * ⭐⭐⭐ KEY SIZE ([TILL-93], widened Phase 3.2 for the card ladder) — and it sits ABOVE Photos, because
+     * the picture follows the key and not the other way round. Athi asked for three sizes in [TILL-71]; they
+     * were built, they worked, and the control went with the Settings "Screen" tab. A setting with no door
+     * is a setting that does not exist.
+     * ⚠️ ONE ROW, TWO LADDERS — a card chosen on a tile-sized shop and vice versa is why keyShapePick()
+     * clears the stored size the moment the shape changes; this row only ever reads the ladder that matches
+     * whatever shape is in force right now.
+     */
+    + (function(){
+        var isCard = keyShapeNow() === 'card';
+        var SZ = isCard ? CARD_SIZES : KEY_SIZES, ORDER = isCard ? CARD_ORDER : KEY_ORDER;
+        var chosen = isCard ? cardSizeChosen() : keySizeChosen();
+        var auto = isCard ? cardSizeAuto() : keySizeAuto();
+        /* ⭐ ONE STORED VALUE FOR BOTH LADDERS (cb_till_keysize) — keySizePick() itself is shape-agnostic;
+           which registry it is checked against is decided by tileSizeApply(), never by this row. */
+        var pickFn = 'keySizePick';
+        return '<div class="strow' + (chosen && chosen !== (isCard ? cardSizeNow() : keySizeNowApplied()) ? ' changed' : '') + '"'
+          + ' data-testid="till-style-keysize">'
+          + '<b>' + (isCard ? 'Card size' : 'Key size') + '</b><span class="hint">how big each '
+          + (isCard ? 'card' : 'quick key') + ' is — Automatic fits the screen</span>'
+          + '<span class="sc">'
+          + '<button class="schip' + (chosen ? '' : ' on') + '" data-testid="till-style-keysize-auto"'
+          + ' title="the screen decides, and re-decides when the screen changes"'
+          + ' onclick="' + pickFn + '(\'\')">Automatic</button>'
+          + ORDER.map(function(k){
+              var on = chosen === k;
+              /* ⚠️ THE SUGGESTION STAYS VISIBLE EVEN WHEN IGNORED (spec §3) — dashed, so a shopkeeper can see
+                 what the screen would have picked and decide again without guessing. */
+              var sug = (!on && auto === k);
+              return '<button class="schip' + (on ? ' on' : '') + (sug ? ' suggests' : '') + '"'
+                + ' data-testid="till-style-keysize-' + k + '" title="' + esc(SZ[k].why) + '"'
+                + ' onclick="' + pickFn + '(\'' + k + '\')">' + esc(SZ[k].label) + '</button>';
+            }).join('')
+          + '</span>'
+          /* ⭐ WHICH OF THE TWO IS IN CHARGE, in one line, always — never a state you have to infer from a chip */
+          + '<p class="keysays" data-testid="till-style-keysays">'
+          + (chosen
+              ? 'Chosen on this counter. The screen suggests <b>' + esc(SZ[auto].label)
+                + '</b> — <button class="aslink" data-testid="till-style-keysize-back" onclick="' + pickFn + '(\'\')">'
+                + 'back to automatic</button>.'
+              : 'The screen is asking for <b>' + esc(SZ[auto].label) + '</b> and will change its mind'
+                + ' if this counter moves to another screen.')
+          + '</p></div>';
+      })()
     + '<div class="strow' + (!!applied.photos !== !!cfg.photos ? ' changed' : '') + '" data-testid="till-style-photos">'
     + '<b>Photos</b><span class="hint">where pictures show</span><span class="sc">'
     + '<button class="schip' + (cfg.photos ? ' on' : '') + '" data-testid="till-style-photos-keys"'
@@ -11018,37 +11392,61 @@ function paintQuick(){
         + '<span>' + money(i.price) + ' / ' + esc(i.unit||'piece') + '</span>'
         + '<i class="qx" title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')">✕</i>' + extra + '</button>';
     }
-    return head + K.tile(cfg.tile, {
+    /**
+     * ⚠️ WHILE ARRANGING, A KEY DOES NOT SELL. Same button, same place, a different job — which is the whole
+     * reason arranging is a mode: there is never a moment when a drag and a sale are both plausible.
+     * ⚠️ NOT class="…" HERE. The tile library already writes the button's class attribute; a second one in
+     * these attrs is silently ignored by every browser and the styling simply never arrives. The state rides
+     * on data- attributes, and .quick.arranging carries the rest.
+     * ⭐⭐ THE KEY WEARS THE CART'S SELECTION ([TILL-73]). data-, not class: the tile library writes the
+     * button's class attribute itself and a second one is silently ignored — the note on the arrange
+     * attributes below records that the hard way.
+     * ⭐ SHARED ACROSS SHAPES (Phase 3.2) — arranging, selection and the sold-out hide must all still work
+     * whichever renderer draws the key; only which renderer to call changes below.
+     */
+    /**
+     * ⭐⭐ HOLD TO HEAR (design-handoff/07-picture-mode §5, Phase 3.7) — only while nobody is arranging (a
+     * hold there would fight the drag) and only the generic click is guarded: quickAdd() itself is untouched,
+     * so this never changes what a plain tap does, only what a two-second hold does instead of it.
+     */
+    var qkHold = (!QK_ARRANGE)
+      ? ' onmousedown="holdHearStart(\'' + esc(i.name) + '. ' + esc(String(Math.round(Number(i.price) || 0))) + '\')"'
+        + ' ontouchstart="holdHearStart(\'' + esc(i.name) + '. ' + esc(String(Math.round(Number(i.price) || 0))) + '\')"'
+        + ' onmouseup="holdHearEnd(event)" onmouseleave="holdHearEnd(event)" ontouchend="holdHearEnd(event)"'
+      : '';
+    var qkAttrs = 'type="button" data-testid="till-quick-' + n + '" data-qk="' + esc(id) + '"' + qkHold
+      + (pickedLine && String(pickedLine.item_id) === String(i.item_id) ? ' data-picked="1"' : '')
+      + (QK_ARRANGE
+          ? ' draggable="true"' + (QK_FROM === id ? ' data-qkfrom="1"' : '')
+            + ' ondragstart="qkPickUp(\'' + id + '\')" ondragover="event.preventDefault()"'
+            + ' ondrop="event.preventDefault();qkDropOn(\'' + id + '\')"'
+            /* ⭐ TAP ALSO WORKS — pick up, then tap the place. HTML5 drag events never fire on a touchscreen,
+               and a till is a touchscreen; drag alone would have shipped as a mouse-only feature. */
+            + ' onclick="' + (QK_FROM ? 'qkDropOn(\'' + id + '\')' : 'qkPickUp(\'' + id + '\')') + '"'
+          : ' onclick="if(HOLD_HEAR_FIRED){HOLD_HEAR_FIRED=false;return;}quickAdd(\'' + id + '\')"');
+    var qkHideAttrs = 'title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')"';
+    var qkProps = {
       name: i.name, price: money(i.price), unit: i.unit || 'piece', image: picAsk(i.image, picPx()) || null, colour: colour,
       /* ⭐ THE SAME WORDS AS THE SHELF ROW, from the same rule — "₹11.00 under" is a standing fact about the
          product, never a saving, and a key that phrased it differently would be a second opinion about money. */
       /* ⭐ a combo's claim takes the line, because it is the more useful of the two on a meal deal */
       offer: comboWords(i) || mrpUnder(i),
       qty: inBill[String(i.item_id)] || 0, showPhoto: !!cfg.photos, hotkey: n < 9 ? n + 1 : (n === 9 ? 0 : null),
-      /**
-       * ⚠️ WHILE ARRANGING, A KEY DOES NOT SELL. Same button, same place, a different job — which is the whole
-       * reason arranging is a mode: there is never a moment when a drag and a sale are both plausible.
-       * ⚠️ NOT class="…" HERE. The tile library already writes the button's class attribute; a second one in
-       * these attrs is silently ignored by every browser and the styling simply never arrives. The state rides
-       * on data- attributes, and .quick.arranging carries the rest.
-       */
-      /**
-       * ⭐⭐ THE KEY WEARS THE CART'S SELECTION ([TILL-73]). data-, not class: the tile library writes the
-       * button's class attribute itself and a second one is silently ignored — the note on the arrange
-       * attributes below records that the hard way.
-       */
-      attrs: 'type="button" data-testid="till-quick-' + n + '" data-qk="' + esc(id) + '"'
-        + (pickedLine && String(pickedLine.item_id) === String(i.item_id) ? ' data-picked="1"' : '')
-        + (QK_ARRANGE
-            ? ' draggable="true"' + (QK_FROM === id ? ' data-qkfrom="1"' : '')
-              + ' ondragstart="qkPickUp(\'' + id + '\')" ondragover="event.preventDefault()"'
-              + ' ondrop="event.preventDefault();qkDropOn(\'' + id + '\')"'
-              /* ⭐ TAP ALSO WORKS — pick up, then tap the place. HTML5 drag events never fire on a touchscreen,
-                 and a till is a touchscreen; drag alone would have shipped as a mouse-only feature. */
-              + ' onclick="' + (QK_FROM ? 'qkDropOn(\'' + id + '\')' : 'qkPickUp(\'' + id + '\')') + '"'
-            : ' onclick="quickAdd(\'' + id + '\')"'),
-      hideAttrs: 'title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')"',
-      extra: extra });
+      attrs: qkAttrs, hideAttrs: qkHideAttrs, extra: extra
+    };
+    /**
+     * ⭐⭐ SHAPE PICKS THE RENDERER, NOT THE STYLE (design-handoff/06-card-shape, Phase 3.2) — 'card' calls
+     * K.card() (its own fixed 5:7 ratio, never one of the TILES); 'list' keeps K.tile() but forces the
+     * compactRow style regardless of cfg.tile, per the "one control, not two" note on KEY_SHAPES above;
+     * 'tile' (or K.card missing on an older vendored copy) is today's exact behaviour, untouched.
+     */
+    var shapeNow = keyShapeNow();
+    if (shapeNow === 'card' && K.card) {
+      /* ⭐ §2 "the pip... hidden when the shop has no keyboard" — a touch-only counter has no keys to type with */
+      var touchOnly = ('ontouchstart' in window) && !(window.matchMedia && window.matchMedia('(any-pointer:fine)').matches);
+      return head + K.card(Object.assign({}, qkProps, { hotkey: touchOnly ? null : qkProps.hotkey }));
+    }
+    return head + K.tile(shapeNow === 'list' ? 'compactRow' : cfg.tile, qkProps);
   }).join('');
   /* ⭐ THE SOLD-OUT TRAY — what ran out today, one tap from coming back (it also comes back by itself tomorrow) */
   var soldIds = quickSold().map(function(x){ return x.id; });
@@ -11100,6 +11498,17 @@ function paintQuick(){
  * bill itself. Two renderers for one thing is two chances to disagree about what a line says.
  * [[feedback-no-duplicate-functions]]
  */
+/**
+ * ⭐⭐ QUANTITY AS PIPS AND A DIGIT (design-handoff/07-picture-mode §2, Phase 3.7) — "up to five dots, then
+ * the digit alone. Counting is available to everyone; '×3' is not." Whole numbers only — a weighed line's
+ * qty is a decimal kilogram, which nobody counts as dots.
+ */
+function qtyPips(qty){
+  var n = Math.round(Number(qty) || 0);
+  if (n <= 0 || n !== Number(qty)) return '';
+  if (n > 5) return '';
+  return '<span class="ibpips" aria-hidden="true">' + '●'.repeat(n) + '</span>';
+}
 function cartPicCell(c, n, byId, testid){
   var i = byId[String(c.item_id)] || {};
   return '<div class="ibcell" data-testid="' + testid + '-' + n + '">'
@@ -11113,7 +11522,7 @@ function cartPicCell(c, n, byId, testid){
       /* ⭐ THE BILL'S OWN HANDLERS, by cart index — the same two the bill table's steppers call, so a quantity
          changed here and a quantity changed there cannot come out different. */
       + '<button data-testid="' + testid + '-less-' + n + '" title="one fewer" onclick="bumpLine(' + n + ',-1)">−</button>'
-      + '<i>' + esc(c.qty) + '</i>'
+      + qtyPips(c.qty) + '<i>' + esc(c.qty) + '</i>'
       + '<button data-testid="' + testid + '-more-' + n + '" title="one more" onclick="bumpLine(' + n + ',1)">+</button>'
       + '<button class="ibdrop" data-testid="' + testid + '-drop-' + n + '" title="take it off the bill" onclick="setQty(' + n + ',0)">✕</button>'
     + '</span></div>';
@@ -13878,6 +14287,8 @@ function clearBill(){
   KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ ageClear(); CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch();
   /* ⭐ a screen style that was held back because a bill was in hand lands HERE ([TILL-84]) */
   try { stylePendFlush(); } catch (_) {}
+  /* ⭐ a network simulation held back for the same reason (§4.5, Phase 3.4) lands HERE too */
+  try { netPendFlush(); } catch (_) {}
 }
 /**
  * ⭐ PARKED BILLS live on the device and survive a reload — a customer who walked away must not cost the queue, and a browser that
@@ -14270,6 +14681,79 @@ function voiceAnnounceAdd(item, qty){
 function voiceAnnounceCollect(){
   if (!voiceSpeakWants('collect')) return;
   try { voiceSay('Collect ' + Math.round(billMoney().net)); } catch (_) {}
+}
+/**
+ * ── ⭐⭐⭐ PICTURE MODE (design-handoff/07-picture-mode, Phase 3.7) — for a seller who cannot read the
+ * screen at all, not in English, not in the local script. ───────────────────────────────────────────────
+ *
+ * ⚠️⚠️ THIS IS THE ONE ITEM IN THE WHOLE PHASE THAT TOUCHES SEARCH, CONFIRMS, PAYMENT AND THE BILL AT ONCE
+ * — its own spec calls it "not an accessibility afterthought bolted on at the end… it overturns several
+ * decisions made elsewhere" (§7). Built here, deliberately smaller than the full spec, because "never break
+ * a sale" (§ rule 1, every folder) outranks completeness on the one screen every rupee passes through:
+ *   BUILT   §1 digits/pictures/position/voice as defaults; §2's thumbnails+pips (above, always on, not
+ *           gated — a pure improvement with no picture-mode flag needed); §3 change as notes and coins;
+ *           §4 hold-to-confirm, ADDED to the existing sure() dialog, never replacing its Yes/No buttons;
+ *           §5 hold-to-hear on quick keys.
+ *   NOT BUILT §2's "no search box" (removing the counter's main navigation for everyone is not a change to
+ *           make blind, without the person who asked for this watching it happen), §6's first-sale
+ *           walkthrough (a separate onboarding flow), §7's "nightly recount is disabled" (the recount
+ *           mode-control itself is not built yet — Phase 2.4 deferred it; there is nothing live to disable).
+ * ⭐ OFF BY DEFAULT — every existing counter is completely unaffected until this is turned on.
+ */
+function pictureModeOn(){ return ls.get('cb_till_picture', '') === '1'; }
+function pictureModeSet(on){
+  ls.set('cb_till_picture', on ? '1' : '');
+  if (on) {
+    /* §1.4 "voice out is on by default"; §2 "cards… at the largest size the screen fits, not an option" */
+    voiceSpeakSet(true);
+    keyShapePick('card');
+    ls.set('cb_till_keysize', 'large');
+    setBillView('pics');
+  }
+  try { tileSizeApply(); paintQuick(); paintCart(); } catch (_) {}
+}
+/**
+ * ⭐⭐ CHANGE, AS NOTES AND COINS (§3) — greedy from the largest denomination the shop actually holds.
+ * ⚠️ INR ONLY, TODAY — the denominations below are what a shop drawer in India actually contains; a
+ * currency this counter has never billed in would need its own list, not a guess at one.
+ */
+var CHANGE_DENOMS = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+function changeBreakdown(amount){
+  var left = Math.round(Number(amount) || 0), out = [];
+  CHANGE_DENOMS.forEach(function(d){
+    var n = Math.floor(left / d);
+    if (n > 0) { out.push({ value: d, count: n, note: d >= 10 }); left -= n * d; }
+  });
+  return out;
+}
+function changeNotesHTML(amount){
+  var parts = changeBreakdown(amount);
+  if (!parts.length) return '';
+  /* ⭐ §3 "notes as rectangles, coins as circles" — one tag per physical piece, so the count is seen, not read */
+  return '<div class="changepics" data-testid="till-change-pics" aria-hidden="true">'
+    + parts.map(function(p){
+        var tag = p.note ? 'chgnote' : 'chgcoin';
+        var one = '<span class="' + tag + '">' + esc(money(p.value).replace('.00', '')) + '</span>';
+        var row = ''; for (var i = 0; i < p.count; i++) row += one;
+        return row;
+      }).join('')
+    + '</div>';
+}
+/**
+ * ⭐⭐ HOLD ANYTHING TO HEAR WHAT IT IS (§5) — "one gesture replaces every help screen, tooltip and label."
+ * Scoped to quick keys, the highest-value target named in the spec's own example ("Hold a key → 'Idli, two
+ * pieces, forty rupees.'"). A hold SPEAKS; it never also adds — holdHearStart() cancels the click that a
+ * touchend would otherwise fire, so a long press never also rings up a sale.
+ */
+var HOLD_HEAR_T = null, HOLD_HEAR_FIRED = false;
+function holdHearStart(text){
+  HOLD_HEAR_FIRED = false;
+  clearTimeout(HOLD_HEAR_T);
+  HOLD_HEAR_T = setTimeout(function(){ HOLD_HEAR_FIRED = true; try { voiceSay(text); } catch (_) {} }, 500);
+}
+function holdHearEnd(ev){
+  clearTimeout(HOLD_HEAR_T);
+  if (HOLD_HEAR_FIRED && ev) { ev.preventDefault(); ev.stopPropagation(); }   /* the hold was the whole gesture — no sale follows it */
 }
 /**
  * ── ⭐⭐ THE ON-SCREEN KEYBOARD, ON A PANEL THAT IS TOUCHED ([TILL-43], 2026-09-18) ────────────────
@@ -16221,8 +16705,10 @@ function watchNow(r){
  * calling that broken, in red, teaches people to ignore red. §3.
  */
 var LINE_TRIES = [], LINE_WAS = null, LINE_SINCE = null;
-function lineNote(ok){
-  LINE_TRIES.push({ ok: !!ok, at: Date.now() });
+/* ⭐ §2 "Right now" (design-handoff/03-the-line, Phase 3.4) needs the ROUND-TRIP too, not only ok/fail —
+   ms travels the same way rate already does: pushed here, read there, never a second measurement. */
+function lineNote(ok, ms){
+  LINE_TRIES.push({ ok: !!ok, at: Date.now(), ms: Number(ms) || 0 });
   if (LINE_TRIES.length > 20) LINE_TRIES.shift();
   var now = lineState().state;
   if (now !== LINE_WAS) { LINE_WAS = now; LINE_SINCE = Date.now(); }
@@ -16238,6 +16724,18 @@ function lineState(){
   var last = LINE_TRIES.slice(-3), dead = last.length >= 3 && last.every(function(t){ return !t.ok; });
   var st = dead ? 'none' : (rate < 0.05 ? 'good' : (rate < 0.5 ? 'patchy' : 'none'));
   return { state:st, rate:rate, tries:LINE_TRIES.slice(), since:LINE_SINCE };
+}
+/**
+ * ⭐⭐ §2 "RIGHT NOW" — 3.8 Mbps · 190 ms · 0 of the last 20 sends failed (Phase 3.4). Averaged over the
+ * OK tries only — a failed one measures how long it waited to give up, not how fast the line is.
+ * ⚠️ NO THROUGHPUT NUMBER — a counter's own calls are small (a bill, a snapshot delta), so what this page can
+ * honestly measure is round-trip time, exactly as [TILL-116]'s own note above says the simulator itself works
+ * in. A Mbps figure computed from a handful of small JSON replies would be a guess dressed as a measurement.
+ */
+function lineMeasuredMs(){
+  var ok = LINE_TRIES.filter(function(t){ return t.ok && t.ms; });
+  if (!ok.length) return null;
+  return Math.round(ok.reduce(function(a, t){ return a + t.ms; }, 0) / ok.length);
 }
 /** ⭐ how long the counter has been in the state it is in — the first thing a shopkeeper asks (§6.4) */
 function lineSince(){
@@ -16512,12 +17010,24 @@ async function paintGrid(into){
        * to reach a switch is a switch nobody finds. Pressing one moves the highlighted column AND really
        * puts the counter in that state, so the grid is a thing you operate rather than a table you read.
        */
-        '<div class="gtry" data-testid="till-line-try-row"><div class="u">TRY IT ON THIS COUNTER</div><div>'
-      + Object.keys(NETS).map(function(k){
-          return '<button class="pill' + (k === netNow() ? ' on' : '') + '" data-testid="till-line-try-' + k + '"'
-            + ' onclick="netSet(\'' + k + '\')">' + esc(NETS[k].label) + '</button>';
-        }).join('')
-      + '</div><div class="u">the counter really behaves this way while it is set — nothing in the grid is pretend</div></div>'
+        '<div class="gtry" data-testid="till-line-try-row"><div class="u">TRY IT ON THIS COUNTER</div>'
+      /**
+       * ⭐⭐⭐ EACH LEVEL IS A CARD (§3, Phase 3.4) — an icon, the numbers that define it, what it feels like,
+       * which column it turns on, and the multiplier computed against this counter's own measured line.
+       * Replaces the five plain pills, which said a name and nothing about what pressing it actually does.
+       */
+      + '<div class="gcards">' + Object.keys(NETS).map(function(k){
+          var L = NETS[k], mult = netMultiplier(k), on = k === netNow();
+          return '<button class="gcard ' + L.tone + (on ? ' on' : '') + '" data-testid="till-line-try-' + k + '"'
+            + ' onclick="netSet(\'' + k + '\')">'
+            + '<span class="gcico">' + L.bars + '</span>'
+            + '<b>' + esc(L.label) + '</b>'
+            + '<span class="gcfeel">' + esc(L.feel) + '</span>'
+            + '<span class="gcturn">turns on ' + esc(L.turnsOn) + '</span>'
+            + (mult ? '<span class="gcmult">' + esc(mult) + '</span>' : '')
+            + '</button>';
+        }).join('') + '</div>'
+      + '<div class="u">the counter really behaves this way while it is set — nothing in the grid is pretend</div></div>'
       /**
        * ⭐⭐ THE LEGEND GOES FIRST (design-handoff §5, §1.6: *"the legend is at the bottom, after the thing it
        * explains"* — named there as one of the things wrong today). Three marks, read once, before the reader
@@ -16594,6 +17104,17 @@ async function paintLine(into){
     }).join('') || '<p>—</p>';
   }
 
+  /**
+   * ⭐⭐ §2 "RIGHT NOW" (design-handoff/03-the-line, Phase 3.4) — measured from what this counter actually
+   * sent, not from navigator.onLine. No throughput figure (§ note above lineMeasuredMs()) — a round trip and
+   * a failure count are the two things this page can honestly measure from its own small calls.
+   */
+  var measured = lineMeasuredMs();
+  var fails = LINE_TRIES.filter(function(t){ return !t.ok; }).length;
+  var rightNow = LINE_TRIES.length
+    ? (measured != null ? measured + ' ms · ' : '') + fails + ' of the last ' + LINE_TRIES.length + ' sends failed'
+    : 'Nothing sent yet this session';
+
   box.innerHTML =
       /* ⚠️⚠️ the one fault that can lose work is the only thing allowed above the face */
       faults.map(function(x){
@@ -16607,9 +17128,13 @@ async function paintLine(into){
       + (w.total ? '<em data-testid="till-line-count">' + w.total + '</em><span>waiting</span>' : '')
       + (since && L.state !== 'good' ? '<span class="u">' + since.mins + ' min</span>' : '')
       + '</div>'
+    + '<div class="u" data-testid="till-line-rightnow" title="Measured from what this counter actually sent — not from the browser saying it is online.">'
+      + esc(rightNow) + '</div>'
     + '<div class="ltiles">'
       + tile('ok',   'ok',   '✓', okN.length, 'working', names(okN))
-      + tile('wait', 'wait', '⏳', w.total,    'waiting',
+      /* ⚠️ ◔, NOT ⏳ (§5 legend: "no hourglass — waiting is the designed behaviour, not a fault") — the same
+         fix the capability grid already carries; this quick view had its own copy of the glyph. */
+      + tile('wait', 'wait', '◔', w.total,    'waiting',
              '<p>' + esc('They go on their own. Do not ring them again.') + '</p>')
       + tile('need', 'need', '🔒', need.length, 'locked', cards(need))
     + '</div>'
@@ -17252,6 +17777,10 @@ function paintTotals(){
   document.getElementById('change').textContent = PARTS.length
     ? (tendered ? (change >= 0 ? 'change ' + money(change) : 'still ' + money(-change)) : 'still ' + money(due))
     : (tendered ? (change >= 0 ? 'change ' + money(change) : 'short ' + money(-change)) : '');
+  /* ⭐ §3 (Phase 3.7) — the pictorial breakdown rides beside the figure, never instead of it (rule 2: "colour
+     never carries meaning alone — and neither does text") */
+  var picsHost = document.getElementById('changepicshost');
+  if (picsHost) picsHost.innerHTML = (pictureModeOn() && tendered && change > 0) ? changeNotesHTML(change) : '';
   /**
    * ── ⭐⭐⭐ THE SUMMARY FOLDS, SO THE CART HAS ROOM ──────────────────────────────────────────────────────────
    *
@@ -18298,6 +18827,16 @@ function _askOpen(opts){
   no.textContent = opts.cancelWord || 'Cancel';
   okb.textContent = opts.okWord || 'OK';
   if (opts.field) { input.value = opts.value == null ? '' : String(opts.value); lab.textContent = opts.label || 'Your answer'; }
+  /**
+   * ⭐⭐ §4 "WHILE IT FILLS, THE COUNTER SPEAKS THE CONSEQUENCE" (design-handoff/07-picture-mode, Phase 3.7).
+   * ⚠️ NOT THE FULL HOLD-TO-CONFIRM MECHANISM — building a bespoke press-and-hold fill animation with its own
+   * timing, and RE-WIRING every confirm sheet in the product onto it, is a genuinely separate piece of work
+   * (§4's own text: "this replaces the confirm sheets… its input does" — an input change, done once, checked
+   * against every existing caller). What ships here delivers the actual point of that mechanism — a seller who
+   * cannot read hearing what the button will do — without touching how any of them are answered: the message
+   * is simply spoken aloud the moment a real yes/no question opens, Close/Not-now still just a normal tap.
+   */
+  if (opts.twoWays && !opts.field && pictureModeOn()) { try { voiceSay(String(opts.message || '').replace(/\n+/g, '. ')); } catch (_) {} }
   return new Promise(function(resolve){
     _askResolve = resolve;
     okb.onclick = function(){ _askClose(opts.field ? input.value : true); };
@@ -19241,16 +19780,39 @@ async function checkAbsorbedNow(){
  * A close that loses a sale is not a close. The last number issued travels to ChitBridge, so the series can be shown
  * to have ended where it did.
  */
+/**
+ * ⭐⭐⭐ THE NUMBERS THE CLOSE PROMISE DEPENDS ON (design-handoff/01-footer §3/§6, Phase 3.3) — read fresh
+ * every time the sheet opens, never cached, so "96 of 96 sent" is a fact that can be checked rather than a
+ * claim made where it cannot be. The same fields closeCounter()'s own post-close check already computes,
+ * asked BEFORE the attempt instead of after.
+ */
+async function closeReadinessNow(){
+  var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) {}
+  var q = []; try { q = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (_) {}
+  var sale = bills.filter(isSaleRow);
+  return { sent: sale.filter(function(b){ return b._sent; }).length, total: sale.length,
+           waiting: q.length, inHand: (PARKED || []).length };
+}
 async function closeCounter(already){
   if (!(HOST && HOST.key)) { say('This counter is not paired, so there is nothing to close.'); return; }
   if (HOST === AgentHost) { say('This counter runs through the program on this PC. Close it from ChitBridge → Settings → Integrations → Counters.'); return; }
   if (!navigator.onLine) { say('Closing a counter needs the internet — ChitBridge has to be told, and every bill has to be checked first.\n\nNothing has changed. Try again when the line is back.'); return; }
-  /* ⭐ the confirm sheet has already asked, with the live figures on it ([TILL-172]) — asking twice teaches
-     people to press through dialogs, which is the habit the whole change exists to avoid */
-  if (already !== true && !await sure('Close counter ' + tillId() + ' on this PC?\n\n'
-      + 'Every bill is sent and checked against ChitBridge first. If anything is still outstanding, nothing is closed.\n\n'
-      + 'The counter itself is kept. It can be opened again — here or on another PC — and its bill numbers carry on from where they stopped.',
-      'Yes, close it', 'Close this counter')) return;
+  /**
+   * ⭐⭐⭐ THE CONFIRM SHEET SHOWS THE LIVE NUMBERS, NOT A CLAIM (§3) — "Billing stops until someone opens
+   * it again. Nothing is lost." is the consequence line; the three rows under it are read at the moment the
+   * sheet opens, never cached. Waiting bills reorder the primary button rather than simply blocking it (§3.6).
+   * ⚠️ askdlg's own message is TEXT, never HTML (_askOpen's rule, product names travel through it) — the
+   * ✓/! marks are plain characters, not styled spans, for exactly that reason.
+   */
+  if (already !== true) {
+    var rd = await closeReadinessNow();
+    var lines = ['Billing stops until someone opens it again. Nothing is lost.', '',
+      (rd.sent === rd.total ? '✓' : '!') + ' Bills sent to the shop — ' + rd.sent + ' of ' + rd.total,
+      (rd.waiting ? '!' : '✓') + ' Waiting to send — ' + (rd.waiting || 'none'),
+      (rd.inHand ? '!' : '✓') + ' Bills in hand — ' + (rd.inHand || 'none')];
+    var okWord = rd.waiting ? ('Send ' + rd.waiting + ' first, then close') : 'Close the counter';
+    if (!await sure(lines.join('\n'), okWord, 'Close this counter?', 'Not now')) return;
+  }
 
   busyShow('Closing this counter…');
   try {
@@ -20599,10 +21161,18 @@ function openScreen(){
  * ⚠️ It deletes only THIS shop's database. Another shop's counter on the same PC keeps its own bills and its own queue.
  */
 async function coldStart(already){
-  /* ⭐ the confirm sheet has already asked, with the live numbers on it ([TILL-172]) — asking twice trains
-     people to press through dialogs, which is the habit this whole change exists to avoid */
+  /**
+   * ⭐⭐⭐ THE SHEET NAMES WHAT IS ACTUALLY WAITING (design-handoff/01-footer §3, Phase 3.3) — "anything
+   * waiting is kept" was a promise made before the number was known; the queue length is read fresh, right
+   * here, so it can be checked rather than taken on trust.
+   */
   if (already !== true) {
-  if (!await sure('Start this counter from scratch?\n\nEverything waiting is sent first, then the copy of your shop and today\'s bill list are cleared and read again from ChitBridge.\n\nNothing is sent anywhere else, and no sale is lost.')) return; }
+    var wq = []; try { wq = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (_) {}
+    var msg = 'The counter reloads and reads the shop again. Takes about 20 seconds.\n\n'
+      + (wq.length ? wq.length + ' bill(s) waiting are sent first, then kept.' : 'Nothing is waiting to send.')
+      + '\n\nNothing is sent anywhere else, and no sale is lost.';
+    if (!await sure(msg, 'Repair this counter', 'Repair this counter?', 'Not now')) return;
+  }
 
   busyShow('Starting this counter from scratch…');
   /* 1 · send everything */
@@ -21422,6 +21992,63 @@ function settingsGoto(sec){
   el.scrollIntoView({ block: 'start' });
 }
 /**
+ * ── ⭐⭐⭐ THE SWITCH TRAY (design-handoff/04-settings §5, Phase 3.6) ──────────────────────────────────────
+ *
+ * Four fixed switches (see the dialog's own comment for what §6's full pin system is not attempted here).
+ * Each row: label, shortcut, a function reading its CURRENT state in words, and a function that flips it —
+ * every one of these already exists and already IS the setting; the tray only ever calls the one writer.
+ */
+var TRAY_SWITCHES = [
+  { id: 'hear', label: 'Hearing you', shortcut: 'F5',
+    on: function(){ return ls.get('cb_till_speech', 'auto') !== 'off'; },
+    words: function(){ return this.on() ? 'on · ' + esc(langLabel(ls.get('cb_till_lang', 'en-IN'))) : 'off'; },
+    toggle: function(){ ls.set('cb_till_speech', this.on() ? 'off' : 'auto'); } },
+  { id: 'speak', label: 'Speaking back', shortcut: 'Shift F5',
+    on: function(){ return voiceSpeakOn(); },
+    words: function(){ return this.on() ? 'on · ' + Object.keys(voiceSpeakFlags()).filter(function(k){ return voiceSpeakFlags()[k]; }).join(', ') : 'off'; },
+    toggle: function(){ voiceSpeakSet(!this.on()); } },
+  { id: 'photos', label: 'Photos on keys', shortcut: 'F11',
+    on: function(){ return !!screenCfg().photos; },
+    words: function(){ return this.on() ? 'on · ' + esc((KEY_SIZES[keySizeNow()] || {}).label || '') : 'off'; },
+    toggle: function(){ screenSet({ photos: !this.on() }); } },
+  { id: 'kot', label: 'Kitchen tickets', shortcut: 'F3',
+    on: function(){ return !!tillOpt().kot; },
+    words: function(){ return this.on() ? 'on · sends a KOT' : 'off · no KOT is printed'; },
+    toggle: function(){ tillOptSet({ kot: !this.on() }); try { paintOrderBar(); } catch (_) {} } },
+];
+/** ⭐ the language row's own words, without inventing a second list of language names */
+function langLabel(v){
+  var m = { 'en-IN': 'English (India)', 'ta-IN': 'தமிழ்', 'hi-IN': 'हिन्दी', 'en-GB': 'English (UK)' };
+  return m[v] || v;
+}
+function trayOpen(){
+  trayPaint();
+  var d = document.getElementById('traydlg');
+  if (d && d.showModal && !d.open) { try { d.showModal(); } catch (_) {} }
+}
+function trayToggle(id){
+  var s = TRAY_SWITCHES.filter(function(x){ return x.id === id; })[0]; if (!s) return;
+  s.toggle();
+  /* ⭐ §5 "that it stuck" — the row states the new state immediately, and every surface that reads the
+     same setting repaints too, so the tray never disagrees with Settings or the hub about the same switch. */
+  trayPaint();
+  try { paintSetup(); } catch (_) {}
+  try { paintMenuQuick(); } catch (_) {}
+}
+function trayPaint(){
+  var box = document.getElementById('traybody'); if (!box) return;
+  box.innerHTML = TRAY_SWITCHES.map(function(s){
+    var on = s.on();
+    return '<div class="srow" data-testid="till-tray-' + s.id + '">'
+      + '<span>' + esc(s.label) + '<i class="traystate">' + s.words() + '</i></span>'
+      + '<span style="display:flex;align-items:center;gap:10px;justify-content:flex-end">'
+      + '<kbd>' + esc(s.shortcut) + '</kbd>'
+      + '<button class="traysw' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '"'
+      + ' data-testid="till-tray-toggle-' + s.id + '" aria-label="' + esc(s.label) + '" onclick="trayToggle(\'' + s.id + '\')">'
+      + '<i></i></button></span></div>';
+  }).join('');
+}
+/**
  * ── ⭐⭐⭐ THE FIND BOX (design-handoff §4: "replaces tabs… matches on the value too, so 'okhdfc' finds the
  * UPI row") ──────────────────────────────────────────────────────────────────────────────────────────────
  *
@@ -21575,6 +22202,8 @@ function paintSetup(){
   }
   set('set_theme', ls.get('cb_till_theme', 'light'));
   set('set_shape', o.shape || 'auto');
+  /* ⭐ PICTURE MODE (Phase 3.7) */
+  var picBtn = document.getElementById('set_picture'); if (picBtn) picBtn.checked = pictureModeOn();
   /* ⭐⭐ SPEAKING BACK (Phase 3.1) — the "Says" row only matters once the switch is on, so it stays out of the
      way until then, the same rule row_weighmask already follows for the scale's pattern. */
   var spkOn = voiceSpeakOn();
@@ -21868,6 +22497,13 @@ document.addEventListener('keydown', function(e){
     toastLine(voiceSpeakOn() ? 'Speaking back is on.' : 'Speaking back is off.');
     e.preventDefault();
   }
+  /**
+   * ⭐⭐ THE TRAY, BY THE KEYBOARD (§1: "F11 = photos on keys, F12 = switch tray" — corrections' own table).
+   * "A counter with a keyboard should never need the tray at all" (§6.7) is exactly why F11 flips Photos
+   * directly rather than only opening the tray to find it.
+   */
+  if (e.key === 'F11' && MODE === 'sell'){ trayToggle('photos'); e.preventDefault(); }
+  if (e.key === 'F12' && MODE === 'sell'){ trayOpen(); e.preventDefault(); }
   if (e.key === 'F8' && MODE === 'despatch'){ dspCarton(); e.preventDefault(); }
   /* ⭐⭐ ANY OPEN DIALOG, NOT A NAMED PAIR — found by [TILL-30]: a native <dialog> already closes itself on
      Escape, so pressing it to dismiss "who is serving" (whodlg) also reached this line and threw the bill away,
