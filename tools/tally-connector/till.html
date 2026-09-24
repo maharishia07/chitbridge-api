@@ -6312,6 +6312,16 @@ var TILL_OPS = [
    * *what still works when the line goes?* It belongs in the hub, one press from the front.
    */
   { id: 'line',     icon: '📶', label: 'Capability health', hint: 'what works with the line and without it · try it here', fn: 'openLineGrid' },
+  /**
+   * ⭐⭐⭐ OFFER LAB, ONE LINK OUT ([TILL-187]). Athi: "embed as a capability under till as well." Not a
+   * second implementation inside the counter — the SAME page chitbridge-web already serves, one door, opened
+   * plain. Offer Lab authenticates a PERSON (cb_sess, a merchant sign-in), never a paired counter's key — the
+   * till has no such session to hand it, and manufacturing one here would be a second, weaker auth path for
+   * exactly the surface the real one already covers. If the person is also signed into the main app in this
+   * browser, Offer Lab picks that up itself and shows their real catalogue; if not, it shows the sample books
+   * with an invite to sign in. Never blocks a sale — it is a tab, not a mode this screen enters.
+   */
+  { id: 'offerlab', icon: '🧮', label: 'Offer Lab',          hint: 'work out a discount before you run it · opens in a new tab', fn: 'openOfferLab' },
   { id: 'break-menu', icon: '☕', label: 'Take a break',      hint: 'the counter stays on this PC · nothing is closed', fn: 'takeBreak' },
   { id: 'close',    icon: '🔒', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeCounter' },
   { id: 'settings', icon: '⚙',  label: 'Settings',           hint: 'look, printer, this till',                      fn: 'openSettings' },
@@ -6753,6 +6763,9 @@ var MENU_HUE = {
   shop:    '122,79,168',    /* the catalogue                                      */
   look:    '20,124,130',    /* teal — appearance, and nothing that moves money    */
   upkeep:  '43,95,153',     /* blue — keeping the till current                    */
+  /* ⭐ ITS OWN HUE ([TILL-187]) — money-green is already 'today's; this is the price tag's own gold,
+     distinct from day's lamp-amber and alerts' warm orange, so the hub guard's distinct-hue count still holds. */
+  pricing: '168,132,18',
   show:    '122,79,168',    /* the catalogue violet — showing it to customers     */
   care:    '110,108,118',   /* structural slate — rare and deliberate, not a warning */
   /* ⚠️ two ops that are their own door and sit in no section — named here so the strip is never grey by
@@ -6850,6 +6863,13 @@ var TILL_MENU = [
   { id: 'upkeep',  icon: '🔄', title: 'Keep it running', sum: 'read the shop again · settings · a break',
     ops: ['refresh', 'settings', 'break-menu', 'install'] },
   /**
+   * ⭐ PRICING — a business tool, not till upkeep and not what a customer sees, so neither "Keep it running"
+   * nor "Show the shop" is honest for it ([TILL-187]). Today: exactly one, Offer Lab.
+   * ⚠️ A GROUP OF ONE, DELIBERATELY — the same reasoning "Show the shop" already made for itself just above.
+   * A named home for the second pricing tool is worth more than filing the first under a noun it does not fit.
+   */
+  { id: 'pricing', icon: '🧮', title: 'Pricing',       sum: 'work out a discount before you run it',  ops: ['offerlab'] },
+  /**
    * ⭐ MARKETING — Athi: *"shop screen is marketing, what other marketing we have?"* Today: exactly one, the
    * TV sign. ⚠️ A GROUP OF ONE, DELIBERATELY: the storefront link and rewards are what would join it and
    * neither is on this page yet. A named home for the second is worth more than filing the first under a noun.
@@ -6894,6 +6914,8 @@ var MENU_ICON = {
   trend:   '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
   alerts:  '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
   upkeep:  '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>',
+  /* ⭐ the same "one icon family" a section without its own SVG falls back to nothing on ([TILL-187]) */
+  pricing: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
   show:    '<path d="M2 16.1A5 5 0 0 1 5.9 20"/><path d="M2 12.05A9 9 0 0 1 9.95 20"/><line x1="2" y1="20" x2="2.01" y2="20"/><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6"/>',
   look:    '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
   care:    '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
@@ -21317,6 +21339,9 @@ function openScreen(){
   var addr = '/promo.html' + (k ? ('#key=' + encodeURIComponent(k) + (shop ? '&shop=' + encodeURIComponent(shop) : '')) : '');
   window.open(addr, '_blank', 'noopener');
 }
+/** ⭐ NO FRAGMENT, DELIBERATELY — unlike openScreen() above, Offer Lab reads a PERSON's cb_sess, never a
+ * till key, so there is nothing of this counter's own to hand it. See the TILL_OPS entry's own note. */
+function openOfferLab(){ window.open('/offer-lab-next.html', '_blank', 'noopener'); }
 /**
  * ⭐⭐⭐ START FROM SCRATCH — but never before everything is safe. Athi, 2026-09-09: *"in the counter we need a mechanism of cold
  * start or reboot kind of, which should clear the indexed db and then restart again — before that it has to sync up and nothing
