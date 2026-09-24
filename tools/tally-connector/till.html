@@ -72,6 +72,9 @@
     --ok:#16693F; --ok-tint:#E8F4ED; --warn:#8E3517; --warn-tint:#FBEAE3; --blue:#1b4f8a;
     --accent:#F2B544;
     --on-accent:#ffffff; --accent-ink:#1D1B16;
+    /* ⭐ THE THIRD SCOPE WORD (design-handoff/04-settings §4: "a scope word under every label" — this counter
+       is --dim, the shop is the existing --blue, "just me" needed its own token). 7.3:1 on --paper/--card. */
+    --purple:#6a3d99;
     --fs:16px; --pad:10px; --radius:12px;
   }
   /**
@@ -86,6 +89,7 @@
     --ok:#4cc38a; --ok-tint:#173226; --warn:#f2a37a; --warn-tint:#3a2318; --blue:#7cb0e8;
     --accent:#F2A93B;
     --on-accent:#0c1a14; --accent-ink:#1D1B16;
+    --purple:#c9a3e8;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -2469,6 +2473,9 @@
   /* ── the shop's particulars, as the counter holds them ── */
   .shopfacts{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--paper)}
   .shopfacts h4{margin:0 0 6px;font-size:1em}
+  /* ⭐ THE ONE LINE (§3) — a name and a status, not a label:value pair, so it does not inherit .f's 118px column */
+  .shopfacts .shoptop{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin-bottom:6px;font-size:1em}
+  .shopfacts .shoptop span{color:var(--dim);font-size:.88em}
   .shopfacts .f{display:grid;grid-template-columns:118px minmax(0,1fr);gap:8px;padding:2px 0;font-size:.88em}
   .shopfacts .f span:first-child{color:var(--dim)}
   .shopfacts .f b{font-weight:700;word-break:break-word}
@@ -2534,25 +2541,60 @@
   .sethead{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .sethead h3{border:0;margin:0;padding:0}
   .setx{border:0;background:none;font-size:1.15em;cursor:pointer;color:var(--dim);padding:4px 8px}
+  /**
+   * ── ⭐⭐⭐ SIX SETTINGS TABS BECOME ONE SCROLLING LIST (design-handoff/B-fine-tuning/04-settings) ─────────
+   *
+   * §1: *"six tabs of wildly different frequency… tabs hide state… no way to find anything. Six tabs work at
+   * 20 settings and fail at 40."* §4: *"title → find box → sections → close."* Settings' OWN tab bar and its
+   * show/hide-by-`.on` switch (`.settab`, singular) are gone; every section is always in the document, and
+   * the find box (§4) is what replaces tabs as the way to get somewhere fast.
+   * ⚠️ `.settabs` (PLURAL) STAYS — menuTrendBody()'s day/week/month/year picker is a different, still-tabbed
+   * control that happens to share the class name. Only `.setdlg`'s markup stopped using it.
+   */
   .settabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);margin:10px 0 8px}
   .settabs button{border:0;background:none;padding:8px 10px;border-bottom:2px solid transparent;cursor:pointer;color:var(--dim);
                   white-space:nowrap;font:inherit;font-size:.92em}
   .settabs button.on{color:inherit;border-bottom-color:var(--ok);font-weight:700}
-  .settab{display:none;min-height:240px}
-  .settab.on{display:block}
+  .sfind{margin:10px 0 4px}
+  /* ⚠️ [hidden] MUST STILL WIN over this — a row the app itself hides never gets .sfhide (setFilter() checks
+     hasAttribute('hidden') first), so there is no ordering fight between the two rules. */
+  .srow.sfhide,.setsec.sfhide{display:none}
+  .ssechd{margin:18px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.78em;
+          font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)}
+  .setsec:first-of-type .ssechd{margin-top:8px;padding-top:0;border-top:0}
+  /* ⭐ TECHNICAL IS FOLDED (§4 "Sections… Technical (folded)") — a native <details>, so no JS owns its state */
+  .settech{margin:18px 0 2px;padding-top:10px;border-top:1px solid var(--line)}
+  .settech > summary{cursor:pointer;font-size:.78em;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+                      color:var(--dim);list-style:none}
+  .settech > summary::-webkit-details-marker{display:none}
+  .settech > summary::before{content:'\203A';display:inline-block;margin-inline-end:6px;transition:transform .14s ease}
+  .settech[open] > summary::before{transform:rotate(90deg)}
   .srow{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
   /* ⚠️ [hidden] MUST WIN — .srow sets display:grid, so the word row would draw on a billing counter
-     ([TILL-148] again, caught by its own guard before it shipped) */
+     ([TILL-148] again, caught by its own guard before it shipped) — and now also how the find box hides a
+     row that does not match, without a second CSS rule to keep in step with this one. */
   .srow[hidden]{display:none}
   .srow.top{align-items:start}
   .srow>span{color:var(--dim);font-size:.88em}
+  /* ⭐ THE LABEL AND ITS SCOPE WORD SHARE THE COLUMN (§4 "a scope word under every label") — the label's own
+     span becomes the column the word sits under, so it costs no width and never crowds the control. */
+  .srow>span:first-child{display:flex;flex-direction:column;gap:1px}
+  .scope{font-style:normal;font-size:.76em;font-weight:600;letter-spacing:.01em}
+  .scope.counter{color:var(--dim)}
+  .scope.shop{color:var(--blue)}
+  .scope.me{color:var(--purple)}
   .srow>input,.srow>select{padding:8px}
   .schips{display:flex;flex-wrap:wrap;gap:6px 14px}
   .dlg .schips label{display:flex;gap:6px;align-items:center;margin:0;color:inherit;font-size:.9em}
   .dlg input[type=checkbox]{width:auto;padding:0}
   .snote{color:var(--dim);font-size:.78em;margin:6px 0}
-  .dlg input.ro{background:var(--line);cursor:not-allowed}
-  .settab .shopfacts{margin-bottom:6px}
+  /**
+   * ⭐⭐ READ-ONLY CARRIES A DASHED BORDER (§4: *"Read-only rows are drawn with a dashed border and carry a
+   * way out"*) — a masked key or a shop-assigned prefix looks like a field you could edit until it is told
+   * apart from one you can.
+   */
+  .dlg input.ro{background:var(--line);cursor:not-allowed;border-style:dashed}
+  .setsec .shopfacts{margin-bottom:6px}
   @media (max-width:520px){ .srow{grid-template-columns:1fr;gap:4px} }
   .dlgbtns{display:flex;gap:8px;margin-top:14px}
   .dlgbtns{border-top:1px solid var(--line);padding-top:12px}
@@ -3081,60 +3123,61 @@
 
 <dialog id="setdlg" class="setdlg"><div class="dlg">
   <!--
-    ⭐⭐ SETTINGS, REDRAWN (Athi, 2026-09-17: "it looks like junk — reduce text as much as possible … bring controls to the top
-    or into a dropdown, easy to manage rather than a set of controls in one place").
-    ⭐ ONE ROW = A SHORT NAME AND ITS CONTROL. The explanation a row used to carry lives in its title (hover / long-press);
-       the words on screen are only the ones needed to choose. [[feedback-text-budget]]
-    ⭐ TABS, not one scroll: what a shop sets once (Counter, Device) apart from what it tunes (Screen, Bill, Keys, Pay, Voice).
-       The last tab is remembered. Every id below is unchanged — saveSettings(), paintSetup() and the specs read them.
+    ⭐⭐ SETTINGS, ONE SCROLLING LIST (design-handoff/B-fine-tuning/04-settings, Phase 2.5).
+    ⚠️⚠️⚠️ SIX TABS OF WILDLY DIFFERENT FREQUENCY (§1): Voice is touched mid-shift, the ChitBridge address once
+    in the counter's life — same container, same weight. §4: "title → find box → sections → close." The tab
+    bar is gone; every section is always in the document (Technical folded, since it is touched least), and
+    the find box is what replaces tabs as the way to get somewhere fast at 40 settings, not 20.
+    ⭐ ONE ROW = A SHORT NAME, ITS CONTROL, AND A SCOPE WORD (§4). The explanation a row used to carry lives in
+       its title (hover / long-press); the scope word replaces the one blanket "Kept on this device" that was
+       wrong for the rows that are not (§1.5). [[feedback-text-budget]]
+    ⚠️ Every id below is UNCHANGED from the tabbed version — saveSettings(), paintSetup() and the specs still
+       read every one of them. Only the container around them moved.
     ⚠️ The everyday three — text size, look, what the counter shows — are ALSO in ☰ (menu "quick" row), one press away.
   -->
   <div class="sethead">
     <h3>Settings</h3>
     <button class="setx" onclick="document.getElementById('setdlg').close()" aria-label="Close" title="Close">✕</button>
   </div>
-  <div class="settabs" role="tablist" id="settabs">
-    <button role="tab" data-tab="counter" onclick="setTab('counter')">Counter</button>
-    <button role="tab" data-tab="bill" onclick="setTab('bill')">Bill</button>
-    <button role="tab" data-tab="keys" onclick="setTab('keys')">Quick keys</button>
-    <button role="tab" data-tab="pay" onclick="setTab('pay')">Pay</button>
-    <button role="tab" data-tab="voice" onclick="setTab('voice')">Voice</button>
-    <button role="tab" data-tab="device" onclick="setTab('device')">Device</button>
-  </div>
+  <!-- ⭐⭐ FIND BOX FIRST (§4) — filters every row below by its label AND its current value, so "okhdfc" finds the UPI row -->
+  <input class="sfind" id="set_find" type="search" data-testid="till-set-find"
+         placeholder='find a setting — try &quot;upi&quot;, &quot;voice&quot;, &quot;bill number&quot;'
+         oninput="settingsFilter(this.value)">
+  <div id="set_findempty" class="snote" hidden data-testid="till-set-findempty">Nothing here matches that.</div>
 
-  <section class="settab" data-tab="counter">
-    <!-- ⭐⭐⭐ WHAT THIS COUNTER IS FOR LIVES ON THE *COUNTER* TAB ([TILL-178b]). It sat under Quick keys,
-         which is a list of buttons — so the one setting that changes what the whole screen IS was filed
-         behind the one that changes which products are on it. Athi found it by not finding it. -->
+  <section class="setsec" data-sec="counter">
+    <h4 class="ssechd">This counter</h4>
+    <!-- ⭐⭐⭐ WHAT THIS COUNTER IS FOR LIVES FIRST ([TILL-178b]) — it changes what everything else on this
+         screen means, so it leads rather than sitting behind Quick keys the way it once did. -->
     <div class="srow" title="Billing is a shop counter: one bill, taken and closed. An order pad holds orders open against a table or a token and bills at the end.">
-      <span>What this counter is for</span>
+      <span>What this counter is for<i class="scope counter">this counter</i></span>
       <select id="set_purpose" data-testid="till-set-purpose" onchange="purposeSet(this.value)"></select>
     </div>
     <div class="srow" id="row_words" hidden title="A restaurant says table; a sweet shop says token; a garage says job card. The word changes, nothing else does.">
-      <span>Held against a</span>
+      <span>Held against a<i class="scope counter">this counter</i></span>
       <input id="set_subject" data-testid="till-set-subject" placeholder="table">
     </div>
     <!-- ⭐⭐⭐ WHERE THE FLOOR LIVES ([TILL-178b]). Empty = this device alone, which is every shop today.
          An address = the shop's own counter PC, which is how a waiter's phone, a kitchen screen and the till
          come to agree about table 7 without an internet between them. -->
     <div class="srow" id="row_floor" hidden title="Leave empty and this device keeps its own tables. Type the shop counter's address and every phone, screen and till in the shop shares one set of orders — over the shop's own wifi, with no internet needed.">
-      <span>Shared with</span>
+      <span>Shared with<i class="scope counter">this counter</i></span>
       <input id="set_floor" data-testid="till-set-floor" placeholder="this device only"
              onchange="floorSet(this.value)" style="min-width:16ch">
     </div>
     <div class="srow" title="A hotel sends the order to the kitchen before it is paid. A shop with no kitchen leaves this off.">
-      <span>Kitchen tickets</span>
+      <span>Kitchen tickets<i class="scope counter">this counter</i></span>
       <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()"> send a KOT (F3), with dine-in · takeaway · delivery</label>
     </div>
     <!-- ⭐⭐⭐ A WEIGHING SCALE ([TILL-185]). A vegetable shop weighs the tomatoes and the scale prints a
          label whose barcode carries the ITEM and the WEIGHT. GS1 reserves the prefix and says nothing about
          the rest, so every scale lays it out differently — the shop says which, and nothing is guessed. -->
     <div class="srow" title="If your scale prints a barcode label with the weight or the price inside it, say which shape it prints. A shop with no scale leaves this off.">
-      <span>Weighing scale</span>
+      <span>Weighing scale<i class="scope counter">this counter</i></span>
       <select id="set_weigh" data-testid="till-set-weigh" onchange="weighSet(this.value)"></select>
     </div>
     <div class="srow" id="row_weighmask" hidden title="One character per digit: your scale's fixed starting digits, then I for the item code, W for weight or P for price, C for the last check digit, X for anything else.">
-      <span>Its pattern</span>
+      <span>Its pattern<i class="scope counter">this counter</i></span>
       <input id="set_weighmask" data-testid="till-set-weighmask" placeholder="21IIIIIWWWWWC"
              autocapitalize="characters" spellcheck="false" onchange="weighMaskSet(this.value)">
     </div>
@@ -3143,42 +3186,14 @@
     <div class="srow" id="row_weighex" hidden><span></span>
       <div class="u" id="set_weighex" data-testid="till-set-weighex"></div>
     </div>
-    <div id="shopbox" data-testid="till-shopbox"></div>
     <!--
       ⭐⭐⭐ THE PREFIX IS GIVEN, NOT TYPED (Athi, 2026-09-17) — the shop assigns it (routes/keys.js claimTill); this only SHOWS it.
       ⚠️ Read-only, but still an input: saveSettings() reads its value and refuses to let it decide the series.
     -->
     <div class="srow" title="Given by the shop so no two counters share a bill series. Pair again for a new one.">
-      <span>Counter</span>
+      <span>Counter<i class="scope shop">the shop</i></span>
       <input id="set_till" placeholder="C1" readonly data-testid="till-set-till" class="ro">
     </div>
-    <!-- ⭐⭐ THE BILL NUMBER'S SHAPE (Athi, 2026-09-16): the DATE and the RESET are separate questions. Not tax advice (lib/docnumber.js). -->
-    <div class="srow" title="Financial year: the tax year is readable. Date: changes daily, the tax year is not readable.">
-      <span>Bill number</span>
-      <select id="set_dating" data-testid="till-set-dating" onchange="tillSeriesSet({dating:this.value})">
-        <option value="fy">C1/26-27/0003 · financial year</option>
-        <option value="julian">C1/26259/0003 · date</option>
-      </select>
-    </div>
-    <div class="srow" title="How often the running number goes back to 0001.">
-      <span>Restart at 0001</span>
-      <select id="set_resets" data-testid="till-set-resets" onchange="tillSeriesSet({resets:this.value})">
-        <option value="year">Every year</option>
-        <option value="month">Every month</option>
-        <option value="day">Every day</option>
-        <option value="never">Never</option>
-      </select>
-    </div>
-    <div class="srow" title="A counter that trades past midnight keeps one day until this hour.">
-      <span>Day starts</span>
-      <select id="set_dayroll" data-testid="till-set-dayroll" onchange="tillSeriesSet({dayRollHour:Number(this.value)})">
-        <option value="0">Midnight</option>
-        <option value="2">2 am</option>
-        <option value="4">4 am</option>
-        <option value="6">6 am</option>
-      </select>
-    </div>
-    <div id="seriesnote" data-testid="till-series-note" class="snote"></div>
   </section>
 
   <!--
@@ -3189,10 +3204,41 @@
     counter's SHAPE. That one is renamed "What shows" and now sits in the hub beside the chips it is a
     shortcut for. Everything visual has one door: ☰ → How it looks → Screen style.
   -->
-  <section class="settab" data-tab="bill">
+  <!-- ⭐⭐ BILLS, ONE SECTION (§3): the bill number's shape, its columns and its printer used to be split
+       across the Counter and Bill tabs — "one decision, three rows, together" plus the columns beside them,
+       since both answer "what does a bill look like". -->
+  <section class="setsec" data-sec="bills">
+    <h4 class="ssechd">Bills</h4>
+    <!-- ⭐⭐ THE BILL NUMBER'S SHAPE (Athi, 2026-09-16): the DATE and the RESET are separate questions. Not tax advice (lib/docnumber.js). -->
+    <div class="srow" title="Financial year: the tax year is readable. Date: changes daily, the tax year is not readable.">
+      <span>Bill number<i class="scope counter">this counter</i></span>
+      <select id="set_dating" data-testid="till-set-dating" onchange="tillSeriesSet({dating:this.value})">
+        <option value="fy">C1/26-27/0003 · financial year</option>
+        <option value="julian">C1/26259/0003 · date</option>
+      </select>
+    </div>
+    <div class="srow" title="How often the running number goes back to 0001.">
+      <span>Restart at 0001<i class="scope counter">this counter</i></span>
+      <select id="set_resets" data-testid="till-set-resets" onchange="tillSeriesSet({resets:this.value})">
+        <option value="year">Every year</option>
+        <option value="month">Every month</option>
+        <option value="day">Every day</option>
+        <option value="never">Never</option>
+      </select>
+    </div>
+    <div class="srow" title="A counter that trades past midnight keeps one day until this hour.">
+      <span>Day starts<i class="scope counter">this counter</i></span>
+      <select id="set_dayroll" data-testid="till-set-dayroll" onchange="tillSeriesSet({dayRollHour:Number(this.value)})">
+        <option value="0">Midnight</option>
+        <option value="2">2 am</option>
+        <option value="4">4 am</option>
+        <option value="6">6 am</option>
+      </select>
+    </div>
+    <div id="seriesnote" data-testid="till-series-note" class="snote"></div>
     <!-- ⭐ WHICH COLUMNS THE BILL SHOWS (observation 6, division E). The number, item, price and Qty are always shown. -->
     <div class="srow top" title="The number, the item, its price and Qty are always shown.">
-      <span>Columns</span>
+      <span>Columns<i class="scope counter">this counter</i></span>
       <div id="setupcols" data-testid="till-set-cols" class="schips">
         <label><input type="checkbox" id="col_offer" data-testid="till-col-offer" onchange="cartColSet('offer',this.checked)"> Offer</label>
         <label><input type="checkbox" id="col_disc" data-testid="till-col-disc" onchange="cartColSet('disc',this.checked)"> Discount</label>
@@ -3204,62 +3250,82 @@
     <div id="printbox"></div>
   </section>
 
-  <section class="settab" data-tab="keys">
-    <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
-      <span>Keys from</span>
-      <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
-      <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})"></select>
-    </div>
-    <div class="srow top" title="A group is a list you make — the same product can sit in Morning and Night, and the shelf never changes.">
-      <span>Group</span>
-      <div id="setupgroups" data-testid="till-set-groups"></div>
-    </div>
-    <div class="srow" title="✕ on a key hides it, 📌 keeps it there all day.">
-      <span>Hidden keys</span>
-      <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show all again</button>
-    </div>
-  </section>
-
-  <section class="settab" data-tab="pay">
+  <section class="setsec" data-sec="pay">
+    <h4 class="ssechd">Taking money</h4>
     <div class="srow" title="The UPI address this counter takes money at.">
-      <span>UPI payee</span>
+      <span>UPI payee<i class="scope counter">this counter</i></span>
       <input id="set_upi" data-testid="till-set-upi" placeholder="name@bank" autocomplete="off"
              onchange="tillOptSet({upi:{payee:this.value.trim(),label:(document.getElementById('set_upilabel').value||'UPI').trim()}})">
     </div>
     <div class="srow" title="The name the pay button carries.">
-      <span>Button</span>
+      <span>Button<i class="scope counter">this counter</i></span>
       <input id="set_upilabel" data-testid="till-set-upilabel" placeholder="UPI" autocomplete="off"
              onchange="tillOptSet({upi:{payee:(document.getElementById('set_upi').value||'').trim(),label:this.value.trim()||'UPI'}})">
     </div>
     <div id="setupupi" class="snote"></div>
   </section>
 
-  <section class="settab" data-tab="voice">
-    <div class="srow" title="ChitBridge: better on Tamil and mixed speech (audio goes to our speech service). Browser: instant and free (audio goes to the browser's own service). Off: no microphone.">
-      <span>Listener</span>
-      <select id="set_speech">
-        <option value="auto">Automatic</option>
+  <!-- ⭐ VOICE ROWS ARE PERSONAL, NOT THE COUNTER'S (§3: "Voice language is personal; the printer is not") —
+       and now save the moment they change, like every other row, instead of waiting on the footer button. -->
+  <section class="setsec" data-sec="voice">
+    <h4 class="ssechd">Voice</h4>
+    <div class="srow" title="ChitBridge: better on Tamil and mixed speech (audio goes to our speech service). Browser: instant and free (audio goes to the browser's own service). Off: no microphone. Automatic starts when the bill line is empty.">
+      <span>Listener<i class="scope me">just me</i></span>
+      <select id="set_speech" onchange="ls.set('cb_till_speech',this.value)">
+        <option value="auto">Automatic — starts when the bill line is empty</option>
         <option value="server">ChitBridge</option>
         <option value="browser">This browser</option>
         <option value="off">Off</option>
       </select>
     </div>
     <div class="srow" title="Off until you press 🎤 — billing never needs it.">
-      <span>Language</span>
-      <select id="set_lang"><option value="en-IN">English (India)</option><option value="ta-IN">தமிழ்</option><option value="hi-IN">हिन्दी</option><option value="en-GB">English (UK)</option></select>
+      <span>Language<i class="scope me">just me</i></span>
+      <select id="set_lang" onchange="ls.set('cb_till_lang',this.value)"><option value="en-IN">English (India)</option><option value="ta-IN">தமிழ்</option><option value="hi-IN">हिन्दी</option><option value="en-GB">English (UK)</option></select>
     </div>
   </section>
 
-  <section class="settab" data-tab="device">
-    <div id="pairbox"></div>
-    <div id="coldbox"></div>
+  <!--
+    ⭐⭐ THE SHOP (§3: "hub ▸ The shop") — paintShop() below keeps only what DECIDES something (GSTIN,
+    Registration, Every bill is, Tax shown as — tests/snapshot-wire.test.js's own rule), same as it always
+    did; address, legal name, phone and currency are the hub's "The shop" card (menuShopBody()) and stay
+    there, reached now by a link instead of being a second, separate place to look for them (§1.7).
+  -->
+  <section class="setsec" data-sec="shop">
+    <h4 class="ssechd">The shop<i class="scope shop" style="margin-inline-start:8px">the shop</i></h4>
+    <div id="shopbox" data-testid="till-shopbox"></div>
   </section>
 
+  <section class="setsec" data-sec="keys">
+    <h4 class="ssechd">Quick keys</h4>
+    <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
+      <span>Keys from<i class="scope counter">this counter</i></span>
+      <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
+      <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})"></select>
+    </div>
+    <div class="srow top" title="A group is a list you make — the same product can sit in Morning and Night, and the shelf never changes.">
+      <span>Group<i class="scope counter">this counter</i></span>
+      <div id="setupgroups" data-testid="till-set-groups"></div>
+    </div>
+    <div class="srow" title="✕ on a key hides it, 📌 keeps it there all day.">
+      <span>Hidden keys<i class="scope counter">this counter</i></span>
+      <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show all again</button>
+    </div>
+  </section>
+
+  <!-- ⭐⭐ TECHNICAL, FOLDED (§4: touched once or twice in the counter's life — the pairing key, the data
+       folder, and the one dangerous row, "Start fresh", that Settings never used to set apart from these). -->
+  <details class="setsec settech" data-sec="technical">
+    <summary class="ssechd">Technical</summary>
+    <div id="pairbox"></div>
+    <div id="coldbox"></div>
+  </details>
+
   <div class="dlgbtns">
-    <button onclick="document.getElementById('setdlg').close()">Close</button>
-    <button class="pri" onclick="saveSettings()">Save</button>
+    <!-- ⚠️ NEVER .pri — a lid is never dressed as the loud action (tests/till-exits.test.js), whatever it also
+         quietly flushes on the way out (the printer choice, a pasted key — everything else already saved live). -->
+    <button onclick="saveSettings()">Close · Esc</button>
   </div>
-  <div id="setnote" class="snote"></div>
+  <div id="setnote" class="snote">Everything saves as you change it. Nothing is lost by closing.</div>
 </div></dialog>
 
 <div id="busy" hidden><div class="busybox">
@@ -15276,50 +15342,56 @@ function countShort(lines){
  * ⭐ WHAT THIS COUNTER KNOWS ABOUT THE SHOP. Every line here changes what gets printed on a bill, so each says what it is
  * FOR rather than just what it is — a shopkeeper reading "33 · Tamil Nadu" should not have to know why it is there.
  */
+/**
+ * ── ⭐⭐ WHAT DECIDES SOMETHING STAYS HERE; THE REST GETS A LINK (design-handoff §1.7: *"the shop's tax
+ * identity is duplicated here, read-only… two places to look"*, tests/snapshot-wire.test.js's own
+ * "only what decides something" rule) ────────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ THE FOUR ROWS THAT SURVIVED THE FIRST CUT ARE NOT THE DUPLICATION. Athi, 2026-09-09: *"we don't need
+ * all I guess — what is required only"* — address, phone, legal name and currency were cut then, and the
+ * hub's menuShopBody() is where they live; GSTIN, Registration, Every bill is and Tax shown as are each a
+ * DECISION about what prints, not header text, and stay. The overlap with the hub is narrower than it looks:
+ * only the GSTIN VALUE itself is shown in both places, because "Tax shown as" cannot be explained without it.
+ * ⭐ THE LINK IS WHAT'S NEW — a way to the hub's fuller read-out (address, phone, legal name, the fix actions
+ * for anything still missing) without this panel trying to be that page a second time.
+ */
 function paintShop(){
   var el = document.getElementById('shopbox'); if (!el) return;
   if (!S || !S.shop) { el.innerHTML = '<div class="shopfacts">No copy of the shop yet — press ↻ once, while online.</div>'; return; }
   var sh = S.shop, tx = shopTax();
-  var miss = function(v, why){ return v ? '<b>' + esc(String(v)) + '</b>' : '<b class="miss">not set</b> <span>' + esc(why) + '</span>'; };
   var doc = tx.kind === 'tax' ? 'TAX INVOICE' : (tx.kind === 'supply' ? 'BILL OF SUPPLY' : 'a cash memo');
   var split = !sh.state_code ? 'cannot be split without the state'
     : ((window.CBTax && CBTax.supplyType(String(sh.state_code), String(sh.state_code)) === 'intra') ? 'CGST + SGST' : 'IGST');
-  /**
-   * ⚠️ ONLY WHAT DECIDES SOMETHING. Athi, 2026-09-09: *"we don't need all I guess — what is required only, we have to bring
-   * it here."* The first cut listed address, phone, legal name and currency. None of those is a DECISION: they are header
-   * text on a slip, and a shopkeeper does not come to a settings panel to read their own address back.
-   *
-   * What is left is the tax identity, and every row of it changes what gets printed:
-   *   GSTIN         — no GSTIN, no GST (lib/tax-shelf's rule), and its first two digits are the state
-   *   Registration  — regular charges tax; composition holds a GSTIN and charges none
-   *   Every bill is — the consequence of those two, in the words on the paper
-   *   Tax shown as  — CGST+SGST or IGST, or why it cannot be split
-   */
   el.innerHTML = '<div class="shopfacts">'
-    + '<h4>' + esc(sh.name || 'This shop') + '</h4>'
+    + '<div class="shoptop"><b>' + esc(sh.name || 'This shop') + '</b></div>'
     /**
      * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
-     * *"service tax not registered."* It used to read `not set · so no GST is charged`, which is the wording
-     * of an unfinished form. A shop below the threshold is correctly unregistered, and the row now says so.
+     * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the row says so.
      */
     + '<div class="f"><span>GSTIN</span>'
     + (sh.gstin ? '<b>' + esc(String(sh.gstin)) + '</b>'
                 : '<b>Not registered</b> <span>this shop does not charge GST</span>') + '</div>'
-    /* ⭐ the reassurance is on the PANEL too, for a shop that never opens the form ([TILL-105]) */
     + (!sh.gstin && regWords() ? '<div class="shopreg">' + esc(regWords()) + '</div>' : '')
     + '<div class="f"><span>Registration</span><b>' + esc(sh.reg_type || 'regular') + '</b></div>'
     + '<div class="f"><span>Every bill is</span><b>' + doc + '</b></div>'
     + (tx.charges ? '<div class="f"><span>Tax shown as</span>'
         + (sh.state_code ? '<b>' + esc(split) + '</b>'
                          : '<b class="miss">cannot be split</b> <span>no state on the GSTIN</span>') + '</div>' : '')
-    /**
-     * ⭐ IT USED TO SAY "Change it in ChitBridge" ([TILL-105]). For a shop whose only screen is this one, that
-     * sent them to a back office they do not use — to fill in the very field this panel was calling missing.
-     */
     + '<div class="src" title="Kept by ChitBridge so every counter and your storefront show the same thing.">From ChitBridge'
     + (S.at ? ' · ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '')
-    + ' · <button class="daylink" data-testid="till-shop-edit" onclick="shopEditOpen()">Change these</button></div>'
+    + ' · <button class="daylink" data-testid="till-shop-edit" onclick="shopEditOpen()">Change these</button>'
+    /* ⭐ NEW: the address, phone, legal name and currency this panel deliberately does not repeat */
+    + ' · <button class="daylink" data-testid="till-shop-openhub" onclick="openShopInHub()">More about the shop ↗</button></div>'
     + '</div>';
+}
+/** ⭐ SETTINGS' OWN LINK INTO THE HUB'S "The shop" — the same section, not a second one (§3's "hub ▸ The shop") */
+function openShopInHub(){
+  var d = document.getElementById('setdlg'); if (d && d.open) d.close();
+  var side = document.getElementById('tillside');
+  if (!side || !side.classList.contains('on')) toggleMenu();
+  if (!menuIsOpen('shopdet')) { menuSection('shopdet'); return; }
+  var el = document.querySelector('[data-testid="till-msec-shopdet"]');
+  if (el) el.scrollIntoView({ block: 'start' });
 }
 /**
  * ── ⭐⭐⭐ EDITING THE SHOP FROM THE COUNTER ([TILL-105]) ───────────────────────────────
@@ -21186,20 +21258,20 @@ async function paintPrinters(){
   var box = document.getElementById('printbox'); if (!box) return;
   if (!HOST || HOST.mode !== 'agent'){
     box.innerHTML = '<div class="srow" title="In a browser a bill goes through the print dialog — pick the till printer there once and it is remembered. For slips that print and cut by themselves, install the counter on the shop PC (ChitBridge › Counter › Download).">'
-      + '<span>Printer</span><span>the browser\'s print dialog</span></div>';
+      + '<span>Printer<i class="scope counter">this counter</i></span><span>the browser\'s print dialog</span></div>';
     return;
   }
   var r = PRINTERS || (PRINTERS = await HOST.printers());
   var list = (r && r.printers) || [];
   box.innerHTML = list.length
-      ? '<div class="srow" title="Slips print here by themselves."><span>Printer</span><select id="set_printer">' + '<option value="">Ask each time</option>'
+      ? '<div class="srow" title="Slips print here by themselves."><span>Printer<i class="scope counter">this counter</i></span><select id="set_printer">' + '<option value="">Ask each time</option>'
         + list.map(function(p){ return '<option value="' + esc(p.name) + '"' + (r.chosen === p.name ? ' selected' : '') + '>' + esc(p.name) + (p.thermal ? ' · till' : '') + '</option>'; }).join('')
         + '</select></div>'
-        + '<div class="srow"><span>Paper</span><select id="set_paper"><option value="80"' + (r.mm !== 58 ? ' selected' : '') + '>80 mm</option><option value="58"' + (r.mm === 58 ? ' selected' : '') + '>58 mm</option></select></div>'
-        + '<div class="srow"><span>Cash drawer</span><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_drawer"' + (r.drawer ? ' checked' : '') + '> open on a cash sale</label></div>'
+        + '<div class="srow"><span>Paper<i class="scope counter">this counter</i></span><select id="set_paper"><option value="80"' + (r.mm !== 58 ? ' selected' : '') + '>80 mm</option><option value="58"' + (r.mm === 58 ? ' selected' : '') + '>58 mm</option></select></div>'
+        + '<div class="srow"><span>Cash drawer<i class="scope counter">this counter</i></span><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_drawer"' + (r.drawer ? ' checked' : '') + '> open on a cash sale</label></div>'
         + '<div class="srow"><span></span><button class="pill" data-testid="till-testprint" onclick="testPrint()">Print a test slip</button></div>'
       : '<div class="srow" title="A USB till printer needs its driver installed once — the cable alone is not enough (Epson TM: Advanced Printer Driver). Then open ⚙ again.">'
-        + '<span>Printer</span><span style="color:var(--warn)">none found on this PC</span></div>';
+        + '<span>Printer<i class="scope counter">this counter</i></span><span style="color:var(--warn)">none found on this PC</span></div>';
 }
 async function testPrint(){
   var sel = document.getElementById('set_printer');
@@ -21207,18 +21279,53 @@ async function testPrint(){
   var n = document.getElementById('setnote');
   if (n) n.textContent = (r && r.ok) ? 'A test slip went to the printer.' : ('It did not print: ' + ((r && r.why) || 'no reason given'));
 }
-/** ⭐ one tab of Settings on show; the last one is remembered on this device */
-function setTab(name){
-  var want = name || ls.get('cb_till_settab', 'counter');
-  var tabs = document.querySelectorAll('#setdlg .settab');
-  if (![].some.call(tabs, function(t){ return t.getAttribute('data-tab') === want; })) want = 'counter';
-  [].forEach.call(tabs, function(t){ t.classList.toggle('on', t.getAttribute('data-tab') === want); });
-  [].forEach.call(document.querySelectorAll('#settabs button'), function(b){
-    var on = b.getAttribute('data-tab') === want; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-  ls.set('cb_till_settab', want);
+/**
+ * ⭐⭐ SCROLL TO A SECTION, NEVER HIDE THE REST (replaces the old tab switch, design-handoff §4). The only
+ * caller that ever asked for a specific place is "the counter needs a key" — that place is now Technical.
+ * A `<details>` section is opened first, since scrollIntoView on a closed one lands on its summary and stops.
+ */
+function settingsGoto(sec){
+  var el = document.querySelector('#setdlg [data-sec="' + sec + '"]'); if (!el) return;
+  if (el.tagName === 'DETAILS') el.open = true;
+  el.scrollIntoView({ block: 'start' });
+}
+/**
+ * ── ⭐⭐⭐ THE FIND BOX (design-handoff §4: "replaces tabs… matches on the value too, so 'okhdfc' finds the
+ * UPI row") ──────────────────────────────────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ NEVER UN-HIDES A ROW THAT HAS ITS OWN REASON TO BE HIDDEN. row_words/row_floor/row_weighmask/row_weighex
+ * carry a real `hidden` attribute the app sets for its own reasons (no scale chosen, purpose is billing, …).
+ * Filtering only ever ADDS `.sfhide` on top of that; it is never the thing that decides a row's baseline
+ * visibility, so a scale row does not reappear for a shop with no scale just because someone typed "scale".
+ * ⭐ A SECTION WITH NOTHING LEFT IN IT DISAPPEARS TOO, rather than showing an empty heading over nothing.
+ */
+/* ⚠️ NOT setFilter() — that name is already the chip/catalogue filter (line ~8340); a second declaration of
+   the same name would have silently replaced it, since only the LAST declaration of a name ever runs
+   (tests/one-name-one-function.test.cjs caught exactly this). [[feedback-no-duplicate-functions]] */
+function settingsFilter(q){
+  q = String(q || '').trim().toLowerCase();
+  var dlg = document.getElementById('setdlg'); if (!dlg) return;
+  var rows = dlg.querySelectorAll('.srow');
+  var any = false;
+  [].forEach.call(rows, function(row){
+    if (row.hasAttribute('hidden')) return;             /* the app's own reason wins; filtering never overrides it */
+    var hit = !q || row.textContent.toLowerCase().indexOf(q) >= 0;
+    row.classList.toggle('sfhide', !hit);
+    if (hit) { any = true;
+      var det = row.closest('details.settech'); if (det && !det.open) det.open = true;   /* a match must be seen, not just be there */
+    }
+  });
+  [].forEach.call(dlg.querySelectorAll('.setsec'), function(sec){
+    var visible = [].some.call(sec.querySelectorAll('.srow'), function(r){
+      return !r.hasAttribute('hidden') && !r.classList.contains('sfhide'); });
+    /* a section with no rows at all (e.g. "The shop", which is one div not a list of .srow) always shows */
+    sec.classList.toggle('sfhide', !!q && sec.querySelectorAll('.srow').length > 0 && !visible);
+  });
+  var empty = document.getElementById('set_findempty');
+  if (empty) empty.hidden = !q || any;
 }
 function openSettings(tab){
-  setTab(typeof tab === 'string' ? tab : null);
+  var find = document.getElementById('set_find'); if (find) { find.value = ''; settingsFilter(''); }
   document.getElementById('set_till').value = ls.get('cb_till_id','C1');
   var kb = document.getElementById('set_kot'); if (kb) kb.checked = (tillOpt().kot === true);
   /* ⚠️ set_fs and set_rows went with the Screen tab ([TILL-81]) — text size lives in the hub, density in
@@ -21231,9 +21338,14 @@ function openSettings(tab){
   /* ⚠️ and the theme, which Screen style owns and previews before it is applied */
   var pair = document.getElementById('pairbox');
   if (HOST && HOST.mode === 'cloud') {
+    /* ⭐ MASKED, WITH A WAY TO CHECK IT (§4 "Rows that need fixing": masked, with copy, show, and paired date) */
+    var masked = CloudHost.key ? '••••••••' + String(CloudHost.key).slice(-6) : '';
     pair.innerHTML = '<div class="srow" title="ChitBridge › Settings › Integrations › Counters — open a counter there to get its key.">'
-      + '<span>Counter key</span><input id="set_key" placeholder="paste the key once" value="' + esc(CloudHost.key ? '••••••••' + String(CloudHost.key).slice(-6) : '') + '"></div>'
-      + '<div class="srow"><span>ChitBridge</span><input id="set_api" value="' + esc(CloudHost.api||'') + '"></div>';
+      + '<span>Counter key<i class="scope shop">the shop</i></span><span style="display:flex;gap:6px;align-items:center">'
+      + '<input id="set_key" placeholder="paste the key once" value="' + esc(masked) + '" style="flex:1">'
+      + (CloudHost.key ? '<button class="pill" type="button" data-testid="till-set-keycopy" onclick="settingsCopyKey()">Copy</button>' : '')
+      + '</span></div>'
+      + '<div class="srow"><span>ChitBridge<i class="scope shop">the shop</i></span><input id="set_api" value="' + esc(CloudHost.api||'') + '"></div>';
   } else {
     /**
      * ⚠️⚠️ IT USED TO SAY ONLY 'on this PC' ([TILL-121]), which is true and useless. A counter holding the
@@ -21245,34 +21357,40 @@ function openSettings(tab){
     var scopes = (sh && sh.scopes) || [];
     var isTill = scopes.indexOf('till') >= 0;
     pair.innerHTML = '<div class="srow" title="The key lives in connector.json beside the program on this PC — it never reaches this page.">'
-      + '<span>This counter</span><span>' + (STATE && STATE.paired
+      + '<span>This counter<i class="scope shop">the shop</i></span><span>' + (STATE && STATE.paired
           ? esc((sh && (sh.name || sh.bridge_id)) || 'connected')
           : 'not connected to a shop') + '</span></div>'
-      + (sh && sh.bridge_id ? '<div class="srow"><span>Shop</span><span>' + esc(sh.bridge_id) + '</span></div>' : '')
+      + (sh && sh.bridge_id ? '<div class="srow"><span>Shop<i class="scope shop">the shop</i></span><span>' + esc(sh.bridge_id) + '</span></div>' : '')
       /* ⚠️ THE SCOPE, SAID PLAINLY. A connector key here is the whole of [TILL-117] in one line. */
       + (STATE && STATE.paired
-          ? '<div class="srow"><span>Key is for</span><span>' + (isTill ? 'billing (till)'
+          ? '<div class="srow"><span>Key is for<i class="scope shop">the shop</i></span><span>' + (isTill ? 'billing (till)'
               : (scopes.length ? esc(scopes.join(', ')) + ' — not billing' : 'unknown')) + '</span></div>' : '')
       + (STATE && STATE.paired && !isTill
           ? '<div class="srow"><span></span><span class="u">This key cannot read your shop. Sign in to get a till key.</span></div>' : '')
       + '<div class="srow" title="Sign in with your ChitBridge email. This counter writes its own key and keeps it.">'
-      + '<span>' + (STATE && STATE.paired ? 'Connect to another shop' : 'Connect this counter') + '</span>'
+      + '<span>' + (STATE && STATE.paired ? 'Connect to another shop' : 'Connect this counter') + '<i class="scope shop">the shop</i></span>'
       + '<button class="pill" data-testid="till-set-signin" onclick="pairAgain()">' + esc(keyWord()) + '</button></button>'
       /* ⚠️ signing OUT lives beside signing in, and only when there is a shop to leave ([TILL-127]) */
       + (STATE && STATE.paired ? ' <button class="pill" data-testid="till-set-signout" onclick="setClose();signoutOpen()">Sign out</button>' : '')
       + '</div>'
-      + '<div class="srow"><span>Data folder</span><span class="u">' + esc((STATE && STATE.folder) || 'till-data') + '</span></div>';
+      + '<div class="srow"><span>Data folder<i class="scope counter">this counter</i></span><span class="u">' + esc((STATE && STATE.folder) || 'till-data') + '</span></div>';
   }
-  document.getElementById('setnote').textContent = 'Kept on this device.';
   /* ⚠️ in ⚙ rather than on the counter itself: it is a maintenance act, and it should take a deliberate walk to reach */
   var cs = document.getElementById('coldbox');
   if (cs) cs.innerHTML = '<div class="srow" title="Sends anything waiting, then clears this counter and reads your shop again. For a counter that feels slow or shows something it should not.">'
-    + '<span>Start fresh</span><button class="pill" data-testid="till-coldstart" onclick="coldStart()">↺ Clear and reload</button></div>';
+    + '<span>Start fresh<i class="scope counter">this counter</i></span><button class="pill" data-testid="till-coldstart" onclick="coldStart()">↺ Clear and reload</button></div>';
   paintPrinters();
   /* ⚠️ painted on OPEN, not once at boot — the shop is re-read all day and a stale GSTIN here would be worse than none */
   paintShop();
   paintSetup();
   document.getElementById('setdlg').showModal();
+  /* ⭐ the one caller that ever asked for a place — the counter needing a key — lands on Technical now */
+  if (typeof tab === 'string' && tab) settingsGoto(tab === 'device' ? 'technical' : tab);
+}
+/** ⭐ the key never lands in a click handler's own string — read fresh, off the host, at the moment of copying */
+function settingsCopyKey(){
+  try { navigator.clipboard.writeText(CloudHost.key || ''); toastLine('Counter key copied.'); }
+  catch (_) { toastLine('Could not copy — select the text and copy it by hand.'); }
 }
 /**
  * ⭐⭐ THE COUNTER'S OWN SETUP, READ BACK FROM WHAT IS STORED. Every control here shows the answer that is in
@@ -21346,9 +21464,17 @@ function paintSetup(){
     /* ⭐ the worked example is the explanation — the cautions are short, the reasons are on the rows' titles */
     var warn = (sc.resets === 'day') ? ' · ⚠️ 0001 every day'
              : (sc.resets === 'month') ? ' · ⚠️ 0001 every month' : '';
-    var lost = (sc.dating === 'julian') ? ' · ⚠️ no tax year in the number' : '';
-    note.textContent = (eg ? 'Next bill: ' + eg : '') + warn + lost;
-    schemeTakesEffect().then(function(w){ if (w) note.textContent += ' · from ' + w; });
+    /**
+     * ⭐⭐ THE WARNING CARRIES ITS OWN FIX (design-handoff §4 "Rows that need fixing": *"the same warning WITH
+     * the button that fixes it"*). Financial-year dating already exists as an option two rows up — this is a
+     * shortcut into it, not a new capability, so it costs nothing beyond a button.
+     */
+    var lost = (sc.dating === 'julian')
+      ? ' · <b class="upibad">⚠️ no tax year in the number</b> <button class="pill" type="button"'
+        + ' data-testid="till-set-fixdating" onclick="tillSeriesSet({dating:\'fy\'});paintSetup()">Add 26-27</button>'
+      : '';
+    note.innerHTML = esc((eg ? 'Next bill: ' + eg : '') + warn) + lost;
+    schemeTakesEffect().then(function(w){ if (w) note.innerHTML += esc(' · from ' + w); });
   }
   var cols = (o.cols || {});
   [['col_offer', 'offer'], ['col_disc', 'disc'], ['col_calc', 'calc'], ['col_value', 'value']].forEach(function(p){
