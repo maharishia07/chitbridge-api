@@ -1057,13 +1057,23 @@
      everything else on a wide one. See the width:900px query below for the second half of this pair. */
   .modeselwrap{position:relative;width:100%;height:40px;border-radius:10px;margin-bottom:4px}
   .modeselwrap:hover{background:var(--panel)}
-  /* ⚠️⚠️ TRANSPARENT, NOT CLIPPED — see the HTML comment beside the markup for why. The select is still the
-     entire clickable box and still opens the real dropdown; only its OWN closed-state text is invisible. */
-  .side select.modesel.side{display:block;width:100%;box-sizing:border-box;height:40px;margin:0;
+  /* ⚠️⚠️⚠️ [TILL-181] "IF I PRESS ANY ICON IN THE HEADER PANEL" — Athi found this live within the hour.
+     The select carried class="modesel side" so `.side select.modesel.side` had the specificity to win over
+     the header's own `.modesel` rule. But `.side` is not a free modifier name here — it is THE aside's own
+     class, carrying `position:fixed;inset-block:0;inset-inline-start:0;z-index:60`. Giving the select that
+     SAME class handed it that SAME rule: fixed, full height, left:0 — and then this block's own width:100%
+     resolved against the VIEWPORT (100% of the containing block for a fixed element, not of .modeselwrap),
+     stretching an invisible, transparent-text select the full width of the screen, above everything
+     (z-index:60), across the whole header. Every header icon a shopkeeper pressed was really pressing this.
+     `.side select.modesel` (the ANCESTOR selector, not a second class) already had enough specificity
+     without it — the class was never needed. TRANSPARENT, NOT CLIPPED remains the reason the text is
+     invisible at all — see the HTML comment beside the markup. The select is still the entire clickable
+     BOX and still opens the real dropdown; only its own closed-state text is invisible. */
+  .side select.modesel{display:block;width:100%;box-sizing:border-box;height:40px;margin:0;
         border:0;border-radius:10px;background:transparent;color:transparent;font:inherit;font-size:16px;
         cursor:pointer;padding:0;appearance:none;-webkit-appearance:none}
   /* the OPEN dropdown's own option rows must not inherit the closed control's transparent text */
-  .side select.modesel.side option{color:#000}
+  .side select.modesel option{color:#000}
   .modeicon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
         font-size:18px;pointer-events:none}
   /* ⚠️ [hidden] MUST WIN (till-hidden.test.js) — a display-setting class needs this even when nothing hides
@@ -2804,7 +2814,7 @@
        clickable area and still opens the real dropdown (with real, visible option text — see the option
        colour override in CSS) — nothing about the control's function changed, only what is drawn where. -->
   <div class="modeselwrap">
-    <select class="modesel side" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
+    <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
       <option value="sell">🧾 Sell</option>
       <option value="receive">📥 Receive</option>
       <option value="despatch">📦 Despatch</option>
