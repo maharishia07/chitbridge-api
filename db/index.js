@@ -135,7 +135,8 @@ const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'chit_me
   // this list, so a context-free query against either went unwatched. The webhook's own lookup is exempt by
   // construction, not by omission: it goes through the SECURITY DEFINER channel_owner(), whose SQL never names
   // the table, which is exactly the narrow hole that guard is meant to leave room for.
-  'capture', 'channel_binding'];
+  'capture', 'channel_binding',
+  'combo_templates'];   // b266 [OFFR-06] — per-entity saved combo/modifier sets, WITH RLS, same reason as catalogue_face
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {

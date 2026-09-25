@@ -248,6 +248,7 @@ const foldersRouter     = require('./routes/folders');      // b63 folders — p
 const relationshipsRouter = require('./routes/relationships');
 const catalogueRouter   = require('./routes/catalogue');
 const productsRouter    = require('./routes/products');
+const comboTemplatesRouter = require('./routes/combo-templates');   // b266 [OFFR-06] — saved, reusable combo/modifier group sets
 const governanceRouter  = require('./routes/governance');
 const attachmentsRouter = require('./routes/attachments');
 
@@ -298,6 +299,7 @@ app.use('/api/governance',  governanceRouter);
 app.use('/api/attachments', attachmentsRouter);
 app.use('/api/network-design', require('./routes/network-design'));   // b111 — per-entity design persistence (RLS)
 app.use('/api/catalogue-face', require('./routes/catalogue-face'));    // b112 — per-entity catalogue face persistence (RLS)
+app.use('/api/combo-templates', comboTemplatesRouter);                 // b266 [OFFR-06] — per-entity saved combo/modifier sets (RLS)
 
 // ── NET (feat/net-full): network + catalogue on /api/network ──
 // cb_chit chit-loop RETIRED in consolidation: all chit writes live on /api/chits (chit_header).
