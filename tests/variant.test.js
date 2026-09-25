@@ -186,6 +186,30 @@ it('addOption then setOption — a name and a price, nothing else survives', () 
   assert.deepStrictEqual(g[0].options[0], { name: 'Naan', price: 25 },
     'a field outside {name,price} rode along — the shape-guard let it through');
 });
+/**
+ * ⚠️⚠️⚠️ THE BUG "+ ADD AN OPTION" SHIPPED WITH. cleanOption() used to return null for a blank name, and
+ * addOption() fed that straight into cleanGroup()'s own .filter(Boolean) — so the option just appended was
+ * gone again before the SAME call returned, and the button visibly did nothing on both app.html's Modifiers
+ * tab and the Offer Lab's modifier lab. Caught by e2e/offer-lab-next-modlab.cjs, not by looking.
+ */
+it('⚠️⚠️⚠️ addOption() with no name yet still actually adds a row — it must survive to be typed into', () => {
+  let g = V.addGroup([], 'Bread');
+  g = V.addOption(g, 0, '', 0);
+  assert.strictEqual(g[0].options.length, 1, 'the option vanished in the same call that added it');
+  assert.strictEqual(g[0].options[0].name, '');
+  g = V.setOption(g, 0, 0, { name: 'Naan' });   /* the row is still there afterwards to actually name */
+  assert.strictEqual(g[0].options[0].name, 'Naan');
+});
+it('a blank option name is still reported by validate(), just no longer silently erased', () => {
+  let g = V.addOption(V.addGroup([], 'Bread'), 0, '', 0);
+  const r = V.validate(g);
+  assert.ok(r.errors.some((e) => /still needs a name/.test(e.message)), 'no warning for the unnamed option: ' + JSON.stringify(r.errors));
+});
+/** ⚠️ ONLY GARBAGE IS DROPPED — a genuinely malformed array entry, never a person's own unfinished row */
+it('a non-object entry in options is still dropped as garbage, unlike a blank-named real one', () => {
+  const g = V.normalize([{ name: 'Bread', options: [null, 'not an object', { name: 'Naan', price: 0 }] }]);
+  assert.deepStrictEqual(g[0].options, [{ name: 'Naan', price: 0 }]);
+});
 it('setGroup only touches what it is given — a price patch on option 0 leaves group settings alone', () => {
   let g = V.addGroup([], 'Spice');
   g = V.setGroup(g, 0, { required: true, max: 2 });
@@ -219,9 +243,17 @@ it('⚠️⚠️ max is always a whole number, at least 1, however it was typed'
   const g3 = V.setGroup(V.addGroup([], 'X'), 0, { max: 'not a number' });
   assert.strictEqual(g3[0].max, 1);
 });
-it('⚠️ a blank option name is dropped, not saved as an empty row', () => {
+/**
+ * ⚠️⚠️⚠️ MOVED, NOT DELETED — this used to assert a blank-named option was dropped on the spot; that turned
+ * out to be the exact bug "+ Add an option" shipped with (see the dedicated test further down): the option
+ * addOption() had JUST appended was gone again before the same call returned, so the button did nothing. The
+ * name still trims to whitespace-free ('   ' → ''); what changed is that a real, still-unfinished row now
+ * survives to be typed into, same as a nameless GROUP already did.
+ */
+it('a blank option name still trims to empty, but the row itself now survives to be finished', () => {
   const g = V.addOption(V.addGroup([], 'X'), 0, '   ', 5);
-  assert.strictEqual(g[0].options.length, 0);
+  assert.strictEqual(g[0].options.length, 1, 'the row must still be there to type a name into');
+  assert.strictEqual(g[0].options[0].name, '');
 });
 it('validate: a duplicate group name, an empty group, and a duplicate option are each named', () => {
   let g = V.addGroup(V.addGroup([], 'Spice'), 'Spice');   /* two groups, same name */
