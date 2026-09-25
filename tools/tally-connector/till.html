@@ -1862,6 +1862,25 @@
   /* ⭐⭐ THE FOLD LINE (§2 "The fold, drawn in the list too") — moves with the rows, drawn after the last one it covers */
   .catfold{border-top:2px dashed var(--accent);color:var(--dim);font-size:.78em;font-weight:600;
            padding:6px 4px 2px;margin-top:2px}
+  /**
+   * ⭐⭐⭐ THE MODE, FIRST (design-handoff §2 "title → the mode → the live strip…", Phase 4.6) — two options,
+   * not a button; stacked cards rather than a bare radio row, since each one carries a whole sentence.
+   */
+  .catmode{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .catmodeopt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;
+              padding:10px 12px;cursor:pointer}
+  /* ⚠️ .on, not :has(input:checked) — the codebase targets nothing yet that assumes :has() support */
+  .catmodeopt.on{border-color:var(--accent);background:var(--panel)}
+  .catmodeopt.off{opacity:.6;cursor:default}
+  .catmodeopt input{margin-top:3px}
+  .catmodeopt b{display:block;font-size:.92em}
+  .catmodeopt i{display:block;font-style:normal;color:var(--dim);font-size:.82em;line-height:1.4;margin-top:2px}
+  /* ⭐⭐ WHEN THE ORDER ISN'T A MANUAL ONE (readOnly, Phase 4.6) — rank, handle and arrows go quiet; the row
+     still names its place and its count, and the Show/Hide toggle keeps working regardless of mode. */
+  .catrow.catauto{opacity:.85}
+  .catrow.catauto .catrank{border-color:transparent;background:transparent;color:var(--dim);
+                            font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;justify-content:center}
+  .cathandle.off{visibility:hidden}
   .stgal .gn{font-weight:700;font-size:1.01em}
   .stgal .gd{color:var(--dim);font-size:.845em;line-height:1.45}
   .stgal .gt{display:flex;flex-wrap:wrap;gap:5px}
@@ -2910,11 +2929,15 @@
     <button class="pri" data-testid="till-shop-save" onclick="shopEditSave()">Save to ChitBridge</button>
   </div>
 </dialog>
+<!--
+  ⭐⭐⭐ THE MODE REPLACES THE THIRD BUTTON (design-handoff/02-category-order §2 "The mode (new, and first)",
+  Phase 4.6). "Back to most-used first" used to sit here, beside Cancel, reading as a second undo — it is now
+  the first thing inside catbody itself (catModeHtml()), a mode picked once rather than a button pressed.
+-->
 <dialog id="catdlg" class="dlg" data-testid="till-catorder-dlg">
-  <h3>Order the categories <span class="u">the order they are listed in — on the chips, on the keys and in maintenance</span></h3>
+  <h3>Category order <span class="u">What the hand reaches first — on the chips, the keys and in maintenance.</span></h3>
   <div id="catbody"></div>
   <div class="dlgbtns">
-    <button data-testid="till-catorder-reset" onclick="catOrderReset()">Back to most-used first</button>
     <button onclick="catOrderClose()">Cancel · Esc</button>
     <button class="pri" data-testid="till-catorder-save" onclick="catOrderSave()">Save the order</button>
   </div>
@@ -5805,6 +5828,12 @@ var CATDRAFT = null;
 /* ⭐ WHERE EACH ROW STOOD WHEN THE DIALOG OPENED (design-handoff §2 "moved" chip) — a row moved is a row
    whose place today differs from its place when this draft started, never from some other list. */
 var CATDRAFT_BASE = null;
+/** ⭐⭐ THE MODE, DRAFTED THE SAME WAY AS THE ORDER (Phase 4.6) — 'most_used' or 'fixed', changed live in the
+ * dialog (so switching shows its effect at once) and persisted only on Save, like everything else here. */
+var CATDRAFT_MODE = null;
+/** ⭐ THE LAST-30-DAYS SALES COUNT PER CATEGORY (Phase 4.6) — filled by loadQuick(), read by catsRankedFor().
+ * Empty until the first loadQuick() runs, which is exactly when there is nothing to rank by yet. */
+var CAT_SALES_30D = {};
 /**
  * ⭐⭐ HIDDEN, DRAFTED THE SAME WAY AS THE ORDER (Phase 4.3). CATDRAFT holds VISIBLE categories ONLY — a
  * hidden one has no rank (spec §2: "They keep no rank —"), so it is not in this array at all; it lives here
@@ -5812,7 +5841,11 @@ var CATDRAFT_BASE = null;
  */
 var CATDRAFT_HIDDEN = null;
 function catOrderOpen(){
-  var all = catsRanked();
+  /* ⭐ THE DRAFT MODE STARTS FROM THE STORED PREFERENCE, NOT THE EFFECTIVE ONE — picture mode can grey the
+     "Most used first" option out and still show it honestly checked, if that is what the counter actually
+     has chosen; only Save can change what is stored, same as everything else in this dialog. */
+  CATDRAFT_MODE = catOrderMode();
+  var all = catsRanked();                          /* what is ACTUALLY on the keys right now, effective mode and all */
   CATDRAFT = all.filter(function(c){ return !c.hidden; }).map(function(c){ return c.name; });
   CATDRAFT_BASE = CATDRAFT.slice();
   CATDRAFT_HIDDEN = all.filter(function(c){ return c.hidden; }).map(function(c){ return c.name; });
@@ -5824,6 +5857,7 @@ function catOrderClose(){
   CATDRAFT = null;
   CATDRAFT_BASE = null;
   CATDRAFT_HIDDEN = null;
+  CATDRAFT_MODE = null;
   var d = document.getElementById('catdlg');
   if (d && d.open) { try { d.close(); } catch (_) {} }
 }
@@ -5927,19 +5961,43 @@ function catRowKey(i, ev){
   var el = document.querySelector('[data-testid="till-catrow-' + (ev.key === 'ArrowUp' ? i - 1 : i + 1) + '"]');
   if (el) el.focus();
 }
-/** ⚠️ RESET MEANS "STOP HAVING AN ORDER", not "order it alphabetically" — the fallback is most-used first */
-function catOrderReset(){
-  catOrderSet([]);
-  catOrderClose();
-  try { paintChips(); paintQuick(); } catch (_) {}
-  toastLine('Back to most-used first.');
+/**
+ * ── ⭐⭐⭐ THE MODE, CHANGED LIVE IN THE DIALOG (design-handoff/02-category-order §2 "The mode (new, and
+ * first)", Phase 4.6) — replaces "Back to most-used first" as a footer button. ────────────────────────────
+ * ⚠️ SWITCHING TO most_used DISCARDS THE MANUAL ORDER, AND SAYS SO. Switching to fixed never asks — it only
+ * ever ADOPTS whatever is on screen right now as the new starting point, so nobody starts from an empty list.
+ */
+async function catModeChange(mode){
+  if (!CATDRAFT || mode === CATDRAFT_MODE) { catOrderPaint(); return; }
+  if (mode === 'most_used') {
+    if (pictureModeOn()) { catOrderPaint(); return; }   /* the radio is disabled, but never trust the DOM alone */
+    if (!(await sure('Your order will be replaced by what sells most.', 'Use most used', 'Replace your order?', 'Not now'))) {
+      catOrderPaint();
+      return;
+    }
+    CATDRAFT_MODE = 'most_used';
+    var ranked = catsRankedFor('most_used').filter(function(c){ return !c.hidden; }).map(function(c){ return c.name; });
+    /* ⭐ a category hidden in THIS draft stays hidden across the switch — only the order itself is recomputed */
+    CATDRAFT = ranked.filter(function(c){ return (CATDRAFT_HIDDEN || []).indexOf(c) < 0; });
+  } else {
+    /* ⭐ "starts from the order below, so nothing begins empty" — CATDRAFT already IS that order */
+    CATDRAFT_MODE = 'fixed';
+  }
+  /* ⭐ a switch that reorders everything is not a "move" anyone made — the new order becomes the new baseline */
+  CATDRAFT_BASE = CATDRAFT.slice();
+  catOrderPaint();
 }
 /** ⭐ "N MOVED" COUNTS POSITION *OR* VISIBILITY CHANGES (spec §2 "The buttons") — a row that changed only
- * whether it shows counts exactly the same as one that changed only its rank. */
+ * whether it shows counts exactly the same as one that changed only its rank.
+ * ⚠️ POSITION ONLY COUNTS IN FIXED MODE — most_used isn't reordered by hand, so nothing in it can have
+ * "moved"; a mode switch resets CATDRAFT_BASE for exactly this reason (see catModeChange). */
 function catMovedCount(){
   if (!CATDRAFT || !CATDRAFT_BASE) return 0;
-  var was = {}; CATDRAFT_BASE.forEach(function(c, i){ was[c] = i; });
-  var moved = CATDRAFT.filter(function(c, i){ return was[c] !== i; }).length;
+  var moved = 0;
+  if (CATDRAFT_MODE === 'fixed') {
+    var was = {}; CATDRAFT_BASE.forEach(function(c, i){ was[c] = i; });
+    moved = CATDRAFT.filter(function(c, i){ return was[c] !== i; }).length;
+  }
   var hiddenWas = {}; catHidden().forEach(function(c){ hiddenWas[c] = true; });
   var hiddenNow = {}; (CATDRAFT_HIDDEN || []).forEach(function(c){ hiddenNow[c] = true; });
   var everyName = {}; Object.keys(hiddenWas).concat(Object.keys(hiddenNow)).forEach(function(c){ everyName[c] = true; });
@@ -5948,13 +6006,38 @@ function catMovedCount(){
   return moved + visChanged;
 }
 function catOrderSave(){
-  var d = CATDRAFT || [];
+  var d = CATDRAFT || [], mode = CATDRAFT_MODE || 'most_used';
+  /* ⭐ THE FIXED LIST IS ALWAYS WRITTEN, even in most_used mode — "switching to fixed writes the current
+     effective order into fixed at that moment" (spec §5); saving it here too costs nothing and means the
+     order is already waiting, correctly seeded, the moment somebody switches modes without reopening. */
   catOrderSet(d);
+  catOrderModeSet(mode);
   catHiddenSet(CATDRAFT_HIDDEN || []);
   catOrderClose();
   /* ⭐ REPAINT EVERY SURFACE THAT READS IT — the chips, the keys and the shelf all list categories */
   try { paintChips(); paintQuick(); paintList(); } catch (_) {}
-  toastLine(d.length ? ('Categories now start with ' + d[0] + '.') : 'Order cleared.');
+  toastLine(mode === 'most_used' ? 'Categories will keep sorting by what sells most.'
+    : (d.length ? ('Categories now start with ' + d[0] + '.') : 'Order cleared.'));
+}
+/**
+ * ⭐⭐⭐ THE MODE, FIRST (design-handoff §2 "title → the mode → the live strip…") — two options, not a
+ * button. picLocked greys "Most used first" out without lying about what is actually stored (catOrderOpen()
+ * seeds CATDRAFT_MODE from the stored preference, not the effective one — see its own comment).
+ */
+function catModeHtml(picLocked){
+  var m = CATDRAFT_MODE || 'most_used';
+  var opt = function(val, label, sub, disabled){
+    return '<label class="catmodeopt' + (m === val ? ' on' : '') + (disabled ? ' off' : '') + '">'
+      + '<input type="radio" name="catmode" value="' + val + '"' + (m === val ? ' checked' : '') + (disabled ? ' disabled' : '')
+      + ' data-testid="till-catmode-' + val + '" onchange="catModeChange(\'' + val + '\')">'
+      + '<span><b>' + esc(label) + '</b><i class="u">' + esc(sub) + '</i></span></label>';
+  };
+  return '<div class="catmode" data-testid="till-catorder-mode">'
+    + opt('most_used', 'Most used first', picLocked
+        ? 'Off in picture mode — a grid that reorders itself is the hardest thing to relearn by position.'
+        : 'Recounted every night from the last 30 days of selling. Nothing to maintain.', picLocked)
+    + opt('fixed', 'The order I set', 'Stays exactly as you leave it. Starts from the order below, so nothing begins empty.', false)
+    + '</div>';
 }
 function catOrderPaint(){
   var box = document.getElementById('catbody'); if (!box || !CATDRAFT) return;
@@ -5967,8 +6050,11 @@ function catOrderPaint(){
   var movedN = catMovedCount();
   var saveBtn = document.querySelector('[data-testid="till-catorder-save"]');
   if (saveBtn) saveBtn.textContent = 'Save the order' + (movedN ? ' · ' + movedN + ' moved' : '');
+  var picLocked = false;
+  try { picLocked = pictureModeOn(); } catch (_) {}
+  var modeHtml = catModeHtml(picLocked);
   if (!CATDRAFT.length && !(CATDRAFT_HIDDEN || []).length) {
-    box.innerHTML = '<p class="catnote">This counter has no categories yet — they come from the shop with the'
+    box.innerHTML = modeHtml + '<p class="catnote">This counter has no categories yet — they come from the shop with the'
       + ' products. Read the shop again once its products carry a category.</p>';
     return;
   }
@@ -5988,13 +6074,18 @@ function catOrderPaint(){
           + '</div>';
       }).join('');
   if (!CATDRAFT.length) {
-    box.innerHTML = '<p class="catnote">Nothing is on the chips or the keys — every category is hidden. Show one below.</p>'
+    box.innerHTML = modeHtml + '<p class="catnote">Nothing is on the chips or the keys — every category is hidden. Show one below.</p>'
       + hiddenSection + '<p class="catnote">Counter 1 only. Counter 2 keeps its own order.</p>';
     return;
   }
+  var readOnly = (CATDRAFT_MODE === 'most_used');   /* ⭐ nothing to drag when the order isn't a manual one */
   var was = {}; (CATDRAFT_BASE || []).forEach(function(c, i){ was[c] = i; });
+  /* ⭐ "with the fixed order on, [moved] also carries most used #N" (spec §2 row) — where each name WOULD
+     rank if it were left to sell on its own, so a manual order can be read against what it has drifted from. */
+  var mostUsedAt = {};
+  catsRankedFor('most_used').filter(function(c){ return !c.hidden; }).forEach(function(c, i){ mostUsedAt[c.name] = i + 1; });
   var fold = catFoldFit(CATDRAFT);
-  box.innerHTML =
+  box.innerHTML = modeHtml +
       /**
        * ⭐⭐ THE LIVE STRIP (§2 "The live strip") — the real chip markup, at the real window width, so the
        * effect of a move is seen here rather than found later at the counter. Chips past the fold keep the
@@ -6010,7 +6101,8 @@ function catOrderPaint(){
         /* ⚠️ THE FOLD LINE MOVES WITH THE ROWS — drawn after the last row it covers, never a fixed row number. */
         var foldLine = (i === fold && i > 0 && i < CATDRAFT.length)
           ? '<div class="catfold" data-testid="till-catorder-fold">↑ These ' + fold + ' reach without a swipe</div>' : '';
-        var moved = was[c] !== undefined && was[c] !== i;
+        var moved = !readOnly && was[c] !== undefined && was[c] !== i;
+        var movedLabel = moved ? ('moved' + (mostUsedAt[c] ? ' · most used #' + mostUsedAt[c] : '')) : 'moved';
         /**
          * ⚠️⚠️ THE BADGE SITS BESIDE .ct, NEVER INSIDE IT — till-catorder.cjs (and anything else) reads
          * ".catrow .ct" for the bare category name; nesting "moved" inside that span made its own textContent
@@ -6025,21 +6117,30 @@ function catOrderPaint(){
          * ⚠️ event.stopPropagation() on every control INSIDE the row — the row's own onclick is the
          * tap-to-place target while something is lifted, and a press on the rank box or an arrow must never
          * also be read as "place it here".
+         * ⭐⭐ NONE OF THIS APPLIES IN most_used MODE (Phase 4.6, readOnly) — nothing here is a manual choice,
+         * so the rank box, the handle and the arrows go quiet (disabled, never hidden — a shopkeeper can still
+         * see the rank and the count, only not touch them); the Show/Hide toggle keeps working regardless of
+         * mode, since hiding a category is a different decision from ordering the rest of them.
          */
-        return foldLine + '<div class="catrow' + (CAT_FROM === i ? ' lifted' : '') + '" data-testid="till-catrow-' + i + '"'
-          + ' tabindex="0" onkeydown="catRowKey(' + i + ',event)"'
-          + ' ondragover="event.preventDefault()" ondrop="event.preventDefault();catDrop(' + i + ')"'
-          + (CAT_FROM != null && CAT_FROM !== i ? ' onclick="catPickUp(' + i + ')"' : '') + '>'
-          + '<input class="catrank" type="number" min="1" max="' + CATDRAFT.length + '" value="' + (i + 1) + '"'
-          + ' data-testid="till-catrank-' + i + '" aria-label="Rank of ' + esc(c) + '"'
-          + ' onclick="event.stopPropagation()" onchange="event.stopPropagation();catRankSet(' + i + ',this.value)">'
-          + '<i class="cathandle' + (CAT_FROM === i ? ' on' : '') + '" data-testid="till-cathandle-' + i + '"'
-          + ' draggable="true" ondragstart="catDragStart(' + i + ',event)" role="button" tabindex="-1"'
-          + ' aria-label="Drag ' + esc(c) + ', or tap to lift and tap another row to place it"'
-          + ' title="Drag, or tap to lift and tap another row to place it"'
-          + ' onclick="event.stopPropagation();catPickUp(' + i + ')">⠷</i>'
+        return foldLine + '<div class="catrow' + (CAT_FROM === i ? ' lifted' : '') + (readOnly ? ' catauto' : '') + '" data-testid="till-catrow-' + i + '"'
+          + (readOnly ? '' :
+              ' tabindex="0" onkeydown="catRowKey(' + i + ',event)"'
+            + ' ondragover="event.preventDefault()" ondrop="event.preventDefault();catDrop(' + i + ')"'
+            + (CAT_FROM != null && CAT_FROM !== i ? ' onclick="catPickUp(' + i + ')"' : '')) + '>'
+          + (readOnly
+              ? '<span class="catrank" data-testid="till-catrank-' + i + '" aria-label="Rank of ' + esc(c) + '">' + (i + 1) + '</span>'
+              : '<input class="catrank" type="number" min="1" max="' + CATDRAFT.length + '" value="' + (i + 1) + '"'
+                + ' data-testid="till-catrank-' + i + '" aria-label="Rank of ' + esc(c) + '"'
+                + ' onclick="event.stopPropagation()" onchange="event.stopPropagation();catRankSet(' + i + ',this.value)">')
+          + (readOnly
+              ? '<i class="cathandle off" data-testid="till-cathandle-' + i + '"></i>'
+              : '<i class="cathandle' + (CAT_FROM === i ? ' on' : '') + '" data-testid="till-cathandle-' + i + '"'
+                + ' draggable="true" ondragstart="catDragStart(' + i + ',event)" role="button" tabindex="-1"'
+                + ' aria-label="Drag ' + esc(c) + ', or tap to lift and tap another row to place it"'
+                + ' title="Drag, or tap to lift and tap another row to place it"'
+                + ' onclick="event.stopPropagation();catPickUp(' + i + ')">⠷</i>')
           + '<span class="ct">' + esc(c) + '</span>'
-          + '<i class="catmoved" data-testid="till-catrow-moved-' + i + '"' + (moved ? '' : ' style="visibility:hidden"') + '>moved</i>'
+          + '<i class="catmoved" data-testid="till-catrow-moved-' + i + '"' + (moved ? '' : ' style="visibility:hidden"') + '>' + esc(movedLabel) + '</i>'
           + '<span class="cq">' + (n[c] || 0) + '</span>'
           /**
            * ⭐ THE SHOW TOGGLE (spec §2 row diagram: "2  ( ●)  [↑] [↓]"), ON by default. Turning it off is
@@ -6049,10 +6150,10 @@ function catOrderPaint(){
           + '<button class="catvis on" role="switch" aria-checked="true" data-testid="till-cathide-' + i + '"'
           + ' aria-label="On the chips and the keys — tap to hide ' + esc(c) + '" title="On the chips and the keys — tap to hide"'
           + ' onclick="event.stopPropagation();catHideAt(' + i + ')"><i></i></button>'
-          + '<button data-testid="till-catup-' + i + '" aria-label="Move ' + esc(c) + ' up"'
-          + (i === 0 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',-1)">↑</button>'
-          + '<button data-testid="till-catdown-' + i + '" aria-label="Move ' + esc(c) + ' down"'
-          + (i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',1)">↓</button>'
+          + '<button data-testid="till-catup-' + i + '" aria-label="' + (readOnly ? 'Order set automatically' : 'Move ' + esc(c) + ' up') + '"'
+          + (readOnly || i === 0 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',-1)">↑</button>'
+          + '<button data-testid="till-catdown-' + i + '" aria-label="' + (readOnly ? 'Order set automatically' : 'Move ' + esc(c) + ' down') + '"'
+          + (readOnly || i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',1)">↓</button>'
           + '</div>';
       }).join('')
     + hiddenSection
@@ -6109,6 +6210,27 @@ function catOrder(){
 }
 function catOrderSet(list){ ls.set(shopLs('cb_till_catorder'), JSON.stringify(list || [])); }
 /**
+ * ── ⭐⭐⭐ THE MODE — "MOST USED FIRST" OR "THE ORDER I SET" (design-handoff/02-category-order §2 "The
+ * mode (new, and first)", Phase 4.6) ─────────────────────────────────────────────────────────────────────
+ * ⚠️ A MODE, NOT A BUTTON. "Back to most-used first" used to be a footer button beside Cancel, where both
+ * read as "undo my work" — it is gone; picking the mode here is the only way in or out now.
+ */
+function catOrderMode(){
+  return (ls.get(shopLs('cb_till_catmode'), 'most_used') === 'fixed') ? 'fixed' : 'most_used';
+}
+function catOrderModeSet(m){ ls.set(shopLs('cb_till_catmode'), (m === 'fixed') ? 'fixed' : 'most_used'); }
+/**
+ * ⭐⭐ PICTURE MODE OVERRIDES THE PREFERENCE, IT DOES NOT ERASE IT (design-handoff/07-picture-mode §… :
+ * *"most used first, recounted every night, is OFF here … fixed order is the default, and the nightly
+ * recount is disabled, not merely unselected"*). A counter's own choice of "most used first" is left exactly
+ * as stored — turning picture mode back off later must restore it — but while picture mode is on, nothing
+ * ever actually SORTS by it: every reader of the category order asks this, never catOrderMode() directly.
+ */
+function catOrderModeEffective(){
+  try { if (pictureModeOn()) return 'fixed'; } catch (_) {}
+  return catOrderMode();
+}
+/**
  * ── ⭐⭐⭐ HIDING A CATEGORY (design-handoff/02-category-order §2 "Hidden categories", Phase 4.3) ────────
  *
  * ⚠️⚠️⚠️ LEAVES THE CHIPS AND THE KEYS AND NOTHING ELSE ([TILL-187] risk note, spec §2 row "Show toggle":
@@ -6124,18 +6246,23 @@ function catHidden(){
 }
 function catHiddenSet(list){ ls.set(shopLs('cb_till_cathidden'), JSON.stringify(list || [])); }
 /**
- * ⭐ EVERY CATEGORY ON THIS COUNTER, IN THE ONE ORDER, with its count. The saved order leads; anything the
- * shop has not placed yet follows by the old rule (most products first), so a new category that arrives
- * overnight appears at the end rather than silently jumping into the middle of a set menu.
+ * ⭐ EVERY CATEGORY ON THIS COUNTER, IN THE ONE ORDER, with its count.
  * ⚠️ A SAVED NAME THAT NO LONGER EXISTS IS DROPPED, not kept as an empty chip — a category the shop
- * retired must not go on being listed because somebody once ordered it.
+ * retired must not go on being listed because somebody once ordered it. A new category that arrives
+ * overnight appears at the end of either mode rather than silently jumping into the middle of a set menu.
+ *
+ * ⭐⭐⭐ RANKED FOR A GIVEN MODE (Phase 4.6) — 'fixed' reads the saved order, unchanged from before this
+ * phase; 'most_used' ignores it entirely and sorts by the last 30 days of real sales instead. Both fall back
+ * to "most products first" for a tie or when there is nothing else to go on yet (a brand-new shop with no
+ * sales history), which is the whole of what this function did before 4.6 gave it a second mode.
  */
-function catsRanked(items){
+function catsRankedFor(mode, items){
   var list = items || (S && S.items) || [];
   var count = {};
   list.forEach(function(i){ var c = byCatOf(i); if (c !== '\u2014') count[c] = (count[c] || 0) + 1; });
-  var saved = catOrder(), at = {};
+  var saved = (mode === 'fixed') ? catOrder() : [], at = {};
   saved.forEach(function(c, n){ at[c] = n; });
+  var sales = (mode === 'fixed') ? {} : (CAT_SALES_30D || {});
   var hidden = catHidden();
   /* \u26a0\ufe0f "a category with zero products is hidden automatically" (spec \u00a72) needs no code of its own here \u2014
      this list is built FROM count, so a category with no current products was never a key to begin with,
@@ -6143,10 +6270,15 @@ function catsRanked(items){
   return Object.keys(count).sort(function(a, b){
     var ia = (at[a] === undefined) ? 1e6 : at[a], ib = (at[b] === undefined) ? 1e6 : at[b];
     if (ia !== ib) return ia - ib;
-    return count[b] - count[a];                 /* the fallback, unchanged: most products first */
+    var sa = sales[a] || 0, sb = sales[b] || 0;
+    if (sa !== sb) return sb - sa;                 /* most_used: the last 30 days of real sales */
+    return count[b] - count[a];                    /* the fallback, unchanged: most products first */
   }).map(function(c){ return { name: c, n: count[c], placed: at[c] !== undefined,
-    hidden: hidden.indexOf(c) >= 0 }; });
+    hidden: hidden.indexOf(c) >= 0, salesRank: sales[c] || 0 }; });
 }
+/** ⭐ EVERY ORDINARY CALLER ASKS THIS — it reads whichever mode is actually in force right now (picture mode
+ * included); only the category-order dialog itself, mid-edit, ever needs a specific mode via catsRankedFor(). */
+function catsRanked(items){ return catsRankedFor(catOrderModeEffective(), items); }
 /** \u2b50 WHAT THE CHIPS AND THE KEYS ARE ALLOWED TO SHOW \u2014 every reader of "the categories, in order" for a
  * selling surface asks this, never catsRanked() directly, so a hidden one actually leaves both. */
 function catsVisible(items){ return catsRanked(items).filter(function(c){ return !c.hidden; }); }
@@ -6219,15 +6351,42 @@ var CARD_ORDER = ['customer', 'large', 'regular', 'small'];
  */
 var KEY_SHAPES = { tile: { label: 'Tile · square' }, card: { label: 'Card · 5:7' }, list: { label: 'List row' } };
 /**
+ * ── ⭐⭐⭐ STABLE ACROSS A TURN, NOT ACROSS A MOVE (design-handoff/06-card-shape §6, Phase 4.8 — HANDOVER's
+ * own risk for this item: *"columns may change on a turn; shape and size must not"*) ─────────────────────
+ *
+ * ⚠️ "auto" IS STILL NEVER WRITTEN BACK, and a genuinely relocated screen still re-decides by itself with
+ * no reload — that decision (keySizeSet()'s own comment, below) is not reversed here. What changes is HOW
+ * QUICKLY a new reading is believed: compute() is asked again on every call, exactly as before, but its
+ * answer is only ADOPTED once it has come back the same way for two seconds straight. Card-shape §6 rule 7
+ * — "turned to the customer… prices stay, tapping adds" — describes a few-second gesture; it must never flip
+ * the shape or size mid-tap, while a counter that is actually remounted in a new orientation and left there
+ * clears the window easily.
+ * ⚠️ ONE HELPER, THREE CALLERS (keyShapeAuto, cardSizeAuto, keySizeAuto) — three copies of a debounce is
+ * three chances for one of them to drift from the other two.
+ */
+var AUTO_STABLE = {};
+var AUTO_STABLE_MS = 2000;
+function autoStable(key, compute){
+  var s = AUTO_STABLE[key] || (AUTO_STABLE[key] = { cache: null, pending: null, at: 0 });
+  var v = compute();
+  if (s.cache === null) { s.cache = v; return v; }             /* the first reading this page load has nothing to debounce against */
+  if (v === s.cache) { s.pending = null; return v; }           /* no change in force — nothing pending either */
+  if (s.pending !== v) { s.pending = v; s.at = Date.now(); return s.cache; }   /* a NEW reading — start the clock, keep the old answer */
+  if (Date.now() - s.at >= AUTO_STABLE_MS) { s.cache = v; s.pending = null; return v; }  /* held long enough — believe it */
+  return s.cache;                                              /* still inside the grace window — a turn, not a move */
+}
+/**
  * ⭐ AUTOMATIC (§6.5: "cards first on a portrait terminal, never on a handheld") — the same reasoning
  * keySizeAuto() already uses (width, height, touch — never a physical inch nobody's browser can report).
  */
 function keyShapeAuto(){
-  var w = window.innerWidth || 1440, h = window.innerHeight || 900;
-  var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  if (w && w <= 400 && touch) return 'tile';       /* a handheld — three cards would fit and nothing else would */
-  if (h > w && h >= 900) return 'card';            /* a portrait terminal — height to spare, width to save */
-  return 'tile';
+  return autoStable('shape', function(){
+    var w = window.innerWidth || 1440, h = window.innerHeight || 900;
+    var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (w && w <= 400 && touch) return 'tile';     /* a handheld — three cards would fit and nothing else would */
+    if (h > w && h >= 900) return 'card';          /* a portrait terminal — height to spare, width to save */
+    return 'tile';
+  });
 }
 function keyShapeChosen(){ var v = ls.get('cb_till_keyshape', ''); return KEY_SHAPES[v] ? v : ''; }
 function keyShapeNow(){ return keyShapeChosen() || keyShapeAuto(); }
@@ -6245,10 +6404,12 @@ function keyShapePick(v){
    above still answer for tile sizes; these answer the same question for CARD_SIZES. */
 function cardSizeChosen(){ var v = ls.get('cb_till_keysize', ''); return CARD_SIZES[v] ? v : ''; }
 function cardSizeAuto(){
-  var w = window.innerWidth || 1440;
-  if (w <= 480) return 'small';
-  if (w >= 1600) return 'customer';
-  return 'regular';
+  return autoStable('cardsize', function(){
+    var w = window.innerWidth || 1440;
+    if (w <= 480) return 'small';
+    if (w >= 1600) return 'customer';
+    return 'regular';
+  });
 }
 function cardSizeNow(){ return cardSizeChosen() || cardSizeAuto(); }
 var KEY_ORDER = ['xlarge', 'large', 'medium', 'small'];
@@ -6260,16 +6421,19 @@ var KEY_ORDER = ['xlarge', 'large', 'medium', 'small'];
  * ⭐ A TALL SCREEN GETS A BIGGER KEY than a wide one of the same width: it is stood at, not sat at.
  */
 function keySizeAuto(){
-  var w = window.innerWidth || 1440, h = window.innerHeight || 900;
-  var tall = h > w;
-  if (tall && w >= 1000) return 'xlarge';        /* a standing kiosk: height to spend */
-  if (tall && w >= 700) return 'large';          /* vertical terminal, used standing   */
-  if (w >= 1100 && w <= 1400) return 'large';    /* tablet in the hand: finger targets */
-  if (w >= 1000) return 'medium';                /* a desk terminal wants many keys    */
-  if (w >= 700) return 'medium';                 /* compact terminal, close to the eye */
-  return 'medium';                               /* phone: thumb reach beats key size  */
+  return autoStable('keysize', function(){
+    var w = window.innerWidth || 1440, h = window.innerHeight || 900;
+    var tall = h > w;
+    if (tall && w >= 1000) return 'xlarge';        /* a standing kiosk: height to spend */
+    if (tall && w >= 700) return 'large';          /* vertical terminal, used standing   */
+    if (w >= 1100 && w <= 1400) return 'large';    /* tablet in the hand: finger targets */
+    if (w >= 1000) return 'medium';                /* a desk terminal wants many keys    */
+    if (w >= 700) return 'medium';                 /* compact terminal, close to the eye */
+    return 'medium';                               /* phone: thumb reach beats key size  */
+  });
 }
-/** ⚠️ 'auto' is never written back — it is resolved at paint time, so a moved screen re-decides by itself */
+/** ⚠️ 'auto' is never written back — it is resolved at paint time (through autoStable(), Phase 4.8), so a
+ * moved screen still re-decides by itself, two seconds after the move actually holds. */
 function keySizeSet(v){ ls.set('cb_till_keysize', v); tileSizeApply(); paintQuick(); }
 function keySizeChosen(){
   var v = ls.get('cb_till_keysize', '');
@@ -11396,6 +11560,22 @@ async function loadQuick(){
   /* ⚠️ ASK, ALWAYS. HOST.history answers { bills: [], offline: true } when the line is down — guarding on navigator.onLine
      skipped the evidence on every device that reports itself offline while being perfectly able to fetch. */
   try { if (HOST && HOST.history) { var h = await HOST.history(30); take((h && h.bills) || []); } } catch (_) {}
+  /**
+   * ⭐⭐⭐ "MOST USED FIRST", FOR CATEGORIES TOO (design-handoff/02-category-order §5: *"mode: 'most_used'
+   * means fixed is ignored and the order is salesRank30d"*, Phase 4.6). No second walk of the bills — `ever`
+   * above already IS the last-30-days-plus-today count per PRODUCT; a category's rank is just those same
+   * counts added up by which category each product belongs to right now. Recomputed every time this runs
+   * (on refresh, and at boot), which is what "recounted every night" means for a counter that re-reads its
+   * shop each morning — there is no separate nightly job to keep in sync with this one.
+   */
+  var catEver = {};
+  ((S && S.items) || []).forEach(function(i){
+    if (!i || !i.item_id) return;
+    var c = byCatOf(i);
+    if (c === '—') return;
+    catEver[c] = (catEver[c] || 0) + (ever[i.item_id] || 0);
+  });
+  CAT_SALES_30D = catEver;
 
   /**
    * ⚠️⚠️ NOT AWAITED. It was, and that put the whole repaint behind a 30-second fetch (and behind history()'s
