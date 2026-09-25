@@ -154,6 +154,38 @@ function fail(res, e, label) {
 }
 const ctx = (req) => auth.entityOf(req);
 
+/**
+ * ⚠️⚠️⚠️ [OFFR-04] COST — VISIBLE ONLY TO THE OWNER, UNLESS THE OWNER SAID OTHERWISE.
+ *
+ * Athi: "the cost information... should not be visible for employee ie the cost information unless the
+ * access is provided, so it has to looked into, keep it as a backlog." Then, deciding the boundary
+ * himself: "employees should not see without a specific permission. otherwise, leave it with owner only."
+ * Then: "decide the role boundary and build the gate... Make cost visible for offer lab as a check box
+ * and it can be made visible otherwise they can only set the availability flag, nothing else."
+ *
+ * ⚠️ hatGate (middleware/auth.js, mounted inside `auth`) already refuses a non-editor actor's PATCH
+ * outright — that governs WHETHER an actor may write at all. This governs something hatGate cannot: an
+ * EDITOR-level actor (a real, working "Counter staff" co-assist) can write plenty of legitimate things —
+ * this is the one field that stays owner-only-by-default regardless of edit level, because seeing it is a
+ * different permission from changing records generally. lib/access.js's own PRESETS already carried
+ * `can_see_costs` per role as picker-copy with nothing reading it back; this is that flag, finally wired
+ * to something.
+ *
+ * ⚠️ NEVER READS THE ACTOR'S OWN ROW. entityFlags always comes from the OWNER's identities row
+ * (auth.entityOf(req)), never req.identity's own policy_flags — an actor editing their own record could
+ * otherwise grant the permission to themselves.
+ */
+const access = require('../lib/access');
+async function entityPolicyFlags(entity_id) {
+  const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+  return (r.rows[0] && r.rows[0].policy_flags) || {};
+}
+/** strips item_data.cost from every row in place — the one place a list response leaves this file */
+function stripCosts(items) {
+  items.forEach((it) => { if (it && it.item_data && 'cost' in it.item_data) delete it.item_data.cost; });
+  return items;
+}
+
 async function defaultSchemaId(entity_id) {
   const r = await query(
     `SELECT schema_id FROM entity_schemas
@@ -613,6 +645,10 @@ router.get('/', auth, async (req, res) => {
     /* ⭐ the category tally, keyed by definition id — counted over every row, not the page (see catSql) */
     const category_counts = {};
     (catRows || []).forEach((x) => { category_counts[String(x.id)] = Number(x.n) || 0; });
+
+    /* [OFFR-04] the one place this list response leaves the server — costs come off here, not client-side,
+       for a caller who is staff and whose owner has not turned this on */
+    if (!access.canSeeCosts(req.identity, await entityPolicyFlags(entity_id))) stripCosts(items);
 
     res.json({ items, count: items.length, total, offset, limit,
                /* ⚠️ SAID OUT LOUD. A screen that shows a tenth of a catalogue without knowing it is a screen that lies quietly. */
@@ -1114,9 +1150,27 @@ function mergePatch(target, patch) {
   for (const k of Object.keys(patch)) { if (patch[k] === null) delete out[k]; else out[k] = mergePatch(out[k], patch[k]); }
   return out;
 }
+/** [OFFR-04] all a cost-blind actor may touch through PATCH /:id — the "availability flag", nothing else.
+ * Not price, not the modifiers, not the name — a person who cannot see what a change to any of those
+ * would cost the margin should not be the one making it either. */
+const COST_BLIND_ALLOWED_FIELDS = ['status'];
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    /**
+     * [OFFR-04] CHECKED AGAINST WHAT THE CLIENT ACTUALLY SENT, before merge:true folds it against the
+     * stored record — merging in the item's OWN existing fields is not the same as the caller trying to
+     * change them, and checking post-merge would refuse a plain status flip for carrying fields the
+     * caller never touched.
+     */
+    if (req.identity && req.identity.identity_type === 'actor'
+        && !access.canSeeCosts(req.identity, await entityPolicyFlags(entity_id))) {
+      const sent = Object.keys(req.body.item_data || {});
+      const blocked = sent.filter((k) => COST_BLIND_ALLOWED_FIELDS.indexOf(k) < 0);
+      if (blocked.length) return res.status(403).json({ error: 'Not permitted',
+        message: 'Your access does not include cost or price. You can change availability; ask the owner '
+          + 'for access to change: ' + blocked.join(', ') + '.' });
+    }
     /**
      * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client
      * comment claimed it merged). The exposure pane sent the whole item_data it had loaded minutes earlier, so a rate set in between
