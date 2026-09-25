@@ -1055,48 +1055,22 @@ router.patch('/me/exposure', auth, async (req, res) => {
 });
 
 /**
- * PATCH /entities/me/offer-lab-costs — [OFFR-04] the ONE checkbox: does staff see cost/margin in Offer Lab.
+ * GET /entities/me/can-see-costs — [OFFR-04] "may I, the caller, see cost and margin in Offer Lab?"
  *
- * Athi: "Make cost visible for offer lab as a check box and it can be made visible otherwise they can only
- * set the availability flag, nothing else." Rides on policy_flags.offer_lab_costs_visible_to_staff — the
- * exact flag lib/access.js's canSeeCosts() reads — same pattern as /me/exposure above, one door down.
- *
- * ⚠️⚠️⚠️ OWNER ONLY, EXPLICITLY — NOT JUST "AN EDITOR." /me/exposure has no such check because a wrong
- * storefront switch is a display mistake anyone with edit rights can be trusted to fix. This one decides
- * whether OTHER staff can see money the owner may not want them to — an editor-level co-assist granting
- * it to themselves (or to every co-assist) through a raw call to this same route would be exactly the hole
- * this whole feature exists to close. hatGate already requires editor to reach any PATCH at all; this adds
- * the narrower check hatGate cannot express, because hatGate does not know what a route DOES, only that it
- * mutates something.
+ * ⚠️⚠️⚠️ NO PATCH HERE — GRANTING ALREADY HAS A DOOR. A first version of this invented its own
+ * entity-wide policy_flags switch and a matching PATCH before finding lib/cost.js (b145) already answers
+ * this exact question with a per-actor identities.can_see_costs column, granted one co-assist at a time
+ * through the EXISTING PATCH /api/actors/:id (owner-only, guarded there, with its own audit trail and its
+ * own "Sees costs" chip already live in app/cap-admin.js's co-assist screen). Reusing that is the fix, not
+ * a second door to the same permission. This route only READS what the caller's own identity already has,
+ * for Offer Lab's client-side UI to agree with the server without re-deriving the rule.
  */
-router.patch('/me/offer-lab-costs', auth, async (req, res) => {
-  try {
-    if (req.identity.identity_type !== 'entity') return res.status(403).json({ error: 'Owner only',
-      message: 'Only the account owner can change who sees cost and margin.' });
-    const entity_id = auth.entityOf(req);
-    const body = req.body || {};
-    if (typeof body.visible_to_staff !== 'boolean') return res.status(400).json({ error: 'validation',
-      message: 'visible_to_staff (true/false) is required.' });
-    await query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb)
-                   || jsonb_build_object('offer_lab_costs_visible_to_staff', $1::boolean)
-                 WHERE identity_id = $2`, [body.visible_to_staff, entity_id]);
-    res.json({ message: 'Saved', visible_to_staff: body.visible_to_staff });
-  } catch (err) { res.status(500).json({ error: 'Save failed', message: safeErr(err) }); }
-});
-
-/** GET /entities/me/offer-lab-costs — read the same flag, for the settings checkbox and for Offer Lab's own
- * client-side UI (which fields to even draw for a cost-blind actor) to agree with the server without
- * either one re-deriving the rule. */
-router.get('/me/offer-lab-costs', auth, async (req, res) => {
+router.get('/me/can-see-costs', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const flags = (await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id])).rows[0];
-    const visible_to_staff = !!(flags && flags.policy_flags && flags.policy_flags.offer_lab_costs_visible_to_staff);
-    const access = require('../lib/access');
-    /* is_owner tells the CLIENT whether to even offer the checkbox — an actor should not see a control it
-       cannot use, matching "leave it with owner only" — not just be refused after trying it. */
-    res.json({ visible_to_staff, is_owner: req.identity.identity_type === 'entity',
-               can_see_costs: access.canSeeCosts(req.identity, { offer_lab_costs_visible_to_staff: visible_to_staff }) });
+    const cost = require('../lib/cost');
+    res.json({ can_see_costs: await cost.canRead(req, entity_id),
+               is_owner: req.identity.identity_type === 'entity' });
   } catch (err) { res.status(500).json({ error: 'Read failed', message: safeErr(err) }); }
 });
 

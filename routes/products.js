@@ -160,26 +160,24 @@ const ctx = (req) => auth.entityOf(req);
  * Athi: "the cost information... should not be visible for employee ie the cost information unless the
  * access is provided, so it has to looked into, keep it as a backlog." Then, deciding the boundary
  * himself: "employees should not see without a specific permission. otherwise, leave it with owner only."
- * Then: "decide the role boundary and build the gate... Make cost visible for offer lab as a check box
- * and it can be made visible otherwise they can only set the availability flag, nothing else."
+ * Then: "decide the role boundary and build the gate."
+ *
+ * ⚠️⚠️⚠️ REUSES lib/cost.js (b145), NOT A NEW MECHANISM. A first version of this invented its own
+ * entity-wide policy_flags switch before this file's own author found lib/cost.js already answers the
+ * identical question — "may this identity see cost/margin" — with a per-actor identities.can_see_costs
+ * column, granted one co-assist at a time through the EXISTING PATCH /api/actors/:id (owner-only there),
+ * with its own audit trail and its own "Sees costs" chip already live in app/cap-admin.js. That version is
+ * gone; this reuses cost.canRead(req, entity_id) exactly as routes/chits.js already does for the identical
+ * question about chit-line costs. Two mechanisms answering the same question is the defect
+ * [[feedback-no-duplicate-functions]] exists to name.
  *
  * ⚠️ hatGate (middleware/auth.js, mounted inside `auth`) already refuses a non-editor actor's PATCH
  * outright — that governs WHETHER an actor may write at all. This governs something hatGate cannot: an
  * EDITOR-level actor (a real, working "Counter staff" co-assist) can write plenty of legitimate things —
  * this is the one field that stays owner-only-by-default regardless of edit level, because seeing it is a
- * different permission from changing records generally. lib/access.js's own PRESETS already carried
- * `can_see_costs` per role as picker-copy with nothing reading it back; this is that flag, finally wired
- * to something.
- *
- * ⚠️ NEVER READS THE ACTOR'S OWN ROW. entityFlags always comes from the OWNER's identities row
- * (auth.entityOf(req)), never req.identity's own policy_flags — an actor editing their own record could
- * otherwise grant the permission to themselves.
+ * different permission from changing records generally.
  */
-const access = require('../lib/access');
-async function entityPolicyFlags(entity_id) {
-  const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
-  return (r.rows[0] && r.rows[0].policy_flags) || {};
-}
+const cost = require('../lib/cost');
 /** strips item_data.cost from every row in place — the one place a list response leaves this file */
 function stripCosts(items) {
   items.forEach((it) => { if (it && it.item_data && 'cost' in it.item_data) delete it.item_data.cost; });
@@ -188,19 +186,19 @@ function stripCosts(items) {
 /**
  * ⚠️⚠️⚠️ NEVER LETS THE COST CHECK BREAK THE CATALOGUE ITSELF. GET / and PATCH /:id worked before this
  * feature existed; this feature must not be the reason either one starts failing for EVERYONE, owner
- * included, over a policy_flags read that hit a real production edge case a stub could not see. On any
- * error here the safe assumption for a READ is "cannot see costs" (strip them — fails closed on the
- * feature this exists to protect) without failing the request that has nothing to do with it; the WRITE
- * side already only runs this for actors, so an error here for an owner's own PATCH is not even reachable.
+ * included, over a can_see_costs read that hit a real production edge case a stub could not see.
+ * cost.canRead() already fails closed on "not migrated" (42P01/42703); this adds the same guarantee for
+ * ANY other error, so a random DB hiccup degrades the FEATURE, never the request. On any error the safe
+ * assumption for a READ is "cannot see costs" (strip them) for an actor — the owner is unconditionally
+ * true regardless of what this read returns (cost.canRead()'s own rule), so an error here must not cost
+ * them their own numbers; the WRITE side already only runs this for actors, so an owner's own PATCH never
+ * reaches this function at all.
  */
-async function safeCanSeeCosts(identity, entity_id) {
-  try { return access.canSeeCosts(identity, await entityPolicyFlags(entity_id)); }
+async function safeCanSeeCosts(req, entity_id) {
+  try { return await cost.canRead(req, entity_id); }
   catch (e) {
     console.error('[OFFR-04] cost-visibility check failed:', e.message);
-    /* the owner is unconditionally true regardless of entityFlags (access.canSeeCosts's own rule) — an
-       error reading a flag that would not have changed the answer for them must not cost them their own
-       numbers. An actor, where the flag is the whole answer, fails to the safe side: hidden. */
-    return !identity || identity.identity_type !== 'actor';
+    return !req.identity || req.identity.identity_type !== 'actor';
   }
 }
 
@@ -666,7 +664,7 @@ router.get('/', auth, async (req, res) => {
 
     /* [OFFR-04] the one place this list response leaves the server — costs come off here, not client-side,
        for a caller who is staff and whose owner has not turned this on */
-    if (!(await safeCanSeeCosts(req.identity, entity_id))) stripCosts(items);
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(items);
 
     res.json({ items, count: items.length, total, offset, limit,
                /* ⚠️ SAID OUT LOUD. A screen that shows a tenth of a catalogue without knowing it is a screen that lies quietly. */
@@ -1182,12 +1180,12 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
      * caller never touched.
      */
     if (req.identity && req.identity.identity_type === 'actor'
-        && !(await safeCanSeeCosts(req.identity, entity_id))) {
+        && !(await safeCanSeeCosts(req, entity_id))) {
       const sent = Object.keys(req.body.item_data || {});
       const blocked = sent.filter((k) => COST_BLIND_ALLOWED_FIELDS.indexOf(k) < 0);
       if (blocked.length) return res.status(403).json({ error: 'Not permitted',
-        message: 'Your access does not include cost or price. You can change availability; ask the owner '
-          + 'for access to change: ' + blocked.join(', ') + '.' });
+        message: 'Your access does not include cost or price. You can change availability; the account '
+          + 'owner can grant "Sees costs" in Co-assists to change: ' + blocked.join(', ') + '.' });
     }
     /**
      * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client

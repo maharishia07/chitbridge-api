@@ -194,40 +194,15 @@ function levelCases() {
 }
 
 /**
- * ── [OFFR-04] canSeeCosts() — the PRESETS' own can_see_costs, finally read by something ────────────────
- * Athi: "the cost information... should not be visible for employee ie the cost information unless the
- * access is provided"; the boundary itself: "employees should not see without a specific permission.
- * otherwise, leave it with owner only."
+ * ⚠️⚠️⚠️ [OFFR-04] NO costCases() HERE — a version of this test briefly lived here, against a canSeeCosts()
+ * that read a new, invented policy_flags switch. That function and this suite were both wrong the same
+ * way: lib/cost.js (b145) already owns "may this identity see cost/margin" via a per-actor
+ * identities.can_see_costs column. See tests/offr04-cost-gate.test.cjs, which drives THAT mechanism
+ * through the real routes instead.
  */
-function costCases() {
-  console.log('\n-- [OFFR-04] . cost visibility: owner always, staff only if the owner turned it on --\n');
-  const access = require(API + '/lib/access');
-
-  t('the entity itself always sees its own costs — no flag needed',
-    access.canSeeCosts({ identity_type:'entity' }, {}), true);
-  t('the entity sees costs even with no entityFlags object at all',
-    access.canSeeCosts({ identity_type:'entity' }), true);
-
-  t('an EDITOR-level actor does NOT see costs by default — level is not the same permission',
-    access.canSeeCosts({ identity_type:'actor', access_level:'editor' }, {}), false);
-  t('a COMMENTER-level actor does not see costs by default either',
-    access.canSeeCosts({ identity_type:'actor', access_level:'commenter' }, {}), false);
-  t('no entityFlags at all -> false, the safe default, not an error',
-    access.canSeeCosts({ identity_type:'actor', access_level:'editor' }), false);
-
-  t('an actor sees costs once the OWNER’s own flag is on',
-    access.canSeeCosts({ identity_type:'actor', access_level:'editor' }, { offer_lab_costs_visible_to_staff: true }), true);
-  t('a VIEWER-level actor still sees costs if the flag is on — visibility and edit level are separate axes',
-    access.canSeeCosts({ identity_type:'actor', access_level:'viewer' }, { offer_lab_costs_visible_to_staff: true }), true);
-
-  t('⚠️ AN ACTOR CANNOT GRANT THIS TO THEMSELVES — canSeeCosts reads the caller’s OWN identity object for the flag; ' +
-    'the real gate (routes) must fetch entityFlags from the OWNER’s row, never the actor’s',
-    access.canSeeCosts({ identity_type:'actor', access_level:'editor', offer_lab_costs_visible_to_staff: true }, {}), false);
-}
 
 (async () => {
   levelCases();
-  costCases();
   await visibilityCases();
   gateCases();
   await routeCases();
