@@ -6902,9 +6902,17 @@ function gstNotRegistered(){
  *
  * ⭐ A DEEP LINK THAT DOES NOT EXIST IS WORSE THAN NO DEEP LINK. It opens the app and says where to go. The
  * real anchor needs a route on the app side and is a backlog item there, not something the counter invents.
+ *
+ * ⚠️⚠️⚠️ [TILL-163] FIXED THE ROUTE AND BROKE THE HOST ([TILL-170]). Athi again: *"if you click add, it is
+ * not working, it is giving some error."* `CloudHost.api` is the RAILWAY API's own host — every other fetch
+ * in this file uses it for exactly that, `/api/...`. `app.html` is never served from there; it is a static
+ * page on the WEB deployment. The URL this built, `<railway-api-host>/app.html#/app`, asked the API server
+ * for a page it does not have — every Add opened an error page again, just a different one. `cbHome()`
+ * (used at #cblink already) is the one place in this file that already knows the web app's real address;
+ * reusing it is the fix, not inventing a second way to find it.
  */
 function openGst(){
-  var url = (CloudHost && CloudHost.api ? String(CloudHost.api).replace(/\/$/, '') : '') + '/app.html#/app';
+  var url = cbHome() + '#/app';
   try { window.open(url, '_blank', 'noopener'); } catch (_) {}
   toastLine('ChitBridge is open in another tab — go to the shop, then its profile, to change this.');
 }
