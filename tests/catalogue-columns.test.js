@@ -63,6 +63,29 @@ t('a genuinely new key becomes a new column', () => {
   assert.strictEqual(f.key, 'hs_code');
 });
 
+/**
+ * ⚠️⚠️⚠️ [OFFR-05] 'cost' MUST NEVER FOLD ONTO 'price' — a real, live bug this closes. Athi, testing Offer
+ * Lab: "the cost price is not storing." lib/csv-preflight.js's SYNONYMS table listed 'cost' as a synonym of
+ * 'price' for CSV import — but fold() applies that same table to every catalogue write, not only a CSV row.
+ * item_data.cost was silently renamed to item_data.price: a plain number slipped past validation and
+ * overwrote the real selling price outright; Offer Lab's own richer cost shape ({value, source, updated_at})
+ * failed price's number check and came back "Price must be a number" — a sentence about the wrong field.
+ * The two are deliberately separate everywhere else in this codebase (lib/item-cost.js, the whole
+ * [OFFR-01]-[OFFR-04] cost-visibility gate exists only because they are not one number) — this is the write
+ * path that let them collide anyway. [[feedback-search-before-you-build]] [[feedback-whitelist-drops-silently]]
+ */
+t('⚠️⚠️⚠️ [OFFR-05] "cost" declares its OWN column — it must never fold onto "price"', () => {
+  const f = C.fold('cost', DECLARED, LABELS);
+  assert.strictEqual(f.how, 'new', 'cost must not match an existing synonym at all');
+  assert.strictEqual(f.key, 'cost', 'and it must declare itself, never rename onto price');
+});
+t('and a real write proves it end to end: setting cost leaves price untouched', () => {
+  const plan = C.planWrite({ item_data: { cost: 38 }, declared: DECLARED, labels: LABELS });
+  assert.strictEqual(plan.item_data.cost, 38, 'cost must be written under its own key');
+  assert.strictEqual('price' in plan.item_data, false, 'and must not manufacture or touch price at all');
+  assert.ok(plan.newFields.some((f) => f.field_key === 'cost'), 'cost must be queued to become its own declared column');
+});
+
 console.log('\ncatalogue-columns · what is NEVER a column');
 
 t('system fields are stored but not declared', () => {
