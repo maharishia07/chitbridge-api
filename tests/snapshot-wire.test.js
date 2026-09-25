@@ -999,12 +999,20 @@ it('⭐ the slip box is paper for a slip and themed for a screen, and never mixe
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   assert.ok(page.indexOf('.slipbox.screen{background:var(--card);color:var(--ink)}') > 0,
     'there is no themed variant, so anything not a receipt is unreadable in one theme or the other');
-  /* health and the verification report are screens; the two printed slips must take it off again */
-  const health = page.slice(page.indexOf('function openHealth(){'), page.indexOf('function openHealth(){') + 2600);
-  assert.ok(health.indexOf("classList.add('screen')") > 0, 'the health check writes theme colours onto white paper');
+  /**
+   * ⚠️ MOVED, NOT DELETED (2026-09-25) — health used to be tested here, but health no longer touches slipbox
+   * at all: it moved to its own dialog (#healthdlg) some time ago, and the openHealth() that STILL wrote
+   * classList.add('screen') onto slipbox was a duplicate declaration ([TILL-170]'s find) — the live
+   * openHealth() had silently shadowed it, so that whole function, and the ~120-line "verification report"
+   * screen it opened (verifyCounter()), were dead code with no caller left; both were deleted. showDoc() is
+   * the general-purpose "themed screen in the slip dialog" helper that survives it — Receipt and Despatch
+   * are screens the same way health used to be, and the same slip-must-take-it-off rule applies to them.
+   */
+  const doc = page.slice(page.indexOf('function showDoc(title, html){'), page.indexOf('function showDoc(title, html){') + 300);
+  assert.ok(doc.indexOf("classList.add('screen')") > 0, 'a non-receipt screen (Receipt, Despatch) writes theme colours onto white paper');
   const slip = page.slice(page.indexOf('function showSlip(bill, m){'), page.indexOf('function showSlip(bill, m){') + 600);
   assert.ok(slip.indexOf("classList.remove('screen')") > 0,
-    'a slip opened after a health check keeps the screen colours — and printSlip copies this element, so it would PRINT them');
+    'a slip opened after a themed screen keeps the screen colours — and printSlip copies this element, so it would PRINT them');
 });
 
 /**
