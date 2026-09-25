@@ -166,7 +166,7 @@ console.log('\n— authoring: input a groups array, output the stored shape, alw
  */
 it('⚠️⚠️⚠️ every documented verb is actually reachable on V, not only used internally', () => {
   ['groupsOf', 'groupsRaw', 'missing', 'words', 'wordsPlain', 'byGroup', 'normalize', 'validate',
-   'addGroup', 'removeGroup', 'moveGroup', 'setGroup', 'addOption', 'removeOption', 'moveOption', 'setOption',
+   'addGroup', 'exampleGroup', 'removeGroup', 'moveGroup', 'setGroup', 'addOption', 'removeOption', 'moveOption', 'setOption',
    'toggle', 'summary']
     .forEach((name) => assert.strictEqual(typeof V[name], 'function', 'V.' + name + ' is not exported as a function'));
 });
@@ -178,6 +178,38 @@ it('normalize() is callable directly, not only through the verbs that use it int
 it('addGroup starts empty, required off, max 1 — a group with nothing to say yet', () => {
   const g = V.addGroup([], 'Spice level');
   assert.deepStrictEqual(g, [{ name: 'Spice level', required: false, max: 1, options: [] }]);
+});
+/**
+ * ── ⭐⭐⭐ exampleGroup() — A WORKED EXAMPLE, NOT A BLANK FIELD (Athi: "i don't know to create one, what to
+ * provide etc, so if i have a couple of options as an example and allow to modify, then i'll be able to
+ * create one"). This is the "+ Add a group" button's own verb now, in both app.html's Modifiers tab and the
+ * Offer Lab's modifier lab — addGroup() itself stays the empty primitive other code still uses directly.
+ */
+it('exampleGroup() adds a REAL, complete group — a name, real options, real prices, ready to sell', () => {
+  const g = V.exampleGroup([]);
+  assert.strictEqual(g.length, 1);
+  assert.strictEqual(g[0].name, 'Extra toppings');
+  assert.strictEqual(g[0].options.length, 2, 'a "couple of options" — one alone does not show how a group works');
+  assert.deepStrictEqual(g[0].options.map((o) => o.name), ['Extra cheese', 'Extra chutney']);
+  assert.ok(g[0].options.every((o) => o.price > 0), 'a price of 0 does not show what the price field is for');
+});
+it('⚠️⚠️⚠️ exampleGroup() is instantly sellable-shaped — groupsOf() and the till’s own preview accept it unedited', () => {
+  const g = V.exampleGroup([]);
+  assert.strictEqual(V.groupsOf({ modifiers: g }).length, 1, 'the example itself must already pass the strict, sale-ready filter');
+  assert.deepStrictEqual(V.validate(g).errors, [], 'the example must not need fixing before it can even be looked at');
+});
+it('exampleGroup() is exactly as editable as anything typed by hand — every value can be renamed or removed', () => {
+  let g = V.exampleGroup([]);
+  g = V.setGroup(g, 0, { name: 'Spice level' });                  /* rename the example's own group */
+  g = V.setOption(g, 0, 0, { name: 'Mild', price: 0 });            /* replace an example option entirely */
+  g = V.removeOption(g, 0, 1);                                     /* remove the other one outright */
+  assert.deepStrictEqual(g, [{ name: 'Spice level', required: false, max: 2, options: [{ name: 'Mild', price: 0 }] }]);
+});
+it('adding a second group gets its own independent example — replicating the pattern costs nothing extra', () => {
+  let g = V.exampleGroup([]);
+  g = V.exampleGroup(g);
+  assert.strictEqual(g.length, 2);
+  assert.strictEqual(g[0].name, g[1].name, 'both start as the same worked example, exactly as addGroup(\'New group\') would repeat too');
 });
 it('addOption then setOption — a name and a price, nothing else survives', () => {
   let g = V.addGroup([], 'Bread');
