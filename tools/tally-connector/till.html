@@ -1051,6 +1051,27 @@
      scrollbar and no hint they existed (critic pass, 2026-09-18). */
   .side .sicons{display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0}
   .side.on .sicons{display:none}
+  /* ⭐ .modeselwrap is a SIBLING of .sicons, not inside it (it wraps a real <select>, not a one-click op
+     from TILL_OPS) — so every place .sicons hides or reappears on the rail, it must do the same, or the
+     mode picker would float over an open menu on a narrow screen, or vanish from a rail that kept
+     everything else on a wide one. See the width:900px query below for the second half of this pair. */
+  .modeselwrap{position:relative;width:100%;height:40px;border-radius:10px;margin-bottom:4px}
+  .modeselwrap:hover{background:var(--panel)}
+  /* ⚠️⚠️ TRANSPARENT, NOT CLIPPED — see the HTML comment beside the markup for why. The select is still the
+     entire clickable box and still opens the real dropdown; only its OWN closed-state text is invisible. */
+  .side select.modesel.side{display:block;width:100%;box-sizing:border-box;height:40px;margin:0;
+        border:0;border-radius:10px;background:transparent;color:transparent;font:inherit;font-size:16px;
+        cursor:pointer;padding:0;appearance:none;-webkit-appearance:none}
+  /* the OPEN dropdown's own option rows must not inherit the closed control's transparent text */
+  .side select.modesel.side option{color:#000}
+  .modeicon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+        font-size:18px;pointer-events:none}
+  /* ⚠️ [hidden] MUST WIN (till-hidden.test.js) — a display-setting class needs this even when nothing hides
+     THIS element today; the guard is defence for whenever something does. The span also carries
+     aria-hidden="true" (decorative — the select's own title already names the control), which the guard's
+     own \bhidden\b check reads the same as the real attribute; this satisfies it either way it's read. */
+  .modeicon[hidden]{display:none}
+  .side.on .modeselwrap{display:none}
   .side .sicons button{display:flex;align-items:center;justify-content:center;min-height:40px;border:0;
         background:transparent;color:var(--ink);cursor:pointer;border-radius:10px;font:inherit;font-size:16px}
   .side .sicons button:hover{background:var(--panel)}
@@ -1086,6 +1107,7 @@
              padding:calc(env(safe-area-inset-top,0px) + 6px) 5px calc(env(safe-area-inset-bottom,0px) + 6px)}
     /* ⭐ and the strip stays — it is the CLOSED half of the same menu, not something the open half replaces */
     .side.on .sicons{display:flex}
+    .side.on .modeselwrap{display:block}
   }
   /**
    * ⚠️⚠️ A CENTRED CARD NEEDS A SCRIM, or the counter behind it stays live: a press aimed at the card that
@@ -2766,6 +2788,30 @@
      #tillside, so a scrim placed INSIDE it would be read as a press on the menu and would never close. -->
 <div class="scrim" id="tillscrim" data-testid="till-scrim" hidden></div>
 <aside class="side" id="tillside" data-testid="till-side" aria-label="Counter menu">
+  <!--
+    ⭐⭐ ONE "WHAT AM I DOING" SELECTOR, MOVED TO THE RAIL ([TILL-179], 2026-09-25 — Athi asked for the header's
+    own dropdown to move left, "so we can pick from there"). Athi, 2026-09-09, on why it is a dropdown at all:
+    *"sell, receive, despatch can be in a dropdown box, so whatever focused operation can come over there?"*
+    Three buttons became five operations, and buttons do not scale — a sixth would have pushed the shop's own
+    name off a tablet. Still ONE job at a time: this is the question "what are you doing right now", and the
+    whole screen answers it — the search box, the right pane and the keyboard all change with it. Same id,
+    same onchange, same options as the header ever had — only WHERE it sits has moved.
+  -->
+  <!-- ⚠️⚠️ THE SELECT'S OWN TEXT IS INVISIBLE, NOT CLIPPED. overflow:hidden on the control or a wrapping div
+       did not clip "🧾 Sell" in this engine — the closed value can render outside either box's own clipping,
+       a known native-<select> quirk. Painting its text transparent and drawing a real icon on top of it,
+       instead, cannot overflow: the icon is a plain, ordinary span. The select itself is still the whole
+       clickable area and still opens the real dropdown (with real, visible option text — see the option
+       colour override in CSS) — nothing about the control's function changed, only what is drawn where. -->
+  <div class="modeselwrap">
+    <select class="modesel side" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
+      <option value="sell">🧾 Sell</option>
+      <option value="receive">📥 Receive</option>
+      <option value="despatch">📦 Despatch</option>
+      <option value="maintain">🛠️ Maintenance</option>
+    </select>
+    <span class="modeicon" id="modeicon" aria-hidden="true">🧾</span>
+  </div>
   <div class="sicons" id="tillsideicons"></div>
   <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
        (the look dropdowns' font) live on it. Dropping it when this moved into the drawer left an "on" chip
@@ -2990,20 +3036,6 @@
   <section class="left">
     <header>
       <span class="shop" id="shopname">…</span>
-      <!--
-        ⭐⭐ ONE "WHAT AM I DOING" SELECTOR. Athi, 2026-09-09: *"sell, receive, despatch can be in a dropdown box, so whatever
-        focused operation can come over there?"* Three buttons became five operations, and buttons do not scale — a sixth would
-        have pushed the shop's own name off a tablet. A list also lets an operation carry a sentence saying when it is for, which
-        a 12-pixel button never could.
-        ⚠️ ONE JOB AT A TIME, still. This is not a menu of features; it is the question "what are you doing right now", and the
-        whole screen answers it — the search box, the right pane and the keyboard all change with it.
-      -->
-      <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
-        <option value="sell">🧾 Sell</option>
-        <option value="receive">📥 Receive</option>
-        <option value="despatch">📦 Despatch</option>
-        <option value="maintain">🛠️ Maintenance</option>
-      </select>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="whoAct()" title="who is signed in at this counter (F7 to hand over)">…</button>
       <!--
@@ -3023,16 +3055,19 @@
       -->
       <button class="pill" id="daypill" data-testid="till-day" onclick="dayPillGo()" title="today's bills — every sale taken at this counter today (F8)"></button>
       <!--
-        ⭐⭐ WHAT STAYS ON THE BAR, AND WHY. Athi, 2026-09-09: *"counter header has many now, better we organise and make it kind
-        of menu, so we know which menu to look at."* Thirteen controls had accumulated, each one reasonable on the day it landed.
-        The rule that sorts them is not importance, it is FREQUENCY DURING A SALE:
-          · on the bar  — what a cashier reads or touches with a customer standing there: who is billing, whether the line is up,
-            how old the prices are, today's total, and the health dot, because a warning nobody can see is not a warning.
-          · behind ☰    — everything done between customers: the bill list, the shop screen, re-reading the shop, settings.
-        ⚠️ THE HEALTH DOT NEVER MOVES INTO THE MENU. It is the one control that has to interrupt, and a thing that interrupts from
-        inside a closed menu interrupts nobody.
+        ⭐⭐ WHAT STAYS ON THE BAR, AND WHY ([TILL-179], revises the 2026-09-09 rule below). Athi, 2026-09-25:
+        *"organise in such a way, a notification icon can show all the notifications, rest all can move
+        inside, only the relevant should be shown."* The 2026-09-09 rule ("the health dot never moves into
+        the menu... a thing that interrupts from inside a closed menu interrupts nobody") still holds in
+        SPIRIT — a warning nobody can see is still not a warning — but the MECHANISM changes: one badge on
+        the sidebar's own ☰ (paintSide(), alertCount()) is now that visible interrupt, not a second pill here
+        repeating what ☰ already knows. netpill and agepill stay on the bar but HIDE when there is nothing to
+        act on (paintStatus()) — "online" and "prices are fresh" are not notifications, they are the quiet
+        default, and occupying bar space to say so is exactly what today's rule asks to stop.
+        Original 2026-09-09 rule, for the record: *"counter header has many now, better we organise and make
+        it kind of menu, so we know which menu to look at."* Sorted by FREQUENCY DURING A SALE — on the bar:
+        what a cashier reads with a customer standing there; behind ☰: everything done between customers.
       -->
-      <button class="pill" id="healthpill" data-testid="till-health" onclick="openHealth()" title="Health check — what would go wrong today">✓</button>
       <!-- ⭐⭐ THE SWITCH TRAY (design-handoff/04-settings §5, Phase 3.6) — "everything else sits behind one
            ⚡ (F12) in the header" — switches, not settings; each already carries its own shortcut. -->
       <button class="pill" id="traybtn" data-testid="till-tray-btn" onclick="trayOpen()" title="Switches — ⚡ or F12">⚡</button>
@@ -5681,6 +5716,16 @@ async function refresh(){
   } finally { busyDone(); }
 }
 
+/**
+ * ⚠️⚠️⚠️ [TILL-170 FOLLOW-UP] ONLY THE RELEVANT PILL SHOWS ([TILL-179]). Athi: *"organise in such a way, a
+ * notification icon can show all the notifications, rest all can move inside, only the relevant should be
+ * shown."* netpill and agepill used to say "online" / "prices as at …" even when there was nothing to act on
+ * — occupying bar space to report that everything was fine. The TEXT they compute is unchanged (still the
+ * one place that knows "no key yet" from plain "offline", still the one place that knows how stale is stale);
+ * only VISIBILITY is new — hidden when there is nothing to say, shown the moment there is. healthpill itself
+ * is gone: the sidebar's own 🩺 (still openHealth() directly) and the ☰ badge (alertCount(), see paintSide())
+ * are the one notification surface now, not a second copy on the bar.
+ */
 function paintStatus(){
   var net = document.getElementById('netpill');
   var offline = !STATE.online;
@@ -5693,11 +5738,13 @@ function paintStatus(){
   var waitingN = Number(STATE.queued) || 0;
   if (!offline && waitingN) net.textContent = 'online · ' + waitingN + ' waiting';
   net.className = 'pill ' + ((offline || waitingN) ? 'off' : 'on');
+  net.hidden = !(offline || waitingN);
   var age = document.getElementById('agepill');
   if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
     age.textContent = 'prices as at ' + new Date(S.at).toTimeString().slice(0,5) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
-    age.className = 'pill' + (mins > 240 ? ' off' : ''); }
-  else { age.textContent = 'no prices yet'; age.className = 'pill off'; }
+    age.className = 'pill' + (mins > 240 ? ' off' : '');
+    age.hidden = mins <= 90; }
+  else { age.textContent = 'no prices yet'; age.className = 'pill off'; age.hidden = false; }
   var d = STATE.today || {};
   /**
    * ⭐⭐ AT THE TOP OF A TOUCH SHAPE, THIS BILL — NOT THE DAY ([TILL-44], 2026-09-18). Athi: *"my eyes are
@@ -5750,12 +5797,12 @@ function paintStatus(){
       + esc(stuckNow.fix) + '</button>';
   } else { qn.textContent = note; }
   paintUpdate();
-  /* ⭐ ONE DOT, AND IT IS NOT A NAG. Green when there is nothing to say; it only asks for attention when something would actually
-     go wrong, and it never interrupts a sale to do it. */
-  var hp = document.getElementById('healthpill');
-  if (hp) { var w = healthWorst();
-    hp.textContent = w === 'bad' ? '⛔ check' : (w === 'warn' ? '⚠️ check' : '✓');
-    hp.className = 'pill' + (w === 'bad' ? ' off' : (w === 'warn' ? '' : ' on')); }
+  /* ⭐ ONE DOT, AND IT IS NOT A NAG. healthpill itself is gone ([TILL-179]) — the sidebar's ☰ badge (below,
+     paintSide()) is where "something would actually go wrong" now shows, and it is drawn from the same
+     healthWorst()/alertCount() this used to read, so nothing here lost its signal, only its second copy.
+     Called here, at the end of the one function every status change already runs through, so the badge is
+     never a beat behind whatever just changed — the callers of paintStatus() do not each need to know it. */
+  try { paintSide(); } catch (_) {}
 }
 /**
  * ⭐ WHAT HAPPENED · WHAT IT MEANS · WHAT TO DO. The little program on this PC keeps the kit current on its own; all this does is say
@@ -6566,7 +6613,6 @@ function stopWrongShop(bad){
     + '<div style="color:var(--dim);line-height:1.6"><b>What to do:</b> go back to ChitBridge, open <b>' + esc(bad.wantName) + '</b>, and press <b>Counter</b> there. It will hand this page the right key.</div>'
     + '</div>';
   var q = document.getElementById('q'); if (q) { q.disabled = true; q.placeholder = 'Billing is stopped until the shop matches'; }
-  var pill = document.getElementById('healthpill'); if (pill) { pill.textContent = '⛔ wrong shop'; pill.className = 'pill off'; }
   paintStatus();
 }
 /**
@@ -8826,7 +8872,16 @@ function paintMenu(){
 function paintSide(){
   var el = document.getElementById('tillsideicons'); if (!el) return;
   var b = [];
-  b.push('<button class="top" data-testid="till-side-open" title="Menu" aria-label="Menu" onclick="toggleMenu(event)">\u2630</button>');
+  /**
+   * \u2b50\u2b50\u2b50 [TILL-179] THE ONE NOTIFICATION ICON. Athi, 2026-09-25: *"a notification icon can show all the
+   * notifications, rest all can move inside, only the relevant should be shown."* alertCount() is the exact
+   * same call that feeds the open menu's own "N need you" chip (hubChips()) and the Check card's badge
+   * (\u00a78.6) \u2014 reused here, not recomputed, so the closed rail can never disagree with what \u2630 shows once
+   * opened. Amber only, never red \u2014 the same rule "3 need you" already follows: none of this stops a sale.
+   */
+  var alerts = (typeof alertCount === 'function') ? alertCount() : 0;
+  var openBadge = alerts ? '<i class="sbadge due">' + alerts + '</i>' : '';
+  b.push('<button class="top" data-testid="till-side-open" title="Menu' + (alerts ? ' \u00b7 ' + alerts + ' need you' : '') + '" aria-label="Menu" onclick="toggleMenu(event)">\u2630' + openBadge + '</button>');
   /**
    * ⚠️⚠️ THE TWO THAT STOP BILLING ARE NOT IN THE STRIP. They live in the hub's CAREFUL box, behind the
    * sentence that warns about them. 'Clear and reload' (↺) sat one tap from 'Read the shop again' (↻) and
@@ -19123,6 +19178,10 @@ function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[]
 RCV = rcvBlank(); DSP = dspBlank();
 
 var OPS = ['sell','receive','despatch','maintain'];
+/* ⭐ the same icon each <option> already carries — read once here rather than re-typed, so #modeicon (the
+   rail's own icon-only overlay, [TILL-179]) can never show a different symbol than opening the real
+   dropdown would. */
+var MODE_ICON = { sell: '🧾', receive: '📥', despatch: '📦', maintain: '🛠️' };
 var PLACEHOLDER = {
   sell:     'Item name, code or barcode…   ↓↑ to choose, Enter to add',
   receive:  'What arrived? Name, code or barcode — 3* for three',
@@ -19136,6 +19195,7 @@ function setMode(m){
     var el = document.getElementById('pane_' + k); if (el) el.style.display = (k === MODE) ? 'flex' : 'none';
   });
   var sel = document.getElementById('modesel'); if (sel) sel.value = MODE;
+  var mi = document.getElementById('modeicon'); if (mi) mi.textContent = MODE_ICON[MODE] || MODE_ICON.sell;
   /* ⭐ the OPERATION on the body, so layout rules can differ by it — the phone puts the bill first while
      selling and the shelf first while maintaining, and that is a stylesheet's decision to make, not a
      painter's. [[feedback-ui-replaceable-logic-in-engines]] */
