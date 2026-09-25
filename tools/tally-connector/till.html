@@ -13924,9 +13924,20 @@ function queueBlock(){
  * the shop PC's own connect flow has always done. The manual key box in ⚙ Settings still exists, for the one
  * case that is not a person signing in at all: a kiosk an admin hands a specific pre-minted key to.
  */
+/**
+ * ⚠️⚠️⚠️ [TILL-192] "I SIGNED OUT AND SIGNED IN AGAIN, BUT IT'S STILL NOT WORKING" — Athi, live, 2026-09-25.
+ * pairAgain() is reached ONLY because the shop just refused this device's key (the regex two lines above
+ * this function, or the 🔑 "Not signed in" flash) — the one fact already established here is that the key
+ * this browser is holding is BAD. But usignEnrolIfNeeded() (below) only ever mints a fresh one when
+ * `!paired()`, and paired() answers from `CloudHost.key` alone: "is there A key on file", never "is the key
+ * on file the one the shop just refused". A browser stuck on exactly this bug is, by that definition,
+ * ALWAYS still "paired" — so a normal re-sign-in silently skipped re-enrolling and put the caller right
+ * back where they started, with no error to explain why. usignOpen(true) tells the flow it was entered
+ * BECAUSE the current key already failed, so paired()'s stale truth must not be trusted this one time.
+ */
 function pairAgain(){
   if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return signinOpen();
-  return usignOpen();
+  return usignOpen(true);
 }
 /** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
 function queueWords(){
@@ -21911,9 +21922,11 @@ async function usignPost(path, body){
   }
 }
 
-function usignOpen(){
+/** [TILL-192] forceEnrol: true only when pairAgain() called this — see its own comment. A routine sign-in
+ * (whoAct()'s 'signin' door) passes nothing, and paired()'s existing key is trusted as it always was. */
+function usignOpen(forceEnrol){
   USIGN = { sent: false, refused: '', person: (typeof WHO !== 'undefined' && WHO && WHO.id) ? WHO : null,
-            who: '', busy: false, usePin: false };
+            who: '', busy: false, usePin: false, forceEnrol: !!forceEnrol };
   usignPaint();
   var d = document.getElementById('usigndlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
@@ -22052,7 +22065,13 @@ async function usignVerify(){
  */
 async function usignEnrolIfNeeded(token){
   if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return true;
-  if (paired()) return true;
+  /**
+   * ⚠️⚠️⚠️ [TILL-192] paired() ANSWERS "IS THERE A KEY", NEVER "IS THE KEY GOOD" — see pairAgain()'s own
+   * comment. Skipping this only when NOT forced keeps every ordinary sign-in exactly as cheap as it always
+   * was (one identity exchange, no enrol call) while letting the one path that exists BECAUSE the current
+   * key just failed actually replace it, instead of confirming the same bad key is still there and stopping.
+   */
+  if (paired() && !(USIGN && USIGN.forceEnrol)) return true;
   if (!token) { USIGN.refused = 'Signed in, but the shop did not send a session to pair with.'; return false; }
   /* ⚠️ CloudHost.api, NOT a bare path — see usignPost()'s own header for why a relative /api/... never
      reaches ChitBridge from a browser counter at all. This function only ever runs on that host (AgentHost
