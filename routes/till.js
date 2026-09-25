@@ -32,6 +32,7 @@ const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
+const variantEngine = require('../lib/variant.browser.js');   /* the same shape-guard the Modifiers tab authors through */
 const keys = require('./keys');
 const { shopChanged } = require('../lib/shopchanged');
 const rateLimit = require('express-rate-limit');
@@ -368,8 +369,19 @@ router.get('/snapshot', auth, async (req, res) => {
                 *   modifiers — the choices a dish has, and which are required (modsOf, modOpen)
                 *   combo_of  — the parts a meal deal replaces, so the counter prices them off its own shelf
                 *   age_check — the minimum age in years; COTPA §6 and the state excise ages (ageOf, ageAllow)
+                *
+                * ⚠️⚠️ MODIFIERS GO THROUGH THE SAME SHAPE-GUARD AUTHORING DOES, NOT STRAIGHT THROUGH. This
+                * used to send the stored array raw to a device holding a till-scoped key — anything a shop or
+                * an importer had put on an option (a cost price, a supplier code) rode along, and the array
+                * was unbounded. normalize() strips every field outside {name,options:[{name,price}]}, and
+                * groupsOf() drops a group that is not actually sellable yet (no name, or no options) — the
+                * exact same two calls the Modifiers tab itself runs before saving, so what ships here is
+                * never wider than what authoring could produce in the first place.
                 */
-               modifiers: Array.isArray(d.modifiers) ? d.modifiers : null,
+               modifiers: (function () {
+                 var g = variantEngine.groupsOf({ modifiers: variantEngine.normalize(d.modifiers) });
+                 return g.length ? g : null;
+               })(),
                combo_of: Array.isArray(d.combo_of) ? d.combo_of : null,
                age_check: (Number(d.age_check) > 0 ? Math.floor(Number(d.age_check)) : null),
                barcode: d.barcode || d.ean || null, avail: d.avail || null,

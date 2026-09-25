@@ -1646,6 +1646,21 @@ it('⚠️⚠️ every field the counter ACTS on is carried by the snapshot proj
     + missing.map((f) => f + ' — ' + MUST[f]).join('\n      '));
 });
 
+/**
+ * ── ⭐⭐⭐ MODIFIERS GO THROUGH THE SHAPE-GUARD, NOT STRAIGHT THROUGH (BACKLOG's own "STILL OPEN": raw
+ * modifiers ships anything a shop or importer put on an option — a cost price, a supplier code — to a device
+ * holding a till-scoped key). Now that the Modifiers tab actually populates this field, that stops being a
+ * theoretical gap. ────────────────────────────────────────────────────────────────────────────────────────
+ */
+it('⚠️⚠️ modifiers is normalized AND filtered before it reaches the wire, never the raw stored array', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const at = src.indexOf('modifiers: (function () {');
+  assert.ok(at > 0, 'the modifiers projection no longer runs through the shape-guard — the raw array is back on the wire');
+  const chunk = src.slice(at, at + 300);
+  assert.ok(/variantEngine\.normalize\(/.test(chunk), 'a cost price or supplier code on an option can ride through unstripped');
+  assert.ok(/variantEngine\.groupsOf\(/.test(chunk), 'an unfinished group (no name, no options) can still reach a customer-facing device');
+});
+
 it('⭐ and the guard can see a field go missing', () => {
   /* ⚠️ BREAK IT BEFORE TRUSTING IT — a checker that always passes is not a check. */
   const fake = 'const tillItem = (item_id, d) => { return { item_id, name: d.name, image: d.image || null }; }';
