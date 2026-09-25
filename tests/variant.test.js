@@ -166,7 +166,8 @@ console.log('\n— authoring: input a groups array, output the stored shape, alw
  */
 it('⚠️⚠️⚠️ every documented verb is actually reachable on V, not only used internally', () => {
   ['groupsOf', 'groupsRaw', 'missing', 'words', 'wordsPlain', 'byGroup', 'normalize', 'validate',
-   'addGroup', 'removeGroup', 'moveGroup', 'setGroup', 'addOption', 'removeOption', 'moveOption', 'setOption', 'summary']
+   'addGroup', 'removeGroup', 'moveGroup', 'setGroup', 'addOption', 'removeOption', 'moveOption', 'setOption',
+   'toggle', 'summary']
     .forEach((name) => assert.strictEqual(typeof V[name], 'function', 'V.' + name + ' is not exported as a function'));
 });
 it('normalize() is callable directly, not only through the verbs that use it internally', () => {
@@ -251,6 +252,56 @@ it('a nameless in-progress group is not lost on the NEXT edit, only dropped once
   const g2 = V.addOption(g, 0, 'Hot', 0);        /* still editable by index */
   assert.strictEqual(g2[0].options.length, 1);
   assert.strictEqual(V.validate(g2).groups.length, 0, 'a nameless group must never actually save');
+});
+/**
+ * ── ⭐⭐⭐ TOGGLE — THE BEHAVIOUR AN AUTHORING PREVIEW SHOWS (Athi: "when we create modifiers, we should be
+ * able to see the behaviour where we are authoring"). Same flat choice shape words()/addedPrice()/missing()
+ * already read — a preview and a real chooser can share every one of these functions, not just the shape.
+ */
+console.log('\n— toggle: the one rule for picking an option, proven against the shape every reader expects —');
+it('max 1 is radio behaviour — picking a second option replaces the first, never adds to it', () => {
+  const g = { name: 'Spice', required: true, max: 1, options: [{ name: 'Mild', price: 0 }, { name: 'Hot', price: 0 }] };
+  let picks = V.toggle([], g, 'Mild');
+  assert.deepStrictEqual(picks, [{ group: 'Spice', option: 'Mild', price: 0 }]);
+  picks = V.toggle(picks, g, 'Hot');
+  assert.deepStrictEqual(picks, [{ group: 'Spice', option: 'Hot', price: 0 }], 'a second pick under max 1 must replace, not add');
+});
+it('tapping the same option again un-picks it', () => {
+  const g = { name: 'Spice', required: false, max: 1, options: [{ name: 'Hot', price: 0 }] };
+  let picks = V.toggle([], g, 'Hot');
+  picks = V.toggle(picks, g, 'Hot');
+  assert.deepStrictEqual(picks, []);
+});
+it('max > 1 adds up to the limit, then drops the OLDEST pick, never refuses silently', () => {
+  const g = { name: 'Extra', required: false, max: 2, options: [{ name: 'Paneer', price: 20 }, { name: 'Cheese', price: 15 }, { name: 'Mushroom', price: 10 }] };
+  let picks = V.toggle([], g, 'Paneer');
+  picks = V.toggle(picks, g, 'Cheese');
+  assert.strictEqual(picks.length, 2);
+  picks = V.toggle(picks, g, 'Mushroom');   /* third pick at max 2 — the OLDEST (Paneer) must go, not a refusal */
+  assert.strictEqual(picks.length, 2, 'the limit was not enforced');
+  assert.deepStrictEqual(picks.map((m) => m.option).sort(), ['Cheese', 'Mushroom']);
+});
+it('a choice in one group never disturbs a choice already made in another', () => {
+  const spice = { name: 'Spice', max: 1, options: [{ name: 'Hot', price: 0 }] };
+  const extra = { name: 'Extra', max: 1, options: [{ name: 'Paneer', price: 20 }] };
+  let picks = V.toggle([], spice, 'Hot');
+  picks = V.toggle(picks, extra, 'Paneer');
+  assert.strictEqual(picks.length, 2);
+  picks = V.toggle(picks, spice, 'Hot');   /* un-pick spice */
+  assert.deepStrictEqual(picks, [{ group: 'Extra', option: 'Paneer', price: 20 }], 'Extra’s own pick was disturbed');
+});
+it('an option name that does not exist on the group changes nothing', () => {
+  const g = { name: 'Spice', max: 1, options: [{ name: 'Hot', price: 0 }] };
+  const picks = V.toggle([{ group: 'Spice', option: 'Hot', price: 0 }], g, 'Not a real option');
+  assert.deepStrictEqual(picks, [{ group: 'Spice', option: 'Hot', price: 0 }]);
+});
+it('⚠️⚠️⚠️ what a preview shows and what missing()/words() report about it agree, because it IS the same shape', () => {
+  const groups = V.setGroup(V.addOption(V.addGroup([], 'Spice'), 0, 'Hot', 0), 0, { required: true });
+  let picks = [];
+  assert.deepStrictEqual(V.missing(groups, picks), ['Spice'], 'an unpicked required group must be reported missing');
+  picks = V.toggle(picks, groups[0], 'Hot');
+  assert.deepStrictEqual(V.missing(groups, picks), [], 'picking it must clear the missing report');
+  assert.strictEqual(V.words(picks, (n) => '₹' + n), 'Hot');
 });
 it('summary reads as a one-line fact for any host’s own outcome row', () => {
   assert.strictEqual(V.summary([]), 'No modifiers yet');
