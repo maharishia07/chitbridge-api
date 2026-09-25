@@ -45,6 +45,7 @@ async function productsCases() {
 
   let WHO = OWNER;
   let ENTITY_FLAGS = {};   // what entityPolicyFlags(entity_id) reads — the OWNER's own row, never the actor's
+  let FLAGS_QUERY_THROWS = false;   // simulates a real production failure reading policy_flags
   const FAKE_ITEM = { item_id: 'i1', item_data: { name: 'Masala Dosa', price: 70, cost: 30, status: 'available' } };
 
   require.cache[require.resolve(API + '/middleware/auth')] = {
@@ -59,7 +60,10 @@ async function productsCases() {
     exports: {
       /* entityPolicyFlags() reads policy_flags via query(); the merge-patch read in PATCH also uses withEntity */
       query: async (sql) => {
-        if (/policy_flags FROM identities/.test(sql)) return { rows: [{ policy_flags: ENTITY_FLAGS }] };
+        if (/policy_flags FROM identities/.test(sql)) {
+          if (FLAGS_QUERY_THROWS) throw new Error('simulated DB failure reading policy_flags');
+          return { rows: [{ policy_flags: ENTITY_FLAGS }] };
+        }
         return { rows: [] };
       },
       withEntity: async (_id, fn) => fn({
@@ -104,6 +108,26 @@ async function productsCases() {
   WHO = STAFF_GRANTED; ENTITY_FLAGS = { offer_lab_costs_visible_to_staff: true };
   const asGranted = await call(port, 'GET', '/api/products');
   t('once the OWNER turns the flag on, staff sees cost too', asGranted.body.items[0].item_data.cost, 30);
+
+  /* ⚠️⚠️⚠️ THE FEATURE MUST NEVER BE ABLE TO BREAK THE CATALOGUE ITSELF — a real production edge case
+     reading policy_flags (found live, 2026-09-25, the same day this shipped) must degrade, never 500 the
+     whole list for everyone including the owner whose own numbers do not even depend on that read. */
+  FLAGS_QUERY_THROWS = true;
+  WHO = OWNER;
+  const ownerDuringFailure = await call(port, 'GET', '/api/products');
+  t('the policy_flags read failing does NOT 500 the owner’s own list', ownerDuringFailure.status, 200);
+  t('…and the owner still sees their own cost — canSeeCosts(entity) never depended on that read anyway',
+    ownerDuringFailure.body.items[0].item_data.cost, 30);
+
+  WHO = STAFF_BLIND;
+  const staffDuringFailure = await call(port, 'GET', '/api/products');
+  t('and staff reading during the same failure gets a real list, not a 500', staffDuringFailure.status, 200);
+  t('…failing to the SAFE side — cost hidden, same as if the flag had read false',
+    'cost' in (staffDuringFailure.body.items[0].item_data || {}), false);
+
+  const staffPatchDuringFailure = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 1 } });
+  t('a write during the same failure also fails closed — refused, not silently allowed', staffPatchDuringFailure.status, 403);
+  FLAGS_QUERY_THROWS = false;
 
   /* ── PATCH /:id — availability only for cost-blind staff ── */
   WHO = OWNER; ENTITY_FLAGS = {};

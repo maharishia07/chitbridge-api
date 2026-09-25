@@ -185,6 +185,24 @@ function stripCosts(items) {
   items.forEach((it) => { if (it && it.item_data && 'cost' in it.item_data) delete it.item_data.cost; });
   return items;
 }
+/**
+ * ⚠️⚠️⚠️ NEVER LETS THE COST CHECK BREAK THE CATALOGUE ITSELF. GET / and PATCH /:id worked before this
+ * feature existed; this feature must not be the reason either one starts failing for EVERYONE, owner
+ * included, over a policy_flags read that hit a real production edge case a stub could not see. On any
+ * error here the safe assumption for a READ is "cannot see costs" (strip them — fails closed on the
+ * feature this exists to protect) without failing the request that has nothing to do with it; the WRITE
+ * side already only runs this for actors, so an error here for an owner's own PATCH is not even reachable.
+ */
+async function safeCanSeeCosts(identity, entity_id) {
+  try { return access.canSeeCosts(identity, await entityPolicyFlags(entity_id)); }
+  catch (e) {
+    console.error('[OFFR-04] cost-visibility check failed:', e.message);
+    /* the owner is unconditionally true regardless of entityFlags (access.canSeeCosts's own rule) — an
+       error reading a flag that would not have changed the answer for them must not cost them their own
+       numbers. An actor, where the flag is the whole answer, fails to the safe side: hidden. */
+    return !identity || identity.identity_type !== 'actor';
+  }
+}
 
 async function defaultSchemaId(entity_id) {
   const r = await query(
@@ -648,7 +666,7 @@ router.get('/', auth, async (req, res) => {
 
     /* [OFFR-04] the one place this list response leaves the server — costs come off here, not client-side,
        for a caller who is staff and whose owner has not turned this on */
-    if (!access.canSeeCosts(req.identity, await entityPolicyFlags(entity_id))) stripCosts(items);
+    if (!(await safeCanSeeCosts(req.identity, entity_id))) stripCosts(items);
 
     res.json({ items, count: items.length, total, offset, limit,
                /* ⚠️ SAID OUT LOUD. A screen that shows a tenth of a catalogue without knowing it is a screen that lies quietly. */
@@ -1164,7 +1182,7 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
      * caller never touched.
      */
     if (req.identity && req.identity.identity_type === 'actor'
-        && !access.canSeeCosts(req.identity, await entityPolicyFlags(entity_id))) {
+        && !(await safeCanSeeCosts(req.identity, entity_id))) {
       const sent = Object.keys(req.body.item_data || {});
       const blocked = sent.filter((k) => COST_BLIND_ALLOWED_FIELDS.indexOf(k) < 0);
       if (blocked.length) return res.status(403).json({ error: 'Not permitted',
