@@ -345,21 +345,23 @@ it('⭐⭐ the keys gather under their category, and a category chip can carry a
    */
   assert.ok(ord.indexOf('.sort(') < 0, 'gathering by category sorts the keys and loses the order inside each');
   /**
-   * ⚠️⚠️ MOVED, NOT DELETED ([TILL-87]). This used to assert `seen.push(c)` — FIRST-SEEN order, i.e.
-   * whatever order the shop's snapshot happened to arrive in. Athi: *"it is coming here in alphabetic or
-   * something"*. The rule being protected has not changed (the alphabet must not decide, and the order
-   * INSIDE a category must survive); the answer has: the shop states the order, and catsRanked() is the one
-   * place that knows it.
+   * ⚠️⚠️ MOVED, NOT DELETED ([TILL-87], then again for Phase 4.3). This used to assert `seen.push(c)` —
+   * FIRST-SEEN order — then `catsRanked(`. Athi: *"it is coming here in alphabetic or something"*, and later
+   * a category needed to leave the keys entirely without leaving catsRanked()'s own ranked list (the order
+   * dialog still needs to see a hidden row to offer Show). The rule being protected has not changed at all
+   * (the alphabet must not decide, the order INSIDE a category must survive, and a hidden category must
+   * leave); the name of the one place that knows it has: catsVisible() — itself entirely catsRanked(), with
+   * hidden rows filtered out — is now that one place.
    */
-  assert.ok(ord.indexOf('catsRanked(') > 0,
-    'the grouped keys no longer read the one category order — they have an order of their own again');
+  assert.ok(ord.indexOf('catsVisible(') > 0,
+    'the grouped keys no longer read the one visible category order — they have an order of their own again');
   /**
    * ⚠️⚠️ AND THE FAULT THAT CAUSED THIS: TWO SURFACES, TWO ORDERS. paintChips() sorted by count while
    * byCatOrder() used first-seen, so one screen could list the same categories two ways. Both must read the
    * SAME function or they will drift again. [[feedback-no-duplicate-functions]]
    */
   const chipsFn = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
-  assert.ok(chipsFn.indexOf('catsRanked(') > 0,
+  assert.ok(chipsFn.indexOf('catsVisible(') > 0,
     'the chip row has gone back to its own sort — it must rank categories the same way the keys do');
   assert.ok(!/Object\.keys\(cats\)\s*\.sort/.test(chipsFn),
     'the chip row sorts categories itself again, which is how it came to disagree with the keys');
@@ -786,13 +788,18 @@ it('⭐⭐ the state code comes from the same GSTIN the shop is shown as having'
  * it"* — then: *"we don't need all, what is required only."* Every row must be a DECISION about what gets printed, not
  * header text a shopkeeper would never come here to read.
  */
-it('⭐ the till shows the shop tax identity, and only what decides something', () => {
+it('⭐⭐⭐ the till shows the shop’s tax facts as ONE LINE, with a link to the rest (00-CORRECTIONS.md §10.7, Phase 4.5)', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   const fn = page.slice(page.indexOf('function paintShop(){'), page.indexOf('function paintTotals'));
-  for (const need of ['GSTIN', 'Registration', 'Every bill is', 'Tax shown as'])
-    assert.ok(fn.indexOf(need) > 0, 'the till does not say ' + need);
+  /* ⚠️ NOTHING WAS DROPPED, ONLY SAID AS ONE SENTENCE — GSTIN, registration state, document type and the tax
+     split are still every one of them here, just folded into one line instead of four stacked rows. */
+  assert.ok(fn.indexOf('GSTIN') > 0, 'the till does not say GSTIN');
+  assert.ok(/every bill is/i.test(fn), 'the till does not say what document every bill is');
+  assert.ok(/CGST \+ SGST|IGST|cannot be split/.test(fn), 'the till does not say how tax is split');
   for (const noise of ['Address', 'Phone', 'Currency', 'Legal name'])
     assert.ok(fn.indexOf('<span>' + noise + '</span>') < 0, noise + ' is back — it decides nothing and is slip header text');
+  /* ⚠️⚠️ NO SECOND EDITABLE COPY (acceptance check §10.7) — the four-row mini table must not come back */
+  assert.ok(fn.indexOf('<div class="f">') < 0, 'the shop block is a mini table again — it must be one line');
   /**
    * ⭐⭐ AN UNREGISTERED SHOP IS TOLD WHAT IT IS ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN
    * shop"* — *"service tax not registered."* It read `not set`, the wording of an unfinished form, at a shop

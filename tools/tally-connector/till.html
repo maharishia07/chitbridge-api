@@ -1828,11 +1828,25 @@
   .catstrip button.past{opacity:.45}
   /* ⭐ PRODUCTS, SAID ONCE (§2 "A row": *"the unit is said once at the top, never on every row"*) */
   .cathead{display:flex;align-items:center;gap:10px;padding:2px 4px 4px;margin-top:8px}
-  /* ⚠️ FIVE SPACERS NOW, NOT FOUR — Phase 3.5 added the drag handle as its own column between the rank box
-     and the name; this header row grew a matching (empty) one so "Products" still sits over the count. */
+  /* ⚠️ SIX SPACERS NOW, NOT FIVE — Phase 4.3 added the Show/Hide toggle as its own column between the count
+     and the arrows; this header row grew a matching (empty) one so "Products" still sits over the count. */
   .cathead span:nth-child(1){flex:0 0 44px} .cathead span:nth-child(2){flex:0 0 28px} .cathead span:nth-child(3){flex:1}
   .cathead span:nth-child(4){min-width:44px;text-align:end;font-size:.72em;text-transform:uppercase;letter-spacing:.03em}
-  .cathead span:nth-child(5){flex:0 0 96px}
+  .cathead span:nth-child(5){flex:0 0 46px}
+  .cathead span:nth-child(6){flex:0 0 96px}
+  /* ⭐ THE SHOW TOGGLE (spec §2 row: "2 ( ●) [↑][↓]") — same knob-and-track shape as the switch tray's own,
+     for one switch look across the counter rather than a second one invented for this row. */
+  .catvis{flex:0 0 auto;width:46px;height:28px;border-radius:14px;border:1px solid var(--line);background:var(--panel);
+          position:relative;cursor:pointer;padding:0}
+  .catvis i{position:absolute;top:2px;inset-inline-start:2px;width:22px;height:22px;border-radius:50%;
+            background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:inset-inline-start .12s ease}
+  .catvis.on{background:var(--ok);border-color:var(--ok)}
+  .catvis.on i{inset-inline-start:20px;background:#fff}
+  @media (prefers-reduced-motion:reduce){ .catvis i{transition:none} }
+  /* ⭐⭐ NOT ON THE KEYS (spec §2 "Hidden categories") — greyed, no rank, a Show action */
+  .catrow.cathid{opacity:.55}
+  .catrow.cathid .catrank{border-color:transparent;background:transparent;color:var(--dim);text-align:center}
+  .catrow.cathid .cathandle{visibility:hidden}
   /* ⭐⭐ THE RANK BOX IS TYPABLE (§2 "the fastest way to move something a long way") */
   .catrank{flex:0 0 44px;min-height:44px;text-align:center;color:var(--ink);font:inherit;
            font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
@@ -2905,6 +2919,32 @@
     <button class="pri" data-testid="till-catorder-save" onclick="catOrderSave()">Save the order</button>
   </div>
 </dialog>
+<!--
+  ⭐⭐⭐ QUICK KEYS MAINTENANCE (design-handoff/04-settings §3, 00-CORRECTIONS.md #18) — "Maintenance. Settings
+  keeps one line and a link." Everything that actually changes what fills the keys — the source, the group
+  picker, the tick-list, hidden keys — lives here now; Settings' own row never edits a group again.
+  ⚠️ NO SAVE BUTTON — every row here already saves as it changes (quickGroupToggle/tillOptSet), the same rule
+  Settings itself follows; Close is the only footer button, same wording as Settings' own.
+-->
+<dialog id="quickmaintdlg" class="dlg" data-testid="till-quickmaint-dlg">
+  <h3>Quick keys <span class="u">what fills the keys, and what stays hidden</span></h3>
+  <div id="quickmaintbody">
+    <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
+      <span>Keys from<i class="scope counter">this counter</i></span>
+      <!-- ⚠️ the options are filled from QUICK_SRC by quickMaintPaint() — the same list the bar above the keys offers -->
+      <select id="qm_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value});quickMaintPaint()"></select>
+    </div>
+    <div class="srow top" title="A group is a list you make — the same product can sit in Morning and Night, and the shelf never changes.">
+      <span>Group<i class="scope counter">this counter</i></span>
+      <div id="qm_groups" data-testid="till-set-groups"></div>
+    </div>
+    <div class="srow" title="✕ on a key hides it, 📌 keeps it there all day.">
+      <span>Hidden keys<i class="scope counter">this counter</i></span>
+      <button class="pill" data-testid="till-quick-reset" onclick="quickReset();quickMaintPaint()">Show all again</button>
+    </div>
+  </div>
+  <div class="dlgbtns"><button onclick="quickMaintClose()">Close · Esc</button></div>
+</dialog>
 <dialog id="stylegal" class="dlg wide" data-testid="till-style-gallery">
   <h3>Pick a starting style <span class="u">Each one is a whole screen, not a colour — and you can change any part of it afterwards.</span></h3>
   <div class="stgal" id="stygal"></div>
@@ -3429,29 +3469,25 @@
     <div id="shopbox" data-testid="till-shopbox"></div>
   </section>
 
+  <!--
+    ⭐⭐⭐ QUICK KEYS IS MAINTENANCE, NOT A SETTING (00-CORRECTIONS.md #18) — "Settings keeps one line and a
+    link." quickMaintPaint() below holds the source, the group picker and the tick-list now; this row only
+    ever shows what is currently in force and a way in.
+  -->
   <section class="setsec" data-sec="keys">
-    <h4 class="ssechd">Quick keys</h4>
-    <div class="srow" title="Learned keys come from this counter's own bills — what sells around this time of day.">
-      <span>Keys from<i class="scope counter">this counter</i></span>
-      <!-- ⚠️ the options are filled from QUICK_SRC by paintSetup() — the same list the bar above the keys offers -->
-      <select id="set_qsrc" data-testid="till-set-qsrc" onchange="tillOptSet({quickSource:this.value})"></select>
-    </div>
-    <div class="srow top" title="A group is a list you make — the same product can sit in Morning and Night, and the shelf never changes.">
-      <span>Group<i class="scope counter">this counter</i></span>
-      <div id="setupgroups" data-testid="till-set-groups"></div>
-    </div>
-    <div class="srow" title="✕ on a key hides it, 📌 keeps it there all day.">
-      <span>Hidden keys<i class="scope counter">this counter</i></span>
-      <button class="pill" data-testid="till-quick-reset" onclick="quickReset()">Show all again</button>
-    </div>
+    <h4 class="ssechd">Quick keys<i class="scope counter" style="margin-inline-start:8px">this counter</i></h4>
+    <div id="quicksum" data-testid="till-quicksum"></div>
   </section>
 
-  <!-- ⭐⭐ TECHNICAL, FOLDED (§4: touched once or twice in the counter's life — the pairing key, the data
-       folder, and the one dangerous row, "Start fresh", that Settings never used to set apart from these). -->
+  <!--
+    ⭐⭐ TECHNICAL, FOLDED (§4: touched once or twice in the counter's life — the pairing key and the data
+    folder). "Start fresh" is gone from here (00-CORRECTIONS.md row-table: *"Clear and reload → health →
+    Counter health ▸ technical ▸ Repair this counter, behind a confirm sheet"*, acceptance check §10.8:
+    *"'Clear and reload' does not appear in Settings"*, Phase 4.5) — its only home is Counter health now.
+  -->
   <details class="setsec settech" data-sec="technical">
     <summary class="ssechd">Technical</summary>
     <div id="pairbox"></div>
-    <div id="coldbox"></div>
   </details>
 
   <div class="dlgbtns">
@@ -5769,9 +5805,17 @@ var CATDRAFT = null;
 /* ⭐ WHERE EACH ROW STOOD WHEN THE DIALOG OPENED (design-handoff §2 "moved" chip) — a row moved is a row
    whose place today differs from its place when this draft started, never from some other list. */
 var CATDRAFT_BASE = null;
+/**
+ * ⭐⭐ HIDDEN, DRAFTED THE SAME WAY AS THE ORDER (Phase 4.3). CATDRAFT holds VISIBLE categories ONLY — a
+ * hidden one has no rank (spec §2: "They keep no rank —"), so it is not in this array at all; it lives here
+ * instead, with the products list it comes back to sit at the END of if it is shown again mid-session.
+ */
+var CATDRAFT_HIDDEN = null;
 function catOrderOpen(){
-  CATDRAFT = catsRanked().map(function(c){ return c.name; });
+  var all = catsRanked();
+  CATDRAFT = all.filter(function(c){ return !c.hidden; }).map(function(c){ return c.name; });
   CATDRAFT_BASE = CATDRAFT.slice();
+  CATDRAFT_HIDDEN = all.filter(function(c){ return c.hidden; }).map(function(c){ return c.name; });
   catOrderPaint();
   var d = document.getElementById('catdlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
@@ -5779,8 +5823,26 @@ function catOrderOpen(){
 function catOrderClose(){
   CATDRAFT = null;
   CATDRAFT_BASE = null;
+  CATDRAFT_HIDDEN = null;
   var d = document.getElementById('catdlg');
   if (d && d.open) { try { d.close(); } catch (_) {} }
+}
+/**
+ * ⭐ THE SHOW TOGGLE (spec §2 row: "Off = the category leaves the chips and the keys"). BY INDEX, not by
+ * name — a category name reaching back into an onclick string is exactly the quoting risk setFilter('cat',…)
+ * already carries elsewhere in this file (it strips apostrophes rather than escaping them); an index needs no
+ * escaping at all. Hiding drops a row out of the ranked list to the bottom section; showing puts it back at
+ * the end — never in the middle of an order nobody asked it to rejoin at.
+ */
+function catHideAt(i){
+  if (!CATDRAFT || !CATDRAFT_HIDDEN || i < 0 || i >= CATDRAFT.length) return;
+  CATDRAFT_HIDDEN.push(CATDRAFT.splice(i, 1)[0]);
+  catOrderPaint();
+}
+function catShowAt(j){
+  if (!CATDRAFT || !CATDRAFT_HIDDEN || j < 0 || j >= CATDRAFT_HIDDEN.length) return;
+  CATDRAFT.push(CATDRAFT_HIDDEN.splice(j, 1)[0]);
+  catOrderPaint();
 }
 /**
  * ── ⭐⭐ THE FOLD IS MEASURED, NEVER GUESSED (design-handoff §2 "The fold") ───────────────────────
@@ -5872,14 +5934,23 @@ function catOrderReset(){
   try { paintChips(); paintQuick(); } catch (_) {}
   toastLine('Back to most-used first.');
 }
+/** ⭐ "N MOVED" COUNTS POSITION *OR* VISIBILITY CHANGES (spec §2 "The buttons") — a row that changed only
+ * whether it shows counts exactly the same as one that changed only its rank. */
 function catMovedCount(){
   if (!CATDRAFT || !CATDRAFT_BASE) return 0;
   var was = {}; CATDRAFT_BASE.forEach(function(c, i){ was[c] = i; });
-  return CATDRAFT.filter(function(c, i){ return was[c] !== i; }).length;
+  var moved = CATDRAFT.filter(function(c, i){ return was[c] !== i; }).length;
+  var hiddenWas = {}; catHidden().forEach(function(c){ hiddenWas[c] = true; });
+  var hiddenNow = {}; (CATDRAFT_HIDDEN || []).forEach(function(c){ hiddenNow[c] = true; });
+  var everyName = {}; Object.keys(hiddenWas).concat(Object.keys(hiddenNow)).forEach(function(c){ everyName[c] = true; });
+  var visChanged = 0;
+  Object.keys(everyName).forEach(function(c){ if (!!hiddenWas[c] !== !!hiddenNow[c]) visChanged++; });
+  return moved + visChanged;
 }
 function catOrderSave(){
   var d = CATDRAFT || [];
   catOrderSet(d);
+  catHiddenSet(CATDRAFT_HIDDEN || []);
   catOrderClose();
   /* ⭐ REPAINT EVERY SURFACE THAT READS IT — the chips, the keys and the shelf all list categories */
   try { paintChips(); paintQuick(); paintList(); } catch (_) {}
@@ -5896,9 +5967,29 @@ function catOrderPaint(){
   var movedN = catMovedCount();
   var saveBtn = document.querySelector('[data-testid="till-catorder-save"]');
   if (saveBtn) saveBtn.textContent = 'Save the order' + (movedN ? ' · ' + movedN + ' moved' : '');
-  if (!CATDRAFT.length) {
+  if (!CATDRAFT.length && !(CATDRAFT_HIDDEN || []).length) {
     box.innerHTML = '<p class="catnote">This counter has no categories yet — they come from the shop with the'
       + ' products. Read the shop again once its products carry a category.</p>';
+    return;
+  }
+  /**
+   * ⭐⭐ NOT ON THE KEYS (spec §2 "Hidden categories") — greyed, no rank, a Show action, below the ranked
+   * list. A category taken off the chips and the keys keeps every one of its products; nothing here deletes.
+   */
+  var hiddenSection = !(CATDRAFT_HIDDEN || []).length ? '' :
+      '<div class="cathead" data-testid="till-cathidden-head"><span></span><span class="u">Not on the keys · '
+        + CATDRAFT_HIDDEN.length + '</span></div>'
+    + CATDRAFT_HIDDEN.map(function(c, j){
+        return '<div class="catrow cathid" data-testid="till-cathidrow-' + j + '">'
+          + '<span class="catrank">—</span><i class="cathandle"></i>'
+          + '<span class="ct">' + esc(c) + '</span><i class="catmoved" style="visibility:hidden">moved</i>'
+          + '<span class="cq">' + (n[c] || 0) + '</span>'
+          + '<button class="pill" data-testid="till-catshow-' + j + '" onclick="catShowAt(' + j + ')">Show</button>'
+          + '</div>';
+      }).join('');
+  if (!CATDRAFT.length) {
+    box.innerHTML = '<p class="catnote">Nothing is on the chips or the keys — every category is hidden. Show one below.</p>'
+      + hiddenSection + '<p class="catnote">Counter 1 only. Counter 2 keeps its own order.</p>';
     return;
   }
   var was = {}; (CATDRAFT_BASE || []).forEach(function(c, i){ was[c] = i; });
@@ -5914,7 +6005,7 @@ function catOrderPaint(){
       + CATDRAFT.map(function(c, i){ return '<button' + (i >= fold ? ' class="past"' : '') + '>' + esc(c) + '</button>'; }).join('')
     + '</div>'
     + '<div class="u">' + fold + ' reach without a swipe. Everything past the line is a scroll.</div>'
-    + '<div class="cathead" data-testid="till-catorder-head"><span></span><span></span><span></span><span class="u">Products</span><span></span></div>'
+    + '<div class="cathead" data-testid="till-catorder-head"><span></span><span></span><span></span><span class="u">Products</span><span></span><span></span></div>'
     + CATDRAFT.map(function(c, i){
         /* ⚠️ THE FOLD LINE MOVES WITH THE ROWS — drawn after the last row it covers, never a fixed row number. */
         var foldLine = (i === fold && i > 0 && i < CATDRAFT.length)
@@ -5950,12 +6041,21 @@ function catOrderPaint(){
           + '<span class="ct">' + esc(c) + '</span>'
           + '<i class="catmoved" data-testid="till-catrow-moved-' + i + '"' + (moved ? '' : ' style="visibility:hidden"') + '>moved</i>'
           + '<span class="cq">' + (n[c] || 0) + '</span>'
+          /**
+           * ⭐ THE SHOW TOGGLE (spec §2 row diagram: "2  ( ●)  [↑] [↓]"), ON by default. Turning it off is
+           * the whole of Phase 4.3 — the row leaves this list the instant the paint after it runs, dropping
+           * to "Not on the keys" below, greyed, with the way back.
+           */
+          + '<button class="catvis on" role="switch" aria-checked="true" data-testid="till-cathide-' + i + '"'
+          + ' aria-label="On the chips and the keys — tap to hide ' + esc(c) + '" title="On the chips and the keys — tap to hide"'
+          + ' onclick="event.stopPropagation();catHideAt(' + i + ')"><i></i></button>'
           + '<button data-testid="till-catup-' + i + '" aria-label="Move ' + esc(c) + ' up"'
           + (i === 0 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',-1)">↑</button>'
           + '<button data-testid="till-catdown-' + i + '" aria-label="Move ' + esc(c) + ' down"'
           + (i === CATDRAFT.length - 1 ? ' disabled' : '') + ' onclick="event.stopPropagation();catMove(' + i + ',1)">↓</button>'
           + '</div>';
       }).join('')
+    + hiddenSection
     /**
      * ⭐ NAMES THE COUNTERS, NOTHING ELSE (§3 "The footnote") — the old line explained an unbuilt catalogue
      * field to a shopkeeper; §1.8 names that as one of the eight things wrong with this screen today.
@@ -6009,6 +6109,21 @@ function catOrder(){
 }
 function catOrderSet(list){ ls.set(shopLs('cb_till_catorder'), JSON.stringify(list || [])); }
 /**
+ * ── ⭐⭐⭐ HIDING A CATEGORY (design-handoff/02-category-order §2 "Hidden categories", Phase 4.3) ────────
+ *
+ * ⚠️⚠️⚠️ LEAVES THE CHIPS AND THE KEYS AND NOTHING ELSE ([TILL-187] risk note, spec §2 row "Show toggle":
+ * "Off = the category leaves the chips and the keys. It keeps its products; nothing is deleted"). This store
+ * is read by catsVisible() (chips, and the order the grouped keys use) and by quickShown() (the keys
+ * themselves) — never by hits() (the search/shelf list, S.items straight) or by anything a scanned barcode
+ * or a typed code reaches, both of which go through hits()/typed() the same as any other search. A category
+ * with zero products hides itself automatically — see catsRanked()'s own count.
+ */
+function catHidden(){
+  try { var a = JSON.parse(ls.get(shopLs('cb_till_cathidden'), '[]')); return Array.isArray(a) ? a : []; }
+  catch (_) { return []; }
+}
+function catHiddenSet(list){ ls.set(shopLs('cb_till_cathidden'), JSON.stringify(list || [])); }
+/**
  * ⭐ EVERY CATEGORY ON THIS COUNTER, IN THE ONE ORDER, with its count. The saved order leads; anything the
  * shop has not placed yet follows by the old rule (most products first), so a new category that arrives
  * overnight appears at the end rather than silently jumping into the middle of a set menu.
@@ -6021,21 +6136,30 @@ function catsRanked(items){
   list.forEach(function(i){ var c = byCatOf(i); if (c !== '\u2014') count[c] = (count[c] || 0) + 1; });
   var saved = catOrder(), at = {};
   saved.forEach(function(c, n){ at[c] = n; });
+  var hidden = catHidden();
+  /* \u26a0\ufe0f "a category with zero products is hidden automatically" (spec \u00a72) needs no code of its own here \u2014
+     this list is built FROM count, so a category with no current products was never a key to begin with,
+     the same rule that already drops a saved name nothing cites any more (see this function's own header). */
   return Object.keys(count).sort(function(a, b){
     var ia = (at[a] === undefined) ? 1e6 : at[a], ib = (at[b] === undefined) ? 1e6 : at[b];
     if (ia !== ib) return ia - ib;
     return count[b] - count[a];                 /* the fallback, unchanged: most products first */
-  }).map(function(c){ return { name: c, n: count[c], placed: at[c] !== undefined }; });
+  }).map(function(c){ return { name: c, n: count[c], placed: at[c] !== undefined,
+    hidden: hidden.indexOf(c) >= 0 }; });
 }
+/** \u2b50 WHAT THE CHIPS AND THE KEYS ARE ALLOWED TO SHOW \u2014 every reader of "the categories, in order" for a
+ * selling surface asks this, never catsRanked() directly, so a hidden one actually leaves both. */
+function catsVisible(items){ return catsRanked(items).filter(function(c){ return !c.hidden; }); }
 /**
  * ⚠️⚠️ IT USED TO BE FIRST-SEEN, i.e. whatever order the shop's snapshot happened to arrive in, while the
  * CHIP ROW above it sorted by count — two orders for one set of categories, on one screen ([TILL-87]).
- * Both now read catsRanked(), so they cannot disagree.
+ * Both now read catsVisible(), so they cannot disagree, and a hidden category's section genuinely stops
+ * appearing on the keys — its products are simply never walked into `out` below (Phase 4.3).
  */
 function byCatOrder(list){
   var bucket = {};
   list.forEach(function(i){ var c = byCatOf(i); (bucket[c] = bucket[c] || []).push(i); });
-  var seen = catsRanked(list).map(function(c){ return c.name; });
+  var seen = catsVisible(list).map(function(c){ return c.name; });
   /* ⚠️ the unnamed bucket is LAST and is never reordered — "Everything else" is not a category */
   if (bucket['\u2014']) seen.push('\u2014');
   var out = [];
@@ -6323,9 +6447,15 @@ var TILL_OPS = [
    */
   { id: 'offerlab', icon: '🧮', label: 'Offer Lab',          hint: 'work out a discount before you run it · opens in a new tab', fn: 'openOfferLab' },
   { id: 'break-menu', icon: '☕', label: 'Take a break',      hint: 'the counter stays on this PC · nothing is closed', fn: 'takeBreak' },
-  { id: 'close',    icon: '🔒', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeCounter' },
+  /**
+   * ⭐⭐ BOTH ROUTED THROUGH THE CONFIRM SHEET NOW, NOT THEIR OWN OLDER sure() (Phase 4.5, alongside removing
+   * Settings' second "Clear and reload" — closeCounter()/coldStart() called bare still self-confirm, just
+   * with the plain single-line dialog these two moved away from everywhere else; closeFromMenu()/
+   * coldStartFromMenu() open the same live-figures sheet Counter health and the day card use.
+   */
+  { id: 'close',    icon: '🔒', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeFromMenu' },
   { id: 'settings', icon: '⚙',  label: 'Settings',           hint: 'look, printer, this till',                      fn: 'openSettings' },
-  { id: 'coldstart-menu', icon: '↺', label: 'Clear and reload', hint: 'throw this copy away and read the shop fresh', fn: 'coldStart' },
+  { id: 'coldstart-menu', icon: '↺', label: 'Repair this counter', hint: 'sends anything waiting, then clears this counter and reads the shop fresh', fn: 'coldStartFromMenu' },
   /* ⚠️ ONLY WHEN THE BROWSER OFFERS IT (beforeinstallprompt). A button that cannot install anything is worse
      than no button — the same rule the microphone follows on a browser with no speech. */
   { id: 'install', icon: '⤓', label: 'Install as an app', hint: 'opens without a browser', fn: 'installApp', when: 'install' },
@@ -6894,7 +7024,7 @@ var TILL_MENU = [
    * ⭐ NEITHER "CAREFUL" NOR RED ANY MORE ([design-handoff/B-fine-tuning/01-footer]). Same two rare actions,
    * named for what they are rather than grouped under an adjective — a shopkeeper does not think in "scary".
    */
-  { id: 'care',    icon: '🔧',  title: 'Repair and close', sum: 'close the counter · clear and reload',  ops: ['close', 'coldstart-menu'] },
+  { id: 'care',    icon: '🔧',  title: 'Repair and close', sum: 'close the counter · repair it',  ops: ['close', 'coldstart-menu'] },
 ];
 /**
  * ── ⭐⭐ ONE ICON FAMILY FOR THE PANEL'S CARDS (design-handoff/B-fine-tuning/05-headers §7.1) ────────────
@@ -8796,8 +8926,9 @@ function paintListTools(){
 function paintChips(){
   var el = document.getElementById('chips'); if (!el || !S) return;
   /* ⚠️ THE SAME RANKING THE GROUPED KEYS USE ([TILL-87]). This row used to sort by count while the keys
-     below it used first-seen — one screen, two orders for the same categories. */
-  var ranked = catsRanked();
+     below it used first-seen — one screen, two orders for the same categories.
+     ⚠️ catsVisible(), NOT catsRanked() — a hidden category must leave the chip row too (Phase 4.3). */
+  var ranked = catsVisible();
   var cats = {};
   ranked.forEach(function(c){ cats[c.name] = c.n; });
   var list = ranked.map(function(c){ return c.name; }).slice(0, 14);
@@ -11128,7 +11259,7 @@ async function quickGroupNew(){
   var o = tillOpt();
   if (!o.groups[name]) o.groups[name] = [];
   tillOptSet({ groups:o.groups, group:name, quickSource: o.quickSource === 'frequent' ? 'both' : o.quickSource });
-  paintSetup();
+  quickMaintPaint();
 }
 /**
  * ⭐⭐ WHAT IS IN A GROUP, DECIDED WHERE GROUPS ARE MANAGED (2026-09-18). Athi: *"quick key management is not
@@ -11141,7 +11272,7 @@ async function quickGroupNew(){
  * takes a second to draw every time somebody types.
  */
 var SETUP_GQ = '';
-function setupGroupFilter(v){ SETUP_GQ = String(v || ''); paintSetup(); }
+function setupGroupFilter(v){ SETUP_GQ = String(v || ''); quickMaintPaint(); }
 function setupGroupItems(o){
   if (!o.group) return '';
   var inG = groupIds(), all = (S && S.items) || [];
@@ -11154,7 +11285,7 @@ function setupGroupItems(o){
   var row = function(i, on){
     return '<label style="display:flex;gap:6px;align-items:center;font-weight:400;padding:2px 0">'
       + '<input type="checkbox"' + (on ? ' checked' : '') + ' data-testid="till-set-group-item-' + esc(i.item_id) + '"'
-      + ' onchange="quickGroupToggle(\'' + esc(i.item_id) + '\');paintSetup()"> '
+      + ' onchange="quickGroupToggle(\'' + esc(i.item_id) + '\');quickMaintPaint()"> '
       + esc(i.name) + '</label>';
   };
   return '<input id="set_gq" data-testid="till-set-group-find" placeholder="find a product to add…"'
@@ -11176,7 +11307,74 @@ async function quickGroupDrop(){
   /* ⭐ and the shop's copy goes with it, or the pull would simply put it back and nothing would appear to happen */
   if (isShop) { var sg = shopGroups(); delete sg[gone]; ls.set(shopLs('cb_till_shopgroups'), JSON.stringify(sg)); }
   tillOptSet({ groups:o.groups, group:'' });
-  paintSetup();
+  quickMaintPaint();
+}
+/**
+ * ── ⭐⭐⭐ QUICK KEYS, ITS OWN MAINTENANCE SCREEN (design-handoff/04-settings §3, 00-CORRECTIONS.md #18:
+ * *"Quick keys: a setting, or maintenance? Decision: Maintenance. Settings keeps one line and a link."*
+ * Phase 4.5) ─────────────────────────────────────────────────────────────────────────────────────────────
+ *
+ * Everything that used to sit inline in Settings — the source, the group picker, the tick-list, "Show all
+ * again" — moved here, into quickmaintdlg, reached by the one line quickSummaryHtml() draws in Settings
+ * itself. Settings' own row never edits a group again; it only ever says what is currently in force.
+ */
+/** ⭐ what the one line in Settings says is in force right now */
+function quickSourceLabel(){
+  var found = QUICK_SRC.filter(function(s){ return s[0] === (tillOpt().quickSource || 'frequent'); })[0];
+  return found ? found[1] : 'What sells now';
+}
+function quickSummaryText(){
+  var o = tillOpt();
+  return o.group ? esc(o.group) + ' (' + ((groupsAll()[o.group] || []).length) + ')' : esc(quickSourceLabel());
+}
+/** ⭐ SETTINGS' OWN ROW — a value and a way in, never a control that itself edits anything */
+function quickSummaryHtml(){
+  var hid = quickHidden().length;
+  return '<div class="srow" style="justify-content:space-between">'
+    + '<span>' + quickSummaryText() + (hid ? ' <span class="dim">· ' + hid + ' hidden</span>' : '') + '</span>'
+    + '<button class="pill" data-testid="till-quickmaint-open" onclick="quickMaintOpen()">Edit ↗</button>'
+    + '</div>';
+}
+function quickSummaryPaint(){
+  var el = document.getElementById('quicksum'); if (el) el.innerHTML = quickSummaryHtml();
+}
+function quickMaintOpen(){
+  quickMaintPaint();
+  var d = document.getElementById('quickmaintdlg');
+  if (d && d.showModal && !d.open) { try { d.showModal(); } catch (_) {} }
+}
+function quickMaintClose(){
+  var d = document.getElementById('quickmaintdlg');
+  if (d && d.open) { try { d.close(); } catch (_) {} }
+}
+/** ⭐ the source, the group picker and the tick-list — moved wholesale out of Settings, none of it rewritten */
+function quickMaintPaint(){
+  var o = tillOpt();
+  /* ⚠️ the options come from QUICK_SRC, the same list the bar above the keys offers — see the note there */
+  var qs = document.getElementById('qm_qsrc');
+  if (qs) {
+    qs.innerHTML = QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '">' + esc(s[2]) + '</option>'; }).join('');
+    qs.value = o.quickSource || 'frequent';
+  }
+  /* ⭐ the groups, each with what it holds — and the one in hand can be renamed away or emptied from here */
+  var box = document.getElementById('qm_groups');
+  if (box) {
+    var names = Object.keys(groupsAll()).sort();
+    box.innerHTML = '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0 6px">'
+      + '<select data-testid="till-set-group" onchange="tillOptSet({group:this.value});quickMaintPaint()">'
+      + '<option value="">— no group —</option>'
+      + names.map(function(nm){
+          return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>'
+            + esc(nm) + ' (' + ((groupsAll()[nm] || []).length) + ')</option>'; }).join('')
+      + '</select>'
+      + '<button class="pill" data-testid="till-set-group-new" onclick="quickGroupNew()" title="A list you make — Morning, Noon, Night…">＋ New</button>'
+      + (o.group ? '<button class="pill" data-testid="till-set-group-drop" onclick="quickGroupDrop()">Remove</button>' : '')
+      + '</div>'
+      /* the counts are in the dropdown itself — no second list under it */
+      + setupGroupItems(o);
+  }
+  /* ⭐ the summary line in Settings is a VIEW of this same state — every change here repaints it too */
+  quickSummaryPaint();
 }
 async function loadQuick(){
   var now = new Date(), hour = now.getHours();
@@ -11296,6 +11494,11 @@ function quickQ(){
  */
 function quickShown(){
   var out = QUICK;
+  /* ⚠️⚠️ HIDDEN LEAVES THE KEYS WHETHER GROUPED OR NOT (Phase 4.3) — byCatOrder() already drops a hidden
+     category's whole section when grouped; this is the same rule for the plain, ungrouped grid, which never
+     asked byCatOrder() at all. Search (hits()) reads S.items directly and never calls quickShown(). */
+  var hiddenCats = catHidden();
+  if (hiddenCats.length) out = out.filter(function(i){ return !i || hiddenCats.indexOf(i.category) < 0; });
   if (quickCatOn()) out = out.filter(function(i){ return i && i.category === FILTER.cat; });
   var q = quickQ();
   if (!q) return out;
@@ -16014,44 +16217,38 @@ function countShort(lines){
  * FOR rather than just what it is — a shopkeeper reading "33 · Tamil Nadu" should not have to know why it is there.
  */
 /**
- * ── ⭐⭐ WHAT DECIDES SOMETHING STAYS HERE; THE REST GETS A LINK (design-handoff §1.7: *"the shop's tax
- * identity is duplicated here, read-only… two places to look"*, tests/snapshot-wire.test.js's own
- * "only what decides something" rule) ────────────────────────────────────────────────────────────────────
+ * ── ⭐⭐⭐ ONE LINE, WITH A LINK (design-handoff/04-settings §3 row-table: *"hub ▸ The shop. One line stays:
+ * Mayur Bhavan · not registered · Open the shop ↗"* — acceptance check §10.7: *"the shop's tax block [is] one
+ * line ... no second editable copy anywhere"*, Phase 4.5) ─────────────────────────────────────────────────
  *
- * ⚠️ THE FOUR ROWS THAT SURVIVED THE FIRST CUT ARE NOT THE DUPLICATION. Athi, 2026-09-09: *"we don't need
- * all I guess — what is required only"* — address, phone, legal name and currency were cut then, and the
- * hub's menuShopBody() is where they live; GSTIN, Registration, Every bill is and Tax shown as are each a
- * DECISION about what prints, not header text, and stay. The overlap with the hub is narrower than it looks:
- * only the GSTIN VALUE itself is shown in both places, because "Tax shown as" cannot be explained without it.
- * ⭐ THE LINK IS WHAT'S NEW — a way to the hub's fuller read-out (address, phone, legal name, the fix actions
- * for anything still missing) without this panel trying to be that page a second time.
+ * ⚠️ NOTHING IS DROPPED, ONLY SAID AS ONE SENTENCE. GSTIN, Registration, Every bill is and Tax shown as were
+ * four stacked rows; each is still a DECISION about what prints, not header text ([TILL-105], Athi 2026-09-09:
+ * *"we don't need all I guess — what is required only"*) — so all four survive, folded into one line, instead
+ * of the mini table this panel used to be. Address, phone, legal name and currency stay where they always
+ * were, in the hub's menuShopBody(), one press away through "More about the shop ↗".
  */
 function paintShop(){
   var el = document.getElementById('shopbox'); if (!el) return;
   if (!S || !S.shop) { el.innerHTML = '<div class="shopfacts">No copy of the shop yet — press ↻ once, while online.</div>'; return; }
   var sh = S.shop, tx = shopTax();
-  var doc = tx.kind === 'tax' ? 'TAX INVOICE' : (tx.kind === 'supply' ? 'BILL OF SUPPLY' : 'a cash memo');
-  var split = !sh.state_code ? 'cannot be split without the state'
+  var doc = tx.kind === 'tax' ? 'a TAX INVOICE' : (tx.kind === 'supply' ? 'a BILL OF SUPPLY' : 'a cash memo');
+  var split = !sh.state_code ? 'cannot be split'
     : ((window.CBTax && CBTax.supplyType(String(sh.state_code), String(sh.state_code)) === 'intra') ? 'CGST + SGST' : 'IGST');
+  /**
+   * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
+   * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the line says so.
+   */
+  var status = sh.gstin ? 'GSTIN ' + esc(String(sh.gstin))
+    : 'Not registered' + (regWords() ? ' — ' + esc(regWords()) : ' — this shop does not charge GST');
+  var docTax = tx.charges
+    ? ', every bill is ' + doc + ' (' + (sh.state_code ? split : 'tax cannot be split — no state on the GSTIN') + ')'
+    : ', every bill is ' + doc;
   el.innerHTML = '<div class="shopfacts">'
-    + '<div class="shoptop"><b>' + esc(sh.name || 'This shop') + '</b></div>'
-    /**
-     * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
-     * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the row says so.
-     */
-    + '<div class="f"><span>GSTIN</span>'
-    + (sh.gstin ? '<b>' + esc(String(sh.gstin)) + '</b>'
-                : '<b>Not registered</b> <span>this shop does not charge GST</span>') + '</div>'
-    + (!sh.gstin && regWords() ? '<div class="shopreg">' + esc(regWords()) + '</div>' : '')
-    + '<div class="f"><span>Registration</span><b>' + esc(sh.reg_type || 'regular') + '</b></div>'
-    + '<div class="f"><span>Every bill is</span><b>' + doc + '</b></div>'
-    + (tx.charges ? '<div class="f"><span>Tax shown as</span>'
-        + (sh.state_code ? '<b>' + esc(split) + '</b>'
-                         : '<b class="miss">cannot be split</b> <span>no state on the GSTIN</span>') + '</div>' : '')
+    + '<div class="shoptop"><b>' + esc(sh.name || 'This shop') + '</b> · ' + status + docTax + '</div>'
     + '<div class="src" title="Kept by ChitBridge so every counter and your storefront show the same thing.">From ChitBridge'
     + (S.at ? ' · ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '')
     + ' · <button class="daylink" data-testid="till-shop-edit" onclick="shopEditOpen()">Change these</button>'
-    /* ⭐ NEW: the address, phone, legal name and currency this panel deliberately does not repeat */
+    /* ⭐ the address, phone, legal name and currency this panel deliberately does not repeat */
     + ' · <button class="daylink" data-testid="till-shop-openhub" onclick="openShopInHub()">More about the shop ↗</button></div>'
     + '</div>';
 }
@@ -19990,6 +20187,8 @@ async function closeReadinessNow(){
   return { sent: sale.filter(function(b){ return b._sent; }).length, total: sale.length,
            waiting: q.length, inHand: (PARKED || []).length };
 }
+/** ⭐ the hub menu's own "Close this counter" — through the same live-figures sheet the day card uses, never closeCounter()'s own bare sure() (Phase 4.5) */
+function closeFromMenu(){ sureSheet('close'); }
 async function closeCounter(already){
   if (!(HOST && HOST.key)) { say('This counter is not paired, so there is nothing to close.'); return; }
   if (HOST === AgentHost) { say('This counter runs through the program on this PC. Close it from ChitBridge → Settings → Integrations → Counters.'); return; }
@@ -21360,6 +21559,8 @@ function openOfferLab(){ window.open('/offer-lab-next.html', '_blank', 'noopener
  *
  * ⚠️ It deletes only THIS shop's database. Another shop's counter on the same PC keeps its own bills and its own queue.
  */
+/** ⭐ the hub menu's own "Repair this counter" — through the same sheet Counter health uses, never coldStart()'s own bare sure() (Phase 4.5) */
+function coldStartFromMenu(){ sureSheet('repair'); }
 async function coldStart(already){
   /**
    * ⭐⭐⭐ THE SHEET NAMES WHAT IS ACTUALLY WAITING (design-handoff/01-footer §3, Phase 3.3) — "anything
@@ -22334,10 +22535,6 @@ function openSettings(tab){
       + '</div>'
       + '<div class="srow"><span>Data folder<i class="scope counter">this counter</i></span><span class="u">' + esc((STATE && STATE.folder) || 'till-data') + '</span></div>';
   }
-  /* ⚠️ in ⚙ rather than on the counter itself: it is a maintenance act, and it should take a deliberate walk to reach */
-  var cs = document.getElementById('coldbox');
-  if (cs) cs.innerHTML = '<div class="srow" title="Sends anything waiting, then clears this counter and reads your shop again. For a counter that feels slow or shows something it should not.">'
-    + '<span>Start fresh<i class="scope counter">this counter</i></span><button class="pill" data-testid="till-coldstart" onclick="coldStart()">↺ Clear and reload</button></div>';
   paintPrinters();
   /* ⚠️ painted on OPEN, not once at boot — the shop is re-read all day and a stale GSTIN here would be worse than none */
   paintShop();
@@ -22413,10 +22610,6 @@ function paintSetup(){
   ['add', 'total', 'collect'].forEach(function(k){
     var el = document.getElementById('spk_' + k); if (el) el.checked = !!spkF[k];
   });
-  /* ⚠️ the options come from QUICK_SRC, the same list the bar above the keys offers — see the note there */
-  var qs = document.getElementById('set_qsrc');
-  if (qs) qs.innerHTML = QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '">' + esc(s[2]) + '</option>'; }).join('');
-  set('set_qsrc', o.quickSource || 'frequent');
   set('set_upi', (o.upi && o.upi.payee) || '');
   set('set_upilabel', (o.upi && o.upi.label) || 'UPI');
   /* ⚠️ the STORED choice, not the effective one — cartCols() also drops a column on a narrow screen, and a tick
@@ -22460,23 +22653,9 @@ function paintSetup(){
         + ' onchange="tillShowSet(\'' + p[0] + '\',this.checked)"> ' + esc(p[1]) + '</label>';
     }).join('');
   }
-  /* ⭐ the groups, each with what it holds — and the one in hand can be renamed away or emptied from here */
-  var box = document.getElementById('setupgroups');
-  if (box) {
-    var names = Object.keys(groupsAll()).sort();
-    box.innerHTML = '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0 6px">'
-      + '<select data-testid="till-set-group" onchange="tillOptSet({group:this.value});paintSetup()">'
-      + '<option value="">— no group —</option>'
-      + names.map(function(nm){
-          return '<option value="' + esc(nm) + '"' + (nm === o.group ? ' selected' : '') + '>'
-            + esc(nm) + ' (' + ((groupsAll()[nm] || []).length) + ')</option>'; }).join('')
-      + '</select>'
-      + '<button class="pill" data-testid="till-set-group-new" onclick="quickGroupNew()" title="A list you make — Morning, Noon, Night…">＋ New</button>'
-      + (o.group ? '<button class="pill" data-testid="till-set-group-drop" onclick="quickGroupDrop()">Remove</button>' : '')
-      + '</div>'
-      /* the counts are in the dropdown itself — no second list under it */
-      + setupGroupItems(o);
-  }
+  /* ⭐ Quick keys is maintenance now, not a setting (00-CORRECTIONS.md #18) — Settings gets one line and a
+     link; quickMaintPaint() (quickmaintdlg) holds the source, the group picker and the tick-list. */
+  quickSummaryPaint();
   /* ⚠️ SAY WHERE THE PAYEE COMES FROM. The shop's own published payee wins; this one only fills a gap, and a
      counter quietly taking money at a different address than the shop declared would be a serious thing. */
   var note = document.getElementById('setupupi');
