@@ -745,7 +745,12 @@ function refOf(req) {
           const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
           const sRow = rowOf(sellerId), bRow = rowOf(buyerId);
           if (sRow && bRow) {
-            const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: new Date().toISOString() });
+            /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
+               so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
+               if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
+               the SELLER's own setting from it, no second query. */
+            const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax') === 'yes';
+            const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: new Date().toISOString(), priceIncludesTax });
             const h = taxLines.heads(inv.invoice);
             if (h && Number.isFinite(h.tax)) { tax = r2m(h.tax); total = r2m(h.total || (net + tax)); }
           }
