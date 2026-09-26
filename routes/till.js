@@ -61,6 +61,17 @@ function versionOf(payload) {
 
 router.get('/snapshot', auth, async (req, res) => {
   try {
+    /**
+     * ⚠️⚠️ [REV-16] "the delta cursor is stamped after the read, so edits vanish permanently." Taken HERE, before
+     * a single query below has run, not at body-construction time (was: right before `res.json`, after the item
+     * SELECT, the tax shelf, the offers and the network lookups had all already completed). Item SELECT runs at
+     * 10:00:00.300, back office saves a price at 10:00:00.700, the OLD stamp landed at 10:00:01.100 — so that
+     * edit's updated_at (10:00:00.700) was already ≤ the cursor the till was handed, and the NEXT `since=` ask
+     * for `updated_at > 10:00:01.100` would never see it. Stamping first makes the cursor slightly
+     * conservative (it may re-send a row that settled a moment after this line) rather than silently unsafe —
+     * a repeat is a no-op merge; a permanent miss is a stale price nobody notices.
+     */
+    const readAt = new Date().toISOString();
     const entity_id = auth.entityOf(req);
     /* the moment the till last read the shop — anything touched after it is what it does not have */
     const sinceRaw = typeof req.query.since === 'string' ? req.query.since.trim() : '';
@@ -511,7 +522,7 @@ router.get('/snapshot', auth, async (req, res) => {
     } catch (_) { /* a network that cannot be read never stops the store's own offers */ }
 
     const body = {
-      at: new Date().toISOString(),
+      at: readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler */
       /**
        * ⭐⭐ WHICH SHOP IS THIS, ANSWERED BY THE SERVER (2026-09-08). Athi: *"can we check is there any other user id sits in the
        * session layer, so we can open it correctly?"* A counter could not check, because nothing it held said whose shop it was —
