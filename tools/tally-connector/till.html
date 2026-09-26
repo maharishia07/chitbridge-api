@@ -3264,6 +3264,13 @@
     <button value="cancel" data-testid="till-return-cancel" onclick="retClose()">Cancel</button>
     <button id="retgo" class="go" data-testid="till-return-go" onclick="retIssue()">Give it back</button>
   </menu></div></dialog>
+<!-- ⭐⭐ [till expenses] MONEY PAID OUT OF THE DRAWER — see expOpen() -->
+<dialog id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
+  <div id="expbody"></div>
+  <menu>
+    <button value="cancel" data-testid="till-expense-cancel" onclick="expClose()">Cancel</button>
+    <button id="expgo" class="go" data-testid="till-expense-go" onclick="expIssue()">Record it</button>
+  </menu></div></dialog>
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <div class="slipbox" id="slipbox"></div>
@@ -4134,6 +4141,7 @@ var CTR_SCREENS = [
   { id: 'needdlg',    code: 'CTR-25', name: 'What is needed' },
   { id: 'dayimgdlg',  code: 'CTR-26', name: "The day's picture" },
   { id: 'askdlg',     code: 'CTR-27', name: 'Ask' },
+  { id: 'expdlg',     code: 'CTR-28', name: 'Expenses' },
 ];
 function ctrScreen(id){ for (var i = 0; i < CTR_SCREENS.length; i++) if (CTR_SCREENS[i].id === id) return CTR_SCREENS[i]; return null; }
 
@@ -4598,22 +4606,27 @@ var CloudHost = {
      * blank screen, because it looks like an answer. [[feedback-silence-is-the-bug]]
      */
     var t = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(mine) : (function(){
-      var by2 = {}, total2 = 0, count2 = 0, back2 = 0;
+      /* [till expenses] the identical fallback rule as the engine's own totals() — an expense is not counted
+       * as a sale and leaves whatever tender it was paid from, same reasoning as a credit note two lines up. */
+      var by2 = {}, total2 = 0, count2 = 0, back2 = 0, exp2 = 0;
       mine.forEach(function(b){
         total2 = r2(total2 + (b.total||0));
         if (b.kind === 'credit_note') {
           back2 = r2(back2 + Math.abs(Number(b.total)||0));
           (b.refunds||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
+        } else if (b.kind === 'expense') {
+          exp2 = r2(exp2 + Math.abs(Number(b.total)||0));
+          (b.spent||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
         } else {
           count2++;
           (b.payments||[]).forEach(function(p){ by2[p.how] = r2((by2[p.how]||0) + (p.amount||0)); });
         }
       });
-      return { count: count2, total: total2, by: by2, refunds: back2 };
+      return { count: count2, total: total2, by: by2, refunds: back2, expenses: exp2 };
     })();
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
     return { snapshot: snap || null, online: lineUp() && !!this.key, queued: queue.length,
-             today: { count: count, total: total, by: by, returns: r2(back) },
+             today: { count: count, total: total, by: by, returns: r2(back), expenses: r2(t.expenses || 0) },
              till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
              engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums, rewards: !!window.CBRewards } };
   },
@@ -4859,6 +4872,22 @@ var CloudHost = {
     var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1'),
                               catalogue_version: S && S.version }, cn, { no: no });
     doc.chitBody = chitOfCN(doc);
+    await DB.put('bills', doc);
+    await DB.put('queue', doc);
+    this.drain();
+    return { ok: true, bill: doc };
+  },
+  /**
+   * ⭐⭐ [till expenses] AN EXPENSE GOES THE WAY A CREDIT NOTE GOES — its own series ('EXP'), its own store
+   * entry, its own queue slot. ⚠️⚠️ SAME RULE: MUST NOT TOUCH LAST_SERIES, for the identical reason — an
+   * expense is not a sale and must never advance or share the sales run's numbering.
+   */
+  async expense(e){
+    LAST_SERIES = null;
+    var no = await nextNumber('EXP');
+    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1') }, e,
+                             { kind: 'expense', no: no });
+    doc.chitBody = chitOfExpense(doc);
     await DB.put('bills', doc);
     await DB.put('queue', doc);
     this.drain();
@@ -5354,7 +5383,7 @@ async function nextNumber(kind){
  * ⚠️ AND AN UNKNOWN TAG IS A SALE, which is what the engine already does — stated here rather than discovered.
  * [[feedback-no-duplicate-functions]] [[feedback-name-vs-behaviour]]
  */
-var DOC_TAGS = { GRN: 'receipt', DC: 'despatch', CN: 'credit' };
+var DOC_TAGS = { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense' };
 function docKindOf(tag){ return DOC_TAGS[tag] || 'sale'; }
 /** and back the other way, for a caller that holds the engine's word and needs the counter's */
 function docTagOf(kind){
@@ -5399,6 +5428,33 @@ function chitOfCN(cn){
       if (l.gst_rate != null) o.gst_rate = l.gst_rate;
       return o;
     }),
+  };
+}
+/**
+ * ⭐⭐ [till expenses] Athi: "no way of recording other expenses which is being done at the counter... so the
+ * counter will have the right balance amount... it can be anything like Gpay, or cash or card, need to know
+ * what the expense is and the mode of payment and amount. so it can be verified against each. we are not
+ * classifying the expense class etc currently." No line items (nothing was sold or moved), no vendor/party
+ * record (that is chitOfDoc's job for a goods receipt) — just what it was for, how much, and which tender it
+ * left. `billed_at` is set for the SAME reason it matters on a bill: [REV-02]'s alreadyBilled() reads it to
+ * skip the seller's live offers/re-rating for a chit that already states a final, already-decided amount — an
+ * expense earning a "10% off" the day it happens to sync would be exactly that bug in a new shape.
+ */
+function chitOfExpense(e){
+  var subject = 'Expense — ' + e.what + ' — ' + e.no;
+  return {
+    recipients: [{ self: true, name: 'self' }],
+    purpose: 'expense',
+    subject: subject, manual_subject: subject,
+    client_ref: e.no,
+    business_json: {
+      till: { id: e.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: e.by || null },
+      doc: 'expense', slip: 'expense',
+      bill_no: e.no, billed_at: e.at,
+      /* ⭐ money OUT, named as its own thing — same reasoning as a credit note's `refund` above */
+      expense: { what: e.what, mode: e.mode, amount: r2(Math.abs(Number(e.total) || 0)) },
+    },
+    line_items: [],
   };
 }
 /**
@@ -7872,6 +7928,20 @@ function menuDayBody(){
     /* ⚠️ A COUNT AND A DOOR, NOT THE LIST ([TILL-79]). The list and the editing are in the popup now; a
        section that redraws the whole list is the content Athi asked to have taken out of the menu. */
     + menuTodoSummary()
+    + menuExpenseSummary()
+    + '</div>';
+}
+/**
+ * ⭐⭐ [till expenses] A DOOR NEXT TO THE TO-DO ONE, for the same reason it lives in this section — money paid
+ * out is a fact about the day, same as opening it or the list of things still to do. Not drawn on a host that
+ * cannot record one — see expCanIssue().
+ */
+function menuExpenseSummary(){
+  if (!expCanIssue()) return '';
+  return '<div class="todo" data-testid="till-expense-summary">'
+    + '<div class="todohead"><b>Expenses</b></div>'
+    + '<button class="pill wide" data-testid="till-open-expense" onclick="fromMenu(function(){ expOpen(); })">'
+    + '💰 Record an expense</button>'
     + '</div>';
 }
 /**
@@ -8020,6 +8090,12 @@ function todoPaint(){
       + '<input type="checkbox"' + (x.done ? ' checked' : '') + ' onchange="todoTick(' + i + ')">'
       + '<span class="tt" onclick="event.preventDefault();todoEdit(' + i + ')" title="tap to change">'
       + esc(x.t) + (x.due ? '<i class="tw">' + esc(todoWhen(x)) + '</i>' : '') + '</span>'
+      /* \u2b50 [till expenses] Athi: "in to do, you have rent to be paid at 4:00 PM... when the rent paid in
+       * whatever mode, it has to be registered" \u2014 reached straight from the reminder, "what" pre-filled with
+       * the to-do's own words, so nothing is typed twice. Not drawn on a host that cannot record one, same
+       * reasoning as the return button. */
+      + (!x.done && expCanIssue() ? '<button class="todox" title="record as an expense" aria-label="record as an expense"'
+          + ' data-testid="till-todo-exp-' + i + '" onclick="event.preventDefault();todoExpense(' + i + ')">\ud83d\udcb0</button>' : '')
       + '<button class="todox" title="remove" aria-label="remove" onclick="event.preventDefault();todoDrop(' + i + ')">\u2715</button>'
       + '</label>';
   };
@@ -8098,28 +8174,33 @@ function menuFresh(){
  * insufferable by the second morning. It marks which bill was the bohni and leaves it there.
  */
 /**
- * ⚠️ A RETURN IS NOT A BOHNI. The first sale of the day sets the day's luck; a credit note issued before the
- * first sale is not a sale at all, and calling it the bohni would be a small daily insult to the custom this
- * was built for.
+ * ⚠️ A RETURN IS NOT A BOHNI, AND NEITHER IS AN EXPENSE. The first sale of the day sets the day's luck; a
+ * credit note or a rent payment recorded before the first sale is not a sale at all, and calling either the
+ * bohni would be a small daily insult to the custom this was built for.
  */
 function bohniOf(bills){
-  return ((bills || []).filter(function(b){ return !isReturnRow(b); })[0]) || null;
+  return ((bills || []).filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); })[0]) || null;
 }
 function menuTodayBody(){
   /* painted synchronously from whatever the last read gave us, then repainted when the read lands */
   var bills = TODAY_BILLS;
   if (!bills) { todayBills().then(function(){ try { paintMenu(); } catch (_) {} }); }
   bills = bills || [];
-  /* ⚠️ THE SAME THREE RULES AS THE HEADER — see CloudHost.state(). Written twice, so they must agree twice. */
+  /* ⚠️ THE SAME RULES AS THE HEADER — see CloudHost.state(). Written twice, so they must agree twice.
+   * [till expenses] `spent` joins `back` here for the identical reason: neither is a sale made today. */
   var back = bills.filter(isReturnRow);
-  var n = bills.length - back.length;
+  var spent = bills.filter(isExpenseRow);
+  var n = bills.length - back.length - spent.length;
   var total = bills.reduce(function(a, b){ return a + (Number(b.total) || 0); }, 0);
   var saved = bills.reduce(function(a, b){ return a + (Number(b.saved) || 0); }, 0);
   var returned = back.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
-  /* how the money came in, less what went back out in the same tender */
+  var expensed = spent.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
+  /* how the money came in, less what went back out (a refund) or was paid out (an expense) in the same tender */
   var by = {};
   bills.forEach(function(b){
     if (isReturnRow(b)) { (b.refunds || []).forEach(function(x){
+      var how = String(x.how || 'Cash'); by[how] = r2((by[how] || 0) - (Number(x.amount) || 0)); }); return; }
+    if (isExpenseRow(b)) { (b.spent || []).forEach(function(x){
       var how = String(x.how || 'Cash'); by[how] = r2((by[how] || 0) - (Number(x.amount) || 0)); }); return; }
     (b.payments || []).forEach(function(pmt){
       var how = String(pmt.how || 'cash'); by[how] = r2((by[how] || 0) + (Number(pmt.amount) || 0)); });
@@ -8143,6 +8224,7 @@ function menuTodayBody(){
     + row("Today's sale", money(total), true)
     + row('Bills', String(n))
     + (returned ? row('Given back', '−' + money(returned)) : '')
+    + (expensed ? row('Expenses paid', '−' + money(expensed)) : '')
     + (n ? row('Average bill', money(r2(total / n))) : '')
     + (saved ? row('Taken off by offers', money(saved)) : '');
   Object.keys(by).sort().forEach(function(how){ out += row(how.charAt(0).toUpperCase() + how.slice(1), money(by[how])); });
@@ -8234,9 +8316,11 @@ function dayRepTable(title, cols, rows, foot){
     + '</table></section>';
 }
 function dayReportHTML(bills){
-  /* ⚠️ THE COUNT IS OF SALES. The money nets by itself (a credit note is stored negative); the count does not. */
+  /* ⚠️ THE COUNT IS OF SALES. The money nets by itself (a credit note or an expense is stored negative); the
+   * count does not — [till expenses] joins the credit-note exclusion here for the identical reason. */
   var back = (bills || []).filter(isReturnRow);
-  var n = (bills || []).length - back.length;
+  var spent = (bills || []).filter(isExpenseRow);
+  var n = (bills || []).length - back.length - spent.length;
   var agg = dayRepRows(bills);
   var total = bills.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
   var taxable = bills.reduce(function(a, b){ return r2(a + (Number(b.taxable) || 0)); }, 0);
@@ -8311,7 +8395,7 @@ function dayReportHTML(bills){
      '<b>' + money(grossSold) + '</b>', offSold ? '<b>\u2212' + money(offSold) + '</b>' : '',
      taxSold ? '<b>' + money(taxSold) + '</b>' : '', '<b>' + money(total) + '</b>']);
 
-  var billRows = (bills || []).filter(function(b){ return !isReturnRow(b); }).map(function(b){
+  var billRows = (bills || []).filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); }).map(function(b){
     var ct = (b.lines || []).reduce(function(a, l){ return r2(a + (Number(l.qty) || 0)); }, 0);
     var how = (b.payments || []).map(function(x){ return x.how; }).filter(Boolean).join(' + ') || '\u2014';
     return [esc(String(b.no || '')), esc(hhmm(b.at)), esc(((b.customer || {}).name) || 'Walk-in'),
@@ -8331,6 +8415,18 @@ function dayReportHTML(bills){
     back.length ? ['<b>' + dayRepCount(back.length, 'credit note', 'credit notes') + '</b>', '', '',
                    '<b>' + money(returned) + '</b>'] : null);
 
+  /* ⭐ [till expenses] the identical table, one column short — an expense has no "against" bill and no GST
+   * reason, just what it was for and which tender it left. */
+  var expensedT = spent.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
+  var expT = dayRepTable('Expenses', [{ label: 'No' }, { label: 'What' }, { label: 'Paid by' },
+    { label: 'Amount', num: true }],
+    spent.map(function(b){
+      var how = (b.spent || []).map(function(x){ return x.how; }).filter(Boolean).join(' + ') || '—';
+      return [esc(String(b.no || '')), esc(b.what || ''), esc(how), money(Math.abs(Number(b.total) || 0))];
+    }),
+    spent.length ? ['<b>' + dayRepCount(spent.length, 'expense', 'expenses') + '</b>', '', '',
+                    '<b>' + money(expensedT) + '</b>'] : null);
+
   var notes = '<footer class="drfoot">'
     + '<div><b>Bohni</b> \u2014 ' + (bohni
         ? esc(String(bohni.no || '')) + ' at ' + esc(hhmm(bohni.at)) + ', ' + money(Number(bohni.total) || 0)
@@ -8340,7 +8436,7 @@ function dayReportHTML(bills){
     + '<div class="drwarn">This counter counts what was SOLD; it does not hold stock figures.</div>'
     + '</footer>';
 
-  return head + '<div class="drbody">' + summary + pay + rate + items + billsT + backT + notes + '</div>';
+  return head + '<div class="drbody">' + summary + pay + rate + items + billsT + backT + expT + notes + '</div>';
 }
 async function dayReport(){
   var d = document.getElementById('dayrep'); if (!d) return;
@@ -19021,6 +19117,13 @@ function isReturnRow(b){
   if (window.CBRollup && CBRollup.isReturn) return CBRollup.isReturn(b);
   return !!(b && b.kind === 'credit_note');
 }
+/** ⭐ [till expenses] ONE DEFINITION, same reasoning as isReturnRow() just above — CBRollup.isExpense is what
+ *  totals()/fold() already use, so "what counts as an expense" cannot mean one thing on this screen and
+ *  another in the day's summary chit. */
+function isExpenseRow(b){
+  if (window.CBRollup && CBRollup.isExpense) return CBRollup.isExpense(b);
+  return !!(b && b.kind === 'expense');
+}
 function dayCloseSheet(rows){
   /**
    * ⚠️⚠️ A RETURN IS NOT A BILL, AND THE COUNT MUST NOT SAY IT IS (2026-09-18). Every accumulator below is a
@@ -19033,6 +19136,9 @@ function dayCloseSheet(rows){
    * So returns are separated here, netted where netting is right, and stated on their own line.
    */
   var back = (rows || []).filter(isReturnRow);
+  /* ⭐ [till expenses] the identical shape as `back` above — kept apart from it because "returned" and "spent"
+   * are different facts (a refund undoes a sale; an expense never was one) even though both leave the drawer. */
+  var spent = (rows || []).filter(isExpenseRow);
   /**
    * ⭐⭐ THE SHARED FIGURES COME FROM THE ENGINE ([TILL-125]): how many SALES, how many returns, and how much
    * was handed back. Those three are the rule the counter program and the server also apply, and this screen
@@ -19047,11 +19153,15 @@ function dayCloseSheet(rows){
    * drawer count wants those two on separate lines.
    */
   var rt0 = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(rows || []) : null;
-  var d = { bills: rt0 ? rt0.count : (rows || []).filter(function(b){ return !isReturnRow(b); }).length,
+  var d = { bills: rt0 ? rt0.count : (rows || []).filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); }).length,
             first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
             rate:{}, modes:{}, people:{}, items:{}, taxed:false,
             /* ⭐ said out loud, never folded away — a day with returns in it is a different day */
-            returns: rt0 ? rt0.returns : back.length, returned: rt0 ? rt0.refunds : 0, refunded: {} };
+            returns: rt0 ? rt0.returns : back.length, returned: rt0 ? rt0.refunds : 0, refunded: {},
+            /* ⭐ [till expenses] the identical treatment, one column over — a day with expenses in it is also
+             * a different day, and pretending the drawer only ever loses money to refunds would be exactly
+             * the bug this whole engine exists to prevent, just for a different cause. */
+            expenses: rt0 ? rt0.expenseCount : spent.length, expensed: rt0 ? rt0.expenses : 0, spentby: {} };
   back.forEach(function(b){
     if (!rt0) d.returned = r2(d.returned + Math.abs(Number(b.total) || 0));
     /* ⚠️ per-tender refunds are this sheet's own — the engine nets them into `by`, and a drawer count must not */
@@ -19059,9 +19169,17 @@ function dayCloseSheet(rows){
       d.refunded[x.how] = r2((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
     });
   });
+  spent.forEach(function(b){
+    if (!rt0) d.expensed = r2(d.expensed + Math.abs(Number(b.total) || 0));
+    /* ⚠️ per-tender expenses are this sheet's own, same reasoning as refunds two lines up */
+    ((b.spent) || []).forEach(function(x){
+      d.spentby[x.how] = r2((d.spentby[x.how] || 0) + (Number(x.amount) || 0));
+    });
+  });
   (rows||[]).slice().sort(function(a,b){ return String(a.at).localeCompare(String(b.at)); }).forEach(function(b){
-    /* ⚠️ the numbers below are the SALES run; a credit note's number belongs to its own series */
-    if (!isReturnRow(b)) { if (!d.first) d.first = b.no; d.last = b.no; }
+    /* ⚠️ the numbers below are the SALES run; a credit note's number belongs to its own series, and so —
+       [till expenses] — does an expense's ('EXP') */
+    if (!isReturnRow(b) && !isExpenseRow(b)) { if (!d.first) d.first = b.no; d.last = b.no; }
     d.total = r2(d.total + (b.total||0)); d.saved = r2(d.saved + (b.saved||0));
     d.gross = r2(d.gross + (b.total||0) + (b.saved||0));
     d.taxable = r2(d.taxable + (b.taxable||0)); d.tax = r2(d.tax + (b.tax||0));
@@ -19077,8 +19195,9 @@ function dayCloseSheet(rows){
      */
     var who = (b.by && b.by.name) || 'No person recorded';
     d.people[who] = d.people[who] || { bills:0, total:0 };
-    /* ⚠️ a refund is not a sale that person made; the money nets, the COUNT does not */
-    if (!isReturnRow(b)) d.people[who].bills++;
+    /* ⚠️ a refund is not a sale that person made; the money nets, the COUNT does not — [till expenses] nor
+       is paying rent a sale, however it went through the same person's hands */
+    if (!isReturnRow(b) && !isExpenseRow(b)) d.people[who].bills++;
     d.people[who].total = r2(d.people[who].total + (b.total||0));
     (b.lines||[]).forEach(function(l){
       var k = l.name || l.item_id;
@@ -19103,9 +19222,13 @@ function dayCloseSheet(rows){
    * in its own 'refunds' array, precisely because every reader of 'payments' assumes money taken — so the drawer
    * has to be told separately or the count at the end of the day would be short by exactly the refunds and
    * somebody would be accused of it.
+   * ⚠️⚠️ [till expenses] AND CASH PAID OUT HAS LEFT IT TOO, for the identical reason — 'spent' is its own
+   * array, never 'payments', so rent paid in cash has to be told here or the drawer will look short by exactly
+   * what left it for a reason that was never a refund.
    */
   d.cash_back = r2(d.refunded.Cash || 0);
-  d.expected_cash = r2(d.cash + d.float - d.cash_back);
+  d.cash_out = r2(d.spentby.Cash || 0);
+  d.expected_cash = r2(d.cash + d.float - d.cash_back - d.cash_out);
   return d;
 }
 function dayCloseHTML(d){
@@ -19115,6 +19238,14 @@ function dayCloseHTML(d){
       + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(d.returned) + '</span></div>'
       + Object.keys(d.refunded).sort().map(function(how){
           return '<div>back in ' + esc(how) + '<span style="float:right">' + money(d.refunded[how]) + '</span></div>';
+        }).join('')
+    : '';
+  /* ⭐ [till expenses] the identical block, one column over — money paid out that was never a refund. */
+  var expBlock = d.expenses
+    ? '<hr><div><b>EXPENSES</b></div>'
+      + '<div>' + d.expenses + ' expense(s)<span style="float:right">' + money(d.expensed) + '</span></div>'
+      + Object.keys(d.spentby).sort().map(function(how){
+          return '<div>paid by ' + esc(how) + '<span style="float:right">' + money(d.spentby[how]) + '</span></div>';
         }).join('')
     : '';
   var shop = (S && S.shop) || {};
@@ -19130,8 +19261,9 @@ function dayCloseHTML(d){
     + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
     + (d.saved > 0 ? t('Before offers', money(d.gross)) + t('Given away', '-' + money(d.saved)) : '')
     + backBlock
-    /* ⚠️ TAKEN IS ALREADY NET OF RETURNS, because a credit note is stored negative and this is a bare sum.
-       The returns block above says how much of the day that was, so the figure can be explained. */
+    + expBlock
+    /* ⚠️ TAKEN IS ALREADY NET OF RETURNS AND EXPENSES, because both are stored negative and this is a bare
+       sum. The blocks above say how much of the day that was, so the figure can be explained. */
     + solid + t('TAKEN', money(d.total), true) + solid
     + (d.taxed ? dash + '<div style="font-weight:700">Tax</div>'
         + Object.keys(d.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
@@ -19147,6 +19279,7 @@ function dayCloseHTML(d){
     + dash + '<div style="font-weight:700">In the drawer</div>'
     + t('Float at the start', money(d.float)) + t('Cash taken', money(d.cash))
     + (d.cash_back ? t('Cash given back', '-' + money(d.cash_back)) : '')
+    + (d.cash_out ? t('Cash paid out', '-' + money(d.cash_out)) : '')
     + t('Should be there', money(d.expected_cash), true)
     + '<div style="font-size:.85em">Count it and hand over (F7) to record the difference.</div>'
     + dash + '<div style="font-weight:700">Who billed</div>'
@@ -21381,7 +21514,9 @@ async function openBills(keepOpen){
           + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button>'
           /* ⭐ a return starts from the bill it undoes — there is nowhere else it could sensibly start */
           /* ⭐ only offered where it can actually be carried through — see retCanIssue() */
-          + ((b.kind === 'credit_note' || !retCanIssue()) ? ''
+          /* ⚠️ [till expenses] AND NOT ON AN EXPENSE — it has no lines to return, "take a return" against a
+             rent payment is meaningless, and retOpen() would have opened an empty sheet with nothing to pick. */
+          + ((b.kind === 'credit_note' || b.kind === 'expense' || !retCanIssue()) ? ''
               : '<button class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
                 + ' onclick="retOpen(\'' + esc(b.no) + '\')">return</button>') + '</div>';
             }).join('') + '</div></details>';
@@ -21571,6 +21706,94 @@ function retPaint(){
 function retClose(){
   var d = document.getElementById('retdlg'); if (d && d.open) { try { d.close(); } catch (_) {} }
   RET_FOR = null; RET_QTY = null; RET_PRIOR = null;
+}
+/**
+ * ── ⭐⭐⭐ [till expenses] MONEY PAID OUT OF THE DRAWER ────────────────────────────────────────────────────────
+ *
+ * Athi: "no way of recording other expenses which is being done at the counter... so the counter will have the
+ * right balance amount." And, on the shape of it: "it can be anything like Gpay from the same receiving gpay,
+ * or cash or card, need to know what the expense is and the mode of payment and amount. so it can be verified
+ * against each. we are not classifying the expense class etc currently, but let it be that way." And on where
+ * it should end up: "assuming if we are bringing the real ledger, then it has to be recorded against the same"
+ * — which is why this is a CHIT (purpose:'expense'), the same document of record every sale and credit note
+ * already is, not a side number that a real ledger would later have to be told about separately.
+ *
+ * ⚠️⚠️ SAME HOST LIMITATION AS A CREDIT NOTE, for the identical reason — AgentHost has no expense() either.
+ */
+var EXP_WHYNOT = 'This counter cannot record an expense yet — that is on the browser counter only.';
+function expCanIssue(){ return !!(HOST && typeof HOST.expense === 'function'); }
+var EXP_WHAT = '', EXP_AMOUNT = '', EXP_HOW = 'Cash';
+/** ⭐ the shop's own tenders, same list checkout offers — plus Cash, which is always available, same reasoning
+ *  retPaint() already uses ("a shop can always hand back cash" — equally true for paying one out). */
+function expWays(){
+  var ways = (S && S.shop && S.shop.pay && S.shop.pay.length) ? S.shop.pay.map(function(w){ return w.label || w.id; })
+           : ['Cash', 'Card'];
+  if (ways.indexOf('Cash') < 0) ways.unshift('Cash');
+  return ways;
+}
+/**
+ * @param prefill  optional text to start "What is it" with — see todoExpense(), which opens this straight
+ *                 from a to-do reminder ("Rent due 4pm") so the words never have to be typed twice.
+ */
+function expOpen(prefill){
+  if (!expCanIssue()) { toastLine(EXP_WHYNOT); return; }
+  EXP_WHAT = prefill || ''; EXP_AMOUNT = ''; EXP_HOW = expWays()[0] || 'Cash';
+  expPaint();
+  var d = document.getElementById('expdlg'); if (d && d.showModal && !d.open) d.showModal();
+  var box = document.getElementById('expwhat'); if (box) setTimeout(function(){ box.focus(); }, 30);
+}
+function expClose(){
+  var d = document.getElementById('expdlg'); if (d && d.open) { try { d.close(); } catch (_) {} }
+  EXP_WHAT = ''; EXP_AMOUNT = '';
+}
+function expWhat(v){ EXP_WHAT = v; expPaint(); }
+function expAmountSet(v){ EXP_AMOUNT = v; expPaint(); }
+function expHow(v){ EXP_HOW = v; expPaint(); }
+function expPaint(){
+  var box = document.getElementById('expbody'); if (!box) return;
+  var amt = Number(EXP_AMOUNT) || 0;
+  box.innerHTML =
+      '<label>What is it<input id="expwhat" value="' + esc(EXP_WHAT) + '" placeholder="Rent, delivery boy, tea for staff…"'
+        + ' oninput="expWhat(this.value)"></label>'
+    + '<label>Amount<input id="expamt" value="' + esc(EXP_AMOUNT) + '" inputmode="decimal" placeholder="0"'
+        + ' oninput="expAmountSet(this.value)"></label>'
+    + '<label>Paid by <select onchange="expHow(this.value)">'
+        + expWays().map(function(w){ return '<option value="' + esc(w) + '"' + (EXP_HOW === w ? ' selected' : '') + '>' + esc(w) + '</option>'; }).join('')
+      + '</select></label>';
+  var go = document.getElementById('expgo');
+  if (go) { go.disabled = !(EXP_WHAT.trim() && amt > 0); go.textContent = amt > 0 ? ('Record ' + money(amt)) : 'Record it'; }
+}
+/**
+ * ⭐⭐ ISSUE IT. Same discipline as a credit note: numbered from its own series, written locally, queued, sent
+ * when the line is there — never lost to the line being down, never mistaken for a sale.
+ */
+async function expIssue(){
+  var what = EXP_WHAT.trim(), amount = r2(Number(EXP_AMOUNT) || 0);
+  if (!what) { toastLine('Say what this expense is for first.'); return; }
+  if (!(amount > 0)) { toastLine('Give it a real amount first.'); return; }
+  if (await tillStopped()) return;
+  if (!expCanIssue()) { toastLine(EXP_WHYNOT); return; }
+  if (!(await sure('Record ' + money(amount) + ' paid for ' + what + ', by ' + EXP_HOW + '?',
+                   'Yes, record it', 'Record an expense'))) return;
+  var body = { what: what, mode: EXP_HOW, total: -amount,
+    spent: [{ how: EXP_HOW, amount: amount }],
+    by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null };
+  var r = { ok: false };
+  try { r = await HOST.expense(body); } catch (e) { r = { ok: false, error: e && e.message }; }
+  if (!r || !r.ok) {
+    /* ⚠️ THE SHEET STAYS OPEN — same reasoning as a credit note's failure path. Nothing typed is lost. */
+    toastLine('The expense was NOT recorded: ' + ((r && (r.why || r.error)) || 'the counter could not write it'));
+    return;
+  }
+  expClose();
+  toastLine('Recorded — ' + money(amount) + ' for ' + what + ', ' + EXP_HOW + '.');
+  try { paintMenu(); } catch (_) {}
+}
+/** ⭐ reached from a to-do reminder — see todoPaint()'s "💰 Record" button on each row. */
+function todoExpense(i){
+  var l = todoRead(); var x = l[i]; if (!x) return;
+  todoClose();
+  expOpen(String(x.t || '').trim());
 }
 /**
  * ⭐⭐ ISSUE IT. A credit note is a document, so it goes through the same queue a bill does and is as safe

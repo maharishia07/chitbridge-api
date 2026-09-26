@@ -252,8 +252,10 @@ router.post('/send',
       .optional()
       .trim()
       /* ⭐ 'credit_note' — a GST §34 return from the counter. This allow-list refuses at the door, and a 4xx is
-         FINAL at the counter (never queued, never retried) — so a purpose missing from here is a return lost. */
-      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note'])
+         FINAL at the counter (never queued, never retried) — so a purpose missing from here is a return lost.
+         ⭐ 'expense' — the counter's own money paid OUT (rent, a delivery boy, anything not a refund of a
+         sale), same reasoning: missing from here means the till's own drawer stops balancing. */
+      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note','expense'])
       .withMessage('Invalid purpose'),
     body('manual_subject').optional().trim().isLength({ max: 500 }),
     // Per-send copy choice — honoured ONLY on a pure self-chit (see the pureSelfChit branch); ignored elsewhere.

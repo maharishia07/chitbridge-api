@@ -29,6 +29,10 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } c
 const sale = (no, total, how) => ({ no, total, at: '2026-09-14T10:00:00Z', payments: [{ how: how || 'Cash', amount: total }] });
 const back = (no, amount, how) => ({ no, kind: 'credit_note', total: -amount, at: '2026-09-14T11:00:00Z',
   refunds: [{ how: how || 'Cash', amount }] });
+/** [till expenses] Athi: "it can be anything like Gpay... or cash or card... need to know what the expense is
+ *  and the mode of payment and amount" — `spent`, never `payments`, same reasoning as a return's `refunds`. */
+const spend = (no, amount, how, what) => ({ no, kind: 'expense', total: -amount, what: what || 'Expense',
+  at: '2026-09-14T12:00:00Z', spent: [{ how: how || 'Cash', amount }] });
 
 console.log('\nA RETURN IS NOT A SALE\n');
 
@@ -67,12 +71,49 @@ it('a day with nothing in it is zeroes, not empty', () => {
   assert.deepStrictEqual(t.by, {});
 });
 
+console.log('\n[till expenses] AN EXPENSE IS NOT A SALE, AND IT LEAVES WHATEVER TENDER IT WAS PAID FROM\n');
+
+it('an expense is not counted as a sale made', () => {
+  const t = R.totals([sale('1', 100), spend('E-1', 40, 'Cash', 'Rent')]);
+  assert.strictEqual(t.count, 1, 'the expense was counted as a sale made');
+  assert.strictEqual(t.returns, 0, 'an expense is not a return either');
+  assert.strictEqual(t.expenseCount, 1, 'expenseCount is the COUNT — a day-close screen asking "how many expenses" needs this, not the amount');
+});
+
+it('an expense leaves the tender it was paid from', () => {
+  const t = R.totals([sale('1', 100), spend('E-1', 40, 'Cash', 'Rent')]);
+  assert.strictEqual(t.by.Cash, 60, 'the drawer figure did not lose the expense');
+  assert.strictEqual(t.gross, 100, 'gross is what was sold — an expense is not a sale, so it never touches gross');
+  assert.strictEqual(t.expenses, 40, 'expenses is an amount, stated positive');
+  assert.strictEqual(t.total, 60, 'total is what the shop actually kept, expense included');
+});
+
+it('an expense paid by GPay/UPI leaves THAT tender, not cash', () => {
+  const t = R.totals([sale('1', 100, 'Cash'), spend('E-1', 25, 'UPI', 'Delivery boy')]);
+  assert.deepStrictEqual(t.by, { Cash: 100, UPI: -25 }, 'an expense on a different tender than the day’s sales is tracked on its own');
+});
+
+it('a return AND an expense on the same day both leave the drawer, independently', () => {
+  const t = R.totals([sale('1', 200), back('CN-1', 30), spend('E-1', 50, 'Cash', 'Tea for staff')]);
+  assert.strictEqual(t.refunds, 30);
+  assert.strictEqual(t.expenses, 50);
+  assert.strictEqual(t.total, 120, '200 sold − 30 refunded − 50 spent = what the shop actually kept');
+  assert.strictEqual(t.by.Cash, 120);
+});
+
+it('what the expense WAS FOR travels on the row, for a person checking the till later — never classified', () => {
+  const t = R.totals([spend('E-1', 500, 'Cash', 'Electrician')]);
+  assert.strictEqual(t.expenses, 500);
+  /* ⭐ Athi: "we are not recording against each class... let it be that way" — totals() itself never reads
+   * `what`; it is carried on the ROW for the chit and the day's list to show, not summarised into a category. */
+});
+
 console.log('\n⚠️⚠️⚠️ FOLDING EQUALS SUMMARISING — THE REASON PURGING IS SAFE\n');
 
 it('a week folded from days equals the days summarised together', () => {
   const d1 = [sale('1', 100), sale('2', 50, 'UPI')];
   const d2 = [sale('3', 200), back('CN-1', 25)];
-  const d3 = [sale('4', 33.33, 'Card')];
+  const d3 = [sale('4', 33.33, 'Card'), spend('E-1', 15, 'Card', 'Auto fare')];
   const folded = R.fold([R.totals(d1), R.totals(d2), R.totals(d3)]);
   const direct = R.totals(d1.concat(d2, d3));
   assert.deepStrictEqual(folded, direct,
@@ -80,10 +121,17 @@ it('a week folded from days equals the days summarised together', () => {
 });
 
 it('and folding folds — a month from weeks equals a month from days', () => {
-  const days = [[sale('1', 10)], [sale('2', 20)], [back('CN', 5)], [sale('3', 40, 'UPI')]];
+  const days = [[sale('1', 10)], [sale('2', 20)], [back('CN', 5)], [sale('3', 40, 'UPI'), spend('E-1', 8, 'UPI', 'Snacks')]];
   const weekA = R.fold([R.totals(days[0]), R.totals(days[1])]);
   const weekB = R.fold([R.totals(days[2]), R.totals(days[3])]);
   assert.deepStrictEqual(R.fold([weekA, weekB]), R.totals([].concat.apply([], days)));
+});
+
+it('a summary saved BEFORE expenses existed folds as zero expense, not a hole', () => {
+  const oldSummary = { count: 2, returns: 0, gross: 300, refunds: 0, total: 300, by: { Cash: 300 } };   /* no .expenses field at all */
+  const f = R.fold([oldSummary, R.totals([spend('E-1', 40, 'Cash', 'Rent')])]);
+  assert.strictEqual(f.expenses, 40, 'the old summary contributed 0, not NaN');
+  assert.strictEqual(f.total, 260);
 });
 
 it('fold accepts summary records as well as bare totals', () => {

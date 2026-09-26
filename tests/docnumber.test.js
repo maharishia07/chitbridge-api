@@ -28,11 +28,22 @@ it('⭐⭐ every document a counter issues fits inside 16 characters', () => {
    * anything unusual. The three-letter tag was the cost, and one letter buys it back without giving up the
    * separators, which are explicitly permitted and are what make the number splittable again.
    */
-  ['sale', 'receipt', 'despatch', 'credit'].forEach((kind) => {
+  ['sale', 'receipt', 'despatch', 'credit', 'expense'].forEach((kind) => {
     const no = D.compose({ country: 'IN', prefix: 'C1', kind, at: AT, seq: 41 });
     const c = D.check(no, 'IN');
     assert.ok(c.ok, kind + ' → ' + no + ' (' + no.length + ') — ' + c.reason);
   });
+});
+
+it('⭐⭐⭐ [till expenses] an expense draws its OWN series too, same reasoning as a credit note', () => {
+  /* ⚠️ found by e2e/till-expense.cjs BEFORE this entry existed: nextNumber('EXP') composed a number
+   * indistinguishable from a plain sale, because compose() reads KINDS['expense'], found it undefined, and
+   * fell straight into the exact trap the comment on the credit-note test above already names. */
+  const sale = D.compose({ country: 'IN', prefix: 'C1', kind: 'sale', at: AT, seq: 7 });
+  const expense = D.compose({ country: 'IN', prefix: 'C1', kind: 'expense', at: AT, seq: 7 });
+  assert.notStrictEqual(expense, sale, 'an expense and a sale at the same sequence produced the SAME number');
+  assert.ok(/^E\//.test(expense), 'an expense is tagged E: ' + expense);
+  assert.ok(D.check(expense, 'IN').ok, expense + ' (' + expense.length + ') is over the limit');
 });
 
 it('⚠️⚠️ a credit note draws its OWN series, and an unknown kind must never draw the sale one', () => {
