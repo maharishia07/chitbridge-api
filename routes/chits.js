@@ -365,6 +365,37 @@ function refOf(req) {
   const v = req && req.body && req.body.client_ref;
   return (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 64) : null;
 }
+/**
+ * ⭐⭐⭐ ONE TIE-BREAK, TWO CALLERS — lifted 2026-09-26 per the external review's §22. This verdict (same till id
+ * AND same billed_at moment → a retry; anything else once a client_ref collides → two counters on one number) was
+ * written out twice — the pre-send check below and the race-catch further down — and had actually drifted: the
+ * catch block was missing this `sameName` branch entirely (the "two counters, ALSO called..." wording), so a
+ * lost-race collision between two identically-named counters read the same as an ordinary one. One function now
+ * answers both callers, so that gap cannot reopen by one of them being edited without the other.
+ */
+function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
+  const otherBill = !!(myAt && theirAt && myAt !== theirAt);
+  if (!((mine && theirs && String(mine) !== String(theirs)) || otherBill)) return { collision: false };
+  const sameName = !!(mine && theirs && String(mine) === String(theirs));
+  return {
+    collision: true,
+    sameName,
+    body: {
+      error: 'Bill number already used by another counter',
+      code: 'TILL_SERIES_COLLISION',
+      client_ref, till: mine, taken_by: theirs,
+      message: sameName
+        ? ('Bill ' + client_ref + ' was already recorded by a different counter that is ALSO called '
+          + mine + '. Two counters are numbering from the same series. This counter is given its own '
+          + 'number the next time it reads the shop. This bill is kept on the counter, unsent — it was '
+          + 'already printed with this number, so how it is recorded needs a decision. Nothing has been lost.')
+        : ('Bill ' + client_ref + ' was already recorded by counter ' + theirs + ', and this is '
+          + 'counter ' + mine + '. Two counters are numbering from the same series. This counter is given '
+          + 'its own number the next time it reads the shop. This bill is kept on the counter, unsent — '
+          + 'nothing has been lost.'),
+    },
+  };
+}
 // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
       /**
        * ⭐⭐ THE SAME BILL TWICE IS THE SAME CHIT (the till, 2026-09-07). A counter queues its bills and replays them when the line
@@ -425,24 +456,8 @@ function refOf(req) {
              */
             const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
             const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
-            const otherBill = !!(myAt && theirAt && myAt !== theirAt);
-            if ((mine && theirs && String(mine) !== String(theirs)) || otherBill) {
-              const sameName = mine && theirs && String(mine) === String(theirs);
-              return res.status(409).json({
-                error: 'Bill number already used by another counter',
-                code: 'TILL_SERIES_COLLISION',
-                client_ref, till: mine, taken_by: theirs,
-                message: sameName
-                  ? ('Bill ' + client_ref + ' was already recorded by a different counter that is ALSO called '
-                    + mine + '. Two counters are numbering from the same series. This counter is given its own '
-                    + 'number the next time it reads the shop. This bill is kept on the counter, unsent — it was '
-                    + 'already printed with this number, so how it is recorded needs a decision. Nothing has been lost.')
-                  : ('Bill ' + client_ref + ' was already recorded by counter ' + theirs + ', and this is '
-                    + 'counter ' + mine + '. Two counters are numbering from the same series. This counter is given '
-                    + 'its own number the next time it reads the shop. This bill is kept on the counter, unsent — '
-                    + 'nothing has been lost.'),
-              });
-            }
+            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
+            if (verdict.collision) return res.status(409).json(verdict.body);
             return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
           }
         } catch (_) { /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
@@ -1462,17 +1477,10 @@ function refOf(req) {
             const theirs = seen.rows[0].till_id || null;
             const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
             const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
-            /* ⚠ THE SAME TWO TESTS AS THE CHECK ABOVE, in the same order — a different tie-break here would mean
-               a bill was answered one way when the check won and another way when it lost. */
-            if ((mine && theirs && String(mine) !== String(theirs)) || (myAt && theirAt && myAt !== theirAt)) {
-              return res.status(409).json({
-                error: 'Bill number already used by another counter',
-                code: 'TILL_SERIES_COLLISION', client_ref: raceRef, till: mine, taken_by: theirs,
-                message: 'Bill ' + raceRef + ' reached ChitBridge from two places at once and the other one was '
-                       + 'recorded first. This counter is given its own number the next time it reads the shop. '
-                       + 'This bill is kept on the counter, unsent — nothing has been lost.',
-              });
-            }
+            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
+               longer drift from it (it used to: this branch had no sameName wording at all). */
+            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
+            if (verdict.collision) return res.status(409).json(verdict.body);
             /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
             return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true,
                                           client_ref: raceRef, raced: true });

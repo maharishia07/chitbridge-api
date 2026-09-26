@@ -22146,9 +22146,18 @@ function openScreen(){
   window.open(addr, '_blank', 'noopener');
 }
 /** ⭐ NO FRAGMENT, DELIBERATELY — unlike openScreen() above, Offer Lab reads a PERSON's cb_sess, never a
- * till key, so there is nothing of this counter's own to hand it. See the TILL_OPS entry's own note. */
-function openOfferLab(){ window.open('/offer-lab-next.html', '_blank', 'noopener'); }
-function openComboLab(){ window.open('/combo-lab.html', '_blank', 'noopener'); }
+ * till key, so there is nothing of this counter's own to hand it. See the TILL_OPS entry's own note.
+ * ⚠️⚠️⚠️ [2026-09-26] A NAMED WINDOW, NOT '_blank' — Athi: "we need to have one window only, either we call
+ * it from backend app or till app, the same application should respond, cannot have multiple path for the
+ * same application." '_blank' opens a brand new tab on every click, from every caller — the till, app.html,
+ * Conversion Lab all had their own unnamed '_blank' link to the same page, so a shopkeeper who opened it from
+ * two places ended up with two tabs of the same Lab, each with its own in-memory state, neither aware of the
+ * other. A NAMED target is the platform's own answer: window.open(url, 'cb_offer_lab') from anywhere finds
+ * and reuses a tab already open under that name instead of spawning another — one window, whichever surface
+ * asked for it. `noopener` dropped on purpose: it is same-origin navigation, not an untrusted external link,
+ * and forcing a fresh opener-less context on every call is exactly what defeats window-name reuse. */
+function openOfferLab(){ window.open('/offer-lab-next.html', 'cb_offer_lab'); }
+function openComboLab(){ window.open('/combo-lab.html', 'cb_combo_lab'); }
 /**
  * ⭐⭐⭐ START FROM SCRATCH — but never before everything is safe. Athi, 2026-09-09: *"in the counter we need a mechanism of cold
  * start or reboot kind of, which should clear the indexed db and then restart again — before that it has to sync up and nothing
