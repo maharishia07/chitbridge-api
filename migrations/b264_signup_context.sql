@@ -1,5 +1,8 @@
 -- b264 · signup_context — WHAT WAS TRUE WHEN AN IDENTITY WAS CREATED, AND WHAT IT AGREED TO.
 --
+-- ✅ CONFIRMED APPLIED — checked live 2026-09-26, read-only (to_regclass finds the table). Ran without RLS
+-- originally, which is exactly why b265 exists right after this one — see that file.
+--
 -- Athi, 2026-09-18: *"anything else to be captured like device information, device type, ip and so on or
 -- anything else which we can capture and make meaning out of it"*, and *"possibly we have to ask for agree
 -- message"*.

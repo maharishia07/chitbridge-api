@@ -1,5 +1,8 @@
 -- b266: SAVED COMBO/MODIFIER TEMPLATES — a named, reusable group set, independent of any one product.
 --
+-- ✅ CONFIRMED APPLIED — checked live 2026-09-26, read-only: combo_templates exists, RLS enabled + forced,
+-- one policy.
+--
 -- [OFFR-06] Athi, testing the Modifier Lab: "the example shown is very pathetic... what i want is something
 -- similar to the combo offer in a popup window with possibly combination, and also with save as option, if
 -- we are doing save as feature then we should be having a mechanism of open the same again."

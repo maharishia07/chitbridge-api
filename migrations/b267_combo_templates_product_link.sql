@@ -1,5 +1,8 @@
 -- b267: a saved combo carries its OWN price, and (once pushed) the real product it created or updates.
 --
+-- ✅ CONFIRMED APPLIED — checked live 2026-09-26, read-only: combo_templates carries both price (numeric) and
+-- product_item_id (uuid).
+--
 -- [OFFR-08] Athi, testing the saved-combo library: "the saved combo should be able to push to product list
 -- as a new product... if it is an existing combo in the product list it has to update only." Without a link
 -- back to the product it created, every push would be a NEW product — there would be no way to tell "this

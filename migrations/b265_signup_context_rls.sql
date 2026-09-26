@@ -2,6 +2,10 @@
 -- b265 — signup_context was created WITHOUT ROW LEVEL SECURITY. Close it.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 --
+-- ✅ CONFIRMED APPLIED — checked live 2026-09-26, read-only: RLS enabled + forced on signup_context, exactly
+-- one policy, and cb_app's ONLY privilege on the table is INSERT (no SELECT/UPDATE/DELETE) — matching this
+-- file's intent precisely, not just "some RLS exists".
+--
 -- Athi, the moment he was handed b264 to run: *"264 with RLS?"* — and then, having already run it,
 -- *"ohh, just ran 264 without RLS?"*
 --
