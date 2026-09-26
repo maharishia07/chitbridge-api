@@ -7370,6 +7370,14 @@ var TILL_MENU = [
    */
   { id: 'pricing', icon: '🧮', title: 'Pricing',       sum: 'work out a discount, or build a combo, before you run it',  ops: ['offerlab', 'combolab'] },
   /**
+   * ⭐⭐⭐ [found live-testing, 2026-09-26] Athi: "i couldn't find the day in the menu icon?" — because
+   * expenses (and, briefly, subscriptions — see menuSubscriptionSummary()'s own HELD note) were filed under
+   * "Start the day" (🪔), which only shows by default BEFORE the day is opened; once it is, that section is
+   * collapsed and its own name gives no reason to look inside it for money paid out. Same reasoning "Pricing"
+   * was given its own section for: a named home beats being filed under a noun that fits neither.
+   */
+  { id: 'moremoney', icon: '💰', title: 'Other money', sum: 'expenses paid out of the drawer', moremoney: true },
+  /**
    * ⭐ MARKETING — Athi: *"shop screen is marketing, what other marketing we have?"* Today: exactly one, the
    * TV sign. ⚠️ A GROUP OF ONE, DELIBERATELY: the storefront link and rewards are what would join it and
    * neither is on this page yet. A named home for the second is worth more than filing the first under a noun.
@@ -8007,8 +8015,6 @@ function menuDayBody(){
     /* ⚠️ A COUNT AND A DOOR, NOT THE LIST ([TILL-79]). The list and the editing are in the popup now; a
        section that redraws the whole list is the content Athi asked to have taken out of the menu. */
     + menuTodoSummary()
-    + menuExpenseSummary()
-    + menuSubscriptionSummary()
     + '</div>';
 }
 /**
@@ -8028,16 +8034,19 @@ function menuExpenseSummary(){
  * ⭐⭐ [subscriptions/AMCs] A DOOR NEXT TO EXPENSES, for the same reason — a recurring commitment sold at the
  * counter is a fact about the day, same as a return or an expense. Not drawn on a host that cannot record one.
  */
-function menuSubscriptionSummary(){
-  if (!subCanIssue()) return '';
-  return '<div class="todo" data-testid="till-subscription-summary">'
-    + '<div class="todohead"><b>Subscriptions &amp; AMCs</b></div>'
-    + '<button class="pill wide" data-testid="till-open-subscription" onclick="fromMenu(function(){ subOpen(); })">'
-    + '🔁 New subscription/AMC</button>'
-    + '<button class="pill wide" data-testid="till-open-subscription-list" onclick="fromMenu(function(){ subListOpen(); })">'
-    + '📋 My subscriptions &amp; AMCs</button>'
-    + '</div>';
-}
+/**
+ * ⚠️⚠️⚠️ [HELD, 2026-09-26 — not showcased, kept as a working asset] Athi, after seeing this live: "remove
+ * the subscription now, it has to be tied with the customer, otherwise how you would know. keep it as one of
+ * the asset but not to be showcased... when we bring the customer then we can include it here, otherwise,
+ * tidy this with the backend app as part of customer link. not here." Right call — "Customer" here is a
+ * free-text name, not a real customer record, so there is nowhere for "your AMC is due" to actually reach
+ * anyone. Everything this depends on is UNCHANGED and still works exactly as built — chitOfSubscription(),
+ * CloudHost.subscription() (its own 'S' series), subOpen()/subListOpen()/subMarkDone() and the dialog/list
+ * markup all still exist and are real, callable functions; tests/till-subscription.cjs still proves the whole
+ * mechanism end to end. This is the ONLY thing standing between it and the till menu. Un-hold by giving this
+ * function back its old body once a real customer link exists to attach a subscription to.
+ */
+function menuSubscriptionSummary(){ return ''; }
 /**
  * ⭐⭐ THE DAY'S LIST (Athi, 2026-09-18: *"checklist, to do, and any other thing useful"*). A shopkeeper's own
  * list — bank the cash, call the milk supplier, order gas — written here and ticked here, because the counter
@@ -8911,6 +8920,7 @@ function paintMenu(){
     if (sec.today) body += menuTodayBody();
     if (sec.alerts) body += menuAlertsBody();
     if (sec.shopdet) body += menuShopBody();
+    if (sec.moremoney) body += menuExpenseSummary() + menuSubscriptionSummary();
     body += !sec.look ? '' : ('<div class="menusec" data-testid="till-quick-settings">'
         + '<div class="mq">'
         + '<label title="Text size">Aa <select id="mq_fs" data-testid="till-mq-fs" onchange="quickLook(\'cb_till_fs\',this.value)">'
