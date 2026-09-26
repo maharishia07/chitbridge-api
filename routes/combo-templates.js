@@ -83,7 +83,9 @@ router.post('/', auth, [ body('name').isString(), body('definition').isArray() ]
   } catch (e) { fail(res, e, 'Could not save this combo') }
 });
 
-// PATCH /api/combo-templates/:id  { name?, definition?, price? } — rename, or replace what it holds
+// PATCH /api/combo-templates/:id  { name?, definition?, price?, product_item_id? } — rename, replace what it
+// holds, or link it to a product that already exists (see modLabAdoptExisting() in offer-lab-next.html —
+// "bring an already-live combo into this library" without pushing a duplicate product for it).
 router.patch('/:id', auth, [ body('name').optional().isString(), body('definition').optional().isArray() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -100,17 +102,23 @@ router.patch('/:id', auth, [ body('name').optional().isString(), body('definitio
       if (priceErr) return res.status(400).json({ error: 'Invalid price', message: priceErr });
     }
     const cur = await withEntity(entity_id, (db) => db.query(
-      `SELECT name, definition, price FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id]));
+      `SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id]));
     if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
     const name = 'name' in req.body ? String(req.body.name).trim() : cur.rows[0].name;
     const definition = 'definition' in req.body ? req.body.definition : cur.rows[0].definition;
     const price = 'price' in req.body
       ? ((req.body.price === null || req.body.price === '') ? null : Number(req.body.price))
       : cur.rows[0].price;
+    /* ⚠️ NOT VALIDATED AGAINST catalogue_items HERE — same "not a foreign key" tolerance as the column
+     * itself (b267): a bogus or cross-entity id simply never resolves at push time and that push falls back
+     * to a clean create, exactly like a dangling link left by a deleted product. */
+    const product_item_id = 'product_item_id' in req.body
+      ? (req.body.product_item_id ? String(req.body.product_item_id) : null)
+      : cur.rows[0].product_item_id;
     const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE combo_templates SET name=$1, definition=$2, price=$3, updated_at=NOW()
-       WHERE id=$4 AND entity_id=$5 RETURNING ${COLS}`,
-      [name, JSON.stringify(definition), price, req.params.id, entity_id]));
+      `UPDATE combo_templates SET name=$1, definition=$2, price=$3, product_item_id=$4, updated_at=NOW()
+       WHERE id=$5 AND entity_id=$6 RETURNING ${COLS}`,
+      [name, JSON.stringify(definition), price, product_item_id, req.params.id, entity_id]));
     res.json({ message: 'Updated', template: r.rows[0] });
   } catch (e) { fail(res, e, 'Could not update this combo'); }
 });
@@ -157,7 +165,7 @@ router.post('/:id/push', auth, async (req, res) => {
     if (t.product_item_id) {
       const p = await withEntity(entity_id, (db) => db.query(
         `SELECT item_id, item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 AND is_active=true`,
-        [t.product_item_id]));
+        [t.product_item_id, entity_id]));
       existing = p.rows[0] || null;   // absent → the link is stale; fall through to create
     }
 

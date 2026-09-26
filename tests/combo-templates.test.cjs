@@ -64,6 +64,20 @@ async function run() {
     withEntity: async (entity_id, fn) => fn({
       query: async (text, params) => {
         const q = text.replace(/\s+/g, ' ').trim();
+        /**
+         * ⚠️⚠️⚠️ [OFFR-08-FIX] REAL POSTGRES ENFORCES THIS; THIS STUB DID NOT, AND A REAL BUG GOT THROUGH
+         * BECAUSE OF IT. routes/combo-templates.js's /:id/push had a SELECT with $1 AND $2 in the SQL text
+         * but only ONE element in its params array — every check here still passed because the earlier stub
+         * read entity_id off the closure, never off params[1], so a missing bind parameter was invisible to
+         * every one of the 36 checks that existed before this one. Caught live instead, on Athi's own
+         * account, the moment the real Postgres driver refused it: "bind message supplies 1 parameters, but
+         * prepared statement requires 2." This one check makes that class of bug fail HERE from now on.
+         */
+        const placeholders = new Set((text.match(/\$(\d+)/g) || []).map((s) => Number(s.slice(1))));
+        const maxPlaceholder = placeholders.size ? Math.max(...placeholders) : 0;
+        if ((params || []).length !== maxPlaceholder) {
+          throw new Error('param count mismatch — SQL wants ' + maxPlaceholder + ' but got ' + (params || []).length + ': ' + q);
+        }
         if (q.startsWith('SELECT id, name, definition, price, product_item_id, created_at, updated_at FROM combo_templates WHERE entity_id=$1')) {
           return { rows: ROWS.filter((r) => r.entity_id === params[0]).sort((a, b) => b.seq - a.seq).map(cols) };
         }
@@ -73,19 +87,16 @@ async function run() {
           ROWS.push(row);
           return { rows: [cols(row)] };
         }
-        if (q.startsWith('SELECT name, definition, price FROM combo_templates WHERE id=$1 AND entity_id=$2')) {
-          const row = ROWS.find((r) => r.id === params[0] && r.entity_id === params[1]);
-          return { rows: row ? [{ name: row.name, definition: row.definition, price: row.price }] : [] };
-        }
         if (q.startsWith('SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2')) {
           const row = ROWS.find((r) => r.id === params[0] && r.entity_id === params[1]);
           return { rows: row ? [{ name: row.name, definition: row.definition, price: row.price, product_item_id: row.product_item_id || null }] : [] };
         }
-        if (q.startsWith('UPDATE combo_templates SET name=$1, definition=$2, price=$3')) {
-          const [name, def, price, id, eid] = params;
+        if (q.startsWith('UPDATE combo_templates SET name=$1, definition=$2, price=$3, product_item_id=$4')) {
+          const [name, def, price, product_item_id, id, eid] = params;
           const row = ROWS.find((r) => r.id === id && r.entity_id === eid);
           if (!row) return { rows: [] };
-          row.name = name; row.definition = JSON.parse(def); row.price = price == null ? null : Number(price); row.updated_at = 'later';
+          row.name = name; row.definition = JSON.parse(def); row.price = price == null ? null : Number(price);
+          row.product_item_id = product_item_id || null; row.updated_at = 'later';
           return { rows: [cols(row)] };
         }
         if (q.startsWith('UPDATE combo_templates SET product_item_id=$1')) {
@@ -103,7 +114,9 @@ async function run() {
         }
         /* ── catalogue_items — the /push tests' stand-in for mint-product.js / products.js's own UPDATE ── */
         if (q.startsWith('SELECT item_id, item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 AND is_active=true')) {
-          const row = PRODUCTS.find((p) => p.item_id === params[0] && p.entity_id === entity_id && p.is_active !== false);
+          /* [OFFR-08-FIX] params[1] now, not the closure's entity_id — proving the route's OWN query really
+           * carries the entity filter, not just this stub's assumption that it must. */
+          const row = PRODUCTS.find((p) => p.item_id === params[0] && p.entity_id === params[1] && p.is_active !== false);
           return { rows: row ? [{ item_id: row.item_id, item_data: row.item_data }] : [] };
         }
         if (q.startsWith('INSERT INTO catalogue_items')) {
@@ -177,6 +190,13 @@ async function run() {
   const del = await call(port, 'DELETE', '/api/combo-templates/' + id);
   t('the owning entity can delete its own saved combo', del.status, 200);
   t('and it is gone from the library afterward', (await call(port, 'GET', '/api/combo-templates')).body.templates.length, 0);
+
+  console.log('\n-- ⭐⭐⭐ [OFFR-08] linking a template to a product it did NOT create — "bring an existing combo in" --\n');
+  const forLink = await call(port, 'POST', '/api/combo-templates', { name: 'Adopted combo', definition: GROUPS });
+  const linked = await call(port, 'PATCH', '/api/combo-templates/' + forLink.body.template.id, { product_item_id: 'already-live-1' });
+  t('PATCH can set product_item_id directly, no push needed', linked.body.template.product_item_id, 'already-live-1');
+  const unlinked = await call(port, 'PATCH', '/api/combo-templates/' + forLink.body.template.id, { product_item_id: null });
+  t('and clear it again with null', unlinked.body.template.product_item_id, null);
 
   console.log('\n-- ⭐⭐⭐ [OFFR-08] "push" — CREATE the first time, UPDATE every time after --\n');
   const withPrice = await call(port, 'POST', '/api/combo-templates', { name: 'Tiffin combo', definition: GROUPS, price: 110 });
