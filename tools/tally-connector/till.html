@@ -22954,8 +22954,21 @@ async function bellUp(){
       /* ⭐ heard, whatever it said — delivery is the fact being measured, not relevance ([TILL-167]) */
       bellHeard();
       var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
-      /* ⚠️ only the kinds this screen actually holds a copy of; a chit arriving is the mailbox's business, not the counter's */
       if (d.kind === 'shop') { refresh().then(function(){ toastLine('The shop changed — this counter is up to date.'); }); }
+      /**
+       * ⭐ Athi: "counter application do not have notifications, do we need to bring notification for the
+       * till/counter application" — until now, deliberately not: "a chit arriving is the mailbox's business,
+       * not the counter's." That held while nothing at the counter ever needed to act on one. It is worth
+       * knowing about even here, though — a customer standing at the till, or calling to ask "did you get my
+       * order", is exactly the moment someone at the counter benefits from knowing one just landed.
+       * ⚠️ DELIBERATELY THE QUIET TIER ONLY — the SAME #lastnote line the 'shop' case above already uses, not
+       * a sound, a badge or a popup. This screen's whole design is "never interrupt an open bill" ([TILL-30]
+       * is the scar from exactly that risk); the counter is told, and can look, on its own time. It never
+       * refreshes anything here — a chit is the mailbox's own data, this is only "something arrived."
+       * ⚠️ FIRES FOR EVERY KIND OF CHIT (order, quote, a captured WhatsApp message, a general note) — the event
+       * itself does not say which, so the wording stays general rather than guessing "order" and being wrong.
+       */
+      else if (d.kind === 'chit' || d.kind === 'capture') { toastLine('New in your mailbox' + (d.who ? (' — ' + d.who) : '') + '.'); }
     });
     BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };   /* it reconnects on the next tick */
   } catch (_) { BELL = null; }
