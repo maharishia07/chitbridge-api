@@ -6729,6 +6729,10 @@ var TILL_OPS = [
    * with an invite to sign in. Never blocks a sale — it is a tab, not a mode this screen enters.
    */
   { id: 'offerlab', icon: '🧮', label: 'Offer Lab',          hint: 'work out a discount before you run it · opens in a new tab', fn: 'openOfferLab' },
+  /* ⭐ [Labs split, 2026-09-26] Athi: "bring offer lab and combo lab as a separate item... combo lab earned
+   * its place now" — was a modal reachable only from inside Offer Lab; now its own page, its own hub entry,
+   * right beside it. */
+  { id: 'combolab', icon: '🧩', label: 'Combo Lab',          hint: 'build a modifier/combo, preview it as the till will show it · opens in a new tab', fn: 'openComboLab' },
   { id: 'break-menu', icon: '☕', label: 'Take a break',      hint: 'the counter stays on this PC · nothing is closed', fn: 'takeBreak' },
   /**
    * ⭐⭐ BOTH ROUTED THROUGH THE CONFIRM SHEET NOW, NOT THEIR OWN OLDER sure() (Phase 4.5, alongside removing
@@ -7284,12 +7288,13 @@ var TILL_MENU = [
   { id: 'upkeep',  icon: '🔄', title: 'Keep it running', sum: 'read the shop again · settings · a break',
     ops: ['refresh', 'settings', 'break-menu', 'install'] },
   /**
-   * ⭐ PRICING — a business tool, not till upkeep and not what a customer sees, so neither "Keep it running"
-   * nor "Show the shop" is honest for it ([TILL-187]). Today: exactly one, Offer Lab.
-   * ⚠️ A GROUP OF ONE, DELIBERATELY — the same reasoning "Show the shop" already made for itself just above.
-   * A named home for the second pricing tool is worth more than filing the first under a noun it does not fit.
+   * ⭐⭐ PRICING — a business tool, not till upkeep and not what a customer sees, so neither "Keep it running"
+   * nor "Show the shop" is honest for it ([TILL-187]). Was a group of one, Offer Lab, deliberately — its own
+   * comment named the day a second pricing tool arrived as worth a real home rather than a forced-fit noun.
+   * [Labs split, 2026-09-26] that second tool is Combo Lab, moved out of Offer Lab's own modal into its own
+   * page (Athi: "combo lab earned its place now") — this section is that home.
    */
-  { id: 'pricing', icon: '🧮', title: 'Pricing',       sum: 'work out a discount before you run it',  ops: ['offerlab'] },
+  { id: 'pricing', icon: '🧮', title: 'Pricing',       sum: 'work out a discount, or build a combo, before you run it',  ops: ['offerlab', 'combolab'] },
   /**
    * ⭐ MARKETING — Athi: *"shop screen is marketing, what other marketing we have?"* Today: exactly one, the
    * TV sign. ⚠️ A GROUP OF ONE, DELIBERATELY: the storefront link and rewards are what would join it and
@@ -21899,6 +21904,7 @@ function openScreen(){
 /** ⭐ NO FRAGMENT, DELIBERATELY — unlike openScreen() above, Offer Lab reads a PERSON's cb_sess, never a
  * till key, so there is nothing of this counter's own to hand it. See the TILL_OPS entry's own note. */
 function openOfferLab(){ window.open('/offer-lab-next.html', '_blank', 'noopener'); }
+function openComboLab(){ window.open('/combo-lab.html', '_blank', 'noopener'); }
 /**
  * ⭐⭐⭐ START FROM SCRATCH — but never before everything is safe. Athi, 2026-09-09: *"in the counter we need a mechanism of cold
  * start or reboot kind of, which should clear the indexed db and then restart again — before that it has to sync up and nothing

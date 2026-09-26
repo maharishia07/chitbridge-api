@@ -27,8 +27,15 @@ const PAGES = [
   /* ⚠ THE STANDALONE PAGES BELONG HERE TOO, and were missing. Each is a one-file app with all of its script
      inline, so a syntax error is total in exactly the way the header above describes — and neither is covered
      by a spec that would have caught it. The offer lab is where offers are proved before they are published;
-     the test board is where every other result is recorded, so a broken one is a testing session lost. */
-  ['the offer lab',      path.join(WEB, 'offer-lab.html')],
+     the test board is where every other result is recorded, so a broken one is a testing session lost.
+     ⚠️⚠️⚠️ [found 2026-09-26, fixing the Labs split] THIS ENTRY POINTED AT offer-lab.html — the RETIRED page
+     (superseded by offer-lab-next.html; see app.html:6370 and cap-catsetup.js's own comment on the switch),
+     which nothing links to any more. Every real nav path opens offer-lab-next.html, so the page actually
+     shipped has had NO syntax-error guard here since the day it superseded offer-lab.html — exactly the class
+     of silent gap this file's own header warns about. Corrected, and combo-lab.html (its own standalone page
+     as of the same split) added alongside it. */
+  ['the offer lab',      path.join(WEB, 'offer-lab-next.html')],
+  ['the combo lab',      path.join(WEB, 'combo-lab.html')],
   ['the test board',     path.join(WEB, 'testing.html')],
 ];
 
