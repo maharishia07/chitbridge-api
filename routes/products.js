@@ -1166,6 +1166,15 @@ function mergePatch(target, patch) {
   for (const k of Object.keys(patch)) { if (patch[k] === null) delete out[k]; else out[k] = mergePatch(out[k], patch[k]); }
   return out;
 }
+/* [OFFR-08] exported so routes/combo-templates.js's "push" can merge a combo's own {name,price,modifiers}
+ * onto an already-linked product the same way this route's own PATCH does — one merge rule, not a second
+ * hand-rolled one the day a combo needs to update a product instead of creating it. defaultSchemaId() and
+ * validateAgainst() are the same two calls this route's own POST/PATCH already make around mintProduct()/
+ * ensureDeclared() — pushing a combo declares and validates exactly like a person typing the product by
+ * hand, not a fourth door with its own rules. */
+router.mergePatch = mergePatch;
+router.defaultSchemaId = defaultSchemaId;
+router.validateAgainst = validateAgainst;
 /** [OFFR-04] all a cost-blind actor may touch through PATCH /:id — the "availability flag", nothing else.
  * Not price, not the modifiers, not the name — a person who cannot see what a change to any of those
  * would cost the margin should not be the one making it either. */
