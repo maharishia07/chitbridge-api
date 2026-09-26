@@ -705,13 +705,25 @@ function refOf(req) {
        * a captured message (business_json.via — WhatsApp, email, any channel) are sent BY the seller; the storefront applied
        * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
        * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
+       *
+       * ⚠️⚠️ [REV-02] "a bill the customer has paid is re-priced at today's offers when it syncs." Send time is not
+       * always sale time — a till bill queued offline can reach here days later, after the shop launches a new
+       * offer. offers-live.js already skips a line that carries `it.offer` (an offer the till itself applied);
+       * what it never skipped was a PLAIN line with none, which is exactly what a later, unrelated offer attaches
+       * itself to — the customer's ₹500 slip becomes a server-side ₹450 chit, and a credit note for the same
+       * bill gets over-refunded the same way. `business_json.billed_at` is the tell: ONLY till.html/till.js ever
+       * set it (grep confirms — no compose/capture/storefront path does), so it names a document that was
+       * ALREADY priced and printed at a real moment in the past, not a sale being priced here for the first time.
+       * A captured/typed sale (no billed_at) still needs these live offers — that path is what this block exists
+       * for — so the guard is additive, not a new refusal.
        */
       let offersApplied = [];   /* what the seller's live offers did to these lines (line + cart scope) — recorded on the summary */
       try {
         const bj = business_json || {};
+        const alreadyBilled = require('../lib/offers-live').alreadyBilled(bj);
         const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
         /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
-        if (bj.customer || bj.via || toSelf || orderLike) {
+        if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
           const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
           const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
           if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
@@ -750,7 +762,11 @@ function refOf(req) {
                if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
                the SELLER's own setting from it, no second query. */
             const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax') === 'yes';
-            const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: new Date().toISOString(), priceIncludesTax });
+            /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
+               reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
+               later must say when it was actually billed, same reasoning as the offers guard just above. */
+            const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
+            const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: invAt, priceIncludesTax });
             const h = taxLines.heads(inv.invoice);
             if (h && Number.isFinite(h.tax)) { tax = r2m(h.tax); total = r2m(h.total || (net + tax)); }
           }
