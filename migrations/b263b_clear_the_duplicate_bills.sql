@@ -1,6 +1,12 @@
 -- b263b: the duplicates b263 refused to index over — find out whose they are, then clear only what is safe.
 --
--- ⚠️⚠️ DRAFT — NOT RUN.
+-- ✅ TURNED OUT NOT TO BE NEEDED — checked live 2026-09-26, read-only: b263's own index
+-- (ux_chit_client_ref_per_entity) already exists on chit_header, and a fresh duplicate-scan against production
+-- returns ZERO rows. Whatever duplicates step 2 of b263 once refused to build over are gone by the time this
+-- was checked — either this file was in fact run at some point with no record of it (there is no
+-- schema_migrations table; "applied-state is manual" per DEPLOY-RUNBOOK.md), or they were cleared another way.
+-- Left in the tree as a record, not deleted — if duplicates ever reappear, this is still the right shape of
+-- fix, and the RLS instruction below is still exactly right for running it again.
 --
 -- ── RUN IT **WITHOUT RLS** ── Supabase SQL editor, as `postgres`. Not `railway run`. ─────────────────
 --

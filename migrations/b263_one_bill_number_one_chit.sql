@@ -1,7 +1,21 @@
 -- b263: ONE BILL NUMBER = ONE CHIT. The index behind the counter's idempotency.
 --
--- ⚠️⚠️ DRAFT — NOT RUN. For Athi to review and run himself in the Supabase SQL editor (standing rule: DDL is his
--- to execute, never the assistant's). Run step 1 first and read the answer before running step 2.
+-- ✅ CONFIRMED APPLIED — checked live 2026-09-26 (read-only: pg_indexes + a fresh duplicate-scan, no write run
+-- by the assistant, per the standing rule that DDL is Athi's to execute). ux_chit_client_ref_per_entity exists
+-- on chit_header exactly as step 2 below defines it, and a live re-run of step 1's duplicate query returns
+-- ZERO rows. Left in the tree as the record of what was done and why — a migration whose header still says
+-- "DRAFT — NOT RUN" once it has quietly been run is exactly the kind of stale doc [[feedback-document-status]]
+-- warns costs more than a missing one. Nothing below needs running again; safe to re-run regardless (see step
+-- 2's own IF NOT EXISTS).
+--
+-- ── RUN AS `postgres` IN THE SUPABASE SQL EDITOR, NOT `railway run` ─────────────────────────────────────────
+-- ⚠️⚠️ Missing from the first cut of this file, and it should not have been: step 1's duplicate-scan reads
+-- chit_header ACROSS EVERY ENTITY (no entity_id filter — that is its whole job, finding a collision between
+-- two shops' data would need exactly this). Run through anything RLS-scoped to one tenant and it silently
+-- answers a SUBSET — not an error, just an incomplete "no duplicates" that is not actually true. `railway run`
+-- connects as `cb_app` and cannot do DDL at all regardless (see below), so it was never really in play for
+-- step 2 — but step 1 alone, run the wrong way, would have been the exact quiet failure mode b263b's own
+-- header warns about for its step 1: an empty answer that means nothing until you know which role asked.
 --
 -- ── WHY ──────────────────────────────────────────────────────────────────────────────────────────────────────
 -- Found 2026-09-18 by running the design package's own R2 test: forty bills rung with the line down, then
@@ -99,7 +113,12 @@ SELECT indexname, indexdef FROM pg_indexes
 --  ORDER BY h.entity_id, bill_no, h.created_at;
 
 
--- ── AFTER THIS RUNS ──────────────────────────────────────────────────────────────────────────────────────────
+-- ── AFTER THIS RUNS — WHICH IT HAS, SO THIS IS NOW UNBLOCKED, NOT DONE ──────────────────────────────────────
+-- ⚠️ NOT YET LANDED. The index existing is what makes this safe to write; it is not the same thing as having
+-- written it. routes/chits.js's INSERT is still the plain check-then-act it always was — a genuine race today
+-- would 500, not silently duplicate (the index catches it), but it would 500 rather than quietly returning the
+-- winner's chit the way a replay already expects. That code change is its own, separate, real edit to the
+-- send path — worth doing, worth its own explicit go-ahead given what it touches, not bundled into this file.
 -- routes/chits.js should carry its INSERT as ON CONFLICT DO NOTHING followed by a re-SELECT, so the loser of a
 -- race returns the winner's chit instead of a 500 — which is already what the counter expects from a replay, and
 -- what the existing SELECT-first path returns today. Until that lands, a racing duplicate becomes a clean 500,
