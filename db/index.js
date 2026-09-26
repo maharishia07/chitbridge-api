@@ -119,24 +119,35 @@ async function ensurePool() {
 // returns empty. The guard makes that mistake LOUD in dev/CI, long before it reaches prod. Legitimate tenant
 // access goes through withEntity()'s `client.query(...)` (the transaction), which never passes through here.
 //
-// The table list MUST equal the RLS-policy set in migration_b49 exactly — no more, no less. `identities` is the
-// deliberate carve-out (cross-tenant discovery) and is intentionally ABSENT.
+// The table list once tracked migration_b49 alone; that stopped being true long before anyone updated the
+// comment. `identities` is the one deliberate carve-out (cross-tenant discovery) and stays intentionally ABSENT.
 //
 // PLATFORM-CONFIGURABILITY (Athi): mode is env-driven, never hardcoded — RLS_GUARD = off | warn | throw.
 //   • prod default = off  (a guard must NEVER hard-block production traffic)
 //   • dev/CI default = warn (visible during the incremental route migration without breaking un-migrated routes)
 //   • set RLS_GUARD=throw in CI (and locally once all Direct-group routes are on withEntity) to ENFORCE it.
-// G1 (reviewer 2026-07-13) — complete the tenant-table list: the guard previously OMITTED chit_messages and the newest
-// (most sensitive) tables entity_compliance / entity_profile (vault) / entity_wallet (money) / usage_ledger.
-const RLS_TENANT_TABLES = ['chit_header', 'chit_status', 'chit_detail', 'chit_messages', 'state_log', 'catalogue_items',
-  'customer_list', 'folder', 'cb_attachment', 'chit_disputes', 'entity_compliance', 'entity_profile', 'entity_wallet', 'usage_ledger',
-  'network_design', 'catalogue_face',   // b111/b112 — per-entity design draft + catalogue face (WITH RLS); guard a context-free query the same way
-  // b104/b123 — the intake queue and the inbound channel map. Both are per-entity FORCE RLS and were missing from
-  // this list, so a context-free query against either went unwatched. The webhook's own lookup is exempt by
-  // construction, not by omission: it goes through the SECURITY DEFINER channel_owner(), whose SQL never names
-  // the table, which is exactly the narrow hole that guard is meant to leave room for.
-  'capture', 'channel_binding',
-  'combo_templates'];   // b266 [OFFR-06] — per-entity saved combo/modifier sets, WITH RLS, same reason as catalogue_face
+//
+// [REV-19] external review, 2026-09-25: "The RLS tripwire covers 19 tables; 67 have policies." True — this list
+// had drifted table-by-table (each addition its own paragraph above, which is how it drifted) while migrations
+// kept adding FORCE RLS tables nobody came back to add here. `node scripts/rls-census.cjs --save` asked the
+// database directly (67 RLS-on, 63 of them FORCE) and this is that answer, not another hand-kept list — the
+// four RLS-but-not-forced tables (ai_usage, entity_profile, entity_wallet, usage_ledger) are kept too, since a
+// context-free read of any of them is worth knowing about even before FORCE closes the gap for real.
+// tests/rls-guard-baseline.test.cjs re-derives this same set from db/rls-baseline.json on every run, so the
+// next table this list forgets fails a test instead of waiting for the next outside review to find it.
+const RLS_TENANT_TABLES = ['access_events', 'ai_usage', 'capture', 'catalogue_adoption', 'catalogue_face',
+  'catalogue_item_schedule', 'catalogue_item_version', 'catalogue_items', 'cb_attachment', 'channel_binding',
+  'channel_outbound', 'chit_detail', 'chit_disputes', 'chit_header', 'chit_line', 'chit_line_amendment',
+  'chit_line_assignment', 'chit_line_cost', 'chit_line_delivery', 'chit_messages', 'chit_reads', 'chit_sla',
+  'chit_sla_pause', 'chit_status', 'combo_templates', 'connector_receipt', 'counter_hidden_item',
+  'counter_quick_key_state', 'customer_list', 'definition', 'definition_version', 'device_screen_config',
+  'entity_compliance', 'entity_governance', 'entity_profile', 'entity_wallet', 'entity_work_routing',
+  'erp_handoff', 'folder', 'folder_rule', 'form_instance', 'idempotency_key', 'identity_documents',
+  'kyb_field_cache', 'network_design', 'notif_dismissed', 'quick_key_audit', 'quick_key_group',
+  'quick_key_group_item', 'register_acceptance', 'register_attachable', 'register_entry',
+  'register_entry_standard', 'register_subject', 'register_template', 'register_template_standard',
+  'retention_config', 'reward_ledger', 'signup_context', 'state_log', 'stock_balance', 'stock_movement',
+  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {

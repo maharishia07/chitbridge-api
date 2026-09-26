@@ -1,5 +1,5 @@
 {
- "at": "2026-09-20T18:57:42.349Z",
+ "at": "2026-09-26T02:21:34.050Z",
  "tables": {
   "access_events": {
    "rls": true,
@@ -296,6 +296,12 @@
    "app_reads": true
   },
   "chit_status": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "combo_templates": {
    "rls": true,
    "forced": true,
    "policies": 1,

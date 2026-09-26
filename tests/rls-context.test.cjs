@@ -1,7 +1,7 @@
 /**
  * ── ⭐⭐⭐ A TENANT TABLE READ WITHOUT A CONTEXT ANSWERS ZERO, AND ZERO LOOKS LIKE AN ANSWER ─────────────────────
  *
- * 55 tables are FORCE ROW LEVEL SECURITY. Read one as `cb_app` with no `app.current_entity` and Postgres returns
+ * 63 tables are FORCE ROW LEVEL SECURITY. Read one as `cb_app` with no `app.current_entity` and Postgres returns
  * an empty set — not an error, not a warning. Every one of those reads is a question that answers "nothing here"
  * whatever is actually there.
  *
@@ -16,26 +16,35 @@
  * The exceptions are real and few — a SECURITY DEFINER function in the `ops` schema reads across tenants ON
  * PURPOSE, and it does so from SQL, not from here.
  *
- * ⚠️ WHY THE LIST IS EMBEDDED. Only two of the 55 are declared with `ALTER TABLE … FORCE ROW LEVEL SECURITY` in
+ * ⚠️ WHY THE LIST IS EMBEDDED. Only two of the 63 are declared with `ALTER TABLE … FORCE ROW LEVEL SECURITY` in
  * a migration; the rest were set elsewhere. An offline guard cannot ask the database, so the list is data, dated,
  * with the query that regenerates it. A stale list under-reports — it never invents a failure.
  *
  *     SELECT relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
  *      WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relforcerowsecurity ORDER BY relname;
+ *
+ * [REV-19] external review, 2026-09-25, on this same drift: "The RLS tripwire covers 19 tables; 67 have
+ * policies." That finding was about db/index.js's RLS_TENANT_TABLES, but this file's own list had the identical
+ * disease — dated 2026-09-15, eight FORCE-RLS tables younger than that (combo_templates among them) never
+ * added. Refreshed 2026-09-26 from `node scripts/rls-census.cjs --save`; tests/rls-guard-baseline.test.cjs now
+ * checks this list and db/index.js's against db/rls-baseline.json on every run, so the next new FORCE-RLS table
+ * fails a test instead of just aging quietly here.
  */
 const fs = require('fs');
 const path = require('path');
 
-/** FORCE ROW LEVEL SECURITY as at 2026-09-15 — regenerate with the query above. */
+/** FORCE ROW LEVEL SECURITY as at 2026-09-26 — regenerate with the query above. */
 const RLS = `access_events capture catalogue_adoption catalogue_face catalogue_item_schedule
 catalogue_item_version catalogue_items cb_attachment channel_binding channel_outbound chit_detail chit_disputes
 chit_header chit_line chit_line_amendment chit_line_assignment chit_line_cost chit_line_delivery chit_messages
-chit_reads chit_sla chit_sla_pause chit_status connector_receipt customer_list definition definition_version
-entity_compliance entity_governance entity_work_routing erp_handoff folder folder_rule form_instance
-idempotency_key identity_documents kyb_field_cache network_design notif_dismissed register_acceptance
-register_attachable register_entry register_entry_standard register_subject register_template
-register_template_standard retention_config reward_ledger state_log stock_balance stock_movement
-supplier_readiness_acceptance supply_item test_result wholesaler_store`.split(/\s+/).filter(Boolean);
+chit_reads chit_sla chit_sla_pause chit_status combo_templates connector_receipt counter_hidden_item
+counter_quick_key_state customer_list definition definition_version device_screen_config entity_compliance
+entity_governance entity_work_routing erp_handoff folder folder_rule form_instance idempotency_key
+identity_documents kyb_field_cache network_design notif_dismissed quick_key_audit quick_key_group
+quick_key_group_item register_acceptance register_attachable register_entry register_entry_standard
+register_subject register_template register_template_standard retention_config reward_ledger signup_context
+state_log stock_balance stock_movement supplier_readiness_acceptance supply_item test_result
+wholesaler_store`.split(/\s+/).filter(Boolean);
 
 const ROOT = path.join(__dirname, '..');
 const DIRS = ['lib', 'routes'];
@@ -102,6 +111,11 @@ const EXPECTED = {
      says it may. */
   'routes/catalogue.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
   'routes/products.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
+  /* ⭐ VERIFIED against migrations/b265_signup_context_rls.sql: the ONLY policy on signup_context is
+     `FOR INSERT WITH CHECK (true)`, deliberately — the row is written during sign-up, BEFORE the entity being
+     signed up exists, so a policy keyed on app.current_entity would block signing up at all. No SELECT/UPDATE/
+     DELETE policy exists, so FORCE RLS makes the table write-only through cb_app regardless of context. */
+  'routes/entities.js:signup_context': 'append-only audit row, written before the entity exists — b265 makes the table insert-only by design, not by context',
 };
 
 const offenders = [];

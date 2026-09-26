@@ -105,6 +105,9 @@ const GUARDS = [
      error. Three near-misses in one day, and one reached a commit message asserting a function was lying
      when the function was right and the check was blind. */
   'rls-context.test.cjs',
+  /* [REV-19] the guard's own tracked-table lists drift the same way the tables they watch grow — this checks
+     both against db/rls-baseline.json instead of trusting the last person who remembered to update them. */
+  'rls-guard-baseline.test.cjs',
   'rls-predicate.test.cjs',   // ⚠️ every policy reads a GUC something sets — written, never declared, so never run
   'migration-rls.test.js',    // a new table closes itself; the default grant makes an open one readable
   /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that
