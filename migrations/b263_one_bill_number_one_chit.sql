@@ -113,14 +113,26 @@ SELECT indexname, indexdef FROM pg_indexes
 --  ORDER BY h.entity_id, bill_no, h.created_at;
 
 
--- ── AFTER THIS RUNS — WHICH IT HAS, SO THIS IS NOW UNBLOCKED, NOT DONE ──────────────────────────────────────
--- ⚠️ NOT YET LANDED. The index existing is what makes this safe to write; it is not the same thing as having
--- written it. routes/chits.js's INSERT is still the plain check-then-act it always was — a genuine race today
--- would 500, not silently duplicate (the index catches it), but it would 500 rather than quietly returning the
--- winner's chit the way a replay already expects. That code change is its own, separate, real edit to the
--- send path — worth doing, worth its own explicit go-ahead given what it touches, not bundled into this file.
--- routes/chits.js should carry its INSERT as ON CONFLICT DO NOTHING followed by a re-SELECT, so the loser of a
--- race returns the winner's chit instead of a 500 — which is already what the counter expects from a replay, and
--- what the existing SELECT-first path returns today. Until that lands, a racing duplicate becomes a clean 500,
+-- ── AFTER THIS RUNS — ALREADY LANDED, AND NOT THE WAY THIS NOTE ORIGINALLY SAID ─────────────────────────────
+-- ✅ ⚠️⚠️ CORRECTING MY OWN EARLIER EDIT HERE (2026-09-26): I told Athi this was "not yet landed" and offered
+-- to scope `ON CONFLICT DO NOTHING` before actually reading routes/chits.js's own catch block. It is landed,
+-- and NOT as ON CONFLICT — routes/chits.js's own comment on its catch(err) block explains why that specific
+-- idea was considered and rejected, correctly, for reasons worth keeping:
+--   · ON CONFLICT DO NOTHING makes the INSERT succeed with zero rows, and the transaction then carries on
+--     writing chit_detail/chit_status/recipient rows against a header that was never inserted — a half-written
+--     chit, worse than the fault being fixed, and silent.
+--   · The index is PARTIAL, so ON CONFLICT inference needs its predicate repeated at every insert site (there
+--     are two — the sender's own copy and each recipient's); a mismatch there fails OPEN, not closed.
+--   · Letting the constraint THROW rolls the whole transaction back, which is exactly what should happen.
+-- So: the raw 23505 is left to throw (full rollback), caught, and translated through sameRefLook() — the SAME
+-- lookup the pre-send check already uses — into the answer a replay expects (the existing chit, `duplicate:
+-- true`) or a named cross-counter collision. This IS "the loser of a race returns the winner's chit instead of
+-- a 500", just built the safer way.
+--
+-- ⚠️ WHAT IS STILL REAL, PER THE EXTERNAL REVIEW'S §22: the tie-break verdict (till id / billed_at compare,
+-- sameName wording) is written out TWICE — once in the pre-check, once in the catch block — and the catch
+-- block is MISSING the pre-check's `sameName` branch (the "two counters, same name" wording), a genuine
+-- drift the review's own words describe: "the same two tests in the same order and no sameName branch."
+-- That part is worth lifting into one function; nothing about ON CONFLICT is.
 -- the bill stays queued and is retried, and the retry finds the winner. Noisy, never a second voucher. That is
 -- the right way round, and it is why this index is worth running before the route change rather than after.
