@@ -379,6 +379,63 @@ it('every verb defends against garbage input the same way groupsOf() always has'
   assert.deepStrictEqual(V.setOption([{ name: 'G', options: [] }], 5, 5, { price: 1 }), [{ name: 'G', required: false, max: 1, options: [] }]);
 });
 
+console.log('\n— chooserHTML() — the ONE combo-dialog markup, shared by the till and any authoring preview —');
+/**
+ * ⭐⭐⭐ [TILL/OFFR-08] Athi, on the Offer Lab's own preview being asked to match the till's real dialog: "if
+ * it reuses what is being used in cart, then there should not be any difference at all." So till.html's
+ * modPaint() now calls THIS, and so does the Offer Lab preview — extracted here so there is exactly one
+ * markup for a combo chooser, never a till copy and an Offer Lab lookalike that could drift apart.
+ */
+const CHOOSER_GROUPS = [
+  { name: 'Choose a tiffin', required: true, max: 1, options: [{ name: 'Idli', price: 0 }, { name: 'Masala Dosa', price: 15 }] },
+  { name: 'Add extras', required: false, max: 2, options: [{ name: 'Extra sambar', price: 20 }] },
+];
+it('groupTag() names the same states till.html’s own comboTag() always has, byte for byte', () => {
+  assert.strictEqual(V.groupTag({ required: true, max: 1 }), 'one of these');
+  assert.strictEqual(V.groupTag({ required: true, max: 2 }), 'up to 2');
+  assert.strictEqual(V.groupTag({ required: true, max: 2, min: 2 }), 'any 2', 'min===max on a required group says "any N"');
+  assert.strictEqual(V.groupTag({ required: false, max: 1 }), 'skip if not');
+  assert.strictEqual(V.groupTag({ required: false, max: 3 }), 'skip if not', 'an OPTIONAL group is always "skip if not", whatever max is');
+});
+it('an unanswered required group is flagged "waiting for a pick", exactly as the till says it', () => {
+  const html = V.chooserHTML(CHOOSER_GROUPS, []);
+  assert.ok(/class="modg need"/.test(html), 'a required, unpicked group must carry the "need" class');
+  assert.ok(/waiting for a pick/.test(html));
+  assert.ok(/<i class="tag">one of these<\/i>/.test(html));
+  assert.ok(/nothing yet/.test(html), 'the optional group says "nothing yet", not "waiting"');
+});
+it('a picked option carries the "on" class and shows what it adds', () => {
+  const picked = [M('Choose a tiffin', 'Masala Dosa', 15)];
+  const html = V.chooserHTML(CHOOSER_GROUPS, picked, { money: (n) => '₹' + n.toFixed(2) });
+  assert.ok(/class="modopt on"[^>]*><span class="mn">Masala Dosa/.test(html));
+  assert.ok(/<span class="mw">\+₹15\.00<\/span>/.test(html), 'the chooser adds its OWN + — money() only formats the number');
+});
+it('a required group with its pick made reads "done", never "want"', () => {
+  const html = V.chooserHTML(CHOOSER_GROUPS, [M('Choose a tiffin', 'Idli', 0)]);
+  assert.ok(/class="gstate done">Idli/.test(html));
+  assert.ok(!/class="modg need"/.test(html));
+});
+it('isOut() disables an option and marks it sold out, without touching any other option', () => {
+  const html = V.chooserHTML(CHOOSER_GROUPS, [], { isOut: (g, o) => o.name === 'Idli' });
+  assert.ok(/class="modopt out" disabled[^>]*><span class="mn">Idli<\/span><span class="mw">sold out today/.test(html));
+  assert.ok(/class="modopt" data-hk="1"[^>]*><span class="mn">Masala Dosa<\/span><span class="mw">\+15/.test(html),
+    'the OTHER option in the same group stays pickable, with its own price, not "sold out"');
+});
+it('onClick() and testId hooks are the only thing a host supplies — the markup itself never changes shape', () => {
+  const html = V.chooserHTML(CHOOSER_GROUPS, [], {
+    onClick: (gi, oi) => 'modLabPreviewPick(' + gi + ',' + oi + ')',
+    testIdGroup: (gi) => 'lab-modg-' + gi, testIdOption: (gi, oi) => 'lab-modopt-' + gi + '-' + oi,
+  });
+  assert.ok(/onclick="modLabPreviewPick\(0,0\)"/.test(html));
+  assert.ok(/data-testid="lab-modg-0"/.test(html));
+  assert.ok(/data-testid="lab-modopt-0-1"/.test(html));
+});
+it('with no opts at all, it still renders a static, non-throwing chooser — a bare preview', () => {
+  assert.doesNotThrow(() => V.chooserHTML(CHOOSER_GROUPS, []));
+  const html = V.chooserHTML(CHOOSER_GROUPS, []);
+  assert.ok(/onclick=""/.test(html), 'an unsupplied onClick() renders an inert button, not a broken attribute');
+});
+
 console.log('\n══ the variant engine · ' + pass + ' passed · ' + fail + ' failed ══');
 console.log(pass + ' checks\n');
 if (fail) process.exitCode = 1;

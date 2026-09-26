@@ -14480,17 +14480,10 @@ function comboNoun(g){
 /** ⭐ "a" or "an", so the button reads like a person wrote it */
 function comboArticle(w){ return /^[aeiou]/i.test(String(w || '')) ? 'an' : 'a'; }
 /**
- * ⭐ HOW MANY, WITHOUT SCOLDING. The spec: *"'must choose' scolds. 'one of these' says how many."* min/max
- * drive it — and our groups carry `required` rather than `min`, which is the same statement.
+ * ⚠️ [TILL/OFFR-08] comboTag() USED TO LIVE HERE — moved to CBVariant.groupTag() (lib/variant.js), called
+ * from inside CBVariant.chooserHTML() now, so the till and the Offer Lab preview say the group's tag
+ * ("one of these" / "up to N" / "any N" / "skip if not") from the same one place, not two that could drift.
  */
-function comboTag(g){
-  var max = Number(g && g.max) || 1;
-  var need = !!(g && g.required);
-  if (!need) return 'skip if not';
-  if (max <= 1) return 'one of these';
-  if (Number(g.min) > 1 && Number(g.min) === max) return 'any ' + max;
-  return 'up to ' + max;
-}
 /**
  * ⚠️⚠️ SOLD OUT IS SHOWN, NOT HIDDEN (spec §5.3). *"Staff then know why a favourite is missing."* It reads the
  * SAME per-counter list the quick keys use — quickSold() — so a thing marked out on the keys is out here, and
@@ -14582,44 +14575,21 @@ function modPaint(){
   var nm = (MOD_FOR && MOD_FOR.item && MOD_FOR.item.name) || 'the choices';
   if (ttl) ttl.textContent = (MOD_EDIT !== null) ? ('Change ' + nm) : nm;
   /* ⚠️ the hotkey runs across the WHOLE sheet, 1–9, so a cashier never counts within a group (spec §5.6) */
-  var hk = 0;
-  box.innerHTML = head + MOD_FOR.groups.map(function(g, gi){
-    var picks = MOD_PICK[g.name] || [];
-    var chosen = picks.map(function(x){ return x.option; });
-    var max = Number(g.max) || 1;
-    /**
-     * ⭐ WHAT THIS GROUP IS WAITING FOR, on its right. In an all-visible chooser this is what replaces the
-     * stepper: the chosen name, or the fact that nothing is chosen yet, said differently for required and
-     * optional so nobody hunts for a pick that was never needed.
-     */
-    var state = picks.length
-      ? (max > 1 ? picks.length + ' of ' + max + ' picked' : esc(chosen[0]))
-      : (g.required ? 'waiting for a pick' : 'nothing yet');
-    return '<div class="modg' + (g.required && !picks.length ? ' need' : '') + '"'
-      + ' data-modg="' + esc(g.name) + '" data-testid="till-modg-' + gi + '">'
-      /* ⭐ "The tiffin", not "Choose a tiffin" — the step is a thing, the verb lives on the button */
-      + '<b>' + esc(g.title || g.name)
-        + ' <i class="tag">' + esc(comboTag(g)) + '</i>'
-        + '<span class="gstate' + (picks.length ? ' done' : (g.required ? ' want' : '')) + '">' + state + '</span>'
-        + '</b>'
-      + '<div class="modo">' + g.options.map(function(o, oi){
-          var on = chosen.indexOf(o.name) >= 0;
-          /* ⚠️ SOLD OUT IS SHOWN, NOT HIDDEN — struck through and unpickable, so staff know why it is missing */
-          var out = comboOut(o);
-          var key = out ? 0 : (++hk);
-          return '<button type="button" class="modopt' + (on ? ' on' : '') + (out ? ' out' : '') + '"'
-            + (out ? ' disabled' : '')
-            + ' data-testid="till-modopt-' + gi + '-' + oi + '"'
-            + (key && key < 10 ? ' data-hk="' + key + '"' : '')
-            + ' onclick="modToggle(' + gi + ',' + oi + ')">'
-            + '<span class="mn">' + esc(o.name) + '</span>'
-            /* ⭐ "in the combo" / "+₹15.00" / "sold out today" — what this pick costs, in three words */
-            + '<span class="mw">' + (out ? 'sold out today'
-                : (Number(o.price) ? '+' + money(o.price) : 'in the combo')) + '</span>'
-            + (key && key < 10 ? '<i class="mk">' + key + '</i>' : '')
-            + '</button>';
-        }).join('') + '</div></div>';
-  }).join('');
+  /**
+   * ⭐⭐⭐ [TILL/OFFR-08] ONE MARKUP FOR A COMBO CHOOSER, NOT A TILL COPY AND AN OFFER LAB LOOKALIKE. Athi, on
+   * the Offer Lab's own preview needing to match this exactly: "if it reuses what is being used in cart,
+   * then there should not be any difference at all." CBVariant.chooserHTML() (lib/variant.js) is this same
+   * loop, extracted — the till and the Offer Lab preview both call it now, so there is nothing left to drift.
+   * [[feedback-no-duplicate-functions]]
+   */
+  box.innerHTML = head + CBVariant.chooserHTML(MOD_FOR.groups, modChosen(), {
+    money: money,
+    onClick: function (gi, oi) { return 'modToggle(' + gi + ',' + oi + ')'; },
+    /* ⚠️ SOLD OUT IS SHOWN, NOT HIDDEN — struck through and unpickable, so staff know why it is missing */
+    isOut: function (g, o) { return comboOut(o); },
+    testIdGroup: function (gi) { return 'till-modg-' + gi; },
+    testIdOption: function (gi, oi) { return 'till-modopt-' + gi + '-' + oi; },
+  });
   var miss = modMissing();
   var add = document.getElementById('modadd');
   if (add) {
