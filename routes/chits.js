@@ -254,8 +254,12 @@ router.post('/send',
       /* ⭐ 'credit_note' — a GST §34 return from the counter. This allow-list refuses at the door, and a 4xx is
          FINAL at the counter (never queued, never retried) — so a purpose missing from here is a return lost.
          ⭐ 'expense' — the counter's own money paid OUT (rent, a delivery boy, anything not a refund of a
-         sale), same reasoning: missing from here means the till's own drawer stops balancing. */
-      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note','expense'])
+         sale), same reasoning: missing from here means the till's own drawer stops balancing.
+         ⭐ 'subscription' — a recurring commitment sold at the counter (a delivery run, an AMC): the money is
+         taken like an ordinary sale (no rollup change needed — it is not 'credit_note'/'expense', so it falls
+         through to the normal sale bucket, correctly), but it is its own document, in its own numbered series
+         (docnumber.js KINDS.subscription), same reasoning as the two above. */
+      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note','expense','subscription'])
       .withMessage('Invalid purpose'),
     body('manual_subject').optional().trim().isLength({ max: 500 }),
     // Per-send copy choice — honoured ONLY on a pure self-chit (see the pureSelfChit branch); ignored elsewhere.

@@ -3271,6 +3271,19 @@
     <button value="cancel" data-testid="till-expense-cancel" onclick="expClose()">Cancel</button>
     <button id="expgo" class="go" data-testid="till-expense-go" onclick="expIssue()">Record it</button>
   </menu></div></dialog>
+<!-- ⭐⭐⭐ [subscriptions/AMCs] SIGNING SOMEONE UP — see subOpen() -->
+<dialog id="subdlg" data-testid="till-subscription"><div class="dlg"><h3>New subscription / AMC</h3>
+  <div id="subbody"></div>
+  <menu>
+    <button value="cancel" data-testid="till-sub-cancel" onclick="subClose()">Cancel</button>
+    <button id="subgo" class="go" data-testid="till-sub-go" onclick="subIssue()">Sign them up</button>
+  </menu></div></dialog>
+<!-- ⭐⭐⭐ [subscriptions/AMCs] EVERY SUBSCRIPTION THIS COUNTER HOLDS — see subListOpen() -->
+<dialog id="sublistdlg" data-testid="till-sub-list"><div class="dlg"><h3>My subscriptions &amp; AMCs</h3>
+  <div id="sublistbody"></div>
+  <menu>
+    <button value="cancel" data-testid="till-sub-list-close" onclick="subListClose()">Close</button>
+  </menu></div></dialog>
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <div class="slipbox" id="slipbox"></div>
@@ -4142,6 +4155,8 @@ var CTR_SCREENS = [
   { id: 'dayimgdlg',  code: 'CTR-26', name: "The day's picture" },
   { id: 'askdlg',     code: 'CTR-27', name: 'Ask' },
   { id: 'expdlg',     code: 'CTR-28', name: 'Expenses' },
+  { id: 'subdlg',     code: 'CTR-29', name: 'New subscription/AMC' },
+  { id: 'sublistdlg', code: 'CTR-30', name: 'My subscriptions & AMCs' },
 ];
 function ctrScreen(id){ for (var i = 0; i < CTR_SCREENS.length; i++) if (CTR_SCREENS[i].id === id) return CTR_SCREENS[i]; return null; }
 
@@ -4893,6 +4908,22 @@ var CloudHost = {
     this.drain();
     return { ok: true, bill: doc };
   },
+  /**
+   * ⭐⭐⭐ [subscriptions/AMCs] A REAL SALE, ITS OWN SERIES ('SUB'). Unlike creditNote()/expense(), this one
+   * carries a real `payments` array — the money taken is banked in the ordinary drawer total, exactly like
+   * bill() below, just under its own number so it can be found again as the commitment it is.
+   */
+  async subscription(s){
+    LAST_SERIES = null;
+    var no = await nextNumber('SUB');
+    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1') }, s,
+                             { kind: 'subscription', no: no });
+    doc.chitBody = chitOfSubscription(doc);
+    await DB.put('bills', doc);
+    await DB.put('queue', doc);
+    this.drain();
+    return { ok: true, bill: doc };
+  },
   async bill(b){
     LAST_SERIES = null;
     var no = await nextNumber();
@@ -5383,7 +5414,7 @@ async function nextNumber(kind){
  * ⚠️ AND AN UNKNOWN TAG IS A SALE, which is what the engine already does — stated here rather than discovered.
  * [[feedback-no-duplicate-functions]] [[feedback-name-vs-behaviour]]
  */
-var DOC_TAGS = { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense' };
+var DOC_TAGS = { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense', SUB: 'subscription' };
 function docKindOf(tag){ return DOC_TAGS[tag] || 'sale'; }
 /** and back the other way, for a caller that holds the engine's word and needs the counter's */
 function docTagOf(kind){
@@ -5455,6 +5486,49 @@ function chitOfExpense(e){
       expense: { what: e.what, mode: e.mode, amount: r2(Math.abs(Number(e.total) || 0)) },
     },
     line_items: [],
+  };
+}
+/**
+ * ⭐⭐⭐ [subscriptions/AMCs] A RECURRING COMMITMENT, SOLD AT THE COUNTER — Athi: "scope the subscription/AMC
+ * feature and let's build it," following his own earlier framing: "it can be anything like Gpay... or cash or
+ * card... we are not classifying... assuming if we are bringing the real ledger, then it has to be recorded
+ * against the same" (the same reasoning that shaped expenses — reused here on purpose).
+ *
+ * ⚠️ UNLIKE A CREDIT NOTE OR AN EXPENSE, THIS **IS** A SALE. Real money changes hands the moment someone signs
+ * up (a year's AMC paid upfront, a month's milk-delivery paid upfront) — so `kind` is 'subscription', never
+ * 'credit_note'/'expense', which is exactly what makes it fall through rollup.js's totals() into the ORDINARY
+ * sale bucket with no code change there: counted, added to gross, its `payments` entry banked per tender, same
+ * as any other bill. What makes it its own document is the SERIES (its own 'S' tag, own numbering) and what
+ * it is FOR — a commitment to be fulfilled over time, not goods handed over now.
+ *
+ * ⚠️ FULFILLMENT (each delivery, each AMC visit) IS DELIBERATELY NOT A SECOND CHIT PER OCCURRENCE, in v1. A
+ * two-party goods ledger already exists (chit_line_delivery, b144-b153) but it is built for a supply chain
+ * between two ChitBridge entities — party-scoped claims, RLS on both sides — and a subscription customer here
+ * is an ordinary walk-in "Customer" object, not a second entity. Inventing a parallel per-visit CHIT for every
+ * delivery would multiply the day's document count for no reader who needs it. So fulfillment is tracked
+ * LOCALLY on this counter (subFulfillments()/subMarkDone(), shop-scoped localStorage — same mechanism the
+ * to-do list already uses) against this document's own number. Stated as a real v1 limitation, not hidden:
+ * see subListHTML()'s own note. Promoting it to a synced record is a real, later decision once the shape has
+ * been used for real — not a guess to make now.
+ */
+function chitOfSubscription(s){
+  var subject = 'Subscription — ' + s.what + ' — ' + s.no;
+  return {
+    recipients: [{ self: true, name: 'self' }],
+    purpose: 'subscription',
+    subject: subject, manual_subject: subject,
+    client_ref: s.no,
+    business_json: {
+      customer: s.customer || { name: 'Walk-in' },
+      till: { id: s.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: s.by || null },
+      doc: 'subscription', slip: 'subscription',
+      bill_no: s.no, billed_at: s.at,
+      payment: { mode: s.mode, paid: s.total, parts: s.payments || [] },
+      /* ⭐ what was actually agreed — never classified into a scheme, per "we are not classifying... let it be
+       * that way". `occurrences_total: null` means "runs until cancelled/paused", not a data gap. */
+      subscription: { what: s.what, occurrences_total: s.occurrencesTotal, cadence_days: s.cadenceDays, starts_at: s.startsAt },
+    },
+    line_items: [{ particulars: s.what, quantity: s.occurrencesTotal || 1, unit: s.unit || 'visit', price: s.price, total: s.total }],
   };
 }
 /**
@@ -7934,6 +8008,7 @@ function menuDayBody(){
        section that redraws the whole list is the content Athi asked to have taken out of the menu. */
     + menuTodoSummary()
     + menuExpenseSummary()
+    + menuSubscriptionSummary()
     + '</div>';
 }
 /**
@@ -7947,6 +8022,20 @@ function menuExpenseSummary(){
     + '<div class="todohead"><b>Expenses</b></div>'
     + '<button class="pill wide" data-testid="till-open-expense" onclick="fromMenu(function(){ expOpen(); })">'
     + '💰 Record an expense</button>'
+    + '</div>';
+}
+/**
+ * ⭐⭐ [subscriptions/AMCs] A DOOR NEXT TO EXPENSES, for the same reason — a recurring commitment sold at the
+ * counter is a fact about the day, same as a return or an expense. Not drawn on a host that cannot record one.
+ */
+function menuSubscriptionSummary(){
+  if (!subCanIssue()) return '';
+  return '<div class="todo" data-testid="till-subscription-summary">'
+    + '<div class="todohead"><b>Subscriptions &amp; AMCs</b></div>'
+    + '<button class="pill wide" data-testid="till-open-subscription" onclick="fromMenu(function(){ subOpen(); })">'
+    + '🔁 New subscription/AMC</button>'
+    + '<button class="pill wide" data-testid="till-open-subscription-list" onclick="fromMenu(function(){ subListOpen(); })">'
+    + '📋 My subscriptions &amp; AMCs</button>'
     + '</div>';
 }
 /**
@@ -21799,6 +21888,151 @@ function todoExpense(i){
   var l = todoRead(); var x = l[i]; if (!x) return;
   todoClose();
   expOpen(String(x.t || '').trim());
+}
+/**
+ * ── ⭐⭐⭐ [subscriptions/AMCs] A RECURRING COMMITMENT — see chitOfSubscription()'s own comment for the shape
+ * and why fulfillment is tracked locally in v1, not as a second chit per occurrence.
+ */
+var SUB_WHYNOT = 'This counter cannot record a subscription/AMC yet — that is on the browser counter only.';
+function subCanIssue(){ return !!(HOST && typeof HOST.subscription === 'function'); }
+var SUB_WHAT = '', SUB_CUSTOMER = '', SUB_AMOUNT = '', SUB_OCC = '', SUB_CADENCE = '30', SUB_HOW = 'Cash';
+/** ⭐ named presets for the common cases, plus "Every ___ days" for anything else — matches todoParse()'s own
+ *  spirit of reading a plain word rather than making a shopkeeper compute days by hand. */
+var SUB_CADENCE_PRESETS = [['1', 'Daily'], ['7', 'Weekly'], ['30', 'Monthly'], ['90', 'Quarterly'], ['365', 'Yearly']];
+function subOpen(){
+  if (!subCanIssue()) { toastLine(SUB_WHYNOT); return; }
+  SUB_WHAT = ''; SUB_CUSTOMER = ''; SUB_AMOUNT = ''; SUB_OCC = ''; SUB_CADENCE = '30'; SUB_HOW = expWays()[0] || 'Cash';
+  subPaint();
+  var d = document.getElementById('subdlg'); if (d && d.showModal && !d.open) d.showModal();
+  var box = document.getElementById('subwhat'); if (box) setTimeout(function(){ box.focus(); }, 30);
+}
+function subClose(){
+  var d = document.getElementById('subdlg'); if (d && d.open) { try { d.close(); } catch (_) {} }
+  SUB_WHAT = ''; SUB_CUSTOMER = ''; SUB_AMOUNT = ''; SUB_OCC = '';
+}
+function subWhat(v){ SUB_WHAT = v; subPaint(); }
+function subCustomer(v){ SUB_CUSTOMER = v; subPaint(); }
+function subAmountSet(v){ SUB_AMOUNT = v; subPaint(); }
+function subOcc(v){ SUB_OCC = v; subPaint(); }
+function subCadence(v){ SUB_CADENCE = v; subPaint(); }
+function subHow(v){ SUB_HOW = v; subPaint(); }
+function subPaint(){
+  var box = document.getElementById('subbody'); if (!box) return;
+  var amt = Number(SUB_AMOUNT) || 0;
+  box.innerHTML =
+      '<label>What is it<input id="subwhat" value="' + esc(SUB_WHAT) + '" placeholder="Milk delivery, AC service contract…"'
+        + ' oninput="subWhat(this.value)"></label>'
+    + '<label>Customer<input value="' + esc(SUB_CUSTOMER) + '" placeholder="Walk-in" oninput="subCustomer(this.value)"></label>'
+    + '<label>Amount taken now<input value="' + esc(SUB_AMOUNT) + '" inputmode="decimal" placeholder="0"'
+        + ' oninput="subAmountSet(this.value)"></label>'
+    + '<label>How many are included <span style="font-weight:400;color:var(--dim)">(leave blank for an ongoing subscription with no fixed end)</span>'
+        + '<input value="' + esc(SUB_OCC) + '" inputmode="numeric" placeholder="e.g. 4 visits, or 30 deliveries" oninput="subOcc(this.value)"></label>'
+    + '<label>Every <select onchange="subCadence(this.value)">'
+        + SUB_CADENCE_PRESETS.map(function(p){ return '<option value="' + p[0] + '"' + (SUB_CADENCE === p[0] ? ' selected' : '') + '>' + p[1] + ' (' + p[0] + ' day' + (p[0] === '1' ? '' : 's') + ')</option>'; }).join('')
+        + '<option value="custom"' + (SUB_CADENCE_PRESETS.some(function(p){ return p[0] === SUB_CADENCE; }) ? '' : ' selected') + '>Custom…</option></select>'
+        + (SUB_CADENCE_PRESETS.some(function(p){ return p[0] === SUB_CADENCE; }) ? '' :
+           '<input style="margin-top:6px" value="' + esc(SUB_CADENCE) + '" inputmode="numeric" placeholder="days" oninput="subCadence(this.value)">') + '</label>'
+    + '<label>Paid by <select onchange="subHow(this.value)">'
+        + expWays().map(function(w){ return '<option value="' + esc(w) + '"' + (SUB_HOW === w ? ' selected' : '') + '>' + esc(w) + '</option>'; }).join('')
+      + '</select></label>';
+  var go = document.getElementById('subgo');
+  if (go) { go.disabled = !(SUB_WHAT.trim() && amt > 0 && Number(SUB_CADENCE) > 0); go.textContent = amt > 0 ? ('Sign up — ' + money(amt)) : 'Sign them up'; }
+}
+/** ⭐⭐ ISSUE IT. Same discipline as an expense: numbered from its own series, written locally, queued, sent
+ *  when the line is there. Unlike an expense, this IS a sale — see chitOfSubscription()'s own comment. */
+async function subIssue(){
+  var what = SUB_WHAT.trim(), amount = r2(Number(SUB_AMOUNT) || 0), cadence = Number(SUB_CADENCE) || 0;
+  if (!what) { toastLine('Say what this subscription/AMC is for first.'); return; }
+  if (!(amount > 0)) { toastLine('Give it a real amount first.'); return; }
+  if (!(cadence > 0)) { toastLine('Say how many days between each one first.'); return; }
+  if (await tillStopped()) return;
+  if (!subCanIssue()) { toastLine(SUB_WHYNOT); return; }
+  var occ = SUB_OCC.trim() ? Math.max(1, Math.round(Number(SUB_OCC) || 0)) : null;
+  var custName = SUB_CUSTOMER.trim() || 'Walk-in';
+  var confirmWords = 'Sign up ' + custName + ' for ' + what + ' — ' + money(amount)
+    + (occ ? ', ' + occ + ' included' : ', ongoing') + ', every ' + cadence + ' day(s)?';
+  if (!(await sure(confirmWords, 'Yes, sign them up', 'New subscription/AMC'))) return;
+  var body = { what: what, customer: { name: custName }, price: amount, total: amount, mode: SUB_HOW,
+    payments: [{ how: SUB_HOW, amount: amount }],
+    occurrencesTotal: occ, cadenceDays: cadence, startsAt: new Date().toISOString(),
+    by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null };
+  var r = { ok: false };
+  try { r = await HOST.subscription(body); } catch (e) { r = { ok: false, error: e && e.message }; }
+  if (!r || !r.ok) {
+    toastLine('The subscription was NOT recorded: ' + ((r && (r.why || r.error)) || 'the counter could not write it'));
+    return;
+  }
+  subClose();
+  toastLine('Signed up — ' + money(amount) + ' from ' + custName + ' for ' + what + '.');
+  try { paintMenu(); } catch (_) {}
+}
+
+/**
+ * ── ⭐⭐⭐ FULFILLMENT — LOCAL TO THIS COUNTER, DELIBERATELY (v1) ────────────────────────────────────────────
+ * See chitOfSubscription()'s own comment for why this is not a second chit per occurrence. Shop-scoped
+ * localStorage, same mechanism the to-do list already uses (shopLs()) — so two shops sharing one browser (or
+ * a re-paired counter) never see each other's delivery history, same guarantee todoRead()/todoWrite() give.
+ */
+function subFulfillKey(no){ return shopLs('cb_till_sub_' + no); }
+function subFulfillments(no){
+  var raw = []; try { raw = JSON.parse(ls.get(subFulfillKey(no), '[]')) || []; } catch (_) {}
+  return Array.isArray(raw) ? raw : [];
+}
+function subMarkDone(no){
+  var list = subFulfillments(no);
+  list.push({ at: new Date().toISOString() });
+  try { ls.set(subFulfillKey(no), JSON.stringify(list.slice(-1000))); } catch (_) {}
+  toastLine('Marked done — ' + list.length + ' so far.');
+  subListPaint();
+}
+/** ⭐ the last one was a mistake — undo it, rather than leaving a shopkeeper with no way back from a mis-tap */
+function subUndoLast(no){
+  var list = subFulfillments(no); if (!list.length) return;
+  list.pop();
+  try { ls.set(subFulfillKey(no), JSON.stringify(list)); } catch (_) {}
+  subListPaint();
+}
+function subOccurrencesTotal(s){ return (s.occurrencesTotal != null && s.occurrencesTotal !== '') ? Number(s.occurrencesTotal) : null; }
+function subDoneCount(s){ return subFulfillments(s.no).length; }
+function subIsDone(s){ var t = subOccurrencesTotal(s); return t != null && subDoneCount(s) >= t; }
+/** ⭐ lazily computed on read, like lib/schedule.js's own "apply lazily, no clock, no worker" — there is no
+ *  cron anywhere in this product, and a subscription/AMC is not the place to add the first one. */
+function subLastAt(s){ var f = subFulfillments(s.no); return f.length ? f[f.length - 1].at : s.startsAt; }
+function subNextDueAt(s){
+  var last = subLastAt(s); if (!last) return null;
+  var cad = Number(s.cadenceDays) || 0; if (!cad) return null;
+  return new Date(new Date(last).getTime() + cad * 86400000);
+}
+function subIsOverdue(s){ if (subIsDone(s)) return false; var d = subNextDueAt(s); return !!(d && d.getTime() < Date.now()); }
+async function subListOpen(){ await subListPaint(); var d = document.getElementById('sublistdlg'); if (d && d.showModal && !d.open) d.showModal(); }
+function subListClose(){ var d = document.getElementById('sublistdlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
+async function subListPaint(){
+  var box = document.getElementById('sublistbody'); if (!box) return;
+  /* ⚠️⚠️ NOT HOST.bills() — CloudHost.bills() answers TODAY ONLY (its own doc comment: "a shift is counted
+   * against, not a shop's whole history"-style day filter). A subscription signed up last month must still
+   * be found, so this reads the local store directly, same as everything else about a subscription in v1 —
+   * see chitOfSubscription()'s own comment on why fulfillment is local too. Safe here specifically because
+   * subCanIssue() (gating the whole feature) is only ever true on CloudHost, which is what DB is scoped to. */
+  var bills = []; try { bills = (await DB.all('bills')) || []; } catch (_) {}
+  var subs = bills.filter(function(b){ return b && b.kind === 'subscription'; })
+    .sort(function(a, b){ return String(b.at || '').localeCompare(String(a.at || '')); });
+  if (!subs.length) { box.innerHTML = '<p class="u" data-testid="till-sub-empty">Nothing yet. “New subscription/AMC” below starts one.</p>'; return; }
+  box.innerHTML = subs.map(function(s){
+    var done = subDoneCount(s), tot = subOccurrencesTotal(s), finished = subIsDone(s), overdue = subIsOverdue(s);
+    var progressWords = tot != null ? (done + ' of ' + tot + ' done') : (done + ' done · ongoing');
+    var due = subNextDueAt(s);
+    var dueWords = finished ? 'All done' : (overdue ? '⚠️ overdue' : (due ? 'next due ' + due.toDateString() : 'not started yet'));
+    return '<div style="padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px" data-testid="till-sub-row-' + esc(s.no) + '">'
+      + '<div style="font-weight:700">' + esc(s.what) + ' · ' + esc((s.customer && s.customer.name) || 'Walk-in') + '</div>'
+      + '<div style="font-size:.85em;color:var(--dim)">' + esc(s.no) + ' · ' + esc(progressWords) + ' · every ' + (Number(s.cadenceDays) || 0) + ' day(s) · '
+        + (overdue ? '<b style="color:#a13a1f">' + esc(dueWords) + '</b>' : esc(dueWords)) + '</div>'
+      + (finished ? '' : '<div style="margin-top:6px;display:flex;gap:6px">'
+          + '<button class="pill" data-testid="till-sub-mark-' + esc(s.no) + '" onclick="subMarkDone(\'' + esc(s.no) + '\')">✓ Mark today done</button>'
+          + (done > 0 ? '<button class="pill" data-testid="till-sub-undo-' + esc(s.no) + '" onclick="subUndoLast(\'' + esc(s.no) + '\')">Undo last</button>' : '')
+          + '</div>')
+      + '</div>';
+  }).join('')
+    + '<p class="u" style="margin-top:8px">Deliveries/visits are tracked on THIS counter only for now — not yet synced or shared with other counters.</p>';
 }
 /**
  * ⭐⭐ ISSUE IT. A credit note is a document, so it goes through the same queue a bill does and is as safe
