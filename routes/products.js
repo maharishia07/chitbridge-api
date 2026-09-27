@@ -1608,13 +1608,42 @@ router.get('/lists', auth, async (req, res) => {
     let mine = [];
     try {
       const r = await withEntity(entity_id, (db) => db.query(
-        `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit
+        `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit, item_data->'price' AS price
            FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`, [entity_id]));
-      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit }));
+      /**
+       * ⭐ THE SHOP'S OWN PRICE TRAVELS TOO — Athi: *"can we have an icon / filter to see what is in my
+       * catalogue with its price here."* Which turns the lab into something it was not a minute ago: a place
+       * to COMPARE what you charge against what the list suggests, not only a place to add.
+       * ⚠️ READ THROUGH money.amountOf. A stored price is a STAMPED object, never a bare number, and that
+       * file's own warning is that the front end's prevailing `+d.price || 0` idiom turns an absent price
+       * into a confident zero — which here would read as "this shop sells tomatoes for nothing".
+       */
+      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price) }));
     } catch (_) { mine = []; }
+
+    /**
+     * ⭐⭐ THE SHOP'S CURRENCY, BECAUSE A BARE NUMBER IS NOT A PRICE. Athi: *"currency is not shown in the
+     * list, but we know the store, so we have to showcase the currency, otherwise just the number doesn't
+     * make sense."* We do know it — regional.currencyFor reads it from the ENTITY, the same rule every
+     * other price on the platform follows: never from the request, never from the page.
+     *
+     * ⭐⭐⭐ AND THE LIST ITSELF CARRIES NO CURRENCY, WHICH IS THE POINT. Athi, correcting a first cut that
+     * shipped an INR label beside the shop's own: *"we do not mix the currency into this? what i have
+     * mentioned was, the name can be picked from here. say a shop in US, who sells tamil vegetables, how do
+     * they inherit, they will set up their shop in US$, but they inherit the products, so the product will
+     * map with their shop currency."*
+     *
+     * What is inherited is the NAME, the unit, the shelf and the local words — the things that are the same
+     * tomato in Chennai and in New Jersey. The figure travels as an indicative starting number and is
+     * stamped with the ENTITY's currency on write, exactly as every other product is. One currency on the
+     * screen, and it is always the shop's. A second one would be a conversion nobody performed.
+     */
+    let currency = 'INR';
+    try { currency = (await regional.currencyFor(entity_id)) || 'INR'; } catch (_) { currency = 'INR'; }
 
     res.json({
       have: mine.length,
+      currency,
       /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
          ticks, so it needs every row's name, unit, price, category and local names to render at all. */
       lists: Object.keys(BP.BLUEPRINTS).map((k) => {
