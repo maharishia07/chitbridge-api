@@ -350,12 +350,15 @@ function cacheName(){
   var h = 5381; for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
   return 'cb_promo_snap_' + h.toString(36);
 }
+var READ_OK = false;   /* ⭐ did the LAST read reach ChitBridge, or is the screen showing its own saved copy */
 async function readShop(){
+  READ_OK = false;
   try {
     if (!KEY) throw new Error('no key');
     var r = await fetch(API + '/api/till/snapshot', { headers:{ 'X-Api-Key': KEY }, cache:'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     S = await r.json();
+    READ_OK = true;
     try { ls.set(cacheName(), JSON.stringify(S)); } catch (_) { /* a big shop may not fit; the screen still runs */ }
   } catch (e) {
     var kept = ls.get(cacheName(), null);
@@ -1105,7 +1108,23 @@ document.getElementById('repair').onclick = function(){ location.hash = 'pair'; 
 /* ⚠️ typing #pair (or a #key= link) onto a sign that is ALREADY open changes only the fragment, and a browser does
    not reload for that — so the request was silently ignored. Reload, and takeAddress() acts on it (the e2e caught it). */
 window.addEventListener('hashchange', function(){ if (/^#(pair\b|key=)/.test(location.hash)) location.reload(); });
-document.getElementById('refresh').onclick = async function(){ var before = pickedIds(); await readShop(); SLIDES = build(); paintBar(); showNewPickNext(before); paint(true); say('Read the shop again'); };
+/**
+ * ⭐ ↻ SAYS WHAT IT READ (2026-09-27). Athi, on his phone: *"i have a refresh button in the current screen but it is
+ * not doing anything … how this refresh button will touch the server and get the new item list?"* It did touch the
+ * server — GET /api/till/snapshot with this screen's key, the whole list replaced — but it said only "Read the shop
+ * again", so a read that changed nothing and a read that found his pick looked identical. Now it answers in digits:
+ * what is on sale, how many are picked for the screen, and which one is next. A failed read says so.
+ */
+document.getElementById('refresh').onclick = async function(){
+  var before = pickedIds();
+  await readShop(); SLIDES = build(); paintBar();
+  var fresh = showNewPickNext(before);
+  paint(true);
+  if (!READ_OK) { say('⚠ Could not reach ChitBridge — showing what this screen already had'); return; }
+  var picks = live().filter(function(i){ return i.screen === true; });
+  say('↻ ' + live().length + ' on sale · 📌 ' + picks.length
+      + (fresh ? ' · next: ' + (fresh === true ? 'your pick' : fresh) : (picks.length ? ' · ' + picks.map(function(i){ return i.name; }).slice(0, 3).join(', ') : '')));
+};
 document.getElementById('full').onclick = function(){
   if (document.fullscreenElement) document.exitFullscreen();
   else document.documentElement.requestFullscreen().catch(function(){ document.body.classList.toggle('show'); });
