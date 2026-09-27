@@ -11963,6 +11963,15 @@ async function loadQuick(){
  * the list that would write an order nobody chose. Arrange shows the group whole, and says so.
  */
 function quickCatOn(){ return !QK_ARRANGE && !!(FILTER && FILTER.cat); }
+/**
+ * ⭐⭐⭐ [found live, 2026-09-27] "when i check the offer, the image panel is not filtering" — quickShown()
+ * only ever asked quickCatOn(); the On offer / Off the shelf chips (the SAME FILTER object, mutually
+ * exclusive with cat — see setFilter()) sit in the identical bar, right above this exact grid, and visibly
+ * did nothing to it while the shelf list one scroll down correctly narrowed. One filter bar, on one screen,
+ * had two different sets of rules depending which panel happened to be looking at it.
+ */
+function quickOfferOn(){ return !QK_ARRANGE && !!(FILTER && FILTER.offer); }
+function quickOffOn(){ return !QK_ARRANGE && !!(FILTER && FILTER.off); }
 /** what has been typed, when it is the keys' business to narrow — never while an ORDER is being written */
 function quickQ(){
   if (QK_ARRANGE) return '';
@@ -11994,6 +12003,10 @@ function quickShown(){
   var hiddenCats = catHidden();
   if (hiddenCats.length) out = out.filter(function(i){ return !i || hiddenCats.indexOf(i.category) < 0; });
   if (quickCatOn()) out = out.filter(function(i){ return i && i.category === FILTER.cat; });
+  /* ⭐ the SAME two tests hits() (the shelf list) already applies for these same two chips — one rule, read
+     from the one place it's already proven correct, not a second opinion about what "on offer" means. */
+  if (quickOfferOn()) out = out.filter(function(i){ return i && offersFor(i).length > 0; });
+  if (quickOffOn()) out = out.filter(function(i){ return i && statusOf(i) === 'unavailable'; });
   var q = quickQ();
   if (!q) return out;
   if (window.CBSearch && CBSearch.search) {
@@ -12042,11 +12055,18 @@ function paintQuick(){
   /* ⚠ WHICHEVER NARROWING IS ON, IT IS NAMED. Keys gone without a reason read as keys LOST — and now there are
      two ways to lose them, a chip and a typed word, so the bar says which one is doing it. */
   var qtyped = quickQ();
-  var narrowed = quickCatOn() || !!qtyped;
-  var why = [quickCatOn() ? esc(FILTER.cat) : '', qtyped ? '“' + esc(qtyped) + '”' : ''].filter(Boolean).join(' · ');
+  /* ⭐ [found live, 2026-09-27] the chip narrows by offer or off-the-shelf too now — named here the same way
+     a category or a typed word already was, so "why did the keys change" never goes unanswered for these two
+     either (quickOfferOn()/quickOffOn(), same FILTER object, see their own comment above). */
+  var chipOn = quickCatOn() || quickOfferOn() || quickOffOn();
+  var narrowed = chipOn || !!qtyped;
+  var why = [
+    quickCatOn() ? esc(FILTER.cat) : '', quickOfferOn() ? 'on-offer items' : '', quickOffOn() ? 'off-the-shelf items' : '',
+    qtyped ? '“' + esc(qtyped) + '”' : ''
+  ].filter(Boolean).join(' · ');
   var catNote = narrowed
     ? '<span class="qwhy" data-testid="till-quick-cat">' + why + ' only · ' + shown.length + ' of ' + QUICK.length + '</span>'
-      + (quickCatOn() ? '<button class="qarr" data-testid="till-quick-catall" title="every key in this group again"'
+      + (chipOn ? '<button class="qarr" data-testid="till-quick-catall" title="every key in this group again"'
            + ' onclick="setFilter(\'all\')">show all</button>' : '')
     : '';
   var bar = '<div class="qbar" data-testid="till-quick-bar">'
@@ -12222,7 +12242,7 @@ function paintQuick(){
     ? '<div class="qarrnote" data-testid="till-arrange-note">Arranging \u2014 drag a key where you want it'
       + (QK_FROM ? ', then tap where it should go' : '') + '. Nothing is billed until you press Done.'
       /* ⚠ the grid just grew back under their hands, and an ORDER is being written — so it is said plainly */
-      + (FILTER && FILTER.cat ? ' Every key in the group is shown while you arrange.' : '') + '</div>'
+      + (FILTER && (FILTER.cat || FILTER.offer || FILTER.off) ? ' Every key in the group is shown while you arrange.' : '') + '</div>'
     : '';
   /* ⚠ AN EMPTY GRID EXPLAINS ITSELF. A blank panel is a fault report; a sentence is an answer. */
   /**
