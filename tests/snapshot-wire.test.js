@@ -648,13 +648,24 @@ it('⭐⭐ the maintenance panel holds the four decisions and writes each throug
    * for a button was a screen nobody could predict — and a mis-tapped switch was already on the shop screen with no undo.
    */
   for (const [what, mark] of [['availability', "pendSet('status'"], ['price', 'pendPrice(this.value)'],
-                              ['offers', 'pendOffer('], ['the shop screen', "pendSet('screen'"]])
+                              ['offers', 'pendOffer(']])
     assert.ok(card.indexOf(mark) > 0, 'the maintenance panel cannot stage ' + what);
   assert.ok(card.indexOf('cardSave()') > 0 && card.indexOf('card-save') > 0, 'there is no one Save for the panel');
   assert.ok(card.indexOf('cardDiscard()') > 0, 'there is no way back — Discard is the undo this screen never had');
   /* ⚠️ nothing may write straight from a control any more, or "nothing leaves until Save" is a lie on the screen */
   for (const direct of ['stockWrite(', 'priceWrite(', 'screenWrite(', 'offerWrite('])
     assert.ok(card.indexOf(direct) < 0, direct + ' is called from a control — it must only be called by cardSave');
+  /**
+   * ⭐ MOVED 2026-09-27, not deleted: THE SHOP-SCREEN SWITCH IS THE ONE EXCEPTION, BY ATHI'S LATER DECISION. *"i should
+   * be able to remove and add item as i like and the changes has to be immediate"* — staged, his second pick never left
+   * the counter. So it saves the moment it is flipped, through screenNow() → the same screenWrite() Save uses; its undo
+   * is flipping it back, which is just as immediate. What stays true: a control never calls a write DIRECTLY, and the
+   * other three decisions still wait for the one Save.
+   */
+  assert.ok(card.indexOf("'screenNow(") > 0, 'the shop-screen switch is not the immediate one any more');
+  assert.ok(card.indexOf("pendSet('screen'") < 0, 'the shop-screen switch is staged again — Athi asked for it to be immediate');
+  const now = page.slice(page.indexOf('async function screenNow(on){'), page.indexOf('async function screenWrite(i, on){'));
+  assert.ok(now.indexOf('screenWrite(i, on)') > 0, 'screenNow does not write through the one screenWrite()');
   /* each field keeps its own narrow route, so a partial failure can be reported per field */
   const save = page.slice(page.indexOf('async function cardSave(){'), page.indexOf('function cardDiscard(){'));
   for (const w of ['stockWrite(i', 'priceWrite(i', 'screenWrite(i', 'offerWrite(i'])

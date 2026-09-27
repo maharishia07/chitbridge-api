@@ -13478,7 +13478,7 @@ function cardForGood(i){
     + '</i></span>'
     + (off
         ? cardSwitch(false, 'card-screen', 'void 0', '')
-        : cardSwitch(!!onScreen, 'card-screen', "pendSet('screen'," + (onScreen ? 'false' : 'true') + ',' + (!!i.on_screen) + ')', ''))
+        : cardSwitch(!!onScreen, 'card-screen', 'screenNow(' + (onScreen ? 'false' : 'true') + ')', ''))
     + '</div>'
     + '</div>';
 }
@@ -13798,6 +13798,22 @@ async function offerItemWrite(i, offer_id, on){
       paintHits();
     },
   });
+}
+/**
+ * ⭐⭐ THE SCREEN SWITCH SAVES THE MOMENT IT IS FLIPPED (2026-09-27). Athi: *"it works now, after that i added one more
+ * item, how do i push to the tv rightaway"* · *"i should be able to remove and add item as i like and the changes has
+ * to be immediate"*. The switch was STAGED like the rest of the card, so it reached nothing until Save — his second pick
+ * never left the counter (live data: no screen pick after the first). Everything else on the card stays staged: a price
+ * or a shelf change is a decision worth a Save; "show this on the telly" is one somebody wants to watch happen.
+ * ⭐ The write is the SAME screenWrite() the Save path uses (cloudFirst: ChitBridge first, nothing claimed that did not
+ * land); the server rings the bell and the TV re-reads within seconds and shows a new pick next (promo.html).
+ */
+async function screenNow(on){
+  var i = cardItem(); if (!i) return;
+  delete PEND.screen;                                   /* nothing left staged for this switch */
+  var out = await screenWrite(i, on);
+  paintCard(); paintHits();
+  if (out && out.ok) toastLine('📺 ' + i.name + (on ? ' — on the shop screen now' : ' — off the shop screen now'));
 }
 async function screenWrite(i, on){
   if (!i) return null;
