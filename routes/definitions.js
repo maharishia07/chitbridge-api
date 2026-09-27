@@ -181,7 +181,17 @@ router.get('/:id', auth, async (req, res) => {
       const v = await db.query(
         `SELECT version, rules, note, created_at, created_by FROM definition_version
           WHERE definition_id = $1 ORDER BY version DESC`, [req.params.id]);
-      return { definition: d.rows[0], versions: v.rows };
+      /**
+       * ⭐ [b268] "who approved the offer or made it live" — the name, not just the id: a LEFT JOIN so a
+       * status_log row from an identity since removed still shows its status and timestamp rather than
+       * vanishing or 500ing.
+       */
+      const sl = await db.query(
+        `SELECT sl.status, sl.changed_at, sl.changed_by, i.display_name AS changed_by_name
+           FROM definition_status_log sl
+           LEFT JOIN identities i ON i.identity_id = sl.changed_by
+          WHERE sl.definition_id = $1 ORDER BY sl.changed_at DESC`, [req.params.id]);
+      return { definition: d.rows[0], versions: v.rows, status_log: sl.rows };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json(out);
@@ -282,6 +292,18 @@ router.put('/:id', auth, async (req, res) => {
         [req.params.id, name ? String(name).trim().slice(0, MAX_NAME) : null,
          note != null ? String(note).slice(0, MAX_NOTE) : null,
          status ? String(status) : null, version]);
+      /**
+       * ⭐⭐⭐ [b268, 2026-09-27] "who approved the offer or made it live" — one row per REAL transition
+       * (never a no-op "approved" PUT that leaves it already approved), so the log answers exactly the
+       * question it exists for and never one nobody asked ("approved" appearing twice because a screen
+       * re-sent the same status is noise, not history).
+       */
+      if (status && status !== d.status) {
+        await db.query(
+          `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
+           VALUES ($1,$2,$3,$4)`,
+          [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]);
+      }
       return { row: upd.rows[0], version, versioned: !!rules };
     });
 
@@ -321,8 +343,9 @@ router.delete('/:id', auth, async (req, res) => {
     if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
     const entity_id = ctx(req);
     const out = await withEntity(entity_id, async (db) => {
-      const cur = await db.query(`SELECT kind FROM definition WHERE definition_id = $1`, [req.params.id]);
+      const cur = await db.query(`SELECT kind, status FROM definition WHERE definition_id = $1`, [req.params.id]);
       if (!cur.rows.length) return { status: 404, body: { error: 'Not found' } };
+      const wasRetired = cur.rows[0].status === 'retired';
       let moved = null;
       if (cur.rows[0].kind === 'tax') {
         /* ⭐ A SLAB DOES NOT GO DARK UNDER ITS PRODUCTS. Refused with the counts; accepted with ?takeover=<slab id>,
@@ -332,6 +355,15 @@ router.delete('/:id', auth, async (req, res) => {
         moved = g ? g.moved : null;
       }
       await db.query(`UPDATE definition SET status = 'retired', updated_at = now() WHERE definition_id = $1`, [req.params.id]);
+      /* ⭐ [b268] the same log the PUT status-change writes to — "who retired it" is exactly as real a question
+         as "who approved it", and this is the ONE status transition that never goes through PUT at all.
+         Guarded the same way PUT guards its own write: a retire called on something already retired is a
+         no-op, not a second event. */
+      if (!wasRetired) {
+        await db.query(
+          `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by) VALUES ($1,$2,'retired',$3)`,
+          [req.params.id, entity_id, req.identity && req.identity.identity_id]);
+      }
       shopChanged(entity_id, 'definition retired');
       return { status: 200, body: { message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true, moved } };
     });
