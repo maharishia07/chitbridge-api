@@ -79,7 +79,7 @@ router.get('/snapshot', auth, async (req, res) => {
 
     /* the shop, as its own books know it — the slip's header, and what decides tax invoice vs cash memo */
     const me = await query(
-      `SELECT display_name, gstn, country, policy_flags FROM identities WHERE identity_id = $1`, [entity_id]);
+      `SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = me.rows[0] || {};
     const flags = await policy.get(entity_id).catch(() => ({}));
 
@@ -562,6 +562,18 @@ router.get('/snapshot', auth, async (req, res) => {
          * ⚠️ The state code IS the first two digits of the GSTIN — so it must come from whichever GSTIN was actually used.
          */
         gstin: gstin,
+        /**
+         * ⭐⭐ THE SHOP'S PUBLIC HANDLE, so the counter can show a shopkeeper their own storefront link.
+         * Athi, 2026-09-27: *"also in the settings, profile, we have to bring the storefront URL."*
+         *
+         * ⚠️ user_id IS the public handle and bridge_id is NOT — routes/catalogue.js settles it: *"THE PUBLIC
+         * HANDLE IS user_id; bridge_id IS THE INTERNAL KEY"*, and every storefront link the app builds is
+         * /shop.html?s=<user_id> (lib/raiseticket). Sending bridge_id here and letting the page build a link
+         * from it would publish the internal key on a screen a shopkeeper is invited to share.
+         * ⚠️ The counter BUILDS the link rather than being sent one, because the web host is something the
+         * page already resolves (cbHome()) and the API does not know which front end asked.
+         */
+        handle: row.user_id || null,
         state_code: String(gstin || '').slice(0, 2) || null,
         reg_type: String(flags.gst_registration || 'regular'),
         /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */

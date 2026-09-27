@@ -7245,6 +7245,9 @@ var SHOP_ROWS = [
   { k: 'gstin',      label: 'GSTIN',      why: 'bills show no GST — that is fine if the shop is not registered' },
   { k: 'currency',   label: 'Money',      why: '' },
   { k: 'counter',    label: 'Counter',    why: 'this device' },
+  /* ⭐ Athi, 2026-09-27: "in the settings, profile, we have to bring the storefront URL." It is the one row
+     here a shopkeeper wants to COPY rather than edit — it is what they send a customer. */
+  { k: 'storefront', label: 'Storefront',  why: 'send this to customers' },
 ];
 
 function menuShopBody(){
@@ -7253,6 +7256,18 @@ function menuShopBody(){
   /* ⭐ a shop that has SAID it is not registered is answered, not unfinished ([TILL-162]) */
   var noGst = (function(){ try { return gstAsked() === 'not_registered'; } catch (_) { return false; } })();
   var val = function(k){
+    /**
+     * ⚠️ BUILT FROM THE HANDLE THE SERVER SENT, never from bridge_id — routes/catalogue.js: "THE PUBLIC
+     * HANDLE IS user_id; bridge_id IS THE INTERNAL KEY". cbHome() is the one place this file already
+     * resolves the web app's address, the same function openGst() uses.
+     */
+    /**
+     * ⚠️⚠️ cbHome() ENDS IN /app.html — it resolves the BACK OFFICE, not the web root, so appending to it
+     * produced ".../app.html/shop.html?s=…" and a dead link. Caught by e2e/day-one, which reads the row
+     * rather than trusting that a URL built from two known-good halves is a known-good URL.
+     */
+    if (k === 'storefront') return sh.handle
+      ? (cbHome().replace(/\/app\.html.*$/, '') + '/shop.html?s=' + encodeURIComponent(sh.handle)) : '';
     if (k === 'gstin')    return tx.gstin || (noGst ? 'Not registered' : '');
     if (k === 'currency') return sh.currency || (S && S.currency) || 'INR';
     if (k === 'counter')  return (STATE && STATE.till && STATE.till.name) || ls.get('cb_till_name', '');
@@ -16414,7 +16429,23 @@ function health(){
       'Set a price in ChitBridge → Catalogue.', noPrice.slice(0, 5).map(function(i){ return i.name; }));
 
   if (!items.length)
-    add('bad', 'Nothing on the shelf', 'There is nothing to sell from this counter.', 'Add products in ChitBridge → Catalogue, then press ↻.');
+    /**
+     * ⭐⭐⭐ DAY ONE, AND THE ANSWER IS NOW IN THIS APP. Athi, 2026-09-27: *"assume one shop, one counter, he
+     * signed in, if no product, lab to be showcased to add products... so they can start using the till
+     * application from the day 1, without much help from others."*
+     *
+     * This line used to read *"Add products in ChitBridge → Catalogue, then press ↻"* — which, on the one
+     * screen a brand-new shop reaches first, sent them to a different application to do the only thing
+     * standing between them and a sale.
+     *
+     * ⚠️⚠️ AND IT NAMES THE DOOR THE OTHER TWO NAME, rather than inventing a third. A shop with nothing to
+     * sell already meets this in two other places — shopReady()'s stop and the shelf line — and BOTH offer
+     * startOpen(). A first draft of this line gave written directions to Product Lab instead, which would
+     * have been a third answer to one question, and instructions where the other two give a button. The
+     * lists live inside startOpen() now, so all three say the same thing and one of them opens it.
+     */
+    add('bad', 'Nothing on the shelf', 'There is nothing to sell from this counter yet.',
+      'Press "Start your shop" and take a ready-made product list — vegetables, eggs, fish, chicken or meat.');
 
   if (S.at) {
     var mins = Math.round((Date.now() - new Date(S.at).getTime()) / 60000);
@@ -18344,6 +18375,19 @@ async function startOpen(){
     + '<b>I already have a list</b>'
     + '<span class="out">bring a spreadsheet — we read it first and show you what we found</span>'
     + '<span class="eg">a .csv from Tally, from your books, or one you typed yourself</span></button>');
+  /**
+   * ⭐⭐ AND THE FOURTH WAY IN — PICK, rather than take the whole list ([Product Lab, 2026-09-27]).
+   * The trade buttons above mint a starter catalogue WHOLE, which is right for a shop opening today and
+   * wrong for one that wants the greens shelf and nothing else. Product Lab is the same six lists with a
+   * checkbox against every row, a price to amend and a shelf decision — so it is offered HERE, beside the
+   * others, rather than as a separate instruction somebody has to be told.
+   * ⚠️ class "bring", NOT "trade" — the trades are a SET read by that class, and this is a different way in.
+   */
+  document.getElementById('startbody').insertAdjacentHTML('beforeend',
+    '<button class="bring" data-testid="till-productlab-open" onclick="startClose();openProductLab()">'
+    + '<b>Let me pick what I sell</b>'
+    + '<span class="out">Product Lab — the same lists, with a tick against each product</span>'
+    + '<span class="eg">choose a shelf at a time, set your own prices, add more whenever you like</span></button>');
 }
 function startClose(){ var d = document.getElementById('startdlg'); if (d && d.open) d.close(); }
 function startSay(t, bad){
