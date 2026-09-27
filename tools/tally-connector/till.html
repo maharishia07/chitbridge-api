@@ -2666,6 +2666,13 @@
   .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--edge);border-radius:9px;background:var(--paper)}
   /* ⭐⭐ [till expenses, 2026-09-27] AMOUNT FIRST AND BIG — it is why the sheet is open, so it gets the sheet's
      largest number, same reasoning screen-kit.js gives a tile's price. */
+  /* ⭐ a phone, because that is what a customer is holding — the same 390px app.html frames it at */
+  .shopprevwrap{display:flex;justify-content:center;padding:4px 0 2px}
+  .shopprevwrap iframe{width:390px;max-width:100%;height:520px;border:1px solid var(--line);
+    border-radius:18px;background:#fff}
+  .shopprevhold{width:390px;max-width:100%;height:520px;border:1px dashed var(--line);border-radius:18px;
+    background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:10px;text-align:center;padding:0 22px}
   .amtbig{display:flex;align-items:center;border:2px solid var(--edge);border-radius:10px;background:var(--paper)}
   .amtbig .cur{padding:0 2px 0 12px;font-size:1.3em;font-weight:700;color:var(--dim)}
   .amtbig input{border:0;background:transparent;width:100%;padding:12px 12px 12px 4px;
@@ -3291,6 +3298,22 @@
     <button value="cancel" data-testid="till-return-cancel" onclick="retClose()">Cancel</button>
     <button id="retgo" class="pri" data-testid="till-return-go" onclick="retIssue()">Give it back</button>
   </div></div></dialog>
+<!--
+  ⭐⭐⭐ WHAT A CUSTOMER SEES — see shopPrevOpen(). Athi, 2026-09-27, pointing at the back office's own
+  Storefront tab: *"we have the shopfront page the catalogue, so possibly we can reuse, we don't need to
+  bring everything as most of the details are not required to be showcased."*
+
+  ⚠️ IT REUSES shop.html ITSELF, in a frame — the same thing app.html's product Storefront tab does, with
+  the same ?s=<handle>&item=<id>&preview=1. Nothing about a product page is re-drawn here; a second opinion
+  about what a customer sees is exactly the drift that would make the preview a lie.
+-->
+<dialog id="shopprevdlg" data-testid="till-shopprev"><div class="dlg"><h3 id="shopprevtitle">What a customer sees</h3>
+  <div id="shopprevbody"></div>
+  <div class="dlgbtns">
+    <button onclick="shopPrevClose()">Close</button>
+    <button class="pri" data-testid="till-shopprev-open" onclick="shopPrevOut()">Open the storefront ↗</button>
+  </div>
+</div></dialog>
 <!-- ⭐⭐ [till expenses] MONEY PAID OUT OF THE DRAWER — see expOpen() -->
 <dialog id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
   <div id="expbody"></div>
@@ -13452,6 +13475,9 @@ function paintCard(){
        something nobody is asking at that moment; the render's phone sheet shows the code and the category only. */
     + '<span class="wideonly"> · name, category and tax slab come from ChitBridge</span></i></span>'
     + '<button class="pill" data-testid="card-photo" onclick="cardPhoto()">Change photo</button>'
+    /* ⭐ one tap from the product a shopkeeper is already looking at — the question "what does this look
+       like to a customer?" is asked HERE, not by going to another application and finding the product again */
+    + (shopPrevCan(i) ? '<button class="pill" data-testid="card-storefront" onclick="shopPrevOpen()">👁 As a customer</button>' : '')
     /* ⚠️ THE WAY OUT OF THE SHEET. On a wide screen the editor is simply a pane and there is nothing to close,
        so this shows only where the sheet exists — a phone. Escape belongs to the bill on this counter. */
     + '</div>'
@@ -22583,6 +22609,63 @@ function openScreen(){
  * and reuses a tab already open under that name instead of spawning another — one window, whichever surface
  * asked for it. `noopener` dropped on purpose: it is same-origin navigation, not an untrusted external link,
  * and forcing a fresh opener-less context on every call is exactly what defeats window-name reuse. */
+/**
+ * ── ⭐⭐⭐ WHAT A CUSTOMER SEES, WITHOUT LEAVING THE COUNTER (2026-09-27) ──────────────────────────────────
+ *
+ * Athi: *"we have the shopfront page the catalogue, so possibly we can reuse."* So this reuses it exactly —
+ * app.html's product Storefront tab frames `shop.html?s=<handle>&item=<id>&preview=1`, and so does this.
+ * Not one line of a product page is re-drawn here: a preview that draws its own version of the storefront
+ * is a preview that can disagree with the storefront, which makes it worse than no preview at all.
+ *
+ * ⚠️⚠️⚠️ AND IT LOADS ONLY WHEN ASKED, which is the lesson app.html already paid for. Athi, 2026-09-13
+ * (CAT001-H06): *"when I browse every item and click the storefront, it takes time to build the
+ * storefront."* The frame was loading eagerly, and it is not slow rendering — it is A SECOND APPLICATION
+ * STARTING: a 91 KB document that then makes its own catalogue, offers and tax calls. `loading="lazy"`
+ * does nothing, because the frame is in view the moment it opens. So: an outline and a button, and the
+ * shop only pays for the preview when somebody actually wants one.
+ *
+ * ⚠️ A shop with no public handle yet gets no button at all, rather than one that opens a broken frame.
+ */
+function shopPrevCan(i){ return !!(i && i.item_id && S && S.shop && S.shop.handle); }
+/** ⚠️ cbHome() ends in /app.html — the storefront sits at the web ROOT, the same trim the profile row makes */
+function shopPrevUrl(i, one){
+  var h = (S && S.shop && S.shop.handle) || '';
+  if (!h) return '';
+  var base = cbHome().replace(/\/app\.html.*$/, '') + '/shop.html?s=' + encodeURIComponent(h);
+  return one && i && i.item_id ? (base + '&item=' + encodeURIComponent(i.item_id) + '&preview=1') : base;
+}
+function shopPrevOpen(){
+  var i = cardItem(); if (!shopPrevCan(i)) { toastLine('This shop has no storefront address yet.'); return; }
+  var t = document.getElementById('shopprevtitle'); if (t) t.textContent = i.name || 'What a customer sees';
+  var box = document.getElementById('shopprevbody'); if (!box) return;
+  /* ⚠️ THE OUTLINE FIRST, NEVER THE FRAME — see the note above. The src sits in data-src until pressed. */
+  box.innerHTML =
+      '<p class="note">' + (statusOf(i) === 'unavailable'
+        ? '● This product is off the shelf, so a customer cannot buy it yet.'
+        : 'This is the customer\u2019s own page, not a drawing of it.') + '</p>'
+    + '<div class="shopprevwrap">'
+      + '<iframe id="shopprevframe" data-testid="till-shopprev-frame" title="What a customer sees"'
+        + ' data-src="' + esc(shopPrevUrl(i, true)) + '" style="display:none"></iframe>'
+      + '<div id="shopprevhold" class="shopprevhold">'
+        + '<div style="font-size:2em">🛍️</div>'
+        + '<div class="note">Loading it opens your storefront in here.</div>'
+        + '<button class="pill" data-testid="till-shopprev-load" onclick="shopPrevLoad()">Show me</button>'
+      + '</div>'
+    + '</div>';
+  var d = document.getElementById('shopprevdlg'); if (d && d.showModal && !d.open) d.showModal();
+}
+/** ⭐ the one place the frame is ever given a src */
+function shopPrevLoad(){
+  var f = document.getElementById('shopprevframe'), h = document.getElementById('shopprevhold');
+  if (!f) return;
+  if (!f.getAttribute('src')) f.setAttribute('src', f.getAttribute('data-src') || '');
+  f.style.display = ''; if (h) h.style.display = 'none';
+}
+function shopPrevOut(){
+  var i = cardItem(); var u = shopPrevUrl(i, false);
+  if (u) { try { window.open(u, '_blank', 'noopener'); } catch (_) {} }
+}
+function shopPrevClose(){ var d = document.getElementById('shopprevdlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
 function openProductLab(){ window.open('/product-lab.html', 'cb_product_lab'); }
 function openOfferLab(){ window.open('/offer-lab-next.html', 'cb_offer_lab'); }
 function openComboLab(){ window.open('/combo-lab.html', 'cb_combo_lab'); }
