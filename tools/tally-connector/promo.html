@@ -133,6 +133,7 @@
   <button id="dlall" title="Save the next ten">⤓ Save 10</button>
   <button id="full" title="F">⛶ Full screen</button>
   <button id="refresh" class="ghost" title="Read the shop again">↻</button>
+  <button id="repair" class="ghost" data-testid="promo-repair" title="Pair this screen again with a new code">📡</button>
 </header>
 
 <main>
@@ -190,7 +191,20 @@ var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null
            set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
 
 var API = ls.get('cb_till_api', 'https://chitbridge-api-production.up.railway.app');
-var KEY = ls.get('cb_till_key', null);
+/**
+ * ── ⚠️⚠️⚠️ THE SCREEN'S OWN KEY, NEVER THE COUNTER'S (2026-09-27) ─────────────────────────────────────────────
+ *
+ * Athi: *"when i open the link, it automatically open the link, it is not connected using the pairing key, is there a
+ * way to force to use the newer key from the tv"*. This page read and wrote `cb_till_key` — THE COUNTER'S OWN storage
+ * name. So a browser that had ever run the counter opened the sign on the counter's key and never asked for a code,
+ * and a TV that once opened a #key= link kept it for good. Worse: pairing a TV in a browser that also runs the counter
+ * OVERWROTE the counter's key with a screen key, and that counter could no longer bill.
+ * ⭐ Now: a paired TV keeps its key in `cb_screen_key`, and nothing here touches `cb_till_key`. The counter's
+ * "▶ This device" link (#key=…) works for THAT TAB only (sessionStorage), so it can never stick to a TV.
+ * ⭐ promo.html#pair — or 📡 on the bar — forgets this screen's key and asks for a fresh code.
+ */
+var SCREEN_LS = 'cb_screen_key', TAB_LS = 'cb_screen_key_tab';
+var KEY = (function(){ try { return sessionStorage.getItem(TAB_LS) || null; } catch (_) { return null; } })() || ls.get(SCREEN_LS, null);
 var S = null, SLIDES = [], AT = 0, TIMER = null, PLAYING = true, ONLY = 'all';
 /**
  * ⭐ THE BILL BEING RUNG UP NEXT DOOR. Null when there is none, and this screen is then what it always was.
@@ -310,9 +324,18 @@ function drawBill(x, w, h, b){
 }
 
 (function takeAddress(){
+  /* ⭐ #pair — start again with a fresh code: this screen's key is forgotten, the tab's too */
+  if (/^#pair\b/.test(location.hash)) {
+    try { localStorage.removeItem(SCREEN_LS); } catch (_) {}
+    try { sessionStorage.removeItem(TAB_LS); } catch (_) {}
+    KEY = null;
+    history.replaceState(null, '', location.pathname + location.search);
+    return;
+  }
   if (location.hash.indexOf('key=') < 0) return;
   var hv = function(n){ var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : ''; };
-  var k = hv('key'); if (k) { ls.set('cb_till_key', k); KEY = k; }
+  /* ⚠️ THIS TAB ONLY — the counter's own key, handed over by "▶ This device"; never written where a TV would keep it */
+  var k = hv('key'); if (k) { try { sessionStorage.setItem(TAB_LS, k); } catch (_) {} KEY = k; }
   var sh = hv('shop'); if (sh) ls.set('cb_till_shop', sh);
   history.replaceState(null, '', location.pathname + location.search);
 })();
@@ -934,6 +957,33 @@ function caption(s){
 }
 
 /* ═══ 4 · the show ═══════════════════════════════════════════════════════════════════════════════════════════ */
+/**
+ * ⭐⭐ A NEW HAND PICK IS SHOWN NEXT (2026-09-27). Athi: *"i switched one item to be shared on the screen and it is not
+ * appearing in the tv?"* It had reached ChitBridge — Mayur Bhavan's Chilli Paneer, on the shelf, ₹185, screen:true —
+ * and build() put it FIRST. But the rotation carried on from wherever it was, so a fresh pick waited for the loop to come
+ * round: dozens of slides at 7 s each, minutes of "it didn't work". A person who has just said "put THAT on the telly"
+ * is standing there watching for it.
+ * ⭐ So after any rebuild, a pick that was not there before becomes the NEXT slide. The one on screen still finishes —
+ * the bell handler's own rule, "a poster that vanishes mid-sentence looks like a fault".
+ * @param before  the item ids that were already picked before the rebuild
+ */
+function pickedIds(){
+  var out = {};
+  (SLIDES || []).forEach(function(sl){ if (sl && sl.kind === 'picked' && sl.item) out[String(sl.item.item_id)] = 1; });
+  return out;
+}
+function showNewPickNext(before){
+  var list = shown();
+  for (var i = 0; i < list.length; i++) {
+    var sl = list[i];
+    if (sl && sl.kind === 'picked' && sl.item && !before[String(sl.item.item_id)]) {
+      AT = i - 1;          /* the next tick is AT++ — paint() wraps a -1 safely */
+      restart();           /* a full 7 s from now, so the current slide is not cut short either */
+      return sl.item.name || true;
+    }
+  }
+  return false;
+}
 function shown(){
   var c = campaign();
   if (ONLY !== 'all') return SLIDES.filter(function(s){ return s.kind === ONLY; });
@@ -1051,7 +1101,11 @@ document.getElementById('nextb').onclick = function(){ step(1); };
 document.getElementById('prevb').onclick = function(){ step(-1); };
 document.getElementById('dl').onclick = save;
 document.getElementById('dlall').onclick = saveMany;
-document.getElementById('refresh').onclick = async function(){ await readShop(); SLIDES = build(); paintBar(); paint(true); say('Read the shop again'); };
+document.getElementById('repair').onclick = function(){ location.hash = 'pair'; location.reload(); };
+/* ⚠️ typing #pair (or a #key= link) onto a sign that is ALREADY open changes only the fragment, and a browser does
+   not reload for that — so the request was silently ignored. Reload, and takeAddress() acts on it (the e2e caught it). */
+window.addEventListener('hashchange', function(){ if (/^#(pair\b|key=)/.test(location.hash)) location.reload(); });
+document.getElementById('refresh').onclick = async function(){ var before = pickedIds(); await readShop(); SLIDES = build(); paintBar(); showNewPickNext(before); paint(true); say('Read the shop again'); };
 document.getElementById('full').onclick = function(){
   if (document.fullscreenElement) document.exitFullscreen();
   else document.documentElement.requestFullscreen().catch(function(){ document.body.classList.toggle('show'); });
@@ -1091,7 +1145,8 @@ async function pairClaim(){
     var j = await r.json().catch(function(){ return {}; });
     if (!r.ok || !j.key) { say.className = 'pairsay bad';
       say.textContent = j.message || 'That code did not work. Ask ChitBridge for a new one.'; return; }
-    ls.set('cb_till_key', j.key);
+    ls.set(SCREEN_LS, j.key);            /* ⚠️ never cb_till_key — that is the counter's, see SCREEN_LS */
+    try { sessionStorage.removeItem(TAB_LS); } catch (_) {}
     if (j.shop && j.shop.entity_id) ls.set('cb_till_shop', j.shop.entity_id);
     say.textContent = 'Connected to ' + ((j.shop && j.shop.name) || 'your shop') + '. Starting…';
     setTimeout(function(){ location.reload(); }, 900);
@@ -1115,7 +1170,7 @@ document.getElementById('paircode').addEventListener('keydown', function(e){ if 
   setPlaying(true);
   if (!SLIDES.length) say(KEY ? 'Nothing to show yet — add products in ChitBridge' : 'Not paired — open this from ChitBridge → Counter');
   /* the shop changes during the day: new prices, an offer that starts at noon, a product that ran out */
-  setInterval(async function(){ await readShop(); SLIDES = build(); paintBar(); }, 15 * 60 * 1000);
+  setInterval(async function(){ var before = pickedIds(); await readShop(); SLIDES = build(); paintBar(); showNewPickNext(before); }, 15 * 60 * 1000);
   bellUp();
 })();
 
@@ -1149,9 +1204,12 @@ async function bellUp(){
     BELL.addEventListener('cb', async function(ev){
       var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (_) {}
       if (d.kind !== 'shop') return;
+      var before = pickedIds();
       await readShop();
       SLIDES = build();
       paintBar();
+      var fresh = showNewPickNext(before);
+      if (fresh) { say('Next on the screen: ' + (fresh === true ? 'your pick' : fresh)); return; }
       say('The shop changed — this screen is up to date');
     });
     BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };
