@@ -1836,12 +1836,12 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
       const bp = BP.blueprint(b.blueprint);
       if (bp.key === 'general' && b.blueprint) {
         return res.status(400).json({ error: 'unknown trade',
-          message: 'There is no starter catalogue for "' + String(b.blueprint).slice(0, 40) + '".',
+          message: 'There is no product list called "' + String(b.blueprint).slice(0, 40) + '".',
           choices: Object.keys(BP.BLUEPRINTS) });
       }
       if (!bp.starter.length) {
         return res.status(400).json({ error: 'nothing to mint',
-          message: 'Choose a trade, or send the products you want added.', choices: Object.keys(BP.BLUEPRINTS) });
+          message: 'Choose a product list, or send the products you want added.', choices: Object.keys(BP.BLUEPRINTS) });
       }
       items = BP.mint(bp.key, existing);
       from = 'blueprint:' + BP.pin(bp);

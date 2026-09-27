@@ -18302,7 +18302,7 @@ async function startOpen(){
   if (!r || !r.blueprints) {
     /* ⚠️ SETUP MAY ASK FOR THE LINE, and must say so plainly rather than showing an empty list */
     document.getElementById('startbody').innerHTML = '';
-    startSay('ChitBridge could not be reached, so the starter shops cannot be listed. Setting up a shop needs the'
+    startSay('ChitBridge could not be reached, so the product lists cannot be shown. Setting up a shop needs the'
       + ' line once — selling afterwards does not. Try again when it is back.', true);
     return;
   }
@@ -18312,7 +18312,7 @@ async function startOpen(){
     return '<button class="trade" data-testid="till-trade-' + esc(b.key) + '" onclick="startMint(\'' + esc(b.key) + '\')">'
       + '<b>' + esc(b.label) + '</b>'
       + '<span class="out">' + esc(b.outcome) + '</span>'
-      + '<span class="eg">' + b.products + ' products to begin with · ' + esc((b.sample || []).join(', ')) + '…</span>'
+      + '<span class="eg">' + b.products + ' products in this list · ' + esc((b.sample || []).join(', ')) + '…</span>'
       + '</button>';
   }).join('');
   /* ⚠️ AND WHAT IS ACTUALLY REQUIRED, said once. A shopkeeper should know the bar is two fields. */
