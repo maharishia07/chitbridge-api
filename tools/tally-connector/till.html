@@ -6713,7 +6713,18 @@ function offersFor(i){
   i._off = got;
   return got;
 }
-function offerNames(i){ return offersFor(i).map(function(o){ return o.label || o.name || 'Offer'; }); }
+/**
+ * ⭐ [found live, 2026-09-27] "offer type also appearing in the text, it has to just state 10% off, also it
+ * states 2 items, what does it mean?" — `o.name` here is Offer Lab's own saveName(): title + detail + a raw
+ * ISO timestamp ("A percentage off · 10% off · 2 items · 2026-09-26T17:36"), built ONLY to satisfy the
+ * server's uniqueness constraint on a definition's name (see its own comment in offer-lab-next.html) — never
+ * meant to be read by a cashier. `o.promise` is the engine's OWN answer to "what may this row honestly
+ * advertise" (offers-engine.js's terms()/promise()) — exactly "10% off" for this kind, already gated to what
+ * the basket will actually apply. `.ochip.pend` (below) already prefers promise() first; this fell out of
+ * step with it and showed the raw name instead because `label` (usually empty) is never actually empty for
+ * an Offer-Lab-saved offer — it silently carried the same messy name.
+ */
+function offerNames(i){ return offersFor(i).map(function(o){ return o.promise || o.label || o.name || 'Offer'; }); }
 /**
  * ⭐ THE RATE ON THE ROW, from the same engine that will put it on the bill (CBTax.slab) — never a second opinion. Cached on the item
  * beside its offers and thrown away with them, because a slab that changed overnight must not linger on a shelf.
