@@ -344,7 +344,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
       const proposal = validateProposal(li.proposal, oi, fref.band, fref.name);
       const finLine = { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
         particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: fref.unit || 'unit', quantity: fq,
-        price: fref.price, total: Math.round(fref.price * fq * 100) / 100,
+        price: fref.price, total: money.round(fref.price * fq),
         ...(fref.band ? { seller_band: fref.band } : {}),
         ...(proposal ? { proposal } : {}),
         // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
@@ -371,7 +371,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
        app/pricing.js) — before offers, before tax; the list price rides beside it so the line can say what it re-priced from */
     const _pe = require('../lib/pricing-engine').CBPricing;
     const _unit = (ref.d && ref.d.pricing_kind && _pe) ? _pe.unitPrice(ref.d, qty, ref.price).amount : ref.price;
-    const total = Math.round(_unit * qty * 100) / 100;
+    const total = money.round(_unit * qty);
     // T3.3 · the OFFER GUARD applies here too. validateProposal was called only on the finish/reference branch, so
     // the ordinary product path silently DROPPED `li.proposal` — meaning the documented restriction ("a fixed-price
     // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
@@ -416,7 +416,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
                     ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
              ref.d));
   }));
-  const total = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
+  const total = money.round(items.reduce((s, i) => s + i.total, 0));
   return { items, total };
 }
 
@@ -1042,11 +1042,11 @@ router.post('/:bridge_id/order/confirm',
       // ticket as a zero-value TRADE and diluted the concentration ratio it exists to compute.
       const monetary = oi.pipeline === 'commerce';
       const summary_json = { line_item_count: line_items.length, ...(offersApplied.length ? { offers: offersApplied } : {}),
-                             total_value: (!monetary || negotiation) ? null : Math.round(total * 100) / 100,
+                             total_value: (!monetary || negotiation) ? null : money.round(total),
                              currency_code: monetary ? (entity.currency_code || 'INR') : null, purpose, is_promotion: false,
                              customer_locality: custLocality || null,
                              order_preset: oi.preset, pipeline: oi.pipeline,
-                             ...(negotiation ? { negotiation: true, indicative_total: Math.round(total * 100) / 100 } : {}) };
+                             ...(negotiation ? { negotiation: true, indicative_total: money.round(total) } : {}) };
       // Assimilate the governance SEAM + advisory conformance onto the storefront chit — parity with /chits/send, so a
       // STOREFRONT order carries the same full stamp (constitution · capability · work-pattern · N standards) as any
       // other chit, PLUS a runtime conformance verdict. Governed by the SHOP (the selling entity). Best-effort: never

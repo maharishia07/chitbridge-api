@@ -1,5 +1,6 @@
 // routes/chits.js — Chit send, inbox, detail, status update
 const express = require('express');
+const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const access = require('../lib/access');   // b173 — viewer / commenter / editor
@@ -145,7 +146,7 @@ const calculateSummary = (lineItems) => {
   }, 0);
   return {
     line_item_count: lineItems.length,
-    total_value: Math.round(total * 100) / 100
+    total_value: roundMoney(total)
   };
 };
 
@@ -763,7 +764,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
        */
       let moneyBlock = null;
       try {
-        const r2m = (n) => Math.round((Number(n) || 0) * 100) / 100;
+        const r2m = (n) => roundMoney(Number(n) || 0);
         const li = Array.isArray(line_items) ? line_items : [];
         const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
         const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;

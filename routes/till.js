@@ -17,6 +17,7 @@
  */
 'use strict';
 const express = require('express');
+const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
@@ -2266,7 +2267,7 @@ router.get('/match', auth, async (req, res) => {
         });
         if (!lines.length) continue;
 
-        const value = (n) => Math.round(n * 100) / 100;
+        const value = (n) => roundMoney(n);
         const ordered_total = value(lines.reduce((t, l) => t + (l.ordered * (l.rate || 0)), 0));
         const received_total = value(lines.reduce((t, l) => t + (l.received * (l.rate || 0)), 0));
         const differences = lines.filter((l) => l.difference !== 0 && !l.absorbed).length;
