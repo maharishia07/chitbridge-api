@@ -1740,6 +1740,45 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
 });
 
 /**
+ * ── ⭐⭐⭐ GET /api/till/stock — READ-ONLY, THE ONE THING MISSING (2026-09-27) ──────────────────────────────
+ *
+ * Athi: *"say what is the existing qty and its cost, add more and its cost, and what is the average cost and
+ * total qty."* lib/stock-from-chit.js has posted weighted-average-cost movements on every receipt and every
+ * sale since 2026-09-10 (`stock_balance`) — nothing ever read them back. This is that read, and nothing else:
+ * no route in this file has written to stock_balance before today and this one still doesn't.
+ *
+ * ⚠️ ONE CALL FOR THE WHOLE SHELF, not one per line — stock-store.sheet() is built for exactly this ("never
+ * for a loop that then asks per item"), and a receipt with thirty lines must not cost thirty round trips.
+ * ⚠️ NO LOTS, NO LOCATIONS — v1 is one pool per product (DEFAULT_LOCATION, no batch breakdown), matching
+ * everything else `lib/stock-store.js` already says about v1. A tracked product's balance is still the sum
+ * across its batches, which is exactly what "total qty" asks for.
+ */
+router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const stockStore = require('../lib/stock-store');
+    const inv = require('../lib/inventory');   /* ⭐ its own q3/m2 rounding — a total here must never disagree with the ledger it reads */
+    const sheet = await stockStore.sheet(entity_id, withEntity, {});
+    /* ⭐ COLLAPSED TO ONE ROW PER PRODUCT — a tracked item's batches sum into the figure the Receive screen
+       actually asks for; the till does not show stock in v1 (Athi, 2026-09-10) and a per-batch breakdown
+       would be exactly that. */
+    const by = {};
+    for (const r of sheet.rows) {
+      const id = String(r.item_id);
+      const cur = by[id] || { qty: 0, value: 0 };
+      cur.qty = inv.q3(cur.qty + r.qty); cur.value = inv.m2(cur.value + r.value);
+      by[id] = cur;
+    }
+    const out = {};
+    for (const id of Object.keys(by)) {
+      const b = by[id];
+      out[id] = { qty: b.qty, avg_cost: b.qty ? inv.m2(b.value / b.qty) : 0 };
+    }
+    res.json({ balances: out, at: new Date().toISOString() });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
  * ── ⭐⭐⭐ POST /api/till/catalogue — A SHOP OPEN FOR BUSINESS, FROM THE COUNTER ([TILL-107]) ────────
  *
  * Athi, 2026-09-19: *"can we have a proper two catalogue, one for Veg Store and another one for Hotel… how do

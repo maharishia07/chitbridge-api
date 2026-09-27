@@ -7272,13 +7272,15 @@ function menuShopBody(){
       + (editable[r.k] ? '<span class="sact"><button class="pill" data-testid="till-shop-edit-' + r.k + '" onclick="fromMenu(shopEditOpen)">Edit</button></span>' : '')
       + '</div>';
     /**
-     * ⚠️⚠️ GSTIN NEEDS SOMETHING OUTSIDE THE APP FIRST, so its action is Register and it leaves — and it says
-     * so before it is pressed, with the ↗ mark (§2). Under it, quietly, the door for a shop that HAS a number
-     * and has simply not typed it in.
+     * ⚠️⚠️ [2026-09-27] NO LONGER A DOOR OUT. Athi, looking at this row: "it is opening the backend app, it
+     * has to open from here, and also validation should happen from here, say verified?" — #shopdlg already
+     * validates a typed GSTIN itself (shopCheck()'s checksum, live, saying "Verified" below) and posts it
+     * through the same POST /api/till/shop as everything else on this row, so sending a shopkeeper elsewhere
+     * to type the SAME 15 characters bought nothing. The one thing genuinely outside this app — applying FOR
+     * a GSTIN that does not exist yet — stays reachable from "Open the shop's profile ↗" at the foot of this
+     * section, for the shop that needs that, rather than being this row's default for every shop.
      */
-    var act = (r.k === 'gstin')
-      ? '<button class="pri sm" data-testid="till-shop-gst" onclick="fromMenu(openGst)">Register ↗</button>'
-      : '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenu(shopEditOpen)">Add</button>';
+    var act = '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenu(shopEditOpen)">Add</button>';
     return '<div class="shoprow empty" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
       + '<span class="sv"><i class="warn">not set</i>'
       + (r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
@@ -7290,8 +7292,10 @@ function menuShopBody(){
        * fact rather than a gap. A shop that is simply not registered is not an unfinished shop.
        */
       + (r.k === 'gstin'
+          /* ⚠️ "Already have one? Enter it" is gone — it opened the identical dialog the row's own "Add"
+             button now opens, which made two buttons for one action. "We are not registered" stays: it is a
+             genuinely different act (it WRITES that answer) rather than a second door to the same form. */
           ? '<div class="shoprow sub"><span></span><span class="sv">'
-            + '<button class="linky" data-testid="till-shop-gst-have" onclick="fromMenu(shopEditOpen)">Already have one? Enter it</button>'
             + '<button class="linky" data-testid="till-shop-gst-no" onclick="gstNotRegistered()">We are not registered</button>'
             + '</span></div>'
           : '');
@@ -13193,6 +13197,22 @@ function cardPrice(i){
     + '</div>';
 }
 /** ⚠ TWO PANELS, NOT TWO ROWS — the heading is what makes the difference readable without reading a sentence */
+/**
+ * ⭐ [2026-09-27] TAX, SHOWN — NOT EDITED. Athi asked whether tax could be set from here too; cardSave() already
+ * documents its own boundary ("each field goes through its OWN narrow route — the same three a counter key is
+ * allowed and no others"), the identical reasoning TILL_SHOP_REFUSED gives currency and reg_type: tax slab
+ * decides what a customer is legally charged, same layer as those two, not a counter's to set with a stolen
+ * key's blast radius in mind. What a counter key SHOULD get is to see it, since it explains a sale — the same
+ * treatment currency/reg_type get on the shop dialog (stated, and named where it is actually changed).
+ */
+function cardTaxWords(i){
+  if (!shopTax().charges || !window.CBTax || !CBTax.slab) return '';
+  try {
+    var r = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
+      face:S.face || {}, slabs:S.slabs || [], categories:S.categories || [] });
+    return (r && r.rate != null) ? (r.rate + '% GST') : 'no GST slab set';
+  } catch (_) { return ''; }
+}
 function cardForGood(i){
   var off = cardVal(i, 'status') === 'unavailable', actualOff = statusOf(i) === 'unavailable';
   var onScreen = cardVal(i, 'screen');
@@ -13371,9 +13391,10 @@ function paintCard(){
     /* ⚠ WHERE THE NAME CAME FROM, said on the screen — a counter that let somebody edit it would be a second
        place for it to be wrong, and the render answers the question before it is asked. */
     + '<i>' + esc(i.code || '') + (i.category ? ' · ' + esc(i.category) : '')
+      + (cardTaxWords(i) ? ' · ' + esc(cardTaxWords(i)) : '')
     /* ⚠️ THE PROVENANCE CLAUSE IS A WIDE-SCREEN LUXURY. On 390px it wrapped the header onto three lines to say
        something nobody is asking at that moment; the render's phone sheet shows the code and the category only. */
-    + '<span class="wideonly"> · name and category come from ChitBridge</span></i></span>'
+    + '<span class="wideonly"> · name, category and tax slab come from ChitBridge</span></i></span>'
     + '<button class="pill" data-testid="card-photo" onclick="cardPhoto()">Change photo</button>'
     /* ⚠️ THE WAY OUT OF THE SHEET. On a wide screen the editor is simply a pane and there is nothing to close,
        so this shows only where the sheet exists — a phone. Escape belongs to the bill on this counter. */
@@ -18396,7 +18417,8 @@ function shopCheck(){
   var code = CBProfileMap.stateOfGstin(v);
   var name = (CBProfileMap.STATE_NAMES || {})[code] || null;
   var kind1 = (shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY' : 'TAX INVOICE';
-  var said = shopSlipBadge(kind1) + ' · ' + esc(name ? code + ' · ' + name : 'state ' + code)
+  /* ⭐ "say verified" (Athi, 2026-09-27) — the word itself, not just a description of what was checked */
+  var said = shopSlipBadge(kind1) + ' · <b style="color:var(--ok)">✓ Verified</b> · ' + esc(name ? code + ' · ' + name : 'state ' + code)
            + ' · PAN ' + esc(CBProfileMap.panOfGstin(v));
   /**
    * ⚠⚠ AND THE ONE A CHECKSUM CANNOT CATCH: a valid GSTIN for one state beside a PIN code in another. Both
@@ -19912,8 +19934,39 @@ function rcvAbsorbed(l){
   if (!window.CBLots) return false;                    /* no engine, no absorbing — a difference stays a difference */
   return CBLots.withinTolerance(d, l.ordered, l.unit, tolerance());
 }
+/**
+ * ⭐⭐⭐ [till stock, 2026-09-27] EXISTING QTY AND ITS COST — READ-ONLY. Athi: *"say what is the existing qty
+ * and its cost, add more and its cost, and what is the average cost and total qty."* lib/stock-from-chit.js
+ * has posted a weighted-average-cost movement on every receipt and every sale since 2026-09-10; nothing on
+ * this screen had ever asked it for the number. This reads it — GET /api/till/stock, ONE call for the whole
+ * shelf — and computes the NEW average client-side as the qty/rate boxes are typed, same arithmetic
+ * lib/stock-store.js's post() uses, so the preview here and the figure the server lands on cannot disagree.
+ * ⚠️ NOTHING HERE WRITES. The engine still only moves when the receipt is confirmed (rcvConfirm() → HOST.doc()
+ * → lib/stock-from-chit.js, unchanged) — this is a look at where that will land, not a second way to move it.
+ */
+var RCV_BAL = null;
+function rcvBalEnsure(){
+  if (RCV_BAL || !HOST || typeof HOST.tillGet !== 'function') return;
+  RCV_BAL = {};   /* set immediately — a second line added while the fetch is in flight must not fire it twice */
+  HOST.tillGet('/api/till/stock').then(function(r){ RCV_BAL = (r && r.balances) || {}; paintReceive(); })
+    .catch(function(){ RCV_BAL = {}; });
+}
+function rcvBalLine(l){
+  if (!RCV_BAL) return '';   /* still loading — say nothing rather than a wrong "0 on the shelf" for a moment */
+  var b = l.item_id ? RCV_BAL[String(l.item_id)] : null;
+  var haveQty = b ? b.qty : 0, haveCost = b ? b.avg_cost : 0;
+  var addQty = Number(l.counted) || 0, addCost = Number(l.rate) || 0;
+  var out = '<span class="u" data-testid="rcv-balance">Have ' + haveQty + ' ' + esc(l.unit) + ' @ ' + money(haveCost);
+  if (addQty > 0) {
+    var newQty = r2(haveQty + addQty);
+    var newAvg = newQty ? r2((haveQty * haveCost + addQty * addCost) / newQty) : 0;
+    out += ' → ' + newQty + ' ' + esc(l.unit) + ' @ ' + money(newAvg) + ' avg';
+  }
+  return out + '</span>';
+}
 function paintReceive(){
   var box = document.getElementById('rcv_lines'); if (!box) return;
+  rcvBalEnsure();
   box.innerHTML = RCV.lines.length ? RCV.lines.map(function(l, n){
     var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
     var ok = d ? rcvAbsorbed(l) : false;
