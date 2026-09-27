@@ -219,3 +219,61 @@ Full run at the time of writing: **1381 guards across 71 files** and **38 harnes
   still shows an empty list.
 * **The name picker survives as `handover`**, which is its real job. It is no longer reachable by any control
   labelled "Sign in".
+
+---
+
+## 6 · Asked again on 2026-09-27 — and the answer is that this is no longer a sign-in problem
+
+Athi: *"here i am still facing confusion on sign-in issue. that has to be well sorted out."* — and, in the same
+breath, what he actually wants: *"just the user id and the password, if we can store, or may be the code, i
+would prefer both... the user id, password or OTP mechanism will allow them to land into till application."*
+
+Re-audited today. **The four acts above are still four, still behind `lib/signin.js`, still routed by one
+`door(state)`.** Nothing has drifted. So the residual confusion is not that there are too many ways to sign
+in. It is these two, which are different problems wearing sign-in's clothes:
+
+### 6.1 · There is no password anywhere in this product, and that is a deliberate position
+
+Grep finds none: the credentials are a **6-digit OTP**, a **4-digit PIN** (co-assists), and the **key/JWT**.
+Athi's own words are why — 2026-09-19, on the counter editing its shop: *"yes, counter has no password, use
+the till key alone for the time being."*
+
+So "user id and password" would introduce a **fifth credential class** beside OTP, PIN and key, and with it:
+hashing and storage, a reset path, lockout and attempt-counting, and a rule for which of the now-three
+credentials wins where. That is a security decision, not a convenience, and nothing should ship it quietly.
+
+⭐ **And the thing he asked for already exists under a different name.** What he described —
+
+> *"the user id, password or OTP mechanism will allow them to land into till application"*
+
+— is, today, **user id (or email) → OTP**, in one box, at `#usigndlg`, landing in the till and minting the
+browser's key in the background ([TILL-190]). For a co-assist it is **user id → PIN**, which he confirmed is
+already fine: *"for coassist we have already the pin number and it can be changed by the owner. so not a
+problem."* The gap is not the credential.
+
+### 6.2 · The actual gap is REGISTRATION, which the till does not have at all
+
+A new shop can only be created at `app.html #/register`. The till has no registration path, and this is
+deliberate rather than missing: `usignAsk()` sends `mode:'login'`, so the server **refuses an unknown id**
+instead of creating a shop — *"a mistyped id should say so, not spin up a phantom empty shop"*
+(`lib/signin.js`). Every till exit to the app is `cbHome()`, which opens the app and says where to go, because
+*"a deep link that does not exist is worse than no deep link."*
+
+So a person who has never registered meets a door that correctly refuses them and no door that would accept
+them. **That** is what reads as a sign-in problem from the outside.
+
+### 6.3 · What to build, and in what order
+
+1. **Registration at the till** — one screen: user id, email, trade. It calls the SAME
+   `POST /api/entities/register` + `/verify` the back office calls, with `mode:'register'`, then rides the
+   existing `usignEnrolIfNeeded()` to mint the counter's key. No new credential, no new endpoint, no eighth
+   door — a second caller of the one that exists. ⚠️ It must reuse `lib/signin.js`'s acts, or this note gets
+   written a third time.
+2. **Then** the day-one sequence already simulated in `e2e/day-one.cjs`: empty shelf → Product Lab → price →
+   tax/offers → on the shelf → first bill.
+3. **A password, only if Athi still wants one after 1 and 2** — at which point the honest question is whether
+   it is worth a fifth credential when OTP already gets a person in and PIN already serves the people who
+   sign in ten times a day.
+
+⚠️ **Nothing above has been built.** It is the audit's answer to the question asked on 2026-09-27, so that the
+next person to ask "why is sign-in confusing" is told that it is not, and what the real gap is.
