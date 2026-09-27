@@ -11996,7 +11996,7 @@ function quickQ(){
  * dropped on, and a partial list would write an order nobody chose.
  */
 function quickShown(){
-  var out = QUICK;
+  var out = QK_FULL ? ((S && S.items) || []).slice() : QUICK;
   /* ⚠️⚠️ HIDDEN LEAVES THE KEYS WHETHER GROUPED OR NOT (Phase 4.3) — byCatOrder() already drops a hidden
      category's whole section when grouped; this is the same rule for the plain, ungrouped grid, which never
      asked byCatOrder() at all. Search (hits()) reads S.items directly and never calls quickShown(). */
@@ -12060,19 +12060,31 @@ function paintQuick(){
      either (quickOfferOn()/quickOffOn(), same FILTER object, see their own comment above). */
   var chipOn = quickCatOn() || quickOfferOn() || quickOffOn();
   var narrowed = chipOn || !!qtyped;
+  /* ⭐ [found live, 2026-09-27] the "of N" total is the CURRENT source's own size — QUICK.length undercounts
+     every filter's own maths once QK_FULL is on and the source is the whole shelf, not the shortlist. */
+  var baseTotal = QK_FULL ? ((S && S.items) || []).length : QUICK.length;
   var why = [
     quickCatOn() ? esc(FILTER.cat) : '', quickOfferOn() ? 'on-offer items' : '', quickOffOn() ? 'off-the-shelf items' : '',
     qtyped ? '“' + esc(qtyped) + '”' : ''
   ].filter(Boolean).join(' · ');
   var catNote = narrowed
-    ? '<span class="qwhy" data-testid="till-quick-cat">' + why + ' only · ' + shown.length + ' of ' + QUICK.length + '</span>'
+    ? '<span class="qwhy" data-testid="till-quick-cat">' + why + ' only · ' + shown.length + ' of ' + baseTotal + '</span>'
       + (chipOn ? '<button class="qarr" data-testid="till-quick-catall" title="every key in this group again"'
            + ' onclick="setFilter(\'all\')">show all</button>' : '')
     : '';
   var bar = '<div class="qbar" data-testid="till-quick-bar">'
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
-    + '<span class="qbadge" data-testid="till-quick-badge">⊞ Quick keys'
-    + (QUICK.length ? '<span class="n">' + QUICK.length + '</span>' : '') + '</span>'
+    + '<span class="qbadge" data-testid="till-quick-badge">' + (QK_FULL ? '⌑ All products' : '⊞ Quick keys')
+    + (baseTotal ? '<span class="n">' + baseTotal + '</span>' : '') + '</span>'
+    /**
+     * ⭐⭐⭐ [found live, 2026-09-27] "can we bring a toggle to switch between quick keys and full list, when
+     * the list is off?" — the toggle itself. On: every tile the shelf has, in whatever the current filter is,
+     * with a picture where one exists and initials where it doesn't (screen-kit's own photoBox()) — never
+     * empty just because nothing happened to be pinned or learned. Off: back to the curated shortlist.
+     */
+    + '<button class="qarr' + (QK_FULL ? ' on' : '') + '" data-testid="till-quick-full"'
+    + ' title="every product on the shelf, as tiles — not just the pinned shortlist"'
+    + ' onclick="qkFullToggle()">' + (QK_FULL ? '⊞ Quick keys only' : '▦ Show all as tiles') + '</button>'
     /* ⭐ what is already on the bill, one tap from being looked at — see cartChip() */
     + cartChip()
     /* ⭐ set the order by hand — see qkArrangeToggle(). Only meaningful on a group, and it says so if not. */
@@ -12252,9 +12264,12 @@ function paintQuick(){
    * nothing at all. So it reads what the shelf actually found. [[feedback-write-for-the-shopkeeper]]
    */
   var onShelf = 0; try { onShelf = hits().length; } catch (_) { onShelf = 0; }
+  /* \u2b50 [found live, 2026-09-27] "among these keys" is only true of the curated shortlist \u2014 in QK_FULL mode
+     this panel already IS the shelf, so an empty result means the shelf itself has none, not that the
+     shortlist happens to lack one. */
   var catEmpty = (narrowed && !shown.length)
-    ? '<div class="qarrnote" data-testid="till-quick-catempty">No ' + why + ' among these keys'
-      + (onShelf ? ' \u2014 the shelf below still has it.' : ' \u2014 and nothing on the shelf matches either.') + '</div>'
+    ? '<div class="qarrnote" data-testid="till-quick-catempty">No ' + why + (QK_FULL ? ' on the shelf' : ' among these keys')
+      + (onShelf ? ' \u2014 the shelf below still has it.' : (QK_FULL ? '.' : ' \u2014 and nothing on the shelf matches either.')) + '</div>'
     : '';
   el.innerHTML = bar + arrNote + catEmpty + inBillStrip() + keys + tray;
 }
@@ -12362,6 +12377,22 @@ function cartPicGrid(){
  * a tap cannot sell anything, which is the whole safety of it.
  */
 var QK_ARRANGE = false, QK_FROM = null;
+/**
+ * ⭐⭐⭐ [found live, 2026-09-27] "quick keys can be very minimal, but when the filter is being tried the rest
+ * should also appear even if image is not there... this gives me a clue, if list is off, then the quick key
+ * panel should appear with full list?... can we bring a toggle to switch between quick keys and full list,
+ * when the list is off?" Athi's own read of the actual problem: quick keys is a deliberate SHORTLIST (learned
+ * from bills, or a hand-picked group), and a filter that empties it leaves nothing on the one panel some
+ * counters live on entirely — the plain list below still has every product, but a device or a habit that
+ * never scrolls to it makes those products invisible in practice, exactly the "missing products in the image
+ * panel" he named.
+ * ⭐ ONE SOURCE SWAP, NOT A SECOND FILTER — QK_FULL only changes which array quickShown() starts from (QUICK,
+ * the curated shortlist, or S.items, the whole shelf); every filter already in quickShown() (category, on
+ * offer, off the shelf, typed search) applies identically to either, so "how a tile filters" never had to be
+ * taught a second way, only "which set it draws from" changed. Persisted per device, like Photos.
+ */
+var QK_FULL = ls.get('cb_till_qfull', '0') === '1';
+function qkFullToggle(){ QK_FULL = !QK_FULL; ls.set('cb_till_qfull', QK_FULL ? '1' : '0'); paintQuick(); }
 /**
  * ⭐ PUT IT BACK THE WAY THE SHOP PUBLISHED IT. Only offered when there is a true original to return to — a
  * group this counter invented has no "before", and a control that did nothing would be worse than no control.
