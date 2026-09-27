@@ -2667,6 +2667,10 @@
   /* ⭐⭐ [till expenses, 2026-09-27] AMOUNT FIRST AND BIG — it is why the sheet is open, so it gets the sheet's
      largest number, same reasoning screen-kit.js gives a tile's price. */
   /* ⭐ a phone, because that is what a customer is holding — the same 390px app.html frames it at */
+  /* ⚠️ a NOTICE, not an alarm — it never blocks a sale, so it must not wear the colour that means stopped */
+  .whosebar:empty{display:none}
+  .whosebar{padding:8px 14px;background:var(--warn-tint);color:var(--warn);font-size:.88em;
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid var(--line)}
   .shopprevwrap{display:flex;justify-content:center;padding:4px 0 2px}
   .shopprevwrap iframe{width:390px;max-width:100%;height:520px;border:1px solid var(--line);
     border-radius:18px;background:#fff}
@@ -3351,6 +3355,7 @@
 <!-- ⚠️⚠️ NO INLINE display HERE. An inline display:flex outranks the hidden attribute, so the first version of this cover
      sat over EVERY counter on EVERY load, break or not — caught by [TILL-25] before it shipped. The rule lives in the
      stylesheet, where [hidden] can still win. -->
+<div id="whosebar"></div>
 <div id="breakcover" hidden data-testid="till-break-cover">
   <div style="max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px">
     <div style="font-size:3em;line-height:1">☕</div>
@@ -5719,6 +5724,60 @@ async function pickHost(){
  * ⚠️ Silent when the counter was opened cold (a bookmark, a shortcut, the desktop kit): nothing declared an expectation, so there
  * is nothing to contradict. A wrong answer is a fault; no answer is just a cold start.
  */
+/**
+ * ── ⭐⭐⭐ THE COUNTER OPENED COLD, AND IT IS SOMEBODY ELSE'S SHOP (2026-09-27) ─────────────────────────────
+ *
+ * Athi, testing many shops in one browser: *"i create a store called vegdemo1 and when we click the counter,
+ * it goes to mayuri bhavan... even in the front end tomorrow when we sign in, using user id password
+ * whatever userid signs in, that shop's counter should open, this is the confusion i keep saying."*
+ *
+ * ⚠️⚠️ wrongShop() BELOW DELIBERATELY SAYS NOTHING HERE, and its reasoning was right for the case it was
+ * written for: *"Silent when the counter was opened cold (a bookmark, a shortcut, the desktop kit): nothing
+ * declared an expectation, so there is nothing to contradict. A wrong answer is a fault; no answer is just a
+ * cold start."* On a shop PC that is correct — there is genuinely nothing to compare against.
+ *
+ * ⭐ BUT IN A BROWSER THERE IS. The back office keeps cb_sess on this very origin, and it names the entity
+ * the PERSON is signed in as. So a cold-started counter holding vegdemo1's neighbour's key can, for the
+ * first time, notice: *the person sitting here is signed in as somebody else's shop.* That is precisely the
+ * expectation that was missing, and it was in localStorage the whole time.
+ *
+ * ⚠️ IT READS THE ENTITY ID AND NOTHING ELSE. The counter keeps no session, deliberately
+ * ([[project-counter-identity]] — "sign in to FETCH A KEY, never a session"), and reading the app's TOKEN
+ * here would be inventing a second, weaker auth path for a surface that already has one. An id is enough to
+ * spot a mismatch and grants nothing.
+ * ⚠️ AND IT NEVER BLOCKS A SALE. wrongShop() stops the counter because the SERVER contradicted the address —
+ * that is a proven fault. This one is only a strong suspicion (a person may legitimately be signed into the
+ * app as one shop while standing at another's counter), so it informs and offers the way over. A counter
+ * that refuses to sell on a suspicion is worse than the confusion it was fixing.
+ */
+function signedInElsewhere(){
+  if (!S || !S.entity_id) return null;
+  var sess = null;
+  try { sess = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (_) { sess = null; }
+  var who = sess && (sess.entityId || sess.entity_id);
+  if (!who || String(who) === String(S.entity_id)) return null;
+  return { asName: (sess && (sess.entity || sess.name)) || 'another shop',
+           here: (S.shop && S.shop.name) || 'this counter' };
+}
+function whoseShopSay(){
+  var m = signedInElsewhere(); if (!m) return '';
+  /* ⚠️ THE SHOP'S NAME, NOT AN ID — an id is unreadable and this line exists to be read at a glance */
+  return '<div class="whosebar" data-testid="till-whose-shop">'
+    + '\u26a0\ufe0f This counter is <b>' + esc(m.here) + '</b>, but you are signed in here as <b>'
+    + esc(m.asName) + '</b>.'
+    + ' <button class="pill" data-testid="till-whose-open" onclick="whoseShopFix()">Open ' + esc(m.asName) + '\u2019s counter</button>'
+    + '</div>';
+}
+/**
+ * ⭐ THE WAY OVER, and it is deliberately the app's own door rather than a second minting path here. The back
+ * office already decides which counter a PC may open (counterGo / Settings > Integrations > Counters, and its
+ * own note: "NO MORE STRAY PAIRINGS — this minted a fresh, unnamed key every time a device had none, which is
+ * how one test shop came to hold nine"). Minting one from the till would recreate exactly that.
+ */
+function whoseShopFix(){
+  try { window.open(cbHome() + '#/app', '_blank', 'noopener'); } catch (_) {}
+  toastLine('ChitBridge is open in another tab \u2014 press Counter there and it will open that shop\u2019s own counter.');
+}
 function wrongShop(){
   if (!S || !S.entity_id) return null;                       /* an older server does not say; nothing to check against */
   var want = ls.get(shopLs('cb_till_shop'), '');
@@ -5780,6 +5839,11 @@ async function load(){
   if (bad) return stopWrongShop(bad);
   applyLook();
   document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.key ? 'Not paired yet' : 'This shop');
+  /* ⭐ said beside the shop's own name, because "which shop is this?" is the question it answers */
+  try {
+    var wb = document.getElementById('whosebar');
+    if (wb) wb.innerHTML = whoseShopSay();
+  } catch (_) {}
   document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
   paintStatus(); paintChips(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
   loadQuick().catch(function(){});
