@@ -22404,7 +22404,7 @@ function expPaint(){
   if (go) { go.onclick = expIssue; }
   if (cancel) cancel.textContent = 'Cancel';
   box.innerHTML =
-      '<label>Amount<span class="amtbig"><span class="cur">₹</span><input id="expamt" class="big" value="' + esc(EXP_AMOUNT)
+      '<label>Amount<span class="amtbig"><span class="cur">' + esc(curSym()) + '</span><input id="expamt" class="big" value="' + esc(EXP_AMOUNT)
         + '" inputmode="decimal" placeholder="0" oninput="expTouch()"></span></label>'
     + '<label>What is it'
         + '<div class="chips" data-testid="till-expense-chips">' + EXP_CHIPS.map(function(w){

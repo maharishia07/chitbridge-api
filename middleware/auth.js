@@ -226,7 +226,9 @@ const KEY_ROUTES = {
   /* ⭐ `summary` joined 2026-09-20 ([TILL-124]): the shop's day/week/month trend folded across every counter.
      A till key may READ it — a counter showing its shop's own months is the point — and cannot write one:
      summaries arrive only as chits through POST /api/chits/send, which is already on this line. */
-  till:      [['GET', /^\/api\/till\/(snapshot|bills|summary|tasks|verify|worth-an-offer|reward|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
+  /* ⚠️ `stock` (GET) is the Receive screen's qty + average cost — this shop's own shelf, read-only. It shipped
+     (dcdf493) without this word, so the read was a bare 403 on a till key; tests/key-scopes caught it. */
+  till:      [['GET', /^\/api\/till\/(snapshot|bills|summary|tasks|verify|worth-an-offer|reward|stock|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
               /* ⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — a counter reads the groups it can choose from, and reads/writes
                  only ITS OWN active groups, hidden items and screen style. It cannot author a group (that's /api/quick-keys,
                  session-only, no scope grants it). */
@@ -267,6 +269,9 @@ const KEY_ROUTES = {
                  product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
               /* ⭐ a counter that is stuck reports itself — the one thing nobody can reach saying so in its own words */
               ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close|state)$/],
+              /* ⭐ the same availability permission as /stock, batched — a selection on or off the shelf in ONE call.
+                 It shipped (f2f2a9f) without this line, so on a till key it was a bare 403; tests/key-scopes caught it. */
+              ['POST', /^\/api\/till\/stock\/bulk$/],
               /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
                  definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
                  authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".

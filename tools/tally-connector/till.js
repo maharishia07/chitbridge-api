@@ -1258,7 +1258,9 @@ const server = http.createServer(async (req, res) => {
                   /* ⭐ the workbook to start from ([TILL-115]) — download first, then bring it back */
                   '/api/products/workbook.xlsx',
                   '/api/till/counters', '/api/till/quick-keys/groups', '/api/till/quick-keys/hidden',
-                  '/api/till/quick-keys/screen-config'];
+                  '/api/till/quick-keys/screen-config',
+                  /* ⭐ qty + average cost for the Receive screen — this shop's own shelf, read-only (dcdf493) */
+                  '/api/till/stock'];
       var base = want.split('?')[0];
       if (READ.indexOf(base) < 0) return json(res, 400, { ok:false, why:'not a question this counter may ask' });
       try { const r = await cb.call('GET', want, null);
@@ -1271,7 +1273,7 @@ const server = http.createServer(async (req, res) => {
       let o = {}; try { o = JSON.parse(body || '{}'); } catch (_) {}
       /* ⚠️ AN EXPLICIT LIST, NOT A PATTERN. This is an allow-list for what a page may ask its own agent to POST upstream, and a
          pattern is one careless edit away from letting through a path nobody meant. Two operations, named. */
-      var ALLOW = ['/api/till/stock', '/api/till/price', '/api/till/flags', '/api/till/offer-item',
+      var ALLOW = ['/api/till/stock', '/api/till/stock/bulk', '/api/till/price', '/api/till/flags', '/api/till/offer-item',
                    /* ⭐ points earned and encashed on a bill, and the claim that moves a walk-in's balance onto an account */
                    '/api/till/reward', '/api/till/reward/claim',
                    /* ⭐⭐ a counter that is stuck reporting itself. A desktop-kit PC is exactly the machine nobody

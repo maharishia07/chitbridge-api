@@ -201,10 +201,16 @@ it('⭐⭐ the counter lists what it can sell, and off-the-shelf is a view you a
     'hits() does not exclude off-the-shelf rows — they would be listed among the sellable ones');
   assert.ok(fn.indexOf('FILTER.off') > 0, 'there is no way to ask for the off-the-shelf rows');
   assert.ok(page.indexOf('till-chip-off') > 0, 'the chip that asks for them is missing, so they are unreachable');
-  /* ⚠️ and the count beside the list must count the same set the list shows */
+  /* ⚠️ and the count beside the list must count the same set the list shows.
+     MOVED 2026-09-27 (beebcf0): the rule now lives in catalogueTotal(), shared by the shelf line and the
+     "All products" badge so the two cannot drift. So the check follows it there — and requires shelfLine to
+     actually read it, which is the half that would break silently if somebody inlined a count again. */
+  const total = page.slice(page.indexOf('function catalogueTotal('), page.indexOf('function shelfLine('));
+  assert.ok(total.length > 0 && total.indexOf("statusOf(i) !== 'unavailable'") > 0,
+    'catalogueTotal() counts every row including the unsellable ones, so the shelf line disagrees with the list under it');
   const shelf = page.slice(page.indexOf('function shelfLine('), page.indexOf('function paintHits'));
-  assert.ok(shelf.indexOf("statusOf(i) !== 'unavailable'") > 0,
-    'the shelf line counts every row including the unsellable ones, so it disagrees with the list under it');
+  assert.ok(/catalogueTotal\(\)/.test(shelf),
+    'shelfLine() no longer reads catalogueTotal(), so its count can drift from the list it sits above');
 });
 
 /**
