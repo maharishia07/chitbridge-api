@@ -127,6 +127,9 @@ it('⭐ the demo pictures land on real products, and a shop that adopts the list
   const minted = B.mint('veg', []);
   assert.strictEqual(minted.filter((p) => p.image).length, veg.starter.filter((p) => p.image).length,
     'the mint dropped a picture on the way to the shop');
+  const fish = B.blueprint('fish');
+  for (const n of ['Seer fish', 'Pomfret (white)', 'Pomfret (black)', 'Sardine', 'Mackerel', 'Rohu', 'Katla', 'Tuna'])
+    assert.ok(fish.starter.some((p) => p.name === n && /\/pics\/fish\//.test(p.image || '')), n + ' has no picture');
 });
 
 /**
