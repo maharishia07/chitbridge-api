@@ -18423,8 +18423,27 @@ function shopCheck(){
   var code = CBProfileMap.stateOfGstin(v);
   var name = (CBProfileMap.STATE_NAMES || {})[code] || null;
   var kind1 = (shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY' : 'TAX INVOICE';
-  /* ⭐ "say verified" (Athi, 2026-09-27) — the word itself, not just a description of what was checked */
-  var said = shopSlipBadge(kind1) + ' · <b style="color:var(--ok)">✓ Verified</b> · ' + esc(name ? code + ' · ' + name : 'state ' + code)
+  /**
+   * ⚠️⚠️⚠️ "CHECKS OUT", NOT "VERIFIED" — AND THE DIFFERENCE IS THE WHOLE POINT (2026-09-27).
+   *
+   * Athi asked for the word ("say verified?"), I shipped it, and he then asked the right question: *"in the
+   * GSTN, we are verifying only the checksum, not against registry? correct?"* Correct. What passes here is
+   * the number checking ITSELF — its shape, the PAN holder-type letter Tally refuses, and the mod-36 check
+   * digit — plus the state-vs-PIN cross-check below. Nothing has asked the GST registry whether this number
+   * exists, who holds it, or whether it is still live.
+   *
+   * ⭐ AND THIS FILE'S OWN VOCABULARY ALREADY DRAWS THAT LINE: lib/profile-map's trust ladder is
+   * ['declared','copied','checked','verified'], and assess() raises a passing checksum to **'checked'** —
+   * 'verified' is the rung above, kept for a fact an outside authority has confirmed. So "Verified" on this
+   * line was not a wording preference, it was the screen claiming a rung the engine behind it refuses to
+   * give. On a number that decides whether a TAX INVOICE is printed and a customer claims credit against,
+   * that is the one direction the copy must not round up. The caveat rides in title=, where a fact guarding
+   * a number belongs. A real registry check is on the backlog; the day it lands, this may say Verified.
+   */
+  var said = shopSlipBadge(kind1)
+           + ' · <b style="color:var(--ok)" title="the number checks itself — its shape, its PAN letter and its check digit.'
+           + ' ChitBridge has not asked the GST registry whether it is real or still live.">✓ Checks out</b> · '
+           + esc(name ? code + ' · ' + name : 'state ' + code)
            + ' · PAN ' + esc(CBProfileMap.panOfGstin(v));
   /**
    * ⚠⚠ AND THE ONE A CHECKSUM CANNOT CATCH: a valid GSTIN for one state beside a PIN code in another. Both
