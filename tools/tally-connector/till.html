@@ -9415,11 +9415,17 @@ function paintChips(){
      find when they want to check — and "0" is itself the answer to "is anything off today?" */
   var offN = (S.items || []).filter(function(i){ return statusOf(i) === 'unavailable'; }).length;
   /**
+   * ⭐ [found live, 2026-09-27] "on offer count is not showing" — every other chip here (Everything, Off the
+   * shelf, every category) says how many; On offer never did. Same test hits() already applies for this chip.
+   */
+  var offerN = (S.items || []).filter(function(i){ return offersFor(i).length > 0; }).length;
+  /**
    * ⭐ THE COUNT ON `Everything` is the number the screen is about — and in maintenance it counts the whole
    * shop, off-the-shelf rows included, so it agrees with the line under the chips rather than contradicting it.
+   * ⚠️ catalogueTotal() — the SAME rule Quick keys' own "All products" badge reads (see its own comment): one
+   * function, so "how many products" cannot quietly drift into two different answers again.
    */
-  var allN = (MODE === 'maintain') ? (S.items || []).length
-    : (S.items || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
+  var allN = catalogueTotal();
   /**
    * ⚠️⚠️ MAINTENANCE WRAPS ITS CHIPS; SELLING SCROLLS THEM. Eleven chips in a sideways-scrolling row put two
    * of them off the screen entirely, and nothing said so — the mask that fades the edge is the only hint, and
@@ -9438,7 +9444,7 @@ function paintChips(){
     : '';
   el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything <span class="u">' + allN + '</span></button>'
     + jobChips
-    + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer</button>'
+    + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer <span class="u">' + offerN + '</span></button>'
     + '<button class="' + (FILTER.off ? 'on' : '') + '" data-testid="till-chip-off" onclick="setFilter(\'off\')">Off the shelf <span class="u">' + offN + '</span></button>'
     /**
      * ⭐⭐ A CATEGORY CHIP CARRIES A PICTURE ([TILL-71]) when pictures are on — Athi: *"category also to be
