@@ -11997,6 +11997,16 @@ function quickQ(){
  */
 function quickShown(){
   var out = QK_FULL ? ((S && S.items) || []).slice() : QUICK;
+  /**
+   * ⭐ [found live, 2026-09-27] "1 product is off the shelf so this is not appearing" — Athi noticing "All
+   * products" (114) read one higher than "Everything"/the shelf caption (113) led straight to it: hits()'s
+   * own rule (Athi, elsewhere: "the list shows only the available product, that is it") never reached
+   * quickShown() because QK_FULL sourcing from the whole shelf is brand new. Same exception either rule
+   * already has — Off the shelf itself still asks for exactly the unavailable ones (quickOffOn(), below), and
+   * maintain mode still sees everything. Quick keys (the curated shortlist) never needed this: a pinned
+   * favourite that runs out keeps its place and shows sold-out on the tile, rather than vanishing.
+   */
+  if (QK_FULL && MODE !== 'maintain' && !quickOffOn()) out = out.filter(function(i){ return statusOf(i) !== 'unavailable'; });
   /* ⚠️⚠️ HIDDEN LEAVES THE KEYS WHETHER GROUPED OR NOT (Phase 4.3) — byCatOrder() already drops a hidden
      category's whole section when grouped; this is the same rule for the plain, ungrouped grid, which never
      asked byCatOrder() at all. Search (hits()) reads S.items directly and never calls quickShown(). */
@@ -12062,7 +12072,7 @@ function paintQuick(){
   var narrowed = chipOn || !!qtyped;
   /* ⭐ [found live, 2026-09-27] the "of N" total is the CURRENT source's own size — QUICK.length undercounts
      every filter's own maths once QK_FULL is on and the source is the whole shelf, not the shortlist. */
-  var baseTotal = QK_FULL ? ((S && S.items) || []).length : QUICK.length;
+  var baseTotal = QK_FULL ? catalogueTotal() : QUICK.length;
   var why = [
     quickCatOn() ? esc(FILTER.cat) : '', quickOfferOn() ? 'on-offer items' : '', quickOffOn() ? 'off-the-shelf items' : '',
     qtyped ? '“' + esc(qtyped) + '”' : ''
@@ -12485,6 +12495,18 @@ function quickAdd(id){
  * Same words as the app's own catalogue header, because a person who reads "showing 60 of 10,441" in one place should not have to
  * learn a second phrasing in the other.
  */
+/**
+ * ⭐⭐⭐ [found live, 2026-09-27] "all products and everything count differs?" — real bug: Quick keys' own
+ * "All products" badge counted raw S.items.length (114 — every row, including the one off the shelf), while
+ * "Everything" and the shelf caption below both count only what's sellable (113) outside maintain mode — the
+ * MAINTENANCE COUNTS EVERYTHING rule two paragraphs down, which the badge never asked at all. Pulled into its
+ * own function so both screens read the SAME number instead of two copies of "how many products" quietly
+ * drifting apart the moment either one changed.
+ */
+function catalogueTotal(){
+  var all = (S && S.items) || [];
+  return (MODE === 'maintain') ? all.length : all.filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
+}
 function shelfLine(shown){
   /**
    * ⚠️⚠️ A COUNTER WITH NO SHOP SAID NOTHING HERE ([TILL-119]) — `return ''`. The deliberate part was not
@@ -12503,8 +12525,7 @@ function shelfLine(shown){
    * ⭐ And it SAYS SO, because a number that differs from the selling screen's has to explain itself.
    */
   var seeAll = (MODE === 'maintain');
-  var total = seeAll ? ((S && S.items) || []).length
-    : ((S && S.items) || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length;
+  var total = catalogueTotal();
   /**
    * ⭐⭐⭐ A COUNTER WITH NOTHING TO SELL OFFERS TO OPEN THE SHOP ([TILL-107]). This line used to be
    * `if (!total) return '';` — the shelf simply said nothing, and the only way forward was a back office the
