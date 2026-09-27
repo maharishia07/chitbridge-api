@@ -15038,8 +15038,22 @@ function modEdit(k){
   var d = document.getElementById('moddlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
 }
+/**
+ * ⭐⭐ A BLANK PRICE IS UNPRICED, NOT FREE (decision D3, SPEC-money-one-reader.md). Athi chose "refuse to bill it".
+ * The snapshot now sends a product whose price was never set as price: null (money.priceOf), where it used to send 0 —
+ * so it sold for ₹0.00 here while the storefront refused it. Selling refuses it and says where to fix it.
+ * ⚠️ ONLY a BLANK price. An explicit 0 is a decision somebody made (a freebie, a dish whose choices carry the price)
+ * and keeps the old warning. Receiving and despatch are untouched — goods arrive before anyone has priced them.
+ */
+function unpriced(i){ return !!i && (i.price === null || i.price === undefined || i.price === ''); }
+function refuseUnpriced(i){
+  if (MODE !== 'sell' || !unpriced(i)) return false;
+  toastLine('💰 ' + i.name + ' has no price yet — not added. Set a price in Maintenance to sell it.');
+  return true;
+}
 async function modOpen(i, qty){
   /* ⚠️ THE GATE IS HERE because this is the one funnel both the keys and the search box now come through */
+  if (refuseUnpriced(i)) { focusSearch(); return; }
   if (MODE === 'sell' && !(await ageAllow(i))) { focusSearch(); return; }
   var groups = modsOf(i);
   if (!groups.length) { addItem(i, qty); price(); voiceAnnounceAdd(i, qty); focusSearch(); return; }
@@ -15345,6 +15359,8 @@ async function addWeighed(w){
    * on the two that were convenient. [[feedback-silence-is-the-bug]]
    */
   if (MODE === 'sell' && !(await ageAllow(i))) return;
+  /* ⚠️ a label that carries its own price bills exactly (above); only a label with NO price needs ours — D3 */
+  if (w.price == null && refuseUnpriced(i)) return;
   CART.push({ key: i.item_id + '|w' + Date.now() + Math.random().toString(36).slice(2, 6),
               item_id: i.item_id, name: i.name, unit: i.unit || 'kg',
               price: (w.price != null && n > 0) ? r2(w.price / n) : (Number(i.price) || 0),

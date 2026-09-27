@@ -54,7 +54,12 @@ const speech = require('../lib/speech');            /* ⭐ what somebody SAID, a
 const crypto = require('crypto');
 
 /** the figure out of a price, whether the catalogue stored a number or { amount, currency } (lib/pricing-engine reads it the same way) */
-function amountOf(p) { const v = (p && typeof p === 'object') ? p.amount : p; const n = Number(v); return Number.isFinite(n) ? n : null; }
+/**
+ * ⭐ THE ONE PRICE READER (SPEC-money-one-reader.md step 3). This file had its own, which read a blank price ('') as 0,
+ * so a product imported with an empty price cell sold for ₹0.00 at the counter while the storefront refused it as
+ * unpriced (external review §21). money.priceOf reads every stored shape and answers null for "no price" — never 0.
+ */
+const { priceOf: amountOf } = require('../lib/money');
 /** a short, stable stamp for "which copy of the catalogue was this bill priced from" */
 function versionOf(payload) {
   return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex').slice(0, 12);
