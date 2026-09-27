@@ -7228,12 +7228,28 @@ function menuShopBody(){
   };
   var filled = SHOP_ROWS.filter(function(r){ return !!val(r.k); }).length;
 
+  /* ⭐ [found live, 2026-09-27] "add, register button calls the backend app, can we bring a dialog box or a
+     prompt box to update values, possibly all at once, if already there show as update or as add" — every
+     one of these was routing to openGst(), which just opens ChitBridge in a NEW TAB and leaves a toast saying
+     "go to the shop, then its profile, to change this" — even for legal_name/address/phone, which have
+     nothing to do with GST at all. #shopdlg (shopEditOpen()) already exists, already edits every one of these
+     fields TOGETHER in one form (SHOP_FIELDS, one list shared with the server's own whitelist), already
+     validates and posts to POST /api/till/shop, already re-paints from the server's own answer — a complete,
+     already-built, already-tested dialog this row simply never opened. GSTIN's "Register ↗" alone stays an
+     external door (the comment right below explains why: registering needs something outside this app first);
+     "Already have one? Enter it" is exactly the case that dialog already handles, so it moves too.
+     ⚠️ NOT "Add" vs "Update" as two different labels — the standard this app already uses elsewhere (open one
+     form, pre-filled with whatever is already there, one "Save" button) does the same job without a second
+     set of copy to keep in sync with whether a field happens to be empty.
+   */
+  var editable = { legal_name:1, address:1, phone:1, gstin:1, name:1 };
   var row = function(r){
     var v = val(r.k);
-    /* ⭐ a filled row carries nothing — there is nothing to do about it (§1, four states) */
     if (v) return '<div class="shoprow" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
       + '<span class="sv"><b>' + esc(v) + '</b>'
-      + (r.k === 'counter' && r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span></div>';
+      + (r.k === 'counter' && r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
+      + (editable[r.k] ? '<span class="sact"><button class="pill" data-testid="till-shop-edit-' + r.k + '" onclick="fromMenu(shopEditOpen)">Edit</button></span>' : '')
+      + '</div>';
     /**
      * ⚠️⚠️ GSTIN NEEDS SOMETHING OUTSIDE THE APP FIRST, so its action is Register and it leaves — and it says
      * so before it is pressed, with the ↗ mark (§2). Under it, quietly, the door for a shop that HAS a number
@@ -7241,7 +7257,7 @@ function menuShopBody(){
      */
     var act = (r.k === 'gstin')
       ? '<button class="pri sm" data-testid="till-shop-gst" onclick="fromMenu(openGst)">Register ↗</button>'
-      : '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenu(openGst)">Add</button>';
+      : '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenu(shopEditOpen)">Add</button>';
     return '<div class="shoprow empty" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
       + '<span class="sv"><i class="warn">not set</i>'
       + (r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
@@ -7254,7 +7270,7 @@ function menuShopBody(){
        */
       + (r.k === 'gstin'
           ? '<div class="shoprow sub"><span></span><span class="sv">'
-            + '<button class="linky" data-testid="till-shop-gst-have" onclick="fromMenu(openGst)">Already have one? Enter it</button>'
+            + '<button class="linky" data-testid="till-shop-gst-have" onclick="fromMenu(shopEditOpen)">Already have one? Enter it</button>'
             + '<button class="linky" data-testid="till-shop-gst-no" onclick="gstNotRegistered()">We are not registered</button>'
             + '</span></div>'
           : '');
