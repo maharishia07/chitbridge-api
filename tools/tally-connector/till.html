@@ -2668,6 +2668,8 @@
      largest number, same reasoning screen-kit.js gives a tile's price. */
   /* ⭐ a phone, because that is what a customer is holding — the same 390px app.html frames it at */
   /* ⚠️ a NOTICE, not an alarm — it never blocks a sale, so it must not wear the colour that means stopped */
+  .whoami{margin:0;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);
+    font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;overflow:auto;max-height:52vh}
   .whosebar:empty{display:none}
   .whosebar{padding:8px 14px;background:var(--warn-tint);color:var(--warn);font-size:.88em;
     display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid var(--line)}
@@ -3355,6 +3357,15 @@
 <!-- ⚠️⚠️ NO INLINE display HERE. An inline display:flex outranks the hidden attribute, so the first version of this cover
      sat over EVERY counter on EVERY load, break or not — caught by [TILL-25] before it shipped. The rule lives in the
      stylesheet, where [hidden] can still win. -->
+<!-- ⭐ the identity of this counter, as JSON — see whoAmI(). Openable from the dev bar. -->
+<dialog id="whoamidlg" data-testid="till-whoami"><div class="dlg"><h3>Whose shop is this counter?</h3>
+  <p class="note">The counter is tied to the entity id the server signs — never to a shop name, which can be changed.</p>
+  <pre id="whoamibody" class="whoami" data-testid="till-whoami-body"></pre>
+  <div class="dlgbtns">
+    <button onclick="whoAmIClose()">Close</button>
+    <button class="pri" onclick="whoAmICopy()">Copy</button>
+  </div>
+</div></dialog>
 <div id="whosebar"></div>
 <div id="breakcover" hidden data-testid="till-break-cover">
   <div style="max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px">
@@ -4277,6 +4288,71 @@ function devHere(){
   return ctrScreen(typeof MODE !== 'undefined' ? MODE : 'sell') || CTR_SCREENS[0];
 }
 
+/**
+ * ── ⭐⭐⭐ WHAT IS THIS COUNTER BOUND TO? (2026-09-27) ──────────────────────────────────────────────────────
+ *
+ * Athi: *"the key has to be tied with the bridge id, uuid whatsoever which cannot be changed, not the user
+ * driven name like shop name etc? is that correct? can you show me the json with the data in the screen so i
+ * can confirm that it is ok?"*
+ *
+ * ⭐ HE IS RIGHT, AND IT ALREADY IS. app.html's setSession() derives the id from the SIGNED JWT —
+ * `SESSION.entityId = p.parent_entity_id || p.identity_id` — with its own note: *"derive the REAL
+ * actor/entity id from the token so the UI never hardcodes ids."* That id is what is written to
+ * cb_till_entity and what counterHere()/counterHasKey() compare. A display name is never compared: it is
+ * changeable by design (*"the display name can be anything and any format. No restriction"*), so binding
+ * anything to it would break the moment somebody renamed their shop.
+ *
+ * This panel exists so that claim can be CHECKED rather than believed — the ids on screen, side by side,
+ * in a demo, in one glance.
+ *
+ * ⚠️ THE KEY ITSELF IS NEVER SHOWN. Its hashed store-name is (that is already a public artefact — the
+ * IndexedDB name), and its length, which is enough to tell two keys apart without putting a live credential
+ * on a screen somebody may be projecting.
+ */
+function whoAmI(){
+  var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? String(CloudHost.key) : '';
+  var sess = null;
+  try { sess = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (_) { sess = null; }
+  return {
+    counter: {
+      /* what the SERVER says this key belongs to — the only answer no client can fake */
+      entity_id: (S && S.entity_id) || null,
+      bridge_id: (S && S.shop && S.shop.bridge_id) || null,
+      handle: (S && S.shop && S.shop.handle) || null,
+      shop_name: (S && S.shop && S.shop.name) || null,      /* shown, never compared — it can be renamed */
+      till: (STATE && STATE.till && STATE.till.name) || null,
+    },
+    key: {
+      held: !!k,
+      length: k ? k.length : 0,
+      store: tillStore(),                                    /* the IndexedDB this shop's copy lives in */
+      opened_for: ls.get(shopLs('cb_till_shop'), '') || null, /* the shop the ADDRESS said, when opened from the app */
+    },
+    signed_in_here: sess ? {
+      /* ⚠️ the id is what matters; the name is here only to make a mismatch readable */
+      entity_id: sess.entityId || sess.entity_id || null,
+      name: sess.entity || sess.name || null,
+      bridge_id: sess.bridgeId || null,
+    } : null,
+    agree: (function(){
+      var a2 = S && S.entity_id, b2 = sess && (sess.entityId || sess.entity_id);
+      if (!a2) return 'the shop has not been read yet';
+      if (!b2) return 'nobody is signed in to ChitBridge in this browser';
+      return String(a2) === String(b2) ? 'YES — same shop' : 'NO — this counter is a different shop';
+    })(),
+  };
+}
+function whoAmIShow(){
+  var j = JSON.stringify(whoAmI(), null, 2);
+  var box = document.getElementById('whoamibody');
+  if (box) box.textContent = j;
+  var d = document.getElementById('whoamidlg'); if (d && d.showModal && !d.open) d.showModal();
+}
+function whoAmIClose(){ var d = document.getElementById('whoamidlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
+function whoAmICopy(){
+  try { navigator.clipboard.writeText(JSON.stringify(whoAmI(), null, 2)); toastLine('Copied.'); }
+  catch (_) { toastLine('Could not copy — select the text instead.'); }
+}
 function devPaint(){
   var el = document.getElementById('devbar'); if (!el) return;
   if (!devOn()) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('devon'); return; }
@@ -4286,6 +4362,8 @@ function devPaint(){
   el.innerHTML = '<b>Build</b>'
     /* ⭐ WHICH SCREEN THIS IS — the whole point of numbering them */
     + '<span class="devhere" data-testid="till-dev-screen">' + esc(here.code) + ' · ' + esc(here.name) + '</span>'
+    /* ⭐ one press, in a demo, to prove the counter is the shop it claims to be */
+    + '<button data-testid="till-dev-whoami" onclick="whoAmIShow()">Whose shop?</button>'
     + '<span class="devsw">'
     + Object.keys(DEV_SIZES).map(function(k){
         return '<button class="' + (k === size ? 'on' : '') + '" data-testid="till-dev-size-' + k + '"'
