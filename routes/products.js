@@ -1718,6 +1718,59 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
         || want.has((it.name + '\u0001' + it.unit).trim().toLowerCase()));
     }
 
+    /**
+     * ⭐⭐ THE PRICE THEY TYPED, IF THEY TYPED ONE. Athi: *"when you are adding a product, you should be
+     * able to amend the price."* The list's figure is indicative; the shop's is what goes on a bill, and
+     * adopting first and correcting afterwards leaves a window where a live shelf is priced by somebody
+     * else's guess.
+     * ⚠️ VALIDATED HERE, NOT TRUSTED — a page can send anything and a bad price is money. Anything that is
+     * not a finite number >= 0 falls back to the list's suggestion rather than being written.
+     * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
+     * setPrice() records as null; reading '' as 0 would give the goods away.
+     */
+    if (Array.isArray(b.names) && b.names.length) {
+      const priceBy = new Map();
+      for (const x of b.names) {
+        if (!x || typeof x !== 'object') continue;
+        if (x.price === undefined || x.price === null || x.price === '') continue;
+        const n = Number(x.price);
+        if (!Number.isFinite(n) || n < 0) continue;
+        priceBy.set(String(x.name).trim().toLowerCase() + '\u0001' + String(x.unit).trim().toLowerCase(), n);
+      }
+      if (priceBy.size) {
+        items = items.map((it) => {
+          const k = it.name.trim().toLowerCase() + '\u0001' + String(it.unit).trim().toLowerCase();
+          const over = priceBy.get(k);
+          return over === undefined ? it : Object.assign({}, it, { price: over });
+        });
+      }
+    }
+
+    /**
+     * ⭐⭐⭐ OFF THE SHELF BY DEFAULT, AND THAT IS THE DELIBERATE ANSWER. Athi: *"it is just the first step of
+     * adding the product, then there may be tax, there may be offer and combo etc, so we should not directly
+     * make it available i guess."*
+     *
+     * Adopting is step ONE. A product that becomes sellable the instant it is adopted can be bought before
+     * its tax slab is resolved, before an offer is attached, before anyone has looked at the price. The
+     * recoverable mistake is a shop finding its new products switched off; the expensive one is a bill
+     * charging the wrong tax on goods nobody meant to sell yet.
+     *
+     * ⚠️ WHICH IS WHY THE DEFAULT IS 'unavailable' RATHER THAN THE USUAL 'available'. statusOf() reads an
+     * unstamped item as available, so doing nothing here would have meant "on sale" — the stamp is what
+     * makes the safe answer the one that happens when nobody chooses.
+     * ⚠️ TWO VALUES ONLY: 'retired' and 'redundant' carry a per-item argument (what replaced it, until when)
+     * that a batch form cannot ask a hundred times — the line POST /status/bulk already draws.
+     */
+    const wantStatus = (b.status === 'available') ? 'available' : 'unavailable';
+    try {
+      const stamped = itemstatus.stamp({ status: wantStatus },
+        { id: (req.identity && req.identity.identity_id) || null });
+      items = items.map((it) => Object.assign({}, it, stamped));
+    } catch (e) {
+      return res.status(400).json({ error: 'status', message: String(e && e.message) });
+    }
+
     if (!items.length) {
       return res.json({ ok: true, added: 0, skipped: plan.skipped, pin: plan.pin,
         message: plan.skipped.length
@@ -1754,8 +1807,10 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
     const n = w.rows.length, s = plan.skipped.length;
     res.json({ ok: true, added: n, skipped: plan.skipped, pin: plan.pin, list: bp.label,
       languages: plan.languages,
+      status: wantStatus,
       message: n + ' product' + (n === 1 ? '' : 's') + ' added'
-        + (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '') + '.' });
+        + (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '')
+        + (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') + '.' });
   } catch (e) { fail(res, e, 'Could not adopt that product list'); }
 });
 
