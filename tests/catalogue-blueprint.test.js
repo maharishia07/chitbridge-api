@@ -118,6 +118,17 @@ it('⭐ minting a blueprint numbers it against what the shop already has', () =>
   for (const p of v) assert.ok(p.name && p.price > 0 && p.unit, 'a minted product is missing part of the axiom');
 });
 
+it('⭐ the demo pictures land on real products, and a shop that adopts the list keeps them', () => {
+  const veg = B.blueprint('veg');
+  const named = ['Cabbage', 'Capsicum', 'Garlic', 'Beetroot', 'Tomato', 'Celery', 'Carrot', 'Onion', 'Potato'];
+  /* a picture keyed to a name no row carries would be dropped in silence — so every one must be found */
+  for (const n of named)
+    assert.ok(veg.starter.some((p) => p.name === n && /^https:\/\/.+\/pics\/veg\//.test(p.image || '')), n + ' has no picture');
+  const minted = B.mint('veg', []);
+  assert.strictEqual(minted.filter((p) => p.image).length, veg.starter.filter((p) => p.image).length,
+    'the mint dropped a picture on the way to the shop');
+});
+
 /**
  * ⚠️⚠️⚠️ THE GATE. An upload that quietly loses rows is the worst outcome available here: nobody finds out
  * until a customer asks for a product that is not on the till.
