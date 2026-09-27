@@ -6723,8 +6723,22 @@ function offersFor(i){
  * the basket will actually apply. `.ochip.pend` (below) already prefers promise() first; this fell out of
  * step with it and showed the raw name instead because `label` (usually empty) is never actually empty for
  * an Offer-Lab-saved offer — it silently carried the same messy name.
+ * ⚠️ [same day] "maintenance screen you removed all the information which should be showcased, it just shows
+ * percentage off alone. there the raw information should be visible" — the fix above landed on the ONE row
+ * template both sell mode AND maintain mode share, so it also stripped detail off the screen where a manager
+ * genuinely needs it (which kind, which scope, when it was set up). MODE decides which reading applies: a
+ * cashier billing gets the clean promise; maintenance gets the same raw name it always did.
+ * ⚠️ "including who approved the offer or made it live" — NOT shown here, and not because it was simplified
+ * away: nothing in this system currently records it. `definition_version.created_by` exists but only fires
+ * on a RULE change (routes/definitions.js's own PUT: "a new version only when the rules change") — approving
+ * or going live is a bare status UPDATE, `updated_at` only, no actor column at all. Showing "who" here would
+ * mean inventing a value; flagging this as a real, separate gap rather than guessing at one.
  */
-function offerNames(i){ return offersFor(i).map(function(o){ return o.promise || o.label || o.name || 'Offer'; }); }
+function offerNames(i){
+  return offersFor(i).map(function(o){
+    return MODE === 'maintain' ? (o.label || o.name || o.promise || 'Offer') : (o.promise || o.label || o.name || 'Offer');
+  });
+}
 /**
  * ⭐ THE RATE ON THE ROW, from the same engine that will put it on the bill (CBTax.slab) — never a second opinion. Cached on the item
  * beside its offers and thrown away with them, because a slab that changed overnight must not linger on a shelf.
@@ -6755,6 +6769,15 @@ function rateOf(i){
     r = (out && out.rate != null) ? out.rate : null; } catch (_) { r = null; }
   i._rate = r;
   return r;
+}
+/** ⭐ the tile's own tax fact, same rate as rateOf() — '' for an unregistered shop, never a claim it cannot make. */
+function taxWords(i){ var r = rateOf(i); return r != null ? (r + '% GST') : ''; }
+/** ⭐ the tile's own offer fact — the CLEAN promise only, regardless of MODE (a key is glanced at, never read
+ *  closely; offerNames()'s maintain-mode raw name belongs on the detailed row, never on a tile this small). */
+function offerPromiseFor(i){
+  var os = offersFor(i);
+  for (var k = 0; k < os.length; k++) if (os[k].promise) return os[k].promise;
+  return '';
 }
 /**
  * ⚠️ A FULL STOP, NOT A WARNING STRIP. A counter that is holding the wrong shop's prices cannot be allowed to keep taking money
@@ -12156,10 +12179,17 @@ function paintQuick(){
     var qkHideAttrs = 'title="sold out today" data-testid="till-quick-hide-' + n + '" onclick="event.stopPropagation();quickSoldOut(\'' + id + '\')"';
     var qkProps = {
       name: i.name, price: money(i.price), unit: i.unit || 'piece', image: picAsk(i.image, picPx()) || null, colour: colour,
-      /* ⭐ THE SAME WORDS AS THE SHELF ROW, from the same rule — "₹11.00 under" is a standing fact about the
-         product, never a saving, and a key that phrased it differently would be a second opinion about money. */
-      /* ⭐ a combo's claim takes the line, because it is the more useful of the two on a meal deal */
-      offer: comboWords(i) || mrpUnder(i),
+      /**
+       * ⭐⭐ [found live, 2026-09-27] "offer detail not appearing in the image icon" — a REAL live discount
+       * (10% off, ₹X off — Offer Lab's own offers, via offerPromiseFor()/CBOffers) never reached this slot at
+       * all; only a combo's own claim or an MRP-under note ever did, so a key carrying an actual percent/amount
+       * offer looked exactly like one carrying none. The live discount now takes the line — it is the more
+       * actionable fact of the three — falling back to a combo's claim, then the MRP note, same as before.
+       */
+      offer: offerPromiseFor(i) || comboWords(i) || mrpUnder(i),
+      /** ⭐ [same ask] "product name price and offer, tax details should be there" — the same rate the bill
+       *  itself will apply (rateOf() → CBTax.slab), never a second opinion computed for the tile alone. */
+      tax: taxWords(i),
       qty: inBill[String(i.item_id)] || 0, showPhoto: !!cfg.photos, hotkey: n < 9 ? n + 1 : (n === 9 ? 0 : null),
       attrs: qkAttrs, hideAttrs: qkHideAttrs, extra: extra
     };
