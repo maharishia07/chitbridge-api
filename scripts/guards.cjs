@@ -26,6 +26,7 @@ const GUARDS = [
   'till-vendor.test.js',      // the counter and its vendored engines agree, byte for byte
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
+  'money-round.test.js',       // one rounder (0 wrong in 1.74 M cases, per-currency decimals) and one price reader
   'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
   'xlsx-write.test.js',       // a workbook Excel will open — every part it needs, and a code keeps its leading zero
   'write-limits.test.js',     // a door that writes many records per request is rate-limited, and keyed by the key
