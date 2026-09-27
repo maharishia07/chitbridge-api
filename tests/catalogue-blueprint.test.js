@@ -139,6 +139,55 @@ it('⭐ the demo pictures land on real products, and a shop that adopts the list
       assert.ok(B.blueprint(k).starter.some((p) => p.name === n && p.image && p.image.includes('/pics/' + k + '/')), n + ' has no picture');
 });
 
+/* ── a reference list held in a store: written like any catalogue, read back without its currency ── */
+function throughAStore(key, currency) {
+  const money = require('../lib/money');
+  const ids = new Map();
+  const stored = B.storeRows(key).map((it) => {
+    /* what catalogue-write does: the category becomes a citation, the price is stamped */
+    const out = Object.assign({}, it);
+    if (out.categoryName) {
+      if (!ids.has(out.categoryName)) ids.set(out.categoryName, 'cat-' + ids.size);
+      out.categories = [ids.get(out.categoryName)];
+    }
+    delete out.categoryName;
+    return { item_data: money.stampItem(out, currency) };
+  });
+  const byId = new Map([...ids].map(([n, id]) => [id, n]));
+  return { stored, rows: B.fromStore(key, stored, (id) => byId.get(id)) };
+}
+
+it('⭐⭐⭐ every list survives the round trip through a store, field for field', () => {
+  for (const k of Object.keys(B.BLUEPRINTS)) {
+    const { stored, rows } = throughAStore(k, 'INR');
+    assert.ok(JSON.stringify(stored).includes('"INR"'), k + ': the store did not stamp its prices — the test proves nothing');
+    const p = B.parity(k, rows);
+    assert.ok(p.ok, k + ' drifted: ' + JSON.stringify({ missing: p.missing, extra: p.extra, changed: p.changed.slice(0, 3) }));
+    assert.strictEqual(p.rows.store, B.blueprint(k).starter.length);
+  }
+});
+
+it('⚠️⚠️⚠️ adopting from a store carries the product, never the store\'s currency', () => {
+  const money = require('../lib/money');
+  const { rows } = throughAStore('veg', 'INR');
+  assert.ok(!JSON.stringify(rows).includes('INR'), 'the reference store\'s currency leaked out of fromStore');
+  /* a US shop adopts: its own currency is the only one on the product */
+  const tomato = rows.find((r) => r.name === 'Tomato' && r.unit === 'kg');
+  const adopted = money.stampItem({ name: tomato.name, price: tomato.price }, 'USD');
+  assert.deepStrictEqual(adopted.price, { amount: 40, currency: 'USD' });
+});
+
+it('⚠️⚠️ parity names the drift — a changed price, a lost row, a stray row', () => {
+  const { rows } = throughAStore('fish', 'INR');
+  const bent = rows.map((r) => (r.name === 'Sardine' ? Object.assign({}, r, { price: r.price + 1 }) : r))
+    .filter((r) => r.name !== 'Rohu').concat([{ name: 'Whale', unit: 'kg', price: 1 }]);
+  const p = B.parity('fish', bent);
+  assert.strictEqual(p.ok, false);
+  assert.deepStrictEqual(p.changed.map((c) => c.name + ':' + c.field), ['Sardine:price']);
+  assert.deepStrictEqual(p.missing.map((m) => m.name), ['Rohu']);
+  assert.deepStrictEqual(p.extra.map((m) => m.name), ['Whale']);
+});
+
 /**
  * ⚠️⚠️⚠️ THE GATE. An upload that quietly loses rows is the worst outcome available here: nobody finds out
  * until a customer asks for a product that is not on the till.
