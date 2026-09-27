@@ -86,6 +86,10 @@ async function mint(entity_id, identity, opts) {
   const token = jwt.sign({ identity_id: entity_id, identity_type: 'entity', bridge_id: id.bridge_id || null, display_name: id.display_name || null,
                            kind: 'api_key', scopes, jti, iat: now, exp }, process.env.JWT_SECRET, { algorithm: 'HS256' });
   const rec = { jti, name, scopes, created_at: new Date().toISOString(), expires_at: new Date(exp * 1000).toISOString(), last4: token.slice(-4) };
+  /* ⭐ A KEY MADE BY A KEY NAMES ITS MAKER (2026-09-27). A counter may pair a TV; the screen key it yields records the
+     counter key's jti, and middleware/auth refuses it the moment that counter key is revoked or closed — so nothing a
+     counter hands out can outlive the counter. Athi: "yes, screen codes only". */
+  if (opts.parent) rec.parent = String(opts.parent);
   /**
    * ⚠️⚠️ FOR UPDATE, THEN WRITE IN THE SAME TRANSACTION (2026-09-23). mint() used to read the list with listOf(),
    * then save() the WHOLE array back — the exact read-modify-write shape the comment above patchKey() already
@@ -319,8 +323,12 @@ router.delete('/:jti', auth, sessionOnly, async (req, res) => {
       const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
       const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
       const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
-      const left = keys.filter((k) => String(k.jti) !== String(req.params.jti));
-      found = left.length !== keys.length;
+      /* ⭐ and the screen keys that counter paired go with it — auth already refuses them once their maker is gone, but
+         left listed they would keep using up the shop's twenty places for keys that can no longer open anything */
+      const gone = String(req.params.jti);
+      const left = keys.filter((k) => String(k.jti) !== gone && String(k.parent || '') !== gone);
+      found = keys.some((k) => String(k.jti) === gone);
+      keys.filter((k) => String(k.parent || '') === gone).forEach((k) => auth.forgetKey(k.jti));
       if (found) await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
         [JSON.stringify({ api_keys: left }), entity_id]);
     });

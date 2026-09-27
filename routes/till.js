@@ -1467,12 +1467,25 @@ router.post('/pair', auth, async (req, res) => {
        definition is — otherwise a counter key on a shared PC could quietly furnish itself a family of screen keys. */
     /* ⚠️ req.api_key is how middleware/auth marks a request that arrived with a key. I first guessed `via_key`, which nothing
        sets — and a guard testing a field nobody sets is a guard that always passes. */
-    if (!req.identity || req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to pair a screen.' });
+    /**
+     * ⭐⭐ A COUNTER MAY PAIR A TV — A SCREEN, AND NOTHING ELSE (2026-09-27). Athi: *"can we give the URL and the code to
+     * display ... in the screen menu itself, so no one need to search that"*, then, asked whether a counter key may do
+     * this: *"yes, screen codes only"*.
+     * The old rule was "a key may not mint a key", and its reason still holds for everything else: a key must not be
+     * able to furnish itself a family of keys that OUTLIVE it. So a counter's code yields a SCREEN key only (less than
+     * a counter can already do: read the shop's offers to show them), and that key names this counter key as its
+     * parent — middleware/auth keyAlive() refuses it the moment the counter key is revoked or closed.
+     * ⚠️ Any other key is still refused: a screen key cannot pair a screen, a connector key cannot pair anything.
+     */
+    const viaCounter = !!(req.api_key && req.api_key.scopes.includes('till'));
+    if (!req.identity || (req.api_key && !viaCounter))
+      return res.status(403).json({ error: 'Forbidden', message: 'Sign in to pair a screen.' });
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
     const expires = Date.now() + PAIR_TTL_MS;
-    PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires });
+    PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires,
+                     parent: viaCounter ? req.api_key.jti : null });
     res.json({ code, expires_at: new Date(expires).toISOString(), minutes: Math.round(PAIR_TTL_MS / 60000) });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
@@ -1570,9 +1583,59 @@ router.post('/pair/claim', async (req, res) => {
        safe way round: a code that survives a failure is a code somebody can retry. */
     PAIR.delete(code);
     const minted = await keys.mint(got.entity_id, null,
-      { name: 'shop screen · paired ' + new Date().toISOString().slice(0, 10), scopes: ['screen'], days: 365 });
+      { name: 'shop screen · paired ' + new Date().toISOString().slice(0, 10), scopes: ['screen'], days: 365,
+        parent: got.parent || null });
     PAIR_MISSES.delete(ip);
     res.json({ key: minted.key, shop: { entity_id: got.entity_id, name: got.name } });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * ── ⭐ GET /api/till/screens · POST /api/till/screens/revoke — THE TVs THIS SHOP HAS PAIRED (2026-09-27) ──────
+ *
+ * Athi: *"can we show how many connection exists already and a switch to revoke"*. Beside the pairing code, the
+ * counter lists every SCREEN key the shop holds — however it was paired, from here or from the back office — with
+ * when it was paired and when it last showed the sign, and a switch that turns one off.
+ * ⚠️ SCREEN KEYS ONLY, in both directions. A key whose scopes are anything but exactly ['screen'] is neither listed
+ * nor revocable here, so a counter can never see or switch off another counter or a connector.
+ * ⚠️ The key itself is never returned — only its name, dates and last four characters, as the keys screen shows.
+ */
+const isScreenKey = (k) => k && Array.isArray(k.scopes) && k.scopes.length === 1 && k.scopes[0] === 'screen';
+router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const list = await keys.listOf(entity_id);
+    const screens = list.filter(isScreenKey).map((k) => ({
+      jti: k.jti, name: k.name || 'shop screen', last4: k.last4 || null, paired_at: k.created_at || null,
+      seen_at: (k.seen && k.seen.at) || null,
+      /* ⭐ whether it would be refused right now — a TV paired by a counter that has since been closed */
+      alive: !!auth.keyAlive(list, k.jti),
+      from_counter: !!k.parent,
+    }));
+    res.json({ screens, count: screens.length, limit: 20, keys_used: list.filter((k) => !(k && k.till && k.till.closed_at)).length });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const jti = String((req.body && req.body.jti) || '');
+    if (!jti) return res.status(400).json({ error: 'validation', message: 'Which screen?' });
+    let found = false, refused = false;
+    await require('../db').withTransaction(async (db) => {
+      const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
+      const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
+      const list = Array.isArray(pf.api_keys) ? pf.api_keys : [];
+      const k = list.find((x) => x && String(x.jti) === jti);
+      if (!k) return;
+      if (!isScreenKey(k)) { refused = true; return; }
+      found = true;
+      await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
+        [JSON.stringify({ api_keys: list.filter((x) => String(x.jti) !== jti) }), entity_id]);
+    });
+    if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be switched off from the counter.' });
+    if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
+    auth.forgetKey(jti);
+    res.json({ ok: true, jti, message: 'That screen is switched off. It stops showing the sign within a minute.' });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

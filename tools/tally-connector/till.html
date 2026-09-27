@@ -2589,6 +2589,13 @@
   .sw.on{background:var(--ok);border-color:var(--ok)}
   .sw.on .knob{left:25px}
   .sw:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+  #tvbody .tvaddr{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-weight:700;word-break:break-all}
+  #tvbody .tvcode{font:900 44px/1.1 ui-monospace,Consolas,monospace;letter-spacing:.18em;text-align:center;
+                   padding:12px;margin:10px 0 4px;border:2px dashed var(--edge);border-radius:14px}
+  #tvbody .tvwhen{text-align:center;color:var(--grey);font-size:.85em;margin-bottom:12px}
+  #tvbody .tvrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+  #tvbody .tvrow .nm{flex:1;min-width:0}
+  #tvbody .tvrow .nm small{display:block;color:var(--grey)}
   #cardprice{width:110px;height:38px;padding:0 10px;border:1px solid var(--edge);border-radius:9px;
              background:var(--paper);color:var(--ink);font:inherit;font-weight:700;font-variant-numeric:tabular-nums}
   #cardprice:focus{outline:2px solid var(--ok);outline-offset:1px}
@@ -3318,6 +3325,14 @@
   <div class="dlgbtns">
     <button onclick="shopPrevClose()">Close</button>
     <button class="pri" data-testid="till-shopprev-open" onclick="shopPrevOut()">Open the storefront ↗</button>
+  </div>
+</div></dialog>
+<dialog id="tvdlg" data-testid="till-tv"><div class="dlg"><h3>📺 Shop screen</h3>
+  <div id="tvbody"></div>
+  <div class="dlgbtns">
+    <button onclick="tvClose()">Close</button>
+    <button data-testid="till-tv-here" onclick="tvHere()">▶ This device</button>
+    <button class="pri" data-testid="till-tv-pair" onclick="tvPair()">📡 Pair a TV</button>
   </div>
 </div></dialog>
 <!-- ⭐⭐ [till expenses] MONEY PAID OUT OF THE DRAWER — see expOpen() -->
@@ -22742,11 +22757,80 @@ function retSlipHTML(cn){
  * ⚠️ It carries the key it already holds, so nothing is minted and nothing has to be paired twice. On the desktop kit the key lives
  * on the agent instead, and the page opens without one and pairs itself the same way the counter did.
  */
+/**
+ * ── ⭐⭐ THE SHOP SCREEN, FROM THE COUNTER'S OWN MENU (2026-09-27) ────────────────────────────────────────────
+ *
+ * Athi: *"can we give the URL and the code to display as a share icon in the screen menu itself, so no one need to
+ * search that"* · *"can we show how many connection exists already and a switch to revoke"* · *"within store same
+ * thing can be repeated for multiple screen"*. Pairing used to live only in the back office (Counter → Put it on a
+ * screen → Pair a TV); now 📺 Shop screen offers both: this device, or a TV by address + a one-time code.
+ * ⭐ Every screen the shop has paired is listed with a switch — from here or from the back office alike.
+ * ⚠️ A counter key yields a SCREEN code only, and a screen it pairs dies with this counter's key (routes/till.js
+ * /pair, middleware/auth keyAlive). It can list and switch off SCREENS only, never another counter.
+ */
+var TV = { code: null, expires: 0, screens: null, why: '' };
+function tvAddr(){ return cbHome().replace(/\/app\.html.*$/, '') + '/promo.html'; }
 function openScreen(){
+  if (!(TV.expires > Date.now())) TV.code = null;
+  TV.why = '';
+  var d = document.getElementById('tvdlg'); if (!d) return;
+  paintTv(); try { d.showModal(); } catch (_) { d.setAttribute('open', ''); }
+  loadTvScreens();
+}
+function tvClose(){ var d = document.getElementById('tvdlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
+/** the sign on THIS device — what 📺 used to do on its own */
+function tvHere(){
   var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? CloudHost.key : null;
   var shop = ls.get(shopLs('cb_till_shop'), '');
   var addr = '/promo.html' + (k ? ('#key=' + encodeURIComponent(k) + (shop ? '&shop=' + encodeURIComponent(shop) : '')) : '');
   window.open(addr, '_blank', 'noopener');
+}
+async function tvPair(){
+  var r = await HOST.tillPost('/api/till/pair', {}, { noQueue: true });
+  if (!r || !r.ok || !r.code) { TV.why = (r && r.why) || 'no code came back'; paintTv(); return; }
+  TV.code = r.code; TV.why = ''; TV.expires = Date.now() + (Number(r.minutes) || 10) * 60000;
+  paintTv();
+}
+async function loadTvScreens(){
+  var r = await HOST.tillGet('/api/till/screens');
+  TV.screens = (r && r.ok && Array.isArray(r.screens)) ? r.screens : null;
+  if (!(r && r.ok)) TV.why = TV.why || (r && r.why) || '';
+  paintTv();
+}
+/** ⭐ the share icon: the device's own share sheet where there is one, otherwise the clipboard */
+async function tvShare(){
+  var text = tvAddr() + (TV.code ? '  ·  code ' + TV.code : '');
+  try { if (navigator.share) { await navigator.share({ title: 'Shop screen', text: text }); return; } } catch (_) { return; }
+  try { await navigator.clipboard.writeText(text); toastLine('Copied: ' + text); } catch (_) { toastLine(text); }
+}
+async function tvOff(jti){
+  var sc = (TV.screens || []).filter(function(x){ return x.jti === jti; })[0];
+  if (!sc || !(await sure('Switch off ' + sc.name + ' (…' + (sc.last4 || '') + ')?', 'Switch off', '📺'))) { paintTv(); return; }
+  var r = await HOST.tillPost('/api/till/screens/revoke', { jti: jti }, { noQueue: true });
+  if (!r || !r.ok) say((r && r.why) || 'ChitBridge could not be reached', 'Not switched off');
+  await loadTvScreens();
+}
+function paintTv(){
+  var box = document.getElementById('tvbody'); if (!box) return;
+  var h = '';
+  if (TV.code && TV.expires > Date.now()) {
+    h += '<div class="tvaddr" data-testid="till-tv-addr"><span>' + esc(tvAddr()) + '</span>'
+      + '<button class="pill" data-testid="till-tv-share" onclick="tvShare()" title="Share the address and code">🔗</button></div>'
+      + '<div class="tvcode" data-testid="till-tv-codebox">' + esc(TV.code) + '</div>'
+      + '<div class="tvwhen">⏱ ' + Math.max(1, Math.round((TV.expires - Date.now()) / 60000)) + ' min · 1 TV</div>';
+  }
+  if (TV.why) h += '<div class="tvwhen" data-testid="till-tv-why">⚠ ' + esc(TV.why) + '</div>';
+  var list = TV.screens;
+  h += '<div style="font-weight:700;margin-top:6px" data-testid="till-tv-count" title="screens paired to this shop">📺 '
+    + (list ? list.length : '…') + '</div>';
+  (list || []).forEach(function(sc){
+    var seen = sc.seen_at ? ('👁 ' + String(sc.seen_at).slice(0, 16).replace('T', ' ')) : '👁 —';
+    var id = String(sc.jti).replace(/[^a-f0-9]/gi, '');
+    h += '<div class="tvrow" data-testid="till-tv-row"><div class="nm">' + esc(sc.name) + ' <small>…' + esc(sc.last4 || '')
+      + ' · ' + seen + (sc.alive ? '' : ' · ✕') + '</small></div>'
+      + cardSwitch(!!sc.alive, 'till-tv-sw', "tvOff('" + id + "')", '') + '</div>';
+  });
+  box.innerHTML = h;
 }
 /** ⭐ NO FRAGMENT, DELIBERATELY — unlike openScreen() above, Offer Lab reads a PERSON's cb_sess, never a
  * till key, so there is nothing of this counter's own to hand it. See the TILL_OPS entry's own note.

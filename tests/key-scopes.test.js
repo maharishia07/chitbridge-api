@@ -45,7 +45,7 @@ const SENSITIVE = [
   ['GET',  '/api/till/snapshot',         'read the whole shop'],
   ['POST', '/api/till/price',            'change a price'],
   ['POST', '/api/till/stock',            'take something off the shelf'],
-  ['POST', '/api/till/pair',             'hand out a new key'],
+  ['POST', '/api/till/pair',             'ask for a TV pairing code (a SCREEN key, which dies with its maker)'],
   ['POST', '/api/keys',                  'mint a key'],
   ['POST', '/api/definitions',           'author an offer or a tax slab'],
   ['DELETE', '/api/definitions/abc',     'retire an offer'],
@@ -73,7 +73,10 @@ const EXPECT = {
                      /* ⭐ the upload, read then committed — the back office's own import, reached from a counter */
                      'POST /api/products/import/preflight', 'POST /api/products/import',
                      /* ⭐ and the workbook it should start from */
-                     'GET /api/products/workbook.xlsx'] },
+                     'GET /api/products/workbook.xlsx',
+                     /* ⭐ MOVED 2026-09-27, not deleted: this was DENY ("a key may not mint a key"). Athi: "yes, screen codes
+                        only". A counter may pair a TV; what makes that safe is asserted below, not assumed. */
+                     'POST /api/till/pair'] },
   connector: { why: 'a program on a shop PC: products up, orders down, the bell',
              allow: ['GET /api/products', 'PATCH /api/products/abc', 'GET /api/chits/inbox', 'POST /api/events/ticket'] },
   offers:  { why: 'the offers engine as a service', allow: [] },
@@ -97,6 +100,31 @@ for (const scope of Object.keys(EXPECT)) {
     assert.strictEqual(wrong.length, 0, 'the ' + scope + ' key:\n        ' + wrong.join('\n        '));
   });
 }
+
+it('⚠️⚠️ a counter’s pairing code yields a SCREEN key only, naming the counter key that made it', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  const pair = src.slice(src.indexOf("router.post('/pair',"), src.indexOf("router.post('/enrol'"));
+  const claim = src.slice(src.indexOf("router.post('/pair/claim'"), src.indexOf("router.get('/screens'"));
+  assert.ok(pair.includes("req.api_key.scopes.includes('till')"), '/pair no longer limits key-bearers to a COUNTER key');
+  assert.ok(pair.includes('parent: viaCounter ? req.api_key.jti'), '/pair does not remember which counter key asked');
+  assert.ok(claim.includes("scopes: ['screen']"), '/pair/claim mints something other than a screen key');
+  assert.ok(claim.includes('parent: got.parent'), '/pair/claim drops the parent — the screen would outlive its counter');
+});
+
+it('⚠️⚠️ a screen key dies with the counter key that paired it', () => {
+  const L = [{ jti: 'c1', scopes: ['till'] }, { jti: 's1', scopes: ['screen'], parent: 'c1' },
+             { jti: 's2', scopes: ['screen'] }, { jti: 'c2', scopes: ['till'], till: { closed_at: '2026-09-01' } },
+             { jti: 's3', scopes: ['screen'], parent: 'c2' }, { jti: 's4', scopes: ['screen'], parent: 'revoked' }];
+  assert.ok(auth.keyAlive(L, 's1'), 'a screen whose counter is live was refused');
+  assert.ok(auth.keyAlive(L, 's2'), 'a screen paired from the back office (no parent) was refused');
+  assert.ok(!auth.keyAlive(L, 's3'), 'a screen outlived its CLOSED counter');
+  assert.ok(!auth.keyAlive(L, 's4'), 'a screen outlived its REVOKED counter');
+});
+
+it('⚠️ only a counter key can ask for a pairing code — a screen cannot pair a screen', () => {
+  for (const scope of auth.SCOPE_NAMES) if (scope !== 'till')
+    assert.ok(!may([scope], 'POST', '/api/till/pair'), 'the ' + scope + ' scope can ask for a pairing code');
+});
 
 it('⚠️⚠️ NO key of any scope may mint another key', () => {
   /* the one that would turn a stolen counter key into every other kind of key */

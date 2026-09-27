@@ -1259,6 +1259,8 @@ const server = http.createServer(async (req, res) => {
                   '/api/products/workbook.xlsx',
                   '/api/till/counters', '/api/till/quick-keys/groups', '/api/till/quick-keys/hidden',
                   '/api/till/quick-keys/screen-config',
+                  /* ⭐ the shop's paired TVs, beside the pairing code (2026-09-27) */
+                  '/api/till/screens',
                   /* ⭐ qty + average cost for the Receive screen — this shop's own shelf, read-only (dcdf493) */
                   '/api/till/stock'];
       var base = want.split('?')[0];
@@ -1273,7 +1275,9 @@ const server = http.createServer(async (req, res) => {
       let o = {}; try { o = JSON.parse(body || '{}'); } catch (_) {}
       /* ⚠️ AN EXPLICIT LIST, NOT A PATTERN. This is an allow-list for what a page may ask its own agent to POST upstream, and a
          pattern is one careless edit away from letting through a path nobody meant. Two operations, named. */
-      var ALLOW = ['/api/till/stock', '/api/till/stock/bulk', '/api/till/price', '/api/till/flags', '/api/till/offer-item',
+      var ALLOW = ['/api/till/stock', '/api/till/stock/bulk', '/api/till/price',
+                   /* ⭐ a TV from the counter's menu: a SCREEN code, and switching a shop screen off (2026-09-27) */
+                   '/api/till/pair', '/api/till/screens/revoke', '/api/till/flags', '/api/till/offer-item',
                    /* ⭐ points earned and encashed on a bill, and the claim that moves a walk-in's balance onto an account */
                    '/api/till/reward', '/api/till/reward/claim',
                    /* ⭐⭐ a counter that is stuck reporting itself. A desktop-kit PC is exactly the machine nobody

@@ -272,6 +272,12 @@ const KEY_ROUTES = {
               /* ⭐ the same availability permission as /stock, batched — a selection on or off the shelf in ONE call.
                  It shipped (f2f2a9f) without this line, so on a till key it was a bare 403; tests/key-scopes caught it. */
               ['POST', /^\/api\/till\/stock\/bulk$/],
+              /* ⭐ a TV for this shop, from the counter's own menu (2026-09-27, Athi: "yes, screen codes only"). The route
+                 hands a key-bearer a SCREEN code only; the screen key names this counter key as its parent and dies with it.
+                 The list and the off-switch reach SCREEN keys only — a counter can never see or revoke another counter. */
+              ['POST', /^\/api\/till\/pair$/],
+              ['GET', /^\/api\/till\/screens$/],
+              ['POST', /^\/api\/till\/screens\/revoke$/],
               /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
                  definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
                  authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".
@@ -325,6 +331,22 @@ function noteSeen(entity_id, jti, req) {
     });
   } catch (_) { /* a sighting is never worth an error */ }
 }
+/**
+ * keyAlive(list, jti) → the key's record, or false. A key is alive while it is LISTED — and, if a counter made it
+ * (`parent`, a TV paired from the counter's own menu), while its maker is listed and not closed too. So revoking or
+ * closing a counter switches off every screen it paired, with no second list for anyone to remember to clear.
+ */
+function keyAlive(list, jti) {
+  if (!Array.isArray(list)) return false;
+  const rec = list.find((k) => k && String(k.jti) === String(jti));
+  if (!rec) return false;
+  if (rec.parent) {
+    const p = list.find((k) => k && String(k.jti) === String(rec.parent));
+    if (!p || (p.till && p.till.closed_at)) return false;
+  }
+  return rec;
+}
+auth.keyAlive = keyAlive;
 async function keyListed(entity_id, jti, req) {
   if (!jti) return false;
   if (req) noteSeen(entity_id, jti, req);
@@ -332,7 +354,7 @@ async function keyListed(entity_id, jti, req) {
   let ok = false;
   try { const { query } = require('../db'); const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
         const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
-        ok = (Array.isArray(list) && list.find((k) => k && String(k.jti) === String(jti))) || false; } catch (_) { ok = false; }
+        ok = keyAlive(list, jti); } catch (_) { ok = false; }
   _keyCache.set(jti, { ok, at: Date.now() }); return ok;
 }
 /** requireScope('offers') — a session may do anything; a key only what it was minted for */
