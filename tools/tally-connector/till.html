@@ -3281,30 +3281,36 @@
 <!-- ⭐⭐ TAKING SOMETHING BACK — see retOpen() -->
 <dialog id="retdlg" data-testid="till-return"><div class="dlg"><h3 id="rettitle">Take a return</h3>
   <div id="retbody"></div>
-  <menu>
+  <!-- ⚠️⚠️ [found live 2026-09-27] .dlgbtns, NOT <menu>. Athi, on the expense sheet: "in the HTML page it
+       looks good, but not in this panel, check cancel, record chip." Nothing in this file has ever styled a
+       bare <menu>, so all four dialogs using one fell back to the browser's list styling — stacked, indented,
+       default chrome — while every .dlgbtns dialog beside them drew a proper row. `class="go"` did not help:
+       .go is the CHECKOUT BAR's rule (display:flex;padding:0 12px 10px) colliding by name, and under
+       body[data-hand="left"] it even reversed the button's own contents. .pri is the primary this row wants. -->
+  <div class="dlgbtns">
     <button value="cancel" data-testid="till-return-cancel" onclick="retClose()">Cancel</button>
-    <button id="retgo" class="go" data-testid="till-return-go" onclick="retIssue()">Give it back</button>
-  </menu></div></dialog>
+    <button id="retgo" class="pri" data-testid="till-return-go" onclick="retIssue()">Give it back</button>
+  </div></div></dialog>
 <!-- ⭐⭐ [till expenses] MONEY PAID OUT OF THE DRAWER — see expOpen() -->
 <dialog id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
   <div id="expbody"></div>
-  <menu>
+  <div class="dlgbtns">
     <button value="cancel" data-testid="till-expense-cancel" onclick="expClose()">Cancel</button>
-    <button id="expgo" class="go" data-testid="till-expense-go" onclick="expIssue()">Record it</button>
-  </menu></div></dialog>
+    <button id="expgo" class="pri" data-testid="till-expense-go" onclick="expIssue()">Record it</button>
+  </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] SIGNING SOMEONE UP — see subOpen() -->
 <dialog id="subdlg" data-testid="till-subscription"><div class="dlg"><h3>New subscription / AMC</h3>
   <div id="subbody"></div>
-  <menu>
+  <div class="dlgbtns">
     <button value="cancel" data-testid="till-sub-cancel" onclick="subClose()">Cancel</button>
-    <button id="subgo" class="go" data-testid="till-sub-go" onclick="subIssue()">Sign them up</button>
-  </menu></div></dialog>
+    <button id="subgo" class="pri" data-testid="till-sub-go" onclick="subIssue()">Sign them up</button>
+  </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] EVERY SUBSCRIPTION THIS COUNTER HOLDS — see subListOpen() -->
 <dialog id="sublistdlg" data-testid="till-sub-list"><div class="dlg"><h3>My subscriptions &amp; AMCs</h3>
   <div id="sublistbody"></div>
-  <menu>
+  <div class="dlgbtns">
     <button value="cancel" data-testid="till-sub-list-close" onclick="subListClose()">Close</button>
-  </menu></div></dialog>
+  </div></div></dialog>
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <div class="slipbox" id="slipbox"></div>
@@ -22087,11 +22093,29 @@ function expClose(){
   var d = document.getElementById('expdlg'); if (d && d.open) { try { d.close(); } catch (_) {} }
   EXP_WHAT = ''; EXP_AMOUNT = ''; EXP_DONE = null;
 }
-function expWhat(v){ EXP_WHAT = v; expPaint(); }
-function expAmountSet(v){ EXP_AMOUNT = v; expPaint(); }
-function expHow(v){ EXP_HOW = v; expPaint(); }
-/** ⭐ a chip only fills the box — it stays a normal, editable input, same as tapping a to-do straight into this sheet */
-function expChip(w){ EXP_WHAT = w; expPaint(); var box = document.getElementById('expwhat'); if (box) box.focus(); }
+/**
+ * ⚠️ none of these repaint the sheet — see expTouch()'s own comment for what that cost when they did.
+ * ⚠️⚠️ AND THEY WRITE THE BOX, NOT JUST THE VARIABLE. expTouch() reads the boxes back as the truth, so a
+ * setter that moved only the variable would be undone by its own next line. (Both of these are also the
+ * programmatic door e2e/till-expense.cjs drives the sheet through — I deleted them once as "dead code" on
+ * the strength of there being no caller IN THIS FILE, and the harness caught it. A caller is a caller.)
+ */
+function expWhat(v){ var w = document.getElementById('expwhat'); if (w) w.value = v; EXP_WHAT = v; expTouch(); }
+function expAmountSet(v){ var a = document.getElementById('expamt'); if (a) a.value = v; EXP_AMOUNT = v; expTouch(); }
+function expHow(v){
+  EXP_HOW = v;
+  Array.prototype.forEach.call(document.querySelectorAll('#expbody [data-way]'), function(b){
+    b.classList.toggle('on', b.getAttribute('data-way') === v);
+  });
+  expTouch();   /* the drawer line appears or goes, and it is the only other thing this changes */
+}
+/** ⭐ a chip only FILLS the box — it stays a normal, editable input, same as tapping a to-do straight into this sheet */
+function expChip(w){
+  var box = document.getElementById('expwhat');
+  if (box) { box.value = w; box.focus(); }
+  EXP_WHAT = w;
+  expTouch();
+}
 /** ⭐⭐ AFTER RECORDING, the sheet becomes a receipt rather than closing — expenses come in runs (a delivery
  *  boy, then tea, then rent), and reopening this dialog fresh each time is the slow path. Keeps the pay
  *  method (it is usually the same for a run); clears amount and reason (they are not). */
@@ -22113,24 +22137,63 @@ function expPaint(){
   }
   if (go) { go.onclick = expIssue; }
   if (cancel) cancel.textContent = 'Cancel';
-  var amt = Number(EXP_AMOUNT) || 0;
-  var missing = !(EXP_WHAT.trim()) ? 'Say what it was for.' : !(amt > 0) ? 'Type the amount.' : '';
   box.innerHTML =
       '<label>Amount<span class="amtbig"><span class="cur">₹</span><input id="expamt" class="big" value="' + esc(EXP_AMOUNT)
-        + '" inputmode="decimal" placeholder="0" oninput="expAmountSet(this.value)"></span></label>'
+        + '" inputmode="decimal" placeholder="0" oninput="expTouch()"></span></label>'
     + '<label>What is it'
         + '<div class="chips" data-testid="till-expense-chips">' + EXP_CHIPS.map(function(w){
-            return '<button type="button" class="' + (EXP_WHAT === w ? 'on' : '') + '" onclick="expChip(\'' + esc(w) + '\')">' + esc(w) + '</button>';
+            return '<button type="button" class="' + (EXP_WHAT === w ? 'on' : '') + '" data-chip="' + esc(w) + '" onclick="expChip(\'' + esc(w) + '\')">' + esc(w) + '</button>';
           }).join('') + '</div>'
-        + '<input id="expwhat" value="' + esc(EXP_WHAT) + '" placeholder="Or type it — delivery boy, tea for staff…" oninput="expWhat(this.value)"></label>'
+        + '<input id="expwhat" value="' + esc(EXP_WHAT) + '" placeholder="Or type it — delivery boy, tea for staff…" oninput="expTouch()"></label>'
     + '<label>Paid by<div class="chips" data-testid="till-expense-how">' + expWays().map(function(w){
-          return '<button type="button" class="' + (EXP_HOW === w ? 'on' : '') + '" onclick="expHow(\'' + esc(w) + '\')">' + esc(w) + '</button>';
+          return '<button type="button" class="' + (EXP_HOW === w ? 'on' : '') + '" data-way="' + esc(w) + '" onclick="expHow(\'' + esc(w) + '\')">' + esc(w) + '</button>';
         }).join('') + '</div></label>'
-    + (EXP_HOW === 'Cash' && amt > 0
-        ? '<div class="expdrawer" data-testid="till-expense-drawer">● Comes out of the drawer — the cash count at close will be <b>' + money(amt) + '</b> short.</div>'
-        : '')
-    + (missing ? '<div class="u" data-testid="till-expense-hint">' + esc(missing) + '</div>' : '');
-  if (go) { go.disabled = !!missing; go.textContent = amt > 0 ? ('Record ' + money(amt)) : 'Record it'; }
+    /* ⚠️⚠️ THESE TWO ARE ALWAYS IN THE DOM, EMPTY WHEN THEY HAVE NOTHING TO SAY — expTouch() swaps what is
+       INSIDE them while somebody is typing, and a box that only exists sometimes cannot be swapped into. */
+    + '<div class="expdrawer" id="expdrawerbox" data-testid="till-expense-drawer" hidden></div>'
+    + '<div class="u" id="exphintbox" data-testid="till-expense-hint"></div>';
+  expTouch();
+}
+/**
+ * ⭐⭐⭐ WHAT CHANGES WHILE SOMEBODY IS TYPING — AND NOTHING ELSE ([found live 2026-09-27]).
+ *
+ * Athi: *"when i type 4 immediately it jumps to record, it is not receiving the full amount."* He typed one
+ * digit and the rest went nowhere. `oninput` called expPaint(), which rebuilt the whole of #expbody — so the
+ * very input being typed into was DESTROYED and recreated on the first keystroke, focus fell to the body
+ * (on a touch counter, the keyboard closes with it), and every digit after the first landed on nothing.
+ *
+ * ⚠️⚠️ THE RULE, AND IT WAS ALREADY WRITTEN DOWN IN THIS FILE — pendPrice(), doing the same job for the price
+ * box on the product card: *"NOT a full paintCard — that would rebuild the box the operator is typing in and
+ * lose the caret. Only the things that depend on the pending state are touched."* Same hazard, same fix; this
+ * sheet simply did not follow the pattern sitting one screen above it.
+ *
+ * ⭐ So: read the boxes, never write them. Everything this touches is either a class on a chip or the text
+ * inside a container that holds no input at all.
+ */
+function expTouch(){
+  var a = document.getElementById('expamt'), w = document.getElementById('expwhat');
+  /* ⭐ THE BOXES ARE THE TRUTH while the sheet is open — read back, not pushed in */
+  if (a) EXP_AMOUNT = a.value;
+  if (w) EXP_WHAT = w.value;
+  var amt = Number(EXP_AMOUNT) || 0;
+  var missing = !(String(EXP_WHAT).trim()) ? 'Say what it was for.' : !(amt > 0) ? 'Type the amount.' : '';
+
+  /* a chip lights when the box happens to say the same thing, however it got there */
+  Array.prototype.forEach.call(document.querySelectorAll('#expbody [data-chip]'), function(b){
+    b.classList.toggle('on', b.getAttribute('data-chip') === String(EXP_WHAT));
+  });
+
+  var dr = document.getElementById('expdrawerbox');
+  if (dr) {
+    var show = (EXP_HOW === 'Cash' && amt > 0);
+    dr.hidden = !show;
+    dr.innerHTML = show ? '● Comes out of the drawer — the cash count at close will be <b>' + money(amt) + '</b> short.' : '';
+  }
+  var hint = document.getElementById('exphintbox');
+  if (hint) hint.textContent = missing;
+
+  var go = document.getElementById('expgo');
+  if (go && !EXP_DONE) { go.disabled = !!missing; go.textContent = amt > 0 ? ('Record ' + money(amt)) : 'Record it'; }
 }
 /**
  * ⭐⭐ ISSUE IT. Same discipline as a credit note: numbered from its own series, written locally, queued, sent
