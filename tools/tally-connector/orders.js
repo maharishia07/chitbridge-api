@@ -73,7 +73,16 @@ function purposeHas(opt, flag) { const p = PURPOSES[purposeOf(opt)]; return !!(p
 /** ⭐ the shop's own word for a thing, so no screen hard-codes "table" */
 function says(opt, k) { const w = (opt && opt.words) || {}; return w[k] || WORDS[k] || k; }
 
-const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+/* ⭐ money.round — THE one rounder (C:devSPEC-money-one-reader.md). CBMoney in a page; elsewhere the SAME rule.
+   ⚠️ NO require('./money') here, on purpose: vendor-till's wrapForBrowser refuses an undeclared require, and the
+   shop-PC kit copy of this file runs without money.js beside it. tests/money-round holds this copy equal. */
+function roundMoney_(n) {
+  if (typeof CBMoney !== 'undefined' && CBMoney.round) return CBMoney.round(n);
+  var x = Number(n); if (!isFinite(x)) return x;
+  var c = Math.round(Number((Math.abs(x) * 100).toPrecision(15))) / 100;
+  return (x < 0 && c !== 0) ? -c : c;
+}
+const r2 = (n) => roundMoney_(Number(n) || 0);
 
 /**
  * ⚠️⚠️ THE SAME SUBJECT MAY NOT BE OPEN TWICE. Two orders on table 7 is two bills for one table — the same

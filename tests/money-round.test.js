@@ -94,4 +94,44 @@ it('⭐⭐ every stored shape reads to the same number', () => {
   assert.strictEqual(M.priceOf(-5), -5, 'priceOf reads; it does not validate');
 });
 
+console.log('\n— every copy of the rule, with money.js ABSENT, agrees with money.round —');
+
+/**
+ * ⭐⭐ THE FALLBACKS ARE HELD EQUAL HERE. An engine that must run without money.js (a page where it failed to
+ * load, the shop-PC kit, a wrapped engine that may not require) carries the SAME rule as a fallback. That is a
+ * second copy of the rule, and a copy is only safe while something checks it — this does. Each helper is cut
+ * out of its file and run with neither CBMoney nor require in reach, so the fallback is what actually runs.
+ */
+const fs = require('fs');
+const WEB_APP = path.join(API, '..', 'chitbridge-web', 'public', 'app');
+function cut(src, start) {
+  const at = src.indexOf(start); if (at < 0) return null;
+  let d = 0, i = src.indexOf('{', at);
+  for (let j = i; j < src.length; j++) { if (src[j] === '{') d++; else if (src[j] === '}') { d--; if (!d) return src.slice(at, j + 1); } }
+  return null;
+}
+const COPIES = [
+  ...['tax.js', 'rewards.js', 'inventory.js', 'rollup.js', 'orders.js', 'qty.js', 'offers-engine.js', 'pricing-engine.js']
+    .map((f) => [path.join(API, 'lib', f), 'function roundMoney_(n)', 'roundMoney_']),
+  ...['cart.js', 'pick.js', 'variant.js', 'offers.js', 'pricing.js']
+    .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n)', 'roundMoney_']),
+  [path.join(API, 'tools', 'tally-connector', 'till.html'), 'var r2 = function(n)', 'r2'],
+];
+for (const [file, start, name] of COPIES) {
+  it('⭐ ' + path.basename(file) + ' — its fallback is money.round', () => {
+    if (!fs.existsSync(file)) throw new Error('missing ' + file);
+    const body = cut(fs.readFileSync(file, 'utf8'), start);
+    assert.ok(body, path.basename(file) + ' no longer has "' + start + '" — the rule moved; move this check with it');
+    /* eslint-disable-next-line no-new-func */
+    const f = new Function('require', 'CBMoney', 'var MONEY_ = null;\n' + body + (start.startsWith('var') ? ';' : '') + '\nreturn ' + name + ';')(undefined, undefined);
+    let bad = 0, first = null;
+    for (const pct of [5, 10, 12.5, 18]) for (let p = 1; p <= 40000; p += 3) {
+      const x = p / 100 * pct / 100;
+      if (f(x) !== M.round(x)) { bad++; if (!first) first = x + ' → ' + f(x) + ', money.round ' + M.round(x); }
+      if (f(-x) !== M.round(-x)) { bad++; if (!first) first = -x + ' → ' + f(-x) + ', money.round ' + M.round(-x); }
+    }
+    assert.strictEqual(bad, 0, bad + ' disagreements — e.g. ' + first);
+  });
+}
+
 console.log(pass + ' checks');

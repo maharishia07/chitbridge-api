@@ -3809,7 +3809,15 @@ var CFD = (function(){
   };
 })();
 
-var r2 = function(n){ return Math.round((Number(n)||0)*100)/100; };
+/* ⭐ money.round — SPEC-money-one-reader.md. engine/money.js loads second, before every caller; but a counter whose
+   engine failed to load must STILL BILL, so if CBMoney is absent it is the SAME rule, never the old one
+   (tests/money-round holds this copy equal). */
+var r2 = function(n){
+  var x = Number(n) || 0;
+  if (typeof CBMoney !== 'undefined' && CBMoney.round) return CBMoney.round(x);
+  var c = Math.round(Number((Math.abs(x) * 100).toPrecision(15))) / 100;
+  return (x < 0 && c !== 0) ? -c : c;
+};
 var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
 /**
  * ⭐⭐ ONE MONEY FORMATTER, AND IT IS NOT OURS. CBLocale.money(amount, code) groups by the locale (India is 2-2-3,
@@ -19556,7 +19564,7 @@ function payLink(way, amount, ref){
     var name = (S && S.shop && (S.shop.name || S.shop.legal_name)) || '';
     return 'upi://pay?pa=' + encodeURIComponent(way.payee)
       + '&pn=' + encodeURIComponent(String(name).slice(0, 60))
-      + (amount ? '&am=' + encodeURIComponent(String(Math.round(Number(amount) * 100) / 100)) : '')
+      + (amount ? '&am=' + encodeURIComponent(String(r2(amount))) : '')
       + '&cu=' + encodeURIComponent((S && S.shop && S.shop.currency) || 'INR')
       + '&tn=' + encodeURIComponent('CB-' + String(ref || '').slice(0, 12));
   }
