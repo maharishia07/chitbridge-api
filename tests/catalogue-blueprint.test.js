@@ -130,6 +130,11 @@ it('⭐ the demo pictures land on real products, and a shop that adopts the list
   const fish = B.blueprint('fish');
   for (const n of ['Seer fish', 'Pomfret (white)', 'Pomfret (black)', 'Sardine', 'Mackerel', 'Rohu', 'Katla', 'Tuna'])
     assert.ok(fish.starter.some((p) => p.name === n && /\/pics\/fish\//.test(p.image || '')), n + ' has no picture');
+  const more = { chicken: ['Whole chicken (dressed)', 'Kadaknath chicken', 'Chicken curry cut', 'Chicken drumstick', 'Chicken wings', 'Chicken liver'],
+                 meat: ['Beef boneless', 'Beef mince', 'Pork belly'] };
+  for (const [k, names] of Object.entries(more))
+    for (const n of names)
+      assert.ok(B.blueprint(k).starter.some((p) => p.name === n && p.image && p.image.includes('/pics/' + k + '/')), n + ' has no picture');
 });
 
 /**
