@@ -6863,6 +6863,11 @@ var TILL_OPS = [
    * browser, Offer Lab picks that up itself and shows their real catalogue; if not, it shows the sample books
    * with an invite to sign in. Never blocks a sale — it is a tab, not a mode this screen enters.
    */
+  /* ⭐ [Lab, 2026-09-27] Athi: "currently it is named as pricing, let us keep it as lab, so all can be
+   * under one roof." Product Lab joins the other two: a shop ADOPTS goods here rather than typing them.
+   * ⚠️ A PERSON signs into it, not this counter — see the Offer Lab note above, which applies with more
+   * force here: adopting creates sellable goods on a live shelf. */
+  { id: 'productlab', icon: '📋', label: 'Product Lab',        hint: 'adopt a ready-made product list — veg, egg, fish, chicken, meat · opens in a new tab', fn: 'openProductLab' },
   { id: 'offerlab', icon: '🧮', label: 'Offer Lab',          hint: 'work out a discount before you run it · opens in a new tab', fn: 'openOfferLab' },
   /* ⭐ [Labs split, 2026-09-26] Athi: "bring offer lab and combo lab as a separate item... combo lab earned
    * its place now" — was a modal reachable only from inside Offer Lab; now its own page, its own hub entry,
@@ -7449,7 +7454,9 @@ var TILL_MENU = [
    * [Labs split, 2026-09-26] that second tool is Combo Lab, moved out of Offer Lab's own modal into its own
    * page (Athi: "combo lab earned its place now") — this section is that home.
    */
-  { id: 'pricing', icon: '🧮', title: 'Pricing',       sum: 'work out a discount, or build a combo, before you run it',  ops: ['offerlab', 'combolab'] },
+  /* ⚠️ THE SECTION KEY STAYS 'pricing' — it is a deep-link target and a data-testid; the NAME is what Athi
+     renamed. [[TERMS.md]] */
+  { id: 'pricing', icon: '🧪', title: 'Lab',           sum: 'adopt products, work out a discount, or build a combo — before you run it',  ops: ['productlab', 'offerlab', 'combolab'] },
   /**
    * ⭐⭐⭐ [found live-testing, 2026-09-26] Athi: "i couldn't find the day in the menu icon?" — because
    * expenses (and, briefly, subscriptions — see menuSubscriptionSummary()'s own HELD note) were filed under
@@ -22504,6 +22511,7 @@ function openScreen(){
  * and reuses a tab already open under that name instead of spawning another — one window, whichever surface
  * asked for it. `noopener` dropped on purpose: it is same-origin navigation, not an untrusted external link,
  * and forcing a fresh opener-less context on every call is exactly what defeats window-name reuse. */
+function openProductLab(){ window.open('/product-lab.html', 'cb_product_lab'); }
 function openOfferLab(){ window.open('/offer-lab-next.html', 'cb_offer_lab'); }
 function openComboLab(){ window.open('/combo-lab.html', 'cb_combo_lab'); }
 /**

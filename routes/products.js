@@ -1580,4 +1580,154 @@ router.get('/:id/versions', auth, async (req, res) => {
   }
 });
 
+/**
+ * ── ⭐⭐⭐ PRODUCT LAB — THE LISTS, AND ADOPTING FROM THEM (2026-09-27) ────────────────────────────────────
+ *
+ * Athi: *"in the settings of the till, we can provide another section as lab, so we include product lab,
+ * offer lab and combo lab. in the product lab, showcase what are the product lists are available... so they
+ * can choose according to their interest... in one go or may be in multiple iteration."*
+ *
+ * ⚠️⚠️ WHY THESE ARE APP ROUTES AND NOT TILL ROUTES, WHICH IS AN AUTHORITY DECISION AND NOT A CONVENIENCE.
+ * POST /api/till/catalogue already mints a list — with requireScope('till'), i.e. a paired COUNTER KEY, and
+ * it refuses outright once the shop has any products. That is not a limitation to route around: it is the
+ * SETUP door, deliberately narrow, and the same reasoning TILL_SHOP_REFUSED gives for currency and reg_type
+ * — *"the blast radius of a stolen counter key is exactly the list above"*. Creating sellable products on an
+ * established shop is not something a key taped to a till should be able to do.
+ *
+ * ⭐ So Product Lab authenticates a PERSON, exactly as Offer Lab does ("Offer Lab authenticates a PERSON
+ * (cb_sess, a merchant sign-in), never a paired counter's key"), and these are its doors. The setup door
+ * stays as it is. Two doors, two authorities, one library underneath — lib/catalogue-blueprint decides what
+ * a list contains and lib/catalogue-write is still the only thing that writes a product.
+ */
+router.get('/lists', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const BP = require('../lib/catalogue-blueprint');
+    /* ⭐ WHAT THIS SHOP ALREADY SELLS, so the lab can tick-and-grey rather than adding a second Tomato.
+       Name AND unit, because one row per unit is the whole shape of these lists. */
+    let mine = [];
+    try {
+      const r = await withEntity(entity_id, (db) => db.query(
+        `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit
+           FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`, [entity_id]));
+      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit }));
+    } catch (_) { mine = []; }
+
+    res.json({
+      have: mine.length,
+      /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
+         ticks, so it needs every row's name, unit, price, category and local names to render at all. */
+      lists: Object.keys(BP.BLUEPRINTS).map((k) => {
+        const bp = BP.blueprint(k);
+        return {
+          key: bp.key, label: bp.label, outcome: bp.outcome, pin: BP.pin(bp),
+          categories: bp.categories, units: bp.units, languages: BP.languagesOf(k),
+          count: bp.starter.length,
+          rows: bp.starter.map((x) => ({
+            name: x.name, unit: x.unit || bp.defaultUnit, price: x.price,
+            category: x.category || null, names: x.names || null,
+          })),
+        };
+      }),
+      /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
+      language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
+      mine,
+    });
+  } catch (e) { fail(res, e, 'Could not read the product lists'); }
+});
+
+/**
+ * ⭐⭐ ADOPT. Athi: *"they can choose it inherit and it can be added as part of their catalogue"* — and
+ * *"in one go or may be in multiple iteration"*, which is why nothing here refuses a shop that already has
+ * products. What it already sells is SKIPPED and reported, never a reason to turn the whole thing away.
+ *
+ * body: { list, categories?, languages?, names?, skip_existing? }
+ *   categories  only these shelves        names  only these exact rows ({name, unit}) — the ticked boxes
+ *   languages   which synonym packs       skip_existing  default true
+ */
+router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const BP = require('../lib/catalogue-blueprint');
+    const units = require('../lib/units');
+    const cats = require('../lib/categories');
+    const b = req.body || {};
+
+    const bp = BP.blueprint(b.list);
+    if (bp.key === 'general') {
+      return res.status(400).json({ error: 'unknown list',
+        message: 'There is no product list called "' + String(b.list).slice(0, 40) + '".',
+        choices: Object.keys(BP.BLUEPRINTS) });
+    }
+
+    /* ⚠️ WHAT THEY ALREADY SELL IS READ HERE, not trusted from the page — the browser's copy can be minutes
+       old, and the cost of being wrong is a duplicate product on a live shelf. */
+    let skipNames = [];
+    if (b.skip_existing !== false) {
+      try {
+        const r = await withEntity(entity_id, (db) => db.query(
+          `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit
+             FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`, [entity_id]));
+        skipNames = r.rows.map((x) => ({ name: x.name, unit: x.unit }));
+      } catch (_) { skipNames = []; }
+    }
+
+    const existing = await catwrite.codesInUse(entity_id);
+    const plan = BP.mintPlan(bp.key, existing, {
+      categories: Array.isArray(b.categories) ? b.categories : null,
+      languages: Array.isArray(b.languages) ? b.languages : [],
+      skipNames,
+    });
+
+    /* ⭐ THE TICKED BOXES, applied after the plan so a row the shop already has is reported as SKIPPED
+       rather than silently missing from a selection the person made. */
+    let items = plan.items;
+    if (Array.isArray(b.names) && b.names.length) {
+      const want = new Set(b.names.map((x) => (typeof x === 'string' ? x : (x && x.name) + '\u0001' + (x && x.unit))
+        .toString().trim().toLowerCase()));
+      items = items.filter((it) => want.has(it.name.trim().toLowerCase())
+        || want.has((it.name + '\u0001' + it.unit).trim().toLowerCase()));
+    }
+
+    if (!items.length) {
+      return res.json({ ok: true, added: 0, skipped: plan.skipped, pin: plan.pin,
+        message: plan.skipped.length
+          ? 'Nothing added — this shop already sells every one of those.'
+          : 'Nothing was selected, so nothing was added.' });
+    }
+
+    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the
+       product. If this and routes/till.js ever differ, they are two opinions about one act. */
+    const wantCats = [...new Set(items.map((x) => x.categoryName).filter(Boolean))];
+    let catIds = new Map();
+    if (wantCats.length) {
+      try {
+        catIds = await cats.ensureCategories(entity_id, wantCats,
+          { withEntity, by: (req.identity && req.identity.identity_id) || null });
+      } catch (e) {
+        return res.status(500).json({ error: 'Failed',
+          message: 'Your categories could not be set up, so nothing was added. ' + String(e && e.message).slice(0, 120) });
+      }
+    }
+    items = items.map((x) => {
+      const out = Object.assign({}, x);
+      const id = x.categoryName ? catIds.get(x.categoryName) : null;
+      delete out.categoryName;
+      if (id) out.categories = [id];
+      return out;
+    });
+
+    const w = await catwrite.writeItems({ entity_id, items });
+    if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
+
+    shopChanged(entity_id, 'product list adopted');
+    /* ⭐ SAID IN THE SHOPKEEPER'S OWN TERMS, because "what did it actually add?" is the next question. */
+    const n = w.rows.length, s = plan.skipped.length;
+    res.json({ ok: true, added: n, skipped: plan.skipped, pin: plan.pin, list: bp.label,
+      languages: plan.languages,
+      message: n + ' product' + (n === 1 ? '' : 's') + ' added'
+        + (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '') + '.' });
+  } catch (e) { fail(res, e, 'Could not adopt that product list'); }
+});
+
 module.exports = router;
