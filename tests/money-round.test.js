@@ -134,4 +134,67 @@ for (const [file, start, name] of COPIES) {
   });
 }
 
+console.log('\n— the count stays at one (SPEC-money-one-reader.md step 6) —');
+
+/**
+ * ⭐⭐⭐ NO HAND-WRITTEN MONEY ROUNDING, ANYWHERE. The cleanup found 14 named helpers and ~40 inline copies; the day
+ * this passes with a new one in it, the count starts climbing again. Every Math.round(<x> * 100) / 100 in both repos
+ * is a failure unless it is NAMED below with the reason it is not money.
+ * ⚠️ The matcher reads brackets, not text — the same one the codemod used — so a nested expression cannot slip past.
+ */
+function roundSites(src) {
+  const out = []; let i = 0;
+  const close = (s, o) => { let d = 0; for (let j = o; j < s.length; j++) { if (s[j] === '(') d++; else if (s[j] === ')') { d--; if (!d) return j; } } return -1; };
+  for (;;) {
+    const k = src.indexOf('Math.round(', i); if (k < 0) break;
+    const o = k + 10, c = close(src, o); if (c < 0) break;
+    if (/^\s*\/\s*100(?![0-9.])/.test(src.slice(c + 1, c + 12)) && /\*\s*100\s*$/.test(src.slice(o + 1, c))) {
+      const ls = src.lastIndexOf('\n', k) + 1, le = src.indexOf('\n', k);
+      out.push(src.slice(ls, le < 0 ? undefined : le).trim());
+    }
+    i = o + 1;
+  }
+  return out;
+}
+/* [file, what the line contains, why it is not money] */
+const NOT_MONEY = [
+  ['catalogue-columns.js', 'best = { canonical: k, score:', 'a header-match SCORE'],
+  ['csv-preflight.js', 'confidence: Math.round(best.score', 'a header-match SCORE'],
+  ['till.html', 'n.items', 'a COUNT of items on a summary'],
+  ['till.html', 'left / Math.max(1, w - left)', 'a layout RATIO'],
+];
+it('⭐⭐⭐ no hand-written money rounding outside money.js', () => {
+  const WEB = path.join(API, '..', 'chitbridge-web', 'public');
+  const files = [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(API, 'tools', 'tally-connector', 'promo.html'),
+                 path.join(WEB, 'app.html')];
+  for (const dir of [path.join(API, 'lib'), path.join(API, 'routes'), path.join(WEB, 'app')])
+    for (const f of fs.readdirSync(dir)) if (/\.js$/.test(f) && !/\.browser\.js$/.test(f) && f !== 'money.js') files.push(path.join(dir, f));
+  const bad = [];
+  for (const f of files) {
+    if (!fs.existsSync(f)) continue;
+    /* ⚠️ block comments blanked first (newlines kept) — a note that NAMES the old rule is not the rule */
+    const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+    for (const line of roundSites(src)) {
+      if (/^\s*(\*|\/\*|\/\/)/.test(line)) continue;                                   /* a comment may name the old rule */
+      if (NOT_MONEY.some(([nf, has]) => path.basename(f) === nf && line.includes(has))) continue;
+      bad.push(path.basename(f) + ': ' + line.slice(0, 110));
+    }
+  }
+  assert.deepStrictEqual(bad, [], bad.length + ' hand-written money rounding — use money.round (CBMoney.round in a page), '
+    + 'or, if it is truly not money, name it in NOT_MONEY with the reason:\n        ' + bad.join('\n        '));
+});
+it('⭐⭐ no home-made price reader outside money.js', () => {
+  /* the shape every one of the five readers had: pull .amount out of an object, else use the value as-is */
+  const RE = /\(\s*\w+\s*&&\s*typeof\s+\w+\s*===\s*'object'\s*\)\s*\?\s*\w+\.amount\s*:\s*\w+/;
+  const bad = [];
+  for (const dir of [path.join(API, 'lib'), path.join(API, 'routes')])
+    for (const f of fs.readdirSync(dir)) {
+      if (!/\.js$/.test(f) || /\.browser\.js$/.test(f) || f === 'money.js') continue;
+      fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((l, n) => {
+        if (RE.test(l) && !/^\s*(\*|\/\*|\/\/)/.test(l.trim())) bad.push(f + ':' + (n + 1) + '  ' + l.trim().slice(0, 100));
+      });
+    }
+  assert.deepStrictEqual(bad, [], 'a price is being read by hand — use money.priceOf:\n        ' + bad.join('\n        '));
+});
+
 console.log(pass + ' checks');
