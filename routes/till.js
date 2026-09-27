@@ -692,6 +692,58 @@ router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
 });
 
 /**
+ * ── ⭐⭐⭐ THE SAME DECISION, ABOUT MANY PRODUCTS AT ONCE (2026-09-27) ──────────────────────────────────────
+ *
+ * Athi: *"yes please, that can be done in the maintenance screen."* — asked after the day-one walk showed the
+ * real friction: Product Lab adopts products OFF the shelf on purpose (tax and offers come first), so a shop
+ * that took a 22-product shelf then had to open 22 cards before it could sell anything. Adopting got fast and
+ * the step after it did not.
+ *
+ * ⚠️⚠️ THIS IS NOT NEW AUTHORITY, WHICH IS THE ONLY REASON IT BELONGS ON A COUNTER KEY. /stock above already
+ * lets a counter set availability — one product at a time, for as many products as it likes. Batching that is
+ * the SAME permission with fewer round trips, unlike a tax slab or a new product, which are refused here for
+ * exactly the reason this one is allowed. [[TILL_SHOP_REFUSED]]
+ *
+ * ⚠️ available and unavailable ONLY, the same two /stock offers and for the same reason: retired and redundant
+ * carry a per-item argument nobody supplies standing at a till.
+ * ⚠️ ONE STATEMENT, ONE STAMP. Every row in a bulk change genuinely was one decision by one person at one
+ * moment, so sharing the stamp is the honest record — the same reasoning POST /api/products/status/bulk gives.
+ * ⚠️ AND IT SAYS HOW MANY IT ACTUALLY MOVED, not how many were asked for. An id that is not this shop's is
+ * silently no row updated; reporting the request back as success is how a shopkeeper believes a shelf is live
+ * when it is not. [[feedback-silence-is-the-bug]]
+ */
+const STOCK_BULK_MAX = 500;
+router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const ids = Array.isArray(b.item_ids) ? b.item_ids.map((x) => String(x || '')).filter(Boolean) : [];
+    const status = String(b.status || '').toLowerCase();
+    if (!ids.length) return res.status(400).json({ error: 'validation', message: 'item_ids required' });
+    if (ids.length > STOCK_BULK_MAX) {
+      return res.status(400).json({ error: 'Too many',
+        message: 'At most ' + STOCK_BULK_MAX + ' products in one change.' });
+    }
+    if (['available', 'unavailable'].indexOf(status) < 0)
+      return res.status(400).json({ error: 'validation', message: "status must be 'available' or 'unavailable'" });
+
+    const rec = itemstatus.stamp({ status, note: b.note || undefined },
+                                 { actor_name: b.by || 'the counter' });
+    const r = await withEntity(entity_id, (db) => db.query(
+      'UPDATE catalogue_items SET item_data = COALESCE(item_data, \'{}\'::jsonb) || $1::jsonb, updated_at = NOW()'
+      + ' WHERE entity_id = $2 AND item_id = ANY($3::uuid[]) RETURNING item_id',
+      [JSON.stringify(rec), entity_id, ids]));
+
+    shopChanged(entity_id, 'stock ' + status + ' ×' + r.rows.length);
+    const n = r.rows.length;
+    res.json({ ok: true, moved: n, asked: ids.length, status,
+      message: n + ' product' + (n === 1 ? '' : 's')
+        + (status === 'available' ? ' put on the shelf' : ' taken off the shelf')
+        + (n < ids.length ? ' · ' + (ids.length - n) + ' could not be found' : '') + '.' });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
  * ⭐⭐ THE SMALL DECISIONS A SHOPKEEPER MAKES ABOUT ONE PRODUCT. Athi, 2026-09-09: *"the catalogue management, minimal stuff —
  * changing availability, product price, offer enable/disable, show on TV — all can be kept in the same place."*
  *

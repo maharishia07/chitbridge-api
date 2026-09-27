@@ -13143,6 +13143,34 @@ async function pickedDo(what){
                                : 'put ' + items.length + ' back on the shelf';
   if (!(await sure('Shall I ' + words + '?', 'Yes, do it', 'Several at once'))) return;
   var done = 0, queued = 0, failed = [];
+  /**
+   * ⭐⭐⭐ ONE CALL FOR THE WHOLE SELECTION (2026-09-27). This loop already did the right THING — it is what
+   * 'Back on the shelf' has always done — but it did it one product at a time, and every call is four
+   * database trips across the Pacific ([[project-roundtrip-cost]]: 1.4–2.4s each). Putting a 22-product
+   * shelf on sale was therefore the better part of a minute of watching, which is exactly the step a shop
+   * reaches straight after adopting a product list.
+   * ⚠️ NOT NEW AUTHORITY — POST /api/till/stock/bulk is the same permission /stock already grants, batched.
+   * ⚠️ IT STILL GOES THROUGH cloudFirst, so a counter with the line down gets the same question and the
+   * same queued replay it always did — as ONE queued operation rather than twenty-two.
+   */
+  if ((what === 'off' || what === 'on') && items.length > 1) {
+    var ids = items.map(function(x){ return x.item_id; }).filter(Boolean);
+    var want = (what === 'off') ? 'unavailable' : 'available';
+    var outB = await cloudFirst({
+      what: items.length + ' products — ' + (what === 'off' ? 'off the shelf' : 'back on the shelf'),
+      path: '/api/till/stock/bulk', body: { item_ids: ids, status: want, by: (WHO && WHO.name) || null },
+      apply: async function(){ for (var z = 0; z < items.length; z++) await stockApply(items[z], want); },
+    });
+    if (outB && outB.queued) { queued = items.length; done = items.length; }
+    else if (outB && outB.ok) done = items.length;
+    else failed = items.map(function(x){ return x.name; });
+    PICKED_IDS = [];
+    paintHits(); paintCard(); paintChips();
+    toastLine(failed.length ? ('Not changed: ' + failed.length + ' product(s).')
+      : (done + ' product' + (done === 1 ? '' : 's') + (what === 'off' ? ' taken off the shelf' : ' put on the shelf')
+         + (queued ? ' · ChitBridge will be told the moment the line is back.' : '.')));
+    return;
+  }
   for (var k = 0; k < items.length; k++) {
     var i = items[k];
     try {
