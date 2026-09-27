@@ -2494,6 +2494,13 @@
   .bring .eg{display:block;color:var(--dim);font-size:.85em}
   .shopsay{font-size:.9em;margin:0 0 10px;min-height:1.2em}
   .shopsay.bad{color:var(--warn,#a8410f)}
+  /* ⭐ the document name that will actually print — the concrete fact GST's paperwork otherwise buries in prose */
+  .slipbadge{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--panel);color:var(--dim);
+    font-size:.82em;letter-spacing:.03em;margin-inline-end:2px}
+  .slipbadge.ok{background:var(--ok-tint,#e8f4ed);color:var(--ok,#16693f)}
+  .shopsay .linklike{border:0;background:none;padding:0;font:inherit;font-size:.92em;color:var(--accent);
+    text-decoration:underline;cursor:pointer}
+  .shopwhy{margin-top:6px;color:var(--dim);font-size:.92em}
   @media (max-width:560px){ .shopform{grid-template-columns:1fr} }
   /* ── the product panel: four decisions, laid out as label / control / plain words about what it means ── */
   .cardhead{display:flex;gap:12px;align-items:center;padding:0 0 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
@@ -2657,6 +2664,20 @@
   .nowbox b{font-size:1.05em}
   .nowbox.none{border-color:var(--warn);background:var(--warn-tint)}
   .dlg input,.dlg select{width:100%;padding:10px;border:1px solid var(--edge);border-radius:9px;background:var(--paper)}
+  /* ⭐⭐ [till expenses, 2026-09-27] AMOUNT FIRST AND BIG — it is why the sheet is open, so it gets the sheet's
+     largest number, same reasoning screen-kit.js gives a tile's price. */
+  .amtbig{display:flex;align-items:center;border:2px solid var(--edge);border-radius:10px;background:var(--paper)}
+  .amtbig .cur{padding:0 2px 0 12px;font-size:1.3em;font-weight:700;color:var(--dim)}
+  .amtbig input{border:0;background:transparent;width:100%;padding:12px 12px 12px 4px;
+    font-size:1.5em;font-weight:700;font-variant-numeric:tabular-nums}
+  .amtbig input:focus{outline:0}
+  /* ⭐ the one fact about an expense that surprises people — said before it is pressed, not discovered at close */
+  .expdrawer{margin-top:10px;padding:9px 12px;border-radius:9px;background:var(--warn-tint);color:var(--warn);font-size:.85em}
+  /* ⭐ AFTER RECORDING, a receipt, not a blank form — see expAgain() */
+  .expdone{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 0;text-align:center}
+  .expdonetick{width:44px;height:44px;border-radius:50%;background:var(--ok-tint);color:var(--ok);
+    font-size:1.4em;line-height:44px}
+  .expdoneamt{font-size:1.6em;font-weight:800;font-variant-numeric:tabular-nums}
   /* ⭐ SETTINGS, REDRAWN (2026-09-17) — tabs across the top, one short name and its control per row; the "why" is in title= */
   .setdlg{width:min(640px,96vw)}
   /* ⭐ COUNTER HEALTH ([TILL-137]) — phone first, as the handoff asks; ONE min-width query widens it. */
@@ -2977,12 +2998,12 @@
   <div class="dlgbtns"><button onclick="signinClose()">Not now · Esc</button></div>
 </dialog>
 <dialog id="shopdlg" class="dlg" data-testid="till-shop-dlg">
-  <h3>Your shop <span class="u">what every bill is headed with · kept by ChitBridge, so every counter and your storefront agree</span></h3>
+  <h3>Your shop <span class="u">what prints on every bill</span></h3>
   <div id="shopform" class="shopform"></div>
   <div id="shopsay" class="shopsay"></div>
   <div class="dlgbtns">
     <button onclick="shopEditClose()">Cancel · Esc</button>
-    <button class="pri" data-testid="till-shop-save" onclick="shopEditSave()">Save to ChitBridge</button>
+    <button class="pri" data-testid="till-shop-save" onclick="shopEditSave()">Save</button>
   </div>
 </dialog>
 <!--
@@ -7426,7 +7447,10 @@ var TILL_MENU = [
    * collapsed and its own name gives no reason to look inside it for money paid out. Same reasoning "Pricing"
    * was given its own section for: a named home beats being filed under a noun that fits neither.
    */
-  { id: 'moremoney', icon: '💰', title: 'Other money', sum: 'expenses paid out of the drawer', moremoney: true },
+  /* ⚠️ Athi, 2026-09-27, looking at this tile: "it cannot be other money, say record expenses" — right now
+     this section holds nothing BUT expenses, so "Other money" named a category wider than what is inside it.
+     Revisit to "Other money" if money coming IN (not from a sale) joins expenses here — see BACKLOG.md. */
+  { id: 'moremoney', icon: '💰', title: 'Record expenses', sum: 'money paid out of the drawer', moremoney: true },
   /**
    * ⭐ MARKETING — Athi: *"shop screen is marketing, what other marketing we have?"* Today: exactly one, the
    * TV sign. ⚠️ A GROUP OF ONE, DELIBERATELY: the storefront link and rewards are what would join it and
@@ -16734,7 +16758,7 @@ function openShopInHub(){
  */
 /** ⚠️ ONE LIST, matching routes/till.js TILL_SHOP_FIELDS — a box the server refuses is a lie to the user. */
 var SHOP_FIELDS = [
-  ['trade_name', 'Shop name',   'what every bill is headed with', 'wide'],
+  ['trade_name', 'Shop name',   '', 'wide'],
   ['legal_name', 'Legal name',  'if it differs from the shop name', 'wide'],
   ['gstin',      'GSTIN',       'without it, no GST is charged on any bill', 'wide'],
   ['street',     'Address',     '', 'wide'],
@@ -16755,8 +16779,11 @@ function shopEditOpen(){
   var missing = Array.isArray(sh.missing) ? sh.missing : [];
   var body = SHOP_FIELDS.map(function(f){
     var k = f[0], val = shopFieldValue(sh, k);
-    /* ⚠️ 'not set yet' comes from the SERVER's idea of missing (lib/profile), not from an empty box here */
-    var gap = !val && (missing.indexOf(k) >= 0 || missing.indexOf(k === 'trade_name' ? 'name' : k) >= 0);
+    /* ⚠️ 'not set yet' comes from the SERVER's idea of missing (lib/profile), not from an empty box here.
+       ⚠️⚠️ [2026-09-27] GSTIN NEVER GETS THIS MARK. shopCheck() already says, in words, that a shop below
+       the threshold is not registered and that is not an error — this label used to disagree with its own
+       form, marking the same empty box "not set yet" in warn colour right above that sentence. */
+    var gap = k !== 'gstin' && !val && (missing.indexOf(k) >= 0 || missing.indexOf(k === 'trade_name' ? 'name' : k) >= 0);
     return '<label class="' + (f[3] || '') + (gap ? ' gap' : '') + '"' + (gap ? ' data-gap="1"' : '') + '>'
       + '<span>' + esc(f[1]) + '</span>'
       + '<input data-shop="' + k + '" data-testid="till-shop-' + k + '" value="' + esc(val) + '"'
@@ -18322,6 +18349,13 @@ function shopBox(k){ return document.querySelector('#shopform input[data-shop="'
  * ⭐ It names the state, because that is what a person can actually confirm. A check digit is not.
  * @returns true when it is safe to send
  */
+/** ⭐ [2026-09-27] "the sheet shows what it edits" — GST's one real consequence, said as the document name that
+ *  will actually print, not as a paragraph about registration. Toggled with shopWhyToggle(), off by default. */
+var SHOP_WHY = false;
+function shopWhyToggle(){ SHOP_WHY = !SHOP_WHY; shopCheck(); }
+function shopSlipBadge(kind){
+  return '<b class="slipbadge' + (kind === 'CASH MEMO' ? '' : ' ok') + '">' + esc(kind) + '</b>';
+}
 function shopCheck(){
   /* ⚠️ THE "not set yet" MARK IS LIVE, not a snapshot of when the form opened. It sat beside a box the
      shopkeeper had just filled, which reads as the form arguing with itself. */
@@ -18338,9 +18372,11 @@ function shopCheck(){
    * calls that field missing is nagging a shopkeeper about a decision the law already made for them.
    */
   if (!v) {
-    shopSay('This shop is not registered for GST — no tax goes on any bill, and each one is headed '
-      + ((window.CBTax && S && S.shop && shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY. ' : 'a cash memo. ')
-      + regWords(), false);
+    var kind0 = (window.CBTax && S && S.shop && shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY' : 'CASH MEMO';
+    shopSay(shopSlipBadge(kind0) + ' · not registered for GST, so no tax goes on any bill'
+      + ' <button type="button" class="linklike" data-testid="till-shop-why" onclick="shopWhyToggle()">'
+      + (SHOP_WHY ? 'Hide' : 'Why?') + '</button>'
+      + (SHOP_WHY ? '<div class="shopwhy">' + esc(regWords()) + '</div>' : ''), false, true);
     return true;
   }
   if (!window.CBProfileMap || !CBProfileMap.gstinChecksum) {
@@ -18359,8 +18395,9 @@ function shopCheck(){
   /* ⭐ WHAT IT IS, IN WORDS THE SHOPKEEPER OWNS */
   var code = CBProfileMap.stateOfGstin(v);
   var name = (CBProfileMap.STATE_NAMES || {})[code] || null;
-  var said = 'GSTIN checks out · ' + (name ? code + ' · ' + name : 'state ' + code)
-           + ' · PAN ' + CBProfileMap.panOfGstin(v);
+  var kind1 = (shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY' : 'TAX INVOICE';
+  var said = shopSlipBadge(kind1) + ' · ' + esc(name ? code + ' · ' + name : 'state ' + code)
+           + ' · PAN ' + esc(CBProfileMap.panOfGstin(v));
   /**
    * ⚠⚠ AND THE ONE A CHECKSUM CANNOT CATCH: a valid GSTIN for one state beside a PIN code in another. Both
    * fields are individually correct and the pair is wrong, which is exactly the shape of a real typo.
@@ -18369,19 +18406,23 @@ function shopCheck(){
   if (pv && CBProfileMap.stateOfPin) {
     var pc = CBProfileMap.stateOfPin(pv);
     if (pc && code && String(pc) !== String(code)) {
-      said += ' — but the PIN code ' + pv + ' is in '
-            + ((CBProfileMap.STATE_NAMES || {})[pc] || ('state ' + pc)) + '. One of the two is wrong.';
-      shopSay(said, true);
+      said += ' — but the PIN code ' + esc(pv) + ' is in '
+            + esc((CBProfileMap.STATE_NAMES || {})[pc] || ('state ' + pc)) + '. One of the two is wrong.';
+      shopSay(said, true, true);
       return true;   /* ⚠️ worth saying, not worth blocking — a shop may genuinely be registered elsewhere */
     }
   }
-  shopSay(said, false);
+  shopSay(said, false, true);
   return true;
 }
 function shopEditClose(){ var d = document.getElementById('shopdlg'); if (d && d.open) d.close(); }
-function shopSay(t, bad){
+/** ⚠️ html=true ONLY for the two callers above, which esc() every piece of it that came from a shopkeeper's own
+ *  typing (a PIN, a name) before folding it in — every other caller passes plain text through textContent,
+ *  exactly as before, and stays safe by construction rather than by remembering to escape it here. */
+function shopSay(t, bad, html){
   var el = document.getElementById('shopsay'); if (!el) return;
-  el.textContent = t || ''; el.className = 'shopsay' + (bad ? ' bad' : '');
+  if (html) el.innerHTML = t || ''; else el.textContent = t || '';
+  el.className = 'shopsay' + (bad ? ' bad' : '');
 }
 /**
  * ⚠️⚠️⚠️ THIS ONE REQUIRES THE LINE, and it is the only counter write that does. cloudFirst() offers "change
@@ -21961,7 +22002,15 @@ function retClose(){
  */
 var EXP_WHYNOT = 'This counter cannot record an expense yet — that is on the browser counter only.';
 function expCanIssue(){ return !!(HOST && typeof HOST.expense === 'function'); }
-var EXP_WHAT = '', EXP_AMOUNT = '', EXP_HOW = 'Cash';
+var EXP_WHAT = '', EXP_AMOUNT = '', EXP_HOW = 'Cash', EXP_DONE = null;
+/**
+ * ⭐ A FIXED STARTER SET, not learned — unlike Quick Keys' quickCompute(), nothing here counts what a shop
+ * actually spends on most, so four honest guesses beat pretending this is per-shop. Tapping one only FILLS
+ * the free-text box below; it edits like anything typed by hand, and the record still stores plain text —
+ * this does not classify the expense (Athi, when this feature was built: "we are not classifying the
+ * expense class etc currently, but let it be that way"), it just saves typing the common ones.
+ */
+var EXP_CHIPS = ['Rent', 'Delivery', 'Staff tea', 'Electricity'];
 /** ⭐ the shop's own tenders, same list checkout offers — plus Cash, which is always available, same reasoning
  *  retPaint() already uses ("a shop can always hand back cash" — equally true for paying one out). */
 function expWays(){
@@ -21976,31 +22025,59 @@ function expWays(){
  */
 function expOpen(prefill){
   if (!expCanIssue()) { toastLine(EXP_WHYNOT); return; }
-  EXP_WHAT = prefill || ''; EXP_AMOUNT = ''; EXP_HOW = expWays()[0] || 'Cash';
+  EXP_WHAT = prefill || ''; EXP_AMOUNT = ''; EXP_HOW = expWays()[0] || 'Cash'; EXP_DONE = null;
   expPaint();
   var d = document.getElementById('expdlg'); if (d && d.showModal && !d.open) d.showModal();
-  var box = document.getElementById('expwhat'); if (box) setTimeout(function(){ box.focus(); }, 30);
+  var box = document.getElementById('expamt'); if (box) setTimeout(function(){ box.focus(); }, 30);
 }
 function expClose(){
   var d = document.getElementById('expdlg'); if (d && d.open) { try { d.close(); } catch (_) {} }
-  EXP_WHAT = ''; EXP_AMOUNT = '';
+  EXP_WHAT = ''; EXP_AMOUNT = ''; EXP_DONE = null;
 }
 function expWhat(v){ EXP_WHAT = v; expPaint(); }
 function expAmountSet(v){ EXP_AMOUNT = v; expPaint(); }
 function expHow(v){ EXP_HOW = v; expPaint(); }
+/** ⭐ a chip only fills the box — it stays a normal, editable input, same as tapping a to-do straight into this sheet */
+function expChip(w){ EXP_WHAT = w; expPaint(); var box = document.getElementById('expwhat'); if (box) box.focus(); }
+/** ⭐⭐ AFTER RECORDING, the sheet becomes a receipt rather than closing — expenses come in runs (a delivery
+ *  boy, then tea, then rent), and reopening this dialog fresh each time is the slow path. Keeps the pay
+ *  method (it is usually the same for a run); clears amount and reason (they are not). */
+function expAgain(){ EXP_WHAT = ''; EXP_AMOUNT = ''; EXP_DONE = null; expPaint();
+  var box = document.getElementById('expamt'); if (box) setTimeout(function(){ box.focus(); }, 30); }
 function expPaint(){
   var box = document.getElementById('expbody'); if (!box) return;
+  var go = document.getElementById('expgo'), cancel = document.querySelector('#expdlg [value=cancel]');
+  if (EXP_DONE) {
+    box.innerHTML =
+        '<div class="expdone" data-testid="till-expense-done">'
+      + '<div class="expdonetick">✓</div>'
+      + '<div class="expdoneamt">' + money(EXP_DONE.amount) + '</div>'
+      + '<div class="u">for ' + esc(EXP_DONE.what) + ' · ' + esc(EXP_DONE.how) + '</div>'
+      + '</div>';
+    if (go) { go.disabled = false; go.textContent = 'Record another'; go.onclick = expAgain; }
+    if (cancel) cancel.textContent = 'Done';
+    return;
+  }
+  if (go) { go.onclick = expIssue; }
+  if (cancel) cancel.textContent = 'Cancel';
   var amt = Number(EXP_AMOUNT) || 0;
+  var missing = !(EXP_WHAT.trim()) ? 'Say what it was for.' : !(amt > 0) ? 'Type the amount.' : '';
   box.innerHTML =
-      '<label>What is it<input id="expwhat" value="' + esc(EXP_WHAT) + '" placeholder="Rent, delivery boy, tea for staff…"'
-        + ' oninput="expWhat(this.value)"></label>'
-    + '<label>Amount<input id="expamt" value="' + esc(EXP_AMOUNT) + '" inputmode="decimal" placeholder="0"'
-        + ' oninput="expAmountSet(this.value)"></label>'
-    + '<label>Paid by <select onchange="expHow(this.value)">'
-        + expWays().map(function(w){ return '<option value="' + esc(w) + '"' + (EXP_HOW === w ? ' selected' : '') + '>' + esc(w) + '</option>'; }).join('')
-      + '</select></label>';
-  var go = document.getElementById('expgo');
-  if (go) { go.disabled = !(EXP_WHAT.trim() && amt > 0); go.textContent = amt > 0 ? ('Record ' + money(amt)) : 'Record it'; }
+      '<label>Amount<span class="amtbig"><span class="cur">₹</span><input id="expamt" class="big" value="' + esc(EXP_AMOUNT)
+        + '" inputmode="decimal" placeholder="0" oninput="expAmountSet(this.value)"></span></label>'
+    + '<label>What is it'
+        + '<div class="chips" data-testid="till-expense-chips">' + EXP_CHIPS.map(function(w){
+            return '<button type="button" class="' + (EXP_WHAT === w ? 'on' : '') + '" onclick="expChip(\'' + esc(w) + '\')">' + esc(w) + '</button>';
+          }).join('') + '</div>'
+        + '<input id="expwhat" value="' + esc(EXP_WHAT) + '" placeholder="Or type it — delivery boy, tea for staff…" oninput="expWhat(this.value)"></label>'
+    + '<label>Paid by<div class="chips" data-testid="till-expense-how">' + expWays().map(function(w){
+          return '<button type="button" class="' + (EXP_HOW === w ? 'on' : '') + '" onclick="expHow(\'' + esc(w) + '\')">' + esc(w) + '</button>';
+        }).join('') + '</div></label>'
+    + (EXP_HOW === 'Cash' && amt > 0
+        ? '<div class="expdrawer" data-testid="till-expense-drawer">● Comes out of the drawer — the cash count at close will be <b>' + money(amt) + '</b> short.</div>'
+        : '')
+    + (missing ? '<div class="u" data-testid="till-expense-hint">' + esc(missing) + '</div>' : '');
+  if (go) { go.disabled = !!missing; go.textContent = amt > 0 ? ('Record ' + money(amt)) : 'Record it'; }
 }
 /**
  * ⭐⭐ ISSUE IT. Same discipline as a credit note: numbered from its own series, written locally, queued, sent
@@ -22024,7 +22101,8 @@ async function expIssue(){
     toastLine('The expense was NOT recorded: ' + ((r && (r.why || r.error)) || 'the counter could not write it'));
     return;
   }
-  expClose();
+  EXP_DONE = { what: what, amount: amount, how: EXP_HOW };
+  expPaint();
   toastLine('Recorded — ' + money(amount) + ' for ' + what + ', ' + EXP_HOW + '.');
   try { paintMenu(); } catch (_) {}
 }
