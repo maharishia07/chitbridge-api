@@ -560,7 +560,6 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/orderhub.js ([TILL-178b]) — the floor's rules, for a device that IS the floor. */
   'orderhub.browser.js',
   /* GENERATED beside lib/dayopen.js ([TILL-182]) — the morning, for the page that narrates it. */
-  'dayopen.browser.js',
   /* GENERATED beside lib/signin.js ([TILL-183]) — for the counter's own sign-in screen. */
   /* GENERATED beside lib/scalecode.js ([TILL-185]) — read on the counter, where the scale is. */
   /* GENERATED beside lib/qty.js ([TILL-186]) — every typed "500 gm" and every scale label asks it. */

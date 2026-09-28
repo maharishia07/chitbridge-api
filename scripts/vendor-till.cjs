@@ -232,7 +232,7 @@ const COPIES = () => [
   /* ⭐⭐⭐ THE MORNING ([TILL-182]). Athi: *"once you sign-in, set up begins… so the counter is setting up for
      the day."* What comes first, what may be skipped and what stops the morning dead is a RULE, and it is read
      by the page that narrates it — so it is wrapped like every other engine rather than written into the page. */
-  [null, path.join(WEB, 'engine', 'dayopen.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
+  /* dayopen: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐⭐⭐ SIGNING A PERSON IN ([TILL-183]). Athi: *"we should not think backoffice engine, tightly coupled,
      it should be independent and also can be called from the backoffice."* So it is neither surface's: the
      rules are here, and each surface keeps a different half of the answer — a session for the back office,
@@ -312,7 +312,6 @@ const COPIES = () => [
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
   [null, path.join(API, 'lib', 'orders.browser.js'), wrapForBrowser('orders.js', 'CBOrders')],
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
-  [null, path.join(API, 'lib', 'dayopen.browser.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],

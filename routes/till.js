@@ -2472,7 +2472,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   rollup: '../lib/rollup.browser.js',
                   orders: '../lib/orders.browser.js',
                   orderhub: '../lib/orderhub.browser.js',
-                  dayopen: '../lib/dayopen.browser.js',
+                  dayopen: '../lib/dayopen.js' /* ADOPTED — one file for node and the page */,
                   signin: '../lib/signin.js' /* ADOPTED — one file for node and the page */,
                   scalecode: '../lib/scalecode.js' /* ADOPTED — one file for node and the page */,
                   qty: '../lib/qty.js' /* ADOPTED — one file for node and the page */,
