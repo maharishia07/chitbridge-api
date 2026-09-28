@@ -382,14 +382,10 @@ app.use((err, req, res, next) => {
    * rather than on the bare SQLSTATE, because 23514 is every CHECK constraint in the schema and answering
    * "cannot trade" to a tax-slab violation would be worse than saying nothing. [[feedback-write-for-the-shopkeeper]]
    */
-  if (err && err.code === '23514' && /cannot trade with a/.test(String(err.message || ''))) {
-    return res.status(409).json({
-      error: 'Test and live cannot mix',
-      message: String(err.message),
-      hint: err.hint || 'Test data must never reach a real business\'s books. Use a test counterparty.',
-      code: 'POPULATION_BOUNDARY',
-    });
-  }
+  /* ⭐ the translation now lives in lib/knownerr.js, so the routes that CATCH their own errors — which is all of
+     them; none calls next(err) — give the same answer (external review §23) */
+  const _known = require('./lib/knownerr').known(err);
+  if (_known) return res.status(_known.status).json(_known.body);
   /**
    * ⭐ A DECISION THIS API MADE ANSWERS AS A DECISION. Only an error that declares this code reaches this
    * branch — an ordinary throw still gets the generic 500 below, so nothing new leaks. The origin is echoed

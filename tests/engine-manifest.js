@@ -183,6 +183,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used
+     by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
+     trigger. (2026-09-28, external review §23) */
+  'knownerr.js',
   /* reads one entity uuid out of the environment and checks it is a uuid. Holds no rule and decides nothing —
      testboard.js and platformroot.js both use it so the read-and-warn exists once. (2026-09-14) */
   'namedentity.js',

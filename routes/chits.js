@@ -1488,6 +1488,10 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
           }
         } catch (_) { /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
       }
+      /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
+         as "Send failed" (lib/knownerr, external review §23) */
+      const _known = require('../lib/knownerr').known(err);
+      if (_known) return res.status(_known.status).json(_known.body);
       console.error('Send chit error:', err.message);
       res.status(500).json({ error: 'Send failed', message: safeErr(err) });
     }

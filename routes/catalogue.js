@@ -597,6 +597,9 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     }
     res.json({ ok: true, order_id: ORDER_ID, item_count: items.length, total, currency, fragment_count: fragments.length });   // customer sees only the order — no stores
   } catch (err) {
+    /* ⭐ a network order writes chits too (deliverEdge), so b247's boundary answers here as a 409 in words (lib/knownerr) */
+    const _known = require('../lib/knownerr').known(err);
+    if (_known) return res.status(_known.status).json(_known.body);
     res.status(500).json({ error: 'Order failed', message: safeErr(err) });
   }
 });
@@ -1258,7 +1261,12 @@ router.post('/:bridge_id/order/confirm',
       res.json({ message: purpose === 'offer' ? 'Offer sent' : 'Order placed', chit_id, shop: entity.display_name,
                  summary: summary_json, token,
                  ...(pendingDocs.length ? { documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256, line_index: d.line_index })) } : {}) });
-    } catch (err) { console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: safeErr(err) }); }
+    } catch (err) {
+      /* ⭐ b247's population boundary answers as a 409 in words, not "Order failed" (lib/knownerr, review §23) */
+      const _known = require('../lib/knownerr').known(err);
+      if (_known) return res.status(_known.status).json(_known.body);
+      console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: safeErr(err) });
+    }
   });
 
 // ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
